@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """Offline append-only U4 decision ledger implementing the frozen #295 contract.
 
-R-015 remains the durable transport and WAL.  Each reviewed candidate is one
-``ar.u4_decision_event.v1`` payload in an outer ``u4_decision`` event.  A
-separate ``u4_decision_closure`` event commits a complete packet revision only
-after every candidate has a current decision.  Rejected, deferred, no-trade,
-and data-blocked candidates are therefore first-class records, not omissions.
+R-015 remains the durable transport and WAL.  A packet revision is persisted as
+``u4_decision_intent -> u4_decision* -> u4_decision_closure``.  The intent
+freezes the complete review packet and every candidate decision before the
+first candidate event is written.  The closure commits only that exact frozen
+subject set.  Rejected, deferred, no-trade, and data-blocked candidates are
+therefore first-class records, not omissions.
 
 This module is deliberately offline and has no production default path.  It
 does not choose candidates, verify a human identity, create an order, or grant
@@ -37,8 +38,11 @@ from experiments.research_funnel import closure_experiment as closure
 from experiments.research_funnel import funnel_pipeline as funnel
 
 
+INTENT_KIND = "u4_decision_intent"
 EVENT_KIND = "u4_decision"
 CLOSURE_KIND = "u4_decision_closure"
+INTENT_SCHEMA = "ar.u4_packet_intent.v1"
+INTENT_VERSION = "1.0"
 EVENT_SCHEMA = "ar.u4_decision_event.v1"
 EVENT_VERSION = "1.0"
 PAYLOAD_EVENT_KIND = "U4_DECISION"
@@ -49,6 +53,7 @@ METHOD_RE = re.compile(r"^[A-Z][A-Z0-9_]{2,63}_V[0-9]+$")
 TICKER_RE = re.compile(r"^[0-9A-Z]+\.[A-Z]+$")
 SHA_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
 EVIDENCE_REF_RE = re.compile(r"^(conversation|pr|commit):.+$")
+INTENT_ID_RE = re.compile(r"^u4i_[0-9a-f]{32}$")
 DECISION_ID_RE = re.compile(r"^u4d_[0-9a-f]{32}$")
 CLOSURE_ID_RE = re.compile(r"^u4c_[0-9a-f]{32}$")
 DECISIONS = {"SELECT", "REJECT", "DEFER", "NO_TRADE", "DATA_BLOCKED"}
@@ -168,6 +173,36 @@ EVENT_FIELDS = {
     "authority",
     "record_hash",
 }
+EVENT_INTENT_FIELDS = {
+    "ledger_id",
+    "decision_revision",
+    "supersedes_decision_id",
+    "method_version",
+    "candidate",
+    "source",
+    "decision",
+    "reason_codes",
+    "reason_note",
+    "missing_evidence",
+    "research_question",
+    "human_decision",
+    "authority",
+}
+INTENT_FIELDS = {
+    "schema",
+    "intent_version",
+    "intent_id",
+    "ledger_id",
+    "u4_packet_hash",
+    "decision_revision",
+    "method_version",
+    "review_packet",
+    "packet_candidate_ids",
+    "packet_candidate_set_hash",
+    "packet_ready_pool_hash",
+    "candidate_intents",
+    "intent_hash",
+}
 CLOSURE_FIELDS = {
     "schema",
     "closure_version",
@@ -175,7 +210,12 @@ CLOSURE_FIELDS = {
     "closure_revision",
     "ledger_id",
     "u4_packet_hash",
+    "intent_id",
+    "intent_hash",
     "method_version",
+    "packet_candidate_ids",
+    "packet_candidate_set_hash",
+    "packet_ready_pool_hash",
     "reviewed_candidate_ids",
     "reviewed_candidate_set_hash",
     "current_decision_ids",
@@ -273,10 +313,6 @@ def _registered_at_from_outer(value: Any) -> str:
     return parsed.astimezone(event_ledger.OPERATIONAL_TIMEZONE).isoformat(timespec="seconds")
 
 
-def _outer_timestamp(now: str | None) -> str:
-    return str(now if now is not None else event_ledger._runtime_timestamp())
-
-
 def _ledger_id(packet: Mapping[str, Any]) -> str:
     packet_hash = str(packet.get("packet_hash") or "")
     return f"u4-ledger:{packet.get('as_of')}:{packet_hash[:12]}"
@@ -301,6 +337,13 @@ def _decision_id(event: Mapping[str, Any]) -> str:
 
 def _record_hash(event: Mapping[str, Any]) -> str:
     return _sha_value({key: value for key, value in event.items() if key != "record_hash"})
+
+
+def _intent_hash(intent: Mapping[str, Any]) -> str:
+    return _sha_value({
+        key: value for key, value in intent.items()
+        if key not in {"intent_id", "intent_hash"}
+    })
 
 
 def _closure_hash(receipt: Mapping[str, Any]) -> str:
@@ -589,6 +632,173 @@ def _intent_from_draft(
     }
 
 
+def _packet_intent_id(intent: Mapping[str, Any]) -> str:
+    identity = {
+        "u4_packet_hash": intent["u4_packet_hash"],
+        "decision_revision": intent["decision_revision"],
+        "intent_hash": intent["intent_hash"],
+    }
+    return "u4i_" + hashlib.sha256(_canonical(identity).encode("utf-8")).hexdigest()[:32]
+
+
+def _build_packet_intent(
+    packet: Mapping[str, Any], draft: Mapping[str, Any],
+    draft_rows: Mapping[str, Mapping[str, Any]], ready_rows: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    ready_by_code = {str(row["ts_code"]): row for row in ready_rows}
+    codes = sorted(ready_by_code)
+    candidate_intents = [
+        _intent_from_draft(packet, draft, draft_rows[code], ready_by_code[code])
+        for code in codes
+    ]
+    intent: dict[str, Any] = {
+        "schema": INTENT_SCHEMA,
+        "intent_version": INTENT_VERSION,
+        "intent_id": "",
+        "ledger_id": _ledger_id(packet),
+        "u4_packet_hash": _packet_hash_ref(packet),
+        "decision_revision": candidate_intents[0]["decision_revision"],
+        "method_version": str(draft["method_version"]),
+        "review_packet": copy.deepcopy(dict(packet)),
+        "packet_candidate_ids": codes,
+        "packet_candidate_set_hash": _sha_value(codes),
+        "packet_ready_pool_hash": _sha_ref(
+            packet["source_refs"]["ready_pool_hash"], "packet ready_pool hash"
+        ),
+        "candidate_intents": candidate_intents,
+        "intent_hash": "",
+    }
+    intent["intent_hash"] = _intent_hash(intent)
+    intent["intent_id"] = _packet_intent_id(intent)
+    return intent
+
+
+def _validate_candidate_intent(
+    item: Mapping[str, Any], packet: Mapping[str, Any], ready_row: Mapping[str, Any],
+    *, revision: int, method_version: str, ledger_id: str,
+) -> None:
+    _require_exact_keys(item, EVENT_INTENT_FIELDS, "U4 candidate intent")
+    if (
+        item.get("ledger_id") != ledger_id
+        or item.get("decision_revision") != revision
+        or item.get("method_version") != method_version
+    ):
+        raise DecisionLedgerError("candidate intent does not share the packet identity")
+    candidate = item.get("candidate")
+    source = item.get("source")
+    if not isinstance(candidate, Mapping) or not isinstance(source, Mapping):
+        raise DecisionLedgerError("candidate intent identity/source is not an object")
+    _validate_candidate(candidate, ready_row)
+    if source != _source_for(packet, ready_row):
+        raise DecisionLedgerError("candidate intent source is not bound to the frozen packet")
+    human = item.get("human_decision")
+    if not isinstance(human, Mapping):
+        raise DecisionLedgerError("candidate intent human decision is not an object")
+    synthetic = _build_event(
+        item,
+        sequence=1,
+        previous_hash=None,
+        registered_at=_registered_at_from_outer(human.get("decided_at")),
+    )
+    validate_decision_event(synthetic, expected_sequence=1, expected_previous_hash=None)
+    blocked = set(ready_row["blocked_reasons"])
+    if "U3_BATTERY_INCOMPLETE" in blocked:
+        if (
+            item.get("decision") != "DATA_BLOCKED"
+            or "U3_SIX_DIMENSION_BATTERY" not in item.get("missing_evidence", [])
+            or "U3_INCOMPLETE" not in item.get("reason_codes", [])
+        ):
+            raise DecisionLedgerError("persisted intent hides a U3-incomplete candidate")
+    elif "E1_RED_FLAG_REQUIRES_SEPARATE_REVIEW" in blocked:
+        if item.get("decision") != "REJECT" or "RED_FLAG_ACTIVE" not in item.get("reason_codes", []):
+            raise DecisionLedgerError("persisted intent hides an E1 red-flag candidate")
+
+
+def validate_packet_intent(intent: Mapping[str, Any]) -> None:
+    _require_exact_keys(intent, INTENT_FIELDS, "U4 packet intent")
+    if intent.get("schema") != INTENT_SCHEMA or intent.get("intent_version") != INTENT_VERSION:
+        raise DecisionLedgerError("U4 packet intent schema/version mismatch")
+    if not isinstance(intent.get("intent_id"), str) or INTENT_ID_RE.fullmatch(intent["intent_id"]) is None:
+        raise DecisionLedgerError("U4 packet intent_id is invalid")
+    revision = intent.get("decision_revision")
+    method_version = intent.get("method_version")
+    if not isinstance(revision, int) or isinstance(revision, bool) or revision < 1:
+        raise DecisionLedgerError("U4 packet intent revision is invalid")
+    if not isinstance(method_version, str) or METHOD_RE.fullmatch(method_version) is None:
+        raise DecisionLedgerError("U4 packet intent method_version is invalid")
+    packet = intent.get("review_packet")
+    if not isinstance(packet, Mapping):
+        raise DecisionLedgerError("U4 packet intent lacks the frozen review packet")
+    rows = _ready_rows(packet)
+    ready_by_code = {str(row["ts_code"]): row for row in rows}
+    codes = sorted(ready_by_code)
+    packet_ref = _packet_hash_ref(packet)
+    # governance-mutation: U4_LEDGER_INTENT_PACKET_BINDING
+    if (
+        intent.get("u4_packet_hash") != packet_ref
+        or intent.get("ledger_id") != _ledger_id(packet)
+        or intent.get("packet_candidate_ids") != codes
+        or intent.get("packet_candidate_set_hash") != _sha_value(codes)
+        or intent.get("packet_ready_pool_hash") != _sha_ref(
+            packet["source_refs"]["ready_pool_hash"], "packet ready_pool hash"
+        )
+    ):
+        raise DecisionLedgerError("U4 packet intent is not bound to the complete frozen packet")
+    items = intent.get("candidate_intents")
+    if not isinstance(items, list) or len(items) != len(codes):
+        raise DecisionLedgerError("U4 packet intent candidate set is incomplete")
+    item_codes: list[str] = []
+    for item in items:
+        if not isinstance(item, Mapping):
+            raise DecisionLedgerError("U4 candidate intent is not an object")
+        candidate = item.get("candidate")
+        code = str(candidate.get("ts_code") or "") if isinstance(candidate, Mapping) else ""
+        if code not in ready_by_code:
+            raise DecisionLedgerError("U4 candidate intent is outside the frozen packet")
+        _validate_candidate_intent(
+            item,
+            packet,
+            ready_by_code[code],
+            revision=revision,
+            method_version=method_version,
+            ledger_id=str(intent["ledger_id"]),
+        )
+        item_codes.append(code)
+    if item_codes != codes or len(item_codes) != len(set(item_codes)):
+        raise DecisionLedgerError("U4 candidate intents are not the exact canonical packet set")
+    # governance-mutation: U4_LEDGER_INTENT_HUMAN_COHERENCE
+    if len({_canonical(item["human_decision"]) for item in items}) != 1:
+        raise DecisionLedgerError("one U4 packet intent must preserve one coherent human decision")
+    selected_count = sum(item["decision"] == "SELECT" for item in items)
+    # governance-mutation: U4_LEDGER_INTENT_CARDINALITY
+    if selected_count not in SELECTED_COUNTS:
+        raise DecisionLedgerError("U4 packet intent selected count must be zero or 3..5")
+    # governance-mutation: U4_LEDGER_INTENT_HASH_FORMULA
+    if intent.get("intent_hash") != _intent_hash(intent):
+        raise DecisionLedgerError("U4 packet intent hash mismatch")
+    if intent.get("intent_id") != _packet_intent_id(intent):
+        raise DecisionLedgerError("U4 packet intent_id formula mismatch")
+
+
+def _validate_intent_revision(
+    intent: Mapping[str, Any], current: Mapping[tuple[str, str], Mapping[str, Any]],
+) -> None:
+    packet_hash = str(intent["u4_packet_hash"])
+    revision = int(intent["decision_revision"])
+    for item in intent["candidate_intents"]:
+        code = str(item["candidate"]["ts_code"])
+        prior = current.get((packet_hash, code))
+        if revision == 1:
+            if prior is not None or item["supersedes_decision_id"] is not None:
+                raise DecisionLedgerError("revision 1 intent cannot supersede an existing U4 decision")
+        elif (
+            prior is None
+            or prior["decision_revision"] != revision - 1
+            or item["supersedes_decision_id"] != prior["decision_id"]
+        ):
+            raise DecisionLedgerError("U4 packet intent does not supersede the exact current decisions")
+
+
 def _build_event(intent: Mapping[str, Any], *, sequence: int, previous_hash: str | None, registered_at: str) -> dict[str, Any]:
     event = {
         "schema": EVENT_SCHEMA,
@@ -719,10 +929,6 @@ def _subject(event: Mapping[str, Any]) -> tuple[str, str]:
     return (str(event["source"]["u4_packet_hash"]), str(event["candidate"]["ts_code"]))
 
 
-def _closure_semantic(receipt: Mapping[str, Any]) -> dict[str, Any]:
-    return {key: value for key, value in receipt.items() if key not in {"closure_id", "closure_hash"}}
-
-
 def _project_review_receipt(events: Sequence[Mapping[str, Any]], packet_hash: str) -> dict[str, Any] | None:
     selected = sorted((event for event in events if event["decision"] == "SELECT"), key=lambda event: event["candidate"]["ts_code"])
     if not selected:
@@ -754,7 +960,8 @@ def _project_review_receipt(events: Sequence[Mapping[str, Any]], packet_hash: st
 
 
 def _build_closure(
-    packet: Mapping[str, Any], events: Sequence[Mapping[str, Any]], *, tail_sequence: int, tail_hash: str
+    packet: Mapping[str, Any], events: Sequence[Mapping[str, Any]], intent: Mapping[str, Any],
+    *, tail_sequence: int, tail_hash: str,
 ) -> dict[str, Any]:
     ordered = sorted(events, key=lambda event: event["candidate"]["ts_code"])
     codes = [event["candidate"]["ts_code"] for event in ordered]
@@ -769,7 +976,12 @@ def _build_closure(
         "closure_revision": ordered[0]["decision_revision"],
         "ledger_id": _ledger_id(packet),
         "u4_packet_hash": _packet_hash_ref(packet),
+        "intent_id": intent["intent_id"],
+        "intent_hash": intent["intent_hash"],
         "method_version": ordered[0]["method_version"],
+        "packet_candidate_ids": copy.deepcopy(intent["packet_candidate_ids"]),
+        "packet_candidate_set_hash": intent["packet_candidate_set_hash"],
+        "packet_ready_pool_hash": intent["packet_ready_pool_hash"],
         "reviewed_candidate_ids": codes,
         "reviewed_candidate_set_hash": _sha_value(codes),
         "current_decision_ids": ids,
@@ -791,6 +1003,7 @@ def _build_closure(
     }
     closure_identity = {
         "u4_packet_hash": receipt["u4_packet_hash"],
+        "intent_id": receipt["intent_id"],
         "closure_revision": receipt["closure_revision"],
         "current_decision_ids": receipt["current_decision_ids"],
         "ledger_tail_hash": receipt["ledger_tail_hash"],
@@ -802,7 +1015,7 @@ def _build_closure(
 
 def validate_packet_closure(
     receipt: Mapping[str, Any], current: Mapping[tuple[str, str], Mapping[str, Any]],
-    *, tail_sequence: int, tail_hash: str,
+    intent: Mapping[str, Any], *, tail_sequence: int, tail_hash: str,
 ) -> None:
     _require_exact_keys(receipt, CLOSURE_FIELDS, "U4 packet closure")
     if receipt.get("schema") != CLOSURE_SCHEMA or receipt.get("closure_version") != CLOSURE_VERSION:
@@ -812,6 +1025,17 @@ def validate_packet_closure(
     packet_hash = receipt.get("u4_packet_hash")
     if not isinstance(packet_hash, str) or SHA_RE.fullmatch(packet_hash) is None:
         raise DecisionLedgerError("U4 packet closure hash reference is invalid")
+    validate_packet_intent(intent)
+    # governance-mutation: U4_LEDGER_CLOSURE_INTENT_BINDING
+    if (
+        receipt.get("intent_id") != intent.get("intent_id")
+        or receipt.get("intent_hash") != intent.get("intent_hash")
+        or receipt.get("u4_packet_hash") != intent.get("u4_packet_hash")
+        or receipt.get("packet_candidate_ids") != intent.get("packet_candidate_ids")
+        or receipt.get("packet_candidate_set_hash") != intent.get("packet_candidate_set_hash")
+        or receipt.get("packet_ready_pool_hash") != intent.get("packet_ready_pool_hash")
+    ):
+        raise DecisionLedgerError("U4 closure is not bound to its complete packet intent")
     packet_events = sorted(
         (event for (subject_packet, _), event in current.items() if subject_packet == packet_hash),
         key=lambda event: event["candidate"]["ts_code"],
@@ -820,11 +1044,17 @@ def validate_packet_closure(
         raise DecisionLedgerError("U4 packet closure has no decision events")
     codes = [event["candidate"]["ts_code"] for event in packet_events]
     ids = [event["decision_id"] for event in packet_events]
+    expected_intents = {
+        item["candidate"]["ts_code"]: item for item in intent["candidate_intents"]
+    }
+    if any(_event_intent(event) != expected_intents.get(event["candidate"]["ts_code"]) for event in packet_events):
+        raise DecisionLedgerError("U4 closure decision events do not match the frozen packet intent")
     counts = {decision: sum(event["decision"] == decision for event in packet_events) for decision in sorted(DECISIONS)}
     selected_count = counts["SELECT"]
     # governance-mutation: U4_LEDGER_CLOSURE_SET_EQUALITY
     if (
-        receipt.get("reviewed_candidate_ids") != codes
+        codes != intent["packet_candidate_ids"]
+        or receipt.get("reviewed_candidate_ids") != codes
         or receipt.get("current_decision_ids") != ids
         or receipt.get("missing_candidate_ids") != []
         or receipt.get("extra_candidate_ids") != []
@@ -834,7 +1064,6 @@ def validate_packet_closure(
         raise DecisionLedgerError("U4 closure subject set is incomplete or contains extras")
     if receipt.get("decision_counts") != counts or receipt.get("selected_count") != selected_count:
         raise DecisionLedgerError("U4 closure decision counts are not recomputed")
-    # governance-mutation: U4_LEDGER_CLOSURE_CARDINALITY
     if selected_count not in SELECTED_COUNTS:
         raise DecisionLedgerError("U4 closure selected_count must be zero or 3..5")
     if len({event["method_version"] for event in packet_events}) != 1:
@@ -872,6 +1101,7 @@ def validate_packet_closure(
         raise DecisionLedgerError("U4 closure hash mismatch")
     closure_identity = {
         "u4_packet_hash": receipt["u4_packet_hash"],
+        "intent_id": receipt["intent_id"],
         "closure_revision": receipt["closure_revision"],
         "current_decision_ids": receipt["current_decision_ids"],
         "ledger_tail_hash": receipt["ledger_tail_hash"],
@@ -886,14 +1116,43 @@ def _read_outer_records(path: Path) -> list[dict[str, Any]]:
 
 
 def _replay_records(records: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    intents: dict[tuple[str, int], dict[str, Any]] = {}
     decisions: list[dict[str, Any]] = []
     current: dict[tuple[str, str], dict[str, Any]] = {}
     closures: dict[str, list[dict[str, Any]]] = {}
+    intent_ids: set[str] = set()
     decision_ids: set[str] = set()
     closure_ids: set[str] = set()
     previous_hash: str | None = None
     for outer in records:
-        if outer.get("kind") == EVENT_KIND:
+        if outer.get("kind") == INTENT_KIND:
+            intent = outer.get("payload")
+            if not isinstance(intent, Mapping):
+                raise DecisionLedgerError("outer U4 packet intent payload is not an object")
+            validate_packet_intent(intent)
+            if outer.get("id") != intent["intent_id"] or intent["intent_id"] in intent_ids:
+                raise DecisionLedgerError("U4 packet intent outer id is invalid or duplicated")
+            registered = _parse_time(
+                _registered_at_from_outer(outer.get("ts")), "U4 packet intent R-015 timestamp"
+            )
+            if any(
+                registered < _parse_time(item["human_decision"]["decided_at"], "intent decided_at")
+                for item in intent["candidate_intents"]
+            ):
+                raise DecisionLedgerError("U4 packet intent was registered before its human decision")
+            packet_hash = str(intent["u4_packet_hash"])
+            revision = int(intent["decision_revision"])
+            key = (packet_hash, revision)
+            if key in intents:
+                raise DecisionLedgerError("duplicate U4 packet intent revision")
+            prior_closures = closures.get(packet_hash, [])
+            expected_revision = prior_closures[-1]["closure_revision"] + 1 if prior_closures else 1
+            if revision != expected_revision:
+                raise DecisionLedgerError("U4 packet intent revision does not follow the committed closure")
+            _validate_intent_revision(intent, current)
+            intents[key] = copy.deepcopy(dict(intent))
+            intent_ids.add(intent["intent_id"])
+        elif outer.get("kind") == EVENT_KIND:
             event = outer.get("payload")
             if not isinstance(event, Mapping):
                 raise DecisionLedgerError("outer U4 decision payload is not an object")
@@ -908,6 +1167,15 @@ def _replay_records(records: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
             if event["decision_id"] in decision_ids:
                 raise DecisionLedgerError("duplicate U4 decision_id")
             subject = _subject(event)
+            intent = intents.get((subject[0], event["decision_revision"]))
+            if intent is None:
+                raise DecisionLedgerError("U4 decision lacks a preceding packet intent")
+            expected_intents = {
+                item["candidate"]["ts_code"]: item for item in intent["candidate_intents"]
+            }
+            # governance-mutation: U4_LEDGER_DECISION_INTENT_MATCH
+            if _event_intent(event) != expected_intents.get(subject[1]):
+                raise DecisionLedgerError("U4 decision differs from its frozen packet intent")
             prior = current.get(subject)
             if prior is None:
                 if event["decision_revision"] != 1 or event["supersedes_decision_id"] is not None:
@@ -928,13 +1196,18 @@ def _replay_records(records: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
                 raise DecisionLedgerError("outer U4 closure payload is not an object")
             if outer.get("id") != receipt.get("closure_id") or receipt.get("closure_id") in closure_ids:
                 raise DecisionLedgerError("U4 closure outer id is invalid or duplicated")
+            packet_hash = str(receipt.get("u4_packet_hash") or "")
+            revision = receipt.get("closure_revision")
+            intent = intents.get((packet_hash, revision)) if isinstance(revision, int) else None
+            if intent is None:
+                raise DecisionLedgerError("U4 closure lacks its preceding packet intent")
             validate_packet_closure(
                 receipt,
                 current,
+                intent,
                 tail_sequence=len(decisions),
                 tail_hash=previous_hash or "",
             )
-            packet_hash = str(receipt["u4_packet_hash"])
             prior_closures = closures.setdefault(packet_hash, [])
             if prior_closures and receipt["closure_revision"] != prior_closures[-1]["closure_revision"] + 1:
                 raise DecisionLedgerError("U4 closure revision is not contiguous")
@@ -943,6 +1216,7 @@ def _replay_records(records: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
             prior_closures.append(copy.deepcopy(dict(receipt)))
             closure_ids.add(receipt["closure_id"])
     return {
+        "intents": intents,
         "decisions": decisions,
         "current": current,
         "closures": closures,
@@ -964,27 +1238,32 @@ def _snapshot_state(path: Path) -> dict[str, Any]:
 def verify_decision_ledger(path: Path) -> dict[str, Any]:
     try:
         state = _snapshot_state(path)
-        latest_closures = {
-            packet_hash: receipts[-1] for packet_hash, receipts in state["closures"].items()
+        committed = {
+            (packet_hash, receipt["closure_revision"])
+            for packet_hash, receipts in state["closures"].items()
+            for receipt in receipts
         }
-        pending: list[str] = []
-        for packet_hash in sorted({subject[0] for subject in state["current"]}):
-            events = [
-                event for (subject_packet, _), event in state["current"].items()
-                if subject_packet == packet_hash
-            ]
-            latest = latest_closures.get(packet_hash)
-            if latest is None or set(latest["current_decision_ids"]) != {event["decision_id"] for event in events}:
-                pending.append(packet_hash)
+        pending = sorted({
+            packet_hash for packet_hash, revision in state["intents"]
+            if (packet_hash, revision) not in committed
+        })
         return {
             "ok": True,
+            "intents": len(state["intents"]),
             "n": len(state["decisions"]),
             "closures": sum(len(items) for items in state["closures"].values()),
             "pending_packets": pending,
             "errors": [],
         }
     except (DecisionLedgerError, ValueError, OSError, json.JSONDecodeError) as exc:
-        return {"ok": False, "n": 0, "closures": 0, "pending_packets": [], "errors": [str(exc)]}
+        return {
+            "ok": False,
+            "intents": 0,
+            "n": 0,
+            "closures": 0,
+            "pending_packets": [],
+            "errors": [str(exc)],
+        }
 
 
 def _atomic_write_json(path: Path, value: Mapping[str, Any]) -> None:
@@ -1006,61 +1285,151 @@ def _atomic_write_json(path: Path, value: Mapping[str, Any]) -> None:
             tmp.unlink()
 
 
+def _fsync_parent(path: Path) -> None:
+    directory = os.open(path.parent, os.O_RDONLY)
+    try:
+        os.fsync(directory)
+    finally:
+        os.close(directory)
+
+
+def projection_path_for(ledger_path: Path, packet_hash: str) -> Path:
+    digest = _sha_ref(packet_hash, "packet hash").removeprefix("sha256:")
+    return ledger_path.with_name(f"{ledger_path.name}.u4-{digest}.receipt.json")
+
+
+def _reconcile_projection(path: Path, projection: Mapping[str, Any] | None) -> None:
+    """Converge the packet sidecar from the committed closure; it is never authoritative."""
+    if projection is not None:
+        # governance-mutation: U4_LEDGER_PROJECTION_RECONCILIATION
+        _atomic_write_json(path, projection)
+        return
+    if path.exists() or path.is_symlink():
+        if path.is_dir() and not path.is_symlink():
+            raise DecisionLedgerError("derived U4 projection path is a directory")
+        path.unlink()
+        _fsync_parent(path)
+
+
 def append_decision_batch(
     *, packet: Mapping[str, Any], draft: Mapping[str, Any], ledger_path: Path,
-    receipt_path: Path | None = None, _test_now: str | None = None,
-    fail_after_decisions: int | None = None,
+    _fail_after_decisions: int | None = None,
 ) -> dict[str, Any]:
-    """Append/resume one coherent packet revision and commit its closure receipt."""
+    """Append/resume one frozen packet transaction and reconcile its derived receipt."""
     ready_rows, draft_rows = _validate_draft(packet, draft)
-    ready_by_code = {row["ts_code"]: row for row in ready_rows}
     packet_ref = _packet_hash_ref(packet)
-    selected_count = sum(row["decision"] == "SELECT" for row in draft_rows.values())
-    if receipt_path is not None and selected_count == 0 and receipt_path.exists():
-        raise DecisionLedgerError("NO_TRADE refuses to leave a stale projected receipt")
-    appended = 0
+    expected_intent = _build_packet_intent(packet, draft, draft_rows, ready_rows)
+    validate_packet_intent(expected_intent)
+    revision = int(expected_intent["decision_revision"])
+    intent_key = (packet_ref, revision)
+    projection_path = projection_path_for(ledger_path, packet_ref)
+    intent_appended = False
+    decisions_appended = 0
+    closure_appended = False
     with _u4_write_lock(ledger_path):
         state = _snapshot_state(ledger_path)
-        for code in sorted(draft_rows):
-            raw = draft_rows[code]
-            intent = _intent_from_draft(packet, draft, raw, ready_by_code[code])
+        packet_intent_revisions = sorted(
+            subject_revision for (subject_packet, subject_revision) in state["intents"]
+            if subject_packet == packet_ref
+        )
+        if packet_intent_revisions and packet_intent_revisions[-1] > revision:
+            raise DecisionLedgerError("stale U4 packet revision cannot retry after a later intent")
+        existing_intent = state["intents"].get(intent_key)
+        if existing_intent is not None:
+            # governance-mutation: U4_LEDGER_IDEMPOTENT_INTENT_MATCH
+            if existing_intent != expected_intent:
+                raise DecisionLedgerError("same U4 packet revision already has a different frozen intent")
+        else:
+            prior_closures = state["closures"].get(packet_ref, [])
+            expected_revision = prior_closures[-1]["closure_revision"] + 1 if prior_closures else 1
+            if revision != expected_revision:
+                raise DecisionLedgerError("U4 packet revision does not follow the committed closure")
+            committed_revisions = {receipt["closure_revision"] for receipt in prior_closures}
+            pending_revisions = [
+                item_revision for item_revision in packet_intent_revisions
+                if item_revision not in committed_revisions
+            ]
+            if pending_revisions:
+                raise DecisionLedgerError("another U4 packet intent is still pending")
+            _validate_intent_revision(expected_intent, state["current"])
+
+            def build_intent(outer_ts: str) -> tuple[str, Mapping[str, Any]]:
+                registered = _parse_time(
+                    _registered_at_from_outer(outer_ts), "U4 packet intent R-015 timestamp"
+                )
+                if any(
+                    registered < _parse_time(
+                        item["human_decision"]["decided_at"], "intent decided_at"
+                    )
+                    for item in expected_intent["candidate_intents"]
+                ):
+                    raise DecisionLedgerError("U4 packet intent was registered before its human decision")
+                return expected_intent["intent_id"], expected_intent
+
+            event_ledger.append_stamped(INTENT_KIND, build_intent, path=str(ledger_path))
+            intent_appended = True
+            state = _snapshot_state(ledger_path)
+            existing_intent = state["intents"].get(intent_key)
+            if existing_intent != expected_intent:
+                raise DecisionLedgerError("persisted U4 packet intent does not match the frozen input")
+
+        prior_closures = state["closures"].get(packet_ref, [])
+        if prior_closures and prior_closures[-1]["closure_revision"] > revision:
+            raise DecisionLedgerError("stale U4 packet revision cannot retry after a later closure")
+        if prior_closures and prior_closures[-1]["closure_revision"] == revision:
+            committed = prior_closures[-1]
+            # governance-mutation: U4_LEDGER_EXISTING_CLOSURE_IDEMPOTENCY
+            if committed["intent_id"] != expected_intent["intent_id"]:
+                raise DecisionLedgerError("committed U4 closure belongs to a different packet intent")
+            _reconcile_projection(projection_path, committed["projected_receipt"])
+            return {
+                "status": "IDEMPOTENT",
+                "intent_appended": False,
+                "decision_events_appended": 0,
+                "closure_appended": False,
+                "closure": copy.deepcopy(committed),
+                "projected_receipt": copy.deepcopy(committed["projected_receipt"]),
+                "projection_path": str(projection_path),
+            }
+
+        expected_by_code = {
+            item["candidate"]["ts_code"]: item for item in expected_intent["candidate_intents"]
+        }
+        for code in expected_intent["packet_candidate_ids"]:
+            candidate_intent = expected_by_code[code]
             subject = (packet_ref, code)
             prior = state["current"].get(subject)
-            revision = raw["decision_revision"]
             if prior is not None and prior["decision_revision"] == revision:
-                # governance-mutation: U4_LEDGER_IDEMPOTENT_INTENT_MATCH
-                if _event_intent(prior) != intent:
+                if _event_intent(prior) != candidate_intent:
                     raise DecisionLedgerError("same U4 subject revision already exists with different content")
                 continue
             if prior is None:
-                if revision != 1 or raw["supersedes_decision_id"] is not None:
+                if revision != 1 or candidate_intent["supersedes_decision_id"] is not None:
                     raise DecisionLedgerError("new U4 subject must start at revision 1")
-            elif revision != prior["decision_revision"] + 1 or raw["supersedes_decision_id"] != prior["decision_id"]:
+            elif (
+                revision != prior["decision_revision"] + 1
+                or candidate_intent["supersedes_decision_id"] != prior["decision_id"]
+            ):
                 raise DecisionLedgerError("U4 retry/revision does not supersede the exact current decision")
-            outer_ts = _outer_timestamp(_test_now)
-            event = _build_event(
-                intent,
-                sequence=state["tail_sequence"] + 1,
-                previous_hash=state["tail_hash"],
-                registered_at=_registered_at_from_outer(outer_ts),
-            )
-            # governance-mutation: U4_LEDGER_PREAPPEND_VALIDATE
-            validate_decision_event(
-                event,
-                expected_sequence=state["tail_sequence"] + 1,
-                expected_previous_hash=state["tail_hash"],
-            )
-            outer = event_ledger.append(
-                EVENT_KIND,
-                event["decision_id"],
-                event,
-                path=str(ledger_path),
-                now=outer_ts,
-            )
-            if _registered_at_from_outer(outer["ts"]) != event["registered_at"]:
-                raise DecisionLedgerError("R-015 writer returned a different registration timestamp")
-            appended += 1
-            if fail_after_decisions is not None and appended == fail_after_decisions:
+
+            def build_event(outer_ts: str) -> tuple[str, Mapping[str, Any]]:
+                event = _build_event(
+                    candidate_intent,
+                    sequence=state["tail_sequence"] + 1,
+                    previous_hash=state["tail_hash"],
+                    registered_at=_registered_at_from_outer(outer_ts),
+                )
+                # governance-mutation: U4_LEDGER_PREAPPEND_VALIDATE
+                validate_decision_event(
+                    event,
+                    expected_sequence=state["tail_sequence"] + 1,
+                    expected_previous_hash=state["tail_hash"],
+                )
+                return event["decision_id"], event
+
+            event_ledger.append_stamped(EVENT_KIND, build_event, path=str(ledger_path))
+            decisions_appended += 1
+            if _fail_after_decisions is not None and decisions_appended == _fail_after_decisions:
                 raise DecisionLedgerError("injected interruption after candidate decision")
             state = _snapshot_state(ledger_path)
         state = _snapshot_state(ledger_path)
@@ -1068,53 +1437,49 @@ def append_decision_batch(
             (event for (subject_packet, _), event in state["current"].items() if subject_packet == packet_ref),
             key=lambda event: event["candidate"]["ts_code"],
         )
-        if {event["candidate"]["ts_code"] for event in packet_events} != set(ready_by_code):
+        if [event["candidate"]["ts_code"] for event in packet_events] != expected_intent["packet_candidate_ids"]:
             raise DecisionLedgerError("cannot close an incomplete or extra U4 packet subject set")
-        if any(event["decision_revision"] != next(iter(draft_rows.values()))["decision_revision"] for event in packet_events):
+        if any(event["decision_revision"] != revision for event in packet_events):
             raise DecisionLedgerError("cannot close mixed U4 decision revisions")
         receipt = _build_closure(
             packet,
             packet_events,
+            expected_intent,
             tail_sequence=state["tail_sequence"],
             tail_hash=state["tail_hash"] or "",
         )
         validate_packet_closure(
             receipt,
             state["current"],
+            expected_intent,
             tail_sequence=state["tail_sequence"],
             tail_hash=state["tail_hash"] or "",
         )
         prior_closures = state["closures"].get(packet_ref, [])
-        if prior_closures and prior_closures[-1]["closure_revision"] == receipt["closure_revision"]:
-            if _closure_semantic(prior_closures[-1]) != _closure_semantic(receipt):
-                raise DecisionLedgerError("same U4 closure revision already exists with different content")
-            committed = prior_closures[-1]
-        else:
-            expected_revision = (prior_closures[-1]["closure_revision"] + 1) if prior_closures else 1
-            if receipt["closure_revision"] != expected_revision:
-                raise DecisionLedgerError("U4 closure revision does not follow the committed revision")
-            event_ledger.append(
-                CLOSURE_KIND,
-                receipt["closure_id"],
-                receipt,
-                path=str(ledger_path),
-                now=_outer_timestamp(_test_now),
-            )
-            committed = receipt
-            appended += 1
+        expected_revision = prior_closures[-1]["closure_revision"] + 1 if prior_closures else 1
+        if receipt["closure_revision"] != expected_revision:
+            raise DecisionLedgerError("U4 closure revision does not follow the committed revision")
+        event_ledger.append(
+            CLOSURE_KIND,
+            receipt["closure_id"],
+            receipt,
+            path=str(ledger_path),
+        )
+        committed = receipt
+        closure_appended = True
         final = verify_decision_ledger(ledger_path)
         if not final["ok"] or packet_ref in final["pending_packets"]:
             raise DecisionLedgerError(f"post-commit U4 verification failed: {final['errors']}")
         projection = committed["projected_receipt"]
-        if receipt_path is not None:
-            if projection is not None:
-                _atomic_write_json(receipt_path, projection)
+        _reconcile_projection(projection_path, projection)
         return {
-            "status": "APPENDED" if appended else "IDEMPOTENT",
-            "decision_events_appended": appended - (1 if committed is receipt else 0),
-            "closure_appended": committed is receipt,
+            "status": "APPENDED",
+            "intent_appended": intent_appended,
+            "decision_events_appended": decisions_appended,
+            "closure_appended": closure_appended,
             "closure": copy.deepcopy(committed),
             "projected_receipt": copy.deepcopy(projection),
+            "projection_path": str(projection_path),
         }
 
 
@@ -1136,7 +1501,6 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--packet", required=True, type=Path)
     parser.add_argument("--draft", required=True, type=Path)
     parser.add_argument("--ledger", required=True, type=Path)
-    parser.add_argument("--receipt", type=Path)
     parser.add_argument("--verify", action="store_true")
     args = parser.parse_args(argv)
     try:
@@ -1148,7 +1512,6 @@ def main(argv: Sequence[str] | None = None) -> int:
             packet=_load_json(args.packet),
             draft=_load_json(args.draft),
             ledger_path=args.ledger,
-            receipt_path=args.receipt,
         )
         print(json.dumps(result, ensure_ascii=False, sort_keys=True))
         return 0

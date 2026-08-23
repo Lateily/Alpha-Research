@@ -10,21 +10,29 @@ describes the implementation added by PR #292. It does not redefine #295.
 ## Durable Shape
 
 The ledger no longer stores a whole review batch inside one opaque event.
-Instead it uses R-015 as an append-only WAL:
+Instead it uses R-015 as a three-stage append-only WAL:
 
-1. each candidate becomes one outer `u4_decision` event whose payload is an
+1. one outer `u4_decision_intent` freezes the complete review packet and the
+   complete normalized decision draft before any candidate event is written;
+2. each candidate becomes one outer `u4_decision` event whose payload is an
    exact `ar.u4_decision_event.v1` object;
-2. `registered_at` is stamped from that outer R-015 event timestamp and cannot
+3. `registered_at` is stamped under the R-015 lock from that outer event's
+   timestamp and cannot
    be supplied by the decision draft;
-3. after every packet candidate has a current event, one outer
+4. after every frozen packet candidate has its exact intended event, one outer
    `u4_decision_closure` event commits the packet revision;
-4. only a committed closure may project the existing packet-bound U4 review
-   receipt.
+5. only a committed closure may project the existing packet-bound U4 review
+   receipt to a deterministic packet-specific sidecar beside the explicit
+   offline ledger.
 
-The closure contains the reviewed-candidate set hash, current-decision-id set
-hash, counts for all five outcomes, selected count, missing/extra sets, and the
-inner U4 decision-chain tail. A partial WAL with no closure is visible as a
-pending packet and is resumed idempotently on exact retry.
+The intent carries the complete parsed packet object, exact packet candidate set and hash,
+ready-pool hash, method version, revision, and all candidate intents. The
+closure references that intent id/hash and contains the reviewed-candidate set
+hash, current-decision-id set hash, counts for all five outcomes, selected
+count, missing/extra sets, and the inner U4 decision-chain tail. A
+self-consistent subset can therefore never close a larger packet. A partial WAL
+with no closure is visible as a pending packet and is resumed only when the
+entire submitted intent matches byte for byte.
 
 ## Complete Decision Denominator
 
@@ -53,7 +61,10 @@ current decision id for every subject. A correction appends a full new packet
 revision; it never updates or deletes old events.
 
 An exact retry reuses already-written candidate events and commits a missing
-closure. A same-revision retry with different content is refused. The U4
+closure. A same-revision retry with different content, including a change to a
+candidate not yet written when the process stopped, is refused. An exact retry
+also finds its already committed historical closure even after unrelated
+packets have advanced the shared R-015 tail. The U4
 transaction holds a dedicated packet lock while every individual append still
 uses R-015's own exclusive lock, chain verification, anchor verification,
 atomic replace, and fsync.
@@ -61,7 +72,13 @@ atomic replace, and fsync.
 Readers take the shared R-015 lock while reading the event file and anchor so
 they cannot observe the interval between ledger replacement and anchor commit.
 Unrelated R-015 event kinds may coexist in the same shared chain; the U4 replay
-filters its own two kinds after verifying the complete outer chain.
+filters its own three kinds after verifying the complete outer chain.
+
+The projected review receipt is not an authority source. Its path is derived
+from the explicit ledger path and full packet digest; callers cannot redirect
+it. Every exact retry reconciles it from the committed closure. This repairs a
+crash after closure commit but before projection write, and removes an older
+selected receipt when a later committed revision selects zero candidates.
 
 ## Evidence Mapping Boundary
 
@@ -105,11 +122,12 @@ ledger is a real-capital action.
 python3 experiments/research_funnel/u4_decision_ledger.py \
   --packet /path/to/review_packet.json \
   --draft /path/to/u4_decisions.json \
-  --ledger /path/to/offline_r015_events.jsonl \
-  --receipt /path/to/projected_u4_receipt.json
+  --ledger /path/to/offline_r015_events.jsonl
 ```
 
-There is no production default path. The implementation is not imported by
-the nightly runner and has not been deployed to `~/ar-live`.
+The optional projection is written beside the ledger as
+`<ledger>.u4-<full-packet-sha256>.receipt.json`. There is no production default
+path. The implementation is not imported by the nightly runner and has not
+been deployed to `~/ar-live`.
 
 不是买卖指令；研究信号，human executes.

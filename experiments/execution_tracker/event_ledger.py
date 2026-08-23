@@ -35,6 +35,8 @@ UNIQUE_KINDS = {"register", "genesis",
                 "register_intent", "register_commit", "register_abort",
                 "evaluation",
                 "evaluation_intent", "evaluation_commit", "evaluation_abort",
+                # governance-mutation: U4_LEDGER_INTENT_KIND_UNIQUE
+                "u4_decision_intent",
                 # governance-mutation: U4_LEDGER_EVENT_KIND_UNIQUE
                 "u4_decision", "u4_decision_closure",
                 "publication_migration_intent", "publication_migration_commit",
@@ -239,6 +241,48 @@ def verify_append_only(path=DEFAULT_PATH, ref="HEAD"):
 
 
 # ────────────────────────────── 写入 ──────────────────────────────
+def _append_verified(kind, rec_id, payload, path, ts, st, lines):
+    """Append one record after the caller has verified chain+anchor under flock."""
+    if lines and str(ts) < str(json.loads(lines[-1])["ts"]):
+        raise ValueError(f"ts 早于链尾({ts} < {json.loads(lines[-1])['ts']}),拒绝回填过去日期")
+    if kind in UNIQUE_KINDS:
+        for ln in lines:
+            r = json.loads(ln)
+            if r["kind"] == kind and r["id"] == rec_id:
+                raise ValueError(f"({kind},{rec_id}) 已存在,拒绝重复登记")
+    rec = {"seq": st["n"], "kind": kind, "id": rec_id, "payload": payload,
+           "ts": ts, "prev": st["head"] or GENESIS_PREV}
+    rec["hash"] = record_hash(rec)
+    line = canonical(rec)                      # 与 verify 的行等值校验同一函数
+    # 整份临时文件替换,避免 append 在进程崩溃时留下半行 JSON。
+    # ledger 已替换而 anchor 尚未来得及更新是安全的:verify_anchor 会确认
+    # 旧 anchor head 仍在链上,下一次写入再推进 anchor。
+    tmp = path + ".append.tmp"
+    with open(tmp, "w", encoding="utf-8") as fh:
+        for old_line in lines:
+            fh.write(old_line + "\n")
+        fh.write(line + "\n")
+        fh.flush(); os.fsync(fh.fileno())
+    os.replace(tmp, path)
+    dir_fd = os.open(os.path.dirname(os.path.abspath(path)), os.O_RDONLY)
+    try:
+        os.fsync(dir_fd)
+    finally:
+        os.close(dir_fd)
+    write_anchor(path, st["n"] + 1, rec["hash"])
+    return rec
+
+
+def _append_preflight(path):
+    st = verify(path)
+    if not st["ok"]:
+        raise ValueError(f"账本已损坏,拒绝追加: {st['errors'][:2]}")
+    an = verify_anchor(path)
+    if not an["ok"]:
+        raise ValueError(f"账本与锚点不符,拒绝追加: {an['errors']}")
+    return st, _read_lines(path)
+
+
 def append(kind, rec_id, payload, path=DEFAULT_PATH, now=None):
     """持排他 flock 追加。写前链与锚点都必须过,否则拒写(不在坏账本上叠加)。"""
     import fcntl
@@ -246,42 +290,35 @@ def append(kind, rec_id, payload, path=DEFAULT_PATH, now=None):
     with open(path + ".lock", "w") as lf:
         fcntl.flock(lf, fcntl.LOCK_EX)
         try:
-            st = verify(path)
-            if not st["ok"]:
-                raise ValueError(f"账本已损坏,拒绝追加: {st['errors'][:2]}")
-            an = verify_anchor(path)
-            if not an["ok"]:
-                raise ValueError(f"账本与锚点不符,拒绝追加: {an['errors']}")
-            ts = now or _runtime_timestamp()
-            lines = _read_lines(path)
-            if lines and str(ts) < str(json.loads(lines[-1])["ts"]):
-                raise ValueError(f"ts 早于链尾({ts} < {json.loads(lines[-1])['ts']}),拒绝回填过去日期")
-            if kind in UNIQUE_KINDS:
-                for ln in lines:
-                    r = json.loads(ln)
-                    if r["kind"] == kind and r["id"] == rec_id:
-                        raise ValueError(f"({kind},{rec_id}) 已存在,拒绝重复登记")
-            rec = {"seq": st["n"], "kind": kind, "id": rec_id, "payload": payload,
-                   "ts": ts, "prev": st["head"] or GENESIS_PREV}
-            rec["hash"] = record_hash(rec)
-            line = canonical(rec)                      # 与 verify 的行等值校验同一函数
-            # 整份临时文件替换,避免 append 在进程崩溃时留下半行 JSON。
-            # ledger 已替换而 anchor 尚未来得及更新是安全的:verify_anchor 会确认
-            # 旧 anchor head 仍在链上,下一次写入再推进 anchor。
-            tmp = path + ".append.tmp"
-            with open(tmp, "w", encoding="utf-8") as fh:
-                for old_line in lines:
-                    fh.write(old_line + "\n")
-                fh.write(line + "\n")
-                fh.flush(); os.fsync(fh.fileno())
-            os.replace(tmp, path)
-            dir_fd = os.open(os.path.dirname(os.path.abspath(path)), os.O_RDONLY)
-            try:
-                os.fsync(dir_fd)
-            finally:
-                os.close(dir_fd)
-            write_anchor(path, st["n"] + 1, rec["hash"])
-            return rec
+            st, lines = _append_preflight(path)
+            return _append_verified(
+                kind, rec_id, payload, path, now or _runtime_timestamp(), st, lines
+            )
+        finally:
+            fcntl.flock(lf, fcntl.LOCK_UN)
+
+
+def append_stamped(kind, build, path=DEFAULT_PATH):
+    """Let R-015 choose one timestamp under flock, then build id+payload from it.
+
+    ``build`` receives the durable R-015 timestamp and must return ``(id,
+    payload)``. This is the only supported path for payload contracts whose own
+    ``registered_at`` field must equal the outer ledger timestamp.
+    """
+    import fcntl
+    os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
+    with open(path + ".lock", "w") as lf:
+        fcntl.flock(lf, fcntl.LOCK_EX)
+        try:
+            st, lines = _append_preflight(path)
+            ts = _runtime_timestamp()
+            built = build(ts)
+            if not isinstance(built, tuple) or len(built) != 2:
+                raise ValueError("stamped event builder must return (id, payload)")
+            rec_id, payload = built
+            if not isinstance(rec_id, str) or not rec_id:
+                raise ValueError("stamped event id must be non-empty")
+            return _append_verified(kind, rec_id, payload, path, ts, st, lines)
         finally:
             fcntl.flock(lf, fcntl.LOCK_UN)
 

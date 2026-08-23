@@ -3,7 +3,7 @@
   "task_id": "U4-DECISION-LEDGER-001",
   "source_issue": null,
   "architecture_block": ["research-framework", "u4-human-decision"],
-  "objective": "Implement the frozen #295 U4 decision contract as one R-015-stamped append-only event per candidate plus an atomic packet-closure receipt, retaining SELECT, REJECT, DEFER, NO_TRADE, and DATA_BLOCKED outcomes.",
+  "objective": "Implement the frozen #295 U4 decision contract as a packet-intent, per-candidate R-015 events, and packet-closure WAL transaction, retaining SELECT, REJECT, DEFER, NO_TRADE, and DATA_BLOCKED outcomes.",
   "non_goals": [
     "Do not select U4 names on behalf of Junyan",
     "Do not write or run the production nightly chain",
@@ -50,10 +50,11 @@
     "explicit Junyan-authored U4 decision draft"
   ],
   "output_artifacts": [
+    "ar.u4_packet_intent.v1 containing the complete packet and complete normalized decision draft",
     "one ar.u4_decision_event.v1 per reviewed candidate",
-    "append-only R-015 u4_decision events",
+    "append-only R-015 u4_decision_intent, u4_decision, and u4_decision_closure events",
     "ar.u4_packet_closure.v1 commit receipt",
-    "packet-bound ar.u4_review_receipt.v1.0 only when exactly 3-5 rows are selected"
+    "deterministic recoverable packet-bound ar.u4_review_receipt.v1.0 sidecar only when exactly 3-5 rows are selected"
   ],
   "acceptance_tests": [
     "python3 tests/test_u4_decision_ledger.py",

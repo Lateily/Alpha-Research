@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import copy
+import inspect
 import json
 import sys
 import tempfile
@@ -186,13 +187,13 @@ def append_fixture(
 ) -> tuple[dict, dict, dict]:
     packet = packet or packet_fixture()
     draft = draft or draft_for(packet)
-    result = ledger.append_decision_batch(
-        packet=packet,
-        draft=draft,
-        ledger_path=path,
-        _test_now=now,
-    )
+    result = append_batch(packet=packet, draft=draft, ledger_path=path, now=now)
     return packet, draft, result
+
+
+def append_batch(*, now: str = REGISTERED_AT, **kwargs) -> dict:
+    with patch.object(event_ledger, "_runtime_timestamp", return_value=now):
+        return ledger.append_decision_batch(**kwargs)
 
 
 class U4DecisionLedgerTests(unittest.TestCase):
@@ -226,14 +227,57 @@ class U4DecisionLedgerTests(unittest.TestCase):
         self.assertTrue(all(item["payload"]["registered_at"] == "2026-08-22T00:16:00+08:00" for item in outer))
         self.assertTrue(all(item["payload"]["registration_source"] == "R015_EVENT_LEDGER_TS" for item in outer))
         self.assertTrue(all(item["id"] == item["payload"]["decision_id"] for item in outer))
+        parameters = inspect.signature(ledger.append_decision_batch).parameters
+        self.assertNotIn("_test_now", parameters)
+        self.assertNotIn("registered_at", parameters)
+        self.assertNotIn("receipt_path", parameters)
 
     def test_registration_cannot_predate_human_decision(self) -> None:
         packet = packet_fixture()
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "events.jsonl"
-            with self.assertRaisesRegex(ledger.DecisionLedgerError, "registered_at cannot predate"):
+            with self.assertRaisesRegex(ledger.DecisionLedgerError, "registered before"):
                 append_fixture(path, packet=packet, now="2026-08-22T00:14:59")
             self.assertFalse(path.exists())
+        rows, draft_rows = ledger._validate_draft(packet, draft_for(packet))
+        ready_by_code = {row["ts_code"]: row for row in rows}
+        item = ledger._intent_from_draft(
+            packet,
+            draft_for(packet),
+            draft_rows["600001.SH"],
+            ready_by_code["600001.SH"],
+        )
+        backdated = ledger._build_event(
+            item,
+            sequence=1,
+            previous_hash=None,
+            registered_at="2026-08-22T00:14:59+08:00",
+        )
+        with self.assertRaisesRegex(ledger.DecisionLedgerError, "registered_at cannot predate"):
+            ledger.validate_decision_event(backdated)
+
+    def test_malformed_candidate_is_rejected_before_its_wal_append(self) -> None:
+        packet = packet_fixture()
+        draft = draft_for(packet)
+        original = ledger._build_event
+
+        def malformed(*args, **kwargs):
+            event = original(*args, **kwargs)
+            if kwargs.get("registered_at") == "2026-08-22T00:16:00+08:00":
+                event["authority"]["trade_authority"] = True
+                event["record_hash"] = ledger._record_hash(event)
+            return event
+
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "events.jsonl"
+            with patch.object(ledger, "_build_event", side_effect=malformed):
+                with self.assertRaisesRegex(ledger.DecisionLedgerError, "forbidden trade"):
+                    append_batch(packet=packet, draft=draft, ledger_path=path)
+            kinds = [
+                json.loads(line)["kind"]
+                for line in path.read_text(encoding="utf-8").splitlines()
+            ]
+        self.assertEqual(kinds, [ledger.INTENT_KIND])
 
     def test_method_version_is_required_and_versioned(self) -> None:
         packet = packet_fixture()
@@ -391,6 +435,63 @@ class U4DecisionLedgerTests(unittest.TestCase):
         with self.assertRaisesRegex(ledger.DecisionLedgerError, "record_hash formula"):
             ledger.validate_decision_event(bad_hash)
 
+    def test_packet_intent_recomputes_packet_identity_and_its_own_hash(self) -> None:
+        packet = packet_fixture()
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "events.jsonl"
+            append_fixture(path, packet=packet)
+            state = ledger._snapshot_state(path)
+        packet_ref = ledger._packet_hash_ref(packet)
+        intent = state["intents"][(packet_ref, 1)]
+        wrong_packet = copy.deepcopy(intent)
+        wrong_packet["u4_packet_hash"] = "sha256:" + "9" * 64
+        wrong_packet["intent_hash"] = ledger._intent_hash(wrong_packet)
+        wrong_packet["intent_id"] = ledger._packet_intent_id(wrong_packet)
+        with self.assertRaisesRegex(ledger.DecisionLedgerError, "complete frozen packet"):
+            ledger.validate_packet_intent(wrong_packet)
+        wrong_hash = copy.deepcopy(intent)
+        wrong_hash["intent_hash"] = "sha256:" + "a" * 64
+        wrong_hash["intent_id"] = ledger._packet_intent_id(wrong_hash)
+        with self.assertRaisesRegex(ledger.DecisionLedgerError, "intent hash"):
+            ledger.validate_packet_intent(wrong_hash)
+
+    def test_decision_event_must_match_the_preceding_full_packet_intent(self) -> None:
+        packet = packet_fixture()
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "events.jsonl"
+            append_fixture(path, packet=packet)
+            state = ledger._snapshot_state(path)
+        packet_ref = ledger._packet_hash_ref(packet)
+        intent = state["intents"][(packet_ref, 1)]
+        event = copy.deepcopy(state["current"][(packet_ref, "600001.SH")])
+        event["reason_note"] = "A self-consistent event that was never in the frozen packet intent."
+        event["record_hash"] = ledger._record_hash(event)
+        records = [
+            {"kind": ledger.INTENT_KIND, "id": intent["intent_id"], "payload": intent, "ts": REGISTERED_AT},
+            {"kind": ledger.EVENT_KIND, "id": event["decision_id"], "payload": event, "ts": REGISTERED_AT},
+        ]
+        with self.assertRaisesRegex(ledger.DecisionLedgerError, "differs from its frozen packet intent"):
+            ledger._replay_records(records)
+
+    def test_closure_recomputes_its_packet_intent_binding(self) -> None:
+        packet = packet_fixture()
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "events.jsonl"
+            append_fixture(path, packet=packet)
+            state = ledger._snapshot_state(path)
+        packet_ref = ledger._packet_hash_ref(packet)
+        receipt = copy.deepcopy(state["closures"][packet_ref][-1])
+        receipt["intent_hash"] = "sha256:" + "b" * 64
+        receipt["closure_hash"] = ledger._closure_hash(receipt)
+        with self.assertRaisesRegex(ledger.DecisionLedgerError, "complete packet intent"):
+            ledger.validate_packet_closure(
+                receipt,
+                state["current"],
+                state["intents"][(packet_ref, 1)],
+                tail_sequence=state["tail_sequence"],
+                tail_hash=state["tail_hash"],
+            )
+
     def test_candidate_and_closure_authority_never_escalate(self) -> None:
         packet = packet_fixture()
         with tempfile.TemporaryDirectory() as tmp:
@@ -410,6 +511,7 @@ class U4DecisionLedgerTests(unittest.TestCase):
             ledger.validate_packet_closure(
                 receipt,
                 state["current"],
+                state["intents"][(packet_ref, 1)],
                 tail_sequence=state["tail_sequence"],
                 tail_hash=state["tail_hash"],
             )
@@ -421,52 +523,47 @@ class U4DecisionLedgerTests(unittest.TestCase):
             decisions[code] = "NO_TRADE"
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "events.jsonl"
-            receipt_path = Path(tmp) / "receipt.json"
-            result = ledger.append_decision_batch(
+            result = append_batch(
                 packet=packet,
                 draft=draft_for(packet, decisions),
                 ledger_path=path,
-                receipt_path=receipt_path,
-                _test_now=REGISTERED_AT,
             )
+            receipt_path = Path(result["projection_path"])
+            self.assertFalse(receipt_path.exists())
         closure_receipt = result["closure"]
         self.assertEqual(closure_receipt["selected_count"], 0)
         self.assertEqual(closure_receipt["outcome"], "NO_TRADE_NO_QUEUE")
         self.assertIsNone(closure_receipt["projected_receipt"])
         self.assertFalse(receipt_path.exists())
 
-    def test_no_trade_refuses_a_stale_receipt_before_any_wal_write(self) -> None:
+    def test_no_trade_retires_a_stale_derived_projection_after_commit(self) -> None:
         packet = packet_fixture()
         decisions = dict(DEFAULT_DECISIONS)
         for code in [f"60000{index}.SH" for index in range(1, 7)]:
             decisions[code] = "NO_TRADE"
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "events.jsonl"
-            receipt_path = Path(tmp) / "receipt.json"
+            receipt_path = ledger.projection_path_for(path, packet["packet_hash"])
             receipt_path.write_text('{"stale":true}\n', encoding="utf-8")
-            with self.assertRaisesRegex(ledger.DecisionLedgerError, "stale projected receipt"):
-                ledger.append_decision_batch(
-                    packet=packet,
-                    draft=draft_for(packet, decisions),
-                    ledger_path=path,
-                    receipt_path=receipt_path,
-                    _test_now=REGISTERED_AT,
-                )
-            self.assertFalse(path.exists())
-            self.assertEqual(json.loads(receipt_path.read_text(encoding="utf-8")), {"stale": True})
+            result = append_batch(
+                packet=packet,
+                draft=draft_for(packet, decisions),
+                ledger_path=path,
+            )
+            self.assertTrue(path.exists())
+            self.assertFalse(receipt_path.exists())
+            self.assertEqual(result["closure"]["selected_count"], 0)
 
     def test_three_selected_rows_project_the_existing_packet_bound_receipt(self) -> None:
         packet = packet_fixture()
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "events.jsonl"
-            receipt_path = Path(tmp) / "receipt.json"
-            result = ledger.append_decision_batch(
+            result = append_batch(
                 packet=packet,
                 draft=draft_for(packet),
                 ledger_path=path,
-                receipt_path=receipt_path,
-                _test_now=REGISTERED_AT,
             )
+            receipt_path = Path(result["projection_path"])
             written = json.loads(receipt_path.read_text(encoding="utf-8"))
         closure.validate_review_receipt(written, packet)
         self.assertEqual(result["closure"]["selected_count"], 3)
@@ -477,13 +574,13 @@ class U4DecisionLedgerTests(unittest.TestCase):
         draft = draft_for(packet)
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "events.jsonl"
-            first = ledger.append_decision_batch(packet=packet, draft=draft, ledger_path=path, _test_now=REGISTERED_AT)
+            first = append_batch(packet=packet, draft=draft, ledger_path=path)
             before = path.read_bytes()
-            retry = ledger.append_decision_batch(packet=packet, draft=draft, ledger_path=path, _test_now="2026-08-22T00:17:00")
+            retry = append_batch(packet=packet, draft=draft, ledger_path=path, now="2026-08-22T00:17:00")
             conflict = draft_for(packet)
             conflict["decisions"][3]["reason_note"] = "Conflicting rewrite at the same revision."
-            with self.assertRaisesRegex(ledger.DecisionLedgerError, "different content"):
-                ledger.append_decision_batch(packet=packet, draft=conflict, ledger_path=path, _test_now="2026-08-22T00:18:00")
+            with self.assertRaisesRegex(ledger.DecisionLedgerError, "different frozen intent"):
+                append_batch(packet=packet, draft=conflict, ledger_path=path, now="2026-08-22T00:18:00")
             after = path.read_bytes()
         self.assertEqual(first["status"], "APPENDED")
         self.assertEqual(retry["status"], "IDEMPOTENT")
@@ -495,19 +592,18 @@ class U4DecisionLedgerTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "events.jsonl"
             with self.assertRaisesRegex(ledger.DecisionLedgerError, "injected interruption"):
-                ledger.append_decision_batch(
+                append_batch(
                     packet=packet,
                     draft=draft,
                     ledger_path=path,
-                    _test_now=REGISTERED_AT,
-                    fail_after_decisions=3,
+                    _fail_after_decisions=3,
                 )
             interrupted = ledger.verify_decision_ledger(path)
-            resumed = ledger.append_decision_batch(
+            resumed = append_batch(
                 packet=packet,
                 draft=draft,
                 ledger_path=path,
-                _test_now="2026-08-22T00:17:00",
+                now="2026-08-22T00:17:00",
             )
             final = ledger.verify_decision_ledger(path)
         self.assertTrue(interrupted["ok"])
@@ -517,6 +613,167 @@ class U4DecisionLedgerTests(unittest.TestCase):
         self.assertEqual(final["n"], 8)
         self.assertEqual(final["closures"], 1)
         self.assertEqual(final["pending_packets"], [])
+
+    def test_self_consistent_subset_closure_is_rejected_against_frozen_intent(self) -> None:
+        packet = packet_fixture()
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "events.jsonl"
+            append_fixture(path, packet=packet)
+            state = ledger._snapshot_state(path)
+        packet_ref = ledger._packet_hash_ref(packet)
+        intent = state["intents"][(packet_ref, 1)]
+        subset = sorted(
+            (
+                copy.deepcopy(event)
+                for (subject_packet, code), event in state["current"].items()
+                if subject_packet == packet_ref and code in {"600001.SH", "600002.SH", "600003.SH"}
+            ),
+            key=lambda event: event["candidate"]["ts_code"],
+        )
+        forged = ledger._build_closure(
+            packet,
+            subset,
+            intent,
+            tail_sequence=len(subset),
+            tail_hash=subset[-1]["record_hash"],
+        )
+        subset_current = {ledger._subject(event): event for event in subset}
+        with self.assertRaisesRegex(ledger.DecisionLedgerError, "complete packet intent|subject set"):
+            ledger.validate_packet_closure(
+                forged,
+                subset_current,
+                intent,
+                tail_sequence=len(subset),
+                tail_hash=subset[-1]["record_hash"],
+            )
+
+    def test_conflicting_partial_retry_is_refused_before_any_new_wal_event(self) -> None:
+        packet = packet_fixture()
+        draft = draft_for(packet)
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "events.jsonl"
+            with self.assertRaisesRegex(ledger.DecisionLedgerError, "injected interruption"):
+                append_batch(
+                    packet=packet,
+                    draft=draft,
+                    ledger_path=path,
+                    _fail_after_decisions=3,
+                )
+            before = path.read_bytes()
+            conflict = copy.deepcopy(draft)
+            conflict["decisions"][5]["reason_note"] = "Changed after the packet intent was frozen."
+            with self.assertRaisesRegex(ledger.DecisionLedgerError, "different frozen intent"):
+                append_batch(
+                    packet=packet,
+                    draft=conflict,
+                    ledger_path=path,
+                    now="2026-08-22T00:17:00",
+                )
+            after = path.read_bytes()
+            verified = ledger.verify_decision_ledger(path)
+        self.assertEqual(before, after)
+        self.assertEqual(verified["n"], 3)
+        self.assertEqual(verified["intents"], 1)
+        self.assertEqual(len(verified["pending_packets"]), 1)
+
+    def test_exact_retry_after_unrelated_packet_recovers_projection_without_wal_append(self) -> None:
+        packet_a = packet_fixture()
+        packet_b = packet_fixture()
+        packet_b["source_refs"]["bundle_hash"] = "8" * 64
+        packet_b["packet_hash"] = funnel._hash({
+            key: value for key, value in packet_b.items() if key != "packet_hash"
+        })
+        closure.validate_review_packet(packet_b)
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "events.jsonl"
+            result_a = append_batch(packet=packet_a, draft=draft_for(packet_a), ledger_path=path)
+            append_batch(packet=packet_b, draft=draft_for(packet_b), ledger_path=path)
+            projection_a = Path(result_a["projection_path"])
+            projection_a.unlink()
+            before = path.read_bytes()
+            retry_error = None
+            try:
+                retry = append_batch(
+                    packet=packet_a,
+                    draft=draft_for(packet_a),
+                    ledger_path=path,
+                    now="2026-08-22T00:17:00",
+                )
+            except Exception as exc:  # converted to an assertion so mutation kills stay attributable
+                retry_error = exc
+                retry = {}
+            after = path.read_bytes()
+            written = json.loads(projection_a.read_text(encoding="utf-8")) if projection_a.exists() else None
+            state = ledger._snapshot_state(path)
+        packet_ref = ledger._packet_hash_ref(packet_a)
+        self.assertIsNone(retry_error)
+        self.assertEqual(retry["status"], "IDEMPOTENT")
+        self.assertEqual(before, after)
+        self.assertEqual(written, retry["projected_receipt"])
+        self.assertEqual(len(state["closures"][packet_ref]), 1)
+
+    def test_projection_failure_after_closure_is_recovered_by_exact_retry(self) -> None:
+        packet = packet_fixture()
+        draft = draft_for(packet)
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "events.jsonl"
+            projection_path = ledger.projection_path_for(path, packet["packet_hash"])
+            with patch.object(
+                ledger,
+                "_reconcile_projection",
+                side_effect=ledger.DecisionLedgerError("injected projection interruption"),
+            ):
+                with self.assertRaisesRegex(ledger.DecisionLedgerError, "projection interruption"):
+                    append_batch(packet=packet, draft=draft, ledger_path=path)
+            committed = ledger.verify_decision_ledger(path)
+            self.assertFalse(projection_path.exists())
+            retry = append_batch(
+                packet=packet,
+                draft=draft,
+                ledger_path=path,
+                now="2026-08-22T00:17:00",
+            )
+            final = ledger.verify_decision_ledger(path)
+            projection_recovered = projection_path.exists()
+        self.assertTrue(committed["ok"])
+        self.assertEqual(committed["closures"], 1)
+        self.assertEqual(committed["pending_packets"], [])
+        self.assertEqual(retry["status"], "IDEMPOTENT")
+        self.assertTrue(projection_recovered)
+        self.assertEqual(final["closures"], 1)
+
+    def test_selected_revision_to_zero_selection_retires_committed_projection(self) -> None:
+        packet = packet_fixture()
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "events.jsonl"
+            first = append_batch(packet=packet, draft=draft_for(packet), ledger_path=path)
+            projection_path = Path(first["projection_path"])
+            self.assertTrue(projection_path.exists())
+            current = ledger.current_packet_decisions(path, packet["packet_hash"])
+            supersedes = {event["candidate"]["ts_code"]: event["decision_id"] for event in current}
+            no_selection = dict(DEFAULT_DECISIONS)
+            for code in [f"60000{index}.SH" for index in range(1, 7)]:
+                no_selection[code] = "NO_TRADE"
+            revised = draft_for(
+                packet,
+                no_selection,
+                revision=2,
+                supersedes=supersedes,
+                decided_at="2026-08-22T00:20:00+08:00",
+            )
+            second = append_batch(
+                packet=packet,
+                draft=revised,
+                ledger_path=path,
+                now="2026-08-22T00:21:00",
+            )
+            verified = ledger.verify_decision_ledger(path)
+            projection_retired = not projection_path.exists()
+        self.assertEqual(second["closure"]["selected_count"], 0)
+        self.assertEqual(second["closure"]["outcome"], "NO_TRADE_NO_QUEUE")
+        self.assertTrue(projection_retired)
+        self.assertEqual(verified["closures"], 2)
+        self.assertEqual(verified["pending_packets"], [])
 
     def test_concurrent_exact_retries_converge_to_one_wal_transaction(self) -> None:
         packet = packet_fixture()
@@ -530,13 +787,13 @@ class U4DecisionLedgerTests(unittest.TestCase):
                         packet=packet,
                         draft=draft,
                         ledger_path=path,
-                        _test_now=f"2026-08-22T00:16:{index:02d}",
                     )["status"]
                 except (ledger.DecisionLedgerError, ValueError):
                     return "REFUSED"
 
-            with ThreadPoolExecutor(max_workers=8) as pool:
-                statuses = list(pool.map(run, range(8)))
+            with patch.object(event_ledger, "_runtime_timestamp", return_value=REGISTERED_AT):
+                with ThreadPoolExecutor(max_workers=8) as pool:
+                    statuses = list(pool.map(run, range(8)))
             verified = ledger.verify_decision_ledger(path)
         self.assertEqual(statuses.count("APPENDED"), 1)
         self.assertEqual(statuses.count("IDEMPOTENT"), 7)
@@ -557,13 +814,13 @@ class U4DecisionLedgerTests(unittest.TestCase):
                         packet=packet,
                         draft=draft,
                         ledger_path=path,
-                        _test_now=REGISTERED_AT,
                     )["status"]
                 except ledger.DecisionLedgerError:
                     return "REFUSED"
 
-            with ThreadPoolExecutor(max_workers=2) as pool:
-                outcomes = list(pool.map(run, (first, second)))
+            with patch.object(event_ledger, "_runtime_timestamp", return_value=REGISTERED_AT):
+                with ThreadPoolExecutor(max_workers=2) as pool:
+                    outcomes = list(pool.map(run, (first, second)))
             verified = ledger.verify_decision_ledger(path)
         self.assertEqual(sorted(outcomes), ["APPENDED", "REFUSED"])
         self.assertTrue(verified["ok"])
@@ -584,11 +841,11 @@ class U4DecisionLedgerTests(unittest.TestCase):
                 supersedes=supersedes,
                 decided_at="2026-08-22T00:20:00+08:00",
             )
-            ledger.append_decision_batch(
+            append_batch(
                 packet=packet,
                 draft=revised,
                 ledger_path=path,
-                _test_now="2026-08-22T00:21:00",
+                now="2026-08-22T00:21:00",
             )
             current = ledger.current_packet_decisions(path, packet["packet_hash"])
             verified = ledger.verify_decision_ledger(path)
@@ -622,7 +879,8 @@ class U4DecisionLedgerTests(unittest.TestCase):
             path = Path(tmp) / "events.jsonl"
             append_fixture(path, packet=packet)
             lines = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()]
-            lines[0]["payload"]["decision"] = "NO_TRADE"
+            decision_outer = next(line for line in lines if line["kind"] == ledger.EVENT_KIND)
+            decision_outer["payload"]["decision"] = "NO_TRADE"
             previous = event_ledger.GENESIS_PREV
             for outer in lines:
                 outer["prev"] = previous
@@ -669,42 +927,51 @@ class U4DecisionLedgerTests(unittest.TestCase):
         self.assertFalse(verified_set["ok"])
         self.assertIn("subject set", verified_set["errors"][0])
 
-    def test_closure_cardinality_and_hash_are_independent_gates(self) -> None:
+    def test_packet_intent_cardinality_and_closure_hash_are_independent_gates(self) -> None:
         packet = packet_fixture()
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "events.jsonl"
             append_fixture(path, packet=packet)
             state = ledger._snapshot_state(path)
         packet_ref = ledger._packet_hash_ref(packet)
-        events = sorted(
-            (copy.deepcopy(event) for (subject_packet, _), event in state["current"].items() if subject_packet == packet_ref),
-            key=lambda event: event["candidate"]["ts_code"],
+        invalid_count = copy.deepcopy(state["intents"][(packet_ref, 1)])
+        item = next(
+            candidate_intent for candidate_intent in invalid_count["candidate_intents"]
+            if candidate_intent["candidate"]["ts_code"] == "600003.SH"
         )
-        for event in events:
-            if event["candidate"]["ts_code"] == "600003.SH":
-                event["decision"] = "DEFER"
-        invalid_count = ledger._build_closure(
-            packet,
-            events,
-            tail_sequence=state["tail_sequence"],
-            tail_hash=state["tail_hash"],
-        )
+        item["decision"] = "DEFER"
+        item["reason_codes"] = ["QUEUE_CAPACITY"]
+        item["research_question"] = None
+        invalid_count["intent_hash"] = ledger._intent_hash(invalid_count)
+        invalid_count["intent_id"] = ledger._packet_intent_id(invalid_count)
         with self.assertRaisesRegex(ledger.DecisionLedgerError, "zero or 3..5"):
-            ledger.validate_packet_closure(
-                invalid_count,
-                {(event["source"]["u4_packet_hash"], event["candidate"]["ts_code"]): event for event in events},
-                tail_sequence=state["tail_sequence"],
-                tail_hash=state["tail_hash"],
-            )
+            ledger.validate_packet_intent(invalid_count)
         valid = copy.deepcopy(state["closures"][packet_ref][-1])
         valid["closure_hash"] = "sha256:" + "0" * 64
         with self.assertRaisesRegex(ledger.DecisionLedgerError, "closure hash"):
             ledger.validate_packet_closure(
                 valid,
                 state["current"],
+                state["intents"][(packet_ref, 1)],
                 tail_sequence=state["tail_sequence"],
                 tail_hash=state["tail_hash"],
             )
+
+    def test_packet_intent_cannot_mix_distinct_human_decisions(self) -> None:
+        packet = packet_fixture()
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "events.jsonl"
+            append_fixture(path, packet=packet)
+            state = ledger._snapshot_state(path)
+        packet_ref = ledger._packet_hash_ref(packet)
+        mixed = copy.deepcopy(state["intents"][(packet_ref, 1)])
+        mixed["candidate_intents"][0]["human_decision"]["authorization_text"] = (
+            "A different authorization cannot be spliced into the same frozen packet."
+        )
+        mixed["intent_hash"] = ledger._intent_hash(mixed)
+        mixed["intent_id"] = ledger._packet_intent_id(mixed)
+        with self.assertRaisesRegex(ledger.DecisionLedgerError, "coherent human decision"):
+            ledger.validate_packet_intent(mixed)
 
     def test_outer_r015_timestamp_binding_cannot_be_relabelled(self) -> None:
         packet = packet_fixture()
@@ -712,7 +979,10 @@ class U4DecisionLedgerTests(unittest.TestCase):
             path = Path(tmp) / "events.jsonl"
             append_fixture(path, packet=packet)
             lines = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()]
-            lines[0]["ts"] = "2026-08-22T00:15:59"
+            decision_outer = next(line for line in lines if line["kind"] == ledger.EVENT_KIND)
+            decision_index = lines.index(decision_outer)
+            for outer in lines[decision_index:]:
+                outer["ts"] = "2026-08-22T00:16:01"
             previous = event_ledger.GENESIS_PREV
             for outer in lines:
                 outer["prev"] = previous
@@ -724,15 +994,14 @@ class U4DecisionLedgerTests(unittest.TestCase):
         self.assertFalse(verified["ok"])
         self.assertIn("outer R-015 id/timestamp", verified["errors"][0])
 
-    def test_both_u4_outer_event_kinds_are_unique_in_the_shared_wal(self) -> None:
+    def test_all_three_u4_outer_event_kinds_are_unique_in_the_shared_wal(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "events.jsonl"
-            event_ledger.append(ledger.EVENT_KIND, "same", {}, path=str(path), now=REGISTERED_AT)
-            with self.assertRaisesRegex(ValueError, "拒绝重复登记"):
-                event_ledger.append(ledger.EVENT_KIND, "same", {}, path=str(path), now=REGISTERED_AT)
-            event_ledger.append(ledger.CLOSURE_KIND, "closure", {}, path=str(path), now=REGISTERED_AT)
-            with self.assertRaisesRegex(ValueError, "拒绝重复登记"):
-                event_ledger.append(ledger.CLOSURE_KIND, "closure", {}, path=str(path), now=REGISTERED_AT)
+            for kind in (ledger.INTENT_KIND, ledger.EVENT_KIND, ledger.CLOSURE_KIND):
+                with self.subTest(kind=kind):
+                    event_ledger.append(kind, kind, {}, path=str(path), now=REGISTERED_AT)
+                    with self.assertRaisesRegex(ValueError, "拒绝重复登记"):
+                        event_ledger.append(kind, kind, {}, path=str(path), now=REGISTERED_AT)
 
     def test_verifier_waits_for_atomic_ledger_anchor_snapshot(self) -> None:
         packet = packet_fixture()
@@ -767,23 +1036,23 @@ class U4DecisionLedgerTests(unittest.TestCase):
                 verifier_started.set()
                 return ledger.verify_decision_ledger(path)
 
-            with patch.object(event_ledger, "write_anchor", side_effect=delayed_anchor):
-                with ThreadPoolExecutor(max_workers=2) as pool:
-                    writer = pool.submit(
-                        ledger.append_decision_batch,
-                        packet=packet,
-                        draft=draft,
-                        ledger_path=path,
-                        _test_now=REGISTERED_AT,
-                    )
-                    self.assertTrue(anchor_reached.wait(timeout=5))
-                    with patch.object(ledger, "_replay_records", side_effect=observed_replay):
-                        reader = pool.submit(verify)
-                        self.assertTrue(verifier_started.wait(timeout=5))
-                        self.assertFalse(replay_entered.wait(timeout=0.2))
-                        release_anchor.set()
-                        self.assertTrue(reader.result(timeout=10)["ok"])
-                    self.assertEqual(writer.result(timeout=10)["status"], "APPENDED")
+            with patch.object(event_ledger, "_runtime_timestamp", return_value=REGISTERED_AT):
+                with patch.object(event_ledger, "write_anchor", side_effect=delayed_anchor):
+                    with ThreadPoolExecutor(max_workers=2) as pool:
+                        writer = pool.submit(
+                            ledger.append_decision_batch,
+                            packet=packet,
+                            draft=draft,
+                            ledger_path=path,
+                        )
+                        self.assertTrue(anchor_reached.wait(timeout=5))
+                        with patch.object(ledger, "_replay_records", side_effect=observed_replay):
+                            reader = pool.submit(verify)
+                            self.assertTrue(verifier_started.wait(timeout=5))
+                            self.assertFalse(replay_entered.wait(timeout=0.2))
+                            release_anchor.set()
+                            self.assertTrue(reader.result(timeout=10)["ok"])
+                        self.assertEqual(writer.result(timeout=10)["status"], "APPENDED")
 
     def test_strict_json_rejects_duplicate_keys_nonfinite_and_unknown_fields(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -809,14 +1078,12 @@ class U4DecisionLedgerTests(unittest.TestCase):
             packet_path = root / "packet.json"
             draft_path = root / "draft.json"
             ledger_path = root / "ledger.jsonl"
-            receipt_path = root / "receipt.json"
             packet_path.write_text(json.dumps(packet), encoding="utf-8")
             draft_path.write_text(json.dumps(draft), encoding="utf-8")
             args = [
                 "--packet", str(packet_path),
                 "--draft", str(draft_path),
                 "--ledger", str(ledger_path),
-                "--receipt", str(receipt_path),
             ]
             output = StringIO()
             with redirect_stdout(output):
@@ -826,6 +1093,7 @@ class U4DecisionLedgerTests(unittest.TestCase):
             lines = [json.loads(line) for line in output.getvalue().splitlines()]
         self.assertEqual(lines[0]["status"], "APPENDED")
         self.assertEqual(lines[1]["status"], "IDEMPOTENT")
+        self.assertEqual(lines[0]["projection_path"], lines[1]["projection_path"])
         self.assertTrue(lines[2]["ok"])
 
     def test_cli_refuses_bad_contract_without_writing(self) -> None:
