@@ -1,0 +1,356 @@
+{
+  "artifact_type": "AR_SEMICONDUCTOR_WORKFLOW_DEBUG_INTAKE_RECEIPT",
+  "artifact_version": "1.0",
+  "contract_status": "NON_RUNTIME_EVIDENCE_ARTIFACT",
+  "intake_attempt_id": "SEMICONDUCTOR_WORKFLOW_DEBUG_001_20260820",
+  "created_at": "2026-08-23T21:59:34+08:00",
+  "method_version": "RESEARCH_CLOSED_LOOP_V1",
+  "mode": "OFFLINE_WORKFLOW_DEBUG",
+  "status": "BLOCKED_BEFORE_U4",
+  "terminal_stage": "U2_CANDIDATE_REVIEW",
+  "prospective_case": {
+    "cycle_registered": false,
+    "cycle_id": null,
+    "u4_receipt_written": false,
+    "selected_count": 0,
+    "paper_order_created": false,
+    "completed_workflow_debug_cycle_count_delta": 0
+  },
+  "authority": {
+    "selection_owner": "Junyan",
+    "human_selection_performed": false,
+    "production_authority": false,
+    "trade_authority": false,
+    "claim_allowed": false,
+    "no_trade_flag": true
+  },
+  "eligibility": {
+    "sample_eligible": false,
+    "method_claim_sample_eligible": false,
+    "portfolio_promotion_eligible": false
+  },
+  "source_bindings": {
+    "source_scope": "PRODUCTION_RUNTIME_READ_ONLY",
+    "runtime_root": "~/ar-live",
+    "runtime_snapshot_copied_into_this_pr": false,
+    "replay_boundary": "The receipt freezes file and canonical row hashes plus the material decision facts. The full production runtime snapshot is not silently copied into this stacked evidence PR.",
+    "research_closed_loop_v1": {
+      "path": "docs/research/contracts/research_closed_loop.v1.json",
+      "sha256": "b1a342065e126e8d49f5130034f8980e76ffeb4fd1ad230f706496b54b9b28bd"
+    },
+    "latest_complete_funnel_bundle": {
+      "as_of": "20260820",
+      "run_id": "20260820_163504_1787214904532487000_2846a771",
+      "durable_location": "data_history/funnel/20260820/20260820_163504_1787214904532487000_2846a771",
+      "manifest_sha256": "8c680f18508a09e2b03249b2024a48a52eacf99c36912dde83017611a0d3e687",
+      "bundle_hash": "944f3151fdfababa82304fdad56e426e2a663a1c22bee019d8272f95275d2f33"
+    },
+    "candidate_review": {
+      "sha256": "8eb6b104602f6ac758b9d010270fec0f5b059a5d1580c3a232f79b8c6af98ea9",
+      "rows_hash": "1c2d7309ed14f57862bcb7e5b6cbc50c91a0c895290cec72ad41f6e66da8ded0",
+      "all_rows": 1360,
+      "candidate_rows": 101,
+      "excluded_rows": 1259,
+      "status": "PARTIAL"
+    },
+    "candidate_manifest": {
+      "sha256": "04914517b715310314b2bf8828db0958a89c25166b76df3d075c2feb321fc8d5",
+      "manifest_hash": "6a9da67118b4dd793cbc24cff77de5df82e894186ebe8000404e3c7f5f116ca0",
+      "expected_count": 101,
+      "semiconductor_count": 0
+    },
+    "candidate_battery": {
+      "sha256": "87a904114d9e23f89f427ff5d474c1984dc394e241268136e1acc10ea4027d8a",
+      "rows_hash": "bbd1d20677fc5cc306dd83beecb8c5e821d9f1a913883e82786a1242bd879e13",
+      "observed_count": 101,
+      "semiconductor_count": 0
+    },
+    "deep_research_queue": {
+      "sha256": "ff82a3b352323117b4a39670c298a0b8ad8cfe1c3af9fe27383dfd910ad4d51e",
+      "rows_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "row_count": 0,
+      "semiconductor_count": 0
+    },
+    "u4_review_packet": {
+      "packet_sha256": "b2d009f1221bea471f5f5545f76fa1cb19b7298adcf71733177f2d6e32f8aed8",
+      "packet_hash": "07227928c8147c87f89dc2aead2fb60a88287b152a13fc5d102fa4ee864d3abc",
+      "status": "AWAITING_JUNYAN_REVIEW",
+      "ready_pool_count": 101,
+      "semiconductor_ready_count": 0,
+      "claim_allowed": false
+    },
+    "e1_event_layer": {
+      "runtime_relative_path": "public/data/v2/e1_event_layer.json",
+      "sha256": "5ca4a8ad1459bae939ef64e217f1fcbc9dbe7e7a8a43c5d87c847cd381f7196b",
+      "rows_hash": "08af8736c1c0485988d07ae603706d92838101c8822b77eb10bc1a76125f9be3",
+      "as_of": "20260820",
+      "status": "PARTIAL"
+    },
+    "funnel_health": {
+      "runtime_relative_path": "public/data/v2/funnel_health.json",
+      "sha256": "d7a04cc205f483ecdaf20bd53e280dbd5264ad34973f1bedbf466d5ae61e9893",
+      "status": "PARTIAL",
+      "battery_expected": 101,
+      "battery_observed": 101,
+      "battery_complete": 87,
+      "battery_data_blocked": 14,
+      "degraded_channels": {
+        "E1_EVENT": 17,
+        "FUNDAMENTAL_VALUATION": 5548,
+        "FUND_FLOW_CHIPS": 5548,
+        "INDUSTRY_VALUE_CHAIN": 5454,
+        "MACRO_CROSS_ASSET": 5548,
+        "PRICE_VOLUME": 26
+      }
+    },
+    "newer_unusable_nightly_run": {
+      "run_id": "20260821_163547_1787301347249096000_bd0c67c8",
+      "nightly_run_sha256": "e69a89b090dd4d384805963a125a5ca654b69db1efed827808800b82641220ed",
+      "report": "INCOMPLETE",
+      "published": false,
+      "target_trade_date": null,
+      "first_failed_step": "official_sample",
+      "failure_class": "NETWORK_TLS_EOF",
+      "use_as_cycle_source": "FORBIDDEN"
+    }
+  },
+  "screening_result": {
+    "semiconductor_u2_rows": 25,
+    "semiconductor_positive_channel_rows": 0,
+    "semiconductor_red_flag_only_rows": 25,
+    "semiconductor_u3_rows": 0,
+    "semiconductor_u4_ready_rows": 0,
+    "common_source_channels": [
+      "E1_EVENT"
+    ],
+    "common_review_status": "EXCLUDED_RED_FLAG",
+    "common_exclusion_reason": "E1_RED_FLAG_WITHOUT_POSITIVE_CHANNEL_ENTRY",
+    "reason_code_occurrences": {
+      "NEGATIVE_AND_WORSENING_QUARTER_PROFIT": 20,
+      "NEGATIVE_ISSUER_GUIDANCE": 6
+    }
+  },
+  "diagnosis": {
+    "red_flag_gate_result": "SUPPORTED_BY_E1_EVIDENCE",
+    "positive_channel_coverage": "INSUFFICIENT_TO_DISTINGUISH_NO_SIGNAL_FROM_DATA_GAP",
+    "conclusion": "The semiconductor cohort entered U2 only through negative E1 evidence and was excluded before the same-run candidate manifest and battery. Because four positive channels were broadly DATA_BLOCKED, this receipt does not infer that the industry lacked positive evidence; it records that the production funnel could not establish it.",
+    "forbidden_shortcuts": [
+      "DO_NOT_WEAKEN_E1_RED_FLAG",
+      "DO_NOT_MANUALLY_INSERT_U4_NAMES",
+      "DO_NOT_USE_20260821_FAILED_OUTPUTS",
+      "DO_NOT_RELABEL_THIS_ATTEMPT_AS_A_REGISTERED_CYCLE"
+    ]
+  },
+  "next_gate": {
+    "required_before_cycle_registration": [
+      "Restore or implement evidence-bearing semiconductor coverage for PRICE_VOLUME, FUND_FLOW_CHIPS, FUNDAMENTAL_VALUATION, and INDUSTRY_VALUE_CHAIN.",
+      "Re-run the same-day U1-U3 funnel and require every semiconductor U2 candidate to receive a same-run battery row or explicit DATA_BLOCKED.",
+      "Generate a new hash-bound U4 packet; Junyan may then select exactly zero or three to five names without bypassing E1 exclusions."
+    ],
+    "industry_research_note": "Red-flag rows may remain in an industry research and rejection cohort, but they cannot be promoted into the U4 paper-ready pool without an independently valid positive channel and the existing U4 authority flow."
+  },
+  "evidence_rows_hash": "3d8994b6a3a11d60731891f2e21cb7f3e95829c805d110ff347a5e8d19448447",
+  "evidence_rows": [
+    {
+      "ts_code": "002449.SZ",
+      "name": "国星光电",
+      "u2_row_hash": "9451fe606ef3e90a439f9545e09a33350a8f42587ef44ad9e3ad294aa1c8aee9",
+      "e1_row_hash": "443ae5249a09d15387227abad03d5abf33686838a4ffd91031112579dac7faa8",
+      "reason_codes": ["NEGATIVE_ISSUER_GUIDANCE"],
+      "latest_e1_date": "20260715"
+    },
+    {
+      "ts_code": "300782.SZ",
+      "name": "卓胜微",
+      "u2_row_hash": "cbb85380c3ed3a405c31f96907e8987f88762d8a7006671b55583ae345f35a86",
+      "e1_row_hash": "c4a968b0160bd145b3a5fdcd6b0cf82f117da67ed1cf533d3e05ba03fe5e9726",
+      "reason_codes": ["NEGATIVE_AND_WORSENING_QUARTER_PROFIT"],
+      "latest_e1_date": "20260428"
+    },
+    {
+      "ts_code": "301095.SZ",
+      "name": "广立微",
+      "u2_row_hash": "05081666be32039a0df3dfe469647601a3a4c2c3a0efd47ffa02fee8de0f3abd",
+      "e1_row_hash": "12bdac16d55536e0b2a940c85b397c40051f94ef0d1ea7e17aa0ec4057245e1f",
+      "reason_codes": ["NEGATIVE_AND_WORSENING_QUARTER_PROFIT"],
+      "latest_e1_date": "20260427"
+    },
+    {
+      "ts_code": "301269.SZ",
+      "name": "华大九天",
+      "u2_row_hash": "e07d7f01abc633a4558929de1980ce6b7cd993c5b38a0e3013c6eada66a4a90c",
+      "e1_row_hash": "77347dfe9395bd3c2e273ff54b86c7db6a54b4d14050ad0af58dcf504b230e8e",
+      "reason_codes": ["NEGATIVE_AND_WORSENING_QUARTER_PROFIT"],
+      "latest_e1_date": "20260428"
+    },
+    {
+      "ts_code": "301629.SZ",
+      "name": "矽电股份",
+      "u2_row_hash": "241d03c9f18eb513128a76ef34cac13142c7153233225ccab3c916c2318c8316",
+      "e1_row_hash": "0b13825fdcd40925b19089d8790ec9594980d721c959222e37f63120c1e42385",
+      "reason_codes": ["NEGATIVE_AND_WORSENING_QUARTER_PROFIT"],
+      "latest_e1_date": "20260422"
+    },
+    {
+      "ts_code": "600703.SH",
+      "name": "三安光电",
+      "u2_row_hash": "223fc339bd87f3751fbbb7267f5b41a11f5c3296c6f4b643d6e680ad9087d8c6",
+      "e1_row_hash": "644ea9483a08ca693db35d72bdb9937513f4bc48b623b7f9d05034667105a11d",
+      "reason_codes": ["NEGATIVE_ISSUER_GUIDANCE"],
+      "latest_e1_date": "20260714"
+    },
+    {
+      "ts_code": "600745.SH",
+      "name": "*ST闻泰",
+      "u2_row_hash": "bf001e316884ea6041f302f5686019f830897f335dda33e9e590d9c84aea7303",
+      "e1_row_hash": "81dbd6f58a29d1602f733cd8144c3442d98222157bbeff00092391e1a420eaef",
+      "reason_codes": ["NEGATIVE_AND_WORSENING_QUARTER_PROFIT"],
+      "latest_e1_date": "20260815"
+    },
+    {
+      "ts_code": "600877.SH",
+      "name": "电科芯片",
+      "u2_row_hash": "c99b4db366969361e52350a003fab0c8fef47b57b2856260caf6924371479dd6",
+      "e1_row_hash": "2bf3b9ae5e0075ccf7334ffbe5265bdf88cb3193a363eed28c6947175a2cc034",
+      "reason_codes": ["NEGATIVE_AND_WORSENING_QUARTER_PROFIT", "NEGATIVE_ISSUER_GUIDANCE"],
+      "latest_e1_date": "20260715"
+    },
+    {
+      "ts_code": "603290.SH",
+      "name": "斯达半导",
+      "u2_row_hash": "1f90c9d12cee77cd329e2b7dca8a5e9c535d82c0ea8426226680506d158b8015",
+      "e1_row_hash": "ab147ea76089125f41224a96ad35d29817fb03c73a76c80b112f6fa9102be339",
+      "reason_codes": ["NEGATIVE_ISSUER_GUIDANCE"],
+      "latest_e1_date": "20260715"
+    },
+    {
+      "ts_code": "603375.SH",
+      "name": "盛景微",
+      "u2_row_hash": "03a8c8c1e3e4042076dc97758d9a7a70950ed264cb0db9b44824ab7cc426bf60",
+      "e1_row_hash": "1338481d53c8d8c47d593fca6965645ace1d7318ec5576c7112f922a3cc2e24a",
+      "reason_codes": ["NEGATIVE_ISSUER_GUIDANCE"],
+      "latest_e1_date": "20260714"
+    },
+    {
+      "ts_code": "603690.SH",
+      "name": "至纯科技",
+      "u2_row_hash": "ff7469f9b7d28c4ad794d29b85cc76bebc59bd30a499b623a66623aec61917f6",
+      "e1_row_hash": "2ffc23ecd6329ef163a75021e3b472c0312290328057fe0ed9ccf154fa8c3bf5",
+      "reason_codes": ["NEGATIVE_ISSUER_GUIDANCE"],
+      "latest_e1_date": "20260711"
+    },
+    {
+      "ts_code": "688047.SH",
+      "name": "龙芯中科",
+      "u2_row_hash": "35274bd6536762ec512f58d481e29337722c8529106da2797c7ef1dd5fca5fe6",
+      "e1_row_hash": "0950af2f050685176cebe89e0b08549593f3668902b612b96877ee276876e883",
+      "reason_codes": ["NEGATIVE_AND_WORSENING_QUARTER_PROFIT"],
+      "latest_e1_date": "20260429"
+    },
+    {
+      "ts_code": "688141.SH",
+      "name": "杰华特",
+      "u2_row_hash": "5fc220fe6cb76c13ff68b17fbdbfdd952007872dd19d7db81c1231e17369cf31",
+      "e1_row_hash": "1c06357379ca9388bcddd52f0e0182c1e16bebbb28fd00526fe89c58bbe6ddf0",
+      "reason_codes": ["NEGATIVE_AND_WORSENING_QUARTER_PROFIT"],
+      "latest_e1_date": "20260430"
+    },
+    {
+      "ts_code": "688153.SH",
+      "name": "唯捷创芯",
+      "u2_row_hash": "5be9059ec63385c7940900eedd188c5d6ecf26a347d2ec21096f3e13914dd8c4",
+      "e1_row_hash": "e0f2a9ae941bd23b355284a47d21ed1b65af987cdcd58532652f818dddfad075",
+      "reason_codes": ["NEGATIVE_AND_WORSENING_QUARTER_PROFIT"],
+      "latest_e1_date": "20260428"
+    },
+    {
+      "ts_code": "688206.SH",
+      "name": "概伦电子",
+      "u2_row_hash": "49e62bc2fc1fb9eda40c0da6e0909c607b72a62df2244f60860cc42a74f06f45",
+      "e1_row_hash": "317e01d993b6ed3d44e6ee360fb69d2b42a91d2c8ea8a9820662a8a6d295a137",
+      "reason_codes": ["NEGATIVE_AND_WORSENING_QUARTER_PROFIT"],
+      "latest_e1_date": "20260430"
+    },
+    {
+      "ts_code": "688216.SH",
+      "name": "气派科技",
+      "u2_row_hash": "9351ab64af54b9f870bb530a15f1373079727a8408e10de91651ed59f7af35c7",
+      "e1_row_hash": "df70e9ad22e086a170fc5a080ebfb7f6548a391955c118fc55ad0334d6cb330b",
+      "reason_codes": ["NEGATIVE_AND_WORSENING_QUARTER_PROFIT"],
+      "latest_e1_date": "20260714"
+    },
+    {
+      "ts_code": "688361.SH",
+      "name": "中科飞测",
+      "u2_row_hash": "54f410db2b0d1fb7461a57db30b6c477b4d4a3944db2e52f4add24d35417c44c",
+      "e1_row_hash": "583637b28595006c2648a805c951158a5a93e2f91865e2fff73aa5349ccfa733",
+      "reason_codes": ["NEGATIVE_AND_WORSENING_QUARTER_PROFIT"],
+      "latest_e1_date": "20260429"
+    },
+    {
+      "ts_code": "688484.SH",
+      "name": "南芯科技",
+      "u2_row_hash": "a6ffa829a769a42fce6764fa3ab53404d4fa60f4f2797961eefd73f7dfa3a6d6",
+      "e1_row_hash": "87f4ba2476e69e8d512065df58a2b768704feebfeed0891ab23e79647175cb66",
+      "reason_codes": ["NEGATIVE_AND_WORSENING_QUARTER_PROFIT"],
+      "latest_e1_date": "20260818"
+    },
+    {
+      "ts_code": "688515.SH",
+      "name": "裕太微",
+      "u2_row_hash": "97c57e6b3f2dbeda73ff68369f66ce8878bc07147fb485d0d01460bf9cf72888",
+      "e1_row_hash": "cd210c55e85196a396dbe17df20488d197202b1b43592194d35c5f79f90f05f3",
+      "reason_codes": ["NEGATIVE_AND_WORSENING_QUARTER_PROFIT"],
+      "latest_e1_date": "20260428"
+    },
+    {
+      "ts_code": "688589.SH",
+      "name": "力合微",
+      "u2_row_hash": "f70c48a14a303485f6493a957c1d35a54c271d00f341e7ed6de48df0b7077c83",
+      "e1_row_hash": "e7119c71a69c704d3eb48b31dd96a0e1a4a0b6c3b0a497c32de48db13bb6d6c5",
+      "reason_codes": ["NEGATIVE_AND_WORSENING_QUARTER_PROFIT"],
+      "latest_e1_date": "20260425"
+    },
+    {
+      "ts_code": "688601.SH",
+      "name": "力芯微",
+      "u2_row_hash": "405980ca5fd286c49a8a938f4bb5cd1b7bbc9051c3aaf226298b5a7fce4ffa22",
+      "e1_row_hash": "75659ec767bac2148f48fe7b13180f7383d6dcb401c603c4b2896c6c84040a5d",
+      "reason_codes": ["NEGATIVE_AND_WORSENING_QUARTER_PROFIT"],
+      "latest_e1_date": "20260430"
+    },
+    {
+      "ts_code": "688691.SH",
+      "name": "灿芯股份",
+      "u2_row_hash": "c7549753490d9f2504d009bf501f732e5bcc88b67d180f0359374168b3c511cc",
+      "e1_row_hash": "bfc22132cc71bf713aa6673fbf4ac6f287522a0d238b00f67433d7b0fa12e11c",
+      "reason_codes": ["NEGATIVE_AND_WORSENING_QUARTER_PROFIT"],
+      "latest_e1_date": "20260429"
+    },
+    {
+      "ts_code": "688709.SH",
+      "name": "成都华微",
+      "u2_row_hash": "92072793356668193c94a47977a56882bb8797d4f2c2de08e5e844ff9145e65b",
+      "e1_row_hash": "e8898bbdca7b0316150eab684fdfa7edfb6218b9bc3cbe1a2048e6fb8ab566ae",
+      "reason_codes": ["NEGATIVE_AND_WORSENING_QUARTER_PROFIT"],
+      "latest_e1_date": "20260430"
+    },
+    {
+      "ts_code": "688790.SH",
+      "name": "昂瑞微",
+      "u2_row_hash": "03c84a21794eebec0214380f0f6081814b9d55f0da97e10042189a70a146d413",
+      "e1_row_hash": "420ddae9cc85224e4c2256323822ddb3b74bb8062bf8bfcca6c75bc28f0c05d3",
+      "reason_codes": ["NEGATIVE_AND_WORSENING_QUARTER_PROFIT"],
+      "latest_e1_date": "20260428"
+    },
+    {
+      "ts_code": "688795.SH",
+      "name": "摩尔线程",
+      "u2_row_hash": "55753a306c58afc037a6b4830624fb7c5489df39ca6ed6e793f5fdbfd7e0191a",
+      "e1_row_hash": "e2f735aad3aed4c8f3eb86c5e69a717432f4c78c049ca6a40b2e0cf3bb6889a3",
+      "reason_codes": ["NEGATIVE_AND_WORSENING_QUARTER_PROFIT"],
+      "latest_e1_date": "20260810"
+    }
+  ],
+  "disclaimer": "不是买卖指令；研究信号，human executes."
+}
