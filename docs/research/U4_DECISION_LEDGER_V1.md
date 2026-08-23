@@ -1,100 +1,115 @@
-# U4 Complete-Decision Ledger v1
+# U4 Decision Ledger v1 Implementation
 
-## Purpose
+Status: `DELIVERED_UNWIRED / OFFLINE_ONLY`
 
-The U4 ledger records the complete review outcome for one frozen
-`ar.u4_review_packet.v1.0`. It closes the survivorship gap created when only
-selected names continue into deep research and rejected or deferred names
-disappear.
+The normative contract is
+`docs/research/U4_DECISION_LEDGER_SPEC_V1.md` and
+`docs/research/contracts/u4_decision_ledger.v1.schema.json`. This document only
+describes the implementation added by PR #292. It does not redefine #295.
 
-The ledger is offline and append-only. It does not select securities, verify a
-human identity, create an order, grant portfolio authority, or count a method
-sample.
+## Durable Shape
 
-## Decision Set
+The ledger no longer stores a whole review batch inside one opaque event.
+Instead it uses R-015 as an append-only WAL:
 
-Every row in the packet `ready_pool` appears exactly once in the sealed batch.
+1. each candidate becomes one outer `u4_decision` event whose payload is an
+   exact `ar.u4_decision_event.v1` object;
+2. `registered_at` is stamped from that outer R-015 event timestamp and cannot
+   be supplied by the decision draft;
+3. after every packet candidate has a current event, one outer
+   `u4_decision_closure` event commits the packet revision;
+4. only a committed closure may project the existing packet-bound U4 review
+   receipt.
 
-| Packet state | Decision source | Allowed outcome |
-|---|---|---|
-| `ready=false` | Frozen U2/U3 machine gate | Deterministic `REJECT` only |
-| `ready=true` | Junyan-authored draft | `SELECT`, `REJECT`, or `DEFER` |
+The closure contains the reviewed-candidate set hash, current-decision-id set
+hash, counts for all five outcomes, selected count, missing/extra sets, and the
+inner U4 decision-chain tail. A partial WAL with no closure is visible as a
+pending packet and is resumed idempotently on exact retry.
 
-Machine-gate rejection reasons are copied exactly from `blocked_reasons` and
-cannot be omitted, changed, or overridden. A human decision records a stable
-reason code, verbatim reason text, and a research question for every `SELECT`.
+## Complete Decision Denominator
 
-The selected count must be either:
+Every candidate in the frozen review packet must appear. The closed decision
+set is:
 
-- zero: batch outcome is `NO_TRADE`, and no U4 review receipt is produced; or
-- three to five: batch outcome is `SELECTED_FOR_OFFLINE_RESEARCH`, and the
-  selected rows deterministically project the existing packet-bound
-  `ar.u4_review_receipt.v1.0`.
+- `SELECT`
+- `REJECT`
+- `DEFER`
+- `NO_TRADE`
+- `DATA_BLOCKED`
 
-One or two selections are invalid. This keeps the ledger aligned with the
-existing U4 review contract instead of creating a parallel selection rule.
+An incomplete U3 battery must remain explicit `DATA_BLOCKED`. An active E1 red
+flag must remain an explicit `REJECT`. Neither may be silently omitted or used
+to fill the selected quota.
 
-## Integrity Model
+The selected count is exactly `0`, `3`, `4`, or `5`. Zero commits
+`NO_TRADE_NO_QUEUE` and creates no queue receipt. Three to five may project the
+existing offline U4 receipt. One, two, or more than five fail closed.
 
-One packet hash may have one decision batch.
+## Revision And Retry Semantics
 
-- The event kind is `u4_decision`.
-- The event id is the packet hash.
-- The event payload contains the full packet and full sealed batch.
-- An exact retry is idempotent.
-- A different batch for the same packet is a refused rewrite.
-- The event-ledger timestamp is the registration boundary and cannot predate
-  the self-reported `reviewed_at` value.
-- The dedicated verifier rejects foreign event kinds, malformed payloads,
-  duplicate packet ids, chain damage, and anchor damage.
+One packet submission uses one coherent `decision_revision` across all packet
+candidates. Revision 1 has no predecessor. Revision N must name the exact
+current decision id for every subject. A correction appends a full new packet
+revision; it never updates or deletes old events.
 
-The implementation reuses the R-015 event ledger for flock locking, canonical
-serialization, hash chaining, atomic replace, and local anchor checks. Readers
-take a shared lock on that same lock file while verifying the chain, anchor,
-and event rows as one snapshot; they cannot classify the short interval between
-ledger replacement and anchor commit as corruption. The CLI requires an
-explicit `--ledger` path and has no production default.
+An exact retry reuses already-written candidate events and commits a missing
+closure. A same-revision retry with different content is refused. The U4
+transaction holds a dedicated packet lock while every individual append still
+uses R-015's own exclusive lock, chain verification, anchor verification,
+atomic replace, and fsync.
 
-## Honest Boundaries
+Readers take the shared R-015 lock while reading the event file and anchor so
+they cannot observe the interval between ledger replacement and anchor commit.
+Unrelated R-015 event kinds may coexist in the same shared chain; the U4 replay
+filters its own two kinds after verifying the complete outer chain.
 
-`claimed_reviewer=Junyan` is recorded with
-`identity_verification=UNAVAILABLE`. The local JSON document does not prove who
-typed it. A future authenticated Human Gate may strengthen that evidence, but
-v1 must not claim it already exists.
+## Evidence Mapping Boundary
 
-`reviewed_at` is also human-supplied. It must fall between the packet timestamp
-and the event-ledger registration timestamp, but the durable event timestamp is
-the evidence of when the platform first recorded the decision. Downstream
-prospective scoring must use that registration boundary rather than treating
-the self-reported review time as proof.
+The frozen `ar.u4_review_packet.v1.0` does not expose a production `run_id`, a
+display name, a cohort id, or a causal-cluster id. This implementation does not
+pretend otherwise:
 
-The append-only chain and anchor raise the cost of local history rewriting;
-they are not an absolute tamper-proof system. A third durable publication
-layer remains necessary for stronger historical guarantees.
+- `source.run_id` is a deterministic offline id,
+  `u4-review-<packet-hash-prefix>`;
+- `u2_candidate_row_hash` binds the exact frozen ready-pool projection visible
+  to this reviewer;
+- display name, cohort id, and causal-cluster id are explicit decision-draft
+  fields, bound immutably after validation;
+- industry code must equal the packet row's `industry_key`.
 
-Rejected and deferred rows are opportunity-cost evidence. They are not paper
-orders, closed cycles, or eligible method samples. In particular:
+A later upstream contract may expose richer production provenance. That is a
+separate schema revision, not grounds for filling v1 with invented values.
 
-- `method_sample_eligible=false`
-- `claim_allowed=false`
+## Authority Boundary
+
+The draft records `claimed_decision_owner=Junyan` and
+`identity_verification=UNAVAILABLE`, plus verbatim authorization text and an
+external evidence reference. This is preserved evidence, not authenticated
+identity.
+
+All candidate events and closure receipts fix:
+
+- `u4_selection_authority=HUMAN_JUNYAN_ONLY`
 - `production_authority=false`
+- `trade_authority=false`
+- `claim_allowed=false`
 - `no_trade_flag=true`
 
-The first 5-10 semiconductor cycles remain workflow-debug observations. No win
-rate, alpha, profitability, or method-validity claim is permitted before 30
-genuinely independent, de-clustered closed samples.
+`SELECT` means admission to offline deep research only. Rejections and defers
+are opportunity-cost evidence, not performance samples. No outcome in this
+ledger is a real-capital action.
 
 ## Offline CLI
 
 ```bash
 python3 experiments/research_funnel/u4_decision_ledger.py \
   --packet /path/to/review_packet.json \
-  --draft /path/to/junyan_decision_draft.json \
-  --ledger /path/to/offline_u4_decisions.jsonl \
-  --receipt /path/to/projected_review_receipt.json
+  --draft /path/to/u4_decisions.json \
+  --ledger /path/to/offline_r015_events.jsonl \
+  --receipt /path/to/projected_u4_receipt.json
 ```
 
-`--receipt` is optional. A `NO_TRADE` batch never writes a receipt. A failed
-validation exits nonzero and does not append an event.
+There is no production default path. The implementation is not imported by
+the nightly runner and has not been deployed to `~/ar-live`.
 
-Not trading advice; research signal, human executes.
+不是买卖指令；研究信号，human executes.

@@ -3,12 +3,12 @@
   "task_id": "U4-DECISION-LEDGER-001",
   "source_issue": null,
   "architecture_block": ["research-framework", "u4-human-decision"],
-  "objective": "Create an offline append-only U4 decision ledger that binds every ready-pool candidate to exactly one SELECT, REJECT, or DEFER result, preserves machine-gate rejections, records a batch-level NO_TRADE outcome when nothing is selected, and projects selected rows into the existing packet-bound U4 receipt.",
+  "objective": "Implement the frozen #295 U4 decision contract as one R-015-stamped append-only event per candidate plus an atomic packet-closure receipt, retaining SELECT, REJECT, DEFER, NO_TRADE, and DATA_BLOCKED outcomes.",
   "non_goals": [
     "Do not select U4 names on behalf of Junyan",
     "Do not write or run the production nightly chain",
     "Do not create a real order, trade action, or portfolio authority",
-    "Do not backfill a decision after outcome evidence exists",
+    "Do not accept caller-supplied registered_at or fabricate historical decisions",
     "Do not claim win rate, alpha, profitability, or method validity"
   ],
   "human_owner": "Junyan",
@@ -17,13 +17,14 @@
   "dependencies": [
     "PR #267 U1-U4 contracts",
     "PR #272 offline U4-to-paper cycle",
-    "PR #283 method attribution"
+    "PR #283 method attribution",
+    "PR #295 frozen U4 decision ledger v1 contract"
   ],
   "authority_docs": [
     "AGENTS.md",
     "experiments/AGENTS.md",
-    "docs/research/ALL_MARKET_RESEARCH_FUNNEL.md",
-    "docs/research/RESEARCH_CLOSURE_EXPERIMENT.md"
+    "docs/research/U4_DECISION_LEDGER_SPEC_V1.md",
+    "docs/research/contracts/u4_decision_ledger.v1.schema.json"
   ],
   "file_scope": [
     "experiments/research_funnel/u4_decision_ledger.py",
@@ -45,15 +46,18 @@
   ],
   "input_contracts": [
     "ar.u4_review_packet.v1.0",
+    "ar.u4_decision_event.v1",
     "explicit Junyan-authored U4 decision draft"
   ],
   "output_artifacts": [
-    "ar.u4_decision_batch.v1.0",
-    "append-only u4_decision event",
-    "packet-bound ar.u4_review_receipt.v1.0 when 3-5 rows are selected"
+    "one ar.u4_decision_event.v1 per reviewed candidate",
+    "append-only R-015 u4_decision events",
+    "ar.u4_packet_closure.v1 commit receipt",
+    "packet-bound ar.u4_review_receipt.v1.0 only when exactly 3-5 rows are selected"
   ],
   "acceptance_tests": [
     "python3 tests/test_u4_decision_ledger.py",
+    "python3 tests/test_u4_decision_ledger_spec.py",
     "python3 scripts/governance_mutation_gate.py",
     "python3 tests/test_no_network_guard.py",
     "python3 scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/u4_decision_ledger_v1.task.json",
