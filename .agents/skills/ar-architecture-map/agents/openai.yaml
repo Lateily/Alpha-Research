@@ -1,0 +1,6 @@
+interface:
+  display_name: "AR Architecture Map"
+  short_description: "Map verified AR architecture without invented topology"
+  default_prompt: "Use $ar-architecture-map to produce a source-grounded map of this system."
+policy:
+  allow_implicit_invocation: true
