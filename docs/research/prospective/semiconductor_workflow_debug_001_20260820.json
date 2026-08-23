@@ -36,7 +36,7 @@
     "replay_boundary": "The receipt freezes file and canonical row hashes plus the material decision facts. The full production runtime snapshot is not silently copied into this stacked evidence PR.",
     "research_closed_loop_v1": {
       "path": "docs/research/contracts/research_closed_loop.v1.json",
-      "sha256": "f1d3bbf14f30e6b0fe67f80ed9a190626b4b16c3077440010bfbca517c832d76"
+      "sha256": "b1a342065e126e8d49f5130034f8980e76ffeb4fd1ad230f706496b54b9b28bd"
     },
     "latest_complete_funnel_bundle": {
       "as_of": "20260820",
