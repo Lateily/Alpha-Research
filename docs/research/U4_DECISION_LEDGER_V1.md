@@ -167,6 +167,8 @@ under the shared R-015 lock, requires the immutable bundle directory, replays
 the exact preview record, and rebuilds its packet from that bundle before
 writing it. Calling the typed transport directly therefore cannot replace
 immutable U2/U3 evidence with internally consistent invented hashes. There is
-no public U4 clock override.
+no public U4 clock override. The builder payload is canonicalized once into an
+isolated snapshot; validation, outer hashing, and persistence all consume that
+same snapshot, so caller mutation cannot swap content after validation.
 
 不是买卖指令；研究信号，human executes.

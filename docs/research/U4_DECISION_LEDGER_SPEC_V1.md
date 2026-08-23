@@ -61,6 +61,9 @@ packet with a caller-supplied timestamp that predates its evidence is refused.
 The typed R-015 append boundary must receive and revalidate the immutable
 bundle for every intent, decision, and closure append; internal hashes alone
 are not source evidence.
+It must canonicalize the builder payload once and use that same isolated
+snapshot for typed validation, hashing, and persistence; validating one
+caller-owned state and appending another is forbidden.
 
 The event also records `as_of`, `run_id`, industry cohort, causal-cluster
 identity, and `method_version`. Method version is mandatory so workflow-debug

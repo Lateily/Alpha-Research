@@ -4527,6 +4527,27 @@ MUTATIONS = MUTATIONS + (
         rationale="The only public U4 append path must validate the exact next typed outer record.",
     ),
     MutationCase(
+        mutation_id="U4_LEDGER_TYPED_APPEND_PAYLOAD_SNAPSHOT",
+        component="Research funnel R-015 typed U4 transport",
+        source_path="experiments/execution_tracker/event_ledger.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '            # governance-mutation: U4_LEDGER_TYPED_APPEND_PAYLOAD_SNAPSHOT\n'
+            '            payload_snapshot = json.loads(canonical(payload))'
+        ),
+        after=(
+            '            # governance-mutation: U4_LEDGER_TYPED_APPEND_PAYLOAD_SNAPSHOT\n'
+            '            payload_snapshot = payload'
+        ),
+        expected_failure_marker=(
+            "test_typed_append_validates_and_persists_one_frozen_payload_snapshot"
+        ),
+        rationale=(
+            "Typed validation, hashing, and append must consume one isolated canonical "
+            "payload snapshot rather than a caller-owned mutable object."
+        ),
+    ),
+    MutationCase(
         mutation_id="R015_RUNTIME_TIMESTAMP_PRECISION",
         component="Research funnel R-015 typed U4 transport",
         source_path="experiments/execution_tracker/event_ledger.py",

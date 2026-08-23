@@ -358,8 +358,10 @@ def append_u4_stamped(kind, build, *, bundle_dir, path=DEFAULT_PATH):
             rec_id, payload = built
             if not isinstance(rec_id, str) or not rec_id:
                 raise ValueError("U4 stamped event id must be non-empty")
+            # governance-mutation: U4_LEDGER_TYPED_APPEND_PAYLOAD_SNAPSHOT
+            payload_snapshot = json.loads(canonical(payload))
             preview = {
-                "seq": st["n"], "kind": kind, "id": rec_id, "payload": payload,
+                "seq": st["n"], "kind": kind, "id": rec_id, "payload": payload_snapshot,
                 "ts": ts, "prev": st["head"] or GENESIS_PREV,
             }
             preview["hash"] = record_hash(preview)
@@ -368,7 +370,7 @@ def append_u4_stamped(kind, build, *, bundle_dir, path=DEFAULT_PATH):
             u4_decision_ledger.validate_typed_outer_append(
                 path, preview, bundle_dir=bundle_dir
             )
-            return _append_verified(kind, rec_id, payload, path, ts, st, lines)
+            return _append_verified(kind, rec_id, payload_snapshot, path, ts, st, lines)
         finally:
             fcntl.flock(lf, fcntl.LOCK_UN)
 

@@ -1543,6 +1543,35 @@ class U4DecisionLedgerTests(unittest.TestCase):
                         )
             self.assertFalse(path.exists())
 
+    def test_typed_append_validates_and_persists_one_frozen_payload_snapshot(self) -> None:
+        class SplitPayload(dict):
+            def __deepcopy__(self, memo):
+                clean = dict(self)
+                clean.pop("trade_action", None)
+                return copy.deepcopy(clean, memo)
+
+        packet = packet_fixture()
+        draft = draft_for(packet)
+        rows, decisions = ledger._validate_draft(packet, draft)
+        valid_intent = ledger._build_packet_intent(packet, draft, decisions, rows)
+        payload = SplitPayload(copy.deepcopy(valid_intent))
+        payload["trade_action"] = "BUY"
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "events.jsonl"
+            with patch.object(
+                event_ledger, "_runtime_timestamp", return_value=REGISTERED_AT
+            ):
+                with self.assertRaisesRegex(
+                    ledger.DecisionLedgerError, "intent fields are not exact"
+                ):
+                    event_ledger.append_u4_stamped(
+                        ledger.INTENT_KIND,
+                        lambda _ts: (payload["intent_id"], payload),
+                        bundle_dir=SOURCE_BUNDLE,
+                        path=str(path),
+                    )
+            self.assertFalse(path.exists())
+
     def test_typed_writer_rejects_self_consistent_fabricated_source(self) -> None:
         packet = packet_fixture()
         packet["source_refs"]["bundle_hash"] = "f" * 64
