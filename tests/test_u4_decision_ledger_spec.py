@@ -175,6 +175,7 @@ def _event(decision: str = "SELECT") -> dict[str, Any]:
             "u2_bundle_hash": "sha256:" + "1" * 64,
             "u2_candidate_row_hash": "sha256:" + "2" * 64,
             "u3_battery_hash": "sha256:" + "3" * 64,
+            "u3_battery_row_hash": "sha256:" + "4" * 64,
             "u4_packet_hash": "sha256:" + "a" * 64,
         },
         "decision": decision,
@@ -271,6 +272,14 @@ class U4DecisionLedgerSpecTests(unittest.TestCase):
         row = _event()
         row["method_version"] = "unversioned draft"
         self.assertInvalid(row, "pattern mismatch")
+
+    def test_full_and_row_battery_hashes_are_both_required_by_contract(self) -> None:
+        row = _event()
+        del row["source"]["u3_battery_hash"]
+        self.assertInvalid(row, "missing u3_battery_hash")
+        row = _event()
+        del row["source"]["u3_battery_row_hash"]
+        self.assertInvalid(row, "missing u3_battery_row_hash")
 
     def test_revisions_and_hash_chain_are_append_only_shaped(self) -> None:
         row = _event("DEFER")

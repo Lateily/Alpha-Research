@@ -138,6 +138,7 @@ SOURCE_FIELDS = {
     "u2_bundle_hash",
     "u2_candidate_row_hash",
     "u3_battery_hash",
+    "u3_battery_row_hash",
     "u4_packet_hash",
 }
 HUMAN_FIELDS = {
@@ -464,7 +465,11 @@ def _source_for(packet: Mapping[str, Any], ready_row: Mapping[str, Any]) -> dict
         "u2_candidate_row_hash": _sha_ref(
             ready_row.get("u2_candidate_row_hash"), "U2 candidate row hash"
         ),
+        # governance-mutation: U4_LEDGER_FULL_BATTERY_SOURCE_HASH
         "u3_battery_hash": _sha_ref(
+            refs.get("battery_hash"), "U3 battery artifact hash"
+        ),
+        "u3_battery_row_hash": _sha_ref(
             ready_row.get("u3_battery_row_hash"), "U3 battery row hash"
         ),
         "u4_packet_hash": _packet_hash_ref(packet),
@@ -1217,11 +1222,34 @@ def _read_outer_records(path: Path) -> list[dict[str, Any]]:
     return [json.loads(line) for line in event_ledger._read_lines(str(path))]
 
 
-def validate_typed_outer_append(path: str, preview: Mapping[str, Any]) -> None:
-    """Validate the exact next U4 R-015 record while its outer lock is held."""
+def validate_typed_outer_append(
+    path: str, preview: Mapping[str, Any], *, bundle_dir: Path,
+) -> None:
+    """Validate the next U4 record and its immutable source under R-015's lock."""
     if preview.get("kind") not in {INTENT_KIND, EVENT_KIND, CLOSURE_KIND}:
         raise DecisionLedgerError("typed U4 append received an unsupported kind")
-    _replay_records([*_read_outer_records(Path(path)), copy.deepcopy(dict(preview))])
+    state = _replay_records(
+        [*_read_outer_records(Path(path)), copy.deepcopy(dict(preview))]
+    )
+    payload = preview.get("payload")
+    if not isinstance(payload, Mapping):
+        raise DecisionLedgerError("typed U4 append payload is not an object")
+    if preview["kind"] == INTENT_KIND:
+        packet = payload.get("review_packet")
+    else:
+        if preview["kind"] == EVENT_KIND:
+            source = payload.get("source")
+            packet_hash = source.get("u4_packet_hash") if isinstance(source, Mapping) else None
+            revision = payload.get("decision_revision")
+        else:
+            packet_hash = payload.get("u4_packet_hash")
+            revision = payload.get("closure_revision")
+        intent = state["intents"].get((packet_hash, revision))
+        packet = intent.get("review_packet") if isinstance(intent, Mapping) else None
+    if not isinstance(packet, Mapping):
+        raise DecisionLedgerError("typed U4 append lacks its frozen review packet")
+    # governance-mutation: U4_LEDGER_TYPED_APPEND_SOURCE_BINDING
+    _validate_packet_source(packet, Path(bundle_dir))
 
 
 def _replay_records(records: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
@@ -1465,7 +1493,8 @@ def append_decision_batch(
     _fail_after_decisions: int | None = None,
 ) -> dict[str, Any]:
     """Append/resume one frozen packet transaction and reconcile its derived receipt."""
-    # governance-mutation: U4_LEDGER_PACKET_SOURCE_REBUILD
+    # Reject before normalizing the draft; the typed append boundary below
+    # repeats this check and is the load-bearing no-bypass guarantee.
     _validate_packet_source(packet, bundle_dir)
     ready_rows, draft_rows = _validate_draft(packet, draft)
     packet_ref = _packet_hash_ref(packet)
@@ -1517,7 +1546,12 @@ def append_decision_batch(
                     raise DecisionLedgerError("U4 packet intent was registered before its human decision")
                 return expected_intent["intent_id"], expected_intent
 
-            event_ledger.append_u4_stamped(INTENT_KIND, build_intent, path=str(ledger_path))
+            event_ledger.append_u4_stamped(
+                INTENT_KIND,
+                build_intent,
+                bundle_dir=bundle_dir,
+                path=str(ledger_path),
+            )
             intent_appended = True
             state = _snapshot_state(ledger_path)
             existing_intent = state["intents"].get(intent_key)
@@ -1572,7 +1606,12 @@ def append_decision_batch(
                 )
                 return event["decision_id"], event
 
-            event_ledger.append_u4_stamped(EVENT_KIND, build_event, path=str(ledger_path))
+            event_ledger.append_u4_stamped(
+                EVENT_KIND,
+                build_event,
+                bundle_dir=bundle_dir,
+                path=str(ledger_path),
+            )
             decisions_appended += 1
             if _fail_after_decisions is not None and decisions_appended == _fail_after_decisions:
                 raise DecisionLedgerError("injected interruption after candidate decision")
@@ -1610,6 +1649,7 @@ def append_decision_batch(
         event_ledger.append_u4_stamped(
             CLOSURE_KIND,
             lambda _outer_ts: (receipt["closure_id"], receipt),
+            bundle_dir=bundle_dir,
             path=str(ledger_path),
         )
         committed = receipt

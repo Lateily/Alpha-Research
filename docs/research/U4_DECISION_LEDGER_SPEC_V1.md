@@ -49,6 +49,12 @@ Each event binds one candidate to the exact same-day chain:
 
 `U2 bundle -> U2 candidate row -> U3 six-dimension battery -> U4 review packet`
 
+`source.u3_battery_hash` binds the complete frozen U3 battery artifact, while
+`source.u3_battery_row_hash` binds that candidate's row inside the artifact.
+The typed R-015 append boundary must receive and revalidate the immutable
+bundle for every intent, decision, and closure append; internal hashes alone
+are not source evidence.
+
 The event also records `as_of`, `run_id`, industry cohort, causal-cluster
 identity, and `method_version`. Method version is mandatory so workflow-debug
 observations and every later frozen method version can be counted separately.

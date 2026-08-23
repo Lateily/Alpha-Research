@@ -332,12 +332,15 @@ def append_stamped(kind, build, path=DEFAULT_PATH):
             fcntl.flock(lf, fcntl.LOCK_UN)
 
 
-def append_u4_stamped(kind, build, path=DEFAULT_PATH):
+def append_u4_stamped(kind, build, *, bundle_dir, path=DEFAULT_PATH):
     """Append one U4 outer record through its schema-aware, runtime-clock path.
 
     Generic append APIs reject these kinds.  This path has no ``now`` argument,
     builds a preview under the R-015 lock, and asks the U4 replay validator to
-    prove that the exact next outer record is legal before it reaches disk.
+    prove that the exact next outer record is legal and bound to ``bundle_dir``
+    before it reaches disk. Requiring the immutable source at this public
+    boundary prevents callers from bypassing the packet transaction writer
+    with a merely self-consistent payload.
     """
     if kind not in U4_TYPED_KINDS:
         raise ValueError(f"{kind} is not a U4 typed kind")
@@ -361,7 +364,9 @@ def append_u4_stamped(kind, build, path=DEFAULT_PATH):
             preview["hash"] = record_hash(preview)
             from experiments.research_funnel import u4_decision_ledger
             # governance-mutation: U4_LEDGER_TYPED_APPEND_VALIDATION
-            u4_decision_ledger.validate_typed_outer_append(path, preview)
+            u4_decision_ledger.validate_typed_outer_append(
+                path, preview, bundle_dir=bundle_dir
+            )
             return _append_verified(kind, rec_id, payload, path, ts, st, lines)
         finally:
             fcntl.flock(lf, fcntl.LOCK_UN)

@@ -3718,6 +3718,41 @@ MUTATIONS: tuple[MutationCase, ...] = (
 # and a separate packet-closure commit.
 MUTATIONS = MUTATIONS + (
     MutationCase(
+        mutation_id="U4_LEDGER_TYPED_APPEND_SOURCE_BINDING",
+        component="Research funnel U4 decision ledger",
+        source_path="experiments/research_funnel/u4_decision_ledger.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '    # governance-mutation: U4_LEDGER_TYPED_APPEND_SOURCE_BINDING\n'
+            '    _validate_packet_source(packet, Path(bundle_dir))'
+        ),
+        after=(
+            '    # governance-mutation: U4_LEDGER_TYPED_APPEND_SOURCE_BINDING\n'
+            '    if False:\n'
+            '        _validate_packet_source(packet, Path(bundle_dir))'
+        ),
+        expected_failure_marker="test_typed_writer_rejects_self_consistent_fabricated_source",
+        rationale="The public typed R-015 writer must not persist an internally consistent packet without immutable U2/U3 evidence.",
+    ),
+    MutationCase(
+        mutation_id="U4_LEDGER_FULL_BATTERY_SOURCE_HASH",
+        component="Research funnel U4 decision ledger",
+        source_path="experiments/research_funnel/u4_decision_ledger.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '        "u3_battery_hash": _sha_ref(\n'
+            '            refs.get("battery_hash"), "U3 battery artifact hash"\n'
+            '        ),'
+        ),
+        after=(
+            '        "u3_battery_hash": _sha_ref(\n'
+            '            ready_row.get("u3_battery_row_hash"), "U3 battery artifact hash"\n'
+            '        ),'
+        ),
+        expected_failure_marker="test_source_separates_full_battery_and_candidate_row_hashes",
+        rationale="The contract's U3 battery hash must bind the complete frozen artifact, not only one candidate row.",
+    ),
+    MutationCase(
         mutation_id="U4_LEDGER_PACKET_EXCLUSIVE_LOCK",
         component="Research funnel U4 decision ledger",
         source_path="experiments/research_funnel/u4_decision_ledger.py",
@@ -4387,12 +4422,16 @@ MUTATIONS = MUTATIONS + (
         test_script="tests/test_u4_decision_ledger.py",
         before=(
             '            # governance-mutation: U4_LEDGER_TYPED_APPEND_VALIDATION\n'
-            '            u4_decision_ledger.validate_typed_outer_append(path, preview)'
+            '            u4_decision_ledger.validate_typed_outer_append(\n'
+            '                path, preview, bundle_dir=bundle_dir\n'
+            '            )'
         ),
         after=(
             '            # governance-mutation: U4_LEDGER_TYPED_APPEND_VALIDATION\n'
             '            if False:\n'
-            '                u4_decision_ledger.validate_typed_outer_append(path, preview)'
+            '                u4_decision_ledger.validate_typed_outer_append(\n'
+            '                    path, preview, bundle_dir=bundle_dir\n'
+            '                )'
         ),
         expected_failure_marker="test_u4_kinds_are_reserved_from_raw_and_generic_stamped_writers",
         rationale="The only public U4 append path must validate the exact next typed outer record.",
@@ -4416,28 +4455,6 @@ MUTATIONS = MUTATIONS + (
         rationale=(
             "An internally self-consistent packet must still equal the packet rebuilt from "
             "the immutable U2/U3 artifacts."
-        ),
-    ),
-    MutationCase(
-        mutation_id="U4_LEDGER_PACKET_SOURCE_REBUILD",
-        component="Research funnel U4 decision ledger",
-        source_path="experiments/research_funnel/u4_decision_ledger.py",
-        test_script="tests/test_u4_decision_ledger.py",
-        before=(
-            '    # governance-mutation: U4_LEDGER_PACKET_SOURCE_REBUILD\n'
-            '    _validate_packet_source(packet, bundle_dir)'
-        ),
-        after=(
-            '    # governance-mutation: U4_LEDGER_PACKET_SOURCE_REBUILD\n'
-            '    if False:\n'
-            '        _validate_packet_source(packet, bundle_dir)'
-        ),
-        expected_failure_marker=(
-            "test_writer_rebuilds_packet_from_immutable_u2_u3_evidence_before_wal"
-        ),
-        rationale=(
-            "The writer must rebuild the submitted packet from the immutable final DAG bundle "
-            "before any R-015 intent is appended."
         ),
     ),
     MutationCase(

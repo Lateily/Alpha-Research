@@ -97,12 +97,15 @@ written, the writer reloads that bundle, verifies the U2/U3/run bindings,
 rebuilds the full review packet, and requires byte-for-byte equality with the
 submitted packet. A packet's own self-reported hashes are never sufficient.
 The packet carries the U3
-`run_id`; exact U2 candidate-row and U3 battery-row hashes; registry display
-name; industry cohort; and the prospective causal-cluster id. Decision drafts
-contain only the ticker plus judgment fields, so they cannot author or relabel
-those provenance values. If the upstream candidate has no causal cluster, the
-packet records `UNAVAILABLE` and the decision must remain `DATA_BLOCKED` with
-`CAUSAL_CLUSTER_ID`; the implementation does not synthesize a cluster.
+`run_id`; the complete U3 battery hash; exact U2 candidate-row and U3
+battery-row hashes; registry display name; industry cohort; and the prospective
+causal-cluster id. The complete battery and candidate-row digests remain
+separate fields so neither whole-artifact nor row-level provenance can be
+mislabelled. Decision drafts contain only the ticker plus judgment fields, so
+they cannot author or relabel those provenance values. If the upstream
+candidate has no causal cluster, the packet records `UNAVAILABLE` and the
+decision must remain `DATA_BLOCKED` with `CAUSAL_CLUSTER_ID`; the implementation
+does not synthesize a cluster.
 
 All event candidate/source fields are derived from that packet and replay
 recomputes the same projection. Cross-run, cross-row, or caller-authored
@@ -144,7 +147,10 @@ been deployed to `~/ar-live`.
 
 R-015 reserves the three U4 outer kinds from both generic append APIs. The only
 supported route is its U4 typed append, which chooses the runtime timestamp
-under the shared R-015 lock and replays the exact preview record through this
-contract before writing it. There is no public U4 clock override.
+under the shared R-015 lock, requires the immutable bundle directory, replays
+the exact preview record, and rebuilds its packet from that bundle before
+writing it. Calling the typed transport directly therefore cannot replace
+immutable U2/U3 evidence with internally consistent invented hashes. There is
+no public U4 clock override.
 
 不是买卖指令；研究信号，human executes.

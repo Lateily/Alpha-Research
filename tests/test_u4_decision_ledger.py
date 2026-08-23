@@ -433,6 +433,22 @@ class U4DecisionLedgerTests(unittest.TestCase):
         with self.assertRaisesRegex(ledger.DecisionLedgerError, "packet-bound provenance"):
             ledger.validate_packet_intent(tampered)
 
+    def test_source_separates_full_battery_and_candidate_row_hashes(self) -> None:
+        packet = packet_fixture()
+        row = packet["ready_pool"][0]
+        source = ledger._source_for(packet, row)
+        self.assertEqual(
+            source["u3_battery_hash"],
+            "sha256:" + packet["source_refs"]["battery_hash"],
+        )
+        self.assertEqual(
+            source["u3_battery_row_hash"],
+            "sha256:" + row["u3_battery_row_hash"],
+        )
+        self.assertNotEqual(
+            source["u3_battery_hash"], source["u3_battery_row_hash"]
+        )
+
     def test_writer_rebuilds_packet_from_immutable_u2_u3_evidence_before_wal(self) -> None:
         for mutate in ("run_id", "candidate"):
             packet = packet_fixture()
@@ -1282,8 +1298,35 @@ class U4DecisionLedgerTests(unittest.TestCase):
                         )
                     with self.assertRaises(ledger.DecisionLedgerError):
                         event_ledger.append_u4_stamped(
-                            kind, lambda _ts: (kind, {}), path=str(path)
+                            kind,
+                            lambda _ts: (kind, {}),
+                            bundle_dir=SOURCE_BUNDLE,
+                            path=str(path),
                         )
+            self.assertFalse(path.exists())
+
+    def test_typed_writer_rejects_self_consistent_fabricated_source(self) -> None:
+        packet = packet_fixture()
+        packet["source_refs"]["bundle_hash"] = "f" * 64
+        packet["packet_hash"] = funnel._hash({
+            key: value for key, value in packet.items() if key != "packet_hash"
+        })
+        closure.validate_review_packet(packet)
+        rows, decisions = ledger._validate_draft(packet, draft_for(packet))
+        intent = ledger._build_packet_intent(
+            packet, draft_for(packet), decisions, rows
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "events.jsonl"
+            with self.assertRaisesRegex(
+                ledger.DecisionLedgerError, "deterministic projection"
+            ):
+                event_ledger.append_u4_stamped(
+                    ledger.INTENT_KIND,
+                    lambda _ts: (intent["intent_id"], intent),
+                    bundle_dir=SOURCE_BUNDLE,
+                    path=str(path),
+                )
             self.assertFalse(path.exists())
 
     def test_r015_u4_kind_uniqueness_is_independent_of_typed_validation(self) -> None:

@@ -81,6 +81,7 @@
         "u2_bundle_hash",
         "u2_candidate_row_hash",
         "u3_battery_hash",
+        "u3_battery_row_hash",
         "u4_packet_hash"
       ],
       "properties": {
@@ -89,6 +90,7 @@
         "u2_bundle_hash": {"$ref": "#/$defs/sha256"},
         "u2_candidate_row_hash": {"$ref": "#/$defs/sha256"},
         "u3_battery_hash": {"$ref": "#/$defs/sha256"},
+        "u3_battery_row_hash": {"$ref": "#/$defs/sha256"},
         "u4_packet_hash": {"$ref": "#/$defs/sha256"}
       }
     },
