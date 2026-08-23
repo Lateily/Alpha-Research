@@ -49,6 +49,12 @@ def _validate(manifest: dict[str, Any]) -> list[str]:
         errors.append("method version changed")
     if manifest.get("status") != "FROZEN_OFFLINE_WORKFLOW_DEBUG":
         errors.append("frozen status changed")
+    if manifest.get("source_base") != {
+        "git_commit": "4d77a21fedf4247a737dfb8891a3210789beb291",
+        "data_dependency_pr": 297,
+        "data_dependency_status": "MERGED_MAIN",
+    }:
+        errors.append("merged data dependency changed")
 
     block_ids = [row.get("id") for row in manifest.get("ordered_blocks", [])]
     if block_ids != [

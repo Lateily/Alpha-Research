@@ -5,9 +5,9 @@
   "status": "FROZEN_OFFLINE_WORKFLOW_DEBUG",
   "frozen_at": "2026-08-23T21:45:00+08:00",
   "source_base": {
-    "git_commit": "f49a00db8fcdb380cd2178e97c159f01b40b1a83",
+    "git_commit": "4d77a21fedf4247a737dfb8891a3210789beb291",
     "data_dependency_pr": 297,
-    "data_dependency_status": "DRAFT_REVIEW_REQUIRED"
+    "data_dependency_status": "MERGED_MAIN"
   },
   "ordered_blocks": [
     {
