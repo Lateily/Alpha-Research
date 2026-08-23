@@ -1149,6 +1149,61 @@ class U4DecisionLedgerTests(unittest.TestCase):
             for event in state["staged_current"].values()
         ))
 
+    def test_pending_later_revision_does_not_block_current_projection_recovery(self) -> None:
+        packet = packet_fixture()
+        original_draft = draft_for(packet)
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "events.jsonl"
+            original = append_batch(packet=packet, draft=original_draft, ledger_path=path)
+            committed = ledger.current_packet_decisions(path, packet["packet_hash"])
+            supersedes = {
+                event["candidate"]["ts_code"]: event["decision_id"]
+                for event in committed
+            }
+            revised_decisions = dict(DEFAULT_DECISIONS)
+            revised_decisions[REJECT_CODE] = "NO_TRADE"
+            revised = draft_for(
+                packet,
+                revised_decisions,
+                revision=2,
+                supersedes=supersedes,
+                decided_at="2026-08-22T00:20:00+08:00",
+            )
+            with self.assertRaisesRegex(ledger.DecisionLedgerError, "injected interruption"):
+                append_batch(
+                    packet=packet,
+                    draft=revised,
+                    ledger_path=path,
+                    now="2026-08-22T00:21:00",
+                    _fail_after_decisions=3,
+                )
+            projection = Path(original["projection_path"])
+            projection.unlink()
+            before = path.read_bytes()
+            retry_error = None
+            try:
+                retry = append_batch(
+                    packet=packet,
+                    draft=original_draft,
+                    ledger_path=path,
+                    now="2026-08-22T00:22:00",
+                )
+            except Exception as exc:  # keep mutation failures attributable to this test
+                retry_error = exc
+                retry = {}
+            after = path.read_bytes()
+            written = json.loads(projection.read_text(encoding="utf-8")) if projection.exists() else None
+            visible = ledger.current_packet_decisions(path, packet["packet_hash"])
+            verified = ledger.verify_decision_ledger(path)
+        packet_ref = ledger._packet_hash_ref(packet)
+        self.assertIsNone(retry_error)
+        self.assertEqual(retry["status"], "IDEMPOTENT")
+        self.assertEqual(before, after)
+        self.assertEqual(written, retry["projected_receipt"])
+        self.assertEqual(visible, committed)
+        self.assertIn(packet_ref, verified["pending_packets"])
+        self.assertEqual(verified["closures"], 1)
+
     def test_exact_retry_after_unrelated_packet_recovers_projection_without_wal_append(self) -> None:
         packet_a = packet_fixture()
         packet_b = packet_fixture(generated_at="2026-08-22T00:11:00+08:00")

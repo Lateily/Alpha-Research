@@ -1566,8 +1566,6 @@ def append_decision_batch(
             subject_revision for (subject_packet, subject_revision) in state["intents"]
             if subject_packet == packet_ref
         )
-        if packet_intent_revisions and packet_intent_revisions[-1] > revision:
-            raise DecisionLedgerError("stale U4 packet revision cannot retry after a later intent")
         existing_intent = state["intents"].get(intent_key)
         if existing_intent is not None:
             # governance-mutation: U4_LEDGER_IDEMPOTENT_INTENT_MATCH
@@ -1615,7 +1613,17 @@ def append_decision_batch(
         prior_closures = state["closures"].get(packet_ref, [])
         if prior_closures and prior_closures[-1]["closure_revision"] > revision:
             raise DecisionLedgerError("stale U4 packet revision cannot retry after a later closure")
-        if prior_closures and prior_closures[-1]["closure_revision"] == revision:
+        committed_same_revision = bool(
+            prior_closures and prior_closures[-1]["closure_revision"] == revision
+        )
+        # governance-mutation: U4_LEDGER_COMMITTED_PROJECTION_BEFORE_STALE_INTENT
+        if (
+            packet_intent_revisions
+            and packet_intent_revisions[-1] > revision
+            and not committed_same_revision
+        ):
+            raise DecisionLedgerError("stale U4 packet revision cannot retry after a later intent")
+        if committed_same_revision:
             committed = prior_closures[-1]
             # governance-mutation: U4_LEDGER_EXISTING_CLOSURE_IDEMPOTENCY
             if committed["intent_id"] != expected_intent["intent_id"]:

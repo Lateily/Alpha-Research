@@ -67,7 +67,9 @@ An exact retry reuses already-written candidate events and commits a missing
 closure. A same-revision retry with different content, including a change to a
 candidate not yet written when the process stopped, is refused. An exact retry
 also finds its already committed historical closure even after unrelated
-packets have advanced the shared R-015 tail. The U4
+packets have advanced the shared R-015 tail. A pending later revision does not
+block reconstruction of the still-current prior committed projection; that
+repair writes no WAL event and leaves the pending revision intact. The U4
 transaction holds a dedicated packet lock while every individual append still
 uses R-015's own exclusive lock, chain verification, anchor verification,
 atomic replace, and fsync.

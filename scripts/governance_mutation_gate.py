@@ -4207,12 +4207,40 @@ MUTATIONS = MUTATIONS + (
         rationale="Each durable candidate event must match the packet-wide draft frozen before any candidate write.",
     ),
     MutationCase(
+        mutation_id="U4_LEDGER_COMMITTED_PROJECTION_BEFORE_STALE_INTENT",
+        component="Research funnel U4 decision ledger",
+        source_path="experiments/research_funnel/u4_decision_ledger.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '        # governance-mutation: U4_LEDGER_COMMITTED_PROJECTION_BEFORE_STALE_INTENT\n'
+            '        if (\n'
+            '            packet_intent_revisions\n'
+            '            and packet_intent_revisions[-1] > revision\n'
+            '            and not committed_same_revision\n'
+            '        ):'
+        ),
+        after=(
+            '        # governance-mutation: U4_LEDGER_COMMITTED_PROJECTION_BEFORE_STALE_INTENT\n'
+            '        if (\n'
+            '            packet_intent_revisions\n'
+            '            and packet_intent_revisions[-1] > revision\n'
+            '        ):'
+        ),
+        expected_failure_marker=(
+            "test_pending_later_revision_does_not_block_current_projection_recovery"
+        ),
+        rationale=(
+            "A pending correction cannot prevent an exact retry from reconstructing the "
+            "still-current committed projection."
+        ),
+    ),
+    MutationCase(
         mutation_id="U4_LEDGER_EXISTING_CLOSURE_IDEMPOTENCY",
         component="Research funnel U4 decision ledger",
         source_path="experiments/research_funnel/u4_decision_ledger.py",
         test_script="tests/test_u4_decision_ledger.py",
         before=(
-            '        if prior_closures and prior_closures[-1]["closure_revision"] == revision:\n'
+            '        if committed_same_revision:\n'
             '            committed = prior_closures[-1]\n'
             '            # governance-mutation: U4_LEDGER_EXISTING_CLOSURE_IDEMPOTENCY'
         ),
