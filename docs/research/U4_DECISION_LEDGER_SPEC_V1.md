@@ -64,6 +64,14 @@ emitted v1.0 packets remain valid for their original offline replay but do not
 carry enough provenance to enter this ledger. The implementation rejects a
 cross-date, cross-run, cross-packet, or differently hashed substitution.
 
+The current six-artifact funnel DAG does not freeze the separately produced
+Industry Cohort OS artifact. Therefore this offline implementation records
+`cohort_id=UNAVAILABLE`; it must not copy the raw U2 `industry_key` into that
+field. Such an event may support offline deep-research workflow debugging, but
+it cannot enter a cohort-specific denominator or support a method claim. A
+future packet version may replace the sentinel only after it binds the exact
+point-in-time cohort artifact and canonical cohort identity.
+
 At U4 admission time the prospective causal cluster may still be
 `UNAVAILABLE`, because assigning it is one of the deep-research outputs after
 selection. That explicit pending value does not prevent admission to offline

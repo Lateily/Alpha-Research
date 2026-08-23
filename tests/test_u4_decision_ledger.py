@@ -646,6 +646,7 @@ class U4DecisionLedgerTests(unittest.TestCase):
         )
         self.assertTrue(all(row["cluster_id"] is None for row in candidates["rows"]))
         self.assertTrue(all(row["causal_cluster_id"] == "UNAVAILABLE" for row in packet["ready_pool"]))
+        self.assertTrue(all(row["cohort_id"] == "UNAVAILABLE" for row in packet["ready_pool"]))
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "events.jsonl"
             result = append_batch(
@@ -657,6 +658,7 @@ class U4DecisionLedgerTests(unittest.TestCase):
         self.assertEqual(result["closure"]["selected_count"], 3)
         self.assertEqual(sum(event["decision"] == "SELECT" for event in events), 3)
         self.assertTrue(all(event["candidate"]["causal_cluster_id"] == "UNAVAILABLE" for event in events))
+        self.assertTrue(all(event["candidate"]["cohort_id"] == "UNAVAILABLE" for event in events))
         self.assertTrue(all(event["authority"]["production_authority"] is False for event in events))
 
     def test_legacy_review_packet_is_valid_but_cannot_enter_the_v1_ledger(self) -> None:

@@ -98,11 +98,16 @@ rebuilds the full review packet, and requires byte-for-byte equality with the
 submitted packet. A packet's own self-reported hashes are never sufficient.
 The expanded `ar.u4_review_packet.v1.1` carries the U3
 `run_id`; the complete U3 battery hash; exact U2 candidate-row and U3
-battery-row hashes; registry display name; industry cohort; and the prospective
+battery-row hashes; registry display name; an explicit cohort-identity state;
+and the prospective
 causal-cluster id. The complete battery and candidate-row digests remain
 separate fields so neither whole-artifact nor row-level provenance can be
 mislabelled. Decision drafts contain only the ticker plus judgment fields, so
-they cannot author or relabel those provenance values. If the upstream
+they cannot author or relabel those provenance values. The current funnel DAG
+does not freeze the separate Industry Cohort OS artifact, so the packet records
+`cohort_id=UNAVAILABLE` rather than copying the raw `industry_key`. These events
+cannot enter cohort-specific denominators or support method claims until a
+future packet version binds the exact point-in-time cohort artifact. If the upstream
 candidate has no causal cluster, the packet records `UNAVAILABLE`. Because
 cluster assignment is a post-selection U4 deep-research output, that pending
 identity may still be selected for offline research, but it cannot pass U5,

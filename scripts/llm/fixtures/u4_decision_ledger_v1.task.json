@@ -9,6 +9,7 @@
     "Do not write or run the production nightly chain",
     "Do not create a real order, trade action, or portfolio authority",
     "Do not accept caller-supplied registered_at or fabricate historical decisions",
+    "Do not relabel a raw industry_key as point-in-time cohort identity",
     "Do not claim win rate, alpha, profitability, or method validity"
   ],
   "human_owner": "Junyan",

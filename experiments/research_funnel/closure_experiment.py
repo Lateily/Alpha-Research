@@ -35,6 +35,7 @@ REPORT_SCHEMA = "ar.research_closure_experiment"
 SCHEMA_VERSION = "1.0"
 LEGACY_PACKET_SCHEMA_VERSION = "1.0"
 PACKET_SCHEMA_VERSION = "1.1"
+COHORT_ID_UNAVAILABLE = "UNAVAILABLE"
 BUNDLE_ARTIFACTS = {
     "all_market_scan.json",
     "candidate_review.json",
@@ -325,7 +326,8 @@ def build_review_packet(
         enriched.update({
             # governance-mutation: FUNNEL_CLOSURE_PACKET_CANDIDATE_EVIDENCE
             "display_name": str(registry_row.get("name") or "UNAVAILABLE"),
-            "cohort_id": str(candidate.get("industry_key") or "UNAVAILABLE"),
+            # governance-mutation: FUNNEL_CLOSURE_PACKET_COHORT_DEGRADED
+            "cohort_id": COHORT_ID_UNAVAILABLE,
             "causal_cluster_id": str(candidate.get("cluster_id") or "UNAVAILABLE"),
             "u2_candidate_row_hash": funnel._hash(candidate),
             "u3_battery_row_hash": funnel._hash(battery_row),

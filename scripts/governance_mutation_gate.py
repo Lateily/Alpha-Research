@@ -4771,6 +4771,27 @@ MUTATIONS = MUTATIONS + (
         expected_failure_marker="test_packet_projects_exact_run_and_candidate_evidence_from_bundle",
         rationale="Candidate identity must project the immutable registry row, not an invented label.",
     ),
+    MutationCase(
+        mutation_id="FUNNEL_CLOSURE_PACKET_COHORT_DEGRADED",
+        component="Research funnel U4 review packet",
+        source_path="experiments/research_funnel/closure_experiment.py",
+        test_script="tests/test_research_closure_experiment.py",
+        before=(
+            '            # governance-mutation: FUNNEL_CLOSURE_PACKET_COHORT_DEGRADED\n'
+            '            "cohort_id": COHORT_ID_UNAVAILABLE,'
+        ),
+        after=(
+            '            # governance-mutation: FUNNEL_CLOSURE_PACKET_COHORT_DEGRADED\n'
+            '            "cohort_id": str(candidate.get("industry_key") or "UNAVAILABLE"),'
+        ),
+        expected_failure_marker=(
+            "test_packet_does_not_fabricate_cohort_identity_from_industry_key"
+        ),
+        rationale=(
+            "A raw U2 industry key cannot masquerade as a point-in-time Industry Cohort OS "
+            "identity when that artifact is not frozen in the packet source."
+        ),
+    ),
 )
 
 

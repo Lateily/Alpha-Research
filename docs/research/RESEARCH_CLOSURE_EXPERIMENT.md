@@ -34,6 +34,12 @@ five source references and legacy ready-row shape. New packets use v1.1; the U4
 decision ledger accepts only v1.1 because v1.0 lacks the run and per-candidate
 provenance needed for a durable decision event.
 
+The current funnel bundle does not contain the separately produced Industry
+Cohort OS artifact. New packets therefore carry `cohort_id=UNAVAILABLE` instead
+of relabeling the raw U2 `industry_key` as a cohort identity. The resulting
+offline events are excluded from cohort-specific denominators and method
+claims until a future packet version binds a point-in-time cohort artifact.
+
 `ar.u4_review_receipt.v1.0` binds exactly one packet and three to five ready
 securities. Every selection needs a research question and a selection reason.
 The receipt is evidence of the supplied text, not cryptographic proof of human

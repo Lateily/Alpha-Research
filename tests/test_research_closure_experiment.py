@@ -171,13 +171,35 @@ class ResearchClosureExperimentTests(unittest.TestCase):
         self.assertEqual(packet["schema_version"], closure.PACKET_SCHEMA_VERSION)
         self.assertEqual(packet["source_refs"]["run_id"], battery["run_id"])
         self.assertEqual(row["display_name"], registry_by_code[code]["name"])
-        self.assertEqual(row["cohort_id"], candidate_by_code[code]["industry_key"])
+        self.assertEqual(row["cohort_id"], closure.COHORT_ID_UNAVAILABLE)
+        self.assertNotEqual(row["cohort_id"], candidate_by_code[code]["industry_key"])
         self.assertEqual(
             row["causal_cluster_id"],
             str(candidate_by_code[code].get("cluster_id") or "UNAVAILABLE"),
         )
         self.assertEqual(row["u2_candidate_row_hash"], funnel._hash(candidate_by_code[code]))
         self.assertEqual(row["u3_battery_row_hash"], funnel._hash(battery_by_code[code]))
+
+    def test_packet_does_not_fabricate_cohort_identity_from_industry_key(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            bundle, battery, _ = build_bundle(Path(tmp))
+            packet = closure.build_review_packet(
+                bundle_dir=bundle,
+                battery=battery,
+                generated_at=GENERATED_AT,
+            )
+            candidates = json.loads(
+                (bundle / "candidate_review.json").read_text(encoding="utf-8")
+            )
+            candidate_by_code = {row["ts_code"]: row for row in candidates["rows"]}
+        self.assertTrue(packet["ready_pool"])
+        self.assertTrue(
+            all(
+                row["cohort_id"] == closure.COHORT_ID_UNAVAILABLE
+                and row["cohort_id"] != candidate_by_code[row["ts_code"]]["industry_key"]
+                for row in packet["ready_pool"]
+            )
+        )
 
     def test_legacy_v1_packet_remains_valid_and_replayable(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
