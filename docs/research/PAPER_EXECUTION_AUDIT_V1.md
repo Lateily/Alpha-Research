@@ -25,12 +25,12 @@ is create-only and refuses a byte-different collision.
 ## Current Main Finding
 
 The committed snapshots contain 5 model-fund orders and 146 paper signals.
-Against current main, 13 behavior probes produce 4 PASS and 9 FAIL:
+Against current main, 13 behavior probes produce 5 PASS and 8 FAIL:
 
 | Capability | Result |
 |---|---|
 | registration-day cutoff | PASS |
-| A-share sell T+1 | FAIL |
+| A-share sell T+1 | PASS |
 | 100-share round lot | PASS |
 | suspension availability | FAIL |
 | one-price limit availability | FAIL |
@@ -44,8 +44,9 @@ Against current main, 13 behavior probes produce 4 PASS and 9 FAIL:
 | cash/order/position/NAV reconciliation | FAIL |
 
 These are observations of current behavior, not a repair plan hidden inside an
-audit PR. PR-B may later change the matrix, but cannot retroactively validate
-fills that were produced without the required execution facts.
+audit PR. Later engine hardening may change the matrix prospectively, but cannot
+retroactively validate fills that were produced without the required execution
+facts.
 
 ## Historical Status
 
