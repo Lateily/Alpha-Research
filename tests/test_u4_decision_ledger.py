@@ -340,25 +340,22 @@ class U4DecisionLedgerTests(unittest.TestCase):
             all(event["registered_at"] == expected_registered_at for event in events)
         )
 
-    def test_typed_u4_runtime_stamp_does_not_round_behind_same_second_decision(self) -> None:
+    def test_runtime_stamp_precision_preserves_u4_and_following_shared_event(self) -> None:
         decided_at = "2026-08-22T00:15:00.500+08:00"
-        runtime_at = "2026-08-22T00:15:00.600"
+        runtime_at = "2026-08-22T00:15:00.600000"
         packet = packet_fixture()
         draft = draft_for(packet, decided_at=decided_at)
 
-        def runtime_clock(*, timespec: str = "seconds") -> str:
-            return runtime_at if timespec == "microseconds" else "2026-08-22T00:15:00"
-
         self.assertRegex(
-            event_ledger._runtime_timestamp(timespec="microseconds"),
+            event_ledger._runtime_timestamp(),
             r"\.\d{6}$",
         )
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "events.jsonl"
             try:
                 with patch.object(
-                    event_ledger, "_runtime_timestamp", side_effect=runtime_clock
-                ) as clock:
+                    event_ledger, "_runtime_timestamp", return_value=runtime_at
+                ) as typed_clock:
                     ledger.append_decision_batch(
                         packet=packet,
                         draft=draft,
@@ -367,7 +364,14 @@ class U4DecisionLedgerTests(unittest.TestCase):
                     )
             except ledger.DecisionLedgerError as exc:
                 self.fail(f"typed U4 runtime timestamp lost subsecond ordering: {exc}")
+            with patch.object(
+                event_ledger,
+                "_runtime_timestamp",
+                return_value="2026-08-22T00:15:00.700000",
+            ):
+                foreign = event_ledger.append("note", "same-second-later", {}, path=str(path))
             events = ledger.current_packet_decisions(path, packet["packet_hash"])
+            verified = event_ledger.verify(str(path))
 
         self.assertTrue(events)
         self.assertTrue(
@@ -376,10 +380,10 @@ class U4DecisionLedgerTests(unittest.TestCase):
                 for event in events
             )
         )
-        self.assertTrue(clock.call_args_list)
-        self.assertTrue(
-            all(call.kwargs == {"timespec": "microseconds"} for call in clock.call_args_list)
-        )
+        self.assertEqual(foreign["ts"], "2026-08-22T00:15:00.700000")
+        self.assertTrue(verified["ok"])
+        self.assertTrue(typed_clock.call_args_list)
+        self.assertTrue(all(not call.args and not call.kwargs for call in typed_clock.call_args_list))
 
     def test_registration_cannot_predate_human_decision(self) -> None:
         packet = packet_fixture()
@@ -737,6 +741,43 @@ class U4DecisionLedgerTests(unittest.TestCase):
             with self.subTest(field=field):
                 with self.assertRaisesRegex(ledger.DecisionLedgerError, marker):
                     ledger._validate_draft(packet, draft)
+
+    def test_typed_append_rejects_unbound_or_predated_human_evidence_before_wal(self) -> None:
+        packet = packet_fixture()
+        draft = draft_for(packet)
+        rows, draft_rows = ledger._validate_draft(packet, draft)
+        base_intent = ledger._build_packet_intent(packet, draft, draft_rows, rows)
+
+        def unbind_authorization(human: dict) -> None:
+            human["authorization_text"] = (
+                "Substantive offline authorization text that is not bound to the packet hash."
+            )
+
+        def predate_packet(human: dict) -> None:
+            human["decided_at"] = "2026-08-21T00:00:00+08:00"
+
+        for mutate, marker in (
+            (unbind_authorization, "packet-bound"),
+            (predate_packet, "predate"),
+        ):
+            intent = copy.deepcopy(base_intent)
+            for item in intent["candidate_intents"]:
+                mutate(item["human_decision"])
+            intent["intent_hash"] = ledger._intent_hash(intent)
+            intent["intent_id"] = ledger._packet_intent_id(intent)
+            with self.subTest(marker=marker), tempfile.TemporaryDirectory() as tmp:
+                path = Path(tmp) / "events.jsonl"
+                with patch.object(
+                    event_ledger, "_runtime_timestamp", return_value=REGISTERED_AT
+                ):
+                    with self.assertRaisesRegex(ledger.DecisionLedgerError, marker):
+                        event_ledger.append_u4_stamped(
+                            ledger.INTENT_KIND,
+                            lambda _outer_ts: (intent["intent_id"], intent),
+                            bundle_dir=SOURCE_BUNDLE,
+                            path=str(path),
+                        )
+                self.assertFalse(path.exists())
 
     def test_event_hashes_and_internal_chain_are_recomputed(self) -> None:
         packet = packet_fixture()
@@ -1319,6 +1360,59 @@ class U4DecisionLedgerTests(unittest.TestCase):
         self.assertFalse(verified_set["ok"])
         self.assertIn("subject set", verified_set["errors"][0])
 
+    def test_closure_numeric_fields_reject_bool_and_float_aliases(self) -> None:
+        packet = packet_fixture()
+        decisions = dict(DEFAULT_DECISIONS)
+        for code in READY_CODES:
+            decisions[code] = "NO_TRADE"
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "events.jsonl"
+            result = append_batch(
+                packet=packet,
+                draft=draft_for(packet, decisions),
+                ledger_path=path,
+            )
+            state = ledger._snapshot_state(path)
+        packet_ref = ledger._packet_hash_ref(packet)
+        intent = state["intents"][(packet_ref, 1)]
+
+        def rehash(receipt: dict) -> None:
+            identity = {
+                "u4_packet_hash": receipt["u4_packet_hash"],
+                "intent_id": receipt["intent_id"],
+                "closure_revision": receipt["closure_revision"],
+                "current_decision_ids": receipt["current_decision_ids"],
+                "ledger_tail_hash": receipt["ledger_tail_hash"],
+            }
+            receipt["closure_id"] = "u4c_" + hashlib.sha256(
+                ledger._canonical(identity).encode("utf-8")
+            ).hexdigest()[:32]
+            receipt["closure_hash"] = ledger._closure_hash(receipt)
+
+        mutations = []
+        bool_revision_and_count = copy.deepcopy(result["closure"])
+        bool_revision_and_count["closure_revision"] = True
+        bool_revision_and_count["selected_count"] = False
+        mutations.append(bool_revision_and_count)
+        bool_decision_count = copy.deepcopy(result["closure"])
+        bool_decision_count["decision_counts"]["SELECT"] = False
+        mutations.append(bool_decision_count)
+        float_tail = copy.deepcopy(result["closure"])
+        float_tail["ledger_tail_sequence"] = float(float_tail["ledger_tail_sequence"])
+        mutations.append(float_tail)
+
+        for receipt in mutations:
+            rehash(receipt)
+            with self.subTest(receipt=receipt):
+                with self.assertRaisesRegex(ledger.DecisionLedgerError, "exact non-negative integers"):
+                    ledger.validate_packet_closure(
+                        receipt,
+                        state["current"],
+                        intent,
+                        tail_sequence=state["tail_sequence"],
+                        tail_hash=state["tail_hash"],
+                    )
+
     def test_packet_intent_cardinality_and_closure_hash_are_independent_gates(self) -> None:
         packet = packet_fixture()
         with tempfile.TemporaryDirectory() as tmp:
@@ -1358,7 +1452,8 @@ class U4DecisionLedgerTests(unittest.TestCase):
         packet_ref = ledger._packet_hash_ref(packet)
         mixed = copy.deepcopy(state["intents"][(packet_ref, 1)])
         mixed["candidate_intents"][0]["human_decision"]["authorization_text"] = (
-            "A different authorization cannot be spliced into the same frozen packet."
+            f"A different offline authorization for packet_hash {packet['packet_hash'][:12]} "
+            "cannot be spliced into the same frozen packet."
         )
         mixed["intent_hash"] = ledger._intent_hash(mixed)
         mixed["intent_id"] = ledger._packet_intent_id(mixed)

@@ -511,22 +511,21 @@ def _validate_reason_list(value: Any, allowed: set[str], label: str, *, nonempty
     return list(value)
 
 
-def _validate_draft(packet: Mapping[str, Any], draft: Mapping[str, Any]) -> tuple[list[dict[str, Any]], dict[str, dict[str, Any]]]:
-    rows = _ready_rows(packet)
-    _require_exact_keys(draft, DRAFT_FIELDS, "decision draft")
-    method_version = draft.get("method_version")
-    # governance-mutation: U4_LEDGER_METHOD_VERSION
-    if not isinstance(method_version, str) or METHOD_RE.fullmatch(method_version) is None:
-        raise DecisionLedgerError("method_version must be a frozen uppercase _Vn token")
+def _validate_human_packet_boundary(
+    packet: Mapping[str, Any], human: Mapping[str, Any],
+) -> None:
+    """Validate the human evidence shared by drafts and durable packet intents."""
+    _require_exact_keys(human, HUMAN_FIELDS, "human_decision")
     if (
-        draft.get("claimed_decision_owner") != "Junyan"
-        or draft.get("identity_verification") != "UNAVAILABLE"
+        human.get("claimed_decision_owner") != "Junyan"
+        or human.get("identity_verification") != "UNAVAILABLE"
     ):
         raise DecisionLedgerError("decision authority boundary changed")
-    authorization = draft.get("authorization_text")
-    evidence_ref = draft.get("authorization_evidence_ref")
+    authorization = human.get("authorization_text")
+    evidence_ref = human.get("authorization_evidence_ref")
     if not isinstance(authorization, str) or len(authorization.strip()) < 20:
         raise DecisionLedgerError("authorization_text must preserve substantive verbatim text")
+    # governance-mutation: U4_LEDGER_HUMAN_PACKET_AUTHORIZATION
     if (
         str(packet.get("packet_hash") or "")[:12] not in authorization
         or not ("离线" in authorization or "offline" in authorization.casefold())
@@ -534,11 +533,24 @@ def _validate_draft(packet: Mapping[str, Any], draft: Mapping[str, Any]) -> tupl
         raise DecisionLedgerError("authorization_text is not packet-bound and offline-scoped")
     if not isinstance(evidence_ref, str) or EVIDENCE_REF_RE.fullmatch(evidence_ref) is None:
         raise DecisionLedgerError("authorization_evidence_ref is not externally anchored")
-    decided_at = _parse_time(draft.get("decided_at"), "human decision decided_at")
+    decided_at = _parse_time(human.get("decided_at"), "human decision decided_at")
     packet_at = _parse_time(packet.get("generated_at"), "review packet generated_at")
     # governance-mutation: U4_LEDGER_REVIEW_CHRONOLOGY
     if decided_at < packet_at:
         raise DecisionLedgerError("decision cannot predate its review packet")
+
+
+def _validate_draft(packet: Mapping[str, Any], draft: Mapping[str, Any]) -> tuple[list[dict[str, Any]], dict[str, dict[str, Any]]]:
+    rows = _ready_rows(packet)
+    _require_exact_keys(draft, DRAFT_FIELDS, "decision draft")
+    method_version = draft.get("method_version")
+    # governance-mutation: U4_LEDGER_METHOD_VERSION
+    if not isinstance(method_version, str) or METHOD_RE.fullmatch(method_version) is None:
+        raise DecisionLedgerError("method_version must be a frozen uppercase _Vn token")
+    _validate_human_packet_boundary(
+        packet,
+        {key: draft.get(key) for key in HUMAN_FIELDS},
+    )
     raw_decisions = draft.get("decisions")
     if not isinstance(raw_decisions, list):
         raise DecisionLedgerError("decision draft decisions must be a list")
@@ -726,6 +738,8 @@ def _validate_candidate_intent(
     human = item.get("human_decision")
     if not isinstance(human, Mapping):
         raise DecisionLedgerError("candidate intent human decision is not an object")
+    # governance-mutation: U4_LEDGER_TYPED_INTENT_HUMAN_BOUNDARY
+    _validate_human_packet_boundary(packet, human)
     synthetic = _build_event(
         item,
         sequence=1,
@@ -1130,6 +1144,22 @@ def validate_packet_closure(
     packet_hash = receipt.get("u4_packet_hash")
     if not isinstance(packet_hash, str) or SHA_RE.fullmatch(packet_hash) is None:
         raise DecisionLedgerError("U4 packet closure hash reference is invalid")
+    revision = receipt.get("closure_revision")
+    selected_count_field = receipt.get("selected_count")
+    tail_sequence_field = receipt.get("ledger_tail_sequence")
+    decision_counts_field = receipt.get("decision_counts")
+    # governance-mutation: U4_LEDGER_CLOSURE_EXACT_INTEGER_TYPES
+    if (
+        type(revision) is not int
+        or revision < 1
+        or type(selected_count_field) is not int
+        or selected_count_field < 0
+        or type(tail_sequence_field) is not int
+        or tail_sequence_field < 0
+        or not isinstance(decision_counts_field, Mapping)
+        or any(type(value) is not int or value < 0 for value in decision_counts_field.values())
+    ):
+        raise DecisionLedgerError("U4 closure numeric fields must be exact non-negative integers")
     validate_packet_intent(intent)
     # governance-mutation: U4_LEDGER_CLOSURE_INTENT_BINDING
     if (
@@ -1173,7 +1203,6 @@ def validate_packet_closure(
         raise DecisionLedgerError("U4 closure selected_count must be zero or 3..5")
     if len({event["method_version"] for event in packet_events}) != 1:
         raise DecisionLedgerError("U4 closure mixes method versions")
-    revision = receipt.get("closure_revision")
     if len({event["decision_revision"] for event in packet_events}) != 1 or revision != packet_events[0]["decision_revision"]:
         raise DecisionLedgerError("U4 closure mixes decision revisions")
     if (

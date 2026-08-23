@@ -3818,6 +3818,25 @@ MUTATIONS = MUTATIONS + (
         rationale="Every prospective decision must name a frozen method version.",
     ),
     MutationCase(
+        mutation_id="U4_LEDGER_HUMAN_PACKET_AUTHORIZATION",
+        component="Research funnel U4 decision ledger",
+        source_path="experiments/research_funnel/u4_decision_ledger.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '    # governance-mutation: U4_LEDGER_HUMAN_PACKET_AUTHORIZATION\n'
+            '    if (\n'
+            '        str(packet.get("packet_hash") or "")[:12] not in authorization\n'
+            '        or not ("离线" in authorization or "offline" in authorization.casefold())\n'
+            '    ):'
+        ),
+        after=(
+            '    # governance-mutation: U4_LEDGER_HUMAN_PACKET_AUTHORIZATION\n'
+            '    if False:'
+        ),
+        expected_failure_marker="test_authorization_and_chronology_are_packet_bound",
+        rationale="Human authorization must remain bound to the frozen packet and offline scope.",
+    ),
+    MutationCase(
         mutation_id="U4_LEDGER_REVIEW_CHRONOLOGY",
         component="Research funnel U4 decision ledger",
         source_path="experiments/research_funnel/u4_decision_ledger.py",
@@ -3832,6 +3851,25 @@ MUTATIONS = MUTATIONS + (
         ),
         expected_failure_marker="test_authorization_and_chronology_are_packet_bound",
         rationale="A claimed human decision cannot predate the evidence packet it reviewed.",
+    ),
+    MutationCase(
+        mutation_id="U4_LEDGER_TYPED_INTENT_HUMAN_BOUNDARY",
+        component="Research funnel U4 decision ledger",
+        source_path="experiments/research_funnel/u4_decision_ledger.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '    # governance-mutation: U4_LEDGER_TYPED_INTENT_HUMAN_BOUNDARY\n'
+            '    _validate_human_packet_boundary(packet, human)'
+        ),
+        after=(
+            '    # governance-mutation: U4_LEDGER_TYPED_INTENT_HUMAN_BOUNDARY\n'
+            '    if False:\n'
+            '        _validate_human_packet_boundary(packet, human)'
+        ),
+        expected_failure_marker=(
+            "test_typed_append_rejects_unbound_or_predated_human_evidence_before_wal"
+        ),
+        rationale="The public typed append path must repeat draft authority and chronology checks before WAL.",
     ),
     MutationCase(
         mutation_id="U4_LEDGER_DECISION_SEMANTICS",
@@ -3968,6 +4006,31 @@ MUTATIONS = MUTATIONS + (
         ),
         expected_failure_marker="test_self_consistent_subset_closure_is_rejected_against_frozen_intent",
         rationale="A closure must prove exact equality between reviewed candidates and current decisions.",
+    ),
+    MutationCase(
+        mutation_id="U4_LEDGER_CLOSURE_EXACT_INTEGER_TYPES",
+        component="Research funnel U4 decision ledger",
+        source_path="experiments/research_funnel/u4_decision_ledger.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '    # governance-mutation: U4_LEDGER_CLOSURE_EXACT_INTEGER_TYPES\n'
+            '    if (\n'
+            '        type(revision) is not int\n'
+            '        or revision < 1\n'
+            '        or type(selected_count_field) is not int\n'
+            '        or selected_count_field < 0\n'
+            '        or type(tail_sequence_field) is not int\n'
+            '        or tail_sequence_field < 0\n'
+            '        or not isinstance(decision_counts_field, Mapping)\n'
+            '        or any(type(value) is not int or value < 0 for value in decision_counts_field.values())\n'
+            '    ):'
+        ),
+        after=(
+            '    # governance-mutation: U4_LEDGER_CLOSURE_EXACT_INTEGER_TYPES\n'
+            '    if False:'
+        ),
+        expected_failure_marker="test_closure_numeric_fields_reject_bool_and_float_aliases",
+        rationale="Python bool/float equality must not let malformed closure counts verify as integers.",
     ),
     MutationCase(
         mutation_id="U4_LEDGER_INTENT_CARDINALITY",
@@ -4464,24 +4527,26 @@ MUTATIONS = MUTATIONS + (
         rationale="The only public U4 append path must validate the exact next typed outer record.",
     ),
     MutationCase(
-        mutation_id="U4_LEDGER_RUNTIME_TIMESTAMP_PRECISION",
+        mutation_id="R015_RUNTIME_TIMESTAMP_PRECISION",
         component="Research funnel R-015 typed U4 transport",
         source_path="experiments/execution_tracker/event_ledger.py",
         test_script="tests/test_u4_decision_ledger.py",
         before=(
-            '            # governance-mutation: U4_LEDGER_RUNTIME_TIMESTAMP_PRECISION\n'
-            '            ts = _runtime_timestamp(timespec="microseconds")'
+            '    # governance-mutation: R015_RUNTIME_TIMESTAMP_PRECISION\n'
+            '    return (datetime.datetime.now(OPERATIONAL_TIMEZONE)\n'
+            '            .replace(tzinfo=None).isoformat(timespec="microseconds"))'
         ),
         after=(
-            '            # governance-mutation: U4_LEDGER_RUNTIME_TIMESTAMP_PRECISION\n'
-            '            ts = _runtime_timestamp()'
+            '    # governance-mutation: R015_RUNTIME_TIMESTAMP_PRECISION\n'
+            '    return (datetime.datetime.now(OPERATIONAL_TIMEZONE)\n'
+            '            .replace(tzinfo=None).isoformat(timespec="seconds"))'
         ),
         expected_failure_marker=(
-            "test_typed_u4_runtime_stamp_does_not_round_behind_same_second_decision"
+            "test_runtime_stamp_precision_preserves_u4_and_following_shared_event"
         ),
         rationale=(
-            "Typed U4 registration must preserve subsecond ordering when the human "
-            "decision and append occur during the same wall-clock second."
+            "Every runtime writer on the shared R-015 ledger must preserve one subsecond "
+            "precision so a later foreign event cannot appear backdated after U4."
         ),
     ),
     MutationCase(

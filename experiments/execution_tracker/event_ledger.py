@@ -46,10 +46,11 @@ U4_TYPED_KINDS = frozenset({
 })
 
 
-def _runtime_timestamp(*, timespec="seconds"):
-    """Return a naive platform timestamp at the requested storage precision."""
+def _runtime_timestamp():
+    """Return one microsecond-precision naive timestamp for every runtime writer."""
+    # governance-mutation: R015_RUNTIME_TIMESTAMP_PRECISION
     return (datetime.datetime.now(OPERATIONAL_TIMEZONE)
-            .replace(tzinfo=None).isoformat(timespec=timespec))
+            .replace(tzinfo=None).isoformat(timespec="microseconds"))
 
 
 def canonical(obj):
@@ -350,8 +351,7 @@ def append_u4_stamped(kind, build, *, bundle_dir, path=DEFAULT_PATH):
         fcntl.flock(lf, fcntl.LOCK_EX)
         try:
             st, lines = _append_preflight(path)
-            # governance-mutation: U4_LEDGER_RUNTIME_TIMESTAMP_PRECISION
-            ts = _runtime_timestamp(timespec="microseconds")
+            ts = _runtime_timestamp()
             built = build(ts)
             if not isinstance(built, tuple) or len(built) != 2:
                 raise ValueError("U4 stamped event builder must return (id, payload)")
