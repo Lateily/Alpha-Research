@@ -69,10 +69,12 @@ from nightly_funnel import (  # noqa: E402
     prune_observation_area,
     published_bundle_date,
 )
+import semiconductor_inputs as semiconductor_evidence  # noqa: E402
 
 STAGE1_FILES = ("all_market_scan.json", "candidate_review.json", "candidate_manifest.json")
 STAGE2_FILES = ("candidate_battery.json",)
 STAGE3_FILES = ("deep_research_queue.json", "security_registry_projected.json")
+INDUSTRY_TAXONOMY_PATH = Path(__file__).resolve().with_name("industry_taxonomy.v1.json")
 
 
 # ── 公共:分段 manifest ────────────────────────────────────────────────────
@@ -190,9 +192,23 @@ def run_candidates() -> int:
     e1 = _load_json(public_v2 / "e1_event_layer.json")
     rotation = _load_json(public_v2 / "rotation_panel.json", optional=True)
     features = load_feature_snapshot(feature_db, target)
+    has_semiconductor_scope = any(
+        row.get("industry_key") == semiconductor_evidence.SEMICONDUCTOR_INDUSTRY_KEY
+        and row.get("qualification", {}).get("u1_scan_eligible") is True
+        for row in registry["rows"]
+    )
+    try:
+        semiconductor_inputs = (
+            semiconductor_evidence.build_snapshot(feature_db, registry, target)
+            if has_semiconductor_scope else None
+        )
+    except semiconductor_evidence.SemiconductorInputError as exc:
+        raise FunnelError(f"semiconductor positive inputs are invalid: {exc}") from exc
+    taxonomy = _load_json(INDUSTRY_TAXONOMY_PATH) if has_semiconductor_scope else None
     scan = build_all_market_scan(
         registry=registry, e1_events=e1, features=features, rotation=rotation,
-        macro_industry=None, trade_date=target, generated_at=generated_at,
+        macro_industry=None, semiconductor_inputs=semiconductor_inputs,
+        industry_taxonomy=taxonomy, trade_date=target, generated_at=generated_at,
     )
     candidates = build_candidate_review(
         registry=registry, scan=scan, features=features, trade_date=target,

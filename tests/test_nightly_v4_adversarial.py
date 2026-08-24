@@ -29,6 +29,10 @@ import run_nightly as nightly  # noqa: E402
 import run_official_sample as official  # noqa: E402
 import nightly_publish  # noqa: E402
 
+RF = ROOT / "experiments" / "research_funnel"
+sys.path.insert(0, str(RF))
+import semiconductor_inputs  # noqa: E402
+
 
 def write_json(path: str, value) -> None:
     os.makedirs(os.path.dirname(path), exist_ok=True)
@@ -1464,6 +1468,23 @@ class ResearchDataLaneTest(unittest.TestCase):
         self.assertEqual(1, len(targets), "研究数据契约的 as_of 不一致")
         target = targets.pop()
         self.assertRegex(target, r"^\d{8}$")
+        registry_payload = read_json(os.path.join(public, "security_registry.json"))
+        semiconductor = semiconductor_inputs.build_snapshot(
+            Path(root) / "absent-semiconductor-store.sqlite3",
+            registry_payload,
+            target,
+        )
+        feature_path = os.path.join(public, "feature_store_health.json")
+        feature_payload = read_json(feature_path)
+        feature_payload["status"] = "PARTIAL"
+        feature_payload["semiconductor_positive_inputs"] = {
+            key: semiconductor[key]
+            for key in (
+                "schema", "schema_version", "method_version", "status", "as_of",
+                "universe_hash", "sources", "coverage", "rows_hash", "policy",
+            )
+        }
+        write_json(feature_path, feature_payload)
         return et, target
 
     def test_u0_precedes_both_full_market_consumers(self) -> None:

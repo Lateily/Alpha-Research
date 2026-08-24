@@ -408,6 +408,13 @@ class ResearchFunnelClosureTests(unittest.TestCase):
         self.assertEqual(frame1["drawn"], frame2["drawn"])
         eligible = {row["ts_code"] for row in registry["rows"]}
         self.assertTrue({row["ts_code"] for row in frame1["drawn"]}.issubset(eligible))
+        red_flags = {
+            row["ts_code"] for row in e1_fixture(registry)["rows"]
+            if row["verdict"] == "RED_FLAG"
+        }
+        self.assertTrue(
+            {row["ts_code"] for row in frame1["drawn"]}.isdisjoint(red_flags)
+        )
         self.assertEqual(frame1["algo"], fp.CONTROL_ALGO)
         strata, _ = fp._feature_strata(registry["rows"], features)
         non_control = {
