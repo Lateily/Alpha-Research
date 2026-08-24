@@ -851,6 +851,9 @@ def validate_all_market_scan(payload: Mapping[str, Any], registry: Mapping[str, 
     for value in input_refs.values():
         if value is not None and (not isinstance(value, str) or len(value) != 64):
             raise FunnelError("all_market_scan input ref hash is invalid")
+    semiconductor_context_bound = (
+        input_refs["semiconductor_positive_inputs_rows_hash"] is not None
+    )
     seen: dict[str, set[str]] = defaultdict(set)
     for row in rows:
         required = {
@@ -879,10 +882,21 @@ def validate_all_market_scan(payload: Mapping[str, Any], registry: Mapping[str, 
         # governance-mutation: FUNNEL_U1_TRIGGER_REQUIRES_COMPLETE
         if row["triggered"] and row["data_status"] != "COMPLETE":
             raise FunnelError("positive channel trigger requires COMPLETE evidence")
+        feature_values = row.get("feature_values")
+        claims_semiconductor_context = (
+            isinstance(feature_values, Mapping)
+            and (
+                feature_values.get("canonical_id") == "SEMICONDUCTOR"
+                or feature_values.get("mapping_scope")
+                == "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_NODE_CLAIM"
+                or "issuer_value_chain_node" in feature_values
+            )
+        )
         if (
             row["channel"] == "INDUSTRY_VALUE_CHAIN"
             and eligible_rows[row["ts_code"]].get("industry_key")
             == semiconductor_evidence.SEMICONDUCTOR_INDUSTRY_KEY
+            and (semiconductor_context_bound or claims_semiconductor_context)
         ):
             # governance-mutation: FUNNEL_U1_SEMICONDUCTOR_INDUSTRY_CONTEXT
             _validate_semiconductor_industry_context(row, as_of=as_of)
