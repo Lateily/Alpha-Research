@@ -35,6 +35,8 @@ SCHEMA_VERSION = "1.0"
 RULE_VERSION = "research_funnel_v1"
 QUALIFICATION_RULE_VERSION = "u0_qualification_v1"
 CONTROL_ALGO = "sha256+mt19937+sorted_sample/v1"
+U3_RED_FLAG_VERDICTS = frozenset({"PASS", "RED_FLAG"})
+RED_FLAG_BLOCK_REASON = "E1_RED_FLAG_REQUIRES_SEPARATE_REVIEW"
 
 CHANNELS = (
     "E1_EVENT",
@@ -1419,6 +1421,27 @@ def _battery_rows(
     return {str(row.get("ts_code")): dict(row) for row in rows if isinstance(row, dict)}
 
 
+def _u3_fundamental_red_flag_active(battery_row: Mapping[str, Any]) -> bool:
+    """Return the U3 E1 red-flag fact without confusing coverage with approval."""
+    code = str(battery_row.get("ts_code") or "")
+    dims = battery_row.get("dims")
+    if not isinstance(dims, Mapping):
+        raise FunnelError(f"U3 battery row lacks six-dimensional evidence: {code}")
+    fundamental = dims.get("基本面")
+    if not isinstance(fundamental, Mapping) or not fundamental:
+        raise FunnelError(f"U3 battery fundamental dimension is missing: {code}")
+    status = fundamental.get("status")
+    if status in {"DATA_BLOCKED", "NOT_RUN"}:
+        return False
+    if status is not None:
+        raise FunnelError(f"U3 battery fundamental status is invalid: {code}={status}")
+    verdict = fundamental.get("红旗闸门")
+    # governance-mutation: FUNNEL_U3_RED_FLAG_VERDICT_REQUIRED
+    if verdict not in U3_RED_FLAG_VERDICTS:
+        raise FunnelError(f"U3 battery fundamental red-flag verdict is invalid: {code}")
+    return verdict == "RED_FLAG"
+
+
 def build_deep_research_queue(
     *, candidate_review: Mapping[str, Any], battery: Mapping[str, Any] | None,
     selected_tickers: Sequence[str], trade_date: str, generated_at: str | None = None,
@@ -1450,20 +1473,23 @@ def build_deep_research_queue(
         candidate = candidates[code]
         battery_row = battery_by_code[code]
         completeness = battery_row.get("completeness") or {}
-        blocked = completeness.get("verdict") != "COMPLETE" or "RED_FLAG" in candidate.get("flags", [])
+        # governance-mutation: FUNNEL_U4_U3_RED_FLAG_PROPAGATION
+        u3_red_flag = _u3_fundamental_red_flag_active(battery_row)
+        red_flagged = "RED_FLAG" in candidate.get("flags", []) or u3_red_flag
+        blocked_reasons = (
+            (["U3_BATTERY_INCOMPLETE"] if completeness.get("verdict") != "COMPLETE" else [])
+            + ([RED_FLAG_BLOCK_REASON] if red_flagged else [])
+        )
         ready_pool.append({
             "ts_code": code,
-            "ready": not blocked,
+            "ready": not blocked_reasons,
             "industry_key": candidate.get("industry_key"),
             "sector_os_status": (
                 "AVAILABLE" if candidate.get("industry_key") in sector_os else "TASK_REQUIRED"
             ),
             "candidate_status": candidate.get("review_status"),
             "battery_verdict": completeness.get("verdict"),
-            "blocked_reasons": (
-                (["U3_BATTERY_INCOMPLETE"] if completeness.get("verdict") != "COMPLETE" else [])
-                + (["E1_RED_FLAG_REQUIRES_SEPARATE_REVIEW"] if "RED_FLAG" in candidate.get("flags", []) else [])
-            ),
+            "blocked_reasons": blocked_reasons,
         })
     ready = {row["ts_code"] for row in ready_pool if row["ready"]}
     missing = [code for code in selected if code not in ready]
@@ -1838,6 +1864,7 @@ def validate_candidate_battery(
                 raise FunnelError(
                     f"blocked battery dimension lacks a reason: {row.get('ts_code')} {name}"
                 )
+        _u3_fundamental_red_flag_active(row)
         completeness = row.get("completeness") or {}
         if completeness.get("of") != 6 or "verdict" not in completeness:
             raise FunnelError(f"battery row completeness stamp is malformed: {row.get('ts_code')}")
