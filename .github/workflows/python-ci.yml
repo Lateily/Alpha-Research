@@ -23,6 +23,7 @@ on:
       - "scripts/llm/AGENTS.md"
       - "web/AGENTS.md"
       - "config/team-ai-workspace.v1.json"
+      - "config/aios-skills.v1.json"
       - "docs/team/TEAM_AI_WORKSPACE_V1.md"
       - ".gitignore"
       - "api/**"
@@ -99,6 +100,8 @@ jobs:
       # runtime baseline metadata, and redacted secret/local-state hygiene.
       - name: Team AI Workspace contract and doctor regression (offline)
         run: python3 tests/test_team_ai_workspace.py
+      - name: AIOS shared skill registry regression (offline)
+        run: python3 tests/test_skill_registry.py
       - name: Transactional forward-return backfill selftest
         run: python3 experiments/execution_tracker/run_post_close_report.py --selftest
       # ── 夜链 v3:进程级入口 + 静态未定义名 + 产物校验 + 崩溃回滚 ──
@@ -145,12 +148,19 @@ jobs:
       # 且 U5 在 factpack/wrong-if/因果簇完成前必须保持 DATA_BLOCKED。
       - name: Offline research closure experiment
         run: python3 tests/test_research_closure_experiment.py
+      # Every U4-ready candidate receives one explicit decision. Machine-gate
+      # rejects remain visible, zero selections become NO_TRADE, and selected
+      # rows only project the existing offline review receipt.
+      - name: Offline U4 complete-decision ledger
+        run: python3 tests/test_u4_decision_ledger.py
       # U4 之后的完整离线链:研究核心、红队、双票、唯一 paper 成交引擎、
       # 产业估值、人工 SMC 注册、多账本事实评分、唯一 paper 成交引擎、
       # 结算复盘与带证据的人类确认/争议;不触碰生产账本。
       - name: Offline U4-to-paper research cycle
         run: |
           python3 tests/test_paper_execution_realism.py
+          python3 tests/test_paper_execution_audit.py
+          python3 scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/paper_execution_audit_v1.task.json
           python3 tests/test_research_method.py
           python3 tests/test_research_cycle.py
       # 终局 paper cycle 五轴归因:thesis/valuation/timing/execution/market beta
@@ -163,6 +173,12 @@ jobs:
         run: |
           python3 tests/test_u4_decision_ledger_spec.py
           python3 scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/u4_decision_ledger_spec_v1.task.json
+      # Frozen assembly contract over the existing funnel, U4, research method,
+      # paper execution, and five-axis modules. This step adds no runtime wiring.
+      - name: Research closed loop V1 assembly contract (offline)
+        run: |
+          python3 tests/test_research_closed_loop_v1.py
+          python3 scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/research_closed_loop_v1.task.json
       # ── Macro OS M0-A:源身份/事件分级/双时间点预判/共识冲突语义 ──
       - name: Macro OS M0-A contract selftest
         run: python3 experiments/macro_os/contracts.py --selftest
