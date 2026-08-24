@@ -114,6 +114,12 @@ For every reviewed candidate, Junyan chooses exactly one:
 Every rejected, deferred, blocked, and no-trade candidate remains part of the
 dataset. This is the anti-cherry-picking core of U4.
 
+This is not a free-form five-way override when packet evidence carries a hard
+blocker. A candidate with incomplete same-run U3 battery evidence must remain
+`DATA_BLOCKED`. A candidate with an active E1 red flag must remain `REJECT`.
+If one row violates those forced outcomes, the batch must refuse to land rather
+than silently dropping or rewriting that row.
+
 `SELECT` means deep research may proceed. It does not mean paper registration,
 position sizing, buying, selling, or portfolio inclusion.
 
@@ -211,6 +217,31 @@ AR_OFFLINE=1 python3 experiments/research_funnel/research_cycle.py replay \
 
 After mechanical review reaches `REVIEW_READY` or `NO_TRADE`, Junyan may confirm
 or dispute the machine thesis/timing label with evidence.
+
+Seal the human postmortem receipt against the cycle bundle. This command uses
+`--cycle-bundle`, not `--closure-bundle`:
+
+```bash
+AR_OFFLINE=1 python3 experiments/research_funnel/research_cycle.py seal-review \
+  --cycle-bundle <research-cycle-result-dir> \
+  --input <junyan-postmortem-draft.json> \
+  --output <junyan-postmortem-receipt.json>
+```
+
+Finalize and verify the reviewed cycle:
+
+```bash
+AR_OFFLINE=1 python3 experiments/research_funnel/research_cycle.py finalize-review \
+  --closure-bundle <research-closure-result-dir> \
+  --cycle-bundle <research-cycle-result-dir> \
+  --receipt <junyan-postmortem-receipt.json> \
+  --output-dir <reviewed-cycle-result-dir>
+
+AR_OFFLINE=1 python3 experiments/research_funnel/research_cycle.py verify-final \
+  --closure-bundle <research-closure-result-dir> \
+  --cycle-bundle <research-cycle-result-dir> \
+  --output-dir <reviewed-cycle-result-dir>
+```
 
 The final five-axis report must keep separate:
 
