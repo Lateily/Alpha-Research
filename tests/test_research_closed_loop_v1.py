@@ -278,6 +278,17 @@ class SemiconductorEvidenceDiagnosticTests(unittest.TestCase):
     def _fixture(self) -> dict[str, Any]:
         return _load(SEMICONDUCTOR_INTAKE_PATH)
 
+    def _rehash_evidence_rows(self, fixture: dict[str, Any]) -> None:
+        fixture["evidence_rows_hash"] = hashlib.sha256(
+            json.dumps(
+                fixture["evidence_rows"],
+                ensure_ascii=False,
+                sort_keys=True,
+                separators=(",", ":"),
+                allow_nan=False,
+            ).encode("utf-8")
+        ).hexdigest()
+
     def test_current_semiconductor_intake_stops_before_u4_without_trade_authority(self) -> None:
         result = semiconductor_diag.build_diagnostic(self._fixture())
         self.assertEqual(result["diagnostic_schema"], semiconductor_diag.DIAGNOSTIC_SCHEMA)
@@ -304,6 +315,20 @@ class SemiconductorEvidenceDiagnosticTests(unittest.TestCase):
         self.assertIn("NO_SAME_RUN_U3_BATTERY", codes)
         self.assertIn("EMPTY_U4_READY_POOL", codes)
         self.assertIn("UPSTREAM_CHANNEL_GAPS", codes)
+
+    def test_semiconductor_counts_are_recomputed_from_evidence_rows(self) -> None:
+        fixture = self._fixture()
+        fixture["screening_result"]["semiconductor_u2_rows"] = 24
+        with self.assertRaisesRegex(
+            semiconductor_diag.DiagnosticError, "RECEIPT_SELF_REPORT_MISMATCH"
+        ):
+            semiconductor_diag.build_diagnostic(fixture)
+
+    def test_semiconductor_evidence_rows_hash_is_verified(self) -> None:
+        fixture = self._fixture()
+        fixture["evidence_rows"][0]["reason_codes"] = []
+        with self.assertRaisesRegex(semiconductor_diag.DiagnosticError, "evidence_rows_hash mismatch"):
+            semiconductor_diag.build_diagnostic(fixture)
 
     def test_semiconductor_authority_promotion_is_rejected(self) -> None:
         fixture = self._fixture()
@@ -339,10 +364,23 @@ class SemiconductorEvidenceDiagnosticTests(unittest.TestCase):
 
     def test_semiconductor_ready_state_requires_at_least_three_clean_u4_rows(self) -> None:
         fixture = self._fixture()
+        fixture["screening_result"]["semiconductor_u2_rows"] = 4
         fixture["screening_result"]["semiconductor_positive_channel_rows"] = 4
         fixture["screening_result"]["semiconductor_red_flag_only_rows"] = 0
         fixture["screening_result"]["semiconductor_u3_rows"] = 4
         fixture["screening_result"]["semiconductor_u4_ready_rows"] = 4
+        fixture["evidence_rows"] = [
+            {
+                "ts_code": f"68800{index}.SH",
+                "name": f"Synthetic {index}",
+                "u2_row_hash": f"u2-{index}",
+                "e1_row_hash": f"e1-{index}",
+                "reason_codes": [],
+                "latest_e1_date": "20260820",
+            }
+            for index in range(4)
+        ]
+        self._rehash_evidence_rows(fixture)
         fixture["source_bindings"]["funnel_health"]["degraded_channels"] = {
             channel: 0
             for channel in fixture["source_bindings"]["funnel_health"]["degraded_channels"]
@@ -351,12 +389,56 @@ class SemiconductorEvidenceDiagnosticTests(unittest.TestCase):
         self.assertEqual(result["status"], "READY_FOR_U4_PACKET")
         self.assertTrue(result["u4_ready"])
 
+    def test_semiconductor_ready_pool_below_selection_floor_is_blocked(self) -> None:
+        fixture = self._fixture()
+        fixture["screening_result"]["semiconductor_u2_rows"] = 2
+        fixture["screening_result"]["semiconductor_positive_channel_rows"] = 2
+        fixture["screening_result"]["semiconductor_red_flag_only_rows"] = 0
+        fixture["screening_result"]["semiconductor_u3_rows"] = 2
+        fixture["screening_result"]["semiconductor_u4_ready_rows"] = 2
+        fixture["evidence_rows"] = [
+            {
+                "ts_code": f"68810{index}.SH",
+                "name": f"Synthetic {index}",
+                "u2_row_hash": f"u2-floor-{index}",
+                "e1_row_hash": f"e1-floor-{index}",
+                "reason_codes": [],
+                "latest_e1_date": "20260820",
+            }
+            for index in range(2)
+        ]
+        self._rehash_evidence_rows(fixture)
+        fixture["source_bindings"]["funnel_health"]["degraded_channels"] = {
+            channel: 0
+            for channel in fixture["source_bindings"]["funnel_health"]["degraded_channels"]
+        }
+        result = semiconductor_diag.build_diagnostic(fixture)
+        self.assertEqual(result["status"], "INSUFFICIENT_U4_READY_POOL")
+        self.assertFalse(result["u4_ready"])
+        self.assertIn(
+            "U4_READY_POOL_BELOW_HUMAN_SELECTION_FLOOR",
+            {row["code"] for row in result["blockers"]},
+        )
+
     def test_semiconductor_degraded_channels_block_ready_status(self) -> None:
         fixture = self._fixture()
+        fixture["screening_result"]["semiconductor_u2_rows"] = 4
         fixture["screening_result"]["semiconductor_positive_channel_rows"] = 4
         fixture["screening_result"]["semiconductor_red_flag_only_rows"] = 0
         fixture["screening_result"]["semiconductor_u3_rows"] = 4
         fixture["screening_result"]["semiconductor_u4_ready_rows"] = 4
+        fixture["evidence_rows"] = [
+            {
+                "ts_code": f"68800{index}.SH",
+                "name": f"Synthetic {index}",
+                "u2_row_hash": f"u2-{index}",
+                "e1_row_hash": f"e1-{index}",
+                "reason_codes": [],
+                "latest_e1_date": "20260820",
+            }
+            for index in range(4)
+        ]
+        self._rehash_evidence_rows(fixture)
         result = semiconductor_diag.build_diagnostic(fixture)
         self.assertEqual(result["status"], "BLOCKED_BEFORE_U4")
         self.assertFalse(result["u4_ready"])

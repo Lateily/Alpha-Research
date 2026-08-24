@@ -135,6 +135,7 @@ FUNNEL_GOVERNANCE_PATHS = (
     "experiments/research_funnel/research_cycle.py",
     "experiments/research_funnel/research_method.py",
     "experiments/research_funnel/industry_cohort.py",
+    "experiments/research_funnel/semiconductor_evidence_diagnostic.py",
     "experiments/execution_tracker/paper_portfolio.py",
     "experiments/execution_tracker/model_paper_fund.py",
     "experiments/research_funnel/u4_decision_ledger.py",
@@ -5412,6 +5413,70 @@ MUTATIONS = MUTATIONS + (
             "Per-ticket promoter rejections must be published as evidence quality, not promoted "
             "into a whole-step failure that skips court and freezes the nightly publication."
         ),
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_DIAGNOSTIC_EVIDENCE_HASH",
+        component="Research funnel semiconductor diagnostic",
+        source_path="experiments/research_funnel/semiconductor_evidence_diagnostic.py",
+        test_script="tests/test_research_closed_loop_v1.py",
+        before=(
+            '    # governance-mutation: SEMICONDUCTOR_DIAGNOSTIC_EVIDENCE_HASH\n'
+            '    if intake.get("evidence_rows_hash") != _hash(rows):'
+        ),
+        after=(
+            '    # governance-mutation: SEMICONDUCTOR_DIAGNOSTIC_EVIDENCE_HASH\n'
+            "    if False:"
+        ),
+        expected_failure_marker="test_semiconductor_evidence_rows_hash_is_verified",
+        rationale="The diagnostic must verify the row-level evidence hash instead of trusting mutable receipt text.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_DIAGNOSTIC_SELF_REPORT_CROSSCHECK",
+        component="Research funnel semiconductor diagnostic",
+        source_path="experiments/research_funnel/semiconductor_evidence_diagnostic.py",
+        test_script="tests/test_research_closed_loop_v1.py",
+        before=(
+            "        # governance-mutation: SEMICONDUCTOR_DIAGNOSTIC_SELF_REPORT_CROSSCHECK\n"
+            "        if counts[key] != expected:"
+        ),
+        after=(
+            "        # governance-mutation: SEMICONDUCTOR_DIAGNOSTIC_SELF_REPORT_CROSSCHECK\n"
+            "        if False:"
+        ),
+        expected_failure_marker="test_semiconductor_counts_are_recomputed_from_evidence_rows",
+        rationale="The diagnostic must reject screening_result counts that disagree with evidence_rows.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_DIAGNOSTIC_RED_FLAG_ONLY_BLOCKER",
+        component="Research funnel semiconductor diagnostic",
+        source_path="experiments/research_funnel/semiconductor_evidence_diagnostic.py",
+        test_script="tests/test_research_closed_loop_v1.py",
+        before=(
+            '    # governance-mutation: SEMICONDUCTOR_DIAGNOSTIC_RED_FLAG_ONLY_BLOCKER\n'
+            '    if counts["semiconductor_red_flag_only_rows"]:'
+        ),
+        after=(
+            '    # governance-mutation: SEMICONDUCTOR_DIAGNOSTIC_RED_FLAG_ONLY_BLOCKER\n'
+            "    if False:"
+        ),
+        expected_failure_marker="test_current_semiconductor_intake_stops_before_u4_without_trade_authority",
+        rationale="A red-flag-only semiconductor cohort must remain visible in the blocker list.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_DIAGNOSTIC_SELECTION_FLOOR",
+        component="Research funnel semiconductor diagnostic",
+        source_path="experiments/research_funnel/semiconductor_evidence_diagnostic.py",
+        test_script="tests/test_research_closed_loop_v1.py",
+        before=(
+            '    # governance-mutation: SEMICONDUCTOR_DIAGNOSTIC_SELECTION_FLOOR\n'
+            '    elif counts["semiconductor_u4_ready_rows"] < 3:'
+        ),
+        after=(
+            '    # governance-mutation: SEMICONDUCTOR_DIAGNOSTIC_SELECTION_FLOOR\n'
+            '    elif counts["semiconductor_u4_ready_rows"] < 1:'
+        ),
+        expected_failure_marker="test_semiconductor_ready_pool_below_selection_floor_is_blocked",
+        rationale="A 1-2 name ready pool cannot be relabeled as enough for the human U4 selection floor.",
     ),
 )
 

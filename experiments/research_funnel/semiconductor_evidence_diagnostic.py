@@ -9,9 +9,10 @@ call models, create paper orders, or write production state.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any, Mapping, Sequence
 
 
 DIAGNOSTIC_SCHEMA = "ar.semiconductor_u1_u3_diagnostic.v0"
@@ -19,6 +20,10 @@ EXPECTED_ARTIFACT = "AR_SEMICONDUCTOR_WORKFLOW_DEBUG_INTAKE_RECEIPT"
 EXPECTED_METHOD = "RESEARCH_CLOSED_LOOP_V1"
 EXPECTED_MODE = "OFFLINE_WORKFLOW_DEBUG"
 DISCLAIMER = "不是买卖指令；研究信号，human executes."
+RED_FLAG_REASON_CODES = {
+    "NEGATIVE_AND_WORSENING_QUARTER_PROFIT",
+    "NEGATIVE_ISSUER_GUIDANCE",
+}
 
 
 class DiagnosticError(RuntimeError):
@@ -45,6 +50,16 @@ def _require_nonnegative_int(value: Any, field: str) -> int:
     if isinstance(value, bool) or not isinstance(value, int) or value < 0:
         raise DiagnosticError(f"{field} must be a nonnegative integer")
     return value
+
+
+def _canonical(value: Any) -> bytes:
+    return json.dumps(
+        value, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False
+    ).encode("utf-8")
+
+
+def _hash(value: Any) -> str:
+    return hashlib.sha256(_canonical(value)).hexdigest()
 
 
 def _validate_authority(intake: Mapping[str, Any]) -> Mapping[str, Any]:
@@ -95,6 +110,41 @@ def _validate_intake(intake: Mapping[str, Any]) -> None:
     _require_mapping(intake.get("next_gate"), "next_gate")
 
 
+def _reason_codes(row: Mapping[str, Any]) -> list[str]:
+    value = row.get("reason_codes")
+    if not isinstance(value, Sequence) or isinstance(value, (str, bytes)):
+        raise DiagnosticError("evidence_rows.reason_codes must be a list")
+    codes = []
+    for code in value:
+        if not isinstance(code, str) or not code:
+            raise DiagnosticError("evidence_rows.reason_codes must contain nonempty strings")
+        codes.append(code)
+    return codes
+
+
+def _evidence_counts(intake: Mapping[str, Any]) -> dict[str, int]:
+    rows = intake.get("evidence_rows")
+    if not isinstance(rows, list):
+        raise DiagnosticError("evidence_rows must be a list")
+    # governance-mutation: SEMICONDUCTOR_DIAGNOSTIC_EVIDENCE_HASH
+    if intake.get("evidence_rows_hash") != _hash(rows):
+        raise DiagnosticError("evidence_rows_hash mismatch")
+
+    red_flag_only = 0
+    for row in rows:
+        if not isinstance(row, Mapping):
+            raise DiagnosticError("evidence_rows entries must be objects")
+        codes = _reason_codes(row)
+        if codes and set(codes).issubset(RED_FLAG_REASON_CODES):
+            red_flag_only += 1
+    total = len(rows)
+    return {
+        "semiconductor_u2_rows": total,
+        "semiconductor_red_flag_only_rows": red_flag_only,
+        "semiconductor_positive_channel_rows": total - red_flag_only,
+    }
+
+
 def build_diagnostic(intake: Mapping[str, Any]) -> dict[str, Any]:
     _validate_intake(intake)
     source_bindings = _require_mapping(intake["source_bindings"], "source_bindings")
@@ -122,6 +172,14 @@ def build_diagnostic(intake: Mapping[str, Any]) -> dict[str, Any]:
             "screening_result.semiconductor_u4_ready_rows",
         ),
     }
+    evidence_counts = _evidence_counts(intake)
+    for key, expected in evidence_counts.items():
+        # governance-mutation: SEMICONDUCTOR_DIAGNOSTIC_SELF_REPORT_CROSSCHECK
+        if counts[key] != expected:
+            raise DiagnosticError(
+                f"RECEIPT_SELF_REPORT_MISMATCH: {key} screening_result={counts[key]} "
+                f"evidence_rows={expected}"
+            )
 
     health = _require_mapping(source_bindings.get("funnel_health"), "source_bindings.funnel_health")
     degraded = _require_mapping(health.get("degraded_channels"), "funnel_health.degraded_channels")
@@ -132,6 +190,7 @@ def build_diagnostic(intake: Mapping[str, Any]) -> dict[str, Any]:
             degraded_channels[str(channel)] = count
 
     blockers: list[dict[str, Any]] = []
+    # governance-mutation: SEMICONDUCTOR_DIAGNOSTIC_RED_FLAG_ONLY_BLOCKER
     if counts["semiconductor_red_flag_only_rows"]:
         blockers.append({
             "code": "RED_FLAG_ONLY_COHORT",
@@ -153,6 +212,7 @@ def build_diagnostic(intake: Mapping[str, Any]) -> dict[str, Any]:
             "code": "EMPTY_U4_READY_POOL",
             "detail": "no semiconductor row reached the U4 ready pool",
         })
+    # governance-mutation: SEMICONDUCTOR_DIAGNOSTIC_SELECTION_FLOOR
     elif counts["semiconductor_u4_ready_rows"] < 3:
         blockers.append({
             "code": "U4_READY_POOL_BELOW_HUMAN_SELECTION_FLOOR",
