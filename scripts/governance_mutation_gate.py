@@ -1363,16 +1363,19 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="Source hashes must be recomputed from rows and explicit gaps, not trusted as labels.",
     ),
     MutationCase(
-        mutation_id="SEMICONDUCTOR_INDUSTRY_NODE_NO_TRIGGER",
+        mutation_id="SEMICONDUCTOR_INDUSTRY_NODE_PARTIAL",
         component="Research funnel semiconductor industry evidence boundary",
         source_path="experiments/research_funnel/funnel_pipeline.py",
         test_script="tests/test_semiconductor_positive_inputs.py",
-        before="            sector_hit = False",
-        after="            sector_hit = True",
+        before='            sector_status = "PARTIAL" if alias_rows else "DATA_BLOCKED"',
+        after='            sector_status = "COMPLETE" if alias_rows else "DATA_BLOCKED"',
         expected_failure_marker=(
             "test_positive_channels_are_real_but_e1_red_flag_still_excludes"
         ),
-        rationale="Industry aliases are context only until an issuer value-chain node is registered.",
+        rationale=(
+            "Industry aliases remain PARTIAL context until an issuer value-chain node is registered; "
+            "the general trigger-requires-COMPLETE gate separately prevents degraded evidence from firing."
+        ),
     ),
     MutationCase(
         mutation_id="SEMICONDUCTOR_HEALTH_QUALITY_ROLLUP",
@@ -5233,7 +5236,7 @@ MUTATIONS = MUTATIONS + (
         test_script="tests/test_research_closed_loop_v1.py",
         before=(
             '    {"path": "experiments/research_funnel/semiconductor_inputs.py", '
-            '"sha256": "sha256:7c833ae836a6b62ff86e19ab43c4a2a0fdd595883c6aadc1706e59bb61459acf"},'
+            '"sha256": "sha256:f438d27542211ed118ba458e0cde84495174847857201df4011e8e853c7d298f"},'
         ),
         after=(
             '    {"path": "experiments/research_funnel/semiconductor_inputs.py", '

@@ -6,7 +6,8 @@
     "A Core Research Funnel",
     "R-008 Point-in-Time Feature Store",
     "U1 Semiconductor Positive Evidence",
-    "U2/U3/U4 Workflow-Debug Packet"
+    "U2/U3/U4 Workflow-Debug Packet",
+    "Research Closed Loop V1.1 Revision"
   ],
   "objective": "Add point-in-time semiconductor price-volume, fund-flow/chip, fundamental-valuation, and industry-level value-chain context to the production research funnel while preserving the E1 red-flag exclusion and Junyan-only U4 selection boundary; issuer-node gaps remain explicit PARTIAL until a registered point-in-time mapping exists.",
   "non_goals": [
@@ -43,8 +44,11 @@
     "tests/test_research_funnel_closure.py",
     "tests/test_funnel_dag_offline.py",
     "tests/test_nightly_v4_adversarial.py",
+    "tests/test_research_closed_loop_v1.py",
     "tests/test_u4_decision_ledger.py",
     "tests/test_no_network_guard.py",
+    "docs/research/RESEARCH_CLOSED_LOOP_V1.md",
+    "docs/research/contracts/research_closed_loop.v1.json",
     "scripts/governance_mutation_gate.py",
     ".github/workflows/python-ci.yml",
     "scripts/llm/fixtures/semiconductor_positive_inputs_v1.task.json"

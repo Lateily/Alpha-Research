@@ -45,12 +45,16 @@ def _validate(manifest: dict[str, Any]) -> list[str]:
         errors.append("top-level contract surface changed")
     if manifest.get("schema") != "ar.research_closed_loop_manifest.v1":
         errors.append("schema changed")
-    if manifest.get("method_version") != "RESEARCH_CLOSED_LOOP_V1":
+    if manifest.get("schema_version") != "1.1":
+        errors.append("manifest revision changed")
+    if manifest.get("method_version") != "RESEARCH_CLOSED_LOOP_V1_1":
         errors.append("method version changed")
     if manifest.get("status") != "FROZEN_OFFLINE_WORKFLOW_DEBUG":
         errors.append("frozen status changed")
     if manifest.get("source_base") != {
-        "git_commit": "4d77a21fedf4247a737dfb8891a3210789beb291",
+        "assembly_code_commit": "af6a0175660176eccf1fc93a375dfa8e091c514a",
+        "base_main": "a83a5d87cb660b579a295b3a2540977bf1f2f398",
+        "review_pr": 306,
         "data_dependency_pr": 297,
         "data_dependency_status": "MERGED_MAIN",
     }:
@@ -148,6 +152,19 @@ class ResearchClosedLoopV1Tests(unittest.TestCase):
             self.assertTrue(path.is_file(), row["path"])
             self.assertEqual(row["sha256"], _sha(path), row["path"])
 
+    def test_revision_1_1_binds_the_semiconductor_screening_assembly(self) -> None:
+        self.assertEqual(self.manifest["schema_version"], "1.1")
+        self.assertEqual(self.manifest["method_version"], "RESEARCH_CLOSED_LOOP_V1_1")
+        bound = {row["path"] for row in self.manifest["artifact_bindings"]}
+        self.assertTrue({
+            "docs/research/RESEARCH_CLOSED_LOOP_V1.md",
+            "experiments/research_funnel/funnel_pipeline.py",
+            "experiments/research_funnel/feature_store.py",
+            "experiments/research_funnel/funnel_dag.py",
+            "experiments/research_funnel/semiconductor_inputs.py",
+            "experiments/research_funnel/industry_taxonomy.v1.json",
+        }.issubset(bound))
+
     def test_authority_cannot_be_promoted(self) -> None:
         self.assertEqual(
             self.manifest["authority"],
@@ -232,7 +249,9 @@ class ResearchClosedLoopV1Tests(unittest.TestCase):
         self.assertEqual(task["risk_level"], "CONSTITUTIONAL")
         text = DOC_PATH.read_text(encoding="utf-8")
         normalized = " ".join(text.split())
+        self.assertIn("Research Closed Loop V1.1", normalized)
         self.assertIn("FROZEN_OFFLINE_WORKFLOW_DEBUG / PRODUCTION_UNWIRED", normalized)
+        self.assertIn("E1 red flags override every positive channel", normalized)
         self.assertIn("first five to ten semiconductor prospective cycles", normalized)
         self.assertIn("30 independent", normalized)
         self.assertIn("requires the method to reproduce across industries", normalized)
