@@ -42,6 +42,7 @@
     "tests/test_semiconductor_positive_inputs.py",
     "tests/test_research_funnel_closure.py",
     "tests/test_funnel_dag_offline.py",
+    "tests/test_nightly_v4_adversarial.py",
     "tests/test_u4_decision_ledger.py",
     "tests/test_no_network_guard.py",
     "scripts/governance_mutation_gate.py",
