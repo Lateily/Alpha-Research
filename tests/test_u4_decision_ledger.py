@@ -68,6 +68,10 @@ def _build_source_evidence(root: Path) -> tuple[Path, dict, dict, dict[str, tupl
         dims = {
             name: {"fixture": True} for name in funnel.BATTERY_DIMENSIONS
         }
+        dims["基本面"] = {
+            "fixture": True,
+            "红旗闸门": "PASS",
+        }
         if code == blocked_code:
             dims["基本面"] = {"status": "DATA_BLOCKED", "err": "fixture evidence unavailable"}
         missing = [name for name, evidence in dims.items() if evidence.get("status") == "DATA_BLOCKED"]

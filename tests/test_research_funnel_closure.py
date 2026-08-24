@@ -175,7 +175,14 @@ def battery_fixture(codes: list[str], trade_date: str = TRADE_DATE) -> dict:
     return {
         "target_trade_date": trade_date,
         "data": {"results": [
-            {"ts_code": code, "completeness": {"verdict": "COMPLETE"}}
+            {
+                "ts_code": code,
+                "dims": {
+                    **{name: {"fixture": True} for name in fp.BATTERY_DIMENSIONS},
+                    "基本面": {"fixture": True, "红旗闸门": "PASS"},
+                },
+                "completeness": {"verdict": "COMPLETE"},
+            }
             for code in codes
         ]},
     }
@@ -601,6 +608,48 @@ class ResearchFunnelClosureTests(unittest.TestCase):
                 generated_at=GENERATED_AT,
                 research_questions={
                     code: f"What causal fact could invalidate {code}?" for code in [red, *clean]
+                },
+            )
+
+    def test_u3_fundamental_red_flag_blocks_u4_even_when_u2_is_clean(self) -> None:
+        _, _, _, candidates = build_candidates()
+        clean = [
+            row["ts_code"]
+            for row in candidates["rows"]
+            if "RED_FLAG" not in row["flags"]
+        ][:3]
+        battery = battery_fixture(clean)
+        battery["data"]["results"][0]["dims"]["基本面"] = {
+            "红旗闸门": "RED_FLAG",
+            "红旗理由": ["fixture negative earnings guidance"],
+            "最新E1日期": TRADE_DATE,
+        }
+
+        waiting = fp.build_deep_research_queue(
+            candidate_review=candidates,
+            battery=battery,
+            selected_tickers=(),
+            trade_date=TRADE_DATE,
+            generated_at=GENERATED_AT,
+        )
+        flagged = next(row for row in waiting["ready_pool"] if row["ts_code"] == clean[0])
+        self.assertNotEqual("EXCLUDED_RED_FLAG", flagged["candidate_status"])
+        self.assertEqual("COMPLETE", flagged["battery_verdict"])
+        self.assertIs(flagged["ready"], False)
+        self.assertEqual(
+            ["E1_RED_FLAG_REQUIRES_SEPARATE_REVIEW"],
+            flagged["blocked_reasons"],
+        )
+
+        with self.assertRaisesRegex(fp.FunnelError, "not backed"):
+            fp.build_deep_research_queue(
+                candidate_review=candidates,
+                battery=battery,
+                selected_tickers=clean,
+                trade_date=TRADE_DATE,
+                generated_at=GENERATED_AT,
+                research_questions={
+                    code: f"What causal fact could invalidate {code}?" for code in clean
                 },
             )
 

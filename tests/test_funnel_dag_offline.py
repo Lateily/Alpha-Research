@@ -48,6 +48,7 @@ def real_scan_and_candidates():
 
 def complete_row(tk: str, today: str = TARGET) -> dict:
     dims = {d: {"ok": True} for d in fp.BATTERY_DIMENSIONS}
+    dims["基本面"] = {"ok": True, "红旗闸门": "PASS"}
     return {"ts_code": tk, "checked_at": today, "dims": dims,
             "completeness": {"covered": 6, "of": 6, "missing": [], "verdict": "COMPLETE"}}
 
@@ -175,6 +176,17 @@ class BatteryCoverageTests(unittest.TestCase):
             "covered": 6, "of": 6, "missing": [], "verdict": "COMPLETE",
         }
         with self.assertRaisesRegex(FunnelError, "completeness does not match"):
+            fp.validate_candidate_battery(battery_for(self.manifest, rows), self.manifest)
+
+    def test_complete_fundamental_dimension_requires_a_red_flag_verdict(self) -> None:
+        rows = [complete_row(tk) for tk in self.codes]
+        del rows[0]["dims"]["基本面"]["红旗闸门"]
+        with self.assertRaisesRegex(FunnelError, "fundamental red-flag verdict"):
+            fp.validate_candidate_battery(battery_for(self.manifest, rows), self.manifest)
+
+        rows = [complete_row(tk) for tk in self.codes]
+        rows[0]["dims"]["基本面"]["红旗闸门"] = "PASS"
+        with self.assertRaisesRegex(FunnelError, "fundamental red-flag verdict"):
             fp.validate_candidate_battery(battery_for(self.manifest, rows), self.manifest)
 
 

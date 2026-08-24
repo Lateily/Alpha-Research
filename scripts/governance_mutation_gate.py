@@ -1633,6 +1633,38 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="U4 and U0 cannot advance a candidate using a stale U3 battery artifact.",
     ),
     MutationCase(
+        mutation_id="FUNNEL_U3_RED_FLAG_VERDICT_REQUIRED",
+        component="Research funnel U3 fundamental red-flag contract",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_funnel_dag_offline.py",
+        before='    if verdict not in U3_RED_FLAG_VERDICTS:\n'
+        '        raise FunnelError(f"U3 battery fundamental red-flag verdict is invalid: {code}")',
+        after='    if False:\n'
+        '        raise FunnelError(f"U3 battery fundamental red-flag verdict is invalid: {code}")',
+        expected_failure_marker=(
+            "test_complete_fundamental_dimension_requires_a_red_flag_verdict"
+        ),
+        rationale=(
+            "A complete U3 fundamental dimension must carry the closed E1 red-flag verdict, "
+            "rather than treating missing or invented labels as clean evidence."
+        ),
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_U4_U3_RED_FLAG_PROPAGATION",
+        component="Research funnel U3-to-U4 red-flag propagation",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_research_funnel_closure.py",
+        before="        u3_red_flag = _u3_fundamental_red_flag_active(battery_row)",
+        after="        u3_red_flag = False",
+        expected_failure_marker=(
+            "test_u3_fundamental_red_flag_blocks_u4_even_when_u2_is_clean"
+        ),
+        rationale=(
+            "Six-dimensional completeness is coverage, not approval; a U3 E1 red flag must "
+            "remain blocked even when U2 positive channels were clean."
+        ),
+    ),
+    MutationCase(
         mutation_id="FUNNEL_U4_HUMAN_SELECTION_SIZE",
         component="Research funnel U4 authority",
         source_path="experiments/research_funnel/funnel_pipeline.py",
