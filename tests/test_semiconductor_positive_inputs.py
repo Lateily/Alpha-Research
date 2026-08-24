@@ -668,6 +668,26 @@ class SemiconductorFunnelTests(unittest.TestCase):
         with self.assertRaisesRegex(fp.FunnelError, "COMPLETE evidence"):
             fp.validate_all_market_scan(promoted_partial, registry)
 
+    def test_semiconductor_industry_context_cannot_be_coordinately_promoted(self) -> None:
+        registry, scan = semiconductor_scan_fixture()
+        promoted_context = copy.deepcopy(scan)
+        industry_row = next(
+            row for row in promoted_context["rows"]
+            if row["ts_code"] == CODES[1]
+            and row["channel"] == "INDUSTRY_VALUE_CHAIN"
+        )
+        industry_row["data_status"] = "COMPLETE"
+        industry_row["triggered"] = True
+        industry_row["entry_reasons"] = [{
+            "channel": "INDUSTRY_VALUE_CHAIN",
+            "metric": "fabricated_issuer_context",
+            "value": 1,
+            "threshold": "POSITIVE",
+        }]
+        promoted_context["rows_hash"] = fp._hash(promoted_context["rows"])
+        with self.assertRaisesRegex(fp.FunnelError, "issuer-node context"):
+            fp.validate_all_market_scan(promoted_context, registry)
+
     def test_missing_sources_are_per_security_data_blocked_not_silent_absence(self) -> None:
         registry = registry_fixture()
         with tempfile.TemporaryDirectory() as tmp:

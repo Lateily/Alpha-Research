@@ -783,6 +783,49 @@ def build_all_market_scan(
     return payload
 
 
+def _validate_semiconductor_industry_context(
+    row: Mapping[str, Any], *, as_of: str,
+) -> None:
+    values = row.get("feature_values")
+    expected_value_keys = {
+        "industry_key",
+        "canonical_id",
+        "rotation_aliases",
+        "observed_aliases",
+        "issuer_value_chain_node",
+        "mapping_scope",
+    }
+    if not isinstance(values, Mapping) or set(values) != expected_value_keys:
+        raise FunnelError("semiconductor industry context fields are not exact")
+    aliases = values.get("rotation_aliases")
+    observed = values.get("observed_aliases")
+    if (
+        values.get("industry_key") != semiconductor_evidence.SEMICONDUCTOR_INDUSTRY_KEY
+        or values.get("canonical_id") != "SEMICONDUCTOR"
+        or values.get("issuer_value_chain_node") is not None
+        or values.get("mapping_scope") != "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_NODE_CLAIM"
+        or not isinstance(aliases, list)
+        or not aliases
+        or not all(isinstance(alias, str) and alias for alias in aliases)
+        or not isinstance(observed, list)
+    ):
+        raise FunnelError("semiconductor issuer-node context boundary changed")
+    expected_status = "PARTIAL" if observed else "DATA_BLOCKED"
+    expected_reasons = (
+        ["ISSUER_VALUE_CHAIN_NODE_UNREGISTERED"]
+        if observed else ["SEMICONDUCTOR_ROTATION_ALIAS_EVIDENCE_MISSING"]
+    )
+    expected_source_as_of = as_of if observed else None
+    if (
+        row.get("data_status") != expected_status
+        or row.get("triggered") is not False
+        or row.get("entry_reasons") != []
+        or row.get("reason_codes") != expected_reasons
+        or row.get("source_as_of") != expected_source_as_of
+    ):
+        raise FunnelError("semiconductor issuer-node context cannot trigger or claim completeness")
+
+
 def validate_all_market_scan(payload: Mapping[str, Any], registry: Mapping[str, Any]) -> None:
     if payload.get("schema") != SCAN_SCHEMA or payload.get("schema_version") != SCHEMA_VERSION:
         raise FunnelError("all_market_scan schema/version mismatch")
@@ -795,7 +838,8 @@ def validate_all_market_scan(payload: Mapping[str, Any], registry: Mapping[str, 
     rows = payload.get("rows")
     if not isinstance(rows, list) or payload.get("rows_hash") != _hash(rows):
         raise FunnelError("all_market_scan rows/hash mismatch")
-    eligible = {row["ts_code"] for row in _eligible_rows(registry)}
+    eligible_rows = {row["ts_code"]: row for row in _eligible_rows(registry)}
+    eligible = set(eligible_rows)
     as_of = _date8(str(payload.get("as_of") or ""))
     if registry.get("as_of") != as_of:
         raise FunnelError("all_market_scan is not from the U0 registry as_of")
@@ -835,6 +879,13 @@ def validate_all_market_scan(payload: Mapping[str, Any], registry: Mapping[str, 
         # governance-mutation: FUNNEL_U1_TRIGGER_REQUIRES_COMPLETE
         if row["triggered"] and row["data_status"] != "COMPLETE":
             raise FunnelError("positive channel trigger requires COMPLETE evidence")
+        if (
+            row["channel"] == "INDUSTRY_VALUE_CHAIN"
+            and eligible_rows[row["ts_code"]].get("industry_key")
+            == semiconductor_evidence.SEMICONDUCTOR_INDUSTRY_KEY
+        ):
+            # governance-mutation: FUNNEL_U1_SEMICONDUCTOR_INDUSTRY_CONTEXT
+            _validate_semiconductor_industry_context(row, as_of=as_of)
         if row["channel"] == "E1_EVENT":
             verdict = (row.get("feature_values") or {}).get("verdict")
             expected_trigger = verdict == "RED_FLAG"

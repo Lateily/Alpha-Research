@@ -1378,6 +1378,21 @@ MUTATIONS: tuple[MutationCase, ...] = (
         ),
     ),
     MutationCase(
+        mutation_id="FUNNEL_U1_SEMICONDUCTOR_INDUSTRY_CONTEXT",
+        component="Research funnel semiconductor issuer-node boundary",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_semiconductor_positive_inputs.py",
+        before="            _validate_semiconductor_industry_context(row, as_of=as_of)",
+        after="            pass",
+        expected_failure_marker=(
+            "test_semiconductor_industry_context_cannot_be_coordinately_promoted"
+        ),
+        rationale=(
+            "Registry-identified semiconductor rows cannot promote industry aliases into issuer-level "
+            "COMPLETE evidence or positive triggers without a registered value-chain node."
+        ),
+    ),
+    MutationCase(
         mutation_id="SEMICONDUCTOR_HEALTH_QUALITY_ROLLUP",
         component="Research funnel semiconductor public health",
         source_path="experiments/research_funnel/feature_store.py",
