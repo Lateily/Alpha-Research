@@ -1,10 +1,28 @@
 {
-  "fetched_at": "2026-08-21T09:07:04Z",
+  "fetched_at": "2026-08-24T02:26:20Z",
   "permission_model": "runtime_probe",
   "_status": "ok",
   "data": {
     "trade_cal": {
       "rows": [
+        {
+          "exchange": "SSE",
+          "cal_date": "20260824",
+          "is_open": 1,
+          "pretrade_date": "20260821"
+        },
+        {
+          "exchange": "SSE",
+          "cal_date": "20260823",
+          "is_open": 0,
+          "pretrade_date": "20260821"
+        },
+        {
+          "exchange": "SSE",
+          "cal_date": "20260822",
+          "is_open": 0,
+          "pretrade_date": "20260821"
+        },
         {
           "exchange": "SSE",
           "cal_date": "20260821",
@@ -1404,12 +1422,21 @@
           "pretrade_date": "20251231"
         }
       ],
-      "row_count": 233,
+      "row_count": 236,
       "_status": "ok",
-      "as_of": "20260821"
+      "as_of": "20260824"
     },
     "moneyflow_hsgt": {
       "rows": [
+        {
+          "trade_date": "20260821",
+          "ggt_ss": "31786.1",
+          "ggt_sz": "22864.07",
+          "hgt": "125846.52",
+          "sgt": "142241.02",
+          "north_money": "268087.54",
+          "south_money": "54650.16"
+        },
         {
           "trade_date": "20260820",
           "ggt_ss": "31837.43",
@@ -1769,38 +1796,11 @@
           "sgt": "235797.34",
           "north_money": "423857.96",
           "south_money": "54106.24"
-        },
-        {
-          "trade_date": "20260624",
-          "ggt_ss": "31235.54",
-          "ggt_sz": "22959.44",
-          "hgt": "187730.5",
-          "sgt": "236625.32",
-          "north_money": "424355.82",
-          "south_money": "54194.99"
-        },
-        {
-          "trade_date": "20260623",
-          "ggt_ss": "31102.98",
-          "ggt_sz": "22934.5",
-          "hgt": "201976.99",
-          "sgt": "241994.58",
-          "north_money": "443971.57",
-          "south_money": "54037.48"
-        },
-        {
-          "trade_date": "20260622",
-          "ggt_ss": "31032.13",
-          "ggt_sz": "22901.64",
-          "hgt": "220128.27",
-          "sgt": "262049.14",
-          "north_money": "482177.41",
-          "south_money": "53933.77"
         }
       ],
-      "row_count": 43,
+      "row_count": 41,
       "_status": "ok",
-      "as_of": "20260820"
+      "as_of": "20260821"
     }
   }
 }
