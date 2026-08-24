@@ -5322,6 +5322,65 @@ MUTATIONS = MUTATIONS + (
         expected_failure_marker="test_method_gate_requires_thirty_independent_clusters_and_replication",
         rationale="A method cannot enter portfolio construction after working in only one industry.",
     ),
+    MutationCase(
+        mutation_id="NIGHTLY_PER_TICKER_EVIDENCE_QUALITY",
+        component="Nightly per-ticket evidence quality rollup",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_nightly_v4_adversarial.py",
+        before=(
+            "    # governance-mutation: NIGHTLY_PER_TICKER_EVIDENCE_QUALITY\n"
+            "    if (step not in RESEARCH_DATA_STEPS | MACRO_DATA_STEPS | FUNNEL_DATA_STEPS\n"
+            "            | PER_TICKER_EVIDENCE_STEPS"
+        ),
+        after=(
+            "    # governance-mutation: NIGHTLY_PER_TICKER_EVIDENCE_QUALITY\n"
+            "    if (step not in RESEARCH_DATA_STEPS | MACRO_DATA_STEPS | FUNNEL_DATA_STEPS\n"
+            "            | set()"
+        ),
+        expected_failure_marker="test_partial_battery_is_publishable_quality_and_still_blocks_ticket",
+        rationale=(
+            "Valid per-ticket evidence gaps must remain visible in the top-level quality rollup "
+            "without becoming publication failures."
+        ),
+    ),
+    MutationCase(
+        mutation_id="NIGHTLY_FULL_BATTERY_PARTIAL_PUBLISHABLE",
+        component="Nightly full-battery process/evidence separation",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_nightly_v4_adversarial.py",
+        before=(
+            "        # governance-mutation: NIGHTLY_FULL_BATTERY_PARTIAL_PUBLISHABLE\n"
+            "        return \"OK\", \"\""
+        ),
+        after=(
+            "        # governance-mutation: NIGHTLY_FULL_BATTERY_PARTIAL_PUBLISHABLE\n"
+            "        return \"PARTIAL\", \"one or more tickets are data blocked\""
+        ),
+        expected_failure_marker="test_partial_battery_is_publishable_quality_and_still_blocks_ticket",
+        rationale=(
+            "A structurally valid battery containing an explicitly blocked ticket remains a "
+            "successful process artifact; the ticket itself must still be rejected downstream."
+        ),
+    ),
+    MutationCase(
+        mutation_id="NIGHTLY_PROMOTER_PARTIAL_PUBLISHABLE",
+        component="Nightly promoter process/evidence separation",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_nightly_v4_adversarial.py",
+        before=(
+            "        # governance-mutation: NIGHTLY_PROMOTER_PARTIAL_PUBLISHABLE\n"
+            "        return \"OK\", \"\""
+        ),
+        after=(
+            "        # governance-mutation: NIGHTLY_PROMOTER_PARTIAL_PUBLISHABLE\n"
+            "        return \"PARTIAL\", \"one or more tickets remain blocked\""
+        ),
+        expected_failure_marker="test_partial_promoter_is_publishable_quality",
+        rationale=(
+            "Per-ticket promoter rejections must be published as evidence quality, not promoted "
+            "into a whole-step failure that skips court and freezes the nightly publication."
+        ),
+    ),
 )
 
 
