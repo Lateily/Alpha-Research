@@ -304,11 +304,25 @@ class ArtifactVerificationTest(unittest.TestCase):
         self.assertEqual(v, "FAILED")
 
     def test_battery_partial_detected(self):
-        """B3:battery 内部 PARTIAL 不得被整轮 COMPLETE 掩盖。"""
+        """B3:逐票 PARTIAL 上浮为质量缺口,但不伪装成整步失败。"""
         self._w("battery.json", {"checked_at": "20260805", "results": [
-            {"ts_code": "x", "completeness": {"verdict": "PARTIAL"}}]})
-        v, _ = self.rn.verify_step_artifacts("full_battery", "20260805", self.start, self.tmp)
-        self.assertEqual(v, "PARTIAL")
+            {
+                "ts_code": "x",
+                "dims": {
+                    "行情": {"value": 1},
+                    "资金": {"value": 1},
+                    "基本面": {"value": 1},
+                    "技术面": {"status": "DATA_BLOCKED", "err": "K线不足60根"},
+                    "消息面": {"value": 1},
+                    "估值": {"value": 1},
+                },
+                "completeness": {"verdict": "PARTIAL"},
+            }]})
+        v, details = self.rn.verify_step_artifacts(
+            "full_battery", "20260805", self.start, self.tmp
+        )
+        self.assertEqual(v, "OK", details)
+        self.assertEqual(details[0].get("quality_status"), "PARTIAL")
 
     def test_run_target_must_be_fresh(self):
         p = self._w("run_target.json", {"trade_date": "20260805"})

@@ -28,6 +28,7 @@ import registry  # noqa: E402
 import run_nightly as nightly  # noqa: E402
 import run_official_sample as official  # noqa: E402
 import nightly_publish  # noqa: E402
+import setup_promoter  # noqa: E402
 
 RF = ROOT / "experiments" / "research_funnel"
 sys.path.insert(0, str(RF))
@@ -1550,6 +1551,104 @@ class ResearchDataLaneTest(unittest.TestCase):
                 persistent_feature_db="/tmp/ar-feature-store-test.sqlite3",
             )
         self.assertEqual("/tmp/ar-feature-store-test.sqlite3", captured["db"])
+
+
+class PerTickerEvidenceLaneTest(unittest.TestCase):
+    TARGET = "20260824"
+    RUN_ID = "RUN-EVIDENCE-QUALITY"
+    DIMS = {"行情", "资金", "基本面", "技术面", "消息面", "估值"}
+
+    def _battery(self, *, partial: bool = True):
+        dims = {name: {"value": 1} for name in self.DIMS}
+        if partial:
+            dims["技术面"] = {"status": "DATA_BLOCKED", "err": "K线不足60根"}
+        return {
+            "checked_at": self.TARGET,
+            "target_trade_date": self.TARGET,
+            "run_id": self.RUN_ID,
+            "results": [{
+                "ts_code": "920206.BJ",
+                "dims": dims,
+                "completeness": {
+                    "covered": 5 if partial else 6,
+                    "of": 6,
+                    "missing": ["技术面"] if partial else [],
+                    "verdict": "PARTIAL" if partial else "COMPLETE",
+                },
+            }],
+        }
+
+    def test_partial_battery_is_publishable_quality_and_still_blocks_ticket(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            payload = self._battery()
+            write_json(os.path.join(tmp, "battery.json"), payload)
+            status, details = nightly.verify_step_artifacts(
+                "full_battery", self.TARGET, time.time() - 1, tmp, self.RUN_ID
+            )
+            self.assertEqual("OK", status, details)
+            self.assertEqual("PARTIAL", details[0].get("quality_status"))
+
+            blocked, trace = setup_promoter.qc_decide({
+                "red_by": {"920206.BJ": "PASS"},
+                "red_fresh": "FRESH",
+                "bat_by": {"920206.BJ": {
+                    "verdict": "PARTIAL", "blocked_dims": ["技术面"],
+                }},
+                "bat_fresh": "FRESH",
+            }, "920206.BJ")
+            self.assertEqual("BLOCKED_DATA_QUALITY", blocked)
+            self.assertEqual("PARTIAL", trace["battery"])
+
+    def test_malformed_battery_still_fails_the_process_contract(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            payload = self._battery()
+            del payload["results"][0]["dims"]["估值"]
+            write_json(os.path.join(tmp, "battery.json"), payload)
+            status, _ = nightly.verify_step_artifacts(
+                "full_battery", self.TARGET, time.time() - 1, tmp, self.RUN_ID
+            )
+            self.assertEqual("FAILED", status)
+
+    def test_partial_promoter_is_publishable_quality(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            write_json(os.path.join(tmp, "promotion_queue.json"), {
+                "as_of": self.TARGET,
+                "target_trade_date": self.TARGET,
+                "run_id": self.RUN_ID,
+                "queue": [{"ticker": "920206.BJ", "verdict": "BLOCKED_DATA_QUALITY"}],
+                "data_blocked": [{"ticker": "920206.BJ", "why": "K线不足60根"}],
+            })
+            status, details = nightly.verify_step_artifacts(
+                "setup_promoter", self.TARGET, time.time() - 1, tmp, self.RUN_ID
+            )
+            self.assertEqual("OK", status, details)
+            self.assertEqual("PARTIAL", details[0]["quality_status"])
+
+    def test_partial_per_ticket_evidence_reaches_rollup_without_veto(self) -> None:
+        def verify(step, *_args, **_kwargs):
+            detail = {"artifact": f"{step}.json", "verdict": "OK", "why": ""}
+            if step in ("full_battery", "setup_promoter"):
+                detail["quality_status"] = "PARTIAL"
+            return "OK", [detail]
+
+        with tempfile.TemporaryDirectory() as tmp:
+            with (
+                mock.patch.object(nightly, "read_run_target", return_value=self.TARGET),
+                mock.patch.object(nightly, "verify_step_artifacts", side_effect=verify),
+            ):
+                result = nightly.run_steps(
+                    runner=lambda _cmd: (0, "ok"),
+                    require_live=False,
+                    verify=True,
+                    base=tmp,
+                    run_id=self.RUN_ID,
+                )
+        statuses = {row["step"]: row["status"] for row in result["steps"]}
+        self.assertEqual("COMPLETE", result["report"])
+        self.assertEqual("PARTIAL", result["research_data_quality"])
+        self.assertEqual("OK", statuses["full_battery"])
+        self.assertEqual("OK", statuses["setup_promoter"])
+        self.assertEqual("OK", statuses["court_10d"])
 
 
 class RuleCompletenessTest(unittest.TestCase):
