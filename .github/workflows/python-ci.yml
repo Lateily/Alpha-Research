@@ -81,6 +81,10 @@ jobs:
       # 覆盖:registry 自检 · 两条注册路径确实打戳 · 账本挂掉时登记被拒且信号不落盘
       - name: Registry schema v2 + ledger wiring regression
         run: python3 tests/test_registry_schema_v2.py
+      # A transient TLS EOF previously stopped the entire 2026-08-21 nightly run.
+      # Retry only transport failures; HTTP/API/schema failures remain fail-closed.
+      - name: Official sample transport retry regression (offline)
+        run: python3 tests/test_fund_source_transport.py
       # R-043:已发布 manifest 合法迁移。覆盖审批绑定、同锁、WAL 崩溃恢复、
       # TOCTOU、双 manifest 留档与旧 run_id 拒绝。
       - name: Publication manifest migration regression (offline)
