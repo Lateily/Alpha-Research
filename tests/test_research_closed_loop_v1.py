@@ -3,8 +3,12 @@
 
 from __future__ import annotations
 
+import copy
 import hashlib
 import json
+import subprocess
+import sys
+import tempfile
 import unittest
 from pathlib import Path
 from typing import Any
@@ -14,6 +18,19 @@ ROOT = Path(__file__).resolve().parents[1]
 MANIFEST_PATH = ROOT / "docs/research/contracts/research_closed_loop.v1.json"
 DOC_PATH = ROOT / "docs/research/RESEARCH_CLOSED_LOOP_V1.md"
 TASK_PATH = ROOT / "scripts/llm/fixtures/research_closed_loop_v1.task.json"
+SEMICONDUCTOR_INTAKE_PATH = (
+    ROOT
+    / "docs"
+    / "research"
+    / "prospective"
+    / "semiconductor_workflow_debug_001_20260820.json"
+)
+SEMICONDUCTOR_DIAGNOSTIC_SCRIPT = (
+    ROOT / "experiments" / "research_funnel" / "semiconductor_evidence_diagnostic.py"
+)
+
+sys.path.insert(0, str(ROOT / "experiments" / "research_funnel"))
+import semiconductor_evidence_diagnostic as semiconductor_diag  # noqa: E402
 
 
 def _strict_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
@@ -255,6 +272,125 @@ class ResearchClosedLoopV1Tests(unittest.TestCase):
         self.assertIn("first five to ten semiconductor prospective cycles", normalized)
         self.assertIn("30 independent", normalized)
         self.assertIn("requires the method to reproduce across industries", normalized)
+
+
+class SemiconductorEvidenceDiagnosticTests(unittest.TestCase):
+    def _fixture(self) -> dict[str, Any]:
+        return _load(SEMICONDUCTOR_INTAKE_PATH)
+
+    def test_current_semiconductor_intake_stops_before_u4_without_trade_authority(self) -> None:
+        result = semiconductor_diag.build_diagnostic(self._fixture())
+        self.assertEqual(result["diagnostic_schema"], semiconductor_diag.DIAGNOSTIC_SCHEMA)
+        self.assertEqual(result["status"], "BLOCKED_BEFORE_U4")
+        self.assertFalse(result["u4_ready"])
+        self.assertEqual(result["counts"]["semiconductor_u2_rows"], 25)
+        self.assertEqual(result["counts"]["semiconductor_positive_channel_rows"], 0)
+        self.assertEqual(result["counts"]["semiconductor_u3_rows"], 0)
+        self.assertEqual(result["counts"]["semiconductor_u4_ready_rows"], 0)
+        self.assertEqual(
+            result["authority"],
+            {
+                "selection_owner": "Junyan",
+                "production_authority": False,
+                "trade_authority": False,
+                "claim_allowed": False,
+                "no_trade_flag": True,
+            },
+        )
+        self.assertEqual(result["disclaimer"], semiconductor_diag.DISCLAIMER)
+        codes = {row["code"] for row in result["blockers"]}
+        self.assertIn("RED_FLAG_ONLY_COHORT", codes)
+        self.assertIn("NO_POSITIVE_CHANNEL_ROWS", codes)
+        self.assertIn("NO_SAME_RUN_U3_BATTERY", codes)
+        self.assertIn("EMPTY_U4_READY_POOL", codes)
+        self.assertIn("UPSTREAM_CHANNEL_GAPS", codes)
+
+    def test_semiconductor_authority_promotion_is_rejected(self) -> None:
+        fixture = self._fixture()
+        for field, bad in (
+            ("production_authority", True),
+            ("trade_authority", True),
+            ("claim_allowed", True),
+            ("no_trade_flag", False),
+        ):
+            mutated = copy.deepcopy(fixture)
+            mutated["authority"][field] = bad
+            with self.subTest(field=field):
+                with self.assertRaisesRegex(
+                    semiconductor_diag.DiagnosticError, "authority boundary changed"
+                ):
+                    semiconductor_diag.build_diagnostic(mutated)
+
+    def test_semiconductor_registered_cycle_is_rejected(self) -> None:
+        fixture = self._fixture()
+        mutated = copy.deepcopy(fixture)
+        mutated["prospective_case"]["cycle_registered"] = True
+        with self.assertRaisesRegex(
+            semiconductor_diag.DiagnosticError, "already crossed pre-U4 boundary"
+        ):
+            semiconductor_diag.build_diagnostic(mutated)
+
+    def test_semiconductor_malformed_counts_fail_closed(self) -> None:
+        fixture = self._fixture()
+        mutated = copy.deepcopy(fixture)
+        mutated["screening_result"]["semiconductor_u3_rows"] = -1
+        with self.assertRaisesRegex(semiconductor_diag.DiagnosticError, "nonnegative integer"):
+            semiconductor_diag.build_diagnostic(mutated)
+
+    def test_semiconductor_ready_state_requires_at_least_three_clean_u4_rows(self) -> None:
+        fixture = self._fixture()
+        fixture["screening_result"]["semiconductor_positive_channel_rows"] = 4
+        fixture["screening_result"]["semiconductor_red_flag_only_rows"] = 0
+        fixture["screening_result"]["semiconductor_u3_rows"] = 4
+        fixture["screening_result"]["semiconductor_u4_ready_rows"] = 4
+        fixture["source_bindings"]["funnel_health"]["degraded_channels"] = {
+            channel: 0
+            for channel in fixture["source_bindings"]["funnel_health"]["degraded_channels"]
+        }
+        result = semiconductor_diag.build_diagnostic(fixture)
+        self.assertEqual(result["status"], "READY_FOR_U4_PACKET")
+        self.assertTrue(result["u4_ready"])
+
+    def test_semiconductor_degraded_channels_block_ready_status(self) -> None:
+        fixture = self._fixture()
+        fixture["screening_result"]["semiconductor_positive_channel_rows"] = 4
+        fixture["screening_result"]["semiconductor_red_flag_only_rows"] = 0
+        fixture["screening_result"]["semiconductor_u3_rows"] = 4
+        fixture["screening_result"]["semiconductor_u4_ready_rows"] = 4
+        result = semiconductor_diag.build_diagnostic(fixture)
+        self.assertEqual(result["status"], "BLOCKED_BEFORE_U4")
+        self.assertFalse(result["u4_ready"])
+        self.assertIn("UPSTREAM_CHANNEL_GAPS", {row["code"] for row in result["blockers"]})
+
+    def test_semiconductor_cli_writes_deterministic_json(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            output = Path(td) / "diagnostic.json"
+            subprocess.run(
+                [
+                    sys.executable,
+                    str(SEMICONDUCTOR_DIAGNOSTIC_SCRIPT),
+                    "--intake",
+                    str(SEMICONDUCTOR_INTAKE_PATH),
+                    "--output",
+                    str(output),
+                ],
+                check=True,
+            )
+            first = output.read_text(encoding="utf-8")
+            subprocess.run(
+                [
+                    sys.executable,
+                    str(SEMICONDUCTOR_DIAGNOSTIC_SCRIPT),
+                    "--intake",
+                    str(SEMICONDUCTOR_INTAKE_PATH),
+                    "--output",
+                    str(output),
+                ],
+                check=True,
+            )
+            self.assertEqual(first, output.read_text(encoding="utf-8"))
+            payload = json.loads(first)
+            self.assertEqual(payload["status"], "BLOCKED_BEFORE_U4")
 
 
 if __name__ == "__main__":
