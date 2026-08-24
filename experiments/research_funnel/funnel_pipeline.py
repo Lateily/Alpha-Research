@@ -698,7 +698,6 @@ def build_all_market_scan(
                 "issuer_value_chain_node": None,
                 "mapping_scope": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_NODE_CLAIM",
             }
-            # governance-mutation: SEMICONDUCTOR_INDUSTRY_NODE_PARTIAL
             sector_status = "PARTIAL" if alias_rows else "DATA_BLOCKED"
             sector_reasons = (
                 ["ISSUER_VALUE_CHAIN_NODE_UNREGISTERED"]

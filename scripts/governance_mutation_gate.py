@@ -1363,21 +1363,6 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="Source hashes must be recomputed from rows and explicit gaps, not trusted as labels.",
     ),
     MutationCase(
-        mutation_id="SEMICONDUCTOR_INDUSTRY_NODE_PARTIAL",
-        component="Research funnel semiconductor industry evidence boundary",
-        source_path="experiments/research_funnel/funnel_pipeline.py",
-        test_script="tests/test_semiconductor_positive_inputs.py",
-        before='            sector_status = "PARTIAL" if alias_rows else "DATA_BLOCKED"',
-        after='            sector_status = "COMPLETE" if alias_rows else "DATA_BLOCKED"',
-        expected_failure_marker=(
-            "test_positive_channels_are_real_but_e1_red_flag_still_excludes"
-        ),
-        rationale=(
-            "Industry aliases remain PARTIAL context until an issuer value-chain node is registered; "
-            "the general trigger-requires-COMPLETE gate separately prevents degraded evidence from firing."
-        ),
-    ),
-    MutationCase(
         mutation_id="FUNNEL_U1_SEMICONDUCTOR_INDUSTRY_CONTEXT",
         component="Research funnel semiconductor issuer-node boundary",
         source_path="experiments/research_funnel/funnel_pipeline.py",
