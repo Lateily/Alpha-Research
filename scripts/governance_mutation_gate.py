@@ -138,6 +138,8 @@ FUNNEL_GOVERNANCE_PATHS = (
     "experiments/execution_tracker/paper_portfolio.py",
     "experiments/execution_tracker/model_paper_fund.py",
     "experiments/research_funnel/u4_decision_ledger.py",
+    "experiments/research_funnel/semiconductor_inputs.py",
+    "experiments/research_funnel/feature_store.py",
     "experiments/execution_tracker/event_ledger.py",
     "experiments/execution_tracker/paper_execution_audit.py",
 )
@@ -1253,6 +1255,138 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="U1 channels cannot be combined into a score that offsets contrary evidence.",
     ),
     MutationCase(
+        mutation_id="SEMICONDUCTOR_FUTURE_DISCLOSURE",
+        component="Research funnel semiconductor point-in-time evidence",
+        source_path="experiments/research_funnel/semiconductor_inputs.py",
+        test_script="tests/test_semiconductor_positive_inputs.py",
+        before='        if values["ann_date"] > as_of:\n            continue',
+        after='        if False:\n            continue',
+        expected_failure_marker=(
+            "test_future_disclosures_and_conflicting_corrections_become_explicit_blocked"
+        ),
+        rationale="A financial disclosure announced after as_of cannot enter the frozen evidence set.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_SOURCE_REVISION",
+        component="Research funnel semiconductor append-only evidence",
+        source_path="experiments/research_funnel/semiconductor_inputs.py",
+        test_script="tests/test_semiconductor_positive_inputs.py",
+        before=(
+            '            if (\n'
+            '                existing["source_hash"] != source_hash\n'
+            '                or existing["universe_hash"] != universe_hash\n'
+            '            ):'
+        ),
+        after=(
+            '            if False and (\n'
+            '                existing["source_hash"] != source_hash\n'
+            '                or existing["universe_hash"] != universe_hash\n'
+            '            ):'
+        ),
+        expected_failure_marker=(
+            "test_append_only_idempotency_revision_and_out_of_order_are_enforced"
+        ),
+        rationale="A same-date source revision requires migration and cannot overwrite frozen facts.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_OUT_OF_ORDER",
+        component="Research funnel semiconductor append-only evidence",
+        source_path="experiments/research_funnel/semiconductor_inputs.py",
+        test_script="tests/test_semiconductor_positive_inputs.py",
+        before="        if latest and date8 < latest:",
+        after="        if False:",
+        expected_failure_marker=(
+            "test_append_only_idempotency_revision_and_out_of_order_are_enforced"
+        ),
+        rationale="Historical evidence cannot be appended behind a later frozen source batch.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_OFFLINE_NETWORK",
+        component="Research funnel semiconductor network boundary",
+        source_path="experiments/research_funnel/semiconductor_inputs.py",
+        test_script="tests/test_semiconductor_positive_inputs.py",
+        before='    if os.environ.get("AR_OFFLINE") == "1":',
+        after="    if False:",
+        expected_failure_marker="test_offline_mode_blocks_collection_before_transport",
+        rationale="The offline suite must reject live collection before any transport is invoked.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_PARTIAL_SCHEMA",
+        component="Research funnel semiconductor store integrity",
+        source_path="experiments/research_funnel/semiconductor_inputs.py",
+        test_script="tests/test_semiconductor_positive_inputs.py",
+        before="            if present and present != required:",
+        after="            if False:",
+        expected_failure_marker=(
+            "test_partial_schema_loss_and_self_reported_hashes_fail_closed"
+        ),
+        rationale="A partially deleted extension cannot be disguised as an unavailable source.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_SNAPSHOT_NO_AUTHORITY",
+        component="Research funnel semiconductor research authority",
+        source_path="experiments/research_funnel/semiconductor_inputs.py",
+        test_script="tests/test_semiconductor_positive_inputs.py",
+        before="    if FORBIDDEN_OUTPUT_KEYS.intersection(_walk_keys(payload)):",
+        after="    if False:",
+        expected_failure_marker=(
+            "test_selection_or_trade_authority_is_rejected_even_when_rows_are_rehashed"
+        ),
+        rationale="A research evidence snapshot cannot carry selection, trade, or blocking authority.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_EXPLICIT_BLOCKED",
+        component="Research funnel semiconductor evidence completeness",
+        source_path="experiments/research_funnel/semiconductor_inputs.py",
+        test_script="tests/test_semiconductor_positive_inputs.py",
+        before='                not evidence.get("reason_codes")\n',
+        after="                False\n",
+        expected_failure_marker="test_blocked_row_must_keep_an_explicit_reason",
+        rationale="Missing semiconductor evidence must carry an explicit reason, never a silent empty row.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_SOURCE_HASH_RECOMPUTED",
+        component="Research funnel semiconductor source integrity",
+        source_path="experiments/research_funnel/semiconductor_inputs.py",
+        test_script="tests/test_semiconductor_positive_inputs.py",
+        before=(
+            '        expected_source_hash = _hash({\n'
+            '            "rows": complete_rows,\n'
+            '            "missing_codes": missing_codes,\n'
+            '            "conflict_codes": conflict_codes,\n'
+            '        })'
+        ),
+        after='        expected_source_hash = str(contract.get("source_hash"))',
+        expected_failure_marker=(
+            "test_partial_schema_loss_and_self_reported_hashes_fail_closed"
+        ),
+        rationale="Source hashes must be recomputed from rows and explicit gaps, not trusted as labels.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_INDUSTRY_NODE_NO_TRIGGER",
+        component="Research funnel semiconductor industry evidence boundary",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_semiconductor_positive_inputs.py",
+        before="            sector_hit = False",
+        after="            sector_hit = True",
+        expected_failure_marker=(
+            "test_positive_channels_are_real_but_e1_red_flag_still_excludes"
+        ),
+        rationale="Industry aliases are context only until an issuer value-chain node is registered.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_HEALTH_QUALITY_ROLLUP",
+        component="Research funnel semiconductor public health",
+        source_path="experiments/research_funnel/feature_store.py",
+        test_script="tests/test_semiconductor_positive_inputs.py",
+        before='    if payload.get("status") != expected_status:',
+        after="    if False:",
+        expected_failure_marker=(
+            "test_feature_health_cannot_hide_a_semiconductor_source_gap"
+        ),
+        rationale="The public feature-store receipt must surface a semiconductor source gap as PARTIAL.",
+    ),
+    MutationCase(
         mutation_id="FUNNEL_U1_NO_TRADE_AUTHORITY",
         component="Research funnel U1 authority",
         source_path="experiments/research_funnel/funnel_pipeline.py",
@@ -1341,6 +1475,44 @@ MUTATIONS: tuple[MutationCase, ...] = (
         after="    selected_main: set[str] = set(red_flag_codes)",
         expected_failure_marker="test_red_flag_without_positive_channel_is_excluded_not_a_u2_candidate",
         rationale="An E1 red flag is an exclusion fact, not a positive candidate signal.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_U2_E1_OVERRIDES_POSITIVE_CHANNELS",
+        component="Research funnel U2 red-flag boundary",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_semiconductor_positive_inputs.py",
+        before="                if code in selected_main or code in red_flag_codes:",
+        after="                if code in selected_main:",
+        expected_failure_marker=(
+            "test_positive_channels_are_real_but_e1_red_flag_still_excludes"
+        ),
+        rationale="A positive channel cannot rescue an E1 red flag into main-channel capacity.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_U2_E1_EXCLUDED_FROM_RANDOM_CONTROL",
+        component="Research funnel U2 red-flag boundary",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_research_funnel_closure.py",
+        before=(
+            "        if code not in selected_all and code not in red_flag_codes and code in strata:"
+        ),
+        after="        if code not in selected_all and code in strata:",
+        expected_failure_marker=(
+            "test_u2_random_control_is_same_pool_stratified_and_reproducible"
+        ),
+        rationale="The randomized control sleeve cannot silently admit an E1 red flag.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_U2_E1_EXCLUSION_VALIDATED",
+        component="Research funnel U2 red-flag boundary",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_semiconductor_positive_inputs.py",
+        before="        elif red_flagged:",
+        after="        elif False and red_flagged:",
+        expected_failure_marker=(
+            "test_positive_channels_are_real_but_e1_red_flag_still_excludes"
+        ),
+        rationale="Validation must independently reject relabeling any E1 red flag as active.",
     ),
     MutationCase(
         mutation_id="FUNNEL_U2_EXACT_EVIDENCE_PROJECTION",

@@ -63,13 +63,12 @@ def _build_source_evidence(root: Path) -> tuple[Path, dict, dict, dict[str, tupl
         run_id=SOURCE_RUN_ID,
     )
     blocked_code = clean_codes[-1]
-    dual_blocked_code = red_codes[0]
     results = []
-    for code in sorted(clean_codes + red_codes):
+    for code in clean_codes:
         dims = {
             name: {"fixture": True} for name in funnel.BATTERY_DIMENSIONS
         }
-        if code in {blocked_code, dual_blocked_code}:
+        if code == blocked_code:
             dims["基本面"] = {"status": "DATA_BLOCKED", "err": "fixture evidence unavailable"}
         missing = [name for name, evidence in dims.items() if evidence.get("status") == "DATA_BLOCKED"]
         results.append({
@@ -157,8 +156,6 @@ def _build_source_evidence(root: Path) -> tuple[Path, dict, dict, dict[str, tupl
         "defer": clean_codes[4],
         "no_trade": clean_codes[5],
         "blocked": blocked_code,
-        "dual_blocked": dual_blocked_code,
-        "red_flags": tuple(red_codes),
         "ready": tuple(clean_codes[:6]),
     }
     return bundle, battery, packet, semantics
@@ -173,9 +170,6 @@ REJECT_CODE = str(_SEMANTICS["reject"])
 DEFER_CODE = str(_SEMANTICS["defer"])
 NO_TRADE_CODE = str(_SEMANTICS["no_trade"])
 BLOCKED_CODE = str(_SEMANTICS["blocked"])
-DUAL_BLOCKED_CODE = str(_SEMANTICS["dual_blocked"])
-RED_FLAG_CODES = tuple(_SEMANTICS["red_flags"])
-PLAIN_RED_FLAG_CODE = next(code for code in RED_FLAG_CODES if code != DUAL_BLOCKED_CODE)
 READY_CODES = tuple(_SEMANTICS["ready"])
 TOTAL_ROWS = len(_PACKET_TEMPLATE["ready_pool"])
 
@@ -196,8 +190,6 @@ DEFAULT_DECISIONS = {
     DEFER_CODE: "DEFER",
     NO_TRADE_CODE: "NO_TRADE",
     BLOCKED_CODE: "DATA_BLOCKED",
-    DUAL_BLOCKED_CODE: "DATA_BLOCKED",
-    PLAIN_RED_FLAG_CODE: "REJECT",
 }
 
 
@@ -215,10 +207,6 @@ def decision_row(
         "NO_TRADE": "NO_ACTIONABLE_SETUP",
         "DATA_BLOCKED": "U3_INCOMPLETE",
     }[decision]]
-    if code in RED_FLAG_CODES:
-        reason_codes = ["RED_FLAG_ACTIVE"]
-        if decision == "DATA_BLOCKED":
-            reason_codes.insert(0, "U3_INCOMPLETE")
     missing = ["U3_SIX_DIMENSION_BATTERY"] if decision == "DATA_BLOCKED" else []
     return {
         "ts_code": code,
@@ -233,6 +221,28 @@ def decision_row(
         "decision_revision": revision,
         "supersedes_decision_id": supersedes,
     }
+
+
+def packet_with_synthetic_red_flag(
+    packet: dict,
+    code: str,
+    *,
+    u3_incomplete: bool = False,
+) -> dict:
+    """Test the ledger's E1 defense without reopening the production U2 gate."""
+    output = copy.deepcopy(packet)
+    row = next(item for item in output["ready_pool"] if item["ts_code"] == code)
+    row["ready"] = False
+    row["blocked_reasons"] = (
+        (["U3_BATTERY_INCOMPLETE"] if u3_incomplete else [])
+        + ["E1_RED_FLAG_REQUIRES_SEPARATE_REVIEW"]
+    )
+    output["source_refs"]["ready_pool_hash"] = funnel._hash(output["ready_pool"])
+    output["packet_hash"] = funnel._hash({
+        key: value for key, value in output.items() if key != "packet_hash"
+    })
+    closure.validate_review_packet(output)
+    return output
 
 
 def draft_for(
@@ -693,15 +703,18 @@ class U4DecisionLedgerTests(unittest.TestCase):
             ledger._validate_draft(packet, draft_for(packet))
 
     def test_dual_u3_and_red_flag_block_preserves_both_evidence_reasons(self) -> None:
-        packet = packet_fixture()
+        packet = packet_with_synthetic_red_flag(
+            packet_fixture(), BLOCKED_CODE, u3_incomplete=True,
+        )
         draft = draft_for(packet)
-        dual = next(row for row in draft["decisions"] if row["ts_code"] == DUAL_BLOCKED_CODE)
+        dual = next(row for row in draft["decisions"] if row["ts_code"] == BLOCKED_CODE)
+        dual["reason_codes"] = ["U3_INCOMPLETE", "RED_FLAG_ACTIVE"]
         self.assertEqual(dual["decision"], "DATA_BLOCKED")
         self.assertEqual(set(dual["reason_codes"]), {"U3_INCOMPLETE", "RED_FLAG_ACTIVE"})
         ledger._validate_draft(packet, draft)
 
         attack = copy.deepcopy(draft)
-        attacked = next(row for row in attack["decisions"] if row["ts_code"] == DUAL_BLOCKED_CODE)
+        attacked = next(row for row in attack["decisions"] if row["ts_code"] == BLOCKED_CODE)
         attacked["reason_codes"] = ["U3_INCOMPLETE"]
         with self.assertRaisesRegex(ledger.DecisionLedgerError, "preserve both evidence"):
             ledger._validate_draft(packet, attack)
@@ -710,9 +723,9 @@ class U4DecisionLedgerTests(unittest.TestCase):
         intent = ledger._build_packet_intent(packet, draft, decisions, rows)
         item = next(
             candidate for candidate in intent["candidate_intents"]
-            if candidate["candidate"]["ts_code"] == DUAL_BLOCKED_CODE
+            if candidate["candidate"]["ts_code"] == BLOCKED_CODE
         )
-        ready_row = next(row for row in rows if row["ts_code"] == DUAL_BLOCKED_CODE)
+        ready_row = next(row for row in rows if row["ts_code"] == BLOCKED_CODE)
         item["reason_codes"] = ["U3_INCOMPLETE"]
         with self.assertRaisesRegex(ledger.DecisionLedgerError, "hides the E1 side"):
             ledger._validate_candidate_intent(
@@ -735,8 +748,9 @@ class U4DecisionLedgerTests(unittest.TestCase):
         })
         with self.assertRaisesRegex(ledger.DecisionLedgerError, "explicit DATA_BLOCKED"):
             ledger._validate_draft(packet, draft)
+        packet = packet_with_synthetic_red_flag(packet_fixture(), REJECT_CODE)
         draft = draft_for(packet)
-        flagged = next(row for row in draft["decisions"] if row["ts_code"] == PLAIN_RED_FLAG_CODE)
+        flagged = next(row for row in draft["decisions"] if row["ts_code"] == REJECT_CODE)
         flagged.update({"decision": "SELECT", "reason_codes": ["EVIDENCE_CHAIN_COMPLETE"], "research_question": "Why?"})
         with self.assertRaisesRegex(ledger.DecisionLedgerError, "explicit REJECT"):
             ledger._validate_draft(packet, draft)

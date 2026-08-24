@@ -30,6 +30,7 @@ from security_registry import (
     _tushare_call,
     validate_registry,
 )
+import semiconductor_inputs as semiconductor_evidence
 
 
 SCHEMA = "ar.feature_store_health"
@@ -229,6 +230,36 @@ def initialize(conn: sqlite3.Connection) -> None:
         raise FeatureStoreError(
             f"store schema mismatch: expected={STORE_SCHEMA_VERSION} actual={current['value']}"
         )
+    semiconductor_evidence.initialize(conn)
+
+
+def _semiconductor_health_summary(
+    db_path: Path, registry: dict[str, Any], as_of: str,
+) -> dict[str, Any]:
+    scoped = [
+        row for row in registry["rows"]
+        if row.get("industry_key") == semiconductor_evidence.SEMICONDUCTOR_INDUSTRY_KEY
+        and row.get("qualification", {}).get("u1_scan_eligible") is True
+    ]
+    if not scoped:
+        return {
+            "schema": semiconductor_evidence.SCHEMA,
+            "schema_version": semiconductor_evidence.SCHEMA_VERSION,
+            "method_version": semiconductor_evidence.METHOD_VERSION,
+            "status": "NOT_APPLICABLE",
+            "as_of": as_of,
+            "coverage": {"expected": 0, "rows": 0},
+            "sources": {},
+            "rows_hash": _hash([]),
+        }
+    snapshot = semiconductor_evidence.build_snapshot(db_path, registry, as_of)
+    return {
+        key: snapshot[key]
+        for key in (
+            "schema", "schema_version", "method_version", "status", "as_of",
+            "universe_hash", "sources", "coverage", "rows_hash", "policy",
+        )
+    }
 
 
 def _insert_rows(conn: sqlite3.Connection, endpoint: str, rows: list[dict[str, Any]]) -> None:
@@ -458,10 +489,15 @@ def build_health(
             (latest,),
         ).fetchone()["n"]
         missing = sorted(set(eligible) - daily_codes)
+        semiconductor_summary = _semiconductor_health_summary(db, registry, latest)
         payload = {
             "schema": SCHEMA,
             "schema_version": SCHEMA_VERSION,
-            "status": "COMPLETE",
+            "status": (
+                "PARTIAL"
+                if semiconductor_summary["status"] == "PARTIAL"
+                else "COMPLETE"
+            ),
             "as_of": latest,
             "generated_at": generated_at or _now_utc(),
             "registry_ref": {
@@ -500,6 +536,7 @@ def build_health(
                     conn, "features_daily", "trade_date,ts_code"
                 ),
             },
+            "semiconductor_positive_inputs": semiconductor_summary,
             "policy": {
                 "point_in_time_only": True,
                 "adjusted_return_basis": "close_times_adj_factor",
@@ -518,8 +555,8 @@ def build_health(
 def validate_health(payload: dict[str, Any]) -> None:
     if payload.get("schema") != SCHEMA or payload.get("schema_version") != SCHEMA_VERSION:
         raise FeatureStoreError("health schema/version mismatch")
-    if payload.get("status") != "COMPLETE":
-        raise FeatureStoreError("feature store health must describe a completed atomic batch")
+    if payload.get("status") not in {"COMPLETE", "PARTIAL"}:
+        raise FeatureStoreError("feature store health status is invalid")
     coverage = payload.get("coverage") or {}
     endpoint_rows = coverage.get("latest_endpoint_rows") or {}
     if set(endpoint_rows) != set(ENDPOINT_FIELDS) or any(
@@ -538,6 +575,109 @@ def validate_health(payload: dict[str, Any]) -> None:
         value = (payload.get("integrity") or {}).get(key)
         if not isinstance(value, str) or len(value) != 64:
             raise FeatureStoreError(f"health integrity hash missing: {key}")
+    semiconductor = payload.get("semiconductor_positive_inputs")
+    if not isinstance(semiconductor, dict):
+        raise FeatureStoreError("semiconductor positive-input health is missing")
+    if (
+        semiconductor.get("schema") != semiconductor_evidence.SCHEMA
+        or semiconductor.get("schema_version") != semiconductor_evidence.SCHEMA_VERSION
+        or semiconductor.get("method_version") != semiconductor_evidence.METHOD_VERSION
+        or semiconductor.get("as_of") != payload.get("as_of")
+    ):
+        raise FeatureStoreError("semiconductor positive-input identity is invalid")
+    semiconductor_status = semiconductor.get("status")
+    if semiconductor_status == "NOT_APPLICABLE":
+        expected_fields = {
+            "schema", "schema_version", "method_version", "status", "as_of",
+            "coverage", "sources", "rows_hash",
+        }
+        if (
+            set(semiconductor) != expected_fields
+            or semiconductor.get("coverage") != {"expected": 0, "rows": 0}
+            or semiconductor.get("sources") != {}
+            or semiconductor.get("rows_hash") != _hash([])
+        ):
+            raise FeatureStoreError("not-applicable semiconductor health is malformed")
+        expected_status = "COMPLETE"
+    else:
+        expected_fields = {
+            "schema", "schema_version", "method_version", "status", "as_of",
+            "universe_hash", "sources", "coverage", "rows_hash", "policy",
+        }
+        if semiconductor_status not in {"COMPLETE", "PARTIAL"}:
+            raise FeatureStoreError("semiconductor positive-input status is invalid")
+        sem_coverage = semiconductor.get("coverage") or {}
+        expected = sem_coverage.get("expected")
+        if (
+            set(semiconductor) != expected_fields
+            or not isinstance(expected, int)
+            or expected <= 0
+            or sem_coverage.get("rows") != expected
+            or set(sem_coverage) != {
+                "expected", "rows", "complete_by_component", "data_blocked_by_component",
+            }
+            or any(
+                set((sem_coverage.get(key) or {})) != set(semiconductor_evidence.COMPONENTS)
+                for key in ("complete_by_component", "data_blocked_by_component")
+            )
+            or any(
+                sem_coverage["complete_by_component"][component]
+                + sem_coverage["data_blocked_by_component"][component]
+                != expected
+                for component in semiconductor_evidence.COMPONENTS
+            )
+            or set(semiconductor.get("sources") or {})
+            != set(semiconductor_evidence.SOURCE_NAMES)
+            or semiconductor.get("policy") != {
+                "point_in_time_only": True,
+                "missing_to_data_blocked": True,
+                "cross_channel_score": False,
+                "u4_selection_authority": False,
+                "trade_or_portfolio_authority": False,
+            }
+            or not isinstance(semiconductor.get("universe_hash"), str)
+            or len(semiconductor["universe_hash"]) != 64
+            or not isinstance(semiconductor.get("rows_hash"), str)
+            or len(semiconductor["rows_hash"]) != 64
+        ):
+            raise FeatureStoreError("semiconductor positive-input coverage is invalid")
+        for source_name, source in semiconductor["sources"].items():
+            if not isinstance(source, dict) or source.get("status") not in {
+                "COMPLETE", "DATA_BLOCKED",
+            }:
+                raise FeatureStoreError(
+                    f"semiconductor source receipt is invalid: {source_name}"
+                )
+            component = semiconductor_evidence.SOURCE_COMPONENT[source_name]
+            if source["status"] == "DATA_BLOCKED":
+                if source != {
+                    "status": "DATA_BLOCKED",
+                    "source_hash": None,
+                    "row_count": 0,
+                    "universe_hash": None,
+                    "reason_codes": ["SOURCE_BATCH_UNAVAILABLE"],
+                } or sem_coverage["complete_by_component"][component] != 0:
+                    raise FeatureStoreError(
+                        f"blocked semiconductor source receipt is inconsistent: {source_name}"
+                    )
+            elif (
+                set(source) != {
+                    "status", "source_hash", "row_count", "universe_hash", "reason_codes",
+                }
+                or not isinstance(source.get("source_hash"), str)
+                or len(source["source_hash"]) != 64
+                or source.get("row_count")
+                != sem_coverage["complete_by_component"][component]
+                or source.get("universe_hash") != semiconductor["universe_hash"]
+                or source.get("reason_codes") != []
+            ):
+                raise FeatureStoreError(
+                    f"complete semiconductor source receipt is inconsistent: {source_name}"
+                )
+        expected_status = "PARTIAL" if semiconductor_status == "PARTIAL" else "COMPLETE"
+    # governance-mutation: SEMICONDUCTOR_HEALTH_QUALITY_ROLLUP
+    if payload.get("status") != expected_status:
+        raise FeatureStoreError("feature-store status does not surface semiconductor evidence gaps")
 
 
 def _open_dates(token: str, as_of: str, count: int) -> list[str]:
@@ -626,9 +766,30 @@ def run_live(
                 registry["eligible_universe_hash"],
             )
         )
+    latest_trade_date = dates[-1]
+    has_semiconductor_scope = any(
+        row.get("industry_key") == semiconductor_evidence.SEMICONDUCTOR_INDUSTRY_KEY
+        and row.get("qualification", {}).get("u1_scan_eligible") is True
+        for row in registry["rows"]
+    )
+    semiconductor_sources = (
+        semiconductor_evidence.collect_live(
+            token,
+            _resolve(db_path),
+            registry,
+            latest_trade_date,
+            sleep_seconds=sleep_seconds,
+        )
+        if has_semiconductor_scope
+        else []
+    )
     health = build_health(db_path, registry)
     _atomic_write_json(_resolve(out_path), health)
-    return {"dates": results, "health": health}
+    return {
+        "dates": results,
+        "semiconductor_sources": semiconductor_sources,
+        "health": health,
+    }
 
 
 def _fixture(date8: str, close: float, adj: float, *, code: str = "000001.SZ") -> dict[str, list[dict[str, Any]]]:
@@ -836,16 +997,27 @@ def main() -> int:
             lookback=args.lookback,
             sleep_seconds=args.sleep_seconds,
         )
-    except (FeatureStoreError, RegistryError, OSError, sqlite3.Error) as exc:
+    except (
+        FeatureStoreError,
+        semiconductor_evidence.SemiconductorInputError,
+        RegistryError,
+        OSError,
+        sqlite3.Error,
+    ) as exc:
         print(f"REFUSED: {exc}")
         return 1
     ingested = sum(item["status"] == "INGESTED" for item in result["dates"])
     skipped = sum(item["status"] == "IDEMPOTENT_SKIP" for item in result["dates"])
     health = result["health"]
+    semiconductor_sources = ",".join(
+        f"{item['source']}={item['status']}"
+        for item in result["semiconductor_sources"]
+    )
     print(
         f"feature_store: {health['status']} as_of={health['as_of']} "
         f"ingested={ingested} idempotent_skips={skipped} "
-        f"features={health['coverage']['latest_feature_rows']}"
+        f"features={health['coverage']['latest_feature_rows']} "
+        f"semiconductor_sources={semiconductor_sources}"
     )
     return 0
 

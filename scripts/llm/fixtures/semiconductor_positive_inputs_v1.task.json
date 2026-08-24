@@ -1,0 +1,97 @@
+{
+  "schema": "ai-task.v1",
+  "task_id": "R-SEMICONDUCTOR-POSITIVE-INPUTS-V1",
+  "source_issue": null,
+  "architecture_block": [
+    "A Core Research Funnel",
+    "R-008 Point-in-Time Feature Store",
+    "U1 Semiconductor Positive Evidence",
+    "U2/U3/U4 Workflow-Debug Packet"
+  ],
+  "objective": "Add point-in-time semiconductor price-volume, fund-flow/chip, fundamental-valuation, and industry-level value-chain context to the production research funnel while preserving the E1 red-flag exclusion and Junyan-only U4 selection boundary; issuer-node gaps remain explicit PARTIAL until a registered point-in-time mapping exists.",
+  "non_goals": [
+    "Do not weaken, bypass, or reinterpret the E1 red-flag gate.",
+    "Do not auto-select or hand-inject any U4 security.",
+    "Do not emit a real trade action, portfolio allocation, win-rate, alpha, or profitability claim.",
+    "Do not repair Macro OS or add news ingestion in this slice.",
+    "Do not make missing evidence positive or replace missing numeric facts with zero.",
+    "Do not count workflow-debug cycles toward a method claim before 30 independent de-clustered samples."
+  ],
+  "human_owner": "Junyan",
+  "reviewer": "Junyan",
+  "executor_candidates": [
+    "Codex"
+  ],
+  "dependencies": [
+    "PR #279 candidate-battery DAG",
+    "PR #285 industry cohort taxonomy",
+    "PR #297 historical order eligibility migration",
+    "PR #305 bounded Tushare transport retry"
+  ],
+  "authority_docs": [
+    "AGENTS.md",
+    "experiments/AGENTS.md",
+    "docs/research/sectors/SEMICONDUCTOR_SECTOR_OS.md",
+    "experiments/research_funnel/industry_taxonomy.v1.json"
+  ],
+  "file_scope": [
+    "experiments/research_funnel/semiconductor_inputs.py",
+    "experiments/research_funnel/feature_store.py",
+    "experiments/research_funnel/funnel_pipeline.py",
+    "experiments/research_funnel/funnel_dag.py",
+    "tests/test_semiconductor_positive_inputs.py",
+    "tests/test_research_funnel_closure.py",
+    "tests/test_funnel_dag_offline.py",
+    "tests/test_u4_decision_ledger.py",
+    "tests/test_no_network_guard.py",
+    "scripts/governance_mutation_gate.py",
+    ".github/workflows/python-ci.yml",
+    "scripts/llm/fixtures/semiconductor_positive_inputs_v1.task.json"
+  ],
+  "forbidden_scope": [
+    "/Users/years/ar-live",
+    "experiments/execution_tracker/event_ledger.jsonl",
+    "experiments/execution_tracker/paper_signal_log.json",
+    "experiments/execution_tracker/model_fund",
+    "public/data/v2",
+    "web"
+  ],
+  "input_contracts": [
+    "ar.security_registry.v1",
+    "ar.feature_store_health.v1",
+    "ar.e1_event_layer.v1",
+    "ar.rotation_panel existing contract",
+    "ar.industry_taxonomy.v1",
+    "Tushare moneyflow_dc by trade_date",
+    "Tushare cyq_perf by trade_date",
+    "Tushare fina_indicator_vip point-in-time disclosures"
+  ],
+  "output_artifacts": [
+    "Append-only semiconductor evidence tables in data_history/feature_store.sqlite3",
+    "Six-channel all_market_scan rows with explicit semiconductor evidence or DATA_BLOCKED",
+    "Same-day U2/U3/U4 packet with no automatic U4 rows",
+    "Semiconductor positive-input coverage receipt"
+  ],
+  "acceptance_tests": [
+    "Compile this task to SPEC_READY.",
+    "Prove every eligible semiconductor has an explicit row or degraded reason for all four evidence dimensions; industry context must remain PARTIAL and non-triggering while issuer-node mappings are unavailable.",
+    "Prove future financial announcements, conflicting corrections, stale dates, source revisions, and partial code sets fail closed.",
+    "Prove E1 red flags remain excluded even when every positive channel triggers.",
+    "Prove the packet leaves U4 empty until Junyan supplies exactly 0 or 3 to 5 identifiers.",
+    "Run the offline suites, socket guard, exact-head CI, and dedicated mutation cases.",
+    "Replay a production-data copy before any production deployment."
+  ],
+  "risk_level": "HIGH",
+  "network_policy": "LIVE_DATA",
+  "budget": {
+    "max_cny": "0",
+    "max_minutes": 480
+  },
+  "approval_gates": [
+    "Independent adversarial review is required before merge.",
+    "Junyan retains final merge authority.",
+    "Production deployment requires a separate canary and artifact audit.",
+    "Junyan alone may choose 0 or 3 to 5 U4 securities from the verified ready pool."
+  ],
+  "created_at": "2026-08-24T13:15:00+08:00"
+}
