@@ -1,194 +1,12 @@
 {
-  "fetched_at": "2026-08-21T09:07:09Z",
-  "trade_date": "20260821",
+  "fetched_at": "2026-08-24T02:26:24Z",
+  "trade_date": "20260824",
   "tier": 15000,
   "_status": "partial",
   "hot_concepts": [],
   "cold_concepts": [],
-  "hot_industries": [
-    {
-      "name": "融资融券",
-      "ts_code": "BK0596.DC",
-      "net_inflow_yuan": 157342679040000.0,
-      "pct_chg": -0.19
-    },
-    {
-      "name": "深股通",
-      "ts_code": "BK0804.DC",
-      "net_inflow_yuan": 144128450560000.0,
-      "pct_chg": 0.01
-    },
-    {
-      "name": "2026中报预增",
-      "ts_code": "BK1749.DC",
-      "net_inflow_yuan": 143757393920000.0,
-      "pct_chg": 0.55
-    },
-    {
-      "name": "MSCI中国",
-      "ts_code": "BK0821.DC",
-      "net_inflow_yuan": 141386792960000.0,
-      "pct_chg": -0.01
-    },
-    {
-      "name": "5G概念",
-      "ts_code": "BK0714.DC",
-      "net_inflow_yuan": 140529016320000.0,
-      "pct_chg": 1.13
-    },
-    {
-      "name": "大盘股",
-      "ts_code": "BK1663.DC",
-      "net_inflow_yuan": 136452915200000.0,
-      "pct_chg": 0.36
-    },
-    {
-      "name": "深成500",
-      "ts_code": "BK0568.DC",
-      "net_inflow_yuan": 134011822080000.0,
-      "pct_chg": -0.09
-    },
-    {
-      "name": "通信技术",
-      "ts_code": "BK1650.DC",
-      "net_inflow_yuan": 133472655360000.0,
-      "pct_chg": 1.13
-    },
-    {
-      "name": "HS300_",
-      "ts_code": "BK0500.DC",
-      "net_inflow_yuan": 130831278080000.0,
-      "pct_chg": 0.07
-    },
-    {
-      "name": "富时罗素",
-      "ts_code": "BK0867.DC",
-      "net_inflow_yuan": 123933859840000.0,
-      "pct_chg": -0.37
-    },
-    {
-      "name": "科技风格",
-      "ts_code": "BK1713.DC",
-      "net_inflow_yuan": 111254574080000.0,
-      "pct_chg": 0.87
-    },
-    {
-      "name": "深证100R",
-      "ts_code": "BK0743.DC",
-      "net_inflow_yuan": 107713807360000.0,
-      "pct_chg": 0.31
-    },
-    {
-      "name": "大盘成长",
-      "ts_code": "BK1665.DC",
-      "net_inflow_yuan": 102713484800000.0,
-      "pct_chg": 0.82
-    },
-    {
-      "name": "光通信模块",
-      "ts_code": "BK1136.DC",
-      "net_inflow_yuan": 102164710400000.0,
-      "pct_chg": 1.37
-    },
-    {
-      "name": "CPO概念",
-      "ts_code": "BK1128.DC",
-      "net_inflow_yuan": 100342018560000.0,
-      "pct_chg": 1.44
-    },
-    {
-      "name": "标准普尔",
-      "ts_code": "BK0879.DC",
-      "net_inflow_yuan": 88675778560000.0,
-      "pct_chg": -0.38
-    },
-    {
-      "name": "有色金属",
-      "ts_code": "BK0478.DC",
-      "net_inflow_yuan": 88288916480000.0,
-      "pct_chg": 2.59
-    },
-    {
-      "name": "周期股",
-      "ts_code": "BK1639.DC",
-      "net_inflow_yuan": 88158999040000.0,
-      "pct_chg": 0.82
-    },
-    {
-      "name": "新能源车",
-      "ts_code": "BK0900.DC",
-      "net_inflow_yuan": 85938749440000.0,
-      "pct_chg": 0.84
-    },
-    {
-      "name": "电子",
-      "ts_code": "BK1201.DC",
-      "net_inflow_yuan": 85529600000000.0,
-      "pct_chg": 0.73
-    }
-  ],
-  "cold_industries": [
-    {
-      "name": "医药生物",
-      "ts_code": "BK1216.DC",
-      "net_inflow_yuan": -91107281920000.0,
-      "pct_chg": -3.14
-    },
-    {
-      "name": "创新药",
-      "ts_code": "BK1106.DC",
-      "net_inflow_yuan": -58350699520000.0,
-      "pct_chg": -3.96
-    },
-    {
-      "name": "医药医疗风格",
-      "ts_code": "BK1712.DC",
-      "net_inflow_yuan": -56380456960000.0,
-      "pct_chg": -3.78
-    },
-    {
-      "name": "创新医疗服务",
-      "ts_code": "BK1658.DC",
-      "net_inflow_yuan": -35165780160000.0,
-      "pct_chg": -3.27
-    },
-    {
-      "name": "化学制药",
-      "ts_code": "BK0465.DC",
-      "net_inflow_yuan": -34653347840000.0,
-      "pct_chg": -3.72
-    },
-    {
-      "name": "病原体防治",
-      "ts_code": "BK1657.DC",
-      "net_inflow_yuan": -34317066240000.0,
-      "pct_chg": -3.76
-    },
-    {
-      "name": "CRO",
-      "ts_code": "BK0899.DC",
-      "net_inflow_yuan": -31889277440000.0,
-      "pct_chg": -4.09
-    },
-    {
-      "name": "题材股",
-      "ts_code": "BK1717.DC",
-      "net_inflow_yuan": -30878855680000.0,
-      "pct_chg": -3.84
-    },
-    {
-      "name": "医疗服务",
-      "ts_code": "BK0727.DC",
-      "net_inflow_yuan": -30819176320000.0,
-      "pct_chg": -4.02
-    },
-    {
-      "name": "医疗研发外包",
-      "ts_code": "BK1600.DC",
-      "net_inflow_yuan": -28259188640000.0,
-      "pct_chg": -5.39
-    }
-  ],
+  "hot_industries": [],
+  "cold_industries": [],
   "concept_meta": {
     "api_used": null,
     "_attempted_endpoints": [
@@ -205,7 +23,7 @@
     "_attempted_endpoints": [
       "moneyflow_ind_dc"
     ],
-    "row_count": 1031,
+    "row_count": 0,
     "_status": "ok"
   }
 }
