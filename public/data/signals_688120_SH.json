@@ -3,19 +3,9 @@
   "generated_at": "2026-08-24",
   "price": 271.7,
   "zone": "BULLISH",
-  "entry_zone": true,
+  "entry_zone": false,
   "exit_zone": true,
   "signals": [
-    {
-      "type": "GOLDEN_CROSS",
-      "strength": "strong",
-      "date": "20260821",
-      "bullish": true,
-      "description": {
-        "e": "MA20 (262.3) crossed above MA60 (260.3) — bullish trend shift",
-        "z": "MA20(262.3)上穿MA60(260.3)金叉看涨"
-      }
-    },
     {
       "type": "KDJ_DEATH_CROSS",
       "strength": "moderate",
@@ -28,9 +18,9 @@
     }
   ],
   "signal_count": {
-    "bullish": 1,
+    "bullish": 0,
     "bearish": 1,
-    "total": 2
+    "total": 1
   },
   "indicators": {
     "ma5": 277.97,
@@ -44,9 +34,9 @@
     "change_1d": -3.14,
     "change_5d": 3.14,
     "change_20d": 2.96,
-    "macd_dif": 3.1905,
-    "macd_dea": 0.8379,
-    "macd_hist": 4.7052,
+    "macd_dif": 3.4716,
+    "macd_dea": 1.2518,
+    "macd_hist": 4.4397,
     "bb_upper": 293.68,
     "bb_mid": 262.35,
     "bb_lower": 231.01,
