@@ -830,6 +830,24 @@ def validate_all_market_scan(payload: Mapping[str, Any], registry: Mapping[str, 
         # governance-mutation: FUNNEL_U1_DATA_STATUS
         if row["data_status"] not in VALID_DATA_STATUS:
             raise FunnelError("invalid channel data_status")
+        if not isinstance(row.get("triggered"), bool):
+            raise FunnelError("channel triggered flag must be boolean")
+        # governance-mutation: FUNNEL_U1_TRIGGER_REQUIRES_COMPLETE
+        if row["triggered"] and row["data_status"] != "COMPLETE":
+            raise FunnelError("positive channel trigger requires COMPLETE evidence")
+        if row["channel"] == "E1_EVENT":
+            verdict = (row.get("feature_values") or {}).get("verdict")
+            expected_trigger = verdict == "RED_FLAG"
+            expected_status = (
+                "DATA_BLOCKED" if verdict in {None, "DATA_BLOCKED"} else "COMPLETE"
+            )
+            # governance-mutation: FUNNEL_U1_E1_TRIGGER_RECOMPUTED
+            if (
+                verdict not in {None, "RED_FLAG", "NO_RED_FLAG_FOUND", "DATA_BLOCKED"}
+                or row["triggered"] is not expected_trigger
+                or row["data_status"] != expected_status
+            ):
+                raise FunnelError("E1 verdict/trigger/status projection is inconsistent")
         reasons = row["entry_reasons"]
         if row["triggered"] and (not isinstance(reasons, list) or not reasons):
             raise FunnelError("triggered channel row requires entry_reasons")

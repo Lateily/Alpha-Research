@@ -674,7 +674,23 @@ def validate_health(payload: dict[str, Any]) -> None:
                 raise FeatureStoreError(
                     f"complete semiconductor source receipt is inconsistent: {source_name}"
                 )
-        expected_status = "PARTIAL" if semiconductor_status == "PARTIAL" else "COMPLETE"
+        complete_counts = sem_coverage["complete_by_component"]
+        blocked_counts = sem_coverage["data_blocked_by_component"]
+        expected_semiconductor_status = (
+            "COMPLETE"
+            if all(
+                complete_counts[component] == expected
+                and blocked_counts[component] == 0
+                for component in semiconductor_evidence.COMPONENTS
+            )
+            else "PARTIAL"
+        )
+        # governance-mutation: SEMICONDUCTOR_HEALTH_COMPONENT_ROLLUP
+        if semiconductor_status != expected_semiconductor_status:
+            raise FeatureStoreError(
+                "semiconductor status does not match component coverage"
+            )
+        expected_status = expected_semiconductor_status
     # governance-mutation: SEMICONDUCTOR_HEALTH_QUALITY_ROLLUP
     if payload.get("status") != expected_status:
         raise FeatureStoreError("feature-store status does not surface semiconductor evidence gaps")

@@ -227,18 +227,19 @@ def initialize(conn: sqlite3.Connection) -> None:
             BEGIN SELECT RAISE(ABORT, 'append-only table: {table}'); END;
             """
         )
+    conn.execute(
+        "INSERT OR IGNORE INTO store_meta(key,value) "
+        "VALUES('semiconductor_schema_version',?)",
+        (STORE_EXTENSION_VERSION,),
+    )
     current = conn.execute(
         "SELECT value FROM store_meta WHERE key='semiconductor_schema_version'"
     ).fetchone()
-    if current is None:
-        conn.execute(
-            "INSERT INTO store_meta(key,value) VALUES('semiconductor_schema_version',?)",
-            (STORE_EXTENSION_VERSION,),
-        )
-    elif current["value"] != STORE_EXTENSION_VERSION:
+    if current is None or current["value"] != STORE_EXTENSION_VERSION:
         raise SemiconductorInputError(
             "semiconductor store schema mismatch: "
-            f"expected={STORE_EXTENSION_VERSION} actual={current['value']}"
+            f"expected={STORE_EXTENSION_VERSION} "
+            f"actual={current['value'] if current is not None else None}"
         )
 
 
@@ -248,7 +249,18 @@ def _connect(path: Path, *, readonly: bool = False) -> sqlite3.Connection:
     else:
         path.parent.mkdir(parents=True, exist_ok=True)
         conn = sqlite3.connect(str(path), timeout=30.0, isolation_level=None)
-        conn.execute("PRAGMA journal_mode=WAL")
+        conn.execute("PRAGMA busy_timeout=30000")
+        for attempt in range(50):
+            try:
+                mode = conn.execute("PRAGMA journal_mode=WAL").fetchone()
+                if mode is None or str(mode[0]).lower() != "wal":
+                    raise SemiconductorInputError("failed to enable WAL journal mode")
+                break
+            except sqlite3.OperationalError as exc:
+                if "locked" not in str(exc).lower() or attempt == 49:
+                    conn.close()
+                    raise
+                time.sleep(min(0.01 * (attempt + 1), 0.10))
         conn.execute("PRAGMA synchronous=FULL")
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA busy_timeout=30000")
@@ -495,7 +507,8 @@ def ingest_source(
         conn.close()
 
 
-def _quarter_periods(as_of: str, count: int = 2) -> list[str]:
+# governance-mutation: SEMICONDUCTOR_FINANCIAL_LOOKBACK
+def _quarter_periods(as_of: str, count: int = 4) -> list[str]:
     target = datetime.strptime(_date8(as_of), "%Y%m%d")
     periods: list[str] = []
     for year in range(target.year, target.year - 3, -1):
@@ -666,6 +679,11 @@ def _batch_contract(
     raw_rows: Mapping[str, Mapping[str, Any]],
 ) -> dict[str, Any]:
     if batch is None:
+        # governance-mutation: SEMICONDUCTOR_ORPHAN_RAW_ROWS
+        if raw_rows:
+            raise SemiconductorInputError(
+                f"{source_name} has orphan raw rows without an atomic source batch"
+            )
         return {
             "status": "DATA_BLOCKED",
             "source_hash": None,

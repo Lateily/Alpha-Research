@@ -1387,6 +1387,55 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="The public feature-store receipt must surface a semiconductor source gap as PARTIAL.",
     ),
     MutationCase(
+        mutation_id="SEMICONDUCTOR_HEALTH_COMPONENT_ROLLUP",
+        component="Research funnel semiconductor health evidence",
+        source_path="experiments/research_funnel/feature_store.py",
+        test_script="tests/test_semiconductor_positive_inputs.py",
+        before="        if semiconductor_status != expected_semiconductor_status:",
+        after="        if False:",
+        expected_failure_marker=(
+            "test_feature_health_cannot_hide_a_semiconductor_source_gap"
+        ),
+        rationale=(
+            "Semiconductor and top-level health must be recomputed from component "
+            "coverage rather than trusting two coordinated COMPLETE labels."
+        ),
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_FINANCIAL_LOOKBACK",
+        component="Research funnel semiconductor PIT financial coverage",
+        source_path="experiments/research_funnel/semiconductor_inputs.py",
+        test_script="tests/test_semiconductor_positive_inputs.py",
+        before=(
+            "# governance-mutation: SEMICONDUCTOR_FINANCIAL_LOOKBACK\n"
+            "def _quarter_periods(as_of: str, count: int = 4) -> list[str]:"
+        ),
+        after=(
+            "# governance-mutation: SEMICONDUCTOR_FINANCIAL_LOOKBACK\n"
+            "def _quarter_periods(as_of: str, count: int = 2) -> list[str]:"
+        ),
+        expected_failure_marker=(
+            "test_financial_query_window_reaches_the_latest_disclosed_prior_quarter"
+        ),
+        rationale=(
+            "The collector must look past nominal but not-yet-disclosed periods to the "
+            "latest PIT financial statement that could actually exist."
+        ),
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_ORPHAN_RAW_ROWS",
+        component="Research funnel semiconductor source atomicity",
+        source_path="experiments/research_funnel/semiconductor_inputs.py",
+        test_script="tests/test_semiconductor_positive_inputs.py",
+        before="        if raw_rows:\n",
+        after="        if False:\n",
+        expected_failure_marker="test_orphan_raw_rows_without_their_atomic_batch_fail_hard",
+        rationale=(
+            "Raw evidence without its atomic source-batch receipt is corruption, not an "
+            "ordinary source outage."
+        ),
+    ),
+    MutationCase(
         mutation_id="FUNNEL_U1_NO_TRADE_AUTHORITY",
         component="Research funnel U1 authority",
         source_path="experiments/research_funnel/funnel_pipeline.py",
@@ -1421,6 +1470,32 @@ MUTATIONS: tuple[MutationCase, ...] = (
         '            raise FunnelError("invalid channel data_status")',
         expected_failure_marker="test_u1_rejects_unknown_data_status",
         rationale="Unknown status labels cannot bypass visible DATA_BLOCKED/PARTIAL semantics.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_U1_TRIGGER_REQUIRES_COMPLETE",
+        component="Research funnel U1 positive evidence boundary",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_semiconductor_positive_inputs.py",
+        before='        if row["triggered"] and row["data_status"] != "COMPLETE":',
+        after="        if False:",
+        expected_failure_marker="test_degraded_channel_can_never_be_a_positive_trigger",
+        rationale=(
+            "PARTIAL, DATA_BLOCKED, or stale context can never be relabeled as a "
+            "positive candidate trigger."
+        ),
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_U1_E1_TRIGGER_RECOMPUTED",
+        component="Research funnel U1 E1 integrity",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_semiconductor_positive_inputs.py",
+        before='                or row["triggered"] is not expected_trigger\n',
+        after="                or False\n",
+        expected_failure_marker="test_e1_verdict_cannot_be_hidden_by_relabeling_triggered",
+        rationale=(
+            "The E1 red-flag verdict must independently determine the trigger consumed "
+            "by U2; a rehashed false label cannot hide it."
+        ),
     ),
     MutationCase(
         mutation_id="FUNNEL_U1_SIX_CHANNEL_COVERAGE",
@@ -5130,6 +5205,44 @@ MUTATIONS = MUTATIONS + (
         rationale=(
             "A raw U2 industry key cannot masquerade as a point-in-time Industry Cohort OS "
             "identity when that artifact is not frozen in the packet source."
+        ),
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_V1_1_REVISION_IDENTITY",
+        component="Research Closed Loop V1.1 revision identity",
+        source_path="docs/research/contracts/research_closed_loop.v1.json",
+        test_script="tests/test_research_closed_loop_v1.py",
+        before=(
+            '  "schema_version": "1.1",\n'
+            '  "method_version": "RESEARCH_CLOSED_LOOP_V1_1",'
+        ),
+        after=(
+            '  "schema_version": "1.0",\n'
+            '  "method_version": "RESEARCH_CLOSED_LOOP_V1",'
+        ),
+        expected_failure_marker="test_manifest_is_strict_and_frozen",
+        rationale=(
+            "The semiconductor screening assembly must be an explicit reviewed revision, "
+            "not a silent byte change under the original V1 method label."
+        ),
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_V1_1_SEMICONDUCTOR_ASSEMBLY_BINDING",
+        component="Research Closed Loop V1.1 semiconductor assembly binding",
+        source_path="docs/research/contracts/research_closed_loop.v1.json",
+        test_script="tests/test_research_closed_loop_v1.py",
+        before=(
+            '    {"path": "experiments/research_funnel/semiconductor_inputs.py", '
+            '"sha256": "sha256:7c833ae836a6b62ff86e19ab43c4a2a0fdd595883c6aadc1706e59bb61459acf"},'
+        ),
+        after=(
+            '    {"path": "experiments/research_funnel/semiconductor_inputs.py", '
+            '"sha256": "sha256:0000000000000000000000000000000000000000000000000000000000000000"},'
+        ),
+        expected_failure_marker="test_every_bound_artifact_matches_its_exact_bytes",
+        rationale=(
+            "The new point-in-time semiconductor evidence implementation must remain "
+            "byte-bound to the reviewed V1.1 assembly."
         ),
     ),
     MutationCase(

@@ -4,11 +4,13 @@
 from __future__ import annotations
 
 import copy
+import concurrent.futures
 import json
 import os
 import sqlite3
 import sys
 import tempfile
+import threading
 import unittest
 from pathlib import Path
 from unittest import mock
@@ -252,7 +254,55 @@ def ingest_all(db: Path, registry: dict) -> None:
     )
 
 
+def semiconductor_scan_fixture() -> tuple[dict, dict]:
+    registry = registry_fixture()
+    taxonomy = json.loads(
+        (ROOT / "experiments" / "research_funnel" / "industry_taxonomy.v1.json")
+        .read_text(encoding="utf-8")
+    )
+    with tempfile.TemporaryDirectory() as tmp:
+        db = Path(tmp) / "features.sqlite3"
+        ingest_all(db, registry)
+        evidence = si.build_snapshot(db, registry, TRADE_DATE)
+    scan = fp.build_all_market_scan(
+        registry=registry,
+        e1_events=e1_fixture(registry),
+        features=features_fixture(),
+        rotation=rotation_fixture(),
+        semiconductor_inputs=evidence,
+        industry_taxonomy=taxonomy,
+        trade_date=TRADE_DATE,
+        generated_at="2026-08-24T00:00:00+00:00",
+    )
+    return registry, scan
+
+
 class SemiconductorStoreTests(unittest.TestCase):
+    def test_concurrent_first_initialization_converges(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            db = Path(tmp) / "features.sqlite3"
+            barrier = threading.Barrier(8)
+
+            def initialize_once(_index: int) -> None:
+                barrier.wait()
+                conn = si._connect(db)
+                try:
+                    si.initialize(conn)
+                finally:
+                    conn.close()
+
+            with concurrent.futures.ThreadPoolExecutor(max_workers=8) as pool:
+                list(pool.map(initialize_once, range(8)))
+
+            conn = sqlite3.connect(db)
+            try:
+                version = conn.execute(
+                    "SELECT value FROM store_meta WHERE key='semiconductor_schema_version'"
+                ).fetchone()
+                self.assertEqual((si.STORE_EXTENSION_VERSION,), version)
+            finally:
+                conn.close()
+
     def test_feature_health_cannot_hide_a_semiconductor_source_gap(self) -> None:
         registry = registry_fixture()
         with tempfile.TemporaryDirectory() as tmp:
@@ -278,6 +328,12 @@ class SemiconductorStoreTests(unittest.TestCase):
             hidden["status"] = "COMPLETE"
             with self.assertRaisesRegex(fs.FeatureStoreError, "does not surface"):
                 fs.validate_health(hidden)
+
+            self_reported = copy.deepcopy(health)
+            self_reported["status"] = "COMPLETE"
+            self_reported["semiconductor_positive_inputs"]["status"] = "COMPLETE"
+            with self.assertRaisesRegex(fs.FeatureStoreError, "component coverage"):
+                fs.validate_health(self_reported)
 
     def test_feature_store_live_path_collects_and_surfaces_semiconductor_sources(self) -> None:
         registry = registry_fixture()
@@ -387,6 +443,24 @@ class SemiconductorStoreTests(unittest.TestCase):
                 row["fundamentals"]["status"] == "DATA_BLOCKED"
                 for row in future["rows"]
             ))
+
+    def test_financial_query_window_reaches_the_latest_disclosed_prior_quarter(self) -> None:
+        self.assertIn("20250930", si._quarter_periods("20260401"))
+
+    def test_orphan_raw_rows_without_their_atomic_batch_fail_hard(self) -> None:
+        registry = registry_fixture()
+        with tempfile.TemporaryDirectory() as tmp:
+            db = Path(tmp) / "features.sqlite3"
+            ingest_all(db, registry)
+            conn = sqlite3.connect(db)
+            conn.execute("DROP TRIGGER semiconductor_source_batches_no_delete")
+            conn.execute(
+                "DELETE FROM semiconductor_source_batches WHERE source_name='moneyflow_dc'"
+            )
+            conn.commit()
+            conn.close()
+            with self.assertRaisesRegex(si.SemiconductorInputError, "orphan raw rows"):
+                si.build_snapshot(db, registry, TRADE_DATE)
 
     def test_partial_schema_loss_and_self_reported_hashes_fail_closed(self) -> None:
         registry = registry_fixture()
@@ -561,6 +635,38 @@ class SemiconductorFunnelTests(unittest.TestCase):
             relabeled["rows_hash"] = fp._hash(relabeled["rows"])
             with self.assertRaisesRegex(fp.FunnelError, "E1 red flag"):
                 fp.validate_candidate_review(relabeled, registry, scan)
+
+
+    def test_e1_verdict_cannot_be_hidden_by_relabeling_triggered(self) -> None:
+        registry, scan = semiconductor_scan_fixture()
+        hidden_e1 = copy.deepcopy(scan)
+        e1_row = next(
+            row for row in hidden_e1["rows"]
+            if row["ts_code"] == CODES[0] and row["channel"] == "E1_EVENT"
+        )
+        e1_row["triggered"] = False
+        hidden_e1["rows_hash"] = fp._hash(hidden_e1["rows"])
+        with self.assertRaisesRegex(fp.FunnelError, "E1 verdict/trigger"):
+            fp.validate_all_market_scan(hidden_e1, registry)
+
+    def test_degraded_channel_can_never_be_a_positive_trigger(self) -> None:
+        registry, scan = semiconductor_scan_fixture()
+        promoted_partial = copy.deepcopy(scan)
+        industry_row = next(
+            row for row in promoted_partial["rows"]
+            if row["ts_code"] == CODES[1]
+            and row["channel"] == "INDUSTRY_VALUE_CHAIN"
+        )
+        industry_row["triggered"] = True
+        industry_row["entry_reasons"] = [{
+            "channel": "INDUSTRY_VALUE_CHAIN",
+            "metric": "fabricated_partial_trigger",
+            "value": 1,
+            "threshold": "POSITIVE",
+        }]
+        promoted_partial["rows_hash"] = fp._hash(promoted_partial["rows"])
+        with self.assertRaisesRegex(fp.FunnelError, "COMPLETE evidence"):
+            fp.validate_all_market_scan(promoted_partial, registry)
 
     def test_missing_sources_are_per_security_data_blocked_not_silent_absence(self) -> None:
         registry = registry_fixture()
