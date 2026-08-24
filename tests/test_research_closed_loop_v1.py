@@ -52,7 +52,7 @@ def _validate(manifest: dict[str, Any]) -> list[str]:
     if manifest.get("status") != "FROZEN_OFFLINE_WORKFLOW_DEBUG":
         errors.append("frozen status changed")
     if manifest.get("source_base") != {
-        "assembly_code_commit": "af6a0175660176eccf1fc93a375dfa8e091c514a",
+        "assembly_code_commit": "3ee830562c7def5f7fc9e136c34e912bcbc657a6",
         "base_main": "a83a5d87cb660b579a295b3a2540977bf1f2f398",
         "review_pr": 306,
         "data_dependency_pr": 297,
