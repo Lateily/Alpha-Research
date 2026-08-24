@@ -185,7 +185,8 @@ class BatteryCoverageTests(unittest.TestCase):
             fp.validate_candidate_battery(battery_for(self.manifest, rows), self.manifest)
 
         rows = [complete_row(tk) for tk in self.codes]
-        rows[0]["dims"]["基本面"]["红旗闸门"] = "PASS"
+        # The E1 event-layer vocabulary must not leak into the U3 producer contract.
+        rows[0]["dims"]["基本面"]["红旗闸门"] = "NO_RED_FLAG_FOUND"
         with self.assertRaisesRegex(FunnelError, "fundamental red-flag verdict"):
             fp.validate_candidate_battery(battery_for(self.manifest, rows), self.manifest)
 
