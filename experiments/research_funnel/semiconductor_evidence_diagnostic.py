@@ -270,7 +270,8 @@ def main() -> int:
     diagnostic = build_diagnostic(_load_json(args.intake))
     text = json.dumps(diagnostic, ensure_ascii=True, indent=2, sort_keys=True) + "\n"
     if args.output:
-        args.output.write_text(text, encoding="utf-8", newline="\n")
+        with args.output.open("w", encoding="utf-8", newline="\n") as output:
+            output.write(text)
     else:
         print(text, end="")
     return 0
