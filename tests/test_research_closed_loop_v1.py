@@ -14,6 +14,30 @@ ROOT = Path(__file__).resolve().parents[1]
 MANIFEST_PATH = ROOT / "docs/research/contracts/research_closed_loop.v1.json"
 DOC_PATH = ROOT / "docs/research/RESEARCH_CLOSED_LOOP_V1.md"
 TASK_PATH = ROOT / "scripts/llm/fixtures/research_closed_loop_v1.task.json"
+EXPECTED_ARTIFACT_PATHS = (
+    "docs/research/RESEARCH_CLOSED_LOOP_V1.md",
+    "docs/research/ALL_MARKET_RESEARCH_FUNNEL.md",
+    "docs/research/U4_DECISION_LEDGER_SPEC_V1.md",
+    "docs/research/contracts/u4_decision_ledger.v1.schema.json",
+    "docs/research/RESEARCH_CLOSURE_EXPERIMENT.md",
+    "docs/research/RESEARCH_METHOD_AND_ATTRIBUTION_V1.md",
+    "docs/research/FIVE_AXIS_ATTRIBUTION_V1.md",
+    "docs/research/PAPER_EXECUTION_REALISM_AUDIT_V1.md",
+    "docs/research/prospective/SEMICONDUCTOR_DAILY_SOURCE_REPAIR_PLAN_V0_1.md",
+    "experiments/research_funnel/funnel_pipeline.py",
+    "experiments/research_funnel/feature_store.py",
+    "experiments/research_funnel/funnel_dag.py",
+    "experiments/research_funnel/semiconductor_inputs.py",
+    "experiments/research_funnel/semiconductor_source_repair.py",
+    "experiments/research_funnel/industry_taxonomy.v1.json",
+    "experiments/research_funnel/u4_decision_ledger.py",
+    "experiments/research_funnel/research_method.py",
+    "experiments/research_funnel/research_cycle.py",
+    "experiments/research_funnel/five_axis_attribution.py",
+    "experiments/execution_tracker/model_paper_fund.py",
+    "experiments/execution_tracker/paper_execution_audit.py",
+    "experiments/execution_tracker/model_fund/orders.json",
+)
 
 
 def _strict_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
@@ -43,6 +67,13 @@ def _validate(manifest: dict[str, Any]) -> list[str]:
     }
     if set(manifest) != expected_top:
         errors.append("top-level contract surface changed")
+    bindings = manifest.get("artifact_bindings")
+    if not isinstance(bindings, list) or any(
+        not isinstance(row, dict) for row in bindings
+    ):
+        errors.append("artifact bindings are not one object list")
+    elif [row.get("path") for row in bindings] != list(EXPECTED_ARTIFACT_PATHS):
+        errors.append("artifact binding set or order changed")
     if manifest.get("schema") != "ar.research_closed_loop_manifest.v1":
         errors.append("schema changed")
     if manifest.get("schema_version") != "1.2":
@@ -144,13 +175,20 @@ class ResearchClosedLoopV1Tests(unittest.TestCase):
     def test_every_bound_artifact_matches_its_exact_bytes(self) -> None:
         rows = self.manifest["artifact_bindings"]
         paths = [row["path"] for row in rows]
-        self.assertEqual(len(paths), len(set(paths)))
-        self.assertGreaterEqual(len(paths), 15)
+        self.assertEqual(list(EXPECTED_ARTIFACT_PATHS), paths)
         for row in rows:
             self.assertEqual(set(row), {"path", "sha256"})
             path = ROOT / row["path"]
             self.assertTrue(path.is_file(), row["path"])
             self.assertEqual(row["sha256"], _sha(path), row["path"])
+
+    def test_artifact_binding_set_cannot_shrink(self) -> None:
+        changed = json.loads(json.dumps(self.manifest))
+        changed["artifact_bindings"] = [
+            row for row in changed["artifact_bindings"]
+            if row["path"] != "experiments/research_funnel/research_cycle.py"
+        ]
+        self.assertIn("artifact binding set or order changed", _validate(changed))
 
     def test_revision_1_2_binds_the_semiconductor_repair_assembly(self) -> None:
         self.assertEqual(self.manifest["schema_version"], "1.2")
