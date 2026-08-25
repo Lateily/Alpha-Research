@@ -5807,7 +5807,7 @@ MUTATIONS = MUTATIONS + (
         test_script="tests/test_research_closed_loop_v1.py",
         before=(
             '    {"path": "experiments/research_funnel/semiconductor_inputs.py", '
-            '"sha256": "sha256:66fe7a9c4354622eff807d0416faf62a498835182dc5348cce799e41c314df7c"},'
+            '"sha256": "sha256:9f0eb2364b0c9174b37715b2953e7e2411f7556042f97d22d30188ad7ba993a4"},'
         ),
         after=(
             '    {"path": "experiments/research_funnel/semiconductor_inputs.py", '
@@ -5826,7 +5826,7 @@ MUTATIONS = MUTATIONS + (
         test_script="tests/test_research_closed_loop_v1.py",
         before=(
             '    {"path": "experiments/research_funnel/semiconductor_source_repair.py", '
-            '"sha256": "sha256:a60e3698cee9abce744452ce0f87897e8bd218a19d379b8b8ed544b3ec2677f0"},'
+            '"sha256": "sha256:ebaafb342e027444ee5711b10ce7f44d109f9f6e304ce3e24d2387d62c79a96a"},'
         ),
         after=(
             '    {"path": "experiments/research_funnel/semiconductor_source_repair.py", '
