@@ -87,6 +87,10 @@ class SemiconductorInputError(RuntimeError):
     pass
 
 
+class SourcePublicationPending(SemiconductorInputError):
+    """The requested source date has not produced a publishable batch yet."""
+
+
 def _canonical(value: Any) -> bytes:
     return json.dumps(
         value, ensure_ascii=False, sort_keys=True, separators=(",", ":"),
@@ -438,6 +442,11 @@ def ingest_source(
         raise SemiconductorInputError("semiconductor source codes must be sorted and unique")
     if universe_hash != _sha256(expected_codes):
         raise SemiconductorInputError("semiconductor source universe hash mismatch")
+    # governance-mutation: SEMICONDUCTOR_SOURCE_PUBLICATION_PENDING
+    if source_name == "cyq_perf" and not raw_rows:
+        raise SourcePublicationPending(
+            "cyq_perf returned no rows; source publication is pending"
+        )
     normalized, conflicts = NORMALIZERS[source_name](raw_rows, date8, set(expected_codes))
     observed = {row["ts_code"] for row in normalized}
     missing = sorted(set(expected_codes) - observed)
@@ -602,6 +611,16 @@ def collect_live(
                 db, source_name, date8, rows, codes, universe_hash,
             )
             results.append(result)
+        except SourcePublicationPending:
+            results.append(
+                {
+                    "source": source_name,
+                    "as_of": date8,
+                    "status": "SOURCE_PUBLICATION_PENDING",
+                    "reason_code": "SOURCE_PUBLICATION_PENDING",
+                    "retryable": True,
+                }
+            )
         except RegistryError:
             results.append(
                 {

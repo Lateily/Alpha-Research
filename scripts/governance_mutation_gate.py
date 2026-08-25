@@ -1289,6 +1289,31 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="A same-date source revision requires migration and cannot overwrite frozen facts.",
     ),
     MutationCase(
+        mutation_id="SEMICONDUCTOR_SOURCE_PUBLICATION_PENDING",
+        component="Research funnel semiconductor source availability",
+        source_path="experiments/research_funnel/semiconductor_inputs.py",
+        test_script="tests/test_semiconductor_positive_inputs.py",
+        before=(
+            '    if source_name == "cyq_perf" and not raw_rows:\n'
+            '        raise SourcePublicationPending(\n'
+            '            "cyq_perf returned no rows; source publication is pending"\n'
+            '        )'
+        ),
+        after=(
+            '    if False:\n'
+            '        raise SourcePublicationPending(\n'
+            '            "cyq_perf returned no rows; source publication is pending"\n'
+            '        )'
+        ),
+        expected_failure_marker=(
+            "test_empty_cyq_batch_stays_pending_and_a_later_retry_can_ingest"
+        ),
+        rationale=(
+            "An empty same-day cyq_perf response is a retryable publication gap, "
+            "not an immutable successful batch declaring every issuer missing."
+        ),
+    ),
+    MutationCase(
         mutation_id="SEMICONDUCTOR_OUT_OF_ORDER",
         component="Research funnel semiconductor append-only evidence",
         source_path="experiments/research_funnel/semiconductor_inputs.py",
@@ -5268,7 +5293,7 @@ MUTATIONS = MUTATIONS + (
         test_script="tests/test_research_closed_loop_v1.py",
         before=(
             '    {"path": "experiments/research_funnel/semiconductor_inputs.py", '
-            '"sha256": "sha256:f438d27542211ed118ba458e0cde84495174847857201df4011e8e853c7d298f"},'
+            '"sha256": "sha256:3ac3e5c78ab7dd749cea6713a45e9d90d02cf8d3e148a6c791ddb2a20d7fb5b5"},'
         ),
         after=(
             '    {"path": "experiments/research_funnel/semiconductor_inputs.py", '
