@@ -1714,6 +1714,26 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="A relabeled staged response cannot pass as the provider capture used by the repair.",
     ),
     MutationCase(
+        mutation_id="SEMICONDUCTOR_REPAIR_PLAN_CAPTURE_PROJECTION",
+        component="Research funnel repair plan capture-to-projection binding",
+        source_path="experiments/research_funnel/semiconductor_source_repair.py",
+        test_script="tests/test_semiconductor_source_repair.py",
+        before=(
+            "        # governance-mutation: SEMICONDUCTOR_REPAIR_PLAN_CAPTURE_PROJECTION\n"
+            "        _validate_capture_projection(record)"
+        ),
+        after=(
+            "        # governance-mutation: SEMICONDUCTOR_REPAIR_PLAN_CAPTURE_PROJECTION\n"
+            "        _replacement_batch(record)"
+        ),
+        expected_failure_marker=(
+            "test_plan_rejects_rehashed_capture_that_disagrees_with_projection"
+        ),
+        rationale=(
+            "A fully rehashed plan must still prove that replacement bytes derive from the attached raw capture."
+        ),
+    ),
+    MutationCase(
         mutation_id="SEMICONDUCTOR_REPAIR_REQUIRED_EVIDENCE_VALUES",
         component="Research funnel semiconductor repaired evidence quality",
         source_path="experiments/research_funnel/semiconductor_source_repair.py",
@@ -1849,10 +1869,10 @@ MUTATIONS: tuple[MutationCase, ...] = (
             "    pass"
         ),
         expected_failure_marker=(
-            "test_reader_recomputes_stored_plan_instead_of_trusting_run_label"
+            "test_reader_rejects_rehashed_capture_that_disagrees_with_projection"
         ),
         rationale=(
-            "A self-consistent receipt label cannot replace recomputation of the exact stored plan."
+            "A self-consistent durable receipt cannot replace semantic recomputation of its exact capture-derived plan."
         ),
     ),
     MutationCase(

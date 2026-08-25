@@ -594,6 +594,42 @@ def _replacement_batch(record: Mapping[str, Any]) -> tuple[dict[str, Any], dict[
     return batch, by_code
 
 
+def _validate_capture_projection(
+    record: Mapping[str, Any],
+) -> tuple[dict[str, Any], dict[str, dict[str, Any]]]:
+    """Prove that the replacement is the deterministic projection of its capture."""
+    source_name = str(record["source_name"])
+    as_of = str(record["as_of"])
+    batch, projected_rows = _replacement_batch(record)
+    _body, expected_codes = _body_from_batch(
+        source_name, batch, projected_rows, require_daily_floor=True,
+    )
+    raw_rows = _validate_raw_capture(
+        record["raw_capture"], source_name, as_of, str(record["observed_at"]),
+    )
+    normalized, conflicts = inputs.NORMALIZERS[source_name](
+        raw_rows, as_of, set(expected_codes),
+    )
+    _validate_normalized_evidence(source_name, normalized)
+    observed_codes = {row["ts_code"] for row in normalized}
+    capture_body = {
+        "rows": normalized,
+        "missing_codes": sorted(set(expected_codes) - observed_codes),
+        "conflict_codes": sorted(set(conflicts)),
+    }
+    if set(capture_body["conflict_codes"]) - set(capture_body["missing_codes"]):
+        raise SourceRepairError("capture conflicts are not declared missing")
+    if (
+        capture_body != record["replacement_body"]
+        or _hash(capture_body) != record["replacement_source_hash"]
+        or len(normalized) != int(record["row_count"])
+    ):
+        raise SourceRepairError(
+            "replacement projection does not derive from its raw capture"
+        )
+    return batch, projected_rows
+
+
 def _validate_repair_record(
     conn: sqlite3.Connection, row: Mapping[str, Any],
 ) -> tuple[dict[str, Any], dict[str, Any], dict[str, dict[str, Any]]]:
@@ -615,10 +651,6 @@ def _validate_repair_record(
         _require_hash(record[key], key)
     if not str(record["repair_reason"]).strip():
         raise SourceRepairError("repair reason is required")
-    _validate_raw_capture(
-        record["raw_capture"], record["source_name"], record["as_of"],
-        record["observed_at"],
-    )
     if record["source_publication_status"] != "PUBLISHED":
         raise SourceRepairError("unpublished source cannot become an active repair")
     observed = _timestamp(record["observed_at"], "observed_at")
@@ -1175,27 +1207,8 @@ def validate_plan(plan: Mapping[str, Any]) -> None:
             )
             if observed < publication:
                 raise SourceRepairError("observed_at cannot precede source publication time")
-        _validate_raw_capture(
-            record["raw_capture"], str(record["source_name"]), str(record["as_of"]),
-            str(record["observed_at"]),
-        )
-        synthetic = {
-            "source_name": record["source_name"],
-            "as_of": record["as_of"],
-            "source_hash": record["replacement_source_hash"],
-            "row_count": record["row_count"],
-            "universe_hash": record["universe_hash"],
-            "missing_codes_json": _canonical(record["replacement_body"]["missing_codes"]),
-            "conflict_codes_json": _canonical(record["replacement_body"]["conflict_codes"]),
-            "ingested_at": record["observed_at"],
-        }
-        rows = {
-            str(row["ts_code"]): dict(row) for row in record["replacement_body"]["rows"]
-        }
-        _body_from_batch(
-            str(record["source_name"]), synthetic, rows, require_daily_floor=True,
-        )
-        _validate_normalized_evidence(str(record["source_name"]), list(rows.values()))
+        # governance-mutation: SEMICONDUCTOR_REPAIR_PLAN_CAPTURE_PROJECTION
+        _validate_capture_projection(record)
         expected_id = f"ssr-{_hash({key: value for key, value in record.items() if key not in {'repair_id', 'plan_hash'}})[:24]}"
         if record["repair_id"] != expected_id:
             raise SourceRepairError("repair plan repair_id does not recompute")

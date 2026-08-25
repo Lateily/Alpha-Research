@@ -218,6 +218,15 @@ def rehash_plan(changed: dict) -> dict:
     return output
 
 
+def rewrite_capture_winner_rate(record: dict, value: float = 88.88) -> None:
+    capture = record["raw_capture"]
+    capture["raw_rows"][0]["winner_rate"] = value
+    capture["raw_rows_hash"] = repair._hash(capture["raw_rows"])
+    unhashed = dict(capture)
+    unhashed.pop("capture_hash")
+    capture["capture_hash"] = repair._hash(unhashed)
+
+
 def original_rows(db: Path) -> dict[str, list[tuple]]:
     conn = sqlite3.connect(db)
     try:
@@ -471,6 +480,18 @@ class SemiconductorSourceRepairTests(unittest.TestCase):
                         )
                     with self.assertRaisesRegex(repair.SourceRepairError, message):
                         repair.build_plan(db, scan, specs)
+
+    def test_plan_rejects_rehashed_capture_that_disagrees_with_projection(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            db = Path(tmp) / "features.sqlite3"
+            build_legacy_store(db, (DATES[0],))
+            _scan, plan = plan_for(db, (DATES[0],))
+            rewrite_capture_winner_rate(plan["repairs"][0])
+            changed = rehash_plan(plan)
+            with self.assertRaisesRegex(
+                repair.SourceRepairError, "does not derive from its raw capture"
+            ):
+                repair.validate_plan(changed)
 
     def test_multi_source_receipt_rebuild_uses_plan_semantic_order(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -1193,6 +1214,25 @@ class SemiconductorSourceRepairTests(unittest.TestCase):
             conn = si._connect(db, readonly=True)
             try:
                 with self.assertRaisesRegex(repair.SourceRepairError, "literal approval"):
+                    repair.resolve_active_source(conn, "cyq_perf", DATES[0])
+            finally:
+                conn.close()
+
+    def test_reader_rejects_rehashed_capture_that_disagrees_with_projection(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            db = Path(tmp) / "features.sqlite3"
+            build_legacy_store(db, (DATES[0],))
+            scan, plan = plan_for(db, (DATES[0],))
+            repair.apply_plan(
+                db, plan, approval_for(plan), _test_nightly_lock_path=Path(tmp) / "lock",
+                expected_scan_hash=scan["scan_hash"], expected_plan_hash=plan["plan_hash"],
+            )
+            rewrite_single_record(db, rewrite_capture_winner_rate)
+            conn = si._connect(db, readonly=True)
+            try:
+                with self.assertRaisesRegex(
+                    repair.SourceRepairError, "does not derive from its raw capture"
+                ):
                     repair.resolve_active_source(conn, "cyq_perf", DATES[0])
             finally:
                 conn.close()
