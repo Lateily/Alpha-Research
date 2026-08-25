@@ -5924,7 +5924,7 @@ MUTATIONS = MUTATIONS + (
             '"sha256": "sha256:f42620fa91cf93fe8fbd28930ab4c2530a5e6ed285c0025df5a74175feb59415"},\n'
         ),
         after="",
-        expected_failure_marker="test_artifact_binding_set_cannot_shrink",
+        expected_failure_marker="test_every_bound_artifact_matches_its_exact_bytes",
         rationale=(
             "A frozen assembly cannot silently drop one reviewed artifact while all remaining hashes stay valid."
         ),
@@ -5936,7 +5936,7 @@ MUTATIONS = MUTATIONS + (
         test_script="tests/test_research_closed_loop_v1.py",
         before=(
             '    {"path": "experiments/research_funnel/semiconductor_inputs.py", '
-            '"sha256": "sha256:9f0eb2364b0c9174b37715b2953e7e2411f7556042f97d22d30188ad7ba993a4"},'
+            '"sha256": "sha256:6701258484cc92bc3280a9086a33bd8ee216161bc0bde9bfed67b7bd94a9aaec"},'
         ),
         after=(
             '    {"path": "experiments/research_funnel/semiconductor_inputs.py", '
@@ -5955,7 +5955,7 @@ MUTATIONS = MUTATIONS + (
         test_script="tests/test_research_closed_loop_v1.py",
         before=(
             '    {"path": "experiments/research_funnel/semiconductor_source_repair.py", '
-            '"sha256": "sha256:72485c18a3c65624490027597d1801b9437010b558bc6da6ef7e5deb26b8597d"},'
+            '"sha256": "sha256:d63f7ae910c198a09e07cbb7ede1510da2204b05f017079e4fe627aa7b6d55c6"},'
         ),
         after=(
             '    {"path": "experiments/research_funnel/semiconductor_source_repair.py", '

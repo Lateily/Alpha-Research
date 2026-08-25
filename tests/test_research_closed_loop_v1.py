@@ -100,7 +100,7 @@ def _validate(manifest: dict[str, Any]) -> list[str]:
     if manifest.get("status") != "FROZEN_OFFLINE_WORKFLOW_DEBUG":
         errors.append("frozen status changed")
     if manifest.get("source_base") != {
-        "assembly_code_commit": "7c216e5f041e10e5cf423edc11a55bd0fe0f92e6",
+        "assembly_code_commit": "4ba8860d9687e58ace2b919604bdd6f686d0d039",
         "base_main": "8ed9cfce536d70a541333e175dfb9b573610605a",
         "review_pr": 316,
         "data_dependency_pr": 297,
