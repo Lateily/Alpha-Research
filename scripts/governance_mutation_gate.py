@@ -422,6 +422,37 @@ MUTATIONS: tuple[MutationCase, ...] = (
         test_function="test_network_requirement_cannot_exceed_task_policy",
     ),
     MutationCase(
+        mutation_id="AIOS_SKILL_RUNTIME_PREFLIGHT",
+        component="AIOS shared skill runtime",
+        source_path="scripts/llm/adapters/base.py",
+        test_script="tests/test_agent_adapter_offline.py",
+        before=(
+            "            request, skill_refs = _bind_repository_skills("
+            "request, skill_selection)"
+        ),
+        after="            request, skill_refs = request, ()",
+        expected_failure_marker="test_tampered_runtime_skill_is_blocked_before_worker",
+        rationale="A selected repository skill must pass registry verification before any worker executes.",
+        test_function="test_tampered_runtime_skill_is_blocked_before_worker",
+    ),
+    MutationCase(
+        mutation_id="AIOS_SKILL_RUNTIME_CONTEXT_BUDGET",
+        component="AIOS shared skill runtime",
+        source_path="scripts/llm/adapters/base.py",
+        test_script="tests/test_agent_adapter_offline.py",
+        before=(
+            "    if not rendered or len(rendered) > _MAX_SKILL_CONTEXT_CHARS:\n"
+            '        raise ValueError("repository skill context size is invalid")'
+        ),
+        after=(
+            "    if not rendered:\n"
+            '        raise ValueError("repository skill context size is invalid")'
+        ),
+        expected_failure_marker="test_oversized_verified_skill_context_is_blocked_before_worker",
+        rationale="Hash-valid skill content cannot silently exceed the fixed prompt and cost budget.",
+        test_function="test_oversized_verified_skill_context_is_blocked_before_worker",
+    ),
+    MutationCase(
         mutation_id="R015_PUBLICATION_MIGRATION_EVENT_UNIQUENESS",
         component="R-015 event ledger",
         source_path="experiments/execution_tracker/event_ledger.py",
@@ -1288,6 +1319,53 @@ MUTATIONS: tuple[MutationCase, ...] = (
             "test_append_only_idempotency_revision_and_out_of_order_are_enforced"
         ),
         rationale="A same-date source revision requires migration and cannot overwrite frozen facts.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_DAILY_SOURCE_REGISTRY",
+        component="Research funnel semiconductor daily-source availability",
+        source_path="experiments/research_funnel/semiconductor_inputs.py",
+        test_script="tests/test_semiconductor_positive_inputs.py",
+        before=(
+            'DAILY_MUST_PUBLISH_SOURCES = frozenset({"moneyflow_dc", "cyq_perf"})'
+        ),
+        after='DAILY_MUST_PUBLISH_SOURCES = frozenset({"cyq_perf"})',
+        expected_failure_marker=(
+            "test_empty_moneyflow_batch_stays_pending_and_a_later_retry_can_ingest"
+        ),
+        rationale=(
+            "Every registered daily must-publish source must keep an empty response "
+            "retryable instead of freezing a successful all-missing batch."
+        ),
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_DAILY_SOURCE_COVERAGE_FLOOR",
+        component="Research funnel semiconductor daily-source completeness",
+        source_path="experiments/research_funnel/semiconductor_inputs.py",
+        test_script="tests/test_semiconductor_positive_inputs.py",
+        before="MIN_DAILY_SOURCE_COVERAGE_RATIO = 0.95",
+        after="MIN_DAILY_SOURCE_COVERAGE_RATIO = 0.90",
+        expected_failure_marker=(
+            "test_daily_coverage_floor_rejects_ninety_percent_coverage"
+        ),
+        rationale=(
+            "A structurally incomplete daily response cannot be frozen by silently "
+            "lowering the declared expected-universe coverage floor."
+        ),
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_SOURCE_PUBLICATION_PENDING",
+        component="Research funnel semiconductor source availability",
+        source_path="experiments/research_funnel/semiconductor_inputs.py",
+        test_script="tests/test_semiconductor_positive_inputs.py",
+        before="    if len(normalized) < minimum_rows:",
+        after="    if False:",
+        expected_failure_marker=(
+            "test_empty_cyq_batch_stays_pending_and_a_later_retry_can_ingest"
+        ),
+        rationale=(
+            "An empty or under-covered daily source response is a retryable "
+            "publication gap, not an immutable successful all-missing batch."
+        ),
     ),
     MutationCase(
         mutation_id="SEMICONDUCTOR_OUT_OF_ORDER",
@@ -5269,7 +5347,7 @@ MUTATIONS = MUTATIONS + (
         test_script="tests/test_research_closed_loop_v1.py",
         before=(
             '    {"path": "experiments/research_funnel/semiconductor_inputs.py", '
-            '"sha256": "sha256:f438d27542211ed118ba458e0cde84495174847857201df4011e8e853c7d298f"},'
+            '"sha256": "sha256:fdf60eb54b2346cd3cce6997195815c14e86e107186d12fbb4a904ba40cdd8d2"},'
         ),
         after=(
             '    {"path": "experiments/research_funnel/semiconductor_inputs.py", '

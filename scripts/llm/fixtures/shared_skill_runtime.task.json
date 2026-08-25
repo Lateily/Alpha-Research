@@ -1,0 +1,68 @@
+{
+  "schema": "ai-task.v1",
+  "task_id": "AIOS-SKILLS-RUNTIME-001",
+  "source_issue": null,
+  "architecture_block": ["aios-agent-harness", "aios-skill-context"],
+  "objective": "Bind selected repository skills into the provider-neutral AgentAdapter execution path with fail-closed preflight, deterministic system-message assembly, input-hash coverage, and skill provenance before any worker or provider call.",
+  "non_goals": [
+    "Do not implement or duplicate A-010 ai-context.v1, Router, Scheduler, or Context Broker",
+    "Do not change ai-task.v1 or context schemas",
+    "Do not call live model, market-data, video, or production services",
+    "Do not change provider pricing, credentials, endpoints, or real-call authority",
+    "Do not change repository skill content or registry policy"
+  ],
+  "human_owner": "Jason",
+  "reviewer": "Junyan",
+  "executor_candidates": ["Codex", "Claude"],
+  "dependencies": ["PR #296 merged shared skill registry foundation"],
+  "authority_docs": [
+    "AGENTS.md",
+    "scripts/llm/AGENTS.md",
+    "docs/llm/AI_OS_BUILD_GUIDE.md"
+  ],
+  "file_scope": [
+    "docs/llm/AIOS_SHARED_SKILL_RUNTIME.md",
+    "scripts/governance_mutation_gate.py",
+    "scripts/llm/adapters/base.py",
+    "scripts/llm/adapters/__init__.py",
+    "scripts/llm/fixtures/shared_skill_runtime.task.json",
+    "tests/test_agent_adapter_offline.py"
+  ],
+  "forbidden_scope": [
+    "scripts/llm/ai_os/context_builder.py",
+    "scripts/llm/ai_os/task_compiler.py",
+    "scripts/llm/schemas",
+    "scripts/llm/adapters/deepseek.py",
+    "scripts/llm/adapters/kimi.py",
+    "config/aios-skills.v1.json",
+    ".agents/skills",
+    "web",
+    "experiments",
+    "data_history",
+    "public/data"
+  ],
+  "input_contracts": [
+    "scripts/llm/adapters/base.py AgentRequest",
+    "config/aios-skills.v1.json",
+    "scripts/llm/ai_os/skill_registry.py"
+  ],
+  "output_artifacts": [
+    "provider-neutral repository skill selection contract",
+    "fail-closed pre-provider context binding",
+    "offline behavior and mutation regressions",
+    "reviewable pull request"
+  ],
+  "acceptance_tests": [
+    "python3 tests/test_agent_adapter_offline.py",
+    "python3 tests/test_skill_registry.py",
+    "python3 tests/test_ai_os_k1_offline.py",
+    "python3 tests/test_governance_mutation_gate.py",
+    "python3 scripts/governance_mutation_gate.py",
+    "python3 scripts/team_ai_workspace.py doctor",
+    "git diff --check"
+  ],
+  "risk_level": "MEDIUM",
+  "network_policy": "OFFLINE",
+  "budget": {"max_cny": "0", "max_minutes": 180},
+  "approval_gates": ["PR_REVIEW", "JUNYAN_MERGE"]
+}
