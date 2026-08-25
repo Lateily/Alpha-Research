@@ -1311,9 +1311,9 @@ MUTATIONS: tuple[MutationCase, ...] = (
         source_path="experiments/research_funnel/semiconductor_inputs.py",
         test_script="tests/test_semiconductor_positive_inputs.py",
         before="MIN_DAILY_SOURCE_COVERAGE_RATIO = 0.95",
-        after="MIN_DAILY_SOURCE_COVERAGE_RATIO = 0.25",
+        after="MIN_DAILY_SOURCE_COVERAGE_RATIO = 0.90",
         expected_failure_marker=(
-            "test_incomplete_daily_batch_stays_pending_until_coverage_floor"
+            "test_daily_coverage_floor_rejects_ninety_percent_coverage"
         ),
         rationale=(
             "A structurally incomplete daily response cannot be frozen by silently "

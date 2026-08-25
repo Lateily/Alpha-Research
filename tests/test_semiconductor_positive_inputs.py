@@ -752,6 +752,25 @@ class SemiconductorStoreTests(unittest.TestCase):
             self.assertEqual(19, batch[0])
             self.assertEqual([codes[-1]], json.loads(batch[1]))
 
+    def test_daily_coverage_floor_rejects_ninety_percent_coverage(self) -> None:
+        codes = [f"{index:06d}.SZ" for index in range(1, 21)]
+        rows = []
+        for index, code in enumerate(codes[:18], 1):
+            row = dict(moneyflow_rows()[0])
+            row["ts_code"] = code
+            row["net_amount"] = float(index)
+            rows.append(row)
+        with tempfile.TemporaryDirectory() as tmp:
+            db = Path(tmp) / "features.sqlite3"
+            with self.assertRaises(si.SourcePublicationPending) as caught:
+                si.ingest_source(
+                    db, "moneyflow_dc", TRADE_DATE, rows, codes, _sha256(codes),
+                )
+            self.assertEqual(18, caught.exception.observed_rows)
+            self.assertEqual(20, caught.exception.expected_rows)
+            self.assertEqual(19, caught.exception.minimum_rows)
+            self.assertFalse(db.exists())
+
     def test_quarterly_source_empty_response_semantics_are_unchanged(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             db = Path(tmp) / "features.sqlite3"
