@@ -93,20 +93,22 @@ def _validate(manifest: dict[str, Any]) -> list[str]:
         errors.append("artifact binding set or order changed")
     if manifest.get("schema") != "ar.research_closed_loop_manifest.v1":
         errors.append("schema changed")
-    if manifest.get("schema_version") != "1.2":
+    if manifest.get("schema_version") != "1.3":
         errors.append("manifest revision changed")
-    if manifest.get("method_version") != "RESEARCH_CLOSED_LOOP_V1_2":
+    if manifest.get("method_version") != "RESEARCH_CLOSED_LOOP_V1_3":
         errors.append("method version changed")
     if manifest.get("status") != "FROZEN_OFFLINE_WORKFLOW_DEBUG":
         errors.append("frozen status changed")
+    if manifest.get("frozen_at") != "2026-08-26T01:17:17+08:00":
+        errors.append("frozen timestamp changed")
     if manifest.get("source_base") != {
-        "assembly_code_commit": "4ba8860d9687e58ace2b919604bdd6f686d0d039",
-        "base_main": "8ed9cfce536d70a541333e175dfb9b573610605a",
-        "review_pr": 316,
+        "assembly_code_commit": "a893d0fc28ffcf3f50ab6071d8f5ccf86b74aa0a",
+        "base_main": "7774e33dbfa6c5554472d3c137ca7b14b4423f4c",
+        "review_pr": 317,
         "data_dependency_pr": 297,
         "data_dependency_status": "MERGED_MAIN",
     }:
-        errors.append("merged data dependency changed")
+        errors.append("source-base review binding changed")
 
     block_ids = [row.get("id") for row in manifest.get("ordered_blocks", [])]
     if block_ids != [
@@ -207,9 +209,9 @@ class ResearchClosedLoopV1Tests(unittest.TestCase):
         ]
         self.assertIn("artifact binding set or order changed", _validate(changed))
 
-    def test_revision_1_2_binds_the_semiconductor_repair_assembly(self) -> None:
-        self.assertEqual(self.manifest["schema_version"], "1.2")
-        self.assertEqual(self.manifest["method_version"], "RESEARCH_CLOSED_LOOP_V1_2")
+    def test_revision_1_3_binds_the_semiconductor_repair_assembly(self) -> None:
+        self.assertEqual(self.manifest["schema_version"], "1.3")
+        self.assertEqual(self.manifest["method_version"], "RESEARCH_CLOSED_LOOP_V1_3")
         bound = {row["path"] for row in self.manifest["artifact_bindings"]}
         self.assertTrue({
             "docs/research/RESEARCH_CLOSED_LOOP_V1.md",
@@ -221,6 +223,25 @@ class ResearchClosedLoopV1Tests(unittest.TestCase):
             "experiments/research_funnel/industry_taxonomy.v1.json",
             "docs/research/prospective/SEMICONDUCTOR_DAILY_SOURCE_REPAIR_PLAN_V0_1.md",
         }.issubset(bound))
+
+    def test_revision_1_3_identity_names_current_review(self) -> None:
+        self.assertEqual(self.manifest["frozen_at"], "2026-08-26T01:17:17+08:00")
+        self.assertEqual(
+            self.manifest["source_base"],
+            {
+                "assembly_code_commit": "a893d0fc28ffcf3f50ab6071d8f5ccf86b74aa0a",
+                "base_main": "7774e33dbfa6c5554472d3c137ca7b14b4423f4c",
+                "review_pr": 317,
+                "data_dependency_pr": 297,
+                "data_dependency_status": "MERGED_MAIN",
+            },
+        )
+        changed = json.loads(json.dumps(self.manifest))
+        changed["frozen_at"] = "2026-08-25T23:58:51+08:00"
+        self.assertIn("frozen timestamp changed", _validate(changed))
+        changed = json.loads(json.dumps(self.manifest))
+        changed["source_base"]["review_pr"] = 316
+        self.assertIn("source-base review binding changed", _validate(changed))
 
     def test_authority_cannot_be_promoted(self) -> None:
         self.assertEqual(
@@ -306,7 +327,7 @@ class ResearchClosedLoopV1Tests(unittest.TestCase):
         self.assertEqual(task["risk_level"], "CONSTITUTIONAL")
         text = DOC_PATH.read_text(encoding="utf-8")
         normalized = " ".join(text.split())
-        self.assertIn("Research Closed Loop V1.2", normalized)
+        self.assertIn("Research Closed Loop V1.3", normalized)
         self.assertIn("repaired historical evidence remains `LATE_OBSERVED`", normalized)
         self.assertIn("FROZEN_OFFLINE_WORKFLOW_DEBUG / PRODUCTION_UNWIRED", normalized)
         self.assertIn("E1 red flags override every positive channel", normalized)

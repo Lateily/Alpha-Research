@@ -5896,17 +5896,17 @@ MUTATIONS = MUTATIONS + (
         ),
     ),
     MutationCase(
-        mutation_id="RESEARCH_V1_2_REVISION_IDENTITY",
-        component="Research Closed Loop V1.2 revision identity",
+        mutation_id="RESEARCH_V1_3_REVISION_IDENTITY",
+        component="Research Closed Loop V1.3 revision identity",
         source_path="docs/research/contracts/research_closed_loop.v1.json",
         test_script="tests/test_research_closed_loop_v1.py",
         before=(
-            '  "schema_version": "1.2",\n'
-            '  "method_version": "RESEARCH_CLOSED_LOOP_V1_2",'
+            '  "schema_version": "1.3",\n'
+            '  "method_version": "RESEARCH_CLOSED_LOOP_V1_3",'
         ),
         after=(
-            '  "schema_version": "1.0",\n'
-            '  "method_version": "RESEARCH_CLOSED_LOOP_V1",'
+            '  "schema_version": "1.2",\n'
+            '  "method_version": "RESEARCH_CLOSED_LOOP_V1_2",'
         ),
         expected_failure_marker="test_manifest_is_strict_and_frozen",
         rationale=(
@@ -5915,8 +5915,42 @@ MUTATIONS = MUTATIONS + (
         ),
     ),
     MutationCase(
-        mutation_id="RESEARCH_V1_2_ARTIFACT_SET_EXACT",
-        component="Research Closed Loop V1.2 exact artifact set",
+        mutation_id="RESEARCH_V1_3_FROZEN_AT",
+        component="Research Closed Loop V1.3 frozen timestamp",
+        source_path="docs/research/contracts/research_closed_loop.v1.json",
+        test_script="tests/test_research_closed_loop_v1.py",
+        before='  "frozen_at": "2026-08-26T01:17:17+08:00",',
+        after='  "frozen_at": "2026-08-25T23:58:51+08:00",',
+        expected_failure_marker="test_revision_1_3_identity_names_current_review",
+        rationale=(
+            "A new byte-bound assembly revision must carry its own reviewed freeze time, "
+            "not reuse the superseded V1.2 identity."
+        ),
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_V1_3_SOURCE_BASE",
+        component="Research Closed Loop V1.3 source review binding",
+        source_path="docs/research/contracts/research_closed_loop.v1.json",
+        test_script="tests/test_research_closed_loop_v1.py",
+        before=(
+            '    "assembly_code_commit": "a893d0fc28ffcf3f50ab6071d8f5ccf86b74aa0a",\n'
+            '    "base_main": "7774e33dbfa6c5554472d3c137ca7b14b4423f4c",\n'
+            '    "review_pr": 317,'
+        ),
+        after=(
+            '    "assembly_code_commit": "4ba8860d9687e58ace2b919604bdd6f686d0d039",\n'
+            '    "base_main": "8ed9cfce536d70a541333e175dfb9b573610605a",\n'
+            '    "review_pr": 316,'
+        ),
+        expected_failure_marker="test_revision_1_3_identity_names_current_review",
+        rationale=(
+            "The frozen source identity must point to the implementation commit, main base, "
+            "and review PR that actually delivered V1.3."
+        ),
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_V1_3_ARTIFACT_SET_EXACT",
+        component="Research Closed Loop V1.3 exact artifact set",
         source_path="docs/research/contracts/research_closed_loop.v1.json",
         test_script="tests/test_research_closed_loop_v1.py",
         before=(
@@ -5930,8 +5964,8 @@ MUTATIONS = MUTATIONS + (
         ),
     ),
     MutationCase(
-        mutation_id="RESEARCH_V1_2_SEMICONDUCTOR_ASSEMBLY_BINDING",
-        component="Research Closed Loop V1.2 semiconductor assembly binding",
+        mutation_id="RESEARCH_V1_3_SEMICONDUCTOR_ASSEMBLY_BINDING",
+        component="Research Closed Loop V1.3 semiconductor assembly binding",
         source_path="docs/research/contracts/research_closed_loop.v1.json",
         test_script="tests/test_research_closed_loop_v1.py",
         before=(
@@ -5945,12 +5979,12 @@ MUTATIONS = MUTATIONS + (
         expected_failure_marker="test_every_bound_artifact_matches_its_exact_bytes",
         rationale=(
             "The new point-in-time semiconductor evidence implementation must remain "
-            "byte-bound to the reviewed V1.2 assembly."
+            "byte-bound to the reviewed V1.3 assembly."
         ),
     ),
     MutationCase(
-        mutation_id="RESEARCH_V1_2_REPAIR_ASSEMBLY_BINDING",
-        component="Research Closed Loop V1.2 append-only source repair binding",
+        mutation_id="RESEARCH_V1_3_REPAIR_ASSEMBLY_BINDING",
+        component="Research Closed Loop V1.3 append-only source repair binding",
         source_path="docs/research/contracts/research_closed_loop.v1.json",
         test_script="tests/test_research_closed_loop_v1.py",
         before=(
@@ -5963,7 +5997,7 @@ MUTATIONS = MUTATIONS + (
         ),
         expected_failure_marker="test_every_bound_artifact_matches_its_exact_bytes",
         rationale=(
-            "The active-source repair resolver must remain byte-bound to the frozen V1.2 assembly."
+            "The active-source repair resolver must remain byte-bound to the frozen V1.3 assembly."
         ),
     ),
     MutationCase(
