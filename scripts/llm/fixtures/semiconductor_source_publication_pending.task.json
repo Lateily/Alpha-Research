@@ -1,0 +1,85 @@
+{
+  "schema": "ai-task.v1",
+  "task_id": "R-SEMICONDUCTOR-SOURCE-PUBLICATION-PENDING-V1",
+  "source_issue": 309,
+  "architecture_block": [
+    "A Core Research Funnel",
+    "R-008 Point-in-Time Feature Store",
+    "U1 Semiconductor Positive Evidence",
+    "Post-merge fix-forward FF-1"
+  ],
+  "objective": "Prevent an empty same-day cyq_perf response from becoming an immutable successful source batch; keep the source retryable and expose SOURCE_PUBLICATION_PENDING until a non-empty point-in-time batch is available.",
+  "non_goals": [
+    "Do not modify production runtime state or the existing 20260824 SQLite batch.",
+    "Do not perform or authorize the append-only historical migration required for 20260824.",
+    "Do not weaken E1 red flags, U3 completeness, or Junyan-only U4 selection.",
+    "Do not change selection, trading, portfolio, win-rate, alpha, or method-effectiveness semantics.",
+    "Do not repair FF-2 through FF-5 in this PR."
+  ],
+  "human_owner": "Junyan",
+  "reviewer": "Junyan",
+  "executor_candidates": [
+    "Codex"
+  ],
+  "dependencies": [
+    "PR #306 semiconductor positive evidence inputs",
+    "PR #308 U3 red-flag propagation",
+    "Issue #309 frozen fix-forward acceptance"
+  ],
+  "authority_docs": [
+    "AGENTS.md",
+    "experiments/AGENTS.md",
+    "docs/research/RESEARCH_CLOSED_LOOP_V1.md",
+    "docs/research/sectors/SEMICONDUCTOR_SECTOR_OS.md"
+  ],
+  "file_scope": [
+    "experiments/research_funnel/semiconductor_inputs.py",
+    "docs/research/contracts/research_closed_loop.v1.json",
+    "tests/test_semiconductor_positive_inputs.py",
+    "scripts/governance_mutation_gate.py",
+    "tests/test_governance_mutation_gate.py",
+    ".github/workflows/python-ci.yml",
+    "scripts/llm/fixtures/semiconductor_source_publication_pending.task.json"
+  ],
+  "forbidden_scope": [
+    "/Users/years/ar-live",
+    "data_history/feature_store.sqlite3",
+    "experiments/execution_tracker/event_ledger.jsonl",
+    "experiments/execution_tracker/paper_signal_log.json",
+    "experiments/research_funnel/u4_decision_ledger.jsonl",
+    "public/data/v2",
+    "web"
+  ],
+  "input_contracts": [
+    "ar.security_registry.v1",
+    "Tushare cyq_perf by trade_date",
+    "ar.semiconductor_positive_inputs.v1 append-only source batches"
+  ],
+  "output_artifacts": [
+    "Retryable SOURCE_PUBLICATION_PENDING collection receipt",
+    "No immutable source batch for an empty cyq_perf response",
+    "Behavior-level negative regressions and mutation-gate coverage"
+  ],
+  "acceptance_tests": [
+    "Compile this task to SPEC_READY.",
+    "Prove an empty cyq_perf response returns SOURCE_PUBLICATION_PENDING and writes no batch or source rows.",
+    "Prove a later non-empty retry for the same date is ingested normally and remains idempotent afterward.",
+    "Prove other source request failures remain DATA_BLOCKED and non-empty point-in-time validation remains unchanged.",
+    "Prove weakening the empty-batch guard makes the dedicated regression and mutation gate fail.",
+    "Run the semiconductor input suite, no-network guard, mutation-gate selftests, and exact-head CI before merge.",
+    "Replay packet 7ea6b5764541 read-only and prove its existing decision ledger remains valid."
+  ],
+  "risk_level": "HIGH",
+  "network_policy": "OFFLINE",
+  "budget": {
+    "max_cny": "0",
+    "max_minutes": 240
+  },
+  "approval_gates": [
+    "Independent adversarial review is required before merge.",
+    "Junyan retains final merge authority.",
+    "The 20260824 runtime migration requires separate explicit approval and a data/migration PR.",
+    "No production deployment or runtime write is authorized by this task."
+  ],
+  "created_at": "2026-08-25T12:00:00+08:00"
+}
