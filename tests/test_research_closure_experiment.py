@@ -44,6 +44,10 @@ def build_bundle(root: Path) -> tuple[Path, dict, list[str]]:
     battery["run_id"] = "FIXTURE_RUN_20260813"
     for row in battery["data"]["results"]:
         row["dims"] = {name: {"fixture": True} for name in closure.BATTERY_DIMENSIONS}
+        row["dims"]["基本面"] = {
+            "fixture": True,
+            "红旗闸门": "PASS",
+        }
         row["completeness"] = {
             "covered": 6, "of": 6, "missing": [], "verdict": "COMPLETE",
         }

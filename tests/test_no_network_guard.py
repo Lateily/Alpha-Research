@@ -66,6 +66,7 @@ from experiments.research_funnel import closure_experiment  # noqa: E402,F401
 from experiments.research_funnel import industry_cohort  # noqa: E402,F401
 from experiments.research_funnel import research_cycle  # noqa: E402,F401
 from experiments.research_funnel import five_axis_attribution  # noqa: E402,F401
+from experiments.research_funnel import semiconductor_inputs  # noqa: E402,F401
 import paper_execution_audit  # noqa: E402,F401
 
 # ── 在守卫下跑完整离线套件入口(任何隐藏外呼 → NetworkAttempt 崩溃)──
@@ -156,6 +157,20 @@ industry_cohort_result = unittest.TextTestRunner(verbosity=0).run(
 )
 assert industry_cohort_result.wasSuccessful(), (
     "offline industry cohort suite failed under socket guard"
+)
+import test_semiconductor_positive_inputs as semiconductor_input_tests  # noqa: E402
+semiconductor_input_result = unittest.TextTestRunner(verbosity=0).run(
+    unittest.TestSuite((
+        unittest.defaultTestLoader.loadTestsFromTestCase(
+            semiconductor_input_tests.SemiconductorStoreTests
+        ),
+        unittest.defaultTestLoader.loadTestsFromTestCase(
+            semiconductor_input_tests.SemiconductorFunnelTests
+        ),
+    ))
+)
+assert semiconductor_input_result.wasSuccessful(), (
+    "semiconductor positive-input suite failed under socket guard"
 )
 import test_research_cycle as research_cycle_tests  # noqa: E402
 import test_research_method as research_method_tests  # noqa: E402
