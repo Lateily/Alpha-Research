@@ -190,6 +190,10 @@ jobs:
         run: |
           python3 tests/test_research_closed_loop_v1.py
           python3 scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/research_closed_loop_v1.task.json
+      # Research quality scorecard: scores research craft quality, not P&L,
+      # alpha, trade readiness, U4 selection, or production authority.
+      - name: Research quality scorecard contract (offline)
+        run: python3 tests/test_research_quality_scorecard.py
       # ── Macro OS M0-A:源身份/事件分级/双时间点预判/共识冲突语义 ──
       - name: Macro OS M0-A contract selftest
         run: python3 experiments/macro_os/contracts.py --selftest
