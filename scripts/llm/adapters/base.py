@@ -18,6 +18,8 @@ from time import monotonic
 from typing import Any, Callable, Mapping
 from uuid import uuid4
 
+from ai_os.skill_registry import SkillBlockedGate, SkillRegistryError
+
 
 class AgentStatus(str, Enum):
     SUCCEEDED = "SUCCEEDED"
@@ -95,6 +97,20 @@ class RepositorySkillSelection:
 
     skill_ids: tuple[str, ...]
     executor_role: str
+
+
+@dataclass(frozen=True)
+class RepositorySkillDiagnostic:
+    """Minimal trusted-side signal for one blocked Skill preflight."""
+
+    run_id: str
+    blocked_gate: SkillBlockedGate
+
+    def to_dict(self) -> dict[str, str]:
+        return {
+            "run_id": self.run_id,
+            "blocked_gate": self.blocked_gate.value,
+        }
 
 
 @dataclass(frozen=True)
@@ -221,6 +237,7 @@ def run_adapter(
     now: Callable[[], datetime] | None = None,
     timer: Callable[[], float] = monotonic,
     skill_selection: RepositorySkillSelection | None = None,
+    skill_diagnostic_sink: Callable[[RepositorySkillDiagnostic], None] | None = None,
 ) -> AgentResult:
     """Run an adapter and fail closed into a provider-neutral result."""
 
@@ -250,7 +267,14 @@ def run_adapter(
     if skill_selection is not None:
         try:
             request, skill_refs = _bind_repository_skills(request, skill_selection)
-        except Exception:
+        except Exception as exc:
+            _emit_skill_diagnostic(
+                skill_diagnostic_sink,
+                RepositorySkillDiagnostic(
+                    run_id=run_id,
+                    blocked_gate=_skill_blocked_gate(exc),
+                ),
+            )
             return _result(
                 adapter,
                 request,
@@ -330,22 +354,60 @@ _SKILL_CONTEXT_HEADER = (
 )
 
 
+class _SkillBindingError(ValueError):
+    def __init__(self, message: str, *, blocked_gate: SkillBlockedGate) -> None:
+        super().__init__(message)
+        self.blocked_gate = blocked_gate
+
+
+def _skill_blocked_gate(exc: Exception) -> SkillBlockedGate:
+    if isinstance(exc, (SkillRegistryError, _SkillBindingError)):
+        blocked_gate = exc.blocked_gate
+        if isinstance(blocked_gate, SkillBlockedGate):
+            return blocked_gate
+    return SkillBlockedGate.INTERNAL
+
+
+def _emit_skill_diagnostic(
+    sink: Callable[[RepositorySkillDiagnostic], None] | None,
+    diagnostic: RepositorySkillDiagnostic,
+) -> None:
+    if sink is None:
+        return
+    try:
+        # governance-mutation: AIOS_SKILL_RUNTIME_DIAGNOSTIC_EMISSION
+        sink(diagnostic)
+    except Exception:
+        # governance-mutation: AIOS_SKILL_RUNTIME_DIAGNOSTIC_ISOLATION
+        # Diagnostics are best-effort and can never reopen or crash a blocked run.
+        return
+
+
 def _bind_repository_skills(
     request: AgentRequest,
     selection: RepositorySkillSelection,
 ) -> tuple[AgentRequest, tuple[str, ...]]:
     if not isinstance(selection, RepositorySkillSelection):
-        raise TypeError("skill selection is invalid")
+        raise _SkillBindingError(
+            "skill selection is invalid", blocked_gate=SkillBlockedGate.SELECTION
+        )
     if (
         not isinstance(selection.skill_ids, tuple)
         or not selection.skill_ids
         or any(not isinstance(skill_id, str) for skill_id in selection.skill_ids)
     ):
-        raise ValueError("skill selection ids are invalid")
+        raise _SkillBindingError(
+            "skill selection ids are invalid", blocked_gate=SkillBlockedGate.SELECTION
+        )
     if not isinstance(selection.executor_role, str) or not selection.executor_role:
-        raise ValueError("skill executor role is invalid")
+        raise _SkillBindingError(
+            "skill executor role is invalid", blocked_gate=SkillBlockedGate.SELECTION
+        )
     if _SKILL_RECEIPTS_KEY in request.input_payload:
-        raise ValueError("reserved skill receipt field is already present")
+        raise _SkillBindingError(
+            "reserved skill receipt field is already present",
+            blocked_gate=SkillBlockedGate.RESERVED_FIELD,
+        )
 
     from ai_os.skill_registry import load_skill_contexts
 
@@ -363,7 +425,10 @@ def _bind_repository_skills(
     ]
     rendered = "\n\n".join(rendered_blocks)
     if not rendered or len(rendered) > _MAX_SKILL_CONTEXT_CHARS:
-        raise ValueError("repository skill context size is invalid")
+        raise _SkillBindingError(
+            "repository skill context size is invalid",
+            blocked_gate=SkillBlockedGate.BUDGET,
+        )
 
     messages = _messages_for_skill_binding(request.input_payload)
     messages.insert(
@@ -408,28 +473,44 @@ def _messages_for_skill_binding(
     raw_messages = input_payload.get("messages")
     if raw_messages is not None:
         if not isinstance(raw_messages, list) or not raw_messages:
-            raise ValueError("messages must be a non-empty list")
+            raise _SkillBindingError(
+                "messages must be a non-empty list",
+                blocked_gate=SkillBlockedGate.INPUT,
+            )
         messages = []
         for item in raw_messages:
             if not isinstance(item, Mapping):
-                raise TypeError("messages entries must be mappings")
+                raise _SkillBindingError(
+                    "messages entries must be mappings",
+                    blocked_gate=SkillBlockedGate.INPUT,
+                )
             role = item.get("role")
             content = item.get("content")
             if role not in {"system", "user", "assistant"}:
-                raise ValueError("messages role is invalid")
+                raise _SkillBindingError(
+                    "messages role is invalid", blocked_gate=SkillBlockedGate.INPUT
+                )
             if not isinstance(content, str) or not content.strip():
-                raise ValueError("messages content is invalid")
+                raise _SkillBindingError(
+                    "messages content is invalid",
+                    blocked_gate=SkillBlockedGate.INPUT,
+                )
             messages.append({"role": role, "content": content.strip()})
         return messages
 
     prompt = input_payload.get("prompt")
     if not isinstance(prompt, str) or not prompt.strip():
-        raise ValueError("input payload lacks a bindable prompt")
+        raise _SkillBindingError(
+            "input payload lacks a bindable prompt",
+            blocked_gate=SkillBlockedGate.INPUT,
+        )
     messages = []
     system = input_payload.get("system")
     if system is not None:
         if not isinstance(system, str) or not system.strip():
-            raise ValueError("system message is invalid")
+            raise _SkillBindingError(
+                "system message is invalid", blocked_gate=SkillBlockedGate.INPUT
+            )
         messages.append({"role": "system", "content": system.strip()})
     messages.append({"role": "user", "content": prompt.strip()})
     return messages

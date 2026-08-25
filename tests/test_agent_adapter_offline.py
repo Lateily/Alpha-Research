@@ -22,13 +22,16 @@ from adapters import (  # noqa: E402
     AgentStatus,
     DeepSeekAdapter,
     DeterministicAdapter,
+    RepositorySkillDiagnostic,
     RepositorySkillSelection,
+    SkillBlockedGate,
     UsageStatus,
     run_adapter,
 )
 import adapters.base as base_module  # noqa: E402
 import adapters.kimi as kimi_module  # noqa: E402
 from ai_os.task_compiler import SPEC_READY, compile_task_manifest  # noqa: E402
+from ai_os.skill_registry import SkillRegistryError  # noqa: E402
 from adapters.kimi import KimiAdapter  # noqa: E402
 from capability import (  # noqa: E402
     CapabilityRecord,
@@ -61,6 +64,7 @@ def run(
     item: AgentRequest,
     *,
     skill_selection: RepositorySkillSelection | None = None,
+    skill_diagnostic_sink=None,
 ):
     fixed_times = iter(
         [
@@ -76,6 +80,7 @@ def run(
         now=lambda: next(fixed_times),
         timer=lambda: next(fixed_timer),
         skill_selection=skill_selection,
+        skill_diagnostic_sink=skill_diagnostic_sink,
     )
 
 
@@ -158,6 +163,7 @@ def test_verified_skill_context_reaches_worker_and_provenance() -> None:
 
 def test_tampered_runtime_skill_is_blocked_before_worker() -> None:
     called = False
+    diagnostics: list[RepositorySkillDiagnostic] = []
 
     def worker(_payload):
         nonlocal called
@@ -176,6 +182,7 @@ def test_tampered_runtime_skill_is_blocked_before_worker() -> None:
                 DeterministicAdapter(worker),
                 request(input_payload={"prompt": "must not execute"}),
                 skill_selection=skill_selection(),
+                skill_diagnostic_sink=diagnostics.append,
             )
 
     assert result.status is AgentStatus.SPEC_BLOCKED
@@ -183,10 +190,18 @@ def test_tampered_runtime_skill_is_blocked_before_worker() -> None:
     assert result.error.code == "SKILL_CONTEXT_BLOCKED"
     assert result.error.message == "repository skill context could not be verified"
     assert called is False
+    assert [item.to_dict() for item in diagnostics] == [
+        {
+            "run_id": "run_test_001",
+            "blocked_gate": "HASH",
+        }
+    ]
+    assert set(diagnostics[0].to_dict()) == {"run_id", "blocked_gate"}
 
 
 def test_runtime_role_denial_is_blocked_before_worker() -> None:
     called = False
+    diagnostics: list[RepositorySkillDiagnostic] = []
 
     def worker(_payload):
         nonlocal called
@@ -197,16 +212,43 @@ def test_runtime_role_denial_is_blocked_before_worker() -> None:
         DeterministicAdapter(worker),
         request(input_payload={"prompt": "must not execute"}),
         skill_selection=skill_selection(executor_role="evidence-worker"),
+        skill_diagnostic_sink=diagnostics.append,
     )
 
     assert result.status is AgentStatus.SPEC_BLOCKED
     assert result.error is not None
     assert result.error.code == "SKILL_CONTEXT_BLOCKED"
     assert called is False
+    assert diagnostics[0].blocked_gate is SkillBlockedGate.ROLE
+
+
+def test_unregistered_runtime_skill_emits_only_unregistered_gate() -> None:
+    called = False
+    diagnostics: list[RepositorySkillDiagnostic] = []
+
+    def worker(_payload):
+        nonlocal called
+        called = True
+        return {}
+
+    result = run(
+        DeterministicAdapter(worker),
+        request(input_payload={"prompt": "must not execute"}),
+        skill_selection=skill_selection(skill_ids=("missing-skill",)),
+        skill_diagnostic_sink=diagnostics.append,
+    )
+
+    assert result.status is AgentStatus.SPEC_BLOCKED
+    assert result.error is not None
+    assert result.error.message == "repository skill context could not be verified"
+    assert diagnostics[0].blocked_gate is SkillBlockedGate.UNREGISTERED
+    assert "missing-skill" not in json.dumps(diagnostics[0].to_dict())
+    assert called is False
 
 
 def test_runtime_skill_cannot_expand_adapter_network_authority() -> None:
     called = False
+    diagnostics: list[RepositorySkillDiagnostic] = []
 
     def worker(_payload):
         nonlocal called
@@ -227,16 +269,19 @@ def test_runtime_skill_cannot_expand_adapter_network_authority() -> None:
                     network_policy="provider_only",
                 ),
                 skill_selection=skill_selection(),
+                skill_diagnostic_sink=diagnostics.append,
             )
 
     assert result.status is AgentStatus.SPEC_BLOCKED
     assert result.error is not None
     assert result.error.code == "SKILL_CONTEXT_BLOCKED"
     assert called is False
+    assert diagnostics[0].blocked_gate is SkillBlockedGate.NETWORK
 
 
 def test_oversized_verified_skill_context_is_blocked_before_worker() -> None:
     called = False
+    diagnostics: list[RepositorySkillDiagnostic] = []
 
     def worker(_payload):
         nonlocal called
@@ -259,16 +304,19 @@ def test_oversized_verified_skill_context_is_blocked_before_worker() -> None:
                 DeterministicAdapter(worker),
                 request(input_payload={"prompt": "must not execute"}),
                 skill_selection=skill_selection(),
+                skill_diagnostic_sink=diagnostics.append,
             )
 
     assert result.status is AgentStatus.SPEC_BLOCKED
     assert result.error is not None
     assert result.error.code == "SKILL_CONTEXT_BLOCKED"
     assert called is False
+    assert diagnostics[0].blocked_gate is SkillBlockedGate.BUDGET
 
 
 def test_runtime_rejects_spoofed_skill_receipts_before_worker() -> None:
     called = False
+    diagnostics: list[RepositorySkillDiagnostic] = []
 
     def worker(_payload):
         nonlocal called
@@ -284,12 +332,14 @@ def test_runtime_rejects_spoofed_skill_receipts_before_worker() -> None:
             }
         ),
         skill_selection=skill_selection(),
+        skill_diagnostic_sink=diagnostics.append,
     )
 
     assert result.status is AgentStatus.SPEC_BLOCKED
     assert result.error is not None
     assert result.error.code == "SKILL_CONTEXT_BLOCKED"
     assert called is False
+    assert diagnostics[0].blocked_gate is SkillBlockedGate.RESERVED_FIELD
 
 
 def test_runtime_selection_cannot_override_repository_root() -> None:
@@ -307,6 +357,7 @@ def test_runtime_selection_cannot_override_repository_root() -> None:
 
 def test_unexpected_skill_preflight_error_fails_closed_before_worker() -> None:
     called = False
+    diagnostics: list[RepositorySkillDiagnostic] = []
 
     def worker(_payload):
         nonlocal called
@@ -324,6 +375,7 @@ def test_unexpected_skill_preflight_error_fails_closed_before_worker() -> None:
             DeterministicAdapter(worker),
             request(input_payload={"prompt": "must not execute"}),
             skill_selection=skill_selection(),
+            skill_diagnostic_sink=diagnostics.append,
         )
     finally:
         base_module._bind_repository_skills = original
@@ -333,6 +385,83 @@ def test_unexpected_skill_preflight_error_fails_closed_before_worker() -> None:
     assert result.error.code == "SKILL_CONTEXT_BLOCKED"
     assert "secret filesystem detail" not in json.dumps(result.to_dict())
     assert called is False
+    assert diagnostics[0].blocked_gate is SkillBlockedGate.INTERNAL
+    assert "secret filesystem detail" not in json.dumps(diagnostics[0].to_dict())
+
+
+def test_skill_diagnostic_sink_failure_cannot_reopen_blocked_run() -> None:
+    called = False
+
+    def worker(_payload):
+        nonlocal called
+        called = True
+        return {}
+
+    def broken_sink(_diagnostic):
+        raise RuntimeError("diagnostic transport secret")
+
+    try:
+        result = run(
+            DeterministicAdapter(worker),
+            request(input_payload={"prompt": "must not execute"}),
+            skill_selection=skill_selection(skill_ids=("missing-skill",)),
+            skill_diagnostic_sink=broken_sink,
+        )
+    except Exception as exc:
+        raise AssertionError("diagnostic sink failure escaped the harness") from exc
+
+    assert result.status is AgentStatus.SPEC_BLOCKED
+    assert result.error is not None
+    assert result.error.message == "repository skill context could not be verified"
+    assert "diagnostic transport secret" not in json.dumps(result.to_dict())
+    assert called is False
+
+
+def test_invalid_internal_gate_collapses_to_content_free_internal() -> None:
+    diagnostics: list[RepositorySkillDiagnostic] = []
+    original = base_module._bind_repository_skills
+
+    def fail_preflight(_request, _selection):
+        raise SkillRegistryError(
+            "secret registry detail",
+            blocked_gate="SECRET_DETAIL",  # type: ignore[arg-type]
+        )
+
+    base_module._bind_repository_skills = fail_preflight
+    try:
+        result = run(
+            DeterministicAdapter(),
+            request(input_payload={"prompt": "must not execute"}),
+            skill_selection=skill_selection(),
+            skill_diagnostic_sink=diagnostics.append,
+        )
+    finally:
+        base_module._bind_repository_skills = original
+
+    assert result.status is AgentStatus.SPEC_BLOCKED
+    assert diagnostics[0].blocked_gate is SkillBlockedGate.INTERNAL
+    assert "SECRET_DETAIL" not in json.dumps(diagnostics[0].to_dict())
+    assert "secret registry detail" not in json.dumps(result.to_dict())
+
+
+def test_skill_diagnostic_sink_is_silent_on_success_and_without_selection() -> None:
+    diagnostics: list[RepositorySkillDiagnostic] = []
+
+    succeeded = run(
+        DeterministicAdapter(),
+        request(input_payload={"prompt": "safe request"}),
+        skill_selection=skill_selection(),
+        skill_diagnostic_sink=diagnostics.append,
+    )
+    unchanged = run(
+        DeterministicAdapter(),
+        request(),
+        skill_diagnostic_sink=diagnostics.append,
+    )
+
+    assert succeeded.status is AgentStatus.SUCCEEDED
+    assert unchanged.status is AgentStatus.SUCCEEDED
+    assert diagnostics == []
 
 
 def test_shared_skill_runtime_task_contract_is_spec_ready() -> None:
@@ -344,6 +473,21 @@ def test_shared_skill_runtime_task_contract_is_spec_ready() -> None:
     result = compile_task_manifest(
         source,
         now=datetime(2026, 8, 23, 14, 0, tzinfo=timezone.utc),
+    )
+
+    assert result.status == SPEC_READY
+    assert result.errors == ()
+
+
+def test_shared_skill_diagnostics_task_contract_is_spec_ready() -> None:
+    source = json.loads(
+        (REPO_ROOT / "scripts/llm/fixtures/shared_skill_diagnostics.task.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    result = compile_task_manifest(
+        source,
+        now=datetime(2026, 8, 25, 15, 0, tzinfo=timezone.utc),
     )
 
     assert result.status == SPEC_READY

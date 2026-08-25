@@ -25,6 +25,27 @@ Any failure before step 5 returns `SPEC_BLOCKED` with error code
 `SKILL_CONTEXT_BLOCKED`. The public error is deliberately generic and the
 worker/provider is not called.
 
+## Trusted Diagnostics
+
+Callers may provide `skill_diagnostic_sink` to `run_adapter()` when an approved
+control-plane or operations boundary needs to distinguish blocked gates. The
+sink receives one immutable `RepositorySkillDiagnostic` containing only:
+
+- `run_id`;
+- `blocked_gate`.
+
+Stable gates are `SELECTION`, `REGISTRY`, `UNREGISTERED`, `ROLE`, `NETWORK`,
+`PATH`, `HASH`, `DELIMITER`, `RESERVED_FIELD`, `INPUT`, `BUDGET`, and
+`INTERNAL`. The event never contains task IDs, Skill content, user task text,
+paths, hashes, registry entries, or exception text. The trusted `run_id` is the
+only correlation key. The public `AgentResult` remains the same generic
+`SKILL_CONTEXT_BLOCKED` response.
+
+The sink is best-effort: if it raises, the exception is discarded and the run
+remains blocked. A diagnostic transport cannot reopen the request, call the
+provider, or turn a blocked run into an infrastructure failure. This slice does
+not install a global logger, persist events, or select a telemetry backend.
+
 ## Example
 
 ```python
@@ -37,6 +58,7 @@ result = run_adapter(
         skill_ids=("ar-architecture-map",),
         executor_role="aios-worker",
     ),
+    skill_diagnostic_sink=trusted_diagnostic_sink,
 )
 ```
 
