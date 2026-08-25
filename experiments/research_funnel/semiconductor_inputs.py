@@ -35,6 +35,10 @@ STORE_EXTENSION_VERSION = "1"
 METHOD_VERSION = "semiconductor_positive_inputs_v1_unvalidated"
 SEMICONDUCTOR_INDUSTRY_KEY = "半导体"
 SOURCE_NAMES = ("moneyflow_dc", "cyq_perf", "fina_indicator_pit")
+DAILY_MUST_PUBLISH_SOURCES = frozenset({"moneyflow_dc", "cyq_perf"})
+# Allow a few issuer-level omissions; wider gaps indicate incomplete publication.
+# governance-mutation: SEMICONDUCTOR_DAILY_SOURCE_COVERAGE_FLOOR
+MIN_DAILY_SOURCE_COVERAGE_RATIO = 0.95
 COMPONENTS = ("fund_flow", "chips", "fundamentals")
 SOURCE_COMPONENT = {
     "moneyflow_dc": "fund_flow",
@@ -89,6 +93,22 @@ class SemiconductorInputError(RuntimeError):
 
 class SourcePublicationPending(SemiconductorInputError):
     """The requested source date has not produced a publishable batch yet."""
+
+    def __init__(
+        self,
+        source_name: str,
+        observed_rows: int,
+        expected_rows: int,
+        minimum_rows: int,
+    ) -> None:
+        self.source_name = source_name
+        self.observed_rows = observed_rows
+        self.expected_rows = expected_rows
+        self.minimum_rows = minimum_rows
+        super().__init__(
+            f"{source_name} publication incomplete: observed={observed_rows} "
+            f"expected={expected_rows} minimum={minimum_rows}"
+        )
 
 
 def _canonical(value: Any) -> bytes:
@@ -412,6 +432,27 @@ NORMALIZERS: dict[
 }
 
 
+def _require_daily_source_publication(
+    source_name: str,
+    normalized: Sequence[Mapping[str, Any]],
+    expected_codes: Sequence[str],
+) -> None:
+    # governance-mutation: SEMICONDUCTOR_DAILY_SOURCE_REGISTRY
+    if source_name not in DAILY_MUST_PUBLISH_SOURCES:
+        return
+    minimum_rows = math.ceil(
+        len(expected_codes) * MIN_DAILY_SOURCE_COVERAGE_RATIO
+    )
+    # governance-mutation: SEMICONDUCTOR_SOURCE_PUBLICATION_PENDING
+    if len(normalized) < minimum_rows:
+        raise SourcePublicationPending(
+            source_name,
+            len(normalized),
+            len(expected_codes),
+            minimum_rows,
+        )
+
+
 def _insert_rows(conn: sqlite3.Connection, table: str, rows: Sequence[Mapping[str, Any]]) -> None:
     if not rows:
         return
@@ -442,12 +483,8 @@ def ingest_source(
         raise SemiconductorInputError("semiconductor source codes must be sorted and unique")
     if universe_hash != _sha256(expected_codes):
         raise SemiconductorInputError("semiconductor source universe hash mismatch")
-    # governance-mutation: SEMICONDUCTOR_SOURCE_PUBLICATION_PENDING
-    if source_name == "cyq_perf" and not raw_rows:
-        raise SourcePublicationPending(
-            "cyq_perf returned no rows; source publication is pending"
-        )
     normalized, conflicts = NORMALIZERS[source_name](raw_rows, date8, set(expected_codes))
+    _require_daily_source_publication(source_name, normalized, expected_codes)
     observed = {row["ts_code"] for row in normalized}
     missing = sorted(set(expected_codes) - observed)
     conflicts = sorted(set(conflicts))
@@ -611,7 +648,7 @@ def collect_live(
                 db, source_name, date8, rows, codes, universe_hash,
             )
             results.append(result)
-        except SourcePublicationPending:
+        except SourcePublicationPending as exc:
             results.append(
                 {
                     "source": source_name,
@@ -619,6 +656,9 @@ def collect_live(
                     "status": "SOURCE_PUBLICATION_PENDING",
                     "reason_code": "SOURCE_PUBLICATION_PENDING",
                     "retryable": True,
+                    "observed_rows": exc.observed_rows,
+                    "expected_rows": exc.expected_rows,
+                    "minimum_rows": exc.minimum_rows,
                 }
             )
         except RegistryError:

@@ -1289,28 +1289,50 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="A same-date source revision requires migration and cannot overwrite frozen facts.",
     ),
     MutationCase(
+        mutation_id="SEMICONDUCTOR_DAILY_SOURCE_REGISTRY",
+        component="Research funnel semiconductor daily-source availability",
+        source_path="experiments/research_funnel/semiconductor_inputs.py",
+        test_script="tests/test_semiconductor_positive_inputs.py",
+        before=(
+            'DAILY_MUST_PUBLISH_SOURCES = frozenset({"moneyflow_dc", "cyq_perf"})'
+        ),
+        after='DAILY_MUST_PUBLISH_SOURCES = frozenset({"cyq_perf"})',
+        expected_failure_marker=(
+            "test_empty_moneyflow_batch_stays_pending_and_a_later_retry_can_ingest"
+        ),
+        rationale=(
+            "Every registered daily must-publish source must keep an empty response "
+            "retryable instead of freezing a successful all-missing batch."
+        ),
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_DAILY_SOURCE_COVERAGE_FLOOR",
+        component="Research funnel semiconductor daily-source completeness",
+        source_path="experiments/research_funnel/semiconductor_inputs.py",
+        test_script="tests/test_semiconductor_positive_inputs.py",
+        before="MIN_DAILY_SOURCE_COVERAGE_RATIO = 0.95",
+        after="MIN_DAILY_SOURCE_COVERAGE_RATIO = 0.90",
+        expected_failure_marker=(
+            "test_daily_coverage_floor_rejects_ninety_percent_coverage"
+        ),
+        rationale=(
+            "A structurally incomplete daily response cannot be frozen by silently "
+            "lowering the declared expected-universe coverage floor."
+        ),
+    ),
+    MutationCase(
         mutation_id="SEMICONDUCTOR_SOURCE_PUBLICATION_PENDING",
         component="Research funnel semiconductor source availability",
         source_path="experiments/research_funnel/semiconductor_inputs.py",
         test_script="tests/test_semiconductor_positive_inputs.py",
-        before=(
-            '    if source_name == "cyq_perf" and not raw_rows:\n'
-            '        raise SourcePublicationPending(\n'
-            '            "cyq_perf returned no rows; source publication is pending"\n'
-            '        )'
-        ),
-        after=(
-            '    if False:\n'
-            '        raise SourcePublicationPending(\n'
-            '            "cyq_perf returned no rows; source publication is pending"\n'
-            '        )'
-        ),
+        before="    if len(normalized) < minimum_rows:",
+        after="    if False:",
         expected_failure_marker=(
             "test_empty_cyq_batch_stays_pending_and_a_later_retry_can_ingest"
         ),
         rationale=(
-            "An empty same-day cyq_perf response is a retryable publication gap, "
-            "not an immutable successful batch declaring every issuer missing."
+            "An empty or under-covered daily source response is a retryable "
+            "publication gap, not an immutable successful all-missing batch."
         ),
     ),
     MutationCase(
@@ -5293,7 +5315,7 @@ MUTATIONS = MUTATIONS + (
         test_script="tests/test_research_closed_loop_v1.py",
         before=(
             '    {"path": "experiments/research_funnel/semiconductor_inputs.py", '
-            '"sha256": "sha256:3ac3e5c78ab7dd749cea6713a45e9d90d02cf8d3e148a6c791ddb2a20d7fb5b5"},'
+            '"sha256": "sha256:fdf60eb54b2346cd3cce6997195815c14e86e107186d12fbb4a904ba40cdd8d2"},'
         ),
         after=(
             '    {"path": "experiments/research_funnel/semiconductor_inputs.py", '

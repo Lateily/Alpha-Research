@@ -130,6 +130,7 @@ jobs:
           python3 tests/test_semiconductor_positive_inputs.py
           python3 scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/semiconductor_positive_inputs_v1.task.json
           python3 scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/semiconductor_source_publication_pending.task.json
+          python3 scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/semiconductor_daily_source_completeness.task.json
       - name: Full-market E1 event layer contract selftest
         run: python3 experiments/research_funnel/e1_event_layer.py --selftest
       # R-033/R-034/R-035:六通道独立并集、U0 状态投影、同池随机控制、
