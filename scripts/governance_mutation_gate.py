@@ -5846,7 +5846,7 @@ MUTATIONS = MUTATIONS + (
         test_script="tests/test_research_closed_loop_v1.py",
         before=(
             '    {"path": "experiments/research_funnel/semiconductor_source_repair.py", '
-            '"sha256": "sha256:ebaafb342e027444ee5711b10ce7f44d109f9f6e304ce3e24d2387d62c79a96a"},'
+            '"sha256": "sha256:72485c18a3c65624490027597d1801b9437010b558bc6da6ef7e5deb26b8597d"},'
         ),
         after=(
             '    {"path": "experiments/research_funnel/semiconductor_source_repair.py", '
