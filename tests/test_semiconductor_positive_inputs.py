@@ -22,6 +22,7 @@ sys.path.insert(0, str(ROOT / "experiments" / "research_funnel"))
 import feature_store as fs  # noqa: E402
 import funnel_pipeline as fp  # noqa: E402
 import semiconductor_inputs as si  # noqa: E402
+import semiconductor_source_repair as source_repair  # noqa: E402
 from security_registry import RegistryError, _sha256  # noqa: E402
 
 
@@ -813,6 +814,113 @@ class SemiconductorStoreTests(unittest.TestCase):
 
 
 class SemiconductorFunnelTests(unittest.TestCase):
+    def test_late_repair_replay_stays_blocked_and_e1_veto_survives(self) -> None:
+        registry = registry_fixture()
+        taxonomy = json.loads(
+            (ROOT / "experiments" / "research_funnel" / "industry_taxonomy.v1.json")
+            .read_text(encoding="utf-8")
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            db = Path(tmp) / "features.sqlite3"
+            universe_hash = _sha256(CODES)
+            si.ingest_source(
+                db, "moneyflow_dc", TRADE_DATE, moneyflow_rows(), CODES, universe_hash,
+            )
+            si.ingest_source(
+                db, "fina_indicator_pit", TRADE_DATE, financial_rows(), CODES,
+                universe_hash,
+            )
+            empty_body = {
+                "rows": [], "missing_codes": CODES, "conflict_codes": [],
+            }
+            conn = si._connect(db)
+            try:
+                si.initialize(conn)
+                conn.execute("BEGIN IMMEDIATE")
+                conn.execute(
+                    "INSERT INTO semiconductor_source_batches VALUES(?,?,?,?,?,?,?,?)",
+                    (
+                        "cyq_perf", TRADE_DATE, si._hash(empty_body), 0,
+                        universe_hash, json.dumps(CODES, separators=(",", ":")),
+                        "[]", "2026-08-21T16:04:00+08:00",
+                    ),
+                )
+                conn.execute("COMMIT")
+            finally:
+                conn.close()
+            scan = source_repair.scan_store(db)
+            captured_at = "2026-08-21T22:00:00+08:00"
+            plan = source_repair.build_plan(
+                db,
+                scan,
+                [{
+                    "source_name": "cyq_perf",
+                    "as_of": TRADE_DATE,
+                    "source_publication_status": "PUBLISHED",
+                    "source_publication_time": "2026-08-21T18:00:00+08:00",
+                    "observed_at": captured_at,
+                    "raw_capture": source_repair.build_raw_capture(
+                        "cyq_perf", TRADE_DATE, chips_rows(), captured_at,
+                    ),
+                    "repair_reason": "fixture late repair replay",
+                }],
+            )
+            approval = {
+                "schema": source_repair.APPROVAL_SCHEMA,
+                "approved_by": "Junyan",
+                "approval_ref": "session:late-repair-e1-fixture",
+                "approval_verbatim": source_repair.approval_verbatim_for(plan),
+                "approval_channel": "session_verbatim",
+                "evidence_strength": "TRANSCRIPT_ONLY_NOT_CRYPTOGRAPHIC",
+                "approved_at": "2026-08-21T22:30:00+08:00",
+                "scan_hash": plan["scan_hash"],
+                "plan_hash": plan["plan_hash"],
+            }
+            source_repair.apply_plan(
+                db,
+                plan,
+                approval,
+                _test_nightly_lock_path=Path(tmp) / "nightly.lock",
+                expected_scan_hash=plan["scan_hash"],
+                expected_plan_hash=plan["plan_hash"],
+            )
+            evidence = si.build_snapshot(db, registry, TRADE_DATE)
+            self.assertTrue(all(
+                row["chips"]["status"] == "DATA_BLOCKED"
+                and row["chips"]["reason_codes"] == ["LATE_OBSERVED_REPAIR"]
+                for row in evidence["rows"]
+            ))
+            market_scan = fp.build_all_market_scan(
+                registry=registry,
+                e1_events=e1_fixture(registry),
+                features=features_fixture(),
+                rotation=rotation_fixture(),
+                semiconductor_inputs=evidence,
+                industry_taxonomy=taxonomy,
+                trade_date=TRADE_DATE,
+                generated_at="2026-08-21T22:31:00+08:00",
+            )
+            candidates = fp.build_candidate_review(
+                registry=registry,
+                scan=market_scan,
+                features=features_fixture(),
+                trade_date=TRADE_DATE,
+                generated_at="2026-08-21T22:31:00+08:00",
+                target_size=100,
+                slow_bull_quota=0,
+                contrarian_quota=0,
+                control_quota=0,
+            )
+            red = next(row for row in candidates["rows"] if row["ts_code"] == CODES[0])
+            self.assertEqual("EXCLUDED_RED_FLAG", red["review_status"])
+            self.assertEqual(
+                "PIT_BLOCKED",
+                next(
+                    row for row in source_repair.scan_store(db)["rows"]
+                    if row["source_name"] == "cyq_perf"
+                )["state"],
+            )
+
     def test_positive_channels_are_real_but_e1_red_flag_still_excludes(self) -> None:
         registry = registry_fixture()
         taxonomy = json.loads(
