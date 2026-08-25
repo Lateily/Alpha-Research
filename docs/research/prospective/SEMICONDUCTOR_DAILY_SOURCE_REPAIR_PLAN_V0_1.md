@@ -90,18 +90,12 @@ handwritten list. The scanner must:
 6. Freeze the complete ordered result as `scan_hash`. The later apply step must
    recompute the scan and refuse if the hash or any bound batch changed.
 
-The production read-only evidence available when V0.1 was drafted was:
-
-| Source | Date | Observed / expected | Classification under FF-1b |
-|---|---:|---:|---|
-| `cyq_perf` | `20260824` | `0 / 197` | repair candidate |
-| `cyq_perf` | `20260825` | `0 / 197` | repair candidate or publication pending |
-| `moneyflow_dc` | `20260824` | `196 / 197` | clean, above 95 percent floor |
-| `moneyflow_dc` | `20260825` | `196 / 197` | clean, above 95 percent floor |
-
-These rows are evidence for the scanner, not its hardcoded scope. A later run may
-discover more dates or sources and must report them without silently expanding an
-already approved apply plan.
+The read-only audit that motivated V0.1 found more than one affected date and
+also found nearby batches above the declared floor. Those observations prove why
+the scanner must derive scope instead of hardcoding an instance. Exact production
+counts belong in the frozen dry-run artifact reviewed for the migration, not in
+this reusable public contract. A later scan may discover more dates or sources
+and must report them without silently expanding an already approved apply plan.
 
 ## Append-Only Repair Shape
 
