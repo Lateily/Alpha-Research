@@ -147,6 +147,79 @@ The future operator should follow this order:
 No step in this runbook allows a direct production write from an unreviewed
 branch.
 
+## Dry-Run Checklist
+
+Before the migration/data PR writes any repair artifact, the operator must run
+a dry-run and preserve its report in the PR. The dry-run is a proof exercise:
+it reads staged artifacts, recomputes identities, and stops before any
+production write.
+
+The dry-run report should answer each question below with `PASS`, `BLOCKED`, or
+`NOT_APPLICABLE` plus evidence paths:
+
+| Check | Required evidence | Fail-closed result |
+|---|---|---|
+| Old batch identified | existing batch id, row count, content hash, ingested_at | `OLD_BATCH_UNBOUND` |
+| Old batch is the known empty batch | `source_name=cyq_perf`, `trade_date=20260824`, `row_count=0` | `WRONG_BATCH_SCOPE` |
+| Original artifact preserved | byte comparison proves no in-place edit | `ORIGINAL_ARTIFACT_MUTATED` |
+| Replacement source published | publication status and timestamp are bound | `SOURCE_PUBLICATION_PENDING` |
+| Replacement rows non-empty | replacement row count and content hash are recomputed from bytes | `EMPTY_REPLACEMENT_BATCH` |
+| PIT boundary holds | replacement facts are usable at the repaired trade date | `LOOKAHEAD_RISK` |
+| Universe identity stable | universe hash or explicit universe-change reason is present | `UNIVERSE_UNBOUND` |
+| Replay is staged only | output path is outside production live runtime | `PRODUCTION_WRITE_ATTEMPT` |
+| E1 veto survives | red-flagged rows cannot become U4-ready | `E1_VETO_BYPASS` |
+| U4 authority unchanged | no selection, paper registration, claim, or trade authority appears | `AUTHORITY_ESCALATION` |
+
+The dry-run must also print the exact commands it would run in the later
+approved migration, but it must not execute those commands against production.
+If the dry-run cannot name a deterministic output path and every input hash, it
+is not ready for review.
+
+## Dry-Run Output Shape
+
+The recommended dry-run report is a small JSON object checked into the future
+migration/data PR or attached as a review artifact:
+
+```json
+{
+  "schema": "ar.semiconductor_source_repair_dry_run.v0",
+  "status": "BLOCKED_OR_READY",
+  "source_name": "cyq_perf",
+  "trade_date": "20260824",
+  "old_batch_ref": {
+    "batch_id": "<existing immutable batch id>",
+    "row_count": 0,
+    "content_hash": "<existing batch content hash>"
+  },
+  "replacement_ref": {
+    "row_count": "<positive integer or null>",
+    "content_hash": "<replacement batch content hash or null>",
+    "source_publication_status": "PUBLISHED_OR_SOURCE_PUBLICATION_PENDING"
+  },
+  "checks": [
+    {
+      "name": "old_batch_identified",
+      "status": "PASS",
+      "evidence": "<path or hash>"
+    }
+  ],
+  "would_write": [
+    "<append-only repair record path>"
+  ],
+  "production_write_performed": false,
+  "authority": {
+    "production_authority": false,
+    "trade_authority": false,
+    "claim_allowed": false,
+    "no_trade_flag": true
+  }
+}
+```
+
+`status=READY` only means the repair PR is ready for human review. It does not
+mean the repair is deployed, the source is production-corrected, or any
+candidate may enter U4.
+
 ## Stop Conditions
 
 Stop and report instead of repairing if:
