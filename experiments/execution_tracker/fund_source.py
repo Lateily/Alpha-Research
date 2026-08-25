@@ -28,10 +28,13 @@ CLI:
   python3 fund_source.py --realtime 300502.SZ,300475.SZ
 """
 import argparse
+import http.client
 import json
 import os
+import ssl
 import sys
 import time
+import urllib.error
 import urllib.request
 
 _HEADERS = {
@@ -46,6 +49,7 @@ EM_DAYKLINE = ("https://push2.eastmoney.com/api/qt/stock/fflow/daykline/get"
 # kline csv order (fields2): date, 主力净额, 小单净额, 中单净额, 大单净额,
 #                            超大单净额, 主力%, 小%, 中%, 大%, 超大%
 TUSHARE_URL = "https://api.tushare.pro"   # MUST be https — http returns HTTP 400 (AWS ALB)
+TUSHARE_TRANSPORT_ATTEMPTS = 3
 TENCENT_REALTIME = "https://qt.gtimg.cn/q={symbols}"
 
 
@@ -58,9 +62,28 @@ def _secid(ticker):
     raise ValueError(f"unknown market for {ticker}")
 
 
-def _http_json(url=None, data=None, headers=None, timeout=12):
-    req = urllib.request.Request(url, data=data, headers=headers or _HEADERS)
-    return json.load(urllib.request.urlopen(req, timeout=timeout))
+def _http_json(url=None, data=None, headers=None, timeout=12, attempts=1,
+               opener=None, sleeper=None):
+    """Read JSON with bounded retries for transient transport failures only."""
+    if attempts < 1:
+        raise ValueError("attempts must be >= 1")
+    opener = opener or urllib.request.urlopen
+    sleeper = sleeper or time.sleep
+    retryable = (urllib.error.URLError, TimeoutError, ConnectionError,
+                 http.client.RemoteDisconnected, ssl.SSLError)
+    last_error = None
+    for attempt in range(attempts):
+        req = urllib.request.Request(url, data=data, headers=headers or _HEADERS)
+        try:
+            return json.load(opener(req, timeout=timeout))
+        except urllib.error.HTTPError:
+            raise
+        except retryable as exc:
+            last_error = exc
+            if attempt + 1 == attempts:
+                raise
+            sleeper(0.5 * (attempt + 1))
+    raise last_error  # pragma: no cover - loop either returns or raises
 
 
 def _parse_em_kline(csv):
@@ -92,7 +115,9 @@ def eastmoney_stock_fund(ticker, retries=3):
 def _tushare_call(api, token, params, fields):
     body = json.dumps({"api_name": api, "token": token, "params": params,
                        "fields": fields}).encode()
-    r = _http_json(url=TUSHARE_URL, data=body, headers={"Content-Type": "application/json"})
+    r = _http_json(url=TUSHARE_URL, data=body,
+                   headers={"Content-Type": "application/json"},
+                   attempts=TUSHARE_TRANSPORT_ATTEMPTS)
     if r.get("code") != 0:
         raise RuntimeError(f"tushare {api} error: {r.get('msg')}")
     return r.get("data") or {}
@@ -124,7 +149,9 @@ def tushare_stock_fund(ticker, token, trade_date=""):
                        "params": {"ts_code": ticker, "trade_date": trade_date},
                        "fields": ("ts_code,trade_date,close,pct_change,net_amount,"
                                   "buy_elg_amount,buy_lg_amount,buy_md_amount,buy_sm_amount")}).encode()
-    r = _http_json(url=TUSHARE_URL, data=body, headers={"Content-Type": "application/json"})
+    r = _http_json(url=TUSHARE_URL, data=body,
+                   headers={"Content-Type": "application/json"},
+                   attempts=TUSHARE_TRANSPORT_ATTEMPTS)
     if r.get("code") != 0:
         raise RuntimeError(f"tushare error: {r.get('msg')}")
     data = r.get("data") or {}

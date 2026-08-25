@@ -81,6 +81,10 @@ jobs:
       # 覆盖:registry 自检 · 两条注册路径确实打戳 · 账本挂掉时登记被拒且信号不落盘
       - name: Registry schema v2 + ledger wiring regression
         run: python3 tests/test_registry_schema_v2.py
+      # A transient TLS EOF previously stopped the entire 2026-08-21 nightly run.
+      # Retry only transport failures; HTTP/API/schema failures remain fail-closed.
+      - name: Official sample transport retry regression (offline)
+        run: python3 tests/test_fund_source_transport.py
       # R-043:已发布 manifest 合法迁移。覆盖审批绑定、同锁、WAL 崩溃恢复、
       # TOCTOU、双 manifest 留档与旧 run_id 拒绝。
       - name: Publication manifest migration regression (offline)
@@ -118,6 +122,13 @@ jobs:
         run: python3 experiments/research_funnel/security_registry.py --selftest
       - name: Feature store contract selftest
         run: python3 experiments/research_funnel/feature_store.py --selftest
+      # Semiconductor positive inputs stay source-atomic and point-in-time;
+      # every scoped security carries evidence or explicit DATA_BLOCKED, while
+      # E1 red flags retain unconditional exclusion authority.
+      - name: Semiconductor positive-input evidence regression (offline)
+        run: |
+          python3 tests/test_semiconductor_positive_inputs.py
+          python3 scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/semiconductor_positive_inputs_v1.task.json
       - name: Full-market E1 event layer contract selftest
         run: python3 experiments/research_funnel/e1_event_layer.py --selftest
       # R-033/R-034/R-035:六通道独立并集、U0 状态投影、同池随机控制、
