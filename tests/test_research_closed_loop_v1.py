@@ -45,16 +45,16 @@ def _validate(manifest: dict[str, Any]) -> list[str]:
         errors.append("top-level contract surface changed")
     if manifest.get("schema") != "ar.research_closed_loop_manifest.v1":
         errors.append("schema changed")
-    if manifest.get("schema_version") != "1.1":
+    if manifest.get("schema_version") != "1.2":
         errors.append("manifest revision changed")
-    if manifest.get("method_version") != "RESEARCH_CLOSED_LOOP_V1_1":
+    if manifest.get("method_version") != "RESEARCH_CLOSED_LOOP_V1_2":
         errors.append("method version changed")
     if manifest.get("status") != "FROZEN_OFFLINE_WORKFLOW_DEBUG":
         errors.append("frozen status changed")
     if manifest.get("source_base") != {
-        "assembly_code_commit": "3ee830562c7def5f7fc9e136c34e912bcbc657a6",
-        "base_main": "a83a5d87cb660b579a295b3a2540977bf1f2f398",
-        "review_pr": 306,
+        "assembly_code_commit": "bc58e05ce497e66a09710a0b3c33735ab1269f64",
+        "base_main": "8ed9cfce536d70a541333e175dfb9b573610605a",
+        "review_pr": 316,
         "data_dependency_pr": 297,
         "data_dependency_status": "MERGED_MAIN",
     }:
@@ -152,9 +152,9 @@ class ResearchClosedLoopV1Tests(unittest.TestCase):
             self.assertTrue(path.is_file(), row["path"])
             self.assertEqual(row["sha256"], _sha(path), row["path"])
 
-    def test_revision_1_1_binds_the_semiconductor_screening_assembly(self) -> None:
-        self.assertEqual(self.manifest["schema_version"], "1.1")
-        self.assertEqual(self.manifest["method_version"], "RESEARCH_CLOSED_LOOP_V1_1")
+    def test_revision_1_2_binds_the_semiconductor_repair_assembly(self) -> None:
+        self.assertEqual(self.manifest["schema_version"], "1.2")
+        self.assertEqual(self.manifest["method_version"], "RESEARCH_CLOSED_LOOP_V1_2")
         bound = {row["path"] for row in self.manifest["artifact_bindings"]}
         self.assertTrue({
             "docs/research/RESEARCH_CLOSED_LOOP_V1.md",
@@ -162,7 +162,9 @@ class ResearchClosedLoopV1Tests(unittest.TestCase):
             "experiments/research_funnel/feature_store.py",
             "experiments/research_funnel/funnel_dag.py",
             "experiments/research_funnel/semiconductor_inputs.py",
+            "experiments/research_funnel/semiconductor_source_repair.py",
             "experiments/research_funnel/industry_taxonomy.v1.json",
+            "docs/research/prospective/SEMICONDUCTOR_DAILY_SOURCE_REPAIR_PLAN_V0_1.md",
         }.issubset(bound))
 
     def test_authority_cannot_be_promoted(self) -> None:
@@ -249,7 +251,8 @@ class ResearchClosedLoopV1Tests(unittest.TestCase):
         self.assertEqual(task["risk_level"], "CONSTITUTIONAL")
         text = DOC_PATH.read_text(encoding="utf-8")
         normalized = " ".join(text.split())
-        self.assertIn("Research Closed Loop V1.1", normalized)
+        self.assertIn("Research Closed Loop V1.2", normalized)
+        self.assertIn("repaired historical evidence remains `LATE_OBSERVED`", normalized)
         self.assertIn("FROZEN_OFFLINE_WORKFLOW_DEBUG / PRODUCTION_UNWIRED", normalized)
         self.assertIn("E1 red flags override every positive channel", normalized)
         self.assertIn("first five to ten semiconductor prospective cycles", normalized)

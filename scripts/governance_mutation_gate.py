@@ -5776,13 +5776,13 @@ MUTATIONS = MUTATIONS + (
         ),
     ),
     MutationCase(
-        mutation_id="RESEARCH_V1_1_REVISION_IDENTITY",
-        component="Research Closed Loop V1.1 revision identity",
+        mutation_id="RESEARCH_V1_2_REVISION_IDENTITY",
+        component="Research Closed Loop V1.2 revision identity",
         source_path="docs/research/contracts/research_closed_loop.v1.json",
         test_script="tests/test_research_closed_loop_v1.py",
         before=(
-            '  "schema_version": "1.1",\n'
-            '  "method_version": "RESEARCH_CLOSED_LOOP_V1_1",'
+            '  "schema_version": "1.2",\n'
+            '  "method_version": "RESEARCH_CLOSED_LOOP_V1_2",'
         ),
         after=(
             '  "schema_version": "1.0",\n'
@@ -5795,13 +5795,13 @@ MUTATIONS = MUTATIONS + (
         ),
     ),
     MutationCase(
-        mutation_id="RESEARCH_V1_1_SEMICONDUCTOR_ASSEMBLY_BINDING",
-        component="Research Closed Loop V1.1 semiconductor assembly binding",
+        mutation_id="RESEARCH_V1_2_SEMICONDUCTOR_ASSEMBLY_BINDING",
+        component="Research Closed Loop V1.2 semiconductor assembly binding",
         source_path="docs/research/contracts/research_closed_loop.v1.json",
         test_script="tests/test_research_closed_loop_v1.py",
         before=(
             '    {"path": "experiments/research_funnel/semiconductor_inputs.py", '
-            '"sha256": "sha256:d5d7e97930c9d49685b6d604aac53cff9f42ebcd17befcf0405ac4c6fe85fade"},'
+            '"sha256": "sha256:66fe7a9c4354622eff807d0416faf62a498835182dc5348cce799e41c314df7c"},'
         ),
         after=(
             '    {"path": "experiments/research_funnel/semiconductor_inputs.py", '
@@ -5810,17 +5810,17 @@ MUTATIONS = MUTATIONS + (
         expected_failure_marker="test_every_bound_artifact_matches_its_exact_bytes",
         rationale=(
             "The new point-in-time semiconductor evidence implementation must remain "
-            "byte-bound to the reviewed V1.1 assembly."
+            "byte-bound to the reviewed V1.2 assembly."
         ),
     ),
     MutationCase(
-        mutation_id="RESEARCH_V1_1_REPAIR_ASSEMBLY_BINDING",
-        component="Research Closed Loop V1.1 append-only source repair binding",
+        mutation_id="RESEARCH_V1_2_REPAIR_ASSEMBLY_BINDING",
+        component="Research Closed Loop V1.2 append-only source repair binding",
         source_path="docs/research/contracts/research_closed_loop.v1.json",
         test_script="tests/test_research_closed_loop_v1.py",
         before=(
             '    {"path": "experiments/research_funnel/semiconductor_source_repair.py", '
-            '"sha256": "sha256:3fa311af3773881501ea7e351d74ba17fc417e39d70e7dd5567de41b37eb8df6"},'
+            '"sha256": "sha256:a60e3698cee9abce744452ce0f87897e8bd218a19d379b8b8ed544b3ec2677f0"},'
         ),
         after=(
             '    {"path": "experiments/research_funnel/semiconductor_source_repair.py", '
@@ -5828,7 +5828,7 @@ MUTATIONS = MUTATIONS + (
         ),
         expected_failure_marker="test_every_bound_artifact_matches_its_exact_bytes",
         rationale=(
-            "The active-source repair resolver must remain byte-bound to the frozen V1.1 assembly."
+            "The active-source repair resolver must remain byte-bound to the frozen V1.2 assembly."
         ),
     ),
     MutationCase(

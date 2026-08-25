@@ -1,13 +1,13 @@
 {
   "schema": "ar.research_closed_loop_manifest.v1",
-  "schema_version": "1.1",
-  "method_version": "RESEARCH_CLOSED_LOOP_V1_1",
+  "schema_version": "1.2",
+  "method_version": "RESEARCH_CLOSED_LOOP_V1_2",
   "status": "FROZEN_OFFLINE_WORKFLOW_DEBUG",
-  "frozen_at": "2026-08-24T14:34:20+08:00",
+  "frozen_at": "2026-08-25T23:58:51+08:00",
   "source_base": {
-    "assembly_code_commit": "3ee830562c7def5f7fc9e136c34e912bcbc657a6",
-    "base_main": "a83a5d87cb660b579a295b3a2540977bf1f2f398",
-    "review_pr": 306,
+    "assembly_code_commit": "bc58e05ce497e66a09710a0b3c33735ab1269f64",
+    "base_main": "8ed9cfce536d70a541333e175dfb9b573610605a",
+    "review_pr": 316,
     "data_dependency_pr": 297,
     "data_dependency_status": "MERGED_MAIN"
   },
@@ -102,7 +102,7 @@
     "deployment_requires_separate_approval": true
   },
   "artifact_bindings": [
-    {"path": "docs/research/RESEARCH_CLOSED_LOOP_V1.md", "sha256": "sha256:b1334d86496116ab0667ff26a3e73b42f8063fddb32aed0c6281b4781efe30b4"},
+    {"path": "docs/research/RESEARCH_CLOSED_LOOP_V1.md", "sha256": "sha256:dc4d0f3bda85f648ddf35cb8cf32bb3a8349db40e019edbc2b2d9cbe412b1ca4"},
     {"path": "docs/research/ALL_MARKET_RESEARCH_FUNNEL.md", "sha256": "sha256:2455af97474039e9023503521e89472a5a2e9df35c9e3a281df06d2fdff05196"},
     {"path": "docs/research/U4_DECISION_LEDGER_SPEC_V1.md", "sha256": "sha256:1b15e7e5ad89d768d9f95d53a48c95c50ebe3de21e197148ff01440030cfb644"},
     {"path": "docs/research/contracts/u4_decision_ledger.v1.schema.json", "sha256": "sha256:5377a87b043c423d554c774cc440d941da6a9201e2d0f7047865f6cbeff45f58"},
@@ -110,10 +110,12 @@
     {"path": "docs/research/RESEARCH_METHOD_AND_ATTRIBUTION_V1.md", "sha256": "sha256:111d657e5e8a99ecda3d2f9bce35e57379dc7771d8a27722cd506891787f6692"},
     {"path": "docs/research/FIVE_AXIS_ATTRIBUTION_V1.md", "sha256": "sha256:505125da00056149de9b71a079f37c17933cf93d0958e1e359d28652181dedaa"},
     {"path": "docs/research/PAPER_EXECUTION_REALISM_AUDIT_V1.md", "sha256": "sha256:33da7765f69dc18fdda4d5faae92a16ad2be939aa779c7367c7627f7e6da7812"},
+    {"path": "docs/research/prospective/SEMICONDUCTOR_DAILY_SOURCE_REPAIR_PLAN_V0_1.md", "sha256": "sha256:105ca70b8a152d90905e27871b5dc6a4aae2d56b6d3d170c482c1d152706a934"},
     {"path": "experiments/research_funnel/funnel_pipeline.py", "sha256": "sha256:3fd601f999e14def5240b59ad7a3ad619f703719ee0c1f2a24857d1f55998ddb"},
     {"path": "experiments/research_funnel/feature_store.py", "sha256": "sha256:1e5430cde084563c59db4c688a2738e2a31f536a3a112b0728debf5282033980"},
     {"path": "experiments/research_funnel/funnel_dag.py", "sha256": "sha256:70b17fefc3ce7a1ac6982192294a7676d793783d8b2cd62e23ce71bd2479bd3f"},
-    {"path": "experiments/research_funnel/semiconductor_inputs.py", "sha256": "sha256:fdf60eb54b2346cd3cce6997195815c14e86e107186d12fbb4a904ba40cdd8d2"},
+    {"path": "experiments/research_funnel/semiconductor_inputs.py", "sha256": "sha256:66fe7a9c4354622eff807d0416faf62a498835182dc5348cce799e41c314df7c"},
+    {"path": "experiments/research_funnel/semiconductor_source_repair.py", "sha256": "sha256:a60e3698cee9abce744452ce0f87897e8bd218a19d379b8b8ed544b3ec2677f0"},
     {"path": "experiments/research_funnel/industry_taxonomy.v1.json", "sha256": "sha256:0cd06c80c2d0b612b1c8b6168f97e7930db049b610ff07f2d0076e1322175d4e"},
     {"path": "experiments/research_funnel/u4_decision_ledger.py", "sha256": "sha256:06ab2c0718a595809d254f17b81581aa812bc7a35ab09b118c6ba69ec06fff82"},
     {"path": "experiments/research_funnel/research_method.py", "sha256": "sha256:54ae465de69378497a1d52f17b5cccd170800cfe3ac940943f3523aaf26b7fa5"},
