@@ -1322,6 +1322,30 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="A same-date source revision requires migration and cannot overwrite frozen facts.",
     ),
     MutationCase(
+        mutation_id="SEMICONDUCTOR_ORIGINAL_TABLE_NO_REPLACE",
+        component="Research funnel original semiconductor append-only tables",
+        source_path="experiments/research_funnel/semiconductor_inputs.py",
+        test_script="tests/test_semiconductor_positive_inputs.py",
+        before=(
+            "        # governance-mutation: SEMICONDUCTOR_ORIGINAL_TABLE_NO_REPLACE\n"
+            "        conn.execute(\n"
+            "            f\"\"\"CREATE TRIGGER IF NOT EXISTS {table}_no_replace\n"
+            "            BEFORE INSERT ON {table}\n"
+            "            WHEN EXISTS (SELECT 1 FROM {table} WHERE {duplicate_match})"
+        ),
+        after=(
+            "        # governance-mutation: SEMICONDUCTOR_ORIGINAL_TABLE_NO_REPLACE\n"
+            "        conn.execute(\n"
+            "            f\"\"\"CREATE TRIGGER IF NOT EXISTS {table}_no_replace\n"
+            "            BEFORE INSERT ON {table}\n"
+            "            WHEN 0 AND EXISTS (SELECT 1 FROM {table} WHERE {duplicate_match})"
+        ),
+        expected_failure_marker="test_original_source_tables_reject_insert_or_replace",
+        rationale=(
+            "SQLite INSERT OR REPLACE cannot rewrite any immutable original batch or evidence row."
+        ),
+    ),
+    MutationCase(
         mutation_id="SEMICONDUCTOR_DAILY_SOURCE_REGISTRY",
         component="Research funnel semiconductor daily-source availability",
         source_path="experiments/research_funnel/semiconductor_inputs.py",
@@ -1688,6 +1712,26 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="Discovery may not narrow the registered source/date class to one known incident.",
     ),
     MutationCase(
+        mutation_id="SEMICONDUCTOR_REPAIR_SCAN_ORPHAN_RAW_KEYS",
+        component="Research funnel semiconductor repair physical date discovery",
+        source_path="experiments/research_funnel/semiconductor_source_repair.py",
+        test_script="tests/test_semiconductor_source_repair.py",
+        before=(
+            "    # governance-mutation: SEMICONDUCTOR_REPAIR_SCAN_ORPHAN_RAW_KEYS\n"
+            "    if raw_keys - original_keys:"
+        ),
+        after=(
+            "    # governance-mutation: SEMICONDUCTOR_REPAIR_SCAN_ORPHAN_RAW_KEYS\n"
+            "    if False:"
+        ),
+        expected_failure_marker=(
+            "test_class_scan_refuses_orphan_rows_outside_batch_calendar"
+        ),
+        rationale=(
+            "A raw evidence date omitted from the batch calendar is corruption, not an empty clean scan."
+        ),
+    ),
+    MutationCase(
         mutation_id="SEMICONDUCTOR_REPAIR_CORE_SCHEMA_REQUIRED",
         component="Research funnel semiconductor repair scan target identity",
         source_path="experiments/research_funnel/semiconductor_source_repair.py",
@@ -1744,6 +1788,24 @@ MUTATIONS: tuple[MutationCase, ...] = (
             "test_capture_receipt_and_required_evidence_values_are_recomputed"
         ),
         rationale="A relabeled staged response cannot pass as the provider capture used by the repair.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_REPAIR_STRICT_JSON_CONSTANTS",
+        component="Research funnel semiconductor repair JSON boundary",
+        source_path="experiments/research_funnel/semiconductor_source_repair.py",
+        test_script="tests/test_semiconductor_source_repair.py",
+        before=(
+            "            # governance-mutation: SEMICONDUCTOR_REPAIR_STRICT_JSON_CONSTANTS\n"
+            "            parse_constant=reject_constant,"
+        ),
+        after=(
+            "            # governance-mutation: SEMICONDUCTOR_REPAIR_STRICT_JSON_CONSTANTS\n"
+            "            parse_constant=None,"
+        ),
+        expected_failure_marker=(
+            "test_json_loader_rejects_nonstandard_numeric_constants"
+        ),
+        rationale="NaN and infinities cannot enter a strict hash-bound repair document.",
     ),
     MutationCase(
         mutation_id="SEMICONDUCTOR_REPAIR_PLAN_CAPTURE_PROJECTION",
@@ -5850,6 +5912,21 @@ MUTATIONS = MUTATIONS + (
         rationale=(
             "The semiconductor screening assembly must be an explicit reviewed revision, "
             "not a silent byte change under the original V1 method label."
+        ),
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_V1_2_ARTIFACT_SET_EXACT",
+        component="Research Closed Loop V1.2 exact artifact set",
+        source_path="docs/research/contracts/research_closed_loop.v1.json",
+        test_script="tests/test_research_closed_loop_v1.py",
+        before=(
+            '    {"path": "experiments/research_funnel/research_cycle.py", '
+            '"sha256": "sha256:f42620fa91cf93fe8fbd28930ab4c2530a5e6ed285c0025df5a74175feb59415"},\n'
+        ),
+        after="",
+        expected_failure_marker="test_artifact_binding_set_cannot_shrink",
+        rationale=(
+            "A frozen assembly cannot silently drop one reviewed artifact while all remaining hashes stay valid."
         ),
     ),
     MutationCase(

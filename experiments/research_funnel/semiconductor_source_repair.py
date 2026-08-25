@@ -245,6 +245,7 @@ def _repair_schema_state(conn: sqlite3.Connection) -> str:
 
 def initialize_repair_schema(conn: sqlite3.Connection) -> None:
     """Create only additive append-only repair tables inside the caller transaction."""
+    inputs.ensure_original_append_only_guards(conn)
     statements = (
         f"""CREATE TABLE IF NOT EXISTS {RUN_TABLE} (
           plan_hash TEXT PRIMARY KEY,
@@ -813,6 +814,21 @@ def _scan_conn(conn: sqlite3.Connection) -> dict[str, Any]:
         (str(row["source_name"]), str(row["as_of"])): row for row in originals
     }
     original_keys = set(original_by_key)
+    raw_keys: set[tuple[str, str]] = set()
+    for source_name in registered:
+        date_column = "as_of" if source_name == "fina_indicator_pit" else "trade_date"
+        raw_keys.update(
+            (source_name, _date8(row["source_date"]))
+            for row in conn.execute(
+                f"SELECT DISTINCT {date_column} AS source_date "
+                f"FROM {inputs.SOURCE_TABLE[source_name]} ORDER BY {date_column}"
+            )
+        )
+    # governance-mutation: SEMICONDUCTOR_REPAIR_SCAN_ORPHAN_RAW_KEYS
+    if raw_keys - original_keys:
+        raise SourceRepairError(
+            "class scan found orphan raw rows without an atomic source batch"
+        )
     if _repair_schema_state(conn) == "COMPLETE":
         repair_keys = {
             (row["source_name"], row["as_of"])
@@ -1575,8 +1591,16 @@ def _load_json(path: Path) -> Any:
             output[key] = value
         return output
 
+    def reject_constant(value: str) -> Any:
+        raise SourceRepairError(f"non-standard JSON constant is forbidden: {value}")
+
     try:
-        return json.loads(path.read_text(encoding="utf-8"), object_pairs_hook=reject_duplicate)
+        return json.loads(
+            path.read_text(encoding="utf-8"),
+            object_pairs_hook=reject_duplicate,
+            # governance-mutation: SEMICONDUCTOR_REPAIR_STRICT_JSON_CONSTANTS
+            parse_constant=reject_constant,
+        )
     except (OSError, json.JSONDecodeError) as exc:
         raise SourceRepairError(f"cannot load JSON: {path}") from exc
 

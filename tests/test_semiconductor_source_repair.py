@@ -633,6 +633,23 @@ class SemiconductorSourceRepairTests(unittest.TestCase):
             self.assertIsNone(missing["original_source_hash"])
             self.assertEqual("NO_ORIGINAL_BATCH", missing["point_in_time_status"])
 
+    def test_class_scan_refuses_orphan_rows_outside_batch_calendar(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            db = Path(tmp) / "features.sqlite3"
+            conn = si._connect(db)
+            try:
+                si.initialize(conn)
+                normalized, _conflicts = si.NORMALIZERS["cyq_perf"](
+                    chip_rows(DATES[0], 1), DATES[0], set(CODES),
+                )
+                conn.execute("BEGIN IMMEDIATE")
+                si._insert_rows(conn, si.SOURCE_TABLE["cyq_perf"], normalized)
+                conn.execute("COMMIT")
+            finally:
+                conn.close()
+            with self.assertRaisesRegex(repair.SourceRepairError, "orphan raw rows"):
+                repair.scan_store(db)
+
     def test_snapshot_consumes_verified_active_repair_and_originals_never_change(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             db = Path(tmp) / "features.sqlite3"
@@ -1236,6 +1253,17 @@ class SemiconductorSourceRepairTests(unittest.TestCase):
                     repair.resolve_active_source(conn, "cyq_perf", DATES[0])
             finally:
                 conn.close()
+
+    def test_json_loader_rejects_nonstandard_numeric_constants(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "input.json"
+            for constant in ("NaN", "Infinity", "-Infinity"):
+                with self.subTest(constant=constant):
+                    path.write_text(f'{{"value":{constant}}}', encoding="utf-8")
+                    with self.assertRaisesRegex(
+                        repair.SourceRepairError, "non-standard JSON constant"
+                    ):
+                        repair._load_json(path)
 
 
 if __name__ == "__main__":

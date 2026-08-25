@@ -162,6 +162,39 @@ def semiconductor_codes(registry: Mapping[str, Any]) -> list[str]:
     return codes
 
 
+ORIGINAL_APPEND_ONLY_KEYS = {
+    "semiconductor_source_batches": ("source_name", "as_of"),
+    "semiconductor_moneyflow_dc": ("ts_code", "trade_date"),
+    "semiconductor_cyq_perf": ("ts_code", "trade_date"),
+    "semiconductor_fina_indicator_pit": ("ts_code", "as_of"),
+}
+
+
+def ensure_original_append_only_guards(conn: sqlite3.Connection) -> None:
+    """Install guards that also defeat SQLite INSERT OR REPLACE semantics."""
+    for table, key_columns in ORIGINAL_APPEND_ONLY_KEYS.items():
+        duplicate_match = " AND ".join(
+            f"{column}=NEW.{column}" for column in key_columns
+        )
+        conn.execute(
+            f"""CREATE TRIGGER IF NOT EXISTS {table}_no_update
+            BEFORE UPDATE ON {table}
+            BEGIN SELECT RAISE(ABORT, 'append-only table: {table}'); END"""
+        )
+        conn.execute(
+            f"""CREATE TRIGGER IF NOT EXISTS {table}_no_delete
+            BEFORE DELETE ON {table}
+            BEGIN SELECT RAISE(ABORT, 'append-only table: {table}'); END"""
+        )
+        # governance-mutation: SEMICONDUCTOR_ORIGINAL_TABLE_NO_REPLACE
+        conn.execute(
+            f"""CREATE TRIGGER IF NOT EXISTS {table}_no_replace
+            BEFORE INSERT ON {table}
+            WHEN EXISTS (SELECT 1 FROM {table} WHERE {duplicate_match})
+            BEGIN SELECT RAISE(ABORT, 'append-only duplicate: {table}'); END"""
+        )
+
+
 def initialize(conn: sqlite3.Connection) -> None:
     """Install additive tables and row-level append-only triggers."""
     conn.executescript(
@@ -236,22 +269,7 @@ def initialize(conn: sqlite3.Connection) -> None:
           ON semiconductor_fina_indicator_pit(as_of);
         """
     )
-    for table in (
-        "semiconductor_source_batches",
-        "semiconductor_moneyflow_dc",
-        "semiconductor_cyq_perf",
-        "semiconductor_fina_indicator_pit",
-    ):
-        conn.executescript(
-            f"""
-            CREATE TRIGGER IF NOT EXISTS {table}_no_update
-            BEFORE UPDATE ON {table}
-            BEGIN SELECT RAISE(ABORT, 'append-only table: {table}'); END;
-            CREATE TRIGGER IF NOT EXISTS {table}_no_delete
-            BEFORE DELETE ON {table}
-            BEGIN SELECT RAISE(ABORT, 'append-only table: {table}'); END;
-            """
-        )
+    ensure_original_append_only_guards(conn)
     conn.execute(
         "INSERT OR IGNORE INTO store_meta(key,value) "
         "VALUES('semiconductor_schema_version',?)",
