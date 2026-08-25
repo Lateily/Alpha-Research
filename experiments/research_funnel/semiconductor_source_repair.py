@@ -408,6 +408,7 @@ def _load_original(
     date_column = "as_of" if source_name == "fina_indicator_pit" else "trade_date"
     raw_rows = inputs._load_rows(conn, inputs.SOURCE_TABLE[source_name], date_column, as_of)
     if row is None:
+        # governance-mutation: SEMICONDUCTOR_ORPHAN_RAW_ROWS
         if raw_rows:
             raise SourceRepairError(
                 f"{source_name} has orphan raw rows without an atomic source batch"

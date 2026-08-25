@@ -764,7 +764,6 @@ def _batch_contract(
     unavailable_reason: str = "SOURCE_BATCH_UNAVAILABLE",
 ) -> dict[str, Any]:
     if batch is None:
-        # governance-mutation: SEMICONDUCTOR_ORPHAN_RAW_ROWS
         if raw_rows:
             raise SemiconductorInputError(
                 f"{source_name} has orphan raw rows without an atomic source batch"

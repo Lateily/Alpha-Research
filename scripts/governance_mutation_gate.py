@@ -1961,10 +1961,16 @@ MUTATIONS: tuple[MutationCase, ...] = (
     MutationCase(
         mutation_id="SEMICONDUCTOR_ORPHAN_RAW_ROWS",
         component="Research funnel semiconductor source atomicity",
-        source_path="experiments/research_funnel/semiconductor_inputs.py",
+        source_path="experiments/research_funnel/semiconductor_source_repair.py",
         test_script="tests/test_semiconductor_positive_inputs.py",
-        before="        if raw_rows:\n",
-        after="        if False:\n",
+        before=(
+            "        # governance-mutation: SEMICONDUCTOR_ORPHAN_RAW_ROWS\n"
+            "        if raw_rows:"
+        ),
+        after=(
+            "        # governance-mutation: SEMICONDUCTOR_ORPHAN_RAW_ROWS\n"
+            "        if False:"
+        ),
         expected_failure_marker="test_orphan_raw_rows_without_their_atomic_batch_fail_hard",
         rationale=(
             "Raw evidence without its atomic source-batch receipt is corruption, not an "
