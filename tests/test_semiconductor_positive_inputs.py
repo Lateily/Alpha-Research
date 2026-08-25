@@ -537,6 +537,82 @@ class SemiconductorStoreTests(unittest.TestCase):
             self.assertEqual(["INGESTED"] * 3, [row["status"] for row in result])
             self.assertEqual("COMPLETE", si.build_snapshot(db, registry, TRADE_DATE)["status"])
 
+    def test_empty_cyq_batch_stays_pending_and_a_later_retry_can_ingest(self) -> None:
+        registry = registry_fixture()
+        with tempfile.TemporaryDirectory() as tmp:
+            db = Path(tmp) / "features.sqlite3"
+
+            def before_publication(_token, api_name, params, _fields):
+                if api_name == "moneyflow_dc":
+                    return moneyflow_rows()
+                if api_name == "cyq_perf":
+                    return []
+                if api_name == "fina_indicator_vip":
+                    return financial_rows() if params["period"] == "20260630" else []
+                raise AssertionError(api_name)
+
+            with mock.patch.dict(os.environ, {"AR_OFFLINE": ""}):
+                first = si.collect_live(
+                    "not-a-real-key", db, registry, TRADE_DATE,
+                    sleep_seconds=0, fetcher=before_publication,
+                )
+            self.assertEqual(
+                ["INGESTED", "SOURCE_PUBLICATION_PENDING", "INGESTED"],
+                [row["status"] for row in first],
+            )
+            self.assertEqual("SOURCE_PUBLICATION_PENDING", first[1]["reason_code"])
+            self.assertIs(True, first[1]["retryable"])
+
+            conn = sqlite3.connect(db)
+            try:
+                self.assertEqual(
+                    0,
+                    conn.execute(
+                        "SELECT COUNT(*) FROM semiconductor_source_batches "
+                        "WHERE source_name='cyq_perf' AND as_of=?",
+                        (TRADE_DATE,),
+                    ).fetchone()[0],
+                )
+                self.assertEqual(
+                    0,
+                    conn.execute(
+                        "SELECT COUNT(*) FROM semiconductor_cyq_perf "
+                        "WHERE trade_date=?", (TRADE_DATE,),
+                    ).fetchone()[0],
+                )
+            finally:
+                conn.close()
+
+            requested: list[str] = []
+
+            def after_publication(_token, api_name, _params, _fields):
+                requested.append(api_name)
+                if api_name == "cyq_perf":
+                    return chips_rows()
+                raise AssertionError(f"already committed source was refetched: {api_name}")
+
+            with mock.patch.dict(os.environ, {"AR_OFFLINE": ""}):
+                second = si.collect_live(
+                    "not-a-real-key", db, registry, TRADE_DATE,
+                    sleep_seconds=0, fetcher=after_publication,
+                )
+                third = si.collect_live(
+                    "not-a-real-key", db, registry, TRADE_DATE,
+                    sleep_seconds=0, fetcher=after_publication,
+                )
+            self.assertEqual(["cyq_perf"], requested)
+            self.assertEqual(
+                ["IDEMPOTENT_SKIP", "INGESTED", "IDEMPOTENT_SKIP"],
+                [row["status"] for row in second],
+            )
+            self.assertEqual(
+                ["IDEMPOTENT_SKIP"] * 3,
+                [row["status"] for row in third],
+            )
+            self.assertEqual(
+                "COMPLETE", si.build_snapshot(db, registry, TRADE_DATE)["status"],
+            )
+
     def test_offline_mode_blocks_collection_before_transport(self) -> None:
         registry = registry_fixture()
         called = False
