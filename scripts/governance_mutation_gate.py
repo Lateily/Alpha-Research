@@ -1322,6 +1322,30 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="A same-date source revision requires migration and cannot overwrite frozen facts.",
     ),
     MutationCase(
+        mutation_id="SEMICONDUCTOR_ORIGINAL_TABLE_NO_REPLACE",
+        component="Research funnel original semiconductor append-only tables",
+        source_path="experiments/research_funnel/semiconductor_inputs.py",
+        test_script="tests/test_semiconductor_positive_inputs.py",
+        before=(
+            "        # governance-mutation: SEMICONDUCTOR_ORIGINAL_TABLE_NO_REPLACE\n"
+            "        conn.execute(\n"
+            "            f\"\"\"CREATE TRIGGER IF NOT EXISTS {table}_no_replace\n"
+            "            BEFORE INSERT ON {table}\n"
+            "            WHEN EXISTS (SELECT 1 FROM {table} WHERE {duplicate_match})"
+        ),
+        after=(
+            "        # governance-mutation: SEMICONDUCTOR_ORIGINAL_TABLE_NO_REPLACE\n"
+            "        conn.execute(\n"
+            "            f\"\"\"CREATE TRIGGER IF NOT EXISTS {table}_no_replace\n"
+            "            BEFORE INSERT ON {table}\n"
+            "            WHEN 0 AND EXISTS (SELECT 1 FROM {table} WHERE {duplicate_match})"
+        ),
+        expected_failure_marker="test_original_source_tables_reject_insert_or_replace",
+        rationale=(
+            "SQLite INSERT OR REPLACE cannot rewrite any immutable original batch or evidence row."
+        ),
+    ),
+    MutationCase(
         mutation_id="SEMICONDUCTOR_DAILY_SOURCE_REGISTRY",
         component="Research funnel semiconductor daily-source availability",
         source_path="experiments/research_funnel/semiconductor_inputs.py",
@@ -1688,6 +1712,26 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="Discovery may not narrow the registered source/date class to one known incident.",
     ),
     MutationCase(
+        mutation_id="SEMICONDUCTOR_REPAIR_SCAN_ORPHAN_RAW_KEYS",
+        component="Research funnel semiconductor repair physical date discovery",
+        source_path="experiments/research_funnel/semiconductor_source_repair.py",
+        test_script="tests/test_semiconductor_source_repair.py",
+        before=(
+            "    # governance-mutation: SEMICONDUCTOR_REPAIR_SCAN_ORPHAN_RAW_KEYS\n"
+            "    if raw_keys - original_keys:"
+        ),
+        after=(
+            "    # governance-mutation: SEMICONDUCTOR_REPAIR_SCAN_ORPHAN_RAW_KEYS\n"
+            "    if False:"
+        ),
+        expected_failure_marker=(
+            "test_class_scan_refuses_orphan_rows_outside_batch_calendar"
+        ),
+        rationale=(
+            "A raw evidence date omitted from the batch calendar is corruption, not an empty clean scan."
+        ),
+    ),
+    MutationCase(
         mutation_id="SEMICONDUCTOR_REPAIR_CORE_SCHEMA_REQUIRED",
         component="Research funnel semiconductor repair scan target identity",
         source_path="experiments/research_funnel/semiconductor_source_repair.py",
@@ -1744,6 +1788,24 @@ MUTATIONS: tuple[MutationCase, ...] = (
             "test_capture_receipt_and_required_evidence_values_are_recomputed"
         ),
         rationale="A relabeled staged response cannot pass as the provider capture used by the repair.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_REPAIR_STRICT_JSON_CONSTANTS",
+        component="Research funnel semiconductor repair JSON boundary",
+        source_path="experiments/research_funnel/semiconductor_source_repair.py",
+        test_script="tests/test_semiconductor_source_repair.py",
+        before=(
+            "            # governance-mutation: SEMICONDUCTOR_REPAIR_STRICT_JSON_CONSTANTS\n"
+            "            parse_constant=reject_constant,"
+        ),
+        after=(
+            "            # governance-mutation: SEMICONDUCTOR_REPAIR_STRICT_JSON_CONSTANTS\n"
+            "            parse_constant=None,"
+        ),
+        expected_failure_marker=(
+            "test_json_loader_rejects_nonstandard_numeric_constants"
+        ),
+        rationale="NaN and infinities cannot enter a strict hash-bound repair document.",
     ),
     MutationCase(
         mutation_id="SEMICONDUCTOR_REPAIR_PLAN_CAPTURE_PROJECTION",
@@ -5834,17 +5896,17 @@ MUTATIONS = MUTATIONS + (
         ),
     ),
     MutationCase(
-        mutation_id="RESEARCH_V1_2_REVISION_IDENTITY",
-        component="Research Closed Loop V1.2 revision identity",
+        mutation_id="RESEARCH_V1_3_REVISION_IDENTITY",
+        component="Research Closed Loop V1.3 revision identity",
         source_path="docs/research/contracts/research_closed_loop.v1.json",
         test_script="tests/test_research_closed_loop_v1.py",
         before=(
-            '  "schema_version": "1.2",\n'
-            '  "method_version": "RESEARCH_CLOSED_LOOP_V1_2",'
+            '  "schema_version": "1.3",\n'
+            '  "method_version": "RESEARCH_CLOSED_LOOP_V1_3",'
         ),
         after=(
-            '  "schema_version": "1.0",\n'
-            '  "method_version": "RESEARCH_CLOSED_LOOP_V1",'
+            '  "schema_version": "1.2",\n'
+            '  "method_version": "RESEARCH_CLOSED_LOOP_V1_2",'
         ),
         expected_failure_marker="test_manifest_is_strict_and_frozen",
         rationale=(
@@ -5853,13 +5915,62 @@ MUTATIONS = MUTATIONS + (
         ),
     ),
     MutationCase(
-        mutation_id="RESEARCH_V1_2_SEMICONDUCTOR_ASSEMBLY_BINDING",
-        component="Research Closed Loop V1.2 semiconductor assembly binding",
+        mutation_id="RESEARCH_V1_3_FROZEN_AT",
+        component="Research Closed Loop V1.3 frozen timestamp",
+        source_path="docs/research/contracts/research_closed_loop.v1.json",
+        test_script="tests/test_research_closed_loop_v1.py",
+        before='  "frozen_at": "2026-08-26T01:17:17+08:00",',
+        after='  "frozen_at": "2026-08-25T23:58:51+08:00",',
+        expected_failure_marker="test_revision_1_3_identity_names_current_review",
+        rationale=(
+            "A new byte-bound assembly revision must carry its own reviewed freeze time, "
+            "not reuse the superseded V1.2 identity."
+        ),
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_V1_3_SOURCE_BASE",
+        component="Research Closed Loop V1.3 source review binding",
+        source_path="docs/research/contracts/research_closed_loop.v1.json",
+        test_script="tests/test_research_closed_loop_v1.py",
+        before=(
+            '    "assembly_code_commit": "a893d0fc28ffcf3f50ab6071d8f5ccf86b74aa0a",\n'
+            '    "base_main": "7774e33dbfa6c5554472d3c137ca7b14b4423f4c",\n'
+            '    "review_pr": 317,'
+        ),
+        after=(
+            '    "assembly_code_commit": "4ba8860d9687e58ace2b919604bdd6f686d0d039",\n'
+            '    "base_main": "8ed9cfce536d70a541333e175dfb9b573610605a",\n'
+            '    "review_pr": 316,'
+        ),
+        expected_failure_marker="test_revision_1_3_identity_names_current_review",
+        rationale=(
+            "The frozen source identity must point to the implementation commit, main base, "
+            "and review PR that actually delivered V1.3."
+        ),
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_V1_3_ARTIFACT_SET_EXACT",
+        component="Research Closed Loop V1.3 exact artifact set",
+        source_path="docs/research/contracts/research_closed_loop.v1.json",
+        test_script="tests/test_research_closed_loop_v1.py",
+        before=(
+            '    {"path": "experiments/research_funnel/research_cycle.py", '
+            '"sha256": "sha256:f42620fa91cf93fe8fbd28930ab4c2530a5e6ed285c0025df5a74175feb59415"},\n'
+        ),
+        after="",
+        expected_failure_marker="test_every_bound_artifact_matches_its_exact_bytes",
+        rationale=(
+            "A frozen assembly cannot silently drop one reviewed artifact while all remaining hashes stay valid."
+        ),
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_V1_3_SEMICONDUCTOR_ASSEMBLY_BINDING",
+        component="Research Closed Loop V1.3 semiconductor assembly binding",
         source_path="docs/research/contracts/research_closed_loop.v1.json",
         test_script="tests/test_research_closed_loop_v1.py",
         before=(
             '    {"path": "experiments/research_funnel/semiconductor_inputs.py", '
-            '"sha256": "sha256:9f0eb2364b0c9174b37715b2953e7e2411f7556042f97d22d30188ad7ba993a4"},'
+            '"sha256": "sha256:6701258484cc92bc3280a9086a33bd8ee216161bc0bde9bfed67b7bd94a9aaec"},'
         ),
         after=(
             '    {"path": "experiments/research_funnel/semiconductor_inputs.py", '
@@ -5868,17 +5979,17 @@ MUTATIONS = MUTATIONS + (
         expected_failure_marker="test_every_bound_artifact_matches_its_exact_bytes",
         rationale=(
             "The new point-in-time semiconductor evidence implementation must remain "
-            "byte-bound to the reviewed V1.2 assembly."
+            "byte-bound to the reviewed V1.3 assembly."
         ),
     ),
     MutationCase(
-        mutation_id="RESEARCH_V1_2_REPAIR_ASSEMBLY_BINDING",
-        component="Research Closed Loop V1.2 append-only source repair binding",
+        mutation_id="RESEARCH_V1_3_REPAIR_ASSEMBLY_BINDING",
+        component="Research Closed Loop V1.3 append-only source repair binding",
         source_path="docs/research/contracts/research_closed_loop.v1.json",
         test_script="tests/test_research_closed_loop_v1.py",
         before=(
             '    {"path": "experiments/research_funnel/semiconductor_source_repair.py", '
-            '"sha256": "sha256:72485c18a3c65624490027597d1801b9437010b558bc6da6ef7e5deb26b8597d"},'
+            '"sha256": "sha256:d63f7ae910c198a09e07cbb7ede1510da2204b05f017079e4fe627aa7b6d55c6"},'
         ),
         after=(
             '    {"path": "experiments/research_funnel/semiconductor_source_repair.py", '
@@ -5886,7 +5997,7 @@ MUTATIONS = MUTATIONS + (
         ),
         expected_failure_marker="test_every_bound_artifact_matches_its_exact_bytes",
         rationale=(
-            "The active-source repair resolver must remain byte-bound to the frozen V1.2 assembly."
+            "The active-source repair resolver must remain byte-bound to the frozen V1.3 assembly."
         ),
     ),
     MutationCase(

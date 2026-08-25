@@ -1,8 +1,8 @@
-# Research Closed Loop V1.2
+# Research Closed Loop V1.3
 
 Status: `FROZEN_OFFLINE_WORKFLOW_DEBUG / PRODUCTION_UNWIRED`
 
-Revision 1.2 keeps every V1 authority, eligibility, denominator, and promotion
+Revision 1.3 keeps every V1 authority, eligibility, denominator, and promotion
 boundary unchanged. Revision 1.1 revised the screening evidence assembly: the
 semiconductor cohort now consumes same-date point-in-time price-volume,
 fund-flow/chip, and fundamental-valuation evidence. Industry value-chain
@@ -10,16 +10,22 @@ evidence remains `PARTIAL` and non-triggering until an issuer-node mapping is
 registered. E1 red flags override every positive channel and remain excluded
 from both active candidates and random controls.
 
-Revision 1.2 adds the append-only daily-source repair projection. It preserves
+Revision 1.2 added the append-only daily-source repair projection. It preserves
 every original batch, verifies one catalog-wide supersession chain, and binds
 the writable store and nightly lock to one runtime root. Because V0.1 has no
 independently authenticated publication-time receipt, repaired historical
 evidence remains `LATE_OBSERVED` and same-date research snapshots stay
 `DATA_BLOCKED`; a repair cannot retroactively create a positive trigger.
 
+Revision 1.3 hardens that immutable boundary. Class-wide scans reject orphan
+raw dates, original source tables reject duplicate insertion and
+`INSERT OR REPLACE`, the repair JSON boundary rejects non-standard numeric
+constants, and the manifest freezes the exact artifact set. It changes no
+research method output or authority and supersedes the V1.2 assembly identity.
+
 ## What V1 Freezes
 
-V1.2 is the assembly contract for the research blocks already delivered in this
+V1.3 is the assembly contract for the research blocks already delivered in this
 repository. It does not create another screener, thesis engine, fill engine, or
 attribution engine. The machine-readable fact source is
 `docs/research/contracts/research_closed_loop.v1.json`; it pins the exact
@@ -69,7 +75,7 @@ missing E1 fact; and a correct thesis cannot excuse an execution violation.
 ## Frozen Authority
 
 - U4 selection and paper registration remain `HUMAN_JUNYAN_ONLY`.
-- All V1.2 artifacts keep `no_trade_flag=true`, `trade_authority=false`,
+- All V1.3 artifacts keep `no_trade_flag=true`, `trade_authority=false`,
   `production_authority=false`, and `claim_allowed=false`.
 - Rejections and missing-data decisions remain in the decision denominator.
 - The five inherited paper orders are `UNVERIFIED_SIMULATION`; they remain in
@@ -106,7 +112,7 @@ research process unscorable and is forbidden.
 
 Any change to the ordered blocks, authority constants, first-wave eligibility,
 30-cluster threshold, cross-industry promotion gate, or bound implementation
-bytes requires a new reviewed manifest revision. Revision 1.2 is such a
+bytes requires a new reviewed manifest revision. Revision 1.3 is such a
 reviewed revision; it does not rewrite the historical V1 registration. A PR
 may repair an implementation, but it cannot silently keep an existing method
 label while changing the frozen assembly.
