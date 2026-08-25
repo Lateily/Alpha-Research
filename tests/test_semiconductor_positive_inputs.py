@@ -497,9 +497,25 @@ class SemiconductorStoreTests(unittest.TestCase):
     def test_blocked_row_must_keep_an_explicit_reason(self) -> None:
         registry = registry_fixture()
         with tempfile.TemporaryDirectory() as tmp:
-            snapshot = si.build_snapshot(Path(tmp) / "absent.sqlite3", registry, TRADE_DATE)
+            db = Path(tmp) / "features.sqlite3"
+            universe_hash = _sha256(CODES)
+            si.ingest_source(
+                db, "moneyflow_dc", TRADE_DATE, moneyflow_rows(), CODES, universe_hash,
+            )
+            si.ingest_source(
+                db, "cyq_perf", TRADE_DATE, chips_rows(), CODES, universe_hash,
+            )
+            si.ingest_source(
+                db, "fina_indicator_pit", TRADE_DATE, financial_rows()[:-1],
+                CODES, universe_hash,
+            )
+            snapshot = si.build_snapshot(db, registry, TRADE_DATE)
             changed = copy.deepcopy(snapshot)
-            changed["rows"][0]["chips"]["reason_codes"] = []
+            self.assertEqual(
+                ["SOURCE_ROW_MISSING"],
+                changed["rows"][-1]["fundamentals"]["reason_codes"],
+            )
+            changed["rows"][-1]["fundamentals"]["reason_codes"] = []
             changed["rows_hash"] = si._hash(changed["rows"])
             with self.assertRaisesRegex(si.SemiconductorInputError, "blocked"):
                 si.validate_snapshot(changed, registry)
