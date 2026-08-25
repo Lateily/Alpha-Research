@@ -1,18 +1,25 @@
-# Research Closed Loop V1.1
+# Research Closed Loop V1.2
 
 Status: `FROZEN_OFFLINE_WORKFLOW_DEBUG / PRODUCTION_UNWIRED`
 
-Revision 1.1 keeps every V1 authority, eligibility, denominator, and promotion
-boundary unchanged. It revises only the screening evidence assembly: the
+Revision 1.2 keeps every V1 authority, eligibility, denominator, and promotion
+boundary unchanged. Revision 1.1 revised the screening evidence assembly: the
 semiconductor cohort now consumes same-date point-in-time price-volume,
 fund-flow/chip, and fundamental-valuation evidence. Industry value-chain
 evidence remains `PARTIAL` and non-triggering until an issuer-node mapping is
 registered. E1 red flags override every positive channel and remain excluded
 from both active candidates and random controls.
 
+Revision 1.2 adds the append-only daily-source repair projection. It preserves
+every original batch, verifies one catalog-wide supersession chain, and binds
+the writable store and nightly lock to one runtime root. Because V0.1 has no
+independently authenticated publication-time receipt, repaired historical
+evidence remains `LATE_OBSERVED` and same-date research snapshots stay
+`DATA_BLOCKED`; a repair cannot retroactively create a positive trigger.
+
 ## What V1 Freezes
 
-V1.1 is the assembly contract for the research blocks already delivered in this
+V1.2 is the assembly contract for the research blocks already delivered in this
 repository. It does not create another screener, thesis engine, fill engine, or
 attribution engine. The machine-readable fact source is
 `docs/research/contracts/research_closed_loop.v1.json`; it pins the exact
@@ -62,7 +69,7 @@ missing E1 fact; and a correct thesis cannot excuse an execution violation.
 ## Frozen Authority
 
 - U4 selection and paper registration remain `HUMAN_JUNYAN_ONLY`.
-- All V1.1 artifacts keep `no_trade_flag=true`, `trade_authority=false`,
+- All V1.2 artifacts keep `no_trade_flag=true`, `trade_authority=false`,
   `production_authority=false`, and `claim_allowed=false`.
 - Rejections and missing-data decisions remain in the decision denominator.
 - The five inherited paper orders are `UNVERIFIED_SIMULATION`; they remain in
@@ -99,7 +106,7 @@ research process unscorable and is forbidden.
 
 Any change to the ordered blocks, authority constants, first-wave eligibility,
 30-cluster threshold, cross-industry promotion gate, or bound implementation
-bytes requires a new reviewed manifest revision. Revision 1.1 is such a
+bytes requires a new reviewed manifest revision. Revision 1.2 is such a
 reviewed revision; it does not rewrite the historical V1 registration. A PR
 may repair an implementation, but it cannot silently keep an existing method
 label while changing the frozen assembly.

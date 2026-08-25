@@ -64,6 +64,7 @@ FINANCIAL_FIELDS = (
     "ocf_to_or,debt_to_assets,q_sales_yoy,q_netprofit_yoy,update_flag"
 )
 VALID_COMPONENT_STATUS = {"COMPLETE", "DATA_BLOCKED"}
+SOURCE_BLOCK_REASONS = {"SOURCE_BATCH_UNAVAILABLE", "LATE_OBSERVED_REPAIR"}
 DISCLAIMER = "Research evidence only; no selection, trade, or portfolio authority."
 FORBIDDEN_OUTPUT_KEYS = {
     "selected",
@@ -288,6 +289,12 @@ def _connect(path: Path, *, readonly: bool = False) -> sqlite3.Connection:
         conn.execute("PRAGMA synchronous=FULL")
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA busy_timeout=30000")
+    if readonly:
+        # One logical snapshot must not mix source bodies from before and after
+        # an atomic repair commit.
+        # governance-mutation: SEMICONDUCTOR_REPAIR_READ_SNAPSHOT
+        conn.execute("BEGIN")
+        conn.execute("SELECT COUNT(*) FROM sqlite_master").fetchone()
     return conn
 
 
@@ -587,13 +594,18 @@ def _call_with_retry(
 def _has_batch(db_path: Path, source_name: str, as_of: str) -> bool:
     if not db_path.exists():
         return False
-    conn = _connect(db_path)
+    setup = _connect(db_path)
     try:
-        initialize(conn)
-        return conn.execute(
-            "SELECT 1 FROM semiconductor_source_batches WHERE source_name=? AND as_of=?",
-            (source_name, as_of),
-        ).fetchone() is not None
+        initialize(setup)
+    finally:
+        setup.close()
+    # The collection skip decision is a read-side decision. Reopen read-only so
+    # the batch row, source rows, and optional repair receipt share one snapshot.
+    # governance-mutation: SEMICONDUCTOR_REPAIR_HAS_BATCH_SNAPSHOT
+    conn = _connect(db_path, readonly=True)
+    try:
+        # governance-mutation: SEMICONDUCTOR_REPAIR_HAS_BATCH_RESOLVER
+        return _active_source(conn, source_name, as_of) is not None
     finally:
         conn.close()
 
@@ -684,18 +696,31 @@ def _load_rows(conn: sqlite3.Connection, table: str, date_column: str, as_of: st
     }
 
 
+def _active_source(
+    conn: sqlite3.Connection, source_name: str, as_of: str,
+) -> dict[str, Any] | None:
+    """Resolve one source through the optional append-only repair projection."""
+    # Lazy import avoids a module cycle: the repair implementation deliberately
+    # reuses this module's canonical normalizers and source registry.
+    from semiconductor_source_repair import resolve_active_source
+
+    # governance-mutation: SEMICONDUCTOR_REPAIR_SHARED_RESOLVER
+    return resolve_active_source(conn, source_name, as_of)
+
+
 def _component(
     source_name: str,
     as_of: str,
     code: str,
     row: Mapping[str, Any] | None,
     batch: Mapping[str, Any] | None,
+    unavailable_reason: str = "SOURCE_BATCH_UNAVAILABLE",
 ) -> dict[str, Any]:
     if batch is None:
         return {
             "status": "DATA_BLOCKED",
             "source_as_of": None,
-            "reason_codes": ["SOURCE_BATCH_UNAVAILABLE"],
+            "reason_codes": [unavailable_reason],
             "values": {},
             "input_hash": None,
         }
@@ -736,9 +761,9 @@ def _batch_contract(
     source_name: str,
     batch: Mapping[str, Any] | None,
     raw_rows: Mapping[str, Mapping[str, Any]],
+    unavailable_reason: str = "SOURCE_BATCH_UNAVAILABLE",
 ) -> dict[str, Any]:
     if batch is None:
-        # governance-mutation: SEMICONDUCTOR_ORPHAN_RAW_ROWS
         if raw_rows:
             raise SemiconductorInputError(
                 f"{source_name} has orphan raw rows without an atomic source batch"
@@ -748,7 +773,7 @@ def _batch_contract(
             "source_hash": None,
             "row_count": 0,
             "universe_hash": None,
-            "reason_codes": ["SOURCE_BATCH_UNAVAILABLE"],
+            "reason_codes": [unavailable_reason],
         }
     missing = json.loads(str(batch["missing_codes_json"]))
     conflicts = json.loads(str(batch["conflict_codes_json"]))
@@ -782,6 +807,7 @@ def build_snapshot(
     db = Path(db_path).expanduser().resolve()
     batches: dict[str, dict[str, Any] | None] = {name: None for name in SOURCE_NAMES}
     raw: dict[str, dict[str, dict[str, Any]]] = {name: {} for name in SOURCE_NAMES}
+    unavailable_reasons = {name: "SOURCE_BATCH_UNAVAILABLE" for name in SOURCE_NAMES}
     if db.exists():
         conn = _connect(db, readonly=True)
         try:
@@ -804,25 +830,27 @@ def build_snapshot(
                     raise SemiconductorInputError(
                         "semiconductor store extension version is missing or invalid"
                     )
-                for row in conn.execute(
-                    "SELECT * FROM semiconductor_source_batches WHERE as_of=?", (date8,)
-                ):
-                    if row["source_name"] in SOURCE_NAMES:
-                        batches[str(row["source_name"])] = dict(row)
-                raw["moneyflow_dc"] = _load_rows(
-                    conn, SOURCE_TABLE["moneyflow_dc"], "trade_date", date8,
-                )
-                raw["cyq_perf"] = _load_rows(
-                    conn, SOURCE_TABLE["cyq_perf"], "trade_date", date8,
-                )
-                raw["fina_indicator_pit"] = _load_rows(
-                    conn, SOURCE_TABLE["fina_indicator_pit"], "as_of", date8,
-                )
+                for source_name in SOURCE_NAMES:
+                    # governance-mutation: SEMICONDUCTOR_REPAIR_SNAPSHOT_RESOLVER
+                    active = _active_source(conn, source_name, date8)
+                    if active is not None:
+                        # governance-mutation: SEMICONDUCTOR_REPAIR_LATE_OBSERVED_BLOCKED
+                        if (
+                            active["repair_chain"]
+                            and active["active_ref"]["point_in_time_status"]
+                            == "LATE_OBSERVED"
+                        ):
+                            unavailable_reasons[source_name] = "LATE_OBSERVED_REPAIR"
+                            continue
+                        batches[source_name] = active["batch"]
+                        raw[source_name] = active["rows"]
         finally:
             conn.close()
 
     source_contracts = {
-        source: _batch_contract(source, batches[source], raw[source])
+        source: _batch_contract(
+            source, batches[source], raw[source], unavailable_reasons[source]
+        )
         for source in SOURCE_NAMES
     }
     for source, contract in source_contracts.items():
@@ -836,14 +864,17 @@ def build_snapshot(
                 "as_of": date8,
                 "method_version": METHOD_VERSION,
                 "fund_flow": _component(
-                    "moneyflow_dc", date8, code, raw["moneyflow_dc"].get(code), batches["moneyflow_dc"],
+                    "moneyflow_dc", date8, code, raw["moneyflow_dc"].get(code),
+                    batches["moneyflow_dc"], unavailable_reasons["moneyflow_dc"],
                 ),
                 "chips": _component(
-                    "cyq_perf", date8, code, raw["cyq_perf"].get(code), batches["cyq_perf"],
+                    "cyq_perf", date8, code, raw["cyq_perf"].get(code),
+                    batches["cyq_perf"], unavailable_reasons["cyq_perf"],
                 ),
                 "fundamentals": _component(
                     "fina_indicator_pit", date8, code,
                     raw["fina_indicator_pit"].get(code), batches["fina_indicator_pit"],
+                    unavailable_reasons["fina_indicator_pit"],
                 ),
             }
         )
@@ -987,13 +1018,21 @@ def validate_snapshot(payload: Mapping[str, Any], registry: Mapping[str, Any]) -
                 if "CONFLICTING_DISCLOSURE_CORRECTIONS" in evidence["reason_codes"]:
                     conflict_codes.append(row["ts_code"])
         if contract.get("status") == "DATA_BLOCKED":
-            if contract != {
+            reasons = contract.get("reason_codes")
+            if (
+                not isinstance(reasons, list)
+                or len(reasons) != 1
+                or reasons[0] not in SOURCE_BLOCK_REASONS
+                or contract != {
                 "status": "DATA_BLOCKED",
                 "source_hash": None,
                 "row_count": 0,
                 "universe_hash": None,
-                "reason_codes": ["SOURCE_BATCH_UNAVAILABLE"],
-            } or complete_rows:
+                    "reason_codes": reasons,
+                }
+                or complete_rows
+                or any(row[component]["reason_codes"] != reasons for row in rows)
+            ):
                 raise SemiconductorInputError("blocked semiconductor source contract is invalid")
             continue
         expected_source_hash = _hash({
