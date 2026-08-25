@@ -57,10 +57,28 @@ Reed must fill this section before asking for U4 review.
 | `u4_packet_status` | `AWAITING_JUNYAN_REVIEW` or stop reason | `TODO` |
 | `data_cutoff` | Timezone-aware ISO-8601 cutoff | `TODO` |
 | `source_scope` | `PRODUCTION_RUNTIME_READ_ONLY` or offline fixture path | `TODO` |
+| `source_publication_status` | `PUBLISHED/SOURCE_PUBLICATION_PENDING/DATA_BLOCKED` per source | `TODO` |
 
 Do not copy production runtime state into a PR unless a separate contract
 explicitly approves that evidence transfer. A PR may record hashes, counts,
 and material decision facts.
+
+## Source Publication Gate
+
+Before filling candidate rows, Reed must prove each required same-day source is
+published, retryable-pending, or explicitly blocked. A same-day empty source
+response is not evidence that every issuer is missing.
+
+| Source | Required state | Stop if |
+|---|---|---|
+| `moneyflow_dc` | `PUBLISHED` or explicit transport/data blocker | Missing flow is treated as zero flow |
+| `cyq_perf` | `PUBLISHED` or `SOURCE_PUBLICATION_PENDING` with `retryable=true` | Empty same-day response is frozen as a successful zero-row batch |
+| `fina_indicator_pit` | `PUBLISHED/PARTIAL` or explicit filing-window blocker | Absent fundamentals are treated as neutral valuation |
+
+If `cyq_perf` is `SOURCE_PUBLICATION_PENDING`, do not generate a U4 packet from
+that run. Wait for a later retry or record `DATA_BLOCKED`. The previously
+frozen `20260824` empty `cyq_perf` batch cannot be repaired by ordinary retry;
+it needs a separately approved append-only migration or data PR.
 
 ## Channel Coverage Gate
 
@@ -119,9 +137,13 @@ Stop before U4 if any of these is true:
 5. positive-channel gaps are silently treated as no signal;
 6. the U4 packet cannot bind exact U2 row hashes and U3 row hashes;
 7. a failed or incomplete newer nightly output is being reused as if fresh;
-8. the review set would force one or two selections instead of exactly zero or
+8. any required source is `SOURCE_PUBLICATION_PENDING` but the packet treats it
+   as `PUBLISHED`, `COMPLETE`, or zero evidence;
+9. the historical `20260824` empty `cyq_perf` batch is used without a separately
+   approved append-only migration or data repair;
+10. the review set would force one or two selections instead of exactly zero or
    three to five;
-9. any artifact claims trading, production, alpha, win-rate, or profitability
+11. any artifact claims trading, production, alpha, win-rate, or profitability
    authority.
 
 An honest zero-selection result is valid. Lowering the threshold to make the
@@ -133,6 +155,8 @@ Before sending to Junyan, Reed should provide:
 
 - the source pack table above;
 - the channel coverage table above;
+- the source publication status for `moneyflow_dc`, `cyq_perf`, and
+  `fina_indicator_pit`;
 - a candidate intake table for all semiconductor rows in scope;
 - count totals for U2 rows, U3 rows, U4-ready rows, red-flag exclusions, and
   `DATA_BLOCKED` rows;
