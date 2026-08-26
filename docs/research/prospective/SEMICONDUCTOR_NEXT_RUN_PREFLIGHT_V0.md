@@ -87,12 +87,18 @@ Reed should answer these in order.
    - Record `trade_date`, `run_id`, `bundle_hash`, and bundle location.
 
 2. **Source publication status**
-   - Record `moneyflow_dc`, `cyq_perf`, and `fina_indicator_pit` as
-     `PUBLISHED`, `SOURCE_PUBLICATION_PENDING`, `PARTIAL`, or `DATA_BLOCKED`.
+   - Record daily sources `moneyflow_dc` and `cyq_perf` as `PUBLISHED`,
+     `SOURCE_PUBLICATION_PENDING`, or `DATA_BLOCKED`.
+   - Record quarterly `fina_indicator_pit` as `PUBLISHED`, `PARTIAL`,
+     `STALE_INPUT`, or `DATA_BLOCKED`; it must not use
+     `SOURCE_PUBLICATION_PENDING`.
    - Stop if an empty same-day `cyq_perf` response is represented as a
      successful zero-row batch.
    - Stop if the run depends on the frozen `20260824` empty `cyq_perf` batch
      without a separately approved append-only migration or data PR.
+   - If `cyq_perf` is `SOURCE_PUBLICATION_PENDING`, do not rerun at the same
+     publication window. Wait for the post-close retry window, then run the
+     source publication check again before any U4 packet is generated.
 
 3. **Semiconductor cohort visibility**
    - Count all semiconductor U2 rows.
@@ -111,16 +117,47 @@ Reed should answer these in order.
    - Do not allow E1 red flags, industry rank, macro context, or manual urgency
      to substitute for a positive company channel.
 
-6. **U4 packet eligibility**
+6. **Diagnostic cross-check**
+   - Run the merged U1-U3 diagnostic before any U4 packet handoff:
+
+```powershell
+python3 experiments/research_funnel/semiconductor_evidence_diagnostic.py --intake <intake-receipt> --output <diagnostic-output>
+```
+
+   - The diagnostic output must bind the same intake receipt, recompute counts
+     from `evidence_rows`, verify `evidence_rows_hash`, and report
+     `BLOCKED_BEFORE_U4`, `SOURCE_PUBLICATION_PENDING`, `DATA_BLOCKED`, or a
+     U4-ready state without manual recounting.
+
+7. **U3 red-flag propagation**
+   - Check that U3-level fundamental or valuation red flags remain visible in
+     the candidate packet.
+   - Stop if positive evidence, source repair, industry rank, or manual urgency
+     hides a red flag propagated from U3 to U4.
+
+8. **U4 packet eligibility**
    - Generate a packet only if source hashes, row hashes, and battery hashes are
      bound.
    - The packet status remains `AWAITING_JUNYAN_REVIEW`.
    - Junyan may choose exactly zero or three to five names.
 
-7. **Post-U4 boundary**
+9. **Post-U4 boundary**
    - A `SELECT` means offline deep research only.
    - It does not authorize paper registration, order creation, model claims, or
      production wiring.
+
+## Retry Timetable For Pending Daily Sources
+
+`SOURCE_PUBLICATION_PENDING` is a stop state, not a soft pass. Use this retry
+discipline before a same-day rerun:
+
+| Source | First check | Retry window | Required proof before rerun |
+|---|---|---|---|
+| `moneyflow_dc` | Same-day post-close source window | One bounded retry after transport or publication delay | Non-empty publication metadata or explicit `DATA_BLOCKED` reason |
+| `cyq_perf` | Same-day post-close source window | Later post-close retry window; do not retry at the original 16:04-like window | `PUBLISHED` status, non-frozen source batch, and no dependency on unrepaired frozen `20260824/20260825` batches |
+
+If a retry still returns `SOURCE_PUBLICATION_PENDING`, the correct output is a
+blocked preflight packet. Do not freeze it as a successful zero-row batch.
 
 ## Forbidden Shortcuts
 
@@ -171,6 +208,13 @@ Counts:
 - same-run U3 rows:
 - U4-ready rows:
 - DATA_BLOCKED rows:
+
+Diagnostic:
+- diagnostic command:
+- diagnostic output path:
+- diagnostic status:
+- evidence_rows_hash verified:
+- U3 red flags propagated to U4:
 
 Decision boundary:
 - Junyan may choose zero or exactly 3-5.
