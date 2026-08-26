@@ -1,11 +1,24 @@
 {
   "ticker": "300054.SZ",
-  "fetched_at": "2026-08-26T02:29:17Z",
+  "fetched_at": "2026-08-26T09:10:25Z",
   "permission_model": "runtime_probe",
   "_status": "partial",
   "data": {
     "daily": {
       "rows": [
+        {
+          "ts_code": "300054.SZ",
+          "trade_date": "20260826",
+          "open": 72.2,
+          "high": 73.17,
+          "low": 70.74,
+          "close": 72.19,
+          "pre_close": 72.19,
+          "change": 0.0,
+          "pct_chg": 0.0,
+          "vol": 197794.0,
+          "amount": 1427309.05752
+        },
         {
           "ts_code": "300054.SZ",
           "trade_date": "20260825",
@@ -826,12 +839,32 @@
           "amount": 2660674.102
         }
       ],
-      "row_count": 63,
+      "row_count": 64,
       "_status": "ok",
-      "as_of": "20260825"
+      "as_of": "20260826"
     },
     "daily_basic": {
       "rows": [
+        {
+          "ts_code": "300054.SZ",
+          "trade_date": "20260826",
+          "close": 72.19,
+          "turnover_rate": 2.657,
+          "turnover_rate_f": 2.9298,
+          "volume_ratio": 0.74,
+          "pe": 95.6873,
+          "pe_ttm": 73.4227,
+          "pb": 12.2534,
+          "ps": 18.8296,
+          "ps_ttm": 17.886,
+          "dv_ratio": 0.1371,
+          "dv_ttm": 0.1383,
+          "total_share": 95462.5953,
+          "float_share": 74442.7001,
+          "free_share": 67510.6768,
+          "total_mv": 6891444.7547,
+          "circ_mv": 5374018.5202
+        },
         {
           "ts_code": "300054.SZ",
           "trade_date": "20260825",
@@ -2093,9 +2126,9 @@
           "circ_mv": 5503667.6123
         }
       ],
-      "row_count": 63,
+      "row_count": 64,
       "_status": "ok",
-      "as_of": "20260825"
+      "as_of": "20260826"
     },
     "adj_factor": {
       "rows": [
@@ -6594,6 +6627,46 @@
       "rows": [
         {
           "ts_code": "300054.SZ",
+          "end_date": "20260630",
+          "bz_item": "新能源材料及其他",
+          "bz_code": "P",
+          "bz_sales": 251878768.98,
+          "bz_profit": 103327464.36,
+          "bz_cost": 148551304.62,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "300054.SZ",
+          "end_date": "20260630",
+          "bz_item": "打印复印通用耗材(含彩色聚合碳粉、显影辊、载体、硒鼓、墨盒)",
+          "bz_code": "P",
+          "bz_sales": 410247216.64,
+          "bz_profit": 120850662.33,
+          "bz_cost": 289396554.31,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "300054.SZ",
+          "end_date": "20260630",
+          "bz_item": "半导体材料(含CMP抛光垫、CMP抛光液、CMP清洗液、YPI、PSPI、TFE-INK、临时键合胶、半导体封装PI、晶圆光?",
+          "bz_code": "P",
+          "bz_sales": 1262469442.78,
+          "bz_profit": 908081955.14,
+          "bz_cost": 354387487.64,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "300054.SZ",
+          "end_date": "20260630",
+          "bz_item": "产品",
+          "bz_code": "P",
+          "bz_sales": 1924595428.4,
+          "bz_profit": 1132260081.83,
+          "bz_cost": 792335346.57,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "300054.SZ",
           "end_date": "20251231",
           "bz_item": "打印复印通用耗材产品(含彩色聚合碳粉、显影辊、载体、硒鼓、墨盒)",
           "bz_code": "P",
@@ -6933,9 +7006,9 @@
           "curr_type": "CNY"
         }
       ],
-      "row_count": 34,
+      "row_count": 38,
       "_status": "ok",
-      "as_of": "20251231"
+      "as_of": "20260630"
     },
     "forecast": {
       "rows": [
