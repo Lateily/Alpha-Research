@@ -1,10 +1,10 @@
 {
   "ticker": "603233.SH",
-  "fetched_at": "2026-08-25T09:07:55Z",
-  "trade_date": "20260825",
+  "fetched_at": "2026-08-26T02:29:28Z",
+  "trade_date": "20260826",
   "_status": "ok",
   "api_used": "cyq_chips",
-  "as_of": "20260824",
+  "as_of": "20260825",
   "fallback_days": 1,
   "chips": [
     {
@@ -41,71 +41,71 @@
     },
     {
       "price": 13.0,
-      "percent": 0.22
+      "percent": 0.21
     },
     {
       "price": 13.5,
-      "percent": 0.22
+      "percent": 0.21
     },
     {
       "price": 14.0,
-      "percent": 0.25
+      "percent": 0.24
     },
     {
       "price": 14.5,
-      "percent": 0.77
+      "percent": 0.75
     },
     {
       "price": 15.0,
-      "percent": 2.8
+      "percent": 2.73
     },
     {
       "price": 15.5,
-      "percent": 5.44
+      "percent": 5.3
     },
     {
       "price": 16.0,
-      "percent": 6.18
+      "percent": 6.02
     },
     {
       "price": 16.5,
-      "percent": 5.77
+      "percent": 5.62
     },
     {
       "price": 17.0,
-      "percent": 8.63
+      "percent": 8.42
     },
     {
       "price": 17.5,
-      "percent": 13.05
+      "percent": 12.92
     },
     {
       "price": 18.0,
-      "percent": 15.48
+      "percent": 16.37
     },
     {
       "price": 18.5,
-      "percent": 15.9
+      "percent": 16.29
     },
     {
       "price": 19.0,
-      "percent": 12.72
+      "percent": 12.5
     },
     {
       "price": 19.5,
-      "percent": 4.17
+      "percent": 4.06
     },
     {
       "price": 20.0,
-      "percent": 0.91
+      "percent": 0.89
     },
     {
       "price": 20.5,
-      "percent": 0.47
+      "percent": 0.46
     },
     {
       "price": 21.0,
-      "percent": 0.23
+      "percent": 0.22
     },
     {
       "price": 21.5,
@@ -364,5 +364,5 @@
       "percent": 0.08
     }
   ],
-  "_note": "requested trade_date=20260825 was empty (cyq_chips is T+1); fell back to most recent non-empty day 20260824"
+  "_note": "requested trade_date=20260826 was empty (cyq_chips is T+1); fell back to most recent non-empty day 20260825"
 }
