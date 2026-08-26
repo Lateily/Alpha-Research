@@ -5897,17 +5897,17 @@ MUTATIONS = MUTATIONS + (
         ),
     ),
     MutationCase(
-        mutation_id="RESEARCH_V1_3_REVISION_IDENTITY",
-        component="Research Closed Loop V1.3 revision identity",
+        mutation_id="RESEARCH_V1_4_REVISION_IDENTITY",
+        component="Research Closed Loop V1.4 revision identity",
         source_path="docs/research/contracts/research_closed_loop.v1.json",
         test_script="tests/test_research_closed_loop_v1.py",
         before=(
-            '  "schema_version": "1.3",\n'
-            '  "method_version": "RESEARCH_CLOSED_LOOP_V1_3",'
+            '  "schema_version": "1.4",\n'
+            '  "method_version": "RESEARCH_CLOSED_LOOP_V1_4",'
         ),
         after=(
-            '  "schema_version": "1.2",\n'
-            '  "method_version": "RESEARCH_CLOSED_LOOP_V1_2",'
+            '  "schema_version": "1.3",\n'
+            '  "method_version": "RESEARCH_CLOSED_LOOP_V1_3",'
         ),
         expected_failure_marker="test_manifest_is_strict_and_frozen",
         rationale=(
@@ -5916,42 +5916,42 @@ MUTATIONS = MUTATIONS + (
         ),
     ),
     MutationCase(
-        mutation_id="RESEARCH_V1_3_FROZEN_AT",
-        component="Research Closed Loop V1.3 frozen timestamp",
+        mutation_id="RESEARCH_V1_4_FROZEN_AT",
+        component="Research Closed Loop V1.4 frozen timestamp",
         source_path="docs/research/contracts/research_closed_loop.v1.json",
         test_script="tests/test_research_closed_loop_v1.py",
-        before='  "frozen_at": "2026-08-26T01:17:17+08:00",',
-        after='  "frozen_at": "2026-08-25T23:58:51+08:00",',
-        expected_failure_marker="test_revision_1_3_identity_names_current_review",
+        before='  "frozen_at": "2026-08-26T14:44:39+08:00",',
+        after='  "frozen_at": "2026-08-26T01:17:17+08:00",',
+        expected_failure_marker="test_revision_1_4_identity_names_current_review",
         rationale=(
             "A new byte-bound assembly revision must carry its own reviewed freeze time, "
-            "not reuse the superseded V1.2 identity."
+            "not reuse the superseded V1.3 identity."
         ),
     ),
     MutationCase(
-        mutation_id="RESEARCH_V1_3_SOURCE_BASE",
-        component="Research Closed Loop V1.3 source review binding",
+        mutation_id="RESEARCH_V1_4_SOURCE_BASE",
+        component="Research Closed Loop V1.4 source review binding",
         source_path="docs/research/contracts/research_closed_loop.v1.json",
         test_script="tests/test_research_closed_loop_v1.py",
         before=(
+            '    "assembly_code_commit": "e0d73dac5a8f8bbc4a427ec15b7efce8c8d5ad8c",\n'
+            '    "base_main": "ad26f1b644d75618a3923267c4dfa5b446d71e67",\n'
+            '    "review_pr": 319,'
+        ),
+        after=(
             '    "assembly_code_commit": "a893d0fc28ffcf3f50ab6071d8f5ccf86b74aa0a",\n'
             '    "base_main": "7774e33dbfa6c5554472d3c137ca7b14b4423f4c",\n'
             '    "review_pr": 317,'
         ),
-        after=(
-            '    "assembly_code_commit": "4ba8860d9687e58ace2b919604bdd6f686d0d039",\n'
-            '    "base_main": "8ed9cfce536d70a541333e175dfb9b573610605a",\n'
-            '    "review_pr": 316,'
-        ),
-        expected_failure_marker="test_revision_1_3_identity_names_current_review",
+        expected_failure_marker="test_revision_1_4_identity_names_current_review",
         rationale=(
             "The frozen source identity must point to the implementation commit, main base, "
-            "and review PR that actually delivered V1.3."
+            "and review PR that actually delivered V1.4."
         ),
     ),
     MutationCase(
-        mutation_id="RESEARCH_V1_3_ARTIFACT_SET_EXACT",
-        component="Research Closed Loop V1.3 exact artifact set",
+        mutation_id="RESEARCH_V1_4_ARTIFACT_SET_EXACT",
+        component="Research Closed Loop V1.4 exact artifact set",
         source_path="docs/research/contracts/research_closed_loop.v1.json",
         test_script="tests/test_research_closed_loop_v1.py",
         before=(
@@ -5965,8 +5965,8 @@ MUTATIONS = MUTATIONS + (
         ),
     ),
     MutationCase(
-        mutation_id="RESEARCH_V1_3_SEMICONDUCTOR_ASSEMBLY_BINDING",
-        component="Research Closed Loop V1.3 semiconductor assembly binding",
+        mutation_id="RESEARCH_V1_4_SEMICONDUCTOR_ASSEMBLY_BINDING",
+        component="Research Closed Loop V1.4 semiconductor assembly binding",
         source_path="docs/research/contracts/research_closed_loop.v1.json",
         test_script="tests/test_research_closed_loop_v1.py",
         before=(
@@ -5980,12 +5980,12 @@ MUTATIONS = MUTATIONS + (
         expected_failure_marker="test_every_bound_artifact_matches_its_exact_bytes",
         rationale=(
             "The new point-in-time semiconductor evidence implementation must remain "
-            "byte-bound to the reviewed V1.3 assembly."
+            "byte-bound to the reviewed V1.4 assembly."
         ),
     ),
     MutationCase(
-        mutation_id="RESEARCH_V1_3_REPAIR_ASSEMBLY_BINDING",
-        component="Research Closed Loop V1.3 append-only source repair binding",
+        mutation_id="RESEARCH_V1_4_REPAIR_ASSEMBLY_BINDING",
+        component="Research Closed Loop V1.4 append-only source repair binding",
         source_path="docs/research/contracts/research_closed_loop.v1.json",
         test_script="tests/test_research_closed_loop_v1.py",
         before=(
@@ -5998,7 +5998,60 @@ MUTATIONS = MUTATIONS + (
         ),
         expected_failure_marker="test_every_bound_artifact_matches_its_exact_bytes",
         rationale=(
-            "The active-source repair resolver must remain byte-bound to the frozen V1.3 assembly."
+            "The active-source repair resolver must remain byte-bound to the frozen V1.4 assembly."
+        ),
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_V1_4_PAPER_REGISTRATION_BLOCK",
+        component="Research Closed Loop V1.4 paper-registration block",
+        source_path="docs/research/contracts/research_closed_loop.v1.json",
+        test_script="tests/test_research_closed_loop_v1.py",
+        before='      "id": "PAPER_REGISTRATION",',
+        after='      "id": "PAPER_EXECUTION",',
+        expected_failure_marker="test_manifest_is_strict_and_frozen",
+        rationale=(
+            "The human-authorized R-015 registration transaction must remain an explicit "
+            "block between research registration and paper execution."
+        ),
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_V1_4_PAPER_REGISTRATION_BINDING",
+        component="Research Closed Loop V1.4 paper-registration byte binding",
+        source_path="docs/research/contracts/research_closed_loop.v1.json",
+        test_script="tests/test_research_closed_loop_v1.py",
+        before=(
+            '    {"path": "experiments/research_funnel/paper_registration_bridge.py", '
+            '"sha256": "sha256:61f095a6b126ed3aedbaae4d69c18e5dcc2d7eb5bd22b2e82713279382b1bc79"},'
+        ),
+        after=(
+            '    {"path": "experiments/research_funnel/paper_registration_bridge.py", '
+            '"sha256": "sha256:0000000000000000000000000000000000000000000000000000000000000000"},'
+        ),
+        expected_failure_marker="test_every_bound_artifact_matches_its_exact_bytes",
+        rationale=(
+            "The reviewed U4-to-paper transaction implementation must remain byte-bound "
+            "to the V1.4 assembly."
+        ),
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_V1_4_PAPER_REGISTRATION_AUTHORITY",
+        component="Research Closed Loop V1.4 paper-registration authority",
+        source_path="docs/research/contracts/research_closed_loop.v1.json",
+        test_script="tests/test_research_closed_loop_v1.py",
+        before=(
+            '      "purpose": "Recompute one current U4 SELECT and one sealed research case '
+            'into an exact human-approved plan, then append one replayable R-015 intent/commit '
+            'transaction and idempotently project one realistic paper-only pending order.",'
+        ),
+        after=(
+            '      "purpose": "Automatically select and submit one production order without '
+            'human approval or an R-015 transaction.",'
+        ),
+        expected_failure_marker=(
+            "test_paper_registration_block_preserves_human_r015_transaction"
+        ),
+        rationale=(
+            "V1.4 must preserve the exact human-approved, paper-only R-015 transaction boundary."
         ),
     ),
     MutationCase(

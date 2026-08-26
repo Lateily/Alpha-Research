@@ -1,13 +1,13 @@
 {
   "schema": "ar.research_closed_loop_manifest.v1",
-  "schema_version": "1.3",
-  "method_version": "RESEARCH_CLOSED_LOOP_V1_3",
+  "schema_version": "1.4",
+  "method_version": "RESEARCH_CLOSED_LOOP_V1_4",
   "status": "FROZEN_OFFLINE_WORKFLOW_DEBUG",
-  "frozen_at": "2026-08-26T01:17:17+08:00",
+  "frozen_at": "2026-08-26T14:44:39+08:00",
   "source_base": {
-    "assembly_code_commit": "a893d0fc28ffcf3f50ab6071d8f5ccf86b74aa0a",
-    "base_main": "7774e33dbfa6c5554472d3c137ca7b14b4423f4c",
-    "review_pr": 317,
+    "assembly_code_commit": "e0d73dac5a8f8bbc4a427ec15b7efce8c8d5ad8c",
+    "base_main": "ad26f1b644d75618a3923267c4dfa5b446d71e67",
+    "review_pr": 319,
     "data_dependency_pr": 297,
     "data_dependency_status": "MERGED_MAIN"
   },
@@ -32,6 +32,13 @@
       "purpose": "Freeze point-in-time factpack, thesis, valuation adapter, red-team result, manual settled-E3 SMC timing evidence, and causal-cluster identity before later outcomes exist.",
       "output": "AR_RESEARCH_METHOD_REGISTRATION_V1_0",
       "honest_stop_states": ["REVISE_REQUIRED", "KILL", "WAIT", "DATA_BLOCKED"]
+    },
+    {
+      "id": "PAPER_REGISTRATION",
+      "stage": "PAPER_REGISTER",
+      "purpose": "Recompute one current U4 SELECT and one sealed research case into an exact human-approved plan, then append one replayable R-015 intent/commit transaction and idempotently project one realistic paper-only pending order.",
+      "output": "AR_PAPER_REGISTRATION_RECEIPT_V1",
+      "honest_stop_states": ["AWAITING_HUMAN_APPROVAL", "U4_REVOKED", "PORTFOLIO_DRIFT", "PENDING_RECOVERY", "DATA_BLOCKED"]
     },
     {
       "id": "PAPER_EXECUTION",
@@ -102,7 +109,7 @@
     "deployment_requires_separate_approval": true
   },
   "artifact_bindings": [
-    {"path": "docs/research/RESEARCH_CLOSED_LOOP_V1.md", "sha256": "sha256:98d19890c231fe71361dda856ffc9ea91a251d919f8bcb990a8ecd23b7cd00d6"},
+    {"path": "docs/research/RESEARCH_CLOSED_LOOP_V1.md", "sha256": "sha256:d3ad6490c746cbdb85fe5bf0bde13f2fbbe6c658429dc4fd94daca64b3ac4250"},
     {"path": "docs/research/ALL_MARKET_RESEARCH_FUNNEL.md", "sha256": "sha256:2455af97474039e9023503521e89472a5a2e9df35c9e3a281df06d2fdff05196"},
     {"path": "docs/research/U4_DECISION_LEDGER_SPEC_V1.md", "sha256": "sha256:1b15e7e5ad89d768d9f95d53a48c95c50ebe3de21e197148ff01440030cfb644"},
     {"path": "docs/research/contracts/u4_decision_ledger.v1.schema.json", "sha256": "sha256:5377a87b043c423d554c774cc440d941da6a9201e2d0f7047865f6cbeff45f58"},
@@ -110,6 +117,7 @@
     {"path": "docs/research/RESEARCH_METHOD_AND_ATTRIBUTION_V1.md", "sha256": "sha256:111d657e5e8a99ecda3d2f9bce35e57379dc7771d8a27722cd506891787f6692"},
     {"path": "docs/research/FIVE_AXIS_ATTRIBUTION_V1.md", "sha256": "sha256:505125da00056149de9b71a079f37c17933cf93d0958e1e359d28652181dedaa"},
     {"path": "docs/research/PAPER_EXECUTION_REALISM_AUDIT_V1.md", "sha256": "sha256:33da7765f69dc18fdda4d5faae92a16ad2be939aa779c7367c7627f7e6da7812"},
+    {"path": "docs/research/PAPER_REGISTRATION_BRIDGE_V1.md", "sha256": "sha256:f59854f06eeda0ccae86c7d67091183de6e628b02f86d0a8d25606cab077ec44"},
     {"path": "docs/research/prospective/SEMICONDUCTOR_DAILY_SOURCE_REPAIR_PLAN_V0_1.md", "sha256": "sha256:105ca70b8a152d90905e27871b5dc6a4aae2d56b6d3d170c482c1d152706a934"},
     {"path": "experiments/research_funnel/funnel_pipeline.py", "sha256": "sha256:3fd601f999e14def5240b59ad7a3ad619f703719ee0c1f2a24857d1f55998ddb"},
     {"path": "experiments/research_funnel/feature_store.py", "sha256": "sha256:1e5430cde084563c59db4c688a2738e2a31f536a3a112b0728debf5282033980"},
@@ -121,7 +129,9 @@
     {"path": "experiments/research_funnel/research_method.py", "sha256": "sha256:54ae465de69378497a1d52f17b5cccd170800cfe3ac940943f3523aaf26b7fa5"},
     {"path": "experiments/research_funnel/research_cycle.py", "sha256": "sha256:f42620fa91cf93fe8fbd28930ab4c2530a5e6ed285c0025df5a74175feb59415"},
     {"path": "experiments/research_funnel/five_axis_attribution.py", "sha256": "sha256:c64259070743e11fded500e027597b36cab5465ef39e5ef14857b34ee9b7b6bb"},
-    {"path": "experiments/execution_tracker/model_paper_fund.py", "sha256": "sha256:cf6d9e38330382037362b6f4330be81def14a1497f0bd313c477649b62cfb868"},
+    {"path": "experiments/research_funnel/paper_registration_bridge.py", "sha256": "sha256:61f095a6b126ed3aedbaae4d69c18e5dcc2d7eb5bd22b2e82713279382b1bc79"},
+    {"path": "experiments/execution_tracker/event_ledger.py", "sha256": "sha256:e4705e14caaf3058afa511043c5fdd07bf99310390620dce5cbcd64f4b98aae3"},
+    {"path": "experiments/execution_tracker/model_paper_fund.py", "sha256": "sha256:4092b014c7bc68e500c3557b75763ee83eb2d34f9e3c6517bac6f1b8ed61c984"},
     {"path": "experiments/execution_tracker/paper_execution_audit.py", "sha256": "sha256:1ae235ed0637390350dc150b8afe593b8eb02331650cc3717ffb530cd19c049f"},
     {"path": "experiments/execution_tracker/model_fund/orders.json", "sha256": "sha256:5862163145e29952f42474a31cf153da7b4838f5fb5c30d7148a90e4b76b0e17"}
   ],

@@ -7,7 +7,7 @@
     "prospective-paper-cycle",
     "model-paper-fund"
   ],
-  "objective": "Implement an offline, human-authorized bridge from one current committed U4 SELECT and one prospectively sealed research case into the existing Model Paper Fund, with an append-only R-015 intent/commit receipt, same-nightly-lock exclusion, crash recovery, idempotent projection, and fail-closed verification before nightly advances the order.",
+  "objective": "Implement and freeze Research Closed Loop V1.4 with an offline, human-authorized bridge from one current committed U4 SELECT and one prospectively sealed research case into the existing Model Paper Fund, with an append-only R-015 intent/commit receipt, same-nightly-lock exclusion, crash recovery, idempotent projection, and fail-closed verification before nightly advances the order.",
   "non_goals": [
     "Do not select U4 securities or author thesis, valuation, timing, entry, stop, or target evidence",
     "Do not connect to a broker, submit a real order, grant trade authority, or remove human approval",
@@ -36,10 +36,13 @@
   ],
   "file_scope": [
     "docs/research/PAPER_REGISTRATION_BRIDGE_V1.md",
+    "docs/research/RESEARCH_CLOSED_LOOP_V1.md",
+    "docs/research/contracts/research_closed_loop.v1.json",
     "experiments/research_funnel/paper_registration_bridge.py",
     "experiments/execution_tracker/event_ledger.py",
     "experiments/execution_tracker/model_paper_fund.py",
     "tests/test_paper_registration_bridge.py",
+    "tests/test_research_closed_loop_v1.py",
     "scripts/llm/fixtures/paper_registration_bridge_v1.task.json",
     "scripts/governance_mutation_gate.py",
     ".github/workflows/python-ci.yml"
