@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-26T02:33:22.295048+00:00",
+  "generated_at": "2026-08-26T09:14:13.273236+00:00",
   "date": "2026-08-26",
   "model_state": "NORMAL_OBSERVATION_MODE",
   "brief_e": "5 Paper Hold",
@@ -13,13 +13,13 @@
         "action": "HOLD",
         "priority": "LOW",
         "confidence": 10,
-        "pnl_pct": 24.12,
+        "pnl_pct": 24.88,
         "holding_days": 169,
-        "weight_pct": 49.0,
+        "weight_pct": 49.1,
         "vp_score": 48,
         "confluence": 10,
-        "reason_e": "Signal neutral (score 10). P&L +24.1% after 169d. Paper-hold — no new review trigger. Bullish: Kdj Oversold | RSI 40 | Price vs MA20 -8.3% | Regime: PERMISSIVE | VP 48.",
-        "reason_z": "信号中性（评分10），浮盈+24.1%，持有169天，无新触发条件。多头：KDJ极度超卖(J<0) | RSI 40 | 距MA20 -8.3% | 政策顺风 | VP 48。",
+        "reason_e": "Signal neutral (score 10). P&L +24.9% after 169d. Paper-hold — no new review trigger. Bullish: Kdj Oversold | RSI 40 | Price vs MA20 -8.3% | Regime: PERMISSIVE | VP 48.",
+        "reason_z": "信号中性（评分10），浮盈+24.9%，持有169天，无新触发条件。多头：KDJ极度超卖(J<0) | RSI 40 | 距MA20 -8.3% | 政策顺风 | VP 48。",
         "entry_target": null,
         "exit_trigger": "Score ≤ -60 OR P&L ≤ -10.0%",
         "execution_posture": null
@@ -51,7 +51,7 @@
         "confidence": 0,
         "pnl_pct": 0.0,
         "holding_days": 162,
-        "weight_pct": 26.9,
+        "weight_pct": 26.8,
         "vp_score": null,
         "confluence": 0,
         "reason_e": "Signal neutral (score 0). P&L +0.0% after 162d. Paper-hold — no new review trigger. RSI 41 | Price vs MA20 -3.5%.",
@@ -85,13 +85,13 @@
         "action": "HOLD",
         "priority": "LOW",
         "confidence": 25,
-        "pnl_pct": -4.67,
+        "pnl_pct": -4.26,
         "holding_days": 147,
         "weight_pct": 4.2,
         "vp_score": 48,
         "confluence": 25,
-        "reason_e": "Signal neutral (score 25). P&L -4.7% after 147d. Paper-hold — no new review trigger. Bullish: Macd Golden Cross, Ma20 Bounce | Bearish: Kdj Overbought | RSI 53 | Price vs MA20 +0.2% | Regime: PERMISSIVE | VP 48.",
-        "reason_z": "信号中性（评分25），浮盈-4.7%，持有147天，无新触发条件。多头：MACD金叉、MA20支撑反弹 | 空头：KDJ极度超买(J>100) | RSI 53 | 距MA20 +0.2% | 政策顺风 | VP 48。",
+        "reason_e": "Signal neutral (score 25). P&L -4.3% after 147d. Paper-hold — no new review trigger. Bullish: Macd Golden Cross, Ma20 Bounce | Bearish: Kdj Overbought | RSI 52 | Price vs MA20 +0.2% | Regime: PERMISSIVE | VP 48.",
+        "reason_z": "信号中性（评分25），浮盈-4.3%，持有147天，无新触发条件。多头：MACD金叉、MA20支撑反弹 | 空头：KDJ极度超买(J>100) | RSI 52 | 距MA20 +0.2% | 政策顺风 | VP 48。",
         "entry_target": null,
         "exit_trigger": "Score ≤ -60 OR P&L ≤ -10.0%",
         "execution_posture": null
@@ -178,18 +178,6 @@
   ],
   "wrongif_alerts": [
     {
-      "ticker": "300308.SZ",
-      "severity": "NONE",
-      "status": "CLEAR",
-      "wrongIf_e": "1.6T mass production delayed beyond Q3 2026 OR NVDA+MSFT+GOOGL stock prices collectively drop >25% from ATH within 1 quarter (hyperscaler CapEx pullback proxy)",
-      "wrongIf_z": "1.6T量产推迟至2026年Q3后，或英伟达/微软/谷歌股价集体较ATH下跌>25%（超大规模CapEx削减代理指标）",
-      "note_e": "✅ Clear: hyperscaler_basket_drawdown_pct = 6.4 (threshold 25.0)",
-      "note_z": "✅ 正常：hyperscaler_basket_drawdown_pct = 6.4（阈值25.0）",
-      "indicator": "hyperscaler_basket_drawdown_pct",
-      "actual": 6.4,
-      "threshold": 25.0
-    },
-    {
       "ticker": "002594.SZ",
       "severity": "LOW",
       "status": "MANUAL",
@@ -200,6 +188,18 @@
       "indicator": "revenue_growth",
       "actual": null,
       "threshold": null
+    },
+    {
+      "ticker": "300308.SZ",
+      "severity": "NONE",
+      "status": "CLEAR",
+      "wrongIf_e": "1.6T mass production delayed beyond Q3 2026 OR NVDA+MSFT+GOOGL stock prices collectively drop >25% from ATH within 1 quarter (hyperscaler CapEx pullback proxy)",
+      "wrongIf_z": "1.6T量产推迟至2026年Q3后，或英伟达/微软/谷歌股价集体较ATH下跌>25%（超大规模CapEx削减代理指标）",
+      "note_e": "✅ Clear: hyperscaler_basket_drawdown_pct = 6.4 (threshold 25.0)",
+      "note_z": "✅ 正常：hyperscaler_basket_drawdown_pct = 6.4（阈值25.0）",
+      "indicator": "hyperscaler_basket_drawdown_pct",
+      "actual": 6.4,
+      "threshold": 25.0
     },
     {
       "ticker": "603233.SH",
