@@ -48,6 +48,7 @@ Reed must fill this section before asking for U4 review.
 |---|---|---|
 | `trade_date` | Same-day A-share trade date, `YYYYMMDD` | `TODO` |
 | `run_id` | Immutable funnel run id | `TODO` |
+| `method_version` | Registered research workflow version, or `UNAVAILABLE` with reason | `TODO` |
 | `bundle_dir` | Read-only immutable bundle path | `TODO` |
 | `bundle_hash` | Hash from bundle manifest | `TODO` |
 | `candidate_review_sha256` | Hash of U2 review artifact | `TODO` |
@@ -63,6 +64,11 @@ Do not copy production runtime state into a PR unless a separate contract
 explicitly approves that evidence transfer. A PR may record hashes, counts,
 and material decision facts.
 
+Hash fields must preserve the exact format emitted by the source artifact. If
+the upstream artifact emits a bare 64-character SHA-256 hex string, keep it
+bare. If it emits a prefixed value such as `sha256:<hex>`, keep the prefix.
+Do not convert between formats while filling this pack.
+
 ## Source Publication Gate
 
 Before filling candidate rows, Reed must prove each required same-day source is
@@ -73,7 +79,7 @@ response is not evidence that every issuer is missing.
 |---|---|---|
 | `moneyflow_dc` | `PUBLISHED` or explicit transport/data blocker | Missing flow is treated as zero flow |
 | `cyq_perf` | `PUBLISHED` or `SOURCE_PUBLICATION_PENDING` with `retryable=true` | Empty same-day response is frozen as a successful zero-row batch |
-| `fina_indicator_pit` | `PUBLISHED/PARTIAL` or explicit filing-window blocker | Absent fundamentals are treated as neutral valuation |
+| `fina_indicator_pit` | `PUBLISHED/PARTIAL/STALE_INPUT` or explicit filing-window blocker | Absent fundamentals are treated as neutral valuation |
 
 If `cyq_perf` is `SOURCE_PUBLICATION_PENDING`, do not generate a U4 packet from
 that run. Wait for a later retry or record `DATA_BLOCKED`. The previously
@@ -88,12 +94,12 @@ flags cannot be canceled by price strength or flow.
 
 | Channel | Required state | Filled state | Notes |
 |---|---|---|---|
-| `E1_EVENT` | `COMPLETE/PARTIAL/DATA_BLOCKED` | `TODO` | Red flags stay visible |
-| `PRICE_VOLUME` | `COMPLETE/PARTIAL/DATA_BLOCKED` | `TODO` | No stale bars as fresh evidence |
-| `FUND_FLOW_CHIPS` | `COMPLETE/PARTIAL/DATA_BLOCKED` | `TODO` | Missing flow is not zero flow |
-| `FUNDAMENTAL_VALUATION` | `COMPLETE/PARTIAL/DATA_BLOCKED` | `TODO` | No absent valuation as cheap/expensive |
-| `INDUSTRY_VALUE_CHAIN` | `COMPLETE/PARTIAL/DATA_BLOCKED` | `TODO` | Semiconductor cohort evidence required |
-| `MACRO_CROSS_ASSET` | `COMPLETE/PARTIAL/DATA_BLOCKED` | `TODO` | Context only; no automatic trade action |
+| `E1_EVENT` | `COMPLETE/PARTIAL/STALE_INPUT/DATA_BLOCKED` | `TODO` | Red flags stay visible |
+| `PRICE_VOLUME` | `COMPLETE/PARTIAL/STALE_INPUT/DATA_BLOCKED` | `TODO` | No stale bars as fresh evidence |
+| `FUND_FLOW_CHIPS` | `COMPLETE/PARTIAL/STALE_INPUT/DATA_BLOCKED` | `TODO` | Missing flow is not zero flow |
+| `FUNDAMENTAL_VALUATION` | `COMPLETE/PARTIAL/STALE_INPUT/DATA_BLOCKED` | `TODO` | No absent valuation as cheap/expensive |
+| `INDUSTRY_VALUE_CHAIN` | `COMPLETE/PARTIAL/STALE_INPUT/DATA_BLOCKED` | `TODO` | Semiconductor cohort evidence required |
+| `MACRO_CROSS_ASSET` | `COMPLETE/PARTIAL/STALE_INPUT/DATA_BLOCKED` | `TODO` | Context only; no automatic trade action |
 
 If any hard-required channel is unavailable, the pack must say
 `DATA_BLOCKED` and name the missing source. It must not fill the gap with `0`,
@@ -109,12 +115,15 @@ recorded with this shape before U4 review.
 | `ts_code` | Security code | `TODO` |
 | `display_name` | Registry display name | `TODO` |
 | `semiconductor_segment` | Equipment/materials/design/foundry/packaging/etc. | `TODO` |
+| `cohort_id` | Same-day cohort id, or `UNAVAILABLE` with reason | `TODO` |
+| `causal_cluster_id` | De-cluster id for independent-sample counting, or `UNAVAILABLE` with reason | `TODO` |
 | `u2_row_hash` | Hash of the exact U2 row | `TODO` |
 | `u3_battery_row_hash` | Hash of the same-run U3 row, or `DATA_BLOCKED` | `TODO` |
 | `primary_channel` | Main U1 entry channel | `TODO` |
 | `positive_channels` | List, may be empty | `TODO` |
 | `red_flag_channels` | List, may be empty | `TODO` |
 | `review_status` | `U3_BATTERY_REVIEW/EXCLUDED_RED_FLAG/DATA_BLOCKED/...` | `TODO` |
+| `blocked_reasons` | Closed list from the packet, may be empty only when unblocked | `TODO` |
 | `missing_evidence` | Closed list of missing evidence codes | `TODO` |
 | `why_in` | Observable reason for entering review | `TODO` |
 | `why_out` | Observable reason for exclusion, if excluded | `TODO` |
@@ -124,6 +133,11 @@ recorded with this shape before U4 review.
 `allowed_for_u4_packet=true` is not a selection. It only means the row may be
 shown to Junyan in the packet. Junyan may still decide `SELECT`, `REJECT`,
 `DEFER`, `NO_TRADE`, or `DATA_BLOCKED`.
+
+That freedom applies only to candidates without packet-level blockers. Rows
+with `U3_BATTERY_INCOMPLETE` must remain `DATA_BLOCKED`; rows with active E1
+red flags must remain `REJECT` with the red-flag reason preserved. If one row
+violates those forced meanings, the whole decision batch must refuse to land.
 
 ## Pre-U4 Stop Conditions
 
@@ -158,6 +172,8 @@ Before sending to Junyan, Reed should provide:
 - the source publication status for `moneyflow_dc`, `cyq_perf`, and
   `fina_indicator_pit`;
 - a candidate intake table for all semiconductor rows in scope;
+- `method_version`, `cohort_id`, `causal_cluster_id`, and `blocked_reasons`
+  visibility, using `UNAVAILABLE` only with an explicit reason;
 - count totals for U2 rows, U3 rows, U4-ready rows, red-flag exclusions, and
   `DATA_BLOCKED` rows;
 - the U4 packet hash if one exists;
@@ -180,8 +196,9 @@ U4_SELECTED
   -> prospective case seal
   -> later settled bars and outcome facts
   -> paper replay
-  -> five-axis attribution
+  -> mechanical replay verification
   -> Junyan postmortem confirm/dispute
+  -> five-axis attribution
 ```
 
 `WAIT`, `NO_TRADE`, `NO_FILL`, `CORPORATE_ACTION_BREAK`, `UNRESOLVED`, and
