@@ -1,6 +1,6 @@
 {
   "ticker": "603233.SH",
-  "fetched_at": "2026-08-25T09:08:04Z",
+  "fetched_at": "2026-08-26T02:29:35Z",
   "_semantics": "issuer_guidance = 公司业绩预告(forecast) + 业绩快报(express) — 发行人自披露,NOT broker consensus. 卖方预测见 broker_recommend (report_rc, E2).",
   "disclaimer": "不是买卖指令;研究信号,human executes.",
   "_status": "EMPTY_VALID",

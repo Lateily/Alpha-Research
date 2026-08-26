@@ -1,6 +1,6 @@
 {
   "ticker": "603233.SH",
-  "fetched_at": "2026-08-25T09:07:13Z",
+  "fetched_at": "2026-08-26T02:28:49Z",
   "permission_model": "runtime_probe",
   "_status": "partial",
   "data": {
@@ -824,22 +824,9 @@
           "pct_chg": -1.872,
           "vol": 39162.22,
           "amount": 63940.594
-        },
-        {
-          "ts_code": "603233.SH",
-          "trade_date": "20260527",
-          "open": 16.89,
-          "high": 16.99,
-          "low": 15.34,
-          "close": 16.56,
-          "pre_close": 17.04,
-          "change": -0.48,
-          "pct_chg": -2.8169,
-          "vol": 55317.1,
-          "amount": 91718.608
         }
       ],
-      "row_count": 64,
+      "row_count": 63,
       "_status": "ok",
       "as_of": "20260825"
     },
@@ -2104,34 +2091,19 @@
           "free_share": 44991.6141,
           "total_mv": 1850628.1089,
           "circ_mv": 1850628.1089
-        },
-        {
-          "ts_code": "603233.SH",
-          "trade_date": "20260527",
-          "close": 16.56,
-          "turnover_rate": 0.4857,
-          "turnover_rate_f": 1.2295,
-          "volume_ratio": 1.09,
-          "pe": 15.2677,
-          "pe_ttm": 14.6606,
-          "pb": 2.4552,
-          "ps": 0.6857,
-          "ps_ttm": 0.6853,
-          "dv_ratio": 3.902,
-          "dv_ttm": 3.902,
-          "total_share": 113884.8067,
-          "float_share": 113884.8067,
-          "free_share": 44991.6141,
-          "total_mv": 1885932.399,
-          "circ_mv": 1885932.399
         }
       ],
-      "row_count": 64,
+      "row_count": 63,
       "_status": "ok",
       "as_of": "20260825"
     },
     "adj_factor": {
       "rows": [
+        {
+          "ts_code": "603233.SH",
+          "trade_date": "20260826",
+          "adj_factor": 3.2361
+        },
         {
           "ts_code": "603233.SH",
           "trade_date": "20260825",
@@ -2446,16 +2418,11 @@
           "ts_code": "603233.SH",
           "trade_date": "20260528",
           "adj_factor": 3.1365
-        },
-        {
-          "ts_code": "603233.SH",
-          "trade_date": "20260527",
-          "adj_factor": 3.1365
         }
       ],
       "row_count": 64,
       "_status": "ok",
-      "as_of": "20260825"
+      "as_of": "20260826"
     },
     "income": {
       "rows": [
@@ -2521,8 +2488,8 @@
           "t_compr_income": 1001811464.03,
           "compr_inc_attr_p": 926701008.2,
           "compr_inc_attr_m_s": 75110455.83,
-          "ebit": 1393694263.04,
-          "ebitda": 2271556666.6,
+          "ebit": 1396314092.55,
+          "ebitda": 2274176496.11,
           "insurance_exp": null,
           "undist_profit": null,
           "distable_profit": null,
