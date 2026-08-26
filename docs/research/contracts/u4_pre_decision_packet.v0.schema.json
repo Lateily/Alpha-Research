@@ -194,6 +194,18 @@
     {
       "if": {
         "properties": {
+          "source_publication": {
+            "properties": {"daily_source_status": {"enum": ["STALE", "DATA_BLOCKED"]}},
+            "required": ["daily_source_status"]
+          }
+        },
+        "required": ["source_publication"]
+      },
+      "then": {"properties": {"status": {"enum": ["BLOCKED_BEFORE_U4", "DATA_BLOCKED"]}}}
+    },
+    {
+      "if": {
+        "properties": {
           "packet_summary": {
             "properties": {"allowed_for_review_count": {"const": 0}},
             "required": ["allowed_for_review_count"]
@@ -276,7 +288,25 @@
             {"type": "string", "minLength": 1}
           ]
         }
-      }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {"red_flag_channels": {"minItems": 1}},
+            "required": ["red_flag_channels"]
+          },
+          "then": {"properties": {"allowed_for_u4_packet": {"const": false}}}
+        },
+        {
+          "if": {
+            "properties": {
+              "blocked_reasons": {"contains": {"const": "E1_RED_FLAG_ACTIVE"}}
+            },
+            "required": ["blocked_reasons"]
+          },
+          "then": {"properties": {"allowed_for_u4_packet": {"const": false}}}
+        }
+      ]
     }
   }
 }

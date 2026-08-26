@@ -102,6 +102,9 @@ def _errors(value: Any, schema: Mapping[str, Any], path: str = "$") -> list[str]
         elif isinstance(schema.get("items"), dict):
             for index, item in enumerate(value):
                 errors.extend(_errors(item, schema["items"], f"{path}[{index}]"))
+        if "contains" in schema:
+            if not any(not _errors(item, schema["contains"], f"{path}[*]") for item in value):
+                errors.append(f"{path}: contains matched no items")
     if isinstance(value, str):
         if len(value) < schema.get("minLength", 0):
             errors.append(f"{path}: too short")
@@ -243,6 +246,19 @@ class U4PreDecisionPacketContractTests(unittest.TestCase):
         packet["status"] = "SOURCE_PUBLICATION_PENDING"
         self.assertValid(packet)
 
+    def test_stale_or_data_blocked_daily_source_cannot_be_reported_ready(self) -> None:
+        for daily_status, valid_status in (
+            ("STALE", "BLOCKED_BEFORE_U4"),
+            ("DATA_BLOCKED", "DATA_BLOCKED"),
+        ):
+            packet = _packet()
+            packet["source_publication"]["daily_source_status"] = daily_status
+            packet["source_publication"]["pending_sources"] = ["cyq_perf"]
+            with self.subTest(daily_status=daily_status):
+                self.assertInvalid(packet, "outside enum")
+                packet["status"] = valid_status
+                self.assertValid(packet)
+
     def test_zero_reviewable_pool_must_stop_before_u4(self) -> None:
         packet = _packet(candidate_rows=[])
         packet["packet_summary"]["candidate_count"] = 0
@@ -282,6 +298,30 @@ class U4PreDecisionPacketContractTests(unittest.TestCase):
         self.assertValid(packet)
         packet["candidate_rows"][0]["blocked_reasons"] = ["BUY_SIGNAL"]
         self.assertInvalid(packet, "outside enum")
+
+    def test_red_flag_candidate_cannot_be_marked_allowed_for_u4_packet(self) -> None:
+        packet = _packet(
+            candidate_rows=[
+                _candidate(
+                    red_flag_channels=["E1_EVENT"],
+                    blocked_reasons=["E1_RED_FLAG_ACTIVE"],
+                    quality_status="REVISE_REQUIRED",
+                    allowed_for_u4_packet=True,
+                )
+            ]
+        )
+        self.assertInvalid(packet, "expected const")
+        packet = _packet(
+            candidate_rows=[
+                _candidate(
+                    red_flag_channels=[],
+                    blocked_reasons=["E1_RED_FLAG_ACTIVE"],
+                    quality_status="REVISE_REQUIRED",
+                    allowed_for_u4_packet=True,
+                )
+            ]
+        )
+        self.assertInvalid(packet, "expected const")
 
     def test_selection_boundary_and_no_trade_authority_are_constants(self) -> None:
         packet = _packet()
