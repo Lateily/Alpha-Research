@@ -1,13 +1,13 @@
 {
   "schema": "ar.research_closed_loop_manifest.v1",
-  "schema_version": "1.2",
-  "method_version": "RESEARCH_CLOSED_LOOP_V1_2",
+  "schema_version": "1.3",
+  "method_version": "RESEARCH_CLOSED_LOOP_V1_3",
   "status": "FROZEN_OFFLINE_WORKFLOW_DEBUG",
-  "frozen_at": "2026-08-25T23:58:51+08:00",
+  "frozen_at": "2026-08-26T01:17:17+08:00",
   "source_base": {
-    "assembly_code_commit": "7c216e5f041e10e5cf423edc11a55bd0fe0f92e6",
-    "base_main": "8ed9cfce536d70a541333e175dfb9b573610605a",
-    "review_pr": 316,
+    "assembly_code_commit": "a893d0fc28ffcf3f50ab6071d8f5ccf86b74aa0a",
+    "base_main": "7774e33dbfa6c5554472d3c137ca7b14b4423f4c",
+    "review_pr": 317,
     "data_dependency_pr": 297,
     "data_dependency_status": "MERGED_MAIN"
   },
@@ -102,7 +102,7 @@
     "deployment_requires_separate_approval": true
   },
   "artifact_bindings": [
-    {"path": "docs/research/RESEARCH_CLOSED_LOOP_V1.md", "sha256": "sha256:dc4d0f3bda85f648ddf35cb8cf32bb3a8349db40e019edbc2b2d9cbe412b1ca4"},
+    {"path": "docs/research/RESEARCH_CLOSED_LOOP_V1.md", "sha256": "sha256:98d19890c231fe71361dda856ffc9ea91a251d919f8bcb990a8ecd23b7cd00d6"},
     {"path": "docs/research/ALL_MARKET_RESEARCH_FUNNEL.md", "sha256": "sha256:2455af97474039e9023503521e89472a5a2e9df35c9e3a281df06d2fdff05196"},
     {"path": "docs/research/U4_DECISION_LEDGER_SPEC_V1.md", "sha256": "sha256:1b15e7e5ad89d768d9f95d53a48c95c50ebe3de21e197148ff01440030cfb644"},
     {"path": "docs/research/contracts/u4_decision_ledger.v1.schema.json", "sha256": "sha256:5377a87b043c423d554c774cc440d941da6a9201e2d0f7047865f6cbeff45f58"},
@@ -114,8 +114,8 @@
     {"path": "experiments/research_funnel/funnel_pipeline.py", "sha256": "sha256:3fd601f999e14def5240b59ad7a3ad619f703719ee0c1f2a24857d1f55998ddb"},
     {"path": "experiments/research_funnel/feature_store.py", "sha256": "sha256:1e5430cde084563c59db4c688a2738e2a31f536a3a112b0728debf5282033980"},
     {"path": "experiments/research_funnel/funnel_dag.py", "sha256": "sha256:70b17fefc3ce7a1ac6982192294a7676d793783d8b2cd62e23ce71bd2479bd3f"},
-    {"path": "experiments/research_funnel/semiconductor_inputs.py", "sha256": "sha256:9f0eb2364b0c9174b37715b2953e7e2411f7556042f97d22d30188ad7ba993a4"},
-    {"path": "experiments/research_funnel/semiconductor_source_repair.py", "sha256": "sha256:72485c18a3c65624490027597d1801b9437010b558bc6da6ef7e5deb26b8597d"},
+    {"path": "experiments/research_funnel/semiconductor_inputs.py", "sha256": "sha256:6701258484cc92bc3280a9086a33bd8ee216161bc0bde9bfed67b7bd94a9aaec"},
+    {"path": "experiments/research_funnel/semiconductor_source_repair.py", "sha256": "sha256:d63f7ae910c198a09e07cbb7ede1510da2204b05f017079e4fe627aa7b6d55c6"},
     {"path": "experiments/research_funnel/industry_taxonomy.v1.json", "sha256": "sha256:0cd06c80c2d0b612b1c8b6168f97e7930db049b610ff07f2d0076e1322175d4e"},
     {"path": "experiments/research_funnel/u4_decision_ledger.py", "sha256": "sha256:06ab2c0718a595809d254f17b81581aa812bc7a35ab09b118c6ba69ec06fff82"},
     {"path": "experiments/research_funnel/research_method.py", "sha256": "sha256:54ae465de69378497a1d52f17b5cccd170800cfe3ac940943f3523aaf26b7fa5"},

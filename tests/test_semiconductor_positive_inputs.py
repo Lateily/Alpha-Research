@@ -410,6 +410,35 @@ class SemiconductorStoreTests(unittest.TestCase):
                 conn.execute("DELETE FROM semiconductor_source_batches")
             conn.close()
 
+    def test_original_source_tables_reject_insert_or_replace(self) -> None:
+        registry = registry_fixture()
+        with tempfile.TemporaryDirectory() as tmp:
+            db = Path(tmp) / "features.sqlite3"
+            ingest_all(db, registry)
+            conn = sqlite3.connect(db)
+            try:
+                for table in si.ORIGINAL_APPEND_ONLY_KEYS:
+                    with self.subTest(table=table):
+                        columns = [
+                            row[1] for row in conn.execute(f"PRAGMA table_info({table})")
+                        ]
+                        row = conn.execute(
+                            f"SELECT {','.join(columns)} FROM {table} LIMIT 1"
+                        ).fetchone()
+                        self.assertIsNotNone(row)
+                        with self.assertRaisesRegex(
+                            sqlite3.IntegrityError, "append-only duplicate"
+                        ):
+                            conn.execute(
+                                f"INSERT OR REPLACE INTO {table} "
+                                f"({','.join(columns)}) VALUES "
+                                f"({','.join('?' for _ in columns)})",
+                                row,
+                            )
+                        conn.rollback()
+            finally:
+                conn.close()
+
     def test_future_disclosures_and_conflicting_corrections_become_explicit_blocked(self) -> None:
         registry = registry_fixture()
         normalized_future, future_conflicts = si._normalize_fundamentals(
