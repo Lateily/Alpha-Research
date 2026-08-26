@@ -172,6 +172,15 @@ semiconductor_input_result = unittest.TextTestRunner(verbosity=0).run(
 assert semiconductor_input_result.wasSuccessful(), (
     "semiconductor positive-input suite failed under socket guard"
 )
+import test_semiconductor_source_repair as semiconductor_repair_tests  # noqa: E402
+semiconductor_repair_result = unittest.TextTestRunner(verbosity=0).run(
+    unittest.defaultTestLoader.loadTestsFromTestCase(
+        semiconductor_repair_tests.SemiconductorSourceRepairTests
+    )
+)
+assert semiconductor_repair_result.wasSuccessful(), (
+    "semiconductor source-repair suite failed under socket guard"
+)
 import test_research_cycle as research_cycle_tests  # noqa: E402
 import test_research_method as research_method_tests  # noqa: E402
 import test_paper_execution_realism as execution_realism_tests  # noqa: E402

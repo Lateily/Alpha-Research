@@ -140,6 +140,7 @@ FUNNEL_GOVERNANCE_PATHS = (
     "experiments/execution_tracker/model_paper_fund.py",
     "experiments/research_funnel/u4_decision_ledger.py",
     "experiments/research_funnel/semiconductor_inputs.py",
+    "experiments/research_funnel/semiconductor_source_repair.py",
     "experiments/research_funnel/feature_store.py",
     "experiments/execution_tracker/event_ledger.py",
     "experiments/execution_tracker/paper_execution_audit.py",
@@ -1321,6 +1322,30 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="A same-date source revision requires migration and cannot overwrite frozen facts.",
     ),
     MutationCase(
+        mutation_id="SEMICONDUCTOR_ORIGINAL_TABLE_NO_REPLACE",
+        component="Research funnel original semiconductor append-only tables",
+        source_path="experiments/research_funnel/semiconductor_inputs.py",
+        test_script="tests/test_semiconductor_positive_inputs.py",
+        before=(
+            "        # governance-mutation: SEMICONDUCTOR_ORIGINAL_TABLE_NO_REPLACE\n"
+            "        conn.execute(\n"
+            "            f\"\"\"CREATE TRIGGER IF NOT EXISTS {table}_no_replace\n"
+            "            BEFORE INSERT ON {table}\n"
+            "            WHEN EXISTS (SELECT 1 FROM {table} WHERE {duplicate_match})"
+        ),
+        after=(
+            "        # governance-mutation: SEMICONDUCTOR_ORIGINAL_TABLE_NO_REPLACE\n"
+            "        conn.execute(\n"
+            "            f\"\"\"CREATE TRIGGER IF NOT EXISTS {table}_no_replace\n"
+            "            BEFORE INSERT ON {table}\n"
+            "            WHEN 0 AND EXISTS (SELECT 1 FROM {table} WHERE {duplicate_match})"
+        ),
+        expected_failure_marker="test_original_source_tables_reject_insert_or_replace",
+        rationale=(
+            "SQLite INSERT OR REPLACE cannot rewrite any immutable original batch or evidence row."
+        ),
+    ),
+    MutationCase(
         mutation_id="SEMICONDUCTOR_DAILY_SOURCE_REGISTRY",
         component="Research funnel semiconductor daily-source availability",
         source_path="experiments/research_funnel/semiconductor_inputs.py",
@@ -1442,6 +1467,549 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="Source hashes must be recomputed from rows and explicit gaps, not trusted as labels.",
     ),
     MutationCase(
+        mutation_id="SEMICONDUCTOR_REPAIR_HAS_BATCH_RESOLVER",
+        component="Research funnel semiconductor repair read path",
+        source_path="experiments/research_funnel/semiconductor_inputs.py",
+        test_script="tests/test_semiconductor_source_repair.py",
+        before=(
+            "        # governance-mutation: SEMICONDUCTOR_REPAIR_HAS_BATCH_RESOLVER\n"
+            "        return _active_source(conn, source_name, as_of) is not None"
+        ),
+        after=(
+            "        # governance-mutation: SEMICONDUCTOR_REPAIR_HAS_BATCH_RESOLVER\n"
+            "        return conn.execute(\n"
+            "            \"SELECT 1 FROM semiconductor_source_batches WHERE source_name=? AND as_of=?\",\n"
+            "            (source_name, as_of),\n"
+            "        ).fetchone() is not None"
+        ),
+        expected_failure_marker=(
+            "test_has_batch_verifies_the_repair_chain_before_skipping_collection"
+        ),
+        rationale="Collection idempotency must validate the active repair chain before skipping a source.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_REPAIR_SHARED_RESOLVER",
+        component="Research funnel semiconductor repair read path",
+        source_path="experiments/research_funnel/semiconductor_inputs.py",
+        test_script="tests/test_semiconductor_source_repair.py",
+        before=(
+            "    # governance-mutation: SEMICONDUCTOR_REPAIR_SHARED_RESOLVER\n"
+            "    return resolve_active_source(conn, source_name, as_of)"
+        ),
+        after=(
+            "    # governance-mutation: SEMICONDUCTOR_REPAIR_SHARED_RESOLVER\n"
+            "    return None"
+        ),
+        expected_failure_marker=(
+            "test_snapshot_consumes_verified_active_repair_and_originals_never_change"
+        ),
+        rationale="All affected readers must share one verified active-source resolver.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_REPAIR_SNAPSHOT_RESOLVER",
+        component="Research funnel semiconductor repair snapshot projection",
+        source_path="experiments/research_funnel/semiconductor_inputs.py",
+        test_script="tests/test_semiconductor_source_repair.py",
+        before=(
+            "                    # governance-mutation: SEMICONDUCTOR_REPAIR_SNAPSHOT_RESOLVER\n"
+            "                    active = _active_source(conn, source_name, date8)"
+        ),
+        after=(
+            "                    # governance-mutation: SEMICONDUCTOR_REPAIR_SNAPSHOT_RESOLVER\n"
+            "                    active = None"
+        ),
+        expected_failure_marker=(
+            "test_snapshot_consumes_verified_active_repair_and_originals_never_change"
+        ),
+        rationale="Snapshot and feature health must consume the active repair rather than the frozen bad body.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_REPAIR_READ_SNAPSHOT",
+        component="Research funnel semiconductor repair atomic read projection",
+        source_path="experiments/research_funnel/semiconductor_inputs.py",
+        test_script="tests/test_semiconductor_source_repair.py",
+        before=(
+            "        # governance-mutation: SEMICONDUCTOR_REPAIR_READ_SNAPSHOT\n"
+            "        conn.execute(\"BEGIN\")"
+        ),
+        after=(
+            "        # governance-mutation: SEMICONDUCTOR_REPAIR_READ_SNAPSHOT\n"
+            "        pass"
+        ),
+        expected_failure_marker=(
+            "test_snapshot_cannot_mix_sources_across_one_atomic_repair_commit"
+        ),
+        rationale=(
+            "One logical snapshot cannot mix source bodies from opposite sides of an atomic repair commit."
+        ),
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_REPAIR_HAS_BATCH_SNAPSHOT",
+        component="Research funnel semiconductor collection idempotency snapshot",
+        source_path="experiments/research_funnel/semiconductor_inputs.py",
+        test_script="tests/test_semiconductor_source_repair.py",
+        before=(
+            "    # governance-mutation: SEMICONDUCTOR_REPAIR_HAS_BATCH_SNAPSHOT\n"
+            "    conn = _connect(db_path, readonly=True)"
+        ),
+        after=(
+            "    # governance-mutation: SEMICONDUCTOR_REPAIR_HAS_BATCH_SNAPSHOT\n"
+            "    conn = _connect(db_path)"
+        ),
+        expected_failure_marker=(
+            "test_has_batch_uses_one_readonly_snapshot_during_a_concurrent_commit"
+        ),
+        rationale=(
+            "The collection skip decision must be pinned before a concurrent writer can change the active source."
+        ),
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_REPAIR_LATE_OBSERVED_BLOCKED",
+        component="Research funnel semiconductor repair point-in-time projection",
+        source_path="experiments/research_funnel/semiconductor_inputs.py",
+        test_script="tests/test_semiconductor_source_repair.py",
+        before=(
+            "                        # governance-mutation: SEMICONDUCTOR_REPAIR_LATE_OBSERVED_BLOCKED\n"
+            "                        if ("
+        ),
+        after=(
+            "                        # governance-mutation: SEMICONDUCTOR_REPAIR_LATE_OBSERVED_BLOCKED\n"
+            "                        if False and ("
+        ),
+        expected_failure_marker=(
+            "test_self_reported_publication_time_cannot_rewrite_historical_evidence"
+        ),
+        rationale=(
+            "A late-observed replacement cannot be projected as evidence that existed on the repaired date."
+        ),
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_REPAIR_NO_ZERO_OR_UNDER_COVERAGE",
+        component="Research funnel semiconductor repair replacement completeness",
+        source_path="experiments/research_funnel/semiconductor_source_repair.py",
+        test_script="tests/test_semiconductor_source_repair.py",
+        before=(
+            "        # governance-mutation: SEMICONDUCTOR_REPAIR_NO_ZERO_OR_UNDER_COVERAGE\n"
+            "        if not normalized_rows or len(normalized_rows) < minimum:"
+        ),
+        after=(
+            "        # governance-mutation: SEMICONDUCTOR_REPAIR_NO_ZERO_OR_UNDER_COVERAGE\n"
+            "        if False:"
+        ),
+        expected_failure_marker=(
+            "test_persisted_undercovered_repair_body_is_rejected_independently"
+        ),
+        rationale="A zero or under-covered replacement cannot become an active repair.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_REPAIR_RUN_NO_REPLACE",
+        component="Research funnel semiconductor append-only run receipts",
+        source_path="experiments/research_funnel/semiconductor_source_repair.py",
+        test_script="tests/test_semiconductor_source_repair.py",
+        before=(
+            "        # governance-mutation: SEMICONDUCTOR_REPAIR_RUN_NO_REPLACE\n"
+            "        f\"\"\"CREATE TRIGGER IF NOT EXISTS {RUN_TABLE}_no_replace\n"
+            "        BEFORE INSERT ON {RUN_TABLE}\n"
+            "        WHEN EXISTS (SELECT 1 FROM {RUN_TABLE} WHERE plan_hash=NEW.plan_hash)"
+        ),
+        after=(
+            "        # governance-mutation: SEMICONDUCTOR_REPAIR_RUN_NO_REPLACE\n"
+            "        f\"\"\"CREATE TRIGGER IF NOT EXISTS {RUN_TABLE}_no_replace\n"
+            "        BEFORE INSERT ON {RUN_TABLE}\n"
+            "        WHEN 0 AND EXISTS (SELECT 1 FROM {RUN_TABLE} WHERE plan_hash=NEW.plan_hash)"
+        ),
+        expected_failure_marker="test_repair_tables_are_append_only",
+        rationale="INSERT OR REPLACE cannot bypass the append-only run receipt boundary.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_REPAIR_ROW_NO_REPLACE",
+        component="Research funnel semiconductor append-only repair rows",
+        source_path="experiments/research_funnel/semiconductor_source_repair.py",
+        test_script="tests/test_semiconductor_source_repair.py",
+        before=(
+            "        # governance-mutation: SEMICONDUCTOR_REPAIR_ROW_NO_REPLACE\n"
+            "        f\"\"\"CREATE TRIGGER IF NOT EXISTS {REPAIR_TABLE}_no_replace\n"
+            "        BEFORE INSERT ON {REPAIR_TABLE}\n"
+            "        WHEN EXISTS ("
+        ),
+        after=(
+            "        # governance-mutation: SEMICONDUCTOR_REPAIR_ROW_NO_REPLACE\n"
+            "        f\"\"\"CREATE TRIGGER IF NOT EXISTS {REPAIR_TABLE}_no_replace\n"
+            "        BEFORE INSERT ON {REPAIR_TABLE}\n"
+            "        WHEN 0 AND EXISTS ("
+        ),
+        expected_failure_marker="test_repair_tables_are_append_only",
+        rationale="INSERT OR REPLACE cannot bypass the append-only repair-row boundary.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_REPAIR_OLD_ARTIFACT_BINDING",
+        component="Research funnel semiconductor repair predecessor binding",
+        source_path="experiments/research_funnel/semiconductor_source_repair.py",
+        test_script="tests/test_semiconductor_source_repair.py",
+        before=(
+            "        # governance-mutation: SEMICONDUCTOR_REPAIR_OLD_ARTIFACT_BINDING\n"
+            "        if record[\"old_batch_ref\"] != current_ref:"
+        ),
+        after=(
+            "        # governance-mutation: SEMICONDUCTOR_REPAIR_OLD_ARTIFACT_BINDING\n"
+            "        if False:"
+        ),
+        expected_failure_marker="test_old_artifact_reference_is_recomputed_not_trusted",
+        rationale="A repair must bind the exact active predecessor bytes, not a self-reported label.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_REPAIR_CATALOG_CALL",
+        component="Research funnel semiconductor catalog-wide reader verification",
+        source_path="experiments/research_funnel/semiconductor_source_repair.py",
+        test_script="tests/test_semiconductor_source_repair.py",
+        before=(
+            "        # governance-mutation: SEMICONDUCTOR_REPAIR_CATALOG_CALL\n"
+            "        _validate_repair_catalog(conn)"
+        ),
+        after=(
+            "        # governance-mutation: SEMICONDUCTOR_REPAIR_CATALOG_CALL\n"
+            "        pass"
+        ),
+        expected_failure_marker=(
+            "test_reader_rejects_any_incomplete_or_orphaned_repair_catalog"
+        ),
+        rationale="A reader cannot accept one key while another committed repair receipt is incomplete.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_REPAIR_CATALOG_RECEIPTS",
+        component="Research funnel semiconductor complete repair receipts",
+        source_path="experiments/research_funnel/semiconductor_source_repair.py",
+        test_script="tests/test_semiconductor_source_repair.py",
+        before=(
+            "    # governance-mutation: SEMICONDUCTOR_REPAIR_CATALOG_RECEIPTS\n"
+            "    for run in runs:"
+        ),
+        after=(
+            "    # governance-mutation: SEMICONDUCTOR_REPAIR_CATALOG_RECEIPTS\n"
+            "    for run in []:"
+        ),
+        expected_failure_marker=(
+            "test_reader_rejects_any_incomplete_or_orphaned_repair_catalog"
+        ),
+        rationale="Every committed run must bind every repair row before any projection is readable.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_REPAIR_CLASS_WIDE_SCAN",
+        component="Research funnel semiconductor repair class-wide discovery",
+        source_path="experiments/research_funnel/semiconductor_source_repair.py",
+        test_script="tests/test_semiconductor_source_repair.py",
+        before=(
+            "    # governance-mutation: SEMICONDUCTOR_REPAIR_CLASS_WIDE_SCAN\n"
+            "    for source_name in registered:"
+        ),
+        after=(
+            "    # governance-mutation: SEMICONDUCTOR_REPAIR_CLASS_WIDE_SCAN\n"
+            "    for source_name in registered[:1]:"
+        ),
+        expected_failure_marker=(
+            "test_class_scan_covers_every_registered_daily_source_and_date"
+        ),
+        rationale="Discovery may not narrow the registered source/date class to one known incident.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_REPAIR_SCAN_ORPHAN_RAW_KEYS",
+        component="Research funnel semiconductor repair physical date discovery",
+        source_path="experiments/research_funnel/semiconductor_source_repair.py",
+        test_script="tests/test_semiconductor_source_repair.py",
+        before=(
+            "    # governance-mutation: SEMICONDUCTOR_REPAIR_SCAN_ORPHAN_RAW_KEYS\n"
+            "    if raw_keys - original_keys:"
+        ),
+        after=(
+            "    # governance-mutation: SEMICONDUCTOR_REPAIR_SCAN_ORPHAN_RAW_KEYS\n"
+            "    if False:"
+        ),
+        expected_failure_marker=(
+            "test_class_scan_refuses_orphan_rows_outside_batch_calendar"
+        ),
+        rationale=(
+            "A raw evidence date omitted from the batch calendar is corruption, not an empty clean scan."
+        ),
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_REPAIR_CORE_SCHEMA_REQUIRED",
+        component="Research funnel semiconductor repair scan target identity",
+        source_path="experiments/research_funnel/semiconductor_source_repair.py",
+        test_script="tests/test_semiconductor_source_repair.py",
+        before=(
+            "    # governance-mutation: SEMICONDUCTOR_REPAIR_CORE_SCHEMA_REQUIRED\n"
+            "    if _core_schema_state(conn) == \"ABSENT\":"
+        ),
+        after=(
+            "    # governance-mutation: SEMICONDUCTOR_REPAIR_CORE_SCHEMA_REQUIRED\n"
+            "    if False:"
+        ),
+        expected_failure_marker=(
+            "test_class_scan_refuses_an_existing_non_feature_store_database"
+        ),
+        rationale=(
+            "Scanning the wrong SQLite file must fail closed instead of producing a valid-looking empty repair scope."
+        ),
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_REPAIR_NO_SELF_REPORTED_PIT",
+        component="Research funnel semiconductor repair PIT boundary",
+        source_path="experiments/research_funnel/semiconductor_source_repair.py",
+        test_script="tests/test_semiconductor_source_repair.py",
+        before=(
+            "    # governance-mutation: SEMICONDUCTOR_REPAIR_NO_SELF_REPORTED_PIT\n"
+            "    return \"LATE_OBSERVED\""
+        ),
+        after=(
+            "    # governance-mutation: SEMICONDUCTOR_REPAIR_NO_SELF_REPORTED_PIT\n"
+            "    return \"PIT_VERIFIED\""
+        ),
+        expected_failure_marker=(
+            "test_self_reported_publication_time_cannot_rewrite_historical_evidence"
+        ),
+        rationale=(
+            "A staged response and self-reported publication time cannot become authenticated historical PIT evidence."
+        ),
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_REPAIR_CAPTURE_HASH",
+        component="Research funnel semiconductor raw capture receipt",
+        source_path="experiments/research_funnel/semiconductor_source_repair.py",
+        test_script="tests/test_semiconductor_source_repair.py",
+        before=(
+            "    # governance-mutation: SEMICONDUCTOR_REPAIR_CAPTURE_HASH\n"
+            "    if _require_hash(claimed, \"capture_hash\") != _hash(unhashed):"
+        ),
+        after=(
+            "    # governance-mutation: SEMICONDUCTOR_REPAIR_CAPTURE_HASH\n"
+            "    if False:"
+        ),
+        expected_failure_marker=(
+            "test_capture_receipt_and_required_evidence_values_are_recomputed"
+        ),
+        rationale="A relabeled staged response cannot pass as the provider capture used by the repair.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_REPAIR_STRICT_JSON_CONSTANTS",
+        component="Research funnel semiconductor repair JSON boundary",
+        source_path="experiments/research_funnel/semiconductor_source_repair.py",
+        test_script="tests/test_semiconductor_source_repair.py",
+        before=(
+            "            # governance-mutation: SEMICONDUCTOR_REPAIR_STRICT_JSON_CONSTANTS\n"
+            "            parse_constant=reject_constant,"
+        ),
+        after=(
+            "            # governance-mutation: SEMICONDUCTOR_REPAIR_STRICT_JSON_CONSTANTS\n"
+            "            parse_constant=None,"
+        ),
+        expected_failure_marker=(
+            "test_json_loader_rejects_nonstandard_numeric_constants"
+        ),
+        rationale="NaN and infinities cannot enter a strict hash-bound repair document.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_REPAIR_PLAN_CAPTURE_PROJECTION",
+        component="Research funnel repair plan capture-to-projection binding",
+        source_path="experiments/research_funnel/semiconductor_source_repair.py",
+        test_script="tests/test_semiconductor_source_repair.py",
+        before=(
+            "        # governance-mutation: SEMICONDUCTOR_REPAIR_PLAN_CAPTURE_PROJECTION\n"
+            "        _validate_capture_projection(record)"
+        ),
+        after=(
+            "        # governance-mutation: SEMICONDUCTOR_REPAIR_PLAN_CAPTURE_PROJECTION\n"
+            "        _replacement_batch(record)"
+        ),
+        expected_failure_marker=(
+            "test_plan_rejects_rehashed_capture_that_disagrees_with_projection"
+        ),
+        rationale=(
+            "A fully rehashed plan must still prove that replacement bytes derive from the attached raw capture."
+        ),
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_REPAIR_REQUIRED_EVIDENCE_VALUES",
+        component="Research funnel semiconductor repaired evidence quality",
+        source_path="experiments/research_funnel/semiconductor_source_repair.py",
+        test_script="tests/test_semiconductor_source_repair.py",
+        before=(
+            "    # governance-mutation: SEMICONDUCTOR_REPAIR_REQUIRED_EVIDENCE_VALUES\n"
+            "    if source_name == \"cyq_perf\":"
+        ),
+        after=(
+            "    # governance-mutation: SEMICONDUCTOR_REPAIR_REQUIRED_EVIDENCE_VALUES\n"
+            "    if False:"
+        ),
+        expected_failure_marker=(
+            "test_capture_receipt_and_required_evidence_values_are_recomputed"
+        ),
+        rationale="A full row count cannot launder null or internally inconsistent chip evidence.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_REPAIR_PLAN_HASH",
+        component="Research funnel semiconductor repair frozen plan",
+        source_path="experiments/research_funnel/semiconductor_source_repair.py",
+        test_script="tests/test_semiconductor_source_repair.py",
+        before=(
+            "    # governance-mutation: SEMICONDUCTOR_REPAIR_PLAN_HASH\n"
+            "    if claimed != _hash(unhashed):"
+        ),
+        after=(
+            "    # governance-mutation: SEMICONDUCTOR_REPAIR_PLAN_HASH\n"
+            "    if False:"
+        ),
+        expected_failure_marker="test_plan_hash_recomputes_after_a_caller_relabels_it",
+        rationale="A caller cannot relabel a changed repair plan with a new self-reported hash.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_REPAIR_PLAN_RECORD_SEMANTICS",
+        component="Research funnel semiconductor repair plan semantics",
+        source_path="experiments/research_funnel/semiconductor_source_repair.py",
+        test_script="tests/test_semiconductor_source_repair.py",
+        before=(
+            "        # governance-mutation: SEMICONDUCTOR_REPAIR_PLAN_RECORD_SEMANTICS\n"
+            "        if not str(record[\"repair_reason\"]).strip():"
+        ),
+        after=(
+            "        # governance-mutation: SEMICONDUCTOR_REPAIR_PLAN_RECORD_SEMANTICS\n"
+            "        if False:"
+        ),
+        expected_failure_marker=(
+            "test_rehashed_plan_cannot_commit_an_empty_repair_reason"
+        ),
+        rationale="A correctly rehashed plan still cannot erase the reason for an append-only repair.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_REPAIR_LITERAL_APPROVAL",
+        component="Research funnel semiconductor repair human approval",
+        source_path="experiments/research_funnel/semiconductor_source_repair.py",
+        test_script="tests/test_semiconductor_source_repair.py",
+        before=(
+            "    # governance-mutation: SEMICONDUCTOR_REPAIR_LITERAL_APPROVAL\n"
+            "    if verbatim != approval_verbatim_for(plan):"
+        ),
+        after=(
+            "    # governance-mutation: SEMICONDUCTOR_REPAIR_LITERAL_APPROVAL\n"
+            "    if False:"
+        ),
+        expected_failure_marker="test_literal_approval_must_bind_both_full_hashes",
+        rationale="The verbatim human approval must contain the complete frozen plan hash.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_REPAIR_SCAN_TOCTOU",
+        component="Research funnel semiconductor repair frozen scan",
+        source_path="experiments/research_funnel/semiconductor_source_repair.py",
+        test_script="tests/test_semiconductor_source_repair.py",
+        before=(
+            "            # governance-mutation: SEMICONDUCTOR_REPAIR_SCAN_TOCTOU\n"
+            "            if current_scan[\"scan_hash\"] != plan[\"scan_hash\"]:"
+        ),
+        after=(
+            "            # governance-mutation: SEMICONDUCTOR_REPAIR_SCAN_TOCTOU\n"
+            "            if False:"
+        ),
+        expected_failure_marker=(
+            "test_changed_class_scan_refuses_before_creating_repair_tables"
+        ),
+        rationale="Any class-wide scan drift after approval must stop before the first repair write.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_REPAIR_RUNTIME_BINDING",
+        component="Research funnel semiconductor production runtime binding",
+        source_path="experiments/research_funnel/semiconductor_source_repair.py",
+        test_script="tests/test_semiconductor_source_repair.py",
+        before=(
+            "    # governance-mutation: SEMICONDUCTOR_REPAIR_RUNTIME_BINDING\n"
+            "    if path != expected_db:"
+        ),
+        after=(
+            "    # governance-mutation: SEMICONDUCTOR_REPAIR_RUNTIME_BINDING\n"
+            "    if False:"
+        ),
+        expected_failure_marker=(
+            "test_production_apply_binds_store_and_lock_to_one_runtime_root"
+        ),
+        rationale="The writable store and nightly lock must come from one explicit runtime root.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_REPAIR_PRECOMMIT_PROJECTION",
+        component="Research funnel semiconductor atomic repair projection",
+        source_path="experiments/research_funnel/semiconductor_source_repair.py",
+        test_script="tests/test_semiconductor_source_repair.py",
+        before=(
+            "            # governance-mutation: SEMICONDUCTOR_REPAIR_PRECOMMIT_PROJECTION\n"
+            "            _validate_pending_projection(conn, plan)"
+        ),
+        after=(
+            "            # governance-mutation: SEMICONDUCTOR_REPAIR_PRECOMMIT_PROJECTION\n"
+            "            pass"
+        ),
+        expected_failure_marker=(
+            "test_invalid_future_projection_rolls_back_before_commit"
+        ),
+        rationale="The exact durable receipt and future active head must validate before COMMIT.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_REPAIR_STORED_PLAN_RECOMPUTED",
+        component="Research funnel semiconductor repair durable plan integrity",
+        source_path="experiments/research_funnel/semiconductor_source_repair.py",
+        test_script="tests/test_semiconductor_source_repair.py",
+        before=(
+            "    # governance-mutation: SEMICONDUCTOR_REPAIR_STORED_PLAN_RECOMPUTED\n"
+            "    validate_plan(reconstructed_plan)"
+        ),
+        after=(
+            "    # governance-mutation: SEMICONDUCTOR_REPAIR_STORED_PLAN_RECOMPUTED\n"
+            "    pass"
+        ),
+        expected_failure_marker=(
+            "test_reader_rejects_rehashed_capture_that_disagrees_with_projection"
+        ),
+        rationale=(
+            "A self-consistent durable receipt cannot replace semantic recomputation of its exact capture-derived plan."
+        ),
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_REPAIR_PLAN_SEMANTIC_ORDER",
+        component="Research funnel semiconductor repair multi-source receipt replay",
+        source_path="experiments/research_funnel/semiconductor_source_repair.py",
+        test_script="tests/test_semiconductor_source_repair.py",
+        before=(
+            "            # governance-mutation: SEMICONDUCTOR_REPAIR_PLAN_SEMANTIC_ORDER\n"
+            "            f\"SELECT * FROM {REPAIR_TABLE} WHERE plan_hash=? ORDER BY source_name,as_of\","
+        ),
+        after=(
+            "            # governance-mutation: SEMICONDUCTOR_REPAIR_PLAN_SEMANTIC_ORDER\n"
+            "            f\"SELECT * FROM {REPAIR_TABLE} WHERE plan_hash=? ORDER BY repair_id\","
+        ),
+        expected_failure_marker=(
+            "test_multi_source_receipt_rebuild_uses_plan_semantic_order"
+        ),
+        rationale=(
+            "A multi-source receipt must reconstruct the frozen plan by source/date semantics, not arbitrary hash order."
+        ),
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_REPAIR_STORED_APPROVAL_RECHECK",
+        component="Research funnel semiconductor repair durable approval integrity",
+        source_path="experiments/research_funnel/semiconductor_source_repair.py",
+        test_script="tests/test_semiconductor_source_repair.py",
+        before=(
+            "    # governance-mutation: SEMICONDUCTOR_REPAIR_STORED_APPROVAL_RECHECK\n"
+            "    _validate_approval_fields(stored_approval, reconstructed_plan)"
+        ),
+        after=(
+            "    # governance-mutation: SEMICONDUCTOR_REPAIR_STORED_APPROVAL_RECHECK\n"
+            "    pass"
+        ),
+        expected_failure_marker=(
+            "test_reader_rechecks_stored_approval_semantics_after_receipt_rehash"
+        ),
+        rationale=(
+            "A rehashed receipt cannot launder approval text that no longer binds the frozen hashes."
+        ),
+    ),
+    MutationCase(
         mutation_id="FUNNEL_U1_SEMICONDUCTOR_INDUSTRY_CONTEXT",
         component="Research funnel semiconductor issuer-node boundary",
         source_path="experiments/research_funnel/funnel_pipeline.py",
@@ -1507,10 +2075,16 @@ MUTATIONS: tuple[MutationCase, ...] = (
     MutationCase(
         mutation_id="SEMICONDUCTOR_ORPHAN_RAW_ROWS",
         component="Research funnel semiconductor source atomicity",
-        source_path="experiments/research_funnel/semiconductor_inputs.py",
+        source_path="experiments/research_funnel/semiconductor_source_repair.py",
         test_script="tests/test_semiconductor_positive_inputs.py",
-        before="        if raw_rows:\n",
-        after="        if False:\n",
+        before=(
+            "        # governance-mutation: SEMICONDUCTOR_ORPHAN_RAW_ROWS\n"
+            "        if raw_rows:"
+        ),
+        after=(
+            "        # governance-mutation: SEMICONDUCTOR_ORPHAN_RAW_ROWS\n"
+            "        if False:"
+        ),
         expected_failure_marker="test_orphan_raw_rows_without_their_atomic_batch_fail_hard",
         rationale=(
             "Raw evidence without its atomic source-batch receipt is corruption, not an "
@@ -5322,17 +5896,17 @@ MUTATIONS = MUTATIONS + (
         ),
     ),
     MutationCase(
-        mutation_id="RESEARCH_V1_1_REVISION_IDENTITY",
-        component="Research Closed Loop V1.1 revision identity",
+        mutation_id="RESEARCH_V1_3_REVISION_IDENTITY",
+        component="Research Closed Loop V1.3 revision identity",
         source_path="docs/research/contracts/research_closed_loop.v1.json",
         test_script="tests/test_research_closed_loop_v1.py",
         before=(
-            '  "schema_version": "1.1",\n'
-            '  "method_version": "RESEARCH_CLOSED_LOOP_V1_1",'
+            '  "schema_version": "1.3",\n'
+            '  "method_version": "RESEARCH_CLOSED_LOOP_V1_3",'
         ),
         after=(
-            '  "schema_version": "1.0",\n'
-            '  "method_version": "RESEARCH_CLOSED_LOOP_V1",'
+            '  "schema_version": "1.2",\n'
+            '  "method_version": "RESEARCH_CLOSED_LOOP_V1_2",'
         ),
         expected_failure_marker="test_manifest_is_strict_and_frozen",
         rationale=(
@@ -5341,13 +5915,62 @@ MUTATIONS = MUTATIONS + (
         ),
     ),
     MutationCase(
-        mutation_id="RESEARCH_V1_1_SEMICONDUCTOR_ASSEMBLY_BINDING",
-        component="Research Closed Loop V1.1 semiconductor assembly binding",
+        mutation_id="RESEARCH_V1_3_FROZEN_AT",
+        component="Research Closed Loop V1.3 frozen timestamp",
+        source_path="docs/research/contracts/research_closed_loop.v1.json",
+        test_script="tests/test_research_closed_loop_v1.py",
+        before='  "frozen_at": "2026-08-26T01:17:17+08:00",',
+        after='  "frozen_at": "2026-08-25T23:58:51+08:00",',
+        expected_failure_marker="test_revision_1_3_identity_names_current_review",
+        rationale=(
+            "A new byte-bound assembly revision must carry its own reviewed freeze time, "
+            "not reuse the superseded V1.2 identity."
+        ),
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_V1_3_SOURCE_BASE",
+        component="Research Closed Loop V1.3 source review binding",
+        source_path="docs/research/contracts/research_closed_loop.v1.json",
+        test_script="tests/test_research_closed_loop_v1.py",
+        before=(
+            '    "assembly_code_commit": "a893d0fc28ffcf3f50ab6071d8f5ccf86b74aa0a",\n'
+            '    "base_main": "7774e33dbfa6c5554472d3c137ca7b14b4423f4c",\n'
+            '    "review_pr": 317,'
+        ),
+        after=(
+            '    "assembly_code_commit": "4ba8860d9687e58ace2b919604bdd6f686d0d039",\n'
+            '    "base_main": "8ed9cfce536d70a541333e175dfb9b573610605a",\n'
+            '    "review_pr": 316,'
+        ),
+        expected_failure_marker="test_revision_1_3_identity_names_current_review",
+        rationale=(
+            "The frozen source identity must point to the implementation commit, main base, "
+            "and review PR that actually delivered V1.3."
+        ),
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_V1_3_ARTIFACT_SET_EXACT",
+        component="Research Closed Loop V1.3 exact artifact set",
+        source_path="docs/research/contracts/research_closed_loop.v1.json",
+        test_script="tests/test_research_closed_loop_v1.py",
+        before=(
+            '    {"path": "experiments/research_funnel/research_cycle.py", '
+            '"sha256": "sha256:f42620fa91cf93fe8fbd28930ab4c2530a5e6ed285c0025df5a74175feb59415"},\n'
+        ),
+        after="",
+        expected_failure_marker="test_every_bound_artifact_matches_its_exact_bytes",
+        rationale=(
+            "A frozen assembly cannot silently drop one reviewed artifact while all remaining hashes stay valid."
+        ),
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_V1_3_SEMICONDUCTOR_ASSEMBLY_BINDING",
+        component="Research Closed Loop V1.3 semiconductor assembly binding",
         source_path="docs/research/contracts/research_closed_loop.v1.json",
         test_script="tests/test_research_closed_loop_v1.py",
         before=(
             '    {"path": "experiments/research_funnel/semiconductor_inputs.py", '
-            '"sha256": "sha256:fdf60eb54b2346cd3cce6997195815c14e86e107186d12fbb4a904ba40cdd8d2"},'
+            '"sha256": "sha256:6701258484cc92bc3280a9086a33bd8ee216161bc0bde9bfed67b7bd94a9aaec"},'
         ),
         after=(
             '    {"path": "experiments/research_funnel/semiconductor_inputs.py", '
@@ -5356,7 +5979,25 @@ MUTATIONS = MUTATIONS + (
         expected_failure_marker="test_every_bound_artifact_matches_its_exact_bytes",
         rationale=(
             "The new point-in-time semiconductor evidence implementation must remain "
-            "byte-bound to the reviewed V1.1 assembly."
+            "byte-bound to the reviewed V1.3 assembly."
+        ),
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_V1_3_REPAIR_ASSEMBLY_BINDING",
+        component="Research Closed Loop V1.3 append-only source repair binding",
+        source_path="docs/research/contracts/research_closed_loop.v1.json",
+        test_script="tests/test_research_closed_loop_v1.py",
+        before=(
+            '    {"path": "experiments/research_funnel/semiconductor_source_repair.py", '
+            '"sha256": "sha256:d63f7ae910c198a09e07cbb7ede1510da2204b05f017079e4fe627aa7b6d55c6"},'
+        ),
+        after=(
+            '    {"path": "experiments/research_funnel/semiconductor_source_repair.py", '
+            '"sha256": "sha256:0000000000000000000000000000000000000000000000000000000000000000"},'
+        ),
+        expected_failure_marker="test_every_bound_artifact_matches_its_exact_bytes",
+        rationale=(
+            "The active-source repair resolver must remain byte-bound to the frozen V1.3 assembly."
         ),
     ),
     MutationCase(
