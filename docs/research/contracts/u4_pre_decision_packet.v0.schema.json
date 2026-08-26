@@ -1,0 +1,282 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Lateily/Alpha-Research/docs/research/contracts/u4_pre_decision_packet.v0.schema.json",
+  "title": "AR U4 Pre-Decision Packet v0",
+  "description": "Offline packet that prepares evidence for Junyan's U4 decision without selecting securities, creating paper orders, or granting production authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "packet_version",
+    "status",
+    "as_of",
+    "method_version",
+    "source_refs",
+    "source_publication",
+    "diagnostic",
+    "candidate_rows",
+    "packet_summary",
+    "selection_boundary",
+    "authority"
+  ],
+  "properties": {
+    "schema": {"const": "ar.u4_pre_decision_packet.v0"},
+    "packet_version": {"const": "0.1"},
+    "status": {
+      "enum": [
+        "READY_FOR_JUNYAN_REVIEW",
+        "BLOCKED_BEFORE_U4",
+        "SOURCE_PUBLICATION_PENDING",
+        "DATA_BLOCKED",
+        "REVISE_REQUIRED"
+      ]
+    },
+    "as_of": {"type": "string", "pattern": "^[0-9]{8}$"},
+    "method_version": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]{2,63}_V[0-9]+$"},
+    "source_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "same_day_bundle_ref",
+        "same_day_bundle_hash",
+        "u2_candidate_pool_hash",
+        "u3_battery_hash",
+        "diagnostic_report_ref"
+      ],
+      "properties": {
+        "same_day_bundle_ref": {"type": "string", "minLength": 1},
+        "same_day_bundle_hash": {"$ref": "#/$defs/sha256"},
+        "u2_candidate_pool_hash": {"$ref": "#/$defs/sha256"},
+        "u3_battery_hash": {"$ref": "#/$defs/sha256"},
+        "diagnostic_report_ref": {"type": "string", "minLength": 1}
+      }
+    },
+    "source_publication": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "daily_source_status",
+        "quarterly_source_status",
+        "pending_sources",
+        "retry_after_utc"
+      ],
+      "properties": {
+        "daily_source_status": {"enum": ["PUBLISHED", "PENDING", "STALE", "DATA_BLOCKED"]},
+        "quarterly_source_status": {"enum": ["PUBLISHED", "PENDING", "STALE", "DATA_BLOCKED"]},
+        "pending_sources": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "retry_after_utc": {
+          "oneOf": [
+            {"type": "null"},
+            {"type": "string", "format": "date-time"}
+          ]
+        }
+      }
+    },
+    "diagnostic": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tool",
+        "tool_version",
+        "evidence_rows_checked",
+        "evidence_rows_hash_verified",
+        "receipt_self_report_checked",
+        "red_flag_only_rows",
+        "positive_channel_rows",
+        "u3_complete_rows",
+        "u4_ready_rows",
+        "blocker_codes"
+      ],
+      "properties": {
+        "tool": {"const": "semiconductor_evidence_diagnostic.py"},
+        "tool_version": {"type": "string", "minLength": 1},
+        "evidence_rows_checked": {"type": "integer", "minimum": 0},
+        "evidence_rows_hash_verified": {"const": true},
+        "receipt_self_report_checked": {"const": true},
+        "red_flag_only_rows": {"type": "integer", "minimum": 0},
+        "positive_channel_rows": {"type": "integer", "minimum": 0},
+        "u3_complete_rows": {"type": "integer", "minimum": 0},
+        "u4_ready_rows": {"type": "integer", "minimum": 0},
+        "blocker_codes": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/blocker_code"}
+        }
+      }
+    },
+    "candidate_rows": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/candidate_row"}
+    },
+    "packet_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "candidate_count",
+        "allowed_for_review_count",
+        "blocked_count",
+        "red_flag_count",
+        "data_blocked_count",
+        "same_day_hash"
+      ],
+      "properties": {
+        "candidate_count": {"type": "integer", "minimum": 0},
+        "allowed_for_review_count": {"type": "integer", "minimum": 0},
+        "blocked_count": {"type": "integer", "minimum": 0},
+        "red_flag_count": {"type": "integer", "minimum": 0},
+        "data_blocked_count": {"type": "integer", "minimum": 0},
+        "same_day_hash": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "selection_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "allowed_selected_counts",
+        "zero_selection_meaning",
+        "human_selection_authority",
+        "machine_selection_authority"
+      ],
+      "properties": {
+        "allowed_selected_counts": {
+          "type": "array",
+          "prefixItems": [
+            {"const": 0},
+            {"const": 3},
+            {"const": 4},
+            {"const": 5}
+          ],
+          "items": false,
+          "minItems": 4,
+          "maxItems": 4
+        },
+        "zero_selection_meaning": {"const": "NO_TRADE_NO_QUEUE"},
+        "human_selection_authority": {"const": "HUMAN_JUNYAN_ONLY"},
+        "machine_selection_authority": {"const": "NONE"}
+      }
+    },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "production_authority",
+        "trade_authority",
+        "paper_order_authority",
+        "claim_allowed",
+        "no_trade_flag"
+      ],
+      "properties": {
+        "production_authority": {"const": false},
+        "trade_authority": {"const": false},
+        "paper_order_authority": {"const": false},
+        "claim_allowed": {"const": false},
+        "no_trade_flag": {"const": true}
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "source_publication": {
+            "properties": {"daily_source_status": {"const": "PENDING"}},
+            "required": ["daily_source_status"]
+          }
+        },
+        "required": ["source_publication"]
+      },
+      "then": {"properties": {"status": {"const": "SOURCE_PUBLICATION_PENDING"}}}
+    },
+    {
+      "if": {
+        "properties": {
+          "packet_summary": {
+            "properties": {"allowed_for_review_count": {"const": 0}},
+            "required": ["allowed_for_review_count"]
+          }
+        },
+        "required": ["packet_summary"]
+      },
+      "then": {"properties": {"status": {"enum": ["BLOCKED_BEFORE_U4", "DATA_BLOCKED", "SOURCE_PUBLICATION_PENDING"]}}}
+    }
+  ],
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "blocker_code": {
+      "enum": [
+        "DAILY_SOURCE_PENDING",
+        "STALE_SOURCE",
+        "U3_BATTERY_INCOMPLETE",
+        "E1_RED_FLAG_ACTIVE",
+        "NO_POSITIVE_CHANNEL",
+        "MISSING_METHOD_VERSION",
+        "MISSING_CAUSAL_CLUSTER_ID",
+        "QUALITY_GATE_INCOMPLETE",
+        "RECEIPT_SELF_REPORT_MISMATCH",
+        "DIAGNOSTIC_EVIDENCE_HASH_MISMATCH",
+        "OTHER_WITH_NOTE"
+      ]
+    },
+    "candidate_row": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ts_code",
+        "display_name",
+        "method_version",
+        "cohort_id",
+        "causal_cluster_id",
+        "u2_candidate_row_hash",
+        "u3_battery_row_hash",
+        "positive_channels",
+        "red_flag_channels",
+        "blocked_reasons",
+        "missing_evidence",
+        "quality_status",
+        "allowed_for_u4_packet",
+        "question_for_junyan"
+      ],
+      "properties": {
+        "ts_code": {"type": "string", "pattern": "^[0-9A-Z]+\\.[A-Z]+$"},
+        "display_name": {"type": "string", "minLength": 1},
+        "method_version": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]{2,63}_V[0-9]+$"},
+        "cohort_id": {"type": "string", "minLength": 1},
+        "causal_cluster_id": {"type": "string", "minLength": 1},
+        "u2_candidate_row_hash": {"$ref": "#/$defs/sha256"},
+        "u3_battery_row_hash": {"$ref": "#/$defs/sha256"},
+        "positive_channels": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"enum": ["PRICE_VOLUME", "MONEYFLOW_CHIPS", "FUNDAMENTAL_VALUATION", "INDUSTRY_CHAIN", "MACRO_CONTEXT", "OTHER"]}
+        },
+        "red_flag_channels": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"enum": ["E1_EVENT", "FINANCIAL_RED_FLAG", "DISCLOSURE_RED_FLAG", "OTHER"]}
+        },
+        "blocked_reasons": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/blocker_code"}
+        },
+        "missing_evidence": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "quality_status": {"enum": ["PASS", "WARN", "DATA_BLOCKED", "REVISE_REQUIRED"]},
+        "allowed_for_u4_packet": {"type": "boolean"},
+        "question_for_junyan": {
+          "oneOf": [
+            {"type": "null"},
+            {"type": "string", "minLength": 1}
+          ]
+        }
+      }
+    }
+  }
+}
