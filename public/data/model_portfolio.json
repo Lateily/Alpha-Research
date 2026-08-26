@@ -8,7 +8,7 @@
     "no_position_mutation": true,
     "run_date": "2026-08-26",
     "pilot_start_date": "2026-06-08",
-    "generated_at": "2026-08-26T02:33:22.344990+00:00",
+    "generated_at": "2026-08-26T09:14:13.323979+00:00",
     "fresh_pilot": true,
     "legacy_paper_positions_inherited": false,
     "sources": [
@@ -64,7 +64,7 @@
         "quant_confluence": {
           "action": "HOLD",
           "score": 25,
-          "rationale": "Bullish: Macd Golden Cross, Ma20 Bounce | Bearish: Kdj Overbought | RSI 53 | Price vs MA20 +0.2% | Regime: PERMISSIVE | VP 48"
+          "rationale": "Bullish: Macd Golden Cross, Ma20 Bounce | Bearish: Kdj Overbought | RSI 52 | Price vs MA20 +0.2% | Regime: PERMISSIVE | VP 48"
         }
       },
       "validation_status": "PENDING",
@@ -250,7 +250,7 @@
         "model_action": "HOLD",
         "horizon_days": 5,
         "evidence_tier": "quant_confluence",
-        "why": "Bullish: Macd Golden Cross, Ma20 Bounce | Bearish: Kdj Overbought | RSI 53 | Price vs MA20 +0.2% | Regime: PERMISSIVE | VP 48",
+        "why": "Bullish: Macd Golden Cross, Ma20 Bounce | Bearish: Kdj Overbought | RSI 52 | Price vs MA20 +0.2% | Regime: PERMISSIVE | VP 48",
         "target_range": {
           "basis": "quant_signal",
           "calibrated": false,
@@ -267,7 +267,7 @@
           "quant_confluence": {
             "action": "HOLD",
             "score": 25,
-            "rationale": "Bullish: Macd Golden Cross, Ma20 Bounce | Bearish: Kdj Overbought | RSI 53 | Price vs MA20 +0.2% | Regime: PERMISSIVE | VP 48",
+            "rationale": "Bullish: Macd Golden Cross, Ma20 Bounce | Bearish: Kdj Overbought | RSI 52 | Price vs MA20 +0.2% | Regime: PERMISSIVE | VP 48",
             "regime": "PERMISSIVE"
           }
         },
@@ -330,8 +330,8 @@
             "total": 4
           },
           "key_indicators": {
-            "rsi14": 52.7,
-            "macd_hist": 0.0233,
+            "rsi14": 52.5,
+            "macd_hist": 0.0105,
             "price_vs_ma20": 0.17,
             "price_vs_ma60": 1.77,
             "change_5d": 2.04,
@@ -354,7 +354,7 @@
               "type": "MACD_GOLDEN_CROSS",
               "strength": "moderate",
               "bullish": true,
-              "desc": "MACD DIF(-0.240) crossed above DEA(-0.252) below zero — bullish momentum"
+              "desc": "MACD DIF(-0.227) crossed above DEA(-0.232) below zero — bullish momentum"
             },
             {
               "type": "KDJ_OVERBOUGHT",
@@ -433,7 +433,7 @@
           },
           "key_indicators": {
             "rsi14": 44.5,
-            "macd_hist": -0.2561,
+            "macd_hist": -0.2501,
             "price_vs_ma20": -2.48,
             "price_vs_ma60": -9.4,
             "change_5d": -11.4,
@@ -444,7 +444,7 @@
               "type": "MACD_DEATH_CROSS",
               "strength": "strong",
               "bullish": false,
-              "desc": "MACD DIF(-0.583) crossed below DEA(-0.455) below zero — bearish momentum"
+              "desc": "MACD DIF(-0.588) crossed below DEA(-0.463) below zero — bearish momentum"
             },
             {
               "type": "KDJ_OVERSOLD",
@@ -480,8 +480,8 @@
             "total": 1
           },
           "key_indicators": {
-            "rsi14": 40.1,
-            "macd_hist": 1.8674,
+            "rsi14": 39.9,
+            "macd_hist": 2.3173,
             "price_vs_ma20": -8.29,
             "price_vs_ma60": -22.29,
             "change_5d": -14.38,
@@ -523,7 +523,7 @@
           },
           "key_indicators": {
             "rsi14": 54.0,
-            "macd_hist": -0.1296,
+            "macd_hist": -0.1322,
             "price_vs_ma20": 1.15,
             "price_vs_ma60": 5.38,
             "change_5d": 2.79,
@@ -625,7 +625,7 @@
           },
           "key_indicators": {
             "rsi14": 48.1,
-            "macd_hist": 0.7684,
+            "macd_hist": 0.6563,
             "price_vs_ma20": 0.07,
             "price_vs_ma60": 0.69,
             "change_5d": -9.07,
