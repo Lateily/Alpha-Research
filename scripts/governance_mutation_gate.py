@@ -133,6 +133,7 @@ FUNNEL_GOVERNANCE_PATHS = (
     "experiments/research_funnel/r035_evaluation.py",
     "experiments/research_funnel/closure_experiment.py",
     "experiments/research_funnel/research_cycle.py",
+    "experiments/research_funnel/paper_registration_bridge.py",
     "experiments/research_funnel/research_method.py",
     "experiments/research_funnel/industry_cohort.py",
     "experiments/research_funnel/semiconductor_evidence_diagnostic.py",
@@ -5541,7 +5542,7 @@ MUTATIONS = MUTATIONS + (
         test_script="tests/test_u4_decision_ledger.py",
         before=(
             '    # governance-mutation: U4_LEDGER_RAW_APPEND_RESERVED\n'
-            '    if kind in U4_TYPED_KINDS:'
+            '    if kind in RESERVED_TYPED_KINDS:'
         ),
         after=(
             '    # governance-mutation: U4_LEDGER_RAW_APPEND_RESERVED\n'
@@ -5557,7 +5558,7 @@ MUTATIONS = MUTATIONS + (
         test_script="tests/test_u4_decision_ledger.py",
         before=(
             '    # governance-mutation: U4_LEDGER_GENERIC_STAMPED_RESERVED\n'
-            '    if kind in U4_TYPED_KINDS:'
+            '    if kind in RESERVED_TYPED_KINDS:'
         ),
         after=(
             '    # governance-mutation: U4_LEDGER_GENERIC_STAMPED_RESERVED\n'
@@ -6196,6 +6197,302 @@ MUTATIONS = MUTATIONS + (
         ),
         expected_failure_marker="test_semiconductor_ready_pool_below_selection_floor_is_blocked",
         rationale="A 1-2 name ready pool cannot be relabeled as enough for the human U4 selection floor.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_REGISTRATION_MARKS_COVERAGE",
+        component="Research funnel paper registration bridge",
+        source_path="experiments/research_funnel/paper_registration_bridge.py",
+        test_script="tests/test_paper_registration_bridge.py",
+        before=(
+            "    # governance-mutation: PAPER_REGISTRATION_MARKS_COVERAGE\n"
+            "    if set(marks) != expected:"
+        ),
+        after=(
+            "    # governance-mutation: PAPER_REGISTRATION_MARKS_COVERAGE\n"
+            "    if False:"
+        ),
+        expected_failure_marker="test_marks_must_cover_every_filled_position_and_plan_is_toctou_bound",
+        rationale="Every filled paper position needs a same-session settled mark before sizing another order.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_REGISTRATION_CURRENT_U4_SELECT",
+        component="Research funnel paper registration bridge",
+        source_path="experiments/research_funnel/paper_registration_bridge.py",
+        test_script="tests/test_paper_registration_bridge.py",
+        before=(
+            '    # governance-mutation: PAPER_REGISTRATION_CURRENT_U4_SELECT\n'
+            '    if decision.get("decision") != "SELECT":'
+        ),
+        after=(
+            '    # governance-mutation: PAPER_REGISTRATION_CURRENT_U4_SELECT\n'
+            '    if False:'
+        ),
+        expected_failure_marker="test_current_u4_rejection_revokes_old_closure_selection",
+        rationale="A later U4 REJECT must revoke an older selected closure before plan creation.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_REGISTRATION_PLAN_HASH",
+        component="Research funnel paper registration bridge",
+        source_path="experiments/research_funnel/paper_registration_bridge.py",
+        test_script="tests/test_paper_registration_bridge.py",
+        before=(
+            '    # governance-mutation: PAPER_REGISTRATION_PLAN_HASH\n'
+            '    if plan.get("plan_hash") != _sha(_without(plan, "plan_hash")):'
+        ),
+        after=(
+            '    # governance-mutation: PAPER_REGISTRATION_PLAN_HASH\n'
+            '    if False:'
+        ),
+        expected_failure_marker="test_plan_hash_is_recomputed",
+        rationale="The approval target must be the recomputed complete plan, not a self-reported digest.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_REGISTRATION_NO_ACTION_AUTHORITY",
+        component="Research funnel paper registration bridge",
+        source_path="experiments/research_funnel/paper_registration_bridge.py",
+        test_script="tests/test_paper_registration_bridge.py",
+        before=(
+            '    # governance-mutation: PAPER_REGISTRATION_NO_ACTION_AUTHORITY\n'
+            '    if _walk_keys(plan) & FORBIDDEN_ACTION_KEYS:'
+        ),
+        after=(
+            '    # governance-mutation: PAPER_REGISTRATION_NO_ACTION_AUTHORITY\n'
+            '    if False:'
+        ),
+        expected_failure_marker="test_forbidden_action_fields_never_enter_a_paper_plan",
+        rationale="A paper plan cannot smuggle real-order or formal blocking fields through a nested projection.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_REGISTRATION_SOURCE_PROJECTION_BINDING",
+        component="Research funnel paper registration bridge",
+        source_path="experiments/research_funnel/paper_registration_bridge.py",
+        test_script="tests/test_paper_registration_bridge.py",
+        before=(
+            '    # governance-mutation: PAPER_REGISTRATION_SOURCE_PROJECTION_BINDING\n'
+            '    if (\n'
+        ),
+        after=(
+            '    # governance-mutation: PAPER_REGISTRATION_SOURCE_PROJECTION_BINDING\n'
+            '    if False and (\n'
+        ),
+        expected_failure_marker="test_request_order_and_source_bindings_are_recomputed",
+        rationale="The projected order must preserve the exact case, U4, and method provenance named by the plan.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_REGISTRATION_REQUEST_ORDER_BINDING",
+        component="Research funnel paper registration bridge",
+        source_path="experiments/research_funnel/paper_registration_bridge.py",
+        test_script="tests/test_paper_registration_bridge.py",
+        before=(
+            '    # governance-mutation: PAPER_REGISTRATION_REQUEST_ORDER_BINDING\n'
+            '    if any(request[source] != order.get(target) for source, target in request_order_fields.items()):'
+        ),
+        after=(
+            '    # governance-mutation: PAPER_REGISTRATION_REQUEST_ORDER_BINDING\n'
+            '    if False:'
+        ),
+        expected_failure_marker="test_request_order_and_source_bindings_are_recomputed",
+        rationale="The human-readable request and durable order projection must describe the same paper setup.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_REGISTRATION_APPROVAL_PLAN_BINDING",
+        component="Research funnel paper registration bridge",
+        source_path="experiments/research_funnel/paper_registration_bridge.py",
+        test_script="tests/test_paper_registration_bridge.py",
+        before=(
+            '    # governance-mutation: PAPER_REGISTRATION_APPROVAL_PLAN_BINDING\n'
+            '    if approval.get("plan_hash") != plan.get("plan_hash"):'
+        ),
+        after=(
+            '    # governance-mutation: PAPER_REGISTRATION_APPROVAL_PLAN_BINDING\n'
+            '    if False:'
+        ),
+        expected_failure_marker="test_approval_must_bind_full_plan_and_preserve_unverified_identity",
+        rationale="The verbatim human approval must bind the exact frozen plan hash.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_REGISTRATION_APPROVAL_AUTHORITY",
+        component="Research funnel paper registration bridge",
+        source_path="experiments/research_funnel/paper_registration_bridge.py",
+        test_script="tests/test_paper_registration_bridge.py",
+        before=(
+            '    # governance-mutation: PAPER_REGISTRATION_APPROVAL_AUTHORITY\n'
+            '    if (\n'
+        ),
+        after=(
+            '    # governance-mutation: PAPER_REGISTRATION_APPROVAL_AUTHORITY\n'
+            '    if False and (\n'
+        ),
+        expected_failure_marker="test_approval_must_bind_full_plan_and_preserve_unverified_identity",
+        rationale="Self-reported approval must remain honestly unverified and unable to grant trade authority.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_REGISTRATION_TYPED_SOURCE_BINDING",
+        component="Research funnel paper registration bridge",
+        source_path="experiments/research_funnel/paper_registration_bridge.py",
+        test_script="tests/test_paper_registration_bridge.py",
+        before=(
+            '        # governance-mutation: PAPER_REGISTRATION_TYPED_SOURCE_BINDING\n'
+            '        if expected != payload["plan"]:'
+        ),
+        after=(
+            '        # governance-mutation: PAPER_REGISTRATION_TYPED_SOURCE_BINDING\n'
+            '        if False:'
+        ),
+        expected_failure_marker="test_typed_intent_boundary_recomputes_current_source_projection",
+        rationale="The only typed R-015 writer must recompute the plan from current U4, case, marks, and fund state.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_REGISTRATION_TYPED_COMMIT_PROJECTION",
+        component="Research funnel paper registration bridge",
+        source_path="experiments/research_funnel/paper_registration_bridge.py",
+        test_script="tests/test_paper_registration_bridge.py",
+        before=(
+            '        # governance-mutation: PAPER_REGISTRATION_TYPED_COMMIT_PROJECTION\n'
+            '        if current != intent["plan"]["projection"]["post_state"]:'
+        ),
+        after=(
+            '        # governance-mutation: PAPER_REGISTRATION_TYPED_COMMIT_PROJECTION\n'
+            '        if False:'
+        ),
+        expected_failure_marker="test_typed_commit_boundary_requires_projection_convergence",
+        rationale="A commit cannot become durable before both Model Paper Fund projections exactly converge.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_REGISTRATION_COMMITTED_ORDER_PROJECTION",
+        component="Research funnel paper registration bridge",
+        source_path="experiments/research_funnel/paper_registration_bridge.py",
+        test_script="tests/test_paper_registration_bridge.py",
+        before=(
+            '            # governance-mutation: PAPER_REGISTRATION_COMMITTED_ORDER_PROJECTION\n'
+            '            if _registration_projection(orders[0]) != expected_plan["projection"]["order_registration_projection"]:'
+        ),
+        after=(
+            '            # governance-mutation: PAPER_REGISTRATION_COMMITTED_ORDER_PROJECTION\n'
+            '            if False:'
+        ),
+        expected_failure_marker="test_committed_immutable_projection_is_checked_but_fill_state_may_advance",
+        rationale="Mutable fill fields may advance, but immutable registration provenance cannot be rewritten.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_REGISTRATION_COMMITTED_DECISION_PROJECTION",
+        component="Research funnel paper registration bridge",
+        source_path="experiments/research_funnel/paper_registration_bridge.py",
+        test_script="tests/test_paper_registration_bridge.py",
+        before=(
+            '            # governance-mutation: PAPER_REGISTRATION_COMMITTED_DECISION_PROJECTION\n'
+            '            if decisions[0] != expected_plan["projection"]["decision_log_event"]:'
+        ),
+        after=(
+            '            # governance-mutation: PAPER_REGISTRATION_COMMITTED_DECISION_PROJECTION\n'
+            '            if False:'
+        ),
+        expected_failure_marker="test_committed_registration_decision_projection_is_checked",
+        rationale="The committed registration decision is an exact immutable projection of the approved intent.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_REGISTRATION_DAILY_PREFLIGHT",
+        component="Research funnel paper registration bridge",
+        source_path="experiments/research_funnel/paper_registration_bridge.py",
+        test_script="tests/test_paper_registration_bridge.py",
+        before=(
+            '    # governance-mutation: PAPER_REGISTRATION_DAILY_PREFLIGHT\n'
+            '    if not result["ok"]:'
+        ),
+        after=(
+            '    # governance-mutation: PAPER_REGISTRATION_DAILY_PREFLIGHT\n'
+            '    if False:'
+        ),
+        expected_failure_marker="test_all_crash_points_converge_without_duplicate_order_or_decision",
+        rationale="Daily paper advancement must stop while an intent is pending or a projection is corrupt.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_REGISTRATION_SHARED_NIGHTLY_LOCK",
+        component="Research funnel paper registration bridge",
+        source_path="experiments/research_funnel/paper_registration_bridge.py",
+        test_script="tests/test_paper_registration_bridge.py",
+        before=(
+            '            # governance-mutation: PAPER_REGISTRATION_SHARED_NIGHTLY_LOCK\n'
+            '            fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)'
+        ),
+        after=(
+            '            # governance-mutation: PAPER_REGISTRATION_SHARED_NIGHTLY_LOCK\n'
+            '            fcntl.flock(handle, fcntl.LOCK_UN)'
+        ),
+        expected_failure_marker="test_shared_nightly_lock_rejects_concurrent_registration",
+        rationale="Registration and the nightly publisher must never mutate the paper ledger concurrently.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_REGISTRATION_TYPED_PAYLOAD_SNAPSHOT",
+        component="Research funnel paper registration R-015 boundary",
+        source_path="experiments/execution_tracker/event_ledger.py",
+        test_script="tests/test_paper_registration_bridge.py",
+        before=(
+            '            # governance-mutation: PAPER_REGISTRATION_TYPED_PAYLOAD_SNAPSHOT\n'
+            '            payload_snapshot = json.loads(canonical(payload))'
+        ),
+        after=(
+            '            # governance-mutation: PAPER_REGISTRATION_TYPED_PAYLOAD_SNAPSHOT\n'
+            '            payload_snapshot = payload'
+        ),
+        expected_failure_marker="test_typed_writer_snapshots_payload_before_validation",
+        rationale="The bytes validated under R-015 flock must be the same immutable payload bytes that are appended.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_REGISTRATION_TYPED_APPEND_VALIDATION",
+        component="Research funnel paper registration R-015 boundary",
+        source_path="experiments/execution_tracker/event_ledger.py",
+        test_script="tests/test_paper_registration_bridge.py",
+        before=(
+            '            # governance-mutation: PAPER_REGISTRATION_TYPED_APPEND_VALIDATION\n'
+            '            paper_registration_bridge.validate_typed_outer_append(\n'
+            '                path, preview, source_context=source_context,\n'
+            '            )'
+        ),
+        after=(
+            '            # governance-mutation: PAPER_REGISTRATION_TYPED_APPEND_VALIDATION\n'
+            '            _ = source_context'
+        ),
+        expected_failure_marker="test_typed_intent_boundary_recomputes_current_source_projection",
+        rationale="Reserved paper-registration kinds must pass schema, replay, and source validation before append.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_REGISTRATION_REALISTIC_MODE_INFERENCE",
+        component="Research funnel Model Paper Fund registration",
+        source_path="experiments/execution_tracker/model_paper_fund.py",
+        test_script="tests/test_paper_registration_bridge.py",
+        before=(
+            '        # governance-mutation: PAPER_REGISTRATION_REALISTIC_MODE_INFERENCE\n'
+            '        order_realistic = (\n'
+            '            require_realistic\n'
+            '            or o.get("execution_mode") == pp.EXECUTION_MODEL_VERSION\n'
+            '        )'
+        ),
+        after=(
+            '        # governance-mutation: PAPER_REGISTRATION_REALISTIC_MODE_INFERENCE\n'
+            '        order_realistic = (\n'
+            '            require_realistic\n'
+            '            and o.get("execution_mode") == pp.EXECUTION_MODEL_VERSION\n'
+            '        )'
+        ),
+        expected_failure_marker="test_daily_engine_infers_realistic_mode_from_registered_order",
+        rationale="Bridge-registered orders must retain realistic fills and costs on the ordinary daily path.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_REGISTRATION_DAILY_CALLSITE",
+        component="Research funnel Model Paper Fund registration",
+        source_path="experiments/execution_tracker/model_paper_fund.py",
+        test_script="tests/test_paper_registration_bridge.py",
+        before=(
+            '            # governance-mutation: PAPER_REGISTRATION_DAILY_CALLSITE\n'
+            '            assert_paper_registration_ready(args.fund_dir, args.event_ledger)'
+        ),
+        after=(
+            '            # governance-mutation: PAPER_REGISTRATION_DAILY_CALLSITE\n'
+            '            pass'
+        ),
+        expected_failure_marker="test_daily_cli_refuses_before_advance_when_registration_preflight_fails",
+        rationale="The production CLI must actually invoke the registration preflight before any daily advancement.",
     ),
 )
 

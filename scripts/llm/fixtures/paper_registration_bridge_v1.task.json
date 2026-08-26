@@ -1,0 +1,91 @@
+{
+  "schema": "ai-task.v1",
+  "task_id": "PAPER-REGISTRATION-BRIDGE-V1-001",
+  "source_issue": null,
+  "architecture_block": [
+    "research-framework",
+    "prospective-paper-cycle",
+    "model-paper-fund"
+  ],
+  "objective": "Implement an offline, human-authorized bridge from one current committed U4 SELECT and one prospectively sealed research case into the existing Model Paper Fund, with an append-only R-015 intent/commit receipt, same-nightly-lock exclusion, crash recovery, idempotent projection, and fail-closed verification before nightly advances the order.",
+  "non_goals": [
+    "Do not select U4 securities or author thesis, valuation, timing, entry, stop, or target evidence",
+    "Do not connect to a broker, submit a real order, grant trade authority, or remove human approval",
+    "Do not add a nightly step that automatically creates paper orders",
+    "Do not run production, write /Users/years/ar-live, or use live market-data network calls",
+    "Do not claim win rate, alpha, profitability, method validity, or portfolio readiness",
+    "Do not rewrite historical orders, U4 decisions, or R-015 records"
+  ],
+  "human_owner": "Junyan",
+  "reviewer": "Junyan",
+  "executor_candidates": [
+    "Codex"
+  ],
+  "dependencies": [
+    "merged Research Closed Loop V1.3",
+    "merged append-only U4 decision ledger",
+    "merged realistic paper execution audit"
+  ],
+  "authority_docs": [
+    "AGENTS.md",
+    "experiments/AGENTS.md",
+    "docs/research/RESEARCH_CLOSED_LOOP_V1.md",
+    "docs/research/U4_DECISION_LEDGER_SPEC_V1.md",
+    "docs/research/PAPER_EXECUTION_REALISM_AUDIT_V1.md",
+    "docs/strategy/MODEL_PAPER_FUND_POLICY.md"
+  ],
+  "file_scope": [
+    "docs/research/PAPER_REGISTRATION_BRIDGE_V1.md",
+    "experiments/research_funnel/paper_registration_bridge.py",
+    "experiments/execution_tracker/event_ledger.py",
+    "experiments/execution_tracker/model_paper_fund.py",
+    "tests/test_paper_registration_bridge.py",
+    "scripts/llm/fixtures/paper_registration_bridge_v1.task.json",
+    "scripts/governance_mutation_gate.py",
+    ".github/workflows/python-ci.yml"
+  ],
+  "forbidden_scope": [
+    "/Users/years/ar-live",
+    "public/data/v2",
+    "data_history",
+    "experiments/execution_tracker/model_fund",
+    "broker APIs",
+    "nightly step topology"
+  ],
+  "input_contracts": [
+    "current committed U4 packet closure and SELECT event",
+    "immutable U2/U3 closure bundle",
+    "prospectively sealed research-cycle case with PASS thesis and timing tickets",
+    "human approval text bound to the exact registration plan hash",
+    "existing Model Paper Fund four-ledger snapshot"
+  ],
+  "output_artifacts": [
+    "ar.paper_registration_plan.v1",
+    "R-015 paper_registration_intent and paper_registration_commit records",
+    "one idempotently projected pending realistic paper order",
+    "one append-only registration decision record",
+    "ar.paper_registration_receipt.v1"
+  ],
+  "acceptance_tests": [
+    "python3 tests/test_paper_registration_bridge.py",
+    "python3 experiments/execution_tracker/event_ledger.py --selftest",
+    "python3 experiments/execution_tracker/model_paper_fund.py --selftest",
+    "python3 scripts/governance_mutation_gate.py",
+    "python3 tests/test_no_network_guard.py",
+    "python3 scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/paper_registration_bridge_v1.task.json",
+    "git diff --check"
+  ],
+  "risk_level": "CONSTITUTIONAL",
+  "network_policy": "OFFLINE",
+  "budget": {
+    "max_cny": "0",
+    "max_minutes": 360
+  },
+  "approval_gates": [
+    "PR_REVIEW",
+    "JUNYAN_MERGE",
+    "SEPARATE_PRODUCTION_DEPLOY_APPROVAL",
+    "EXACT_HUMAN_PAPER_REGISTRATION_APPROVAL"
+  ],
+  "created_at": "2026-08-26T12:00:00+08:00"
+}

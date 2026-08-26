@@ -65,6 +65,7 @@ from experiments.macro_os import expectation_registry as macro_expectations  # n
 from experiments.research_funnel import closure_experiment  # noqa: E402,F401
 from experiments.research_funnel import industry_cohort  # noqa: E402,F401
 from experiments.research_funnel import research_cycle  # noqa: E402,F401
+from experiments.research_funnel import paper_registration_bridge  # noqa: E402,F401
 from experiments.research_funnel import five_axis_attribution  # noqa: E402,F401
 from experiments.research_funnel import semiconductor_inputs  # noqa: E402,F401
 import paper_execution_audit  # noqa: E402,F401
@@ -182,6 +183,7 @@ assert semiconductor_repair_result.wasSuccessful(), (
     "semiconductor source-repair suite failed under socket guard"
 )
 import test_research_cycle as research_cycle_tests  # noqa: E402
+import test_paper_registration_bridge as paper_registration_tests  # noqa: E402
 import test_research_method as research_method_tests  # noqa: E402
 import test_paper_execution_realism as execution_realism_tests  # noqa: E402
 import test_five_axis_attribution as five_axis_tests  # noqa: E402
@@ -217,6 +219,14 @@ research_cycle_result = unittest.TextTestRunner(verbosity=0).run(
 )
 assert research_cycle_result.wasSuccessful(), (
     "offline U4-to-paper research cycle suite failed under socket guard"
+)
+paper_registration_result = unittest.TextTestRunner(verbosity=0).run(
+    unittest.defaultTestLoader.loadTestsFromTestCase(
+        paper_registration_tests.PaperRegistrationBridgeTests
+    )
+)
+assert paper_registration_result.wasSuccessful(), (
+    "offline U4-to-paper registration bridge suite failed under socket guard"
 )
 five_axis_result = unittest.TextTestRunner(verbosity=0).run(
     unittest.defaultTestLoader.loadTestsFromTestCase(
