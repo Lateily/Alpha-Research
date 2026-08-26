@@ -11,7 +11,7 @@
       "paper": "/home/runner/work/Alpha-Research/Alpha-Research/public/data/positions.json (read-only)",
       "registered": "/home/runner/work/Alpha-Research/Alpha-Research/public/data/thesis_queue.json"
     },
-    "as_of_paper": "2026-08-25T09:06:23"
+    "as_of_paper": "2026-08-26T02:28:01"
   },
   "books": {
     "A_current_paper": {
@@ -20,8 +20,8 @@
           "ticker": "300308.SZ",
           "name": "中际旭创",
           "side": "LONG",
-          "weight_pct": 48.98,
-          "pnl_pct": 24.16
+          "weight_pct": 48.96,
+          "pnl_pct": 24.12
         },
         {
           "ticker": "6160.HK",
@@ -48,8 +48,8 @@
           "ticker": "002594.SZ",
           "name": "比亚迪",
           "side": "LONG",
-          "weight_pct": 4.23,
-          "pnl_pct": -5.02
+          "weight_pct": 4.25,
+          "pnl_pct": -4.67
         }
       ],
       "gross_pct": 100.0,
@@ -61,7 +61,7 @@
           "ticker": "002594.SZ",
           "name": "比亚迪",
           "side": "LONG",
-          "paper_weight_pct": 4.23,
+          "paper_weight_pct": 4.25,
           "renorm_weight_pct": 100.0
         }
       ],
@@ -118,7 +118,7 @@
       "name": "比亚迪",
       "in_paper": true,
       "paper_side": "LONG",
-      "paper_weight_pct": 4.23,
+      "paper_weight_pct": 4.25,
       "in_registered": true,
       "registered_direction": "LONG",
       "registered_role": "directional",
@@ -142,7 +142,7 @@
       "name": "中际旭创",
       "in_paper": true,
       "paper_side": "LONG",
-      "paper_weight_pct": 48.98,
+      "paper_weight_pct": 48.96,
       "in_registered": true,
       "registered_direction": "PASS",
       "registered_role": "observer_control",
@@ -215,8 +215,8 @@
       "603233.SH"
     ],
     "paper_gross_pct": 100.0,
-    "paper_weight_aligned_pct": 4.23,
-    "paper_weight_aligned_share": 0.0423
+    "paper_weight_aligned_pct": 4.25,
+    "paper_weight_aligned_share": 0.0425
   },
   "performance": {
     "status": "PENDING",
