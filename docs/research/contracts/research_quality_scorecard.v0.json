@@ -17,6 +17,7 @@
         "source_tier",
         "source_date",
         "data_cutoff",
+        "issuer_or_exchange_facts",
         "missing_fields",
         "confidence_or_data_status"
       ]
@@ -59,6 +60,7 @@
         "timing_state",
         "entry_reference",
         "stop_logic",
+        "invalidation_reference",
         "wait_allowed",
         "registered_before_outcome"
       ]
@@ -71,7 +73,8 @@
         "artifact_hash",
         "rejected_samples",
         "blocked_samples",
-        "commands_or_generation_path"
+        "commands_or_generation_path",
+        "reviewer_notes"
       ]
     }
   ],

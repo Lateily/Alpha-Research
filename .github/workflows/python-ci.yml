@@ -15,6 +15,8 @@ on:
       - "tests/**"
       - "docs/llm/**"
       - "public/data/v2/**"
+      - "docs/research/RESEARCH_QUALITY_SCORECARD_V0.md"
+      - "docs/research/contracts/**"
       - "docs/research/macro/**"
       - "docs/contracts/macro/**"
       - ".agents/skills/**"

@@ -71,6 +71,15 @@ class ResearchQualityScorecardContractTests(unittest.TestCase):
                 self.assertGreaterEqual(len(axis["required_evidence"]), 4)
                 self.assertTrue(all(isinstance(item, str) and item for item in axis["required_evidence"]))
 
+    def test_doc_promised_evidence_terms_are_machine_readable(self) -> None:
+        by_axis = {
+            axis["id"]: set(axis["required_evidence"])
+            for axis in self.contract["quality_axes"]
+        }
+        self.assertIn("issuer_or_exchange_facts", by_axis["FACT_COMPLETENESS"])
+        self.assertIn("invalidation_reference", by_axis["TIMING_REGISTRATION"])
+        self.assertIn("reviewer_notes", by_axis["REVIEWABILITY"])
+
     def test_quality_pass_gate_and_honest_stop_states_are_fixed(self) -> None:
         gate = self.contract["gate"]
         self.assertEqual(gate["quality_pass_average_min"], 70)
