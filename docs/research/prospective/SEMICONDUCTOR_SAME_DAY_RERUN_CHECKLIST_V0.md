@@ -36,6 +36,37 @@ The operator must name these artifacts before a rerun is treated as ready:
 
 Any unavailable artifact is a stop, not a warning to ignore.
 
+## Operator Packet
+
+Before any same-day U1-U3 rerun, Reed prepares one operator packet. The packet
+is a preflight cover sheet, not the rerun output. It must be written before the
+rerun starts and must bind the evidence that makes the rerun allowed.
+
+The packet must contain:
+
+| Field | Required content |
+|---|---|
+| `packet_id` | Stable local identifier such as `semiconductor-rerun-YYYYMMDD-preflight` |
+| `prepared_by` | Human owner, expected `Reed` |
+| `prepared_at_utc` | Timezone-aware UTC timestamp |
+| `origin_main_sha` | Full SHA from `git rev-parse origin/main` after fetch |
+| `worktree_status` | `CLEAN` or explicit dirty-file list and owner |
+| `source_scan_ref` | Local scan output path and `scan_hash` |
+| `source_scan_status` | `CLEAN`, `REPAIR_REQUIRED`, or `DATA_BLOCKED` |
+| `repair_approval_ref` | Exact Junyan approval reference when repair is required; otherwise `null` |
+| `diagnostic_ref` | Local diagnostic output path and blocker codes |
+| `same_day_bundle_ref` | U1/U2 bundle path, hash, `as_of`, and run identity |
+| `u3_battery_ref` | U3 battery path, hash, `as_of`, and row count |
+| `handoff_intent` | `STOP_BEFORE_RERUN` or `ALLOW_U1_U3_RERUN` |
+| `stop_conditions` | Exact stop condition numbers triggered, or an empty list |
+| `next_action` | The next human action; never a trade instruction |
+| `authority` | `HUMAN_JUNYAN_ONLY`, `no_trade_flag=true`, and all machine authorities false |
+
+The packet must not contain raw production credentials, unreviewed live database
+paths, model outputs, chat history, or any field that asks an agent to decide
+which securities to select. A packet that cannot name its hashes and stop
+conditions is `BLOCKED`, even if the market session is urgent.
+
 ## Allowed Local Checks
 
 These checks are read-only or write only local scratch outputs:
@@ -144,6 +175,38 @@ COHORT_STATUS:
 CAUSAL_CLUSTER_STATUS:
 STOP_CONDITIONS:
 NEXT:
+NO_TRADE_FLAG: true
+```
+
+## Operator Packet Template
+
+```text
+SEMICONDUCTOR_RERUN_OPERATOR_PACKET_V0
+PACKET_ID:
+PREPARED_BY: Reed
+PREPARED_AT_UTC:
+ORIGIN_MAIN_SHA:
+WORKTREE_STATUS: CLEAN / DIRTY_WITH_OWNER_LIST
+SOURCE_SCAN_REF:
+SOURCE_SCAN_HASH:
+SOURCE_SCAN_STATUS: CLEAN / REPAIR_REQUIRED / DATA_BLOCKED
+REPAIR_APPROVAL_REF: null / Junyan exact approval reference
+DIAGNOSTIC_REF:
+DIAGNOSTIC_BLOCKER_CODES:
+SAME_DAY_BUNDLE_REF:
+SAME_DAY_BUNDLE_HASH:
+SAME_DAY_AS_OF:
+U3_BATTERY_REF:
+U3_BATTERY_HASH:
+U3_ROW_COUNT:
+HANDOFF_INTENT: STOP_BEFORE_RERUN / ALLOW_U1_U3_RERUN
+STOP_CONDITIONS:
+NEXT_ACTION:
+AUTHORITY: HUMAN_JUNYAN_ONLY
+PRODUCTION_AUTHORITY: false
+TRADE_AUTHORITY: false
+PAPER_ORDER_AUTHORITY: false
+CLAIM_ALLOWED: false
 NO_TRADE_FLAG: true
 ```
 

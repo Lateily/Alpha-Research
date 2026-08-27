@@ -85,6 +85,47 @@ class SemiconductorRerunChecklistTests(unittest.TestCase):
         self.assertIn("python3 tests/test_semiconductor_rerun_checklist.py", ci)
         self.assertIn('"docs/research/**"', ci)
 
+    def test_operator_packet_binds_pre_rerun_evidence(self) -> None:
+        for phrase in (
+            "## Operator Packet",
+            "preflight cover sheet, not the rerun output",
+            "`packet_id`",
+            "`origin_main_sha`",
+            "`source_scan_ref`",
+            "`source_scan_status`",
+            "`repair_approval_ref`",
+            "`diagnostic_ref`",
+            "`same_day_bundle_ref`",
+            "`u3_battery_ref`",
+            "`handoff_intent`",
+            "`stop_conditions`",
+            "A packet that cannot name its hashes and stop",
+        ):
+            self.assertIn(phrase, self.text)
+
+    def test_operator_packet_template_keeps_authority_closed(self) -> None:
+        for phrase in (
+            "SEMICONDUCTOR_RERUN_OPERATOR_PACKET_V0",
+            "HANDOFF_INTENT: STOP_BEFORE_RERUN / ALLOW_U1_U3_RERUN",
+            "AUTHORITY: HUMAN_JUNYAN_ONLY",
+            "PRODUCTION_AUTHORITY: false",
+            "TRADE_AUTHORITY: false",
+            "PAPER_ORDER_AUTHORITY: false",
+            "CLAIM_ALLOWED: false",
+            "NO_TRADE_FLAG: true",
+        ):
+            self.assertIn(phrase, self.text)
+
+    def test_operator_packet_rejects_private_or_decision_inputs(self) -> None:
+        for phrase in (
+            "must not contain raw production credentials",
+            "unreviewed live database",
+            "model outputs",
+            "chat history",
+            "asks an agent to decide",
+        ):
+            self.assertIn(phrase, self.text)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
