@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "generated_at": "2026-08-26T09:14:14.254529+00:00",
+    "generated_at": "2026-08-27T11:10:47.296281+00:00",
     "layer": "Factory Progress aggregator (read-only over committed artifacts)",
     "disclaimer": "internal progress dashboard — UNVALIDATED research pipeline state; nothing here is a recommendation, a buy list, or validated alpha"
   },
@@ -27,19 +27,19 @@
             "offset_days": 30,
             "due_date": "2026-07-10",
             "status": "EVALUATED",
-            "days_to_due": -47
+            "days_to_due": -48
           },
           {
             "offset_days": 60,
             "due_date": "2026-08-09",
             "status": "EVALUATED",
-            "days_to_due": -17
+            "days_to_due": -18
           },
           {
             "offset_days": 90,
             "due_date": "2026-09-08",
             "status": "PENDING",
-            "days_to_due": 13
+            "days_to_due": 12
           }
         ]
       },
@@ -62,19 +62,19 @@
             "offset_days": 30,
             "due_date": "2026-07-12",
             "status": "EVALUATED",
-            "days_to_due": -45
+            "days_to_due": -46
           },
           {
             "offset_days": 60,
             "due_date": "2026-08-11",
             "status": "EVALUATED",
-            "days_to_due": -15
+            "days_to_due": -16
           },
           {
             "offset_days": 90,
             "due_date": "2026-09-10",
             "status": "PENDING",
-            "days_to_due": 15
+            "days_to_due": 14
           }
         ]
       },
@@ -97,19 +97,19 @@
             "offset_days": 30,
             "due_date": "2026-07-12",
             "status": "EVALUATED",
-            "days_to_due": -45
+            "days_to_due": -46
           },
           {
             "offset_days": 60,
             "due_date": "2026-08-11",
             "status": "EVALUATED",
-            "days_to_due": -15
+            "days_to_due": -16
           },
           {
             "offset_days": 90,
             "due_date": "2026-09-10",
             "status": "PENDING",
-            "days_to_due": 15
+            "days_to_due": 14
           }
         ]
       },
@@ -132,19 +132,19 @@
             "offset_days": 30,
             "due_date": "2026-07-14",
             "status": "PENDING",
-            "days_to_due": -43
+            "days_to_due": -44
           },
           {
             "offset_days": 60,
             "due_date": "2026-08-13",
             "status": "PENDING",
-            "days_to_due": -13
+            "days_to_due": -14
           },
           {
             "offset_days": 90,
             "due_date": "2026-09-12",
             "status": "PENDING",
-            "days_to_due": 17
+            "days_to_due": 16
           }
         ]
       },
@@ -167,19 +167,19 @@
             "offset_days": 30,
             "due_date": "2026-07-14",
             "status": "PENDING",
-            "days_to_due": -43
+            "days_to_due": -44
           },
           {
             "offset_days": 60,
             "due_date": "2026-08-13",
             "status": "PENDING",
-            "days_to_due": -13
+            "days_to_due": -14
           },
           {
             "offset_days": 90,
             "due_date": "2026-09-12",
             "status": "PENDING",
-            "days_to_due": 17
+            "days_to_due": 16
           }
         ]
       },
@@ -202,19 +202,19 @@
             "offset_days": 30,
             "due_date": "2026-07-15",
             "status": "PENDING",
-            "days_to_due": -42
+            "days_to_due": -43
           },
           {
             "offset_days": 60,
             "due_date": "2026-08-14",
             "status": "PENDING",
-            "days_to_due": -12
+            "days_to_due": -13
           },
           {
             "offset_days": 90,
             "due_date": "2026-09-13",
             "status": "PENDING",
-            "days_to_due": 18
+            "days_to_due": 17
           }
         ]
       },
@@ -237,19 +237,19 @@
             "offset_days": 30,
             "due_date": "2026-07-21",
             "status": "PENDING",
-            "days_to_due": -36
+            "days_to_due": -37
           },
           {
             "offset_days": 60,
             "due_date": "2026-08-20",
             "status": "PENDING",
-            "days_to_due": -6
+            "days_to_due": -7
           },
           {
             "offset_days": 90,
             "due_date": "2026-09-19",
             "status": "PENDING",
-            "days_to_due": 24
+            "days_to_due": 23
           }
         ]
       }
@@ -257,7 +257,7 @@
     "next_read": {
       "date": "2026-07-14",
       "ticker": "688008.SH",
-      "days_to_due": -43
+      "days_to_due": -44
     },
     "note_zh": "人工红队为 measure of record;检查点是 case-level 读数,不是统计"
   },
@@ -273,7 +273,7 @@
         "due_date": "2026-07-14",
         "status": "PENDING",
         "result": null,
-        "days_to_due": -43
+        "days_to_due": -44
       }
     },
     "official": [
@@ -373,7 +373,7 @@
               "catalysts_due": null,
               "note": "mechanical reads only — wrong_if/catalyst resolution requires the human (disclosure-bound)"
             },
-            "days_to_due": -47
+            "days_to_due": -48
           },
           {
             "offset_days": 60,
@@ -398,14 +398,14 @@
               "catalysts_due": null,
               "note": "mechanical reads only — wrong_if/catalyst resolution requires the human (disclosure-bound)"
             },
-            "days_to_due": -17
+            "days_to_due": -18
           },
           {
             "offset_days": 90,
             "due_date": "2026-09-08",
             "status": "PENDING",
             "result": null,
-            "days_to_due": 13
+            "days_to_due": 12
           }
         ],
         "next_checkpoint": {
@@ -413,27 +413,25 @@
           "due_date": "2026-09-08",
           "status": "PENDING",
           "result": null,
-          "days_to_due": 13
+          "days_to_due": 12
         },
         "technical": {
-          "price_change_pct": 0.799,
-          "turnover_rate": 0.8112,
-          "volume_ratio": 1.08,
-          "momentum_factor": 58.4,
-          "low_vol_factor": 70.4,
-          "alpha_score": 56.7,
+          "price_change_pct": -0.6515,
+          "turnover_rate": 0.5077,
+          "volume_ratio": 0.65,
+          "momentum_factor": 58.1,
+          "low_vol_factor": 98.6,
+          "alpha_score": 61.0,
           "source": "universe_a",
           "signals": {
             "zone": "BULLISH",
-            "generated_at": "2026-08-26",
-            "rsi14": 52.5,
-            "ma20": 91.2,
-            "ma60": 89.77,
+            "generated_at": "2026-08-27",
+            "rsi14": 55.1,
+            "ma20": 91.07,
+            "ma60": 89.69,
             "signals": [
               "MA20_BOUNCE",
-              "MA60_BOUNCE",
-              "MACD_GOLDEN_CROSS",
-              "KDJ_OVERBOUGHT"
+              "MA60_BOUNCE"
             ],
             "source": "signals_file"
           }
@@ -547,7 +545,7 @@
               ],
               "note": "mechanical reads only — wrong_if/catalyst resolution requires the human (disclosure-bound)"
             },
-            "days_to_due": -45
+            "days_to_due": -46
           },
           {
             "offset_days": 60,
@@ -576,14 +574,14 @@
               ],
               "note": "mechanical reads only — wrong_if/catalyst resolution requires the human (disclosure-bound)"
             },
-            "days_to_due": -15
+            "days_to_due": -16
           },
           {
             "offset_days": 90,
             "due_date": "2026-09-10",
             "status": "PENDING",
             "result": null,
-            "days_to_due": 15
+            "days_to_due": 14
           }
         ],
         "next_checkpoint": {
@@ -591,23 +589,25 @@
           "due_date": "2026-09-10",
           "status": "PENDING",
           "result": null,
-          "days_to_due": 15
+          "days_to_due": 14
         },
         "technical": {
-          "price_change_pct": -0.1219,
-          "turnover_rate": 1.3691,
-          "volume_ratio": 0.71,
-          "momentum_factor": 99.0,
-          "low_vol_factor": 30.2,
-          "alpha_score": 53.4,
+          "price_change_pct": 1.8766,
+          "turnover_rate": 1.6752,
+          "volume_ratio": 1.01,
+          "momentum_factor": 99.2,
+          "low_vol_factor": 25.0,
+          "alpha_score": 52.7,
           "source": "universe_a",
           "signals": {
             "zone": "BULLISH",
-            "generated_at": "2026-08-26",
-            "rsi14": 48.1,
-            "ma20": 262.33,
-            "ma60": 260.7,
-            "signals": [],
+            "generated_at": "2026-08-27",
+            "rsi14": 48.0,
+            "ma20": 262.0,
+            "ma60": 260.99,
+            "signals": [
+              "MACD_DEATH_CROSS"
+            ],
             "source": "signals_file"
           }
         },
@@ -720,7 +720,7 @@
               ],
               "note": "mechanical reads only — wrong_if/catalyst resolution requires the human (disclosure-bound)"
             },
-            "days_to_due": -45
+            "days_to_due": -46
           },
           {
             "offset_days": 60,
@@ -749,14 +749,14 @@
               ],
               "note": "mechanical reads only — wrong_if/catalyst resolution requires the human (disclosure-bound)"
             },
-            "days_to_due": -15
+            "days_to_due": -16
           },
           {
             "offset_days": 90,
             "due_date": "2026-09-10",
             "status": "PENDING",
             "result": null,
-            "days_to_due": 15
+            "days_to_due": 14
           }
         ],
         "next_checkpoint": {
@@ -764,26 +764,23 @@
           "due_date": "2026-09-10",
           "status": "PENDING",
           "result": null,
-          "days_to_due": 15
+          "days_to_due": 14
         },
         "technical": {
-          "price_change_pct": 0.0,
-          "turnover_rate": 2.657,
-          "volume_ratio": 0.74,
+          "price_change_pct": 3.8925,
+          "turnover_rate": 3.7466,
+          "volume_ratio": 1.2,
           "momentum_factor": 97.5,
-          "low_vol_factor": 44.3,
-          "alpha_score": 57.1,
+          "low_vol_factor": 23.6,
+          "alpha_score": 53.9,
           "source": "universe_a",
           "signals": {
             "zone": "BEARISH",
-            "generated_at": "2026-08-26",
+            "generated_at": "2026-08-27",
             "rsi14": 44.5,
-            "ma20": 74.03,
-            "ma60": 79.68,
-            "signals": [
-              "MACD_DEATH_CROSS",
-              "KDJ_OVERSOLD"
-            ],
+            "ma20": 74.16,
+            "ma60": 79.76,
+            "signals": [],
             "source": "signals_file"
           }
         },
@@ -870,21 +867,21 @@
             "due_date": "2026-07-14",
             "status": "PENDING",
             "result": null,
-            "days_to_due": -43
+            "days_to_due": -44
           },
           {
             "offset_days": 60,
             "due_date": "2026-08-13",
             "status": "PENDING",
             "result": null,
-            "days_to_due": -13
+            "days_to_due": -14
           },
           {
             "offset_days": 90,
             "due_date": "2026-09-12",
             "status": "PENDING",
             "result": null,
-            "days_to_due": 17
+            "days_to_due": 16
           }
         ],
         "next_checkpoint": {
@@ -892,15 +889,15 @@
           "due_date": "2026-07-14",
           "status": "PENDING",
           "result": null,
-          "days_to_due": -43
+          "days_to_due": -44
         },
         "technical": {
-          "price_change_pct": 3.3844,
-          "turnover_rate": 2.6422,
-          "volume_ratio": 0.97,
-          "momentum_factor": 96.9,
-          "low_vol_factor": 15.5,
-          "alpha_score": 51.4,
+          "price_change_pct": 10.0597,
+          "turnover_rate": 5.8762,
+          "volume_ratio": 2.49,
+          "momentum_factor": 97.3,
+          "low_vol_factor": 3.9,
+          "alpha_score": 49.5,
           "source": "universe_a",
           "signals": {
             "zone": null,
@@ -1001,21 +998,21 @@
             "due_date": "2026-07-14",
             "status": "PENDING",
             "result": null,
-            "days_to_due": -43
+            "days_to_due": -44
           },
           {
             "offset_days": 60,
             "due_date": "2026-08-13",
             "status": "PENDING",
             "result": null,
-            "days_to_due": -13
+            "days_to_due": -14
           },
           {
             "offset_days": 90,
             "due_date": "2026-09-12",
             "status": "PENDING",
             "result": null,
-            "days_to_due": 17
+            "days_to_due": 16
           }
         ],
         "next_checkpoint": {
@@ -1023,15 +1020,15 @@
           "due_date": "2026-07-14",
           "status": "PENDING",
           "result": null,
-          "days_to_due": -43
+          "days_to_due": -44
         },
         "technical": {
-          "price_change_pct": 3.0642,
-          "turnover_rate": 1.5625,
-          "volume_ratio": 0.72,
+          "price_change_pct": 2.6575,
+          "turnover_rate": 1.7544,
+          "volume_ratio": 0.9,
           "momentum_factor": 99.6,
-          "low_vol_factor": 11.2,
-          "alpha_score": 52.0,
+          "low_vol_factor": 20.7,
+          "alpha_score": 53.5,
           "source": "universe_a",
           "signals": {
             "zone": null,
@@ -1120,21 +1117,21 @@
             "due_date": "2026-07-15",
             "status": "PENDING",
             "result": null,
-            "days_to_due": -42
+            "days_to_due": -43
           },
           {
             "offset_days": 60,
             "due_date": "2026-08-14",
             "status": "PENDING",
             "result": null,
-            "days_to_due": -12
+            "days_to_due": -13
           },
           {
             "offset_days": 90,
             "due_date": "2026-09-13",
             "status": "PENDING",
             "result": null,
-            "days_to_due": 18
+            "days_to_due": 17
           }
         ],
         "next_checkpoint": {
@@ -1142,15 +1139,15 @@
           "due_date": "2026-07-15",
           "status": "PENDING",
           "result": null,
-          "days_to_due": -42
+          "days_to_due": -43
         },
         "technical": {
-          "price_change_pct": 0.6983,
-          "turnover_rate": 0.3696,
-          "volume_ratio": 0.78,
-          "momentum_factor": 90.3,
-          "low_vol_factor": 71.0,
-          "alpha_score": 64.1,
+          "price_change_pct": 5.4317,
+          "turnover_rate": 0.751,
+          "volume_ratio": 1.84,
+          "momentum_factor": 87.1,
+          "low_vol_factor": 29.2,
+          "alpha_score": 57.0,
           "source": "universe_a",
           "signals": {
             "zone": null,
@@ -1251,21 +1248,21 @@
             "due_date": "2026-07-21",
             "status": "PENDING",
             "result": null,
-            "days_to_due": -36
+            "days_to_due": -37
           },
           {
             "offset_days": 60,
             "due_date": "2026-08-20",
             "status": "PENDING",
             "result": null,
-            "days_to_due": -6
+            "days_to_due": -7
           },
           {
             "offset_days": 90,
             "due_date": "2026-09-19",
             "status": "PENDING",
             "result": null,
-            "days_to_due": 24
+            "days_to_due": 23
           }
         ],
         "next_checkpoint": {
@@ -1273,15 +1270,15 @@
           "due_date": "2026-07-21",
           "status": "PENDING",
           "result": null,
-          "days_to_due": -36
+          "days_to_due": -37
         },
         "technical": {
-          "price_change_pct": 1.3671,
-          "turnover_rate": 0.6584,
-          "volume_ratio": 0.89,
-          "momentum_factor": 85.8,
-          "low_vol_factor": 65.3,
-          "alpha_score": 67.2,
+          "price_change_pct": -1.6118,
+          "turnover_rate": 0.4637,
+          "volume_ratio": 0.68,
+          "momentum_factor": 86.6,
+          "low_vol_factor": 58.4,
+          "alpha_score": 66.5,
           "source": "universe_a",
           "signals": {
             "zone": null,
@@ -1356,7 +1353,7 @@
               ],
               "note": "mechanical beta read only — catalyst/wrong_if resolution remains human/disclosure-bound"
             },
-            "days_to_due": -43
+            "days_to_due": -44
           },
           {
             "offset_days": 60,
@@ -1376,14 +1373,14 @@
               ],
               "note": "mechanical beta read only — catalyst/wrong_if resolution remains human/disclosure-bound"
             },
-            "days_to_due": -13
+            "days_to_due": -14
           },
           {
             "offset_days": 90,
             "due_date": "2026-09-12",
             "status": "PENDING",
             "result": null,
-            "days_to_due": 17
+            "days_to_due": 16
           }
         ],
         "next_checkpoint": {
@@ -1391,15 +1388,15 @@
           "due_date": "2026-09-12",
           "status": "PENDING",
           "result": null,
-          "days_to_due": 17
+          "days_to_due": 16
         },
         "technical": {
-          "price_change_pct": 0.6983,
+          "price_change_pct": 5.4317,
           "turnover_rate": 0.6,
-          "volume_ratio": 0.78,
+          "volume_ratio": 1.84,
           "momentum_factor": 57.3,
-          "low_vol_factor": 71.0,
-          "alpha_score": 64.1,
+          "low_vol_factor": 29.2,
+          "alpha_score": 57.0,
           "source": "universe_a",
           "value_factor": 45.6,
           "signals": {
@@ -1470,7 +1467,7 @@
               ],
               "note": "mechanical beta read only — catalyst/wrong_if resolution remains human/disclosure-bound"
             },
-            "days_to_due": -43
+            "days_to_due": -44
           },
           {
             "offset_days": 60,
@@ -1490,14 +1487,14 @@
               ],
               "note": "mechanical beta read only — catalyst/wrong_if resolution remains human/disclosure-bound"
             },
-            "days_to_due": -13
+            "days_to_due": -14
           },
           {
             "offset_days": 90,
             "due_date": "2026-09-12",
             "status": "PENDING",
             "result": null,
-            "days_to_due": 17
+            "days_to_due": 16
           }
         ],
         "next_checkpoint": {
@@ -1505,15 +1502,15 @@
           "due_date": "2026-09-12",
           "status": "PENDING",
           "result": null,
-          "days_to_due": 17
+          "days_to_due": 16
         },
         "technical": {
-          "price_change_pct": 0.8798,
+          "price_change_pct": 0.1744,
           "turnover_rate": 3.43,
-          "volume_ratio": 1.76,
+          "volume_ratio": 1.02,
           "momentum_factor": 84.8,
-          "low_vol_factor": 37.4,
-          "alpha_score": 53.2,
+          "low_vol_factor": 60.9,
+          "alpha_score": 57.9,
           "source": "universe_a",
           "value_factor": 63.7,
           "signals": {
@@ -1584,7 +1581,7 @@
               ],
               "note": "mechanical beta read only — catalyst/wrong_if resolution remains human/disclosure-bound"
             },
-            "days_to_due": -43
+            "days_to_due": -44
           },
           {
             "offset_days": 60,
@@ -1604,14 +1601,14 @@
               ],
               "note": "mechanical beta read only — catalyst/wrong_if resolution remains human/disclosure-bound"
             },
-            "days_to_due": -13
+            "days_to_due": -14
           },
           {
             "offset_days": 90,
             "due_date": "2026-09-12",
             "status": "PENDING",
             "result": null,
-            "days_to_due": 17
+            "days_to_due": 16
           }
         ],
         "next_checkpoint": {
@@ -1619,15 +1616,15 @@
           "due_date": "2026-09-12",
           "status": "PENDING",
           "result": null,
-          "days_to_due": 17
+          "days_to_due": 16
         },
         "technical": {
-          "price_change_pct": 0.0,
+          "price_change_pct": 6.383,
           "turnover_rate": 1.69,
-          "volume_ratio": 0.7,
+          "volume_ratio": 2.37,
           "momentum_factor": 42.3,
-          "low_vol_factor": 98.0,
-          "alpha_score": 58.6,
+          "low_vol_factor": 28.2,
+          "alpha_score": 47.5,
           "source": "universe_a",
           "value_factor": 54.6,
           "signals": {
@@ -1698,7 +1695,7 @@
               ],
               "note": "mechanical beta read only — catalyst/wrong_if resolution remains human/disclosure-bound"
             },
-            "days_to_due": -43
+            "days_to_due": -44
           },
           {
             "offset_days": 60,
@@ -1718,14 +1715,14 @@
               ],
               "note": "mechanical beta read only — catalyst/wrong_if resolution remains human/disclosure-bound"
             },
-            "days_to_due": -13
+            "days_to_due": -14
           },
           {
             "offset_days": 90,
             "due_date": "2026-09-12",
             "status": "PENDING",
             "result": null,
-            "days_to_due": 17
+            "days_to_due": 16
           }
         ],
         "next_checkpoint": {
@@ -1733,15 +1730,15 @@
           "due_date": "2026-09-12",
           "status": "PENDING",
           "result": null,
-          "days_to_due": 17
+          "days_to_due": 16
         },
         "technical": {
-          "price_change_pct": 4.3136,
+          "price_change_pct": 2.3486,
           "turnover_rate": 3.23,
-          "volume_ratio": 1.37,
+          "volume_ratio": 1.41,
           "momentum_factor": 38.0,
-          "low_vol_factor": 15.8,
-          "alpha_score": 54.2,
+          "low_vol_factor": 24.4,
+          "alpha_score": 55.3,
           "source": "universe_a",
           "value_factor": 36.9,
           "signals": {
@@ -1812,7 +1809,7 @@
               ],
               "note": "mechanical beta read only — catalyst/wrong_if resolution remains human/disclosure-bound"
             },
-            "days_to_due": -43
+            "days_to_due": -44
           },
           {
             "offset_days": 60,
@@ -1832,14 +1829,14 @@
               ],
               "note": "mechanical beta read only — catalyst/wrong_if resolution remains human/disclosure-bound"
             },
-            "days_to_due": -13
+            "days_to_due": -14
           },
           {
             "offset_days": 90,
             "due_date": "2026-09-12",
             "status": "PENDING",
             "result": null,
-            "days_to_due": 17
+            "days_to_due": 16
           }
         ],
         "next_checkpoint": {
@@ -1847,15 +1844,15 @@
           "due_date": "2026-09-12",
           "status": "PENDING",
           "result": null,
-          "days_to_due": 17
+          "days_to_due": 16
         },
         "technical": {
-          "price_change_pct": -1.477,
+          "price_change_pct": 6.0544,
           "turnover_rate": 5.97,
-          "volume_ratio": 0.6,
+          "volume_ratio": 1.5,
           "momentum_factor": 90.3,
-          "low_vol_factor": 73.2,
-          "alpha_score": 66.7,
+          "low_vol_factor": 17.3,
+          "alpha_score": 58.0,
           "source": "universe_a",
           "value_factor": 50.2,
           "signals": {
@@ -1926,7 +1923,7 @@
               ],
               "note": "mechanical beta read only — catalyst/wrong_if resolution remains human/disclosure-bound"
             },
-            "days_to_due": -43
+            "days_to_due": -44
           },
           {
             "offset_days": 60,
@@ -1946,14 +1943,14 @@
               ],
               "note": "mechanical beta read only — catalyst/wrong_if resolution remains human/disclosure-bound"
             },
-            "days_to_due": -13
+            "days_to_due": -14
           },
           {
             "offset_days": 90,
             "due_date": "2026-09-12",
             "status": "PENDING",
             "result": null,
-            "days_to_due": 17
+            "days_to_due": 16
           }
         ],
         "next_checkpoint": {
@@ -1961,15 +1958,15 @@
           "due_date": "2026-09-12",
           "status": "PENDING",
           "result": null,
-          "days_to_due": 17
+          "days_to_due": 16
         },
         "technical": {
-          "price_change_pct": -0.474,
+          "price_change_pct": 6.499,
           "turnover_rate": 1.63,
-          "volume_ratio": 0.77,
+          "volume_ratio": 1.3,
           "momentum_factor": 27.4,
-          "low_vol_factor": 74.1,
-          "alpha_score": 56.8,
+          "low_vol_factor": 28.7,
+          "alpha_score": 49.3,
           "source": "universe_a",
           "value_factor": 21.4,
           "signals": {

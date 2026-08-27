@@ -1,11 +1,24 @@
 {
   "ticker": "300054.SZ",
-  "fetched_at": "2026-08-26T09:10:25Z",
+  "fetched_at": "2026-08-27T11:06:35Z",
   "permission_model": "runtime_probe",
   "_status": "partial",
   "data": {
     "daily": {
       "rows": [
+        {
+          "ts_code": "300054.SZ",
+          "trade_date": "20260827",
+          "open": 73.0,
+          "high": 75.46,
+          "low": 72.07,
+          "close": 75.0,
+          "pre_close": 72.19,
+          "change": 2.81,
+          "pct_chg": 3.8925,
+          "vol": 278903.46,
+          "amount": 2070802.38132
+        },
         {
           "ts_code": "300054.SZ",
           "trade_date": "20260826",
@@ -824,27 +837,34 @@
           "pct_chg": -9.9517,
           "vol": 560320.43,
           "amount": 3884304.382
-        },
-        {
-          "ts_code": "300054.SZ",
-          "trade_date": "20260528",
-          "open": 73.33,
-          "high": 75.4,
-          "low": 71.0,
-          "close": 74.56,
-          "pre_close": 73.4,
-          "change": 1.16,
-          "pct_chg": 1.5804,
-          "vol": 360836.63,
-          "amount": 2660674.102
         }
       ],
       "row_count": 64,
       "_status": "ok",
-      "as_of": "20260826"
+      "as_of": "20260827"
     },
     "daily_basic": {
       "rows": [
+        {
+          "ts_code": "300054.SZ",
+          "trade_date": "20260827",
+          "close": 75.0,
+          "turnover_rate": 3.7466,
+          "turnover_rate_f": 4.1312,
+          "volume_ratio": 1.2,
+          "pe": 99.412,
+          "pe_ttm": 76.2807,
+          "pb": 12.7304,
+          "ps": 19.5625,
+          "ps_ttm": 18.5822,
+          "dv_ratio": 0.1319,
+          "dv_ttm": 0.1331,
+          "total_share": 95462.5953,
+          "float_share": 74442.7001,
+          "free_share": 67510.6768,
+          "total_mv": 7159694.6475,
+          "circ_mv": 5583202.5075
+        },
         {
           "ts_code": "300054.SZ",
           "trade_date": "20260826",
@@ -2104,34 +2124,19 @@
           "free_share": 66883.2612,
           "total_mv": 6365345.6593,
           "circ_mv": 4955958.2013
-        },
-        {
-          "ts_code": "300054.SZ",
-          "trade_date": "20260528",
-          "close": 74.56,
-          "turnover_rate": 4.8884,
-          "turnover_rate_f": 5.395,
-          "volume_ratio": 0.7,
-          "pe": 98.1501,
-          "pe_ttm": 85.1493,
-          "pb": 12.9425,
-          "ps": 19.3142,
-          "ps_ttm": 18.3313,
-          "dv_ratio": 0.1336,
-          "dv_ttm": 0.1336,
-          "total_share": 94807.0548,
-          "float_share": 73815.2845,
-          "free_share": 66883.2612,
-          "total_mv": 7068814.0059,
-          "circ_mv": 5503667.6123
         }
       ],
       "row_count": 64,
       "_status": "ok",
-      "as_of": "20260826"
+      "as_of": "20260827"
     },
     "adj_factor": {
       "rows": [
+        {
+          "ts_code": "300054.SZ",
+          "trade_date": "20260827",
+          "adj_factor": 12.967
+        },
         {
           "ts_code": "300054.SZ",
           "trade_date": "20260826",
@@ -2446,16 +2451,11 @@
           "ts_code": "300054.SZ",
           "trade_date": "20260529",
           "adj_factor": 12.9517
-        },
-        {
-          "ts_code": "300054.SZ",
-          "trade_date": "20260528",
-          "adj_factor": 12.9517
         }
       ],
       "row_count": 64,
       "_status": "ok",
-      "as_of": "20260826"
+      "as_of": "20260827"
     },
     "income": {
       "rows": [
@@ -2608,8 +2608,8 @@
           "t_compr_income": 563137016.81,
           "compr_inc_attr_p": 529436710.39,
           "compr_inc_attr_m_s": 33700306.42,
-          "ebit": 642496832.63,
-          "ebitda": 787362268.01,
+          "ebit": 641452291.35,
+          "ebitda": 786317726.73,
           "insurance_exp": null,
           "undist_profit": null,
           "distable_profit": null,
