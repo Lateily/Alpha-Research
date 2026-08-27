@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import re
 import unittest
 from datetime import datetime
@@ -27,6 +28,130 @@ def _strict_object(pairs):
 
 
 SCHEMA = json.loads(SCHEMA_PATH.read_text(encoding="utf-8"), object_pairs_hook=_strict_object)
+
+
+def _digest(value: Any) -> str:
+    encoded = json.dumps(
+        value, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False
+    ).encode("utf-8")
+    return "sha256:" + hashlib.sha256(encoded).hexdigest()
+
+
+def _derived_status(packet: Mapping[str, Any]) -> str:
+    publication = packet["source_publication"]
+    statuses = {
+        publication["daily_source_status"],
+        publication["quarterly_source_status"],
+    }
+    if "PENDING" in statuses:
+        return "SOURCE_PUBLICATION_PENDING"
+    if statuses.intersection({"STALE", "DATA_BLOCKED"}):
+        return "DATA_BLOCKED"
+    if not any(row["allowed_for_u4_packet"] is True for row in packet["candidate_rows"]):
+        return "BLOCKED_BEFORE_U4"
+    return "READY_FOR_JUNYAN_REVIEW"
+
+
+def _seal(packet: dict[str, Any]) -> dict[str, Any]:
+    rows = packet["candidate_rows"]
+    allowed = sum(row["allowed_for_u4_packet"] is True for row in rows)
+    publication = packet["source_publication"]
+    blockers = sorted({code for row in rows for code in row["blocked_reasons"]})
+    if publication["daily_source_status"] != "PUBLISHED":
+        blockers.append("DAILY_SOURCE_NOT_PUBLISHED")
+    if publication["quarterly_source_status"] != "PUBLISHED":
+        blockers.append("QUARTERLY_SOURCE_NOT_PUBLISHED")
+    packet["diagnostic"] = {
+        "tool": "u4_pre_decision.py",
+        "tool_version": "0.1",
+        "evidence_rows_checked": len(rows),
+        "evidence_rows_hash_verified": True,
+        "receipt_self_report_checked": True,
+        "red_flag_only_rows": sum(bool(row["red_flag_channels"]) for row in rows),
+        "positive_channel_rows": sum(bool(row["positive_channels"]) for row in rows),
+        "u3_complete_rows": sum(
+            "U3_BATTERY_INCOMPLETE" not in row["blocked_reasons"] for row in rows
+        ),
+        "u4_ready_rows": allowed,
+        "blocker_codes": sorted(set(blockers)),
+    }
+    packet["source_refs"]["diagnostic_report_hash"] = _digest(packet["diagnostic"])
+    packet["packet_summary"] = {
+        "candidate_count": len(rows),
+        "allowed_for_review_count": allowed,
+        "blocked_count": len(rows) - allowed,
+        "red_flag_count": sum(bool(row["red_flag_channels"]) for row in rows),
+        "data_blocked_count": sum(row["quality_status"] == "DATA_BLOCKED" for row in rows),
+        "same_day_hash": _digest({
+            "as_of": packet["as_of"],
+            "source_refs": packet["source_refs"],
+            "source_publication": publication,
+            "candidate_rows": rows,
+        }),
+    }
+    packet["status"] = _derived_status(packet)
+    packet["packet_hash"] = _digest({
+        key: value for key, value in packet.items() if key != "packet_hash"
+    })
+    return packet
+
+
+def _semantic_errors(packet: Mapping[str, Any]) -> list[str]:
+    errors: list[str] = []
+    try:
+        publication = packet["source_publication"]
+        rows = packet["candidate_rows"]
+        refs = packet["source_refs"]
+    except (KeyError, TypeError):
+        return ["semantic inputs are missing"]
+    if not isinstance(publication, Mapping) or not isinstance(rows, list) or not isinstance(refs, Mapping):
+        return ["semantic inputs have the wrong type"]
+    for index, row in enumerate(rows):
+        if not isinstance(row, Mapping):
+            errors.append(f"candidate_rows[{index}] is not an object")
+            continue
+        positive = row.get("positive_channels")
+        red_flags = row.get("red_flag_channels")
+        blocked = row.get("blocked_reasons")
+        missing = row.get("missing_evidence")
+        if not all(isinstance(value, list) for value in (positive, red_flags, blocked, missing)):
+            errors.append(f"candidate_rows[{index}] evidence lists are invalid")
+            continue
+        if red_flags and "E1_RED_FLAG_ACTIVE" not in blocked:
+            errors.append(f"candidate_rows[{index}] red flag is not blocked")
+        if not positive and "NO_POSITIVE_CHANNEL" not in blocked:
+            errors.append(f"candidate_rows[{index}] missing positive channel is not blocked")
+        if row.get("candidate_status") == "RANDOM_CONTROL" and "RANDOM_CONTROL_NOT_SELECTABLE" not in blocked:
+            errors.append(f"candidate_rows[{index}] random control is not blocked")
+        if bool(blocked) == (row.get("allowed_for_u4_packet") is True):
+            errors.append(f"candidate_rows[{index}] allowed flag is not derived")
+        expected_quality = (
+            "REVISE_REQUIRED" if "E1_RED_FLAG_ACTIVE" in blocked
+            else "DATA_BLOCKED" if blocked
+            else "WARN" if missing
+            else "PASS"
+        )
+        if row.get("quality_status") != expected_quality:
+            errors.append(f"candidate_rows[{index}] quality is not derived")
+        for identity in ("cohort_id", "causal_cluster_id"):
+            if row.get(identity) == "UNAVAILABLE" and identity not in missing:
+                errors.append(f"candidate_rows[{index}] hides unavailable {identity}")
+    try:
+        expected = _seal(json.loads(json.dumps(packet)))
+    except (KeyError, TypeError, ValueError):
+        return errors + ["semantic receipt cannot be recomputed"]
+    for field in ("status", "diagnostic", "packet_summary", "packet_hash"):
+        if packet.get(field) != expected.get(field):
+            errors.append(f"{field} is not derived")
+    if refs.get("diagnostic_report_hash") != expected["source_refs"]["diagnostic_report_hash"]:
+        errors.append("diagnostic_report_hash is not derived")
+    all_published = all(
+        publication.get(field) == "PUBLISHED"
+        for field in ("daily_source_status", "quarterly_source_status")
+    )
+    if all_published != (publication.get("pending_sources") == []):
+        errors.append("pending_sources disagrees with source status")
+    return errors
 
 
 def _resolve_ref(ref: str) -> Mapping[str, Any]:
@@ -178,18 +303,7 @@ def _packet(**updates: Any) -> dict[str, Any]:
             "pending_sources": [],
             "retry_after_utc": None,
         },
-        "diagnostic": {
-            "tool": "u4_pre_decision.py",
-            "tool_version": "0.1",
-            "evidence_rows_checked": 75,
-            "evidence_rows_hash_verified": True,
-            "receipt_self_report_checked": True,
-            "red_flag_only_rows": 0,
-            "positive_channel_rows": 75,
-            "u3_complete_rows": 75,
-            "u4_ready_rows": 3,
-            "blocker_codes": [],
-        },
+        "diagnostic": {},
         "candidate_rows": [_candidate()],
         "packet_summary": {
             "candidate_count": 1,
@@ -215,15 +329,15 @@ def _packet(**updates: Any) -> dict[str, Any]:
         "packet_hash": "sha256:" + "a" * 64,
     }
     packet.update(updates)
-    return packet
+    return _seal(packet)
 
 
 class U4PreDecisionPacketContractTests(unittest.TestCase):
     def assertValid(self, value: Mapping[str, Any]) -> None:
-        self.assertEqual(_errors(value, SCHEMA), [])
+        self.assertEqual(_errors(value, SCHEMA) + _semantic_errors(value), [])
 
     def assertInvalid(self, value: Mapping[str, Any], fragment: str) -> None:
-        errors = _errors(value, SCHEMA)
+        errors = _errors(value, SCHEMA) + _semantic_errors(value)
         self.assertTrue(any(fragment in error for error in errors), errors)
 
     def test_valid_reviewable_packet_shape(self) -> None:
@@ -253,7 +367,7 @@ class U4PreDecisionPacketContractTests(unittest.TestCase):
         packet["source_publication"]["retry_after_utc"] = "2026-08-26T09:00:00+00:00"
         self.assertInvalid(packet, "expected const 'SOURCE_PUBLICATION_PENDING'")
         packet["status"] = "SOURCE_PUBLICATION_PENDING"
-        self.assertValid(packet)
+        self.assertValid(_seal(packet))
 
         packet = _packet()
         packet["source_publication"]["pending_sources"] = ["not-really-pending"]
@@ -267,7 +381,7 @@ class U4PreDecisionPacketContractTests(unittest.TestCase):
             with self.subTest(daily_status=daily_status):
                 self.assertInvalid(packet, "outside enum")
                 packet["status"] = "DATA_BLOCKED"
-                self.assertValid(packet)
+                self.assertValid(_seal(packet))
 
     def test_quarterly_source_status_is_a_real_packet_gate(self) -> None:
         packet = _packet()
@@ -275,14 +389,14 @@ class U4PreDecisionPacketContractTests(unittest.TestCase):
         packet["source_publication"]["pending_sources"] = ["fina_indicator_pit"]
         self.assertInvalid(packet, "expected const 'SOURCE_PUBLICATION_PENDING'")
         packet["status"] = "SOURCE_PUBLICATION_PENDING"
-        self.assertValid(packet)
+        self.assertValid(_seal(packet))
 
         packet = _packet()
         packet["source_publication"]["quarterly_source_status"] = "DATA_BLOCKED"
         packet["source_publication"]["pending_sources"] = ["fina_indicator_pit"]
         self.assertInvalid(packet, "outside enum")
         packet["status"] = "DATA_BLOCKED"
-        self.assertValid(packet)
+        self.assertValid(_seal(packet))
 
     def test_zero_reviewable_pool_must_stop_before_u4(self) -> None:
         packet = _packet(candidate_rows=[])
@@ -291,7 +405,7 @@ class U4PreDecisionPacketContractTests(unittest.TestCase):
         packet["status"] = "READY_FOR_JUNYAN_REVIEW"
         self.assertInvalid(packet, "outside enum")
         packet["status"] = "BLOCKED_BEFORE_U4"
-        self.assertValid(packet)
+        self.assertValid(_seal(packet))
 
     def test_diagnostic_must_crosscheck_evidence_rows_not_self_report_only(self) -> None:
         for field in ("evidence_rows_hash_verified", "receipt_self_report_checked"):
@@ -312,13 +426,6 @@ class U4PreDecisionPacketContractTests(unittest.TestCase):
                     question_for_junyan=None,
                 )
             ],
-        )
-        packet["packet_summary"].update(
-            {
-                "allowed_for_review_count": 0,
-                "blocked_count": 1,
-                "red_flag_count": 1,
-            }
         )
         self.assertValid(packet)
         packet["candidate_rows"][0]["blocked_reasons"] = ["BUY_SIGNAL"]
@@ -364,7 +471,22 @@ class U4PreDecisionPacketContractTests(unittest.TestCase):
             "allowed_for_u4_packet": False,
             "question_for_junyan": None,
         })
-        self.assertValid(packet)
+        self.assertValid(_seal(packet))
+
+    def test_quality_and_summary_are_recomputed_not_self_reported(self) -> None:
+        packet = _packet()
+        packet["candidate_rows"][0]["quality_status"] = "DATA_BLOCKED"
+        self.assertInvalid(packet, "quality is not derived")
+        packet = _packet()
+        packet["packet_summary"].update({
+            "candidate_count": 999,
+            "allowed_for_review_count": 999,
+            "blocked_count": 0,
+        })
+        self.assertInvalid(packet, "packet_summary is not derived")
+        packet = _packet()
+        packet["diagnostic"]["u4_ready_rows"] = 999
+        self.assertInvalid(packet, "diagnostic is not derived")
 
     def test_random_control_and_incomplete_u3_cannot_be_marked_reviewable(self) -> None:
         for blocker in ("RANDOM_CONTROL_NOT_SELECTABLE", "U3_BATTERY_INCOMPLETE"):
@@ -395,6 +517,14 @@ class U4PreDecisionPacketContractTests(unittest.TestCase):
         packet = _packet()
         packet["selection_boundary"]["allowed_selected_counts"] = [0, 1, 3, 5]
         self.assertInvalid(packet, "expected const 3")
+        for field, value in (
+            ("human_selection_authority", "MODEL"),
+            ("machine_selection_authority", "AUTO"),
+        ):
+            packet = _packet()
+            packet["selection_boundary"][field] = value
+            with self.subTest(field=field):
+                self.assertInvalid(packet, "expected const")
         for field in ("production_authority", "trade_authority", "paper_order_authority", "claim_allowed"):
             packet = _packet()
             packet["authority"][field] = True
@@ -421,7 +551,10 @@ class U4PreDecisionPacketContractTests(unittest.TestCase):
 
     def test_ci_runs_this_contract(self) -> None:
         ci = CI_PATH.read_text(encoding="utf-8")
-        self.assertIn("python3 tests/test_u4_pre_decision_packet.py", ci)
+        self.assertRegex(
+            ci,
+            r"(?m)^\s*run:\s*python3 tests/test_u4_pre_decision_packet\.py\s*$",
+        )
         self.assertIn('"docs/research/**"', ci)
 
 

@@ -93,6 +93,12 @@ remain visible as otherwise reviewable while the packet itself is
 `DATA_BLOCKED`; Junyan must not make a U4 decision until the missing same-day
 source is published and the packet is rebuilt.
 
+JSON Schema validation is necessary but not sufficient. Before review, the
+offline packet validator must recompute packet status, summary counts,
+diagnostic counts, the same-day digest, the diagnostic digest, and the packet
+self-hash from the candidate rows and source state. A consumer must reject a
+packet that has only passed structural Schema validation.
+
 ## Selection Boundary
 
 The only legal selected counts after Junyan review are:
