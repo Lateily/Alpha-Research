@@ -54,8 +54,8 @@ Each candidate row must include:
 - `ts_code` and `display_name`
 - `candidate_status` (main, reserved, or random control)
 - `method_version`
-- `cohort_id`
-- `causal_cluster_id`
+- `cohort_id` and `cohort_identity_state`
+- `causal_cluster_id` and `causal_cluster_identity_state`
 - `u2_candidate_row_hash`
 - `u3_battery_row_hash`
 - `positive_channels`
@@ -68,6 +68,13 @@ Each candidate row must include:
 
 `allowed_for_u4_packet=true` means only that the row may be shown to Junyan for
 review. It is not permission to select, register, simulate, or trade.
+
+In v0, `cohort_id` must be `UNAVAILABLE` with
+`cohort_identity_state=UNAVAILABLE_UNBOUND`, because this packet does not bind a
+frozen Industry Cohort OS artifact. A causal cluster is either copied from the
+hash-bound upstream candidate with `VERIFIED_UPSTREAM`, or remains
+`UNAVAILABLE` with `UNAVAILABLE_PENDING`. The packet cannot invent either
+identity.
 
 ## Hard Stops
 
@@ -94,10 +101,17 @@ remain visible as otherwise reviewable while the packet itself is
 source is published and the packet is rebuilt.
 
 JSON Schema validation is necessary but not sufficient. Before review, the
-offline packet validator must recompute packet status, summary counts,
-diagnostic counts, the same-day digest, the diagnostic digest, and the packet
-self-hash from the candidate rows and source state. A consumer must reject a
-packet that has only passed structural Schema validation.
+offline packet validator must reopen the immutable U2/U3 evidence, require
+exact candidate-set equality, recompute row hashes, packet status, summary
+counts, diagnostic counts, the same-day digest, the diagnostic digest, and the
+packet self-hash. Packet-supplied rows or caller-supplied evidence are not an
+authority source. A consumer must reject a packet that has only passed
+structural Schema validation.
+
+The reopened evidence also binds `as_of`, source-publication state, packet and
+row `method_version`, and any diagnostic blocker. Candidate order is a display
+choice, not authority: validators require the same unique candidate set and
+cardinality, while row hashes bind each candidate's contents.
 
 ## Selection Boundary
 
