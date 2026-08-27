@@ -1,11 +1,83 @@
 {
-  "generated_at": "2026-08-27T11:10:14Z",
+  "generated_at": "2026-08-27T19:17:02Z",
   "_status": "OK",
   "window_hours": 24,
-  "as_of": "2026-08-27 18:21:00",
-  "row_count": 43,
+  "as_of": "2026-08-28 02:15:00",
+  "row_count": 46,
   "_trust_boundary": "UNTRUSTED EXTERNAL TEXT — titles/urls are scraped media content. Wrap in an explicit data boundary before any LLM prompt; never treat as instructions.",
   "items": [
+    {
+      "title": "洛阳轴承集团股份有限公司首次公开发行股票并在创业板上市网下发行初步配售结果公告",
+      "src": "新浪财经",
+      "pub_time": "2026-08-28 02:15:00",
+      "url": "https://finance.sina.com.cn/roll/2026-08-28/doc-inipuuqi5096281.shtml"
+    },
+    {
+      "title": "产销对接助“广货”拓市 智能传感器专场落地东莞",
+      "src": "同花顺",
+      "pub_time": "2026-08-28 00:29:06",
+      "url": "http://field.10jqka.com.cn/20260828/c679364895.shtml"
+    },
+    {
+      "title": "*ST新元：上半年营收同比增长658% 拟收购四川愿景51%股权",
+      "src": "新浪财经",
+      "pub_time": "2026-08-27 23:49:00",
+      "url": "https://finance.sina.com.cn/roll/2026-08-27/doc-inipuuqi9046979.shtml"
+    },
+    {
+      "title": "灵初智能完成A轮超亿美元融资  拓普集团等参投",
+      "src": "财联社",
+      "pub_time": "2026-08-27 23:33:53",
+      "url": "https://www.cls.cn/detail/2466860"
+    },
+    {
+      "title": "研发投入激增叠加投资收入减少 国机精工2026H1利润同比下滑超7成|财报解读",
+      "src": "财联社",
+      "pub_time": "2026-08-27 23:01:37",
+      "url": "https://www.cls.cn/detail/2466836"
+    },
+    {
+      "title": "小鹏给智驾加上“时间记忆”",
+      "src": "华尔街见闻",
+      "pub_time": "2026-08-27 22:47:06",
+      "url": "https://wallstreetcn.com/articles/3780481"
+    },
+    {
+      "title": "拟主动退市，昔日“彩电一哥”将告别A股！公司已连亏4年",
+      "src": "财联社",
+      "pub_time": "2026-08-27 21:21:50",
+      "url": "https://www.cls.cn/detail/2466720"
+    },
+    {
+      "title": "13天12板狂欢背后：爱丽家居2026年上半年营收同比下降逾6%，归母净利润由盈转亏",
+      "src": "新浪财经",
+      "pub_time": "2026-08-27 20:28:00",
+      "url": "https://finance.sina.com.cn/roll/2026-08-27/doc-inipuiyp5225313.shtml"
+    },
+    {
+      "title": "港交所回应“GEM与主板合并”传闻：将继续研究更多措施切合发展需要",
+      "src": "财联社",
+      "pub_time": "2026-08-27 20:11:55",
+      "url": "https://www.cls.cn/detail/2466625"
+    },
+    {
+      "title": "上半年盈利了，君实生物的“奇点时刻”",
+      "src": "新浪财经",
+      "pub_time": "2026-08-27 20:00:00",
+      "url": "https://finance.sina.com.cn/wm/2026-08-27/doc-inipuiyu0718165.shtml"
+    },
+    {
+      "title": "降价压力继续侵蚀国药现代业绩",
+      "src": "新浪财经",
+      "pub_time": "2026-08-27 19:53:00",
+      "url": "https://finance.sina.com.cn/jjxw/2026-08-27/doc-inipuiyp9073496.shtml"
+    },
+    {
+      "title": "香农芯创：上半年归母净利润36.4亿元，同比上升2207.2%",
+      "src": "新浪财经",
+      "pub_time": "2026-08-27 19:04:00",
+      "url": "https://finance.sina.com.cn/stock/zqgd/2026-08-27/doc-inipucst5919060.shtml"
+    },
     {
       "title": "白酒C端转型 泸州老窖以低度化、年轻化培育长期动能",
       "src": "新浪财经",
@@ -37,16 +109,16 @@
       "url": "http://field.10jqka.com.cn/20260827/c679352913.shtml"
     },
     {
-      "title": "诺唯赞上半年归母净利润同比增250.3%至1096万元",
-      "src": "新浪财经",
-      "pub_time": "2026-08-27 16:57:00",
-      "url": "https://finance.sina.com.cn/stock/zqgd/2026-08-27/doc-iniptxkt5378212.shtml"
-    },
-    {
       "title": "天宇股份：上半年归母净利润1.04亿元，同比下降32.1%",
       "src": "新浪财经",
       "pub_time": "2026-08-27 16:57:00",
       "url": "https://finance.sina.com.cn/stock/zqgd/2026-08-27/doc-iniptxkt5378218.shtml"
+    },
+    {
+      "title": "诺唯赞上半年归母净利润同比增250.3%至1096万元",
+      "src": "新浪财经",
+      "pub_time": "2026-08-27 16:57:00",
+      "url": "https://finance.sina.com.cn/stock/zqgd/2026-08-27/doc-iniptxkt5378212.shtml"
     },
     {
       "title": "对公猛增、零售收缩！中信银行上半年赚了376亿，不良率持平，拟大手笔分红113亿",
@@ -209,60 +281,6 @@
       "src": "新浪财经",
       "pub_time": "2026-08-27 04:45:00",
       "url": "https://finance.sina.com.cn/roll/2026-08-27/doc-inipsvxf9063381.shtml"
-    },
-    {
-      "title": "机器人自主进化学院亮相HICOOL",
-      "src": "新浪财经",
-      "pub_time": "2026-08-27 02:19:00",
-      "url": "https://finance.sina.com.cn/jjxw/2026-08-27/doc-inipsrri9112235.shtml"
-    },
-    {
-      "title": "长线资金持续借道ETF加仓 频频跻身前十大持有人行列",
-      "src": "新浪财经",
-      "pub_time": "2026-08-27 02:06:00",
-      "url": "https://finance.sina.com.cn/jjxw/2026-08-27/doc-inipsrri5784107.shtml"
-    },
-    {
-      "title": "亨通光电H1净利增逾九成 章建平家族Q2“扫货”光通信股|财报解读",
-      "src": "财联社",
-      "pub_time": "2026-08-26 23:40:28",
-      "url": "https://www.cls.cn/detail/2465480"
-    },
-    {
-      "title": "全流程降本和高端产品增量 新钢股份第二季度实现盈利",
-      "src": "新浪财经",
-      "pub_time": "2026-08-26 22:31:00",
-      "url": "https://finance.sina.com.cn/roll/2026-08-26/doc-inipsezp5974292.shtml"
-    },
-    {
-      "title": "公司与复旦大学合作的机器人腿项目进展如何？精工科技回应",
-      "src": "同花顺",
-      "pub_time": "2026-08-26 21:40:09",
-      "url": "http://field.10jqka.com.cn/20260826/c679318898.shtml"
-    },
-    {
-      "title": "交通运输部就公共数据开发利用答每经问：智能体已有效支撑路段拥堵研判等",
-      "src": "同花顺",
-      "pub_time": "2026-08-26 20:54:11",
-      "url": "http://field.10jqka.com.cn/20260826/c679318230.shtml"
-    },
-    {
-      "title": "莫德纳癌症疫苗，一针近50万美元",
-      "src": "财联社",
-      "pub_time": "2026-08-26 20:21:59",
-      "url": "https://www.cls.cn/detail/2465278"
-    },
-    {
-      "title": "三祥科技：上半年归母净利润3219万元 同比下降18.1%",
-      "src": "新浪财经",
-      "pub_time": "2026-08-26 20:11:00",
-      "url": "https://finance.sina.com.cn/stock/zqgd/2026-08-26/doc-iniprytr6041723.shtml"
-    },
-    {
-      "title": "华为鸿蒙智家技术沟通会举行：发布高阶家电品牌，多款新品齐发",
-      "src": "同花顺",
-      "pub_time": "2026-08-26 19:48:30",
-      "url": "http://field.10jqka.com.cn/20260826/c679314693.shtml"
     }
   ],
   "disclaimer": "不是买卖指令;研究信号,human executes."

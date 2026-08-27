@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "fetched_at": "2026-08-27T11:05:14.265036",
+    "fetched_at": "2026-08-27T19:11:46.570362",
     "version": "4.1",
     "tickers": [
       "300308.SZ",
@@ -645,7 +645,7 @@
         "code": "001258",
         "name": "立新能源",
         "date": "",
-        "reason": "日涨幅偏离值达到7%的前5只证券",
+        "reason": "日振幅值达到15%的前5只证券",
         "buy_amt": null,
         "sell_amt": null,
         "net_amt": null,
@@ -655,7 +655,7 @@
         "code": "001258",
         "name": "立新能源",
         "date": "",
-        "reason": "日振幅值达到15%的前5只证券",
+        "reason": "日涨幅偏离值达到7%的前5只证券",
         "buy_amt": null,
         "sell_amt": null,
         "net_amt": null,
@@ -855,7 +855,7 @@
         "code": "002412",
         "name": "汉森制药",
         "date": "",
-        "reason": "日换手率达到20%的前5只证券",
+        "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
         "buy_amt": null,
         "sell_amt": null,
         "net_amt": null,
@@ -865,7 +865,7 @@
         "code": "002412",
         "name": "汉森制药",
         "date": "",
-        "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
+        "reason": "日换手率达到20%的前5只证券",
         "buy_amt": null,
         "sell_amt": null,
         "net_amt": null,
