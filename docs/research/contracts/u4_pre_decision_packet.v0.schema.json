@@ -290,7 +290,6 @@
         "DAILY_SOURCE_NOT_PUBLISHED",
         "QUARTERLY_SOURCE_NOT_PUBLISHED",
         "MISSING_METHOD_VERSION",
-        "MISSING_CAUSAL_CLUSTER_ID",
         "QUALITY_GATE_INCOMPLETE",
         "RECEIPT_SELF_REPORT_MISMATCH",
         "DIAGNOSTIC_EVIDENCE_HASH_MISMATCH",
@@ -306,7 +305,9 @@
         "candidate_status",
         "method_version",
         "cohort_id",
+        "cohort_identity_state",
         "causal_cluster_id",
+        "causal_cluster_identity_state",
         "u2_candidate_row_hash",
         "u3_battery_row_hash",
         "positive_channels",
@@ -324,8 +325,12 @@
           "enum": ["MAIN_CHANNEL", "RESERVED_SLOW_BULL", "RESERVED_CONTRARIAN", "RANDOM_CONTROL"]
         },
         "method_version": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]{2,63}_V[0-9]+$"},
-        "cohort_id": {"type": "string", "minLength": 1},
+        "cohort_id": {"const": "UNAVAILABLE"},
+        "cohort_identity_state": {"const": "UNAVAILABLE_UNBOUND"},
         "causal_cluster_id": {"type": "string", "minLength": 1},
+        "causal_cluster_identity_state": {
+          "enum": ["VERIFIED_UPSTREAM", "UNAVAILABLE_PENDING"]
+        },
         "u2_candidate_row_hash": {"$ref": "#/$defs/sha256"},
         "u3_battery_row_hash": {"$ref": "#/$defs/sha256"},
         "positive_channels": {
@@ -358,6 +363,44 @@
         }
       },
       "allOf": [
+        {
+          "if": {
+            "properties": {"cohort_id": {"const": "UNAVAILABLE"}},
+            "required": ["cohort_id"]
+          },
+          "then": {
+            "properties": {
+              "missing_evidence": {"contains": {"const": "cohort_id"}}
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "causal_cluster_identity_state": {"const": "UNAVAILABLE_PENDING"}
+            },
+            "required": ["causal_cluster_identity_state"]
+          },
+          "then": {
+            "properties": {
+              "causal_cluster_id": {"const": "UNAVAILABLE"},
+              "missing_evidence": {"contains": {"const": "causal_cluster_id"}}
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "causal_cluster_identity_state": {"const": "VERIFIED_UPSTREAM"}
+            },
+            "required": ["causal_cluster_identity_state"]
+          },
+          "then": {
+            "properties": {
+              "causal_cluster_id": {"type": "string", "pattern": "^(?!UNAVAILABLE$).+"}
+            }
+          }
+        },
         {
           "if": {
             "properties": {"red_flag_channels": {"minItems": 1}},
