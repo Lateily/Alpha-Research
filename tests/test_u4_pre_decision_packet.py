@@ -133,6 +133,7 @@ def _candidate(**updates: Any) -> dict[str, Any]:
     row = {
         "ts_code": "688001.SH",
         "display_name": "Fixture Semiconductor",
+        "candidate_status": "MAIN_CHANNEL",
         "method_version": "RESEARCH_CLOSED_LOOP_V1",
         "cohort_id": "cohort-semiconductor-20260826",
         "causal_cluster_id": "cluster-semiconductor-demand-001",
@@ -156,13 +157,20 @@ def _packet(**updates: Any) -> dict[str, Any]:
         "packet_version": "0.1",
         "status": "READY_FOR_JUNYAN_REVIEW",
         "as_of": "20260826",
+        "generated_at": "2026-08-26T09:00:00+00:00",
         "method_version": "RESEARCH_CLOSED_LOOP_V1",
         "source_refs": {
             "same_day_bundle_ref": "experiments/research_funnel/output/semiconductor-20260826",
             "same_day_bundle_hash": "sha256:" + "3" * 64,
             "u2_candidate_pool_hash": "sha256:" + "4" * 64,
             "u3_battery_hash": "sha256:" + "5" * 64,
+            "feature_store_health_ref": "public/data/v2/feature_store_health.json",
+            "feature_store_health_hash": "sha256:" + "7" * 64,
+            "funnel_health_ref": "public/data/v2/funnel_health.json",
+            "funnel_health_hash": "sha256:" + "8" * 64,
+            "stage_receipts_hash": "sha256:" + "b" * 64,
             "diagnostic_report_ref": "tmp/semiconductor-diagnostic-20260826.json",
+            "diagnostic_report_hash": "sha256:" + "9" * 64,
         },
         "source_publication": {
             "daily_source_status": "PUBLISHED",
@@ -171,7 +179,7 @@ def _packet(**updates: Any) -> dict[str, Any]:
             "retry_after_utc": None,
         },
         "diagnostic": {
-            "tool": "semiconductor_evidence_diagnostic.py",
+            "tool": "u4_pre_decision.py",
             "tool_version": "0.1",
             "evidence_rows_checked": 75,
             "evidence_rows_hash_verified": True,
@@ -204,6 +212,7 @@ def _packet(**updates: Any) -> dict[str, Any]:
             "claim_allowed": False,
             "no_trade_flag": True,
         },
+        "packet_hash": "sha256:" + "a" * 64,
     }
     packet.update(updates)
     return packet
@@ -246,18 +255,34 @@ class U4PreDecisionPacketContractTests(unittest.TestCase):
         packet["status"] = "SOURCE_PUBLICATION_PENDING"
         self.assertValid(packet)
 
+        packet = _packet()
+        packet["source_publication"]["pending_sources"] = ["not-really-pending"]
+        self.assertInvalid(packet, "too many items")
+
     def test_stale_or_data_blocked_daily_source_cannot_be_reported_ready(self) -> None:
-        for daily_status, valid_status in (
-            ("STALE", "BLOCKED_BEFORE_U4"),
-            ("DATA_BLOCKED", "DATA_BLOCKED"),
-        ):
+        for daily_status in ("STALE", "DATA_BLOCKED"):
             packet = _packet()
             packet["source_publication"]["daily_source_status"] = daily_status
             packet["source_publication"]["pending_sources"] = ["cyq_perf"]
             with self.subTest(daily_status=daily_status):
                 self.assertInvalid(packet, "outside enum")
-                packet["status"] = valid_status
+                packet["status"] = "DATA_BLOCKED"
                 self.assertValid(packet)
+
+    def test_quarterly_source_status_is_a_real_packet_gate(self) -> None:
+        packet = _packet()
+        packet["source_publication"]["quarterly_source_status"] = "PENDING"
+        packet["source_publication"]["pending_sources"] = ["fina_indicator_pit"]
+        self.assertInvalid(packet, "expected const 'SOURCE_PUBLICATION_PENDING'")
+        packet["status"] = "SOURCE_PUBLICATION_PENDING"
+        self.assertValid(packet)
+
+        packet = _packet()
+        packet["source_publication"]["quarterly_source_status"] = "DATA_BLOCKED"
+        packet["source_publication"]["pending_sources"] = ["fina_indicator_pit"]
+        self.assertInvalid(packet, "outside enum")
+        packet["status"] = "DATA_BLOCKED"
+        self.assertValid(packet)
 
     def test_zero_reviewable_pool_must_stop_before_u4(self) -> None:
         packet = _packet(candidate_rows=[])
@@ -311,6 +336,13 @@ class U4PreDecisionPacketContractTests(unittest.TestCase):
             ]
         )
         self.assertInvalid(packet, "expected const")
+        packet = _packet(candidate_rows=[_candidate(
+            red_flag_channels=["E1_EVENT"],
+            blocked_reasons=[],
+            allowed_for_u4_packet=False,
+            question_for_junyan=None,
+        )])
+        self.assertInvalid(packet, "contains matched no items")
         packet = _packet(
             candidate_rows=[
                 _candidate(
@@ -322,6 +354,42 @@ class U4PreDecisionPacketContractTests(unittest.TestCase):
             ]
         )
         self.assertInvalid(packet, "expected const")
+
+    def test_no_positive_channel_cannot_be_marked_reviewable(self) -> None:
+        packet = _packet(candidate_rows=[_candidate(positive_channels=[])])
+        self.assertInvalid(packet, "contains matched no items")
+        packet["candidate_rows"][0].update({
+            "blocked_reasons": ["NO_POSITIVE_CHANNEL"],
+            "quality_status": "DATA_BLOCKED",
+            "allowed_for_u4_packet": False,
+            "question_for_junyan": None,
+        })
+        self.assertValid(packet)
+
+    def test_random_control_and_incomplete_u3_cannot_be_marked_reviewable(self) -> None:
+        for blocker in ("RANDOM_CONTROL_NOT_SELECTABLE", "U3_BATTERY_INCOMPLETE"):
+            packet = _packet(candidate_rows=[_candidate(blocked_reasons=[blocker])])
+            with self.subTest(blocker=blocker):
+                self.assertInvalid(packet, "expected const")
+        packet = _packet(candidate_rows=[_candidate(candidate_status="RANDOM_CONTROL")])
+        self.assertInvalid(packet, "contains matched no items")
+
+    def test_unavailable_cohort_identity_is_visible_but_not_an_offline_u4_stop(self) -> None:
+        packet = _packet(candidate_rows=[_candidate(
+            cohort_id="UNAVAILABLE",
+            causal_cluster_id="UNAVAILABLE",
+            missing_evidence=["cohort_id", "causal_cluster_id"],
+            quality_status="WARN",
+        )])
+        self.assertValid(packet)
+
+    def test_packet_hash_and_health_bindings_are_required(self) -> None:
+        packet = _packet()
+        del packet["packet_hash"]
+        self.assertInvalid(packet, "missing packet_hash")
+        packet = _packet()
+        del packet["source_refs"]["feature_store_health_hash"]
+        self.assertInvalid(packet, "missing feature_store_health_hash")
 
     def test_selection_boundary_and_no_trade_authority_are_constants(self) -> None:
         packet = _packet()
@@ -340,8 +408,10 @@ class U4PreDecisionPacketContractTests(unittest.TestCase):
         text = DOC_PATH.read_text(encoding="utf-8")
         for phrase in (
             "not a recommendation list",
-            "semiconductor_evidence_diagnostic.py",
+            "u4_pre_decision.py",
             "E1 red flags remain one-vote vetoes",
+            "random-control observation",
+            "prevent offline U4 research",
             "HUMAN_JUNYAN_ONLY",
             "no_trade_flag=true",
             "first 5-10 semiconductor cycles are workflow-debug samples only",

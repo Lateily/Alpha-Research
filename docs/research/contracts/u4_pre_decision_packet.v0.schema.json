@@ -10,6 +10,7 @@
     "packet_version",
     "status",
     "as_of",
+    "generated_at",
     "method_version",
     "source_refs",
     "source_publication",
@@ -17,7 +18,8 @@
     "candidate_rows",
     "packet_summary",
     "selection_boundary",
-    "authority"
+    "authority",
+    "packet_hash"
   ],
   "properties": {
     "schema": {"const": "ar.u4_pre_decision_packet.v0"},
@@ -32,6 +34,7 @@
       ]
     },
     "as_of": {"type": "string", "pattern": "^[0-9]{8}$"},
+    "generated_at": {"type": "string", "format": "date-time"},
     "method_version": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]{2,63}_V[0-9]+$"},
     "source_refs": {
       "type": "object",
@@ -41,14 +44,26 @@
         "same_day_bundle_hash",
         "u2_candidate_pool_hash",
         "u3_battery_hash",
-        "diagnostic_report_ref"
+        "feature_store_health_ref",
+        "feature_store_health_hash",
+        "funnel_health_ref",
+        "funnel_health_hash",
+        "stage_receipts_hash",
+        "diagnostic_report_ref",
+        "diagnostic_report_hash"
       ],
       "properties": {
         "same_day_bundle_ref": {"type": "string", "minLength": 1},
         "same_day_bundle_hash": {"$ref": "#/$defs/sha256"},
         "u2_candidate_pool_hash": {"$ref": "#/$defs/sha256"},
         "u3_battery_hash": {"$ref": "#/$defs/sha256"},
-        "diagnostic_report_ref": {"type": "string", "minLength": 1}
+        "feature_store_health_ref": {"type": "string", "minLength": 1},
+        "feature_store_health_hash": {"$ref": "#/$defs/sha256"},
+        "funnel_health_ref": {"type": "string", "minLength": 1},
+        "funnel_health_hash": {"$ref": "#/$defs/sha256"},
+        "stage_receipts_hash": {"$ref": "#/$defs/sha256"},
+        "diagnostic_report_ref": {"type": "string", "minLength": 1},
+        "diagnostic_report_hash": {"$ref": "#/$defs/sha256"}
       }
     },
     "source_publication": {
@@ -92,7 +107,7 @@
         "blocker_codes"
       ],
       "properties": {
-        "tool": {"const": "semiconductor_evidence_diagnostic.py"},
+        "tool": {"const": "u4_pre_decision.py"},
         "tool_version": {"type": "string", "minLength": 1},
         "evidence_rows_checked": {"type": "integer", "minimum": 0},
         "evidence_rows_hash_verified": {"const": true},
@@ -176,7 +191,8 @@
         "claim_allowed": {"const": false},
         "no_trade_flag": {"const": true}
       }
-    }
+    },
+    "packet_hash": {"$ref": "#/$defs/sha256"}
   },
   "allOf": [
     {
@@ -195,13 +211,37 @@
       "if": {
         "properties": {
           "source_publication": {
+            "properties": {"quarterly_source_status": {"const": "PENDING"}},
+            "required": ["quarterly_source_status"]
+          }
+        },
+        "required": ["source_publication"]
+      },
+      "then": {"properties": {"status": {"const": "SOURCE_PUBLICATION_PENDING"}}}
+    },
+    {
+      "if": {
+        "properties": {
+          "source_publication": {
             "properties": {"daily_source_status": {"enum": ["STALE", "DATA_BLOCKED"]}},
             "required": ["daily_source_status"]
           }
         },
         "required": ["source_publication"]
       },
-      "then": {"properties": {"status": {"enum": ["BLOCKED_BEFORE_U4", "DATA_BLOCKED"]}}}
+      "then": {"properties": {"status": {"enum": ["DATA_BLOCKED", "SOURCE_PUBLICATION_PENDING"]}}}
+    },
+    {
+      "if": {
+        "properties": {
+          "source_publication": {
+            "properties": {"quarterly_source_status": {"enum": ["STALE", "DATA_BLOCKED"]}},
+            "required": ["quarterly_source_status"]
+          }
+        },
+        "required": ["source_publication"]
+      },
+      "then": {"properties": {"status": {"enum": ["DATA_BLOCKED", "SOURCE_PUBLICATION_PENDING"]}}}
     },
     {
       "if": {
@@ -214,6 +254,27 @@
         "required": ["packet_summary"]
       },
       "then": {"properties": {"status": {"enum": ["BLOCKED_BEFORE_U4", "DATA_BLOCKED", "SOURCE_PUBLICATION_PENDING"]}}}
+    },
+    {
+      "if": {
+        "properties": {
+          "source_publication": {
+            "properties": {
+              "daily_source_status": {"const": "PUBLISHED"},
+              "quarterly_source_status": {"const": "PUBLISHED"}
+            },
+            "required": ["daily_source_status", "quarterly_source_status"]
+          }
+        },
+        "required": ["source_publication"]
+      },
+      "then": {
+        "properties": {
+          "source_publication": {
+            "properties": {"pending_sources": {"maxItems": 0}}
+          }
+        }
+      }
     }
   ],
   "$defs": {
@@ -225,6 +286,9 @@
         "U3_BATTERY_INCOMPLETE",
         "E1_RED_FLAG_ACTIVE",
         "NO_POSITIVE_CHANNEL",
+        "RANDOM_CONTROL_NOT_SELECTABLE",
+        "DAILY_SOURCE_NOT_PUBLISHED",
+        "QUARTERLY_SOURCE_NOT_PUBLISHED",
         "MISSING_METHOD_VERSION",
         "MISSING_CAUSAL_CLUSTER_ID",
         "QUALITY_GATE_INCOMPLETE",
@@ -239,6 +303,7 @@
       "required": [
         "ts_code",
         "display_name",
+        "candidate_status",
         "method_version",
         "cohort_id",
         "causal_cluster_id",
@@ -255,6 +320,9 @@
       "properties": {
         "ts_code": {"type": "string", "pattern": "^[0-9A-Z]+\\.[A-Z]+$"},
         "display_name": {"type": "string", "minLength": 1},
+        "candidate_status": {
+          "enum": ["MAIN_CHANNEL", "RESERVED_SLOW_BULL", "RESERVED_CONTRARIAN", "RANDOM_CONTROL"]
+        },
         "method_version": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]{2,63}_V[0-9]+$"},
         "cohort_id": {"type": "string", "minLength": 1},
         "causal_cluster_id": {"type": "string", "minLength": 1},
@@ -299,8 +367,61 @@
         },
         {
           "if": {
+            "properties": {"red_flag_channels": {"minItems": 1}},
+            "required": ["red_flag_channels"]
+          },
+          "then": {
             "properties": {
               "blocked_reasons": {"contains": {"const": "E1_RED_FLAG_ACTIVE"}}
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "blocked_reasons": {"contains": {"const": "E1_RED_FLAG_ACTIVE"}}
+            },
+            "required": ["blocked_reasons"]
+          },
+          "then": {"properties": {"allowed_for_u4_packet": {"const": false}}}
+        },
+        {
+          "if": {
+            "properties": {"positive_channels": {"maxItems": 0}},
+            "required": ["positive_channels"]
+          },
+          "then": {
+            "properties": {
+              "blocked_reasons": {"contains": {"const": "NO_POSITIVE_CHANNEL"}},
+              "allowed_for_u4_packet": {"const": false}
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {"candidate_status": {"const": "RANDOM_CONTROL"}},
+            "required": ["candidate_status"]
+          },
+          "then": {
+            "properties": {
+              "blocked_reasons": {"contains": {"const": "RANDOM_CONTROL_NOT_SELECTABLE"}},
+              "allowed_for_u4_packet": {"const": false}
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "blocked_reasons": {"contains": {"const": "RANDOM_CONTROL_NOT_SELECTABLE"}}
+            },
+            "required": ["blocked_reasons"]
+          },
+          "then": {"properties": {"allowed_for_u4_packet": {"const": false}}}
+        },
+        {
+          "if": {
+            "properties": {
+              "blocked_reasons": {"contains": {"const": "U3_BATTERY_INCOMPLETE"}}
             },
             "required": ["blocked_reasons"]
           },

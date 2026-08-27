@@ -31,20 +31,28 @@ Every packet must bind these inputs:
 | Same-day U1-U3 bundle hash | Prevents later ticket swapping |
 | U2 candidate-pool hash | Shows the pool Junyan is reviewing |
 | U3 battery hash and candidate row hash | Proves each row has the same-day battery context |
-| `semiconductor_evidence_diagnostic.py` report | Confirms evidence rows were cross-checked, not self-reported |
+| Three-stage receipt hash | Proves candidate, battery, and finalize receipts were rechecked against their actual bytes and DAG binds |
+| `u4_pre_decision.py` diagnostic report | Confirms evidence rows were cross-checked against the immutable bundle, feature health, and funnel health |
 | Source publication status | Prevents pending daily data from being treated as published |
+| Packet `generated_at` and self-hash | Makes same-day rebuilds distinguishable and tamper-evident |
 | `method_version` | Keeps workflow-debug samples separate from future production methods |
 | `cohort_id` and `causal_cluster_id` | Lets later sample counts de-cluster correctly |
 
-If a required input is absent, stale, or unverifiable, the packet status must be
+If a required source is absent, stale, or unverifiable, the packet status must be
 `DATA_BLOCKED`, `SOURCE_PUBLICATION_PENDING`, or `BLOCKED_BEFORE_U4`. Missing
 data cannot be filled with zero or guessed.
+
+`cohort_id=UNAVAILABLE` or `causal_cluster_id=UNAVAILABLE` remains visible as a
+row warning. In line with the merged U4 decision-ledger contract, it does not by
+itself prevent offline U4 research, but it blocks U5 promotion and contribution
+to de-clustered method claims until the identity is assigned and verified.
 
 ## Candidate Row
 
 Each candidate row must include:
 
 - `ts_code` and `display_name`
+- `candidate_status` (main, reserved, or random control)
 - `method_version`
 - `cohort_id`
 - `causal_cluster_id`
@@ -66,10 +74,12 @@ review. It is not permission to select, register, simulate, or trade.
 The packet must stop before U4 when any of these are true:
 
 - daily source is `PENDING`, `STALE`, or `DATA_BLOCKED`;
+- quarterly source is `PENDING`, `STALE`, or `DATA_BLOCKED`;
 - U3 six-dimension battery is incomplete without explicit `DATA_BLOCKED`;
 - an active E1 red flag is present;
 - no independent positive channel exists;
-- `method_version`, `cohort_id`, or `causal_cluster_id` is missing;
+- the row is a random-control observation rather than a research candidate;
+- `method_version` is missing or invalid;
 - quality gate output is missing or unverifiable;
 - diagnostic evidence hash or receipt self-report cross-check fails;
 - any authority field claims production, trade, paper-order, or model selection
@@ -77,6 +87,11 @@ The packet must stop before U4 when any of these are true:
 
 E1 red flags remain one-vote vetoes. Positive evidence can explain why a name
 is interesting, but it cannot cover a red flag.
+
+The packet-level source gate is stronger than row-level readiness. Rows may
+remain visible as otherwise reviewable while the packet itself is
+`DATA_BLOCKED`; Junyan must not make a U4 decision until the missing same-day
+source is published and the packet is rebuilt.
 
 ## Selection Boundary
 
