@@ -13,6 +13,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -43,7 +44,10 @@ def _write(path: Path, payload: dict) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def _feature_health() -> dict:
+def _feature_health(
+    *, eligible_universe_hash: str, semiconductor_rows_hash: str,
+    generated_at: str = GENERATED_AT,
+) -> dict:
     expected = 3
     universe_hash = "1" * 64
     complete_by_component = {component: expected for component in si.COMPONENTS}
@@ -53,11 +57,11 @@ def _feature_health() -> dict:
         "schema_version": fs.SCHEMA_VERSION,
         "status": "COMPLETE",
         "as_of": AS_OF,
-        "generated_at": GENERATED_AT,
+        "generated_at": generated_at,
         "registry_ref": {
             "as_of": AS_OF,
             "registry_hash": "2" * 64,
-            "eligible_universe_hash": "3" * 64,
+            "eligible_universe_hash": eligible_universe_hash,
             "eligible_count": 1,
         },
         "coverage": {
@@ -94,7 +98,7 @@ def _feature_health() -> dict:
                 "complete_by_component": complete_by_component,
                 "data_blocked_by_component": blocked_by_component,
             },
-            "rows_hash": "9" * 64,
+            "rows_hash": semiconductor_rows_hash,
             "policy": {
                 "point_in_time_only": True,
                 "missing_to_data_blocked": True,
@@ -123,8 +127,22 @@ def _block_feature_source(health: dict, source_name: str) -> None:
     health["status"] = "PARTIAL"
 
 
-def _fixture_tree(root: Path, *, red_flag: bool = False) -> tuple[Path, Path, Path]:
+def _fixture_tree(
+    root: Path, *, red_flag: bool = False,
+    candidate_generated_at: str = GENERATED_AT,
+    battery_generated_at: str = GENERATED_AT,
+    finalize_generated_at: str = GENERATED_AT,
+    bundle_generated_at: str = GENERATED_AT,
+    feature_generated_at: str = GENERATED_AT,
+    funnel_generated_at: str = GENERATED_AT,
+) -> tuple[Path, Path, Path]:
     registry, _features, scan, candidates = fixture.build_candidates(n=90)
+    semiconductor_rows_hash = "9" * 64
+    scan["generated_at"] = candidate_generated_at
+    scan["input_refs"]["semiconductor_positive_inputs_rows_hash"] = (
+        semiconductor_rows_hash
+    )
+    candidates["generated_at"] = candidate_generated_at
     manifest = fp.build_candidate_manifest(
         candidate_review=candidates,
         scan=scan,
@@ -160,7 +178,7 @@ def _fixture_tree(root: Path, *, red_flag: bool = False) -> tuple[Path, Path, Pa
         "target_trade_date": AS_OF,
         "checked_at": AS_OF,
         "run_id": RUN_ID,
-        "generated_at": GENERATED_AT,
+        "generated_at": battery_generated_at,
         "manifest_hash": manifest["manifest_hash"],
         "provider_state": "FIXTURE",
         "results": battery_rows,
@@ -173,7 +191,7 @@ def _fixture_tree(root: Path, *, red_flag: bool = False) -> tuple[Path, Path, Pa
         battery=battery,
         selected_tickers=(),
         trade_date=AS_OF,
-        generated_at=GENERATED_AT,
+        generated_at=finalize_generated_at,
     )
     projected = fp.advance_registry(
         registry=registry,
@@ -181,7 +199,7 @@ def _fixture_tree(root: Path, *, red_flag: bool = False) -> tuple[Path, Path, Pa
         candidate_review=candidates,
         battery=battery,
         deep_queue=queue,
-        generated_at=GENERATED_AT,
+        generated_at=finalize_generated_at,
     )
     bundle = root / "data_history" / "funnel" / AS_OF / RUN_ID
     stage1 = {
@@ -198,12 +216,12 @@ def _fixture_tree(root: Path, *, red_flag: bool = False) -> tuple[Path, Path, Pa
     }
     dag._write_stage(
         bundle, "candidates", stage1, as_of=AS_OF, run_id=RUN_ID,
-        generated_at=GENERATED_AT,
+        generated_at=candidate_generated_at,
         binds={"candidate_manifest_hash": manifest["manifest_hash"]},
     )
     dag._write_stage(
         bundle, "battery", stage2, as_of=AS_OF, run_id=RUN_ID,
-        generated_at=GENERATED_AT,
+        generated_at=battery_generated_at,
         binds={
             "candidate_manifest_hash": manifest["manifest_hash"],
             "battery_rows_hash": battery["rows_hash"],
@@ -211,7 +229,7 @@ def _fixture_tree(root: Path, *, red_flag: bool = False) -> tuple[Path, Path, Pa
     )
     dag._write_stage(
         bundle, "finalize", stage3, as_of=AS_OF, run_id=RUN_ID,
-        generated_at=GENERATED_AT,
+        generated_at=finalize_generated_at,
         binds={
             "candidate_manifest_hash": manifest["manifest_hash"],
             "battery_rows_hash": battery["rows_hash"],
@@ -228,7 +246,7 @@ def _fixture_tree(root: Path, *, red_flag: bool = False) -> tuple[Path, Path, Pa
         "rule_version": fp.RULE_VERSION,
         "as_of": AS_OF,
         "run_id": RUN_ID,
-        "generated_at": GENERATED_AT,
+        "generated_at": bundle_generated_at,
         "artifacts": artifacts,
         "dag": {
             "stages": ["candidates", "battery", "finalize"],
@@ -240,14 +258,18 @@ def _fixture_tree(root: Path, *, red_flag: bool = False) -> tuple[Path, Path, Pa
     _write(bundle / "manifest.json", top)
 
     feature_health = root / "public" / "data" / "v2" / "feature_store_health.json"
-    _write(feature_health, _feature_health())
+    _write(feature_health, _feature_health(
+        eligible_universe_hash=scan["eligible_universe_hash"],
+        semiconductor_rows_hash=semiconductor_rows_hash,
+        generated_at=feature_generated_at,
+    ))
     funnel_health = root / "public" / "data" / "v2" / "funnel_health.json"
     health = nightly.build_health(
         target=AS_OF,
         run_id=RUN_ID,
         bundle_dir=bundle,
         registry=registry,
-        generated_at=GENERATED_AT,
+        generated_at=funnel_generated_at,
     )
     health["battery_coverage"] = dict(
         fp.validate_candidate_battery(battery, manifest),
@@ -372,7 +394,7 @@ class U4PreDecisionRuntimeTests(unittest.TestCase):
             row["positive_channels"] = []
             _rehash_packet(packet)
             with self.assertRaisesRegex(pre.PreDecisionError, "without positive evidence"):
-                _validate(packet, bundle, feature_health, funnel_health)
+                pre._validate_packet_receipt(packet)
 
     def test_validator_refuses_self_consistent_random_control_as_reviewable(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -381,7 +403,7 @@ class U4PreDecisionRuntimeTests(unittest.TestCase):
             row["candidate_status"] = "RANDOM_CONTROL"
             _rehash_packet(packet)
             with self.assertRaisesRegex(pre.PreDecisionError, "random-control row escaped"):
-                _validate(packet, bundle, feature_health, funnel_health)
+                pre._validate_packet_receipt(packet)
 
     def test_source_bound_validator_rejects_resealed_denominator_and_relabels(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -571,7 +593,7 @@ class U4PreDecisionRuntimeTests(unittest.TestCase):
             })
             packet["packet_hash"] = pre._sha(pre._without_hash(packet))
             with self.assertRaisesRegex(pre.PreDecisionError, "diagnostic report binding"):
-                _validate(packet, bundle, feature_health, funnel_health)
+                pre._validate_packet_receipt(packet)
 
             packet, _, bundle, feature_health, funnel_health = _build(Path(tmp) / "third")
             packet["authority"]["trade_authority"] = True
@@ -625,6 +647,35 @@ class U4PreDecisionRuntimeTests(unittest.TestCase):
                     method_version=pre.DEFAULT_METHOD_VERSION,
                     generated_at=GENERATED_AT,
                 )
+
+    def test_feature_health_identity_is_bound_to_the_bundle_scan(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            _, _, bundle, feature_health, funnel_health = _build(root)
+            for field in ("eligible_universe_hash", "semiconductor_rows_hash"):
+                health = json.loads(feature_health.read_text(encoding="utf-8"))
+                if field == "eligible_universe_hash":
+                    health["registry_ref"]["eligible_universe_hash"] = "a" * 64
+                else:
+                    health["semiconductor_positive_inputs"]["rows_hash"] = "b" * 64
+                _write(feature_health, health)
+                with self.subTest(field=field):
+                    with self.assertRaisesRegex(pre.PreDecisionError, "identity is not bound"):
+                        pre.build_packet(
+                            bundle_dir=bundle,
+                            feature_health_path=feature_health,
+                            funnel_health_path=funnel_health,
+                            diagnostic_ref="diagnostic.json",
+                            industry="TECH",
+                            method_version=pre.DEFAULT_METHOD_VERSION,
+                            generated_at=GENERATED_AT,
+                        )
+                _write(feature_health, _feature_health(
+                    eligible_universe_hash=json.loads(
+                        (bundle / "all_market_scan.json").read_text(encoding="utf-8")
+                    )["eligible_universe_hash"],
+                    semiconductor_rows_hash="9" * 64,
+                ))
 
     def test_funnel_health_counts_and_status_are_recomputed_from_the_bundle(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -686,67 +737,21 @@ class U4PreDecisionRuntimeTests(unittest.TestCase):
                     generated_at=GENERATED_AT,
                 )
 
-    def test_packet_cannot_predate_immutable_bundle(self) -> None:
+    def test_stage_receipts_are_ordered_and_timestamp_bound_to_artifacts(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            _, _, bundle, feature_health, funnel_health = _build(root)
-            for stage in ("candidates", "battery", "finalize"):
-                receipt_path = bundle / f"stage_{stage}.json"
-                receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
-                receipt["generated_at"] = "2026-08-12T08:59:58+00:00"
-                receipt["stage_hash"] = fp._hash({
-                    key: value for key, value in receipt.items() if key != "stage_hash"
-                })
-                _write(receipt_path, receipt)
-            health = json.loads(funnel_health.read_text(encoding="utf-8"))
-            health["generated_at"] = "2026-08-12T08:59:58+00:00"
-            _write(funnel_health, health)
+            bundle, feature_health, funnel_health = _fixture_tree(root)
             feature = json.loads(feature_health.read_text(encoding="utf-8"))
             feature["generated_at"] = "2026-08-12T08:59:58+00:00"
             _write(feature_health, feature)
-            with self.assertRaisesRegex(
-                pre.PreDecisionError, "predates its immutable bundle"
-            ):
-                pre.build_packet(
-                    bundle_dir=bundle,
-                    feature_health_path=feature_health,
-                    funnel_health_path=funnel_health,
-                    diagnostic_ref="diagnostic.json",
-                    industry="TECH",
-                    method_version=pre.DEFAULT_METHOD_VERSION,
-                    generated_at="2026-08-12T08:59:59+00:00",
-                )
-
-    def test_packet_cannot_predate_feature_store_health(self) -> None:
-        with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
-            _, _, bundle, feature_health, funnel_health = _build(root)
-            health = json.loads(feature_health.read_text(encoding="utf-8"))
-            health["generated_at"] = "2026-08-12T09:00:01+00:00"
-            _write(feature_health, health)
-            with self.assertRaisesRegex(pre.PreDecisionError, "predates feature-store health"):
-                pre.build_packet(
-                    bundle_dir=bundle,
-                    feature_health_path=feature_health,
-                    funnel_health_path=funnel_health,
-                    diagnostic_ref="diagnostic.json",
-                    industry="TECH",
-                    method_version=pre.DEFAULT_METHOD_VERSION,
-                    generated_at=GENERATED_AT,
-                )
-
-    def test_packet_cannot_predate_stage_receipts(self) -> None:
-        with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
-            _, _, bundle, feature_health, funnel_health = _build(root)
             receipt_path = bundle / "stage_candidates.json"
             receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
-            receipt["generated_at"] = "2026-08-12T09:00:01+00:00"
+            receipt["generated_at"] = "2026-08-12T08:59:59+00:00"
             receipt["stage_hash"] = fp._hash({
                 key: value for key, value in receipt.items() if key != "stage_hash"
             })
             _write(receipt_path, receipt)
-            with self.assertRaisesRegex(pre.PreDecisionError, "predates candidates receipt"):
+            with self.assertRaisesRegex(pre.PreDecisionError, "not bound to its artifacts"):
                 pre.build_packet(
                     bundle_dir=bundle,
                     feature_health_path=feature_health,
@@ -754,15 +759,68 @@ class U4PreDecisionRuntimeTests(unittest.TestCase):
                     diagnostic_ref="diagnostic.json",
                     industry="TECH",
                     method_version=pre.DEFAULT_METHOD_VERSION,
-                    generated_at=GENERATED_AT,
+                    generated_at="2026-08-12T09:00:02+00:00",
                 )
 
-    def test_cli_outputs_are_scratch_only_and_refuse_overwrite(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
+            bundle, feature_health, funnel_health = _fixture_tree(
+                root,
+                candidate_generated_at="2026-08-12T09:00:00+00:00",
+                battery_generated_at="2026-08-12T08:59:59+00:00",
+                finalize_generated_at="2026-08-12T09:00:01+00:00",
+                bundle_generated_at="2026-08-12T09:00:01+00:00",
+                feature_generated_at="2026-08-12T08:59:58+00:00",
+                funnel_generated_at="2026-08-12T09:00:01+00:00",
+            )
+            with self.assertRaisesRegex(pre.PreDecisionError, "violate candidates"):
+                pre.build_packet(
+                    bundle_dir=bundle,
+                    feature_health_path=feature_health,
+                    funnel_health_path=funnel_health,
+                    diagnostic_ref="diagnostic.json",
+                    industry="TECH",
+                    method_version=pre.DEFAULT_METHOD_VERSION,
+                    generated_at="2026-08-12T09:00:02+00:00",
+                )
+
+    def test_feature_bundle_and_funnel_health_follow_causal_order(self) -> None:
+        cases = (
+            {
+                "feature_generated_at": "2026-08-12T09:00:01+00:00",
+                "candidate_generated_at": "2026-08-12T09:00:00+00:00",
+            },
+            {
+                "bundle_generated_at": "2026-08-12T09:00:01+00:00",
+                "funnel_generated_at": "2026-08-12T09:00:00+00:00",
+            },
+            {
+                "funnel_generated_at": "2026-08-12T09:00:03+00:00",
+            },
+        )
+        for index, overrides in enumerate(cases):
+            with self.subTest(case=index), tempfile.TemporaryDirectory() as tmp:
+                bundle, feature_health, funnel_health = _fixture_tree(
+                    Path(tmp), **overrides
+                )
+                with self.assertRaisesRegex(pre.PreDecisionError, "evidence violates"):
+                    pre.build_packet(
+                        bundle_dir=bundle,
+                        feature_health_path=feature_health,
+                        funnel_health_path=funnel_health,
+                        diagnostic_ref="diagnostic.json",
+                        industry="TECH",
+                        method_version=pre.DEFAULT_METHOD_VERSION,
+                        generated_at="2026-08-12T09:00:02+00:00",
+                    )
+
+    def test_cli_outputs_are_scratch_only_and_refuse_overwrite(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp, tempfile.TemporaryDirectory() as scratch:
+            root = Path(tmp)
             _, _, bundle, feature_health, funnel_health = _build(root)
-            packet_path = root / "scratch" / "packet.json"
-            diagnostic_path = root / "scratch" / "diagnostic.json"
+            scratch_root = Path(scratch)
+            packet_path = scratch_root / "packet.json"
+            diagnostic_path = scratch_root / "diagnostic.json"
             args = [
                 "--bundle", str(bundle),
                 "--feature-health", str(feature_health),
@@ -770,6 +828,7 @@ class U4PreDecisionRuntimeTests(unittest.TestCase):
                 "--generated-at", GENERATED_AT,
                 "--packet-output", str(packet_path),
                 "--diagnostic-output", str(diagnostic_path),
+                "--scratch-root", str(scratch_root),
                 "--industry", "TECH",
             ]
             output = io.StringIO()
@@ -779,6 +838,57 @@ class U4PreDecisionRuntimeTests(unittest.TestCase):
             self.assertTrue(diagnostic_path.is_file())
             with contextlib.redirect_stdout(output):
                 self.assertEqual(1, pre.main(args))
+
+    def test_cli_refuses_to_write_outputs_into_the_immutable_runtime_tree(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            _, _, bundle, feature_health, funnel_health = _build(root)
+            packet_path = bundle / "injected-packet.json"
+            diagnostic_path = bundle / "injected-diagnostic.json"
+            args = [
+                "--bundle", str(bundle),
+                "--feature-health", str(feature_health),
+                "--funnel-health", str(funnel_health),
+                "--generated-at", GENERATED_AT,
+                "--packet-output", str(packet_path),
+                "--diagnostic-output", str(diagnostic_path),
+                "--scratch-root", str(bundle),
+                "--industry", "TECH",
+            ]
+            output = io.StringIO()
+            with contextlib.redirect_stdout(output):
+                self.assertEqual(1, pre.main(args))
+            self.assertIn("overlaps", output.getvalue())
+            self.assertFalse(packet_path.exists())
+            self.assertFalse(diagnostic_path.exists())
+
+    def test_cli_refuses_the_runtime_tree_even_with_copied_evidence(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            evidence_root = root / "copied-evidence"
+            _, _, bundle, feature_health, funnel_health = _build(evidence_root)
+            runtime_root = root / "actual-runtime"
+            scratch_root = runtime_root / "public" / "scratch"
+            scratch_root.mkdir(parents=True)
+            packet_path = scratch_root / "packet.json"
+            diagnostic_path = scratch_root / "diagnostic.json"
+            args = [
+                "--bundle", str(bundle),
+                "--feature-health", str(feature_health),
+                "--funnel-health", str(funnel_health),
+                "--generated-at", GENERATED_AT,
+                "--packet-output", str(packet_path),
+                "--diagnostic-output", str(diagnostic_path),
+                "--scratch-root", str(scratch_root),
+                "--industry", "TECH",
+            ]
+            output = io.StringIO()
+            with mock.patch.object(pre, "RUNTIME_ROOT", runtime_root):
+                with contextlib.redirect_stdout(output):
+                    self.assertEqual(1, pre.main(args))
+            self.assertIn("overlaps", output.getvalue())
+            self.assertFalse(packet_path.exists())
+            self.assertFalse(diagnostic_path.exists())
 
 
 if __name__ == "__main__":

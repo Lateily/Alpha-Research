@@ -6277,20 +6277,20 @@ MUTATIONS = MUTATIONS + (
         rationale="No invented source row may bypass the complete producer health contract.",
     ),
     MutationCase(
-        mutation_id="U4_PREDECISION_FEATURE_HEALTH_CHRONOLOGY",
+        mutation_id="U4_PREDECISION_FEATURE_HEALTH_IDENTITY",
         component="Research funnel U4 pre-decision runtime",
         source_path="experiments/research_funnel/u4_pre_decision.py",
         test_script="tests/test_u4_pre_decision_runtime.py",
         before=(
-            "    # governance-mutation: U4_PREDECISION_FEATURE_HEALTH_CHRONOLOGY\n"
-            "    if packet_generated_at < health_generated_at:"
+            "    # governance-mutation: U4_PREDECISION_FEATURE_HEALTH_IDENTITY\n"
+            "    if ("
         ),
         after=(
-            "    # governance-mutation: U4_PREDECISION_FEATURE_HEALTH_CHRONOLOGY\n"
-            "    if False:"
+            "    # governance-mutation: U4_PREDECISION_FEATURE_HEALTH_IDENTITY\n"
+            "    if False and ("
         ),
-        expected_failure_marker="test_packet_cannot_predate_feature_store_health",
-        rationale="The packet cannot predate the source-health receipt it cites.",
+        expected_failure_marker="test_feature_health_identity_is_bound_to_the_bundle_scan",
+        rationale="Feature health must identify the exact universe and semiconductor rows consumed by U1.",
     ),
     MutationCase(
         mutation_id="U4_PREDECISION_FUNNEL_HEALTH_DERIVATION",
@@ -6325,36 +6325,52 @@ MUTATIONS = MUTATIONS + (
         rationale="A receipt must be an in-bundle regular file, never an external symlink.",
     ),
     MutationCase(
-        mutation_id="U4_PREDECISION_CHRONOLOGY",
+        mutation_id="U4_PREDECISION_STAGE_ARTIFACT_CHRONOLOGY",
         component="Research funnel U4 pre-decision runtime",
         source_path="experiments/research_funnel/u4_pre_decision.py",
         test_script="tests/test_u4_pre_decision_runtime.py",
         before=(
-            "        # governance-mutation: U4_PREDECISION_CHRONOLOGY\n"
-            "        if packet_generated_at < receipt_generated_at:"
+            "        # governance-mutation: U4_PREDECISION_STAGE_ARTIFACT_CHRONOLOGY\n"
+            "        if not artifact_times or any(value != receipt_generated_at for value in artifact_times):"
         ),
         after=(
-            "        # governance-mutation: U4_PREDECISION_CHRONOLOGY\n"
+            "        # governance-mutation: U4_PREDECISION_STAGE_ARTIFACT_CHRONOLOGY\n"
             "        if False:"
         ),
-        expected_failure_marker="test_packet_cannot_predate_stage_receipts",
-        rationale="The packet cannot predate a stage receipt it cites.",
+        expected_failure_marker="test_stage_receipts_are_ordered_and_timestamp_bound_to_artifacts",
+        rationale="A stage receipt timestamp must be carried by its timestamped artifacts.",
     ),
     MutationCase(
-        mutation_id="U4_PREDECISION_BUNDLE_CHRONOLOGY",
+        mutation_id="U4_PREDECISION_STAGE_ORDER",
         component="Research funnel U4 pre-decision runtime",
         source_path="experiments/research_funnel/u4_pre_decision.py",
         test_script="tests/test_u4_pre_decision_runtime.py",
         before=(
-            "    # governance-mutation: U4_PREDECISION_BUNDLE_CHRONOLOGY\n"
-            "    if packet_generated_at < bundle_generated_at:"
+            "    # governance-mutation: U4_PREDECISION_STAGE_ORDER\n"
+            "    if not ("
         ),
         after=(
-            "    # governance-mutation: U4_PREDECISION_BUNDLE_CHRONOLOGY\n"
-            "    if False:"
+            "    # governance-mutation: U4_PREDECISION_STAGE_ORDER\n"
+            "    if False and not ("
         ),
-        expected_failure_marker="test_packet_cannot_predate_immutable_bundle",
-        rationale="The packet cannot predate its immutable U1-U3 bundle.",
+        expected_failure_marker="test_stage_receipts_are_ordered_and_timestamp_bound_to_artifacts",
+        rationale="Candidate, battery, and finalize receipts must follow causal stage order.",
+    ),
+    MutationCase(
+        mutation_id="U4_PREDECISION_CAUSAL_CHRONOLOGY",
+        component="Research funnel U4 pre-decision runtime",
+        source_path="experiments/research_funnel/u4_pre_decision.py",
+        test_script="tests/test_u4_pre_decision_runtime.py",
+        before=(
+            "    # governance-mutation: U4_PREDECISION_CAUSAL_CHRONOLOGY\n"
+            "    if not ("
+        ),
+        after=(
+            "    # governance-mutation: U4_PREDECISION_CAUSAL_CHRONOLOGY\n"
+            "    if False and not ("
+        ),
+        expected_failure_marker="test_feature_bundle_and_funnel_health_follow_causal_order",
+        rationale="Health and bundle evidence must form one causal chain before packet creation.",
     ),
     MutationCase(
         mutation_id="U4_PREDECISION_NO_POSITIVE_CHANNEL",
@@ -6483,6 +6499,38 @@ MUTATIONS = MUTATIONS + (
         ),
         expected_failure_marker="test_source_bound_validator_rejects_resealed_denominator_and_relabels",
         rationale="A fully resealed packet must still match reopened immutable evidence.",
+    ),
+    MutationCase(
+        mutation_id="U4_PREDECISION_SCRATCH_BOUNDARY",
+        component="Research funnel U4 pre-decision runtime",
+        source_path="experiments/research_funnel/u4_pre_decision.py",
+        test_script="tests/test_u4_pre_decision_runtime.py",
+        before=(
+            "    # governance-mutation: U4_PREDECISION_SCRATCH_BOUNDARY\n"
+            "    if any("
+        ),
+        after=(
+            "    # governance-mutation: U4_PREDECISION_SCRATCH_BOUNDARY\n"
+            "    if False and any("
+        ),
+        expected_failure_marker="test_cli_refuses_to_write_outputs_into_the_immutable_runtime_tree",
+        rationale="Scratch outputs must never mutate an input bundle or production runtime tree.",
+    ),
+    MutationCase(
+        mutation_id="U4_PREDECISION_STATIC_RUNTIME_BOUNDARY",
+        component="Research funnel U4 pre-decision runtime",
+        source_path="experiments/research_funnel/u4_pre_decision.py",
+        test_script="tests/test_u4_pre_decision_runtime.py",
+        before=(
+            "    # governance-mutation: U4_PREDECISION_STATIC_RUNTIME_BOUNDARY\n"
+            "    protected_roots: set[Path] = {RUNTIME_ROOT.resolve()}"
+        ),
+        after=(
+            "    # governance-mutation: U4_PREDECISION_STATIC_RUNTIME_BOUNDARY\n"
+            "    protected_roots: set[Path] = set()"
+        ),
+        expected_failure_marker="test_cli_refuses_the_runtime_tree_even_with_copied_evidence",
+        rationale="The code checkout and production runtime remain protected even when evidence is copied elsewhere.",
     ),
     MutationCase(
         mutation_id="U4_PREDECISION_COHORT_IDENTITY",

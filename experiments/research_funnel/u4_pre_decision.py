@@ -35,6 +35,7 @@ SCHEMA = "ar.u4_pre_decision_packet.v0"
 SCHEMA_VERSION = "0.1"
 DIAGNOSTIC_TOOL = "u4_pre_decision.py"
 DIAGNOSTIC_VERSION = "0.1"
+RUNTIME_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_METHOD_VERSION = "RESEARCH_CLOSED_LOOP_V1"
 DEFAULT_INDUSTRY = "半导体"
 DISCLAIMER = "不是买卖指令；研究信号，human executes."
@@ -208,8 +209,8 @@ def _publication_status(sources: Mapping[str, Any], names: Sequence[str]) -> tup
 
 
 def _source_publication(
-    feature_health: Mapping[str, Any], as_of: str, packet_generated_at: Any,
-) -> dict[str, Any]:
+    feature_health: Mapping[str, Any], bundle: Mapping[str, Any], as_of: str,
+) -> tuple[dict[str, Any], Any]:
     if (
         feature_health.get("schema") != "ar.feature_store_health"
         or feature_health.get("as_of") != as_of
@@ -221,15 +222,28 @@ def _source_publication(
     sources = positive.get("sources")
     if not isinstance(sources, Mapping):
         raise PreDecisionError("semiconductor source-health rows are missing")
+    registry_ref = feature_health.get("registry_ref")
+    scan = bundle.get("scan")
+    scan_refs = scan.get("input_refs") if isinstance(scan, Mapping) else None
+    # governance-mutation: U4_PREDECISION_FEATURE_HEALTH_IDENTITY
+    if (
+        not isinstance(registry_ref, Mapping)
+        or not isinstance(scan, Mapping)
+        or not isinstance(scan_refs, Mapping)
+        or registry_ref.get("eligible_universe_hash")
+        != scan.get("eligible_universe_hash")
+        or positive.get("rows_hash")
+        != scan_refs.get("semiconductor_positive_inputs_rows_hash")
+    ):
+        raise PreDecisionError(
+            "feature-store health identity is not bound to the immutable bundle scan"
+        )
     try:
         health_generated_at = closure._iso(
             feature_health.get("generated_at"), "feature-store health generated_at"
         )
     except closure.ClosureError as exc:
         raise PreDecisionError(str(exc)) from exc
-    # governance-mutation: U4_PREDECISION_FEATURE_HEALTH_CHRONOLOGY
-    if packet_generated_at < health_generated_at:
-        raise PreDecisionError("pre-decision packet predates feature-store health")
     # feature_store.v1 has no PENDING source-row contract. An invented PENDING
     # row must not bypass validation of every other field in the health receipt.
     # governance-mutation: U4_PREDECISION_FEATURE_HEALTH_CONTRACT
@@ -244,13 +258,12 @@ def _source_publication(
         "quarterly_source_status": quarterly_status,
         "pending_sources": sorted(set(daily_missing + quarterly_missing)),
         "retry_after_utc": None,
-    }
+    }, health_generated_at
 
 
 def _validate_funnel_health(
     health: Mapping[str, Any], bundle: Mapping[str, Any], bundle_path: Path,
-    packet_generated_at: Any,
-) -> None:
+) -> Any:
     manifest = bundle["manifest"]
     bundle_health = health.get("bundle")
     if (
@@ -270,8 +283,6 @@ def _validate_funnel_health(
         )
     except closure.ClosureError as exc:
         raise PreDecisionError(str(exc)) from exc
-    if packet_generated_at < health_generated_at:
-        raise PreDecisionError("pre-decision packet predates funnel health")
     try:
         expected = nightly_funnel.build_health(
             target=str(manifest["as_of"]),
@@ -294,11 +305,12 @@ def _validate_funnel_health(
     )
     if health.get("battery_coverage") != expected_battery_coverage:
         raise PreDecisionError("funnel health battery coverage is not derived from U3")
+    return health_generated_at
 
 
 def _validate_stage_receipts(
-    bundle: Mapping[str, Any], bundle_path: Path, packet_generated_at: Any,
-) -> str:
+    bundle: Mapping[str, Any], bundle_path: Path,
+) -> tuple[str, dict[str, Any]]:
     top = bundle["manifest"]
     candidate_manifest = bundle["candidate_manifest"]
     battery = bundle["battery"]
@@ -357,11 +369,34 @@ def _validate_stage_receipts(
             )
         except closure.ClosureError as exc:
             raise PreDecisionError(str(exc)) from exc
-        # governance-mutation: U4_PREDECISION_CHRONOLOGY
-        if packet_generated_at < receipt_generated_at:
-            raise PreDecisionError(f"pre-decision packet predates {stage} receipt")
+        artifact_times: list[Any] = []
+        for name, payload in payloads.items():
+            if not isinstance(payload, Mapping) or "generated_at" not in payload:
+                continue
+            try:
+                artifact_times.append(
+                    closure._iso(
+                        payload.get("generated_at"), f"{stage} artifact generated_at: {name}"
+                    )
+                )
+            except closure.ClosureError as exc:
+                raise PreDecisionError(str(exc)) from exc
+        # governance-mutation: U4_PREDECISION_STAGE_ARTIFACT_CHRONOLOGY
+        if not artifact_times or any(value != receipt_generated_at for value in artifact_times):
+            raise PreDecisionError(f"{stage} receipt timestamp is not bound to its artifacts")
         receipts[stage] = receipt
-    return _sha(receipts)
+    receipt_times = {
+        stage: closure._iso(receipt["generated_at"], f"{stage} receipt generated_at")
+        for stage, receipt in receipts.items()
+    }
+    # governance-mutation: U4_PREDECISION_STAGE_ORDER
+    if not (
+        receipt_times["candidates"]
+        <= receipt_times["battery"]
+        <= receipt_times["finalize"]
+    ):
+        raise PreDecisionError("stage receipts violate candidates -> battery -> finalize order")
+    return _sha(receipts), receipt_times
 
 
 def _red_flags(candidate: Mapping[str, Any], battery_row: Mapping[str, Any]) -> list[str]:
@@ -483,8 +518,8 @@ def build_packet(
         raise PreDecisionError("method_version is invalid")
     feature_health = _load(feature_health_path)
     funnel_health = _load(funnel_health_path)
-    _validate_funnel_health(
-        funnel_health, bundle, bundle_dir, packet_generated_at
+    funnel_health_generated_at = _validate_funnel_health(
+        funnel_health, bundle, bundle_dir
     )
     try:
         bundle_generated_at = closure._iso(
@@ -492,14 +527,25 @@ def build_packet(
         )
     except closure.ClosureError as exc:
         raise PreDecisionError(str(exc)) from exc
-    # governance-mutation: U4_PREDECISION_BUNDLE_CHRONOLOGY
-    if packet_generated_at < bundle_generated_at:
-        raise PreDecisionError("pre-decision packet predates its immutable bundle")
-    stage_receipts_hash = _validate_stage_receipts(
-        bundle, bundle_dir, packet_generated_at
+    stage_receipts_hash, stage_times = _validate_stage_receipts(
+        bundle, bundle_dir
     )
     as_of = str(bundle["manifest"]["as_of"])
-    publication = _source_publication(feature_health, as_of, packet_generated_at)
+    publication, feature_health_generated_at = _source_publication(
+        feature_health, bundle, as_of
+    )
+    # governance-mutation: U4_PREDECISION_CAUSAL_CHRONOLOGY
+    if not (
+        feature_health_generated_at
+        <= stage_times["candidates"]
+        and stage_times["finalize"]
+        <= bundle_generated_at
+        <= funnel_health_generated_at
+        <= packet_generated_at
+    ):
+        raise PreDecisionError(
+            "evidence violates feature -> candidates -> battery -> finalize -> bundle/health order"
+        )
     rows = _candidate_rows(bundle, industry, method_version)
     allowed = sum(row["allowed_for_u4_packet"] is True for row in rows)
     blocked_codes = sorted({code for row in rows for code in row["blocked_reasons"]})
@@ -834,11 +880,47 @@ def validate_packet(
 
 
 def _write_outputs(
-    packet_path: Path, diagnostic_path: Path, packet: Mapping[str, Any], diagnostic: Mapping[str, Any],
+    scratch_root: Path, packet_path: Path, diagnostic_path: Path,
+    packet: Mapping[str, Any], diagnostic: Mapping[str, Any],
+    *, protected_paths: Sequence[Path],
 ) -> None:
-    if packet_path == diagnostic_path:
+    if not scratch_root.is_dir() or scratch_root.is_symlink():
+        raise PreDecisionError("scratch root must be one existing regular directory")
+    scratch_lexical = Path(os.path.abspath(scratch_root))
+    scratch_resolved = scratch_root.resolve()
+    # governance-mutation: U4_PREDECISION_STATIC_RUNTIME_BOUNDARY
+    protected_roots: set[Path] = {RUNTIME_ROOT.resolve()}
+    for protected in protected_paths:
+        resolved = protected.resolve()
+        protected_roots.add(resolved if resolved.is_dir() else resolved.parent)
+        parts = resolved.parts
+        for marker in ("data_history", "public"):
+            if marker in parts:
+                protected_roots.add(Path(*parts[:parts.index(marker)]).resolve())
+    # governance-mutation: U4_PREDECISION_SCRATCH_BOUNDARY
+    if any(
+        scratch_resolved == protected
+        or scratch_resolved.is_relative_to(protected)
+        or protected.is_relative_to(scratch_resolved)
+        for protected in protected_roots
+    ):
+        raise PreDecisionError("scratch root overlaps an immutable input or production tree")
+    if packet_path.resolve(strict=False) == diagnostic_path.resolve(strict=False):
         raise PreDecisionError("packet and diagnostic outputs must be different files")
     for path in (packet_path, diagnostic_path):
+        path_lexical = Path(os.path.abspath(path))
+        resolved = path.resolve(strict=False)
+        if resolved == scratch_resolved or not resolved.is_relative_to(scratch_resolved):
+            raise PreDecisionError("output path must remain inside the dedicated scratch root")
+        try:
+            relative_parent = path_lexical.parent.relative_to(scratch_lexical)
+        except ValueError as exc:
+            raise PreDecisionError("output path is not lexically inside the scratch root") from exc
+        current = scratch_lexical
+        for part in relative_parent.parts:
+            current /= part
+            if current.is_symlink():
+                raise PreDecisionError("output path cannot traverse a symbolic link")
         if os.path.lexists(path):
             raise PreDecisionError(f"output already exists: {path}")
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -858,6 +940,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--generated-at", required=True)
     parser.add_argument("--packet-output", required=True, type=Path)
     parser.add_argument("--diagnostic-output", required=True, type=Path)
+    parser.add_argument("--scratch-root", required=True, type=Path)
     parser.add_argument("--industry", default=DEFAULT_INDUSTRY)
     parser.add_argument("--method-version", default=DEFAULT_METHOD_VERSION)
     args = parser.parse_args(argv)
@@ -880,7 +963,14 @@ def main(argv: Sequence[str] | None = None) -> int:
             industry=args.industry,
             method_version=args.method_version,
         )
-        _write_outputs(args.packet_output, args.diagnostic_output, packet, diagnostic)
+        _write_outputs(
+            args.scratch_root,
+            args.packet_output,
+            args.diagnostic_output,
+            packet,
+            diagnostic,
+            protected_paths=(args.bundle, args.feature_health, args.funnel_health),
+        )
     except (PreDecisionError, ValueError) as exc:
         print(f"REFUSED: {exc}")
         return 1
