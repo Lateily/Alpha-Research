@@ -108,6 +108,11 @@ packet self-hash. Packet-supplied rows or caller-supplied evidence are not an
 authority source. A consumer must reject a packet that has only passed
 structural Schema validation.
 
+The reopened evidence also binds `as_of`, source-publication state, packet and
+row `method_version`, and any diagnostic blocker. Candidate order is a display
+choice, not authority: validators require the same unique candidate set and
+cardinality, while row hashes bind each candidate's contents.
+
 ## Selection Boundary
 
 The only legal selected counts after Junyan review are:

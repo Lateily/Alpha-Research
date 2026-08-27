@@ -26,6 +26,13 @@ IMMUTABLE_REF_FIELDS = {
     "funnel_health_ref",
     "funnel_health_hash",
     "stage_receipts_hash",
+    "diagnostic_report_ref",
+    "diagnostic_report_hash",
+}
+EXTERNAL_ROW_BLOCKERS = {
+    "QUALITY_GATE_INCOMPLETE",
+    "RECEIPT_SELF_REPORT_MISMATCH",
+    "DIAGNOSTIC_EVIDENCE_HASH_MISMATCH",
 }
 
 
@@ -114,6 +121,7 @@ def _frozen_evidence(packet: Mapping[str, Any]) -> dict[str, Any]:
         rows[row["ts_code"]] = {
             "display_name": row["display_name"],
             "candidate_status": row["candidate_status"],
+            "method_version": row["method_version"],
             "cohort_id": row["cohort_id"],
             "cohort_identity_state": row["cohort_identity_state"],
             "causal_cluster_id": row["causal_cluster_id"],
@@ -124,8 +132,14 @@ def _frozen_evidence(packet: Mapping[str, Any]) -> dict[str, Any]:
             "red_flag_channels": list(row["red_flag_channels"]),
             "u3_complete": "U3_BATTERY_INCOMPLETE" not in row["blocked_reasons"],
             "missing_evidence": list(row["missing_evidence"]),
+            "diagnostic_blockers": sorted(
+                set(row["blocked_reasons"]).intersection(EXTERNAL_ROW_BLOCKERS)
+            ),
         }
     return {
+        "as_of": packet["as_of"],
+        "method_version": packet["method_version"],
+        "source_publication": json.loads(json.dumps(packet["source_publication"])),
         "source_refs": {
             key: packet["source_refs"][key] for key in sorted(IMMUTABLE_REF_FIELDS)
         },
@@ -139,16 +153,30 @@ def _semantic_errors(packet: Mapping[str, Any], evidence: Mapping[str, Any]) -> 
         publication = packet["source_publication"]
         rows = packet["candidate_rows"]
         refs = packet["source_refs"]
+        evidence_publication = evidence["source_publication"]
         evidence_refs = evidence["source_refs"]
         evidence_rows = evidence["rows"]
     except (KeyError, TypeError):
         return ["semantic inputs are missing"]
-    if not all(isinstance(value, Mapping) for value in (publication, refs, evidence_refs, evidence_rows)) or not isinstance(rows, list):
+    if not all(
+        isinstance(value, Mapping)
+        for value in (publication, refs, evidence_publication, evidence_refs, evidence_rows)
+    ) or not isinstance(rows, list):
         return ["semantic inputs have the wrong type"]
+    if packet.get("as_of") != evidence.get("as_of"):
+        errors.append("as_of does not match frozen evidence")
+    if packet.get("method_version") != evidence.get("method_version"):
+        errors.append("packet method_version does not match frozen evidence")
+    if dict(publication) != dict(evidence_publication):
+        errors.append("source publication does not match frozen evidence")
     if {key: refs.get(key) for key in IMMUTABLE_REF_FIELDS} != dict(evidence_refs):
         errors.append("immutable source refs do not match frozen evidence")
     codes = [row.get("ts_code") for row in rows if isinstance(row, Mapping)]
-    if codes != sorted(evidence_rows) or len(codes) != len(set(codes)):
+    if (
+        len(codes) != len(evidence_rows)
+        or len(codes) != len(set(codes))
+        or set(codes) != set(evidence_rows)
+    ):
         errors.append("candidate denominator does not match frozen evidence")
     for index, row in enumerate(rows):
         if not isinstance(row, Mapping):
@@ -166,14 +194,17 @@ def _semantic_errors(packet: Mapping[str, Any], evidence: Mapping[str, Any]) -> 
             errors.append(f"candidate_rows[{index}] evidence lists are invalid")
             continue
         for field in (
-            "display_name", "candidate_status", "cohort_id", "cohort_identity_state",
+            "display_name", "candidate_status", "method_version",
+            "cohort_id", "cohort_identity_state",
             "causal_cluster_id", "causal_cluster_identity_state",
             "u2_candidate_row_hash", "u3_battery_row_hash", "positive_channels",
             "red_flag_channels", "missing_evidence",
         ):
             if row.get(field) != source.get(field):
                 errors.append(f"candidate_rows[{index}] {field} differs from frozen evidence")
-        expected_blocked: list[str] = []
+        if row.get("method_version") != packet.get("method_version"):
+            errors.append(f"candidate_rows[{index}] method_version differs from packet")
+        expected_blocked = list(source.get("diagnostic_blockers", []))
         if source.get("u3_complete") is not True:
             expected_blocked.append("U3_BATTERY_INCOMPLETE")
         if source.get("red_flag_channels"):
@@ -452,7 +483,8 @@ class U4PreDecisionPacketContractTests(unittest.TestCase):
         packet["source_publication"]["retry_after_utc"] = "2026-08-26T09:00:00+00:00"
         self.assertInvalid(packet, "expected const 'SOURCE_PUBLICATION_PENDING'")
         packet["status"] = "SOURCE_PUBLICATION_PENDING"
-        self.assertValid(_seal(packet))
+        packet = _seal(packet)
+        self.assertValid(packet, _frozen_evidence(packet))
 
         packet = _packet()
         packet["source_publication"]["pending_sources"] = ["not-really-pending"]
@@ -466,7 +498,8 @@ class U4PreDecisionPacketContractTests(unittest.TestCase):
             with self.subTest(daily_status=daily_status):
                 self.assertInvalid(packet, "outside enum")
                 packet["status"] = "DATA_BLOCKED"
-                self.assertValid(_seal(packet))
+                packet = _seal(packet)
+                self.assertValid(packet, _frozen_evidence(packet))
 
     def test_quarterly_source_status_is_a_real_packet_gate(self) -> None:
         packet = _packet()
@@ -474,14 +507,16 @@ class U4PreDecisionPacketContractTests(unittest.TestCase):
         packet["source_publication"]["pending_sources"] = ["fina_indicator_pit"]
         self.assertInvalid(packet, "expected const 'SOURCE_PUBLICATION_PENDING'")
         packet["status"] = "SOURCE_PUBLICATION_PENDING"
-        self.assertValid(_seal(packet))
+        packet = _seal(packet)
+        self.assertValid(packet, _frozen_evidence(packet))
 
         packet = _packet()
         packet["source_publication"]["quarterly_source_status"] = "DATA_BLOCKED"
         packet["source_publication"]["pending_sources"] = ["fina_indicator_pit"]
         self.assertInvalid(packet, "outside enum")
         packet["status"] = "DATA_BLOCKED"
-        self.assertValid(_seal(packet))
+        packet = _seal(packet)
+        self.assertValid(packet, _frozen_evidence(packet))
 
     def test_zero_reviewable_pool_must_stop_before_u4(self) -> None:
         packet = _packet(candidate_rows=[])
@@ -598,6 +633,73 @@ class U4PreDecisionPacketContractTests(unittest.TestCase):
         self.assertInvalid(
             invented_hash, "u3_battery_row_hash differs from frozen evidence", frozen
         )
+
+        reversed_packet = _packet(candidate_rows=[second, _candidate()])
+        self.assertValid(reversed_packet, frozen)
+
+    def test_date_publication_and_method_are_bound_to_frozen_evidence(self) -> None:
+        pending = _packet()
+        pending["source_publication"] = {
+            "daily_source_status": "PENDING",
+            "quarterly_source_status": "PUBLISHED",
+            "pending_sources": ["cyq_perf"],
+            "retry_after_utc": "2026-08-26T10:00:00+00:00",
+        }
+        pending = _seal(pending)
+        frozen = _frozen_evidence(pending)
+
+        relabeled = json.loads(json.dumps(pending))
+        relabeled["source_publication"] = {
+            "daily_source_status": "PUBLISHED",
+            "quarterly_source_status": "PUBLISHED",
+            "pending_sources": [],
+            "retry_after_utc": None,
+        }
+        relabeled = _seal(relabeled)
+        self.assertEqual(relabeled["status"], "READY_FOR_JUNYAN_REVIEW")
+        self.assertInvalid(
+            relabeled, "source publication does not match frozen evidence", frozen
+        )
+
+        for field, value, fragment in (
+            ("as_of", "20260827", "as_of does not match frozen evidence"),
+            (
+                "method_version",
+                "INVENTED_RESEARCH_METHOD_V9",
+                "packet method_version does not match frozen evidence",
+            ),
+        ):
+            packet = json.loads(json.dumps(pending))
+            packet[field] = value
+            if field == "method_version":
+                packet["candidate_rows"][0]["method_version"] = value
+            packet = _seal(packet)
+            with self.subTest(field=field):
+                self.assertInvalid(packet, fragment, frozen)
+
+    def test_external_diagnostic_blockers_are_visible_and_derived(self) -> None:
+        for blocker in sorted(EXTERNAL_ROW_BLOCKERS):
+            row = _candidate(
+                blocked_reasons=[blocker],
+                quality_status="DATA_BLOCKED",
+                allowed_for_u4_packet=False,
+                question_for_junyan=None,
+            )
+            source_packet = _packet(candidate_rows=[row])
+            frozen = _frozen_evidence(source_packet)
+            with self.subTest(blocker=blocker):
+                self.assertValid(source_packet, frozen)
+                concealed = json.loads(json.dumps(source_packet))
+                concealed["candidate_rows"][0]["blocked_reasons"] = []
+                concealed["candidate_rows"][0]["quality_status"] = "WARN"
+                concealed["candidate_rows"][0]["allowed_for_u4_packet"] = True
+                concealed["candidate_rows"][0]["question_for_junyan"] = (
+                    "Does the same-day evidence support deep research?"
+                )
+                concealed = _seal(concealed)
+                self.assertInvalid(
+                    concealed, "blockers are not derived from frozen evidence", frozen
+                )
 
     def test_random_control_and_incomplete_u3_cannot_be_marked_reviewable(self) -> None:
         for blocker in ("RANDOM_CONTROL_NOT_SELECTABLE", "U3_BATTERY_INCOMPLETE"):
