@@ -141,6 +141,7 @@ FUNNEL_GOVERNANCE_PATHS = (
     "experiments/research_funnel/u4_decision_ledger.py",
     "experiments/research_funnel/semiconductor_inputs.py",
     "experiments/research_funnel/semiconductor_source_repair.py",
+    "experiments/research_funnel/u4_pre_decision.py",
     "experiments/research_funnel/feature_store.py",
     "experiments/execution_tracker/event_ledger.py",
     "experiments/execution_tracker/paper_execution_audit.py",
@@ -6239,6 +6240,303 @@ MUTATIONS = MUTATIONS + (
         ),
         expected_failure_marker="test_semiconductor_ready_pool_below_selection_floor_is_blocked",
         rationale="A 1-2 name ready pool cannot be relabeled as enough for the human U4 selection floor.",
+    ),
+    MutationCase(
+        mutation_id="U4_PREDECISION_STAGE_RECEIPTS",
+        component="Research funnel U4 pre-decision runtime",
+        source_path="experiments/research_funnel/u4_pre_decision.py",
+        test_script="tests/test_u4_pre_decision_runtime.py",
+        before=(
+            "        # governance-mutation: U4_PREDECISION_STAGE_RECEIPTS\n"
+            "        if ("
+        ),
+        after=(
+            "        # governance-mutation: U4_PREDECISION_STAGE_RECEIPTS\n"
+            "        if False and ("
+        ),
+        expected_failure_marker="test_stage_receipt_self_report_is_crosschecked_against_the_dag",
+        rationale="Stage receipts must be recomputed against their artifacts and DAG bindings.",
+    ),
+    MutationCase(
+        mutation_id="U4_PREDECISION_FEATURE_HEALTH_CONTRACT",
+        component="Research funnel U4 pre-decision runtime",
+        source_path="experiments/research_funnel/u4_pre_decision.py",
+        test_script="tests/test_u4_pre_decision_runtime.py",
+        before=(
+            "    # governance-mutation: U4_PREDECISION_FEATURE_HEALTH_CONTRACT\n"
+            "    try:\n"
+            "        feature_store.validate_health(dict(feature_health))"
+        ),
+        after=(
+            "    # governance-mutation: U4_PREDECISION_FEATURE_HEALTH_CONTRACT\n"
+            "    try:\n"
+            "        if False:\n"
+            "            feature_store.validate_health(dict(feature_health))"
+        ),
+        expected_failure_marker="test_feature_health_complete_state_must_pass_the_producer_contract",
+        rationale="No invented source row may bypass the complete producer health contract.",
+    ),
+    MutationCase(
+        mutation_id="U4_PREDECISION_FEATURE_HEALTH_CHRONOLOGY",
+        component="Research funnel U4 pre-decision runtime",
+        source_path="experiments/research_funnel/u4_pre_decision.py",
+        test_script="tests/test_u4_pre_decision_runtime.py",
+        before=(
+            "    # governance-mutation: U4_PREDECISION_FEATURE_HEALTH_CHRONOLOGY\n"
+            "    if packet_generated_at < health_generated_at:"
+        ),
+        after=(
+            "    # governance-mutation: U4_PREDECISION_FEATURE_HEALTH_CHRONOLOGY\n"
+            "    if False:"
+        ),
+        expected_failure_marker="test_packet_cannot_predate_feature_store_health",
+        rationale="The packet cannot predate the source-health receipt it cites.",
+    ),
+    MutationCase(
+        mutation_id="U4_PREDECISION_FUNNEL_HEALTH_DERIVATION",
+        component="Research funnel U4 pre-decision runtime",
+        source_path="experiments/research_funnel/u4_pre_decision.py",
+        test_script="tests/test_u4_pre_decision_runtime.py",
+        before=(
+            "    # governance-mutation: U4_PREDECISION_FUNNEL_HEALTH_DERIVATION\n"
+            "    if any(health.get(key) != value for key, value in expected.items()):"
+        ),
+        after=(
+            "    # governance-mutation: U4_PREDECISION_FUNNEL_HEALTH_DERIVATION\n"
+            "    if False:"
+        ),
+        expected_failure_marker="test_funnel_health_counts_and_status_are_recomputed_from_the_bundle",
+        rationale="Funnel health must be recomputed from immutable bundle bytes.",
+    ),
+    MutationCase(
+        mutation_id="U4_PREDECISION_STAGE_RECEIPT_FILE",
+        component="Research funnel U4 pre-decision runtime",
+        source_path="experiments/research_funnel/u4_pre_decision.py",
+        test_script="tests/test_u4_pre_decision_runtime.py",
+        before=(
+            "        # governance-mutation: U4_PREDECISION_STAGE_RECEIPT_FILE\n"
+            "        if not receipt_path.is_file() or receipt_path.is_symlink():"
+        ),
+        after=(
+            "        # governance-mutation: U4_PREDECISION_STAGE_RECEIPT_FILE\n"
+            "        if not receipt_path.is_file():"
+        ),
+        expected_failure_marker="test_stage_receipt_symlink_is_rejected_before_reading",
+        rationale="A receipt must be an in-bundle regular file, never an external symlink.",
+    ),
+    MutationCase(
+        mutation_id="U4_PREDECISION_CHRONOLOGY",
+        component="Research funnel U4 pre-decision runtime",
+        source_path="experiments/research_funnel/u4_pre_decision.py",
+        test_script="tests/test_u4_pre_decision_runtime.py",
+        before=(
+            "        # governance-mutation: U4_PREDECISION_CHRONOLOGY\n"
+            "        if packet_generated_at < receipt_generated_at:"
+        ),
+        after=(
+            "        # governance-mutation: U4_PREDECISION_CHRONOLOGY\n"
+            "        if False:"
+        ),
+        expected_failure_marker="test_packet_cannot_predate_stage_receipts",
+        rationale="The packet cannot predate a stage receipt it cites.",
+    ),
+    MutationCase(
+        mutation_id="U4_PREDECISION_BUNDLE_CHRONOLOGY",
+        component="Research funnel U4 pre-decision runtime",
+        source_path="experiments/research_funnel/u4_pre_decision.py",
+        test_script="tests/test_u4_pre_decision_runtime.py",
+        before=(
+            "    # governance-mutation: U4_PREDECISION_BUNDLE_CHRONOLOGY\n"
+            "    if packet_generated_at < bundle_generated_at:"
+        ),
+        after=(
+            "    # governance-mutation: U4_PREDECISION_BUNDLE_CHRONOLOGY\n"
+            "    if False:"
+        ),
+        expected_failure_marker="test_packet_cannot_predate_immutable_bundle",
+        rationale="The packet cannot predate its immutable U1-U3 bundle.",
+    ),
+    MutationCase(
+        mutation_id="U4_PREDECISION_NO_POSITIVE_CHANNEL",
+        component="Research funnel U4 pre-decision runtime",
+        source_path="experiments/research_funnel/u4_pre_decision.py",
+        test_script="tests/test_u4_pre_decision_runtime.py",
+        before=(
+            "        # governance-mutation: U4_PREDECISION_NO_POSITIVE_CHANNEL\n"
+            "        if not positive and ("
+        ),
+        after=(
+            "        # governance-mutation: U4_PREDECISION_NO_POSITIVE_CHANNEL\n"
+            "        if False and ("
+        ),
+        expected_failure_marker="test_validator_refuses_self_consistent_candidate_without_positive_channel",
+        rationale="A row without positive evidence cannot enter human U4 review.",
+    ),
+    MutationCase(
+        mutation_id="U4_PREDECISION_RANDOM_CONTROL",
+        component="Research funnel U4 pre-decision runtime",
+        source_path="experiments/research_funnel/u4_pre_decision.py",
+        test_script="tests/test_u4_pre_decision_runtime.py",
+        before=(
+            "        # governance-mutation: U4_PREDECISION_RANDOM_CONTROL\n"
+            '        if row.get("candidate_status") == "RANDOM_CONTROL" and ('
+        ),
+        after=(
+            "        # governance-mutation: U4_PREDECISION_RANDOM_CONTROL\n"
+            "        if False and ("
+        ),
+        expected_failure_marker="test_validator_refuses_self_consistent_random_control_as_reviewable",
+        rationale="Random controls cannot masquerade as research candidates.",
+    ),
+    MutationCase(
+        mutation_id="U4_PREDECISION_GLOBAL_SOURCE_GATE",
+        component="Research funnel U4 pre-decision runtime",
+        source_path="experiments/research_funnel/u4_pre_decision.py",
+        test_script="tests/test_u4_pre_decision_runtime.py",
+        before=(
+            "    # governance-mutation: U4_PREDECISION_GLOBAL_SOURCE_GATE\n"
+            '    if "PENDING" in values:'
+        ),
+        after=(
+            "    # governance-mutation: U4_PREDECISION_GLOBAL_SOURCE_GATE\n"
+            "    if False:"
+        ),
+        expected_failure_marker="test_status_helper_reserves_pending_for_future_validated_receipts",
+        rationale="A future validated pending receipt must stop before U4 rather than become ready.",
+    ),
+    MutationCase(
+        mutation_id="U4_PREDECISION_GLOBAL_DATA_BLOCK",
+        component="Research funnel U4 pre-decision runtime",
+        source_path="experiments/research_funnel/u4_pre_decision.py",
+        test_script="tests/test_u4_pre_decision_runtime.py",
+        before=(
+            "    # governance-mutation: U4_PREDECISION_GLOBAL_DATA_BLOCK\n"
+            '    if values.intersection({"STALE", "DATA_BLOCKED"}):'
+        ),
+        after=(
+            "    # governance-mutation: U4_PREDECISION_GLOBAL_DATA_BLOCK\n"
+            "    if False:"
+        ),
+        expected_failure_marker="test_global_missing_chips_source_blocks_the_packet_without_hiding_rows",
+        rationale="A missing same-day source must block the packet without hiding rows.",
+    ),
+    MutationCase(
+        mutation_id="U4_PREDECISION_DERIVED_DIAGNOSTIC",
+        component="Research funnel U4 pre-decision runtime",
+        source_path="experiments/research_funnel/u4_pre_decision.py",
+        test_script="tests/test_u4_pre_decision_runtime.py",
+        before=(
+            "    # governance-mutation: U4_PREDECISION_DERIVED_DIAGNOSTIC\n"
+            "    if ("
+        ),
+        after=(
+            "    # governance-mutation: U4_PREDECISION_DERIVED_DIAGNOSTIC\n"
+            "    if False and ("
+        ),
+        expected_failure_marker="test_validator_recomputes_row_diagnostic_summary_and_authority",
+        rationale="Diagnostic counts cannot be trusted as self-reported labels.",
+    ),
+    MutationCase(
+        mutation_id="U4_PREDECISION_HUMAN_AUTHORITY",
+        component="Research funnel U4 pre-decision runtime",
+        source_path="experiments/research_funnel/u4_pre_decision.py",
+        test_script="tests/test_u4_pre_decision_runtime.py",
+        before=(
+            "    # governance-mutation: U4_PREDECISION_HUMAN_AUTHORITY\n"
+            '    if packet.get("selection_boundary") != {'
+        ),
+        after=(
+            "    # governance-mutation: U4_PREDECISION_HUMAN_AUTHORITY\n"
+            '    if False and packet.get("selection_boundary") != {'
+        ),
+        expected_failure_marker="test_validator_recomputes_row_diagnostic_summary_and_authority",
+        rationale="Only Junyan may turn this packet into a U4 decision.",
+    ),
+    MutationCase(
+        mutation_id="U4_PREDECISION_PACKET_HASH",
+        component="Research funnel U4 pre-decision runtime",
+        source_path="experiments/research_funnel/u4_pre_decision.py",
+        test_script="tests/test_u4_pre_decision_runtime.py",
+        before=(
+            "    # governance-mutation: U4_PREDECISION_PACKET_HASH\n"
+            '    if packet.get("packet_hash") != _sha(_without_hash(packet)):'
+        ),
+        after=(
+            "    # governance-mutation: U4_PREDECISION_PACKET_HASH\n"
+            "    if False:"
+        ),
+        expected_failure_marker="test_validator_recomputes_row_diagnostic_summary_and_authority",
+        rationale="The packet must remain tamper-evident after construction.",
+    ),
+    MutationCase(
+        mutation_id="U4_PREDECISION_EXTERNAL_EVIDENCE_BINDING",
+        component="Research funnel U4 pre-decision runtime",
+        source_path="experiments/research_funnel/u4_pre_decision.py",
+        test_script="tests/test_u4_pre_decision_runtime.py",
+        before=(
+            "    # governance-mutation: U4_PREDECISION_EXTERNAL_EVIDENCE_BINDING\n"
+            "    if source_bound_actual != source_bound_expected:"
+        ),
+        after=(
+            "    # governance-mutation: U4_PREDECISION_EXTERNAL_EVIDENCE_BINDING\n"
+            "    if False:"
+        ),
+        expected_failure_marker="test_source_bound_validator_rejects_resealed_denominator_and_relabels",
+        rationale="A fully resealed packet must still match reopened immutable evidence.",
+    ),
+    MutationCase(
+        mutation_id="U4_PREDECISION_COHORT_IDENTITY",
+        component="Research funnel U4 pre-decision runtime",
+        source_path="experiments/research_funnel/u4_pre_decision.py",
+        test_script="tests/test_u4_pre_decision_runtime.py",
+        before=(
+            "        # governance-mutation: U4_PREDECISION_COHORT_IDENTITY\n"
+            "        if ("
+        ),
+        after=(
+            "        # governance-mutation: U4_PREDECISION_COHORT_IDENTITY\n"
+            "        if False and ("
+        ),
+        expected_failure_marker="test_identity_states_cannot_be_invented_inside_a_resealed_packet",
+        rationale="The offline packet cannot invent an unbound cohort identity.",
+    ),
+    MutationCase(
+        mutation_id="U4_PREDECISION_CLUSTER_IDENTITY",
+        component="Research funnel U4 pre-decision runtime",
+        source_path="experiments/research_funnel/u4_pre_decision.py",
+        test_script="tests/test_u4_pre_decision_runtime.py",
+        before=(
+            '        if cluster_state == "UNAVAILABLE_PENDING":\n'
+            "            # governance-mutation: U4_PREDECISION_CLUSTER_IDENTITY\n"
+            '            if cluster_id != UNAVAILABLE or "causal_cluster_id" not in missing:'
+        ),
+        after=(
+            '        if cluster_state == "UNAVAILABLE_PENDING":\n'
+            "            # governance-mutation: U4_PREDECISION_CLUSTER_IDENTITY\n"
+            "            if False:"
+        ),
+        expected_failure_marker="test_identity_states_cannot_be_invented_inside_a_resealed_packet",
+        rationale="A pending causal-cluster identity must remain explicitly unavailable.",
+    ),
+    MutationCase(
+        mutation_id="U4_PREDECISION_COMBINED_QUALITY",
+        component="Research funnel U4 pre-decision runtime",
+        source_path="experiments/research_funnel/u4_pre_decision.py",
+        test_script="tests/test_u4_pre_decision_runtime.py",
+        before=(
+            "        # governance-mutation: U4_PREDECISION_COMBINED_QUALITY\n"
+            "        expected_quality = (\n"
+            '            "DATA_BLOCKED" if any(item != "E1_RED_FLAG_ACTIVE" for item in blocked)\n'
+            '            else "REVISE_REQUIRED" if "E1_RED_FLAG_ACTIVE" in blocked'
+        ),
+        after=(
+            "        # governance-mutation: U4_PREDECISION_COMBINED_QUALITY\n"
+            "        expected_quality = (\n"
+            '            "REVISE_REQUIRED" if "E1_RED_FLAG_ACTIVE" in blocked\n'
+            '            else "DATA_BLOCKED" if blocked'
+        ),
+        expected_failure_marker="test_u3_incomplete_plus_e1_is_data_blocked_not_only_revise_required",
+        rationale="An incomplete U3 row remains DATA_BLOCKED even when E1 is also active.",
     ),
 )
 

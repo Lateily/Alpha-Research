@@ -197,6 +197,8 @@ jobs:
       # closed and source/diagnostic blockers remain visible.
       - name: U4 pre-decision packet contract (offline)
         run: python3 tests/test_u4_pre_decision_packet.py
+      - name: U4 pre-decision runtime (offline)
+        run: python3 tests/test_u4_pre_decision_runtime.py
       # Frozen assembly contract over the existing funnel, U4, research method,
       # paper execution, and five-axis modules. This step adds no runtime wiring.
       - name: Research closed loop V1 assembly contract (offline)
