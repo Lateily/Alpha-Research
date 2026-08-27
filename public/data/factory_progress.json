@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "generated_at": "2026-08-27T11:10:47.296281+00:00",
+    "generated_at": "2026-08-27T19:17:36.783149+00:00",
     "layer": "Factory Progress aggregator (read-only over committed artifacts)",
     "disclaimer": "internal progress dashboard — UNVALIDATED research pipeline state; nothing here is a recommendation, a buy list, or validated alpha"
   },
@@ -426,12 +426,11 @@
           "signals": {
             "zone": "BULLISH",
             "generated_at": "2026-08-27",
-            "rsi14": 55.1,
-            "ma20": 91.07,
-            "ma60": 89.69,
+            "rsi14": 52.5,
+            "ma20": 90.83,
+            "ma60": 89.64,
             "signals": [
-              "MA20_BOUNCE",
-              "MA60_BOUNCE"
+              "BULLISH_ALIGNMENT"
             ],
             "source": "signals_file"
           }
@@ -602,11 +601,13 @@
           "signals": {
             "zone": "BULLISH",
             "generated_at": "2026-08-27",
-            "rsi14": 48.0,
-            "ma20": 262.0,
-            "ma60": 260.99,
+            "rsi14": 50.1,
+            "ma20": 261.94,
+            "ma60": 261.31,
             "signals": [
-              "MACD_DEATH_CROSS"
+              "MA20_BOUNCE",
+              "MA60_BOUNCE",
+              "BULLISH_ALIGNMENT"
             ],
             "source": "signals_file"
           }
@@ -775,12 +776,14 @@
           "alpha_score": 53.9,
           "source": "universe_a",
           "signals": {
-            "zone": "BEARISH",
+            "zone": "NEUTRAL",
             "generated_at": "2026-08-27",
-            "rsi14": 44.5,
-            "ma20": 74.16,
-            "ma60": 79.76,
-            "signals": [],
+            "rsi14": 49.4,
+            "ma20": 74.63,
+            "ma60": 79.84,
+            "signals": [
+              "MA20_BOUNCE"
+            ],
             "source": "signals_file"
           }
         },
