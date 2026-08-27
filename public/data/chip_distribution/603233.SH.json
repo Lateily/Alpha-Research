@@ -1,10 +1,10 @@
 {
   "ticker": "603233.SH",
-  "fetched_at": "2026-08-26T09:10:37Z",
-  "trade_date": "20260826",
+  "fetched_at": "2026-08-27T11:06:48Z",
+  "trade_date": "20260827",
   "_status": "ok",
   "api_used": "cyq_chips",
-  "as_of": "20260825",
+  "as_of": "20260826",
   "fallback_days": 1,
   "chips": [
     {
@@ -53,55 +53,55 @@
     },
     {
       "price": 14.5,
-      "percent": 0.75
+      "percent": 0.74
     },
     {
       "price": 15.0,
-      "percent": 2.73
+      "percent": 2.69
     },
     {
       "price": 15.5,
-      "percent": 5.3
+      "percent": 5.21
     },
     {
       "price": 16.0,
-      "percent": 6.02
+      "percent": 5.92
     },
     {
       "price": 16.5,
-      "percent": 5.62
+      "percent": 5.52
     },
     {
       "price": 17.0,
-      "percent": 8.42
+      "percent": 8.28
     },
     {
       "price": 17.5,
-      "percent": 12.92
+      "percent": 12.7
     },
     {
       "price": 18.0,
-      "percent": 16.37
+      "percent": 16.77
     },
     {
       "price": 18.5,
-      "percent": 16.29
+      "percent": 16.78
     },
     {
       "price": 19.0,
-      "percent": 12.5
+      "percent": 12.38
     },
     {
       "price": 19.5,
-      "percent": 4.06
+      "percent": 3.99
     },
     {
       "price": 20.0,
-      "percent": 0.89
+      "percent": 0.88
     },
     {
       "price": 20.5,
-      "percent": 0.46
+      "percent": 0.45
     },
     {
       "price": 21.0,
@@ -364,5 +364,5 @@
       "percent": 0.08
     }
   ],
-  "_note": "requested trade_date=20260826 was empty (cyq_chips is T+1); fell back to most recent non-empty day 20260825"
+  "_note": "requested trade_date=20260827 was empty (cyq_chips is T+1); fell back to most recent non-empty day 20260826"
 }
