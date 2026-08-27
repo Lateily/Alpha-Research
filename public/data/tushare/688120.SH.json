@@ -1,11 +1,24 @@
 {
   "ticker": "688120.SH",
-  "fetched_at": "2026-08-26T09:10:10Z",
+  "fetched_at": "2026-08-27T11:06:20Z",
   "permission_model": "runtime_probe",
   "_status": "partial",
   "data": {
     "daily": {
       "rows": [
+        {
+          "ts_code": "688120.SH",
+          "trade_date": "20260827",
+          "open": 263.88,
+          "high": 272.24,
+          "low": 260.36,
+          "close": 267.1,
+          "pre_close": 262.18,
+          "change": 4.92,
+          "pct_chg": 1.8766,
+          "vol": 83138.56,
+          "amount": 2218432.506
+        },
         {
           "ts_code": "688120.SH",
           "trade_date": "20260826",
@@ -824,27 +837,34 @@
           "pct_chg": -4.8124,
           "vol": 130100.66,
           "amount": 3460596.592
-        },
-        {
-          "ts_code": "688120.SH",
-          "trade_date": "20260528",
-          "open": 280.66,
-          "high": 282.86,
-          "low": 270.07,
-          "close": 274.5,
-          "pre_close": 281.98,
-          "change": -7.48,
-          "pct_chg": -2.6527,
-          "vol": 129421.27,
-          "amount": 3564050.992
         }
       ],
       "row_count": 64,
       "_status": "ok",
-      "as_of": "20260826"
+      "as_of": "20260827"
     },
     "daily_basic": {
       "rows": [
+        {
+          "ts_code": "688120.SH",
+          "trade_date": "20260827",
+          "close": 267.1,
+          "turnover_rate": 1.6752,
+          "turnover_rate_f": 2.3286,
+          "volume_ratio": 1.01,
+          "pe": 122.3159,
+          "pe_ttm": 116.1229,
+          "pb": 16.7563,
+          "ps": 28.5177,
+          "ps_ttm": 24.8148,
+          "dv_ratio": 0.098,
+          "dv_ttm": 0.1064,
+          "total_share": 49628.1438,
+          "float_share": 49628.1438,
+          "free_share": 35703.6196,
+          "total_mv": 13255676.194,
+          "circ_mv": 13255676.194
+        },
         {
           "ts_code": "688120.SH",
           "trade_date": "20260826",
@@ -2104,34 +2124,19 @@
           "free_share": 25419.1104,
           "total_mv": 9240572.8728,
           "circ_mv": 9240572.8728
-        },
-        {
-          "ts_code": "688120.SH",
-          "trade_date": "20260528",
-          "close": 274.5,
-          "turnover_rate": 3.6596,
-          "turnover_rate_f": 5.0915,
-          "volume_ratio": 0.95,
-          "pe": 89.5776,
-          "pe_ttm": 88.4442,
-          "pb": 12.5734,
-          "ps": 20.8848,
-          "ps_ttm": 19.6627,
-          "dv_ratio": 0.1338,
-          "dv_ttm": 0.1338,
-          "total_share": 35365.1991,
-          "float_share": 35365.1991,
-          "free_share": 25419.1104,
-          "total_mv": 9707747.153,
-          "circ_mv": 9707747.153
         }
       ],
       "row_count": 64,
       "_status": "ok",
-      "as_of": "20260826"
+      "as_of": "20260827"
     },
     "adj_factor": {
       "rows": [
+        {
+          "ts_code": "688120.SH",
+          "trade_date": "20260827",
+          "adj_factor": 4.6652
+        },
         {
           "ts_code": "688120.SH",
           "trade_date": "20260826",
@@ -2446,16 +2451,11 @@
           "ts_code": "688120.SH",
           "trade_date": "20260529",
           "adj_factor": 3.3296
-        },
-        {
-          "ts_code": "688120.SH",
-          "trade_date": "20260528",
-          "adj_factor": 3.3296
         }
       ],
       "row_count": 64,
       "_status": "ok",
-      "as_of": "20260826"
+      "as_of": "20260827"
     },
     "income": {
       "rows": [
