@@ -20,6 +20,17 @@ visible rows were red-flag-only and the positive input channels were either
 absent or not yet trustworthy enough. The next rerun must prove that the data
 and review gates are ready before any candidate is handed to Junyan.
 
+## Canonical Preflight
+
+After Junyan approves this checklist, this document is the canonical preflight
+for the next semiconductor same-day U1-U3 rerun. PR #303 / NEXT_RUN_PREFLIGHT is
+background context only unless Junyan explicitly reassigns authority back to it.
+
+When the two documents disagree, stop and follow this checklist. Do not average
+the two documents, copy the easier command, or treat #303 as an alternate pass
+path. Any future checklist replacement must name the document it supersedes and
+must carry a new review reference.
+
 ## Operator Inputs
 
 The operator must name these artifacts before a rerun is treated as ready:
@@ -35,6 +46,57 @@ The operator must name these artifacts before a rerun is treated as ready:
 | U4 handoff packet | Only built after sources, diagnostics, and red-flag propagation pass |
 
 Any unavailable artifact is a stop, not a warning to ignore.
+
+## Execution Environments
+
+The reviewed feature-store copy is produced on the production Mac because the
+live store lives there. Windows workstations may inspect a reviewed copy after it
+has been produced, but they must not point this checklist at a live production
+database path.
+
+The copy step is a read-only source operation and a local-copy write operation.
+It does not repair production data and does not grant permission to run nightly,
+apply a source repair, or write an order. If the production Mac lacks the files
+needed to make a reviewed copy, stop with `DATA_BLOCKED`.
+
+### Production Mac: make reviewed feature-store copy
+
+Run this on the production Mac from a reviewed shell. Use plain backslash line
+continuations; do not use zsh backticks.
+
+```bash
+cd <alpha-research-repo>
+REVIEW_DIR="<local-reviewed-copy-dir>/semiconductor-rerun-YYYYMMDD"
+mkdir -p "$REVIEW_DIR"
+sqlite3 "/Users/years/ar-live/data_history/feature_store.sqlite3" \
+  ".backup '$REVIEW_DIR/feature_store-review.sqlite3'"
+sqlite3 "$REVIEW_DIR/feature_store-review.sqlite3" \
+  "PRAGMA journal_mode=DELETE; PRAGMA integrity_check;"
+```
+
+The `journal_mode=DELETE` conversion is applied only to the reviewed copy. It
+prevents a detached WAL copy from failing under read-only scan. If
+`integrity_check` does not return `ok`, stop.
+
+### Production Mac: scan reviewed copy
+
+```bash
+cd <alpha-research-repo>
+python3 experiments/research_funnel/semiconductor_source_repair.py scan \
+  --db "<local-reviewed-copy-dir>/semiconductor-rerun-YYYYMMDD/feature_store-review.sqlite3" \
+  --output "<local-reviewed-copy-dir>/semiconductor-rerun-YYYYMMDD/source-scan.json"
+```
+
+### Windows review station: scan transferred reviewed copy
+
+Use this only after the reviewed copy exists locally. This is the Reed-side
+shape; it is not the production Mac shape.
+
+```powershell
+py -3.11 .\experiments\research_funnel\semiconductor_source_repair.py scan `
+  --db <reviewed-feature-store-copy.sqlite> `
+  --output <local-scan.json>
+```
 
 ## Operator Packet
 
@@ -90,9 +152,37 @@ py -3.11 .\experiments\research_funnel\semiconductor_evidence_diagnostic.py `
   --output <local-diagnostic.json>
 ```
 
+```bash
+cd <alpha-research-repo>
+python3 experiments/research_funnel/semiconductor_evidence_diagnostic.py \
+  --intake "<committed-intake-receipt.json>" \
+  --output "<local-diagnostic.json>"
+```
+
 Do not run `apply`, production nightly, or feature-store live collection from
 this checklist. Those require a separate Junyan approval with exact scope and
 hashes.
+
+## Pending Daily Source Retry Schedule
+
+`SOURCE_PUBLICATION_PENDING` is a stop, not a soft warning. A rerun may not start
+from a pending daily source just because an operator wants same-day output.
+
+For daily sources such as `moneyflow_dc` and `cyq_perf`, use this retry rule
+until a source-specific publication calendar exists:
+
+1. If the first scan happens before the post-publication window, record
+   `SOURCE_PUBLICATION_PENDING` and do not run U1-U3.
+2. The first same-day retry window is after `17:30 Asia/Shanghai`.
+3. If the source is still pending after that window, run one final same-day
+   verification after `20:30 Asia/Shanghai`.
+4. If the final verification is still pending, stop for that trade date and
+   carry the blocker into the next operator packet.
+5. A later observation without publication-time proof remains `LATE_OBSERVED`
+   and cannot be treated as same-day evidence.
+
+Quarterly or non-daily sources do not inherit this schedule. They must name their
+own publication basis or stop as `DATA_BLOCKED`.
 
 ## Stop Conditions
 

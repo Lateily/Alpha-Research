@@ -32,9 +32,51 @@ class SemiconductorRerunChecklistTests(unittest.TestCase):
         self.assertIn("semiconductor_source_repair.py scan", self.text)
         self.assertIn("--db <reviewed-feature-store-copy.sqlite>", self.text)
         self.assertIn("--output <local-scan.json>", self.text)
+        self.assertIn("python3 experiments/research_funnel/semiconductor_source_repair.py scan", self.text)
+        self.assertIn("--db \"<local-reviewed-copy-dir>/semiconductor-rerun-YYYYMMDD/feature_store-review.sqlite3\"", self.text)
+        self.assertIn("--output \"<local-reviewed-copy-dir>/semiconductor-rerun-YYYYMMDD/source-scan.json\"", self.text)
         self.assertIn("semiconductor_evidence_diagnostic.py", self.text)
         self.assertIn("--intake <committed-intake-receipt.json>", self.text)
+        self.assertIn("--intake \"<committed-intake-receipt.json>\"", self.text)
         self.assertNotIn("--input <committed-intake-receipt.json>", self.text)
+
+    def test_checklist_names_canonical_relation_to_303(self) -> None:
+        for phrase in (
+            "After Junyan approves this checklist, this document is the canonical preflight",
+            "PR #303 / NEXT_RUN_PREFLIGHT is",
+            "background context only unless Junyan explicitly reassigns authority back to it",
+            "When the two documents disagree, stop and follow this checklist",
+            "must name the document it supersedes",
+        ):
+            self.assertIn(phrase, self.text)
+
+    def test_execution_environment_covers_mac_copy_and_windows_review(self) -> None:
+        for phrase in (
+            "The reviewed feature-store copy is produced on the production Mac",
+            "Windows workstations may inspect a reviewed copy",
+            "must not point this checklist at a live production",
+            "database path",
+            "sqlite3 \"/Users/years/ar-live/data_history/feature_store.sqlite3\"",
+            ".backup '$REVIEW_DIR/feature_store-review.sqlite3'",
+            "PRAGMA journal_mode=DELETE; PRAGMA integrity_check;",
+            "detached WAL copy",
+            "`integrity_check` does not return `ok`, stop",
+            "do not use zsh backticks",
+        ):
+            self.assertIn(phrase, self.text)
+
+    def test_pending_daily_sources_have_retry_schedule(self) -> None:
+        for phrase in (
+            "`SOURCE_PUBLICATION_PENDING` is a stop",
+            "The first same-day retry window is after `17:30 Asia/Shanghai`",
+            "run one final same-day",
+            "verification after `20:30 Asia/Shanghai`",
+            "stop for that trade date",
+            "carry the blocker into the next operator packet",
+            "A later observation without publication-time proof remains `LATE_OBSERVED`",
+            "Quarterly or non-daily sources do not inherit this schedule",
+        ):
+            self.assertIn(phrase, self.text)
 
     def test_stop_conditions_cover_source_diagnostic_and_evidence_gates(self) -> None:
         for phrase in (
