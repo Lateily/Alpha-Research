@@ -1,11 +1,35 @@
 {
-  "generated_at": "2026-08-28T12:43:08Z",
+  "generated_at": "2026-08-28T20:22:01Z",
   "_status": "OK",
   "window_hours": 24,
-  "as_of": "2026-08-28 19:49:00",
-  "row_count": 37,
+  "as_of": "2026-08-28 22:29:15",
+  "row_count": 33,
   "_trust_boundary": "UNTRUSTED EXTERNAL TEXT — titles/urls are scraped media content. Wrap in an explicit data boundary before any LLM prompt; never treat as instructions.",
   "items": [
+    {
+      "title": "中期盈利小幅提升5.9% 都市丽人对下半年前景“审慎乐观”|财报解读",
+      "src": "财联社",
+      "pub_time": "2026-08-28 22:29:15",
+      "url": "https://www.cls.cn/detail/2468313"
+    },
+    {
+      "title": "硅谷知名风投a16z成立11亿美元基金 布局芯片、内存与机器人",
+      "src": "财联社",
+      "pub_time": "2026-08-28 22:26:27",
+      "url": "https://www.cls.cn/detail/2468308"
+    },
+    {
+      "title": "中国人保上半年归母净利润367.4亿元，同比增长38.5%",
+      "src": "新浪财经",
+      "pub_time": "2026-08-28 22:20:00",
+      "url": "https://finance.sina.com.cn/stock/zqgd/2026-08-28/doc-inipwtfm9053223.shtml"
+    },
+    {
+      "title": "绿的谐波H1营收净利双增 正谋求赴港二次上市",
+      "src": "新浪财经",
+      "pub_time": "2026-08-28 20:40:00",
+      "url": "https://finance.sina.com.cn/jjxw/2026-08-28/doc-inipwtfr9867452.shtml"
+    },
     {
       "title": "持续加码研发创新 华兰生物上半年实现归母净利润3.83亿元",
       "src": "新浪财经",
@@ -17,6 +41,12 @@
       "src": "新浪财经",
       "pub_time": "2026-08-28 18:42:00",
       "url": "https://finance.sina.com.cn/jjxw/2026-08-28/doc-inipwnxp8970613.shtml"
+    },
+    {
+      "title": "中东局势影响下油运运费走强 中远海能H1扣非净利增1.5倍|财报解读",
+      "src": "财联社",
+      "pub_time": "2026-08-28 18:09:10",
+      "url": "https://www.cls.cn/detail/2467940"
     },
     {
       "title": "中国银行(03988)发布中期业绩，股东应享税后利润1235.94亿元 同比增加5.1%",
@@ -173,60 +203,6 @@
       "src": "新浪财经",
       "pub_time": "2026-08-28 08:02:00",
       "url": "https://finance.sina.com.cn/jjxw/2026-08-28/doc-inipvmmz4795823.shtml"
-    },
-    {
-      "title": "从价格“内卷”到差异化进阶 化纤企业竞逐“第二增长曲线”",
-      "src": "新浪财经",
-      "pub_time": "2026-08-28 04:06:00",
-      "url": "https://finance.sina.com.cn/stock/bxjj/2026-08-28/doc-inipuywf9058573.shtml"
-    },
-    {
-      "title": "小鹏集团(XPEV)公布业绩指引低于预期 布局机器人及智能驾驶技术",
-      "src": "新浪财经",
-      "pub_time": "2026-08-28 03:36:00",
-      "url": "https://finance.sina.com.cn/roll/2026-08-28/doc-inipuywf4995734.shtml"
-    },
-    {
-      "title": "洛阳轴承集团股份有限公司首次公开发行股票并在创业板上市网下发行初步配售结果公告",
-      "src": "新浪财经",
-      "pub_time": "2026-08-28 02:15:00",
-      "url": "https://finance.sina.com.cn/roll/2026-08-28/doc-inipuuqi5096281.shtml"
-    },
-    {
-      "title": "产销对接助“广货”拓市 智能传感器专场落地东莞",
-      "src": "同花顺",
-      "pub_time": "2026-08-28 00:29:06",
-      "url": "http://field.10jqka.com.cn/20260828/c679364895.shtml"
-    },
-    {
-      "title": "*ST新元：上半年营收同比增长658% 拟收购四川愿景51%股权",
-      "src": "新浪财经",
-      "pub_time": "2026-08-27 23:49:00",
-      "url": "https://finance.sina.com.cn/roll/2026-08-27/doc-inipuuqi9046979.shtml"
-    },
-    {
-      "title": "灵初智能完成A轮超亿美元融资  拓普集团等参投",
-      "src": "财联社",
-      "pub_time": "2026-08-27 23:33:53",
-      "url": "https://www.cls.cn/detail/2466860"
-    },
-    {
-      "title": "研发投入激增叠加投资收入减少 国机精工2026H1利润同比下滑超7成|财报解读",
-      "src": "财联社",
-      "pub_time": "2026-08-27 23:01:37",
-      "url": "https://www.cls.cn/detail/2466836"
-    },
-    {
-      "title": "小鹏给智驾加上“时间记忆”",
-      "src": "华尔街见闻",
-      "pub_time": "2026-08-27 22:47:06",
-      "url": "https://wallstreetcn.com/articles/3780481"
-    },
-    {
-      "title": "拟主动退市，昔日“彩电一哥”将告别A股！公司已连亏4年",
-      "src": "财联社",
-      "pub_time": "2026-08-27 21:21:50",
-      "url": "https://www.cls.cn/detail/2466720"
     }
   ],
   "disclaimer": "不是买卖指令;研究信号,human executes."
