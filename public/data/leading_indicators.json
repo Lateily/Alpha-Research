@@ -1,21 +1,21 @@
 {
-  "generated_at": "2026-08-27T19:11:49.808386+00:00",
+  "generated_at": "2026-08-28T12:38:37.464265+00:00",
   "industry": "ai_infrastructure",
   "composite_score": 65.3,
   "composite_signal": "MODERATE",
   "hyperscaler_basket": {
     "NVDA": {
-      "price": 226.51,
-      "ath_3mo": 226.51,
+      "price": 227.98,
+      "ath_3mo": 227.98,
       "drawdown_3mo_pct": 0.0
     },
     "MSFT": {
-      "price": 505.27,
-      "ath_3mo": 505.27,
-      "drawdown_3mo_pct": 0.0
+      "price": 505.06,
+      "ath_3mo": 505.11,
+      "drawdown_3mo_pct": -0.0
     },
     "GOOGL": {
-      "price": 340.73,
+      "price": 340.65,
       "ath_3mo": 380.11,
       "drawdown_3mo_pct": -10.4
     },
@@ -62,9 +62,9 @@
         }
       ],
       "price": {
-        "price": 226.51,
-        "return_3m_pct": 4.7,
-        "ath_3mo": 226.51,
+        "price": 227.98,
+        "return_3m_pct": 7.1,
+        "ath_3mo": 227.98,
         "drawdown_3mo_pct": 0.0
       },
       "latest_qoq": 19.8,
@@ -101,10 +101,10 @@
             }
           ],
           "price": {
-            "price": 505.27,
-            "return_3m_pct": 19.4,
-            "ath_3mo": 505.27,
-            "drawdown_3mo_pct": 0.0
+            "price": 505.06,
+            "return_3m_pct": 18.1,
+            "ath_3mo": 505.11,
+            "drawdown_3mo_pct": -0.0
           },
           "latest_qoq": 16.0,
           "score": 65,
@@ -135,8 +135,8 @@
             }
           ],
           "price": {
-            "price": 340.73,
-            "return_3m_pct": -2.7,
+            "price": 340.65,
+            "return_3m_pct": -2.6,
             "ath_3mo": 380.11,
             "drawdown_3mo_pct": -10.4
           },
@@ -169,10 +169,10 @@
             }
           ],
           "price": {
-            "price": 570.22,
-            "return_3m_pct": -15.9,
+            "price": 571.1,
+            "return_3m_pct": -14.9,
             "ath_3mo": 681.31,
-            "drawdown_3mo_pct": -16.3
+            "drawdown_3mo_pct": -16.2
           },
           "latest_qoq": 58.5,
           "score": 90,
@@ -203,10 +203,10 @@
             }
           ],
           "price": {
-            "price": 255.67,
-            "return_3m_pct": -2.1,
+            "price": 256.26,
+            "return_3m_pct": -1.3,
             "ath_3mo": 284.02,
-            "drawdown_3mo_pct": -10.0
+            "drawdown_3mo_pct": -9.8
           },
           "latest_qoq": 11.8,
           "score": 65,
@@ -242,17 +242,17 @@
         }
       ],
       "price": {
-        "price": 424.38,
-        "return_3m_pct": 5.0,
+        "price": 427.3,
+        "return_3m_pct": 9.2,
         "ath_3mo": 477.57,
-        "drawdown_3mo_pct": -11.1
+        "drawdown_3mo_pct": -10.5
       },
       "latest_qoq": 12.0,
       "score": 55,
       "signal": "MODERATE"
     },
     "price_momentum": {
-      "basket_return_3m_pct": 1.4,
+      "basket_return_3m_pct": 1.5,
       "score": 50,
       "signal": "NEUTRAL"
     }
