@@ -190,6 +190,11 @@ jobs:
         run: |
           python3 tests/test_u4_decision_ledger_spec.py
           python3 scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/u4_decision_ledger_spec_v1.task.json
+      # U4 pre-decision packet: same-day U1-U3 evidence is prepared for
+      # Junyan review, while machine selection/trade/paper-order authority stays
+      # closed and source/diagnostic blockers remain visible.
+      - name: U4 pre-decision packet contract (offline)
+        run: python3 tests/test_u4_pre_decision_packet.py
       # Frozen assembly contract over the existing funnel, U4, research method,
       # paper execution, and five-axis modules. This step adds no runtime wiring.
       - name: Research closed loop V1 assembly contract (offline)
