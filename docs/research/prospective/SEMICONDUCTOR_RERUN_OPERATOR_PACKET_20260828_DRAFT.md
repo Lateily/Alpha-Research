@@ -17,7 +17,8 @@ PREPARED_BY: Reed
 PREPARED_AT_UTC: 2026-08-29T04:52:51Z
 PREPARED_CALENDAR_DATE_CN: 2026-08-29; Saturday non-trading day
 TARGET_TRADE_DATE: 20260828
-ORIGIN_MAIN_SHA: 4a8f5660136b7ed892a2114c7d66dd227e4adece
+REPO_BASELINE_SHA: 99a9252cc3a9877ef9eb681f6b8e7f757b37ac40
+REVIEWED_COPY_SOURCE_MAIN_SHA: 4a8f5660136b7ed892a2114c7d66dd227e4adece
 WORKTREE_STATUS: CLEAN
 SOURCE_SCAN_REF: production-Mac-reviewed-copy/source-scan.json; file not yet transferred to Reed
 SOURCE_SCAN_HASH_PREFIX: 517a96f7; full value held off-GitHub by Junyan
@@ -34,8 +35,8 @@ U3_BATTERY_REF: pending; U1-U3 rerun has not started
 U3_BATTERY_HASH: pending
 U3_ROW_COUNT: pending
 HANDOFF_INTENT: STOP_BEFORE_RERUN
-STOP_CONDITIONS: source artifact not yet transferred to Reed; cyq_perf 20260826/20260827 remain SOURCE_PUBLICATION_PENDING pending 17:30/20:30 retry evidence
-NEXT_ACTION: wait for Junyan production-side final report or transferred reviewed artifacts; do not start U1-U3 until pending daily-source state is resolved or explicitly carried as DATA_BLOCKED by Junyan-approved scope
+STOP_CONDITIONS: source artifact not yet transferred to Reed; reviewed copy source main is older than repo baseline after docs-only #302 merge; cyq_perf 20260826/20260827 remain SOURCE_PUBLICATION_PENDING pending 17:30/20:30 retry evidence
+NEXT_ACTION: wait for Junyan production-side final report or transferred reviewed artifacts; ask Junyan whether reviewed copy from main 4a8f5660 is acceptable after docs-only #302 merge or must be refreshed; do not start U1-U3 until pending daily-source state is resolved or explicitly carried as DATA_BLOCKED by Junyan-approved scope
 AUTHORITY: HUMAN_JUNYAN_ONLY
 PRODUCTION_AUTHORITY: false
 TRADE_AUTHORITY: false
@@ -46,11 +47,15 @@ NO_TRADE_FLAG: true
 
 ## Source Status Notes
 
-The production-side confirmation reported that a fresh reviewed copy was made
-from main `4a8f5660136b7ed892a2114c7d66dd227e4adece` with SQLite `.backup`,
+The repository baseline for this draft now includes #302 at
+`99a9252cc3a9877ef9eb681f6b8e7f757b37ac40`. The production-side confirmation
+reported that a fresh reviewed copy was made from earlier main
+`4a8f5660136b7ed892a2114c7d66dd227e4adece` with SQLite `.backup`,
 `journal_mode=DELETE` on the copy, and `integrity_check=ok`. Reed has not yet
 received the reviewed database copy or the `source-scan.json` file, so this
-packet treats those artifacts as reported-but-not-independently-held.
+packet treats those artifacts as reported-but-not-independently-held and asks
+Junyan to decide whether the docs-only #302 delta requires a refreshed reviewed
+copy.
 Full production-side artifact fingerprints are intentionally not recorded in
 this GitHub draft until Junyan explicitly approves publishing them.
 
