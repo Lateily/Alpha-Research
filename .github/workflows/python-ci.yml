@@ -17,6 +17,8 @@ on:
       - "docs/research/**"
       - "docs/contracts/**"
       - "public/data/v2/**"
+      - "docs/research/RESEARCH_QUALITY_SCORECARD_V0.md"
+      - "docs/research/contracts/**"
       - "docs/research/macro/**"
       - "docs/contracts/macro/**"
       - ".agents/skills/**"
@@ -201,6 +203,10 @@ jobs:
         run: |
           python3 tests/test_research_closed_loop_v1.py
           python3 scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/research_closed_loop_v1.task.json
+      # Research quality scorecard: scores research craft quality, not P&L,
+      # alpha, trade readiness, U4 selection, or production authority.
+      - name: Research quality scorecard contract (offline)
+        run: python3 tests/test_research_quality_scorecard.py
       # Rerun operator checklist: same-day semiconductor reruns must stop on
       # source, diagnostic, U3, red-flag, sample-denominator, or authority gaps
       # before any U4 handoff.
