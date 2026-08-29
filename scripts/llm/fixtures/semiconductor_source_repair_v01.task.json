@@ -1,0 +1,106 @@
+{
+  "schema": "ai-task.v1",
+  "task_id": "R-SEMICONDUCTOR-SOURCE-REPAIR-V0-1",
+  "source_issue": 309,
+  "architecture_block": [
+    "A Core Research Funnel",
+    "R-008 Point-in-Time Feature Store",
+    "Semiconductor Daily Source Repair V0.1",
+    "Post-merge fix-forward FF-1 migration"
+  ],
+  "objective": "Implement the reviewed v0.1 append-only daily-source repair path: one shared active-source resolver, class-wide discovery across every registered daily must-publish source and historical date, hash-frozen planning, and an atomic approval-bound apply operation that preserves every original batch.",
+  "non_goals": [
+    "Do not read or modify the production ~/ar-live runtime while implementing or testing this task.",
+    "Do not fetch replacement market data in the implementation PR.",
+    "Do not repair any production SQLite batch before a reviewed implementation is merged and Junyan approves the exact scan_hash and plan_hash.",
+    "Do not rewrite historical packets, U4 decisions, paper registrations, or model claims.",
+    "Do not grant selection, paper, trade, portfolio, or formal blocking authority.",
+    "Do not implement FF-2 through FF-5 in this PR."
+  ],
+  "human_owner": "Junyan",
+  "reviewer": "Junyan",
+  "executor_candidates": [
+    "Codex"
+  ],
+  "dependencies": [
+    "PR #313 daily-source completeness guard",
+    "PR #311 Semiconductor Daily Source Repair Plan V0.1",
+    "Issue #309 frozen fix-forward order"
+  ],
+  "authority_docs": [
+    "AGENTS.md",
+    "experiments/AGENTS.md",
+    "docs/research/prospective/SEMICONDUCTOR_DAILY_SOURCE_REPAIR_PLAN_V0_1.md",
+    "docs/research/RESEARCH_CLOSED_LOOP_V1.md"
+  ],
+  "file_scope": [
+    "experiments/research_funnel/semiconductor_inputs.py",
+    "experiments/research_funnel/semiconductor_source_repair.py",
+    "tests/test_semiconductor_source_repair.py",
+    "tests/test_semiconductor_positive_inputs.py",
+    "tests/test_no_network_guard.py",
+    "scripts/governance_mutation_gate.py",
+    "tests/test_governance_mutation_gate.py",
+    ".github/workflows/python-ci.yml",
+    "docs/research/RESEARCH_CLOSED_LOOP_V1.md",
+    "docs/research/prospective/SEMICONDUCTOR_DAILY_SOURCE_REPAIR_PLAN_V0_1.md",
+    "docs/research/contracts/research_closed_loop.v1.json",
+    "tests/test_research_closed_loop_v1.py",
+    "scripts/llm/fixtures/semiconductor_source_repair_v01.task.json"
+  ],
+  "forbidden_scope": [
+    "/Users/years/ar-live",
+    "data_history/feature_store.sqlite3",
+    "experiments/execution_tracker/event_ledger.jsonl",
+    "experiments/execution_tracker/paper_signal_log.json",
+    "experiments/research_funnel/u4_decision_ledger.jsonl",
+    "public/data/v2",
+    "web"
+  ],
+  "input_contracts": [
+    "ar.semiconductor_positive_inputs.v1 immutable source batches and rows",
+    "ar.semiconductor_source_repair.v0.1 reviewed repair contract",
+    "DAILY_MUST_PUBLISH_SOURCES and MIN_DAILY_SOURCE_COVERAGE_RATIO from semiconductor_inputs.py",
+    "Junyan literal approval bound to one exact scan_hash and plan_hash"
+  ],
+  "output_artifacts": [
+    "Shared verified active-source resolver",
+    "Deterministic class-wide read-only scan and scan_hash",
+    "Explicit hash-frozen repair plan and plan_hash",
+    "Append-only atomic repair storage and verification CLI",
+    "Behavior-level negative regressions and mutation-gate coverage"
+  ],
+  "acceptance_tests": [
+    "Compile this task to SPEC_READY.",
+    "Prove original batches and original rows remain byte-for-byte unchanged after a repair.",
+    "Prove snapshot construction consumes the unique verified active repair rather than the superseded source body.",
+    "Prove forks, cycles, orphan predecessors, duplicate active heads, and hash drift fail closed.",
+    "Prove the scanner derives every source from DAILY_MUST_PUBLISH_SOURCES and every historical date rather than a hardcoded source/date list.",
+    "Prove the scan emits the complete registered-source by historical-date Cartesian set, including explicit SOURCE_PUBLICATION_PENDING rows for missing pairs.",
+    "Prove zero and under-covered replacements are rejected under the same 95 percent policy as forward ingestion.",
+    "Prove every repair carries a rehashed raw provider-capture receipt and complete internally consistent normalized evidence.",
+    "Prove V0.1 never promotes self-reported publication time to PIT_VERIFIED and keeps repaired same-day research evidence DATA_BLOCKED.",
+    "Prove a changed scan or plan between review and apply is rejected before any write.",
+    "Prove exact retries are idempotent, concurrent apply is atomic, and injected failures roll back completely.",
+    "Prove INSERT OR REPLACE cannot mutate either append-only repair table and every committed run binds the complete repair catalog.",
+    "Prove the production feature-store path and nightly lock derive from one explicit runtime root with no independent CLI override.",
+    "Prove repaired replay preserves the E1 veto and cannot create a positive same-day trigger from late evidence.",
+    "Prove no repair artifact can carry selection, paper, trade, portfolio, claim, or formal blocking authority.",
+    "Prove weakening the resolver call, class-wide scan, old-artifact binding, or no-zero rule makes a dedicated mutation case fail.",
+    "Run the repair suite, semiconductor input suite, no-network guard, mutation gate, and exact-head CI before merge."
+  ],
+  "risk_level": "HIGH",
+  "network_policy": "OFFLINE",
+  "budget": {
+    "max_cny": "0",
+    "max_minutes": 480
+  },
+  "approval_gates": [
+    "Independent adversarial review is required before merge.",
+    "Junyan retains final merge authority.",
+    "Implementation merge does not authorize a production write.",
+    "Production apply requires a fresh read-only class scan, a frozen explicit plan, and Junyan's literal approval naming the exact scan_hash and plan_hash.",
+    "Any scope, source, date, predecessor, replacement, or hash drift stops the apply for renewed approval."
+  ],
+  "created_at": "2026-08-25T22:30:00+08:00"
+}
