@@ -725,7 +725,10 @@ class U4PreDecisionRuntimeTests(unittest.TestCase):
             external = root / "external-stage-receipt.json"
             external.write_bytes(receipt_path.read_bytes())
             receipt_path.unlink()
-            os.symlink(external, receipt_path)
+            try:
+                os.symlink(external, receipt_path)
+            except OSError as exc:
+                self.skipTest(f"symlink creation unavailable on this platform: {exc}")
             with self.assertRaisesRegex(pre.PreDecisionError, "regular file"):
                 pre.build_packet(
                     bundle_dir=bundle,

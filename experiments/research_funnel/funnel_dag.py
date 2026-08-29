@@ -83,6 +83,19 @@ def _stage_manifest_path(bundle_dir: Path, stage: str) -> Path:
     return bundle_dir / f"stage_{stage}.json"
 
 
+def _fsync_directory(path: Path) -> None:
+    try:
+        fd = os.open(path, os.O_RDONLY)
+    except PermissionError:
+        if os.name == "nt":
+            return
+        raise
+    try:
+        os.fsync(fd)
+    finally:
+        os.close(fd)
+
+
 def _write_stage(bundle_dir: Path, stage: str, files: dict[str, dict], *,
                  as_of: str, run_id: str, generated_at: str, binds: dict[str, str]) -> None:
     """把一段的产物原子落进 bundle_dir,并写该段的 stage manifest。
@@ -114,11 +127,7 @@ def _write_stage(bundle_dir: Path, stage: str, files: dict[str, dict], *,
         _atomic_write_json(staging / _stage_manifest_path(bundle_dir, stage).name, manifest)
         for name in list(files) + [_stage_manifest_path(bundle_dir, stage).name]:
             os.replace(staging / name, bundle_dir / name)
-        fd = os.open(bundle_dir, os.O_RDONLY)
-        try:
-            os.fsync(fd)
-        finally:
-            os.close(fd)
+        _fsync_directory(bundle_dir)
     finally:
         shutil.rmtree(staging, ignore_errors=True)
 
