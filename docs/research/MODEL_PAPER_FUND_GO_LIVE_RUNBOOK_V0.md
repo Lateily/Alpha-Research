@@ -120,6 +120,9 @@ through an alternate manual path.
 Intraday work is observation only. It may update a watch/review note, but it
 must not create fills, exits, official NAV, or method-validity samples.
 
+Use `MODEL_PAPER_FUND_INTRADAY_OBSERVATION_TEMPLATE_V0.md` for every intraday
+operator note so the authority fields and forbidden outputs stay visible.
+
 Allowed observation outputs:
 
 - visible thesis status;
@@ -142,6 +145,9 @@ Forbidden intraday outputs:
 
 After settled bars are available, the paper account may be advanced only through
 the official paper engine path.
+
+Use `MODEL_PAPER_FUND_POST_CLOSE_REPORT_TEMPLATE_V0.md` for the daily report
+after the engine outputs are available.
 
 The expected daily order is:
 
