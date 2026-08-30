@@ -217,3 +217,16 @@ For the paper fund to be usable tomorrow, the team needs exactly this:
 
 If items 1-2 are not approved by market open, the safe fallback is to run
 research preflight and U4 preparation only, without creating a new paper order.
+
+## Prelaunch Companion Artifacts
+
+The following companion artifacts keep the launch sequence auditable:
+
+- `MODEL_PAPER_FUND_FRONTEND_DISPLAY_AUDIT_20260830.md` checks that the paper
+  fund display reads the paper-only v2 state instead of legacy recommendation
+  fields.
+- `MODEL_PAPER_FUND_DRY_RUN_20260830.md` and
+  `fixtures/model_paper_fund_dry_run_v0.json` rehearse the U4-to-pending-order
+  handoff with fake data only.
+- `PR319_PR322_ACCEPTANCE_CHECKLIST_V0.md` separates the #322 U4
+  pre-decision gate from the #319 paper registration bridge gate.

@@ -187,6 +187,8 @@ jobs:
       # T+ observation schedule visible.
       - name: Model Paper Fund go-live runbook contract (offline)
         run: python3 tests/test_model_paper_fund_go_live_runbook.py
+      - name: Model Paper Fund prelaunch readiness artifacts (offline)
+        run: python3 tests/test_model_paper_fund_prelaunch_readiness.py
       # 终局 paper cycle 五轴归因:thesis/valuation/timing/execution/market beta
       # 独立判定;beta 从冻结样本重算,相对收益不得升格为 alpha。
       - name: Offline five-axis paper-cycle attribution
