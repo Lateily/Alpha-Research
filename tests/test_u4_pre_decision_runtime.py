@@ -12,11 +12,14 @@ import os
 import sys
 import tempfile
 import unittest
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from threading import Barrier
 from unittest import mock
 
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "tests"))
 sys.path.insert(0, str(ROOT / "experiments" / "research_funnel"))
 
@@ -351,6 +354,25 @@ def _rehash_packet(packet: dict) -> None:
 
 
 class U4PreDecisionRuntimeTests(unittest.TestCase):
+    def test_fix_forward_task_compiles_and_preserves_the_frozen_assembly(self) -> None:
+        from scripts.llm.ai_os.task_compiler import compile_task_manifest
+
+        task = json.loads((ROOT / "scripts/llm/fixtures/u4_pre_decision_runtime.task.json").read_text())
+        compiled = compile_task_manifest(task).to_dict()
+        self.assertEqual("SPEC_READY", compiled["status"])
+        self.assertEqual("OFFLINE", compiled["manifest"]["network_policy"])
+        self.assertIn("JUNYAN_MERGE", compiled["manifest"]["approval_gates"])
+        # V1.3 identity cannot be retained while its manifest or DAG bytes drift.
+        # A future reviewed revision must explicitly update this historical pin.
+        frozen = {
+            "docs/research/contracts/research_closed_loop.v1.json":
+                "3e1291ce233e51e8a91b4513717bc2ca5c31b5cc7097d26e732ad0f5da708965",
+            "experiments/research_funnel/funnel_dag.py":
+                "70b17fefc3ce7a1ac6982192294a7676d793783d8b2cd62e23ce71bd2479bd3f",
+        }
+        for path, expected in frozen.items():
+            self.assertEqual(expected, hashlib.sha256((ROOT / path).read_bytes()).hexdigest(), path)
+
     def test_same_day_bundle_build_is_deterministic_and_keeps_authority_human(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -841,6 +863,125 @@ class U4PreDecisionRuntimeTests(unittest.TestCase):
             self.assertTrue(diagnostic_path.is_file())
             with contextlib.redirect_stdout(output):
                 self.assertEqual(1, pre.main(args))
+
+    def test_cli_refuses_a_destination_created_after_preflight(self) -> None:
+        for racing_name in ("packet.json", "diagnostic.json"):
+            with self.subTest(racing_name=racing_name), tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp)
+                _, _, bundle, feature_health, funnel_health = _build(root / "evidence")
+                scratch = root / "scratch"
+                scratch.mkdir()
+                packet_path, diagnostic_path = scratch / "packet.json", scratch / "diagnostic.json"
+                args = [
+                    "--bundle", str(bundle), "--feature-health", str(feature_health),
+                    "--funnel-health", str(funnel_health), "--generated-at", GENERATED_AT,
+                    "--packet-output", str(packet_path), "--diagnostic-output", str(diagnostic_path),
+                    "--scratch-root", str(scratch), "--industry", "TECH",
+                ]
+                publish = pre._publish_new_json
+                racing_path = scratch / racing_name
+                sentinel = b"another writer's immutable evidence\n"
+
+                def insert_competing_file(path, payload):
+                    # Deterministically schedule the competing writer after
+                    # preflight, but exercise the real publication primitive.
+                    if path == racing_path:
+                        with path.open("xb") as handle:
+                            handle.write(sentinel)
+                    publish(path, payload)
+
+                output = io.StringIO()
+                with mock.patch.object(pre, "_publish_new_json", side_effect=insert_competing_file):
+                    with contextlib.redirect_stdout(output):
+                        result = pre.main(args)
+                self.assertEqual(sentinel, racing_path.read_bytes())
+                self.assertEqual(1, result)
+                self.assertIn("REFUSED", output.getvalue())
+                self.assertNotIn('"packet_hash"', output.getvalue())
+                if racing_path == diagnostic_path:
+                    self.assertFalse(packet_path.exists())
+                else:
+                    self.assertIsInstance(json.loads(diagnostic_path.read_text()), dict)
+                self.assertEqual([], list(scratch.glob(".u4-predecision-*")))
+
+    def test_concurrent_publishers_produce_one_complete_unmixed_pair(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            scratch = Path(tmp)
+            packet_path, diagnostic_path = scratch / "packet.json", scratch / "diagnostic.json"
+            barrier = Barrier(2)
+            publish = pre._publish_new_json
+
+            def meet_after_preflight(path, payload):
+                if path == diagnostic_path:
+                    barrier.wait(timeout=10)
+                publish(path, payload)
+
+            def worker(writer):
+                try:
+                    pre._write_outputs(scratch, packet_path, diagnostic_path,
+                                       {"writer": writer}, {"writer": writer}, protected_paths=())
+                except pre.PreDecisionError:
+                    return None
+                return writer
+
+            with mock.patch.object(pre, "_publish_new_json", side_effect=meet_after_preflight):
+                with ThreadPoolExecutor(max_workers=2) as workers:
+                    results = list(workers.map(worker, ("first", "second")))
+            winners = [result for result in results if result is not None]
+            self.assertEqual(1, len(winners))
+            self.assertEqual({"writer": winners[0]}, json.loads(packet_path.read_text()))
+            self.assertEqual({"writer": winners[0]}, json.loads(diagnostic_path.read_text()))
+            self.assertEqual({"packet.json", "diagnostic.json"}, {p.name for p in scratch.iterdir()})
+
+    def test_failed_packet_publication_never_unlinks_replaced_diagnostic(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            scratch = Path(tmp)
+            packet_path, diagnostic_path = scratch / "packet.json", scratch / "diagnostic.json"
+            publish = pre._publish_new_json
+            sentinel = b"competing diagnostic evidence\n"
+
+            def fail_packet(path, payload):
+                if path == packet_path:
+                    replacement = scratch / "replacement.json"
+                    replacement.write_bytes(sentinel)
+                    os.replace(replacement, diagnostic_path)
+                    raise OSError("simulated publication failure")
+                publish(path, payload)
+
+            with mock.patch.object(pre, "_publish_new_json", side_effect=fail_packet):
+                with self.assertRaisesRegex(pre.PreDecisionError, "fresh packet/diagnostic"):
+                    pre._write_outputs(scratch, packet_path, diagnostic_path, {}, {}, protected_paths=())
+            self.assertTrue(diagnostic_path.exists(), "failure cleanup must not unlink public evidence")
+            self.assertEqual(sentinel, diagnostic_path.read_bytes())
+            self.assertFalse(packet_path.exists())
+            self.assertEqual({"diagnostic.json"}, {p.name for p in scratch.iterdir()})
+
+    def test_unsupported_atomic_publication_has_no_overwrite_fallback(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            scratch = Path(tmp)
+            with mock.patch.object(pre.os, "link", side_effect=OSError("unsupported hard link")):
+                with self.assertRaisesRegex(pre.PreDecisionError, "existing evidence was retained"):
+                    pre._write_outputs(scratch, scratch / "packet.json", scratch / "diagnostic.json",
+                                       {}, {}, protected_paths=())
+            self.assertEqual([], list(scratch.iterdir()))
+
+    def test_new_json_is_complete_before_it_becomes_visible(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            scratch = Path(tmp)
+            target = scratch / "packet.json"
+            link = os.link
+            payload = {"evidence": "完整", "authority": False}
+
+            def inspect_then_link(source, destination):
+                self.assertEqual(payload, json.loads(Path(source).read_text()))
+                self.assertFalse(Path(destination).exists())
+                link(source, destination)
+
+            with mock.patch.object(pre.os, "link", side_effect=inspect_then_link) as publish:
+                pre._publish_new_json(target, payload)
+            publish.assert_called_once()
+            self.assertEqual(payload, json.loads(target.read_text()))
+            self.assertEqual([target], list(scratch.iterdir()))
 
     def test_cli_refuses_to_write_outputs_into_the_immutable_runtime_tree(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

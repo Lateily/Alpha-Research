@@ -12,6 +12,7 @@ import argparse
 import json
 import os
 import re
+import tempfile
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
@@ -21,14 +22,12 @@ try:
     from . import funnel_dag as dag
     from . import funnel_pipeline as funnel
     from . import nightly_funnel as nightly_funnel
-    from .security_registry import _atomic_write_json
 except ImportError:  # Direct CLI execution adds this directory to sys.path.
     import closure_experiment as closure
     import feature_store as feature_store
     import funnel_dag as dag
     import funnel_pipeline as funnel
     import nightly_funnel as nightly_funnel
-    from security_registry import _atomic_write_json
 
 
 SCHEMA = "ar.u4_pre_decision_packet.v0"
@@ -879,6 +878,26 @@ def validate_packet(
         raise PreDecisionError("packet differs from reopened immutable evidence")
 
 
+def _publish_new_json(path: Path, payload: Mapping[str, Any]) -> None:
+    """Publish complete bytes without replacing even a racing destination.
+
+    The private staging directory is the only cleanup target. Once linked,
+    public evidence is never rolled back: another writer may already own or
+    have replaced that name. Unsupported hard links fail closed, with no
+    fallback to replace/rename or a partially visible exclusive-open file.
+    """
+    with tempfile.TemporaryDirectory(prefix=".u4-predecision-", dir=path.parent) as stage:
+        temporary = Path(stage) / "payload.json"
+        with temporary.open("x", encoding="utf-8") as handle:
+            json.dump(dict(payload), handle, ensure_ascii=False, sort_keys=True,
+                      indent=2, allow_nan=False)
+            handle.write("\n")
+            handle.flush()
+            os.fsync(handle.fileno())
+        # governance-mutation: U4_PREDECISION_ATOMIC_NO_REPLACE
+        os.link(temporary, path)
+
+
 def _write_outputs(
     scratch_root: Path, packet_path: Path, diagnostic_path: Path,
     packet: Mapping[str, Any], diagnostic: Mapping[str, Any],
@@ -924,12 +943,17 @@ def _write_outputs(
         if os.path.lexists(path):
             raise PreDecisionError(f"output already exists: {path}")
         path.parent.mkdir(parents=True, exist_ok=True)
-    _atomic_write_json(diagnostic_path, dict(diagnostic))
     try:
-        _atomic_write_json(packet_path, dict(packet))
-    except Exception:
-        diagnostic_path.unlink(missing_ok=True)
-        raise
+        _publish_new_json(diagnostic_path, diagnostic)
+        # The packet is published last. A diagnostic alone is not a completed
+        # pair, and a consumer must still verify both source-bound artifacts.
+        _publish_new_json(packet_path, packet)
+    except OSError as exc:
+        # governance-mutation: U4_PREDECISION_PRESERVE_PUBLISHED_EVIDENCE
+        raise PreDecisionError(
+            "output publication failed; existing evidence was retained; "
+            "use a fresh packet/diagnostic path pair"
+        ) from exc
 
 
 def main(argv: Sequence[str] | None = None) -> int:

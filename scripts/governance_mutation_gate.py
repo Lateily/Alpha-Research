@@ -6242,6 +6242,43 @@ MUTATIONS = MUTATIONS + (
         rationale="A 1-2 name ready pool cannot be relabeled as enough for the human U4 selection floor.",
     ),
     MutationCase(
+        mutation_id="U4_PREDECISION_ATOMIC_NO_REPLACE",
+        component="Research funnel U4 pre-decision runtime",
+        source_path="experiments/research_funnel/u4_pre_decision.py",
+        test_script="tests/test_u4_pre_decision_runtime.py",
+        before="        os.link(temporary, path)",
+        after="        os.replace(temporary, path)",
+        expected_failure_marker="test_cli_refuses_a_destination_created_after_preflight",
+        rationale="Preflight absence cannot authorize replacing another writer's later evidence.",
+    ),
+    MutationCase(
+        mutation_id="U4_PREDECISION_PRESERVE_PUBLISHED_EVIDENCE",
+        component="Research funnel U4 pre-decision runtime",
+        source_path="experiments/research_funnel/u4_pre_decision.py",
+        test_script="tests/test_u4_pre_decision_runtime.py",
+        before=(
+            "        # governance-mutation: U4_PREDECISION_PRESERVE_PUBLISHED_EVIDENCE\n"
+            "        raise PreDecisionError("
+        ),
+        after=(
+            "        # governance-mutation: U4_PREDECISION_PRESERVE_PUBLISHED_EVIDENCE\n"
+            "        diagnostic_path.unlink(missing_ok=True)\n"
+            "        raise PreDecisionError("
+        ),
+        expected_failure_marker="test_failed_packet_publication_never_unlinks_replaced_diagnostic",
+        rationale="Failure cleanup cannot delete diagnostic evidence that now belongs to another writer.",
+    ),
+    MutationCase(
+        mutation_id="U4_PREDECISION_FROZEN_ASSEMBLY_IDENTITY",
+        component="Research Closed Loop V1 assembly identity",
+        source_path="docs/research/contracts/research_closed_loop.v1.json",
+        test_script="tests/test_u4_pre_decision_runtime.py",
+        before="sha256:70b17fefc3ce7a1ac6982192294a7676d793783d8b2cd62e23ce71bd2479bd3f",
+        after="sha256:e84b0e026832420ee1e88e1fcbac2b69a836e97cf29f5d1d7daf15eb3fbe09fa",
+        expected_failure_marker="test_fix_forward_task_compiles_and_preserves_the_frozen_assembly",
+        rationale="The previously reviewed V1.3 identity must not silently bind changed DAG bytes.",
+    ),
+    MutationCase(
         mutation_id="U4_PREDECISION_STAGE_RECEIPTS",
         component="Research funnel U4 pre-decision runtime",
         source_path="experiments/research_funnel/u4_pre_decision.py",
