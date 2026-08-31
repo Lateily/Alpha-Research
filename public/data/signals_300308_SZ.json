@@ -3,30 +3,19 @@
   "generated_at": "2026-08-31",
   "price": 858.35,
   "zone": "BEARISH",
-  "entry_zone": true,
+  "entry_zone": false,
   "exit_zone": false,
-  "signals": [
-    {
-      "type": "MACD_GOLDEN_CROSS",
-      "strength": "moderate",
-      "date": "20260828",
-      "bullish": true,
-      "description": {
-        "e": "MACD DIF(-46.129) crossed above DEA(-46.198) below zero — bullish momentum",
-        "z": "MACD DIF(-46.129)上穿DEA(-46.198)零轴下方金叉看涨"
-      }
-    }
-  ],
+  "signals": [],
   "signal_count": {
-    "bullish": 1,
+    "bullish": 0,
     "bearish": 0,
-    "total": 1
+    "total": 0
   },
   "indicators": {
     "ma5": 858.32,
     "ma20": 915.36,
     "ma60": 1069.12,
-    "rsi14": 41.6,
+    "rsi14": 41.5,
     "vol_ma20": 357567,
     "vol_ratio": 0.89,
     "price_vs_ma20": -6.23,
@@ -34,9 +23,9 @@
     "change_1d": -0.9,
     "change_5d": -8.98,
     "change_20d": -4.84,
-    "macd_dif": -46.129,
-    "macd_dea": -46.1979,
-    "macd_hist": 0.1379,
+    "macd_dif": -46.5197,
+    "macd_dea": -46.7706,
+    "macd_hist": 0.5018,
     "bb_upper": 1014.33,
     "bb_mid": 915.36,
     "bb_lower": 816.39,
