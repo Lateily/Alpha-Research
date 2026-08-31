@@ -1,10 +1,19 @@
 {
   "_status": "ok",
   "ticker": "603233.SH",
-  "fetched_at": "2026-08-28T20:21:40Z",
+  "fetched_at": "2026-08-31T06:56:21Z",
   "api_used": "pledge_stat",
   "window_quarters": 4,
   "records": [
+    {
+      "ts_code": "603233.SH",
+      "end_date": "20260828",
+      "pledge_count": 10,
+      "unrest_pledge": 8112.96,
+      "rest_pledge": 0.0,
+      "total_share": 113885.64,
+      "pledge_ratio": 7.12
+    },
     {
       "ts_code": "603233.SH",
       "end_date": "20260821",
@@ -31,20 +40,11 @@
       "rest_pledge": 0.0,
       "total_share": 113885.46,
       "pledge_ratio": 7.12
-    },
-    {
-      "ts_code": "603233.SH",
-      "end_date": "20260731",
-      "pledge_count": 10,
-      "unrest_pledge": 8112.96,
-      "rest_pledge": 0.0,
-      "total_share": 113885.45,
-      "pledge_ratio": 7.12
     }
   ],
   "summary": {
     "latest_pledge_ratio": 7.12,
-    "latest_end_date": "2026-08-21",
+    "latest_end_date": "2026-08-28",
     "trend_direction": "flat",
     "risk_level": "LOW",
     "records_count": 4
