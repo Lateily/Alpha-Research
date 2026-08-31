@@ -6,9 +6,9 @@
     "no_size": true,
     "no_buy_sell": true,
     "no_position_mutation": true,
-    "run_date": "2026-08-28",
+    "run_date": "2026-08-31",
     "pilot_start_date": "2026-06-08",
-    "generated_at": "2026-08-28T20:22:30.651158+00:00",
+    "generated_at": "2026-08-31T06:57:25.587478+00:00",
     "fresh_pilot": true,
     "legacy_paper_positions_inherited": false,
     "sources": [
@@ -22,7 +22,7 @@
     "disclaimer": "Internal model-recommendation pilot. UNVALIDATED model output — not validated alpha, and not external investment advice. Target ranges are thesis-derived and NOT calibrated; entry references pend the next market sync. Live execution-return tracking begins from the next trading-day pilot run. The product edge is the loop: recommendation -> user execution -> performance attribution -> model improvement.",
     "counts": {
       "core_thesis": 5,
-      "quant_swing_active": 1,
+      "quant_swing_active": 0,
       "quant_swing_setup_watch": 9,
       "research_pool": 20,
       "watch_pool": 31
@@ -62,9 +62,9 @@
           "screen_score": null
         },
         "quant_confluence": {
-          "action": "HOLD",
-          "score": 34,
-          "rationale": "Bullish: Ma20 Bounce, Bullish Alignment | RSI 56 | Price vs MA20 +1.8% | Regime: PERMISSIVE | VP 48"
+          "action": "NEUTRAL",
+          "score": 19,
+          "rationale": "Bullish: Bullish Alignment, Ma20 Bounce | RSI 56 | Price vs MA20 +1.8% | Regime: PERMISSIVE | VP 48"
         }
       },
       "validation_status": "PENDING",
@@ -105,7 +105,7 @@
         },
         "quant_confluence": {
           "action": "NEUTRAL",
-          "score": 18,
+          "score": 8,
           "rationale": "Bullish: Ma20 Bounce, Ma60 Bounce | RSI 51 | Price vs MA20 +0.5% | VP 50"
         }
       },
@@ -241,40 +241,7 @@
     }
   ],
   "quant_swing": {
-    "active": [
-      {
-        "ticker": "002594.SZ",
-        "name": "比亚迪",
-        "market": "A",
-        "sleeve": "quant_swing",
-        "model_action": "HOLD",
-        "horizon_days": 5,
-        "evidence_tier": "quant_confluence",
-        "why": "Bullish: Ma20 Bounce, Bullish Alignment | RSI 56 | Price vs MA20 +1.8% | Regime: PERMISSIVE | VP 48",
-        "target_range": {
-          "basis": "quant_signal",
-          "calibrated": false,
-          "entry_reference": "pending_next_market_sync",
-          "reward_to_risk": null,
-          "note": "Quant-signal idea — not yet calibrated to a live entry."
-        },
-        "construction_plan": "Confluence-confirmed short-term idea; stage entry on the next session — pending calibration. No size, no auto-trade.",
-        "risk_rules": {
-          "invalidation": [],
-          "current_blocker": null
-        },
-        "source_signals": {
-          "quant_confluence": {
-            "action": "HOLD",
-            "score": 34,
-            "rationale": "Bullish: Ma20 Bounce, Bullish Alignment | RSI 56 | Price vs MA20 +1.8% | Regime: PERMISSIVE | VP 48",
-            "regime": "PERMISSIVE"
-          }
-        },
-        "validation_status": "unvalidated_pilot",
-        "no_trade_flag": true
-      }
-    ],
+    "active": [],
     "setup_watch": [
       {
         "ticker": "002594.SZ",
@@ -285,7 +252,7 @@
         "signal_class": "no_trade_signal",
         "setup_type": "ma20_bounce / ma60_bounce / bullish_alignment",
         "bias": "bullish",
-        "why_not_active": "confluence verdict is HOLD — no active swing trade today",
+        "why_not_active": "confluence verdict is NEUTRAL — no active swing trade today",
         "trigger_to_activate": "confluence upgrade to non-neutral, or a volume-confirmed breakout (current vol_ratio 0.83).",
         "risk_rule": "Setup invalidated on a decisive close below MA20 (90.66); loss of MA60 (89.62) ends it.",
         "technical": {
@@ -326,7 +293,7 @@
             }
           ]
         },
-        "as_of": "2026-08-28",
+        "as_of": "2026-08-31",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -368,7 +335,7 @@
             }
           ]
         },
-        "as_of": "2026-08-28",
+        "as_of": "2026-08-31",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -403,7 +370,7 @@
           },
           "signals": []
         },
-        "as_of": "2026-08-28",
+        "as_of": "2026-08-31",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -445,7 +412,7 @@
             }
           ]
         },
-        "as_of": "2026-08-28",
+        "as_of": "2026-08-31",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -493,7 +460,7 @@
             }
           ]
         },
-        "as_of": "2026-08-28",
+        "as_of": "2026-08-31",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -547,7 +514,7 @@
             }
           ]
         },
-        "as_of": "2026-08-28",
+        "as_of": "2026-08-31",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -582,7 +549,7 @@
           },
           "signals": []
         },
-        "as_of": "2026-08-28",
+        "as_of": "2026-08-31",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -617,7 +584,7 @@
           },
           "signals": []
         },
-        "as_of": "2026-08-28",
+        "as_of": "2026-08-31",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -652,7 +619,7 @@
           },
           "signals": []
         },
-        "as_of": "2026-08-28",
+        "as_of": "2026-08-31",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       }
