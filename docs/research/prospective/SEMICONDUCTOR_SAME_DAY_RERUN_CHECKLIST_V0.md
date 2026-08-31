@@ -129,6 +129,13 @@ paths, model outputs, chat history, or any field that asks an agent to decide
 which securities to select. A packet that cannot name its hashes and stop
 conditions is `BLOCKED`, even if the market session is urgent.
 
+The machine-readable v0 packet builder is
+`experiments/research_funnel/semiconductor_preflight_packet.py`. It assembles the
+same packet from a source scan, intake diagnostic, same-day bundle reference, and
+U3 battery reference. It may generate `STOP_BEFORE_RERUN` packets when inputs are
+missing or pending; it must not run source repair, U1-U3, U4 selection, paper
+orders, or production nightly jobs.
+
 ## Allowed Local Checks
 
 These checks are read-only or write only local scratch outputs:

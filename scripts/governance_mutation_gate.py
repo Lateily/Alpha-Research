@@ -141,6 +141,7 @@ FUNNEL_GOVERNANCE_PATHS = (
     "experiments/research_funnel/u4_decision_ledger.py",
     "experiments/research_funnel/semiconductor_inputs.py",
     "experiments/research_funnel/semiconductor_source_repair.py",
+    "experiments/research_funnel/semiconductor_preflight_packet.py",
     "experiments/research_funnel/feature_store.py",
     "experiments/execution_tracker/event_ledger.py",
     "experiments/execution_tracker/paper_execution_audit.py",
@@ -6239,6 +6240,54 @@ MUTATIONS = MUTATIONS + (
         ),
         expected_failure_marker="test_semiconductor_ready_pool_below_selection_floor_is_blocked",
         rationale="A 1-2 name ready pool cannot be relabeled as enough for the human U4 selection floor.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_PREFLIGHT_SOURCE_SCAN_HASH",
+        component="Research funnel semiconductor preflight packet",
+        source_path="experiments/research_funnel/semiconductor_preflight_packet.py",
+        test_script="tests/test_semiconductor_preflight_packet.py",
+        before=(
+            "    # governance-mutation: SEMICONDUCTOR_PREFLIGHT_SOURCE_SCAN_HASH\n"
+            "    if claimed != _hash(unhashed):"
+        ),
+        after=(
+            "    # governance-mutation: SEMICONDUCTOR_PREFLIGHT_SOURCE_SCAN_HASH\n"
+            "    if False:"
+        ),
+        expected_failure_marker="test_source_scan_hash_must_recompute",
+        rationale="The operator packet must bind a recomputed source scan, not a hand-edited scan_hash.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_PREFLIGHT_PENDING_STOPS",
+        component="Research funnel semiconductor preflight packet",
+        source_path="experiments/research_funnel/semiconductor_preflight_packet.py",
+        test_script="tests/test_semiconductor_preflight_packet.py",
+        before=(
+            "        # governance-mutation: SEMICONDUCTOR_PREFLIGHT_PENDING_STOPS\n"
+            "        elif as_of == target_trade_date and state in {"
+        ),
+        after=(
+            "        # governance-mutation: SEMICONDUCTOR_PREFLIGHT_PENDING_STOPS\n"
+            "        elif False and as_of == target_trade_date and state in {"
+        ),
+        expected_failure_marker="test_pending_daily_source_stops_before_rerun",
+        rationale="A target-date SOURCE_PUBLICATION_PENDING row must generate STOP_BEFORE_RERUN.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_PREFLIGHT_AUTHORITY_CLOSED",
+        component="Research funnel semiconductor preflight packet",
+        source_path="experiments/research_funnel/semiconductor_preflight_packet.py",
+        test_script="tests/test_semiconductor_preflight_packet.py",
+        before=(
+            "        # governance-mutation: SEMICONDUCTOR_PREFLIGHT_AUTHORITY_CLOSED\n"
+            "        if authority.get(key) != expected_value:"
+        ),
+        after=(
+            "        # governance-mutation: SEMICONDUCTOR_PREFLIGHT_AUTHORITY_CLOSED\n"
+            "        if False:"
+        ),
+        expected_failure_marker="test_diagnostic_authority_cannot_be_escalated",
+        rationale="Diagnostic authority cannot be escalated into trade or production permission.",
     ),
 )
 
