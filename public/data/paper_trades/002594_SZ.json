@@ -6,7 +6,7 @@
   "direction": "LONG",
   "entry_date": "2026-05-17",
   "entry_price": null,
-  "current_price": 88.36,
+  "current_price": 88.2,
   "current_date": "2026-08-31",
   "days_held": 106,
   "return_since_entry_pct": null,
@@ -525,7 +525,7 @@
     },
     {
       "date": "2026-08-31",
-      "price": 88.36,
+      "price": 88.2,
       "return_pct": null,
       "status": "ACTIVE"
     }
