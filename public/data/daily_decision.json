@@ -1,27 +1,27 @@
 {
-  "generated_at": "2026-08-31T06:57:25.538394+00:00",
+  "generated_at": "2026-08-31T16:21:17.207114+00:00",
   "date": "2026-08-31",
   "model_state": "NORMAL_OBSERVATION_MODE",
-  "brief_e": "5 Paper Hold",
-  "brief_z": "5 模拟持有",
+  "brief_e": "1 Exposure Review",
+  "brief_z": "1 敞口复核",
   "decisions": {
     "held": [
       {
         "ticker": "300308.SZ",
         "name": "中际旭创",
         "status": "HELD",
-        "action": "HOLD",
-        "priority": "LOW",
-        "confidence": 10,
-        "pnl_pct": 24.58,
+        "action": "REVIEW_TRIM",
+        "priority": "MEDIUM",
+        "confidence": 0,
+        "pnl_pct": 25.03,
         "holding_days": 174,
-        "weight_pct": 49.1,
+        "weight_pct": 49.2,
         "vp_score": 48,
-        "confluence": 10,
-        "reason_e": "Signal neutral (score 10). P&L +24.6% after 174d. Paper-hold — no new review trigger. Bullish: Macd Golden Cross | RSI 42 | Price vs MA20 -6.2% | Regime: PERMISSIVE | VP 48.",
-        "reason_z": "信号中性（评分10），浮盈+24.6%，持有174天，无新触发条件。多头：MACD金叉 | RSI 42 | 距MA20 -6.2% | 政策顺风 | VP 48。",
+        "confluence": 0,
+        "reason_e": "Large unrealised gain +25.0% after 174d. Signal still NEUTRAL (score 0). Exposure-review condition (sizable unrealised gain).",
+        "reason_z": "浮盈+25.0%（持有174天），信号0仍属信号中性，等待，敞口复核条件（浮盈较大）。",
         "entry_target": null,
-        "exit_trigger": "Score ≤ -60 OR P&L ≤ -10.0%",
+        "exit_trigger": "P&L > 25.0% → exposure-review condition",
         "execution_posture": null
       },
       {
@@ -85,13 +85,13 @@
         "action": "HOLD",
         "priority": "LOW",
         "confidence": 19,
-        "pnl_pct": -8.14,
+        "pnl_pct": -8.31,
         "holding_days": 152,
         "weight_pct": 4.1,
         "vp_score": 48,
         "confluence": 19,
-        "reason_e": "Signal neutral (score 19). P&L -8.1% after 152d. Paper-hold — no new review trigger. Bullish: Bullish Alignment, Ma20 Bounce | RSI 56 | Price vs MA20 +1.8% | Regime: PERMISSIVE | VP 48.",
-        "reason_z": "信号中性（评分19），浮盈-8.1%，持有152天，无新触发条件。多头：均线多头排列、MA20支撑反弹 | RSI 56 | 距MA20 +1.8% | 政策顺风 | VP 48。",
+        "reason_e": "Signal neutral (score 19). P&L -8.3% after 152d. Paper-hold — no new review trigger. Bullish: Bullish Alignment, Ma20 Bounce | RSI 55 | Price vs MA20 +1.8% | Regime: PERMISSIVE | VP 48.",
+        "reason_z": "信号中性（评分19），浮盈-8.3%，持有152天，无新触发条件。多头：均线多头排列、MA20支撑反弹 | RSI 55 | 距MA20 +1.8% | 政策顺风 | VP 48。",
         "entry_target": null,
         "exit_trigger": "Score ≤ -60 OR P&L ≤ -10.0%",
         "execution_posture": null
@@ -174,7 +174,8 @@
   },
   "buy_watches": [],
   "portfolio_risk": [
-    "⚠️ CONCENTRATION: 300308.SZ (中际旭创) = 49% of portfolio — above 40.0% limit"
+    "⚠️ CONCENTRATION: 300308.SZ (中际旭创) = 49% of portfolio — above 40.0% limit",
+    "PROFIT REVIEW: 300308.SZ +25.0% — exposure-review condition (sizable unrealised gain)"
   ],
   "wrongif_alerts": [
     {
@@ -195,10 +196,10 @@
       "status": "CLEAR",
       "wrongIf_e": "1.6T mass production delayed beyond Q3 2026 OR NVDA+MSFT+GOOGL stock prices collectively drop >25% from ATH within 1 quarter (hyperscaler CapEx pullback proxy)",
       "wrongIf_z": "1.6T量产推迟至2026年Q3后，或英伟达/微软/谷歌股价集体较ATH下跌>25%（超大规模CapEx削减代理指标）",
-      "note_e": "✅ Clear: hyperscaler_basket_drawdown_pct = 4.3 (threshold 25.0)",
-      "note_z": "✅ 正常：hyperscaler_basket_drawdown_pct = 4.3（阈值25.0）",
+      "note_e": "✅ Clear: hyperscaler_basket_drawdown_pct = 4.9 (threshold 25.0)",
+      "note_z": "✅ 正常：hyperscaler_basket_drawdown_pct = 4.9（阈值25.0）",
       "indicator": "hyperscaler_basket_drawdown_pct",
-      "actual": 4.3,
+      "actual": 4.9,
       "threshold": 25.0
     },
     {
