@@ -42,6 +42,61 @@ class ModelPaperFundGoLiveRunbookTests(unittest.TestCase):
             with self.subTest(token=token):
                 self.assertIn(token, self.text)
 
+    def test_runbook_freezes_paper_admission_required_fields(self) -> None:
+        for token in (
+            "Paper Admission Acceptance Gate",
+            "`ticker`",
+            "`target_trade_date`",
+            "`u4_decision_ref`",
+            "`u4_decision_actor`",
+            "`u4_decision`",
+            "`source_packet_ref`",
+            "`source_packet_hash`",
+            "`evidence_hash`",
+            "`method_version`",
+            "`cohort_id`",
+            "`causal_cluster_id`",
+            "`thesis_hash`",
+            "`valuation_hash`",
+            "`wrong_if`",
+            "`manual_smc_hash`",
+            "`timing_state`",
+            "`entry_zone`",
+            "`structure_stop`",
+            "`fund_snapshot_hash`",
+            "`paper_registration_plan_hash`",
+            "`human_approval_ref`",
+            "`observation_schedule`",
+            "`paper_only`",
+            "`no_trade_flag`",
+            "`trade_authority`",
+            "`production_authority`",
+            "`sample_eligible`",
+            "`method_claim_sample_eligible`",
+        ):
+            with self.subTest(token=token):
+                self.assertIn(token, self.text)
+
+    def test_runbook_freezes_paper_admission_stop_conditions(self) -> None:
+        for token in (
+            "not by Junyan",
+            "not `SELECT`",
+            "stale, pending, missing, or not hash-bound",
+            "active E1 red flag",
+            "unsealed",
+            "`timing_state` is `WAIT` or `DATA_BLOCKED`",
+            "after seeing the target price path",
+            "model text, chat text",
+            "full `paper_registration_plan_hash`",
+            "fund snapshot is missing, stale, or not hash-bound",
+            "outside the reviewed bridge",
+            "`T+1`, `T+3`, `T+5`, or `T+10`",
+            "method-validity samples",
+            "STOP_BEFORE_PAPER_REGISTRATION",
+        ):
+            with self.subTest(token=token):
+                self.assertIn(token, self.text)
+
     def test_runbook_keeps_t_checkpoint_observation_schedule(self) -> None:
         for token in ("T+1", "T+3", "T+5", "T+10", "DATA_BLOCKED"):
             with self.subTest(token=token):

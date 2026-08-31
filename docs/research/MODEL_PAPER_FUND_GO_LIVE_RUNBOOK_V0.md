@@ -68,6 +68,72 @@ created:
 
 If any item is missing, the correct result is `STOP_BEFORE_PAPER_REGISTRATION`.
 
+## Paper Admission Acceptance Gate
+
+Plain meaning: a security is not "admitted" to the Model Paper Fund when it
+looks interesting. It is admitted only when the full U4-to-paper packet is
+complete, reviewable, and still paper-only.
+
+Every new admission packet must carry these fields before a pending paper order
+can be created:
+
+| Field | Required value or meaning |
+|---|---|
+| `ticker` | the security identity used by the paper engine |
+| `security_name` | human-readable name for review only |
+| `target_trade_date` | the trade date this paper plan is allowed to use |
+| `u4_decision_ref` | committed U4 decision-ledger artifact |
+| `u4_decision_actor` | `Junyan` |
+| `u4_decision` | `SELECT` only; `REJECT`, `DEFER`, `NO_TRADE`, and `DATA_BLOCKED` must stop |
+| `source_packet_ref` | same-day preflight or U4 pre-decision packet reference |
+| `source_packet_hash` | hash of the exact evidence packet reviewed |
+| `evidence_hash` | hash binding the evidence used for thesis and timing |
+| `method_version` | method version attached before the outcome |
+| `cohort_id` | denominator cohort for later review |
+| `causal_cluster_id` | de-clustering key for the 30 independent-sample rule |
+| `thesis_ref` | sealed thesis artifact |
+| `thesis_hash` | hash of the sealed thesis |
+| `valuation_ref` | sealed valuation artifact |
+| `valuation_hash` | hash of the sealed valuation |
+| `wrong_if` | pre-outcome invalidation condition |
+| `manual_smc_ref` | sealed manual SMC timing artifact |
+| `manual_smc_hash` | hash of the timing artifact |
+| `timing_state` | `PASS`; `WAIT` and `DATA_BLOCKED` must stop before paper registration |
+| `entry_zone` | planned paper review zone, not an after-the-fact fill |
+| `structure_stop` | pre-outcome technical invalidation reference |
+| `target_1` / `target_2` | planned paper references, not proof of value |
+| `fund_snapshot_ref` | paper-fund state reviewed before plan creation |
+| `fund_snapshot_hash` | hash of the exact fund snapshot |
+| `paper_registration_plan_hash` | full plan hash shown to the human approver |
+| `human_approval_ref` | approval artifact separate from model output and bound to the full plan hash |
+| `observation_schedule` | `T+1`, `T+3`, `T+5`, and `T+10` checkpoints |
+| `paper_only` | `true` |
+| `no_trade_flag` | `true` |
+| `trade_authority` | `false` |
+| `production_authority` | `false` |
+| `sample_eligible` | `false` for the first 5-10 semiconductor workflow-debug cycles |
+| `method_claim_sample_eligible` | `false` until the 30 independent de-clustered sample gate is met |
+
+The admission gate must stop before a pending order when any of these are true:
+
+- the U4 decision is missing, not committed, not by Junyan, or not `SELECT`;
+- the source packet is stale, pending, missing, or not hash-bound;
+- an active E1 red flag is present;
+- thesis, valuation, wrong-if, or manual SMC is unsealed;
+- `timing_state` is `WAIT` or `DATA_BLOCKED`;
+- the plan was created after seeing the target price path;
+- `human_approval_ref` is model text, chat text, or not bound to the full `paper_registration_plan_hash`;
+- the paper fund snapshot is missing, stale, or not hash-bound;
+- any authority field attempts to grant real trading, production, or paper-order
+  authority outside the reviewed bridge;
+- the observation schedule is missing any of `T+1`, `T+3`, `T+5`, or `T+10`;
+- the first 5-10 semiconductor workflow-debug cycles are marked as
+  method-validity samples.
+
+The stop result remains `STOP_BEFORE_PAPER_REGISTRATION`. A stopped packet is
+still useful: it records exactly why a promising research idea was not admitted
+to the paper fund.
+
 ## Morning Checklist
 
 Before market open, Reed prepares the paper fund view:
