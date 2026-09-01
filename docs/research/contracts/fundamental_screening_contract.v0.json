@@ -28,6 +28,27 @@
     "missing_behavior",
     "reason"
   ],
+  "threshold_profile_ref_pattern": "^[A-Z][A-Z0-9_]{2,63}_V[0-9]+$",
+  "threshold_profile_required_fields": [
+    "profile_id",
+    "method_version",
+    "universe_scope",
+    "industry_scope",
+    "approved_by",
+    "approval_ref",
+    "data_cutoff",
+    "thresholds",
+    "source_refs",
+    "missing_policy",
+    "no_trade_flag"
+  ],
+  "threshold_profile_rules": [
+    "threshold_profile_ref must equal profile_id",
+    "profile_id must match threshold_profile_ref_pattern",
+    "thresholds must be non-empty and each row must include threshold_required_fields",
+    "missing_policy must define DATA_BLOCKED, REJECT, and WATCH_WITH_GAP handling",
+    "no_trade_flag must be true"
+  ],
   "candidate_row_required_fields": [
     "ts_code",
     "display_name",
@@ -50,6 +71,47 @@
     "screening_status",
     "allowed_for_u2",
     "no_trade_flag"
+  ],
+  "explanation_code_vocabulary": {
+    "why_in": [
+      "PROFITABILITY_QUALITY_PASS",
+      "REVENUE_OR_ORDER_GROWTH_PASS",
+      "CASH_FLOW_QUALITY_PASS",
+      "BALANCE_SHEET_RISK_ACCEPTABLE",
+      "VALUATION_CONTEXT_INTERPRETABLE",
+      "INDUSTRY_POSITION_RELEVANT",
+      "CONTROL_SAMPLE_INCLUDED",
+      "OTHER_WITH_NOTE"
+    ],
+    "why_out": [
+      "E1_RED_FLAG_ACTIVE",
+      "PIT_SOURCE_TIMING_UNBOUND",
+      "MISSING_FUNDAMENTAL_FILLED_AS_ZERO",
+      "PROFITABILITY_QUALITY_FAIL",
+      "REVENUE_OR_ORDER_GROWTH_FAIL",
+      "CASH_FLOW_QUALITY_FAIL",
+      "BALANCE_SHEET_RISK_FAIL",
+      "VALUATION_CONTEXT_UNINTERPRETABLE",
+      "INDUSTRY_POSITION_UNCLEAR",
+      "DENOMINATOR_ROW_NOT_OMITTED",
+      "OTHER_WITH_NOTE"
+    ],
+    "missing_evidence": [
+      "PIT_FINANCIAL_SOURCE_MISSING",
+      "SOURCE_TIMESTAMP_MISSING",
+      "VALUATION_INPUT_MISSING",
+      "INDUSTRY_POSITION_EVIDENCE_MISSING",
+      "CASH_FLOW_DATA_MISSING",
+      "BALANCE_SHEET_FIELD_MISSING",
+      "CONTROL_DENOMINATOR_REASON_MISSING",
+      "NONE",
+      "OTHER_WITH_NOTE"
+    ]
+  },
+  "explanation_code_rules": [
+    "why_in, why_out, and missing_evidence must use explanation_code_vocabulary",
+    "OTHER_WITH_NOTE requires a non-empty reviewer/operator note",
+    "free-text narrative may supplement codes but cannot replace codes"
   ],
   "output_states": [
     "FUNDAMENTAL_RESEARCH_PASS",
