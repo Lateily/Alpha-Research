@@ -142,6 +142,9 @@ class SemiconductorRerunChecklistTests(unittest.TestCase):
             "`handoff_intent`",
             "`stop_conditions`",
             "A packet that cannot name its hashes and stop",
+            "semiconductor_preflight_packet.py",
+            "It may generate `STOP_BEFORE_RERUN` packets",
+            "must not run source repair, U1-U3, U4 selection, paper",
         ):
             self.assertIn(phrase, self.text)
 
