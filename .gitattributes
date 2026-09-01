@@ -1,12 +1,17 @@
 .gitattributes text eol=lf
+.github/workflows/python-ci.yml text eol=lf
 docs/research/RESEARCH_CLOSED_LOOP_V1.md text eol=lf
 docs/research/ALL_MARKET_RESEARCH_FUNNEL.md text eol=lf
 docs/research/U4_DECISION_LEDGER_SPEC_V1.md text eol=lf
+docs/research/MODEL_PAPER_OBSERVATION_TEMPLATE_V0.md text eol=lf
+docs/research/prospective/MODEL_PAPER_OBSERVATION_DRY_RUN_FAKE001_20260901.md text eol=lf
 docs/research/contracts/u4_decision_ledger.v1.schema.json text eol=lf
+docs/research/contracts/model_paper_observation.v0.json text eol=lf
 docs/research/RESEARCH_CLOSURE_EXPERIMENT.md text eol=lf
 docs/research/RESEARCH_METHOD_AND_ATTRIBUTION_V1.md text eol=lf
 docs/research/FIVE_AXIS_ATTRIBUTION_V1.md text eol=lf
 docs/research/PAPER_EXECUTION_REALISM_AUDIT_V1.md text eol=lf
+tests/test_model_paper_observation_template.py text eol=lf
 experiments/research_funnel/funnel_pipeline.py text eol=lf
 experiments/research_funnel/feature_store.py text eol=lf
 experiments/research_funnel/funnel_dag.py text eol=lf

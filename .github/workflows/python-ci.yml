@@ -219,6 +219,11 @@ jobs:
       # separate before any method or profitability claim.
       - name: Research strategy quality upgrade contract (offline)
         run: python3 tests/test_research_strategy_quality_upgrade.py
+      # Model paper observation template: after U4/paper registration, T+1/T+3/
+      # T+5/T+10 rows remain paper-only observations, not trade instructions or
+      # method claims.
+      - name: Model paper observation template contract (offline)
+        run: python3 tests/test_model_paper_observation_template.py
       # Rerun operator checklist: same-day semiconductor reruns must stop on
       # source, diagnostic, U3, red-flag, sample-denominator, or authority gaps
       # before any U4 handoff.
