@@ -177,6 +177,7 @@ jobs:
       # 结算复盘与带证据的人类确认/争议;不触碰生产账本。
       - name: Offline U4-to-paper research cycle
         run: |
+          python3 tests/test_model_paper_launch_bridge.py
           python3 tests/test_paper_execution_realism.py
           python3 tests/test_paper_execution_audit.py
           python3 scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/paper_execution_audit_v1.task.json
