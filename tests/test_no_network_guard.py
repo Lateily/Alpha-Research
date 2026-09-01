@@ -67,6 +67,7 @@ from experiments.research_funnel import industry_cohort  # noqa: E402,F401
 from experiments.research_funnel import research_cycle  # noqa: E402,F401
 from experiments.research_funnel import five_axis_attribution  # noqa: E402,F401
 from experiments.research_funnel import semiconductor_inputs  # noqa: E402,F401
+from experiments.research_funnel import u4_pre_decision  # noqa: E402,F401
 import paper_execution_audit  # noqa: E402,F401
 
 # ── 在守卫下跑完整离线套件入口(任何隐藏外呼 → NetworkAttempt 崩溃)──
@@ -149,6 +150,15 @@ u4_decision_result = unittest.TextTestRunner(verbosity=0).run(
 assert u4_decision_result.wasSuccessful(), (
     "offline U4 decision-ledger suite failed under socket guard"
 )
+import test_u4_pre_decision_runtime as u4_pre_decision_tests  # noqa: E402
+u4_pre_decision_result = unittest.TextTestRunner(verbosity=0).run(
+    unittest.defaultTestLoader.loadTestsFromTestCase(
+        u4_pre_decision_tests.U4PreDecisionRuntimeTests
+    )
+)
+assert u4_pre_decision_result.wasSuccessful(), (
+    "offline U4 pre-decision runtime suite failed under socket guard"
+)
 import test_industry_cohort_offline as industry_cohort_tests  # noqa: E402
 industry_cohort_result = unittest.TextTestRunner(verbosity=0).run(
     unittest.defaultTestLoader.loadTestsFromTestCase(
@@ -171,6 +181,15 @@ semiconductor_input_result = unittest.TextTestRunner(verbosity=0).run(
 )
 assert semiconductor_input_result.wasSuccessful(), (
     "semiconductor positive-input suite failed under socket guard"
+)
+import test_semiconductor_source_repair as semiconductor_repair_tests  # noqa: E402
+semiconductor_repair_result = unittest.TextTestRunner(verbosity=0).run(
+    unittest.defaultTestLoader.loadTestsFromTestCase(
+        semiconductor_repair_tests.SemiconductorSourceRepairTests
+    )
+)
+assert semiconductor_repair_result.wasSuccessful(), (
+    "semiconductor source-repair suite failed under socket guard"
 )
 import test_research_cycle as research_cycle_tests  # noqa: E402
 import test_research_method as research_method_tests  # noqa: E402

@@ -18,6 +18,30 @@ ROOT = Path(__file__).resolve().parents[1]
 MANIFEST_PATH = ROOT / "docs/research/contracts/research_closed_loop.v1.json"
 DOC_PATH = ROOT / "docs/research/RESEARCH_CLOSED_LOOP_V1.md"
 TASK_PATH = ROOT / "scripts/llm/fixtures/research_closed_loop_v1.task.json"
+EXPECTED_ARTIFACT_PATHS = (
+    "docs/research/RESEARCH_CLOSED_LOOP_V1.md",
+    "docs/research/ALL_MARKET_RESEARCH_FUNNEL.md",
+    "docs/research/U4_DECISION_LEDGER_SPEC_V1.md",
+    "docs/research/contracts/u4_decision_ledger.v1.schema.json",
+    "docs/research/RESEARCH_CLOSURE_EXPERIMENT.md",
+    "docs/research/RESEARCH_METHOD_AND_ATTRIBUTION_V1.md",
+    "docs/research/FIVE_AXIS_ATTRIBUTION_V1.md",
+    "docs/research/PAPER_EXECUTION_REALISM_AUDIT_V1.md",
+    "docs/research/prospective/SEMICONDUCTOR_DAILY_SOURCE_REPAIR_PLAN_V0_1.md",
+    "experiments/research_funnel/funnel_pipeline.py",
+    "experiments/research_funnel/feature_store.py",
+    "experiments/research_funnel/funnel_dag.py",
+    "experiments/research_funnel/semiconductor_inputs.py",
+    "experiments/research_funnel/semiconductor_source_repair.py",
+    "experiments/research_funnel/industry_taxonomy.v1.json",
+    "experiments/research_funnel/u4_decision_ledger.py",
+    "experiments/research_funnel/research_method.py",
+    "experiments/research_funnel/research_cycle.py",
+    "experiments/research_funnel/five_axis_attribution.py",
+    "experiments/execution_tracker/model_paper_fund.py",
+    "experiments/execution_tracker/paper_execution_audit.py",
+    "experiments/execution_tracker/model_fund/orders.json",
+)
 SEMICONDUCTOR_INTAKE_PATH = (
     ROOT
     / "docs"
@@ -60,22 +84,31 @@ def _validate(manifest: dict[str, Any]) -> list[str]:
     }
     if set(manifest) != expected_top:
         errors.append("top-level contract surface changed")
+    bindings = manifest.get("artifact_bindings")
+    if not isinstance(bindings, list) or any(
+        not isinstance(row, dict) for row in bindings
+    ):
+        errors.append("artifact bindings are not one object list")
+    elif [row.get("path") for row in bindings] != list(EXPECTED_ARTIFACT_PATHS):
+        errors.append("artifact binding set or order changed")
     if manifest.get("schema") != "ar.research_closed_loop_manifest.v1":
         errors.append("schema changed")
-    if manifest.get("schema_version") != "1.1":
+    if manifest.get("schema_version") != "1.3":
         errors.append("manifest revision changed")
-    if manifest.get("method_version") != "RESEARCH_CLOSED_LOOP_V1_1":
+    if manifest.get("method_version") != "RESEARCH_CLOSED_LOOP_V1_3":
         errors.append("method version changed")
     if manifest.get("status") != "FROZEN_OFFLINE_WORKFLOW_DEBUG":
         errors.append("frozen status changed")
+    if manifest.get("frozen_at") != "2026-08-26T01:17:17+08:00":
+        errors.append("frozen timestamp changed")
     if manifest.get("source_base") != {
-        "assembly_code_commit": "3ee830562c7def5f7fc9e136c34e912bcbc657a6",
-        "base_main": "a83a5d87cb660b579a295b3a2540977bf1f2f398",
-        "review_pr": 306,
+        "assembly_code_commit": "a893d0fc28ffcf3f50ab6071d8f5ccf86b74aa0a",
+        "base_main": "7774e33dbfa6c5554472d3c137ca7b14b4423f4c",
+        "review_pr": 317,
         "data_dependency_pr": 297,
         "data_dependency_status": "MERGED_MAIN",
     }:
-        errors.append("merged data dependency changed")
+        errors.append("source-base review binding changed")
 
     block_ids = [row.get("id") for row in manifest.get("ordered_blocks", [])]
     if block_ids != [
@@ -161,17 +194,24 @@ class ResearchClosedLoopV1Tests(unittest.TestCase):
     def test_every_bound_artifact_matches_its_exact_bytes(self) -> None:
         rows = self.manifest["artifact_bindings"]
         paths = [row["path"] for row in rows]
-        self.assertEqual(len(paths), len(set(paths)))
-        self.assertGreaterEqual(len(paths), 15)
+        self.assertEqual(list(EXPECTED_ARTIFACT_PATHS), paths)
         for row in rows:
             self.assertEqual(set(row), {"path", "sha256"})
             path = ROOT / row["path"]
             self.assertTrue(path.is_file(), row["path"])
             self.assertEqual(row["sha256"], _sha(path), row["path"])
 
-    def test_revision_1_1_binds_the_semiconductor_screening_assembly(self) -> None:
-        self.assertEqual(self.manifest["schema_version"], "1.1")
-        self.assertEqual(self.manifest["method_version"], "RESEARCH_CLOSED_LOOP_V1_1")
+    def test_artifact_binding_set_cannot_shrink(self) -> None:
+        changed = json.loads(json.dumps(self.manifest))
+        changed["artifact_bindings"] = [
+            row for row in changed["artifact_bindings"]
+            if row["path"] != "experiments/research_funnel/research_cycle.py"
+        ]
+        self.assertIn("artifact binding set or order changed", _validate(changed))
+
+    def test_revision_1_3_binds_the_semiconductor_repair_assembly(self) -> None:
+        self.assertEqual(self.manifest["schema_version"], "1.3")
+        self.assertEqual(self.manifest["method_version"], "RESEARCH_CLOSED_LOOP_V1_3")
         bound = {row["path"] for row in self.manifest["artifact_bindings"]}
         self.assertTrue({
             "docs/research/RESEARCH_CLOSED_LOOP_V1.md",
@@ -179,8 +219,29 @@ class ResearchClosedLoopV1Tests(unittest.TestCase):
             "experiments/research_funnel/feature_store.py",
             "experiments/research_funnel/funnel_dag.py",
             "experiments/research_funnel/semiconductor_inputs.py",
+            "experiments/research_funnel/semiconductor_source_repair.py",
             "experiments/research_funnel/industry_taxonomy.v1.json",
+            "docs/research/prospective/SEMICONDUCTOR_DAILY_SOURCE_REPAIR_PLAN_V0_1.md",
         }.issubset(bound))
+
+    def test_revision_1_3_identity_names_current_review(self) -> None:
+        self.assertEqual(self.manifest["frozen_at"], "2026-08-26T01:17:17+08:00")
+        self.assertEqual(
+            self.manifest["source_base"],
+            {
+                "assembly_code_commit": "a893d0fc28ffcf3f50ab6071d8f5ccf86b74aa0a",
+                "base_main": "7774e33dbfa6c5554472d3c137ca7b14b4423f4c",
+                "review_pr": 317,
+                "data_dependency_pr": 297,
+                "data_dependency_status": "MERGED_MAIN",
+            },
+        )
+        changed = json.loads(json.dumps(self.manifest))
+        changed["frozen_at"] = "2026-08-25T23:58:51+08:00"
+        self.assertIn("frozen timestamp changed", _validate(changed))
+        changed = json.loads(json.dumps(self.manifest))
+        changed["source_base"]["review_pr"] = 316
+        self.assertIn("source-base review binding changed", _validate(changed))
 
     def test_authority_cannot_be_promoted(self) -> None:
         self.assertEqual(
@@ -266,7 +327,8 @@ class ResearchClosedLoopV1Tests(unittest.TestCase):
         self.assertEqual(task["risk_level"], "CONSTITUTIONAL")
         text = DOC_PATH.read_text(encoding="utf-8")
         normalized = " ".join(text.split())
-        self.assertIn("Research Closed Loop V1.1", normalized)
+        self.assertIn("Research Closed Loop V1.3", normalized)
+        self.assertIn("repaired historical evidence remains `LATE_OBSERVED`", normalized)
         self.assertIn("FROZEN_OFFLINE_WORKFLOW_DEBUG / PRODUCTION_UNWIRED", normalized)
         self.assertIn("E1 red flags override every positive channel", normalized)
         self.assertIn("first five to ten semiconductor prospective cycles", normalized)

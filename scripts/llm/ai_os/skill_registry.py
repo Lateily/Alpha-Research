@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import re
 from dataclasses import dataclass
+from enum import Enum
 from hashlib import sha256
 from pathlib import Path
 from typing import Any, Iterable, Mapping
@@ -35,8 +36,34 @@ BOUNDARY_END = "</repository_skill>"
 REFERENCE_END = "</skill_reference>"
 
 
+class SkillBlockedGate(str, Enum):
+    """Stable, content-free reasons for trusted-side Skill diagnostics."""
+
+    SELECTION = "SELECTION"
+    REGISTRY = "REGISTRY"
+    UNREGISTERED = "UNREGISTERED"
+    ROLE = "ROLE"
+    NETWORK = "NETWORK"
+    PATH = "PATH"
+    HASH = "HASH"
+    DELIMITER = "DELIMITER"
+    RESERVED_FIELD = "RESERVED_FIELD"
+    INPUT = "INPUT"
+    BUDGET = "BUDGET"
+    INTERNAL = "INTERNAL"
+
+
 class SkillRegistryError(ValueError):
     """Raised when skill selection cannot be proven safe and complete."""
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        blocked_gate: SkillBlockedGate = SkillBlockedGate.REGISTRY,
+    ) -> None:
+        super().__init__(message)
+        self.blocked_gate = blocked_gate
 
 
 @dataclass(frozen=True)
@@ -92,39 +119,55 @@ def load_skill_contexts(
         not isinstance(skill_id, str) or not ID_RE.fullmatch(skill_id)
         for skill_id in requested
     ):
-        raise SkillRegistryError("selected skill id is invalid")
+        raise SkillRegistryError(
+            "selected skill id is invalid", blocked_gate=SkillBlockedGate.SELECTION
+        )
     if len(requested) != len(set(requested)):
-        raise SkillRegistryError("duplicate selected skill id")
+        raise SkillRegistryError(
+            "duplicate selected skill id", blocked_gate=SkillBlockedGate.SELECTION
+        )
     if not ROLE_RE.fullmatch(executor_role):
-        raise SkillRegistryError("executor role is invalid")
+        raise SkillRegistryError(
+            "executor role is invalid", blocked_gate=SkillBlockedGate.SELECTION
+        )
     if task_network_policy not in NETWORK_RANK:
-        raise SkillRegistryError("task network policy is invalid")
+        raise SkillRegistryError(
+            "task network policy is invalid", blocked_gate=SkillBlockedGate.SELECTION
+        )
 
     registry_file = Path(registry_path)
     if not registry_file.is_absolute():
         registry_file = root_path / registry_file
     registry_file = registry_file.resolve()
     if not registry_file.is_relative_to(root_path):
-        raise SkillRegistryError("skill registry resolves outside repository")
+        raise SkillRegistryError(
+            "skill registry resolves outside repository",
+            blocked_gate=SkillBlockedGate.PATH,
+        )
     registry = _read_registry(registry_file)
     entries = _validate_entries(registry.get("skills"), root_path)
 
     missing = sorted(set(requested) - set(entries))
     if missing:
-        raise SkillRegistryError(f"unregistered skill ids: {', '.join(missing)}")
+        raise SkillRegistryError(
+            f"unregistered skill ids: {', '.join(missing)}",
+            blocked_gate=SkillBlockedGate.UNREGISTERED,
+        )
 
     contexts = []
     for skill_id in requested:
         entry = entries[skill_id]
         if executor_role not in entry["allowed_roles"]:
             raise SkillRegistryError(
-                f"skill {skill_id} is not allowed for role {executor_role}"
+                f"skill {skill_id} is not allowed for role {executor_role}",
+                blocked_gate=SkillBlockedGate.ROLE,
             )
         required_policy = entry["network_policy"]
         if NETWORK_RANK[required_policy] > NETWORK_RANK[task_network_policy]:
             raise SkillRegistryError(
                 f"skill {skill_id} requires {required_policy}, task allows "
-                f"{task_network_policy}"
+                f"{task_network_policy}",
+                blocked_gate=SkillBlockedGate.NETWORK,
             )
         content = _verified_content(root_path, entry)
         resources = _verified_resources(root_path, entry)
@@ -174,11 +217,17 @@ def _validate_entries(value: Any, root: Path) -> dict[str, Mapping[str, Any]]:
             raise SkillRegistryError(f"skill {skill_id} version is invalid")
         expected_path = f".agents/skills/{skill_id}/SKILL.md"
         if raw.get("path") != expected_path:
-            raise SkillRegistryError(f"skill {skill_id} path is not canonical")
+            raise SkillRegistryError(
+                f"skill {skill_id} path is not canonical",
+                blocked_gate=SkillBlockedGate.PATH,
+            )
         if not isinstance(raw.get("sha256"), str) or not HASH_RE.fullmatch(
             raw["sha256"]
         ):
-            raise SkillRegistryError(f"skill {skill_id} hash is invalid")
+            raise SkillRegistryError(
+                f"skill {skill_id} hash is invalid",
+                blocked_gate=SkillBlockedGate.HASH,
+            )
         roles = raw.get("allowed_roles")
         if (
             not isinstance(roles, list)
@@ -202,7 +251,10 @@ def _validate_entries(value: Any, root: Path) -> dict[str, Mapping[str, Any]]:
         _validate_resource_entries(root, skill_id, raw.get("resources"))
         skill_path = (root / expected_path).resolve()
         if not skill_path.is_relative_to(root):
-            raise SkillRegistryError(f"skill {skill_id} resolves outside repository")
+            raise SkillRegistryError(
+                f"skill {skill_id} resolves outside repository",
+                blocked_gate=SkillBlockedGate.PATH,
+            )
         entries[skill_id] = raw
     return entries
 
@@ -218,10 +270,17 @@ def _verified_content(root: Path, entry: Mapping[str, Any]) -> str:
     if metadata.get("name") != skill_id or not metadata.get("description"):
         raise SkillRegistryError(f"skill {skill_id} frontmatter does not match registry")
     if BOUNDARY_END in content or REFERENCE_END in content:
-        raise SkillRegistryError(f"skill {skill_id} contains reserved context delimiter")
+        raise SkillRegistryError(
+            f"skill {skill_id} contains reserved context delimiter",
+            blocked_gate=SkillBlockedGate.DELIMITER,
+        )
     actual = "sha256:" + sha256(content.encode("utf-8")).hexdigest()
     if actual != entry["sha256"]:
-        raise SkillRegistryError(f"skill {skill_id} content hash mismatch")
+        # governance-mutation: AIOS_SKILL_DIAGNOSTIC_CLASSIFICATION
+        raise SkillRegistryError(
+            f"skill {skill_id} content hash mismatch",
+            blocked_gate=SkillBlockedGate.HASH,
+        )
     return content
 
 
@@ -242,14 +301,23 @@ def _validate_resource_entries(root: Path, skill_id: str, value: Any) -> None:
             or not RESOURCE_PATH_RE.fullmatch(path)
             or ".." in Path(path).parts
         ):
-            raise SkillRegistryError(f"skill {skill_id} resource path is not canonical")
+            raise SkillRegistryError(
+                f"skill {skill_id} resource path is not canonical",
+                blocked_gate=SkillBlockedGate.PATH,
+            )
         if not isinstance(resource.get("sha256"), str) or not HASH_RE.fullmatch(
             resource["sha256"]
         ):
-            raise SkillRegistryError(f"skill {skill_id} resource hash is invalid")
+            raise SkillRegistryError(
+                f"skill {skill_id} resource hash is invalid",
+                blocked_gate=SkillBlockedGate.HASH,
+            )
         resolved = (root / path).resolve()
         if not resolved.is_relative_to(reference_root):
-            raise SkillRegistryError(f"skill {skill_id} resource resolves outside references")
+            raise SkillRegistryError(
+                f"skill {skill_id} resource resolves outside references",
+                blocked_gate=SkillBlockedGate.PATH,
+            )
         paths.append(path)
     if len(paths) != len(set(paths)):
         raise SkillRegistryError(f"skill {skill_id} has duplicate resource paths")
@@ -272,12 +340,14 @@ def _verified_resources(
             ) from exc
         if BOUNDARY_END in content or REFERENCE_END in content:
             raise SkillRegistryError(
-                f"skill {skill_id} resource contains reserved context delimiter"
+                f"skill {skill_id} resource contains reserved context delimiter",
+                blocked_gate=SkillBlockedGate.DELIMITER,
             )
         actual = "sha256:" + sha256(content.encode("utf-8")).hexdigest()
         if actual != resource["sha256"]:
             raise SkillRegistryError(
-                f"skill {skill_id} resource hash mismatch: {resource['path']}"
+                f"skill {skill_id} resource hash mismatch: {resource['path']}",
+                blocked_gate=SkillBlockedGate.HASH,
             )
         resources.append(
             SkillResource(
