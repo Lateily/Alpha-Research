@@ -17,6 +17,8 @@ on:
       - "docs/research/**"
       - "docs/contracts/**"
       - "public/data/v2/**"
+      - "docs/research/RESEARCH_QUALITY_SCORECARD_V0.md"
+      - "docs/research/contracts/**"
       - "docs/research/macro/**"
       - "docs/contracts/macro/**"
       - ".agents/skills/**"
@@ -197,12 +199,31 @@ jobs:
         run: |
           python3 tests/test_u4_decision_ledger_spec.py
           python3 scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/u4_decision_ledger_spec_v1.task.json
+      # U4 pre-decision packet: same-day U1-U3 evidence is prepared for
+      # Junyan review, while machine selection/trade/paper-order authority stays
+      # closed and source/diagnostic blockers remain visible.
+      - name: U4 pre-decision packet contract (offline)
+        run: python3 tests/test_u4_pre_decision_packet.py
       # Frozen assembly contract over the existing funnel, U4, research method,
       # paper execution, and five-axis modules. This step adds no runtime wiring.
       - name: Research closed loop V1 assembly contract (offline)
         run: |
           python3 tests/test_research_closed_loop_v1.py
           python3 scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/research_closed_loop_v1.task.json
+      # Research quality scorecard: scores research craft quality, not P&L,
+      # alpha, trade readiness, U4 selection, or production authority.
+      - name: Research quality scorecard contract (offline)
+        run: python3 tests/test_research_quality_scorecard.py
+      # Research go/no-go + fundamentals: preserve human-only authority, make
+      # stale/legacy paper-fund display states explicit, and keep fundamental
+      # screens as explainable research intake rather than trade signals.
+      - name: Research go/no-go and fundamental screening contract (offline)
+        run: python3 tests/test_research_go_no_go_and_fundamental_screening.py
+      # Rerun operator checklist: same-day semiconductor reruns must stop on
+      # source, diagnostic, U3, red-flag, sample-denominator, or authority gaps
+      # before any U4 handoff.
+      - name: Semiconductor same-day rerun checklist (offline)
+        run: python3 tests/test_semiconductor_rerun_checklist.py
       # ── Macro OS M0-A:源身份/事件分级/双时间点预判/共识冲突语义 ──
       - name: Macro OS M0-A contract selftest
         run: python3 experiments/macro_os/contracts.py --selftest

@@ -12,7 +12,11 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts/llm"))
 
-from ai_os.skill_registry import SkillRegistryError, load_skill_contexts  # noqa: E402
+from ai_os.skill_registry import (  # noqa: E402
+    SkillBlockedGate,
+    SkillRegistryError,
+    load_skill_contexts,
+)
 
 
 class SkillRegistryTests(unittest.TestCase):
@@ -93,13 +97,16 @@ class SkillRegistryTests(unittest.TestCase):
                 encoding="utf-8",
             )
 
-            with self.assertRaisesRegex(SkillRegistryError, "content hash mismatch"):
+            with self.assertRaisesRegex(
+                SkillRegistryError, "content hash mismatch"
+            ) as caught:
                 load_skill_contexts(
                     root,
                     ["ar-divergent-reasoning"],
                     executor_role="aios-worker",
                     task_network_policy="OFFLINE",
                 )
+            self.assertIs(caught.exception.blocked_gate, SkillBlockedGate.HASH)
 
     def test_reserved_delimiter_is_rejected_even_with_matching_hash(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -120,13 +127,14 @@ class SkillRegistryTests(unittest.TestCase):
 
             with self.assertRaisesRegex(
                 SkillRegistryError, "reserved context delimiter"
-            ):
+            ) as caught:
                 load_skill_contexts(
                     root,
                     ["ar-divergent-reasoning"],
                     executor_role="aios-worker",
                     task_network_policy="OFFLINE",
                 )
+            self.assertIs(caught.exception.blocked_gate, SkillBlockedGate.DELIMITER)
 
     def test_path_escape_fails_before_content_load(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -136,13 +144,16 @@ class SkillRegistryTests(unittest.TestCase):
             registry["skills"][0]["path"] = "../outside/SKILL.md"
             registry_path.write_text(json.dumps(registry), encoding="utf-8")
 
-            with self.assertRaisesRegex(SkillRegistryError, "path is not canonical"):
+            with self.assertRaisesRegex(
+                SkillRegistryError, "path is not canonical"
+            ) as caught:
                 load_skill_contexts(
                     root,
                     ["ar-divergent-reasoning"],
                     executor_role="aios-worker",
                     task_network_policy="OFFLINE",
                 )
+            self.assertIs(caught.exception.blocked_gate, SkillBlockedGate.PATH)
 
     def test_network_requirement_cannot_exceed_task_policy(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -152,13 +163,16 @@ class SkillRegistryTests(unittest.TestCase):
             registry["skills"][0]["network_policy"] = "ALLOWLIST"
             registry_path.write_text(json.dumps(registry), encoding="utf-8")
 
-            with self.assertRaisesRegex(SkillRegistryError, "requires ALLOWLIST"):
+            with self.assertRaisesRegex(
+                SkillRegistryError, "requires ALLOWLIST"
+            ) as caught:
                 load_skill_contexts(
                     root,
                     ["ar-divergent-reasoning"],
                     executor_role="aios-worker",
                     task_network_policy="OFFLINE",
                 )
+            self.assertIs(caught.exception.blocked_gate, SkillBlockedGate.NETWORK)
 
     def test_prompt_version_cannot_inject_context_attributes(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:

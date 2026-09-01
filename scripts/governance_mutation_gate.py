@@ -380,10 +380,8 @@ MUTATIONS: tuple[MutationCase, ...] = (
         component="AIOS shared skill registry",
         source_path="scripts/llm/ai_os/skill_registry.py",
         test_script="tests/test_skill_registry.py",
-        before='    if actual != entry["sha256"]:\n'
-        '        raise SkillRegistryError(f"skill {skill_id} content hash mismatch")',
-        after='    if False:\n'
-        '        raise SkillRegistryError(f"skill {skill_id} content hash mismatch")',
+        before='    if actual != entry["sha256"]:',
+        after="    if False:",
         expected_failure_marker="test_tampered_skill_content_fails_hash_guard",
         rationale="A selected skill must remain byte-bound to its reviewed registry digest.",
         test_function="test_tampered_skill_content_fails_hash_guard",
@@ -393,10 +391,16 @@ MUTATIONS: tuple[MutationCase, ...] = (
         component="AIOS shared skill registry",
         source_path="scripts/llm/ai_os/skill_registry.py",
         test_script="tests/test_skill_registry.py",
-        before="    if BOUNDARY_END in content or REFERENCE_END in content:\n"
-        '        raise SkillRegistryError(f"skill {skill_id} contains reserved context delimiter")',
-        after="    if False:\n"
-        '        raise SkillRegistryError(f"skill {skill_id} contains reserved context delimiter")',
+        before=(
+            "    if BOUNDARY_END in content or REFERENCE_END in content:\n"
+            "        raise SkillRegistryError(\n"
+            '            f"skill {skill_id} contains reserved context delimiter",'
+        ),
+        after=(
+            "    if False:\n"
+            "        raise SkillRegistryError(\n"
+            '            f"skill {skill_id} contains reserved context delimiter",'
+        ),
         expected_failure_marker="test_reserved_delimiter_is_rejected_even_with_matching_hash",
         rationale="Reviewed skill bytes cannot close their context boundary and inject policy-shaped text.",
         test_function="test_reserved_delimiter_is_rejected_even_with_matching_hash",
@@ -442,17 +446,56 @@ MUTATIONS: tuple[MutationCase, ...] = (
         component="AIOS shared skill runtime",
         source_path="scripts/llm/adapters/base.py",
         test_script="tests/test_agent_adapter_offline.py",
-        before=(
-            "    if not rendered or len(rendered) > _MAX_SKILL_CONTEXT_CHARS:\n"
-            '        raise ValueError("repository skill context size is invalid")'
-        ),
-        after=(
-            "    if not rendered:\n"
-            '        raise ValueError("repository skill context size is invalid")'
-        ),
+        before="    if not rendered or len(rendered) > _MAX_SKILL_CONTEXT_CHARS:",
+        after="    if not rendered:",
         expected_failure_marker="test_oversized_verified_skill_context_is_blocked_before_worker",
         rationale="Hash-valid skill content cannot silently exceed the fixed prompt and cost budget.",
         test_function="test_oversized_verified_skill_context_is_blocked_before_worker",
+    ),
+    MutationCase(
+        mutation_id="AIOS_SKILL_DIAGNOSTIC_CLASSIFICATION",
+        component="AIOS shared skill diagnostics",
+        source_path="scripts/llm/ai_os/skill_registry.py",
+        test_script="tests/test_skill_registry.py",
+        before=(
+            '            f"skill {skill_id} content hash mismatch",\n'
+            "            blocked_gate=SkillBlockedGate.HASH,"
+        ),
+        after=(
+            '            f"skill {skill_id} content hash mismatch",\n'
+            "            blocked_gate=SkillBlockedGate.REGISTRY,"
+        ),
+        expected_failure_marker="test_tampered_skill_content_fails_hash_guard",
+        rationale="Trusted operations must distinguish a verified-content hash failure without parsing exception text.",
+        test_function="test_tampered_skill_content_fails_hash_guard",
+    ),
+    MutationCase(
+        mutation_id="AIOS_SKILL_RUNTIME_DIAGNOSTIC_EMISSION",
+        component="AIOS shared skill diagnostics",
+        source_path="scripts/llm/adapters/base.py",
+        test_script="tests/test_agent_adapter_offline.py",
+        before="        sink(diagnostic)",
+        after="        return  # mutation: drop trusted Skill diagnostic",
+        expected_failure_marker="test_tampered_runtime_skill_is_blocked_before_worker",
+        rationale="A blocked Skill preflight must emit its minimal trusted diagnostic when a sink is configured.",
+        test_function="test_tampered_runtime_skill_is_blocked_before_worker",
+    ),
+    MutationCase(
+        mutation_id="AIOS_SKILL_RUNTIME_DIAGNOSTIC_ISOLATION",
+        component="AIOS shared skill diagnostics",
+        source_path="scripts/llm/adapters/base.py",
+        test_script="tests/test_agent_adapter_offline.py",
+        before=(
+            "    except Exception:\n"
+            "        # governance-mutation: AIOS_SKILL_RUNTIME_DIAGNOSTIC_ISOLATION"
+        ),
+        after=(
+            "    except TypeError:\n"
+            "        # governance-mutation: AIOS_SKILL_RUNTIME_DIAGNOSTIC_ISOLATION"
+        ),
+        expected_failure_marker="test_skill_diagnostic_sink_failure_cannot_reopen_blocked_run",
+        rationale="A failed diagnostic transport cannot escape the harness or reopen a blocked provider call.",
+        test_function="test_skill_diagnostic_sink_failure_cannot_reopen_blocked_run",
     ),
     MutationCase(
         mutation_id="R015_PUBLICATION_MIGRATION_EVENT_UNIQUENESS",
