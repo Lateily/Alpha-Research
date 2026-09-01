@@ -1,0 +1,123 @@
+{
+  "schema": "ar.model_paper_observation_contract.v0",
+  "schema_version": "0.1",
+  "status": "DRAFT_OFFLINE_OBSERVATION_TEMPLATE",
+  "purpose": "Define a paper-only T+1/T+3/T+5/T+10 observation template for registered semiconductor workflow-debug cases without granting paper-order, production, trade, or method-claim authority.",
+  "applies_after": [
+    "U4_HUMAN_JUNYAN_SELECT",
+    "SEALED_RESEARCH_CASE",
+    "REVIEWED_PAPER_REGISTRATION_PLAN",
+    "PAPER_ONLY_PENDING_ORDER"
+  ],
+  "case_header_required_fields": [
+    "case_id",
+    "ticker",
+    "name",
+    "target_trade_date",
+    "u4_decision_ref",
+    "u4_decision_hash",
+    "sealed_case_hash",
+    "paper_registration_plan_hash",
+    "paper_order_ref",
+    "method_version",
+    "cohort_id",
+    "causal_cluster_id",
+    "sample_purpose",
+    "sample_eligible",
+    "method_claim_sample_eligible",
+    "portfolio_promotion_eligible",
+    "no_trade_flag"
+  ],
+  "observation_horizons": [
+    "T_PLUS_1",
+    "T_PLUS_3",
+    "T_PLUS_5",
+    "T_PLUS_10"
+  ],
+  "daily_observation_required_fields": [
+    "horizon",
+    "observation_date",
+    "settled_bar_ref",
+    "bar_hash",
+    "mark_price",
+    "entry_reference",
+    "paper_return_pct",
+    "relative_industry_return_pct",
+    "thesis_axis_status",
+    "valuation_axis_status",
+    "timing_axis_status",
+    "execution_axis_status",
+    "market_beta_axis_status",
+    "source_status",
+    "observation_status",
+    "operator_note"
+  ],
+  "axis_statuses": [
+    "PASS",
+    "FAIL",
+    "MIXED",
+    "WAIT",
+    "DATA_BLOCKED"
+  ],
+  "source_statuses": [
+    "COMPLETE",
+    "PARTIAL",
+    "STALE_INPUT",
+    "DATA_BLOCKED"
+  ],
+  "observation_statuses": [
+    "OBSERVE",
+    "DATA_BLOCKED",
+    "EXIT_REVIEW",
+    "STOPPED",
+    "CLOSED"
+  ],
+  "intraday_note_required_fields": [
+    "note_time",
+    "source",
+    "observed_fact",
+    "smc_structure_note",
+    "risk_or_red_flag_note",
+    "follow_up_needed",
+    "no_trade_flag"
+  ],
+  "sample_policy": {
+    "first_semiconductor_cycles": "WORKFLOW_DEBUG_ONLY",
+    "first_batch_size": "5_TO_10",
+    "minimum_method_claim_clusters": 30,
+    "workflow_debug_counts_toward_threshold": false,
+    "requires_cross_industry_replication": true,
+    "portfolio_promotion_allowed": false
+  },
+  "authority": {
+    "u4_selection_authority": "HUMAN_JUNYAN_ONLY",
+    "paper_registration_authority": "HUMAN_JUNYAN_ONLY",
+    "production_authority": false,
+    "trade_authority": false,
+    "paper_order_authority": false,
+    "claim_allowed": false,
+    "no_trade_flag": true
+  },
+  "hard_stops": [
+    "U4_DECISION_MISSING_OR_NOT_JUNYAN_AUTHORED",
+    "PAPER_PLAN_HASH_MISSING_OR_UNMATCHED",
+    "SETTLED_BAR_MISSING_OR_UNHASHED",
+    "INTRADAY_USED_AS_OFFICIAL_SAMPLE",
+    "ADJUSTED_OR_STALE_BAR_USED_AS_RAW_SETTLED_BAR",
+    "POST_REGISTRATION_LEVEL_MUTATION",
+    "CORPORATE_ACTION_BREAK_UNRESOLVED",
+    "STOP_LOOSENED_AFTER_OUTCOME",
+    "PNL_REWRITES_RESEARCH_AXIS",
+    "AUTHORITY_ESCALATION"
+  ],
+  "non_goals": [
+    "stock_recommendation",
+    "automatic_security_selection",
+    "paper_order_creation",
+    "real_trade_execution",
+    "alpha_claim",
+    "profitability_claim",
+    "portfolio_construction"
+  ],
+  "disclaimer": "Not trading advice; research signal, human executes."
+}
