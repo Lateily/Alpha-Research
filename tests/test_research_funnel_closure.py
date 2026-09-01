@@ -11,6 +11,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -189,6 +190,12 @@ def battery_fixture(codes: list[str], trade_date: str = TRADE_DATE) -> dict:
 
 
 class ResearchFunnelClosureTests(unittest.TestCase):
+    def test_directory_fsync_is_skipped_on_windows(self) -> None:
+        staging = Path("staging-dir")
+        with mock.patch.object(fp.os, "name", "nt"), mock.patch.object(fp.os, "open") as opened:
+            fp._fsync_directory_if_supported(staging)
+        opened.assert_not_called()
+
     def test_u0_zero_eligible_universe_fails_closed(self) -> None:
         registry = registry_fixture()
         for row in registry["rows"]:
