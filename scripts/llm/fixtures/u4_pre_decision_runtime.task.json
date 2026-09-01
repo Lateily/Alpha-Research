@@ -1,0 +1,70 @@
+{
+  "schema": "ai-task.v1",
+  "task_id": "U4-PREDECISION-RUNTIME-322",
+  "source_issue": null,
+  "architecture_block": ["research-framework", "u4-human-decision"],
+  "objective": "Deliver the offline evidence-bound U4 pre-decision runtime in PR #322 and fix the exact-head review findings: preserve the frozen V1.3 assembly and publish scratch outputs without overwriting concurrent evidence.",
+  "non_goals": [
+    "No frozen manifest revision, research-method change, or Windows DAG compatibility change",
+    "No production run, live-data collection, operator packet publication, or nightly wiring",
+    "No automated U4 selection, trading instruction, paper order, or performance claim",
+    "No all-or-nothing two-file transaction or power-loss durability guarantee",
+    "No defense against a privileged actor replacing scratch ancestor directories during publication"
+  ],
+  "human_owner": "Junyan",
+  "reviewer": "Junyan",
+  "executor_candidates": ["Codex"],
+  "dependencies": ["PR #320 packet contract", "PR #317 frozen V1.3 assembly", "PR #318 current main"],
+  "authority_docs": [
+    "AGENTS.md",
+    "experiments/AGENTS.md",
+    "scripts/llm/AGENTS.md",
+    "docs/research/RESEARCH_CLOSED_LOOP_V1.md",
+    "docs/research/prospective/U4_PRE_DECISION_PACKET_V0.md"
+  ],
+  "file_scope": [
+    "experiments/research_funnel/u4_pre_decision.py",
+    "experiments/research_funnel/funnel_dag.py",
+    "docs/research/contracts/research_closed_loop.v1.json",
+    "docs/research/prospective/U4_PRE_DECISION_RUNTIME_V0.md",
+    "tests/test_u4_pre_decision_runtime.py",
+    "scripts/governance_mutation_gate.py",
+    "tests/test_no_network_guard.py",
+    ".github/workflows/python-ci.yml",
+    "scripts/llm/fixtures/u4_pre_decision_runtime.task.json"
+  ],
+  "forbidden_scope": [
+    "data_history", "public", "web", "experiments/execution_tracker",
+    "experiments/research_funnel/run_nightly.py", "/Users/years/ar-live"
+  ],
+  "input_contracts": [
+    "ar.u4_pre_decision_packet.v0",
+    "Immutable same-day U1-U3 bundle, three-stage receipts, feature health and funnel health",
+    "Existing dedicated local scratch directory outside repository and evidence trees",
+    "Explicit user fix-forward authorization; final merge remains Junyan-only"
+  ],
+  "output_artifacts": [
+    "Offline packet and diagnostic JSON with source hashes and fixed non-trading authority",
+    "Atomic no-replace publication of each file, diagnostic first and packet last",
+    "Failed attempts preserve any published evidence; incomplete pairs require a fresh output pair",
+    "V1.3 manifest and funnel_dag.py restored byte-for-byte to base main",
+    "Negative regressions and mutation cases for collision handling and preservation"
+  ],
+  "acceptance_tests": [
+    "python3 scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/u4_pre_decision_runtime.task.json",
+    "AR_OFFLINE=1 python3 tests/test_u4_pre_decision_runtime.py",
+    "AR_OFFLINE=1 python3 tests/test_u4_pre_decision_packet.py",
+    "AR_OFFLINE=1 python3 tests/test_research_funnel_closure.py",
+    "AR_OFFLINE=1 python3 tests/test_funnel_dag_offline.py",
+    "AR_OFFLINE=1 python3 tests/test_u4_decision_ledger.py",
+    "AR_OFFLINE=1 python3 tests/test_research_closed_loop_v1.py",
+    "AR_OFFLINE=1 python3 scripts/governance_mutation_gate.py",
+    "AR_OFFLINE=1 python3 tests/test_no_network_guard.py",
+    "git diff --check"
+  ],
+  "risk_level": "HIGH",
+  "network_policy": "OFFLINE",
+  "budget": {"max_cny": "0", "max_minutes": 240},
+  "approval_gates": ["PR_REVIEW", "JUNYAN_MERGE", "SEPARATE_PRODUCTION_DEPLOY_APPROVAL"],
+  "created_at": "2026-08-31T00:00:00+08:00"
+}
