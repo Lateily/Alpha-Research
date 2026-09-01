@@ -79,6 +79,43 @@
     "requires_cross_industry_replication": true,
     "portfolio_promotion_allowed": false
   },
+  "cluster_counting_rules": [
+    "count closed samples by causal_cluster_id, not ticker rows",
+    "exclude WORKFLOW_DEBUG_ONLY cycles from minimum_method_claim_clusters",
+    "exclude duplicate catalysts, same issuer restatements, and same supply-chain shock clusters from independent counts",
+    "DATA_BLOCKED and NO_TRADE rows remain in the denominator but cannot be counted as method-success samples",
+    "method claims require at least 30 independent closed causal clusters and cross-industry replication"
+  ],
+  "pre_registration_failure_modes": [
+    "THESIS_NOT_SEALED",
+    "VALUATION_RANGE_NOT_SEALED",
+    "WRONG_IF_NOT_SEALED",
+    "TIMING_TICKET_NOT_PRE_OUTCOME",
+    "MANUAL_SMC_STATUS_NOT_PASS",
+    "ACTIVE_E1_RED_FLAG",
+    "SOURCE_DATA_BLOCKED",
+    "U4_SELECT_MISSING_OR_UNTRUSTED",
+    "PLAN_HASH_UNBOUND",
+    "AUTHORITY_ESCALATION"
+  ],
+  "method_claim_gate": {
+    "claim_status_before_threshold": "METHOD_CLAIM_BLOCKED",
+    "minimum_independent_closed_clusters": 30,
+    "workflow_debug_counts_toward_threshold": false,
+    "requires_cross_industry_replication": true,
+    "requires_pre_registered_failure_modes": true,
+    "allowed_claims_before_threshold": [
+      "workflow_debug_observation",
+      "process_quality_issue",
+      "data_gap_report"
+    ],
+    "blocked_claims_before_threshold": [
+      "alpha_claim",
+      "profitability_claim",
+      "method_validity_claim",
+      "portfolio_promotion_claim"
+    ]
+  },
   "authority": {
     "u4_selection_authority": "HUMAN_JUNYAN_ONLY",
     "paper_registration_authority": "HUMAN_JUNYAN_ONLY",
@@ -94,6 +131,7 @@
     "E1_RED_FLAG_OFFSET_BY_POSITIVE_EVIDENCE",
     "TIMING_EVIDENCE_AFTER_OUTCOME",
     "DENOMINATOR_NOT_RETAINED",
+    "METHOD_CLAIM_BELOW_30_INDEPENDENT_CLUSTERS",
     "ONE_OR_TWO_NAME_POOL_FORCED_TO_U4_SELECTION",
     "PAPER_PNL_REWRITES_RESEARCH_AXIS",
     "AUTHORITY_ESCALATION"

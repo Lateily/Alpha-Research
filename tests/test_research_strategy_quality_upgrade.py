@@ -51,6 +51,9 @@ class ResearchStrategyQualityUpgradeTests(unittest.TestCase):
                 "backtest_hygiene",
                 "five_axis_learning",
                 "sample_policy",
+                "cluster_counting_rules",
+                "pre_registration_failure_modes",
+                "method_claim_gate",
                 "authority",
                 "hard_stops",
                 "non_goals",
@@ -158,6 +161,70 @@ class ResearchStrategyQualityUpgradeTests(unittest.TestCase):
                 "portfolio_promotion_allowed": False,
             },
         )
+
+    def test_cluster_counting_rules_exclude_debug_cycles_from_method_claims(self) -> None:
+        rules = self.contract["cluster_counting_rules"]
+        for rule in (
+            "count closed samples by causal_cluster_id, not ticker rows",
+            "exclude WORKFLOW_DEBUG_ONLY cycles from minimum_method_claim_clusters",
+            "DATA_BLOCKED and NO_TRADE rows remain in the denominator but cannot be counted as method-success samples",
+            "method claims require at least 30 independent closed causal clusters and cross-industry replication",
+        ):
+            self.assertIn(rule, rules)
+
+        for phrase in (
+            "Method quality is counted by independent causal clusters, not raw ticker rows",
+            "The first 5-10 semiconductor cycles test the process and do not count toward the 30-cluster method threshold",
+            "Exclude those workflow-debug cycles from the 30-cluster method denominator",
+        ):
+            self.assertIn(phrase, self.normalized)
+
+    def test_pre_registration_failure_modes_are_explicit_before_paper_review(self) -> None:
+        self.assertEqual(
+            self.contract["pre_registration_failure_modes"],
+            [
+                "THESIS_NOT_SEALED",
+                "VALUATION_RANGE_NOT_SEALED",
+                "WRONG_IF_NOT_SEALED",
+                "TIMING_TICKET_NOT_PRE_OUTCOME",
+                "MANUAL_SMC_STATUS_NOT_PASS",
+                "ACTIVE_E1_RED_FLAG",
+                "SOURCE_DATA_BLOCKED",
+                "U4_SELECT_MISSING_OR_UNTRUSTED",
+                "PLAN_HASH_UNBOUND",
+                "AUTHORITY_ESCALATION",
+            ],
+        )
+        for mode in self.contract["pre_registration_failure_modes"]:
+            self.assertIn(mode, self.doc)
+
+    def test_method_claim_gate_blocks_alpha_profitability_and_promotion_claims(self) -> None:
+        gate = self.contract["method_claim_gate"]
+        self.assertEqual(gate["claim_status_before_threshold"], "METHOD_CLAIM_BLOCKED")
+        self.assertEqual(gate["minimum_independent_closed_clusters"], 30)
+        self.assertFalse(gate["workflow_debug_counts_toward_threshold"])
+        self.assertTrue(gate["requires_cross_industry_replication"])
+        self.assertTrue(gate["requires_pre_registered_failure_modes"])
+        self.assertEqual(
+            gate["allowed_claims_before_threshold"],
+            [
+                "workflow_debug_observation",
+                "process_quality_issue",
+                "data_gap_report",
+            ],
+        )
+        self.assertEqual(
+            gate["blocked_claims_before_threshold"],
+            [
+                "alpha_claim",
+                "profitability_claim",
+                "method_validity_claim",
+                "portfolio_promotion_claim",
+            ],
+        )
+        self.assertIn("METHOD_CLAIM_BELOW_30_INDEPENDENT_CLUSTERS", self.contract["hard_stops"])
+        self.assertIn("Blocked claims before that threshold", self.doc)
+        self.assertIn("a method claim is made below 30 independent closed causal clusters", self.doc)
 
     def test_authority_and_non_goals_cannot_claim_trade_or_paper_power(self) -> None:
         self.assertEqual(

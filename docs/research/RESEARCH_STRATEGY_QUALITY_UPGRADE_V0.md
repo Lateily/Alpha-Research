@@ -155,6 +155,60 @@ Each closed paper cycle must be attributed on five separate axes:
 P&L is recorded, but it cannot rewrite any axis. This is how the team learns
 whether the method is improving instead of simply celebrating winning trades.
 
+## Sample And Claim Gate
+
+Method quality is counted by independent causal clusters, not raw ticker rows.
+The same issuer event, restatement, catalyst chain, or supply-chain shock cannot
+be counted many times just because it appears in multiple securities or dates.
+
+Counting rules:
+
+| Rule | Meaning |
+|---|---|
+| Count by `causal_cluster_id` | One cluster counts once, even if it contains many rows. |
+| Keep the full denominator | `SELECT`, `REJECT`, `DEFER`, `NO_TRADE`, `DATA_BLOCKED`, and controls stay visible. |
+| Exclude workflow-debug cycles | The first 5-10 semiconductor cycles test the process and do not count toward the 30-cluster method threshold. |
+| Exclude blocked rows from success claims | `DATA_BLOCKED` and `NO_TRADE` rows stay in the denominator but cannot be called method wins. |
+| Require cross-industry replication | A method that only works in one industry cannot move to portfolio construction. |
+
+Before at least 30 independent closed causal clusters and cross-industry
+replication, the only allowed claims are:
+
+```text
+workflow_debug_observation
+process_quality_issue
+data_gap_report
+```
+
+Blocked claims before that threshold:
+
+```text
+alpha_claim
+profitability_claim
+method_validity_claim
+portfolio_promotion_claim
+```
+
+If a report tries to make one of those blocked claims early, the result is
+`METHOD_CLAIM_BELOW_30_INDEPENDENT_CLUSTERS`.
+
+## Pre-Registration Failure Modes
+
+Paper registration review must fail before any plan is treated as usable when:
+
+| Failure mode | Meaning |
+|---|---|
+| `THESIS_NOT_SEALED` | The business thesis is missing or mutable. |
+| `VALUATION_RANGE_NOT_SEALED` | Bear/base/bull valuation is missing or mutable. |
+| `WRONG_IF_NOT_SEALED` | The invalidation condition is missing or mutable. |
+| `TIMING_TICKET_NOT_PRE_OUTCOME` | Timing evidence was written after the outcome window began. |
+| `MANUAL_SMC_STATUS_NOT_PASS` | SMC timing is `WAIT`, `DATA_BLOCKED`, or otherwise not pass. |
+| `ACTIVE_E1_RED_FLAG` | A red flag is active and cannot be offset. |
+| `SOURCE_DATA_BLOCKED` | Required evidence is missing, stale, or unverifiable. |
+| `U4_SELECT_MISSING_OR_UNTRUSTED` | Junyan has not issued a trusted U4 `SELECT`. |
+| `PLAN_HASH_UNBOUND` | The paper plan is not bound by a stable full hash. |
+| `AUTHORITY_ESCALATION` | The artifact claims production, paper-order, or trade authority. |
+
 ## Near-Term Work Order
 
 1. Keep #325 as the research go/no-go and fundamental-screening contract.
@@ -165,7 +219,8 @@ whether the method is improving instead of simply celebrating winning trades.
 4. Add a backtest hygiene checklist before publishing any win-rate, alpha, or
    strategy result.
 5. Run the first 5-10 semiconductor cycles as workflow-debug only.
-6. Wait for at least 30 independent, de-clustered closed samples before method
+6. Exclude those workflow-debug cycles from the 30-cluster method denominator.
+7. Wait for at least 30 independent, de-clustered closed samples before method
    claims.
 
 ## Stop Conditions
@@ -177,6 +232,7 @@ Stop and report instead of continuing when:
 - E1 red flags are offset by positive fundamentals or timing;
 - timing evidence is registered after the price outcome;
 - selected and rejected samples are not both retained;
+- a method claim is made below 30 independent closed causal clusters;
 - a one-name or two-name review pool is forced into U4 selection;
 - paper P&L is used to claim thesis quality;
 - a result claims production, trade, paper-order, alpha, or profitability
