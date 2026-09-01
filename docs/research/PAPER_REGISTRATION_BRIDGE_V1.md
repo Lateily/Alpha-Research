@@ -105,4 +105,8 @@ No win-rate, alpha, profitability or method-validity statement is permitted
 before at least 30 independent, de-clustered closed samples and cross-industry
 replication under the existing research constitution.
 
+Artifact binding hashes in the closed-loop manifest bind the canonical LF bytes
+stored in Git, not a Windows CRLF working-tree checkout. Windows local raw-byte
+reproducibility is handled by the separate #314 EOL pinning fix.
+
 不是买卖指令；研究信号，human executes.

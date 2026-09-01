@@ -117,7 +117,7 @@
     {"path": "docs/research/RESEARCH_METHOD_AND_ATTRIBUTION_V1.md", "sha256": "sha256:111d657e5e8a99ecda3d2f9bce35e57379dc7771d8a27722cd506891787f6692"},
     {"path": "docs/research/FIVE_AXIS_ATTRIBUTION_V1.md", "sha256": "sha256:505125da00056149de9b71a079f37c17933cf93d0958e1e359d28652181dedaa"},
     {"path": "docs/research/PAPER_EXECUTION_REALISM_AUDIT_V1.md", "sha256": "sha256:33da7765f69dc18fdda4d5faae92a16ad2be939aa779c7367c7627f7e6da7812"},
-    {"path": "docs/research/PAPER_REGISTRATION_BRIDGE_V1.md", "sha256": "sha256:f59854f06eeda0ccae86c7d67091183de6e628b02f86d0a8d25606cab077ec44"},
+    {"path": "docs/research/PAPER_REGISTRATION_BRIDGE_V1.md", "sha256": "sha256:33b395839de2576aeb7fef991354aa2d9871f2c6231bb1ff22c721ce3ec4523c"},
     {"path": "docs/research/prospective/SEMICONDUCTOR_DAILY_SOURCE_REPAIR_PLAN_V0_1.md", "sha256": "sha256:105ca70b8a152d90905e27871b5dc6a4aae2d56b6d3d170c482c1d152706a934"},
     {"path": "experiments/research_funnel/funnel_pipeline.py", "sha256": "sha256:3fd601f999e14def5240b59ad7a3ad619f703719ee0c1f2a24857d1f55998ddb"},
     {"path": "experiments/research_funnel/feature_store.py", "sha256": "sha256:1e5430cde084563c59db4c688a2738e2a31f536a3a112b0728debf5282033980"},
