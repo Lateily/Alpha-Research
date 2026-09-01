@@ -62,6 +62,29 @@ The contract supports two modes:
 Every run must name a threshold profile. Thresholds are explicit research
 assumptions, not hidden global defaults.
 
+The profile reference is machine-checkable, not a free-form label:
+
+```text
+threshold_profile_ref pattern: ^[A-Z][A-Z0-9_]{2,63}_V[0-9]+$
+example: SEMICONDUCTOR_FUNDAMENTAL_PROFILE_V0
+```
+
+The referenced profile object must include:
+
+| Field | Meaning |
+|---|---|
+| `profile_id` | Versioned id; must equal `threshold_profile_ref`. |
+| `method_version` | Research method version using the profile. |
+| `universe_scope` | Full-market or named research universe. |
+| `industry_scope` | Industry scope or `ALL_A_SHARE`. |
+| `approved_by` | Human approver, or `null` while draft. |
+| `approval_ref` | Approval anchor, or `null` while draft. |
+| `data_cutoff` | Timezone-aware cutoff for the profile source. |
+| `thresholds` | Non-empty list of threshold rows. |
+| `source_refs` | Evidence sources used by the profile. |
+| `missing_policy` | How missing evidence maps to stop/watch/reject. |
+| `no_trade_flag` | Always `true`. |
+
 Each threshold must include:
 
 | Field | Meaning |
@@ -79,6 +102,9 @@ Each threshold must include:
 
 If a threshold cannot name its source and missing-data behavior, it cannot be
 used.
+
+The profile must define `DATA_BLOCKED`, `REJECT`, and `WATCH_WITH_GAP` handling
+before it can be used in a run.
 
 ## Minimum Fundamental Gates
 
@@ -124,6 +150,19 @@ Every output row must carry these fields before it can enter U2:
 | `screening_status` | Final screening output state. |
 | `allowed_for_u2` | Whether it can be shown in U2 review. |
 | `no_trade_flag` | Always `true` in this contract. |
+
+The reason fields are code-first. Free text may explain the code, but cannot
+replace it.
+
+| Field | Closed vocabulary |
+|---|---|
+| `why_in` | `PROFITABILITY_QUALITY_PASS`, `REVENUE_OR_ORDER_GROWTH_PASS`, `CASH_FLOW_QUALITY_PASS`, `BALANCE_SHEET_RISK_ACCEPTABLE`, `VALUATION_CONTEXT_INTERPRETABLE`, `INDUSTRY_POSITION_RELEVANT`, `CONTROL_SAMPLE_INCLUDED`, `OTHER_WITH_NOTE` |
+| `why_out` | `E1_RED_FLAG_ACTIVE`, `PIT_SOURCE_TIMING_UNBOUND`, `MISSING_FUNDAMENTAL_FILLED_AS_ZERO`, `PROFITABILITY_QUALITY_FAIL`, `REVENUE_OR_ORDER_GROWTH_FAIL`, `CASH_FLOW_QUALITY_FAIL`, `BALANCE_SHEET_RISK_FAIL`, `VALUATION_CONTEXT_UNINTERPRETABLE`, `INDUSTRY_POSITION_UNCLEAR`, `DENOMINATOR_ROW_NOT_OMITTED`, `OTHER_WITH_NOTE` |
+| `missing_evidence` | `PIT_FINANCIAL_SOURCE_MISSING`, `SOURCE_TIMESTAMP_MISSING`, `VALUATION_INPUT_MISSING`, `INDUSTRY_POSITION_EVIDENCE_MISSING`, `CASH_FLOW_DATA_MISSING`, `BALANCE_SHEET_FIELD_MISSING`, `CONTROL_DENOMINATOR_REASON_MISSING`, `NONE`, `OTHER_WITH_NOTE` |
+
+`OTHER_WITH_NOTE` is allowed only when the row carries a non-empty operator or
+reviewer note. This keeps unusual cases visible without reopening the whole
+contract to unstructured explanations.
 
 ## Output States
 

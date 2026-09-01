@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+import re
 import unittest
 from pathlib import Path
 from typing import Any
@@ -76,7 +77,12 @@ class ResearchGoNoGoAndFundamentalScreeningTests(unittest.TestCase):
                 "modes",
                 "minimum_gates",
                 "threshold_required_fields",
+                "threshold_profile_ref_pattern",
+                "threshold_profile_required_fields",
+                "threshold_profile_rules",
                 "candidate_row_required_fields",
+                "explanation_code_vocabulary",
+                "explanation_code_rules",
                 "output_states",
                 "cohort_buckets",
                 "hard_stops",
@@ -87,6 +93,35 @@ class ResearchGoNoGoAndFundamentalScreeningTests(unittest.TestCase):
         )
         self.assertEqual(self.contract["schema"], "ar.fundamental_screening_contract.v0")
         self.assertEqual(self.contract["status"], "DRAFT_OFFLINE_SCREENING_CONTRACT")
+
+    def test_threshold_profile_ref_and_object_shape_are_machine_checkable(self) -> None:
+        pattern = self.contract["threshold_profile_ref_pattern"]
+        self.assertEqual(pattern, r"^[A-Z][A-Z0-9_]{2,63}_V[0-9]+$")
+        self.assertRegex("SEMICONDUCTOR_FUNDAMENTAL_PROFILE_V0", pattern)
+        self.assertIsNone(re.fullmatch(pattern, "semiconductor profile"))
+
+        self.assertEqual(
+            self.contract["threshold_profile_required_fields"],
+            [
+                "profile_id",
+                "method_version",
+                "universe_scope",
+                "industry_scope",
+                "approved_by",
+                "approval_ref",
+                "data_cutoff",
+                "thresholds",
+                "source_refs",
+                "missing_policy",
+                "no_trade_flag",
+            ],
+        )
+        for rule in (
+            "threshold_profile_ref must equal profile_id",
+            "thresholds must be non-empty and each row must include threshold_required_fields",
+            "missing_policy must define DATA_BLOCKED, REJECT, and WATCH_WITH_GAP handling",
+        ):
+            self.assertIn(rule, self.contract["threshold_profile_rules"])
 
     def test_threshold_profile_requires_source_missing_behavior_and_reason(self) -> None:
         self.assertEqual(
@@ -122,6 +157,21 @@ class ResearchGoNoGoAndFundamentalScreeningTests(unittest.TestCase):
                 "no_trade_flag",
             }.issubset(required)
         )
+
+    def test_explanation_fields_use_closed_vocabularies_with_other_escape_hatch(self) -> None:
+        vocab = self.contract["explanation_code_vocabulary"]
+        self.assertEqual(set(vocab), {"why_in", "why_out", "missing_evidence"})
+        self.assertIn("OTHER_WITH_NOTE", vocab["why_in"])
+        self.assertIn("OTHER_WITH_NOTE", vocab["why_out"])
+        self.assertIn("OTHER_WITH_NOTE", vocab["missing_evidence"])
+        self.assertIn("E1_RED_FLAG_ACTIVE", vocab["why_out"])
+        self.assertIn("PIT_FINANCIAL_SOURCE_MISSING", vocab["missing_evidence"])
+        self.assertNotIn("BUY", vocab["why_in"])
+        self.assertNotIn("LONG", vocab["why_in"])
+
+        rules = self.contract["explanation_code_rules"]
+        self.assertIn("OTHER_WITH_NOTE requires a non-empty reviewer/operator note", rules)
+        self.assertIn("free-text narrative may supplement codes but cannot replace codes", rules)
 
     def test_output_states_are_research_intake_states_not_trade_actions(self) -> None:
         states = set(self.contract["output_states"])
@@ -175,6 +225,10 @@ class ResearchGoNoGoAndFundamentalScreeningTests(unittest.TestCase):
             "cannot overwrite E1 red flags",
             "cannot force U4 to select any name",
             "Thresholds are explicit research assumptions",
+            "threshold_profile_ref pattern",
+            "profile_id` | Versioned id; must equal `threshold_profile_ref",
+            "The reason fields are code-first",
+            "`OTHER_WITH_NOTE` is allowed only when the row carries a non-empty",
             "No weighted total score may offset",
             "These states are research-intake states",
             "not `BUY`, `SELL`, `LONG`, or `SHORT`",
