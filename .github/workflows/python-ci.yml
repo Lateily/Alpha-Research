@@ -212,6 +212,11 @@ jobs:
       # screens as explainable research intake rather than trade signals.
       - name: Research go/no-go and fundamental screening contract (offline)
         run: python3 tests/test_research_go_no_go_and_fundamental_screening.py
+      # Research strategy quality upgrade: keep fundamentals, SMC timing,
+      # backtest hygiene, sample-denominator accounting, and five-axis learning
+      # separate before any method or profitability claim.
+      - name: Research strategy quality upgrade contract (offline)
+        run: python3 tests/test_research_strategy_quality_upgrade.py
       # Rerun operator checklist: same-day semiconductor reruns must stop on
       # source, diagnostic, U3, red-flag, sample-denominator, or authority gaps
       # before any U4 handoff.
