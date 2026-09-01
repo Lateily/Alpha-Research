@@ -117,8 +117,8 @@ The packet must contain:
 | `source_scan_status` | `CLEAN`, `REPAIR_REQUIRED`, or `DATA_BLOCKED` |
 | `repair_approval_ref` | Exact Junyan approval reference when repair is required; otherwise `null` |
 | `diagnostic_ref` | Local diagnostic output path and blocker codes |
-| `same_day_bundle_ref` | U1/U2 bundle path, hash, `as_of`, and run identity |
-| `u3_battery_ref` | U3 battery path, hash, `as_of`, and row count |
+| `same_day_bundle_ref` | U1/U2 bundle path, recomputed hash, `as_of`, and run identity |
+| `u3_battery_ref` | U3 battery path, recomputed hash, `as_of`, and row count |
 | `handoff_intent` | `STOP_BEFORE_RERUN` or `ALLOW_U1_U3_RERUN` |
 | `stop_conditions` | Exact stop condition numbers triggered, or an empty list |
 | `next_action` | The next human action; never a trade instruction |
@@ -128,6 +128,14 @@ The packet must not contain raw production credentials, unreviewed live database
 paths, model outputs, chat history, or any field that asks an agent to decide
 which securities to select. A packet that cannot name its hashes and stop
 conditions is `BLOCKED`, even if the market session is urgent.
+
+The machine-readable v0 packet builder is
+`experiments/research_funnel/semiconductor_preflight_packet.py`. It assembles the
+same packet from a source scan, intake diagnostic, same-day bundle artifact, and
+U3 battery artifact. It recomputes artifact hashes from readable local files,
+checks the target-date rows per daily source, and treats CLI-provided git facts
+as equality cross-checks only. It may generate `STOP_BEFORE_RERUN` packets when
+inputs are missing or pending; it must not run source repair, U1-U3, U4 selection, paper orders, or production nightly jobs.
 
 ## Allowed Local Checks
 
@@ -197,14 +205,17 @@ Stop before rerun when any condition below is true:
 5. A source repair is `LATE_OBSERVED` and the operator tries to treat it as
    same-day evidence.
 6. The diagnostic fails `evidence_rows_hash` or `RECEIPT_SELF_REPORT_MISMATCH`.
-7. U1/U2 has no positive semiconductor channel rows.
+7. U1/U2 has no positive semiconductor channel rows, or diagnostic counts
+   contradict the diagnostic's ready self-report.
 8. Any U4-ready row carries an active E1 red flag.
 9. Any U2 candidate lacks a same-run U3 battery row or explicit `DATA_BLOCKED`.
 10. The U4-ready pool contains one or two names; legal handoff counts remain
     zero or three to five.
-11. `method_version`, `cohort_id`, or `causal_cluster_id` is missing from rows
+11. A same-day bundle or U3 battery ref is missing, unreadable, has a hash
+    mismatch, or carries an `as_of` outside the target trade date.
+12. `method_version`, `cohort_id`, or `causal_cluster_id` is missing from rows
     that will later be used for sample accounting.
-12. Any output claims `production_authority=true`, `trade_authority=true`,
+13. Any output claims `production_authority=true`, `trade_authority=true`,
     `claim_allowed=true`, or `no_trade_flag=false`.
 
 The correct result for a stopped rerun is an explicit blocked report. It is not
@@ -286,8 +297,10 @@ DIAGNOSTIC_BLOCKER_CODES:
 SAME_DAY_BUNDLE_REF:
 SAME_DAY_BUNDLE_HASH:
 SAME_DAY_AS_OF:
+SAME_DAY_RUN_ID:
 U3_BATTERY_REF:
 U3_BATTERY_HASH:
+U3_BATTERY_AS_OF:
 U3_ROW_COUNT:
 HANDOFF_INTENT: STOP_BEFORE_RERUN / ALLOW_U1_U3_RERUN
 STOP_CONDITIONS:
