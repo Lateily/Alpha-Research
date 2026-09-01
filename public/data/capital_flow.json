@@ -1,12 +1,194 @@
 {
-  "fetched_at": "2026-08-31T16:17:28Z",
+  "fetched_at": "2026-09-01T13:37:14Z",
   "trade_date": "20260901",
   "tier": 15000,
   "_status": "partial",
   "hot_concepts": [],
   "cold_concepts": [],
-  "hot_industries": [],
-  "cold_industries": [],
+  "hot_industries": [
+    {
+      "name": "互联网金融",
+      "ts_code": "BK0637.DC",
+      "net_inflow_yuan": 31592540160000.0,
+      "pct_chg": 1.75
+    },
+    {
+      "name": "农林牧渔",
+      "ts_code": "BK0433.DC",
+      "net_inflow_yuan": 28764808480000.0,
+      "pct_chg": 4.04
+    },
+    {
+      "name": "非银金融",
+      "ts_code": "BK1203.DC",
+      "net_inflow_yuan": 27819770880000.0,
+      "pct_chg": 1.91
+    },
+    {
+      "name": "金融地产风格",
+      "ts_code": "BK1714.DC",
+      "net_inflow_yuan": 27638028800000.0,
+      "pct_chg": 1.38
+    },
+    {
+      "name": "乡村振兴",
+      "ts_code": "BK0834.DC",
+      "net_inflow_yuan": 26936015360000.0,
+      "pct_chg": 2.56
+    },
+    {
+      "name": "粮食概念",
+      "ts_code": "BK1086.DC",
+      "net_inflow_yuan": 25951846240000.0,
+      "pct_chg": 6.87
+    },
+    {
+      "name": "农业种植",
+      "ts_code": "BK0888.DC",
+      "net_inflow_yuan": 24519082720000.0,
+      "pct_chg": 4.75
+    },
+    {
+      "name": "区块链",
+      "ts_code": "BK0830.DC",
+      "net_inflow_yuan": 22188185600000.0,
+      "pct_chg": 2.03
+    },
+    {
+      "name": "证金持股",
+      "ts_code": "BK0718.DC",
+      "net_inflow_yuan": 21562001920000.0,
+      "pct_chg": 0.72
+    },
+    {
+      "name": "跨境支付",
+      "ts_code": "BK1071.DC",
+      "net_inflow_yuan": 20550487040000.0,
+      "pct_chg": 2.58
+    },
+    {
+      "name": "AI应用",
+      "ts_code": "BK1629.DC",
+      "net_inflow_yuan": 20427002880000.0,
+      "pct_chg": 1.98
+    },
+    {
+      "name": "医药生物",
+      "ts_code": "BK1216.DC",
+      "net_inflow_yuan": 20192619520000.0,
+      "pct_chg": 1.09
+    },
+    {
+      "name": "破增发价股",
+      "ts_code": "BK1673.DC",
+      "net_inflow_yuan": 18233251840000.0,
+      "pct_chg": 1.14
+    },
+    {
+      "name": "种植业",
+      "ts_code": "BK1261.DC",
+      "net_inflow_yuan": 18180050240000.0,
+      "pct_chg": 8.88
+    },
+    {
+      "name": "电商概念",
+      "ts_code": "BK0665.DC",
+      "net_inflow_yuan": 17541468160000.0,
+      "pct_chg": 1.62
+    },
+    {
+      "name": "商贸零售",
+      "ts_code": "BK1213.DC",
+      "net_inflow_yuan": 17253236160000.0,
+      "pct_chg": 2.87
+    },
+    {
+      "name": "种子",
+      "ts_code": "BK1518.DC",
+      "net_inflow_yuan": 16851765440000.0,
+      "pct_chg": 12.87
+    },
+    {
+      "name": "消费风格",
+      "ts_code": "BK1711.DC",
+      "net_inflow_yuan": 16837071360000.0,
+      "pct_chg": 1.04
+    },
+    {
+      "name": "养老概念",
+      "ts_code": "BK0653.DC",
+      "net_inflow_yuan": 16767600640000.0,
+      "pct_chg": 1.25
+    },
+    {
+      "name": "中药概念",
+      "ts_code": "BK0615.DC",
+      "net_inflow_yuan": 16411310880000.0,
+      "pct_chg": 1.87
+    }
+  ],
+  "cold_industries": [
+    {
+      "name": "融资融券",
+      "ts_code": "BK0596.DC",
+      "net_inflow_yuan": -313094553600000.0,
+      "pct_chg": 0.29
+    },
+    {
+      "name": "MSCI中国",
+      "ts_code": "BK0821.DC",
+      "net_inflow_yuan": -288269762560000.0,
+      "pct_chg": -0.65
+    },
+    {
+      "name": "电子",
+      "ts_code": "BK1201.DC",
+      "net_inflow_yuan": -248480867840000.0,
+      "pct_chg": -1.96
+    },
+    {
+      "name": "富时罗素",
+      "ts_code": "BK0867.DC",
+      "net_inflow_yuan": -247810785280000.0,
+      "pct_chg": 0.49
+    },
+    {
+      "name": "2026中报预增",
+      "ts_code": "BK1749.DC",
+      "net_inflow_yuan": -236211773440000.0,
+      "pct_chg": -0.63
+    },
+    {
+      "name": "深成500",
+      "ts_code": "BK0568.DC",
+      "net_inflow_yuan": -194621194240000.0,
+      "pct_chg": -0.26
+    },
+    {
+      "name": "半导体概念",
+      "ts_code": "BK0917.DC",
+      "net_inflow_yuan": -194045880320000.0,
+      "pct_chg": -2.05
+    },
+    {
+      "name": "国产芯片",
+      "ts_code": "BK0891.DC",
+      "net_inflow_yuan": -190315038720000.0,
+      "pct_chg": -1.26
+    },
+    {
+      "name": "科技风格",
+      "ts_code": "BK1713.DC",
+      "net_inflow_yuan": -185719042560000.0,
+      "pct_chg": -2.94
+    },
+    {
+      "name": "深股通",
+      "ts_code": "BK0804.DC",
+      "net_inflow_yuan": -176564551680000.0,
+      "pct_chg": 0.23
+    }
+  ],
   "concept_meta": {
     "api_used": null,
     "_attempted_endpoints": [
@@ -23,7 +205,7 @@
     "_attempted_endpoints": [
       "moneyflow_ind_dc"
     ],
-    "row_count": 0,
+    "row_count": 1031,
     "_status": "ok"
   }
 }
