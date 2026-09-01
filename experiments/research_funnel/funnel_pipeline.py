@@ -62,6 +62,18 @@ FORBIDDEN_ACTION_KEYS = {
     "position_size",
     "formal_blocking_authority",
 }
+
+
+def _fsync_directory_if_supported(path: Path) -> None:
+    if os.name == "nt":
+        return
+    directory_fd = os.open(path, os.O_RDONLY)
+    try:
+        os.fsync(directory_fd)
+    finally:
+        os.close(directory_fd)
+
+
 STAGE_ORDER = {
     "UNSCANNED": 0,
     "SCANNED": 1,
@@ -1719,11 +1731,7 @@ def run_pipeline(
         }
         manifest["bundle_hash"] = _hash(manifest["artifacts"])
         _atomic_write_json(staging / "manifest.json", manifest)
-        directory_fd = os.open(staging, os.O_RDONLY)
-        try:
-            os.fsync(directory_fd)
-        finally:
-            os.close(directory_fd)
+        _fsync_directory_if_supported(staging)
         os.replace(staging, output_dir)
     finally:
         if staging.exists():
