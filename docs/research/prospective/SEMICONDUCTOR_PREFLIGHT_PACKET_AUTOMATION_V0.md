@@ -52,17 +52,20 @@ py -3.11 .\experiments\research_funnel\semiconductor_preflight_packet.py `
   --diagnostic ".\output\semiconductor-rerun-YYYYMMDD\intake-diagnostic.json" `
   --target-trade-date YYYYMMDD `
   --same-day-bundle-ref ".\output\semiconductor-rerun-YYYYMMDD\same-day-bundle.json" `
-  --same-day-bundle-hash sha256:<64hex> `
   --same-day-as-of YYYYMMDD `
+  --same-day-run-id same-day-run-YYYYMMDD `
   --u3-battery-ref ".\output\semiconductor-rerun-YYYYMMDD\u3-battery.json" `
-  --u3-battery-hash sha256:<64hex> `
+  --u3-battery-as-of YYYYMMDD `
   --u3-row-count <positive-int> `
   --output ".\output\semiconductor-rerun-YYYYMMDD\operator-packet.json"
 ```
 
-If same-day bundle or U3 artifacts are not ready yet, omit those flags and the
-tool will still write a stop packet. The stop packet is the correct preflight
-state until the missing artifacts exist.
+The bundle and U3 references must point to readable local artifact files. The
+tool recomputes their `sha256` values from disk; hand-typed hashes are accepted
+only as optional cross-checks and cannot make a missing or mismatched artifact
+look ready. If same-day bundle or U3 artifacts are not ready yet, omit those
+flags and the tool will still write a stop packet. The stop packet is the
+correct preflight state until the missing artifacts exist.
 
 ## Output Contract
 
@@ -75,8 +78,10 @@ Required bindings:
 - `source_scan.ref`, `source_scan.hash`, `source_scan.status`;
 - recomputed source scan hash;
 - `diagnostic.ref`, `diagnostic.hash`, `diagnostic.status`, and blocker codes;
-- `same_day_bundle.ref`, `same_day_bundle.hash`, and `same_day_bundle.as_of`;
-- `u3_battery.ref`, `u3_battery.hash`, and positive `row_count`;
+- `same_day_bundle.ref`, recomputed `same_day_bundle.hash`,
+  `same_day_bundle.as_of`, and `same_day_bundle.run_identity`;
+- `u3_battery.ref`, recomputed `u3_battery.hash`, `u3_battery.as_of`, and
+  positive `row_count`;
 - `handoff_intent`;
 - explicit `stop_conditions`;
 - closed authority constants.
@@ -86,11 +91,15 @@ Required bindings:
 - source scan hash recomputes;
 - no source row is `REPAIR_REQUIRED`;
 - target trade-date daily sources are clean;
-- diagnostic status is `READY_FOR_U4_PACKET`;
-- same-day bundle hash is present and `same_day_as_of` equals
-  `target_trade_date`;
-- U3 battery hash is present and `u3_row_count > 0`;
-- worktree status is `CLEAN`;
+- diagnostic status, blockers, and derived counts all agree that the packet is
+  `READY_FOR_U4_PACKET`;
+- every configured daily source has a target-date row;
+- same-day bundle ref is readable, hash recomputes, `same_day_as_of` equals
+  `target_trade_date`, and a run identity is bound;
+- U3 battery ref is readable, hash recomputes, `u3_battery_as_of` equals
+  `target_trade_date`, and `u3_row_count > 0`;
+- worktree status and `origin/main` SHA are observed from local git, with CLI
+  values used only as equality cross-checks;
 - authority constants remain closed.
 
 Every other case is `STOP_BEFORE_RERUN`.

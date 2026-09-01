@@ -8,6 +8,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest import mock
 from pathlib import Path
 from typing import Any
 
@@ -93,6 +94,20 @@ def _diagnostic(*, status: str = "READY_FOR_U4_PACKET", u4_ready: bool = True) -
 
 
 def _ready_packet(**overrides: Any) -> dict[str, Any]:
+    git_status = overrides.pop("_git_status", "")
+    git_origin = overrides.pop("_git_origin", SHA)
+    temp_dir = tempfile.TemporaryDirectory()
+    root = Path(temp_dir.name)
+    bundle_path = root / "same-day-bundle.json"
+    battery_path = root / "u3-battery.json"
+    bundle_path.write_text(
+        json.dumps({"as_of": TARGET, "run_identity": "same-day-run-20260831"}),
+        encoding="utf-8",
+    )
+    battery_path.write_text(
+        json.dumps({"as_of": TARGET, "row_count": 75}),
+        encoding="utf-8",
+    )
     kwargs = {
         "source_scan": _source_scan(
             ("cyq_perf", TARGET, "CLEAN_ACTIVE"),
@@ -105,15 +120,30 @@ def _ready_packet(**overrides: Any) -> dict[str, Any]:
         "prepared_at_utc": "2026-08-31T01:00:00+00:00",
         "origin_main_sha": SHA,
         "worktree_status": "CLEAN",
-        "same_day_bundle_ref": "output/same-day-bundle.json",
-        "same_day_bundle_hash": "sha256:" + HASH,
+        "same_day_bundle_ref": str(bundle_path),
+        "same_day_bundle_hash": None,
         "same_day_as_of": TARGET,
-        "u3_battery_ref": "output/u3-battery.json",
-        "u3_battery_hash": "sha256:" + "5" * 64,
+        "same_day_run_id": "same-day-run-20260831",
+        "u3_battery_ref": str(battery_path),
+        "u3_battery_hash": None,
+        "u3_battery_as_of": TARGET,
         "u3_row_count": 75,
+        "repo_root": root,
     }
     kwargs.update(overrides)
-    return packet.build_packet(**kwargs)
+
+    def fake_git_output(args: list[str], repo_root: Path) -> str:
+        if args == ["rev-parse", "origin/main"]:
+            return git_origin
+        if args == ["status", "--short"]:
+            return git_status
+        raise AssertionError(f"unexpected git command: {args}")
+
+    try:
+        with mock.patch.object(packet, "_git_output", side_effect=fake_git_output):
+            return packet.build_packet(**kwargs)
+    finally:
+        temp_dir.cleanup()
 
 
 class SemiconductorPreflightPacketTests(unittest.TestCase):
@@ -142,6 +172,15 @@ class SemiconductorPreflightPacketTests(unittest.TestCase):
         self.assertEqual(result["source_scan"]["status"], "DATA_BLOCKED")
         self.assertIn("SOURCE_PUBLICATION_PENDING", codes)
 
+    def test_each_daily_source_needs_target_date_row(self) -> None:
+        result = _ready_packet(source_scan=_source_scan(
+            ("cyq_perf", "20260830", "SOURCE_PUBLICATION_PENDING"),
+            ("moneyflow_dc", TARGET, "CLEAN_ACTIVE"),
+        ))
+        codes = {row["code"] for row in result["stop_conditions"]}
+        self.assertEqual(result["handoff_intent"], "STOP_BEFORE_RERUN")
+        self.assertIn("DAILY_SOURCE_MISSING_TARGET_ROW", codes)
+
     def test_unsafe_artifact_refs_are_rejected_before_packet_build(self) -> None:
         with self.assertRaisesRegex(packet.PreflightPacketError, "unsupported characters"):
             _ready_packet(source_scan_ref="output/source-scan.json\nraw-model-text")
@@ -166,6 +205,33 @@ class SemiconductorPreflightPacketTests(unittest.TestCase):
         self.assertIn("INTAKE_DIAGNOSTIC_NOT_READY", codes)
         self.assertEqual(result["diagnostic"]["blocker_codes"], ["EMPTY_U4_READY_POOL"])
 
+    def test_diagnostic_counts_force_stop_even_when_self_reported_ready(self) -> None:
+        diagnostic = _diagnostic()
+        diagnostic["counts"] = {
+            "semiconductor_u2_rows": 75,
+            "semiconductor_positive_channel_rows": 0,
+            "semiconductor_red_flag_only_rows": 75,
+            "semiconductor_u3_rows": 0,
+            "semiconductor_u4_ready_rows": 0,
+        }
+        result = _ready_packet(diagnostic=diagnostic)
+        codes = {row["code"] for row in result["stop_conditions"]}
+        self.assertEqual(result["handoff_intent"], "STOP_BEFORE_RERUN")
+        self.assertIn("RECEIPT_SELF_REPORT_MISMATCH", codes)
+        self.assertIn("NO_POSITIVE_CHANNEL_ROWS", codes)
+        self.assertIn("RED_FLAG_ONLY_COHORT", codes)
+        self.assertIn("NO_SAME_RUN_U3_BATTERY", codes)
+        self.assertIn("EMPTY_U4_READY_POOL", codes)
+
+    def test_diagnostic_reported_blockers_force_stop_even_when_ready(self) -> None:
+        diagnostic = _diagnostic()
+        diagnostic["blockers"] = [{"code": "E1_RED_FLAG_ACTIVE", "detail": "active red flag"}]
+        result = _ready_packet(diagnostic=diagnostic)
+        codes = {row["code"] for row in result["stop_conditions"]}
+        self.assertEqual(result["handoff_intent"], "STOP_BEFORE_RERUN")
+        self.assertIn("INTAKE_DIAGNOSTIC_HAS_BLOCKERS", codes)
+        self.assertIn("RECEIPT_SELF_REPORT_MISMATCH", codes)
+
     def test_missing_same_day_artifacts_still_generates_stop_packet(self) -> None:
         result = _ready_packet(
             same_day_bundle_ref=None,
@@ -186,11 +252,37 @@ class SemiconductorPreflightPacketTests(unittest.TestCase):
         self.assertEqual(result["handoff_intent"], "STOP_BEFORE_RERUN")
         self.assertIn("SAME_DAY_BUNDLE_DATE_MISMATCH", codes)
 
+    def test_same_day_bundle_hash_is_recomputed_from_readable_file(self) -> None:
+        result = _ready_packet(same_day_bundle_hash="sha256:" + "d" * 64)
+        codes = {row["code"] for row in result["stop_conditions"]}
+        self.assertEqual(result["handoff_intent"], "STOP_BEFORE_RERUN")
+        self.assertIn("SAME_DAY_BUNDLE_UNVERIFIED", codes)
+        self.assertNotEqual(result["same_day_bundle"]["hash"], "sha256:" + "d" * 64)
+
+    def test_u3_battery_must_bind_target_trade_date(self) -> None:
+        result = _ready_packet(u3_battery_as_of="20260828")
+        codes = {row["code"] for row in result["stop_conditions"]}
+        self.assertEqual(result["handoff_intent"], "STOP_BEFORE_RERUN")
+        self.assertIn("U3_BATTERY_DATE_MISMATCH", codes)
+
     def test_u3_battery_row_count_must_be_positive_to_allow(self) -> None:
         result = _ready_packet(u3_row_count=0)
         codes = {row["code"] for row in result["stop_conditions"]}
         self.assertEqual(result["handoff_intent"], "STOP_BEFORE_RERUN")
         self.assertIn("U3_BATTERY_EMPTY", codes)
+
+    def test_git_metadata_must_match_real_observed_values(self) -> None:
+        with self.assertRaisesRegex(packet.PreflightPacketError, "origin_main_sha does not match"):
+            _ready_packet(origin_main_sha="f" * 40)
+        with self.assertRaisesRegex(packet.PreflightPacketError, "worktree_status does not match"):
+            _ready_packet(_git_status=" M docs/example.md", worktree_status="CLEAN")
+
+    def test_dirty_worktree_is_reported_in_stop_packet(self) -> None:
+        result = _ready_packet(_git_status=" M docs/example.md", worktree_status=None)
+        codes = {row["code"] for row in result["stop_conditions"]}
+        self.assertEqual(result["handoff_intent"], "STOP_BEFORE_RERUN")
+        self.assertIn("WORKTREE_NOT_CLEAN", codes)
+        self.assertEqual(result["worktree_dirty_files"], [" M docs/example.md"])
 
     def test_source_scan_hash_must_recompute(self) -> None:
         scan = _source_scan(("cyq_perf", TARGET, "CLEAN_ACTIVE"))
@@ -207,14 +299,41 @@ class SemiconductorPreflightPacketTests(unittest.TestCase):
     def test_cli_writes_lf_json_packet(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
+            git_root = root / "git-root"
+            git_root.mkdir()
+            subprocess.run(["git", "init"], cwd=git_root, check=True, capture_output=True, text=True)
+            subprocess.run(["git", "config", "user.email", "ci@example.test"], cwd=git_root, check=True)
+            subprocess.run(["git", "config", "user.name", "CI"], cwd=git_root, check=True)
+            (git_root / "tracked.txt").write_text("tracked\n", encoding="utf-8")
+            subprocess.run(["git", "add", "tracked.txt"], cwd=git_root, check=True)
+            subprocess.run(["git", "commit", "-m", "init"], cwd=git_root, check=True, capture_output=True, text=True)
+            head = subprocess.run(
+                ["git", "rev-parse", "HEAD"],
+                cwd=git_root,
+                check=True,
+                capture_output=True,
+                text=True,
+            ).stdout.strip()
+            subprocess.run(
+                ["git", "update-ref", "refs/remotes/origin/main", head],
+                cwd=git_root,
+                check=True,
+            )
             scan_path = root / "scan.json"
             diagnostic_path = root / "diagnostic.json"
+            bundle_path = root / "same-day-bundle.json"
+            battery_path = root / "u3-battery.json"
             out_path = root / "packet.json"
             scan_path.write_text(json.dumps(_source_scan(
                 ("cyq_perf", TARGET, "CLEAN_ACTIVE"),
                 ("moneyflow_dc", TARGET, "CLEAN_ACTIVE"),
             )), encoding="utf-8")
             diagnostic_path.write_text(json.dumps(_diagnostic()), encoding="utf-8")
+            bundle_path.write_text(
+                json.dumps({"as_of": TARGET, "run_identity": "same-day-run-20260831"}),
+                encoding="utf-8",
+            )
+            battery_path.write_text(json.dumps({"as_of": TARGET, "row_count": 75}), encoding="utf-8")
             completed = subprocess.run(
                 [
                     sys.executable,
@@ -228,21 +347,23 @@ class SemiconductorPreflightPacketTests(unittest.TestCase):
                     "--prepared-at-utc",
                     "2026-08-31T01:00:00+00:00",
                     "--origin-main-sha",
-                    SHA,
+                    head,
                     "--worktree-status",
                     "CLEAN",
                     "--same-day-bundle-ref",
-                    "output/same-day-bundle.json",
-                    "--same-day-bundle-hash",
-                    "sha256:" + HASH,
+                    str(bundle_path),
                     "--same-day-as-of",
                     TARGET,
+                    "--same-day-run-id",
+                    "same-day-run-20260831",
                     "--u3-battery-ref",
-                    "output/u3-battery.json",
-                    "--u3-battery-hash",
-                    "sha256:" + "5" * 64,
+                    str(battery_path),
+                    "--u3-battery-as-of",
+                    TARGET,
                     "--u3-row-count",
                     "75",
+                    "--repo-root",
+                    str(git_root),
                     "--output",
                     str(out_path),
                 ],

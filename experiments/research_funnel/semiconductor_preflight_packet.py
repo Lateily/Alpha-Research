@@ -73,6 +73,10 @@ def _hash(value: Any) -> str:
     return hashlib.sha256(_canonical(value)).hexdigest()
 
 
+def _sha256_bytes(data: bytes) -> str:
+    return hashlib.sha256(data).hexdigest()
+
+
 def _require_string(value: Any, field: str, *, allow_empty: bool = False) -> str:
     if not isinstance(value, str):
         raise PreflightPacketError(f"{field} must be a string")
@@ -98,6 +102,12 @@ def _require_hash_ref(value: Any, field: str, *, allow_none: bool = False) -> st
     if not HASH_REF_RE.fullmatch(text):
         raise PreflightPacketError(f"{field} must be a sha256 hash")
     return text
+
+
+def _optional_bare_hash_ref(value: Any, field: str) -> str | None:
+    if value is None:
+        return None
+    return (_require_hash_ref(value, field) or "").removeprefix("sha256:")
 
 
 def _require_bare_hash(value: Any, field: str) -> str:
@@ -162,21 +172,62 @@ def _git_output(args: Sequence[str], repo_root: Path) -> str:
 
 
 def _origin_main_sha(value: str | None, repo_root: Path) -> str:
-    sha = value.strip() if isinstance(value, str) and value.strip() else _git_output(
-        ["rev-parse", "origin/main"], repo_root
-    )
-    if not SHA_RE.fullmatch(sha):
+    observed = _git_output(["rev-parse", "origin/main"], repo_root)
+    if not SHA_RE.fullmatch(observed):
         raise PreflightPacketError("origin_main_sha must be a 40-character git sha")
-    return sha
-
-
-def _worktree_status(value: str | None, repo_root: Path) -> str:
     if isinstance(value, str) and value.strip():
-        status = value.strip()
-        if status not in {"CLEAN", "DIRTY_WITH_OWNER_LIST"}:
+        claimed = value.strip()
+        if not SHA_RE.fullmatch(claimed):
+            raise PreflightPacketError("origin_main_sha must be a 40-character git sha")
+        # governance-mutation: SEMICONDUCTOR_PREFLIGHT_ORIGIN_SHA_MATCH
+        if claimed != observed:
+            raise PreflightPacketError("origin_main_sha does not match git rev-parse origin/main")
+    return observed
+
+
+def _worktree_state(value: str | None, repo_root: Path) -> tuple[str, list[str]]:
+    dirty_files = [line for line in _git_output(["status", "--short"], repo_root).splitlines() if line]
+    observed = "CLEAN" if not dirty_files else "DIRTY_WITH_OWNER_LIST"
+    if isinstance(value, str) and value.strip():
+        claimed = value.strip()
+        if claimed not in {"CLEAN", "DIRTY_WITH_OWNER_LIST"}:
             raise PreflightPacketError("worktree_status must be CLEAN or DIRTY_WITH_OWNER_LIST")
-        return status
-    return "CLEAN" if _git_output(["status", "--short"], repo_root) == "" else "DIRTY_WITH_OWNER_LIST"
+        # governance-mutation: SEMICONDUCTOR_PREFLIGHT_WORKTREE_STATUS_MATCH
+        if claimed != observed:
+            raise PreflightPacketError("worktree_status does not match git status --short")
+    return observed, dirty_files
+
+
+def _artifact_hash_from_ref(ref: str, repo_root: Path) -> tuple[str | None, str | None]:
+    path = Path(ref)
+    if not path.is_absolute():
+        path = repo_root / path
+    try:
+        data = path.read_bytes()
+    except OSError:
+        return None, "artifact ref does not point to a readable local file"
+    return _sha256_bytes(data), None
+
+
+def _artifact_binding(
+    *,
+    ref: Any,
+    claimed_hash: Any,
+    ref_field: str,
+    hash_field: str,
+    repo_root: Path,
+) -> tuple[str | None, str | None, str | None]:
+    safe_ref = _require_safe_ref(ref, ref_field, allow_none=True)
+    claimed = _optional_bare_hash_ref(claimed_hash, hash_field)
+    if safe_ref is None:
+        return None, None, None
+    actual, error = _artifact_hash_from_ref(safe_ref, repo_root)
+    if actual is None:
+        return safe_ref, None, error
+    # governance-mutation: SEMICONDUCTOR_PREFLIGHT_ARTIFACT_HASH_RECOMPUTES
+    if claimed is not None and claimed != actual:
+        return safe_ref, f"sha256:{actual}", "artifact hash does not match readable local file"
+    return safe_ref, f"sha256:{actual}", None
 
 
 def _validate_source_scan(scan: Mapping[str, Any]) -> str:
@@ -193,6 +244,18 @@ def _validate_source_scan(scan: Mapping[str, Any]) -> str:
     return claimed
 
 
+def _daily_sources(scan: Mapping[str, Any]) -> list[str]:
+    raw = scan.get("daily_sources")
+    if not isinstance(raw, list) or not raw:
+        raise PreflightPacketError("source scan daily_sources must be a nonempty list")
+    sources: list[str] = []
+    for index, value in enumerate(raw):
+        sources.append(_require_string(value, f"source_scan.daily_sources[{index}]"))
+    if len(set(sources)) != len(sources):
+        raise PreflightPacketError("source scan daily_sources must not contain duplicates")
+    return sources
+
+
 def _scan_stop_conditions(
     scan: Mapping[str, Any],
     *,
@@ -203,6 +266,8 @@ def _scan_stop_conditions(
     stops: list[dict[str, Any]] = []
     states: list[dict[str, Any]] = []
     target_row_seen = False
+    target_sources_seen: set[str] = set()
+    required_daily_sources = set(_daily_sources(scan))
     status = "CLEAN"
 
     for raw in rows:
@@ -215,6 +280,7 @@ def _scan_stop_conditions(
         states.append(item)
         if as_of == target_trade_date:
             target_row_seen = True
+            target_sources_seen.add(source_name)
         if state == "REPAIR_REQUIRED":
             status = "REPAIR_REQUIRED"
             stops.append({
@@ -245,6 +311,17 @@ def _scan_stop_conditions(
                 "detail": "source scan row state is not a supported preflight state",
                 **item,
             })
+
+    missing_target_sources = sorted(required_daily_sources - target_sources_seen)
+    for source_name in missing_target_sources:
+        # governance-mutation: SEMICONDUCTOR_PREFLIGHT_DAILY_SOURCE_TARGET_ROWS
+        status = "DATA_BLOCKED" if status == "CLEAN" else status
+        stops.append({
+            "code": "DAILY_SOURCE_MISSING_TARGET_ROW",
+            "detail": "daily source has no row for target_trade_date",
+            "source_name": source_name,
+            "target_trade_date": target_trade_date,
+        })
 
     if not target_row_seen:
         status = "DATA_BLOCKED" if status == "CLEAN" else status
@@ -303,6 +380,48 @@ def _diagnostic_stop_conditions(diagnostic: Mapping[str, Any]) -> tuple[str, str
         )
     }
     stops: list[dict[str, Any]] = []
+    forced_stops: list[dict[str, Any]] = []
+    if counts["semiconductor_u2_rows"] <= 0:
+        forced_stops.append({
+            "code": "EMPTY_SEMICONDUCTOR_U2_POOL",
+            "detail": "diagnostic counts show no semiconductor U2 rows",
+        })
+    # governance-mutation: SEMICONDUCTOR_PREFLIGHT_DIAGNOSTIC_COUNTS_FORCE_STOP
+    if counts["semiconductor_positive_channel_rows"] <= 0:
+        forced_stops.append({
+            "code": "NO_POSITIVE_CHANNEL_ROWS",
+            "detail": "diagnostic counts show no positive semiconductor evidence channel rows",
+        })
+    if counts["semiconductor_red_flag_only_rows"] > 0:
+        forced_stops.append({
+            "code": "RED_FLAG_ONLY_COHORT",
+            "detail": "diagnostic counts show red-flag-only rows before U4 handoff",
+            "red_flag_only_rows": counts["semiconductor_red_flag_only_rows"],
+        })
+    if counts["semiconductor_u3_rows"] <= 0:
+        forced_stops.append({
+            "code": "NO_SAME_RUN_U3_BATTERY",
+            "detail": "diagnostic counts show no U3 battery rows",
+        })
+    elif counts["semiconductor_u3_rows"] < counts["semiconductor_u2_rows"]:
+        forced_stops.append({
+            "code": "U3_BATTERY_INCOMPLETE",
+            "detail": "diagnostic counts show some U2 rows lack same-run U3 battery rows",
+            "u2_rows": counts["semiconductor_u2_rows"],
+            "u3_rows": counts["semiconductor_u3_rows"],
+        })
+    ready_rows = counts["semiconductor_u4_ready_rows"]
+    if ready_rows <= 0:
+        forced_stops.append({
+            "code": "EMPTY_U4_READY_POOL",
+            "detail": "diagnostic counts show no U4-ready rows",
+        })
+    elif ready_rows < 3:
+        forced_stops.append({
+            "code": "U4_READY_POOL_BELOW_HUMAN_SELECTION_FLOOR",
+            "detail": "diagnostic counts show one or two U4-ready rows; legal selections are 0, 3, 4, or 5",
+            "u4_ready_rows": ready_rows,
+        })
     if diagnostic.get("u4_ready") is not True or status != "READY_FOR_U4_PACKET":
         stops.append({
             "code": "INTAKE_DIAGNOSTIC_NOT_READY",
@@ -310,6 +429,20 @@ def _diagnostic_stop_conditions(diagnostic: Mapping[str, Any]) -> tuple[str, str
             "diagnostic_status": status,
             "blocker_codes": blocker_codes,
         })
+    if blocker_codes:
+        stops.append({
+            "code": "INTAKE_DIAGNOSTIC_HAS_BLOCKERS",
+            "detail": "intake diagnostic carries explicit blockers",
+            "blocker_codes": blocker_codes,
+        })
+    if status == "READY_FOR_U4_PACKET" and diagnostic.get("u4_ready") is True and (forced_stops or blocker_codes):
+        stops.append({
+            "code": "RECEIPT_SELF_REPORT_MISMATCH",
+            "detail": "diagnostic self-reported READY while derived counts or blockers require a stop",
+            "derived_blocker_codes": [row["code"] for row in forced_stops],
+            "reported_blocker_codes": blocker_codes,
+        })
+    stops.extend(forced_stops)
     return status, _hash(diagnostic), blocker_codes, counts, stops
 
 
@@ -327,8 +460,10 @@ def build_packet(
     same_day_bundle_ref: str | None = None,
     same_day_bundle_hash: str | None = None,
     same_day_as_of: str | None = None,
+    same_day_run_id: str | None = None,
     u3_battery_ref: str | None = None,
     u3_battery_hash: str | None = None,
+    u3_battery_as_of: str | None = None,
     u3_row_count: int | None = None,
     repair_approval_ref: str | None = None,
     repo_root: Path | None = None,
@@ -340,7 +475,7 @@ def build_packet(
     scan_ref = _require_safe_ref(source_scan_ref, "source_scan_ref")
     diag_ref = _require_safe_ref(diagnostic_ref, "diagnostic_ref")
     repair_ref = _require_safe_ref(repair_approval_ref, "repair_approval_ref", allow_none=True)
-    resolved_worktree_status = _worktree_status(worktree_status, repo)
+    resolved_worktree_status, dirty_files = _worktree_state(worktree_status, repo)
     source_status, source_stops, source_states = _scan_stop_conditions(
         source_scan, target_trade_date=target, repair_approval_ref=repair_ref
     )
@@ -348,11 +483,23 @@ def build_packet(
         _diagnostic_stop_conditions(diagnostic)
     )
 
-    same_day_ref = _require_safe_ref(same_day_bundle_ref, "same_day_bundle_ref", allow_none=True)
-    same_day_hash = _require_hash_ref(same_day_bundle_hash, "same_day_bundle_hash", allow_none=True)
+    same_day_ref, same_day_hash, same_day_artifact_error = _artifact_binding(
+        ref=same_day_bundle_ref,
+        claimed_hash=same_day_bundle_hash,
+        ref_field="same_day_bundle_ref",
+        hash_field="same_day_bundle_hash",
+        repo_root=repo,
+    )
     same_day_date = _require_date8(same_day_as_of, "same_day_as_of") if same_day_as_of else None
-    u3_ref = _require_safe_ref(u3_battery_ref, "u3_battery_ref", allow_none=True)
-    u3_hash = _require_hash_ref(u3_battery_hash, "u3_battery_hash", allow_none=True)
+    same_day_identity = _require_safe_ref(same_day_run_id, "same_day_run_id", allow_none=True)
+    u3_ref, u3_hash, u3_artifact_error = _artifact_binding(
+        ref=u3_battery_ref,
+        claimed_hash=u3_battery_hash,
+        ref_field="u3_battery_ref",
+        hash_field="u3_battery_hash",
+        repo_root=repo,
+    )
+    u3_date = _require_date8(u3_battery_as_of, "u3_battery_as_of") if u3_battery_as_of else None
     u3_count = _require_nonnegative_int(u3_row_count, "u3_row_count", allow_none=True)
 
     stops = [*source_stops, *diagnostic_stops]
@@ -360,12 +507,19 @@ def build_packet(
         stops.append({
             "code": "WORKTREE_NOT_CLEAN",
             "detail": "preflight packet must be regenerated from a clean or fully-owned worktree",
+            "dirty_files": dirty_files,
         })
 
-    if same_day_ref is None or same_day_hash is None or same_day_date is None:
+    if same_day_ref is None or same_day_date is None or same_day_identity is None:
         stops.append({
             "code": "SAME_DAY_BUNDLE_MISSING",
-            "detail": "same-day U1/U2 bundle ref, hash, and as-of date must be bound",
+            "detail": "same-day U1/U2 bundle ref, as-of date, and run identity must be bound",
+        })
+    elif same_day_artifact_error:
+        stops.append({
+            "code": "SAME_DAY_BUNDLE_UNVERIFIED",
+            "detail": same_day_artifact_error,
+            "ref": same_day_ref,
         })
     elif same_day_date != target:
         stops.append({
@@ -375,10 +529,23 @@ def build_packet(
             "target_trade_date": target,
         })
 
-    if u3_ref is None or u3_hash is None or u3_count is None:
+    if u3_ref is None or u3_date is None or u3_count is None:
         stops.append({
             "code": "U3_BATTERY_MISSING",
-            "detail": "U3 battery ref, hash, and row count must be bound",
+            "detail": "U3 battery ref, as-of date, and row count must be bound",
+        })
+    elif u3_artifact_error:
+        stops.append({
+            "code": "U3_BATTERY_UNVERIFIED",
+            "detail": u3_artifact_error,
+            "ref": u3_ref,
+        })
+    elif u3_date != target:
+        stops.append({
+            "code": "U3_BATTERY_DATE_MISMATCH",
+            "detail": "U3 battery as-of date does not match target_trade_date",
+            "u3_battery_as_of": u3_date,
+            "target_trade_date": target,
         })
     elif u3_count <= 0:
         stops.append({
@@ -402,6 +569,7 @@ def build_packet(
         "target_trade_date": target,
         "origin_main_sha": origin_sha,
         "worktree_status": resolved_worktree_status,
+        "worktree_dirty_files": dirty_files,
         "source_scan": {
             "ref": scan_ref,
             "hash": source_hash,
@@ -420,10 +588,12 @@ def build_packet(
             "ref": same_day_ref,
             "hash": same_day_hash,
             "as_of": same_day_date,
+            "run_identity": same_day_identity,
         },
         "u3_battery": {
             "ref": u3_ref,
             "hash": u3_hash,
+            "as_of": u3_date,
             "row_count": u3_count,
         },
         "handoff_intent": handoff_intent,
@@ -457,10 +627,13 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--same-day-bundle-ref")
     parser.add_argument("--same-day-bundle-hash")
     parser.add_argument("--same-day-as-of")
+    parser.add_argument("--same-day-run-id")
     parser.add_argument("--u3-battery-ref")
     parser.add_argument("--u3-battery-hash")
+    parser.add_argument("--u3-battery-as-of")
     parser.add_argument("--u3-row-count", type=int)
     parser.add_argument("--repair-approval-ref")
+    parser.add_argument("--repo-root", type=Path)
     parser.add_argument("--output", required=True, type=Path)
     args = parser.parse_args(argv)
 
@@ -477,10 +650,13 @@ def main(argv: Sequence[str] | None = None) -> int:
         same_day_bundle_ref=args.same_day_bundle_ref,
         same_day_bundle_hash=args.same_day_bundle_hash,
         same_day_as_of=args.same_day_as_of,
+        same_day_run_id=args.same_day_run_id,
         u3_battery_ref=args.u3_battery_ref,
         u3_battery_hash=args.u3_battery_hash,
+        u3_battery_as_of=args.u3_battery_as_of,
         u3_row_count=args.u3_row_count,
         repair_approval_ref=args.repair_approval_ref,
+        repo_root=args.repo_root,
     )
     _write_json(args.output, packet)
     return 0
