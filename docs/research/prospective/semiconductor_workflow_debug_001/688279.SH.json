@@ -1,0 +1,1082 @@
+{
+  "schema": "ar.semiconductor_research_freeze_proposal.v1",
+  "schema_version": "1.0",
+  "ticker": "688279.SH",
+  "name": "峰岹科技",
+  "status": "AWAITING_JUNYAN_CONTENT_REVIEW",
+  "u4_binding": {
+    "packet_hash": "7ea6b5764541c380baa5f727618662f37eca75dd1780a8099bf5342254a7c7ff",
+    "ledger_snapshot_sha256": "9a6e6b2a26834520fbf30bb2da6eb43e4da39a20ad2d5579e766e74be006d30e",
+    "decision_receipt_sha256": "37578115f352fb1ae9f6bc2ee038efd620aa5f0cc8137bd3c332f14cc2443d3a",
+    "decision": "SELECT",
+    "u2_candidate_row_hash": "834a4800712a00d571aa925fb6174385ebbf888b8f86a3b47bf1681d1a3e7ddf",
+    "u3_battery_row_hash": "971dd3e4a5e5e278a55662348b435ef2f02fb4129ff1248583f75dd7e818ec19",
+    "as_of": "20260824",
+    "method_version": "SEMICONDUCTOR_WORKFLOW_DEBUG_V1",
+    "production_authority": false,
+    "no_trade_flag": true
+  },
+  "source_evidence": {
+    "factpack_cutoff": "20260824",
+    "financial_records": [
+      {
+        "record_id": "FDKJ_U4_SELECT",
+        "tier": "E1",
+        "source_date": "20260824",
+        "source_ref": "internal:u4-decision-ledger packet-7ea6b5764541",
+        "source_snapshot_sha256": "9a6e6b2a26834520fbf30bb2da6eb43e4da39a20ad2d5579e766e74be006d30e",
+        "record": {
+          "decision": "SELECT",
+          "ready": true,
+          "battery": "COMPLETE",
+          "blocked_reasons": []
+        },
+        "source_record_hash": "e02c29b0ab0a61f5f33c6c0ad09e27852a368662553aac4bcbd7cc1ac4c18412"
+      },
+      {
+        "record_id": "FDKJ_Q1_FINANCIALS",
+        "tier": "E2",
+        "source_date": "20260429",
+        "source_ref": "tushare-normalized issuer filing:income 20260331",
+        "source_snapshot_sha256": "f85dae8a312980e3a4b438804e97aeb7e5334d45b304e720e4ea39cc7ee9cfad",
+        "record": {
+          "revenue_cny": 250291452.83,
+          "net_income_attr_cny": 88267191.13,
+          "basic_eps": 0.77,
+          "q1_revenue_yoy_pct": 46.2013,
+          "q1_net_income_yoy_pct": 75.0895
+        },
+        "source_record_hash": "70f03c194d884bc8d81b9c79e30a5cee17661e84145f9620ea00c3acbe572737"
+      },
+      {
+        "record_id": "FDKJ_FY25_SEGMENTS",
+        "tier": "E2",
+        "source_date": "20260328",
+        "source_ref": "tushare-normalized issuer filing:fina_mainbz_product 20251231",
+        "source_snapshot_sha256": "f85dae8a312980e3a4b438804e97aeb7e5334d45b304e720e4ea39cc7ee9cfad",
+        "record": {
+          "mcu_revenue_cny": 482336903.89,
+          "mcu_gross_margin_pct": 54.44,
+          "asic_revenue_cny": 133019508.03,
+          "asic_gross_margin_pct": 60.17,
+          "hvic_revenue_cny": 95052741.11,
+          "hvic_gross_margin_pct": 39.33
+        },
+        "source_record_hash": "8b7720f2f11292af4f0f948aa4d49f9e492af4d9a364dd0d355d154289f1b10d"
+      },
+      {
+        "record_id": "FDKJ_Q1_CASH_BALANCE",
+        "tier": "E2",
+        "source_date": "20260429",
+        "source_ref": "tushare-normalized issuer filing:balance/cashflow 20260331",
+        "source_snapshot_sha256": "f85dae8a312980e3a4b438804e97aeb7e5334d45b304e720e4ea39cc7ee9cfad",
+        "record": {
+          "cash_cny": 677110543.32,
+          "trading_assets_cny": 944470000.0,
+          "short_debt_cny": 0.0,
+          "long_debt_cny": 0.0,
+          "shares": 115114080.0,
+          "net_cash_per_share": 14.09,
+          "operating_cash_flow_cny": 51782617.44,
+          "capex_cny": 9147204.31
+        },
+        "source_record_hash": "4c86a23516c2e6e4cea0d12956dce29bbc4b034595b7bcf4fc0ce96b1e1b064a"
+      }
+    ],
+    "settled_e3": {
+      "source_snapshot_sha256": "f2b5fec0cc8d60bfd99e1c640f58cd3e19f2b8052741a8a11f992de835e00992",
+      "bars": [
+        {
+          "ts_code": "688279.SH",
+          "trade_date": "20260804",
+          "open": 161.07,
+          "high": 161.98,
+          "low": 152.0,
+          "close": 156.0,
+          "pre_close": 159.28,
+          "change": -3.28,
+          "pct_chg": -2.0593,
+          "vol": 25289.43,
+          "amount": 392845.901
+        },
+        {
+          "ts_code": "688279.SH",
+          "trade_date": "20260805",
+          "open": 156.01,
+          "high": 167.62,
+          "low": 155.07,
+          "close": 166.35,
+          "pre_close": 156.0,
+          "change": 10.35,
+          "pct_chg": 6.6346,
+          "vol": 23677.57,
+          "amount": 385332.139
+        },
+        {
+          "ts_code": "688279.SH",
+          "trade_date": "20260806",
+          "open": 163.0,
+          "high": 169.0,
+          "low": 161.11,
+          "close": 167.55,
+          "pre_close": 166.35,
+          "change": 1.2,
+          "pct_chg": 0.7214,
+          "vol": 17377.8,
+          "amount": 289230.196
+        },
+        {
+          "ts_code": "688279.SH",
+          "trade_date": "20260807",
+          "open": 169.19,
+          "high": 172.0,
+          "low": 164.75,
+          "close": 170.0,
+          "pre_close": 167.55,
+          "change": 2.45,
+          "pct_chg": 1.4623,
+          "vol": 19134.44,
+          "amount": 322807.575
+        },
+        {
+          "ts_code": "688279.SH",
+          "trade_date": "20260810",
+          "open": 170.0,
+          "high": 170.99,
+          "low": 162.87,
+          "close": 165.09,
+          "pre_close": 170.0,
+          "change": -4.91,
+          "pct_chg": -2.8882,
+          "vol": 15131.93,
+          "amount": 249936.736
+        },
+        {
+          "ts_code": "688279.SH",
+          "trade_date": "20260811",
+          "open": 163.35,
+          "high": 172.04,
+          "low": 162.0,
+          "close": 169.13,
+          "pre_close": 165.09,
+          "change": 4.04,
+          "pct_chg": 2.4472,
+          "vol": 16686.77,
+          "amount": 279293.961
+        },
+        {
+          "ts_code": "688279.SH",
+          "trade_date": "20260812",
+          "open": 168.96,
+          "high": 169.9,
+          "low": 166.58,
+          "close": 169.36,
+          "pre_close": 169.13,
+          "change": 0.23,
+          "pct_chg": 0.136,
+          "vol": 11525.25,
+          "amount": 194151.1
+        },
+        {
+          "ts_code": "688279.SH",
+          "trade_date": "20260813",
+          "open": 169.81,
+          "high": 171.38,
+          "low": 163.02,
+          "close": 163.4,
+          "pre_close": 169.36,
+          "change": -5.96,
+          "pct_chg": -3.5191,
+          "vol": 17302.38,
+          "amount": 290509.808
+        },
+        {
+          "ts_code": "688279.SH",
+          "trade_date": "20260814",
+          "open": 166.0,
+          "high": 166.0,
+          "low": 158.8,
+          "close": 162.11,
+          "pre_close": 163.4,
+          "change": -1.29,
+          "pct_chg": -0.7895,
+          "vol": 14147.16,
+          "amount": 228433.511
+        },
+        {
+          "ts_code": "688279.SH",
+          "trade_date": "20260817",
+          "open": 163.0,
+          "high": 179.0,
+          "low": 162.14,
+          "close": 178.64,
+          "pre_close": 162.11,
+          "change": 16.53,
+          "pct_chg": 10.1968,
+          "vol": 23652.58,
+          "amount": 404429.182
+        },
+        {
+          "ts_code": "688279.SH",
+          "trade_date": "20260818",
+          "open": 179.17,
+          "high": 189.98,
+          "low": 178.7,
+          "close": 185.48,
+          "pre_close": 178.64,
+          "change": 6.84,
+          "pct_chg": 3.8289,
+          "vol": 24726.27,
+          "amount": 453276.79
+        },
+        {
+          "ts_code": "688279.SH",
+          "trade_date": "20260819",
+          "open": 181.0,
+          "high": 181.0,
+          "low": 163.29,
+          "close": 166.66,
+          "pre_close": 185.48,
+          "change": -18.82,
+          "pct_chg": -10.1466,
+          "vol": 43269.16,
+          "amount": 729027.12
+        },
+        {
+          "ts_code": "688279.SH",
+          "trade_date": "20260820",
+          "open": 167.94,
+          "high": 170.8,
+          "low": 162.49,
+          "close": 168.04,
+          "pre_close": 166.66,
+          "change": 1.38,
+          "pct_chg": 0.828,
+          "vol": 15573.75,
+          "amount": 260075.222
+        },
+        {
+          "ts_code": "688279.SH",
+          "trade_date": "20260821",
+          "open": 175.0,
+          "high": 184.98,
+          "low": 174.01,
+          "close": 177.74,
+          "pre_close": 168.04,
+          "change": 9.7,
+          "pct_chg": 5.7724,
+          "vol": 28045.95,
+          "amount": 502241.433
+        },
+        {
+          "ts_code": "688279.SH",
+          "trade_date": "20260824",
+          "open": 178.09,
+          "high": 185.0,
+          "low": 174.33,
+          "close": 179.12,
+          "pre_close": 177.74,
+          "change": 1.38,
+          "pct_chg": 0.7764,
+          "vol": 27677.8,
+          "amount": 501348.976
+        },
+        {
+          "ts_code": "688279.SH",
+          "trade_date": "20260825",
+          "open": 175.72,
+          "high": 184.5,
+          "low": 173.0,
+          "close": 182.63,
+          "pre_close": 179.12,
+          "change": 3.51,
+          "pct_chg": 1.9596,
+          "vol": 22256.58,
+          "amount": 398902.468
+        },
+        {
+          "ts_code": "688279.SH",
+          "trade_date": "20260826",
+          "open": 183.04,
+          "high": 194.99,
+          "low": 180.04,
+          "close": 189.17,
+          "pre_close": 182.63,
+          "change": 6.54,
+          "pct_chg": 3.581,
+          "vol": 25679.49,
+          "amount": 487837.783
+        },
+        {
+          "ts_code": "688279.SH",
+          "trade_date": "20260827",
+          "open": 193.6,
+          "high": 198.5,
+          "low": 187.46,
+          "close": 197.28,
+          "pre_close": 189.17,
+          "change": 8.11,
+          "pct_chg": 4.2871,
+          "vol": 27627.25,
+          "amount": 534445.008
+        },
+        {
+          "ts_code": "688279.SH",
+          "trade_date": "20260828",
+          "open": 197.74,
+          "high": 201.45,
+          "low": 187.4,
+          "close": 189.67,
+          "pre_close": 197.28,
+          "change": -7.61,
+          "pct_chg": -3.8575,
+          "vol": 26006.48,
+          "amount": 499383.722
+        },
+        {
+          "ts_code": "688279.SH",
+          "trade_date": "20260831",
+          "open": 186.07,
+          "high": 199.87,
+          "low": 184.06,
+          "close": 197.5,
+          "pre_close": 189.67,
+          "change": 7.83,
+          "pct_chg": 4.1282,
+          "vol": 26649.05,
+          "amount": 520846.522
+        }
+      ],
+      "moneyflow": [
+        {
+          "buy_elg_amount": 72.27,
+          "buy_elg_amount_rate": 0.14,
+          "buy_lg_amount": 4742.43,
+          "buy_lg_amount_rate": 9.46,
+          "buy_md_amount": 2283.95,
+          "buy_md_amount_rate": 4.56,
+          "buy_sm_amount": -7098.65,
+          "buy_sm_amount_rate": -14.16,
+          "close": 179.12,
+          "name": "峰岹科技",
+          "net_amount": 4814.7,
+          "net_amount_rate": 9.6,
+          "pct_change": 0.78,
+          "trade_date": "20260824",
+          "ts_code": "688279.SH"
+        },
+        {
+          "buy_elg_amount": -356.59,
+          "buy_elg_amount_rate": -0.89,
+          "buy_lg_amount": 2486.1,
+          "buy_lg_amount_rate": 6.23,
+          "buy_md_amount": 1832.9,
+          "buy_md_amount_rate": 4.59,
+          "buy_sm_amount": -3962.41,
+          "buy_sm_amount_rate": -9.93,
+          "close": 182.63,
+          "name": "峰岹科技",
+          "net_amount": 2129.51,
+          "net_amount_rate": 5.34,
+          "pct_change": 1.96,
+          "trade_date": "20260825",
+          "ts_code": "688279.SH"
+        },
+        {
+          "buy_elg_amount": 3700.57,
+          "buy_elg_amount_rate": 7.59,
+          "buy_lg_amount": 5837.07,
+          "buy_lg_amount_rate": 11.97,
+          "buy_md_amount": -5000.63,
+          "buy_md_amount_rate": -10.25,
+          "buy_sm_amount": -4537.0,
+          "buy_sm_amount_rate": -9.3,
+          "close": 189.17,
+          "name": "峰岹科技",
+          "net_amount": 9537.64,
+          "net_amount_rate": 19.55,
+          "pct_change": 3.58,
+          "trade_date": "20260826",
+          "ts_code": "688279.SH"
+        },
+        {
+          "buy_elg_amount": 2540.19,
+          "buy_elg_amount_rate": 4.75,
+          "buy_lg_amount": 2212.41,
+          "buy_lg_amount_rate": 4.14,
+          "buy_md_amount": 504.49,
+          "buy_md_amount_rate": 0.94,
+          "buy_sm_amount": -5257.09,
+          "buy_sm_amount_rate": -9.84,
+          "close": 197.28,
+          "name": "峰岹科技",
+          "net_amount": 4752.6,
+          "net_amount_rate": 8.89,
+          "pct_change": 4.29,
+          "trade_date": "20260827",
+          "ts_code": "688279.SH"
+        },
+        {
+          "buy_elg_amount": -3835.09,
+          "buy_elg_amount_rate": -7.68,
+          "buy_lg_amount": 2084.93,
+          "buy_lg_amount_rate": 4.18,
+          "buy_md_amount": 1296.53,
+          "buy_md_amount_rate": 2.6,
+          "buy_sm_amount": 453.63,
+          "buy_sm_amount_rate": 0.91,
+          "close": 189.67,
+          "name": "峰岹科技",
+          "net_amount": -1750.16,
+          "net_amount_rate": -3.5,
+          "pct_change": -3.86,
+          "trade_date": "20260828",
+          "ts_code": "688279.SH"
+        },
+        {
+          "buy_elg_amount": -2221.51,
+          "buy_elg_amount_rate": -4.27,
+          "buy_lg_amount": 4113.75,
+          "buy_lg_amount_rate": 7.9,
+          "buy_md_amount": 2042.78,
+          "buy_md_amount_rate": 3.92,
+          "buy_sm_amount": -3935.02,
+          "buy_sm_amount_rate": -7.56,
+          "close": 197.5,
+          "name": "峰岹科技",
+          "net_amount": 1892.25,
+          "net_amount_rate": 3.63,
+          "pct_change": 4.13,
+          "trade_date": "20260831",
+          "ts_code": "688279.SH"
+        }
+      ],
+      "sector_breadth": {
+        "trade_date": "20260831",
+        "registry_count": 197,
+        "observed": 196,
+        "up": 156,
+        "down": 39,
+        "flat": 1,
+        "mean_pct_chg": 2.2719,
+        "median_pct_chg": 1.7763,
+        "state": "CONFIRMED",
+        "source_ref": "DERIVATION:197-name semiconductor registry joined to settled all-A daily 20260831"
+      },
+      "technical_summary": {
+        "settled_trade_date": "20260831",
+        "close": 197.5,
+        "ma20": 175.046,
+        "atr14": 12.3264,
+        "range20_low": 152.0,
+        "range20_high": 201.45,
+        "range20_equilibrium": 176.725,
+        "range_location_pct": 92.01,
+        "volume_5v20": 1.136
+      },
+      "flow_summary": {
+        "settled_trade_date": "20260831",
+        "positive_sessions": 5,
+        "observed_sessions": 6,
+        "latest_net_amount_rate": 3.63,
+        "five_session_net_amount_rate_sum": 33.91
+      },
+      "evidence_hash": "bab4c25e5fc722af4fa16c08f08f6893fe8e124d36386595c3b63bd4787e6bab"
+    }
+  },
+  "thesis_core": {
+    "serenity": {
+      "theme_system_change": "China semiconductor localization and end-market recovery remain research hypotheses, not a trade signal.",
+      "value_chain_map": [
+        "L1 upstream materials/equipment or IP",
+        "L2 semiconductor device/chip production",
+        "L3 downstream customer qualification and end demand"
+      ],
+      "scarce_layer": "The issuer-specific qualified product and customer-validation layer.",
+      "company_role": "Motor-efficiency and intelligent-control demand raises MCU/ASIC/HVIC content, while algorithm-chip co-design supports retention and margin; the mechanism fails if MCU growth, margin or cash generation deteriorates.",
+      "bottleneck_evidence": [
+        {
+          "claim": "Frozen point-in-time evidence record FDKJ_FY25_SEGMENTS supports the research mechanism.",
+          "tier": "E2",
+          "citation_grade": "EDGE_ESTABLISHING",
+          "source": "FDKJ_FY25_SEGMENTS"
+        }
+      ],
+      "market_may_be_missing": "The U4-cutoff factpack contains FY2025 and 2026 Q1 but not the later H1 filing, while the reference price already discounts a bull-like multiple.",
+      "substitution_route": "Customer qualification, product iteration and production scale; no shortcut is assumed.",
+      "expansion_difficulty": "Quality consistency, process know-how, customer validation and capital intensity constrain expansion.",
+      "customer_validation": "No customer name or share is invented; segment revenue is the only frozen proxy and requires issuer re-confirmation.",
+      "what_weakens_the_view": [
+        {
+          "metric": "MCU_REVENUE_YOY_PCT",
+          "threshold": "<= 15%",
+          "source": "issuer FY2026 annual segment disclosure",
+          "check_date": "2027-04-30"
+        },
+        {
+          "metric": "MCU_GROSS_MARGIN_PCT",
+          "threshold": "<= 50%",
+          "source": "issuer FY2026 annual segment disclosure",
+          "check_date": "2027-04-30"
+        }
+      ]
+    },
+    "identity": {
+      "ticker": "688279.SH",
+      "name": {
+        "zh": "峰岹科技",
+        "en": "峰岹科技"
+      },
+      "market": "A",
+      "as_of": "2026-08-24",
+      "provenance": {
+        "u4_packet_hash": "7ea6b5764541c380baa5f727618662f37eca75dd1780a8099bf5342254a7c7ff",
+        "u2_row_hash": "834a4800712a00d571aa925fb6174385ebbf888b8f86a3b47bf1681d1a3e7ddf",
+        "u3_row_hash": "971dd3e4a5e5e278a55662348b435ef2f02fb4129ff1248583f75dd7e818ec19"
+      }
+    },
+    "thesis": {
+      "variant_perception": {
+        "zh": "研究假设是电机主控 MCU/ASIC 与驱动芯片的高毛利产品组合可延续增长，但 2026-08-24 截止时只有一季报，且市场价格已接近乐观情景，当前没有可注册优势。",
+        "en": "The research hypothesis is that the high-margin motor-control MCU/ASIC and driver mix can sustain growth, but only Q1 was available at the 2026-08-24 cutoff and price already approached the optimistic case, leaving no registerable edge."
+      },
+      "mechanism": {
+        "zh": "下游电机能效和智能控制需求增加 MCU/ASIC/HVIC 用量，算法与芯片协同提高客户黏性和毛利；若 MCU 增速、毛利或现金创造下降，机制失效。",
+        "en": "Motor-efficiency and intelligent-control demand raises MCU/ASIC/HVIC content, while algorithm-chip co-design supports retention and margin; the mechanism fails if MCU growth, margin or cash generation deteriorates."
+      },
+      "direction": "FUNDAMENTAL_UPSIDE_HYPOTHESIS",
+      "horizon": "6-12m",
+      "conviction": "WORKFLOW_DEBUG_UNVALIDATED"
+    },
+    "evidence": {
+      "items": [
+        {
+          "claim": "Frozen point-in-time evidence record FDKJ_U4_SELECT supports the research mechanism.",
+          "tier": "E1",
+          "causal_tag": "PROVEN",
+          "citation_grade": "CONSENSUS_CONFIRMING",
+          "source": "FDKJ_U4_SELECT"
+        },
+        {
+          "claim": "Frozen point-in-time evidence record FDKJ_Q1_FINANCIALS supports the research mechanism.",
+          "tier": "E2",
+          "causal_tag": "INFERRED",
+          "citation_grade": "EDGE_ESTABLISHING",
+          "source": "FDKJ_Q1_FINANCIALS"
+        },
+        {
+          "claim": "Frozen point-in-time evidence record FDKJ_FY25_SEGMENTS supports the research mechanism.",
+          "tier": "E2",
+          "causal_tag": "INFERRED",
+          "citation_grade": "EDGE_ESTABLISHING",
+          "source": "FDKJ_FY25_SEGMENTS"
+        },
+        {
+          "claim": "Frozen point-in-time evidence record FDKJ_Q1_CASH_BALANCE supports the research mechanism.",
+          "tier": "E2",
+          "causal_tag": "INFERRED",
+          "citation_grade": "CONSENSUS_CONFIRMING",
+          "source": "FDKJ_Q1_CASH_BALANCE"
+        }
+      ],
+      "rule_x_check": {
+        "pass": false,
+        "why": "Provider-normalized filing rows are hash-bound; issuer-document identity still requires Junyan review before registration."
+      },
+      "contrarian_view": "At CNY 197.50, the market implies about 70.5x normalized EPS after net cash, close to the authored bull assumptions."
+    },
+    "catalyst_calendar": [
+      {
+        "event": "FY2026 Q3 report",
+        "date": "2026-10-31",
+        "watch": "MCU_REVENUE_YOY_PCT",
+        "expected": "No forecast claim; observe against wrong-if only."
+      },
+      {
+        "event": "FY2026 annual report",
+        "date": "2027-04-30",
+        "watch": "NORMALIZED_EPS and all five wrong-if metrics",
+        "expected": "Score only against the registered ranges."
+      }
+    ],
+    "wrong_if": {
+      "triggers": [
+        {
+          "metric": "MCU_REVENUE_YOY_PCT",
+          "threshold": "<= 15%",
+          "source": "issuer FY2026 annual segment disclosure",
+          "check_date": "2027-04-30"
+        },
+        {
+          "metric": "MCU_GROSS_MARGIN_PCT",
+          "threshold": "<= 50%",
+          "source": "issuer FY2026 annual segment disclosure",
+          "check_date": "2027-04-30"
+        },
+        {
+          "metric": "NORMALIZED_EPS",
+          "threshold": "<= 2.20",
+          "source": "issuer FY2026 annual report normalized bridge",
+          "check_date": "2027-04-30"
+        },
+        {
+          "metric": "OPERATING_CASH_FLOW_MARGIN_PCT",
+          "threshold": "<= 20%",
+          "source": "issuer FY2026 cash-flow statement",
+          "check_date": "2027-04-30"
+        },
+        {
+          "metric": "NET_CASH_PER_SHARE",
+          "threshold": "<= 10.00",
+          "source": "issuer FY2026 balance sheet",
+          "check_date": "2027-04-30"
+        }
+      ]
+    },
+    "valuation_target_range": {
+      "calibrated": false,
+      "basis": "normalized_eps_x_fair_multiple_plus_net_cash_per_share",
+      "bear": {
+        "low": 87.59,
+        "high": 102.29,
+        "assumptions": [
+          "earnings or multiple falls below base assumptions",
+          "no method-validity claim"
+        ]
+      },
+      "base": {
+        "low": 131.09,
+        "high": 157.09,
+        "assumptions": [
+          "normalized EPS 2.6",
+          "fair multiple 45.0-55.0x",
+          "net cash per share 14.09"
+        ]
+      },
+      "bull": {
+        "low": 206.09,
+        "high": 238.09,
+        "assumptions": [
+          "sustained segment growth and margin",
+          "premium multiple remains unvalidated"
+        ]
+      }
+    },
+    "execution_plan": {
+      "summary": {
+        "zh": "仅冻结人工复核参考位；当前 WAIT，不生成订单。",
+        "en": "Freeze review references only; current state is WAIT and creates no order."
+      },
+      "entry": "Review only if settled evidence confirms around 188.0-190.0",
+      "staging": "No staging while WAIT; any later paper sleeve requires separate Junyan approval.",
+      "invalidation": "Structure invalidation 184.06; thesis invalidation is the five-item wrong-if set.",
+      "sizing_suggestion": "No size proposed; human_executes after separate paper-registration approval.",
+      "holding_horizon": "SWING workflow-debug observation through T+10",
+      "review_dates": [
+        "2026-09-01",
+        "2026-10-31",
+        "2027-04-30"
+      ]
+    },
+    "risk": {
+      "fundamental": "Registered earnings or segment assumptions may fail.",
+      "policy": "Semiconductor localization policy evidence is not treated as company revenue evidence.",
+      "valuation": "At CNY 197.50, the market implies about 70.5x normalized EPS after net cash, close to the authored bull assumptions.",
+      "liquidity": "Paper references do not model a real order or real-capital liquidity.",
+      "crowding_reflexivity": "Sector breadth can reverse and cannot offset issuer wrong-if evidence."
+    },
+    "disclaimers": {
+      "unvalidated": true,
+      "human_executes": true,
+      "workflow_debug": true,
+      "claim_allowed": false
+    }
+  },
+  "decision_pack": {
+    "variant_view": {
+      "stance": "NO_EDGE",
+      "reason": "The U4-cutoff factpack contains FY2025 and 2026 Q1 but not the later H1 filing, while the reference price already discounts a bull-like multiple."
+    },
+    "clean_valuation": {
+      "caliber": "SEMICONDUCTOR_NORMALIZED_EARNINGS",
+      "盈利位置": "PIT estimate, uncalibrated",
+      "normalized_bridge": {
+        "normalized_eps": 2.6,
+        "multiple_low": 45.0,
+        "multiple_high": 55.0,
+        "net_cash_per_share": 14.09,
+        "base_low": 131.09,
+        "base_high": 157.09
+      },
+      "reference_price": 197.5,
+      "market_implied_case": "At CNY 197.50, the market implies about 70.5x normalized EPS after net cash, close to the authored bull assumptions."
+    },
+    "catalyst_map": [
+      {
+        "window": "by 2026-10-31",
+        "event": "FY2026 Q3 issuer filing",
+        "verifies": "MCU_REVENUE_YOY_PCT"
+      },
+      {
+        "window": "by 2027-04-30",
+        "event": "FY2026 annual issuer filing",
+        "verifies": "normalized EPS and five wrong-if metrics"
+      }
+    ],
+    "risk_mitigation": [
+      {
+        "risk": "Fundamental thesis fails",
+        "wrong_if": {
+          "metric": "MCU_REVENUE_YOY_PCT",
+          "threshold": "<= 15%",
+          "source": "issuer FY2026 annual segment disclosure",
+          "check_date": "2027-04-30"
+        }
+      },
+      {
+        "risk": "Fundamental thesis fails",
+        "wrong_if": {
+          "metric": "MCU_GROSS_MARGIN_PCT",
+          "threshold": "<= 50%",
+          "source": "issuer FY2026 annual segment disclosure",
+          "check_date": "2027-04-30"
+        }
+      },
+      {
+        "risk": "Fundamental thesis fails",
+        "wrong_if": {
+          "metric": "NORMALIZED_EPS",
+          "threshold": "<= 2.20",
+          "source": "issuer FY2026 annual report normalized bridge",
+          "check_date": "2027-04-30"
+        }
+      },
+      {
+        "risk": "Fundamental thesis fails",
+        "wrong_if": {
+          "metric": "OPERATING_CASH_FLOW_MARGIN_PCT",
+          "threshold": "<= 20%",
+          "source": "issuer FY2026 cash-flow statement",
+          "check_date": "2027-04-30"
+        }
+      },
+      {
+        "risk": "Fundamental thesis fails",
+        "wrong_if": {
+          "metric": "NET_CASH_PER_SHARE",
+          "threshold": "<= 10.00",
+          "source": "issuer FY2026 balance sheet",
+          "check_date": "2027-04-30"
+        }
+      }
+    ],
+    "execution_gate": {
+      "posture": "HOLD_OBSERVE",
+      "levels": {
+        "entry_review": 190.0,
+        "structure_stop": 177.8968,
+        "target_1": 201.45
+      },
+      "wait_reason": "Structure and settled confirmations are positive, but premium location and sub-2:1 first-target geometry fail registration."
+    },
+    "portfolio_impact": {
+      "single_beta_overlap": true,
+      "correlation_note": "All three cases share semiconductor beta and are one workflow-debug cluster, not three independent method samples.",
+      "paper_risk_budget": "NONE_WHILE_WAIT"
+    },
+    "paper_plan": {
+      "entry_review": 190.0,
+      "stop_reference": 177.8968,
+      "take_profit_reference": 201.45,
+      "invalidation": 184.06,
+      "no_trade_flag": true
+    },
+    "self_audit": [
+      "U4 SELECT hash verified",
+      "thesis facts stop at 20260824",
+      "settled E3 is separated from thesis facts",
+      "manual SMC remains WAIT",
+      "no paper or real order authority",
+      "no alpha, win-rate or method-validity claim"
+    ]
+  },
+  "timing_ticket": {
+    "status": "WAIT",
+    "as_of": "20260901",
+    "posture": "HOLD_OBSERVE",
+    "market_state": "SETTLED_E3_REVIEW_ONLY",
+    "sector_state": "CONFIRMED",
+    "flow_state": "SETTLED_INFLOW_CONFIRMED",
+    "technical_state": "WAIT_SWEEP_RECLAIM",
+    "portfolio_state": "NOT_ASSESSED_NO_REGISTRATION",
+    "wait_reason": "Structure and settled confirmations are positive, but premium location and sub-2:1 first-target geometry fail registration.",
+    "entry_review": 190.0,
+    "stop_reference": 177.8968,
+    "take_profit_reference": 201.45,
+    "intraday_sample_eligible": false,
+    "settlement_required": true,
+    "human_executes": true,
+    "no_trade_flag": true,
+    "production_authority": false
+  },
+  "method_registration_draft": {
+    "schema": "ar.research_method_registration",
+    "schema_version": "1.0",
+    "ticker": "688279.SH",
+    "as_of": "20260824",
+    "registered_at": "20260901",
+    "strategy_mode": "SWING",
+    "thesis_core_hash": "da8617be0a1de39e586cf0b10b5ed0b4925c55f43d454702ee73431507d3646f",
+    "timing_ticket_hash": "5a296ce9cce22b899090bd7e1c6e7544d49dc18c88f95a6dc1aa003c93f251fa",
+    "decision_pack_hash": "7177d3f49d781c2798ad845750c5ce3462fa98bce6557ed4974157bc8146a869",
+    "wrong_if_hash": "3fd698d6b695e70e966b5b0e68cca87bd598286cbb3338019c9771a88e70100e",
+    "thesis_expectations": [
+      {
+        "claim_id": "FDKJ_CATALYST_FY26",
+        "kind": "CATALYST",
+        "metric": "FY2026_ANNUAL_REPORT_RELEASED",
+        "operator": "OCCURRED",
+        "threshold": true,
+        "due_date": "20270430",
+        "required_tier": "E1",
+        "source_ref": "ISSUER_FY2026_ANNUAL_REPORT",
+        "measurement_period": "FY2026_RELEASE",
+        "wrong_if_trigger_hash": null
+      },
+      {
+        "claim_id": "FDKJ_FUND_NORMALIZED_EPS",
+        "kind": "FUNDAMENTAL",
+        "metric": "NORMALIZED_EPS",
+        "operator": "BETWEEN",
+        "threshold": [
+          2.3,
+          2.9
+        ],
+        "due_date": "20270430",
+        "required_tier": "E1",
+        "source_ref": "ISSUER_FY2026_ANNUAL_REPORT",
+        "measurement_period": "FY2026",
+        "wrong_if_trigger_hash": null
+      },
+      {
+        "claim_id": "FDKJ_INVALID_1",
+        "kind": "INVALIDATION",
+        "metric": "MCU_REVENUE_YOY_PCT",
+        "operator": "LTE",
+        "threshold": 15.0,
+        "due_date": "20270430",
+        "required_tier": "E1",
+        "source_ref": "ISSUER_FY2026_ANNUAL_REPORT",
+        "measurement_period": "FY2026",
+        "wrong_if_trigger_hash": "ee4b017011446364647049e5785b56d69d6e9115dba1fd0d01f46badecb1c51d"
+      },
+      {
+        "claim_id": "FDKJ_INVALID_2",
+        "kind": "INVALIDATION",
+        "metric": "MCU_GROSS_MARGIN_PCT",
+        "operator": "LTE",
+        "threshold": 50.0,
+        "due_date": "20270430",
+        "required_tier": "E1",
+        "source_ref": "ISSUER_FY2026_ANNUAL_REPORT",
+        "measurement_period": "FY2026",
+        "wrong_if_trigger_hash": "b8fb3b245b1d222049623d04c32f943f1e59fa09ceabd42667a2b94f7cc425f8"
+      },
+      {
+        "claim_id": "FDKJ_INVALID_3",
+        "kind": "INVALIDATION",
+        "metric": "NORMALIZED_EPS",
+        "operator": "LTE",
+        "threshold": 2.2,
+        "due_date": "20270430",
+        "required_tier": "E1",
+        "source_ref": "ISSUER_FY2026_ANNUAL_REPORT",
+        "measurement_period": "FY2026",
+        "wrong_if_trigger_hash": "27dab6560e5381dac71af4441f0488ab3ee37700a87c857d586ef757a47bf734"
+      },
+      {
+        "claim_id": "FDKJ_INVALID_4",
+        "kind": "INVALIDATION",
+        "metric": "OPERATING_CASH_FLOW_MARGIN_PCT",
+        "operator": "LTE",
+        "threshold": 20.0,
+        "due_date": "20270430",
+        "required_tier": "E1",
+        "source_ref": "ISSUER_FY2026_ANNUAL_REPORT",
+        "measurement_period": "FY2026",
+        "wrong_if_trigger_hash": "5c4ae265bb4260597265e52b77294a7c6b7e3c1142f20e5353fc716c2ece8fb8"
+      },
+      {
+        "claim_id": "FDKJ_INVALID_5",
+        "kind": "INVALIDATION",
+        "metric": "NET_CASH_PER_SHARE",
+        "operator": "LTE",
+        "threshold": 10.0,
+        "due_date": "20270430",
+        "required_tier": "E1",
+        "source_ref": "ISSUER_FY2026_ANNUAL_REPORT",
+        "measurement_period": "FY2026",
+        "wrong_if_trigger_hash": "762a54f2acbef5f2e6b6fa3b55c9998796239f6e013295071a7a56e26455139f"
+      }
+    ],
+    "valuation": {
+      "adapter": "SEMICONDUCTOR_NORMALIZED_EARNINGS",
+      "industry": "SEMICONDUCTOR",
+      "currency": "CNY",
+      "scenario_band_hash": "c2673379fc61688214908167f92da0434dfedbd705ac935b6f2060495262182f",
+      "reference_price": 197.5,
+      "reference_price_source": "settled close 20260831 from E3 snapshot",
+      "market_implied_case": "At CNY 197.50, the market implies about 70.5x normalized EPS after net cash, close to the authored bull assumptions.",
+      "paper_exit_reference": 144.09,
+      "model_inputs": {
+        "normalized_eps": 2.6,
+        "fair_multiple_low": 45.0,
+        "fair_multiple_high": 55.0,
+        "net_cash_per_share": 14.09
+      },
+      "model_output": {
+        "computed_base_low": 131.09,
+        "computed_base_high": 157.09,
+        "calculation_status": "MANUAL_UNVALIDATED"
+      },
+      "forecasts": [
+        {
+          "forecast_id": "FDKJ_VALUATION_NORMALIZED_EPS",
+          "metric": "NORMALIZED_EPS",
+          "low": 2.3,
+          "high": 2.9,
+          "due_date": "20270430",
+          "required_tier": "E1",
+          "source_ref": "ISSUER_FY2026_ANNUAL_REPORT",
+          "measurement_period": "FY2026"
+        }
+      ],
+      "calibrated": false
+    },
+    "smc": {
+      "method_version": "manual-smc-v1",
+      "status": "WAIT",
+      "evidence_as_of": "20260901",
+      "higher_timeframe_structure": "BULLISH",
+      "setup_type": "SWEEP_RECLAIM",
+      "liquidity_reference": "20-session supply 201.45; reclaimed references 184.06/189.98",
+      "poi_type": "RECLAIM_RETEST_ZONE",
+      "poi_zone": {
+        "low": 184.0,
+        "high": 190.0
+      },
+      "range_location": "PREMIUM",
+      "volume_state": "CONFIRMED",
+      "flow_state": "SETTLED_INFLOW_CONFIRMED",
+      "sector_state": "CONFIRMED",
+      "entry_zone": {
+        "low": 188.0,
+        "high": 190.0
+      },
+      "entry_trigger": 190.0,
+      "structure_invalidation": 184.06,
+      "atr14": 12.3264,
+      "atr_buffer_multiple": 0.5,
+      "structure_stop": 177.8968,
+      "target_1": 201.45,
+      "target_2": 244.42,
+      "thesis_line_hash": "3fd698d6b695e70e966b5b0e68cca87bd598286cbb3338019c9771a88e70100e",
+      "disaster_line": 173.0,
+      "source": "MANUAL_SMC_E3_SETTLED",
+      "calibrated": false,
+      "no_trade_flag": true,
+      "production_authority": false,
+      "evidence_hash": "bab4c25e5fc722af4fa16c08f08f6893fe8e124d36386595c3b63bd4787e6bab"
+    },
+    "method_status": "MANUAL_UNVALIDATED",
+    "no_trade_flag": true,
+    "production_authority": false,
+    "disclaimer": "不是买卖指令；研究信号，human executes."
+  },
+  "prospective_registration_hash": "9c84591a5b500d92ef10c966b63b5c5da0ad30664e5ff398ee9d169358d5b0d8",
+  "quality_scorecard": {
+    "schema": "ar.research_quality_scorecard.v0",
+    "status": "QUALITY_PASS",
+    "artifact_ref": {
+      "kind": "THESIS_CORE",
+      "path": "docs/research/prospective/semiconductor_workflow_debug_001/688279.SH.json#thesis_core",
+      "hash": "sha256:da8617be0a1de39e586cf0b10b5ed0b4925c55f43d454702ee73431507d3646f"
+    },
+    "axes": [
+      {
+        "axis": "FACT_COMPLETENESS",
+        "score": 72,
+        "status": "PASS",
+        "evidence_refs": [
+          "FY2025 and 2026 Q1 are PIT-bound"
+        ],
+        "gaps": [
+          "FY2026 H1 was unavailable at the U4 cutoff and is deliberately excluded",
+          "issuer URL identity remains human-verification pending"
+        ]
+      },
+      {
+        "axis": "FALSIFIABILITY",
+        "score": 90,
+        "status": "PASS",
+        "evidence_refs": [
+          "five mechanized wrong-if triggers"
+        ],
+        "gaps": []
+      },
+      {
+        "axis": "REVIEWABILITY",
+        "score": 92,
+        "status": "PASS",
+        "evidence_refs": [
+          "U4, source rows and E3 carry hashes"
+        ],
+        "gaps": []
+      },
+      {
+        "axis": "TIMING_REGISTRATION",
+        "score": 80,
+        "status": "PASS",
+        "evidence_refs": [
+          "settled E3 through 20260831; WAIT before outcome"
+        ],
+        "gaps": [
+          "premium location and first-target R/R below 2:1"
+        ]
+      },
+      {
+        "axis": "VALUATION_DISCIPLINE",
+        "score": 84,
+        "status": "PASS",
+        "evidence_refs": [
+          "normalized EPS x explicit multiple + net cash"
+        ],
+        "gaps": [
+          "multiple range is uncalibrated"
+        ]
+      },
+      {
+        "axis": "VARIANT_THESIS",
+        "score": 68,
+        "status": "PASS",
+        "evidence_refs": [
+          "NO_EDGE is declared at a bull-implied reference price"
+        ],
+        "gaps": []
+      }
+    ],
+    "average_score": 81.0,
+    "blockers": [],
+    "next_state": "READY_FOR_HUMAN_REVIEW",
+    "authority": {
+      "u4_selection_authority": "HUMAN_JUNYAN_ONLY",
+      "paper_registration_authority": "HUMAN_JUNYAN_ONLY",
+      "production_authority": false,
+      "trade_authority": false,
+      "claim_allowed": false,
+      "no_trade_flag": true
+    },
+    "disclaimer": "不是买卖指令；研究信号，human executes."
+  },
+  "case_hash": "7173c6d7c54e34981a545da0384235cff79574302a7ff2269edc71e467137725"
+}

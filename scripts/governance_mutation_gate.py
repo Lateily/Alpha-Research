@@ -141,6 +141,7 @@ FUNNEL_GOVERNANCE_PATHS = (
     "experiments/research_funnel/u4_decision_ledger.py",
     "experiments/research_funnel/semiconductor_inputs.py",
     "experiments/research_funnel/semiconductor_source_repair.py",
+    "experiments/research_funnel/semiconductor_thesis_freeze.py",
     "experiments/research_funnel/u4_pre_decision.py",
     "experiments/research_funnel/feature_store.py",
     "experiments/execution_tracker/event_ledger.py",
@@ -6622,6 +6623,134 @@ MUTATIONS = MUTATIONS + (
         ),
         expected_failure_marker="test_u3_incomplete_plus_e1_is_data_blocked_not_only_revise_required",
         rationale="An incomplete U3 row remains DATA_BLOCKED even when E1 is also active.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_FREEZE_U4_BINDING",
+        component="Research funnel semiconductor post-U4 research freeze",
+        source_path="experiments/research_funnel/semiconductor_thesis_freeze.py",
+        test_script="tests/test_semiconductor_thesis_freeze.py",
+        before=(
+            "    # governance-mutation: SEMICONDUCTOR_FREEZE_U4_BINDING\n"
+            "    if any(binding.get(key) != value for key, value in expected_binding.items()):"
+        ),
+        after=(
+            "    # governance-mutation: SEMICONDUCTOR_FREEZE_U4_BINDING\n"
+            "    if False:"
+        ),
+        expected_failure_marker="test_u4_row_hash_substitution_fails_closed",
+        rationale="A thesis proposal cannot substitute a different U2/U3 row for Junyan's frozen SELECT.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_FREEZE_PIT_CUTOFF",
+        component="Research funnel semiconductor point-in-time thesis evidence",
+        source_path="experiments/research_funnel/semiconductor_thesis_freeze.py",
+        test_script="tests/test_semiconductor_thesis_freeze.py",
+        before=(
+            "        # governance-mutation: SEMICONDUCTOR_FREEZE_PIT_CUTOFF\n"
+            "        if source_date > bundle[\"fact_cutoff\"]:"
+        ),
+        after=(
+            "        # governance-mutation: SEMICONDUCTOR_FREEZE_PIT_CUTOFF\n"
+            "        if False:"
+        ),
+        expected_failure_marker="test_post_cutoff_fact_fails_even_when_resealed",
+        rationale="Facts published after U4 cannot be backfilled into the frozen thesis factpack.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_FREEZE_E3_BAR_SHAPE",
+        component="Research funnel semiconductor settled-E3 manual SMC evidence",
+        source_path="experiments/research_funnel/semiconductor_thesis_freeze.py",
+        test_script="tests/test_semiconductor_thesis_freeze.py",
+        before=(
+            "        # governance-mutation: SEMICONDUCTOR_FREEZE_E3_BAR_SHAPE\n"
+            "        if not low <= min(open_, close) <= max(open_, close) <= high or volume < 0:"
+        ),
+        after=(
+            "        # governance-mutation: SEMICONDUCTOR_FREEZE_E3_BAR_SHAPE\n"
+            "        if False:"
+        ),
+        expected_failure_marker="test_invalid_ohlc_shape_fails_closed",
+        rationale="Malformed settled bars cannot become evidence for manual SMC references.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_FREEZE_SOURCE_RECORD_HASH",
+        component="Research funnel semiconductor point-in-time source receipts",
+        source_path="experiments/research_funnel/semiconductor_thesis_freeze.py",
+        test_script="tests/test_semiconductor_thesis_freeze.py",
+        before=(
+            "        # governance-mutation: SEMICONDUCTOR_FREEZE_SOURCE_RECORD_HASH\n"
+            "        if item.get(\"source_record_hash\") != _hash(_without(item, \"source_record_hash\")):"
+        ),
+        after=(
+            "        # governance-mutation: SEMICONDUCTOR_FREEZE_SOURCE_RECORD_HASH\n"
+            "        if False:"
+        ),
+        expected_failure_marker="test_source_metadata_is_inside_record_hash",
+        rationale="Source tier, date, reference and values must remain one hash-bound evidence record.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_FREEZE_CASE_CONTENT_LOCK",
+        component="Research funnel semiconductor case content review lock",
+        source_path="experiments/research_funnel/semiconductor_thesis_freeze.py",
+        test_script="tests/test_semiconductor_thesis_freeze.py",
+        before=(
+            "    # governance-mutation: SEMICONDUCTOR_FREEZE_CASE_CONTENT_LOCK\n"
+            "    elif case.get(\"case_hash\") != expected[\"case\"]:"
+        ),
+        after=(
+            "    # governance-mutation: SEMICONDUCTOR_FREEZE_CASE_CONTENT_LOCK\n"
+            "    elif False:"
+        ),
+        expected_failure_marker="test_content_edit_needs_a_new_junyan_review_hash",
+        rationale="A changed thesis, valuation or SMC proposal must return to Junyan content review.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_FREEZE_BUNDLE_CONTENT_LOCK",
+        component="Research funnel semiconductor bundle content review lock",
+        source_path="experiments/research_funnel/semiconductor_thesis_freeze.py",
+        test_script="tests/test_semiconductor_thesis_freeze.py",
+        before=(
+            "    # governance-mutation: SEMICONDUCTOR_FREEZE_BUNDLE_CONTENT_LOCK\n"
+            "    elif payload.get(\"bundle_hash\") != EXPECTED_BUNDLE_HASH:"
+        ),
+        after=(
+            "    # governance-mutation: SEMICONDUCTOR_FREEZE_BUNDLE_CONTENT_LOCK\n"
+            "    elif False:"
+        ),
+        expected_failure_marker="test_bundle_metadata_edit_needs_a_new_junyan_review_hash",
+        rationale="Bundle chronology or metadata cannot change under an already reviewed content hash.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_FREEZE_SPLIT_CASE_BINDING",
+        component="Research funnel semiconductor split dossier consistency",
+        source_path="experiments/research_funnel/semiconductor_thesis_freeze.py",
+        test_script="tests/test_semiconductor_thesis_freeze.py",
+        before=(
+            "        # governance-mutation: SEMICONDUCTOR_FREEZE_SPLIT_CASE_BINDING\n"
+            "        if case_copy != by_ticker.get(ticker):"
+        ),
+        after=(
+            "        # governance-mutation: SEMICONDUCTOR_FREEZE_SPLIT_CASE_BINDING\n"
+            "        if False:"
+        ),
+        expected_failure_marker="test_split_case_drift_is_visible_even_if_bundle_is_unchanged",
+        rationale="Human-readable per-name dossiers must remain byte-content equivalent to the bundle cases.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_FREEZE_DUPLICATE_JSON",
+        component="Research funnel semiconductor freeze JSON boundary",
+        source_path="experiments/research_funnel/semiconductor_thesis_freeze.py",
+        test_script="tests/test_semiconductor_thesis_freeze.py",
+        before=(
+            "        # governance-mutation: SEMICONDUCTOR_FREEZE_DUPLICATE_JSON\n"
+            "        if key in output:"
+        ),
+        after=(
+            "        # governance-mutation: SEMICONDUCTOR_FREEZE_DUPLICATE_JSON\n"
+            "        if False:"
+        ),
+        expected_failure_marker="test_duplicate_json_keys_are_rejected",
+        rationale="Duplicate JSON keys cannot silently replace frozen research content.",
     ),
 )
 

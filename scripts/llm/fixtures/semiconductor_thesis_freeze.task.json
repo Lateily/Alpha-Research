@@ -1,0 +1,85 @@
+{
+  "schema": "ai-task.v1",
+  "task_id": "SEMICONDUCTOR-THESIS-FREEZE-001",
+  "source_issue": null,
+  "architecture_block": [
+    "research-framework",
+    "semiconductor-workflow-debug",
+    "post-U4-method-freeze"
+  ],
+  "objective": "Freeze reviewable thesis, normalized-earnings valuation, manual settled-E3 SMC, and mechanized invalidation proposals for the three U4 SELECT decisions bound to packet 7ea6b5764541, without granting paper-order, production, claim, or real-capital authority.",
+  "non_goals": [
+    "Do not modify or run the production nightly chain",
+    "Do not write or alter the production U4 ledger, feature store, paper fund, NAV, manifest, or current_run pointer",
+    "Do not backdate research content or use facts published after the 20260824 U4 cutoff inside the thesis factpack",
+    "Do not convert a draft SMC review into a real trade instruction or production paper order",
+    "Do not claim alpha, win rate, method effectiveness, or portfolio-promotion eligibility",
+    "Do not impersonate Junyan's content review or final registration approval"
+  ],
+  "human_owner": "Junyan",
+  "reviewer": "Junyan",
+  "executor_candidates": ["Codex"],
+  "dependencies": [
+    "PR #301 merged",
+    "PR #302 merged",
+    "PR #325 merged",
+    "PR #326 recovered on main by PR #329",
+    "PR #322 merged",
+    "U4 packet 7ea6b5764541 decision ledger closed"
+  ],
+  "authority_docs": [
+    "AGENTS.md",
+    "experiments/AGENTS.md",
+    "docs/research/prospective/SEMICONDUCTOR_PROSPECTIVE_PAPER_CYCLE_PLAYBOOK_V0.md",
+    "docs/research/prospective/SEMICONDUCTOR_PAPER_CYCLE_INPUT_PACK_V0.md",
+    "docs/research/RESEARCH_QUALITY_SCORECARD_V0.md",
+    "docs/research/RESEARCH_STRATEGY_QUALITY_UPGRADE_V0.md"
+  ],
+  "file_scope": [
+    "experiments/research_funnel/semiconductor_thesis_freeze.py",
+    "scripts/governance_mutation_gate.py",
+    "docs/research/prospective/semiconductor_workflow_debug_001/*",
+    "tests/test_semiconductor_thesis_freeze.py",
+    "scripts/llm/fixtures/semiconductor_thesis_freeze.task.json"
+  ],
+  "forbidden_scope": [
+    "/Users/years/ar-live",
+    "experiments/execution_tracker/run_nightly.py",
+    "experiments/execution_tracker/event_ledger.jsonl",
+    "experiments/execution_tracker/model_fund",
+    "public/data/v2"
+  ],
+  "input_contracts": [
+    "ar.u4_decision_projection.v1",
+    "packet 7ea6b5764541 hash-bound U2/U3 evidence",
+    "issuer-filing facts available no later than 20260824",
+    "Tushare settled E3 observations through 20260831",
+    "SEMICONDUCTOR_NORMALIZED_EARNINGS valuation adapter",
+    "MANUAL_SMC_E3_SETTLED timing method"
+  ],
+  "output_artifacts": [
+    "ar.semiconductor_research_freeze_manifest.v1 manifest",
+    "ar.semiconductor_research_freeze_bundle.v1 hash-frozen bundle",
+    "three ar.semiconductor_research_freeze_proposal.v1 dossiers",
+    "human-readable Junyan content-review sheet"
+  ],
+  "acceptance_tests": [
+    "python3 experiments/research_funnel/semiconductor_thesis_freeze.py --verify-dir docs/research/prospective/semiconductor_workflow_debug_001",
+    "python3 tests/test_semiconductor_thesis_freeze.py",
+    "python3 tests/test_research_method.py",
+    "python3 tests/test_research_quality_scorecard.py",
+    "python3 tests/test_no_network_guard.py",
+    "git diff --check"
+  ],
+  "risk_level": "HIGH",
+  "network_policy": "ALLOWLIST",
+  "budget": {"max_cny": "0", "max_minutes": 240},
+  "approval_gates": [
+    "U4_DECISION_LEDGER_VERIFIED",
+    "JUNYAN_EXACT_CONTENT_REVIEW",
+    "PR_REVIEW",
+    "JUNYAN_MERGE",
+    "SEPARATE_PAPER_REGISTRATION_APPROVAL"
+  ],
+  "created_at": "2026-09-01T06:40:00Z"
+}
