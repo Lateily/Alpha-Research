@@ -6,9 +6,9 @@
     "no_size": true,
     "no_buy_sell": true,
     "no_position_mutation": true,
-    "run_date": "2026-08-31",
+    "run_date": "2026-09-01",
     "pilot_start_date": "2026-06-08",
-    "generated_at": "2026-08-31T16:21:17.257781+00:00",
+    "generated_at": "2026-09-01T13:41:14.800466+00:00",
     "fresh_pilot": true,
     "legacy_paper_positions_inherited": false,
     "sources": [
@@ -22,7 +22,7 @@
     "disclaimer": "Internal model-recommendation pilot. UNVALIDATED model output — not validated alpha, and not external investment advice. Target ranges are thesis-derived and NOT calibrated; entry references pend the next market sync. Live execution-return tracking begins from the next trading-day pilot run. The product edge is the loop: recommendation -> user execution -> performance attribution -> model improvement.",
     "counts": {
       "core_thesis": 5,
-      "quant_swing_active": 0,
+      "quant_swing_active": 1,
       "quant_swing_setup_watch": 9,
       "research_pool": 20,
       "watch_pool": 31
@@ -63,8 +63,8 @@
         },
         "quant_confluence": {
           "action": "NEUTRAL",
-          "score": 19,
-          "rationale": "Bullish: Bullish Alignment, Ma20 Bounce | RSI 55 | Price vs MA20 +1.8% | Regime: PERMISSIVE | VP 48"
+          "score": -8,
+          "rationale": "Bullish: Bb Lower Break, Bb Squeeze | Bearish: Volume Selloff, Macd Death Cross | RSI 41 | Price vs MA20 -2.4% | Regime: PERMISSIVE | VP 48"
         }
       },
       "validation_status": "PENDING",
@@ -104,9 +104,9 @@
           "screen_score": null
         },
         "quant_confluence": {
-          "action": "NEUTRAL",
-          "score": 8,
-          "rationale": "Bullish: Ma20 Bounce, Ma60 Bounce | RSI 51 | Price vs MA20 +0.5% | VP 50"
+          "action": "HOLD",
+          "score": 23,
+          "rationale": "Bullish: Ma20 Bounce, Bullish Alignment | RSI 54 | Price vs MA20 +2.2% | VP 50"
         }
       },
       "validation_status": "PENDING",
@@ -241,7 +241,40 @@
     }
   ],
   "quant_swing": {
-    "active": [],
+    "active": [
+      {
+        "ticker": "603233.SH",
+        "name": "大参林",
+        "market": "A",
+        "sleeve": "quant_swing",
+        "model_action": "HOLD",
+        "horizon_days": 5,
+        "evidence_tier": "quant_confluence",
+        "why": "Bullish: Ma20 Bounce, Bullish Alignment | RSI 54 | Price vs MA20 +2.2% | VP 50",
+        "target_range": {
+          "basis": "quant_signal",
+          "calibrated": false,
+          "entry_reference": "pending_next_market_sync",
+          "reward_to_risk": null,
+          "note": "Quant-signal idea — not yet calibrated to a live entry."
+        },
+        "construction_plan": "Confluence-confirmed short-term idea; stage entry on the next session — pending calibration. No size, no auto-trade.",
+        "risk_rules": {
+          "invalidation": [],
+          "current_blocker": null
+        },
+        "source_signals": {
+          "quant_confluence": {
+            "action": "HOLD",
+            "score": 23,
+            "rationale": "Bullish: Ma20 Bounce, Bullish Alignment | RSI 54 | Price vs MA20 +2.2% | VP 50",
+            "regime": "NEUTRAL"
+          }
+        },
+        "validation_status": "unvalidated_pilot",
+        "no_trade_flag": true
+      }
+    ],
     "setup_watch": [
       {
         "ticker": "002594.SZ",
@@ -250,50 +283,56 @@
         "sleeve": "quant_swing",
         "state": "SETUP_WATCH",
         "signal_class": "no_trade_signal",
-        "setup_type": "ma20_bounce / ma60_bounce / bullish_alignment",
-        "bias": "bullish",
+        "setup_type": "volume_selloff / macd_death_cross / bb_lower_break / bb_squeeze",
+        "bias": "bearish",
         "why_not_active": "confluence verdict is NEUTRAL — no active swing trade today",
-        "trigger_to_activate": "confluence upgrade to non-neutral, or a volume-confirmed breakout (current vol_ratio 0.83).",
-        "risk_rule": "Setup invalidated on a decisive close below MA20 (90.66); loss of MA60 (89.62) ends it.",
+        "trigger_to_activate": "confluence upgrade to non-neutral, or a volume-confirmed breakdown (current vol_ratio 2.02).",
+        "risk_rule": "Bearish read negated on a volume-backed reclaim of MA20 (90.34).",
         "technical": {
-          "zone": "BULLISH",
+          "zone": "NEUTRAL",
           "entry_zone": true,
-          "exit_zone": false,
+          "exit_zone": true,
           "signal_count": {
-            "bullish": 3,
-            "bearish": 0,
-            "total": 3
+            "bullish": 2,
+            "bearish": 2,
+            "total": 4
           },
           "key_indicators": {
-            "rsi14": 55.3,
-            "macd_hist": 0.3929,
-            "price_vs_ma20": 1.83,
-            "price_vs_ma60": 3.01,
-            "change_5d": 2.04,
-            "vol_ratio": 0.83
+            "rsi14": 41.3,
+            "macd_hist": -0.0694,
+            "price_vs_ma20": -2.37,
+            "price_vs_ma60": -1.5,
+            "change_5d": -2.71,
+            "vol_ratio": 2.02
           },
           "signals": [
             {
-              "type": "MA20_BOUNCE",
+              "type": "VOLUME_SELLOFF",
+              "strength": "moderate",
+              "bullish": false,
+              "desc": "Volume 2.0× avg, price -4.5% — distribution"
+            },
+            {
+              "type": "MACD_DEATH_CROSS",
+              "strength": "strong",
+              "bullish": false,
+              "desc": "MACD DIF(-0.099) crossed below DEA(-0.065) below zero — bearish momentum"
+            },
+            {
+              "type": "BB_LOWER_BREAK",
               "strength": "moderate",
               "bullish": true,
-              "desc": "Price bounced off MA20 (90.8) — near-term support held"
+              "desc": "Price (88.2) touched Bollinger lower (88.2) — oversold, mean reversion watch"
             },
             {
-              "type": "MA60_BOUNCE",
-              "strength": "strong",
+              "type": "BB_SQUEEZE",
+              "strength": "moderate",
               "bullish": true,
-              "desc": "Price bounced off MA60 (89.6) — major support held"
-            },
-            {
-              "type": "BULLISH_ALIGNMENT",
-              "strength": "strong",
-              "bullish": true,
-              "desc": "MA5(91.6) > MA20(90.7) > MA60(89.6), price above all — full bullish alignment"
+              "desc": "Bollinger width 4.7% (was 9.8%) — squeeze, pending directional breakout"
             }
           ]
         },
-        "as_of": "2026-08-31",
+        "as_of": "2026-09-01",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -335,7 +374,7 @@
             }
           ]
         },
-        "as_of": "2026-08-31",
+        "as_of": "2026-09-01",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -349,8 +388,8 @@
         "setup_type": "no_signal",
         "bias": "bearish",
         "why_not_active": "confluence verdict is NEUTRAL — no active swing trade today",
-        "trigger_to_activate": "confluence upgrade to non-neutral, or a volume-confirmed breakdown (current vol_ratio 0.75).",
-        "risk_rule": "Bearish read negated on a volume-backed reclaim of MA20 (74.82).",
+        "trigger_to_activate": "confluence upgrade to non-neutral, or a volume-confirmed breakdown (current vol_ratio 0.9).",
+        "risk_rule": "Bearish read negated on a volume-backed reclaim of MA20 (75.31).",
         "technical": {
           "zone": "BEARISH",
           "entry_zone": false,
@@ -361,16 +400,16 @@
             "total": 0
           },
           "key_indicators": {
-            "rsi14": 45.9,
-            "macd_hist": -0.3298,
-            "price_vs_ma20": -3.1,
-            "price_vs_ma60": -9.17,
-            "change_5d": -1.81,
-            "vol_ratio": 0.75
+            "rsi14": 46.3,
+            "macd_hist": -0.364,
+            "price_vs_ma20": -3.44,
+            "price_vs_ma60": -8.96,
+            "change_5d": -1.22,
+            "vol_ratio": 0.9
           },
           "signals": []
         },
-        "as_of": "2026-08-31",
+        "as_of": "2026-09-01",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -384,8 +423,8 @@
         "setup_type": "no_signal",
         "bias": "bearish",
         "why_not_active": "confluence verdict is NEUTRAL — no active swing trade today",
-        "trigger_to_activate": "confluence upgrade to non-neutral, or a volume-confirmed breakdown (current vol_ratio 0.89).",
-        "risk_rule": "Bearish read negated on a volume-backed reclaim of MA20 (915.36).",
+        "trigger_to_activate": "confluence upgrade to non-neutral, or a volume-confirmed breakdown (current vol_ratio 0.64).",
+        "risk_rule": "Bearish read negated on a volume-backed reclaim of MA20 (912.83).",
         "technical": {
           "zone": "BEARISH",
           "entry_zone": false,
@@ -396,16 +435,16 @@
             "total": 0
           },
           "key_indicators": {
-            "rsi14": 41.5,
-            "macd_hist": 0.5018,
-            "price_vs_ma20": -6.23,
-            "price_vs_ma60": -19.71,
-            "change_5d": -8.98,
-            "vol_ratio": 0.89
+            "rsi14": 40.9,
+            "macd_hist": 0.6086,
+            "price_vs_ma20": -6.67,
+            "price_vs_ma60": -19.91,
+            "change_5d": -2.11,
+            "vol_ratio": 0.64
           },
           "signals": []
         },
-        "as_of": "2026-08-31",
+        "as_of": "2026-09-01",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -416,27 +455,27 @@
         "sleeve": "quant_swing",
         "state": "SETUP_WATCH",
         "signal_class": "no_trade_signal",
-        "setup_type": "ma20_bounce / ma60_bounce",
+        "setup_type": "ma20_bounce / bullish_alignment / macd_golden_cross",
         "bias": "bullish",
-        "why_not_active": "confluence verdict is NEUTRAL — no active swing trade today",
-        "trigger_to_activate": "confluence upgrade to non-neutral, or a volume-confirmed breakout (current vol_ratio 0.94).",
-        "risk_rule": "Setup invalidated on a decisive close below MA20 (18.06); loss of MA60 (17.56) ends it.",
+        "why_not_active": "confluence verdict is HOLD — no active swing trade today",
+        "trigger_to_activate": "confluence upgrade to non-neutral, or a volume-confirmed breakout (current vol_ratio 1.25).",
+        "risk_rule": "Setup invalidated on a decisive close below MA20 (18.06); loss of MA60 (17.6) ends it.",
         "technical": {
           "zone": "BULLISH",
           "entry_zone": true,
           "exit_zone": false,
           "signal_count": {
-            "bullish": 2,
+            "bullish": 3,
             "bearish": 0,
-            "total": 2
+            "total": 3
           },
           "key_indicators": {
-            "rsi14": 51.1,
-            "macd_hist": -0.0614,
-            "price_vs_ma20": 0.5,
-            "price_vs_ma60": 3.38,
-            "change_5d": 2.77,
-            "vol_ratio": 0.94
+            "rsi14": 54.0,
+            "macd_hist": 0.0076,
+            "price_vs_ma20": 2.18,
+            "price_vs_ma60": 4.84,
+            "change_5d": 6.28,
+            "vol_ratio": 1.25
           },
           "signals": [
             {
@@ -446,14 +485,20 @@
               "desc": "Price bounced off MA20 (18.1) — near-term support held"
             },
             {
-              "type": "MA60_BOUNCE",
+              "type": "BULLISH_ALIGNMENT",
               "strength": "strong",
               "bullish": true,
-              "desc": "Price bounced off MA60 (17.5) — major support held"
+              "desc": "MA5(18.2) > MA20(18.1) > MA60(17.6), price above all — full bullish alignment"
+            },
+            {
+              "type": "MACD_GOLDEN_CROSS",
+              "strength": "strong",
+              "bullish": true,
+              "desc": "MACD DIF(0.021) crossed above DEA(0.017) above zero — bullish momentum"
             }
           ]
         },
-        "as_of": "2026-08-31",
+        "as_of": "2026-09-01",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -507,7 +552,7 @@
             }
           ]
         },
-        "as_of": "2026-08-31",
+        "as_of": "2026-09-01",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -522,7 +567,7 @@
         "bias": "neutral",
         "why_not_active": "confluence verdict is NEUTRAL — no active swing trade today",
         "trigger_to_activate": "confluence upgrade to non-neutral; no technical signal firing yet.",
-        "risk_rule": "No setup yet — watch MA20 (262.12) / MA60 (261.4) for the first directional signal.",
+        "risk_rule": "No setup yet — watch MA20 (263.8) / MA60 (261.61) for the first directional signal.",
         "technical": {
           "zone": "NEUTRAL",
           "entry_zone": false,
@@ -534,15 +579,15 @@
           },
           "key_indicators": {
             "rsi14": 47.6,
-            "macd_hist": -1.9011,
-            "price_vs_ma20": -0.61,
-            "price_vs_ma60": -0.34,
-            "change_5d": -4.11,
-            "vol_ratio": 0.51
+            "macd_hist": -2.3942,
+            "price_vs_ma20": -1.2,
+            "price_vs_ma60": -0.37,
+            "change_5d": -2.26,
+            "vol_ratio": 0.75
           },
           "signals": []
         },
-        "as_of": "2026-08-31",
+        "as_of": "2026-09-01",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -577,7 +622,7 @@
           },
           "signals": []
         },
-        "as_of": "2026-08-31",
+        "as_of": "2026-09-01",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -612,7 +657,7 @@
           },
           "signals": []
         },
-        "as_of": "2026-08-31",
+        "as_of": "2026-09-01",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       }
