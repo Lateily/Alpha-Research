@@ -207,6 +207,11 @@ jobs:
       # alpha, trade readiness, U4 selection, or production authority.
       - name: Research quality scorecard contract (offline)
         run: python3 tests/test_research_quality_scorecard.py
+      # Research go/no-go + fundamentals: preserve human-only authority, make
+      # stale/legacy paper-fund display states explicit, and keep fundamental
+      # screens as explainable research intake rather than trade signals.
+      - name: Research go/no-go and fundamental screening contract (offline)
+        run: python3 tests/test_research_go_no_go_and_fundamental_screening.py
       # Rerun operator checklist: same-day semiconductor reruns must stop on
       # source, diagnostic, U3, red-flag, sample-denominator, or authority gaps
       # before any U4 handoff.
