@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-09-01T13:41:16.125687+00:00",
+  "updated_at": "2026-09-02T05:41:42.029171+00:00",
   "total_theses_tracked": 1,
   "by_status": {
     "EXPIRED": 1
@@ -13,7 +13,7 @@
       "ticker": "002594.SZ",
       "direction": "LONG",
       "status": "EXPIRED",
-      "days_to_catalyst": -17,
+      "days_to_catalyst": -18,
       "thesis_logged_at": "2026-05-17T19:47:04.532052+00:00"
     }
   ],
