@@ -1,6 +1,6 @@
 {
   "ticker": "175.HK",
-  "generated_at": "2026-09-01T13:35:44.289796+00:00",
+  "generated_at": "2026-09-02T05:35:55.435558+00:00",
   "overall": "MED",
   "sections": {
     "business_model": {
@@ -49,9 +49,9 @@
     "⚠️ Consensus estimates are 999 days old — expectation gap may be stale"
   ],
   "data_freshness": {
-    "financials": "2026-06-03",
-    "price": "2026-09-01",
+    "financials": "2026-06-04",
+    "price": "2026-09-02",
     "consensus": null,
-    "news": "2026-09-01"
+    "news": "2026-09-02"
   }
 }

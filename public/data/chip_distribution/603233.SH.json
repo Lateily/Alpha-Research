@@ -1,11 +1,11 @@
 {
   "ticker": "603233.SH",
-  "fetched_at": "2026-09-01T13:37:17Z",
-  "trade_date": "20260901",
+  "fetched_at": "2026-09-02T05:37:30Z",
+  "trade_date": "20260902",
   "_status": "ok",
   "api_used": "cyq_chips",
   "as_of": "20260901",
-  "fallback_days": 0,
+  "fallback_days": 1,
   "chips": [
     {
       "price": 9.0,
@@ -363,5 +363,6 @@
       "price": 53.0,
       "percent": 0.08
     }
-  ]
+  ],
+  "_note": "requested trade_date=20260902 was empty (cyq_chips is T+1); fell back to most recent non-empty day 20260901"
 }
