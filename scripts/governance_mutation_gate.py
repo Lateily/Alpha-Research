@@ -6752,6 +6752,22 @@ mutation_id="U4_PREDECISION_ATOMIC_NO_REPLACE",
         expected_failure_marker="test_u3_incomplete_plus_e1_is_data_blocked_not_only_revise_required",
         rationale="An incomplete U3 row remains DATA_BLOCKED even when E1 is also active.",
     ),
+    MutationCase(
+        mutation_id="LHB_RENDER_READS_APPEARANCES",
+        component="Research API LHB rendering",
+        source_path="api/research.js",
+        test_script="tests/test_research_lhb_render.py",
+        before=(
+            "  // governance-mutation: LHB_RENDER_READS_APPEARANCES\n"
+            "  if (lhb && Array.isArray(lhb.appearances) && lhb.appearances.length > 0) {"
+        ),
+        after=(
+            "  // governance-mutation: LHB_RENDER_READS_APPEARANCES\n"
+            "  if (lhb && Array.isArray(lhb.records) && lhb.records.length > 0) {"
+        ),
+        expected_failure_marker="test_lhb_render_reads_appearances",
+        rationale="The research prompt must consume the canonical appearances array emitted by fetch_lhb.py.",
+    ),
 )
 
 
