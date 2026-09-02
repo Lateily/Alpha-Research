@@ -6,9 +6,9 @@
   "direction": "LONG",
   "entry_date": "2026-05-17",
   "entry_price": null,
-  "current_price": 88.71,
-  "current_date": "2026-09-01",
-  "days_held": 107,
+  "current_price": 87.01,
+  "current_date": "2026-09-02",
+  "days_held": 108,
   "return_since_entry_pct": null,
   "expected_pnl": {
     "upside_if_right": "+22% to +35% (toward analyst target 119.32 mid, range 117-130)",
@@ -22,7 +22,7 @@
     "2026-08-15",
     "2026-08-31"
   ],
-  "days_to_catalyst": -17,
+  "days_to_catalyst": -18,
   "current_status": "EXPIRED",
   "wrongIf_conditions": [
     "2026 H1 overseas segment gross margin ≤ 16.5% @ 2026 H1 报告 2026-08-31 | source: 2026 H1 报告 分部信息披露: 海外/境外 营业收入与营业成本 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
@@ -532,6 +532,12 @@
     {
       "date": "2026-09-01",
       "price": 88.71,
+      "return_pct": null,
+      "status": "EXPIRED"
+    },
+    {
+      "date": "2026-09-02",
+      "price": 87.01,
       "return_pct": null,
       "status": "EXPIRED"
     }
