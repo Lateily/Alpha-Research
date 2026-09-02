@@ -1,79 +1,49 @@
 {
   "ticker": "002594.SZ",
-  "generated_at": "2026-09-01",
-  "price": 88.2,
+  "generated_at": "2026-09-02",
+  "price": 88.71,
   "zone": "NEUTRAL",
   "entry_zone": true,
-  "exit_zone": true,
+  "exit_zone": false,
   "signals": [
-    {
-      "type": "VOLUME_SELLOFF",
-      "strength": "moderate",
-      "date": "20260831",
-      "bullish": false,
-      "description": {
-        "e": "Volume 2.0× avg, price -4.5% — distribution",
-        "z": "成交量2.0倍均量，股价-4.5%，放量下跌"
-      }
-    },
-    {
-      "type": "MACD_DEATH_CROSS",
-      "strength": "strong",
-      "date": "20260831",
-      "bullish": false,
-      "description": {
-        "e": "MACD DIF(-0.099) crossed below DEA(-0.065) below zero — bearish momentum",
-        "z": "MACD DIF(-0.099)下穿DEA(-0.065)零轴下方死叉看跌"
-      }
-    },
-    {
-      "type": "BB_LOWER_BREAK",
-      "strength": "moderate",
-      "date": "20260831",
-      "bullish": true,
-      "description": {
-        "e": "Price (88.2) touched Bollinger lower (88.2) — oversold, mean reversion watch",
-        "z": "股价(88.2)触及布林下轨(88.2)，超卖，关注均值回归"
-      }
-    },
     {
       "type": "BB_SQUEEZE",
       "strength": "moderate",
-      "date": "20260831",
+      "date": "20260901",
       "bullish": true,
       "description": {
-        "e": "Bollinger width 4.7% (was 9.8%) — squeeze, pending directional breakout",
-        "z": "布林带收窄至4.7%（前5日9.8%），波动收缩，方向性突破即将来临"
+        "e": "Bollinger width 4.9% (was 9.6%) — squeeze, pending directional breakout",
+        "z": "布林带收窄至4.9%（前5日9.6%），波动收缩，方向性突破即将来临"
       }
     }
   ],
   "signal_count": {
-    "bullish": 2,
-    "bearish": 2,
-    "total": 4
+    "bullish": 1,
+    "bearish": 0,
+    "total": 1
   },
   "indicators": {
-    "ma5": 91.09,
-    "ma20": 90.34,
-    "ma60": 89.54,
-    "rsi14": 41.3,
-    "vol_ma20": 316711,
-    "vol_ratio": 2.02,
-    "price_vs_ma20": -2.37,
-    "price_vs_ma60": -1.5,
-    "change_1d": -4.46,
-    "change_5d": -2.71,
-    "change_20d": -6.62,
-    "macd_dif": -0.0995,
-    "macd_dea": -0.0648,
-    "macd_hist": -0.0694,
-    "bb_upper": 92.48,
-    "bb_mid": 90.34,
-    "bb_lower": 88.21,
-    "bb_bandwidth": 4.72,
-    "kdj_k": 48.9,
-    "kdj_d": 59.0,
-    "kdj_j": 28.7,
+    "ma5": 90.56,
+    "ma20": 90.22,
+    "ma60": 89.5,
+    "rsi14": 43.3,
+    "vol_ma20": 297755,
+    "vol_ratio": 0.97,
+    "price_vs_ma20": -1.68,
+    "price_vs_ma60": -0.88,
+    "change_1d": 0.58,
+    "change_5d": -2.9,
+    "change_20d": -2.68,
+    "macd_dif": -0.2283,
+    "macd_dea": -0.0756,
+    "macd_hist": -0.3054,
+    "bb_upper": 92.43,
+    "bb_mid": 90.22,
+    "bb_lower": 88.01,
+    "bb_bandwidth": 4.9,
+    "kdj_k": 36.6,
+    "kdj_d": 51.5,
+    "kdj_j": 6.7,
     "cvd_latest": null,
     "cvd_slope_5d": null,
     "cvd_chg_1d": null,
