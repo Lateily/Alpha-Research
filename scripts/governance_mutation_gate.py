@@ -7103,6 +7103,70 @@ mutation_id="U4_PREDECISION_ATOMIC_NO_REPLACE",
         rationale="An incomplete U3 row remains DATA_BLOCKED even when E1 is also active.",
     ),
     MutationCase(
+        mutation_id="FACT_CHECK_BLOCKS_UNTRACED_MONETARY_CLAIMS",
+        component="Research LLM deterministic fact checker",
+        source_path="scripts/llm/fact_check.py",
+        test_script="tests/test_fact_check.py",
+        before=(
+            "    # governance-mutation: FACT_CHECK_BLOCKS_UNTRACED_MONETARY_CLAIMS\n"
+            "    status = BLOCKED if fabrication_suspects else PASS"
+        ),
+        after=(
+            "    # governance-mutation: FACT_CHECK_BLOCKS_UNTRACED_MONETARY_CLAIMS\n"
+            "    status = PASS"
+        ),
+        expected_failure_marker="test_untraced_monetary_claim_blocks",
+        rationale="An untraced order, contract, capacity, or monetary claim must block the complete thesis receipt.",
+    ),
+    MutationCase(
+        mutation_id="FACT_CHECK_API_BLOCKS_UNTRACED_MONETARY_CLAIMS",
+        component="Research API deterministic fact checker",
+        source_path="api/research.js",
+        test_script="tests/test_fact_check.py",
+        before=(
+            "  // governance-mutation: FACT_CHECK_API_BLOCKS_UNTRACED_MONETARY_CLAIMS\n"
+            "  const status = fabricationSuspects.length ? FACT_CHECK_BLOCKED : 'PASS';"
+        ),
+        after=(
+            "  // governance-mutation: FACT_CHECK_API_BLOCKS_UNTRACED_MONETARY_CLAIMS\n"
+            "  const status = 'PASS';"
+        ),
+        expected_failure_marker="test_api_postprocessor_uses_the_same_three_states",
+        rationale="The API-side checker must preserve the same whole-output blocking state as the offline implementation.",
+    ),
+    MutationCase(
+        mutation_id="FACT_CHECK_SINGLE_API_POSTPROCESS",
+        component="Research single-agent API fact-check wiring",
+        source_path="api/research.js",
+        test_script="tests/test_fact_check.py",
+        before=(
+            "    // governance-mutation: FACT_CHECK_SINGLE_API_POSTPROCESS\n"
+            "    const factChecked = attachFactCheck(research, enrichment_context, ticker);"
+        ),
+        after=(
+            "    // governance-mutation: FACT_CHECK_SINGLE_API_POSTPROCESS\n"
+            "    const factChecked = { data: research, status: 'PASS' };"
+        ),
+        expected_failure_marker="test_single_api_calls_fact_checker_before_returning_generated_thesis",
+        rationale="The single-agent production response cannot bypass deterministic post-generation fact checking.",
+    ),
+    MutationCase(
+        mutation_id="FACT_CHECK_MULTI_API_POSTPROCESS",
+        component="Research multi-agent API fact-check wiring",
+        source_path="api/research-multi.js",
+        test_script="tests/test_fact_check.py",
+        before=(
+            "    // governance-mutation: FACT_CHECK_MULTI_API_POSTPROCESS\n"
+            "    const factChecked = attachFactCheck(synth, enrichment_context, ticker);"
+        ),
+        after=(
+            "    // governance-mutation: FACT_CHECK_MULTI_API_POSTPROCESS\n"
+            "    const factChecked = { data: synth, status: 'PASS' };"
+        ),
+        expected_failure_marker="test_multi_api_calls_fact_checker_before_returning_generated_thesis",
+        rationale="The multi-agent production response cannot bypass deterministic post-generation fact checking.",
+    ),
+    MutationCase(
         mutation_id="LHB_RENDER_READS_APPEARANCES",
         component="Research API LHB rendering",
         source_path="api/research.js",

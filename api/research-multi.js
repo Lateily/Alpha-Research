@@ -53,6 +53,7 @@ import {
   extractJsonPayload,
   isPlainObject,
   buildQcFindings,
+  attachFactCheck,
 } from './research.js';
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
@@ -955,10 +956,12 @@ export default async function handler(req, res) {
     // ── Validate (FC.1+FC.4) ────────────────────────────────────────────
     const quality = validateThesisQuality(synth);
     const qcMeta = { ...quality, qc_findings: buildQcFindings(quality) };
+    // governance-mutation: FACT_CHECK_MULTI_API_POSTPROCESS
+    const factChecked = attachFactCheck(synth, enrichment_context, ticker);
 
     // ── Assemble final response ─────────────────────────────────────────
     const thesisOut = {
-      ...synth,
+      ...factChecked.data,
       _bull_thesis: bullR2,
       _bear_thesis: bearR2,
       _bull_r1: bullR1,
@@ -979,13 +982,15 @@ export default async function handler(req, res) {
 
     const partialFailures = [bullR1Run, bearR1Run, technicalRun, bullR2Run, bearR2Run, forensicRun]
       .filter(r => r.status !== 'success').map(r => r.role);
+    const pipelineStatus = partialFailures.length > 0 ? 'PARTIAL_FAILURE' : 'OK';
 
     return res.status(200).json({
       success: true,
       ticker,
       data: thesisOut,
       models_used: MODELS,
-      _status: partialFailures.length > 0 ? 'PARTIAL_FAILURE' : 'OK',
+      _status: factChecked.status === 'BLOCKED_PENDING_HUMAN' ? factChecked.status : pipelineStatus,
+      _pipeline_status: pipelineStatus,
       _partial_failures: partialFailures,
       pipeline_ms_total: bullR1Run.ms + (bullR2Run.ms || 0) + forensicRun.ms + synthRun.ms, // approximate (ignores parallel overlap)
     });
