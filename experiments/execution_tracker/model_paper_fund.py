@@ -23,6 +23,7 @@ import json
 import math
 import os
 import sys
+from pathlib import Path
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
@@ -59,13 +60,35 @@ def _path(name, fund_dir=None):
 
 def load(name, default, fund_dir=None):
     p = _path(name, fund_dir)
-    return json.load(open(p)) if os.path.exists(p) else default
+    if not os.path.exists(p):
+        return default
+    with open(p, encoding="utf-8") as fh:
+        return json.load(fh)
 
 
 def save(name, obj, fund_dir=None):
-    os.makedirs(fund_dir or FUND_DIR, exist_ok=True)
-    with open(_path(name, fund_dir), "w") as fh:
-        json.dump(obj, fh, ensure_ascii=False, indent=2)
+    root = fund_dir or FUND_DIR
+    os.makedirs(root, exist_ok=True)
+    path = _path(name, fund_dir)
+    if os.path.islink(path):
+        raise ValueError(f"refusing to replace symlink ledger projection: {path}")
+    tmp = f"{path}.{os.getpid()}.tmp"
+    try:
+        with open(tmp, "w", encoding="utf-8") as fh:
+            json.dump(obj, fh, ensure_ascii=False, indent=2, allow_nan=False)
+            fh.write("\n")
+            fh.flush()
+            os.fsync(fh.fileno())
+        os.replace(tmp, path)
+        if os.name != "nt":
+            directory = os.open(os.path.dirname(os.path.abspath(path)), os.O_RDONLY)
+            try:
+                os.fsync(directory)
+            finally:
+                os.close(directory)
+    finally:
+        if os.path.exists(tmp):
+            os.unlink(tmp)
 
 
 def init_fund(fund_dir=None, capital=INITIAL_CAPITAL, date="init"):
@@ -316,25 +339,31 @@ def process_day(fund, orders, decision_log, token, series_fn=None, *,
                 require_realistic=False):
     """Advance fills/exits from SETTLED bars via paper_portfolio._advance (the one
     fill engine), then settle cash. Returns list of events."""
-    series_fn = series_fn or (
-        pp.execution_ohlc_series if require_realistic else pp.qfq_ohlc_series
-    )
     events, cache = [], {}
     for o in orders:
         if o["status"] == "closed":
             continue
-        if o["ticker"] not in cache:
-            cache[o["ticker"]] = series_fn(o["ticker"], token, o["registered_at"])
+        # governance-mutation: PAPER_REGISTRATION_REALISTIC_MODE_INFERENCE
+        order_realistic = (
+            require_realistic
+            or o.get("execution_mode") == pp.EXECUTION_MODEL_VERSION
+        )
+        loader = series_fn or (
+            pp.execution_ohlc_series if order_realistic else pp.qfq_ohlc_series
+        )
+        cache_key = (o["ticker"], order_realistic)
+        if cache_key not in cache:
+            cache[cache_key] = loader(o["ticker"], token, o["registered_at"])
         was = o["status"]
         was_frozen = o.get("execution_frozen") is True
         changed = pp._advance(
-            o, cache[o["ticker"]], require_realistic=require_realistic,
+            o, cache[cache_key], require_realistic=order_realistic,
         )
         if not changed:
             continue
         if was == "pending" and o["status"] in ("filled", "closed"):
             gross = round(o["shares"] * o["fill_price"], 2)
-            fee = transaction_cost(gross, "buy", o["cost_model"]) if require_realistic else 0.0
+            fee = transaction_cost(gross, "buy", o["cost_model"]) if order_realistic else 0.0
             o["entry_gross_cny"] = gross
             o["entry_fees_cny"] = fee
             fund["cash"] = round(fund["cash"] - gross - fee, 2)
@@ -358,7 +387,7 @@ def process_day(fund, orders, decision_log, token, series_fn=None, *,
             })
         if o["status"] == "closed":
             gross = round(o["shares"] * o["exit_price"], 2)
-            fee = transaction_cost(gross, "sell", o["cost_model"]) if require_realistic else 0.0
+            fee = transaction_cost(gross, "sell", o["cost_model"]) if order_realistic else 0.0
             fund["cash"] = round(fund["cash"] + gross - fee, 2)
             entry_gross = float(o.get("entry_gross_cny") or o["shares"] * o["fill_price"])
             entry_fees = float(o.get("entry_fees_cny") or 0.0)
@@ -378,6 +407,21 @@ def process_day(fund, orders, decision_log, token, series_fn=None, *,
                                  "pnl_cny": o["pnl_cny"],
                                  "realized_R": o["realized_R"], "no_trade_flag": True})
     return events
+
+
+def assert_paper_registration_ready(fund_dir=None, event_ledger_path=None):
+    """Fail closed before a daily advance sees half-projected registration state."""
+    repo_root = os.path.dirname(os.path.dirname(HERE))
+    if repo_root not in sys.path:
+        sys.path.insert(0, repo_root)
+    from experiments.research_funnel import paper_registration_bridge
+
+    paper_registration_bridge.assert_registration_state_ready(
+        event_ledger_path=Path(
+            event_ledger_path or os.path.join(HERE, "event_ledger.jsonl")
+        ),
+        fund_dir=Path(fund_dir or FUND_DIR),
+    )
 
 
 def execution_realism_receipt(order):
@@ -644,16 +688,20 @@ def main():
     ap.add_argument("--status", action="store_true")
     ap.add_argument("--daily", action="store_true",
                     help="每日结算:推进成交/退出并按当轮 target 追加 NAV(append-only,一天一条)")
+    ap.add_argument("--fund-dir", default=FUND_DIR,
+                    help="explicit Model Paper Fund directory (tests use an isolated fixture)")
+    ap.add_argument("--event-ledger", default=os.path.join(HERE, "event_ledger.jsonl"),
+                    help="R-015 ledger used by paper-registration preflight")
     args = ap.parse_args()
     if args.selftest:
         sys.exit(0 if selftest() else 1)
     if args.init:
-        if os.path.exists(_path("fund.json")):
+        if os.path.exists(_path("fund.json", args.fund_dir)):
             print("fund.json already exists — refusing to re-init (append-only ledger)")
             sys.exit(1)
         import datetime
-        fund = init_fund(date=datetime.datetime.now().strftime("%Y%m%d"))
-        print(f"Model Paper Fund initialized: ¥{fund['initial_capital']:,.0f} (VIRTUAL) at {FUND_DIR}")
+        fund = init_fund(fund_dir=args.fund_dir, date=datetime.datetime.now().strftime("%Y%m%d"))
+        print(f"Model Paper Fund initialized: ¥{fund['initial_capital']:,.0f} (VIRTUAL) at {args.fund_dir}")
         print("不是买卖指令；研究信号，human executes。")
         return
     if args.daily:
@@ -663,12 +711,19 @@ def main():
         date = target_trade_date()
         if not date:
             print("DATA_BLOCKED: 无 target_trade_date"); return 1
-        fund = load("fund.json", None)
+        try:
+            # governance-mutation: PAPER_REGISTRATION_DAILY_CALLSITE
+            assert_paper_registration_ready(args.fund_dir, args.event_ledger)
+        except Exception as exc:
+            print(f"DATA_BLOCKED: paper registration preflight failed: {exc}")
+            print("不是买卖指令；研究信号，human executes。")
+            return 1
+        fund = load("fund.json", None, args.fund_dir)
         if not fund:
             print("DATA_BLOCKED: fund.json 未初始化 — 先跑 --init"); return 1
-        orders = load("orders.json", [])
-        decision_log = load("decision_log.json", [])
-        navh = load("nav_history.json", [])
+        orders = load("orders.json", [], args.fund_dir)
+        decision_log = load("decision_log.json", [], args.fund_dir)
+        navh = load("nav_history.json", [], args.fund_dir)
         token = os.environ.get("TUSHARE_TOKEN", "").strip()
         events = []
         if token and not os.environ.get("AR_OFFLINE"):
@@ -715,8 +770,8 @@ def main():
                   f"拒绝写入 NAV(不接受部分市值+部分成本的混合口径)")
             print("不是买卖指令；研究信号，human executes。")
             return 1
-        save("fund.json", fund); save("orders.json", orders)
-        save("decision_log.json", decision_log); save("nav_history.json", navh)
+        save("fund.json", fund, args.fund_dir); save("orders.json", orders, args.fund_dir)
+        save("decision_log.json", decision_log, args.fund_dir); save("nav_history.json", navh, args.fund_dir)
         print(f"[daily] {date} nav={rec['nav']:,.0f} cash={rec['cash']:,.0f} "
               f"n_pos={rec['n_positions']} events={len(events)} run_id={run_id()}")
         for e in events:
@@ -725,11 +780,11 @@ def main():
         return 0
 
     if args.status:
-        fund = load("fund.json", None)
+        fund = load("fund.json", None, args.fund_dir)
         if not fund:
             print("not initialized — run --init"); return
-        orders = load("orders.json", [])
-        navh = load("nav_history.json", [])
+        orders = load("orders.json", [], args.fund_dir)
+        navh = load("nav_history.json", [], args.fund_dir)
         print(json.dumps(compute_performance(fund, orders, navh), ensure_ascii=False, indent=2))
         print("不是买卖指令；研究信号，human executes。")
         return
