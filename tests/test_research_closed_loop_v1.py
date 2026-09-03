@@ -27,6 +27,7 @@ EXPECTED_ARTIFACT_PATHS = (
     "docs/research/RESEARCH_METHOD_AND_ATTRIBUTION_V1.md",
     "docs/research/FIVE_AXIS_ATTRIBUTION_V1.md",
     "docs/research/PAPER_EXECUTION_REALISM_AUDIT_V1.md",
+    "docs/research/PAPER_REGISTRATION_BRIDGE_V1.md",
     "docs/research/prospective/SEMICONDUCTOR_DAILY_SOURCE_REPAIR_PLAN_V0_1.md",
     "experiments/research_funnel/funnel_pipeline.py",
     "experiments/research_funnel/feature_store.py",
@@ -38,6 +39,8 @@ EXPECTED_ARTIFACT_PATHS = (
     "experiments/research_funnel/research_method.py",
     "experiments/research_funnel/research_cycle.py",
     "experiments/research_funnel/five_axis_attribution.py",
+    "experiments/research_funnel/paper_registration_bridge.py",
+    "experiments/execution_tracker/event_ledger.py",
     "experiments/execution_tracker/model_paper_fund.py",
     "experiments/execution_tracker/paper_execution_audit.py",
     "experiments/execution_tracker/model_fund/orders.json",
@@ -93,18 +96,18 @@ def _validate(manifest: dict[str, Any]) -> list[str]:
         errors.append("artifact binding set or order changed")
     if manifest.get("schema") != "ar.research_closed_loop_manifest.v1":
         errors.append("schema changed")
-    if manifest.get("schema_version") != "1.3":
+    if manifest.get("schema_version") != "1.4":
         errors.append("manifest revision changed")
-    if manifest.get("method_version") != "RESEARCH_CLOSED_LOOP_V1_3":
+    if manifest.get("method_version") != "RESEARCH_CLOSED_LOOP_V1_4":
         errors.append("method version changed")
     if manifest.get("status") != "FROZEN_OFFLINE_WORKFLOW_DEBUG":
         errors.append("frozen status changed")
-    if manifest.get("frozen_at") != "2026-08-26T01:17:17+08:00":
+    if manifest.get("frozen_at") != "2026-08-26T14:44:39+08:00":
         errors.append("frozen timestamp changed")
     if manifest.get("source_base") != {
-        "assembly_code_commit": "a893d0fc28ffcf3f50ab6071d8f5ccf86b74aa0a",
-        "base_main": "7774e33dbfa6c5554472d3c137ca7b14b4423f4c",
-        "review_pr": 317,
+        "assembly_code_commit": "e0d73dac5a8f8bbc4a427ec15b7efce8c8d5ad8c",
+        "base_main": "ad26f1b644d75618a3923267c4dfa5b446d71e67",
+        "review_pr": 319,
         "data_dependency_pr": 297,
         "data_dependency_status": "MERGED_MAIN",
     }:
@@ -112,7 +115,8 @@ def _validate(manifest: dict[str, Any]) -> list[str]:
 
     block_ids = [row.get("id") for row in manifest.get("ordered_blocks", [])]
     if block_ids != [
-        "SCREENING", "U4_DECISION", "RESEARCH_REGISTRATION", "PAPER_EXECUTION",
+        "SCREENING", "U4_DECISION", "RESEARCH_REGISTRATION", "PAPER_REGISTRATION",
+        "PAPER_EXECUTION",
         "OUTCOME_SCORING", "FIVE_AXIS_ATTRIBUTION", "METHOD_LEARNING",
     ]:
         errors.append("ordered block chain changed")
@@ -209,9 +213,9 @@ class ResearchClosedLoopV1Tests(unittest.TestCase):
         ]
         self.assertIn("artifact binding set or order changed", _validate(changed))
 
-    def test_revision_1_3_binds_the_semiconductor_repair_assembly(self) -> None:
-        self.assertEqual(self.manifest["schema_version"], "1.3")
-        self.assertEqual(self.manifest["method_version"], "RESEARCH_CLOSED_LOOP_V1_3")
+    def test_revision_1_4_binds_the_paper_registration_assembly(self) -> None:
+        self.assertEqual(self.manifest["schema_version"], "1.4")
+        self.assertEqual(self.manifest["method_version"], "RESEARCH_CLOSED_LOOP_V1_4")
         bound = {row["path"] for row in self.manifest["artifact_bindings"]}
         self.assertTrue({
             "docs/research/RESEARCH_CLOSED_LOOP_V1.md",
@@ -222,25 +226,52 @@ class ResearchClosedLoopV1Tests(unittest.TestCase):
             "experiments/research_funnel/semiconductor_source_repair.py",
             "experiments/research_funnel/industry_taxonomy.v1.json",
             "docs/research/prospective/SEMICONDUCTOR_DAILY_SOURCE_REPAIR_PLAN_V0_1.md",
+            "docs/research/PAPER_REGISTRATION_BRIDGE_V1.md",
+            "experiments/research_funnel/paper_registration_bridge.py",
+            "experiments/execution_tracker/event_ledger.py",
+            "experiments/execution_tracker/model_paper_fund.py",
         }.issubset(bound))
 
-    def test_revision_1_3_identity_names_current_review(self) -> None:
-        self.assertEqual(self.manifest["frozen_at"], "2026-08-26T01:17:17+08:00")
+    def test_paper_registration_block_preserves_human_r015_transaction(self) -> None:
+        block = next(
+            row for row in self.manifest["ordered_blocks"]
+            if row["id"] == "PAPER_REGISTRATION"
+        )
+        self.assertEqual(
+            block,
+            {
+                "id": "PAPER_REGISTRATION",
+                "stage": "PAPER_REGISTER",
+                "purpose": (
+                    "Recompute one current U4 SELECT and one sealed research case into an "
+                    "exact human-approved plan, then append one replayable R-015 intent/commit "
+                    "transaction and idempotently project one realistic paper-only pending order."
+                ),
+                "output": "AR_PAPER_REGISTRATION_RECEIPT_V1",
+                "honest_stop_states": [
+                    "AWAITING_HUMAN_APPROVAL", "U4_REVOKED", "PORTFOLIO_DRIFT",
+                    "PENDING_RECOVERY", "DATA_BLOCKED",
+                ],
+            },
+        )
+
+    def test_revision_1_4_identity_names_current_review(self) -> None:
+        self.assertEqual(self.manifest["frozen_at"], "2026-08-26T14:44:39+08:00")
         self.assertEqual(
             self.manifest["source_base"],
             {
-                "assembly_code_commit": "a893d0fc28ffcf3f50ab6071d8f5ccf86b74aa0a",
-                "base_main": "7774e33dbfa6c5554472d3c137ca7b14b4423f4c",
-                "review_pr": 317,
+                "assembly_code_commit": "e0d73dac5a8f8bbc4a427ec15b7efce8c8d5ad8c",
+                "base_main": "ad26f1b644d75618a3923267c4dfa5b446d71e67",
+                "review_pr": 319,
                 "data_dependency_pr": 297,
                 "data_dependency_status": "MERGED_MAIN",
             },
         )
         changed = json.loads(json.dumps(self.manifest))
-        changed["frozen_at"] = "2026-08-25T23:58:51+08:00"
+        changed["frozen_at"] = "2026-08-26T01:17:17+08:00"
         self.assertIn("frozen timestamp changed", _validate(changed))
         changed = json.loads(json.dumps(self.manifest))
-        changed["source_base"]["review_pr"] = 316
+        changed["source_base"]["review_pr"] = 317
         self.assertIn("source-base review binding changed", _validate(changed))
 
     def test_authority_cannot_be_promoted(self) -> None:
@@ -327,7 +358,8 @@ class ResearchClosedLoopV1Tests(unittest.TestCase):
         self.assertEqual(task["risk_level"], "CONSTITUTIONAL")
         text = DOC_PATH.read_text(encoding="utf-8")
         normalized = " ".join(text.split())
-        self.assertIn("Research Closed Loop V1.3", normalized)
+        self.assertIn("Research Closed Loop V1.4", normalized)
+        self.assertIn("shared R-015 intent/commit WAL", normalized)
         self.assertIn("repaired historical evidence remains `LATE_OBSERVED`", normalized)
         self.assertIn("FROZEN_OFFLINE_WORKFLOW_DEBUG / PRODUCTION_UNWIRED", normalized)
         self.assertIn("E1 red flags override every positive channel", normalized)

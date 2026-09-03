@@ -39,11 +39,16 @@ UNIQUE_KINDS = {"register", "genesis",
                 "u4_decision_intent",
                 # governance-mutation: U4_LEDGER_EVENT_KIND_UNIQUE
                 "u4_decision", "u4_decision_closure",
+                "paper_registration_intent", "paper_registration_commit",
                 "publication_migration_intent", "publication_migration_commit",
                 "publication_migration_abort"}
 U4_TYPED_KINDS = frozenset({
     "u4_decision_intent", "u4_decision", "u4_decision_closure",
 })
+PAPER_REGISTRATION_TYPED_KINDS = frozenset({
+    "paper_registration_intent", "paper_registration_commit",
+})
+RESERVED_TYPED_KINDS = U4_TYPED_KINDS | PAPER_REGISTRATION_TYPED_KINDS
 
 
 def _runtime_timestamp():
@@ -290,7 +295,7 @@ def _append_preflight(path):
 def append(kind, rec_id, payload, path=DEFAULT_PATH, now=None):
     """持排他 flock 追加。写前链与锚点都必须过,否则拒写(不在坏账本上叠加)。"""
     # governance-mutation: U4_LEDGER_RAW_APPEND_RESERVED
-    if kind in U4_TYPED_KINDS:
+    if kind in RESERVED_TYPED_KINDS:
         raise ValueError(f"{kind} is typed-only; raw append is forbidden")
     import fcntl
     os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
@@ -313,7 +318,7 @@ def append_stamped(kind, build, path=DEFAULT_PATH):
     ``registered_at`` field must equal the outer ledger timestamp.
     """
     # governance-mutation: U4_LEDGER_GENERIC_STAMPED_RESERVED
-    if kind in U4_TYPED_KINDS:
+    if kind in RESERVED_TYPED_KINDS:
         raise ValueError(f"{kind} is typed-only; generic stamped append is forbidden")
     import fcntl
     os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
@@ -371,6 +376,52 @@ def append_u4_stamped(kind, build, *, bundle_dir, path=DEFAULT_PATH):
                 path, preview, bundle_dir=bundle_dir
             )
             return _append_verified(kind, rec_id, payload_snapshot, path, ts, st, lines)
+        finally:
+            fcntl.flock(lf, fcntl.LOCK_UN)
+
+
+def append_paper_registration_stamped(
+    kind, build, *, source_context, path=DEFAULT_PATH,
+):
+    """Append one paper-registration event through its typed replay boundary.
+
+    The generic append APIs reserve these kinds. The builder receives the sole
+    R-015 runtime timestamp, and the bridge replays the proposed outer record
+    together with every prior registration event before any byte reaches disk.
+    """
+    if kind not in PAPER_REGISTRATION_TYPED_KINDS:
+        raise ValueError(f"{kind} is not a paper-registration typed kind")
+    import fcntl
+    os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
+    with open(path + ".lock", "w") as lf:
+        fcntl.flock(lf, fcntl.LOCK_EX)
+        try:
+            st, lines = _append_preflight(path)
+            ts = _runtime_timestamp()
+            built = build(ts)
+            if not isinstance(built, tuple) or len(built) != 2:
+                raise ValueError(
+                    "paper-registration stamped event builder must return (id, payload)"
+                )
+            rec_id, payload = built
+            if not isinstance(rec_id, str) or not rec_id:
+                raise ValueError("paper-registration stamped event id must be non-empty")
+            # governance-mutation: PAPER_REGISTRATION_TYPED_PAYLOAD_SNAPSHOT
+            payload_snapshot = json.loads(canonical(payload))
+            preview = {
+                "seq": st["n"], "kind": kind, "id": rec_id,
+                "payload": payload_snapshot, "ts": ts,
+                "prev": st["head"] or GENESIS_PREV,
+            }
+            preview["hash"] = record_hash(preview)
+            from experiments.research_funnel import paper_registration_bridge
+            # governance-mutation: PAPER_REGISTRATION_TYPED_APPEND_VALIDATION
+            paper_registration_bridge.validate_typed_outer_append(
+                path, preview, source_context=source_context,
+            )
+            return _append_verified(
+                kind, rec_id, payload_snapshot, path, ts, st, lines
+            )
         finally:
             fcntl.flock(lf, fcntl.LOCK_UN)
 

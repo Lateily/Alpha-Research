@@ -1,0 +1,149 @@
+{
+  "schema": "ar.research_strategy_quality_contract.v0",
+  "schema_version": "0.1",
+  "status": "DRAFT_OFFLINE_QUALITY_PLAN",
+  "purpose": "Define the next research-quality controls for fundamental precision, timing discipline, backtest hygiene, and five-axis learning without granting selection or trading authority.",
+  "pipeline_order": [
+    "U0_ELIGIBLE_UNIVERSE",
+    "FUNDAMENTAL_THRESHOLD_PROFILE",
+    "U1_INDEPENDENT_CHANNELS",
+    "U2_BUCKETED_CANDIDATE_POOL",
+    "U3_SIX_DIMENSION_BATTERY",
+    "U4_HUMAN_JUNYAN_DECISION",
+    "THESIS_VALUATION_WRONG_IF",
+    "MANUAL_SMC_TIMING_TICKET",
+    "PROSPECTIVE_PAPER_REGISTRATION",
+    "PAPER_EXECUTION_A_SHARE_CONSTRAINTS",
+    "T_PLUS_OBSERVATION",
+    "FIVE_AXIS_ATTRIBUTION",
+    "METHOD_KEEP_REVISE_KILL"
+  ],
+  "candidate_buckets": [
+    "A_FUNDAMENTAL_PASS_TIMING_NEAR",
+    "B_FUNDAMENTAL_PASS_TIMING_WAIT",
+    "C_REPAIR_OR_REVERSAL_WATCH",
+    "D_CONTROL_OR_DENOMINATOR"
+  ],
+  "fundamental_precision_fields": [
+    "threshold_profile_ref",
+    "why_in",
+    "why_out",
+    "missing_evidence",
+    "method_version",
+    "cohort_id",
+    "causal_cluster_id"
+  ],
+  "timing_ticket_required_fields": [
+    "timing_method_version",
+    "evidence_as_of",
+    "higher_timeframe_structure",
+    "setup_type",
+    "poi_zone",
+    "range_location",
+    "volume_state",
+    "flow_state",
+    "sector_state",
+    "entry_zone",
+    "structure_invalidation",
+    "structure_stop",
+    "target_1",
+    "target_2",
+    "wait_reason"
+  ],
+  "timing_statuses": [
+    "PASS",
+    "WAIT",
+    "DATA_BLOCKED"
+  ],
+  "backtest_hygiene": [
+    "POINT_IN_TIME_SOURCES",
+    "CORPORATE_ACTION_LINEAGE",
+    "A_SHARE_T_PLUS_1_PRICE_LIMIT_LOT_COST_SLIPPAGE_VOLUME",
+    "NO_SAME_DAY_FILL_AFTER_REGISTRATION",
+    "RANDOM_AND_NON_PASS_CONTROLS",
+    "FULL_DENOMINATOR_RETENTION",
+    "CAUSAL_CLUSTER_INDEPENDENCE",
+    "OVERFIT_COST_TURNOVER_SENSITIVITY"
+  ],
+  "five_axis_learning": [
+    "THESIS",
+    "VALUATION",
+    "TIMING",
+    "EXECUTION",
+    "MARKET_BETA"
+  ],
+  "sample_policy": {
+    "first_semiconductor_cycles": "WORKFLOW_DEBUG_ONLY",
+    "first_batch_size": "5_TO_10",
+    "minimum_method_claim_clusters": 30,
+    "requires_cross_industry_replication": true,
+    "portfolio_promotion_allowed": false
+  },
+  "cluster_counting_rules": [
+    "count closed samples by causal_cluster_id, not ticker rows",
+    "exclude WORKFLOW_DEBUG_ONLY cycles from minimum_method_claim_clusters",
+    "exclude duplicate catalysts, same issuer restatements, and same supply-chain shock clusters from independent counts",
+    "DATA_BLOCKED and NO_TRADE rows remain in the denominator but cannot be counted as method-success samples",
+    "method claims require at least 30 independent closed causal clusters and cross-industry replication"
+  ],
+  "pre_registration_failure_modes": [
+    "THESIS_NOT_SEALED",
+    "VALUATION_RANGE_NOT_SEALED",
+    "WRONG_IF_NOT_SEALED",
+    "TIMING_TICKET_NOT_PRE_OUTCOME",
+    "MANUAL_SMC_STATUS_NOT_PASS",
+    "ACTIVE_E1_RED_FLAG",
+    "SOURCE_DATA_BLOCKED",
+    "U4_SELECT_MISSING_OR_UNTRUSTED",
+    "PLAN_HASH_UNBOUND",
+    "AUTHORITY_ESCALATION"
+  ],
+  "method_claim_gate": {
+    "claim_status_before_threshold": "METHOD_CLAIM_BLOCKED",
+    "minimum_independent_closed_clusters": 30,
+    "workflow_debug_counts_toward_threshold": false,
+    "requires_cross_industry_replication": true,
+    "requires_pre_registered_failure_modes": true,
+    "allowed_claims_before_threshold": [
+      "workflow_debug_observation",
+      "process_quality_issue",
+      "data_gap_report"
+    ],
+    "blocked_claims_before_threshold": [
+      "alpha_claim",
+      "profitability_claim",
+      "method_validity_claim",
+      "portfolio_promotion_claim"
+    ]
+  },
+  "authority": {
+    "u4_selection_authority": "HUMAN_JUNYAN_ONLY",
+    "paper_registration_authority": "HUMAN_JUNYAN_ONLY",
+    "production_authority": false,
+    "trade_authority": false,
+    "paper_order_authority": false,
+    "claim_allowed": false,
+    "no_trade_flag": true
+  },
+  "hard_stops": [
+    "THRESHOLD_PROFILE_HAS_NO_APPROVAL_REF",
+    "MISSING_DATA_FILLED_AS_ZERO_OR_NEUTRAL",
+    "E1_RED_FLAG_OFFSET_BY_POSITIVE_EVIDENCE",
+    "TIMING_EVIDENCE_AFTER_OUTCOME",
+    "DENOMINATOR_NOT_RETAINED",
+    "METHOD_CLAIM_BELOW_30_INDEPENDENT_CLUSTERS",
+    "ONE_OR_TWO_NAME_POOL_FORCED_TO_U4_SELECTION",
+    "PAPER_PNL_REWRITES_RESEARCH_AXIS",
+    "AUTHORITY_ESCALATION"
+  ],
+  "non_goals": [
+    "stock_recommendation",
+    "automatic_security_selection",
+    "paper_order_creation",
+    "real_trade_execution",
+    "alpha_claim",
+    "profitability_claim",
+    "portfolio_construction"
+  ],
+  "disclaimer": "Not trading advice; research signal, human executes."
+}
