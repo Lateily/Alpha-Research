@@ -49,24 +49,6 @@ CHANNEL_BINDINGS = frozenset(
     }
 )
 
-# Closed source-field catalog for the currently reviewed semiconductor cards.
-# It records known Tushare source identities; it does not claim that every field
-# is already collected by the production feature store.
-KNOWN_TUSHARE_FIELDS_BY_API = {
-    "daily_basic": frozenset({"pe_ttm", "pb", "ps_ttm"}),
-    "fina_indicator": frozenset(
-        {"roe", "grossprofit_margin", "netprofit_margin", "inv_turn", "invturn_days"}
-    ),
-    "balancesheet": frozenset(
-        {"cip", "fix_assets", "inventories", "total_assets", "contract_liab"}
-    ),
-    "cashflow": frozenset({"c_pay_acq_const_fiolta", "depr_fa_coga_dpba"}),
-    "income": frozenset(
-        {"revenue", "total_revenue", "rd_exp", "oth_income", "total_profit", "depr_fa_coga_dpba"}
-    ),
-    "fina_mainbz": frozenset({"bz_item", "bz_sales", "bz_cost", "bz_profit"}),
-}
-
 CARD_REQUIRED_FIELDS = frozenset(
     {
         "card_id",
@@ -93,6 +75,11 @@ LOGIC_REQUIRED_FIELDS = frozenset({"type", "positive_if", "negative_if", "lookba
 LOGIC_OPTIONAL_FIELDS = frozenset({"threshold", "stages"})
 CARD_ID_RE = re.compile(r"^SEMI_(MAT|EQP|DSN|FDY|OSAT)_[0-9]{3}$")
 DATE8_RE = re.compile(r"^[0-9]{8}$")
+CARD_TEXT_MIN_LENGTHS = {
+    "variable": 2,
+    "why_it_matters": 20,
+    "falsification": 10,
+}
 
 
 class KnowledgeCardError(RuntimeError):
@@ -171,6 +158,68 @@ def _split_csv(value: str, label: str) -> tuple[str, ...]:
     return parts
 
 
+def _field_names(raw: str | Sequence[str]) -> frozenset[str]:
+    values = raw.split(",") if isinstance(raw, str) else raw
+    return frozenset(str(value).strip() for value in values if str(value).strip())
+
+
+def repo_collected_tushare_fields() -> dict[str, frozenset[str]]:
+    """Build the field catalog from the collectors that declare exact fields.
+
+    ``scripts/fetch_tushare.py`` stores provider-default raw rows and therefore
+    has no stable field-level contract to contribute here.  Its API calls are
+    not treated as proof that any particular field is available to the
+    all-market feature store.
+    """
+    import feature_store
+    import semiconductor_inputs
+
+    collected = {
+        api: set(_field_names(fields))
+        for api, fields in feature_store.ENDPOINT_FIELDS.items()
+    }
+    exact_semiconductor_sources = {
+        "moneyflow_dc": semiconductor_inputs.MONEYFLOW_FIELDS,
+        "cyq_perf": semiconductor_inputs.CHIPS_FIELDS,
+        "fina_indicator": semiconductor_inputs.FINANCIAL_FIELDS,
+    }
+    for api, fields in exact_semiconductor_sources.items():
+        collected.setdefault(api, set()).update(_field_names(fields))
+    return {api: frozenset(fields) for api, fields in sorted(collected.items())}
+
+
+def source_coverage(card: Mapping[str, Any]) -> dict[str, Any]:
+    """Report every declared API/field pair without claiming missing collection."""
+    source = card.get("data_source") or {}
+    api_value = source.get("tushare_api")
+    field_value = source.get("tushare_field")
+    if api_value is None or field_value is None:
+        return {
+            "collected_by_repo": False,
+            "declared_pairs": [],
+            "uncollected_pairs": [],
+        }
+    apis = _split_csv(str(api_value), "data_source.tushare_api")
+    fields = _split_csv(str(field_value), "data_source.tushare_field")
+    catalog = repo_collected_tushare_fields()
+    pairs = [
+        {
+            "api": api,
+            "field": field,
+            "collected_by_repo": field in catalog.get(api, frozenset()),
+        }
+        for api in apis
+        for field in fields
+    ]
+    missing = [f"{pair['api']}.{pair['field']}" for pair in pairs if not pair["collected_by_repo"]]
+    return {
+        # governance-mutation: CARD_SOURCE_FIELD_COVERAGE
+        "collected_by_repo": bool(pairs) and not missing,
+        "declared_pairs": pairs,
+        "uncollected_pairs": missing,
+    }
+
+
 def _validate_source(source: Any, label: str) -> None:
     if not isinstance(source, Mapping):
         raise KnowledgeCardError(f"{label} must be an object")
@@ -195,18 +244,11 @@ def _validate_source(source: Any, label: str) -> None:
     if api_value is None:
         return
 
-    apis = _split_csv(_nonempty_string(api_value, f"{label}.tushare_api"), f"{label}.tushare_api")
-    fields = _split_csv(
+    _split_csv(_nonempty_string(api_value, f"{label}.tushare_api"), f"{label}.tushare_api")
+    _split_csv(
         _nonempty_string(field_value, f"{label}.tushare_field"),
         f"{label}.tushare_field",
     )
-    unknown_apis = sorted(set(apis) - set(KNOWN_TUSHARE_FIELDS_BY_API))
-    if unknown_apis:
-        raise KnowledgeCardError(f"{label}.tushare_api is unknown: {unknown_apis}")
-    known_fields = set().union(*(KNOWN_TUSHARE_FIELDS_BY_API[api] for api in apis))
-    unknown_fields = sorted(set(fields) - known_fields)
-    if unknown_fields:
-        raise KnowledgeCardError(f"{label}.tushare_field is unknown: {unknown_fields}")
 
 
 def _validate_logic(logic: Any, label: str) -> None:
@@ -248,7 +290,11 @@ def validate_card(card: Any) -> None:
     if card["sub_sector"] not in SUB_SECTORS:
         raise KnowledgeCardError(f"{card_id}.sub_sector is invalid")
     for field in ("variable", "why_it_matters", "falsification", "authored_by"):
-        _nonempty_string(card[field], f"{card_id}.{field}")
+        text = _nonempty_string(card[field], f"{card_id}.{field}")
+        minimum = CARD_TEXT_MIN_LENGTHS.get(field)
+        # governance-mutation: CARD_SCHEMA_MIN_LENGTHS
+        if minimum is not None and len(text) < minimum:
+            raise KnowledgeCardError(f"{card_id}.{field} must have length >= {minimum}")
     if card["status"] not in STATUS_ORDER:
         raise KnowledgeCardError(f"{card_id}.status is invalid")
     if card["status"] != "DRAFT":
@@ -324,6 +370,7 @@ def _blocked(card: Mapping[str, Any], row: Mapping[str, Any], reason: str) -> di
         "result": None,
         "card_hash": canonical_hash(card),
         "source_row_hash": canonical_hash(row),
+        "source_coverage": source_coverage(card),
         "disclaimer": DISCLAIMER,
     }
 
@@ -335,6 +382,11 @@ def evaluate(card: Mapping[str, Any], row: Mapping[str, Any]) -> dict[str, Any] 
         return None
     if not isinstance(row, Mapping):
         raise KnowledgeCardError("evaluation row must be an object")
+    coverage = source_coverage(card)
+    if card["data_source"]["availability"] == "AUTO":
+        # governance-mutation: CARD_AUTO_SOURCE_COLLECTION_GATE
+        if not coverage["collected_by_repo"]:
+            return _blocked(card, row, "SOURCE_FIELDS_NOT_COLLECTED_BY_REPO")
     logic = card["judgment_logic"]
     logic_type = logic["type"]
 
@@ -419,6 +471,7 @@ def evaluate(card: Mapping[str, Any], row: Mapping[str, Any]) -> dict[str, Any] 
         "result": result,
         "card_hash": canonical_hash(card),
         "source_row_hash": canonical_hash(row),
+        "source_coverage": coverage,
         "disclaimer": DISCLAIMER,
     }
 
@@ -440,7 +493,41 @@ def attach_evaluations(
     output = dict(payload)
     output["knowledge_card_evidence"] = evaluations
     output["knowledge_card_evidence_hash"] = canonical_hash(evaluations)
+    verify_evaluations(output, cards, rows_by_card)
     return output
+
+
+def verify_evaluations(
+    payload: Mapping[str, Any],
+    cards: Sequence[Mapping[str, Any]],
+    rows_by_card: Mapping[str, Mapping[str, Any]],
+) -> dict[str, Any]:
+    """Rebuild every active observation and reject any self-consistent rewrite."""
+    if not isinstance(payload, Mapping) or not isinstance(rows_by_card, Mapping):
+        raise KnowledgeCardError("payload and rows_by_card must be objects")
+    active = participating_cards(cards)
+    if not active:
+        if "knowledge_card_evidence" in payload or "knowledge_card_evidence_hash" in payload:
+            raise KnowledgeCardError("inactive card table cannot carry evaluations")
+        return {"ok": True, "count": 0, "evidence_hash": None}
+    evidence = payload.get("knowledge_card_evidence")
+    if not isinstance(evidence, list):
+        raise KnowledgeCardError("knowledge_card_evidence must be an array")
+    observed_hash = payload.get("knowledge_card_evidence_hash")
+    if observed_hash != canonical_hash(evidence):
+        raise KnowledgeCardError("knowledge-card evidence hash mismatch")
+    expected = [
+        evaluate(card, rows_by_card.get(str(card["card_id"]), {}))
+        for card in active
+    ]
+    # governance-mutation: CARD_EVIDENCE_HASH_VERIFIED
+    if evidence != expected:
+        raise KnowledgeCardError("knowledge-card evidence differs from source-derived result")
+    return {
+        "ok": True,
+        "count": len(evidence),
+        "evidence_hash": observed_hash,
+    }
 
 
 def _summary(cards: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
@@ -454,6 +541,10 @@ def _summary(cards: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
             if any(card["status"] == status for card in cards)
         },
         "cards_hash": canonical_hash(cards),
+        "source_coverage": [
+            {"card_id": card["card_id"], **source_coverage(card)}
+            for card in sorted(cards, key=lambda item: str(item["card_id"]))
+        ],
         "authority": {
             "selection": False,
             "trade": False,

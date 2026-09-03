@@ -4,6 +4,7 @@ from __future__ import annotations
 import copy
 import io
 import json
+import runpy
 import sys
 import tempfile
 import unittest
@@ -19,7 +20,10 @@ if str(FUNNEL) not in sys.path:
 import knowledge_cards as cards  # noqa: E402
 
 
-COMMITTED_CARDS = ROOT / "data" / "knowledge_cards" / "semiconductor.json"
+CARD_DIR = ROOT / "data" / "knowledge_cards"
+COMMITTED_CARDS = CARD_DIR / "semiconductor_materials.json"
+COMMITTED_SCHEMA = CARD_DIR / "knowledge_card.schema.json"
+MIGRATED_VALIDATOR = CARD_DIR / "validate_cards.py"
 
 
 def _card(
@@ -75,6 +79,33 @@ class KnowledgeCardTests(unittest.TestCase):
             cards.LOGIC_TYPES,
             {card["judgment_logic"]["type"] for card in loaded},
         )
+
+    def test_migrated_schema_validator_and_runtime_accept_the_reviewed_table(self) -> None:
+        schema = json.loads(COMMITTED_SCHEMA.read_text(encoding="utf-8"))
+        self.assertEqual(2, schema["properties"]["variable"]["minLength"])
+        self.assertEqual(20, schema["properties"]["why_it_matters"]["minLength"])
+        self.assertEqual(10, schema["properties"]["falsification"]["minLength"])
+        migrated = runpy.run_path(str(MIGRATED_VALIDATOR))
+        loaded = json.loads(COMMITTED_CARDS.read_text(encoding="utf-8"))
+        source_errors = [
+            error
+            for index, card in enumerate(loaded)
+            for error in migrated["check"](card, index)
+        ]
+        self.assertEqual([], source_errors)
+        cards.validate_cards(loaded)
+
+    def test_schema_minimum_text_lengths_are_enforced(self) -> None:
+        for field, value in (
+            ("variable", "x"),
+            ("why_it_matters", "too short"),
+            ("falsification", "short"),
+        ):
+            with self.subTest(field=field):
+                card = _card()
+                card[field] = value
+                with self.assertRaisesRegex(cards.KnowledgeCardError, "length >="):
+                    cards.validate_card(card)
 
     def test_empty_table_leaves_full_chain_hash_unchanged(self) -> None:
         payload = {"schema": "fixture.chain", "rows": [{"ts_code": "000001.SZ"}]}
@@ -153,7 +184,7 @@ class KnowledgeCardTests(unittest.TestCase):
         self.assertEqual(1, len(output["knowledge_card_evidence"]))
         self.assertEqual("DATA_BLOCKED", output["knowledge_card_evidence"][0]["status"])
 
-    def test_unknown_tushare_field_is_rejected(self) -> None:
+    def test_uncollected_auto_source_is_visible_and_cannot_look_computable(self) -> None:
         card = _card()
         card["data_source"] = {
             "availability": "AUTO",
@@ -162,8 +193,60 @@ class KnowledgeCardTests(unittest.TestCase):
             "tushare_field": "pe_ttm,invented_field",
             "manual_required": False,
         }
-        with self.assertRaisesRegex(cards.KnowledgeCardError, "tushare_field is unknown"):
-            cards.validate_card(card)
+        cards.validate_card(card)
+        coverage = cards.source_coverage(card)
+        self.assertFalse(coverage["collected_by_repo"])
+        self.assertIn("daily_basic.invented_field", coverage["uncollected_pairs"])
+        result = cards.evaluate(card, {"value": 12.0})
+        self.assertEqual("DATA_BLOCKED", result["status"])
+        self.assertEqual(["SOURCE_FIELDS_NOT_COLLECTED_BY_REPO"], result["reason_codes"])
+
+    def test_source_coverage_is_checked_per_api_field_pair_not_by_union(self) -> None:
+        card = _card()
+        card["data_source"] = {
+            "availability": "AUTO",
+            "primary": "Two exact repository collectors",
+            "tushare_api": "daily_basic,fina_indicator",
+            "tushare_field": "pe_ttm,roe",
+            "manual_required": False,
+        }
+        coverage = cards.source_coverage(card)
+        by_pair = {
+            (item["api"], item["field"]): item["collected_by_repo"]
+            for item in coverage["declared_pairs"]
+        }
+        self.assertTrue(by_pair[("daily_basic", "pe_ttm")])
+        self.assertFalse(by_pair[("daily_basic", "roe")])
+        self.assertFalse(by_pair[("fina_indicator", "pe_ttm")])
+        self.assertTrue(by_pair[("fina_indicator", "roe")])
+        self.assertFalse(coverage["collected_by_repo"])
+
+    def test_evaluation_verifier_rejects_result_card_and_envelope_hash_drift(self) -> None:
+        card = _card()
+        rows = {card["card_id"]: {"value": 12.0}}
+        original = cards.attach_evaluations({"schema": "fixture.chain"}, [card], rows)
+        self.assertTrue(cards.verify_evaluations(original, [card], rows)["ok"])
+
+        result_drift = copy.deepcopy(original)
+        result_drift["knowledge_card_evidence"][0]["result"]["observed"] = 999.0
+        result_drift["knowledge_card_evidence_hash"] = cards.canonical_hash(
+            result_drift["knowledge_card_evidence"]
+        )
+        with self.assertRaisesRegex(cards.KnowledgeCardError, "source-derived result"):
+            cards.verify_evaluations(result_drift, [card], rows)
+
+        card_hash_drift = copy.deepcopy(original)
+        card_hash_drift["knowledge_card_evidence"][0]["card_hash"] = "sha256:" + "0" * 64
+        card_hash_drift["knowledge_card_evidence_hash"] = cards.canonical_hash(
+            card_hash_drift["knowledge_card_evidence"]
+        )
+        with self.assertRaisesRegex(cards.KnowledgeCardError, "source-derived result"):
+            cards.verify_evaluations(card_hash_drift, [card], rows)
+
+        envelope_drift = copy.deepcopy(original)
+        envelope_drift["knowledge_card_evidence_hash"] = "sha256:" + "f" * 64
+        with self.assertRaisesRegex(cards.KnowledgeCardError, "evidence hash mismatch"):
+            cards.verify_evaluations(envelope_drift, [card], rows)
 
     def test_duplicate_json_key_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

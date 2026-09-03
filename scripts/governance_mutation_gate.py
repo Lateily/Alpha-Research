@@ -7151,6 +7151,70 @@ mutation_id="U4_PREDECISION_ATOMIC_NO_REPLACE",
         expected_failure_marker="test_threshold_evaluation_recomputes_from_source_value",
         rationale="A card evaluation must derive from frozen source values, not a caller-reported label.",
     ),
+    MutationCase(
+        mutation_id="CARD_SCHEMA_MIN_LENGTHS",
+        component="Research funnel knowledge-card schema parity",
+        source_path="experiments/research_funnel/knowledge_cards.py",
+        test_script="tests/test_knowledge_cards.py",
+        before=(
+            "        # governance-mutation: CARD_SCHEMA_MIN_LENGTHS\n"
+            "        if minimum is not None and len(text) < minimum:"
+        ),
+        after=(
+            "        # governance-mutation: CARD_SCHEMA_MIN_LENGTHS\n"
+            "        if False and minimum is not None and len(text) < minimum:"
+        ),
+        expected_failure_marker="test_schema_minimum_text_lengths_are_enforced",
+        rationale="The runtime validator must retain the reviewed schema's minimum-content gates.",
+    ),
+    MutationCase(
+        mutation_id="CARD_SOURCE_FIELD_COVERAGE",
+        component="Research funnel knowledge-card source coverage",
+        source_path="experiments/research_funnel/knowledge_cards.py",
+        test_script="tests/test_knowledge_cards.py",
+        before=(
+            "        # governance-mutation: CARD_SOURCE_FIELD_COVERAGE\n"
+            '        "collected_by_repo": bool(pairs) and not missing,'
+        ),
+        after=(
+            "        # governance-mutation: CARD_SOURCE_FIELD_COVERAGE\n"
+            '        "collected_by_repo": bool(pairs),'
+        ),
+        expected_failure_marker="test_source_coverage_is_checked_per_api_field_pair_not_by_union",
+        rationale="A field declared under one API cannot make missing pairs under another API look collected.",
+    ),
+    MutationCase(
+        mutation_id="CARD_AUTO_SOURCE_COLLECTION_GATE",
+        component="Research funnel knowledge-card AUTO availability",
+        source_path="experiments/research_funnel/knowledge_cards.py",
+        test_script="tests/test_knowledge_cards.py",
+        before=(
+            "        # governance-mutation: CARD_AUTO_SOURCE_COLLECTION_GATE\n"
+            '        if not coverage["collected_by_repo"]:'
+        ),
+        after=(
+            "        # governance-mutation: CARD_AUTO_SOURCE_COLLECTION_GATE\n"
+            "        if False:"
+        ),
+        expected_failure_marker="test_uncollected_auto_source_is_visible_and_cannot_look_computable",
+        rationale="An AUTO card cannot be presented as computable when its declared source pairs are not collected.",
+    ),
+    MutationCase(
+        mutation_id="CARD_EVIDENCE_HASH_VERIFIED",
+        component="Research funnel knowledge-card evidence verification",
+        source_path="experiments/research_funnel/knowledge_cards.py",
+        test_script="tests/test_knowledge_cards.py",
+        before=(
+            "    # governance-mutation: CARD_EVIDENCE_HASH_VERIFIED\n"
+            "    if evidence != expected:"
+        ),
+        after=(
+            "    # governance-mutation: CARD_EVIDENCE_HASH_VERIFIED\n"
+            "    if False:"
+        ),
+        expected_failure_marker="test_evaluation_verifier_rejects_result_card_and_envelope_hash_drift",
+        rationale="A rehashed display result must still be rebuilt from the reviewed card and frozen source row.",
+    ),
 )
 
 
