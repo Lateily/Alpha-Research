@@ -1,0 +1,72 @@
+{
+  "fixture": "model_paper_fund_dry_run_v0",
+  "status": "OFFLINE_FIXTURE_ONLY",
+  "created_at": "2026-08-30T18:00:00+08:00",
+  "security": {
+    "ticker": "FAKE001.PAPER",
+    "name": "Offline Fixture Company",
+    "is_real_security": false
+  },
+  "authority": {
+    "paper_only": true,
+    "no_trade_flag": true,
+    "trade_authority": false,
+    "production_authority": false,
+    "real_capital_authority": false,
+    "u4_selection_authority": "HUMAN_JUNYAN_ONLY"
+  },
+  "stages": [
+    {
+      "stage": "U4_SELECT",
+      "actor": "Junyan",
+      "artifact_id": "dryrun-u4-select-001",
+      "artifact_hash": "1111111111111111111111111111111111111111111111111111111111111111"
+    },
+    {
+      "stage": "SEALED_CASE",
+      "actor": "Reed",
+      "artifact_id": "dryrun-sealed-case-001",
+      "artifact_hash": "2222222222222222222222222222222222222222222222222222222222222222",
+      "requires": [
+        "thesis",
+        "valuation",
+        "wrong_if",
+        "manual_smc"
+      ]
+    },
+    {
+      "stage": "PAPER_REGISTRATION_PLAN",
+      "actor": "Reed",
+      "artifact_id": "dryrun-registration-plan-001",
+      "plan_hash": "3333333333333333333333333333333333333333333333333333333333333333",
+      "approval_required": true
+    },
+    {
+      "stage": "PENDING_ORDER",
+      "actor": "paper_registration_bridge",
+      "artifact_id": "dryrun-pending-order-001",
+      "order_status": "PENDING_DRY_RUN",
+      "ledger_write_mode": "OFFLINE_FIXTURE_ONLY"
+    }
+  ],
+  "sealed_case": {
+    "thesis": "Fake thesis for structure rehearsal only.",
+    "valuation": "Fake valuation range for structure rehearsal only.",
+    "wrong_if": "Fake invalidation condition for structure rehearsal only.",
+    "manual_smc": "Fake manual SMC timing note for structure rehearsal only."
+  },
+  "paper_registration_plan": {
+    "side": "PAPER_RESEARCH_POSTURE",
+    "entry_reference": 10.0,
+    "stop_reference": 9.0,
+    "target_reference": 12.0,
+    "plan_hash": "3333333333333333333333333333333333333333333333333333333333333333"
+  },
+  "result": {
+    "dry_run_result": "PENDING_ORDER_CREATED_OFFLINE_FIXTURE",
+    "model_calls": 0,
+    "external_data_calls": 0,
+    "production_writes": 0,
+    "paper_ledger_writes": 0
+  }
+}

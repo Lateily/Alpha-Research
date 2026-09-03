@@ -7,6 +7,7 @@ import copy
 import hashlib
 import json
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -40,8 +41,13 @@ def build_bundle(root: Path) -> tuple[Path, dict, list[str]]:
         if "RED_FLAG" not in row["flags"] and row["review_status"] != "RANDOM_CONTROL"
     ][:8]
     battery = fixtures.battery_fixture(clean_codes)
+    battery["run_id"] = "FIXTURE_RUN_20260813"
     for row in battery["data"]["results"]:
         row["dims"] = {name: {"fixture": True} for name in closure.BATTERY_DIMENSIONS}
+        row["dims"]["基本面"] = {
+            "fixture": True,
+            "红旗闸门": "PASS",
+        }
         row["completeness"] = {
             "covered": 6, "of": 6, "missing": [], "verdict": "COMPLETE",
         }
@@ -145,6 +151,97 @@ class ResearchClosureExperimentTests(unittest.TestCase):
             packet["claim_allowed"] = True
             with self.assertRaisesRegex(closure.ClosureError, "packet hash mismatch"):
                 closure.validate_review_packet(packet)
+
+    def test_packet_projects_exact_run_and_candidate_evidence_from_bundle(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            bundle, battery, _ = build_bundle(Path(tmp))
+            try:
+                packet = closure.build_review_packet(
+                    bundle_dir=bundle, battery=battery, generated_at=GENERATED_AT,
+                )
+            except closure.ClosureError as exc:
+                self.fail(f"default v1.1 packet construction failed: {exc}")
+            candidates = json.loads(
+                (bundle / "candidate_review.json").read_text(encoding="utf-8")
+            )
+            registry = json.loads(
+                (bundle / "security_registry_projected.json").read_text(encoding="utf-8")
+            )
+            candidate_by_code = {row["ts_code"]: row for row in candidates["rows"]}
+            registry_by_code = {row["ts_code"]: row for row in registry["rows"]}
+            battery_by_code = funnel._battery_rows(battery, packet["as_of"])
+            row = packet["ready_pool"][0]
+            code = row["ts_code"]
+        self.assertEqual(packet["schema_version"], closure.PACKET_SCHEMA_VERSION)
+        self.assertEqual(packet["source_refs"]["run_id"], battery["run_id"])
+        self.assertEqual(row["display_name"], registry_by_code[code]["name"])
+        self.assertEqual(row["cohort_id"], closure.COHORT_ID_UNAVAILABLE)
+        self.assertNotEqual(row["cohort_id"], candidate_by_code[code]["industry_key"])
+        self.assertEqual(
+            row["causal_cluster_id"],
+            str(candidate_by_code[code].get("cluster_id") or "UNAVAILABLE"),
+        )
+        self.assertEqual(row["u2_candidate_row_hash"], funnel._hash(candidate_by_code[code]))
+        self.assertEqual(row["u3_battery_row_hash"], funnel._hash(battery_by_code[code]))
+
+    def test_packet_does_not_fabricate_cohort_identity_from_industry_key(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            bundle, battery, _ = build_bundle(Path(tmp))
+            packet = closure.build_review_packet(
+                bundle_dir=bundle,
+                battery=battery,
+                generated_at=GENERATED_AT,
+            )
+            candidates = json.loads(
+                (bundle / "candidate_review.json").read_text(encoding="utf-8")
+            )
+            candidate_by_code = {row["ts_code"]: row for row in candidates["rows"]}
+        self.assertTrue(packet["ready_pool"])
+        self.assertTrue(
+            all(
+                row["cohort_id"] == closure.COHORT_ID_UNAVAILABLE
+                and row["cohort_id"] != candidate_by_code[row["ts_code"]]["industry_key"]
+                for row in packet["ready_pool"]
+            )
+        )
+
+    def test_legacy_v1_packet_remains_valid_and_replayable(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            bundle, battery, codes = build_bundle(Path(tmp))
+            try:
+                packet = closure.build_review_packet(
+                    bundle_dir=bundle,
+                    battery=battery,
+                    generated_at=GENERATED_AT,
+                    packet_version=closure.LEGACY_PACKET_SCHEMA_VERSION,
+                )
+                receipt = receipt_for(packet, codes[:3])
+                closure.validate_review_packet(packet)
+                queue, report = closure.run_offline_replay(
+                    bundle_dir=bundle,
+                    battery=battery,
+                    packet=packet,
+                    receipt=receipt,
+                    generated_at="2026-08-13T10:06:00+00:00",
+                )
+            except closure.ClosureError as exc:
+                self.fail(f"legacy v1.0 packet compatibility regressed: {exc}")
+        self.assertEqual(packet["schema_version"], "1.0")
+        self.assertEqual(set(packet["source_refs"]), closure.LEGACY_PACKET_SOURCE_REF_FIELDS)
+        self.assertTrue(
+            all(set(row) == closure.LEGACY_PACKET_READY_ROW_FIELDS for row in packet["ready_pool"])
+        )
+        self.assertEqual(len(queue["rows"]), 3)
+        self.assertEqual(report["u5_handoff"]["status"], "DATA_BLOCKED")
+
+    def test_packet_refuses_a_battery_without_an_exact_run_id(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            bundle, battery, _ = build_bundle(Path(tmp))
+            battery.pop("run_id")
+            with self.assertRaisesRegex(closure.ClosureError, "exact U3 run_id"):
+                closure.build_review_packet(
+                    bundle_dir=bundle, battery=battery, generated_at=GENERATED_AT,
+                )
 
     def test_u3_complete_stamp_requires_six_complete_dimensions(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -387,6 +484,48 @@ class ResearchClosureExperimentTests(unittest.TestCase):
                 closure._write_replay_outputs(
                     output, bundle, battery, packet, receipt, queue, report,
                 )
+
+    def test_result_bundle_freezes_and_verifies_the_complete_dag_source(self) -> None:
+        import test_u4_decision_ledger as u4_fixtures
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            bundle = root / "dag-bundle"
+            shutil.copytree(u4_fixtures.SOURCE_BUNDLE, bundle)
+            battery = copy.deepcopy(u4_fixtures.SOURCE_BATTERY)
+            packet = closure.build_review_packet(
+                bundle_dir=bundle,
+                battery=None,
+                generated_at=GENERATED_AT,
+            )
+            receipt = receipt_for(packet, list(u4_fixtures.SELECT_CODES))
+            queue, report = closure.run_offline_replay(
+                bundle_dir=bundle,
+                battery=battery,
+                packet=packet,
+                receipt=receipt,
+                generated_at="2026-08-13T10:06:00+00:00",
+            )
+            output = root / "result"
+            try:
+                closure._write_replay_outputs(
+                    output, bundle, battery, packet, receipt, queue, report,
+                )
+            except (closure.ClosureError, OSError) as exc:
+                self.fail(f"valid DAG source was not frozen as a replay bundle: {exc}")
+            source_names = set(
+                json.loads((bundle / "manifest.json").read_text(encoding="utf-8"))["artifacts"]
+            )
+            result_manifest = json.loads(
+                (output / "manifest.json").read_text(encoding="utf-8")
+            )
+            expected = closure._result_artifact_names(source_names)
+            self.assertEqual(set(result_manifest["artifacts"]), expected)
+            self.assertTrue({
+                "frozen_funnel_bundle/candidate_manifest.json",
+                "frozen_funnel_bundle/candidate_battery.json",
+            }.issubset(expected))
+            self.assertEqual(closure.verify_result_bundle(output)["status"], "VERIFIED")
 
     def test_result_bundle_verifier_rejects_artifact_mutation(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

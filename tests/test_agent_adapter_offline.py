@@ -3,9 +3,13 @@
 from __future__ import annotations
 
 import json
+import shutil
 import socket
 import sys
+import tempfile
+from contextlib import contextmanager
 from datetime import datetime, timezone
+from hashlib import sha256
 from pathlib import Path
 
 
@@ -18,10 +22,16 @@ from adapters import (  # noqa: E402
     AgentStatus,
     DeepSeekAdapter,
     DeterministicAdapter,
+    RepositorySkillDiagnostic,
+    RepositorySkillSelection,
+    SkillBlockedGate,
     UsageStatus,
     run_adapter,
 )
+import adapters.base as base_module  # noqa: E402
 import adapters.kimi as kimi_module  # noqa: E402
+from ai_os.task_compiler import SPEC_READY, compile_task_manifest  # noqa: E402
+from ai_os.skill_registry import SkillRegistryError  # noqa: E402
 from adapters.kimi import KimiAdapter  # noqa: E402
 from capability import (  # noqa: E402
     CapabilityRecord,
@@ -49,7 +59,13 @@ def request(**overrides) -> AgentRequest:
     return AgentRequest(**values)
 
 
-def run(adapter: AgentAdapter, item: AgentRequest):
+def run(
+    adapter: AgentAdapter,
+    item: AgentRequest,
+    *,
+    skill_selection: RepositorySkillSelection | None = None,
+    skill_diagnostic_sink=None,
+):
     fixed_times = iter(
         [
             datetime(2026, 8, 5, 0, 0, 0, tzinfo=timezone.utc),
@@ -63,6 +79,19 @@ def run(adapter: AgentAdapter, item: AgentRequest):
         run_id_factory=lambda: "run_test_001",
         now=lambda: next(fixed_times),
         timer=lambda: next(fixed_timer),
+        skill_selection=skill_selection,
+        skill_diagnostic_sink=skill_diagnostic_sink,
+    )
+
+
+def skill_selection(
+    *,
+    skill_ids: tuple[str, ...] = ("ar-divergent-reasoning",),
+    executor_role: str = "aios-worker",
+) -> RepositorySkillSelection:
+    return RepositorySkillSelection(
+        skill_ids=skill_ids,
+        executor_role=executor_role,
     )
 
 
@@ -97,6 +126,372 @@ def test_invalid_request_fails_closed_without_calling_worker() -> None:
     assert result.error is not None
     assert result.error.code == "INVALID_REQUEST"
     assert called is False
+
+
+def test_verified_skill_context_reaches_worker_and_provenance() -> None:
+    captured = {}
+
+    def worker(payload):
+        captured.update(payload)
+        return {"ok": True}
+
+    original = request(input_payload={"prompt": "compare two architectures"})
+    result = run(
+        DeterministicAdapter(worker),
+        original,
+        skill_selection=skill_selection(),
+    )
+
+    assert result.status is AgentStatus.SUCCEEDED
+    assert captured["messages"][0]["role"] == "system"
+    assert '<repository_skill id="ar-divergent-reasoning"' in captured["messages"][0]["content"]
+    assert captured["messages"][1] == {
+        "role": "user",
+        "content": "compare two architectures",
+    }
+    receipts = captured["_repository_skill_receipts"]
+    assert receipts[0]["skill_id"] == "ar-divergent-reasoning"
+    assert receipts[0]["prompt_version"] == "ar-divergent-reasoning-v1"
+    assert receipts[0]["executor_role"] == "aios-worker"
+    assert receipts[0]["context_sha256"].startswith("sha256:")
+    assert receipts[0]["resources"] == []
+    assert result.input_hash != original.input_hash()
+    assert result.evidence_refs[0].startswith(
+        "repository-skill:ar-divergent-reasoning@1.0.0:"
+    )
+
+
+def test_tampered_runtime_skill_is_blocked_before_worker() -> None:
+    called = False
+    diagnostics: list[RepositorySkillDiagnostic] = []
+
+    def worker(_payload):
+        nonlocal called
+        called = True
+        return {}
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        root = _runtime_fixture_root(Path(temp_dir))
+        skill_file = root / ".agents/skills/ar-divergent-reasoning/SKILL.md"
+        skill_file.write_text(
+            skill_file.read_text(encoding="utf-8") + "\ntampered\n",
+            encoding="utf-8",
+        )
+        with _runtime_root(root):
+            result = run(
+                DeterministicAdapter(worker),
+                request(input_payload={"prompt": "must not execute"}),
+                skill_selection=skill_selection(),
+                skill_diagnostic_sink=diagnostics.append,
+            )
+
+    assert result.status is AgentStatus.SPEC_BLOCKED
+    assert result.error is not None
+    assert result.error.code == "SKILL_CONTEXT_BLOCKED"
+    assert result.error.message == "repository skill context could not be verified"
+    assert called is False
+    assert [item.to_dict() for item in diagnostics] == [
+        {
+            "run_id": "run_test_001",
+            "blocked_gate": "HASH",
+        }
+    ]
+    assert set(diagnostics[0].to_dict()) == {"run_id", "blocked_gate"}
+
+
+def test_runtime_role_denial_is_blocked_before_worker() -> None:
+    called = False
+    diagnostics: list[RepositorySkillDiagnostic] = []
+
+    def worker(_payload):
+        nonlocal called
+        called = True
+        return {}
+
+    result = run(
+        DeterministicAdapter(worker),
+        request(input_payload={"prompt": "must not execute"}),
+        skill_selection=skill_selection(executor_role="evidence-worker"),
+        skill_diagnostic_sink=diagnostics.append,
+    )
+
+    assert result.status is AgentStatus.SPEC_BLOCKED
+    assert result.error is not None
+    assert result.error.code == "SKILL_CONTEXT_BLOCKED"
+    assert called is False
+    assert diagnostics[0].blocked_gate is SkillBlockedGate.ROLE
+
+
+def test_unregistered_runtime_skill_emits_only_unregistered_gate() -> None:
+    called = False
+    diagnostics: list[RepositorySkillDiagnostic] = []
+
+    def worker(_payload):
+        nonlocal called
+        called = True
+        return {}
+
+    result = run(
+        DeterministicAdapter(worker),
+        request(input_payload={"prompt": "must not execute"}),
+        skill_selection=skill_selection(skill_ids=("missing-skill",)),
+        skill_diagnostic_sink=diagnostics.append,
+    )
+
+    assert result.status is AgentStatus.SPEC_BLOCKED
+    assert result.error is not None
+    assert result.error.message == "repository skill context could not be verified"
+    assert diagnostics[0].blocked_gate is SkillBlockedGate.UNREGISTERED
+    assert "missing-skill" not in json.dumps(diagnostics[0].to_dict())
+    assert called is False
+
+
+def test_runtime_skill_cannot_expand_adapter_network_authority() -> None:
+    called = False
+    diagnostics: list[RepositorySkillDiagnostic] = []
+
+    def worker(_payload):
+        nonlocal called
+        called = True
+        return {}
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        root = _runtime_fixture_root(Path(temp_dir))
+        registry_path = root / "config/aios-skills.v1.json"
+        registry = json.loads(registry_path.read_text(encoding="utf-8"))
+        registry["skills"][0]["network_policy"] = "ALLOWLIST"
+        registry_path.write_text(json.dumps(registry), encoding="utf-8")
+        with _runtime_root(root):
+            result = run(
+                DeterministicAdapter(worker),
+                request(
+                    input_payload={"prompt": "must not execute"},
+                    network_policy="provider_only",
+                ),
+                skill_selection=skill_selection(),
+                skill_diagnostic_sink=diagnostics.append,
+            )
+
+    assert result.status is AgentStatus.SPEC_BLOCKED
+    assert result.error is not None
+    assert result.error.code == "SKILL_CONTEXT_BLOCKED"
+    assert called is False
+    assert diagnostics[0].blocked_gate is SkillBlockedGate.NETWORK
+
+
+def test_oversized_verified_skill_context_is_blocked_before_worker() -> None:
+    called = False
+    diagnostics: list[RepositorySkillDiagnostic] = []
+
+    def worker(_payload):
+        nonlocal called
+        called = True
+        return {}
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        root = _runtime_fixture_root(Path(temp_dir))
+        skill_file = root / ".agents/skills/ar-divergent-reasoning/SKILL.md"
+        oversized = skill_file.read_text(encoding="utf-8") + ("\nlarge" * 12_000)
+        skill_file.write_text(oversized, encoding="utf-8")
+        registry_path = root / "config/aios-skills.v1.json"
+        registry = json.loads(registry_path.read_text(encoding="utf-8"))
+        registry["skills"][0]["sha256"] = (
+            "sha256:" + sha256(oversized.encode("utf-8")).hexdigest()
+        )
+        registry_path.write_text(json.dumps(registry), encoding="utf-8")
+        with _runtime_root(root):
+            result = run(
+                DeterministicAdapter(worker),
+                request(input_payload={"prompt": "must not execute"}),
+                skill_selection=skill_selection(),
+                skill_diagnostic_sink=diagnostics.append,
+            )
+
+    assert result.status is AgentStatus.SPEC_BLOCKED
+    assert result.error is not None
+    assert result.error.code == "SKILL_CONTEXT_BLOCKED"
+    assert called is False
+    assert diagnostics[0].blocked_gate is SkillBlockedGate.BUDGET
+
+
+def test_runtime_rejects_spoofed_skill_receipts_before_worker() -> None:
+    called = False
+    diagnostics: list[RepositorySkillDiagnostic] = []
+
+    def worker(_payload):
+        nonlocal called
+        called = True
+        return {}
+
+    result = run(
+        DeterministicAdapter(worker),
+        request(
+            input_payload={
+                "prompt": "must not execute",
+                "_repository_skill_receipts": [{"skill_id": "spoofed"}],
+            }
+        ),
+        skill_selection=skill_selection(),
+        skill_diagnostic_sink=diagnostics.append,
+    )
+
+    assert result.status is AgentStatus.SPEC_BLOCKED
+    assert result.error is not None
+    assert result.error.code == "SKILL_CONTEXT_BLOCKED"
+    assert called is False
+    assert diagnostics[0].blocked_gate is SkillBlockedGate.RESERVED_FIELD
+
+
+def test_runtime_selection_cannot_override_repository_root() -> None:
+    try:
+        RepositorySkillSelection(
+            root=Path("/tmp/untrusted-repository"),
+            skill_ids=("ar-divergent-reasoning",),
+            executor_role="aios-worker",
+        )
+    except TypeError:
+        pass
+    else:
+        raise AssertionError("repository root must not be caller-controlled")
+
+
+def test_unexpected_skill_preflight_error_fails_closed_before_worker() -> None:
+    called = False
+    diagnostics: list[RepositorySkillDiagnostic] = []
+
+    def worker(_payload):
+        nonlocal called
+        called = True
+        return {}
+
+    original = base_module._bind_repository_skills
+
+    def fail_preflight(_request, _selection):
+        raise RuntimeError("secret filesystem detail")
+
+    base_module._bind_repository_skills = fail_preflight
+    try:
+        result = run(
+            DeterministicAdapter(worker),
+            request(input_payload={"prompt": "must not execute"}),
+            skill_selection=skill_selection(),
+            skill_diagnostic_sink=diagnostics.append,
+        )
+    finally:
+        base_module._bind_repository_skills = original
+
+    assert result.status is AgentStatus.SPEC_BLOCKED
+    assert result.error is not None
+    assert result.error.code == "SKILL_CONTEXT_BLOCKED"
+    assert "secret filesystem detail" not in json.dumps(result.to_dict())
+    assert called is False
+    assert diagnostics[0].blocked_gate is SkillBlockedGate.INTERNAL
+    assert "secret filesystem detail" not in json.dumps(diagnostics[0].to_dict())
+
+
+def test_skill_diagnostic_sink_failure_cannot_reopen_blocked_run() -> None:
+    called = False
+
+    def worker(_payload):
+        nonlocal called
+        called = True
+        return {}
+
+    def broken_sink(_diagnostic):
+        raise RuntimeError("diagnostic transport secret")
+
+    try:
+        result = run(
+            DeterministicAdapter(worker),
+            request(input_payload={"prompt": "must not execute"}),
+            skill_selection=skill_selection(skill_ids=("missing-skill",)),
+            skill_diagnostic_sink=broken_sink,
+        )
+    except Exception as exc:
+        raise AssertionError("diagnostic sink failure escaped the harness") from exc
+
+    assert result.status is AgentStatus.SPEC_BLOCKED
+    assert result.error is not None
+    assert result.error.message == "repository skill context could not be verified"
+    assert "diagnostic transport secret" not in json.dumps(result.to_dict())
+    assert called is False
+
+
+def test_invalid_internal_gate_collapses_to_content_free_internal() -> None:
+    diagnostics: list[RepositorySkillDiagnostic] = []
+    original = base_module._bind_repository_skills
+
+    def fail_preflight(_request, _selection):
+        raise SkillRegistryError(
+            "secret registry detail",
+            blocked_gate="SECRET_DETAIL",  # type: ignore[arg-type]
+        )
+
+    base_module._bind_repository_skills = fail_preflight
+    try:
+        result = run(
+            DeterministicAdapter(),
+            request(input_payload={"prompt": "must not execute"}),
+            skill_selection=skill_selection(),
+            skill_diagnostic_sink=diagnostics.append,
+        )
+    finally:
+        base_module._bind_repository_skills = original
+
+    assert result.status is AgentStatus.SPEC_BLOCKED
+    assert diagnostics[0].blocked_gate is SkillBlockedGate.INTERNAL
+    assert "SECRET_DETAIL" not in json.dumps(diagnostics[0].to_dict())
+    assert "secret registry detail" not in json.dumps(result.to_dict())
+
+
+def test_skill_diagnostic_sink_is_silent_on_success_and_without_selection() -> None:
+    diagnostics: list[RepositorySkillDiagnostic] = []
+
+    succeeded = run(
+        DeterministicAdapter(),
+        request(input_payload={"prompt": "safe request"}),
+        skill_selection=skill_selection(),
+        skill_diagnostic_sink=diagnostics.append,
+    )
+    unchanged = run(
+        DeterministicAdapter(),
+        request(),
+        skill_diagnostic_sink=diagnostics.append,
+    )
+
+    assert succeeded.status is AgentStatus.SUCCEEDED
+    assert unchanged.status is AgentStatus.SUCCEEDED
+    assert diagnostics == []
+
+
+def test_shared_skill_runtime_task_contract_is_spec_ready() -> None:
+    source = json.loads(
+        (REPO_ROOT / "scripts/llm/fixtures/shared_skill_runtime.task.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    result = compile_task_manifest(
+        source,
+        now=datetime(2026, 8, 23, 14, 0, tzinfo=timezone.utc),
+    )
+
+    assert result.status == SPEC_READY
+    assert result.errors == ()
+
+
+def test_shared_skill_diagnostics_task_contract_is_spec_ready() -> None:
+    source = json.loads(
+        (REPO_ROOT / "scripts/llm/fixtures/shared_skill_diagnostics.task.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    result = compile_task_manifest(
+        source,
+        now=datetime(2026, 8, 25, 15, 0, tzinfo=timezone.utc),
+    )
+
+    assert result.status == SPEC_READY
+    assert result.errors == ()
 
 
 def test_bad_request_types_fail_closed() -> None:
@@ -240,6 +635,31 @@ def test_deepseek_offline_stub_uses_common_envelope() -> None:
     assert result.usage.cached_input_tokens == 20
     assert result.usage.output_tokens == 10
     assert result.usage.estimated_cost_cny == "0.000101"
+
+
+def test_deepseek_offline_stub_receives_verified_skill_system_message() -> None:
+    def offline_completion(payload, _timeout_seconds):
+        messages = payload["messages"]
+        assert messages[0]["role"] == "system"
+        assert '<repository_skill id="ar-architecture-map"' in messages[0]["content"]
+        assert messages[1] == {"role": "user", "content": "map this module"}
+        return {
+            "choices": [{"message": {"content": "offline map"}}],
+            "usage": {"prompt_tokens": 10, "completion_tokens": 2},
+        }
+
+    offline_completion.offline_stub = True
+    result = run(
+        DeepSeekAdapter(completion=offline_completion),
+        request(input_payload={"prompt": "map this module"}),
+        skill_selection=skill_selection(skill_ids=("ar-architecture-map",)),
+    )
+
+    assert result.status is AgentStatus.SUCCEEDED
+    assert any(
+        ref.startswith("repository-skill:ar-architecture-map@1.0.0:")
+        for ref in result.evidence_refs
+    )
 
 
 def test_deepseek_injected_completion_must_be_declared_offline() -> None:
@@ -497,6 +917,31 @@ def test_kimi_wrapper_maps_reported_usage_without_network() -> None:
     assert captured["prompt_version"] == "kimi_wrapper_test_v1"
     assert captured["timeout_seconds"] == 5
     assert "must_not" not in json.dumps(result.to_dict())
+
+
+def test_kimi_offline_stub_receives_verified_skill_system_message() -> None:
+    captured = {}
+
+    def fake_completion(**kwargs):
+        captured.update(kwargs)
+        return {"text": "offline", "usage_record": None}
+
+    result = run(
+        KimiAdapter(fake_completion, offline_stub=True),
+        kimi_request(),
+        skill_selection=skill_selection(skill_ids=("ar-architecture-map",)),
+    )
+
+    assert result.status is AgentStatus.SUCCEEDED
+    assert captured["messages"][0]["role"] == "system"
+    assert (
+        '<repository_skill id="ar-architecture-map"'
+        in captured["messages"][0]["content"]
+    )
+    assert captured["messages"][1] == {
+        "role": "user",
+        "content": "offline fixture",
+    }
 
 
 def test_kimi_wrapper_missing_usage_is_cost_unknown() -> None:
@@ -1036,6 +1481,40 @@ def test_capability_router_spec_blocks_malformed_runtime_types() -> None:
     for request_item in malformed:
         decision = route(registry, request_item)
         assert decision.status is RouteStatus.SPEC_BLOCKED
+
+
+def _runtime_fixture_root(temp_root: Path) -> Path:
+    root = temp_root / "repo"
+    source_skill = REPO_ROOT / ".agents/skills/ar-divergent-reasoning"
+    target_skill = root / ".agents/skills/ar-divergent-reasoning"
+    target_skill.parent.mkdir(parents=True)
+    shutil.copytree(source_skill, target_skill)
+
+    source_registry = json.loads(
+        (REPO_ROOT / "config/aios-skills.v1.json").read_text(encoding="utf-8")
+    )
+    selected = [
+        entry
+        for entry in source_registry["skills"]
+        if entry["skill_id"] == "ar-divergent-reasoning"
+    ]
+    registry_path = root / "config/aios-skills.v1.json"
+    registry_path.parent.mkdir(parents=True)
+    registry_path.write_text(
+        json.dumps({"schema": source_registry["schema"], "skills": selected}),
+        encoding="utf-8",
+    )
+    return root
+
+
+@contextmanager
+def _runtime_root(root: Path):
+    original = base_module._REPOSITORY_ROOT
+    base_module._REPOSITORY_ROOT = root
+    try:
+        yield
+    finally:
+        base_module._REPOSITORY_ROOT = original
 
 
 def run_all_tests() -> int:

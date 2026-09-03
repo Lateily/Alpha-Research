@@ -5,7 +5,7 @@ model_paper_fund.py — P6.1: the Model Paper Fund ledger (¥1,000,000 VIRTUAL).
 The fund layer on top of paper_portfolio's fill engine — capital, sizing,
 portfolio constraints, NAV, decision log, performance. It deliberately REUSES
 paper_portfolio._advance (registered → no-fill-on-registration-day → T+1 →
-gaps-fill-worse → same-bar-stop-wins) instead of reimplementing fills: one fill
+gaps-fill-worse → no same-day sell → later-bar-stop-wins) instead of reimplementing fills: one fill
 engine, no divergence.
 
 Policy: docs/strategy/MODEL_PAPER_FUND_POLICY.md. All thresholds
@@ -23,6 +23,7 @@ import json
 import math
 import os
 import sys
+from pathlib import Path
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
@@ -40,6 +41,16 @@ MIN_CASH_PCT = 0.20
 LOT = 100
 MIN_CLOSED_FOR_CLAIM = 30
 NO_NEW_ORDER_STATES = {"NO_CHASE", "FAKE_STRENGTH"}
+WORKFLOW_DEBUG_COST_MODEL = {
+    "model_version": "a-share-cost-proxy-v1",
+    "commission_rate": 0.0003,
+    "minimum_commission_cny": 5.0,
+    "transfer_fee_rate": 0.00001,
+    "sell_stamp_duty_rate": 0.0005,
+    "slippage_bps": 5.0,
+    "verification_status": "PROXY_UNVERIFIED",
+}
+MAX_VOLUME_PARTICIPATION = 0.01
 
 
 # ------------------------------------------------------------------ ledger ----
@@ -49,13 +60,35 @@ def _path(name, fund_dir=None):
 
 def load(name, default, fund_dir=None):
     p = _path(name, fund_dir)
-    return json.load(open(p)) if os.path.exists(p) else default
+    if not os.path.exists(p):
+        return default
+    with open(p, encoding="utf-8") as fh:
+        return json.load(fh)
 
 
 def save(name, obj, fund_dir=None):
-    os.makedirs(fund_dir or FUND_DIR, exist_ok=True)
-    with open(_path(name, fund_dir), "w") as fh:
-        json.dump(obj, fh, ensure_ascii=False, indent=2)
+    root = fund_dir or FUND_DIR
+    os.makedirs(root, exist_ok=True)
+    path = _path(name, fund_dir)
+    if os.path.islink(path):
+        raise ValueError(f"refusing to replace symlink ledger projection: {path}")
+    tmp = f"{path}.{os.getpid()}.tmp"
+    try:
+        with open(tmp, "w", encoding="utf-8") as fh:
+            json.dump(obj, fh, ensure_ascii=False, indent=2, allow_nan=False)
+            fh.write("\n")
+            fh.flush()
+            os.fsync(fh.fileno())
+        os.replace(tmp, path)
+        if os.name != "nt":
+            directory = os.open(os.path.dirname(os.path.abspath(path)), os.O_RDONLY)
+            try:
+                os.fsync(directory)
+            finally:
+                os.close(directory)
+    finally:
+        if os.path.exists(tmp):
+            os.unlink(tmp)
 
 
 def init_fund(fund_dir=None, capital=INITIAL_CAPITAL, date="init"):
@@ -69,16 +102,66 @@ def init_fund(fund_dir=None, capital=INITIAL_CAPITAL, date="init"):
 
 
 # ------------------------------------------------------------------ sizing ----
-def size_order(nav, entry, stop, risk_pct):
+def _round_shares(raw, ticker=None):
+    """Conservative board-aware A-share quantity rounding.
+
+    STAR names require at least 200 shares; after that the exchange permits
+    one-share increments. Main-board/GEM/BSE workflow-debug orders retain the
+    existing 100-share block convention.
+    """
+    code = str(ticker or "").split(".")[0]
+    if code.startswith(("688", "689")):
+        return int(raw) if raw >= 200 else 0
+    return int(raw // LOT) * LOT
+
+
+def size_order(nav, entry, stop, risk_pct, ticker=None):
     """shares = risk_budget / (entry-stop), lot-rounded, capped by single-name %."""
     risk_pct = max(RISK_PCT_RANGE[0], min(RISK_PCT_RANGE[1], risk_pct))
     risk_cny = nav * risk_pct
     raw = risk_cny / abs(entry - stop)
-    shares = int(raw // LOT) * LOT
+    shares = _round_shares(raw, ticker)
     max_notional = nav * MAX_NAME_PCT
     if shares * entry > max_notional:
-        shares = int(max_notional / entry // LOT) * LOT
+        shares = _round_shares(max_notional / entry, ticker)
     return shares, round(shares * entry, 2), round(risk_cny, 2)
+
+
+def _validate_cost_model(model):
+    if not isinstance(model, dict) or set(model) != set(WORKFLOW_DEBUG_COST_MODEL):
+        raise ValueError("paper cost model fields are not exact")
+    for field in ("commission_rate", "transfer_fee_rate", "sell_stamp_duty_rate"):
+        value = model.get(field)
+        if not isinstance(value, (int, float)) or not math.isfinite(value) or value < 0:
+            raise ValueError(f"paper cost model {field} is invalid")
+    if model.get("minimum_commission_cny") != 5.0:
+        raise ValueError("paper cost model minimum commission must remain CNY 5")
+    if not 0 <= float(model.get("slippage_bps", -1)) <= 50:
+        raise ValueError("paper cost model slippage is invalid")
+    if model.get("verification_status") != "PROXY_UNVERIFIED":
+        raise ValueError("workflow-debug broker cost model must remain explicitly unverified")
+    # governance-mutation: PAPER_EXECUTION_COST_MODEL_FROZEN
+    if model != WORKFLOW_DEBUG_COST_MODEL:
+        raise ValueError("workflow-debug cost model must exactly match the frozen proxy")
+    return dict(model)
+
+
+def transaction_cost(notional, side, model):
+    model = _validate_cost_model(model)
+    # governance-mutation: PAPER_EXECUTION_COST_SIDE_ENUM
+    if side not in ("buy", "sell"):
+        raise ValueError("paper transaction side must be exactly buy or sell")
+    commission = max(
+        float(model["minimum_commission_cny"]),
+        float(notional) * float(model["commission_rate"]),
+    )
+    transfer = float(notional) * float(model["transfer_fee_rate"])
+    stamp = (
+        float(notional) * float(model["sell_stamp_duty_rate"])
+        if side == "sell" else 0.0
+    )
+    # governance-mutation: PAPER_EXECUTION_COSTS_APPLIED
+    return round(commission + transfer + stamp, 2)
 
 
 def _open_orders(orders):
@@ -98,6 +181,14 @@ class NavMarksIncomplete(Exception):
         super().__init__(f"缺目标日定盘价: {self.missing}")
 
 
+class CorporateActionUnresolved(Exception):
+    """A frozen filled position has no trustworthy share/price basis for NAV."""
+
+    def __init__(self, tickers):
+        self.tickers = list(tickers)
+        super().__init__(f"企业行动待人工重注册,拒绝计算 NAV: {self.tickers}")
+
+
 def _usable_mark(value):
     try:
         value = float(value)
@@ -112,10 +203,18 @@ def current_nav(fund, orders, marks=None, *, require_complete_marks=False):
     require_complete_marks=True(官方 NAV 路径必须用):任一 filled 持仓缺目标日
     定盘价即抛 NavMarksIncomplete,绝不产出混合口径。
     默认 False 只供 --status 一类的**只读估算**,其结果不得写入 nav_history。
+    两种路径都拒绝给企业行动冻结中的持仓估值,因为旧股数与新价格不可比。
     """
     marks = marks or {}
     valid_marks = {ticker: mark for ticker, raw in marks.items()
                    if (mark := _usable_mark(raw)) is not None}
+    frozen_positions = [
+        o["ticker"] for o in orders
+        if o["status"] == "filled" and o.get("execution_frozen") is True
+    ]
+    # governance-mutation: PAPER_EXECUTION_FROZEN_NAV_BLOCK
+    if frozen_positions:
+        raise CorporateActionUnresolved(frozen_positions)
     missing = [o["ticker"] for o in orders
                if o["status"] == "filled" and o["ticker"] not in valid_marks]
     if require_complete_marks and missing:
@@ -130,7 +229,10 @@ def current_nav(fund, orders, marks=None, *, require_complete_marks=False):
 # ---------------------------------------------------------------- register ----
 def register_order(fund, orders, decision_log, *, ticker, name, theme, setup,
                    registered_at, entry, stop, target, risk_pct, reason,
-                   invalid_if="", gate_state="", marks=None):
+                   invalid_if="", gate_state="", marks=None,
+                   max_fill_price=None, cost_model=None,
+                   max_volume_participation=MAX_VOLUME_PARTICIPATION,
+                   execution_mode="LEGACY_DAILY_BAR"):
     """Pre-register a PAPER order under all policy constraints. Refusals are
     logged too — a refused order is itself a decision. Returns (order|None, msg)."""
     nav = current_nav(fund, orders, marks)
@@ -149,9 +251,21 @@ def register_order(fund, orders, decision_log, *, ticker, name, theme, setup,
     if any(o["ticker"] == ticker for o in _open_orders(orders)):
         return refuse(f"{ticker} already open (adds need profit + fresh signal — v0 refuses)")
 
-    shares, notional, risk_cny = size_order(nav, entry, stop, risk_pct)
+    realistic = execution_mode == pp.EXECUTION_MODEL_VERSION
+    if realistic:
+        if not isinstance(max_fill_price, (int, float)) or not entry <= max_fill_price < target:
+            return refuse("realistic paper order needs entry <= max_fill_price < target")
+        if not isinstance(max_volume_participation, (int, float)) or not 0 < max_volume_participation <= 0.01:
+            return refuse("realistic paper order participation must be in (0, 1%]")
+        try:
+            cost_model = _validate_cost_model(cost_model)
+        except ValueError as exc:
+            return refuse(str(exc))
+    sizing_price = float(max_fill_price) if realistic else float(entry)
+    shares, notional, risk_cny = size_order(nav, sizing_price, stop, risk_pct, ticker)
     if shares <= 0:
         return refuse("sized to 0 shares (risk budget too small vs stop distance)")
+    reserved_fee = transaction_cost(notional, "buy", cost_model) if realistic else 0.0
 
     # Codex adversarial review of #120 (blocking 2): theme exposure must use CURRENT
     # marks for filled positions — entry-price sums under-count winners and let a
@@ -171,9 +285,9 @@ def register_order(fund, orders, decision_log, *, ticker, name, theme, setup,
     # several pendings can each pass a per-order check yet jointly breach the floor
     # if they all fill.
     reserved_pending = sum(o["notional"] for o in orders if o["status"] == "pending")
-    if fund["cash"] - reserved_pending - notional < nav * MIN_CASH_PCT:
+    if fund["cash"] - reserved_pending - notional - reserved_fee < nav * MIN_CASH_PCT:
         return refuse(f"cash floor: cash {fund['cash']:,.0f} − pending reserve {reserved_pending:,.0f} "
-                      f"− new {notional:,.0f} would leave < {MIN_CASH_PCT:.0%} NAV")
+                      f"− new {notional + reserved_fee:,.0f} would leave < {MIN_CASH_PCT:.0%} NAV")
 
     order = {
         "entry_id": f"{ticker}_{registered_at}_{setup}",
@@ -183,7 +297,17 @@ def register_order(fund, orders, decision_log, *, ticker, name, theme, setup,
         "take_profit_reference": target, "invalid_if": invalid_if,
         "risk_R": round((target - entry) / (entry - stop), 2),
         "risk_budget_cny": risk_cny, "shares": shares, "notional": notional,
-        "reason": reason, "no_trade_flag": True, "sample_eligible": True,
+        "max_fill_price": max_fill_price if realistic else None,
+        "max_volume_participation": max_volume_participation if realistic else None,
+        "slippage_bps": cost_model["slippage_bps"] if realistic else 0.0,
+        "execution_mode": execution_mode,
+        "cost_model": cost_model if realistic else None,
+        "entry_gross_cny": None, "entry_fees_cny": None,
+        "exit_gross_cny": None, "exit_fees_cny": None,
+        "net_pnl_cny": None,
+        "reason": reason, "no_trade_flag": True,
+        # governance-mutation: PAPER_EXECUTION_DEBUG_NOT_CLAIM_SAMPLE
+        "sample_eligible": False if realistic else True,
         "status": "pending", "fill_date": None, "fill_price": None,
         "exit_date": None, "exit_price": None, "exit_reason": None,
         "paper_return": None, "realized_R": None, "pnl_cny": None,
@@ -211,36 +335,141 @@ def tighten_stop(orders, decision_log, ticker, new_stop, date, why):
 
 
 # ------------------------------------------------------------- process day ----
-def process_day(fund, orders, decision_log, token, series_fn=None):
+def process_day(fund, orders, decision_log, token, series_fn=None, *,
+                require_realistic=False):
     """Advance fills/exits from SETTLED bars via paper_portfolio._advance (the one
     fill engine), then settle cash. Returns list of events."""
-    series_fn = series_fn or pp.qfq_ohlc_series
     events, cache = [], {}
     for o in orders:
         if o["status"] == "closed":
             continue
-        if o["ticker"] not in cache:
-            cache[o["ticker"]] = series_fn(o["ticker"], token, o["registered_at"])
+        # governance-mutation: PAPER_REGISTRATION_REALISTIC_MODE_INFERENCE
+        order_realistic = (
+            require_realistic
+            or o.get("execution_mode") == pp.EXECUTION_MODEL_VERSION
+        )
+        loader = series_fn or (
+            pp.execution_ohlc_series if order_realistic else pp.qfq_ohlc_series
+        )
+        cache_key = (o["ticker"], order_realistic)
+        if cache_key not in cache:
+            cache[cache_key] = loader(o["ticker"], token, o["registered_at"])
         was = o["status"]
-        changed = pp._advance(o, cache[o["ticker"]])
+        was_frozen = o.get("execution_frozen") is True
+        changed = pp._advance(
+            o, cache[cache_key], require_realistic=order_realistic,
+        )
         if not changed:
             continue
         if was == "pending" and o["status"] in ("filled", "closed"):
-            fund["cash"] = round(fund["cash"] - o["shares"] * o["fill_price"], 2)
+            gross = round(o["shares"] * o["fill_price"], 2)
+            fee = transaction_cost(gross, "buy", o["cost_model"]) if order_realistic else 0.0
+            o["entry_gross_cny"] = gross
+            o["entry_fees_cny"] = fee
+            fund["cash"] = round(fund["cash"] - gross - fee, 2)
             events.append(f"FILL {o['name']} {o['shares']}股 @{o['fill_price']} ({o['fill_date']})")
             decision_log.append({"date": o["fill_date"], "action": "PAPER_FILL",
                                  "ticker": o["ticker"], "price": o["fill_price"],
-                                 "shares": o["shares"], "no_trade_flag": True})
+                                 "shares": o["shares"], "fees_cny": fee,
+                                 "no_trade_flag": True})
+        if not was_frozen and o.get("execution_frozen") is True:
+            events.append(
+                f"FREEZE {o['name']} [{o['execution_freeze_reason']}] "
+                f"({o['execution_freeze_date']})"
+            )
+            decision_log.append({
+                "date": o["execution_freeze_date"],
+                "action": "PAPER_EXECUTION_FROZEN",
+                "ticker": o["ticker"],
+                "reason": o["execution_freeze_reason"],
+                "evidence": o["execution_freeze_evidence"],
+                "no_trade_flag": True,
+            })
         if o["status"] == "closed":
-            fund["cash"] = round(fund["cash"] + o["shares"] * o["exit_price"], 2)
-            o["pnl_cny"] = round(o["shares"] * (o["exit_price"] - o["fill_price"]), 2)
+            gross = round(o["shares"] * o["exit_price"], 2)
+            fee = transaction_cost(gross, "sell", o["cost_model"]) if order_realistic else 0.0
+            fund["cash"] = round(fund["cash"] + gross - fee, 2)
+            entry_gross = float(o.get("entry_gross_cny") or o["shares"] * o["fill_price"])
+            entry_fees = float(o.get("entry_fees_cny") or 0.0)
+            pnl = round(gross - fee - entry_gross - entry_fees, 2)
+            o["exit_gross_cny"] = gross
+            o["exit_fees_cny"] = fee
+            o["net_pnl_cny"] = pnl
+            o["pnl_cny"] = pnl
+            o["paper_return"] = round(pnl / (entry_gross + entry_fees), 6)
+            gross_risk = o["shares"] * (o["fill_price"] - o["stop_reference"])
+            o["realized_R"] = round(pnl / gross_risk, 3) if gross_risk > 0 else None
             events.append(f"EXIT {o['name']} @{o['exit_price']} [{o['exit_reason']}] "
                           f"PnL {o['pnl_cny']:+,.0f} (R={o['realized_R']})")
             decision_log.append({"date": o["exit_date"], "action": "PAPER_EXIT",
                                  "ticker": o["ticker"], "price": o["exit_price"],
-                                 "exit_reason": o["exit_reason"], "pnl_cny": o["pnl_cny"],
+                                 "exit_reason": o["exit_reason"], "fees_cny": fee,
+                                 "pnl_cny": o["pnl_cny"],
                                  "realized_R": o["realized_R"], "no_trade_flag": True})
     return events
+
+
+def assert_paper_registration_ready(fund_dir=None, event_ledger_path=None):
+    """Fail closed before a daily advance sees half-projected registration state."""
+    repo_root = os.path.dirname(os.path.dirname(HERE))
+    if repo_root not in sys.path:
+        sys.path.insert(0, repo_root)
+    from experiments.research_funnel import paper_registration_bridge
+
+    paper_registration_bridge.assert_registration_state_ready(
+        event_ledger_path=Path(
+            event_ledger_path or os.path.join(HERE, "event_ledger.jsonl")
+        ),
+        fund_dir=Path(fund_dir or FUND_DIR),
+    )
+
+
+def execution_realism_receipt(order):
+    """Classify a paper order for workflow debugging without granting claims."""
+    realistic_mode = order.get("execution_mode") == pp.EXECUTION_MODEL_VERSION
+    try:
+        _validate_cost_model(order.get("cost_model"))
+        cost_model_valid = True
+    except ValueError:
+        cost_model_valid = False
+    checks = {
+        "raw_settled_execution_bars": realistic_mode,
+        "t_plus_one_sell": realistic_mode,
+        "registered_no_chase_limit": (
+            isinstance(order.get("max_fill_price"), (int, float))
+            and order["max_fill_price"] >= order.get("entry_review_price", math.inf)
+        ),
+        "price_limit_facts_required": realistic_mode,
+        "liquidity_participation_capped": (
+            order.get("max_volume_participation") == MAX_VOLUME_PARTICIPATION
+        ),
+        "costs_recorded": cost_model_valid,
+        "corporate_action_price_chain_intact": (
+            order.get("execution_frozen") is not True
+        ),
+        "workflow_debug_sample_excluded": order.get("sample_eligible") is False,
+    }
+    all_ready = all(checks.values())
+    return {
+        "schema": "ar.paper_execution_realism_receipt",
+        "schema_version": "1.0",
+        "status": "PASS_WORKFLOW_DEBUG" if all_ready else "DATA_BLOCKED",
+        "checks": checks,
+        "cost_verification_status": (
+            (order.get("cost_model") or {}).get("verification_status")
+        ),
+        "known_residuals": [
+            "DAILY_OHLC_HAS_NO_INTRADAY_SEQUENCE",
+            "BROKER_COMMISSION_SCHEDULE_NOT_BOUND_TO_STATEMENT",
+            "NO_QUEUE_POSITION_MODEL_AT_PRICE_LIMIT",
+            "TARGET_TOUCH_ASSUMES_FULL_FILL_AT_REGISTERED_LEVEL",
+            "NO_PARTIAL_FILL_MODEL",
+        ],
+        # governance-mutation: PAPER_EXECUTION_RECEIPT_NO_CLAIM
+        "method_claim_sample_eligible": False,
+        "portfolio_promotion_eligible": False,
+        "no_trade_flag": True,
+    }
 
 
 def update_nav(fund, orders, nav_history, date, marks=None, *,
@@ -258,7 +487,9 @@ def update_nav(fund, orders, nav_history, date, marks=None, *,
 
 # -------------------------------------------------------------- performance ----
 def compute_performance(fund, orders, nav_history):
-    closed = [o for o in orders if o["status"] == "closed"]
+    closed_all = [o for o in orders if o["status"] == "closed"]
+    # governance-mutation: PAPER_EXECUTION_CLAIM_COUNT_EXCLUDES_DEBUG
+    closed = [o for o in closed_all if o.get("sample_eligible") is True]
     wins = [o for o in closed if (o["paper_return"] or 0) > 0]
     rs = [o["realized_R"] for o in closed if o.get("realized_R") is not None]
     navs = [x["nav"] for x in nav_history] or [fund["initial_capital"]]
@@ -270,7 +501,9 @@ def compute_performance(fund, orders, nav_history):
     return {
         "nav": navs[-1], "cum_return": round(navs[-1] / fund["initial_capital"] - 1, 5),
         "max_drawdown": round(max_dd, 5),
-        "n_closed": n, "n_open": sum(1 for o in orders if o["status"] == "filled"),
+        "n_closed": len(closed_all), "n_claim_eligible": n,
+        "n_workflow_debug_closed": len(closed_all) - n,
+        "n_open": sum(1 for o in orders if o["status"] == "filled"),
         "n_pending": sum(1 for o in orders if o["status"] == "pending"),
         "win_rate": round(len(wins) / n, 3) if n else None,
         "avg_R": round(sum(rs) / len(rs), 3) if rs else None,
@@ -455,16 +688,20 @@ def main():
     ap.add_argument("--status", action="store_true")
     ap.add_argument("--daily", action="store_true",
                     help="每日结算:推进成交/退出并按当轮 target 追加 NAV(append-only,一天一条)")
+    ap.add_argument("--fund-dir", default=FUND_DIR,
+                    help="explicit Model Paper Fund directory (tests use an isolated fixture)")
+    ap.add_argument("--event-ledger", default=os.path.join(HERE, "event_ledger.jsonl"),
+                    help="R-015 ledger used by paper-registration preflight")
     args = ap.parse_args()
     if args.selftest:
         sys.exit(0 if selftest() else 1)
     if args.init:
-        if os.path.exists(_path("fund.json")):
+        if os.path.exists(_path("fund.json", args.fund_dir)):
             print("fund.json already exists — refusing to re-init (append-only ledger)")
             sys.exit(1)
         import datetime
-        fund = init_fund(date=datetime.datetime.now().strftime("%Y%m%d"))
-        print(f"Model Paper Fund initialized: ¥{fund['initial_capital']:,.0f} (VIRTUAL) at {FUND_DIR}")
+        fund = init_fund(fund_dir=args.fund_dir, date=datetime.datetime.now().strftime("%Y%m%d"))
+        print(f"Model Paper Fund initialized: ¥{fund['initial_capital']:,.0f} (VIRTUAL) at {args.fund_dir}")
         print("不是买卖指令；研究信号，human executes。")
         return
     if args.daily:
@@ -474,12 +711,19 @@ def main():
         date = target_trade_date()
         if not date:
             print("DATA_BLOCKED: 无 target_trade_date"); return 1
-        fund = load("fund.json", None)
+        try:
+            # governance-mutation: PAPER_REGISTRATION_DAILY_CALLSITE
+            assert_paper_registration_ready(args.fund_dir, args.event_ledger)
+        except Exception as exc:
+            print(f"DATA_BLOCKED: paper registration preflight failed: {exc}")
+            print("不是买卖指令；研究信号，human executes。")
+            return 1
+        fund = load("fund.json", None, args.fund_dir)
         if not fund:
             print("DATA_BLOCKED: fund.json 未初始化 — 先跑 --init"); return 1
-        orders = load("orders.json", [])
-        decision_log = load("decision_log.json", [])
-        navh = load("nav_history.json", [])
+        orders = load("orders.json", [], args.fund_dir)
+        decision_log = load("decision_log.json", [], args.fund_dir)
+        navh = load("nav_history.json", [], args.fund_dir)
         token = os.environ.get("TUSHARE_TOKEN", "").strip()
         events = []
         if token and not os.environ.get("AR_OFFLINE"):
@@ -526,8 +770,8 @@ def main():
                   f"拒绝写入 NAV(不接受部分市值+部分成本的混合口径)")
             print("不是买卖指令；研究信号，human executes。")
             return 1
-        save("fund.json", fund); save("orders.json", orders)
-        save("decision_log.json", decision_log); save("nav_history.json", navh)
+        save("fund.json", fund, args.fund_dir); save("orders.json", orders, args.fund_dir)
+        save("decision_log.json", decision_log, args.fund_dir); save("nav_history.json", navh, args.fund_dir)
         print(f"[daily] {date} nav={rec['nav']:,.0f} cash={rec['cash']:,.0f} "
               f"n_pos={rec['n_positions']} events={len(events)} run_id={run_id()}")
         for e in events:
@@ -536,11 +780,11 @@ def main():
         return 0
 
     if args.status:
-        fund = load("fund.json", None)
+        fund = load("fund.json", None, args.fund_dir)
         if not fund:
             print("not initialized — run --init"); return
-        orders = load("orders.json", [])
-        navh = load("nav_history.json", [])
+        orders = load("orders.json", [], args.fund_dir)
+        navh = load("nav_history.json", [], args.fund_dir)
         print(json.dumps(compute_performance(fund, orders, navh), ensure_ascii=False, indent=2))
         print("不是买卖指令；研究信号，human executes。")
         return

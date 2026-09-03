@@ -137,7 +137,20 @@ FUNNEL_GOVERNANCE_PATHS = (
     "experiments/research_funnel/r035_evaluation.py",
     "experiments/research_funnel/closure_experiment.py",
     "experiments/research_funnel/research_cycle.py",
+    "experiments/research_funnel/paper_registration_bridge.py",
     "experiments/research_funnel/research_method.py",
+    "experiments/research_funnel/industry_cohort.py",
+    "experiments/research_funnel/semiconductor_evidence_diagnostic.py",
+    "experiments/execution_tracker/paper_portfolio.py",
+    "experiments/execution_tracker/model_paper_fund.py",
+    "experiments/research_funnel/u4_decision_ledger.py",
+    "experiments/research_funnel/semiconductor_inputs.py",
+    "experiments/research_funnel/semiconductor_source_repair.py",
+    "experiments/research_funnel/semiconductor_preflight_packet.py",
+    "experiments/research_funnel/u4_pre_decision.py",
+    "experiments/research_funnel/feature_store.py",
+    "experiments/execution_tracker/event_ledger.py",
+    "experiments/execution_tracker/paper_execution_audit.py",
 )
 # 夜链接入方式(隔离 / 产物销毁 / 不进发布树)同样是漏斗治理,必须同样被 marker
 # 覆盖 —— 否则新的 wiring 规则可以靠改组件名绕开检查。但它不能并进上面那条规则:
@@ -173,6 +186,54 @@ class MutationCase:
 
 
 MUTATIONS: tuple[MutationCase, ...] = (
+    MutationCase(
+        mutation_id="MACRO_M0B_FRED_KEYLESS_ROUTE",
+        component="Macro M0-B collection",
+        source_path="experiments/macro_os/collectors.py",
+        test_script="tests/test_macro_m0b_offline.py",
+        before=(
+            '        # governance-mutation: MACRO_M0B_FRED_KEYLESS_ROUTE\n'
+            "        if key:"
+        ),
+        after=(
+            '        # governance-mutation: MACRO_M0B_FRED_KEYLESS_ROUTE\n'
+            "        if True:"
+        ),
+        expected_failure_marker="test_fred_without_credentials_uses_e2_official_csv_export",
+        rationale="A missing FRED key must select the credential-free official CSV transport.",
+    ),
+    MutationCase(
+        mutation_id="MACRO_M0B_FRED_CSV_SERIES_BINDING",
+        component="Macro M0-B collection",
+        source_path="experiments/macro_os/collectors.py",
+        test_script="tests/test_macro_m0b_offline.py",
+        before=(
+            '    # governance-mutation: MACRO_M0B_FRED_CSV_SERIES_BINDING\n'
+            "    if reader.fieldnames != expected_header:"
+        ),
+        after=(
+            '    # governance-mutation: MACRO_M0B_FRED_CSV_SERIES_BINDING\n'
+            "    if False:"
+        ),
+        expected_failure_marker="test_fred_csv_header_is_bound_to_requested_series",
+        rationale="A FRED CSV response must be bound to the exact requested native series.",
+    ),
+    MutationCase(
+        mutation_id="MACRO_M0B_TIMEOUT_TRANSLATION",
+        component="Macro M0-B collection",
+        source_path="experiments/macro_os/collectors.py",
+        test_script="tests/test_macro_m0b_offline.py",
+        before=(
+            '            # governance-mutation: MACRO_M0B_TIMEOUT_TRANSLATION\n'
+            '            raise CollectionError("SOURCE_DOWN", "TIMEOUT", "source request timed out") from exc'
+        ),
+        after=(
+            '            # governance-mutation: MACRO_M0B_TIMEOUT_TRANSLATION\n'
+            '            raise CollectionError("DATA_INVALID", "TIMEOUT", "source request timed out") from exc'
+        ),
+        expected_failure_marker="test_socket_timeout_is_reported_as_source_down",
+        rationale="Transport timeouts must become structured SOURCE_DOWN evidence instead of escaping.",
+    ),
     MutationCase(
         mutation_id="MACRO_M0B3_RULES_HASH",
         component="Macro M0-B3",
@@ -319,6 +380,128 @@ MUTATIONS: tuple[MutationCase, ...] = (
         expected_failure_marker="test_invalid_request_fails_closed_without_calling_worker",
         rationale="Invalid agent requests must fail closed before provider execution.",
         test_function="test_invalid_request_fails_closed_without_calling_worker",
+    ),
+    MutationCase(
+        mutation_id="AIOS_SKILL_CONTENT_HASH",
+        component="AIOS shared skill registry",
+        source_path="scripts/llm/ai_os/skill_registry.py",
+        test_script="tests/test_skill_registry.py",
+        before='    if actual != entry["sha256"]:',
+        after="    if False:",
+        expected_failure_marker="test_tampered_skill_content_fails_hash_guard",
+        rationale="A selected skill must remain byte-bound to its reviewed registry digest.",
+        test_function="test_tampered_skill_content_fails_hash_guard",
+    ),
+    MutationCase(
+        mutation_id="AIOS_SKILL_CONTEXT_DELIMITER",
+        component="AIOS shared skill registry",
+        source_path="scripts/llm/ai_os/skill_registry.py",
+        test_script="tests/test_skill_registry.py",
+        before=(
+            "    if BOUNDARY_END in content or REFERENCE_END in content:\n"
+            "        raise SkillRegistryError(\n"
+            '            f"skill {skill_id} contains reserved context delimiter",'
+        ),
+        after=(
+            "    if False:\n"
+            "        raise SkillRegistryError(\n"
+            '            f"skill {skill_id} contains reserved context delimiter",'
+        ),
+        expected_failure_marker="test_reserved_delimiter_is_rejected_even_with_matching_hash",
+        rationale="Reviewed skill bytes cannot close their context boundary and inject policy-shaped text.",
+        test_function="test_reserved_delimiter_is_rejected_even_with_matching_hash",
+    ),
+    MutationCase(
+        mutation_id="AIOS_SKILL_ROLE_POLICY",
+        component="AIOS shared skill registry",
+        source_path="scripts/llm/ai_os/skill_registry.py",
+        test_script="tests/test_skill_registry.py",
+        before='        if executor_role not in entry["allowed_roles"]:',
+        after="        if False:",
+        expected_failure_marker="test_role_policy_fails_closed",
+        rationale="A worker cannot load a repository skill outside its explicit role allowlist.",
+        test_function="test_role_policy_fails_closed",
+    ),
+    MutationCase(
+        mutation_id="AIOS_SKILL_NETWORK_POLICY_RANK",
+        component="AIOS shared skill registry",
+        source_path="scripts/llm/ai_os/skill_registry.py",
+        test_script="tests/test_skill_registry.py",
+        before="        if NETWORK_RANK[required_policy] > NETWORK_RANK[task_network_policy]:",
+        after="        if False:",
+        expected_failure_marker="test_network_requirement_cannot_exceed_task_policy",
+        rationale="A skill's network requirement cannot exceed the task's explicit network authority.",
+        test_function="test_network_requirement_cannot_exceed_task_policy",
+    ),
+    MutationCase(
+        mutation_id="AIOS_SKILL_RUNTIME_PREFLIGHT",
+        component="AIOS shared skill runtime",
+        source_path="scripts/llm/adapters/base.py",
+        test_script="tests/test_agent_adapter_offline.py",
+        before=(
+            "            request, skill_refs = _bind_repository_skills("
+            "request, skill_selection)"
+        ),
+        after="            request, skill_refs = request, ()",
+        expected_failure_marker="test_tampered_runtime_skill_is_blocked_before_worker",
+        rationale="A selected repository skill must pass registry verification before any worker executes.",
+        test_function="test_tampered_runtime_skill_is_blocked_before_worker",
+    ),
+    MutationCase(
+        mutation_id="AIOS_SKILL_RUNTIME_CONTEXT_BUDGET",
+        component="AIOS shared skill runtime",
+        source_path="scripts/llm/adapters/base.py",
+        test_script="tests/test_agent_adapter_offline.py",
+        before="    if not rendered or len(rendered) > _MAX_SKILL_CONTEXT_CHARS:",
+        after="    if not rendered:",
+        expected_failure_marker="test_oversized_verified_skill_context_is_blocked_before_worker",
+        rationale="Hash-valid skill content cannot silently exceed the fixed prompt and cost budget.",
+        test_function="test_oversized_verified_skill_context_is_blocked_before_worker",
+    ),
+    MutationCase(
+        mutation_id="AIOS_SKILL_DIAGNOSTIC_CLASSIFICATION",
+        component="AIOS shared skill diagnostics",
+        source_path="scripts/llm/ai_os/skill_registry.py",
+        test_script="tests/test_skill_registry.py",
+        before=(
+            '            f"skill {skill_id} content hash mismatch",\n'
+            "            blocked_gate=SkillBlockedGate.HASH,"
+        ),
+        after=(
+            '            f"skill {skill_id} content hash mismatch",\n'
+            "            blocked_gate=SkillBlockedGate.REGISTRY,"
+        ),
+        expected_failure_marker="test_tampered_skill_content_fails_hash_guard",
+        rationale="Trusted operations must distinguish a verified-content hash failure without parsing exception text.",
+        test_function="test_tampered_skill_content_fails_hash_guard",
+    ),
+    MutationCase(
+        mutation_id="AIOS_SKILL_RUNTIME_DIAGNOSTIC_EMISSION",
+        component="AIOS shared skill diagnostics",
+        source_path="scripts/llm/adapters/base.py",
+        test_script="tests/test_agent_adapter_offline.py",
+        before="        sink(diagnostic)",
+        after="        return  # mutation: drop trusted Skill diagnostic",
+        expected_failure_marker="test_tampered_runtime_skill_is_blocked_before_worker",
+        rationale="A blocked Skill preflight must emit its minimal trusted diagnostic when a sink is configured.",
+        test_function="test_tampered_runtime_skill_is_blocked_before_worker",
+    ),
+    MutationCase(
+        mutation_id="AIOS_SKILL_RUNTIME_DIAGNOSTIC_ISOLATION",
+        component="AIOS shared skill diagnostics",
+        source_path="scripts/llm/adapters/base.py",
+        test_script="tests/test_agent_adapter_offline.py",
+        before=(
+            "    except Exception:\n"
+            "        # governance-mutation: AIOS_SKILL_RUNTIME_DIAGNOSTIC_ISOLATION"
+        ),
+        after=(
+            "    except TypeError:\n"
+            "        # governance-mutation: AIOS_SKILL_RUNTIME_DIAGNOSTIC_ISOLATION"
+        ),
+        expected_failure_marker="test_skill_diagnostic_sink_failure_cannot_reopen_blocked_run",
+        rationale="A failed diagnostic transport cannot escape the harness or reopen a blocked provider call.",
+        test_function="test_skill_diagnostic_sink_failure_cannot_reopen_blocked_run",
     ),
     MutationCase(
         mutation_id="R015_PUBLICATION_MIGRATION_EVENT_UNIQUENESS",
@@ -1383,6 +1566,810 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="U1 channels cannot be combined into a score that offsets contrary evidence.",
     ),
     MutationCase(
+        mutation_id="SEMICONDUCTOR_FUTURE_DISCLOSURE",
+        component="Research funnel semiconductor point-in-time evidence",
+        source_path="experiments/research_funnel/semiconductor_inputs.py",
+        test_script="tests/test_semiconductor_positive_inputs.py",
+        before='        if values["ann_date"] > as_of:\n            continue',
+        after='        if False:\n            continue',
+        expected_failure_marker=(
+            "test_future_disclosures_and_conflicting_corrections_become_explicit_blocked"
+        ),
+        rationale="A financial disclosure announced after as_of cannot enter the frozen evidence set.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_SOURCE_REVISION",
+        component="Research funnel semiconductor append-only evidence",
+        source_path="experiments/research_funnel/semiconductor_inputs.py",
+        test_script="tests/test_semiconductor_positive_inputs.py",
+        before=(
+            '            if (\n'
+            '                existing["source_hash"] != source_hash\n'
+            '                or existing["universe_hash"] != universe_hash\n'
+            '            ):'
+        ),
+        after=(
+            '            if False and (\n'
+            '                existing["source_hash"] != source_hash\n'
+            '                or existing["universe_hash"] != universe_hash\n'
+            '            ):'
+        ),
+        expected_failure_marker=(
+            "test_append_only_idempotency_revision_and_out_of_order_are_enforced"
+        ),
+        rationale="A same-date source revision requires migration and cannot overwrite frozen facts.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_ORIGINAL_TABLE_NO_REPLACE",
+        component="Research funnel original semiconductor append-only tables",
+        source_path="experiments/research_funnel/semiconductor_inputs.py",
+        test_script="tests/test_semiconductor_positive_inputs.py",
+        before=(
+            "        # governance-mutation: SEMICONDUCTOR_ORIGINAL_TABLE_NO_REPLACE\n"
+            "        conn.execute(\n"
+            "            f\"\"\"CREATE TRIGGER IF NOT EXISTS {table}_no_replace\n"
+            "            BEFORE INSERT ON {table}\n"
+            "            WHEN EXISTS (SELECT 1 FROM {table} WHERE {duplicate_match})"
+        ),
+        after=(
+            "        # governance-mutation: SEMICONDUCTOR_ORIGINAL_TABLE_NO_REPLACE\n"
+            "        conn.execute(\n"
+            "            f\"\"\"CREATE TRIGGER IF NOT EXISTS {table}_no_replace\n"
+            "            BEFORE INSERT ON {table}\n"
+            "            WHEN 0 AND EXISTS (SELECT 1 FROM {table} WHERE {duplicate_match})"
+        ),
+        expected_failure_marker="test_original_source_tables_reject_insert_or_replace",
+        rationale=(
+            "SQLite INSERT OR REPLACE cannot rewrite any immutable original batch or evidence row."
+        ),
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_DAILY_SOURCE_REGISTRY",
+        component="Research funnel semiconductor daily-source availability",
+        source_path="experiments/research_funnel/semiconductor_inputs.py",
+        test_script="tests/test_semiconductor_positive_inputs.py",
+        before=(
+            'DAILY_MUST_PUBLISH_SOURCES = frozenset({"moneyflow_dc", "cyq_perf"})'
+        ),
+        after='DAILY_MUST_PUBLISH_SOURCES = frozenset({"cyq_perf"})',
+        expected_failure_marker=(
+            "test_empty_moneyflow_batch_stays_pending_and_a_later_retry_can_ingest"
+        ),
+        rationale=(
+            "Every registered daily must-publish source must keep an empty response "
+            "retryable instead of freezing a successful all-missing batch."
+        ),
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_DAILY_SOURCE_COVERAGE_FLOOR",
+        component="Research funnel semiconductor daily-source completeness",
+        source_path="experiments/research_funnel/semiconductor_inputs.py",
+        test_script="tests/test_semiconductor_positive_inputs.py",
+        before="MIN_DAILY_SOURCE_COVERAGE_RATIO = 0.95",
+        after="MIN_DAILY_SOURCE_COVERAGE_RATIO = 0.90",
+        expected_failure_marker=(
+            "test_daily_coverage_floor_rejects_ninety_percent_coverage"
+        ),
+        rationale=(
+            "A structurally incomplete daily response cannot be frozen by silently "
+            "lowering the declared expected-universe coverage floor."
+        ),
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_SOURCE_PUBLICATION_PENDING",
+        component="Research funnel semiconductor source availability",
+        source_path="experiments/research_funnel/semiconductor_inputs.py",
+        test_script="tests/test_semiconductor_positive_inputs.py",
+        before="    if len(normalized) < minimum_rows:",
+        after="    if False:",
+        expected_failure_marker=(
+            "test_empty_cyq_batch_stays_pending_and_a_later_retry_can_ingest"
+        ),
+        rationale=(
+            "An empty or under-covered daily source response is a retryable "
+            "publication gap, not an immutable successful all-missing batch."
+        ),
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_OUT_OF_ORDER",
+        component="Research funnel semiconductor append-only evidence",
+        source_path="experiments/research_funnel/semiconductor_inputs.py",
+        test_script="tests/test_semiconductor_positive_inputs.py",
+        before="        if latest and date8 < latest:",
+        after="        if False:",
+        expected_failure_marker=(
+            "test_append_only_idempotency_revision_and_out_of_order_are_enforced"
+        ),
+        rationale="Historical evidence cannot be appended behind a later frozen source batch.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_OFFLINE_NETWORK",
+        component="Research funnel semiconductor network boundary",
+        source_path="experiments/research_funnel/semiconductor_inputs.py",
+        test_script="tests/test_semiconductor_positive_inputs.py",
+        before='    if os.environ.get("AR_OFFLINE") == "1":',
+        after="    if False:",
+        expected_failure_marker="test_offline_mode_blocks_collection_before_transport",
+        rationale="The offline suite must reject live collection before any transport is invoked.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_PARTIAL_SCHEMA",
+        component="Research funnel semiconductor store integrity",
+        source_path="experiments/research_funnel/semiconductor_inputs.py",
+        test_script="tests/test_semiconductor_positive_inputs.py",
+        before="            if present and present != required:",
+        after="            if False:",
+        expected_failure_marker=(
+            "test_partial_schema_loss_and_self_reported_hashes_fail_closed"
+        ),
+        rationale="A partially deleted extension cannot be disguised as an unavailable source.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_SNAPSHOT_NO_AUTHORITY",
+        component="Research funnel semiconductor research authority",
+        source_path="experiments/research_funnel/semiconductor_inputs.py",
+        test_script="tests/test_semiconductor_positive_inputs.py",
+        before="    if FORBIDDEN_OUTPUT_KEYS.intersection(_walk_keys(payload)):",
+        after="    if False:",
+        expected_failure_marker=(
+            "test_selection_or_trade_authority_is_rejected_even_when_rows_are_rehashed"
+        ),
+        rationale="A research evidence snapshot cannot carry selection, trade, or blocking authority.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_EXPLICIT_BLOCKED",
+        component="Research funnel semiconductor evidence completeness",
+        source_path="experiments/research_funnel/semiconductor_inputs.py",
+        test_script="tests/test_semiconductor_positive_inputs.py",
+        before='                not evidence.get("reason_codes")\n',
+        after="                False\n",
+        expected_failure_marker="test_blocked_row_must_keep_an_explicit_reason",
+        rationale="Missing semiconductor evidence must carry an explicit reason, never a silent empty row.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_SOURCE_HASH_RECOMPUTED",
+        component="Research funnel semiconductor source integrity",
+        source_path="experiments/research_funnel/semiconductor_inputs.py",
+        test_script="tests/test_semiconductor_positive_inputs.py",
+        before=(
+            '        expected_source_hash = _hash({\n'
+            '            "rows": complete_rows,\n'
+            '            "missing_codes": missing_codes,\n'
+            '            "conflict_codes": conflict_codes,\n'
+            '        })'
+        ),
+        after='        expected_source_hash = str(contract.get("source_hash"))',
+        expected_failure_marker=(
+            "test_partial_schema_loss_and_self_reported_hashes_fail_closed"
+        ),
+        rationale="Source hashes must be recomputed from rows and explicit gaps, not trusted as labels.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_REPAIR_HAS_BATCH_RESOLVER",
+        component="Research funnel semiconductor repair read path",
+        source_path="experiments/research_funnel/semiconductor_inputs.py",
+        test_script="tests/test_semiconductor_source_repair.py",
+        before=(
+            "        # governance-mutation: SEMICONDUCTOR_REPAIR_HAS_BATCH_RESOLVER\n"
+            "        return _active_source(conn, source_name, as_of) is not None"
+        ),
+        after=(
+            "        # governance-mutation: SEMICONDUCTOR_REPAIR_HAS_BATCH_RESOLVER\n"
+            "        return conn.execute(\n"
+            "            \"SELECT 1 FROM semiconductor_source_batches WHERE source_name=? AND as_of=?\",\n"
+            "            (source_name, as_of),\n"
+            "        ).fetchone() is not None"
+        ),
+        expected_failure_marker=(
+            "test_has_batch_verifies_the_repair_chain_before_skipping_collection"
+        ),
+        rationale="Collection idempotency must validate the active repair chain before skipping a source.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_REPAIR_SHARED_RESOLVER",
+        component="Research funnel semiconductor repair read path",
+        source_path="experiments/research_funnel/semiconductor_inputs.py",
+        test_script="tests/test_semiconductor_source_repair.py",
+        before=(
+            "    # governance-mutation: SEMICONDUCTOR_REPAIR_SHARED_RESOLVER\n"
+            "    return resolve_active_source(conn, source_name, as_of)"
+        ),
+        after=(
+            "    # governance-mutation: SEMICONDUCTOR_REPAIR_SHARED_RESOLVER\n"
+            "    return None"
+        ),
+        expected_failure_marker=(
+            "test_snapshot_consumes_verified_active_repair_and_originals_never_change"
+        ),
+        rationale="All affected readers must share one verified active-source resolver.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_REPAIR_SNAPSHOT_RESOLVER",
+        component="Research funnel semiconductor repair snapshot projection",
+        source_path="experiments/research_funnel/semiconductor_inputs.py",
+        test_script="tests/test_semiconductor_source_repair.py",
+        before=(
+            "                    # governance-mutation: SEMICONDUCTOR_REPAIR_SNAPSHOT_RESOLVER\n"
+            "                    active = _active_source(conn, source_name, date8)"
+        ),
+        after=(
+            "                    # governance-mutation: SEMICONDUCTOR_REPAIR_SNAPSHOT_RESOLVER\n"
+            "                    active = None"
+        ),
+        expected_failure_marker=(
+            "test_snapshot_consumes_verified_active_repair_and_originals_never_change"
+        ),
+        rationale="Snapshot and feature health must consume the active repair rather than the frozen bad body.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_REPAIR_READ_SNAPSHOT",
+        component="Research funnel semiconductor repair atomic read projection",
+        source_path="experiments/research_funnel/semiconductor_inputs.py",
+        test_script="tests/test_semiconductor_source_repair.py",
+        before=(
+            "        # governance-mutation: SEMICONDUCTOR_REPAIR_READ_SNAPSHOT\n"
+            "        conn.execute(\"BEGIN\")"
+        ),
+        after=(
+            "        # governance-mutation: SEMICONDUCTOR_REPAIR_READ_SNAPSHOT\n"
+            "        pass"
+        ),
+        expected_failure_marker=(
+            "test_snapshot_cannot_mix_sources_across_one_atomic_repair_commit"
+        ),
+        rationale=(
+            "One logical snapshot cannot mix source bodies from opposite sides of an atomic repair commit."
+        ),
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_REPAIR_HAS_BATCH_SNAPSHOT",
+        component="Research funnel semiconductor collection idempotency snapshot",
+        source_path="experiments/research_funnel/semiconductor_inputs.py",
+        test_script="tests/test_semiconductor_source_repair.py",
+        before=(
+            "    # governance-mutation: SEMICONDUCTOR_REPAIR_HAS_BATCH_SNAPSHOT\n"
+            "    conn = _connect(db_path, readonly=True)"
+        ),
+        after=(
+            "    # governance-mutation: SEMICONDUCTOR_REPAIR_HAS_BATCH_SNAPSHOT\n"
+            "    conn = _connect(db_path)"
+        ),
+        expected_failure_marker=(
+            "test_has_batch_uses_one_readonly_snapshot_during_a_concurrent_commit"
+        ),
+        rationale=(
+            "The collection skip decision must be pinned before a concurrent writer can change the active source."
+        ),
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_REPAIR_LATE_OBSERVED_BLOCKED",
+        component="Research funnel semiconductor repair point-in-time projection",
+        source_path="experiments/research_funnel/semiconductor_inputs.py",
+        test_script="tests/test_semiconductor_source_repair.py",
+        before=(
+            "                        # governance-mutation: SEMICONDUCTOR_REPAIR_LATE_OBSERVED_BLOCKED\n"
+            "                        if ("
+        ),
+        after=(
+            "                        # governance-mutation: SEMICONDUCTOR_REPAIR_LATE_OBSERVED_BLOCKED\n"
+            "                        if False and ("
+        ),
+        expected_failure_marker=(
+            "test_self_reported_publication_time_cannot_rewrite_historical_evidence"
+        ),
+        rationale=(
+            "A late-observed replacement cannot be projected as evidence that existed on the repaired date."
+        ),
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_REPAIR_NO_ZERO_OR_UNDER_COVERAGE",
+        component="Research funnel semiconductor repair replacement completeness",
+        source_path="experiments/research_funnel/semiconductor_source_repair.py",
+        test_script="tests/test_semiconductor_source_repair.py",
+        before=(
+            "        # governance-mutation: SEMICONDUCTOR_REPAIR_NO_ZERO_OR_UNDER_COVERAGE\n"
+            "        if not normalized_rows or len(normalized_rows) < minimum:"
+        ),
+        after=(
+            "        # governance-mutation: SEMICONDUCTOR_REPAIR_NO_ZERO_OR_UNDER_COVERAGE\n"
+            "        if False:"
+        ),
+        expected_failure_marker=(
+            "test_persisted_undercovered_repair_body_is_rejected_independently"
+        ),
+        rationale="A zero or under-covered replacement cannot become an active repair.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_REPAIR_RUN_NO_REPLACE",
+        component="Research funnel semiconductor append-only run receipts",
+        source_path="experiments/research_funnel/semiconductor_source_repair.py",
+        test_script="tests/test_semiconductor_source_repair.py",
+        before=(
+            "        # governance-mutation: SEMICONDUCTOR_REPAIR_RUN_NO_REPLACE\n"
+            "        f\"\"\"CREATE TRIGGER IF NOT EXISTS {RUN_TABLE}_no_replace\n"
+            "        BEFORE INSERT ON {RUN_TABLE}\n"
+            "        WHEN EXISTS (SELECT 1 FROM {RUN_TABLE} WHERE plan_hash=NEW.plan_hash)"
+        ),
+        after=(
+            "        # governance-mutation: SEMICONDUCTOR_REPAIR_RUN_NO_REPLACE\n"
+            "        f\"\"\"CREATE TRIGGER IF NOT EXISTS {RUN_TABLE}_no_replace\n"
+            "        BEFORE INSERT ON {RUN_TABLE}\n"
+            "        WHEN 0 AND EXISTS (SELECT 1 FROM {RUN_TABLE} WHERE plan_hash=NEW.plan_hash)"
+        ),
+        expected_failure_marker="test_repair_tables_are_append_only",
+        rationale="INSERT OR REPLACE cannot bypass the append-only run receipt boundary.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_REPAIR_ROW_NO_REPLACE",
+        component="Research funnel semiconductor append-only repair rows",
+        source_path="experiments/research_funnel/semiconductor_source_repair.py",
+        test_script="tests/test_semiconductor_source_repair.py",
+        before=(
+            "        # governance-mutation: SEMICONDUCTOR_REPAIR_ROW_NO_REPLACE\n"
+            "        f\"\"\"CREATE TRIGGER IF NOT EXISTS {REPAIR_TABLE}_no_replace\n"
+            "        BEFORE INSERT ON {REPAIR_TABLE}\n"
+            "        WHEN EXISTS ("
+        ),
+        after=(
+            "        # governance-mutation: SEMICONDUCTOR_REPAIR_ROW_NO_REPLACE\n"
+            "        f\"\"\"CREATE TRIGGER IF NOT EXISTS {REPAIR_TABLE}_no_replace\n"
+            "        BEFORE INSERT ON {REPAIR_TABLE}\n"
+            "        WHEN 0 AND EXISTS ("
+        ),
+        expected_failure_marker="test_repair_tables_are_append_only",
+        rationale="INSERT OR REPLACE cannot bypass the append-only repair-row boundary.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_REPAIR_OLD_ARTIFACT_BINDING",
+        component="Research funnel semiconductor repair predecessor binding",
+        source_path="experiments/research_funnel/semiconductor_source_repair.py",
+        test_script="tests/test_semiconductor_source_repair.py",
+        before=(
+            "        # governance-mutation: SEMICONDUCTOR_REPAIR_OLD_ARTIFACT_BINDING\n"
+            "        if record[\"old_batch_ref\"] != current_ref:"
+        ),
+        after=(
+            "        # governance-mutation: SEMICONDUCTOR_REPAIR_OLD_ARTIFACT_BINDING\n"
+            "        if False:"
+        ),
+        expected_failure_marker="test_old_artifact_reference_is_recomputed_not_trusted",
+        rationale="A repair must bind the exact active predecessor bytes, not a self-reported label.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_REPAIR_CATALOG_CALL",
+        component="Research funnel semiconductor catalog-wide reader verification",
+        source_path="experiments/research_funnel/semiconductor_source_repair.py",
+        test_script="tests/test_semiconductor_source_repair.py",
+        before=(
+            "        # governance-mutation: SEMICONDUCTOR_REPAIR_CATALOG_CALL\n"
+            "        _validate_repair_catalog(conn)"
+        ),
+        after=(
+            "        # governance-mutation: SEMICONDUCTOR_REPAIR_CATALOG_CALL\n"
+            "        pass"
+        ),
+        expected_failure_marker=(
+            "test_reader_rejects_any_incomplete_or_orphaned_repair_catalog"
+        ),
+        rationale="A reader cannot accept one key while another committed repair receipt is incomplete.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_REPAIR_CATALOG_RECEIPTS",
+        component="Research funnel semiconductor complete repair receipts",
+        source_path="experiments/research_funnel/semiconductor_source_repair.py",
+        test_script="tests/test_semiconductor_source_repair.py",
+        before=(
+            "    # governance-mutation: SEMICONDUCTOR_REPAIR_CATALOG_RECEIPTS\n"
+            "    for run in runs:"
+        ),
+        after=(
+            "    # governance-mutation: SEMICONDUCTOR_REPAIR_CATALOG_RECEIPTS\n"
+            "    for run in []:"
+        ),
+        expected_failure_marker=(
+            "test_reader_rejects_any_incomplete_or_orphaned_repair_catalog"
+        ),
+        rationale="Every committed run must bind every repair row before any projection is readable.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_REPAIR_CLASS_WIDE_SCAN",
+        component="Research funnel semiconductor repair class-wide discovery",
+        source_path="experiments/research_funnel/semiconductor_source_repair.py",
+        test_script="tests/test_semiconductor_source_repair.py",
+        before=(
+            "    # governance-mutation: SEMICONDUCTOR_REPAIR_CLASS_WIDE_SCAN\n"
+            "    for source_name in registered:"
+        ),
+        after=(
+            "    # governance-mutation: SEMICONDUCTOR_REPAIR_CLASS_WIDE_SCAN\n"
+            "    for source_name in registered[:1]:"
+        ),
+        expected_failure_marker=(
+            "test_class_scan_covers_every_registered_daily_source_and_date"
+        ),
+        rationale="Discovery may not narrow the registered source/date class to one known incident.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_REPAIR_SCAN_ORPHAN_RAW_KEYS",
+        component="Research funnel semiconductor repair physical date discovery",
+        source_path="experiments/research_funnel/semiconductor_source_repair.py",
+        test_script="tests/test_semiconductor_source_repair.py",
+        before=(
+            "    # governance-mutation: SEMICONDUCTOR_REPAIR_SCAN_ORPHAN_RAW_KEYS\n"
+            "    if raw_keys - original_keys:"
+        ),
+        after=(
+            "    # governance-mutation: SEMICONDUCTOR_REPAIR_SCAN_ORPHAN_RAW_KEYS\n"
+            "    if False:"
+        ),
+        expected_failure_marker=(
+            "test_class_scan_refuses_orphan_rows_outside_batch_calendar"
+        ),
+        rationale=(
+            "A raw evidence date omitted from the batch calendar is corruption, not an empty clean scan."
+        ),
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_REPAIR_CORE_SCHEMA_REQUIRED",
+        component="Research funnel semiconductor repair scan target identity",
+        source_path="experiments/research_funnel/semiconductor_source_repair.py",
+        test_script="tests/test_semiconductor_source_repair.py",
+        before=(
+            "    # governance-mutation: SEMICONDUCTOR_REPAIR_CORE_SCHEMA_REQUIRED\n"
+            "    if _core_schema_state(conn) == \"ABSENT\":"
+        ),
+        after=(
+            "    # governance-mutation: SEMICONDUCTOR_REPAIR_CORE_SCHEMA_REQUIRED\n"
+            "    if False:"
+        ),
+        expected_failure_marker=(
+            "test_class_scan_refuses_an_existing_non_feature_store_database"
+        ),
+        rationale=(
+            "Scanning the wrong SQLite file must fail closed instead of producing a valid-looking empty repair scope."
+        ),
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_REPAIR_NO_SELF_REPORTED_PIT",
+        component="Research funnel semiconductor repair PIT boundary",
+        source_path="experiments/research_funnel/semiconductor_source_repair.py",
+        test_script="tests/test_semiconductor_source_repair.py",
+        before=(
+            "    # governance-mutation: SEMICONDUCTOR_REPAIR_NO_SELF_REPORTED_PIT\n"
+            "    return \"LATE_OBSERVED\""
+        ),
+        after=(
+            "    # governance-mutation: SEMICONDUCTOR_REPAIR_NO_SELF_REPORTED_PIT\n"
+            "    return \"PIT_VERIFIED\""
+        ),
+        expected_failure_marker=(
+            "test_self_reported_publication_time_cannot_rewrite_historical_evidence"
+        ),
+        rationale=(
+            "A staged response and self-reported publication time cannot become authenticated historical PIT evidence."
+        ),
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_REPAIR_CAPTURE_HASH",
+        component="Research funnel semiconductor raw capture receipt",
+        source_path="experiments/research_funnel/semiconductor_source_repair.py",
+        test_script="tests/test_semiconductor_source_repair.py",
+        before=(
+            "    # governance-mutation: SEMICONDUCTOR_REPAIR_CAPTURE_HASH\n"
+            "    if _require_hash(claimed, \"capture_hash\") != _hash(unhashed):"
+        ),
+        after=(
+            "    # governance-mutation: SEMICONDUCTOR_REPAIR_CAPTURE_HASH\n"
+            "    if False:"
+        ),
+        expected_failure_marker=(
+            "test_capture_receipt_and_required_evidence_values_are_recomputed"
+        ),
+        rationale="A relabeled staged response cannot pass as the provider capture used by the repair.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_REPAIR_STRICT_JSON_CONSTANTS",
+        component="Research funnel semiconductor repair JSON boundary",
+        source_path="experiments/research_funnel/semiconductor_source_repair.py",
+        test_script="tests/test_semiconductor_source_repair.py",
+        before=(
+            "            # governance-mutation: SEMICONDUCTOR_REPAIR_STRICT_JSON_CONSTANTS\n"
+            "            parse_constant=reject_constant,"
+        ),
+        after=(
+            "            # governance-mutation: SEMICONDUCTOR_REPAIR_STRICT_JSON_CONSTANTS\n"
+            "            parse_constant=None,"
+        ),
+        expected_failure_marker=(
+            "test_json_loader_rejects_nonstandard_numeric_constants"
+        ),
+        rationale="NaN and infinities cannot enter a strict hash-bound repair document.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_REPAIR_PLAN_CAPTURE_PROJECTION",
+        component="Research funnel repair plan capture-to-projection binding",
+        source_path="experiments/research_funnel/semiconductor_source_repair.py",
+        test_script="tests/test_semiconductor_source_repair.py",
+        before=(
+            "        # governance-mutation: SEMICONDUCTOR_REPAIR_PLAN_CAPTURE_PROJECTION\n"
+            "        _validate_capture_projection(record)"
+        ),
+        after=(
+            "        # governance-mutation: SEMICONDUCTOR_REPAIR_PLAN_CAPTURE_PROJECTION\n"
+            "        _replacement_batch(record)"
+        ),
+        expected_failure_marker=(
+            "test_plan_rejects_rehashed_capture_that_disagrees_with_projection"
+        ),
+        rationale=(
+            "A fully rehashed plan must still prove that replacement bytes derive from the attached raw capture."
+        ),
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_REPAIR_REQUIRED_EVIDENCE_VALUES",
+        component="Research funnel semiconductor repaired evidence quality",
+        source_path="experiments/research_funnel/semiconductor_source_repair.py",
+        test_script="tests/test_semiconductor_source_repair.py",
+        before=(
+            "    # governance-mutation: SEMICONDUCTOR_REPAIR_REQUIRED_EVIDENCE_VALUES\n"
+            "    if source_name == \"cyq_perf\":"
+        ),
+        after=(
+            "    # governance-mutation: SEMICONDUCTOR_REPAIR_REQUIRED_EVIDENCE_VALUES\n"
+            "    if False:"
+        ),
+        expected_failure_marker=(
+            "test_capture_receipt_and_required_evidence_values_are_recomputed"
+        ),
+        rationale="A full row count cannot launder null or internally inconsistent chip evidence.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_REPAIR_PLAN_HASH",
+        component="Research funnel semiconductor repair frozen plan",
+        source_path="experiments/research_funnel/semiconductor_source_repair.py",
+        test_script="tests/test_semiconductor_source_repair.py",
+        before=(
+            "    # governance-mutation: SEMICONDUCTOR_REPAIR_PLAN_HASH\n"
+            "    if claimed != _hash(unhashed):"
+        ),
+        after=(
+            "    # governance-mutation: SEMICONDUCTOR_REPAIR_PLAN_HASH\n"
+            "    if False:"
+        ),
+        expected_failure_marker="test_plan_hash_recomputes_after_a_caller_relabels_it",
+        rationale="A caller cannot relabel a changed repair plan with a new self-reported hash.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_REPAIR_PLAN_RECORD_SEMANTICS",
+        component="Research funnel semiconductor repair plan semantics",
+        source_path="experiments/research_funnel/semiconductor_source_repair.py",
+        test_script="tests/test_semiconductor_source_repair.py",
+        before=(
+            "        # governance-mutation: SEMICONDUCTOR_REPAIR_PLAN_RECORD_SEMANTICS\n"
+            "        if not str(record[\"repair_reason\"]).strip():"
+        ),
+        after=(
+            "        # governance-mutation: SEMICONDUCTOR_REPAIR_PLAN_RECORD_SEMANTICS\n"
+            "        if False:"
+        ),
+        expected_failure_marker=(
+            "test_rehashed_plan_cannot_commit_an_empty_repair_reason"
+        ),
+        rationale="A correctly rehashed plan still cannot erase the reason for an append-only repair.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_REPAIR_LITERAL_APPROVAL",
+        component="Research funnel semiconductor repair human approval",
+        source_path="experiments/research_funnel/semiconductor_source_repair.py",
+        test_script="tests/test_semiconductor_source_repair.py",
+        before=(
+            "    # governance-mutation: SEMICONDUCTOR_REPAIR_LITERAL_APPROVAL\n"
+            "    if verbatim != approval_verbatim_for(plan):"
+        ),
+        after=(
+            "    # governance-mutation: SEMICONDUCTOR_REPAIR_LITERAL_APPROVAL\n"
+            "    if False:"
+        ),
+        expected_failure_marker="test_literal_approval_must_bind_both_full_hashes",
+        rationale="The verbatim human approval must contain the complete frozen plan hash.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_REPAIR_SCAN_TOCTOU",
+        component="Research funnel semiconductor repair frozen scan",
+        source_path="experiments/research_funnel/semiconductor_source_repair.py",
+        test_script="tests/test_semiconductor_source_repair.py",
+        before=(
+            "            # governance-mutation: SEMICONDUCTOR_REPAIR_SCAN_TOCTOU\n"
+            "            if current_scan[\"scan_hash\"] != plan[\"scan_hash\"]:"
+        ),
+        after=(
+            "            # governance-mutation: SEMICONDUCTOR_REPAIR_SCAN_TOCTOU\n"
+            "            if False:"
+        ),
+        expected_failure_marker=(
+            "test_changed_class_scan_refuses_before_creating_repair_tables"
+        ),
+        rationale="Any class-wide scan drift after approval must stop before the first repair write.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_REPAIR_RUNTIME_BINDING",
+        component="Research funnel semiconductor production runtime binding",
+        source_path="experiments/research_funnel/semiconductor_source_repair.py",
+        test_script="tests/test_semiconductor_source_repair.py",
+        before=(
+            "    # governance-mutation: SEMICONDUCTOR_REPAIR_RUNTIME_BINDING\n"
+            "    if path != expected_db:"
+        ),
+        after=(
+            "    # governance-mutation: SEMICONDUCTOR_REPAIR_RUNTIME_BINDING\n"
+            "    if False:"
+        ),
+        expected_failure_marker=(
+            "test_production_apply_binds_store_and_lock_to_one_runtime_root"
+        ),
+        rationale="The writable store and nightly lock must come from one explicit runtime root.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_REPAIR_PRECOMMIT_PROJECTION",
+        component="Research funnel semiconductor atomic repair projection",
+        source_path="experiments/research_funnel/semiconductor_source_repair.py",
+        test_script="tests/test_semiconductor_source_repair.py",
+        before=(
+            "            # governance-mutation: SEMICONDUCTOR_REPAIR_PRECOMMIT_PROJECTION\n"
+            "            _validate_pending_projection(conn, plan)"
+        ),
+        after=(
+            "            # governance-mutation: SEMICONDUCTOR_REPAIR_PRECOMMIT_PROJECTION\n"
+            "            pass"
+        ),
+        expected_failure_marker=(
+            "test_invalid_future_projection_rolls_back_before_commit"
+        ),
+        rationale="The exact durable receipt and future active head must validate before COMMIT.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_REPAIR_STORED_PLAN_RECOMPUTED",
+        component="Research funnel semiconductor repair durable plan integrity",
+        source_path="experiments/research_funnel/semiconductor_source_repair.py",
+        test_script="tests/test_semiconductor_source_repair.py",
+        before=(
+            "    # governance-mutation: SEMICONDUCTOR_REPAIR_STORED_PLAN_RECOMPUTED\n"
+            "    validate_plan(reconstructed_plan)"
+        ),
+        after=(
+            "    # governance-mutation: SEMICONDUCTOR_REPAIR_STORED_PLAN_RECOMPUTED\n"
+            "    pass"
+        ),
+        expected_failure_marker=(
+            "test_reader_rejects_rehashed_capture_that_disagrees_with_projection"
+        ),
+        rationale=(
+            "A self-consistent durable receipt cannot replace semantic recomputation of its exact capture-derived plan."
+        ),
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_REPAIR_PLAN_SEMANTIC_ORDER",
+        component="Research funnel semiconductor repair multi-source receipt replay",
+        source_path="experiments/research_funnel/semiconductor_source_repair.py",
+        test_script="tests/test_semiconductor_source_repair.py",
+        before=(
+            "            # governance-mutation: SEMICONDUCTOR_REPAIR_PLAN_SEMANTIC_ORDER\n"
+            "            f\"SELECT * FROM {REPAIR_TABLE} WHERE plan_hash=? ORDER BY source_name,as_of\","
+        ),
+        after=(
+            "            # governance-mutation: SEMICONDUCTOR_REPAIR_PLAN_SEMANTIC_ORDER\n"
+            "            f\"SELECT * FROM {REPAIR_TABLE} WHERE plan_hash=? ORDER BY repair_id\","
+        ),
+        expected_failure_marker=(
+            "test_multi_source_receipt_rebuild_uses_plan_semantic_order"
+        ),
+        rationale=(
+            "A multi-source receipt must reconstruct the frozen plan by source/date semantics, not arbitrary hash order."
+        ),
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_REPAIR_STORED_APPROVAL_RECHECK",
+        component="Research funnel semiconductor repair durable approval integrity",
+        source_path="experiments/research_funnel/semiconductor_source_repair.py",
+        test_script="tests/test_semiconductor_source_repair.py",
+        before=(
+            "    # governance-mutation: SEMICONDUCTOR_REPAIR_STORED_APPROVAL_RECHECK\n"
+            "    _validate_approval_fields(stored_approval, reconstructed_plan)"
+        ),
+        after=(
+            "    # governance-mutation: SEMICONDUCTOR_REPAIR_STORED_APPROVAL_RECHECK\n"
+            "    pass"
+        ),
+        expected_failure_marker=(
+            "test_reader_rechecks_stored_approval_semantics_after_receipt_rehash"
+        ),
+        rationale=(
+            "A rehashed receipt cannot launder approval text that no longer binds the frozen hashes."
+        ),
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_U1_SEMICONDUCTOR_INDUSTRY_CONTEXT",
+        component="Research funnel semiconductor issuer-node boundary",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_semiconductor_positive_inputs.py",
+        before="            _validate_semiconductor_industry_context(row, as_of=as_of)",
+        after="            pass",
+        expected_failure_marker=(
+            "test_semiconductor_industry_context_cannot_be_coordinately_promoted"
+        ),
+        rationale=(
+            "Registry-identified semiconductor rows cannot promote industry aliases into issuer-level "
+            "COMPLETE evidence or positive triggers without a registered value-chain node."
+        ),
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_HEALTH_QUALITY_ROLLUP",
+        component="Research funnel semiconductor public health",
+        source_path="experiments/research_funnel/feature_store.py",
+        test_script="tests/test_semiconductor_positive_inputs.py",
+        before='    if payload.get("status") != expected_status:',
+        after="    if False:",
+        expected_failure_marker=(
+            "test_feature_health_cannot_hide_a_semiconductor_source_gap"
+        ),
+        rationale="The public feature-store receipt must surface a semiconductor source gap as PARTIAL.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_HEALTH_COMPONENT_ROLLUP",
+        component="Research funnel semiconductor health evidence",
+        source_path="experiments/research_funnel/feature_store.py",
+        test_script="tests/test_semiconductor_positive_inputs.py",
+        before="        if semiconductor_status != expected_semiconductor_status:",
+        after="        if False:",
+        expected_failure_marker=(
+            "test_feature_health_cannot_hide_a_semiconductor_source_gap"
+        ),
+        rationale=(
+            "Semiconductor and top-level health must be recomputed from component "
+            "coverage rather than trusting two coordinated COMPLETE labels."
+        ),
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_FINANCIAL_LOOKBACK",
+        component="Research funnel semiconductor PIT financial coverage",
+        source_path="experiments/research_funnel/semiconductor_inputs.py",
+        test_script="tests/test_semiconductor_positive_inputs.py",
+        before=(
+            "# governance-mutation: SEMICONDUCTOR_FINANCIAL_LOOKBACK\n"
+            "def _quarter_periods(as_of: str, count: int = 4) -> list[str]:"
+        ),
+        after=(
+            "# governance-mutation: SEMICONDUCTOR_FINANCIAL_LOOKBACK\n"
+            "def _quarter_periods(as_of: str, count: int = 2) -> list[str]:"
+        ),
+        expected_failure_marker=(
+            "test_financial_query_window_reaches_the_latest_disclosed_prior_quarter"
+        ),
+        rationale=(
+            "The collector must look past nominal but not-yet-disclosed periods to the "
+            "latest PIT financial statement that could actually exist."
+        ),
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_ORPHAN_RAW_ROWS",
+        component="Research funnel semiconductor source atomicity",
+        source_path="experiments/research_funnel/semiconductor_source_repair.py",
+        test_script="tests/test_semiconductor_positive_inputs.py",
+        before=(
+            "        # governance-mutation: SEMICONDUCTOR_ORPHAN_RAW_ROWS\n"
+            "        if raw_rows:"
+        ),
+        after=(
+            "        # governance-mutation: SEMICONDUCTOR_ORPHAN_RAW_ROWS\n"
+            "        if False:"
+        ),
+        expected_failure_marker="test_orphan_raw_rows_without_their_atomic_batch_fail_hard",
+        rationale=(
+            "Raw evidence without its atomic source-batch receipt is corruption, not an "
+            "ordinary source outage."
+        ),
+    ),
+    MutationCase(
         mutation_id="FUNNEL_U1_NO_TRADE_AUTHORITY",
         component="Research funnel U1 authority",
         source_path="experiments/research_funnel/funnel_pipeline.py",
@@ -1417,6 +2404,32 @@ MUTATIONS: tuple[MutationCase, ...] = (
         '            raise FunnelError("invalid channel data_status")',
         expected_failure_marker="test_u1_rejects_unknown_data_status",
         rationale="Unknown status labels cannot bypass visible DATA_BLOCKED/PARTIAL semantics.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_U1_TRIGGER_REQUIRES_COMPLETE",
+        component="Research funnel U1 positive evidence boundary",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_semiconductor_positive_inputs.py",
+        before='        if row["triggered"] and row["data_status"] != "COMPLETE":',
+        after="        if False:",
+        expected_failure_marker="test_degraded_channel_can_never_be_a_positive_trigger",
+        rationale=(
+            "PARTIAL, DATA_BLOCKED, or stale context can never be relabeled as a "
+            "positive candidate trigger."
+        ),
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_U1_E1_TRIGGER_RECOMPUTED",
+        component="Research funnel U1 E1 integrity",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_semiconductor_positive_inputs.py",
+        before='                or row["triggered"] is not expected_trigger\n',
+        after="                or False\n",
+        expected_failure_marker="test_e1_verdict_cannot_be_hidden_by_relabeling_triggered",
+        rationale=(
+            "The E1 red-flag verdict must independently determine the trigger consumed "
+            "by U2; a rehashed false label cannot hide it."
+        ),
     ),
     MutationCase(
         mutation_id="FUNNEL_U1_SIX_CHANNEL_COVERAGE",
@@ -1473,6 +2486,44 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="An E1 red flag is an exclusion fact, not a positive candidate signal.",
     ),
     MutationCase(
+        mutation_id="FUNNEL_U2_E1_OVERRIDES_POSITIVE_CHANNELS",
+        component="Research funnel U2 red-flag boundary",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_semiconductor_positive_inputs.py",
+        before="                if code in selected_main or code in red_flag_codes:",
+        after="                if code in selected_main:",
+        expected_failure_marker=(
+            "test_positive_channels_are_real_but_e1_red_flag_still_excludes"
+        ),
+        rationale="A positive channel cannot rescue an E1 red flag into main-channel capacity.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_U2_E1_EXCLUDED_FROM_RANDOM_CONTROL",
+        component="Research funnel U2 red-flag boundary",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_research_funnel_closure.py",
+        before=(
+            "        if code not in selected_all and code not in red_flag_codes and code in strata:"
+        ),
+        after="        if code not in selected_all and code in strata:",
+        expected_failure_marker=(
+            "test_u2_random_control_is_same_pool_stratified_and_reproducible"
+        ),
+        rationale="The randomized control sleeve cannot silently admit an E1 red flag.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_U2_E1_EXCLUSION_VALIDATED",
+        component="Research funnel U2 red-flag boundary",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_semiconductor_positive_inputs.py",
+        before="        elif red_flagged:",
+        after="        elif False and red_flagged:",
+        expected_failure_marker=(
+            "test_positive_channels_are_real_but_e1_red_flag_still_excludes"
+        ),
+        rationale="Validation must independently reject relabeling any E1 red flag as active.",
+    ),
+    MutationCase(
         mutation_id="FUNNEL_U2_EXACT_EVIDENCE_PROJECTION",
         component="Research funnel U2 evidence boundary",
         source_path="experiments/research_funnel/funnel_pipeline.py",
@@ -1513,6 +2564,38 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="U4 and U0 cannot advance a candidate using a stale U3 battery artifact.",
     ),
     MutationCase(
+        mutation_id="FUNNEL_U3_RED_FLAG_VERDICT_REQUIRED",
+        component="Research funnel U3 fundamental red-flag contract",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_funnel_dag_offline.py",
+        before='    if verdict not in U3_RED_FLAG_VERDICTS:\n'
+        '        raise FunnelError(f"U3 battery fundamental red-flag verdict is invalid: {code}")',
+        after='    if False:\n'
+        '        raise FunnelError(f"U3 battery fundamental red-flag verdict is invalid: {code}")',
+        expected_failure_marker=(
+            "test_complete_fundamental_dimension_requires_a_red_flag_verdict"
+        ),
+        rationale=(
+            "A complete U3 fundamental dimension must carry the closed E1 red-flag verdict, "
+            "rather than treating missing or invented labels as clean evidence."
+        ),
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_U4_U3_RED_FLAG_PROPAGATION",
+        component="Research funnel U3-to-U4 red-flag propagation",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_research_funnel_closure.py",
+        before="        u3_red_flag = _u3_fundamental_red_flag_active(battery_row)",
+        after="        u3_red_flag = False",
+        expected_failure_marker=(
+            "test_u3_fundamental_red_flag_blocks_u4_even_when_u2_is_clean"
+        ),
+        rationale=(
+            "Six-dimensional completeness is coverage, not approval; a U3 E1 red flag must "
+            "remain blocked even when U2 positive channels were clean."
+        ),
+    ),
+    MutationCase(
         mutation_id="FUNNEL_U4_HUMAN_SELECTION_SIZE",
         component="Research funnel U4 authority",
         source_path="experiments/research_funnel/funnel_pipeline.py",
@@ -1547,6 +2630,273 @@ MUTATIONS: tuple[MutationCase, ...] = (
         '        raise FunnelError(f"U4 selection lacks a clear research question: {missing_questions}")',
         expected_failure_marker="test_u4_requires_an_explicit_research_question",
         rationale="A U3 name cannot enter deep research without a concrete question to answer.",
+    ),
+    MutationCase(
+        mutation_id="INDUSTRY_COHORT_PARTIAL_STATUS",
+        component="Research funnel industry partial-data honesty",
+        source_path="experiments/research_funnel/industry_cohort.py",
+        test_script="tests/test_industry_cohort_offline.py",
+        before='    return (\n'
+        '        "PARTIAL"\n'
+        '        if any(row["data_gap_channels"] or row["data_partial_channels"] for row in rows)\n'
+        '        else "COMPLETE"\n'
+        '    )',
+        after='    return "COMPLETE"',
+        expected_failure_marker="test_partial_security_data_makes_snapshot_partial",
+        rationale="One degraded security must make the snapshot PARTIAL even when the rest of the channel is usable.",
+    ),
+    MutationCase(
+        mutation_id="INDUSTRY_COHORT_TAXONOMY_CLOSED_WORLD",
+        component="Research funnel industry taxonomy shape",
+        source_path="experiments/research_funnel/industry_cohort.py",
+        test_script="tests/test_industry_cohort_offline.py",
+        before='    _require_exact_fields(payload, TAXONOMY_FIELDS, "industry taxonomy")',
+        after='    pass',
+        expected_failure_marker="test_taxonomy_and_registry_contracts_are_closed_world",
+        rationale="Undeclared taxonomy fields cannot smuggle authority into an otherwise valid mapping file.",
+    ),
+    MutationCase(
+        mutation_id="INDUSTRY_COHORT_TAXONOMY_POLICY",
+        component="Research funnel industry taxonomy authority policy",
+        source_path="experiments/research_funnel/industry_cohort.py",
+        test_script="tests/test_industry_cohort_offline.py",
+        before='    if policy != expected_policy:\n'
+        '        raise FunnelError("industry taxonomy policy changed")',
+        after='    if False:\n'
+        '        raise FunnelError("industry taxonomy policy changed")',
+        expected_failure_marker="test_taxonomy_policy_guard_is_behaviorally_pinned",
+        rationale="The taxonomy cannot acquire production or U4 authority during a refactor.",
+    ),
+    MutationCase(
+        mutation_id="INDUSTRY_COHORT_IDENTITY_NO_ROTATION",
+        component="Research funnel unreviewed industry mapping boundary",
+        source_path="experiments/research_funnel/industry_cohort.py",
+        test_script="tests/test_industry_cohort_offline.py",
+        before='            rotation_aliases = []',
+        after='            rotation_aliases = [source_key]',
+        expected_failure_marker="test_identity_only_does_not_guess_cross_source_aliases",
+        rationale="An unreviewed exact-name coincidence cannot become rotation confirmation.",
+    ),
+    MutationCase(
+        mutation_id="INDUSTRY_COHORT_REGISTRY_CLOSED_WORLD",
+        component="Research funnel industry registry shape",
+        source_path="experiments/research_funnel/industry_cohort.py",
+        test_script="tests/test_industry_cohort_offline.py",
+        before='    _require_exact_fields(payload, INDUSTRY_REGISTRY_FIELDS, "industry registry")',
+        after='    pass',
+        expected_failure_marker="test_taxonomy_and_registry_contracts_are_closed_world",
+        rationale="The registry contract cannot carry undeclared action or authority fields.",
+    ),
+    MutationCase(
+        mutation_id="INDUSTRY_COHORT_REGISTRY_POLICY",
+        component="Research funnel industry registry authority policy",
+        source_path="experiments/research_funnel/industry_cohort.py",
+        test_script="tests/test_industry_cohort_offline.py",
+        before='    if payload.get("policy") != REGISTRY_POLICY:\n'
+        '        raise FunnelError("industry registry authority or coverage policy changed")',
+        after='    if False:\n'
+        '        raise FunnelError("industry registry authority or coverage policy changed")',
+        expected_failure_marker="test_registry_policy_guard_is_behaviorally_pinned",
+        rationale="The all-industry registry must retain its no-selection and no-production boundary.",
+    ),
+    MutationCase(
+        mutation_id="INDUSTRY_COHORT_ALL_INDUSTRIES",
+        component="Research funnel industry U0 coverage",
+        source_path="experiments/research_funnel/industry_cohort.py",
+        test_script="tests/test_industry_cohort_offline.py",
+        before='    if rows != expected_rows or payload.get("rows_hash") != _hash(expected_rows):\n'
+        '        raise FunnelError("industry registry rows do not cover the U0 taxonomy exactly")',
+        after='    if False:\n'
+        '        raise FunnelError("industry registry rows do not cover the U0 taxonomy exactly")',
+        expected_failure_marker="test_all_u0_industries_are_retained_and_tamper_rejected",
+        rationale="Every eligible U0 industry must remain represented even when its mapping is identity-only.",
+    ),
+    MutationCase(
+        mutation_id="INDUSTRY_COHORT_ROTATION_FRESHNESS",
+        component="Research funnel industry rotation point-in-time binding",
+        source_path="experiments/research_funnel/industry_cohort.py",
+        test_script="tests/test_industry_cohort_offline.py",
+        before='        _validate_rotation_wrapper(payload, data, as_of)',
+        after='        pass',
+        expected_failure_marker="test_stale_or_blocked_rotation_wrapper_is_rejected",
+        rationale="A stale or blocked rotation body cannot borrow a current wrapper date and confirm P1.",
+    ),
+    MutationCase(
+        mutation_id="INDUSTRY_COHORT_ROTATION_WRAPPER_REQUIRED",
+        component="Research funnel industry rotation provenance",
+        source_path="experiments/research_funnel/industry_cohort.py",
+        test_script="tests/test_industry_cohort_offline.py",
+        before='    if not wrapped:\n'
+        '        raise FunnelError("rotation panel must use the governed wrapper contract")',
+        after='    if False:\n'
+        '        raise FunnelError("rotation panel must use the governed wrapper contract")',
+        expected_failure_marker="test_rotation_payload_without_governed_wrapper_is_rejected",
+        rationale="Raw rotation rows cannot bypass wrapper status, quality, date, and run provenance.",
+    ),
+    MutationCase(
+        mutation_id="INDUSTRY_COHORT_RELATIVE_BENCHMARK",
+        component="Research funnel industry-relative snapshot evidence",
+        source_path="experiments/research_funnel/industry_cohort.py",
+        test_script="tests/test_industry_cohort_offline.py",
+        before='        relative_benchmark, relative_excess, relative_sample_count = _industry_relative_price_evidence(\n'
+        '            codes, scan_by_code,\n'
+        '        )',
+        after='        relative_benchmark, relative_excess, relative_sample_count = None, {}, 0',
+        expected_failure_marker="test_relative_evidence_uses_within_industry_median",
+        rationale="Relative evidence must be positive excess over the current industry's median, not raw return.",
+    ),
+    MutationCase(
+        mutation_id="INDUSTRY_COHORT_ROTATION_ALIAS",
+        component="Research funnel industry cross-source context",
+        source_path="experiments/research_funnel/industry_cohort.py",
+        test_script="tests/test_industry_cohort_offline.py",
+        before='        rotation_context = _rotation_context(industry["rotation_aliases"], rotation_rows)',
+        after='        rotation_context = _rotation_context([], rotation_rows)',
+        expected_failure_marker="test_semiconductor_rotation_alias_is_observed",
+        rationale="A reviewed cross-source alias must affect the industry's research context without changing issuer membership.",
+    ),
+    MutationCase(
+        mutation_id="INDUSTRY_COHORT_RELATIVE_RESEARCH_ONLY",
+        component="Research funnel industry relative-evidence boundary",
+        source_path="experiments/research_funnel/industry_cohort.py",
+        test_script="tests/test_industry_cohort_offline.py",
+        before='        if any(rep.get("ready_for_u4") is not False for rep in reps):\n'
+        '            raise FunnelError("industry cohort representative acquired U4 readiness")',
+        after='        if False:\n'
+        '            raise FunnelError("industry cohort representative acquired U4 readiness")',
+        expected_failure_marker="test_relative_representatives_never_gain_u4_readiness",
+        rationale="Industry-relative leaders cannot become U4-ready without absolute U1 evidence and a later human gate.",
+    ),
+    MutationCase(
+        mutation_id="INDUSTRY_COHORT_RED_FLAG_EXCLUSION",
+        component="Research funnel industry E1 exclusion",
+        source_path="experiments/research_funnel/industry_cohort.py",
+        test_script="tests/test_industry_cohort_offline.py",
+        before='        if red_flags.intersection(codes):\n'
+        '            raise FunnelError("E1 red-flag security cannot become an industry representative")',
+        after='        if False:\n'
+        '            raise FunnelError("E1 red-flag security cannot become an industry representative")',
+        expected_failure_marker="test_red_flags_never_become_representatives",
+        rationale="A current E1 red flag must exclude a security from every industry representative role.",
+    ),
+    MutationCase(
+        mutation_id="INDUSTRY_COHORT_NO_AUTHORITY",
+        component="Research funnel industry snapshot authority boundary",
+        source_path="experiments/research_funnel/industry_cohort.py",
+        test_script="tests/test_industry_cohort_offline.py",
+        before='    _require_exact_fields(payload, INDUSTRY_SNAPSHOT_FIELDS, "industry snapshot")',
+        after='    pass',
+        expected_failure_marker="test_forbidden_authority_fields_fail_closed",
+        rationale="A closed snapshot contract cannot acquire undeclared trade, U4, or score authority.",
+    ),
+    MutationCase(
+        mutation_id="INDUSTRY_COHORT_SNAPSHOT_POLICY",
+        component="Research funnel industry snapshot authority policy",
+        source_path="experiments/research_funnel/industry_cohort.py",
+        test_script="tests/test_industry_cohort_offline.py",
+        before='    if payload.get("policy") != SNAPSHOT_POLICY:\n'
+        '        raise FunnelError("industry snapshot acquired selection or production authority")',
+        after='    if False:\n'
+        '        raise FunnelError("industry snapshot acquired selection or production authority")',
+        expected_failure_marker="test_snapshot_policy_guard_is_behaviorally_pinned",
+        rationale="A structurally valid snapshot still cannot change its macro, U4, or production policy.",
+    ),
+    MutationCase(
+        mutation_id="INDUSTRY_COHORT_RELATIVE_COHORT",
+        component="Research funnel industry-relative cohort membership",
+        source_path="experiments/research_funnel/industry_cohort.py",
+        test_script="tests/test_industry_cohort_offline.py",
+        before='        relative_benchmark, relative_excess, _ = _industry_relative_price_evidence(\n'
+        '            selectable, scan_by_code,\n'
+        '        )',
+        after='        relative_benchmark, relative_excess, _ = None, {}, 0',
+        expected_failure_marker="test_relative_evidence_uses_within_industry_median",
+        rationale="Relative representatives must be chosen from the same explicit median-excess evidence as the snapshot.",
+    ),
+    MutationCase(
+        mutation_id="INDUSTRY_COHORT_NO_TRADE_OR_U4_AUTHORITY",
+        component="Research funnel industry cohort authority boundary",
+        source_path="experiments/research_funnel/industry_cohort.py",
+        test_script="tests/test_industry_cohort_offline.py",
+        before='    _require_exact_fields(payload, INDUSTRY_COHORT_FIELDS, "industry cohort")',
+        after='    pass',
+        expected_failure_marker="test_forbidden_authority_fields_fail_closed",
+        rationale="A closed cohort contract is research context and cannot emit undeclared trade or U4 authority.",
+    ),
+    MutationCase(
+        mutation_id="INDUSTRY_COHORT_FIXED_GATE_TEXT",
+        component="Research funnel industry next-gate boundary",
+        source_path="experiments/research_funnel/industry_cohort.py",
+        test_script="tests/test_industry_cohort_offline.py",
+        before='    if payload.get("next_gate") != COHORT_NEXT_GATE or payload.get("disclaimer") != DISCLAIMER:\n'
+        '        raise FunnelError("industry cohort next gate or disclaimer changed")',
+        after='    if False:\n'
+        '        raise FunnelError("industry cohort next gate or disclaimer changed")',
+        expected_failure_marker="test_cohort_next_gate_and_disclaimer_are_fixed",
+        rationale="A valid rows hash cannot legitimize an automatic execution gate or erase the research-only disclaimer.",
+    ),
+    MutationCase(
+        mutation_id="INDUSTRY_COHORT_RECOMPUTE",
+        component="Research funnel industry cohort evidence binding",
+        source_path="experiments/research_funnel/industry_cohort.py",
+        test_script="tests/test_industry_cohort_offline.py",
+        before='    if rows != expected_rows or payload.get("rows_hash") != _hash(expected_rows):\n'
+        '        raise FunnelError("industry cohort membership or evidence does not recompute")',
+        after='    if False:\n'
+        '        raise FunnelError("industry cohort membership or evidence does not recompute")',
+        expected_failure_marker="test_cohort_membership_recomputes_from_u1",
+        rationale="Representative membership and its channel evidence must recompute from the bound U1 snapshot.",
+    ),
+    MutationCase(
+        mutation_id="INDUSTRY_COHORT_EVIDENCE_STATUS",
+        component="Research funnel industry honest status",
+        source_path="experiments/research_funnel/industry_cohort.py",
+        test_script="tests/test_industry_cohort_offline.py",
+        before='    if (\n'
+        '        payload.get("status") != expected_status\n'
+        '        or payload.get("coverage") != dict(expected_coverage)\n'
+        '    ):\n'
+        '        raise FunnelError(f"{label} status/coverage do not recompute from evidence")',
+        after='    if False:\n'
+        '        raise FunnelError(f"{label} status/coverage do not recompute from evidence")',
+        expected_failure_marker="test_status_and_coverage_are_recomputed_from_rows",
+        rationale="A contract cannot self-report COMPLETE or inflate coverage independently of its rows.",
+    ),
+    MutationCase(
+        mutation_id="INDUSTRY_COHORT_UPSTREAM_QUALITY",
+        component="Research funnel industry cohort quality propagation",
+        source_path="experiments/research_funnel/industry_cohort.py",
+        test_script="tests/test_industry_cohort_offline.py",
+        before='    if industry_snapshot_status != "COMPLETE":\n'
+        '        return "PARTIAL"',
+        after='    if False:\n'
+        '        return "PARTIAL"',
+        expected_failure_marker="test_partial_snapshot_cannot_be_hidden_by_absolute_cohort_rows",
+        rationale="Absolute representatives cannot hide partial upstream evidence in the cohort status.",
+    ),
+    MutationCase(
+        mutation_id="INDUSTRY_COHORT_IMMUTABLE_BUNDLE",
+        component="Research funnel industry immutable history",
+        source_path="experiments/research_funnel/industry_cohort.py",
+        test_script="tests/test_industry_cohort_offline.py",
+        before='    if os.path.lexists(target):\n'
+        '        raise FunnelError(f"industry cohort bundle already exists; refusing overwrite: {target}")',
+        after='    if False:\n'
+        '        raise FunnelError(f"industry cohort bundle already exists; refusing overwrite: {target}")',
+        expected_failure_marker="test_immutable_bundle_refuses_same_run_overwrite",
+        rationale="A later refresh must create a new run rather than overwrite a prior industry snapshot.",
+    ),
+    MutationCase(
+        mutation_id="INDUSTRY_COHORT_EXACT_ARTIFACT_SET",
+        component="Research funnel industry bundle path boundary",
+        source_path="experiments/research_funnel/industry_cohort.py",
+        test_script="tests/test_industry_cohort_offline.py",
+        before='    if set(contracts) != set(CONTRACT_SCHEMAS):\n'
+        '        raise FunnelError("industry cohort bundle artifact set is not exact")',
+        after='    if False:\n'
+        '        raise FunnelError("industry cohort bundle artifact set is not exact")',
+        expected_failure_marker="test_bundle_artifact_names_cannot_escape_staging",
+        rationale="Only the three declared contract names may be written inside the immutable bundle staging directory.",
     ),
     MutationCase(
         mutation_id="FUNNEL_CLOSURE_BUNDLE_HASH",
@@ -1871,6 +3221,311 @@ MUTATIONS: tuple[MutationCase, ...] = (
         '        raise CycleError("registered valuation industry differs from the research case")',
         expected_failure_marker="test_case_industry_must_match_registered_valuation_adapter",
         rationale="A research case cannot borrow a valuation adapter from a different industry method.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_EXECUTION_RAW_SETTLED_BARS",
+        component="Research funnel paper execution realism",
+        source_path="experiments/execution_tracker/paper_portfolio.py",
+        test_script="tests/test_paper_execution_realism.py",
+        before=(
+            '    # governance-mutation: PAPER_EXECUTION_RAW_SETTLED_BARS\n'
+            '    if bar.get("price_basis") != "RAW_UNADJUSTED" or bar.get("settled") is not True:'
+        ),
+        after=(
+            '    # governance-mutation: PAPER_EXECUTION_RAW_SETTLED_BARS\n'
+            '    if False:'
+        ),
+        expected_failure_marker="test_adjusted_or_unsettled_bar_is_rejected",
+        rationale="Adjusted or unsettled bars cannot serve as executable-price evidence.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_EXECUTION_DATE_SEQUENCE",
+        component="Research funnel paper execution realism",
+        source_path="experiments/execution_tracker/paper_portfolio.py",
+        test_script="tests/test_paper_execution_realism.py",
+        before=(
+            '        # governance-mutation: PAPER_EXECUTION_DATE_SEQUENCE\n'
+            '        if dates != sorted(set(dates)):'
+        ),
+        after=(
+            '        # governance-mutation: PAPER_EXECUTION_DATE_SEQUENCE\n'
+            '        if False:'
+        ),
+        expected_failure_marker="test_realistic_bar_dates_must_be_ordered_unique_calendar_dates",
+        rationale="Direct fill-engine callers cannot reorder or duplicate settlement sessions.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_EXECUTION_CORPORATE_ACTION_FREEZE",
+        component="Research funnel paper execution realism",
+        source_path="experiments/execution_tracker/paper_portfolio.py",
+        test_script="tests/test_paper_execution_realism.py",
+        before=(
+            '    # governance-mutation: PAPER_EXECUTION_CORPORATE_ACTION_FREEZE\n'
+            '    if detail is not None:'
+        ),
+        after=(
+            '    # governance-mutation: PAPER_EXECUTION_CORPORATE_ACTION_FREEZE\n'
+            '    if False:'
+        ),
+        expected_failure_marker="test_corporate_action_price_chain_break_freezes_without_false_exit",
+        rationale="A raw-price discontinuity cannot apply stale nominal levels across a corporate action.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_EXECUTION_FROZEN_STAYS_FROZEN",
+        component="Research funnel paper execution realism",
+        source_path="experiments/execution_tracker/paper_portfolio.py",
+        test_script="tests/test_paper_execution_realism.py",
+        before=(
+            '        # governance-mutation: PAPER_EXECUTION_FROZEN_STAYS_FROZEN\n'
+            '        if entry.get("execution_frozen") is True:'
+        ),
+        after=(
+            '        # governance-mutation: PAPER_EXECUTION_FROZEN_STAYS_FROZEN\n'
+            '        if False:'
+        ),
+        expected_failure_marker="test_corporate_action_price_chain_break_freezes_without_false_exit",
+        rationale="A frozen paper order cannot resume against stale nominal levels on a shorter replay window.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_EXECUTION_FROZEN_NAV_BLOCK",
+        component="Research funnel paper execution realism",
+        source_path="experiments/execution_tracker/model_paper_fund.py",
+        test_script="tests/test_paper_execution_realism.py",
+        before=(
+            '    # governance-mutation: PAPER_EXECUTION_FROZEN_NAV_BLOCK\n'
+            '    if frozen_positions:'
+        ),
+        after=(
+            '    # governance-mutation: PAPER_EXECUTION_FROZEN_NAV_BLOCK\n'
+            '    if False:'
+        ),
+        expected_failure_marker="test_corporate_action_price_chain_break_freezes_without_false_exit",
+        rationale="A frozen filled position cannot emit a false NAV from stale shares and post-action prices.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_EXECUTION_LIMIT_UP_NO_BUY",
+        component="Research funnel paper execution realism",
+        source_path="experiments/execution_tracker/paper_portfolio.py",
+        test_script="tests/test_paper_execution_realism.py",
+        before=(
+            '                # governance-mutation: PAPER_EXECUTION_LIMIT_UP_NO_BUY\n'
+            '                if require_realistic and _one_price_at(b, "up_limit"):'
+        ),
+        after=(
+            '                # governance-mutation: PAPER_EXECUTION_LIMIT_UP_NO_BUY\n'
+            '                if False:'
+        ),
+        expected_failure_marker="test_one_price_limit_up_does_not_fill",
+        rationale="A one-price limit-up bar cannot be treated as an available buy fill.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_EXECUTION_LIQUIDITY_CAP",
+        component="Research funnel paper execution realism",
+        source_path="experiments/execution_tracker/paper_portfolio.py",
+        test_script="tests/test_paper_execution_realism.py",
+        before=(
+            '                # governance-mutation: PAPER_EXECUTION_LIQUIDITY_CAP\n'
+            '                if require_realistic and not _participation_ok(entry, b):'
+        ),
+        after=(
+            '                # governance-mutation: PAPER_EXECUTION_LIQUIDITY_CAP\n'
+            '                if False:'
+        ),
+        expected_failure_marker="test_liquidity_participation_cap_blocks_fill",
+        rationale="A paper order cannot consume more than the registered share of settled volume.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_EXECUTION_NO_CHASE_LIMIT",
+        component="Research funnel paper execution realism",
+        source_path="experiments/execution_tracker/paper_portfolio.py",
+        test_script="tests/test_paper_execution_realism.py",
+        before=(
+            '                # governance-mutation: PAPER_EXECUTION_NO_CHASE_LIMIT\n'
+            '                if require_realistic and (not _number(max_fill) or fill > float(max_fill)):'
+        ),
+        after=(
+            '                # governance-mutation: PAPER_EXECUTION_NO_CHASE_LIMIT\n'
+            '                if False:'
+        ),
+        expected_failure_marker="test_registered_no_chase_limit_blocks_large_gap",
+        rationale="A gap above the prospectively registered entry zone cannot be chased after the fact.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_EXECUTION_T1_SELL",
+        component="Research funnel paper execution realism",
+        source_path="experiments/execution_tracker/paper_portfolio.py",
+        test_script="tests/test_paper_execution_realism.py",
+        before=(
+            '        # governance-mutation: PAPER_EXECUTION_T1_SELL\n'
+            '        for b in (x for x in eligible if x["date"] > entry["fill_date"]):'
+        ),
+        after=(
+            '        # governance-mutation: PAPER_EXECUTION_T1_SELL\n'
+            '        for b in (x for x in eligible if x["date"] >= entry["fill_date"]):'
+        ),
+        expected_failure_marker="test_fill_day_stop_and_target_cannot_sell_under_t1",
+        rationale="A-share cash-equity fills cannot be sold on their purchase date.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_EXECUTION_LIMIT_DOWN_NO_SELL",
+        component="Research funnel paper execution realism",
+        source_path="experiments/execution_tracker/paper_portfolio.py",
+        test_script="tests/test_paper_execution_realism.py",
+        before=(
+            '                # governance-mutation: PAPER_EXECUTION_LIMIT_DOWN_NO_SELL\n'
+            '                if require_realistic and _one_price_at(b, "down_limit"):'
+        ),
+        after=(
+            '                # governance-mutation: PAPER_EXECUTION_LIMIT_DOWN_NO_SELL\n'
+            '                if False:'
+        ),
+        expected_failure_marker="test_one_price_limit_down_does_not_fake_stop_exit",
+        rationale="A one-price limit-down bar cannot manufacture an available stop exit.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_EXECUTION_COSTS_APPLIED",
+        component="Research funnel paper execution realism",
+        source_path="experiments/execution_tracker/model_paper_fund.py",
+        test_script="tests/test_paper_execution_realism.py",
+        before=(
+            '    # governance-mutation: PAPER_EXECUTION_COSTS_APPLIED\n'
+            '    return round(commission + transfer + stamp, 2)'
+        ),
+        after=(
+            '    # governance-mutation: PAPER_EXECUTION_COSTS_APPLIED\n'
+            '    return 0.0'
+        ),
+        expected_failure_marker="test_costs_reduce_cash_and_net_pnl",
+        rationale="Workflow-debug PnL must remain net of the declared conservative cost proxy.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_EXECUTION_COST_SIDE_ENUM",
+        component="Research funnel paper execution realism",
+        source_path="experiments/execution_tracker/model_paper_fund.py",
+        test_script="tests/test_paper_execution_realism.py",
+        before=(
+            '    # governance-mutation: PAPER_EXECUTION_COST_SIDE_ENUM\n'
+            '    if side not in ("buy", "sell"):'
+        ),
+        after=(
+            '    # governance-mutation: PAPER_EXECUTION_COST_SIDE_ENUM\n'
+            '    if False:'
+        ),
+        expected_failure_marker="test_transaction_cost_rejects_unknown_or_noncanonical_side",
+        rationale="An unknown side cannot silently fall through to the cheaper buy-side fee path.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_EXECUTION_COST_MODEL_FROZEN",
+        component="Research funnel paper execution realism",
+        source_path="experiments/execution_tracker/model_paper_fund.py",
+        test_script="tests/test_paper_execution_realism.py",
+        before=(
+            '    # governance-mutation: PAPER_EXECUTION_COST_MODEL_FROZEN\n'
+            '    if model != WORKFLOW_DEBUG_COST_MODEL:'
+        ),
+        after=(
+            '    # governance-mutation: PAPER_EXECUTION_COST_MODEL_FROZEN\n'
+            '    if False:'
+        ),
+        expected_failure_marker="test_cost_model_cannot_be_silently_zeroed",
+        rationale="A caller cannot zero a fee while retaining the approved cost-model label.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_EXECUTION_DEBUG_NOT_CLAIM_SAMPLE",
+        component="Research funnel paper execution realism",
+        source_path="experiments/execution_tracker/model_paper_fund.py",
+        test_script="tests/test_paper_execution_realism.py",
+        before=(
+            '        # governance-mutation: PAPER_EXECUTION_DEBUG_NOT_CLAIM_SAMPLE\n'
+            '        "sample_eligible": False if realistic else True,'
+        ),
+        after=(
+            '        # governance-mutation: PAPER_EXECUTION_DEBUG_NOT_CLAIM_SAMPLE\n'
+            '        "sample_eligible": True,'
+        ),
+        expected_failure_marker="test_workflow_debug_receipt_never_becomes_claim_sample",
+        rationale="The first workflow-debug cycles cannot enter the 30-sample method claim set.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_EXECUTION_RECEIPT_NO_CLAIM",
+        component="Research funnel paper execution realism",
+        source_path="experiments/execution_tracker/model_paper_fund.py",
+        test_script="tests/test_paper_execution_realism.py",
+        before=(
+            '        # governance-mutation: PAPER_EXECUTION_RECEIPT_NO_CLAIM\n'
+            '        "method_claim_sample_eligible": False,'
+        ),
+        after=(
+            '        # governance-mutation: PAPER_EXECUTION_RECEIPT_NO_CLAIM\n'
+            '        "method_claim_sample_eligible": True,'
+        ),
+        expected_failure_marker="test_workflow_debug_receipt_never_becomes_claim_sample",
+        rationale="A realism receipt must never promote workflow-debug fills into claim evidence.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_EXECUTION_CLAIM_COUNT_EXCLUDES_DEBUG",
+        component="Research funnel paper execution realism",
+        source_path="experiments/execution_tracker/model_paper_fund.py",
+        test_script="tests/test_paper_execution_realism.py",
+        before=(
+            '    # governance-mutation: PAPER_EXECUTION_CLAIM_COUNT_EXCLUDES_DEBUG\n'
+            '    closed = [o for o in closed_all if o.get("sample_eligible") is True]'
+        ),
+        after=(
+            '    # governance-mutation: PAPER_EXECUTION_CLAIM_COUNT_EXCLUDES_DEBUG\n'
+            '    closed = list(closed_all)'
+        ),
+        expected_failure_marker="test_thirty_workflow_debug_closures_do_not_unlock_claims",
+        rationale="Thirty workflow-debug closures cannot masquerade as the independent claim set.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_AUDIT_BEHAVIORAL_PROBES",
+        component="Research funnel paper execution read-only audit",
+        source_path="experiments/execution_tracker/paper_execution_audit.py",
+        test_script="tests/test_paper_execution_audit.py",
+        before=(
+            "    # governance-mutation: PAPER_AUDIT_BEHAVIORAL_PROBES\n"
+            "    cases = _run_capability_probes()"
+        ),
+        after=(
+            "    # governance-mutation: PAPER_AUDIT_BEHAVIORAL_PROBES\n"
+            '    cases = [{"case_id": "DECLARED_ONLY", "requirement": "none", '
+            '"status": "PASS", "observed": {}}]'
+        ),
+        expected_failure_marker="test_behavioral_probe_matrix_executes_against_current_engine",
+        rationale="The audit must execute the engine probes instead of accepting an empty or declared capability matrix.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_AUDIT_HISTORY_UNVERIFIED",
+        component="Research funnel paper execution read-only audit",
+        source_path="experiments/execution_tracker/paper_execution_audit.py",
+        test_script="tests/test_paper_execution_audit.py",
+        before=(
+            "        # governance-mutation: PAPER_AUDIT_HISTORY_UNVERIFIED\n"
+            "        status = HISTORICAL_STATUS"
+        ),
+        after=(
+            "        # governance-mutation: PAPER_AUDIT_HISTORY_UNVERIFIED\n"
+            '        status = "VERIFIED_SIMULATION"'
+        ),
+        expected_failure_marker="test_history_is_projected_unverified_without_rewrite",
+        rationale="An audit of the current engine cannot retroactively validate fills generated without realism facts.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_AUDIT_NO_CLAIM_AUTHORITY",
+        component="Research funnel paper execution read-only audit",
+        source_path="experiments/execution_tracker/paper_execution_audit.py",
+        test_script="tests/test_paper_execution_audit.py",
+        before=(
+            "    # governance-mutation: PAPER_AUDIT_NO_CLAIM_AUTHORITY\n"
+            "    claim_allowed = False"
+        ),
+        after=(
+            "    # governance-mutation: PAPER_AUDIT_NO_CLAIM_AUTHORITY\n"
+            "    claim_allowed = True"
+        ),
+        expected_failure_marker="test_receipt_never_grants_claim_or_production_authority",
+        rationale="The audit receipt cannot grant method claims or production authority.",
     ),
     MutationCase(
         mutation_id="RESEARCH_CYCLE_NO_LOOKAHEAD_BARS",
@@ -2199,6 +3854,247 @@ MUTATIONS: tuple[MutationCase, ...] = (
         '        raise CycleError("human attribution confirmation/dispute lacks bound evidence semantics")',
         expected_failure_marker="test_human_dispute_requires_evidence_and_preserves_machine_result",
         rationale="Junyan may supersede machine attribution, but the disagreement must remain explicit and evidence-bound.",
+    ),
+    MutationCase(
+        mutation_id="FIVE_AXIS_BETA_BENCHMARK_BINDING",
+        component="Five-axis paper attribution",
+        source_path="experiments/research_funnel/five_axis_attribution.py",
+        test_script="tests/test_five_axis_attribution.py",
+        before=(
+            '    # governance-mutation: FIVE_AXIS_BETA_BENCHMARK_BINDING\n'
+            '    if beta.get("benchmark_id") != market_id:\n'
+            '        raise AttributionError("beta estimate market benchmark differs")'
+        ),
+        after=(
+            '    # governance-mutation: FIVE_AXIS_BETA_BENCHMARK_BINDING\n'
+            '    if False:\n'
+            '        raise AttributionError("beta estimate market benchmark differs")'
+        ),
+        expected_failure_marker="test_beta_samples_are_bound_to_the_market_benchmark",
+        rationale="A beta estimate for another market benchmark cannot be reused for this cycle.",
+    ),
+    MutationCase(
+        mutation_id="FIVE_AXIS_BETA_ASSET_BINDING",
+        component="Five-axis paper attribution",
+        source_path="experiments/research_funnel/five_axis_attribution.py",
+        test_script="tests/test_five_axis_attribution.py",
+        before=(
+            '    # governance-mutation: FIVE_AXIS_BETA_ASSET_BINDING\n'
+            '    if beta.get("asset_id") != registration.get("ticker"):\n'
+            '        raise AttributionError("beta estimate asset differs from cycle ticker")'
+        ),
+        after=(
+            '    # governance-mutation: FIVE_AXIS_BETA_ASSET_BINDING\n'
+            '    if False:\n'
+            '        raise AttributionError("beta estimate asset differs from cycle ticker")'
+        ),
+        expected_failure_marker="test_beta_samples_are_bound_to_the_cycle_ticker",
+        rationale="A beta estimate for another security cannot be reused for this paper cycle.",
+    ),
+    MutationCase(
+        mutation_id="FIVE_AXIS_BETA_POINT_IN_TIME",
+        component="Five-axis paper attribution",
+        source_path="experiments/research_funnel/five_axis_attribution.py",
+        test_script="tests/test_five_axis_attribution.py",
+        before=(
+            '    # governance-mutation: FIVE_AXIS_BETA_POINT_IN_TIME\n'
+            '    if not start < end <= registered <= method_as_of <= method_registered:\n'
+            '        raise AttributionError("beta estimate is not point-in-time registered evidence")'
+        ),
+        after=(
+            '    # governance-mutation: FIVE_AXIS_BETA_POINT_IN_TIME\n'
+            '    if False:\n'
+            '        raise AttributionError("beta estimate is not point-in-time registered evidence")'
+        ),
+        expected_failure_marker="test_beta_estimate_must_be_point_in_time",
+        rationale="A paper-cycle beta must be frozen before the method registration and cannot consume later returns.",
+    ),
+    MutationCase(
+        mutation_id="FIVE_AXIS_BETA_RECOMPUTATION",
+        component="Five-axis paper attribution",
+        source_path="experiments/research_funnel/five_axis_attribution.py",
+        test_script="tests/test_five_axis_attribution.py",
+        before=(
+            '    # governance-mutation: FIVE_AXIS_BETA_RECOMPUTATION\n'
+            '    if not math.isclose(value_number, computed, rel_tol=0.0, abs_tol=1e-10):\n'
+            '        raise AttributionError("beta estimate is not derived from frozen return samples")'
+        ),
+        after=(
+            '    # governance-mutation: FIVE_AXIS_BETA_RECOMPUTATION\n'
+            '    if False:\n'
+            '        raise AttributionError("beta estimate is not derived from frozen return samples")'
+        ),
+        expected_failure_marker="test_beta_is_recomputed_from_frozen_return_samples",
+        rationale="The declared beta must be recomputed from the frozen point-in-time return sample instead of trusted as a label.",
+    ),
+    MutationCase(
+        mutation_id="FIVE_AXIS_MARKET_SOURCE_BINDING",
+        component="Five-axis paper attribution",
+        source_path="experiments/research_funnel/five_axis_attribution.py",
+        test_script="tests/test_five_axis_attribution.py",
+        before=(
+            '    # governance-mutation: FIVE_AXIS_MARKET_SOURCE_BINDING\n'
+            '    if any(market.get(key) != value for key, value in expected.items()):\n'
+            '        raise AttributionError("market evidence is not bound to the exact cycle and order")'
+        ),
+        after=(
+            '    # governance-mutation: FIVE_AXIS_MARKET_SOURCE_BINDING\n'
+            '    if False:\n'
+            '        raise AttributionError("market evidence is not bound to the exact cycle and order")'
+        ),
+        expected_failure_marker="test_market_evidence_is_bound_to_exact_cycle_and_order",
+        rationale="Market evidence from another cycle or order cannot be reused for this attribution.",
+    ),
+    MutationCase(
+        mutation_id="FIVE_AXIS_EXECUTION_ORDER_BINDING",
+        component="Five-axis paper attribution",
+        source_path="experiments/research_funnel/five_axis_attribution.py",
+        test_script="tests/test_five_axis_attribution.py",
+        before=(
+            '    # governance-mutation: FIVE_AXIS_EXECUTION_ORDER_BINDING\n'
+            '    if any(receipt.get(key) != value for key, value in expected.items()):\n'
+            '        raise AttributionError("execution evidence is not bound to the exact cycle and order")'
+        ),
+        after=(
+            '    # governance-mutation: FIVE_AXIS_EXECUTION_ORDER_BINDING\n'
+            '    if False:\n'
+            '        raise AttributionError("execution evidence is not bound to the exact cycle and order")'
+        ),
+        expected_failure_marker="test_execution_evidence_is_bound_to_exact_order",
+        rationale="An execution audit cannot be borrowed from a different paper order.",
+    ),
+    MutationCase(
+        mutation_id="FIVE_AXIS_EXECUTION_SOURCE_RECEIPT",
+        component="Five-axis paper attribution",
+        source_path="experiments/research_funnel/five_axis_attribution.py",
+        test_script="tests/test_five_axis_attribution.py",
+        before=(
+            '        # governance-mutation: FIVE_AXIS_EXECUTION_SOURCE_RECEIPT\n'
+            '        raise AttributionError("execution wrapper is not bound to its full source receipt")'
+        ),
+        after=(
+            '        # governance-mutation: FIVE_AXIS_EXECUTION_SOURCE_RECEIPT\n'
+            '        pass'
+        ),
+        expected_failure_marker="test_execution_wrapper_freezes_the_full_source_receipt",
+        rationale="The wrapper must freeze the complete execution-realism receipt instead of accepting copied pass labels.",
+    ),
+    MutationCase(
+        mutation_id="FIVE_AXIS_EXECUTION_DEBUG_BOUNDARY",
+        component="Five-axis paper attribution",
+        source_path="experiments/research_funnel/five_axis_attribution.py",
+        test_script="tests/test_five_axis_attribution.py",
+        before=(
+            '    # governance-mutation: FIVE_AXIS_EXECUTION_DEBUG_BOUNDARY\n'
+            '    if status == "PASS_WORKFLOW_DEBUG" and not all(checks.values()):\n'
+            '        raise AttributionError("PASS_WORKFLOW_DEBUG execution evidence has failed checks")'
+        ),
+        after=(
+            '    # governance-mutation: FIVE_AXIS_EXECUTION_DEBUG_BOUNDARY\n'
+            '    if False:\n'
+            '        raise AttributionError("PASS_WORKFLOW_DEBUG execution evidence has failed checks")'
+        ),
+        expected_failure_marker="test_execution_pass_requires_every_realism_check",
+        rationale="A workflow-debug execution pass cannot contain a failed realism check.",
+    ),
+    MutationCase(
+        mutation_id="FIVE_AXIS_MISSING_EXECUTION_VISIBLE",
+        component="Five-axis paper attribution",
+        source_path="experiments/research_funnel/five_axis_attribution.py",
+        test_script="tests/test_five_axis_attribution.py",
+        before=(
+            '        # governance-mutation: FIVE_AXIS_MISSING_EXECUTION_VISIBLE\n'
+            '        status = "DATA_BLOCKED"'
+        ),
+        after=(
+            '        # governance-mutation: FIVE_AXIS_MISSING_EXECUTION_VISIBLE\n'
+            '        status = "WORKFLOW_DEBUG_ONLY"'
+        ),
+        expected_failure_marker="test_missing_evidence_stays_visible_and_does_not_block_other_axes",
+        rationale="Missing execution-realism evidence must remain visible instead of becoming a debug pass.",
+    ),
+    MutationCase(
+        mutation_id="FIVE_AXIS_EXECUTION_WORKFLOW_ONLY",
+        component="Five-axis paper attribution",
+        source_path="experiments/research_funnel/five_axis_attribution.py",
+        test_script="tests/test_five_axis_attribution.py",
+        before=(
+            '        # governance-mutation: FIVE_AXIS_EXECUTION_WORKFLOW_ONLY\n'
+            '        status = "WORKFLOW_DEBUG_ONLY"'
+        ),
+        after=(
+            '        # governance-mutation: FIVE_AXIS_EXECUTION_WORKFLOW_ONLY\n'
+            '        status = "COMPLIANT"'
+        ),
+        expected_failure_marker="test_workflow_debug_execution_never_becomes_method_sample",
+        rationale="A realism receipt in the first debug cycles cannot be relabeled as validated execution skill.",
+    ),
+    MutationCase(
+        mutation_id="FIVE_AXIS_MISSING_MARKET_VISIBLE",
+        component="Five-axis paper attribution",
+        source_path="experiments/research_funnel/five_axis_attribution.py",
+        test_script="tests/test_five_axis_attribution.py",
+        before=(
+            '            # governance-mutation: FIVE_AXIS_MISSING_MARKET_VISIBLE\n'
+            '            "status": "DATA_BLOCKED",'
+        ),
+        after=(
+            '            # governance-mutation: FIVE_AXIS_MISSING_MARKET_VISIBLE\n'
+            '            "status": "ATTRIBUTED_DIAGNOSTIC",'
+        ),
+        expected_failure_marker="test_missing_evidence_stays_visible_and_does_not_block_other_axes",
+        rationale="Missing market evidence cannot silently become a beta attribution.",
+    ),
+    MutationCase(
+        mutation_id="FIVE_AXIS_MARKET_BETA_DERIVATION",
+        component="Five-axis paper attribution",
+        source_path="experiments/research_funnel/five_axis_attribution.py",
+        test_script="tests/test_five_axis_attribution.py",
+        before=(
+            '            # governance-mutation: FIVE_AXIS_MARKET_BETA_DERIVATION\n'
+            '            values = {'
+        ),
+        after=(
+            '            # governance-mutation: FIVE_AXIS_MARKET_BETA_DERIVATION\n'
+            '            contribution = 0.0\n'
+            '            values = {'
+        ),
+        expected_failure_marker="test_market_beta_is_derived_and_never_called_alpha",
+        rationale="Market-beta contribution and residual must be derived from the registered beta and same-window market return.",
+    ),
+    MutationCase(
+        mutation_id="FIVE_AXIS_DERIVED_NO_CLAIM",
+        component="Five-axis paper attribution",
+        source_path="experiments/research_funnel/five_axis_attribution.py",
+        test_script="tests/test_five_axis_attribution.py",
+        before=(
+            '        # governance-mutation: FIVE_AXIS_DERIVED_NO_CLAIM\n'
+            '        "method_sample_eligible": False,'
+        ),
+        after=(
+            '        # governance-mutation: FIVE_AXIS_DERIVED_NO_CLAIM\n'
+            '        "method_sample_eligible": True,'
+        ),
+        expected_failure_marker="test_derived_receipt_hardcodes_the_no_claim_boundary",
+        rationale="Workflow-debug attribution must remain excluded from the 30-sample method gate by construction.",
+    ),
+    MutationCase(
+        mutation_id="FIVE_AXIS_DETERMINISTIC_PROJECTION",
+        component="Five-axis paper attribution",
+        source_path="experiments/research_funnel/five_axis_attribution.py",
+        test_script="tests/test_five_axis_attribution.py",
+        before=(
+            '    # governance-mutation: FIVE_AXIS_DETERMINISTIC_PROJECTION\n'
+            '    if dict(receipt) != expected:\n'
+            '        raise AttributionError("five-axis attribution is not the deterministic evidence projection")'
+        ),
+        after=(
+            '    # governance-mutation: FIVE_AXIS_DETERMINISTIC_PROJECTION\n'
+            '    if False:\n'
+            '        raise AttributionError("five-axis attribution is not the deterministic evidence projection")'
+        ),
+        expected_failure_marker="test_receipt_is_a_deterministic_projection",
+        rationale="A self-rehashed receipt cannot rewrite any axis away from its verified sources.",
     ),
     MutationCase(
         mutation_id="GOVERNANCE_FUNNEL_MARKER_COVERAGE_CALL",
@@ -3126,6 +5022,2333 @@ MUTATIONS: tuple[MutationCase, ...] = (
             "test_validate_manifest_enforces_funnel_nightly_marker_coverage"
         ),
         rationale="The manifest must not silently stop enforcing nightly wiring marker coverage.",
+    ),
+)
+
+# #295 replaces the original packet-as-one-event model with candidate events
+# and a separate packet-closure commit.
+MUTATIONS = MUTATIONS + (
+    MutationCase(
+        mutation_id="U4_LEDGER_TYPED_APPEND_SOURCE_BINDING",
+        component="Research funnel U4 decision ledger",
+        source_path="experiments/research_funnel/u4_decision_ledger.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '    # governance-mutation: U4_LEDGER_TYPED_APPEND_SOURCE_BINDING\n'
+            '    _validate_packet_source(packet, Path(bundle_dir))'
+        ),
+        after=(
+            '    # governance-mutation: U4_LEDGER_TYPED_APPEND_SOURCE_BINDING\n'
+            '    if False:\n'
+            '        _validate_packet_source(packet, Path(bundle_dir))'
+        ),
+        expected_failure_marker="test_typed_writer_rejects_self_consistent_fabricated_source",
+        rationale="The public typed R-015 writer must not persist an internally consistent packet without immutable U2/U3 evidence.",
+    ),
+    MutationCase(
+        mutation_id="U4_LEDGER_FULL_BATTERY_SOURCE_HASH",
+        component="Research funnel U4 decision ledger",
+        source_path="experiments/research_funnel/u4_decision_ledger.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '        "u3_battery_hash": _sha_ref(\n'
+            '            refs.get("battery_hash"), "U3 battery artifact hash"\n'
+            '        ),'
+        ),
+        after=(
+            '        "u3_battery_hash": _sha_ref(\n'
+            '            ready_row.get("u3_battery_row_hash"), "U3 battery artifact hash"\n'
+            '        ),'
+        ),
+        expected_failure_marker="test_source_separates_full_battery_and_candidate_row_hashes",
+        rationale="The contract's U3 battery hash must bind the complete frozen artifact, not only one candidate row.",
+    ),
+    MutationCase(
+        mutation_id="U4_LEDGER_PACKET_EXCLUSIVE_LOCK",
+        component="Research funnel U4 decision ledger",
+        source_path="experiments/research_funnel/u4_decision_ledger.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '            # governance-mutation: U4_LEDGER_PACKET_EXCLUSIVE_LOCK\n'
+            '            fcntl.flock(lock_file, fcntl.LOCK_EX)'
+        ),
+        after=(
+            '            # governance-mutation: U4_LEDGER_PACKET_EXCLUSIVE_LOCK\n'
+            '            if False:\n'
+            '                fcntl.flock(lock_file, fcntl.LOCK_EX)'
+        ),
+        expected_failure_marker="test_concurrent_exact_retries_converge_to_one_wal_transaction",
+        rationale="A multi-event packet revision must serialize around all candidate events and its closure.",
+    ),
+    MutationCase(
+        mutation_id="U4_LEDGER_MACHINE_GATE_SOURCE",
+        component="Research funnel U4 decision ledger",
+        source_path="experiments/research_funnel/u4_decision_ledger.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '        # governance-mutation: U4_LEDGER_MACHINE_GATE_SOURCE\n'
+            '        if (raw["ready"] and blocked) or (not raw["ready"] and not blocked):'
+        ),
+        after=(
+            '        # governance-mutation: U4_LEDGER_MACHINE_GATE_SOURCE\n'
+            '        if False:'
+        ),
+        expected_failure_marker="test_ready_pool_machine_source_and_hash_are_recomputed",
+        rationale="A packet cannot call a blocked candidate ready or hide a reason on a non-ready row.",
+    ),
+    MutationCase(
+        mutation_id="U4_LEDGER_PACKET_POOL_BINDING",
+        component="Research funnel U4 decision ledger",
+        source_path="experiments/research_funnel/u4_decision_ledger.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '    # governance-mutation: U4_LEDGER_PACKET_POOL_BINDING\n'
+            '    if refs.get("ready_pool_hash") != funnel._hash(rows):'
+        ),
+        after=(
+            '    # governance-mutation: U4_LEDGER_PACKET_POOL_BINDING\n'
+            '    if False:'
+        ),
+        expected_failure_marker="test_ready_pool_machine_source_and_hash_are_recomputed",
+        rationale="Candidate decisions must bind to the frozen packet candidate bytes.",
+    ),
+    MutationCase(
+        mutation_id="U4_LEDGER_METHOD_VERSION",
+        component="Research funnel U4 decision ledger",
+        source_path="experiments/research_funnel/u4_decision_ledger.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '    # governance-mutation: U4_LEDGER_METHOD_VERSION\n'
+            '    if not isinstance(method_version, str) or METHOD_RE.fullmatch(method_version) is None:'
+        ),
+        after=(
+            '    # governance-mutation: U4_LEDGER_METHOD_VERSION\n'
+            '    if False:'
+        ),
+        expected_failure_marker="test_method_version_is_required_and_versioned",
+        rationale="Every prospective decision must name a frozen method version.",
+    ),
+    MutationCase(
+        mutation_id="U4_LEDGER_HUMAN_PACKET_AUTHORIZATION",
+        component="Research funnel U4 decision ledger",
+        source_path="experiments/research_funnel/u4_decision_ledger.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '    # governance-mutation: U4_LEDGER_HUMAN_PACKET_AUTHORIZATION\n'
+            '    if (\n'
+            '        str(packet.get("packet_hash") or "")[:12] not in authorization\n'
+            '        or not ("离线" in authorization or "offline" in authorization.casefold())\n'
+            '    ):'
+        ),
+        after=(
+            '    # governance-mutation: U4_LEDGER_HUMAN_PACKET_AUTHORIZATION\n'
+            '    if False:'
+        ),
+        expected_failure_marker="test_authorization_and_chronology_are_packet_bound",
+        rationale="Human authorization must remain bound to the frozen packet and offline scope.",
+    ),
+    MutationCase(
+        mutation_id="U4_LEDGER_REVIEW_CHRONOLOGY",
+        component="Research funnel U4 decision ledger",
+        source_path="experiments/research_funnel/u4_decision_ledger.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '    # governance-mutation: U4_LEDGER_REVIEW_CHRONOLOGY\n'
+            '    if decided_at < packet_at:'
+        ),
+        after=(
+            '    # governance-mutation: U4_LEDGER_REVIEW_CHRONOLOGY\n'
+            '    if False:'
+        ),
+        expected_failure_marker="test_authorization_and_chronology_are_packet_bound",
+        rationale="A claimed human decision cannot predate the evidence packet it reviewed.",
+    ),
+    MutationCase(
+        mutation_id="U4_LEDGER_TYPED_INTENT_HUMAN_BOUNDARY",
+        component="Research funnel U4 decision ledger",
+        source_path="experiments/research_funnel/u4_decision_ledger.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '    # governance-mutation: U4_LEDGER_TYPED_INTENT_HUMAN_BOUNDARY\n'
+            '    _validate_human_packet_boundary(packet, human)'
+        ),
+        after=(
+            '    # governance-mutation: U4_LEDGER_TYPED_INTENT_HUMAN_BOUNDARY\n'
+            '    if False:\n'
+            '        _validate_human_packet_boundary(packet, human)'
+        ),
+        expected_failure_marker=(
+            "test_typed_append_rejects_unbound_or_predated_human_evidence_before_wal"
+        ),
+        rationale="The public typed append path must repeat draft authority and chronology checks before WAL.",
+    ),
+    MutationCase(
+        mutation_id="U4_LEDGER_DECISION_SEMANTICS",
+        component="Research funnel U4 decision ledger",
+        source_path="experiments/research_funnel/u4_decision_ledger.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '        # governance-mutation: U4_LEDGER_DECISION_SEMANTICS\n'
+            '        if decision == "SELECT" and (missing or not isinstance(question, str) or not question.strip()):'
+        ),
+        after=(
+            '        # governance-mutation: U4_LEDGER_DECISION_SEMANTICS\n'
+            '        if False:'
+        ),
+        expected_failure_marker="test_select_and_data_blocked_semantics_fail_closed_before_wal",
+        rationale="SELECT needs a falsifiable question and cannot carry missing evidence.",
+    ),
+    MutationCase(
+        mutation_id="U4_LEDGER_COMPLETE_SUBJECT_SET",
+        component="Research funnel U4 decision ledger",
+        source_path="experiments/research_funnel/u4_decision_ledger.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '    # governance-mutation: U4_LEDGER_COMPLETE_SUBJECT_SET\n'
+            '    if set(decisions) != set(packet_by_code):'
+        ),
+        after=(
+            '    # governance-mutation: U4_LEDGER_COMPLETE_SUBJECT_SET\n'
+            '    if False:'
+        ),
+        expected_failure_marker="test_packet_candidate_set_must_include_reject_defer_no_trade_and_blocked_rows",
+        rationale="Rejected and deferred alternatives cannot disappear from the review denominator.",
+    ),
+    MutationCase(
+        mutation_id="U4_LEDGER_SELECTION_CARDINALITY",
+        component="Research funnel U4 decision ledger",
+        source_path="experiments/research_funnel/u4_decision_ledger.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '    # governance-mutation: U4_LEDGER_SELECTION_CARDINALITY\n'
+            '    if selected_count not in SELECTED_COUNTS:'
+        ),
+        after=(
+            '    # governance-mutation: U4_LEDGER_SELECTION_CARDINALITY\n'
+            '    if False:'
+        ),
+        expected_failure_marker="test_selection_count_is_only_zero_or_three_to_five",
+        rationale="A packet may select nobody or exactly three to five candidates, never one, two, or six.",
+    ),
+    MutationCase(
+        mutation_id="U4_LEDGER_REGISTRATION_CHRONOLOGY",
+        component="Research funnel U4 decision ledger",
+        source_path="experiments/research_funnel/u4_decision_ledger.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '    # governance-mutation: U4_LEDGER_REGISTRATION_CHRONOLOGY\n'
+            '    if registered < _parse_time(human.get("decided_at"), "human_decision.decided_at"):'
+        ),
+        after=(
+            '    # governance-mutation: U4_LEDGER_REGISTRATION_CHRONOLOGY\n'
+            '    if False:'
+        ),
+        expected_failure_marker="test_registration_cannot_predate_human_decision",
+        rationale="The durable R-015 registration timestamp cannot predate the claimed review.",
+    ),
+    MutationCase(
+        mutation_id="U4_LEDGER_PERSISTED_DECISION_SEMANTICS",
+        component="Research funnel U4 decision ledger",
+        source_path="experiments/research_funnel/u4_decision_ledger.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '    # governance-mutation: U4_LEDGER_PERSISTED_DECISION_SEMANTICS\n'
+            '    if event["decision"] == "SELECT" and (missing or not isinstance(question, str) or not question.strip()):'
+        ),
+        after=(
+            '    # governance-mutation: U4_LEDGER_PERSISTED_DECISION_SEMANTICS\n'
+            '    if False:'
+        ),
+        expected_failure_marker="test_persisted_decision_semantics_and_both_hash_formulas_are_independent_gates",
+        rationale="Replay must independently revalidate SELECT semantics rather than trusting the writer.",
+    ),
+    MutationCase(
+        mutation_id="U4_LEDGER_DECISION_ID_FORMULA",
+        component="Research funnel U4 decision ledger",
+        source_path="experiments/research_funnel/u4_decision_ledger.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '    # governance-mutation: U4_LEDGER_DECISION_ID_FORMULA\n'
+            '    if event.get("decision_id") != _decision_id(event):'
+        ),
+        after=(
+            '    # governance-mutation: U4_LEDGER_DECISION_ID_FORMULA\n'
+            '    if False:'
+        ),
+        expected_failure_marker="test_persisted_decision_semantics_and_both_hash_formulas_are_independent_gates",
+        rationale="The #295 deterministic decision identity formula is load-bearing.",
+    ),
+    MutationCase(
+        mutation_id="U4_LEDGER_RECORD_HASH_FORMULA",
+        component="Research funnel U4 decision ledger",
+        source_path="experiments/research_funnel/u4_decision_ledger.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '    # governance-mutation: U4_LEDGER_RECORD_HASH_FORMULA\n'
+            '    if event.get("record_hash") != _record_hash(event):'
+        ),
+        after=(
+            '    # governance-mutation: U4_LEDGER_RECORD_HASH_FORMULA\n'
+            '    if False:'
+        ),
+        expected_failure_marker="test_persisted_decision_semantics_and_both_hash_formulas_are_independent_gates",
+        rationale="The inner #295 record hash must be recomputed independently of the outer R-015 chain.",
+    ),
+    MutationCase(
+        mutation_id="U4_LEDGER_CLOSURE_SET_EQUALITY",
+        component="Research funnel U4 decision ledger",
+        source_path="experiments/research_funnel/u4_decision_ledger.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '    # governance-mutation: U4_LEDGER_CLOSURE_SET_EQUALITY\n'
+            '    if (\n'
+            '        codes != intent["packet_candidate_ids"]\n'
+            '        or receipt.get("reviewed_candidate_ids") != codes\n'
+            '        or receipt.get("current_decision_ids") != ids\n'
+            '        or receipt.get("missing_candidate_ids") != []\n'
+            '        or receipt.get("extra_candidate_ids") != []\n'
+            '        or receipt.get("reviewed_candidate_set_hash") != _sha_value(codes)\n'
+            '        or receipt.get("current_decision_set_hash") != _sha_value(ids)\n'
+            '    ):'
+        ),
+        after=(
+            '    # governance-mutation: U4_LEDGER_CLOSURE_SET_EQUALITY\n'
+            '    if False:'
+        ),
+        expected_failure_marker="test_self_consistent_subset_closure_is_rejected_against_frozen_intent",
+        rationale="A closure must prove exact equality between reviewed candidates and current decisions.",
+    ),
+    MutationCase(
+        mutation_id="U4_LEDGER_CLOSURE_EXACT_INTEGER_TYPES",
+        component="Research funnel U4 decision ledger",
+        source_path="experiments/research_funnel/u4_decision_ledger.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '    # governance-mutation: U4_LEDGER_CLOSURE_EXACT_INTEGER_TYPES\n'
+            '    if (\n'
+            '        type(revision) is not int\n'
+            '        or revision < 1\n'
+            '        or type(selected_count_field) is not int\n'
+            '        or selected_count_field < 0\n'
+            '        or type(tail_sequence_field) is not int\n'
+            '        or tail_sequence_field < 0\n'
+            '        or not isinstance(decision_counts_field, Mapping)\n'
+            '        or any(type(value) is not int or value < 0 for value in decision_counts_field.values())\n'
+            '    ):'
+        ),
+        after=(
+            '    # governance-mutation: U4_LEDGER_CLOSURE_EXACT_INTEGER_TYPES\n'
+            '    if False:'
+        ),
+        expected_failure_marker="test_closure_numeric_fields_reject_bool_and_float_aliases",
+        rationale="Python bool/float equality must not let malformed closure counts verify as integers.",
+    ),
+    MutationCase(
+        mutation_id="U4_LEDGER_INTENT_CARDINALITY",
+        component="Research funnel U4 decision ledger",
+        source_path="experiments/research_funnel/u4_decision_ledger.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '    # governance-mutation: U4_LEDGER_INTENT_CARDINALITY\n'
+            '    if selected_count not in SELECTED_COUNTS:'
+        ),
+        after=(
+            '    # governance-mutation: U4_LEDGER_INTENT_CARDINALITY\n'
+            '    if False:'
+        ),
+        expected_failure_marker="test_packet_intent_cardinality_and_closure_hash_are_independent_gates",
+        rationale="Replay must re-enforce zero-or-three-to-five from the frozen packet intent.",
+    ),
+    MutationCase(
+        mutation_id="U4_LEDGER_NO_AUTHORITY",
+        component="Research funnel U4 decision ledger",
+        source_path="experiments/research_funnel/u4_decision_ledger.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '    # governance-mutation: U4_LEDGER_NO_AUTHORITY\n'
+            '    if (\n'
+            '        authority != _authority()\n'
+            '        or _walk_keys(event) & set(funnel.FORBIDDEN_ACTION_KEYS)\n'
+            '    ):'
+        ),
+        after=(
+            '    # governance-mutation: U4_LEDGER_NO_AUTHORITY\n'
+            '    if False:'
+        ),
+        expected_failure_marker="test_candidate_and_closure_authority_never_escalate",
+        rationale="Candidate decisions must never acquire trade or production authority.",
+    ),
+    MutationCase(
+        mutation_id="U4_LEDGER_CLOSURE_NO_AUTHORITY",
+        component="Research funnel U4 decision ledger",
+        source_path="experiments/research_funnel/u4_decision_ledger.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '    # governance-mutation: U4_LEDGER_CLOSURE_NO_AUTHORITY\n'
+            '    if (\n'
+            '        receipt.get("claim_allowed") is not False\n'
+            '        or receipt.get("production_authority") is not False\n'
+            '        or receipt.get("trade_authority") is not False\n'
+            '        or receipt.get("no_trade_flag") is not True\n'
+            '    ):'
+        ),
+        after=(
+            '    # governance-mutation: U4_LEDGER_CLOSURE_NO_AUTHORITY\n'
+            '    if False:'
+        ),
+        expected_failure_marker="test_candidate_and_closure_authority_never_escalate",
+        rationale="The packet closure must remain advisory and carry no production authority.",
+    ),
+    MutationCase(
+        mutation_id="U4_LEDGER_CLOSURE_HASH",
+        component="Research funnel U4 decision ledger",
+        source_path="experiments/research_funnel/u4_decision_ledger.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '    # governance-mutation: U4_LEDGER_CLOSURE_HASH\n'
+            '    if receipt.get("closure_hash") != _closure_hash(receipt):'
+        ),
+        after=(
+            '    # governance-mutation: U4_LEDGER_CLOSURE_HASH\n'
+            '    if False:'
+        ),
+        expected_failure_marker="test_packet_intent_cardinality_and_closure_hash_are_independent_gates",
+        rationale="The packet commit receipt must be content-addressed independently of R-015.",
+    ),
+    MutationCase(
+        mutation_id="U4_LEDGER_R015_TIMESTAMP_BINDING",
+        component="Research funnel U4 decision ledger",
+        source_path="experiments/research_funnel/u4_decision_ledger.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '            # governance-mutation: U4_LEDGER_R015_TIMESTAMP_BINDING\n'
+            '            if outer.get("id") != event["decision_id"] or _registered_at_from_outer(outer.get("ts")) != event["registered_at"]:'
+        ),
+        after=(
+            '            # governance-mutation: U4_LEDGER_R015_TIMESTAMP_BINDING\n'
+            '            if False:'
+        ),
+        expected_failure_marker="test_outer_r015_timestamp_binding_cannot_be_relabelled",
+        rationale="registered_at must be the outer R-015 timestamp, not a caller-controlled payload label.",
+    ),
+    MutationCase(
+        mutation_id="U4_LEDGER_INTENT_PACKET_BINDING",
+        component="Research funnel U4 decision ledger",
+        source_path="experiments/research_funnel/u4_decision_ledger.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '    # governance-mutation: U4_LEDGER_INTENT_PACKET_BINDING\n'
+            '    if (\n'
+            '        intent.get("u4_packet_hash") != packet_ref'
+        ),
+        after=(
+            '    # governance-mutation: U4_LEDGER_INTENT_PACKET_BINDING\n'
+            '    if (\n'
+            '        False'
+        ),
+        expected_failure_marker="test_packet_intent_recomputes_packet_identity_and_its_own_hash",
+        rationale="The packet intent must retain the complete frozen packet identity, not a self-reported label.",
+    ),
+    MutationCase(
+        mutation_id="U4_LEDGER_INTENT_HASH_FORMULA",
+        component="Research funnel U4 decision ledger",
+        source_path="experiments/research_funnel/u4_decision_ledger.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '    # governance-mutation: U4_LEDGER_INTENT_HASH_FORMULA\n'
+            '    if intent.get("intent_hash") != _intent_hash(intent):'
+        ),
+        after=(
+            '    # governance-mutation: U4_LEDGER_INTENT_HASH_FORMULA\n'
+            '    if False:'
+        ),
+        expected_failure_marker="test_packet_intent_recomputes_packet_identity_and_its_own_hash",
+        rationale="A full-packet intent must be independently content-addressed during replay.",
+    ),
+    MutationCase(
+        mutation_id="U4_LEDGER_INTENT_HUMAN_COHERENCE",
+        component="Research funnel U4 decision ledger",
+        source_path="experiments/research_funnel/u4_decision_ledger.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '    # governance-mutation: U4_LEDGER_INTENT_HUMAN_COHERENCE\n'
+            '    if len({_canonical(item["human_decision"]) for item in items}) != 1:'
+        ),
+        after=(
+            '    # governance-mutation: U4_LEDGER_INTENT_HUMAN_COHERENCE\n'
+            '    if False:'
+        ),
+        expected_failure_marker="test_packet_intent_cannot_mix_distinct_human_decisions",
+        rationale="One packet intent cannot splice multiple human decisions into a synthetic batch.",
+    ),
+    MutationCase(
+        mutation_id="U4_LEDGER_CLOSURE_INTENT_BINDING",
+        component="Research funnel U4 decision ledger",
+        source_path="experiments/research_funnel/u4_decision_ledger.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '    # governance-mutation: U4_LEDGER_CLOSURE_INTENT_BINDING\n'
+            '    if (\n'
+            '        receipt.get("intent_id") != intent.get("intent_id")\n'
+            '        or receipt.get("intent_hash") != intent.get("intent_hash")'
+        ),
+        after=(
+            '    # governance-mutation: U4_LEDGER_CLOSURE_INTENT_BINDING\n'
+            '    if (\n'
+            '        receipt.get("intent_id") != intent.get("intent_id")\n'
+            '        or False'
+        ),
+        expected_failure_marker="test_closure_recomputes_its_packet_intent_binding",
+        rationale="A closure cannot relabel the full-packet intent it commits.",
+    ),
+    MutationCase(
+        mutation_id="U4_LEDGER_DECISION_INTENT_MATCH",
+        component="Research funnel U4 decision ledger",
+        source_path="experiments/research_funnel/u4_decision_ledger.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '            # governance-mutation: U4_LEDGER_DECISION_INTENT_MATCH\n'
+            '            if _event_intent(event) != expected_intents.get(subject[1]):'
+        ),
+        after=(
+            '            # governance-mutation: U4_LEDGER_DECISION_INTENT_MATCH\n'
+            '            if False:'
+        ),
+        expected_failure_marker="test_decision_event_must_match_the_preceding_full_packet_intent",
+        rationale="Each durable candidate event must match the packet-wide draft frozen before any candidate write.",
+    ),
+    MutationCase(
+        mutation_id="U4_LEDGER_COMMITTED_PROJECTION_BEFORE_STALE_INTENT",
+        component="Research funnel U4 decision ledger",
+        source_path="experiments/research_funnel/u4_decision_ledger.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '        # governance-mutation: U4_LEDGER_COMMITTED_PROJECTION_BEFORE_STALE_INTENT\n'
+            '        if (\n'
+            '            packet_intent_revisions\n'
+            '            and packet_intent_revisions[-1] > revision\n'
+            '            and not committed_same_revision\n'
+            '        ):'
+        ),
+        after=(
+            '        # governance-mutation: U4_LEDGER_COMMITTED_PROJECTION_BEFORE_STALE_INTENT\n'
+            '        if (\n'
+            '            packet_intent_revisions\n'
+            '            and packet_intent_revisions[-1] > revision\n'
+            '        ):'
+        ),
+        expected_failure_marker=(
+            "test_pending_later_revision_does_not_block_current_projection_recovery"
+        ),
+        rationale=(
+            "A pending correction cannot prevent an exact retry from reconstructing the "
+            "still-current committed projection."
+        ),
+    ),
+    MutationCase(
+        mutation_id="U4_LEDGER_EXISTING_CLOSURE_IDEMPOTENCY",
+        component="Research funnel U4 decision ledger",
+        source_path="experiments/research_funnel/u4_decision_ledger.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '        if committed_same_revision:\n'
+            '            committed = prior_closures[-1]\n'
+            '            # governance-mutation: U4_LEDGER_EXISTING_CLOSURE_IDEMPOTENCY'
+        ),
+        after=(
+            '        if False:\n'
+            '            committed = prior_closures[-1]\n'
+            '            # governance-mutation: U4_LEDGER_EXISTING_CLOSURE_IDEMPOTENCY'
+        ),
+        expected_failure_marker="test_exact_retry_after_unrelated_packet_recovers_projection_without_wal_append",
+        rationale="An exact retry must return its historical closure even after another packet advances the global tail.",
+    ),
+    MutationCase(
+        mutation_id="U4_LEDGER_PROJECTION_RECONCILIATION",
+        component="Research funnel U4 decision ledger",
+        source_path="experiments/research_funnel/u4_decision_ledger.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '        # governance-mutation: U4_LEDGER_PROJECTION_RECONCILIATION\n'
+            '        _atomic_write_json(path, projection)'
+        ),
+        after=(
+            '        # governance-mutation: U4_LEDGER_PROJECTION_RECONCILIATION\n'
+            '        if False:\n'
+            '            _atomic_write_json(path, projection)'
+        ),
+        expected_failure_marker="test_projection_failure_after_closure_is_recovered_by_exact_retry",
+        rationale="A committed closure must be able to reconstruct its non-authoritative projection after interruption.",
+    ),
+    MutationCase(
+        mutation_id="U4_LEDGER_IDEMPOTENT_INTENT_MATCH",
+        component="Research funnel U4 decision ledger",
+        source_path="experiments/research_funnel/u4_decision_ledger.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '            # governance-mutation: U4_LEDGER_IDEMPOTENT_INTENT_MATCH\n'
+            '            if existing_intent != expected_intent:'
+        ),
+        after=(
+            '            # governance-mutation: U4_LEDGER_IDEMPOTENT_INTENT_MATCH\n'
+            '            if False:'
+        ),
+        expected_failure_marker="test_conflicting_partial_retry_is_refused_before_any_new_wal_event",
+        rationale="A partial retry must match the complete packet intent frozen before its first candidate event.",
+    ),
+    MutationCase(
+        mutation_id="U4_LEDGER_SHARED_READ_LOCK",
+        component="Research funnel U4 decision ledger",
+        source_path="experiments/research_funnel/u4_decision_ledger.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '            # governance-mutation: U4_LEDGER_SHARED_READ_LOCK\n'
+            '            fcntl.flock(lock_file, fcntl.LOCK_SH)'
+        ),
+        after=(
+            '            # governance-mutation: U4_LEDGER_SHARED_READ_LOCK\n'
+            '            if False:\n'
+            '                fcntl.flock(lock_file, fcntl.LOCK_SH)'
+        ),
+        expected_failure_marker="test_verifier_waits_for_atomic_ledger_anchor_snapshot",
+        rationale="Readers cannot classify the ledger-before-anchor interval as corruption.",
+    ),
+    MutationCase(
+        mutation_id="U4_LEDGER_INTENT_KIND_UNIQUE",
+        component="Research funnel U4 decision ledger",
+        source_path="experiments/execution_tracker/event_ledger.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '                # governance-mutation: U4_LEDGER_INTENT_KIND_UNIQUE\n'
+            '                "u4_decision_intent",'
+        ),
+        after=(
+            '                # governance-mutation: U4_LEDGER_INTENT_KIND_UNIQUE\n'
+            '                # U4 packet-intent uniqueness removed by mutation'
+        ),
+        expected_failure_marker="test_r015_u4_kind_uniqueness_is_independent_of_typed_validation",
+        rationale="R-015 must reject duplicate full-packet intents before candidate replay begins.",
+    ),
+    MutationCase(
+        mutation_id="U4_LEDGER_EVENT_KIND_UNIQUE",
+        component="Research funnel U4 decision ledger",
+        source_path="experiments/execution_tracker/event_ledger.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '                # governance-mutation: U4_LEDGER_EVENT_KIND_UNIQUE\n'
+            '                "u4_decision", "u4_decision_closure",'
+        ),
+        after=(
+            '                # governance-mutation: U4_LEDGER_EVENT_KIND_UNIQUE\n'
+            '                # U4 uniqueness removed by mutation'
+        ),
+        expected_failure_marker="test_r015_u4_kind_uniqueness_is_independent_of_typed_validation",
+        rationale="R-015 must reject duplicate candidate events and duplicate packet commits.",
+    ),
+    MutationCase(
+        mutation_id="U4_LEDGER_COMMITTED_REPLAY_VIEW",
+        component="Research funnel U4 decision ledger",
+        source_path="experiments/research_funnel/u4_decision_ledger.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '        # governance-mutation: U4_LEDGER_COMMITTED_REPLAY_VIEW\n'
+            '        "current": committed_current,'
+        ),
+        after=(
+            '        # governance-mutation: U4_LEDGER_COMMITTED_REPLAY_VIEW\n'
+            '        "current": staged_current,'
+        ),
+        expected_failure_marker="test_interruption_after_intent_events_resumes_to_one_closure",
+        rationale="Pending candidate writes cannot become current before the packet closure commits.",
+    ),
+    MutationCase(
+        mutation_id="U4_LEDGER_CLOSURE_ATOMIC_VISIBILITY",
+        component="Research funnel U4 decision ledger",
+        source_path="experiments/research_funnel/u4_decision_ledger.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '            # governance-mutation: U4_LEDGER_CLOSURE_ATOMIC_VISIBILITY\n'
+            '            for code in intent["packet_candidate_ids"]:\n'
+            '                subject = (packet_hash, code)\n'
+            '                committed_current[subject] = copy.deepcopy(staged_current[subject])'
+        ),
+        after=(
+            '            # governance-mutation: U4_LEDGER_CLOSURE_ATOMIC_VISIBILITY\n'
+            '            if False:\n'
+            '                for code in intent["packet_candidate_ids"]:\n'
+            '                    subject = (packet_hash, code)\n'
+            '                    committed_current[subject] = copy.deepcopy(staged_current[subject])'
+        ),
+        expected_failure_marker="test_all_five_outcomes_are_persisted_as_individual_295_events",
+        rationale="A valid closure must atomically promote its exact packet revision to current.",
+    ),
+    MutationCase(
+        mutation_id="U4_LEDGER_PROJECTION_CURRENT_CLOSURE",
+        component="Research funnel U4 decision ledger",
+        source_path="experiments/research_funnel/u4_decision_ledger.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '    # governance-mutation: U4_LEDGER_PROJECTION_CURRENT_CLOSURE\n'
+            '    if latest.get("projected_receipt") is None or dict(projection) != latest["projected_receipt"]:'
+        ),
+        after=(
+            '    # governance-mutation: U4_LEDGER_PROJECTION_CURRENT_CLOSURE\n'
+            '    if False:'
+        ),
+        expected_failure_marker="test_selected_revision_to_zero_selection_retires_committed_projection",
+        rationale="A cached SELECT projection must be revoked by the latest zero-selection closure.",
+    ),
+    MutationCase(
+        mutation_id="U4_LEDGER_PROJECTION_HASH",
+        component="Research funnel U4 decision ledger",
+        source_path="experiments/research_funnel/u4_decision_ledger.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '    # governance-mutation: U4_LEDGER_PROJECTION_HASH\n'
+            '    if projection.get("projection_hash") != _projection_hash(projection):'
+        ),
+        after=(
+            '    # governance-mutation: U4_LEDGER_PROJECTION_HASH\n'
+            '    if False:'
+        ),
+        expected_failure_marker="test_three_selected_rows_project_the_existing_packet_bound_receipt",
+        rationale="A projection envelope must bind its closure identity and nested receipt bytes.",
+    ),
+    MutationCase(
+        mutation_id="U4_LEDGER_PACKET_CANDIDATE_PROVENANCE",
+        component="Research funnel U4 decision ledger",
+        source_path="experiments/research_funnel/u4_decision_ledger.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '    # governance-mutation: U4_LEDGER_PACKET_CANDIDATE_PROVENANCE\n'
+            '    if dict(candidate) != _candidate_for(ready_row):'
+        ),
+        after=(
+            '    # governance-mutation: U4_LEDGER_PACKET_CANDIDATE_PROVENANCE\n'
+            '    if False:'
+        ),
+        expected_failure_marker="test_event_candidate_and_source_are_derived_only_from_the_packet",
+        rationale="Display, cohort, cluster, and industry must be packet-bound rather than draft-authored.",
+    ),
+    MutationCase(
+        mutation_id="U4_LEDGER_PACKET_VERSION_BOUNDARY",
+        component="Research funnel U4 decision ledger",
+        source_path="experiments/research_funnel/u4_decision_ledger.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '    # governance-mutation: U4_LEDGER_PACKET_VERSION_BOUNDARY\n'
+            '    if packet.get("schema_version") != closure.PACKET_SCHEMA_VERSION:'
+        ),
+        after=(
+            '    # governance-mutation: U4_LEDGER_PACKET_VERSION_BOUNDARY\n'
+            '    if False:'
+        ),
+        expected_failure_marker="test_legacy_review_packet_is_valid_but_cannot_enter_the_v1_ledger",
+        rationale="The new ledger must require the expanded packet version without invalidating legacy replay.",
+    ),
+    MutationCase(
+        mutation_id="U4_LEDGER_REGISTRATION_PRECISION",
+        component="Research funnel U4 decision ledger",
+        source_path="experiments/research_funnel/u4_decision_ledger.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '    # governance-mutation: U4_LEDGER_REGISTRATION_PRECISION\n'
+            '    timespec = "microseconds" if localized.microsecond else "seconds"'
+        ),
+        after=(
+            '    # governance-mutation: U4_LEDGER_REGISTRATION_PRECISION\n'
+            '    timespec = "seconds"'
+        ),
+        expected_failure_marker="test_fractional_decision_time_is_preserved_at_the_r015_boundary",
+        rationale="Fractional decision instants cannot be rounded backward before R-015 chronology validation.",
+    ),
+    MutationCase(
+        mutation_id="U4_LEDGER_DUAL_BLOCK_EVIDENCE",
+        component="Research funnel U4 decision ledger",
+        source_path="experiments/research_funnel/u4_decision_ledger.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '            # governance-mutation: U4_LEDGER_DUAL_BLOCK_EVIDENCE\n'
+            '            if "E1_RED_FLAG_REQUIRES_SEPARATE_REVIEW" in blocked and "RED_FLAG_ACTIVE" not in reason_codes:'
+        ),
+        after=(
+            '            # governance-mutation: U4_LEDGER_DUAL_BLOCK_EVIDENCE\n'
+            '            if False:'
+        ),
+        expected_failure_marker="test_dual_u3_and_red_flag_block_preserves_both_evidence_reasons",
+        rationale="A U3 block cannot hide a simultaneous E1 red flag in the human decision record.",
+    ),
+    MutationCase(
+        mutation_id="U4_LEDGER_PERSISTED_DUAL_BLOCK_EVIDENCE",
+        component="Research funnel U4 decision ledger",
+        source_path="experiments/research_funnel/u4_decision_ledger.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '        # governance-mutation: U4_LEDGER_PERSISTED_DUAL_BLOCK_EVIDENCE\n'
+            '        if ('
+        ),
+        after=(
+            '        # governance-mutation: U4_LEDGER_PERSISTED_DUAL_BLOCK_EVIDENCE\n'
+            '        if False and ('
+        ),
+        expected_failure_marker="test_dual_u3_and_red_flag_block_preserves_both_evidence_reasons",
+        rationale="Intent replay must independently preserve both machine blockers before durable append.",
+    ),
+    MutationCase(
+        mutation_id="U4_LEDGER_VERIFY_REQUIRES_LEDGER",
+        component="Research funnel U4 decision ledger",
+        source_path="experiments/research_funnel/u4_decision_ledger.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '        # governance-mutation: U4_LEDGER_VERIFY_REQUIRES_LEDGER\n'
+            '        raise DecisionLedgerError("R-015 decision ledger does not exist")'
+        ),
+        after=(
+            '        # governance-mutation: U4_LEDGER_VERIFY_REQUIRES_LEDGER\n'
+            '        return _replay_records([])'
+        ),
+        expected_failure_marker=(
+            "test_missing_ledger_is_not_a_clean_verification_or_cli_success"
+        ),
+        rationale="A typo or missing ledger path cannot verify as an empty clean ledger.",
+    ),
+    MutationCase(
+        mutation_id="U4_LEDGER_RAW_APPEND_RESERVED",
+        component="Research funnel R-015 typed U4 transport",
+        source_path="experiments/execution_tracker/event_ledger.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '    # governance-mutation: U4_LEDGER_RAW_APPEND_RESERVED\n'
+            '    if kind in RESERVED_TYPED_KINDS:'
+        ),
+        after=(
+            '    # governance-mutation: U4_LEDGER_RAW_APPEND_RESERVED\n'
+            '    if False:'
+        ),
+        expected_failure_marker="test_u4_kinds_are_reserved_from_raw_and_generic_stamped_writers",
+        rationale="Caller-controlled raw timestamps and malformed U4 payloads must not enter R-015.",
+    ),
+    MutationCase(
+        mutation_id="U4_LEDGER_GENERIC_STAMPED_RESERVED",
+        component="Research funnel R-015 typed U4 transport",
+        source_path="experiments/execution_tracker/event_ledger.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '    # governance-mutation: U4_LEDGER_GENERIC_STAMPED_RESERVED\n'
+            '    if kind in RESERVED_TYPED_KINDS:'
+        ),
+        after=(
+            '    # governance-mutation: U4_LEDGER_GENERIC_STAMPED_RESERVED\n'
+            '    if False:'
+        ),
+        expected_failure_marker="test_u4_kinds_are_reserved_from_raw_and_generic_stamped_writers",
+        rationale="A generic stamped builder cannot bypass the U4 typed validator.",
+    ),
+    MutationCase(
+        mutation_id="U4_LEDGER_TYPED_APPEND_VALIDATION",
+        component="Research funnel R-015 typed U4 transport",
+        source_path="experiments/execution_tracker/event_ledger.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '            # governance-mutation: U4_LEDGER_TYPED_APPEND_VALIDATION\n'
+            '            u4_decision_ledger.validate_typed_outer_append(\n'
+            '                path, preview, bundle_dir=bundle_dir\n'
+            '            )'
+        ),
+        after=(
+            '            # governance-mutation: U4_LEDGER_TYPED_APPEND_VALIDATION\n'
+            '            if False:\n'
+            '                u4_decision_ledger.validate_typed_outer_append(\n'
+            '                    path, preview, bundle_dir=bundle_dir\n'
+            '                )'
+        ),
+        expected_failure_marker="test_u4_kinds_are_reserved_from_raw_and_generic_stamped_writers",
+        rationale="The only public U4 append path must validate the exact next typed outer record.",
+    ),
+    MutationCase(
+        mutation_id="U4_LEDGER_TYPED_APPEND_PAYLOAD_SNAPSHOT",
+        component="Research funnel R-015 typed U4 transport",
+        source_path="experiments/execution_tracker/event_ledger.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '            # governance-mutation: U4_LEDGER_TYPED_APPEND_PAYLOAD_SNAPSHOT\n'
+            '            payload_snapshot = json.loads(canonical(payload))'
+        ),
+        after=(
+            '            # governance-mutation: U4_LEDGER_TYPED_APPEND_PAYLOAD_SNAPSHOT\n'
+            '            payload_snapshot = payload'
+        ),
+        expected_failure_marker=(
+            "test_typed_append_validates_and_persists_one_frozen_payload_snapshot"
+        ),
+        rationale=(
+            "Typed validation, hashing, and append must consume one isolated canonical "
+            "payload snapshot rather than a caller-owned mutable object."
+        ),
+    ),
+    MutationCase(
+        mutation_id="R015_RUNTIME_TIMESTAMP_PRECISION",
+        component="Research funnel R-015 typed U4 transport",
+        source_path="experiments/execution_tracker/event_ledger.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '    # governance-mutation: R015_RUNTIME_TIMESTAMP_PRECISION\n'
+            '    return (datetime.datetime.now(OPERATIONAL_TIMEZONE)\n'
+            '            .replace(tzinfo=None).isoformat(timespec="microseconds"))'
+        ),
+        after=(
+            '    # governance-mutation: R015_RUNTIME_TIMESTAMP_PRECISION\n'
+            '    return (datetime.datetime.now(OPERATIONAL_TIMEZONE)\n'
+            '            .replace(tzinfo=None).isoformat(timespec="seconds"))'
+        ),
+        expected_failure_marker=(
+            "test_runtime_stamp_precision_preserves_u4_and_following_shared_event"
+        ),
+        rationale=(
+            "Every runtime writer on the shared R-015 ledger must preserve one subsecond "
+            "precision so a later foreign event cannot appear backdated after U4."
+        ),
+    ),
+    MutationCase(
+        mutation_id="U4_LEDGER_PACKET_SOURCE_EQUALITY",
+        component="Research funnel U4 decision ledger",
+        source_path="experiments/research_funnel/u4_decision_ledger.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '    # governance-mutation: U4_LEDGER_PACKET_SOURCE_EQUALITY\n'
+            '    if dict(packet) != expected:'
+        ),
+        after=(
+            '    # governance-mutation: U4_LEDGER_PACKET_SOURCE_EQUALITY\n'
+            '    if False:'
+        ),
+        expected_failure_marker=(
+            "test_writer_rebuilds_packet_from_immutable_u2_u3_evidence_before_wal"
+        ),
+        rationale=(
+            "An internally self-consistent packet must still equal the packet rebuilt from "
+            "the immutable U2/U3 artifacts."
+        ),
+    ),
+    MutationCase(
+        mutation_id="U4_LEDGER_PACKET_EVIDENCE_CHRONOLOGY",
+        component="Research funnel U4 decision ledger",
+        source_path="experiments/research_funnel/u4_decision_ledger.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '        # governance-mutation: U4_LEDGER_PACKET_EVIDENCE_CHRONOLOGY\n'
+            '        if any(packet_at < evidence_at for evidence_at in evidence_times.values()):'
+        ),
+        after=(
+            '        # governance-mutation: U4_LEDGER_PACKET_EVIDENCE_CHRONOLOGY\n'
+            '        if False:'
+        ),
+        expected_failure_marker=(
+            "test_packet_and_human_decision_cannot_predate_frozen_evidence"
+        ),
+        rationale=(
+            "A caller-chosen packet timestamp must not make a human decision appear to "
+            "precede the immutable U2/U3 evidence it reviewed."
+        ),
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_CLOSURE_DAG_EVIDENCE_BINDING",
+        component="Research funnel U4 review packet",
+        source_path="experiments/research_funnel/closure_experiment.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '            # governance-mutation: FUNNEL_CLOSURE_DAG_EVIDENCE_BINDING\n'
+            '            if ('
+        ),
+        after=(
+            '            # governance-mutation: FUNNEL_CLOSURE_DAG_EVIDENCE_BINDING\n'
+            '            if False and ('
+        ),
+        expected_failure_marker=(
+            "test_dag_manifest_cannot_relabel_embedded_stage_hashes"
+        ),
+        rationale=(
+            "A self-consistent top manifest cannot relabel which exact U2 rows and U3 battery "
+            "belong to the final run."
+        ),
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_CLOSURE_DAG_METADATA",
+        component="Research funnel U4 review packet",
+        source_path="experiments/research_funnel/closure_experiment.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '            # governance-mutation: FUNNEL_CLOSURE_DAG_METADATA\n'
+            '            if (\n'
+            '                not isinstance(dag, Mapping)'
+        ),
+        after=(
+            '            # governance-mutation: FUNNEL_CLOSURE_DAG_METADATA\n'
+            '            if False and (\n'
+            '                not isinstance(dag, Mapping)'
+        ),
+        expected_failure_marker=(
+            "test_dag_manifest_metadata_is_exact_and_version_bound"
+        ),
+        rationale=(
+            "The immutable source must declare exactly the canonical three-stage DAG and no "
+            "unhashed metadata aliases."
+        ),
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_CLOSURE_MANIFEST_RULE_VERSION",
+        component="Research funnel U4 review packet",
+        source_path="experiments/research_funnel/closure_experiment.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '    # governance-mutation: FUNNEL_CLOSURE_MANIFEST_RULE_VERSION\n'
+            '    if manifest.get("rule_version") != funnel.RULE_VERSION:'
+        ),
+        after=(
+            '    # governance-mutation: FUNNEL_CLOSURE_MANIFEST_RULE_VERSION\n'
+            '    if False:'
+        ),
+        expected_failure_marker=(
+            "test_dag_manifest_metadata_is_exact_and_version_bound"
+        ),
+        rationale=(
+            "A final immutable bundle cannot relabel the screening rule version while retaining "
+            "the same artifact bytes."
+        ),
+    ),
+    MutationCase(
+        mutation_id="U4_LEDGER_TASK_SCOPE_COMPLETE",
+        component="Research U4 task contract",
+        source_path="scripts/llm/fixtures/u4_decision_ledger_v1.task.json",
+        test_script="tests/test_u4_decision_ledger_spec.py",
+        before='    "docs/research/RESEARCH_CLOSURE_EXPERIMENT.md",\n',
+        after="",
+        expected_failure_marker=(
+            "test_implementation_task_scope_matches_delivered_surface"
+        ),
+        rationale=(
+            "The machine-readable task scope must name every delivered file so review authority "
+            "does not silently narrow beneath the actual patch."
+        ),
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_CLOSURE_DAG_CANDIDATE_PROJECTION",
+        component="Research funnel immutable U2/U3 bundle",
+        source_path="experiments/research_funnel/closure_experiment.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '            # governance-mutation: FUNNEL_CLOSURE_DAG_CANDIDATE_PROJECTION\n'
+            '            if candidate_manifest != expected_candidate_manifest:'
+        ),
+        after=(
+            '            # governance-mutation: FUNNEL_CLOSURE_DAG_CANDIDATE_PROJECTION\n'
+            '            if False:'
+        ),
+        expected_failure_marker=(
+            "test_dag_candidate_manifest_cannot_self_consistently_omit_a_u2_row"
+        ),
+        rationale=(
+            "A self-consistent candidate manifest and battery cannot silently omit an "
+            "eligible row from the frozen U2 review."
+        ),
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_CLOSURE_FREEZE_SOURCE_ARTIFACTS",
+        component="Research funnel closure immutable replay bundle",
+        source_path="experiments/research_funnel/closure_experiment.py",
+        test_script="tests/test_research_closure_experiment.py",
+        before=(
+            '        # governance-mutation: FUNNEL_CLOSURE_FREEZE_SOURCE_ARTIFACTS\n'
+            '        for name in sorted(source_artifacts | {"manifest.json"}):'
+        ),
+        after=(
+            '        # governance-mutation: FUNNEL_CLOSURE_FREEZE_SOURCE_ARTIFACTS\n'
+            '        for name in sorted(BUNDLE_ARTIFACTS | {"manifest.json"}):'
+        ),
+        expected_failure_marker=(
+            "test_result_bundle_freezes_and_verifies_the_complete_dag_source"
+        ),
+        rationale="A DAG replay must freeze all six source artifacts, not the legacy four.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_CLOSURE_RESULT_SOURCE_ARTIFACT_SET",
+        component="Research funnel closure immutable replay verifier",
+        source_path="experiments/research_funnel/closure_experiment.py",
+        test_script="tests/test_research_closure_experiment.py",
+        before=(
+            '    # governance-mutation: FUNNEL_CLOSURE_RESULT_SOURCE_ARTIFACT_SET\n'
+            '    expected_result_artifacts = _result_artifact_names(source_artifacts)'
+        ),
+        after=(
+            '    # governance-mutation: FUNNEL_CLOSURE_RESULT_SOURCE_ARTIFACT_SET\n'
+            '    expected_result_artifacts = RESULT_ARTIFACTS'
+        ),
+        expected_failure_marker=(
+            "test_result_bundle_freezes_and_verifies_the_complete_dag_source"
+        ),
+        rationale="The replay verifier must derive its frozen source set from the embedded manifest.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_CLOSURE_PACKET_VERSION_DEFAULT",
+        component="Research funnel U4 review packet",
+        source_path="experiments/research_funnel/closure_experiment.py",
+        test_script="tests/test_research_closure_experiment.py",
+        before=(
+            '        # governance-mutation: FUNNEL_CLOSURE_PACKET_VERSION_DEFAULT\n'
+            '        "schema_version": packet_version,'
+        ),
+        after=(
+            '        # governance-mutation: FUNNEL_CLOSURE_PACKET_VERSION_DEFAULT\n'
+            '        "schema_version": LEGACY_PACKET_SCHEMA_VERSION,'
+        ),
+        expected_failure_marker="test_packet_projects_exact_run_and_candidate_evidence_from_bundle",
+        rationale="New packets must identify the expanded provenance contract as v1.1.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_CLOSURE_PACKET_VERSION_COMPATIBILITY",
+        component="Research funnel U4 review packet compatibility",
+        source_path="experiments/research_funnel/closure_experiment.py",
+        test_script="tests/test_research_closure_experiment.py",
+        before=(
+            '    # governance-mutation: FUNNEL_CLOSURE_PACKET_VERSION_COMPATIBILITY\n'
+            '    if packet.get("schema") != PACKET_SCHEMA or version not in {'
+        ),
+        after=(
+            '    # governance-mutation: FUNNEL_CLOSURE_PACKET_VERSION_COMPATIBILITY\n'
+            '    if packet.get("schema") != PACKET_SCHEMA or version != PACKET_SCHEMA_VERSION or version not in {'
+        ),
+        expected_failure_marker="test_legacy_v1_packet_remains_valid_and_replayable",
+        rationale="Previously emitted v1.0 packets must remain valid and replayable after v1.1 ships.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_CLOSURE_PACKET_RUN_ID",
+        component="Research funnel U4 review packet",
+        source_path="experiments/research_funnel/closure_experiment.py",
+        test_script="tests/test_research_closure_experiment.py",
+        before=(
+            '    # governance-mutation: FUNNEL_CLOSURE_PACKET_RUN_ID\n'
+            '    if version == PACKET_SCHEMA_VERSION and not str(refs.get("run_id") or "").strip():'
+        ),
+        after=(
+            '    # governance-mutation: FUNNEL_CLOSURE_PACKET_RUN_ID\n'
+            '    if False:'
+        ),
+        expected_failure_marker="test_packet_refuses_a_battery_without_an_exact_run_id",
+        rationale="The U4 packet cannot invent a run id when the exact U3 run is absent.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_CLOSURE_PACKET_CANDIDATE_EVIDENCE",
+        component="Research funnel U4 review packet",
+        source_path="experiments/research_funnel/closure_experiment.py",
+        test_script="tests/test_research_closure_experiment.py",
+        before=(
+            '            # governance-mutation: FUNNEL_CLOSURE_PACKET_CANDIDATE_EVIDENCE\n'
+            '            "display_name": str(registry_row.get("name") or "UNAVAILABLE"),'
+        ),
+        after=(
+            '            # governance-mutation: FUNNEL_CLOSURE_PACKET_CANDIDATE_EVIDENCE\n'
+            '            "display_name": "INVENTED_BY_MUTATION",'
+        ),
+        expected_failure_marker="test_packet_projects_exact_run_and_candidate_evidence_from_bundle",
+        rationale="Candidate identity must project the immutable registry row, not an invented label.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_CLOSURE_PACKET_COHORT_DEGRADED",
+        component="Research funnel U4 review packet",
+        source_path="experiments/research_funnel/closure_experiment.py",
+        test_script="tests/test_research_closure_experiment.py",
+        before=(
+            '            # governance-mutation: FUNNEL_CLOSURE_PACKET_COHORT_DEGRADED\n'
+            '            "cohort_id": COHORT_ID_UNAVAILABLE,'
+        ),
+        after=(
+            '            # governance-mutation: FUNNEL_CLOSURE_PACKET_COHORT_DEGRADED\n'
+            '            "cohort_id": str(candidate.get("industry_key") or "UNAVAILABLE"),'
+        ),
+        expected_failure_marker=(
+            "test_packet_does_not_fabricate_cohort_identity_from_industry_key"
+        ),
+        rationale=(
+            "A raw U2 industry key cannot masquerade as a point-in-time Industry Cohort OS "
+            "identity when that artifact is not frozen in the packet source."
+        ),
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_V1_4_REVISION_IDENTITY",
+        component="Research Closed Loop V1.4 revision identity",
+        source_path="docs/research/contracts/research_closed_loop.v1.json",
+        test_script="tests/test_research_closed_loop_v1.py",
+        before=(
+            '  "schema_version": "1.4",\n'
+            '  "method_version": "RESEARCH_CLOSED_LOOP_V1_4",'
+        ),
+        after=(
+            '  "schema_version": "1.3",\n'
+            '  "method_version": "RESEARCH_CLOSED_LOOP_V1_3",'
+        ),
+        expected_failure_marker="test_manifest_is_strict_and_frozen",
+        rationale=(
+            "The semiconductor screening assembly must be an explicit reviewed revision, "
+            "not a silent byte change under the original V1 method label."
+        ),
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_V1_4_FROZEN_AT",
+        component="Research Closed Loop V1.4 frozen timestamp",
+        source_path="docs/research/contracts/research_closed_loop.v1.json",
+        test_script="tests/test_research_closed_loop_v1.py",
+        before='  "frozen_at": "2026-08-26T14:44:39+08:00",',
+        after='  "frozen_at": "2026-08-26T01:17:17+08:00",',
+        expected_failure_marker="test_revision_1_4_identity_names_current_review",
+        rationale=(
+            "A new byte-bound assembly revision must carry its own reviewed freeze time, "
+            "not reuse the superseded V1.3 identity."
+        ),
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_V1_4_SOURCE_BASE",
+        component="Research Closed Loop V1.4 source review binding",
+        source_path="docs/research/contracts/research_closed_loop.v1.json",
+        test_script="tests/test_research_closed_loop_v1.py",
+        before=(
+            '    "assembly_code_commit": "e0d73dac5a8f8bbc4a427ec15b7efce8c8d5ad8c",\n'
+            '    "base_main": "ad26f1b644d75618a3923267c4dfa5b446d71e67",\n'
+            '    "review_pr": 319,'
+        ),
+        after=(
+            '    "assembly_code_commit": "a893d0fc28ffcf3f50ab6071d8f5ccf86b74aa0a",\n'
+            '    "base_main": "7774e33dbfa6c5554472d3c137ca7b14b4423f4c",\n'
+            '    "review_pr": 317,'
+        ),
+        expected_failure_marker="test_revision_1_4_identity_names_current_review",
+        rationale=(
+            "The frozen source identity must point to the implementation commit, main base, "
+            "and review PR that actually delivered V1.4."
+        ),
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_V1_4_ARTIFACT_SET_EXACT",
+        component="Research Closed Loop V1.4 exact artifact set",
+        source_path="docs/research/contracts/research_closed_loop.v1.json",
+        test_script="tests/test_research_closed_loop_v1.py",
+        before=(
+            '    {"path": "experiments/research_funnel/research_cycle.py", '
+            '"sha256": "sha256:f42620fa91cf93fe8fbd28930ab4c2530a5e6ed285c0025df5a74175feb59415"},\n'
+        ),
+        after="",
+        expected_failure_marker="test_every_bound_artifact_matches_its_exact_bytes",
+        rationale=(
+            "A frozen assembly cannot silently drop one reviewed artifact while all remaining hashes stay valid."
+        ),
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_V1_4_SEMICONDUCTOR_ASSEMBLY_BINDING",
+        component="Research Closed Loop V1.4 semiconductor assembly binding",
+        source_path="docs/research/contracts/research_closed_loop.v1.json",
+        test_script="tests/test_research_closed_loop_v1.py",
+        before=(
+            '    {"path": "experiments/research_funnel/semiconductor_inputs.py", '
+            '"sha256": "sha256:6701258484cc92bc3280a9086a33bd8ee216161bc0bde9bfed67b7bd94a9aaec"},'
+        ),
+        after=(
+            '    {"path": "experiments/research_funnel/semiconductor_inputs.py", '
+            '"sha256": "sha256:0000000000000000000000000000000000000000000000000000000000000000"},'
+        ),
+        expected_failure_marker="test_every_bound_artifact_matches_its_exact_bytes",
+        rationale=(
+            "The new point-in-time semiconductor evidence implementation must remain "
+            "byte-bound to the reviewed V1.4 assembly."
+        ),
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_V1_4_REPAIR_ASSEMBLY_BINDING",
+        component="Research Closed Loop V1.4 append-only source repair binding",
+        source_path="docs/research/contracts/research_closed_loop.v1.json",
+        test_script="tests/test_research_closed_loop_v1.py",
+        before=(
+            '    {"path": "experiments/research_funnel/semiconductor_source_repair.py", '
+            '"sha256": "sha256:d63f7ae910c198a09e07cbb7ede1510da2204b05f017079e4fe627aa7b6d55c6"},'
+        ),
+        after=(
+            '    {"path": "experiments/research_funnel/semiconductor_source_repair.py", '
+            '"sha256": "sha256:0000000000000000000000000000000000000000000000000000000000000000"},'
+        ),
+        expected_failure_marker="test_every_bound_artifact_matches_its_exact_bytes",
+        rationale=(
+            "The active-source repair resolver must remain byte-bound to the frozen V1.4 assembly."
+        ),
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_V1_4_PAPER_REGISTRATION_BLOCK",
+        component="Research Closed Loop V1.4 paper-registration block",
+        source_path="docs/research/contracts/research_closed_loop.v1.json",
+        test_script="tests/test_research_closed_loop_v1.py",
+        before='      "id": "PAPER_REGISTRATION",',
+        after='      "id": "PAPER_EXECUTION",',
+        expected_failure_marker="test_manifest_is_strict_and_frozen",
+        rationale=(
+            "The human-authorized R-015 registration transaction must remain an explicit "
+            "block between research registration and paper execution."
+        ),
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_V1_4_PAPER_REGISTRATION_BINDING",
+        component="Research Closed Loop V1.4 paper-registration byte binding",
+        source_path="docs/research/contracts/research_closed_loop.v1.json",
+        test_script="tests/test_research_closed_loop_v1.py",
+        before=(
+            '    {"path": "experiments/research_funnel/paper_registration_bridge.py", '
+            '"sha256": "sha256:61f095a6b126ed3aedbaae4d69c18e5dcc2d7eb5bd22b2e82713279382b1bc79"},'
+        ),
+        after=(
+            '    {"path": "experiments/research_funnel/paper_registration_bridge.py", '
+            '"sha256": "sha256:0000000000000000000000000000000000000000000000000000000000000000"},'
+        ),
+        expected_failure_marker="test_every_bound_artifact_matches_its_exact_bytes",
+        rationale=(
+            "The reviewed U4-to-paper transaction implementation must remain byte-bound "
+            "to the V1.4 assembly."
+        ),
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_V1_4_PAPER_REGISTRATION_AUTHORITY",
+        component="Research Closed Loop V1.4 paper-registration authority",
+        source_path="docs/research/contracts/research_closed_loop.v1.json",
+        test_script="tests/test_research_closed_loop_v1.py",
+        before=(
+            '      "purpose": "Recompute one current U4 SELECT and one sealed research case '
+            'into an exact human-approved plan, then append one replayable R-015 intent/commit '
+            'transaction and idempotently project one realistic paper-only pending order.",'
+        ),
+        after=(
+            '      "purpose": "Automatically select and submit one production order without '
+            'human approval or an R-015 transaction.",'
+        ),
+        expected_failure_marker=(
+            "test_paper_registration_block_preserves_human_r015_transaction"
+        ),
+        rationale=(
+            "V1.4 must preserve the exact human-approved, paper-only R-015 transaction boundary."
+        ),
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_V1_HUMAN_AUTHORITY",
+        component="Research Closed Loop V1 authority",
+        source_path="docs/research/contracts/research_closed_loop.v1.json",
+        test_script="tests/test_research_closed_loop_v1.py",
+        before=(
+            '    "paper_registration_authority": "HUMAN_JUNYAN_ONLY",\n'
+            '    "production_authority": false,\n'
+            '    "trade_authority": false,'
+        ),
+        after=(
+            '    "paper_registration_authority": "AUTOMATED_MODEL",\n'
+            '    "production_authority": false,\n'
+            '    "trade_authority": true,'
+        ),
+        expected_failure_marker="test_authority_cannot_be_promoted",
+        rationale="V1 cannot silently grant an automated system paper-registration or trade authority.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_V1_WORKFLOW_DEBUG_EXCLUSION",
+        component="Research Closed Loop V1 first-wave eligibility",
+        source_path="docs/research/contracts/research_closed_loop.v1.json",
+        test_script="tests/test_research_closed_loop_v1.py",
+        before=(
+            '    "first_wave_sample_eligible": false,\n'
+            '    "first_wave_method_claim_sample_eligible": false,\n'
+            '    "first_wave_portfolio_promotion_eligible": false,'
+        ),
+        after=(
+            '    "first_wave_sample_eligible": true,\n'
+            '    "first_wave_method_claim_sample_eligible": true,\n'
+            '    "first_wave_portfolio_promotion_eligible": true,'
+        ),
+        expected_failure_marker="test_workflow_debug_samples_cannot_enter_claims_or_portfolio",
+        rationale="The first semiconductor cycles debug the workflow and cannot enter method or portfolio denominators.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_V1_THIRTY_CLUSTER_GATE",
+        component="Research Closed Loop V1 evidence threshold",
+        source_path="docs/research/contracts/research_closed_loop.v1.json",
+        test_script="tests/test_research_closed_loop_v1.py",
+        before='    "minimum_independent_clusters_for_method_claim": 30,',
+        after='    "minimum_independent_clusters_for_method_claim": 5,',
+        expected_failure_marker="test_method_gate_requires_thirty_independent_clusters_and_replication",
+        rationale="A small workflow-debug batch cannot be relabeled as a validated method sample.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_V1_COMPLETE_U4_DENOMINATOR",
+        component="Research Closed Loop V1 complete U4 denominator",
+        source_path="docs/research/contracts/research_closed_loop.v1.json",
+        test_script="tests/test_research_closed_loop_v1.py",
+        before=(
+            '    "required_decisions": ["SELECT", "REJECT", "DEFER", "NO_TRADE", "DATA_BLOCKED"],\n'
+            '    "selected_count_allowed": [0, 3, 4, 5],\n'
+            '    "rejected_and_blocked_rows_retained": true'
+        ),
+        after=(
+            '    "required_decisions": ["SELECT"],\n'
+            '    "selected_count_allowed": [1, 2, 3, 4, 5],\n'
+            '    "rejected_and_blocked_rows_retained": false'
+        ),
+        expected_failure_marker="test_reject_defer_no_trade_and_data_blocked_remain_in_denominator",
+        rationale="Selection-only logging would erase the negative-decision denominator and weaken the U4 gate.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_V1_CROSS_INDUSTRY_PROMOTION",
+        component="Research Closed Loop V1 portfolio promotion",
+        source_path="docs/research/contracts/research_closed_loop.v1.json",
+        test_script="tests/test_research_closed_loop_v1.py",
+        before='    "cross_industry_replication_required_for_portfolio": true',
+        after='    "cross_industry_replication_required_for_portfolio": false',
+        expected_failure_marker="test_method_gate_requires_thirty_independent_clusters_and_replication",
+        rationale="A method cannot enter portfolio construction after working in only one industry.",
+    ),
+    MutationCase(
+        mutation_id="NIGHTLY_PER_TICKER_EVIDENCE_QUALITY",
+        component="Nightly per-ticket evidence quality rollup",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_nightly_v4_adversarial.py",
+        before=(
+            "    # governance-mutation: NIGHTLY_PER_TICKER_EVIDENCE_QUALITY\n"
+            "    if (step not in RESEARCH_DATA_STEPS | MACRO_DATA_STEPS | FUNNEL_DATA_STEPS\n"
+            "            | PER_TICKER_EVIDENCE_STEPS"
+        ),
+        after=(
+            "    # governance-mutation: NIGHTLY_PER_TICKER_EVIDENCE_QUALITY\n"
+            "    if (step not in RESEARCH_DATA_STEPS | MACRO_DATA_STEPS | FUNNEL_DATA_STEPS\n"
+            "            | set()"
+        ),
+        expected_failure_marker="test_partial_battery_is_publishable_quality_and_still_blocks_ticket",
+        rationale=(
+            "Valid per-ticket evidence gaps must remain visible in the top-level quality rollup "
+            "without becoming publication failures."
+        ),
+    ),
+    MutationCase(
+        mutation_id="NIGHTLY_FULL_BATTERY_PARTIAL_PUBLISHABLE",
+        component="Nightly full-battery process/evidence separation",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_nightly_v4_adversarial.py",
+        before=(
+            "        # governance-mutation: NIGHTLY_FULL_BATTERY_PARTIAL_PUBLISHABLE\n"
+            "        return \"OK\", \"\""
+        ),
+        after=(
+            "        # governance-mutation: NIGHTLY_FULL_BATTERY_PARTIAL_PUBLISHABLE\n"
+            "        return \"PARTIAL\", \"one or more tickets are data blocked\""
+        ),
+        expected_failure_marker="test_partial_battery_is_publishable_quality_and_still_blocks_ticket",
+        rationale=(
+            "A structurally valid battery containing an explicitly blocked ticket remains a "
+            "successful process artifact; the ticket itself must still be rejected downstream."
+        ),
+    ),
+    MutationCase(
+        mutation_id="NIGHTLY_PROMOTER_PARTIAL_PUBLISHABLE",
+        component="Nightly promoter process/evidence separation",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_nightly_v4_adversarial.py",
+        before=(
+            "        # governance-mutation: NIGHTLY_PROMOTER_PARTIAL_PUBLISHABLE\n"
+            "        return \"OK\", \"\""
+        ),
+        after=(
+            "        # governance-mutation: NIGHTLY_PROMOTER_PARTIAL_PUBLISHABLE\n"
+            "        return \"PARTIAL\", \"one or more tickets remain blocked\""
+        ),
+        expected_failure_marker="test_partial_promoter_is_publishable_quality",
+        rationale=(
+            "Per-ticket promoter rejections must be published as evidence quality, not promoted "
+            "into a whole-step failure that skips court and freezes the nightly publication."
+        ),
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_DIAGNOSTIC_EVIDENCE_HASH",
+        component="Research funnel semiconductor diagnostic",
+        source_path="experiments/research_funnel/semiconductor_evidence_diagnostic.py",
+        test_script="tests/test_research_closed_loop_v1.py",
+        before=(
+            '    # governance-mutation: SEMICONDUCTOR_DIAGNOSTIC_EVIDENCE_HASH\n'
+            '    if intake.get("evidence_rows_hash") != _hash(rows):'
+        ),
+        after=(
+            '    # governance-mutation: SEMICONDUCTOR_DIAGNOSTIC_EVIDENCE_HASH\n'
+            "    if False:"
+        ),
+        expected_failure_marker="test_semiconductor_evidence_rows_hash_is_verified",
+        rationale="The diagnostic must verify the row-level evidence hash instead of trusting mutable receipt text.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_DIAGNOSTIC_SELF_REPORT_CROSSCHECK",
+        component="Research funnel semiconductor diagnostic",
+        source_path="experiments/research_funnel/semiconductor_evidence_diagnostic.py",
+        test_script="tests/test_research_closed_loop_v1.py",
+        before=(
+            "        # governance-mutation: SEMICONDUCTOR_DIAGNOSTIC_SELF_REPORT_CROSSCHECK\n"
+            "        if counts[key] != expected:"
+        ),
+        after=(
+            "        # governance-mutation: SEMICONDUCTOR_DIAGNOSTIC_SELF_REPORT_CROSSCHECK\n"
+            "        if False:"
+        ),
+        expected_failure_marker="test_semiconductor_counts_are_recomputed_from_evidence_rows",
+        rationale="The diagnostic must reject screening_result counts that disagree with evidence_rows.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_DIAGNOSTIC_RED_FLAG_ONLY_BLOCKER",
+        component="Research funnel semiconductor diagnostic",
+        source_path="experiments/research_funnel/semiconductor_evidence_diagnostic.py",
+        test_script="tests/test_research_closed_loop_v1.py",
+        before=(
+            '    # governance-mutation: SEMICONDUCTOR_DIAGNOSTIC_RED_FLAG_ONLY_BLOCKER\n'
+            '    if counts["semiconductor_red_flag_only_rows"]:'
+        ),
+        after=(
+            '    # governance-mutation: SEMICONDUCTOR_DIAGNOSTIC_RED_FLAG_ONLY_BLOCKER\n'
+            "    if False:"
+        ),
+        expected_failure_marker="test_current_semiconductor_intake_stops_before_u4_without_trade_authority",
+        rationale="A red-flag-only semiconductor cohort must remain visible in the blocker list.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_DIAGNOSTIC_SELECTION_FLOOR",
+        component="Research funnel semiconductor diagnostic",
+        source_path="experiments/research_funnel/semiconductor_evidence_diagnostic.py",
+        test_script="tests/test_research_closed_loop_v1.py",
+        before=(
+            '    # governance-mutation: SEMICONDUCTOR_DIAGNOSTIC_SELECTION_FLOOR\n'
+            '    elif counts["semiconductor_u4_ready_rows"] < 3:'
+        ),
+        after=(
+            '    # governance-mutation: SEMICONDUCTOR_DIAGNOSTIC_SELECTION_FLOOR\n'
+            '    elif counts["semiconductor_u4_ready_rows"] < 1:'
+        ),
+        expected_failure_marker="test_semiconductor_ready_pool_below_selection_floor_is_blocked",
+        rationale="A 1-2 name ready pool cannot be relabeled as enough for the human U4 selection floor.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_REGISTRATION_MARKS_COVERAGE",
+        component="Research funnel paper registration bridge",
+        source_path="experiments/research_funnel/paper_registration_bridge.py",
+        test_script="tests/test_paper_registration_bridge.py",
+        before=(
+            "    # governance-mutation: PAPER_REGISTRATION_MARKS_COVERAGE\n"
+            "    if set(marks) != expected:"
+        ),
+        after=(
+            "    # governance-mutation: PAPER_REGISTRATION_MARKS_COVERAGE\n"
+            "    if False:"
+        ),
+        expected_failure_marker="test_marks_must_cover_every_filled_position_and_plan_is_toctou_bound",
+        rationale="Every filled paper position needs a same-session settled mark before sizing another order.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_REGISTRATION_CURRENT_U4_SELECT",
+        component="Research funnel paper registration bridge",
+        source_path="experiments/research_funnel/paper_registration_bridge.py",
+        test_script="tests/test_paper_registration_bridge.py",
+        before=(
+            '    # governance-mutation: PAPER_REGISTRATION_CURRENT_U4_SELECT\n'
+            '    if decision.get("decision") != "SELECT":'
+        ),
+        after=(
+            '    # governance-mutation: PAPER_REGISTRATION_CURRENT_U4_SELECT\n'
+            '    if False:'
+        ),
+        expected_failure_marker="test_current_u4_rejection_revokes_old_closure_selection",
+        rationale="A later U4 REJECT must revoke an older selected closure before plan creation.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_REGISTRATION_PLAN_HASH",
+        component="Research funnel paper registration bridge",
+        source_path="experiments/research_funnel/paper_registration_bridge.py",
+        test_script="tests/test_paper_registration_bridge.py",
+        before=(
+            '    # governance-mutation: PAPER_REGISTRATION_PLAN_HASH\n'
+            '    if plan.get("plan_hash") != _sha(_without(plan, "plan_hash")):'
+        ),
+        after=(
+            '    # governance-mutation: PAPER_REGISTRATION_PLAN_HASH\n'
+            '    if False:'
+        ),
+        expected_failure_marker="test_plan_hash_is_recomputed",
+        rationale="The approval target must be the recomputed complete plan, not a self-reported digest.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_REGISTRATION_NO_ACTION_AUTHORITY",
+        component="Research funnel paper registration bridge",
+        source_path="experiments/research_funnel/paper_registration_bridge.py",
+        test_script="tests/test_paper_registration_bridge.py",
+        before=(
+            '    # governance-mutation: PAPER_REGISTRATION_NO_ACTION_AUTHORITY\n'
+            '    if _walk_keys(plan) & FORBIDDEN_ACTION_KEYS:'
+        ),
+        after=(
+            '    # governance-mutation: PAPER_REGISTRATION_NO_ACTION_AUTHORITY\n'
+            '    if False:'
+        ),
+        expected_failure_marker="test_forbidden_action_fields_never_enter_a_paper_plan",
+        rationale="A paper plan cannot smuggle real-order or formal blocking fields through a nested projection.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_REGISTRATION_SOURCE_PROJECTION_BINDING",
+        component="Research funnel paper registration bridge",
+        source_path="experiments/research_funnel/paper_registration_bridge.py",
+        test_script="tests/test_paper_registration_bridge.py",
+        before=(
+            '    # governance-mutation: PAPER_REGISTRATION_SOURCE_PROJECTION_BINDING\n'
+            '    if (\n'
+        ),
+        after=(
+            '    # governance-mutation: PAPER_REGISTRATION_SOURCE_PROJECTION_BINDING\n'
+            '    if False and (\n'
+        ),
+        expected_failure_marker="test_request_order_and_source_bindings_are_recomputed",
+        rationale="The projected order must preserve the exact case, U4, and method provenance named by the plan.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_REGISTRATION_REQUEST_ORDER_BINDING",
+        component="Research funnel paper registration bridge",
+        source_path="experiments/research_funnel/paper_registration_bridge.py",
+        test_script="tests/test_paper_registration_bridge.py",
+        before=(
+            '    # governance-mutation: PAPER_REGISTRATION_REQUEST_ORDER_BINDING\n'
+            '    if any(request[source] != order.get(target) for source, target in request_order_fields.items()):'
+        ),
+        after=(
+            '    # governance-mutation: PAPER_REGISTRATION_REQUEST_ORDER_BINDING\n'
+            '    if False:'
+        ),
+        expected_failure_marker="test_request_order_and_source_bindings_are_recomputed",
+        rationale="The human-readable request and durable order projection must describe the same paper setup.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_REGISTRATION_APPROVAL_PLAN_BINDING",
+        component="Research funnel paper registration bridge",
+        source_path="experiments/research_funnel/paper_registration_bridge.py",
+        test_script="tests/test_paper_registration_bridge.py",
+        before=(
+            '    # governance-mutation: PAPER_REGISTRATION_APPROVAL_PLAN_BINDING\n'
+            '    if approval.get("plan_hash") != plan.get("plan_hash"):'
+        ),
+        after=(
+            '    # governance-mutation: PAPER_REGISTRATION_APPROVAL_PLAN_BINDING\n'
+            '    if False:'
+        ),
+        expected_failure_marker="test_approval_must_bind_full_plan_and_preserve_unverified_identity",
+        rationale="The verbatim human approval must bind the exact frozen plan hash.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_REGISTRATION_APPROVAL_AUTHORITY",
+        component="Research funnel paper registration bridge",
+        source_path="experiments/research_funnel/paper_registration_bridge.py",
+        test_script="tests/test_paper_registration_bridge.py",
+        before=(
+            '    # governance-mutation: PAPER_REGISTRATION_APPROVAL_AUTHORITY\n'
+            '    if (\n'
+        ),
+        after=(
+            '    # governance-mutation: PAPER_REGISTRATION_APPROVAL_AUTHORITY\n'
+            '    if False and (\n'
+        ),
+        expected_failure_marker="test_approval_must_bind_full_plan_and_preserve_unverified_identity",
+        rationale="Self-reported approval must remain honestly unverified and unable to grant trade authority.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_REGISTRATION_TYPED_SOURCE_BINDING",
+        component="Research funnel paper registration bridge",
+        source_path="experiments/research_funnel/paper_registration_bridge.py",
+        test_script="tests/test_paper_registration_bridge.py",
+        before=(
+            '        # governance-mutation: PAPER_REGISTRATION_TYPED_SOURCE_BINDING\n'
+            '        if expected != payload["plan"]:'
+        ),
+        after=(
+            '        # governance-mutation: PAPER_REGISTRATION_TYPED_SOURCE_BINDING\n'
+            '        if False:'
+        ),
+        expected_failure_marker="test_typed_intent_boundary_recomputes_current_source_projection",
+        rationale="The only typed R-015 writer must recompute the plan from current U4, case, marks, and fund state.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_REGISTRATION_TYPED_COMMIT_PROJECTION",
+        component="Research funnel paper registration bridge",
+        source_path="experiments/research_funnel/paper_registration_bridge.py",
+        test_script="tests/test_paper_registration_bridge.py",
+        before=(
+            '        # governance-mutation: PAPER_REGISTRATION_TYPED_COMMIT_PROJECTION\n'
+            '        if current != intent["plan"]["projection"]["post_state"]:'
+        ),
+        after=(
+            '        # governance-mutation: PAPER_REGISTRATION_TYPED_COMMIT_PROJECTION\n'
+            '        if False:'
+        ),
+        expected_failure_marker="test_typed_commit_boundary_requires_projection_convergence",
+        rationale="A commit cannot become durable before both Model Paper Fund projections exactly converge.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_REGISTRATION_COMMITTED_ORDER_PROJECTION",
+        component="Research funnel paper registration bridge",
+        source_path="experiments/research_funnel/paper_registration_bridge.py",
+        test_script="tests/test_paper_registration_bridge.py",
+        before=(
+            '            # governance-mutation: PAPER_REGISTRATION_COMMITTED_ORDER_PROJECTION\n'
+            '            if _registration_projection(orders[0]) != expected_plan["projection"]["order_registration_projection"]:'
+        ),
+        after=(
+            '            # governance-mutation: PAPER_REGISTRATION_COMMITTED_ORDER_PROJECTION\n'
+            '            if False:'
+        ),
+        expected_failure_marker="test_committed_immutable_projection_is_checked_but_fill_state_may_advance",
+        rationale="Mutable fill fields may advance, but immutable registration provenance cannot be rewritten.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_REGISTRATION_COMMITTED_DECISION_PROJECTION",
+        component="Research funnel paper registration bridge",
+        source_path="experiments/research_funnel/paper_registration_bridge.py",
+        test_script="tests/test_paper_registration_bridge.py",
+        before=(
+            '            # governance-mutation: PAPER_REGISTRATION_COMMITTED_DECISION_PROJECTION\n'
+            '            if decisions[0] != expected_plan["projection"]["decision_log_event"]:'
+        ),
+        after=(
+            '            # governance-mutation: PAPER_REGISTRATION_COMMITTED_DECISION_PROJECTION\n'
+            '            if False:'
+        ),
+        expected_failure_marker="test_committed_registration_decision_projection_is_checked",
+        rationale="The committed registration decision is an exact immutable projection of the approved intent.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_REGISTRATION_DAILY_PREFLIGHT",
+        component="Research funnel paper registration bridge",
+        source_path="experiments/research_funnel/paper_registration_bridge.py",
+        test_script="tests/test_paper_registration_bridge.py",
+        before=(
+            '    # governance-mutation: PAPER_REGISTRATION_DAILY_PREFLIGHT\n'
+            '    if not result["ok"]:'
+        ),
+        after=(
+            '    # governance-mutation: PAPER_REGISTRATION_DAILY_PREFLIGHT\n'
+            '    if False:'
+        ),
+        expected_failure_marker="test_all_crash_points_converge_without_duplicate_order_or_decision",
+        rationale="Daily paper advancement must stop while an intent is pending or a projection is corrupt.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_REGISTRATION_SHARED_NIGHTLY_LOCK",
+        component="Research funnel paper registration bridge",
+        source_path="experiments/research_funnel/paper_registration_bridge.py",
+        test_script="tests/test_paper_registration_bridge.py",
+        before=(
+            '            # governance-mutation: PAPER_REGISTRATION_SHARED_NIGHTLY_LOCK\n'
+            '            fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)'
+        ),
+        after=(
+            '            # governance-mutation: PAPER_REGISTRATION_SHARED_NIGHTLY_LOCK\n'
+            '            fcntl.flock(handle, fcntl.LOCK_UN)'
+        ),
+        expected_failure_marker="test_shared_nightly_lock_rejects_concurrent_registration",
+        rationale="Registration and the nightly publisher must never mutate the paper ledger concurrently.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_REGISTRATION_TYPED_PAYLOAD_SNAPSHOT",
+        component="Research funnel paper registration R-015 boundary",
+        source_path="experiments/execution_tracker/event_ledger.py",
+        test_script="tests/test_paper_registration_bridge.py",
+        before=(
+            '            # governance-mutation: PAPER_REGISTRATION_TYPED_PAYLOAD_SNAPSHOT\n'
+            '            payload_snapshot = json.loads(canonical(payload))'
+        ),
+        after=(
+            '            # governance-mutation: PAPER_REGISTRATION_TYPED_PAYLOAD_SNAPSHOT\n'
+            '            payload_snapshot = payload'
+        ),
+        expected_failure_marker="test_typed_writer_snapshots_payload_before_validation",
+        rationale="The bytes validated under R-015 flock must be the same immutable payload bytes that are appended.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_REGISTRATION_TYPED_APPEND_VALIDATION",
+        component="Research funnel paper registration R-015 boundary",
+        source_path="experiments/execution_tracker/event_ledger.py",
+        test_script="tests/test_paper_registration_bridge.py",
+        before=(
+            '            # governance-mutation: PAPER_REGISTRATION_TYPED_APPEND_VALIDATION\n'
+            '            paper_registration_bridge.validate_typed_outer_append(\n'
+            '                path, preview, source_context=source_context,\n'
+            '            )'
+        ),
+        after=(
+            '            # governance-mutation: PAPER_REGISTRATION_TYPED_APPEND_VALIDATION\n'
+            '            _ = source_context'
+        ),
+        expected_failure_marker="test_typed_intent_boundary_recomputes_current_source_projection",
+        rationale="Reserved paper-registration kinds must pass schema, replay, and source validation before append.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_REGISTRATION_REALISTIC_MODE_INFERENCE",
+        component="Research funnel Model Paper Fund registration",
+        source_path="experiments/execution_tracker/model_paper_fund.py",
+        test_script="tests/test_paper_registration_bridge.py",
+        before=(
+            '        # governance-mutation: PAPER_REGISTRATION_REALISTIC_MODE_INFERENCE\n'
+            '        order_realistic = (\n'
+            '            require_realistic\n'
+            '            or o.get("execution_mode") == pp.EXECUTION_MODEL_VERSION\n'
+            '        )'
+        ),
+        after=(
+            '        # governance-mutation: PAPER_REGISTRATION_REALISTIC_MODE_INFERENCE\n'
+            '        order_realistic = (\n'
+            '            require_realistic\n'
+            '            and o.get("execution_mode") == pp.EXECUTION_MODEL_VERSION\n'
+            '        )'
+        ),
+        expected_failure_marker="test_daily_engine_infers_realistic_mode_from_registered_order",
+        rationale="Bridge-registered orders must retain realistic fills and costs on the ordinary daily path.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_REGISTRATION_DAILY_CALLSITE",
+        component="Research funnel Model Paper Fund registration",
+        source_path="experiments/execution_tracker/model_paper_fund.py",
+        test_script="tests/test_paper_registration_bridge.py",
+        before=(
+            '            # governance-mutation: PAPER_REGISTRATION_DAILY_CALLSITE\n'
+            '            assert_paper_registration_ready(args.fund_dir, args.event_ledger)'
+        ),
+        after=(
+            '            # governance-mutation: PAPER_REGISTRATION_DAILY_CALLSITE\n'
+            '            pass'
+        ),
+        expected_failure_marker="test_daily_cli_refuses_before_advance_when_registration_preflight_fails",
+        rationale="The production CLI must actually invoke the registration preflight before any daily advancement.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_PREFLIGHT_SOURCE_SCAN_HASH",
+        component="Research funnel semiconductor preflight packet",
+        source_path="experiments/research_funnel/semiconductor_preflight_packet.py",
+        test_script="tests/test_semiconductor_preflight_packet.py",
+        before=(
+            "    # governance-mutation: SEMICONDUCTOR_PREFLIGHT_SOURCE_SCAN_HASH\n"
+            "    if claimed != _hash(unhashed):"
+        ),
+        after=(
+            "    # governance-mutation: SEMICONDUCTOR_PREFLIGHT_SOURCE_SCAN_HASH\n"
+            "    if False:"
+        ),
+        expected_failure_marker="test_source_scan_hash_must_recompute",
+        rationale="The operator packet must bind a recomputed source scan, not a hand-edited scan_hash.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_PREFLIGHT_PENDING_STOPS",
+        component="Research funnel semiconductor preflight packet",
+        source_path="experiments/research_funnel/semiconductor_preflight_packet.py",
+        test_script="tests/test_semiconductor_preflight_packet.py",
+        before=(
+            "        # governance-mutation: SEMICONDUCTOR_PREFLIGHT_PENDING_STOPS\n"
+            "        elif as_of == target_trade_date and state in {"
+        ),
+        after=(
+            "        # governance-mutation: SEMICONDUCTOR_PREFLIGHT_PENDING_STOPS\n"
+            "        elif False and as_of == target_trade_date and state in {"
+        ),
+        expected_failure_marker="test_pending_daily_source_stops_before_rerun",
+        rationale="A target-date SOURCE_PUBLICATION_PENDING row must generate STOP_BEFORE_RERUN.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_PREFLIGHT_AUTHORITY_CLOSED",
+        component="Research funnel semiconductor preflight packet",
+        source_path="experiments/research_funnel/semiconductor_preflight_packet.py",
+        test_script="tests/test_semiconductor_preflight_packet.py",
+        before=(
+            "        # governance-mutation: SEMICONDUCTOR_PREFLIGHT_AUTHORITY_CLOSED\n"
+            "        if authority.get(key) != expected_value:"
+        ),
+        after=(
+            "        # governance-mutation: SEMICONDUCTOR_PREFLIGHT_AUTHORITY_CLOSED\n"
+            "        if False:"
+        ),
+        expected_failure_marker="test_diagnostic_authority_cannot_be_escalated",
+        rationale="Diagnostic authority cannot be escalated into trade or production permission.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_PREFLIGHT_DIAGNOSTIC_COUNTS_FORCE_STOP",
+        component="Research funnel semiconductor preflight packet",
+        source_path="experiments/research_funnel/semiconductor_preflight_packet.py",
+        test_script="tests/test_semiconductor_preflight_packet.py",
+        before=(
+            "    # governance-mutation: SEMICONDUCTOR_PREFLIGHT_DIAGNOSTIC_COUNTS_FORCE_STOP\n"
+            '    if counts["semiconductor_positive_channel_rows"] <= 0:'
+        ),
+        after=(
+            "    # governance-mutation: SEMICONDUCTOR_PREFLIGHT_DIAGNOSTIC_COUNTS_FORCE_STOP\n"
+            "    if False:"
+        ),
+        expected_failure_marker="test_diagnostic_counts_force_stop_even_when_self_reported_ready",
+        rationale="The preflight handoff must derive stops from diagnostic counts instead of trusting status/u4_ready text.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_PREFLIGHT_ORIGIN_SHA_MATCH",
+        component="Research funnel semiconductor preflight packet",
+        source_path="experiments/research_funnel/semiconductor_preflight_packet.py",
+        test_script="tests/test_semiconductor_preflight_packet.py",
+        before=(
+            "        # governance-mutation: SEMICONDUCTOR_PREFLIGHT_ORIGIN_SHA_MATCH\n"
+            "        if claimed != observed:"
+        ),
+        after=(
+            "        # governance-mutation: SEMICONDUCTOR_PREFLIGHT_ORIGIN_SHA_MATCH\n"
+            "        if False:"
+        ),
+        expected_failure_marker="test_git_metadata_must_match_real_observed_values",
+        rationale="CLI-provided origin/main SHA cannot override the git-observed SHA.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_PREFLIGHT_WORKTREE_STATUS_MATCH",
+        component="Research funnel semiconductor preflight packet",
+        source_path="experiments/research_funnel/semiconductor_preflight_packet.py",
+        test_script="tests/test_semiconductor_preflight_packet.py",
+        before=(
+            "        # governance-mutation: SEMICONDUCTOR_PREFLIGHT_WORKTREE_STATUS_MATCH\n"
+            "        if claimed != observed:"
+        ),
+        after=(
+            "        # governance-mutation: SEMICONDUCTOR_PREFLIGHT_WORKTREE_STATUS_MATCH\n"
+            "        if False:"
+        ),
+        expected_failure_marker="test_git_metadata_must_match_real_observed_values",
+        rationale="CLI-provided worktree status cannot hide a dirty local checkout.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_PREFLIGHT_ARTIFACT_HASH_RECOMPUTES",
+        component="Research funnel semiconductor preflight packet",
+        source_path="experiments/research_funnel/semiconductor_preflight_packet.py",
+        test_script="tests/test_semiconductor_preflight_packet.py",
+        before=(
+            "    # governance-mutation: SEMICONDUCTOR_PREFLIGHT_ARTIFACT_HASH_RECOMPUTES\n"
+            "    if claimed is not None and claimed != actual:"
+        ),
+        after=(
+            "    # governance-mutation: SEMICONDUCTOR_PREFLIGHT_ARTIFACT_HASH_RECOMPUTES\n"
+            "    if False:"
+        ),
+        expected_failure_marker="test_same_day_bundle_hash_is_recomputed_from_readable_file",
+        rationale="Same-day bundle and U3 battery hashes must come from readable artifacts, not hand-entered strings.",
+    ),
+    MutationCase(
+        mutation_id="SEMICONDUCTOR_PREFLIGHT_DAILY_SOURCE_TARGET_ROWS",
+        component="Research funnel semiconductor preflight packet",
+        source_path="experiments/research_funnel/semiconductor_preflight_packet.py",
+        test_script="tests/test_semiconductor_preflight_packet.py",
+        before=(
+            "        # governance-mutation: SEMICONDUCTOR_PREFLIGHT_DAILY_SOURCE_TARGET_ROWS\n"
+            '        status = "DATA_BLOCKED" if status == "CLEAN" else status'
+        ),
+        after=(
+            "        # governance-mutation: SEMICONDUCTOR_PREFLIGHT_DAILY_SOURCE_TARGET_ROWS\n"
+            "        continue"
+        ),
+        expected_failure_marker="test_each_daily_source_needs_target_date_row",
+        rationale="Every configured daily source must have a target-date row before a same-day rerun handoff.",
+    ),
+    MutationCase(
+mutation_id="U4_PREDECISION_ATOMIC_NO_REPLACE",
+        component="Research funnel U4 pre-decision runtime",
+        source_path="experiments/research_funnel/u4_pre_decision.py",
+        test_script="tests/test_u4_pre_decision_runtime.py",
+        before="        os.link(temporary, path)",
+        after="        os.replace(temporary, path)",
+        expected_failure_marker="test_cli_refuses_a_destination_created_after_preflight",
+        rationale="Preflight absence cannot authorize replacing another writer's later evidence.",
+    ),
+    MutationCase(
+        mutation_id="U4_PREDECISION_PRESERVE_PUBLISHED_EVIDENCE",
+        component="Research funnel U4 pre-decision runtime",
+        source_path="experiments/research_funnel/u4_pre_decision.py",
+        test_script="tests/test_u4_pre_decision_runtime.py",
+        before=(
+            "        # governance-mutation: U4_PREDECISION_PRESERVE_PUBLISHED_EVIDENCE\n"
+            "        raise PreDecisionError("
+        ),
+        after=(
+            "        # governance-mutation: U4_PREDECISION_PRESERVE_PUBLISHED_EVIDENCE\n"
+            "        diagnostic_path.unlink(missing_ok=True)\n"
+            "        raise PreDecisionError("
+        ),
+        expected_failure_marker="test_failed_packet_publication_never_unlinks_replaced_diagnostic",
+        rationale="Failure cleanup cannot delete diagnostic evidence that now belongs to another writer.",
+    ),
+    MutationCase(
+        mutation_id="U4_PREDECISION_FROZEN_ASSEMBLY_IDENTITY",
+        component="Research Closed Loop V1 assembly identity",
+        source_path="docs/research/contracts/research_closed_loop.v1.json",
+        test_script="tests/test_u4_pre_decision_runtime.py",
+        before="sha256:70b17fefc3ce7a1ac6982192294a7676d793783d8b2cd62e23ce71bd2479bd3f",
+        after="sha256:e84b0e026832420ee1e88e1fcbac2b69a836e97cf29f5d1d7daf15eb3fbe09fa",
+        expected_failure_marker="test_fix_forward_task_compiles_and_preserves_the_frozen_assembly",
+        rationale="The previously reviewed V1.3 identity must not silently bind changed DAG bytes.",
+    ),
+    MutationCase(
+        mutation_id="U4_PREDECISION_STAGE_RECEIPTS",
+        component="Research funnel U4 pre-decision runtime",
+        source_path="experiments/research_funnel/u4_pre_decision.py",
+        test_script="tests/test_u4_pre_decision_runtime.py",
+        before=(
+            "        # governance-mutation: U4_PREDECISION_STAGE_RECEIPTS\n"
+            "        if ("
+        ),
+        after=(
+            "        # governance-mutation: U4_PREDECISION_STAGE_RECEIPTS\n"
+            "        if False and ("
+        ),
+        expected_failure_marker="test_stage_receipt_self_report_is_crosschecked_against_the_dag",
+        rationale="Stage receipts must be recomputed against their artifacts and DAG bindings.",
+    ),
+    MutationCase(
+        mutation_id="U4_PREDECISION_FEATURE_HEALTH_CONTRACT",
+        component="Research funnel U4 pre-decision runtime",
+        source_path="experiments/research_funnel/u4_pre_decision.py",
+        test_script="tests/test_u4_pre_decision_runtime.py",
+        before=(
+            "    # governance-mutation: U4_PREDECISION_FEATURE_HEALTH_CONTRACT\n"
+            "    try:\n"
+            "        feature_store.validate_health(dict(feature_health))"
+        ),
+        after=(
+            "    # governance-mutation: U4_PREDECISION_FEATURE_HEALTH_CONTRACT\n"
+            "    try:\n"
+            "        if False:\n"
+            "            feature_store.validate_health(dict(feature_health))"
+        ),
+        expected_failure_marker="test_feature_health_complete_state_must_pass_the_producer_contract",
+        rationale="No invented source row may bypass the complete producer health contract.",
+    ),
+    MutationCase(
+        mutation_id="U4_PREDECISION_FEATURE_HEALTH_IDENTITY",
+        component="Research funnel U4 pre-decision runtime",
+        source_path="experiments/research_funnel/u4_pre_decision.py",
+        test_script="tests/test_u4_pre_decision_runtime.py",
+        before=(
+            "    # governance-mutation: U4_PREDECISION_FEATURE_HEALTH_IDENTITY\n"
+            "    if ("
+        ),
+        after=(
+            "    # governance-mutation: U4_PREDECISION_FEATURE_HEALTH_IDENTITY\n"
+            "    if False and ("
+        ),
+        expected_failure_marker="test_feature_health_identity_is_bound_to_the_bundle_scan",
+        rationale="Feature health must identify the exact universe and semiconductor rows consumed by U1.",
+    ),
+    MutationCase(
+        mutation_id="U4_PREDECISION_FUNNEL_HEALTH_DERIVATION",
+        component="Research funnel U4 pre-decision runtime",
+        source_path="experiments/research_funnel/u4_pre_decision.py",
+        test_script="tests/test_u4_pre_decision_runtime.py",
+        before=(
+            "    # governance-mutation: U4_PREDECISION_FUNNEL_HEALTH_DERIVATION\n"
+            "    if any(health.get(key) != value for key, value in expected.items()):"
+        ),
+        after=(
+            "    # governance-mutation: U4_PREDECISION_FUNNEL_HEALTH_DERIVATION\n"
+            "    if False:"
+        ),
+        expected_failure_marker="test_funnel_health_counts_and_status_are_recomputed_from_the_bundle",
+        rationale="Funnel health must be recomputed from immutable bundle bytes.",
+    ),
+    MutationCase(
+        mutation_id="U4_PREDECISION_STAGE_RECEIPT_FILE",
+        component="Research funnel U4 pre-decision runtime",
+        source_path="experiments/research_funnel/u4_pre_decision.py",
+        test_script="tests/test_u4_pre_decision_runtime.py",
+        before=(
+            "        # governance-mutation: U4_PREDECISION_STAGE_RECEIPT_FILE\n"
+            "        if not receipt_path.is_file() or receipt_path.is_symlink():"
+        ),
+        after=(
+            "        # governance-mutation: U4_PREDECISION_STAGE_RECEIPT_FILE\n"
+            "        if not receipt_path.is_file():"
+        ),
+        expected_failure_marker="test_stage_receipt_symlink_is_rejected_before_reading",
+        rationale="A receipt must be an in-bundle regular file, never an external symlink.",
+    ),
+    MutationCase(
+        mutation_id="U4_PREDECISION_STAGE_ARTIFACT_CHRONOLOGY",
+        component="Research funnel U4 pre-decision runtime",
+        source_path="experiments/research_funnel/u4_pre_decision.py",
+        test_script="tests/test_u4_pre_decision_runtime.py",
+        before=(
+            "        # governance-mutation: U4_PREDECISION_STAGE_ARTIFACT_CHRONOLOGY\n"
+            "        if not artifact_times or any(value != receipt_generated_at for value in artifact_times):"
+        ),
+        after=(
+            "        # governance-mutation: U4_PREDECISION_STAGE_ARTIFACT_CHRONOLOGY\n"
+            "        if False:"
+        ),
+        expected_failure_marker="test_stage_receipts_are_ordered_and_timestamp_bound_to_artifacts",
+        rationale="A stage receipt timestamp must be carried by its timestamped artifacts.",
+    ),
+    MutationCase(
+        mutation_id="U4_PREDECISION_STAGE_ORDER",
+        component="Research funnel U4 pre-decision runtime",
+        source_path="experiments/research_funnel/u4_pre_decision.py",
+        test_script="tests/test_u4_pre_decision_runtime.py",
+        before=(
+            "    # governance-mutation: U4_PREDECISION_STAGE_ORDER\n"
+            "    if not ("
+        ),
+        after=(
+            "    # governance-mutation: U4_PREDECISION_STAGE_ORDER\n"
+            "    if False and not ("
+        ),
+        expected_failure_marker="test_stage_receipts_are_ordered_and_timestamp_bound_to_artifacts",
+        rationale="Candidate, battery, and finalize receipts must follow causal stage order.",
+    ),
+    MutationCase(
+        mutation_id="U4_PREDECISION_CAUSAL_CHRONOLOGY",
+        component="Research funnel U4 pre-decision runtime",
+        source_path="experiments/research_funnel/u4_pre_decision.py",
+        test_script="tests/test_u4_pre_decision_runtime.py",
+        before=(
+            "    # governance-mutation: U4_PREDECISION_CAUSAL_CHRONOLOGY\n"
+            "    if not ("
+        ),
+        after=(
+            "    # governance-mutation: U4_PREDECISION_CAUSAL_CHRONOLOGY\n"
+            "    if False and not ("
+        ),
+        expected_failure_marker="test_feature_bundle_and_funnel_health_follow_causal_order",
+        rationale="Health and bundle evidence must form one causal chain before packet creation.",
+    ),
+    MutationCase(
+        mutation_id="U4_PREDECISION_NO_POSITIVE_CHANNEL",
+        component="Research funnel U4 pre-decision runtime",
+        source_path="experiments/research_funnel/u4_pre_decision.py",
+        test_script="tests/test_u4_pre_decision_runtime.py",
+        before=(
+            "        # governance-mutation: U4_PREDECISION_NO_POSITIVE_CHANNEL\n"
+            "        if not positive and ("
+        ),
+        after=(
+            "        # governance-mutation: U4_PREDECISION_NO_POSITIVE_CHANNEL\n"
+            "        if False and ("
+        ),
+        expected_failure_marker="test_validator_refuses_self_consistent_candidate_without_positive_channel",
+        rationale="A row without positive evidence cannot enter human U4 review.",
+    ),
+    MutationCase(
+        mutation_id="U4_PREDECISION_RANDOM_CONTROL",
+        component="Research funnel U4 pre-decision runtime",
+        source_path="experiments/research_funnel/u4_pre_decision.py",
+        test_script="tests/test_u4_pre_decision_runtime.py",
+        before=(
+            "        # governance-mutation: U4_PREDECISION_RANDOM_CONTROL\n"
+            '        if row.get("candidate_status") == "RANDOM_CONTROL" and ('
+        ),
+        after=(
+            "        # governance-mutation: U4_PREDECISION_RANDOM_CONTROL\n"
+            "        if False and ("
+        ),
+        expected_failure_marker="test_validator_refuses_self_consistent_random_control_as_reviewable",
+        rationale="Random controls cannot masquerade as research candidates.",
+    ),
+    MutationCase(
+        mutation_id="U4_PREDECISION_GLOBAL_SOURCE_GATE",
+        component="Research funnel U4 pre-decision runtime",
+        source_path="experiments/research_funnel/u4_pre_decision.py",
+        test_script="tests/test_u4_pre_decision_runtime.py",
+        before=(
+            "    # governance-mutation: U4_PREDECISION_GLOBAL_SOURCE_GATE\n"
+            '    if "PENDING" in values:'
+        ),
+        after=(
+            "    # governance-mutation: U4_PREDECISION_GLOBAL_SOURCE_GATE\n"
+            "    if False:"
+        ),
+        expected_failure_marker="test_status_helper_reserves_pending_for_future_validated_receipts",
+        rationale="A future validated pending receipt must stop before U4 rather than become ready.",
+    ),
+    MutationCase(
+        mutation_id="U4_PREDECISION_GLOBAL_DATA_BLOCK",
+        component="Research funnel U4 pre-decision runtime",
+        source_path="experiments/research_funnel/u4_pre_decision.py",
+        test_script="tests/test_u4_pre_decision_runtime.py",
+        before=(
+            "    # governance-mutation: U4_PREDECISION_GLOBAL_DATA_BLOCK\n"
+            '    if values.intersection({"STALE", "DATA_BLOCKED"}):'
+        ),
+        after=(
+            "    # governance-mutation: U4_PREDECISION_GLOBAL_DATA_BLOCK\n"
+            "    if False:"
+        ),
+        expected_failure_marker="test_global_missing_chips_source_blocks_the_packet_without_hiding_rows",
+        rationale="A missing same-day source must block the packet without hiding rows.",
+    ),
+    MutationCase(
+        mutation_id="U4_PREDECISION_DERIVED_DIAGNOSTIC",
+        component="Research funnel U4 pre-decision runtime",
+        source_path="experiments/research_funnel/u4_pre_decision.py",
+        test_script="tests/test_u4_pre_decision_runtime.py",
+        before=(
+            "    # governance-mutation: U4_PREDECISION_DERIVED_DIAGNOSTIC\n"
+            "    if ("
+        ),
+        after=(
+            "    # governance-mutation: U4_PREDECISION_DERIVED_DIAGNOSTIC\n"
+            "    if False and ("
+        ),
+        expected_failure_marker="test_validator_recomputes_row_diagnostic_summary_and_authority",
+        rationale="Diagnostic counts cannot be trusted as self-reported labels.",
+    ),
+    MutationCase(
+        mutation_id="U4_PREDECISION_HUMAN_AUTHORITY",
+        component="Research funnel U4 pre-decision runtime",
+        source_path="experiments/research_funnel/u4_pre_decision.py",
+        test_script="tests/test_u4_pre_decision_runtime.py",
+        before=(
+            "    # governance-mutation: U4_PREDECISION_HUMAN_AUTHORITY\n"
+            '    if packet.get("selection_boundary") != {'
+        ),
+        after=(
+            "    # governance-mutation: U4_PREDECISION_HUMAN_AUTHORITY\n"
+            '    if False and packet.get("selection_boundary") != {'
+        ),
+        expected_failure_marker="test_validator_recomputes_row_diagnostic_summary_and_authority",
+        rationale="Only Junyan may turn this packet into a U4 decision.",
+    ),
+    MutationCase(
+        mutation_id="U4_PREDECISION_PACKET_HASH",
+        component="Research funnel U4 pre-decision runtime",
+        source_path="experiments/research_funnel/u4_pre_decision.py",
+        test_script="tests/test_u4_pre_decision_runtime.py",
+        before=(
+            "    # governance-mutation: U4_PREDECISION_PACKET_HASH\n"
+            '    if packet.get("packet_hash") != _sha(_without_hash(packet)):'
+        ),
+        after=(
+            "    # governance-mutation: U4_PREDECISION_PACKET_HASH\n"
+            "    if False:"
+        ),
+        expected_failure_marker="test_validator_recomputes_row_diagnostic_summary_and_authority",
+        rationale="The packet must remain tamper-evident after construction.",
+    ),
+    MutationCase(
+        mutation_id="U4_PREDECISION_EXTERNAL_EVIDENCE_BINDING",
+        component="Research funnel U4 pre-decision runtime",
+        source_path="experiments/research_funnel/u4_pre_decision.py",
+        test_script="tests/test_u4_pre_decision_runtime.py",
+        before=(
+            "    # governance-mutation: U4_PREDECISION_EXTERNAL_EVIDENCE_BINDING\n"
+            "    if source_bound_actual != source_bound_expected:"
+        ),
+        after=(
+            "    # governance-mutation: U4_PREDECISION_EXTERNAL_EVIDENCE_BINDING\n"
+            "    if False:"
+        ),
+        expected_failure_marker="test_source_bound_validator_rejects_resealed_denominator_and_relabels",
+        rationale="A fully resealed packet must still match reopened immutable evidence.",
+    ),
+    MutationCase(
+        mutation_id="U4_PREDECISION_SCRATCH_BOUNDARY",
+        component="Research funnel U4 pre-decision runtime",
+        source_path="experiments/research_funnel/u4_pre_decision.py",
+        test_script="tests/test_u4_pre_decision_runtime.py",
+        before=(
+            "    # governance-mutation: U4_PREDECISION_SCRATCH_BOUNDARY\n"
+            "    if any("
+        ),
+        after=(
+            "    # governance-mutation: U4_PREDECISION_SCRATCH_BOUNDARY\n"
+            "    if False and any("
+        ),
+        expected_failure_marker="test_cli_refuses_to_write_outputs_into_the_immutable_runtime_tree",
+        rationale="Scratch outputs must never mutate an input bundle or production runtime tree.",
+    ),
+    MutationCase(
+        mutation_id="U4_PREDECISION_STATIC_RUNTIME_BOUNDARY",
+        component="Research funnel U4 pre-decision runtime",
+        source_path="experiments/research_funnel/u4_pre_decision.py",
+        test_script="tests/test_u4_pre_decision_runtime.py",
+        before=(
+            "    # governance-mutation: U4_PREDECISION_STATIC_RUNTIME_BOUNDARY\n"
+            "    protected_roots: set[Path] = {RUNTIME_ROOT.resolve()}"
+        ),
+        after=(
+            "    # governance-mutation: U4_PREDECISION_STATIC_RUNTIME_BOUNDARY\n"
+            "    protected_roots: set[Path] = set()"
+        ),
+        expected_failure_marker="test_cli_refuses_the_runtime_tree_even_with_copied_evidence",
+        rationale="The code checkout and production runtime remain protected even when evidence is copied elsewhere.",
+    ),
+    MutationCase(
+        mutation_id="U4_PREDECISION_COHORT_IDENTITY",
+        component="Research funnel U4 pre-decision runtime",
+        source_path="experiments/research_funnel/u4_pre_decision.py",
+        test_script="tests/test_u4_pre_decision_runtime.py",
+        before=(
+            "        # governance-mutation: U4_PREDECISION_COHORT_IDENTITY\n"
+            "        if ("
+        ),
+        after=(
+            "        # governance-mutation: U4_PREDECISION_COHORT_IDENTITY\n"
+            "        if False and ("
+        ),
+        expected_failure_marker="test_identity_states_cannot_be_invented_inside_a_resealed_packet",
+        rationale="The offline packet cannot invent an unbound cohort identity.",
+    ),
+    MutationCase(
+        mutation_id="U4_PREDECISION_CLUSTER_IDENTITY",
+        component="Research funnel U4 pre-decision runtime",
+        source_path="experiments/research_funnel/u4_pre_decision.py",
+        test_script="tests/test_u4_pre_decision_runtime.py",
+        before=(
+            '        if cluster_state == "UNAVAILABLE_PENDING":\n'
+            "            # governance-mutation: U4_PREDECISION_CLUSTER_IDENTITY\n"
+            '            if cluster_id != UNAVAILABLE or "causal_cluster_id" not in missing:'
+        ),
+        after=(
+            '        if cluster_state == "UNAVAILABLE_PENDING":\n'
+            "            # governance-mutation: U4_PREDECISION_CLUSTER_IDENTITY\n"
+            "            if False:"
+        ),
+        expected_failure_marker="test_identity_states_cannot_be_invented_inside_a_resealed_packet",
+        rationale="A pending causal-cluster identity must remain explicitly unavailable.",
+    ),
+    MutationCase(
+        mutation_id="U4_PREDECISION_COMBINED_QUALITY",
+        component="Research funnel U4 pre-decision runtime",
+        source_path="experiments/research_funnel/u4_pre_decision.py",
+        test_script="tests/test_u4_pre_decision_runtime.py",
+        before=(
+            "        # governance-mutation: U4_PREDECISION_COMBINED_QUALITY\n"
+            "        expected_quality = (\n"
+            '            "DATA_BLOCKED" if any(item != "E1_RED_FLAG_ACTIVE" for item in blocked)\n'
+            '            else "REVISE_REQUIRED" if "E1_RED_FLAG_ACTIVE" in blocked'
+        ),
+        after=(
+            "        # governance-mutation: U4_PREDECISION_COMBINED_QUALITY\n"
+            "        expected_quality = (\n"
+            '            "REVISE_REQUIRED" if "E1_RED_FLAG_ACTIVE" in blocked\n'
+            '            else "DATA_BLOCKED" if blocked'
+        ),
+        expected_failure_marker="test_u3_incomplete_plus_e1_is_data_blocked_not_only_revise_required",
+        rationale="An incomplete U3 row remains DATA_BLOCKED even when E1 is also active.",
+    ),
+    MutationCase(
+        mutation_id="LHB_RENDER_READS_APPEARANCES",
+        component="Research API LHB rendering",
+        source_path="api/research.js",
+        test_script="tests/test_research_lhb_render.py",
+        before=(
+            "  // governance-mutation: LHB_RENDER_READS_APPEARANCES\n"
+            "  if (lhb && Array.isArray(lhb.appearances) && lhb.appearances.length > 0) {"
+        ),
+        after=(
+            "  // governance-mutation: LHB_RENDER_READS_APPEARANCES\n"
+            "  if (lhb && Array.isArray(lhb.records) && lhb.records.length > 0) {"
+        ),
+        expected_failure_marker="test_lhb_render_reads_appearances",
+        rationale="The research prompt must consume the canonical appearances array emitted by fetch_lhb.py.",
     ),
 )
 

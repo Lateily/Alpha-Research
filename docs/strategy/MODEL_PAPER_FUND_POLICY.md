@@ -14,9 +14,9 @@
 | Item | Value |
 |---|---|
 | Initial capital | ¥1,000,000 (virtual) |
-| Instruments | A-share equities, long-only v0, 100-share lots |
+| Instruments | A-share equities, long-only v0; 100-share blocks except STAR's 200-share minimum then one-share increments |
 | Ledger | `experiments/execution_tracker/model_fund/` (append-only JSON) |
-| Engine | fills/exits via `paper_portfolio.py` mechanics (registered→T+1 fill→stop/target) |
+| Engine | fills/exits via `paper_portfolio.py`; new workflow-debug cycles use `a-share-daily-realism-v1` |
 
 ## 2. Portfolio construction rules (v0, conservative)
 
@@ -48,7 +48,21 @@ a refused order is itself a decision-log entry.
    understates profit rather than overstates; engine-enforced since the #120
    review fix).
 4. Same-bar stop+target → **stop wins** (conservative).
-5. Marks/fills/exits use **settled Tushare bars only** (定盘). Intraday is
+5. A-share cash equities cannot exit on their buy-fill date. The earliest exit
+   scan is the next settled trading bar.
+6. New workflow-debug fills require raw unadjusted bars, official price limits,
+   positive settled volume/amount, a 1% volume-participation cap, and a
+   prospectively registered no-chase ceiling. A one-price limit-up cannot fill
+   a buy; a one-price limit-down cannot fill a sell.
+7. Workflow-debug cash and P&L include the declared cost proxy. The proxy is
+   `PROXY_UNVERIFIED` until bound to a broker statement, so these cycles remain
+   excluded from method claims and portfolio promotion.
+8. A post-registration discontinuity between a raw bar's `pre_close` and the
+   preceding raw close freezes the paper order as `CORPORATE_ACTION_BREAK`.
+   Stale nominal levels are never applied across a split, dividend, or other
+   corporate action, and official NAV output is blocked until manual
+   re-registration resolves both share count and price basis.
+9. Marks/fills/exits use **settled Tushare bars only** (定盘). Intraday is
    observation/nowcast, never a fill source.
 
 ## 4. Posture → allowed fund action

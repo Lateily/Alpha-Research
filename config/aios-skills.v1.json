@@ -1,0 +1,56 @@
+{
+  "schema": "ar.aios_skills.v1",
+  "skills": [
+    {
+      "skill_id": "ar-divergent-reasoning",
+      "version": "1.0.0",
+      "path": ".agents/skills/ar-divergent-reasoning/SKILL.md",
+      "sha256": "sha256:5af8905b2f1db7d8871a14c4f644b91f832daaabf590a81ed8f582f0add2948e",
+      "allowed_roles": ["aios-worker", "product-worker", "research-worker"],
+      "network_policy": "OFFLINE",
+      "prompt_version": "ar-divergent-reasoning-v1",
+      "requires_evidence_grade": true,
+      "resources": []
+    },
+    {
+      "skill_id": "ar-architecture-map",
+      "version": "1.0.0",
+      "path": ".agents/skills/ar-architecture-map/SKILL.md",
+      "sha256": "sha256:b1e54b310ab182eed0dac0a62810be60ac0c4b8a34ab1ffcd384b69d5a7fadac",
+      "allowed_roles": ["aios-worker", "product-worker", "research-worker"],
+      "network_policy": "OFFLINE",
+      "prompt_version": "ar-architecture-map-v1",
+      "requires_evidence_grade": true,
+      "resources": [
+        {
+          "path": ".agents/skills/ar-architecture-map/references/evidence-contract.md",
+          "sha256": "sha256:672beeb45dc309894cf5517cb432715ccfcdb381dd7f0e5533ca5eeb62963bad"
+        },
+        {
+          "path": ".agents/skills/ar-architecture-map/references/upstream.md",
+          "sha256": "sha256:231128bd01e8660c8b3583564739a9769179a02c9335239c1338772ed57fa783"
+        }
+      ]
+    },
+    {
+      "skill_id": "ar-video-evidence",
+      "version": "1.0.0",
+      "path": ".agents/skills/ar-video-evidence/SKILL.md",
+      "sha256": "sha256:1f40198566eafc4143c160c86fa3e86d1e15b28171c5bd411c4cd1553d8f0684",
+      "allowed_roles": ["aios-worker", "evidence-worker", "research-worker"],
+      "network_policy": "OFFLINE",
+      "prompt_version": "ar-video-evidence-v1",
+      "requires_evidence_grade": true,
+      "resources": [
+        {
+          "path": ".agents/skills/ar-video-evidence/references/evidence-contract.md",
+          "sha256": "sha256:f65392332527072023f40ec62a94f0e638d91776bcf965ec4074dce1ccd2a484"
+        },
+        {
+          "path": ".agents/skills/ar-video-evidence/references/upstream.md",
+          "sha256": "sha256:05a68bc9ef8b411699b8457c891c8ca96f05e4edcde88cc2c1ae39fa4cfded4e"
+        }
+      ]
+    }
+  ]
+}

@@ -25,6 +25,7 @@ from pathlib import Path
 from typing import Any, Iterable, Mapping, Sequence
 
 from security_registry import _atomic_write_json, _date8, _sha256, validate_registry
+import semiconductor_inputs as semiconductor_evidence
 
 
 SCAN_SCHEMA = "ar.all_market_scan"
@@ -34,6 +35,8 @@ SCHEMA_VERSION = "1.0"
 RULE_VERSION = "research_funnel_v1"
 QUALIFICATION_RULE_VERSION = "u0_qualification_v1"
 CONTROL_ALGO = "sha256+mt19937+sorted_sample/v1"
+U3_RED_FLAG_VERDICTS = frozenset({"PASS", "RED_FLAG"})
+RED_FLAG_BLOCK_REASON = "E1_RED_FLAG_REQUIRES_SEPARATE_REVIEW"
 
 CHANNELS = (
     "E1_EVENT",
@@ -59,6 +62,18 @@ FORBIDDEN_ACTION_KEYS = {
     "position_size",
     "formal_blocking_authority",
 }
+
+
+def _fsync_directory_if_supported(path: Path) -> None:
+    if os.name == "nt":
+        return
+    directory_fd = os.open(path, os.O_RDONLY)
+    try:
+        os.fsync(directory_fd)
+    finally:
+        os.close(directory_fd)
+
+
 STAGE_ORDER = {
     "UNSCANNED": 0,
     "SCANNED": 1,
@@ -122,6 +137,16 @@ def _finite(value: Any) -> float | None:
     except (TypeError, ValueError):
         return None
     return number if math.isfinite(number) else None
+
+
+def _median(values: Sequence[float]) -> float | None:
+    ordered = sorted(values)
+    if not ordered:
+        return None
+    middle = len(ordered) // 2
+    if len(ordered) % 2:
+        return ordered[middle]
+    return (ordered[middle - 1] + ordered[middle]) / 2.0
 
 
 def _walk_keys(value: Any) -> Iterable[str]:
@@ -214,11 +239,141 @@ def _rotation_index(payload: Mapping[str, Any] | None, as_of: str) -> dict[str, 
         raise FunnelError("rotation panel is not from the requested trade date")
     data = payload.get("data") if isinstance(payload.get("data"), dict) else payload
     indexed: dict[str, dict[str, Any]] = {}
-    for bucket in ("inflow_cont", "warming", "flicker"):
+    for bucket in ("inflow_cont", "warming", "flicker", "outflow_cont"):
         for row in data.get(bucket, []) if isinstance(data, dict) else []:
             if isinstance(row, dict) and row.get("sector"):
                 indexed[str(row["sector"])] = dict(row)
     return indexed
+
+
+def _semiconductor_rotation_aliases(
+    taxonomy: Mapping[str, Any] | None,
+) -> tuple[list[str], str | None]:
+    if taxonomy is None:
+        return [], None
+    mappings = taxonomy.get("mappings")
+    if (
+        taxonomy.get("schema") != "ar.industry_taxonomy"
+        or taxonomy.get("schema_version") != "1.0"
+        or taxonomy.get("rule_version") != "industry_taxonomy_v1"
+        or not isinstance(mappings, list)
+        or taxonomy.get("mappings_hash") != _hash(mappings)
+    ):
+        raise FunnelError("industry taxonomy schema/hash mismatch")
+    policy = taxonomy.get("policy") or {}
+    if (
+        policy.get("u4_selection_authority") is not False
+        or policy.get("production_authority") is not False
+    ):
+        raise FunnelError("industry taxonomy acquired selection or production authority")
+    matches = [
+        row for row in mappings
+        if isinstance(row, Mapping)
+        and row.get("canonical_id") == "SEMICONDUCTOR"
+        and semiconductor_evidence.SEMICONDUCTOR_INDUSTRY_KEY
+        in (row.get("source_industry_keys") or [])
+    ]
+    if len(matches) != 1:
+        raise FunnelError("industry taxonomy must define semiconductor exactly once")
+    aliases = matches[0].get("rotation_aliases")
+    if (
+        not isinstance(aliases, list)
+        or not aliases
+        or any(not isinstance(value, str) or not value.strip() for value in aliases)
+        or len(aliases) != len(set(aliases))
+    ):
+        raise FunnelError("semiconductor rotation aliases are invalid")
+    return list(aliases), str(taxonomy["mappings_hash"])
+
+
+def _semiconductor_method_context(
+    *, evidence: Mapping[str, Any] | None,
+    registry: Mapping[str, Any], features: Mapping[str, Mapping[str, Any]],
+    trade_date: str,
+) -> dict[str, Any]:
+    if evidence is None:
+        return {}
+    try:
+        semiconductor_evidence.validate_snapshot(evidence, registry)
+    except semiconductor_evidence.SemiconductorInputError as exc:
+        raise FunnelError(f"semiconductor positive inputs are invalid: {exc}") from exc
+    if evidence.get("as_of") != trade_date:
+        raise FunnelError("semiconductor positive inputs are not from the scan date")
+    rows = {str(row["ts_code"]): row for row in evidence["rows"]}
+    price_observed = {
+        code: {
+            "return_20d": _finite((features.get(code) or {}).get("return_20d")),
+            "return_5d": _finite((features.get(code) or {}).get("return_5d")),
+            "volume_ratio": _finite((features.get(code) or {}).get("volume_ratio")),
+        }
+        for code in rows
+        if str((features.get(code) or {}).get("trade_date") or "") == trade_date
+    }
+    return_20d_values = [
+        item["return_20d"] for item in price_observed.values()
+        if item["return_20d"] is not None
+    ]
+    winner_rates = [
+        _finite(row["chips"]["values"].get("winner_rate"))
+        for row in rows.values() if row["chips"]["status"] == "COMPLETE"
+    ]
+    financial_rows = [
+        row["fundamentals"]["values"] for row in rows.values()
+        if row["fundamentals"]["status"] == "COMPLETE"
+    ]
+    sales_growth = [
+        value for row in financial_rows
+        if (value := _finite(row.get("q_sales_yoy"))) is not None
+    ]
+    profit_growth = [
+        value for row in financial_rows
+        if (value := _finite(row.get("q_netprofit_yoy"))) is not None
+    ]
+    positive_pe = [
+        value for code in rows
+        if (value := _finite((features.get(code) or {}).get("pe_ttm"))) is not None
+        and value > 0
+    ]
+    price_ranked = sorted(
+        (
+            (-float(values["return_20d"]), code)
+            for code, values in price_observed.items()
+            if values["return_20d"] is not None
+        )
+    )
+    flow_ranked = sorted(
+        (
+            (-float(rate), code)
+            for code, row in rows.items()
+            if row["fund_flow"]["status"] == "COMPLETE"
+            and (rate := _finite(row["fund_flow"]["values"].get("net_amount_rate")))
+            is not None
+        )
+    )
+    fundamental_ranked = sorted(
+        (
+            (-float(growth), code)
+            for code, row in rows.items()
+            if row["fundamentals"]["status"] == "COMPLETE"
+            and (growth := _finite(row["fundamentals"]["values"].get("q_netprofit_yoy")))
+            is not None
+        )
+    )
+    return {
+        "rows": rows,
+        "price_observed": price_observed,
+        "price_return_20d_median": _median(return_20d_values),
+        "chips_winner_rate_median": _median([v for v in winner_rates if v is not None]),
+        "sales_growth_median": _median(sales_growth),
+        "profit_growth_median": _median(profit_growth),
+        "positive_pe_median": _median(positive_pe),
+        "price_rank": {code: rank for rank, (_, code) in enumerate(price_ranked, 1)},
+        "flow_rank": {code: rank for rank, (_, code) in enumerate(flow_ranked, 1)},
+        "fundamental_rank": {
+            code: rank for rank, (_, code) in enumerate(fundamental_ranked, 1)
+        },
+        "rows_hash": evidence["rows_hash"],
+    }
 
 
 def _macro_index(payload: Mapping[str, Any] | None) -> dict[str, dict[str, Any]]:
@@ -266,6 +421,8 @@ def build_all_market_scan(
     *, registry: Mapping[str, Any], e1_events: Mapping[str, Any] | None,
     features: Mapping[str, Mapping[str, Any]], rotation: Mapping[str, Any] | None = None,
     macro_industry: Mapping[str, Any] | None = None, trade_date: str,
+    semiconductor_inputs: Mapping[str, Any] | None = None,
+    industry_taxonomy: Mapping[str, Any] | None = None,
     generated_at: str | None = None, channel_top_n: int = 40,
 ) -> dict[str, Any]:
     """Build six independent channel rows; no cross-channel score exists."""
@@ -278,6 +435,13 @@ def build_all_market_scan(
     e1_by_code = _e1_index(e1_events, trade_date, registry)
     rotation_by_industry = _rotation_index(rotation, trade_date)
     macro_by_industry = _macro_index(macro_industry)
+    semiconductor = _semiconductor_method_context(
+        evidence=semiconductor_inputs,
+        registry=registry,
+        features=features,
+        trade_date=trade_date,
+    )
+    semiconductor_aliases, taxonomy_hash = _semiconductor_rotation_aliases(industry_taxonomy)
 
     usable_price = [
         (code, _finite(row.get("return_20d")))
@@ -329,53 +493,250 @@ def build_all_market_scan(
         rows.append(row)
 
         feature = dict(features.get(code) or {})
-        rank = price_rank.get(code)
-        price_complete = str(feature.get("trade_date") or "") == trade_date and rank is not None
-        price_hit = bool(price_complete and rank <= channel_top_n)
-        rows.append(_scan_row(
-            trade_date=trade_date, code=code, channel="PRICE_VOLUME",
-            feature_values={
+        sem_row = (semiconductor.get("rows") or {}).get(code)
+        if sem_row is not None:
+            price_values = (semiconductor.get("price_observed") or {}).get(code) or {}
+            rank = (semiconductor.get("price_rank") or {}).get(code)
+            price_median = semiconductor.get("price_return_20d_median")
+            price_complete = (
+                rank is not None
+                and price_median is not None
+                and all(
+                    price_values.get(key) is not None
+                    for key in ("return_20d", "return_5d", "volume_ratio")
+                )
+            )
+            price_hit = bool(
+                price_complete
+                and price_values["return_20d"] > price_median
+                and price_values["return_5d"] > 0
+                and price_values["volume_ratio"] >= 1.0
+            )
+            price_feature_values = {
                 key: feature.get(key) for key in (
                     "return_1d", "return_5d", "return_10d", "return_20d",
                     "distance_to_20d_close_high_pct", "turnover_rate", "volume_ratio",
                     "total_mv_cny",
                 )
-            } if feature else {},
+            }
+            price_feature_values.update({
+                "industry_key": semiconductor_evidence.SEMICONDUCTOR_INDUSTRY_KEY,
+                "industry_median_return_20d": price_median,
+                "method": "ABOVE_INDUSTRY_MEDIAN_R20_AND_POSITIVE_R5_AND_VOLUME_RATIO_GTE_1",
+            })
+            price_reason_codes = [] if price_complete else [
+                "SEMICONDUCTOR_PRICE_VOLUME_INPUT_INCOMPLETE"
+            ]
+        else:
+            rank = price_rank.get(code)
+            price_complete = str(feature.get("trade_date") or "") == trade_date and rank is not None
+            price_hit = bool(price_complete and rank <= channel_top_n)
+            price_feature_values = {
+                key: feature.get(key) for key in (
+                    "return_1d", "return_5d", "return_10d", "return_20d",
+                    "distance_to_20d_close_high_pct", "turnover_rate", "volume_ratio",
+                    "total_mv_cny",
+                )
+            } if feature else {}
+            price_reason_codes = [] if price_complete else ["POINT_IN_TIME_FEATURES_MISSING"]
+        rows.append(_scan_row(
+            trade_date=trade_date, code=code, channel="PRICE_VOLUME",
+            feature_values=price_feature_values,
             triggered=price_hit, source_as_of=feature.get("trade_date"),
             data_status="COMPLETE" if price_complete else "DATA_BLOCKED",
-            reason_codes=[] if price_complete else ["POINT_IN_TIME_FEATURES_MISSING"],
+            reason_codes=price_reason_codes,
             entry_reasons=[{
-                "channel": "PRICE_VOLUME", "metric": "return_20d_rank",
-                "value": rank, "threshold": f"TOP_{channel_top_n}",
+                "channel": "PRICE_VOLUME",
+                "metric": (
+                    "semiconductor_relative_price_volume_rule"
+                    if sem_row is not None else "return_20d_rank"
+                ),
+                "value": rank,
+                "threshold": (
+                    "R20>INDUSTRY_MEDIAN_AND_R5>0_AND_VOLUME_RATIO>=1"
+                    if sem_row is not None else f"TOP_{channel_top_n}"
+                ),
             }] if price_hit else [], channel_rank=rank,
         ))
 
-        rows.append(_scan_row(
-            trade_date=trade_date, code=code, channel="FUND_FLOW_CHIPS", feature_values={},
-            triggered=False, source_as_of=None, data_status="DATA_BLOCKED",
-            reason_codes=["FULL_MARKET_FUND_FLOW_SOURCE_UNAVAILABLE"],
-        ))
-        rows.append(_scan_row(
-            trade_date=trade_date, code=code, channel="FUNDAMENTAL_VALUATION",
-            feature_values={key: feature.get(key) for key in ("pe_ttm", "pb", "total_mv_cny")}
-            if feature else {}, triggered=False, source_as_of=feature.get("trade_date"),
-            data_status="DATA_BLOCKED",
-            reason_codes=["FINANCIAL_STATEMENT_TREND_NOT_IN_FEATURE_STORE"],
-        ))
+        if sem_row is None:
+            rows.append(_scan_row(
+                trade_date=trade_date, code=code, channel="FUND_FLOW_CHIPS", feature_values={},
+                triggered=False, source_as_of=None, data_status="DATA_BLOCKED",
+                reason_codes=["FULL_MARKET_FUND_FLOW_SOURCE_UNAVAILABLE"],
+            ))
+            rows.append(_scan_row(
+                trade_date=trade_date, code=code, channel="FUNDAMENTAL_VALUATION",
+                feature_values={key: feature.get(key) for key in ("pe_ttm", "pb", "total_mv_cny")}
+                if feature else {}, triggered=False, source_as_of=feature.get("trade_date"),
+                data_status="DATA_BLOCKED",
+                reason_codes=["FINANCIAL_STATEMENT_TREND_NOT_IN_FEATURE_STORE"],
+            ))
+        else:
+            flow = sem_row["fund_flow"]
+            chips = sem_row["chips"]
+            flow_values = flow["values"] if flow["status"] == "COMPLETE" else {}
+            chip_values = chips["values"] if chips["status"] == "COMPLETE" else {}
+            winner_rate = _finite(chip_values.get("winner_rate"))
+            net_amount = _finite(flow_values.get("net_amount_cny"))
+            net_amount_rate = _finite(flow_values.get("net_amount_rate"))
+            winner_median = semiconductor.get("chips_winner_rate_median")
+            flow_complete = (
+                flow["status"] == "COMPLETE"
+                and chips["status"] == "COMPLETE"
+                and None not in (winner_rate, net_amount, net_amount_rate, winner_median)
+            )
+            flow_hit = bool(
+                flow_complete
+                and net_amount > 0
+                and net_amount_rate > 0
+                and winner_rate >= winner_median
+            )
+            flow_reasons = [] if flow_complete else sorted(set(
+                list(flow.get("reason_codes") or [])
+                + list(chips.get("reason_codes") or [])
+                + (["SEMICONDUCTOR_FUND_FLOW_CHIP_FIELDS_MISSING"]
+                   if flow["status"] == chips["status"] == "COMPLETE" else [])
+            ))
+            rows.append(_scan_row(
+                trade_date=trade_date, code=code, channel="FUND_FLOW_CHIPS",
+                feature_values={
+                    "net_amount_cny": net_amount,
+                    "net_amount_rate": net_amount_rate,
+                    "winner_rate": winner_rate,
+                    "industry_median_winner_rate": winner_median,
+                    "cost_50pct": chip_values.get("cost_50pct"),
+                    "weight_avg": chip_values.get("weight_avg"),
+                    "fund_flow_input_hash": flow.get("input_hash"),
+                    "chips_input_hash": chips.get("input_hash"),
+                    "method": "POSITIVE_NET_FLOW_AND_WINNER_RATE_GTE_INDUSTRY_MEDIAN",
+                },
+                triggered=flow_hit,
+                source_as_of=trade_date if flow_complete else None,
+                data_status="COMPLETE" if flow_complete else "DATA_BLOCKED",
+                reason_codes=flow_reasons,
+                entry_reasons=[{
+                    "channel": "FUND_FLOW_CHIPS",
+                    "metric": "semiconductor_fund_flow_chips_rule",
+                    "value": (semiconductor.get("flow_rank") or {}).get(code),
+                    "threshold": "NET_AMOUNT>0_AND_RATE>0_AND_WINNER_RATE>=INDUSTRY_MEDIAN",
+                }] if flow_hit else [],
+                channel_rank=(semiconductor.get("flow_rank") or {}).get(code),
+            ))
 
-        sector = rotation_by_industry.get(industry)
-        sector_rank = industry_rank.get(code)
-        sector_hit = bool(sector_rank and sector_rank <= channel_top_n)
-        rows.append(_scan_row(
-            trade_date=trade_date, code=code, channel="INDUSTRY_VALUE_CHAIN",
-            feature_values={
+            fundamentals = sem_row["fundamentals"]
+            fundamental_values = (
+                fundamentals["values"] if fundamentals["status"] == "COMPLETE" else {}
+            )
+            sales_growth = _finite(fundamental_values.get("q_sales_yoy"))
+            profit_growth = _finite(fundamental_values.get("q_netprofit_yoy"))
+            roe = _finite(fundamental_values.get("roe"))
+            ocf_to_or = _finite(fundamental_values.get("ocf_to_or"))
+            pe_ttm = _finite(feature.get("pe_ttm"))
+            sales_median = semiconductor.get("sales_growth_median")
+            profit_median = semiconductor.get("profit_growth_median")
+            pe_median = semiconductor.get("positive_pe_median")
+            fundamental_complete = (
+                fundamentals["status"] == "COMPLETE"
+                and str(feature.get("trade_date") or "") == trade_date
+                and None not in (
+                    sales_growth, profit_growth, roe, ocf_to_or, pe_ttm,
+                    sales_median, profit_median, pe_median,
+                )
+            )
+            fundamental_hit = bool(
+                fundamental_complete
+                and sales_growth > sales_median
+                and profit_growth > profit_median
+                and roe > 0
+                and ocf_to_or > 0
+                and 0 < pe_ttm <= pe_median
+            )
+            fundamental_reasons = [] if fundamental_complete else sorted(set(
+                list(fundamentals.get("reason_codes") or [])
+                + (["SEMICONDUCTOR_FUNDAMENTAL_VALUATION_FIELDS_MISSING"]
+                   if fundamentals["status"] == "COMPLETE" else [])
+            ))
+            rows.append(_scan_row(
+                trade_date=trade_date, code=code, channel="FUNDAMENTAL_VALUATION",
+                feature_values={
+                    "ann_date": fundamental_values.get("ann_date"),
+                    "report_period": fundamental_values.get("report_period"),
+                    "q_sales_yoy": sales_growth,
+                    "q_netprofit_yoy": profit_growth,
+                    "roe": roe,
+                    "ocf_to_or": ocf_to_or,
+                    "pe_ttm": pe_ttm,
+                    "pb": feature.get("pb"),
+                    "industry_median_q_sales_yoy": sales_median,
+                    "industry_median_q_netprofit_yoy": profit_median,
+                    "industry_median_positive_pe_ttm": pe_median,
+                    "fundamental_input_hash": fundamentals.get("input_hash"),
+                    "method": "ABOVE_MEDIAN_GROWTH_POSITIVE_QUALITY_PE_NOT_ABOVE_MEDIAN",
+                },
+                triggered=fundamental_hit,
+                source_as_of=fundamentals.get("source_as_of"),
+                data_status="COMPLETE" if fundamental_complete else "DATA_BLOCKED",
+                reason_codes=fundamental_reasons,
+                entry_reasons=[{
+                    "channel": "FUNDAMENTAL_VALUATION",
+                    "metric": "semiconductor_fundamental_valuation_rule",
+                    "value": (semiconductor.get("fundamental_rank") or {}).get(code),
+                    "threshold": "GROWTH>MEDIANS_AND_ROE>0_AND_OCF_TO_OR>0_AND_0<PE<=MEDIAN",
+                }] if fundamental_hit else [],
+                channel_rank=(semiconductor.get("fundamental_rank") or {}).get(code),
+            ))
+
+        if sem_row is not None and semiconductor_aliases:
+            alias_rows = [
+                rotation_by_industry[alias]
+                for alias in semiconductor_aliases if alias in rotation_by_industry
+            ]
+            alias_rows.sort(key=lambda row: str(row.get("sector") or ""))
+            sector = None
+            sector_rank = None
+            sector_hit = False
+            sector_values = {
+                "industry_key": industry,
+                "canonical_id": "SEMICONDUCTOR",
+                "rotation_aliases": semiconductor_aliases,
+                "observed_aliases": [
+                    {
+                        "sector": row.get("sector"),
+                        "status": row.get("status"),
+                        "streak": row.get("streak"),
+                        "sequence": row.get("seq"),
+                    }
+                    for row in alias_rows
+                ],
+                "issuer_value_chain_node": None,
+                "mapping_scope": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_NODE_CLAIM",
+            }
+            sector_status = "PARTIAL" if alias_rows else "DATA_BLOCKED"
+            sector_reasons = (
+                ["ISSUER_VALUE_CHAIN_NODE_UNREGISTERED"]
+                if alias_rows else ["SEMICONDUCTOR_ROTATION_ALIAS_EVIDENCE_MISSING"]
+            )
+            sector_source_as_of = trade_date if alias_rows else None
+        else:
+            sector = rotation_by_industry.get(industry)
+            sector_rank = industry_rank.get(code)
+            sector_hit = bool(sector_rank and sector_rank <= channel_top_n)
+            sector_values = {
                 "industry_key": industry,
                 "rotation_status": sector.get("status") if sector else None,
                 "streak": sector.get("streak") if sector else None,
                 "sequence": sector.get("seq") if sector else None,
-            }, triggered=sector_hit, source_as_of=trade_date if sector else None,
-            data_status="COMPLETE" if sector else "DATA_BLOCKED",
-            reason_codes=[] if sector else ["EXACT_INDUSTRY_ROTATION_MATCH_MISSING"],
+            }
+            sector_status = "COMPLETE" if sector else "DATA_BLOCKED"
+            sector_reasons = [] if sector else ["EXACT_INDUSTRY_ROTATION_MATCH_MISSING"]
+            sector_source_as_of = trade_date if sector else None
+        rows.append(_scan_row(
+            trade_date=trade_date, code=code, channel="INDUSTRY_VALUE_CHAIN",
+            feature_values=sector_values, triggered=sector_hit,
+            source_as_of=sector_source_as_of,
+            data_status=sector_status,
+            reason_codes=sector_reasons,
             entry_reasons=[{
                 "channel": "INDUSTRY_VALUE_CHAIN", "metric": "rotation_status_rank",
                 "value": sector_rank, "threshold": f"TOP_{channel_top_n}",
@@ -423,12 +784,59 @@ def build_all_market_scan(
             "blocked_by_channel": dict(sorted(blocked.items())),
             "triggered_by_channel": dict(sorted(triggered.items())),
         },
+        "input_refs": {
+            "semiconductor_positive_inputs_rows_hash": semiconductor.get("rows_hash"),
+            "industry_taxonomy_hash": taxonomy_hash,
+        },
         "rows": rows,
         "rows_hash": _hash(rows),
         "disclaimer": DISCLAIMER,
     }
     validate_all_market_scan(payload, registry)
     return payload
+
+
+def _validate_semiconductor_industry_context(
+    row: Mapping[str, Any], *, as_of: str,
+) -> None:
+    values = row.get("feature_values")
+    expected_value_keys = {
+        "industry_key",
+        "canonical_id",
+        "rotation_aliases",
+        "observed_aliases",
+        "issuer_value_chain_node",
+        "mapping_scope",
+    }
+    if not isinstance(values, Mapping) or set(values) != expected_value_keys:
+        raise FunnelError("semiconductor industry context fields are not exact")
+    aliases = values.get("rotation_aliases")
+    observed = values.get("observed_aliases")
+    if (
+        values.get("industry_key") != semiconductor_evidence.SEMICONDUCTOR_INDUSTRY_KEY
+        or values.get("canonical_id") != "SEMICONDUCTOR"
+        or values.get("issuer_value_chain_node") is not None
+        or values.get("mapping_scope") != "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_NODE_CLAIM"
+        or not isinstance(aliases, list)
+        or not aliases
+        or not all(isinstance(alias, str) and alias for alias in aliases)
+        or not isinstance(observed, list)
+    ):
+        raise FunnelError("semiconductor issuer-node context boundary changed")
+    expected_status = "PARTIAL" if observed else "DATA_BLOCKED"
+    expected_reasons = (
+        ["ISSUER_VALUE_CHAIN_NODE_UNREGISTERED"]
+        if observed else ["SEMICONDUCTOR_ROTATION_ALIAS_EVIDENCE_MISSING"]
+    )
+    expected_source_as_of = as_of if observed else None
+    if (
+        row.get("data_status") != expected_status
+        or row.get("triggered") is not False
+        or row.get("entry_reasons") != []
+        or row.get("reason_codes") != expected_reasons
+        or row.get("source_as_of") != expected_source_as_of
+    ):
+        raise FunnelError("semiconductor issuer-node context cannot trigger or claim completeness")
 
 
 def validate_all_market_scan(payload: Mapping[str, Any], registry: Mapping[str, Any]) -> None:
@@ -443,10 +851,22 @@ def validate_all_market_scan(payload: Mapping[str, Any], registry: Mapping[str, 
     rows = payload.get("rows")
     if not isinstance(rows, list) or payload.get("rows_hash") != _hash(rows):
         raise FunnelError("all_market_scan rows/hash mismatch")
-    eligible = {row["ts_code"] for row in _eligible_rows(registry)}
+    eligible_rows = {row["ts_code"]: row for row in _eligible_rows(registry)}
+    eligible = set(eligible_rows)
     as_of = _date8(str(payload.get("as_of") or ""))
     if registry.get("as_of") != as_of:
         raise FunnelError("all_market_scan is not from the U0 registry as_of")
+    input_refs = payload.get("input_refs")
+    if not isinstance(input_refs, Mapping) or set(input_refs) != {
+        "semiconductor_positive_inputs_rows_hash", "industry_taxonomy_hash",
+    }:
+        raise FunnelError("all_market_scan input refs are incomplete")
+    for value in input_refs.values():
+        if value is not None and (not isinstance(value, str) or len(value) != 64):
+            raise FunnelError("all_market_scan input ref hash is invalid")
+    semiconductor_context_bound = (
+        input_refs["semiconductor_positive_inputs_rows_hash"] is not None
+    )
     seen: dict[str, set[str]] = defaultdict(set)
     for row in rows:
         required = {
@@ -470,6 +890,42 @@ def validate_all_market_scan(payload: Mapping[str, Any], registry: Mapping[str, 
         # governance-mutation: FUNNEL_U1_DATA_STATUS
         if row["data_status"] not in VALID_DATA_STATUS:
             raise FunnelError("invalid channel data_status")
+        if not isinstance(row.get("triggered"), bool):
+            raise FunnelError("channel triggered flag must be boolean")
+        # governance-mutation: FUNNEL_U1_TRIGGER_REQUIRES_COMPLETE
+        if row["triggered"] and row["data_status"] != "COMPLETE":
+            raise FunnelError("positive channel trigger requires COMPLETE evidence")
+        feature_values = row.get("feature_values")
+        claims_semiconductor_context = (
+            isinstance(feature_values, Mapping)
+            and (
+                feature_values.get("canonical_id") == "SEMICONDUCTOR"
+                or feature_values.get("mapping_scope")
+                == "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_NODE_CLAIM"
+                or "issuer_value_chain_node" in feature_values
+            )
+        )
+        if (
+            row["channel"] == "INDUSTRY_VALUE_CHAIN"
+            and eligible_rows[row["ts_code"]].get("industry_key")
+            == semiconductor_evidence.SEMICONDUCTOR_INDUSTRY_KEY
+            and (semiconductor_context_bound or claims_semiconductor_context)
+        ):
+            # governance-mutation: FUNNEL_U1_SEMICONDUCTOR_INDUSTRY_CONTEXT
+            _validate_semiconductor_industry_context(row, as_of=as_of)
+        if row["channel"] == "E1_EVENT":
+            verdict = (row.get("feature_values") or {}).get("verdict")
+            expected_trigger = verdict == "RED_FLAG"
+            expected_status = (
+                "DATA_BLOCKED" if verdict in {None, "DATA_BLOCKED"} else "COMPLETE"
+            )
+            # governance-mutation: FUNNEL_U1_E1_TRIGGER_RECOMPUTED
+            if (
+                verdict not in {None, "RED_FLAG", "NO_RED_FLAG_FOUND", "DATA_BLOCKED"}
+                or row["triggered"] is not expected_trigger
+                or row["data_status"] != expected_status
+            ):
+                raise FunnelError("E1 verdict/trigger/status projection is inconsistent")
         reasons = row["entry_reasons"]
         if row["triggered"] and (not isinstance(reasons, list) or not reasons):
             raise FunnelError("triggered channel row requires entry_reasons")
@@ -607,7 +1063,7 @@ def build_candidate_review(
     positive_triggered = {
         code for code, source_rows in all_triggered.items()
         if any(row["channel"] != "E1_EVENT" for row in source_rows)
-    }
+    } - red_flag_codes
     # governance-mutation: FUNNEL_U2_QUOTA_FLOOR
     main_capacity = target_size - reserved_total
     # governance-mutation: FUNNEL_U2_RED_FLAG_NOT_POSITIVE
@@ -623,7 +1079,8 @@ def build_candidate_review(
             while positions[channel] < len(queue):
                 code = queue[positions[channel]]["ts_code"]
                 positions[channel] += 1
-                if code in selected_main:
+                # governance-mutation: FUNNEL_U2_E1_OVERRIDES_POSITIVE_CHANNELS
+                if code in selected_main or code in red_flag_codes:
                     continue
                 selected_main.add(code)
                 progressed = True
@@ -651,7 +1108,8 @@ def build_candidate_review(
     main_counts = Counter(strata[code] for code in selected_main if code in strata)
     pools: dict[str, list[str]] = defaultdict(list)
     for code in sorted(registry_by_code):
-        if code not in selected_all and code in strata:
+        # governance-mutation: FUNNEL_U2_E1_EXCLUDED_FROM_RANDOM_CONTROL
+        if code not in selected_all and code not in red_flag_codes and code in strata:
             pools[strata[code]].append(code)
     universe_codes = sorted(registry_by_code)
     eligible_hash = _hash({"rule_version": QUALIFICATION_RULE_VERSION, "ts_codes": universe_codes})
@@ -671,7 +1129,7 @@ def build_candidate_review(
                 "ts_code": code, "stratum": stratum, "drawn_rank": len(drawn) + 1,
             })
     selected_all.update(control_codes)
-    excluded_red_flags = red_flag_codes - selected_all - positive_triggered
+    excluded_red_flags = set(red_flag_codes)
 
     rows: list[dict[str, Any]] = []
     category = {code: "MAIN_CHANNEL" for code in selected_main}
@@ -695,7 +1153,7 @@ def build_candidate_review(
         if code in excluded_red_flags:
             review_status = "EXCLUDED_RED_FLAG"
             priority = "RED_FLAG_ARCHIVE"
-            exclusion_reason = "E1_RED_FLAG_WITHOUT_POSITIVE_CHANNEL_ENTRY"
+            exclusion_reason = "E1_RED_FLAG_OVERRIDES_ALL_POSITIVE_CHANNELS"
             next_action = "E1_REVIEW_ONLY"
         else:
             review_status = row_category
@@ -725,6 +1183,11 @@ def build_candidate_review(
 
     trigger_excluded = sorted(positive_triggered - selected_main)
     excluded_by_code = {row["ts_code"]: dict(row) for row in stratum_excluded}
+    for code in red_flag_codes:
+        excluded_by_code[code] = {
+            "ts_code": code,
+            "reason": "E1_RED_FLAG_OVERRIDES_ALL_POSITIVE_CHANNELS",
+        }
     for row in registry["rows"]:
         if row.get("qualification", {}).get("u1_scan_eligible") is not True:
             excluded_by_code[row["ts_code"]] = {
@@ -857,18 +1320,18 @@ def validate_candidate_review(
         if row.get("source_channels") != expected_channels or row.get("entry_reasons") != expected_reasons:
             raise FunnelError("candidate U1 channel/reason projection is not exact")
         red_flagged = "E1_EVENT" in expected_channels
-        positive = any(channel != "E1_EVENT" for channel in expected_channels)
         if ("RED_FLAG" in row.get("flags", [])) is not red_flagged:
             raise FunnelError("candidate RED_FLAG flag differs from U1 evidence")
         if row.get("review_status") == "EXCLUDED_RED_FLAG":
             if not row.get("exclusion_reason") or row.get("next_action") == "U3_BATTERY_REVIEW":
                 raise FunnelError("red-flag exclusion semantics are inconsistent")
-            if not red_flagged or positive:
-                raise FunnelError("only an E1-only red flag may use EXCLUDED_RED_FLAG")
+            if not red_flagged:
+                raise FunnelError("only an E1 red flag may use EXCLUDED_RED_FLAG")
         elif row.get("exclusion_reason") is not None:
             raise FunnelError("active candidate cannot carry an exclusion reason")
-        elif red_flagged and not positive and row.get("review_status") != "RANDOM_CONTROL":
-            raise FunnelError("an E1-only red flag cannot become an active research candidate")
+        # governance-mutation: FUNNEL_U2_E1_EXCLUSION_VALIDATED
+        elif red_flagged:
+            raise FunnelError("an E1 red flag cannot become an active research candidate")
         if row["review_status"] == "RANDOM_CONTROL":
             control_rows.append(row)
             if row.get("control_batch_id") != payload["control_sampling_frame"]["control_batch_id"]:
@@ -970,6 +1433,27 @@ def _battery_rows(
     return {str(row.get("ts_code")): dict(row) for row in rows if isinstance(row, dict)}
 
 
+def _u3_fundamental_red_flag_active(battery_row: Mapping[str, Any]) -> bool:
+    """Return the U3 E1 red-flag fact without confusing coverage with approval."""
+    code = str(battery_row.get("ts_code") or "")
+    dims = battery_row.get("dims")
+    if not isinstance(dims, Mapping):
+        raise FunnelError(f"U3 battery row lacks six-dimensional evidence: {code}")
+    fundamental = dims.get("基本面")
+    if not isinstance(fundamental, Mapping) or not fundamental:
+        raise FunnelError(f"U3 battery fundamental dimension is missing: {code}")
+    status = fundamental.get("status")
+    if status in {"DATA_BLOCKED", "NOT_RUN"}:
+        return False
+    if status is not None:
+        raise FunnelError(f"U3 battery fundamental status is invalid: {code}={status}")
+    verdict = fundamental.get("红旗闸门")
+    # governance-mutation: FUNNEL_U3_RED_FLAG_VERDICT_REQUIRED
+    if verdict not in U3_RED_FLAG_VERDICTS:
+        raise FunnelError(f"U3 battery fundamental red-flag verdict is invalid: {code}")
+    return verdict == "RED_FLAG"
+
+
 def build_deep_research_queue(
     *, candidate_review: Mapping[str, Any], battery: Mapping[str, Any] | None,
     selected_tickers: Sequence[str], trade_date: str, generated_at: str | None = None,
@@ -1001,20 +1485,23 @@ def build_deep_research_queue(
         candidate = candidates[code]
         battery_row = battery_by_code[code]
         completeness = battery_row.get("completeness") or {}
-        blocked = completeness.get("verdict") != "COMPLETE" or "RED_FLAG" in candidate.get("flags", [])
+        # governance-mutation: FUNNEL_U4_U3_RED_FLAG_PROPAGATION
+        u3_red_flag = _u3_fundamental_red_flag_active(battery_row)
+        red_flagged = "RED_FLAG" in candidate.get("flags", []) or u3_red_flag
+        blocked_reasons = (
+            (["U3_BATTERY_INCOMPLETE"] if completeness.get("verdict") != "COMPLETE" else [])
+            + ([RED_FLAG_BLOCK_REASON] if red_flagged else [])
+        )
         ready_pool.append({
             "ts_code": code,
-            "ready": not blocked,
+            "ready": not blocked_reasons,
             "industry_key": candidate.get("industry_key"),
             "sector_os_status": (
                 "AVAILABLE" if candidate.get("industry_key") in sector_os else "TASK_REQUIRED"
             ),
             "candidate_status": candidate.get("review_status"),
             "battery_verdict": completeness.get("verdict"),
-            "blocked_reasons": (
-                (["U3_BATTERY_INCOMPLETE"] if completeness.get("verdict") != "COMPLETE" else [])
-                + (["E1_RED_FLAG_REQUIRES_SEPARATE_REVIEW"] if "RED_FLAG" in candidate.get("flags", []) else [])
-            ),
+            "blocked_reasons": blocked_reasons,
         })
     ready = {row["ts_code"] for row in ready_pool if row["ready"]}
     missing = [code for code in selected if code not in ready]
@@ -1167,6 +1654,7 @@ def run_pipeline(
     *, registry_path: Path, e1_path: Path, feature_db: Path,
     output_dir: Path, trade_date: str, rotation_path: Path | None = None,
     macro_industry_path: Path | None = None, battery_path: Path | None = None,
+    industry_taxonomy_path: Path | None = None,
     selected_tickers: Sequence[str] = (), generated_at: str | None = None,
     research_questions: Mapping[str, str] | None = None,
     sector_os_industries: Sequence[str] = (),
@@ -1178,11 +1666,25 @@ def run_pipeline(
     rotation = _load_json(rotation_path, optional=True) if rotation_path else None
     macro = _load_json(macro_industry_path, optional=True) if macro_industry_path else None
     battery = _load_json(battery_path, optional=True) if battery_path else None
+    taxonomy = (
+        _load_json(industry_taxonomy_path, optional=True)
+        if industry_taxonomy_path else None
+    )
     assert registry is not None and e1 is not None
     features = load_feature_snapshot(feature_db, _date8(trade_date))
+    has_semiconductor_scope = any(
+        row.get("industry_key") == semiconductor_evidence.SEMICONDUCTOR_INDUSTRY_KEY
+        and row.get("qualification", {}).get("u1_scan_eligible") is True
+        for row in registry["rows"]
+    )
+    semiconductor_inputs = (
+        semiconductor_evidence.build_snapshot(feature_db, registry, _date8(trade_date))
+        if has_semiconductor_scope else None
+    )
     scan = build_all_market_scan(
         registry=registry, e1_events=e1, features=features, rotation=rotation,
-        macro_industry=macro, trade_date=trade_date, generated_at=generated_at,
+        macro_industry=macro, semiconductor_inputs=semiconductor_inputs,
+        industry_taxonomy=taxonomy, trade_date=trade_date, generated_at=generated_at,
     )
     candidates = build_candidate_review(
         registry=registry, scan=scan, features=features, trade_date=trade_date,
@@ -1229,11 +1731,7 @@ def run_pipeline(
         }
         manifest["bundle_hash"] = _hash(manifest["artifacts"])
         _atomic_write_json(staging / "manifest.json", manifest)
-        directory_fd = os.open(staging, os.O_RDONLY)
-        try:
-            os.fsync(directory_fd)
-        finally:
-            os.close(directory_fd)
+        _fsync_directory_if_supported(staging)
         os.replace(staging, output_dir)
     finally:
         if staging.exists():
@@ -1374,6 +1872,7 @@ def validate_candidate_battery(
                 raise FunnelError(
                     f"blocked battery dimension lacks a reason: {row.get('ts_code')} {name}"
                 )
+        _u3_fundamental_red_flag_active(row)
         completeness = row.get("completeness") or {}
         if completeness.get("of") != 6 or "verdict" not in completeness:
             raise FunnelError(f"battery row completeness stamp is malformed: {row.get('ts_code')}")
@@ -1426,6 +1925,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--e1", default="public/data/v2/e1_event_layer.json")
     parser.add_argument("--feature-db", default="data_history/feature_store.sqlite3")
     parser.add_argument("--rotation", default="public/data/v2/rotation_panel.json")
+    parser.add_argument(
+        "--industry-taxonomy",
+        default="experiments/research_funnel/industry_taxonomy.v1.json",
+    )
     parser.add_argument("--macro-industry")
     parser.add_argument("--battery", default="public/data/v2/battery.json")
     parser.add_argument("--output-dir", required=False)
@@ -1455,6 +1958,9 @@ def main(argv: Sequence[str] | None = None) -> int:
             feature_db=resolve(args.feature_db), output_dir=resolve(args.output_dir),
             trade_date=args.trade_date,
             rotation_path=resolve(args.rotation) if args.rotation else None,
+            industry_taxonomy_path=(
+                resolve(args.industry_taxonomy) if args.industry_taxonomy else None
+            ),
             macro_industry_path=resolve(args.macro_industry) if args.macro_industry else None,
             battery_path=resolve(args.battery) if args.battery else None,
             selected_tickers=selected_tickers,

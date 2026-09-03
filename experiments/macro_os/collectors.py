@@ -5,7 +5,7 @@ Supported adapters:
   * BLS Public Data API (official E1): labor and inflation series
   * BEA Public API (official E1): GDP and core-PCE tables
   * Cboe official VIX history download (official E1)
-  * FRED/ALFRED (E2 mirror): Treasury, real-yield, and credit series
+  * FRED current-vintage export (E2 mirror): Treasury, real-yield, and credit series
   * U.S. Census Economic Indicators (official E1): retail sales
 
 Collection writes raw bytes and observations into the append-only SQLite store.
@@ -20,6 +20,7 @@ import io
 import json
 import os
 import re
+import socket
 import sys
 import urllib.error
 import urllib.parse
@@ -43,7 +44,7 @@ from experiments.macro_os.storage import (
 )
 
 
-COLLECTOR_VERSION = "macro-m0b/1.0"
+COLLECTOR_VERSION = "macro-m0b/1.1"
 DEFAULT_HEALTH = Path("public/data/v2/macro/source_health.json")
 DISCLAIMER = "不是买卖指令;研究信号,human executes."
 FAILURE_STATUSES = {"DATA_BLOCKED", "SOURCE_DOWN", "DATA_INVALID"}
@@ -282,7 +283,8 @@ class UrllibTransport:
         except urllib.error.URLError as exc:
             reason = type(exc.reason).__name__ if getattr(exc, "reason", None) else "URLError"
             raise CollectionError("SOURCE_DOWN", reason, "source connection failed") from exc
-        except TimeoutError as exc:
+        except (TimeoutError, socket.timeout) as exc:
+            # governance-mutation: MACRO_M0B_TIMEOUT_TRANSLATION
             raise CollectionError("SOURCE_DOWN", "TIMEOUT", "source request timed out") from exc
 
 
@@ -408,44 +410,66 @@ def _cboe_parser(raw: bytes, fetched_at: str, spec: RequestSpec) -> list[Observa
 
 
 def _fred_builder(metric: MetricSpec) -> Builder:
-    def build(_now: datetime, env: dict[str, str]) -> HttpRequest:
+    def build(now: datetime, env: dict[str, str]) -> HttpRequest:
         key = env.get("FRED_API_KEY", "").strip()
-        if not key:
-            raise CollectionError(
-                "DATA_BLOCKED", "FRED_API_KEY_MISSING", "FRED_API_KEY is not configured"
+        # governance-mutation: MACRO_M0B_FRED_KEYLESS_ROUTE
+        if key:
+            query = urllib.parse.urlencode(
+                {
+                    "series_id": metric.native_series_id,
+                    "api_key": key,
+                    "file_type": "json",
+                    "sort_order": "desc",
+                    "limit": "5000",
+                }
             )
+            public_query = urllib.parse.urlencode(
+                {
+                    "series_id": metric.native_series_id,
+                    "file_type": "json",
+                    "sort_order": "desc",
+                    "limit": "5000",
+                }
+            )
+            return HttpRequest(
+                method="GET",
+                url=f"https://api.stlouisfed.org/fred/series/observations?{query}",
+                public_locator=(
+                    "https://api.stlouisfed.org/fred/series/observations?" + public_query
+                ),
+                headers={"Accept": "application/json", "User-Agent": "Alpha-Research-MacroOS/1"},
+                body=None,
+                allowed_hosts=("api.stlouisfed.org",),
+            )
+
+        # The provider's graph CSV is a credential-free current-vintage export.
+        # It remains the same E2 FRED source and never masquerades as an official
+        # Treasury/BLS/BEA release.  Limit the request to the registry's 10-year
+        # market-series horizon instead of downloading an unbounded history.
+        start_year = max(1900, now.astimezone(timezone.utc).year - 10)
         query = urllib.parse.urlencode(
             {
-                "series_id": metric.native_series_id,
-                "api_key": key,
-                "file_type": "json",
-                "sort_order": "desc",
-                "limit": "5000",
+                "id": metric.native_series_id,
+                "cosd": f"{start_year:04d}-01-01",
+                "coed": now.astimezone(timezone.utc).date().isoformat(),
             }
         )
-        public_query = urllib.parse.urlencode(
-            {
-                "series_id": metric.native_series_id,
-                "file_type": "json",
-                "sort_order": "desc",
-                "limit": "5000",
-            }
-        )
+        url = "https://fred.stlouisfed.org/graph/fredgraph.csv?" + query
         return HttpRequest(
             method="GET",
-            url=f"https://api.stlouisfed.org/fred/series/observations?{query}",
-            public_locator=(
-                "https://api.stlouisfed.org/fred/series/observations?" + public_query
-            ),
-            headers={"Accept": "application/json", "User-Agent": "Alpha-Research-MacroOS/1"},
+            url=url,
+            public_locator=url,
+            headers={"Accept": "text/csv"},
             body=None,
-            allowed_hosts=("api.stlouisfed.org",),
+            allowed_hosts=("fred.stlouisfed.org",),
         )
 
     return build
 
 
-def _fred_parser(raw: bytes, fetched_at: str, spec: RequestSpec) -> list[Observation]:
+def _fred_json_parser(
+    raw: bytes, fetched_at: str, spec: RequestSpec
+) -> list[Observation]:
     payload = _json_payload(raw)
     if "error_code" in payload:
         raise CollectionError("DATA_INVALID", "FRED_REJECTED", "FRED rejected the request")
@@ -477,6 +501,59 @@ def _fred_parser(raw: bytes, fetched_at: str, spec: RequestSpec) -> list[Observa
     if not observations:
         raise CollectionError("DATA_INVALID", "FRED_EMPTY", "FRED returned no usable rows")
     return observations
+
+
+def _fred_csv_parser(
+    raw: bytes, fetched_at: str, spec: RequestSpec
+) -> list[Observation]:
+    try:
+        text = raw.decode("utf-8-sig")
+    except UnicodeDecodeError as exc:
+        raise CollectionError(
+            "DATA_INVALID", "FRED_CSV_ENCODING", "FRED CSV is not UTF-8"
+        ) from exc
+    reader = csv.DictReader(io.StringIO(text))
+    metric = spec.metrics[0]
+    expected_header = ["observation_date", metric.native_series_id]
+    # governance-mutation: MACRO_M0B_FRED_CSV_SERIES_BINDING
+    if reader.fieldnames != expected_header:
+        raise CollectionError(
+            "DATA_INVALID",
+            "FRED_CSV_HEADER",
+            "FRED CSV header differs from the requested series",
+        )
+    observations: list[Observation] = []
+    for row in reader:
+        raw_value = str(row.get(metric.native_series_id, "")).strip()
+        if not raw_value or raw_value == ".":
+            continue
+        value_text, value = _number_text(raw_value)
+        observations.append(
+            Observation(
+                series_id=metric.series_id,
+                metric_key=metric.metric_key,
+                observation_at=_period_iso(str(row.get("observation_date", ""))),
+                vintage_at=fetched_at,
+                value_text=value_text,
+                value=value,
+                unit=metric.unit,
+                attributes={
+                    "native_series_id": metric.native_series_id,
+                    "transport_mode": "FRED_GRAPH_CSV_CURRENT_VINTAGE",
+                },
+            )
+        )
+    if not observations:
+        raise CollectionError(
+            "DATA_INVALID", "FRED_CSV_EMPTY", "FRED CSV returned no usable rows"
+        )
+    return observations
+
+
+def _fred_parser(raw: bytes, fetched_at: str, spec: RequestSpec) -> list[Observation]:
+    if raw.lstrip().startswith(b"{"):
+        return _fred_json_parser(raw, fetched_at, spec)
+    return _fred_csv_parser(raw, fetched_at, spec)
 
 
 def _bea_builder(table_name: str, frequency: str) -> Builder:

@@ -5,6 +5,7 @@ on:
       - "experiments/**/*.py"
       - "experiments/execution_tracker/**/*.json"
       - "experiments/macro_os/**/*.json"
+      - "experiments/research_funnel/**/*.json"
       # R-015 账本是 .jsonl —— 不加这条,"只改账本数据"的 PR 根本不触发本工作流,
       # 而那正是第③层唯一要把关的 diff 形态(实测:.jsonl 不匹配 *.json)
       - "experiments/execution_tracker/event_ledger.jsonl*"
@@ -13,7 +14,11 @@ on:
       - "scripts/llm/**/*.json"
       - "tests/**"
       - "docs/llm/**"
+      - "docs/research/**"
+      - "docs/contracts/**"
       - "public/data/v2/**"
+      - "docs/research/RESEARCH_QUALITY_SCORECARD_V0.md"
+      - "docs/research/contracts/**"
       - "docs/research/macro/**"
       - "docs/contracts/macro/**"
       - ".agents/skills/**"
@@ -22,6 +27,7 @@ on:
       - "scripts/llm/AGENTS.md"
       - "web/AGENTS.md"
       - "config/team-ai-workspace.v1.json"
+      - "config/aios-skills.v1.json"
       - "docs/team/TEAM_AI_WORKSPACE_V1.md"
       - ".gitignore"
       - "api/**"
@@ -33,7 +39,7 @@ on:
 jobs:
   offline-tests:
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 15
     env:
       AR_OFFLINE: "1"
     steps:
@@ -79,6 +85,10 @@ jobs:
       # 覆盖:registry 自检 · 两条注册路径确实打戳 · 账本挂掉时登记被拒且信号不落盘
       - name: Registry schema v2 + ledger wiring regression
         run: python3 tests/test_registry_schema_v2.py
+      # A transient TLS EOF previously stopped the entire 2026-08-21 nightly run.
+      # Retry only transport failures; HTTP/API/schema failures remain fail-closed.
+      - name: Official sample transport retry regression (offline)
+        run: python3 tests/test_fund_source_transport.py
       # R-043:已发布 manifest 合法迁移。覆盖审批绑定、同锁、WAL 崩溃恢复、
       # TOCTOU、双 manifest 留档与旧 run_id 拒绝。
       - name: Publication manifest migration regression (offline)
@@ -101,6 +111,8 @@ jobs:
       # runtime baseline metadata, and redacted secret/local-state hygiene.
       - name: Team AI Workspace contract and doctor regression (offline)
         run: python3 tests/test_team_ai_workspace.py
+      - name: AIOS shared skill registry regression (offline)
+        run: python3 tests/test_skill_registry.py
       - name: Transactional forward-return backfill selftest
         run: python3 experiments/execution_tracker/run_post_close_report.py --selftest
       # ── 夜链 v3:进程级入口 + 静态未定义名 + 产物校验 + 崩溃回滚 ──
@@ -117,6 +129,17 @@ jobs:
         run: python3 experiments/research_funnel/security_registry.py --selftest
       - name: Feature store contract selftest
         run: python3 experiments/research_funnel/feature_store.py --selftest
+      # Semiconductor positive inputs stay source-atomic and point-in-time;
+      # every scoped security carries evidence or explicit DATA_BLOCKED, while
+      # E1 red flags retain unconditional exclusion authority.
+      - name: Semiconductor positive-input evidence regression (offline)
+        run: |
+          python3 tests/test_semiconductor_positive_inputs.py
+          python3 tests/test_semiconductor_source_repair.py
+          python3 scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/semiconductor_positive_inputs_v1.task.json
+          python3 scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/semiconductor_source_publication_pending.task.json
+          python3 scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/semiconductor_daily_source_completeness.task.json
+          python3 scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/semiconductor_source_repair_v01.task.json
       - name: Full-market E1 event layer contract selftest
         run: python3 experiments/research_funnel/e1_event_layer.py --selftest
       # R-033/R-034/R-035:六通道独立并集、U0 状态投影、同池随机控制、
@@ -135,6 +158,10 @@ jobs:
       # ── 三段子 DAG:候选清单 → 逐票电池/DATA_BLOCKED → 集合相等后 U3/U4 ──
       - name: Research funnel candidate-battery DAG regression (offline)
         run: python3 tests/test_funnel_dag_offline.py
+      # 全市场行业 Cohort OS:所有 U0 行业保留、跨源别名显式、行业排序无 U4
+      # 权限、代表由当期 U1 动态重算、相对锚与不可变历史均 fail-closed。
+      - name: Industry cohort foundation regression (offline)
+        run: python3 tests/test_industry_cohort_offline.py
       # launchd 首轮验收不能靠旧日志里残留的 OK 行。验收器绑定安装入口、
       # launchctl 计数/退出码、精确 run 日志段、持久 bundle 与报警旗,全程只读。
       - name: Scheduled nightly production acceptance regression (offline)
@@ -143,13 +170,82 @@ jobs:
       # 且 U5 在 factpack/wrong-if/因果簇完成前必须保持 DATA_BLOCKED。
       - name: Offline research closure experiment
         run: python3 tests/test_research_closure_experiment.py
+      # Every U4-ready candidate receives one explicit decision. Machine-gate
+      # rejects remain visible, zero selections become NO_TRADE, and selected
+      # rows only project the existing offline review receipt.
+      - name: Offline U4 complete-decision ledger
+        run: python3 tests/test_u4_decision_ledger.py
       # U4 之后的完整离线链:研究核心、红队、双票、唯一 paper 成交引擎、
       # 产业估值、人工 SMC 注册、多账本事实评分、唯一 paper 成交引擎、
       # 结算复盘与带证据的人类确认/争议;不触碰生产账本。
       - name: Offline U4-to-paper research cycle
         run: |
+          python3 tests/test_paper_execution_realism.py
+          python3 tests/test_paper_execution_audit.py
+          python3 scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/paper_execution_audit_v1.task.json
           python3 tests/test_research_method.py
           python3 tests/test_research_cycle.py
+      # Current U4 SELECT + sealed case -> explicit human-approved, recoverable
+      # Model Paper Fund registration. This remains offline and is not a nightly
+      # order-creation step.
+      - name: Offline U4-to-paper registration bridge
+        run: |
+          python3 tests/test_paper_registration_bridge.py
+          python3 scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/paper_registration_bridge_v1.task.json
+      # Model Paper Fund go-live runbook: tomorrow's paper-only operating guide
+      # must keep the Junyan-only authority boundary, registration bridge, and
+      # T+ observation schedule visible.
+      - name: Model Paper Fund go-live runbook contract (offline)
+        run: python3 tests/test_model_paper_fund_go_live_runbook.py
+      - name: Model Paper Fund prelaunch readiness artifacts (offline)
+        run: python3 tests/test_model_paper_fund_prelaunch_readiness.py
+      # 终局 paper cycle 五轴归因:thesis/valuation/timing/execution/market beta
+      # 独立判定;beta 从冻结样本重算,相对收益不得升格为 alpha。
+      - name: Offline five-axis paper-cycle attribution
+        run: python3 tests/test_five_axis_attribution.py
+      # U4 decision ledger contract only: closed decision enum, rejected-sample
+      # retention, append-only revision shape, and no trade/production authority.
+      - name: U4 decision ledger specification (offline)
+        run: |
+          python3 tests/test_u4_decision_ledger_spec.py
+          python3 scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/u4_decision_ledger_spec_v1.task.json
+      # U4 pre-decision packet: same-day U1-U3 evidence is prepared for
+      # Junyan review, while machine selection/trade/paper-order authority stays
+      # closed and source/diagnostic blockers remain visible.
+      - name: U4 pre-decision packet contract (offline)
+        run: python3 tests/test_u4_pre_decision_packet.py
+      - name: U4 pre-decision runtime (offline)
+        run: python3 tests/test_u4_pre_decision_runtime.py
+      # Frozen assembly contract over the existing funnel, U4, research method,
+      # paper execution, and five-axis modules. This step adds no runtime wiring.
+      - name: Research closed loop V1 assembly contract (offline)
+        run: |
+          python3 tests/test_research_closed_loop_v1.py
+          python3 scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/research_closed_loop_v1.task.json
+      # Research quality scorecard: scores research craft quality, not P&L,
+      # alpha, trade readiness, U4 selection, or production authority.
+      - name: Research quality scorecard contract (offline)
+        run: python3 tests/test_research_quality_scorecard.py
+      # Research go/no-go + fundamentals: preserve human-only authority, make
+      # stale/legacy paper-fund display states explicit, and keep fundamental
+      # screens as explainable research intake rather than trade signals.
+      - name: Research go/no-go and fundamental screening contract (offline)
+        run: python3 tests/test_research_go_no_go_and_fundamental_screening.py
+      # Research strategy quality upgrade: keep fundamentals, SMC timing,
+      # backtest hygiene, sample-denominator accounting, and five-axis learning
+      # separate before any method or profitability claim.
+      - name: Research strategy quality upgrade contract (offline)
+        run: python3 tests/test_research_strategy_quality_upgrade.py
+      # Rerun operator checklist: same-day semiconductor reruns must stop on
+      # source, diagnostic, U3, red-flag, sample-denominator, or authority gaps
+      # before any U4 handoff.
+      - name: Semiconductor same-day rerun checklist (offline)
+        run: |
+          python3 tests/test_semiconductor_rerun_checklist.py
+          python3 tests/test_semiconductor_preflight_packet.py
+      # WO-A1: canonical LHB appearances render contract (offline, node subprocess)
+      - name: Research API LHB render regression (offline)
+        run: python3 tests/test_research_lhb_render.py
       # ── Macro OS M0-A:源身份/事件分级/双时间点预判/共识冲突语义 ──
       - name: Macro OS M0-A contract selftest
         run: python3 experiments/macro_os/contracts.py --selftest

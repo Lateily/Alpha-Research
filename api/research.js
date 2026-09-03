@@ -725,14 +725,15 @@ function buildExtrasBlock(extras) {
 
   // ── 龙虎榜 LHB: recent appearance reasons + top buyer/seller seats ──
   const lhb = ts.lhb;
-  if (lhb && Array.isArray(lhb.records) && lhb.records.length > 0) {
+  // governance-mutation: LHB_RENDER_READS_APPEARANCES
+  if (lhb && Array.isArray(lhb.appearances) && lhb.appearances.length > 0) {
     lines.push('');
     lines.push('TUSHARE — 龙虎榜 LHB APPEARANCES (institutional/北向 net activity):');
-    for (const e of lhb.records.slice(0, 5)) {
+    for (const e of lhb.appearances.slice(0, 5)) {
       const date = e.trade_date || '?';
       const reason = e.reason || '?';
-      const netbuy = e.netbuy != null ? (e.netbuy >= 0 ? '+' : '') + (e.netbuy / 1e8).toFixed(2) + '亿' : '?';
-      lines.push(`  ${date} ${reason} | net ${netbuy}`);
+      const net = e.net_amount != null ? (e.net_amount >= 0 ? '+' : '') + (e.net_amount / 1e8).toFixed(2) + '亿' : '?';
+      lines.push(`  ${date} ${reason} | net ${net}`);
     }
   } else if (lhb && lhb._status === 'endpoint_unavailable') {
     // Skip silently, no permission

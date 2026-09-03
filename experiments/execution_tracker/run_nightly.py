@@ -177,6 +177,10 @@ RESEARCH_DATA_STEPS = {"security_registry", "feature_store", "e1_event_layer"}
 MACRO_DATA_STEPS = {"macro_m1c"}
 FUNNEL_DATA_STEPS = {"funnel_finalize"}
 FUNNEL_STAGE_STEPS = {"funnel_candidates", "candidate_battery"}
+# Per-ticket evidence may be incomplete without the generator itself failing.
+# Downstream gates consume the explicit blocked rows; one blocked ticket must
+# not veto unrelated NAV, Macro, Funnel, or publication work.
+PER_TICKER_EVIDENCE_STEPS = {"full_battery", "setup_promoter"}
 ISOLATED_CALIBRATION_STEPS = frozenset({
     "macro_m1c", "funnel_candidates", "candidate_battery", "funnel_finalize",
 })
@@ -211,9 +215,23 @@ def _research_quality(step, data):
     # data_quality 这条要防的混淆。承重的只有这个集合:漏斗的 status 字段与研究步
     # 同形,下面的通用尾部本来就能正确转述,不需要再写一个分支。
     # governance-mutation: FUNNEL_NIGHTLY_QUALITY_ROLLUP
+    # governance-mutation: NIGHTLY_PER_TICKER_EVIDENCE_QUALITY
     if (step not in RESEARCH_DATA_STEPS | MACRO_DATA_STEPS | FUNNEL_DATA_STEPS
+            | PER_TICKER_EVIDENCE_STEPS
             or not isinstance(data, dict)):
         return None
+    if step == "full_battery":
+        rows = data.get("results")
+        if not isinstance(rows, list):
+            return "UNKNOWN"
+        return (
+            "PARTIAL"
+            if any((row.get("completeness") or {}).get("verdict") != "COMPLETE"
+                   for row in rows if isinstance(row, dict))
+            else "COMPLETE"
+        )
+    if step == "setup_promoter":
+        return "PARTIAL" if data.get("data_blocked") else "COMPLETE"
     if step in MACRO_DATA_STEPS:
         return _normalize_data_quality(data.get("data_quality"))
     status = str(data.get("status") or "UNKNOWN").upper()
@@ -572,9 +590,27 @@ def _artifact_status_scan(step, data, artifact_path=None):
     """个别产物的内部状态字段(仅对语义明确的两个,避免把逐票 DATA_BLOCKED
     的诚实条目误判成整步失败 —— 误报的下场是闸门被人关掉)。"""
     if step == "full_battery":
-        bad = [r.get("ts_code") for r in (data.get("results") or [])
-               if (r.get("completeness") or {}).get("verdict") not in (None, "COMPLETE")]
-        return ("PARTIAL", f"电池非完整: {bad[:3]}") if bad else ("OK", "")
+        rows = data.get("results")
+        if not isinstance(rows, list) or not rows:
+            return "FAILED", "电池 results 为空或结构非法"
+        expected_dims = {"行情", "资金", "基本面", "技术面", "消息面", "估值"}
+        for row in rows:
+            if not isinstance(row, dict) or not row.get("ts_code"):
+                return "FAILED", "电池存在无 ts_code 的非法行"
+            if set((row.get("dims") or {})) != expected_dims:
+                return "FAILED", f"{row.get('ts_code')} 六维集合不完整"
+            verdict = (row.get("completeness") or {}).get("verdict")
+            if verdict not in ("COMPLETE", "PARTIAL"):
+                return "FAILED", f"{row.get('ts_code')} completeness verdict 非法"
+        # governance-mutation: NIGHTLY_FULL_BATTERY_PARTIAL_PUBLISHABLE
+        return "OK", ""
+    if step == "setup_promoter":
+        if not isinstance(data.get("queue"), list):
+            return "FAILED", "promotion queue 结构非法"
+        if not isinstance(data.get("data_blocked", []), list):
+            return "FAILED", "promotion data_blocked 结构非法"
+        # governance-mutation: NIGHTLY_PROMOTER_PARTIAL_PUBLISHABLE
+        return "OK", ""
     if step in RESEARCH_DATA_STEPS:
         try:
             _validate_research_contract(step, data)
@@ -638,7 +674,7 @@ def _artifact_status_scan(step, data, artifact_path=None):
                 blocked.append(key)
         if blocked:
             return "PARTIAL", f"轮动检验部分 DATA_BLOCKED: {','.join(blocked[:3])}"
-    if step in ("rotation_stats", "setup_promoter") and data.get("data_blocked"):
+    if step == "rotation_stats" and data.get("data_blocked"):
         return "PARTIAL", f"内部 DATA_BLOCKED n={len(data['data_blocked'])}"
     return "OK", ""
 

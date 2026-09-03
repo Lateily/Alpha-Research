@@ -137,6 +137,15 @@ def fred_fixture(value: str = "4.25") -> bytes:
     ).encode("utf-8")
 
 
+def fred_csv_fixture(native_series_id: str = "DGS2") -> bytes:
+    return (
+        f"observation_date,{native_series_id}\n"
+        "2026-08-04,4.20\n"
+        "2026-08-05,.\n"
+        "2026-08-06,4.25\n"
+    ).encode("utf-8")
+
+
 def bea_fixture(line: str, period: str, value: str) -> bytes:
     return json.dumps(
         {
@@ -502,7 +511,7 @@ class MacroM0BTests(unittest.TestCase):
         with self.assertRaisesRegex(collectors.CollectionError, "omitted requested series"):
             spec.parser(json.dumps(payload).encode("utf-8"), NOW_ISO, spec)
 
-    def test_cboe_fred_and_bea_parsers(self) -> None:
+    def test_cboe_fred_json_csv_and_bea_parsers(self) -> None:
         plan = {row.request_id: row for row in collectors.collection_plan()}
         cboe = plan["cboe_vix_history"].parser(
             b"DATE,OPEN,HIGH,LOW,CLOSE\n08/06/2026,17,19,16,18.50\n",
@@ -512,6 +521,14 @@ class MacroM0BTests(unittest.TestCase):
         self.assertEqual(18.5, cboe[0].value)
         fred = plan["fred_dgs2"].parser(fred_fixture(), NOW_ISO, plan["fred_dgs2"])
         self.assertEqual("y2", fred[0].metric_key)
+        fred_csv = plan["fred_dgs2"].parser(
+            fred_csv_fixture(), NOW_ISO, plan["fred_dgs2"]
+        )
+        self.assertEqual([4.2, 4.25], [row.value for row in fred_csv])
+        self.assertEqual(
+            "FRED_GRAPH_CSV_CURRENT_VINTAGE",
+            fred_csv[0].attributes["transport_mode"],
+        )
         gdp = plan["bea_gdp"].parser(
             bea_fixture("1", "2026Q2", "3.0"), NOW_ISO, plan["bea_gdp"]
         )
@@ -610,9 +627,23 @@ class MacroM0BTests(unittest.TestCase):
         self.assertEqual(["BEA_API_KEY"], meta["redacted_secret_names"])
         self.assertNotIn(key.encode("utf-8"), self.db.read_bytes())
 
-    def test_missing_credentials_is_explicit_data_blocked(self) -> None:
+    def test_fred_without_credentials_uses_e2_official_csv_export(self) -> None:
         spec = next(row for row in collectors.collection_plan() if row.request_id == "fred_dgs2")
-        transport = MappingTransport({})
+        request = spec.build_request(NOW, {})
+        self.assertEqual("fred.stlouisfed.org", request.allowed_hosts[0])
+        self.assertEqual(request.url, request.public_locator)
+        self.assertNotIn("api_key", request.url.casefold())
+        self.assertNotIn("User-Agent", request.headers)
+        transport = MappingTransport(
+            {
+                request.public_locator: collectors.HttpResponse(
+                    200,
+                    request.public_locator,
+                    {"content-type": "application/csv"},
+                    fred_csv_fixture(),
+                )
+            }
+        )
         result = collectors.collect(
             store=self.store,
             transport=transport,
@@ -621,10 +652,34 @@ class MacroM0BTests(unittest.TestCase):
             now=NOW,
             env={},
         )
-        self.assertEqual("DATA_BLOCKED", result[0]["status"])
-        self.assertEqual("FRED_API_KEY_MISSING", result[0]["error_code"])
-        self.assertEqual(0, transport.calls)
-        self.assertEqual(0, self.store.counts()["raw_snapshots"])
+        self.assertEqual("OK", result[0]["status"])
+        self.assertEqual(1, transport.calls)
+        self.assertEqual(1, self.store.counts()["raw_snapshots"])
+        with self.store.connect() as conn:
+            snapshot = conn.execute(
+                "SELECT collector_version FROM raw_snapshots"
+            ).fetchone()
+        self.assertEqual("macro-m0b/1.1", snapshot["collector_version"])
+        source, _registry_hash = source_row("fred_alfred")
+        self.assertFalse(source["official"])
+        self.assertEqual("E2", source["evidence_level"])
+        self.assertEqual(["MARKET_SERIES"], source["roles"])
+        self.assertEqual("LIMITED", source["vintage_support"])
+
+    def test_fred_key_uses_api_without_exposing_it_in_public_locator(self) -> None:
+        spec = next(row for row in collectors.collection_plan() if row.request_id == "fred_dgs2")
+        secret = "fred-secret-fixture"
+        request = spec.build_request(NOW, {"FRED_API_KEY": secret})
+        self.assertEqual(("api.stlouisfed.org",), request.allowed_hosts)
+        self.assertIn(secret, request.url)
+        self.assertNotIn(secret, request.public_locator)
+
+    def test_fred_csv_header_is_bound_to_requested_series(self) -> None:
+        spec = next(row for row in collectors.collection_plan() if row.request_id == "fred_dgs2")
+        with self.assertRaisesRegex(
+            collectors.CollectionError, "header differs from the requested series"
+        ):
+            spec.parser(fred_csv_fixture("DGS10"), NOW_ISO, spec)
 
     def test_offline_transport_refuses_network(self) -> None:
         spec = next(row for row in collectors.collection_plan() if row.request_id == "cboe_vix_history")
@@ -639,6 +694,27 @@ class MacroM0BTests(unittest.TestCase):
                 os.environ.pop("AR_OFFLINE", None)
             else:
                 os.environ["AR_OFFLINE"] = original
+
+    def test_socket_timeout_is_reported_as_source_down(self) -> None:
+        request = next(
+            row for row in collectors.collection_plan() if row.request_id == "fred_dgs2"
+        ).build_request(NOW, {})
+        original = collectors.urllib.request.urlopen
+        original_offline = os.environ.pop("AR_OFFLINE", None)
+
+        def raise_timeout(*_args, **_kwargs):
+            raise collectors.socket.timeout("fixture timeout")
+
+        collectors.urllib.request.urlopen = raise_timeout
+        try:
+            with self.assertRaises(collectors.CollectionError) as caught:
+                collectors.UrllibTransport().fetch(request)
+        finally:
+            collectors.urllib.request.urlopen = original
+            if original_offline is not None:
+                os.environ["AR_OFFLINE"] = original_offline
+        self.assertEqual("SOURCE_DOWN", caught.exception.status)
+        self.assertEqual("TIMEOUT", caught.exception.code)
 
     def test_documented_cli_runs_directly_from_repo_root(self) -> None:
         result = subprocess.run(

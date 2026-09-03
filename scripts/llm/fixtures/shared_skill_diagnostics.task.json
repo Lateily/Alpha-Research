@@ -1,0 +1,73 @@
+{
+  "schema": "ai-task.v1",
+  "task_id": "AIOS-SKILL-DIAGNOSTICS-001",
+  "source_issue": null,
+  "architecture_block": ["aios-agent-harness", "aios-skill-context"],
+  "objective": "Expose minimal trusted-side structured diagnostics for repository Skill preflight failures while preserving the generic public error, fail-closed execution ordering, and zero provider calls on every blocked path.",
+  "non_goals": [
+    "Do not expose exception text, Skill content, user prompt text, paths, hashes, or registry internals in public results or diagnostic events",
+    "Do not add global logging, persistence, telemetry transport, or production deployment",
+    "Do not change provider adapters, provider authority, Router, Scheduler, Context Builder, or task/context schemas",
+    "Do not change repository Skill content, registry entries, role policy, or network policy"
+  ],
+  "human_owner": "Jason",
+  "reviewer": "Junyan",
+  "executor_candidates": ["Codex", "Claude"],
+  "dependencies": [
+    "PR #296 merged shared Skill registry foundation",
+    "PR #300 merged provider-neutral shared Skill runtime binding"
+  ],
+  "authority_docs": [
+    "AGENTS.md",
+    "scripts/llm/AGENTS.md",
+    "docs/llm/AIOS_SHARED_SKILL_RUNTIME.md"
+  ],
+  "file_scope": [
+    "docs/llm/AIOS_SHARED_SKILL_RUNTIME.md",
+    "scripts/governance_mutation_gate.py",
+    "scripts/llm/adapters/base.py",
+    "scripts/llm/adapters/__init__.py",
+    "scripts/llm/ai_os/skill_registry.py",
+    "scripts/llm/fixtures/shared_skill_diagnostics.task.json",
+    "tests/test_agent_adapter_offline.py",
+    "tests/test_skill_registry.py"
+  ],
+  "forbidden_scope": [
+    "scripts/llm/ai_os/context_builder.py",
+    "scripts/llm/ai_os/task_compiler.py",
+    "scripts/llm/schemas",
+    "scripts/llm/adapters/deepseek.py",
+    "scripts/llm/adapters/kimi.py",
+    "config/aios-skills.v1.json",
+    ".agents/skills",
+    "web",
+    "experiments",
+    "data_history",
+    "public/data"
+  ],
+  "input_contracts": [
+    "scripts/llm/adapters/base.py run_adapter",
+    "scripts/llm/adapters/base.py AgentResult",
+    "scripts/llm/ai_os/skill_registry.py SkillRegistryError"
+  ],
+  "output_artifacts": [
+    "typed repository Skill blocked-gate taxonomy",
+    "minimal trusted diagnostic callback event",
+    "unchanged public Skill failure envelope",
+    "offline behavior and mutation regressions",
+    "reviewable pull request"
+  ],
+  "acceptance_tests": [
+    "python3 tests/test_agent_adapter_offline.py",
+    "python3 tests/test_skill_registry.py",
+    "python3 tests/test_ai_os_k1_offline.py",
+    "python3 tests/test_governance_mutation_gate.py",
+    "python3 scripts/governance_mutation_gate.py",
+    "python3 scripts/team_ai_workspace.py doctor",
+    "git diff --check"
+  ],
+  "risk_level": "MEDIUM",
+  "network_policy": "OFFLINE",
+  "budget": {"max_cny": "0", "max_minutes": 180},
+  "approval_gates": ["PR_REVIEW", "JUNYAN_MERGE"]
+}
