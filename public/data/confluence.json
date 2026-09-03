@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-03T05:43:45.634251+00:00",
+  "generated_at": "2026-09-03T13:01:33.599249+00:00",
   "model_state": "NORMAL_OBSERVATION_MODE",
   "tickers_scored": 9,
   "summary": {
@@ -66,7 +66,7 @@
         "BB_LOWER_BREAK",
         "KDJ_OVERSOLD"
       ],
-      "computed_at": "2026-09-03T05:43:45.633704+00:00"
+      "computed_at": "2026-09-03T13:01:33.598518+00:00"
     },
     {
       "ticker": "175.HK",
@@ -109,7 +109,7 @@
       "signal_types": [
         "KDJ_OVERSOLD"
       ],
-      "computed_at": "2026-09-03T05:43:45.633798+00:00"
+      "computed_at": "2026-09-03T13:01:33.598654+00:00"
     },
     {
       "ticker": "300054.SZ",
@@ -132,7 +132,7 @@
       "rationale_e": "RSI 41 | Price vs MA20 -8.4% | VP 47",
       "rationale_z": "RSI 41 | 距MA20 -8.4% | VP 47",
       "signal_types": [],
-      "computed_at": "2026-09-03T05:43:45.633863+00:00"
+      "computed_at": "2026-09-03T13:01:33.598740+00:00"
     },
     {
       "ticker": "603233.SH",
@@ -155,7 +155,7 @@
       "rationale_e": "RSI 50 | Price vs MA20 +0.2% | VP 50",
       "rationale_z": "RSI 50 | 距MA20 +0.2% | VP 50",
       "signal_types": [],
-      "computed_at": "2026-09-03T05:43:45.634012+00:00"
+      "computed_at": "2026-09-03T13:01:33.598933+00:00"
     },
     {
       "ticker": "6160.HK",
@@ -232,7 +232,7 @@
         "MA60_BOUNCE",
         "MACD_GOLDEN_CROSS"
       ],
-      "computed_at": "2026-09-03T05:43:45.634089+00:00"
+      "computed_at": "2026-09-03T13:01:33.599034+00:00"
     },
     {
       "ticker": "688120.SH",
@@ -255,7 +255,7 @@
       "rationale_e": "RSI 43 | Price vs MA20 -5.7% | VP 45",
       "rationale_z": "RSI 43 | 距MA20 -5.7% | VP 45",
       "signal_types": [],
-      "computed_at": "2026-09-03T05:43:45.634146+00:00"
+      "computed_at": "2026-09-03T13:01:33.599109+00:00"
     },
     {
       "ticker": "700.HK",
@@ -278,7 +278,7 @@
       "rationale_e": "RSI 41 | Price vs MA20 -3.5%",
       "rationale_z": "RSI 41 | 距MA20 -3.5%",
       "signal_types": [],
-      "computed_at": "2026-09-03T05:43:45.634199+00:00"
+      "computed_at": "2026-09-03T13:01:33.599177+00:00"
     },
     {
       "ticker": "9999.HK",
@@ -301,7 +301,7 @@
       "rationale_e": "RSI 56 | Price vs MA20 +2.8%",
       "rationale_z": "RSI 56 | 距MA20 +2.8%",
       "signal_types": [],
-      "computed_at": "2026-09-03T05:43:45.634243+00:00"
+      "computed_at": "2026-09-03T13:01:33.599239+00:00"
     },
     {
       "ticker": "300308.SZ",
@@ -339,12 +339,12 @@
           "contribution": -8.6
         }
       ],
-      "rationale_e": "Bearish: Macd Death Cross | RSI 38 | Price vs MA20 -8.5% | Regime: PERMISSIVE | VP 48",
-      "rationale_z": "空头：MACD死叉 | RSI 38 | 距MA20 -8.5% | 政策顺风 | VP 48",
+      "rationale_e": "Bearish: Macd Death Cross | RSI 39 | Price vs MA20 -8.5% | Regime: PERMISSIVE | VP 48",
+      "rationale_z": "空头：MACD死叉 | RSI 39 | 距MA20 -8.5% | 政策顺风 | VP 48",
       "signal_types": [
         "MACD_DEATH_CROSS"
       ],
-      "computed_at": "2026-09-03T05:43:45.633950+00:00"
+      "computed_at": "2026-09-03T13:01:33.598852+00:00"
     }
   ]
 }
