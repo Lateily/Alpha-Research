@@ -144,6 +144,7 @@ FUNNEL_GOVERNANCE_PATHS = (
     "experiments/research_funnel/semiconductor_source_repair.py",
     "experiments/research_funnel/semiconductor_preflight_packet.py",
     "experiments/research_funnel/u4_pre_decision.py",
+    "experiments/research_funnel/knowledge_cards.py",
     "experiments/research_funnel/feature_store.py",
     "experiments/execution_tracker/event_ledger.py",
     "experiments/execution_tracker/paper_execution_audit.py",
@@ -7117,6 +7118,38 @@ mutation_id="U4_PREDECISION_ATOMIC_NO_REPLACE",
         ),
         expected_failure_marker="test_lhb_render_reads_appearances",
         rationale="The research prompt must consume the canonical appearances array emitted by fetch_lhb.py.",
+    ),
+    MutationCase(
+        mutation_id="CARD_STATUS_GATE",
+        component="Research funnel knowledge-card status boundary",
+        source_path="experiments/research_funnel/knowledge_cards.py",
+        test_script="tests/test_knowledge_cards.py",
+        before=(
+            '    # governance-mutation: CARD_STATUS_GATE\n'
+            '    selected = [card for card in cards if card["status"] in PARTICIPATING_STATUSES]'
+        ),
+        after=(
+            '    # governance-mutation: CARD_STATUS_GATE\n'
+            '    selected = list(cards)'
+        ),
+        expected_failure_marker="test_draft_card_does_not_participate",
+        rationale="Draft knowledge cards cannot enter the display-only evaluation set.",
+    ),
+    MutationCase(
+        mutation_id="CARD_EVAL_DERIVES_FROM_SOURCE",
+        component="Research funnel knowledge-card source-derived evaluation",
+        source_path="experiments/research_funnel/knowledge_cards.py",
+        test_script="tests/test_knowledge_cards.py",
+        before=(
+            '            # governance-mutation: CARD_EVAL_DERIVES_FROM_SOURCE\n'
+            '            comparison = "AT_OR_ABOVE" if observed >= threshold else "BELOW"'
+        ),
+        after=(
+            '            # governance-mutation: CARD_EVAL_DERIVES_FROM_SOURCE\n'
+            '            comparison = str(row.get("comparison_unvalidated") or "BELOW")'
+        ),
+        expected_failure_marker="test_threshold_evaluation_recomputes_from_source_value",
+        rationale="A card evaluation must derive from frozen source values, not a caller-reported label.",
     ),
 )
 

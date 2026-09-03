@@ -213,6 +213,10 @@ jobs:
         run: python3 tests/test_u4_pre_decision_packet.py
       - name: U4 pre-decision runtime (offline)
         run: python3 tests/test_u4_pre_decision_runtime.py
+      # Reviewed knowledge cards remain offline, display-only evidence. Their
+      # status and source-derived evaluation gates must be exercised in CI.
+      - name: Research knowledge-card reader (offline)
+        run: python3 tests/test_knowledge_cards.py
       # Frozen assembly contract over the existing funnel, U4, research method,
       # paper execution, and five-axis modules. This step adds no runtime wiring.
       - name: Research closed loop V1 assembly contract (offline)

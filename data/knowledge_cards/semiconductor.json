@@ -1,0 +1,858 @@
+[
+  {
+    "card_id": "SEMI_MAT_001",
+    "sub_sector": "MATERIALS",
+    "variable": "客户验证阶段阶梯(按产品线×客户)",
+    "why_it_matters": "材料票收入拐点滞后验证通过 1–4 季度,验证阶段是最前瞻的 E1 信号。三路来源独立汇聚:发行人年报用'送样/验证/取得订单/批量供应'计数(鼎龙 30 款布局→20 款送样→3 款批量),招股书披露四阶段认证,卖方框架把认证周期按下游分档(IC 2–3 年)。",
+    "data_source": {
+      "availability": "SEMI",
+      "primary": "年报'经营情况讨论'与'研发项目进展'表;招股书'业务与技术';投资者关系记录;关键词:送样/验证/小批量/取得订单/批量供应/量产",
+      "tushare_api": null,
+      "tushare_field": null,
+      "manual_required": true
+    },
+    "judgment_logic": {
+      "type": "STAGE_LADDER",
+      "positive_if": "近 4 季度任一产品线在阶梯上升阶 ≥1,且'取得订单→批量供应'转化率上行",
+      "negative_if": "≥2 季度阶段停滞、退阶,或公司改用'多款/进展顺利'模糊措辞且不再给数",
+      "lookback": "4Q",
+      "threshold": "v0=文献锚/待B4验证(_unvalidated)",
+      "stages": [
+        "布局",
+        "送样",
+        "验证通过",
+        "取得订单",
+        "批量供应"
+      ]
+    },
+    "evidence_tier": "E1",
+    "literature": [
+      "鼎龙股份 2025 年报 第三节一(二)1(4) 高端晶圆光刻胶('超 30 款……超 20 款完成客户送样验证……3 款进入稳定批量供应')",
+      "厦门恒坤新材料 科创板招股说明书(上会稿)2025-08-22 第六节 客户与供应链壁垒(认证四阶段)https://static.sse.com.cn/stock/disclosure/announcement/c/202508/002050_20250822_EYQT.pdf",
+      "方正证券《半导体材料研究框架系列:详解八大芯片材料》2022-01-19 '客户壁垒极高'",
+      "太平洋证券《光刻胶国产替代迎来良机》2023-04-17 pp.28-29 认证三阶段"
+    ],
+    "falsification": "封装材料验证快于制造材料,同一阶梯不可跨制造/封装比较;'通过认证'不等于采购量(晶圆厂常做二供备份);已成熟品类(安集主力抛光液、江丰铝钛靶)阶梯饱和,不再领先;订单金额未披露时'取得订单'不等于放量。",
+    "channel_binding": [
+      "E1_EVENT",
+      "LLM_MUST_CHECK"
+    ],
+    "status": "REVIEWED",
+    "authored_by": "Claude (Track B synthesis from 3 collectors: issuer FY2025 reports ×8 / academic ×29 / sell-side ×28)",
+    "reviewed_by": "Junyan",
+    "as_of": "20260903",
+    "review_notes": "★★★ 三源汇聚,建议第一优先审。当前 E1 层零正向事件识别(F-012),本卡是补齐正向事件的核心。需 WO-A6 正向事件类型清单 + NLP 抽取(SEMI)。阶梯词表建议:布局→送样→验证通过→取得订单→批量供应。 ‖ Junyan 2026-09-03 整体批准(REVIEWED):卡组系统性认可;阈值取文献锚为 v0,标 _unvalidated,以 B4 三周期点回看验证后再翻 VALIDATED。"
+  },
+  {
+    "card_id": "SEMI_MAT_002",
+    "sub_sector": "MATERIALS",
+    "variable": "分产品毛利率水平与同比变动",
+    "why_it_matters": "配方型湿化学品/CMP 与硅片/靶材毛利率结构差异极大,综合毛利率对混业公司无意义;分产品毛利率同比方向与量价拆分结论交叉验证(量增价减→毛利率应降,若反升则为新品结构)。验证期公司常以价换量(华特 2019–20 毛利率 35→26%)。",
+    "data_source": {
+      "availability": "AUTO",
+      "primary": "Tushare fina_mainbz(type='P'):bz_item/bz_sales/bz_cost → 毛利率=(bz_sales−bz_cost)/bz_sales;年报'占营收 10% 以上产品'表核对",
+      "tushare_api": "fina_mainbz",
+      "tushare_field": "bz_item,bz_sales,bz_cost,bz_profit",
+      "manual_required": false
+    },
+    "judgment_logic": {
+      "type": "TREND",
+      "positive_if": "半导体材料分部毛利率同比 ≥0 且与同品类同业中位差 ≥0",
+      "negative_if": "分部毛利率连续 2 期同比下降,且公司自陈'价格承压/内卷'",
+      "lookback": "2Y(4 个半年期)",
+      "threshold": "v0=文献锚/待B4验证(_unvalidated)"
+    },
+    "evidence_tier": "E1",
+    "literature": [
+      "江丰电子 2025 年报 第三节四(2) 分产品(超高纯靶材 34.24% +2.89pp;精密零部件 14.88% −9.39pp)",
+      "鼎龙股份 2025 年报 第三节四(2)(半导体材料及芯片 50.88% +3.74pp)",
+      "东海证券《电子特气行业深度报告》2023-07-31 第 4 章 华特气体财务分析(验证期定价折让)",
+      "Irwin, D.A. & Klenow, P.J. (1994). Learning-by-Doing Spillovers in the Semiconductor Industry. JPE 102(6):1200-1227(学习曲线单价侵蚀)"
+    ],
+    "falsification": "分产品口径年度间调整(年报'统计口径调整'勾选)时不可比;公司申请豁免披露重要子公司利润时子公司层毛利率不可得;含受托加工的产品线(沪硅)受加工费影响;bz_cost 缺失时只能用 bz_profit/bz_sales 代理并标 PROXY。",
+    "channel_binding": [
+      "FUNDAMENTAL_VALUATION",
+      "BATTERY_基本面"
+    ],
+    "status": "REVIEWED",
+    "authored_by": "Claude (Track B synthesis from 3 collectors: issuer FY2025 reports ×8 / academic ×29 / sell-side ×28)",
+    "reviewed_by": "Junyan",
+    "as_of": "20260903",
+    "review_notes": "★★★ AUTO。复用 research_data_loader.derive_segment_economics(已实现分部毛利计算,含 PROXY 标记),改造为半导体版。fina_mainbz type='P' 已由 fetch_tushare.py 以 5 年窗口拉取。同业中位需材料票池(WO-A9 sub_sector)。 ‖ Junyan 2026-09-03 整体批准(REVIEWED):卡组系统性认可;阈值取文献锚为 v0,标 _unvalidated,以 B4 三周期点回看验证后再翻 VALIDATED。"
+  },
+  {
+    "card_id": "SEMI_MAT_003",
+    "sub_sector": "MATERIALS",
+    "variable": "量价拆分:分产品收入增速 − 销量增速 ≈ 隐含 ASP 变动",
+    "why_it_matters": "材料票的周期位置由量价组合定义:量升价跌=筑底/产能释放期,量价齐升=上行期,量跌价跌=下行。非标品(光刻胶/特气/抛光液)无公开价格序列,只能从年报产销量表反推。沪硅 2025 自陈'量增价减的分化特征'。",
+    "data_source": {
+      "availability": "SEMI",
+      "primary": "收入端 fina_mainbz(type='P') bz_sales(AUTO);销量端 年报'产销量情况分析表'(深交所:实物销售收入表;上交所:产销量表)需表格解析;价格表述关键词:价格承压/内卷/量增价减/价格中枢",
+      "tushare_api": "fina_mainbz",
+      "tushare_field": "bz_sales",
+      "manual_required": true
+    },
+    "judgment_logic": {
+      "type": "CYCLE_POSITION",
+      "positive_if": "隐含 ASP 同比 ≥0 且销量同比 >0(量价齐升)",
+      "negative_if": "隐含 ASP 同比 <0 且销量同比 <0(量价齐跌);或公司文字出现'价格承压/内卷'",
+      "lookback": "2Y",
+      "threshold": "v0=文献锚/待B4验证(_unvalidated)"
+    },
+    "evidence_tier": "E1",
+    "literature": [
+      "沪硅产业 2025 年报 第三节二 经营情况讨论('市场呈现量增价减的分化特征''持续面临较大的价格压力')",
+      "安集科技 2025 年报 第三节五(2) 产销量情况分析表(抛光液 产 45,691.51 吨/销 42,188.67 吨/库存 6,801.05 吨)",
+      "方正证券 2022-01-19 '半导体材料短期看点:涨价';国盛证券《硅片行业深度》2022-04-02 p.19(2016–18 硅片单位面积价格上涨)"
+    ],
+    "falsification": "产品结构切换(高规格新品放量)时隐含 ASP 上升是混合效应非涨价;计量单位不可比(靶材 枚/套/公斤 混计,鼎龙 支/吨/片 合并)时不能算;单一产品线且无销量披露的公司不适用;受托加工计入销量时需剔除。",
+    "channel_binding": [
+      "FUNDAMENTAL_VALUATION",
+      "LLM_MUST_CHECK"
+    ],
+    "status": "REVIEWED",
+    "authored_by": "Claude (Track B synthesis from 3 collectors: issuer FY2025 reports ×8 / academic ×29 / sell-side ×28)",
+    "reviewed_by": "Junyan",
+    "as_of": "20260903",
+    "review_notes": "★★★ 三源汇聚。销量表解析是 SEMI 的核心工程量(WO-A11 evidence_pack 可扩展做年报表格抽取)。四象限周期位置 = normalized 桥的直接输入(WO-L9 adapter v2 的 units×ASP)。 ‖ Junyan 2026-09-03 整体批准(REVIEWED):卡组系统性认可;阈值取文献锚为 v0,标 _unvalidated,以 B4 三周期点回看验证后再翻 VALIDATED。"
+  },
+  {
+    "card_id": "SEMI_MAT_004",
+    "sub_sector": "MATERIALS",
+    "variable": "分产品实物库存量同比 − 销量同比(成品积压警戒)",
+    "why_it_matters": "年报强制按产品线披露产量/销量/库存量及同比,并对变动 30% 以上作说明。库存量增速显著超过销量增速 = 成品积压或主动备货,公司被迫在'原因说明'里表态,是 E1 级的自陈信号。",
+    "data_source": {
+      "availability": "SEMI",
+      "primary": "年报第三节 产销量情况分析表 + '相关数据同比变动 30% 以上的原因说明'",
+      "tushare_api": null,
+      "tushare_field": null,
+      "manual_required": true
+    },
+    "judgment_logic": {
+      "type": "THRESHOLD",
+      "positive_if": "库存量同比 − 销量同比 ≤ 0,或差值为正但公司说明为'为已签订单/新认证产品备货'",
+      "negative_if": "库存量同比 − 销量同比 显著为正且说明为'客户需求下降/去库存'",
+      "lookback": "1Y",
+      "threshold": "v0=文献锚/待B4验证(_unvalidated)"
+    },
+    "evidence_tier": "E1",
+    "literature": [
+      "安集科技 2025 年报 第三节五(2)(库存 +68.74% vs 销 +35.91%)",
+      "深交所《上市公司自律监管指引》年报格式 主营业务分析 实物销售表要求"
+    ],
+    "falsification": "多产品线合并计量单位时量信息被抹掉;受托加工计入销量;库存高增若解释为主动战略备货(原料端)方向相反,需与卡 8(存货结构)联动判定。",
+    "channel_binding": [
+      "FUNDAMENTAL_VALUATION",
+      "BATTERY_基本面"
+    ],
+    "status": "REVIEWED",
+    "authored_by": "Claude (Track B synthesis from 3 collectors: issuer FY2025 reports ×8 / academic ×29 / sell-side ×28)",
+    "reviewed_by": "Junyan",
+    "as_of": "20260903",
+    "review_notes": "★ 单源(发行人)但强制披露、口径稳定。与卡 3 共用同一张表的解析,边际成本低。差值阈值待定(文献无锚,建议先用'公司是否被迫作原因说明'的二值)。 ‖ Junyan 2026-09-03 整体批准(REVIEWED):卡组系统性认可;阈值取文献锚为 v0,标 _unvalidated,以 B4 三周期点回看验证后再翻 VALIDATED。"
+  },
+  {
+    "card_id": "SEMI_MAT_005",
+    "sub_sector": "MATERIALS",
+    "variable": "在建工程→固定资产转固节奏与折旧跳升(增收不增利识别)",
+    "why_it_matters": "扩产期在建工程余额高,转固当年折旧跳升;利用率决定是否摊薄。上海新阳 2025 集成电路材料折旧 +101%,自陈'新建产能尚处爬坡阶段,固定成本高'。D&A/营收见顶回落 + 利用率上行 = 拐点前置(国盛跟踪沪硅该比率)。",
+    "data_source": {
+      "availability": "AUTO",
+      "primary": "Tushare balancesheet.cip / fix_assets 两期差分;cashflow.depr_fa_coga_dpba(折旧)/ income.revenue;年报'营业成本构成'表中折旧行核对",
+      "tushare_api": "balancesheet,cashflow,income",
+      "tushare_field": "cip,fix_assets,depr_fa_coga_dpba,revenue",
+      "manual_required": false
+    },
+    "judgment_logic": {
+      "type": "STAGE_LADDER",
+      "positive_if": "在建工程余额回落 + 固定资产增加(转固完成)且 D&A/营收同比开始回落",
+      "negative_if": "在建工程持续高位 + D&A/营收上升 + 收入增速 < D&A 增速(增收不增利)",
+      "lookback": "3Y",
+      "threshold": "v0=文献锚/待B4验证(_unvalidated)",
+      "stages": [
+        "立项",
+        "建设",
+        "转固",
+        "爬坡",
+        "满产"
+      ]
+    },
+    "evidence_tier": "E1",
+    "literature": [
+      "上海新阳 2025 年报 第三节四(5) 营业成本构成('集成电路材料折旧 33,697,105.49 元 +101.12%……部分在建工程转固后固定成本高')",
+      "国盛证券 2022-04-02 图表 48(沪硅产业 折旧及摊销占营收比)",
+      "太平洋证券 2023-04-17 pp.30-35 光刻胶产业链公司 设计产能/产能利用率/在建产能 表"
+    ],
+    "falsification": "轻资产配方型公司(安集制造费用占比 22.82%)折旧敏感度低,本卡权重应降;转固时点可被会计政策延后(在建工程长期挂账)会低估压力;折旧口径含非半导体业务(鼎龙耗材、雅克 LNG)时需拆分;若新产线对应已签长协定制产能则利用率风险小。",
+    "channel_binding": [
+      "FUNDAMENTAL_VALUATION",
+      "BATTERY_基本面"
+    ],
+    "status": "REVIEWED",
+    "authored_by": "Claude (Track B synthesis from 3 collectors: issuer FY2025 reports ×8 / academic ×29 / sell-side ×28)",
+    "reviewed_by": "Junyan",
+    "as_of": "20260903",
+    "review_notes": "★★ AUTO,源已付费零调用(balancesheet/cashflow),WO-X1 扩源后即可算。阶梯:立项→建设→转固→爬坡→满产,前三阶段可 AUTO 判,后两阶段需卡 6。 ‖ Junyan 2026-09-03 整体批准(REVIEWED):卡组系统性认可;阈值取文献锚为 v0,标 _unvalidated,以 B4 三周期点回看验证后再翻 VALIDATED。"
+  },
+  {
+    "card_id": "SEMI_MAT_006",
+    "sub_sector": "MATERIALS",
+    "variable": "产能利用率与在建产能三元组(设计产能/利用率/在建)",
+    "why_it_matters": "利用率低且在建产能大 = 固定成本压力期;接近满产且在建产能落地在即 = 量的释放窗口。深交所化工行业公司(雅克)强制披露产能表;其余散见文字(沪硅'85 万片/月')。",
+    "data_source": {
+      "availability": "SEMI",
+      "primary": "年报'主要产品的产能情况'表(深交所化工指引)或'占营收 10% 以上产品产销情况';募投公告;文字 NER:万片/月、吨/年、产能利用率",
+      "tushare_api": null,
+      "tushare_field": null,
+      "manual_required": true
+    },
+    "judgment_logic": {
+      "type": "THRESHOLD",
+      "positive_if": "利用率上行趋势且在建产能/现有产能 比处于合理区间(待定)",
+      "negative_if": "利用率 <60%(太平洋表格示例 59.25% 为低位参照,未验证)且在建产能大",
+      "lookback": "2Y",
+      "threshold": "60%(卖方单例参照,未验证)"
+    },
+    "evidence_tier": "E1",
+    "literature": [
+      "沪硅产业 2025 年报 第三节二('上海及太原两地 300mm 硅片合计产能已达 85 万片/月')",
+      "太平洋证券 2023-04-17 产能表('设计产能 2100 吨/年,产能利用率 59.25%,在建产能…')",
+      "Liu, W.-H., Chung, C.-F. & Chang, K.-L. (2013). Inventory change, capacity utilization and the semiconductor industry cycle. Economic Modelling 31:119-127"
+    ],
+    "falsification": "多品种小批量定制品(靶材、零部件)无统一产能口径;配方类湿化学品(安集、上海新阳)产能弹性大、利用率不披露;'设计产能'vs'有效产能'需区分;利用率多只在 IPO/募投期披露,后续不更新。",
+    "channel_binding": [
+      "FUNDAMENTAL_VALUATION",
+      "LLM_MUST_CHECK"
+    ],
+    "status": "REVIEWED",
+    "authored_by": "Claude (Track B synthesis from 3 collectors: issuer FY2025 reports ×8 / academic ×29 / sell-side ×28)",
+    "reviewed_by": "Junyan",
+    "as_of": "20260903",
+    "review_notes": "★★ 与卡 5 配对。60% 阈值来自卖方表格单例,不是验证阈值。建议先做 MANUAL 待查项进 LLM 必查清单。 ‖ Junyan 2026-09-03 整体批准(REVIEWED):卡组系统性认可;阈值取文献锚为 v0,标 _unvalidated,以 B4 三周期点回看验证后再翻 VALIDATED。"
+  },
+  {
+    "card_id": "SEMI_MAT_007",
+    "sub_sector": "MATERIALS",
+    "variable": "异常资本开支 CI = capex_t / mean(capex_{t-1..t-3}) − 1(叠加行业周期位置)",
+    "why_it_matters": "Titman-Wei-Xie (2004) 实证:资本开支大幅上升的公司随后基准调整后收益为负,投资自由度高的公司更强;行业层面 Liu (2005)/Tan-Mathews (2010) 证明过剩产能是半导体周期主因。材料公司在景气高点集体扩产是产能周期顶部特征。",
+    "data_source": {
+      "availability": "AUTO",
+      "primary": "Tushare cashflow.c_pay_acq_const_fiolta(购建固定资产、无形及其他长期资产支付的现金)构建 CI;balancesheet.cip/fix_assets 辅助",
+      "tushare_api": "cashflow,balancesheet",
+      "tushare_field": "c_pay_acq_const_fiolta,cip,fix_assets",
+      "manual_required": false
+    },
+    "judgment_logic": {
+      "type": "RATIO_VS_PEER",
+      "positive_if": "CI 处于自身历史与同业中位以下,或 CI 高但对应已通过认证的确定订单/长协",
+      "negative_if": "CI 显著高于自身 3 年均值(倍数待定)且行业总 capex 处于周期高位(卡 18)",
+      "lookback": "4Y",
+      "threshold": "v0=文献锚/待B4验证(_unvalidated)"
+    },
+    "evidence_tier": "E1",
+    "literature": [
+      "Titman, S., Wei, K.C.J. & Xie, F. (2004). Capital Investments and Stock Returns. JFQA 39(4):677-700. https://www.nber.org/papers/w9951",
+      "Tan, H. & Mathews, J.A. (2010). Identification and analysis of industry cycles. J. Business Research 63(5):454-462",
+      "Liu, W.-H. (2005). Determinants of the semiconductor industry cycles. J. Policy Modeling 27(7):853-866"
+    ],
+    "falsification": "Titman 负相关仅在敌意收购不活跃时期显著且为美国全市场结论;国产替代驱动、由客户/大基金背书的定向扩产未必对应过度投资;定制化以销定产公司(江丰韩国基地服务既有客户)扩产风险低于投机性扩产;需与卡 1(认证阶段)联动否则误杀。",
+    "channel_binding": [
+      "FUNDAMENTAL_VALUATION"
+    ],
+    "status": "REVIEWED",
+    "authored_by": "Claude (Track B synthesis from 3 collectors: issuer FY2025 reports ×8 / academic ×29 / sell-side ×28)",
+    "reviewed_by": "Junyan",
+    "as_of": "20260903",
+    "review_notes": "★★ AUTO。CI 倍数阈值待 Junyan 定(Titman 原文用分位数排序非绝对阈值)。 ‖ Junyan 2026-09-03 整体批准(REVIEWED):卡组系统性认可;阈值取文献锚为 v0,标 _unvalidated,以 B4 三周期点回看验证后再翻 VALIDATED。"
+  },
+  {
+    "card_id": "SEMI_MAT_008",
+    "sub_sector": "MATERIALS",
+    "variable": "存货变动(ΔInv/总资产)与周转天数相对自身历史 + 存货结构(原料/在产/成品)",
+    "why_it_matters": "Thomas-Zhang (2002) 证明应计异象主要由存货变动驱动,存货异常增加的公司未来异常收益为负(需求转移信号)。材料公司成品积压先于砍单被识别;但为新认证产品备货(原料端)是扩张性,方向相反,须与卡 1 联动。",
+    "data_source": {
+      "availability": "AUTO",
+      "primary": "Tushare fina_indicator.inv_turn / invturn_days;balancesheet.inventories 与 total_assets → ΔInv/TA;存货结构与跌价准备在年报附注'存货'表(SEMI 增强)",
+      "tushare_api": "fina_indicator,balancesheet",
+      "tushare_field": "inv_turn,invturn_days,inventories,total_assets",
+      "manual_required": false
+    },
+    "judgment_logic": {
+      "type": "THRESHOLD",
+      "positive_if": "ΔInv/TA 处于自身 5 年分位中段,或上升但结构为原料端且卡 1 显示升阶",
+      "negative_if": "ΔInv/TA 落入自身历史极端高分位且成品端占比上升且收入增速放缓;跌价准备/存货比上升(沪硅 14.82%)",
+      "lookback": "5Y",
+      "threshold": "v0=文献锚/待B4验证(_unvalidated)"
+    },
+    "evidence_tier": "E1",
+    "literature": [
+      "Thomas, J.K. & Zhang, H. (2002). Inventory Changes and Future Returns. Review of Accounting Studies 7:163-187. https://link.springer.com/article/10.1023/A:1020221918065",
+      "沪硅产业 2025 年报 第三节四(五)5 存货减值风险('存货跌价准备 34,209.23 万元,占比 14.82%')",
+      "安集科技 2025 年报 第三节四(五)(1) 存货管理风险(上线结算/寄售模式)"
+    ],
+    "falsification": "美国全市场样本非半导体专门证据;0→1 放量期公司存货上升可能是产能爬坡与客户拉货前置(正向);以销定产定制品(靶材,江丰存货 15.4 亿)存货天然高不宜与配方化学品横比;寄售模式(安集)存货与收入确认时点由客户领用控制。",
+    "channel_binding": [
+      "FUNDAMENTAL_VALUATION",
+      "BATTERY_基本面"
+    ],
+    "status": "REVIEWED",
+    "authored_by": "Claude (Track B synthesis from 3 collectors: issuer FY2025 reports ×8 / academic ×29 / sell-side ×28)",
+    "reviewed_by": "Junyan",
+    "as_of": "20260903",
+    "review_notes": "★★ AUTO。需 semiconductor_inputs 历史窗口从 4Q 扩到 5Y(WO-X1)。分位阈值待定。 ‖ Junyan 2026-09-03 整体批准(REVIEWED):卡组系统性认可;阈值取文献锚为 v0,标 _unvalidated,以 B4 三周期点回看验证后再翻 VALIDATED。"
+  },
+  {
+    "card_id": "SEMI_MAT_009",
+    "sub_sector": "MATERIALS",
+    "variable": "客户集中度:前五大合计/第一大占比/三年序列方向/新进前五",
+    "why_it_matters": "三源汇聚。Patatoukas (2012) 与 Dhaliwal 等 (2016) 实证客户集中度对绩效与资本成本的双向影响;发行人年报强制披露前五大(安集三年 80.49→74.67→75.65%);卖方强调与头部 fab 绑定深度正向、过度集中负向。新进前五客户是卡 1 兑现的旁证。",
+    "data_source": {
+      "availability": "SEMI",
+      "primary": "年报'主要销售客户'表:前五合计占比、逐一占比(匿名)、'前 5 名中存在新增客户'勾选;科创板'风险因素'三年序列;招股书",
+      "tushare_api": null,
+      "tushare_field": null,
+      "manual_required": true
+    },
+    "judgment_logic": {
+      "type": "THRESHOLD",
+      "positive_if": "第一大占比 ≤ 阈值(待定)或客户为头部/国有 fab;三年序列集中度下降且收入增长(客户扩容);出现新进前五",
+      "negative_if": "第一大占比 > 阈值且客户非头部;集中度上升伴随收入停滞(单一依赖);前五中出现非半导体业务客户(平台型污染)",
+      "lookback": "3Y",
+      "threshold": "v0=文献锚/待B4验证(_unvalidated)"
+    },
+    "evidence_tier": "E1",
+    "literature": [
+      "Patatoukas, P.N. (2012). Customer-Base Concentration: Implications for Firm Performance and Capital Markets. The Accounting Review 87(2):363-392",
+      "Dhaliwal, D., Judd, J.S., Serfling, M. & Shaikh, S. (2016). Customer concentration risk and the cost of equity capital. JAE 61(1):23-48",
+      "安集科技 2025 年报 第三节四(四)(1)('2023-2025 前五名客户……80.49%、74.67%、75.65%')及五(7)(第一名 26.62%)",
+      "观察者网《国产光刻胶'生死局'》2026-06-11(与龙头 fab 紧密合作前提)"
+    ],
+    "falsification": "文献样本非半导体材料专门;认证放量期公司前五接近 100% 是常态,不能套一般制造业阈值;同一控制人合并口径(沪硅)改变数值;平台型公司前五可能来自 LNG/打印耗材;特气零售天然分散,低集中度非弱绑定;脱敏客户名难以自动判客户类型。",
+    "channel_binding": [
+      "E1_EVENT",
+      "LLM_MUST_CHECK"
+    ],
+    "status": "REVIEWED",
+    "authored_by": "Claude (Track B synthesis from 3 collectors: issuer FY2025 reports ×8 / academic ×29 / sell-side ×28)",
+    "reviewed_by": "Junyan",
+    "as_of": "20260903",
+    "review_notes": "★★★ 三源汇聚。阈值文献无普适锚(Patatoukas 用分位),建议 Junyan 按材料票池分布定。年报表格解析是 SEMI 工程量,与卡 3/4 共用解析器。 ‖ Junyan 2026-09-03 整体批准(REVIEWED):卡组系统性认可;阈值取文献锚为 v0,标 _unvalidated,以 B4 三周期点回看验证后再翻 VALIDATED。"
+  },
+  {
+    "card_id": "SEMI_MAT_010",
+    "sub_sector": "MATERIALS",
+    "variable": "国产化率/市占率阶段(口径标注:采购金额/使用量/工序覆盖)",
+    "why_it_matters": "三源汇聚。国产化率 <5% = 0→1 认证期权;5–30% = 放量期收入弹性最大;>30–50% = 进入价格竞争与均值回归(Makioka-Zhang 2023 日韩案例)。份额三年序列斜率(安集 8→11→13%)比绝对值重要;客户覆盖率饱和(华特 >90% fab)时增量只能来自单客户份额或新品类,判断逻辑要切换。",
+    "data_source": {
+      "availability": "MANUAL",
+      "primary": "第三方:Frost & Sullivan/SEMI/中国电子材料协会/天下工厂(三种口径);公司自报:年报'行业地位''核心竞争力'文字;自算:fina_mainbz.bz_sales ÷ 外部品类市场规模",
+      "tushare_api": null,
+      "tushare_field": null,
+      "manual_required": true
+    },
+    "judgment_logic": {
+      "type": "STAGE_LADDER",
+      "positive_if": "份额三年序列斜率 >0 且处于 5–30% 放量段;或 <5% 但卡 1 显示升阶",
+      "negative_if": "份额停滞或处于 >30% 段且卡 2 毛利率下行(均值回归期);客户覆盖饱和且无新品类",
+      "lookback": "3Y",
+      "threshold": "5% / 30% / 50%(文献锚,未验证)",
+      "stages": [
+        "<5% 认证期权",
+        "5–30% 放量期",
+        "30–50% 价格竞争期",
+        ">50% 成熟期"
+      ]
+    },
+    "evidence_tier": "E2",
+    "literature": [
+      "Makioka, R. & Zhang, H. (2023). The Impact of Export Controls on International Trade: Evidence from the Japan–Korea Trade Dispute in Semiconductor Industry. RIETI DP 23-E-017",
+      "USITC Office of Industries Working Paper ID-062 (Oct 2019). The South Korea-Japan Trade Dispute in Context: Semiconductor Manufacturing, Chemicals, and Concentrated Supply Chains",
+      "安集科技 2025 年报 第三节一(三)2('CMP 抛光液全球市占率约 8%、11%、13%')",
+      "天下工厂产业研究院《2026 中国半导体材料深度研究报告》'国产化率三种计量口径'节(采购金额 25-30% / 使用量 35-40% / 工序覆盖 40-50%)"
+    ],
+    "falsification": "国产化率口径混乱(按量/按额/按线/按制程)不同来源相差数倍,只能同源纵比;'客户覆盖'不等于'供应份额';日韩案例有政府 7.8 万亿韩元投入,直接外推到中国需谨慎;第三方份额口径与公司收入口径不一致时份额数字只能同源纵比;先进制程国产化率与成熟制程差异极大。",
+    "channel_binding": [
+      "INDUSTRY_VALUE_CHAIN",
+      "LLM_MUST_CHECK"
+    ],
+    "status": "REVIEWED",
+    "authored_by": "Claude (Track B synthesis from 3 collectors: issuer FY2025 reports ×8 / academic ×29 / sell-side ×28)",
+    "reviewed_by": "Junyan",
+    "as_of": "20260903",
+    "review_notes": "★★★ 三源汇聚。三段阶梯(<5/5-30/>30)来自学术路综合,是文献锚非验证阈值。MANUAL 为主,建议进 LLM 必查清单并要求逐条标口径。 ‖ Junyan 2026-09-03 整体批准(REVIEWED):卡组系统性认可;阈值取文献锚为 v0,标 _unvalidated,以 B4 三周期点回看验证后再翻 VALIDATED。"
+  },
+  {
+    "card_id": "SEMI_MAT_011",
+    "sub_sector": "MATERIALS",
+    "variable": "研发投入强度(研发投入/营收)、增速与研发人员占比(按品类分组)",
+    "why_it_matters": "配方型湿化学品/CMP 普遍 13–18%(安集 17.76%、鼎龙 14.19%),硅片/靶材 5–10%;强度跳升需对应年报'主要研发项目'表新增项目;研发强度高但收入增速不匹配 = 投入未转化。资本化比例高的年份压低费用化口径。",
+    "data_source": {
+      "availability": "AUTO",
+      "primary": "Tushare income.rd_exp / income.total_revenue;研发投入总额(含资本化)与人员占比在年报'研发投入'表(SEMI 增强)",
+      "tushare_api": "income",
+      "tushare_field": "rd_exp,total_revenue",
+      "manual_required": false
+    },
+    "judgment_logic": {
+      "type": "RATIO_VS_PEER",
+      "positive_if": "研发强度处于同品类中位附近且收入增速 ≥ 研发增速(转化中)",
+      "negative_if": "研发强度显著低于同品类中位;或强度跳升但无新增研发项目披露;或资本化比例突升",
+      "lookback": "3Y",
+      "threshold": "v0=文献锚/待B4验证(_unvalidated)"
+    },
+    "evidence_tier": "E1",
+    "literature": [
+      "安集科技 2025 年报 第三节二('研发投入 44,470.13 万元,占营收 17.76%')",
+      "鼎龙股份 2025 年报 第三节一(二)('研发投入 5.19 亿元……占营收 14.19%')",
+      "上海新阳 2023 年报 研发投入表(资本化比例 7.57%)"
+    ],
+    "falsification": "研发资本化比例高的年份费用化强度失真,需用'研发投入总额'口径;平台型公司合并研发强度被非半导体业务稀释,应按半导体业务估算;品类分组必须先有 sub_sector 细分(WO-A9)。",
+    "channel_binding": [
+      "BATTERY_基本面"
+    ],
+    "status": "REVIEWED",
+    "authored_by": "Claude (Track B synthesis from 3 collectors: issuer FY2025 reports ×8 / academic ×29 / sell-side ×28)",
+    "reviewed_by": "Junyan",
+    "as_of": "20260903",
+    "review_notes": "★ 单源但 AUTO 且口径稳定。income.rd_exp 字段名需 probe 确认。 ‖ Junyan 2026-09-03 整体批准(REVIEWED):卡组系统性认可;阈值取文献锚为 v0,标 _unvalidated,以 B4 三周期点回看验证后再翻 VALIDATED。"
+  },
+  {
+    "card_id": "SEMI_MAT_012",
+    "sub_sector": "MATERIALS",
+    "variable": "核心原料自主可控阶段(外购→部分自供→量产级自供)+ 供应商集中度 + 直接材料占成本比",
+    "why_it_matters": "光刻胶原料(成膜树脂、光引发剂)基本被国外垄断(太平洋图表 36),氦气等特气原料进口依赖;'自产核心原料已量产'是毛利率改善的公司自陈机制(鼎龙自产研磨粒子、安集参股硅溶胶)。直接材料占成本比越高,价格传导弹性越大。",
+    "data_source": {
+      "availability": "SEMI",
+      "primary": "年报'营业成本构成'表(直接材料占比);'主要供应商'表(前五占比、关联采购);深交所化工公司'主要原材料采购模式/平均价格'表;'核心竞争力'文字",
+      "tushare_api": null,
+      "tushare_field": null,
+      "manual_required": true
+    },
+    "judgment_logic": {
+      "type": "STAGE_LADDER",
+      "positive_if": "核心原料阶段升阶(自供比例上升)且已通过客户验证;供应商集中度下降",
+      "negative_if": "核心原料 100% 外购且单一进口来源;或自供原料未过客户验证仍计入自给",
+      "lookback": "2Y",
+      "threshold": "v0=文献锚/待B4验证(_unvalidated)",
+      "stages": [
+        "100% 外购",
+        "部分自供(未验证)",
+        "部分自供(已验证)",
+        "量产级自供"
+      ]
+    },
+    "evidence_tier": "E1",
+    "literature": [
+      "太平洋证券 2023-04-17 p.29 及图表 35-36(成膜树脂 50%、光引发剂 15% 依赖进口)",
+      "鼎龙股份 2025 年报 第三节一(二)1(1)(2)(预聚体/研磨粒子自产)",
+      "安集科技 2025 年报 第三节一(三)2('核心原材料建设-提升自主可控战略供应能力……3+1 技术平台')",
+      "USITC WP ID-062 (2019)(日韩管制案例:光刻胶保质期 3-6 个月,供应链集中度)"
+    ],
+    "falsification": "硅片(多晶硅)、湿化学品(基础酸碱)原料充裕,原料依赖非瓶颈;靶材高纯金属原料需单独核;自供原料若仅'参股公司开发'(安集)不等于并表自供;雅克原料价格表混入 LNG 原料需只取电子材料行。",
+    "channel_binding": [
+      "LLM_MUST_CHECK"
+    ],
+    "status": "REVIEWED",
+    "authored_by": "Claude (Track B synthesis from 3 collectors: issuer FY2025 reports ×8 / academic ×29 / sell-side ×28)",
+    "reviewed_by": "Junyan",
+    "as_of": "20260903",
+    "review_notes": "★★ 双源。适用性按品类分化强,建议卡内加 applicable_categories 字段(光刻胶/特气强适用,硅片/湿化学品弱)。 ‖ Junyan 2026-09-03 整体批准(REVIEWED):卡组系统性认可;阈值取文献锚为 v0,标 _unvalidated,以 B4 三周期点回看验证后再翻 VALIDATED。"
+  },
+  {
+    "card_id": "SEMI_MAT_013",
+    "sub_sector": "MATERIALS",
+    "variable": "周期平均盈利 vs TTM(毛利率/ROE 相对自身 ≥4 年均值的 z-score)—— 峰值利润折算触发",
+    "why_it_matters": "Fama-French (2000) 盈利均值回归;Campbell-Shiller 估值比率长期回归。TTM 毛利率/ROE z 高且行业稼动率/库存处于高位 = 峰值利润,估值应按周期均值折算(宪法'峰值利润票 PE 失真需 normalized 桥')。海通/广发 PB-ROE 用 ROE 均值非单年。仓内 cyclical_flag 已算峰值标签(ROE≥1.25× 或 GM≥1.15× 5 年中位)但零消费者。",
+    "data_source": {
+      "availability": "AUTO",
+      "primary": "Tushare fina_indicator.roe/grossprofit_margin/netprofit_margin 多年序列 → z-score;复用 scripts/cyclical_flag.py(PEAK_ROE_RATIO 1.25 / PEAK_GM_RATIO 1.15)",
+      "tushare_api": "fina_indicator",
+      "tushare_field": "roe,grossprofit_margin,netprofit_margin",
+      "manual_required": false
+    },
+    "judgment_logic": {
+      "type": "CYCLE_POSITION",
+      "positive_if": "z 处于 [−1, +1] 且卡 15/16 显示行业周期中段(利润可信为中枢)",
+      "negative_if": "z > +1(或 cyclical_flag peak=true)且卡 15/16 显示行业高位 → 强制 normalized 桥;z < −1 且卡 1 显示升阶 → 底部",
+      "lookback": "5Y",
+      "threshold": "z=±1(统计惯例);cyclical_flag 1.25×/1.15×(仓内既有,未验证)"
+    },
+    "evidence_tier": "E1",
+    "literature": [
+      "Fama, E.F. & French, K.R. (2000). Forecasting Profitability and Earnings. Journal of Business 73(2):161-175",
+      "Campbell, J.Y. & Shiller, R.J. (2001). Valuation Ratios and the Long-Run Stock Market Outlook: An Update. NBER WP 8221",
+      "海通证券《周期股估值方法探讨》2019-09;广发策略《PB-ROE 方法论(上)》2024-09-23",
+      "国盛证券 2022-04-02 图表 39(2016-18 硅片厂商盈利水平快速提升 → 上一轮峰值锚)"
+    ],
+    "falsification": "均值回归假设竞争均衡;国产替代 0→1 公司的利润率是结构性抬升非周期峰值,套用自身历史均值会系统性低估(必须与卡 10 阶段联动:处于 <30% 段的公司 z 高不触发峰值);上市不足 5 年无完整周期样本;Liu-Chyi 7.7/3.7 个月是月度 regime 期望持续期非完整 capex 周期。",
+    "channel_binding": [
+      "BATTERY_估值",
+      "FUNDAMENTAL_VALUATION"
+    ],
+    "status": "REVIEWED",
+    "authored_by": "Claude (Track B synthesis from 3 collectors: issuer FY2025 reports ×8 / academic ×29 / sell-side ×28)",
+    "reviewed_by": "Junyan",
+    "as_of": "20260903",
+    "review_notes": "★★★ 三源汇聚 + 仓内已有实现(cyclical_flag,297 标签零读取方,F-023)。WO-A3 已把 peak_flag 接进 U4 packet;本卡定义它的消费逻辑。z 阈值 ±1 是统计惯例非验证值。 ‖ Junyan 2026-09-03 整体批准(REVIEWED):卡组系统性认可;阈值取文献锚为 v0,标 _unvalidated,以 B4 三周期点回看验证后再翻 VALIDATED。"
+  },
+  {
+    "card_id": "SEMI_MAT_014",
+    "sub_sector": "MATERIALS",
+    "variable": "技术节点覆盖上限(最高量产节点/最高验证节点)与单片材料强度逻辑",
+    "why_it_matters": "节点越先进→工艺步骤数越多→单片材料用量越高(安集自陈:CMP 步骤 180nm 10 次→14nm 20+→7nm 30+)。记录每条产品线的最高量产/验证节点,年度'升阶'为正向;同类产品跨公司比节点上限。国内先进节点扩产受设备管制约束。",
+    "data_source": {
+      "availability": "SEMI",
+      "primary": "年报'主要产品''核心竞争力''研发项目进展'文字;抽取'X nm 及以下/先进制程/成熟制程/全覆盖'",
+      "tushare_api": null,
+      "tushare_field": null,
+      "manual_required": true
+    },
+    "judgment_logic": {
+      "type": "STAGE_LADDER",
+      "positive_if": "任一产品线最高量产节点或最高验证节点年度升阶",
+      "negative_if": "节点上限停滞 ≥2 年且同类同业已升阶;或公司只说'先进制程'不给节点数",
+      "lookback": "3Y",
+      "threshold": "v0=文献锚/待B4验证(_unvalidated)",
+      "stages": [
+        "≥90nm",
+        "55–65nm",
+        "28–40nm",
+        "14nm",
+        "≤7nm"
+      ]
+    },
+    "evidence_tier": "E1",
+    "literature": [
+      "安集科技 2025 年报 第三节一(三)1②('14 纳米……CMP 工艺步骤数由 180 纳米的 10 次增加到 20 次以上,7 纳米及以下超过 30 次')",
+      "上海新阳 2025 年报 第三节二(一)(清洗工艺占比)",
+      "国信证券《半导体材料深度报告》2022-11-26 需求端驱动段(步骤数节点对照);华安证券 2024-07-26 CMP 节(抛光液 49%/抛光垫 33%)"
+    ],
+    "falsification": "硅片/特气等'节点无关'通用材料(普通工业气体、200mm 成熟硅片)不适用;国内先进节点受管制,节点上限不必然转化为销量;单片消耗测算为粗算(天下工厂自注)不可作精确阈值。",
+    "channel_binding": [
+      "LLM_MUST_CHECK",
+      "INDUSTRY_VALUE_CHAIN"
+    ],
+    "status": "REVIEWED",
+    "authored_by": "Claude (Track B synthesis from 3 collectors: issuer FY2025 reports ×8 / academic ×29 / sell-side ×28)",
+    "reviewed_by": "Junyan",
+    "as_of": "20260903",
+    "review_notes": "★★ 双源。节点阶梯词表:≥90nm / 55-65nm / 28-40nm / 14nm / ≤7nm(建议,Junyan 定)。 ‖ Junyan 2026-09-03 整体批准(REVIEWED):卡组系统性认可;阈值取文献锚为 v0,标 _unvalidated,以 B4 三周期点回看验证后再翻 VALIDATED。"
+  },
+  {
+    "card_id": "SEMI_MAT_015",
+    "sub_sector": "MATERIALS",
+    "variable": "产品线下游标签(先进逻辑/HBM-DRAM/3D NAND/成熟制程/面板/LED/光伏)与结构性景气分化",
+    "why_it_matters": "2023 年后 AI 逻辑/HBM 与消费类周期分裂(SEMI 2026Q1'两轨'):沪硅自陈'先进逻辑外延片、HBM 抛光片需求激增……传统应用未见改善'。单一行业指数(SOX)代表性下降,材料票必须按产品线下游标签加权判景气。",
+    "data_source": {
+      "availability": "MANUAL",
+      "primary": "标签:年报'行业情况/经营讨论'文字(SEMI);景气量化外源:SEMI 硅片出货面积、WSTS 分产品、TECHCET 分材料、Yole 先进封装 CAGR、HBM 产能;下游 fab 财报代理(688981/688347)",
+      "tushare_api": null,
+      "tushare_field": null,
+      "manual_required": true
+    },
+    "judgment_logic": {
+      "type": "CYCLE_POSITION",
+      "positive_if": "公司收入权重最大的下游标签处于'需求激增/旺盛'且卡 17 该分项同比转正",
+      "negative_if": "主要下游标签处于'需求下降/未改善'且公司文字确认;或产品线下游标签模糊无法归类",
+      "lookback": "2Y",
+      "threshold": "v0=文献锚/待B4验证(_unvalidated)"
+    },
+    "evidence_tier": "E2",
+    "literature": [
+      "沪硅产业 2025 年报 第三节二('用于先进逻辑芯片的外延片、HBM 抛光片需求激增……传统半导体应用领域需求和价格环境尚未出现显著改善')",
+      "SEMI (2026-04-29). Worldwide Silicon Wafer Shipments Increase 13% YoY in Q1 2026(手机/PC 走弱、AI 数据中心强)",
+      "中银国际 2024-12-19 pp.12-15(先进封装 Yole 2022-2028 CAGR 10.6%)"
+    ],
+    "falsification": "公司引用的行业数据(WSTS/SEMI/TECHCET)是 E2 且不同公司引用同一机构数字不一致(WSTS 2025:安集 7,956 亿 vs 沪硅 7,917 亿)需以机构原文为准;先进封装产能主要在台韩,国内材料票只吃国内 OSAT/HBM 份额;传统封装材料已基本国产化。",
+    "channel_binding": [
+      "MACRO_CROSS_ASSET",
+      "INDUSTRY_VALUE_CHAIN"
+    ],
+    "status": "REVIEWED",
+    "authored_by": "Claude (Track B synthesis from 3 collectors: issuer FY2025 reports ×8 / academic ×29 / sell-side ×28)",
+    "reviewed_by": "Junyan",
+    "as_of": "20260903",
+    "review_notes": "★★ 双源。MACRO_CROSS_ASSET 通道当前恒 CALIBRATING 零输出(F-013),本卡是它的第一个真实输入。需 Junyan 定外源(L1f)。上海新阳:湿化学品→成熟+先进逻辑;电镀液→先进封装。 ‖ Junyan 2026-09-03 整体批准(REVIEWED):卡组系统性认可;阈值取文献锚为 v0,标 _unvalidated,以 B4 三周期点回看验证后再翻 VALIDATED。"
+  },
+  {
+    "card_id": "SEMI_MAT_016",
+    "sub_sector": "MATERIALS",
+    "variable": "客户侧(A 股晶圆厂)稼动率与存货周转天数 + 自身合同负债(牛鞭前兆)",
+    "why_it_matters": "Liu-Chung-Chang (2013) 用库存变动+稼动率给出衰退概率样本外预测;Terwiesch 等 (2005) 实证半导体供应链软订单/预测放大。客户存货周转天数上升 + 自身合同负债下降 = 砍单前兆。SICAS 稼动率统计 2011 年停更,需从中芯/华虹季报解析(8 寸/12 寸分开)。",
+    "data_source": {
+      "availability": "AUTO",
+      "primary": "客户侧:Tushare fina_indicator.invturn_days(688981 中芯国际、688347 华虹、603986 兆易);自身:balancesheet.contract_liab;稼动率:客户季报文本(SEMI 增强)",
+      "tushare_api": "fina_indicator,balancesheet",
+      "tushare_field": "invturn_days,contract_liab",
+      "manual_required": false
+    },
+    "judgment_logic": {
+      "type": "TREND",
+      "positive_if": "主要客户存货周转天数下降(去库存尾声)且自身合同负债上升",
+      "negative_if": "主要客户存货周转天数连续 2 季上升 + 自身合同负债下降;或客户披露稼动率下行",
+      "lookback": "4Q",
+      "threshold": "v0=文献锚/待B4验证(_unvalidated)"
+    },
+    "evidence_tier": "E2",
+    "literature": [
+      "Liu, W.-H., Chung, C.-F. & Chang, K.-L. (2013). Economic Modelling 31:119-127",
+      "Terwiesch, C., Ren, Z.J., Ho, T.H. & Cohen, M.A. (2005). An Empirical Analysis of Forecast Sharing in the Semiconductor Equipment Supply Chain. Management Science 51(2):208-220",
+      "Jewell, B. (2012-03-13). SICAS is dead. SemiWiki(稼动率统计停更说明);华安证券 2024-07-26 p.5(8 寸 2023Q4 低谷,12 寸约 80%)"
+    ],
+    "falsification": "Terwiesch 样本是设备非材料,材料连续补货订单粒度小,软订单机制不完全适用;港/台上市客户(TSMC/UMC/华虹港股)不在 Tushare 财务表;合同负债在材料行业普遍较小信噪比低;不同晶圆厂'产能利用率'定义不一;存储厂稼动率更灵活,存储客户占比高的票不能套代工逻辑;下游为面板/光伏的应改用面板出货/光伏装机。",
+    "channel_binding": [
+      "MACRO_CROSS_ASSET",
+      "FUNDAMENTAL_VALUATION"
+    ],
+    "status": "REVIEWED",
+    "authored_by": "Claude (Track B synthesis from 3 collectors: issuer FY2025 reports ×8 / academic ×29 / sell-side ×28)",
+    "reviewed_by": "Junyan",
+    "as_of": "20260903",
+    "review_notes": "★★ 双源(学术+卖方)。AUTO 部分靠 A 股客户代理,需客户映射表(卡 9 的客户名脱敏是障碍)。 ‖ Junyan 2026-09-03 整体批准(REVIEWED):卡组系统性认可;阈值取文献锚为 v0,标 _unvalidated,以 B4 三周期点回看验证后再翻 VALIDATED。"
+  },
+  {
+    "card_id": "SEMI_MAT_017",
+    "sub_sector": "MATERIALS",
+    "variable": "全球硅片出货面积(SEMI SMG MSI)同比/环比,300mm/200mm 拆分",
+    "why_it_matters": "材料需求的直接量:同比转正且环比连续两季为正视为投片上行(东海:2024Q3 起单季同比转正;SEMI 2026Q1 3275 MSI +13.1%)。但先进制程每片材料价值量远高于成熟制程,MSI 增长与高价值材料收入可能背离。",
+    "data_source": {
+      "availability": "MANUAL",
+      "primary": "SEMI Silicon Manufacturers Group 季度新闻稿(总量免费,分尺寸订阅;semi.org 直抓 403,可用转载);国内代理:沪硅 688126/立昂微 605358 年报产销量表",
+      "tushare_api": null,
+      "tushare_field": null,
+      "manual_required": true
+    },
+    "judgment_logic": {
+      "type": "TREND",
+      "positive_if": "MSI 同比 >0 且环比连续 2 季 >0;对应尺寸分项(材料票下游 8 寸/12 寸)同向",
+      "negative_if": "MSI 同比 <0;或总量升但对应尺寸分项降",
+      "lookback": "6Q",
+      "threshold": "v0=文献锚/待B4验证(_unvalidated)"
+    },
+    "evidence_tier": "E2",
+    "literature": [
+      "SEMI (2026-04-29). SEMI Reports Worldwide Silicon Wafer Shipments Increase 13% Year-on-Year in Q1 2026. https://www.prnewswire.com/in/news-releases/semi-reports-worldwide-silicon-wafer-shipments-increase-13-year-on-year-in-q1-2026-302754712.html",
+      "东海证券《电子行业月报》2026-03-04 第 2.1 节(6) 图 25-26",
+      "Liu, W.-H. & Weng, S.-S. (2018). On predicting the semiconductor industry cycle: a Bayesian model averaging approach. Empirical Economics 54(2):673-703"
+    ],
+    "falsification": "全球口径,国内 fab 投片可能错位;对 8 寸材料票(功率/模拟)需 200mm 分项;'量增价跌'阶段出货面积回升不等于材料价格回升;MSI 覆盖全部形态不区分节点。",
+    "channel_binding": [
+      "MACRO_CROSS_ASSET"
+    ],
+    "status": "REVIEWED",
+    "authored_by": "Claude (Track B synthesis from 3 collectors: issuer FY2025 reports ×8 / academic ×29 / sell-side ×28)",
+    "reviewed_by": "Junyan",
+    "as_of": "20260903",
+    "review_notes": "★★ 双源。MANUAL 季度更新,进 L1f 外源清单。 ‖ Junyan 2026-09-03 整体批准(REVIEWED):卡组系统性认可;阈值取文献锚为 v0,标 _unvalidated,以 B4 三周期点回看验证后再翻 VALIDATED。"
+  },
+  {
+    "card_id": "SEMI_MAT_018",
+    "sub_sector": "MATERIALS",
+    "variable": "供给周期相位:设备出货(SEMI/SEAJ billings、book-to-bill)→ 国内新开产线数(验证窗口)→ 材料缺货",
+    "why_it_matters": "方正:'设备先行(交期近 1 年)→制造接力→材料缺货'三段相位;Chow-Choy (2006) book-to-bill 在 BVAR 中显著;'只有开新产线时国产材料才有被验证的机会'(晶瑞董秘:2023 年国内约 16 条新线)。设备订单是材料需求的上游领先量,新线数是验证窗口计数。",
+    "data_source": {
+      "availability": "MANUAL",
+      "primary": "SEMI 北美设备 billings 月报(book-to-bill 2017 年停发)、SEAJ 日本 book-to-bill 3MMA、WWSEMS;SEMI World Fab Forecast;国内 fab 环评/开工公告(人工维护新线清单)",
+      "tushare_api": null,
+      "tushare_field": null,
+      "manual_required": true
+    },
+    "judgment_logic": {
+      "type": "CYCLE_POSITION",
+      "positive_if": "设备 billings 3MMA 同比转正 ≥2 季(材料需求拐点前 2-4 季)且国内新线数上升",
+      "negative_if": "设备 billings 同比连续下行;或新线因管制延期(东海风险提示)",
+      "lookback": "8Q",
+      "threshold": "v0=文献锚/待B4验证(_unvalidated)"
+    },
+    "evidence_tier": "E2",
+    "literature": [
+      "Chow, H.K. & Choy, K.M. (2006). Forecasting the global electronics cycle with leading indicators: A Bayesian VAR approach. Int. J. Forecasting 22(2):301-315",
+      "方正证券 2022-01-19 '半导体材料对比半导体设备:需求稳健上升''三大催化剂'页",
+      "观察者网 2026-06-11(晶瑞董秘:2023 年国内约 16 条新线);华安证券 2024-07-26 主要观点第 2 条"
+    ],
+    "falsification": "全球设备订单对'以中国成熟制程扩产为主要客户'的材料票代表性弱,且中国 WFE 受出口管制扰动;材料波动幅度远小于设备,不能用设备周期幅度推材料价格幅度;海外新线对国产材料无窗口意义;先进制程新线可能只认证海外材料;Chow-Choy 显著性来自检索摘要,全文未打开。",
+    "channel_binding": [
+      "MACRO_CROSS_ASSET",
+      "INDUSTRY_VALUE_CHAIN"
+    ],
+    "status": "REVIEWED",
+    "authored_by": "Claude (Track B synthesis from 3 collectors: issuer FY2025 reports ×8 / academic ×29 / sell-side ×28)",
+    "reviewed_by": "Junyan",
+    "as_of": "20260903",
+    "review_notes": "★★ 双源。与卡 7(异常 capex)配对:行业 capex 高位 + 公司 CI 高 = 双重顶部信号。 ‖ Junyan 2026-09-03 整体批准(REVIEWED):卡组系统性认可;阈值取文献锚为 v0,标 _unvalidated,以 B4 三周期点回看验证后再翻 VALIDATED。"
+  },
+  {
+    "card_id": "SEMI_MAT_019",
+    "sub_sector": "MATERIALS",
+    "variable": "半导体材料收入占比与增量贡献(平台型 vs 纯半导体;非半导体业务噪音标记)",
+    "why_it_matters": "鼎龙(半导体 57% + 打印耗材 42.59%)、雅克(电子材料 58.99% + LNG 27%)、江丰(靶材 + 零部件)为平台型;安集、沪硅、南大为纯半导体。综合指标对平台型无意义,所有分部类卡必须先按此卡过滤;'半导体精密零部件''OLED 材料'不属于晶圆制造材料,需按产品线再拆。",
+    "data_source": {
+      "availability": "AUTO",
+      "primary": "Tushare fina_mainbz(type='P'/'I') 分行业/分产品 bz_sales 两期 → 半导体材料占比及 Δ半导体收入/Δ总收入",
+      "tushare_api": "fina_mainbz",
+      "tushare_field": "bz_item,bz_sales",
+      "manual_required": false
+    },
+    "judgment_logic": {
+      "type": "THRESHOLD",
+      "positive_if": "半导体材料收入占比 ≥ 阈值(待定)或 Δ半导体/Δ总 >1(增量全来自半导体)",
+      "negative_if": "占比 < 阈值且非半导体业务利润贡献为负(拖累);或年度间口径重分类不可比",
+      "lookback": "2Y",
+      "threshold": "50%(建议,未验证)"
+    },
+    "evidence_tier": "E1",
+    "literature": [
+      "鼎龙股份 2025 年报 第三节四 2(1)(半导体材料及芯片 57.00% +37.27%;打印复印通用耗材 42.59% −12.97%)",
+      "雅克科技 2025 年报 第三节四 2(1)(电子材料 58.99%;LNG 保温绝热材料 27%)",
+      "方正证券 2022-01-19 '单一市场较小,平台化布局至关重要';华安证券 2024-07-26 主要观点第 1 条"
+    ],
+    "falsification": "分行业口径把'半导体精密零部件''半导体显示材料'算进半导体时与本子赛道定义不一致;公司口径年度重分类时不可比;平台化若靠并购形成需看商誉。",
+    "channel_binding": [
+      "FUNDAMENTAL_VALUATION"
+    ],
+    "status": "REVIEWED",
+    "authored_by": "Claude (Track B synthesis from 3 collectors: issuer FY2025 reports ×8 / academic ×29 / sell-side ×28)",
+    "reviewed_by": "Junyan",
+    "as_of": "20260903",
+    "review_notes": "★ AUTO 且是其他分部类卡的前置过滤器。建议 status 直接进 REVIEWED(逻辑无争议),阈值 Junyan 定(建议 50%)。 ‖ Junyan 2026-09-03 整体批准(REVIEWED):卡组系统性认可;阈值取文献锚为 v0,标 _unvalidated,以 B4 三周期点回看验证后再翻 VALIDATED。"
+  },
+  {
+    "card_id": "SEMI_MAT_020",
+    "sub_sector": "MATERIALS",
+    "variable": "其他收益(税收优惠+政府补助)/利润总额 与 税收优惠资格依赖自陈",
+    "why_it_matters": "江丰 2025 其他收益占利润总额 19.83%(增值税加计抵减+奖励补助);上海新阳同类。比例高且公司在风险因素中承认依赖 = 盈利质量折扣;政策清单变化为事件触发。需拆分稳定项(加计抵减)与一次性项。",
+    "data_source": {
+      "availability": "AUTO",
+      "primary": "Tushare income.oth_income(需 probe)/ income.total_profit;所得税率与高新资格在年报'税项'附注(SEMI)",
+      "tushare_api": "income",
+      "tushare_field": "oth_income,total_profit",
+      "manual_required": false
+    },
+    "judgment_logic": {
+      "type": "THRESHOLD",
+      "positive_if": "其他收益/利润总额 ≤ 阈值(待定)或主要为稳定项(加计抵减)",
+      "negative_if": "比例 > 阈值且含大额一次性补助;或公司风险因素自陈依赖且政策到期在即",
+      "lookback": "3Y",
+      "threshold": "20%(单例参照,未验证)"
+    },
+    "evidence_tier": "E1",
+    "literature": [
+      "江丰电子 2025 年报 第三节五 非主营业务('其他收益 109,775,251.74 元 占利润总额 19.83%')",
+      "上海新阳 2025 年报 第三节五 非主营业务情况(其他收益 61,897 万元级)"
+    ],
+    "falsification": "亏损公司(沪硅)利润总额为负时比率无意义改看绝对额;科创板/创业板公司收大额补助时经营现金流也被抬高(与 ocf_to_or 判定联动);income.oth_income 字段名待 probe。",
+    "channel_binding": [
+      "BATTERY_基本面"
+    ],
+    "status": "REVIEWED",
+    "authored_by": "Claude (Track B synthesis from 3 collectors: issuer FY2025 reports ×8 / academic ×29 / sell-side ×28)",
+    "reviewed_by": "Junyan",
+    "as_of": "20260903",
+    "review_notes": "★ 单源 AUTO,盈利质量折扣项。阈值建议 20%(江丰实例),未验证。 ‖ Junyan 2026-09-03 整体批准(REVIEWED):卡组系统性认可;阈值取文献锚为 v0,标 _unvalidated,以 B4 三周期点回看验证后再翻 VALIDATED。"
+  },
+  {
+    "card_id": "SEMI_MAT_021",
+    "sub_sector": "MATERIALS",
+    "variable": "年报风险因素模板勾选变化(尚未盈利/业绩大幅下滑)+ 公司自陈的证伪触发条件",
+    "why_it_matters": "上交所科创板年报'风险因素'各小节有'□适用 √不适用'勾选;由不适用转适用为负向事件。更重要的是说明文字里公司自陈的触发条件(沪硅:'未能按计划扩大产品销售或推动客户认证进度')—— 这是发行人给出的该票专属 wrong_if,直接可作 thesis 层的证伪条件来源。卖方风险提示共识(验证不及预期/竞争加剧/原料价格/管制)映射到可观测变量。",
+    "data_source": {
+      "availability": "SEMI",
+      "primary": "年报第三节'风险因素'勾选框字符解析(上交所模板);深交所'重要提示'指向段落;卖方风险提示清单映射",
+      "tushare_api": null,
+      "tushare_field": null,
+      "manual_required": true
+    },
+    "judgment_logic": {
+      "type": "THRESHOLD",
+      "positive_if": "勾选由适用→不适用;或自陈触发条件对应的可观测变量(卡 1/5/2)未触发",
+      "negative_if": "勾选由不适用→适用;或自陈触发条件对应变量同时恶化(验证阶段回退 + 在建停滞 + 分部毛利率下滑)",
+      "lookback": "1Y",
+      "threshold": "v0=文献锚/待B4验证(_unvalidated)"
+    },
+    "evidence_tier": "E1",
+    "literature": [
+      "沪硅产业 2025 年报 第三节四(二) 业绩大幅下滑或亏损的风险('√适用……未能按计划扩大产品销售或按计划推动产品的客户认证进度')",
+      "安集科技 2025 年报 第三节四(一)(二)('□适用 √不适用')",
+      "华安证券 2024-07-26 风险提示;国盛证券 2022-04-02 第五章;东海证券 2023-07-31 第 5 章(卖方风险共识)"
+    ],
+    "falsification": "深交所公司无勾选模板只能用文字;勾选是模板化披露,公司可能保守勾选'适用'而无实质变化,需读说明文字;风险提示出现≠触发,只有对应可观测变量同时变化才计为触发。",
+    "channel_binding": [
+      "E1_EVENT",
+      "LLM_MUST_CHECK"
+    ],
+    "status": "REVIEWED",
+    "authored_by": "Claude (Track B synthesis from 3 collectors: issuer FY2025 reports ×8 / academic ×29 / sell-side ×28)",
+    "reviewed_by": "Junyan",
+    "as_of": "20260903",
+    "review_notes": "★★ 双源。**特别价值**:公司自陈触发条件可直接生成 thesis 的 wrong_if 候选(L8 层 F-018 零内容校验的部分解药——至少 wrong_if 有 E1 来源)。 ‖ Junyan 2026-09-03 整体批准(REVIEWED):卡组系统性认可;阈值取文献锚为 v0,标 _unvalidated,以 B4 三周期点回看验证后再翻 VALIDATED。"
+  },
+  {
+    "card_id": "SEMI_MAT_022",
+    "sub_sector": "MATERIALS",
+    "variable": "海外收入占比、海外毛利率差与汇兑敏感度",
+    "why_it_matters": "海外占比高且毛利率高于内销(江丰外销 34.07%,毛利率 31.93% vs 内销 24.71%)= 竞争力外溢;华特由中间商转终端直销。汇兑损益/净利润敏感度随海外占比线性放大。'境外'含中国台湾时地缘属性不同(安集海外主要面向台湾)。",
+    "data_source": {
+      "availability": "AUTO",
+      "primary": "Tushare fina_mainbz(type='D') 分地区 bz_sales/bz_cost;汇兑损益在'财务费用'附注(SEMI)",
+      "tushare_api": "fina_mainbz",
+      "tushare_field": "bz_item,bz_sales,bz_cost",
+      "manual_required": false
+    },
+    "judgment_logic": {
+      "type": "RATIO_VS_PEER",
+      "positive_if": "海外占比上升且海外毛利率 ≥ 内销(外溢);或海外直销比例上升",
+      "negative_if": "海外占比高但来自非半导体业务(鼎龙耗材);或汇兑损益/净利润 > 阈值且无对冲",
+      "lookback": "3Y",
+      "threshold": "v0=文献锚/待B4验证(_unvalidated)"
+    },
+    "evidence_tier": "E1",
+    "literature": [
+      "江丰电子 2025 年报 第三节四(2) 分地区(外销 1,568,477,940.14 元 占 34.07%,毛利率 31.93%;内销 24.71%)",
+      "沪硅产业 2025 年报 第三节四(五)2 汇率波动风险;安集科技 2025 年报 汇兑损益三年序列"
+    ],
+    "falsification": "'境外'含台湾/香港时地缘属性不同;通过国际气体公司/商社间接出口的收入算外销但客户关系不直接;外销以人民币结算部分无汇率敏感;须先过卡 19 剔除非半导体海外收入。",
+    "channel_binding": [
+      "FUNDAMENTAL_VALUATION"
+    ],
+    "status": "REVIEWED",
+    "authored_by": "Claude (Track B synthesis from 3 collectors: issuer FY2025 reports ×8 / academic ×29 / sell-side ×28)",
+    "reviewed_by": "Junyan",
+    "as_of": "20260903",
+    "review_notes": "★ 单源 AUTO,fina_mainbz type='D' 已在拉取(fetch_tushare.py)。复用 derive_segment_economics 的境内/境外分桶。 ‖ Junyan 2026-09-03 整体批准(REVIEWED):卡组系统性认可;阈值取文献锚为 v0,标 _unvalidated,以 B4 三周期点回看验证后再翻 VALIDATED。"
+  },
+  {
+    "card_id": "SEMI_MAT_023",
+    "sub_sector": "MATERIALS",
+    "variable": "个股/板块估值历史分位(PE/PS/PB 5y & 10y)与 PB-ROE 中枢(亏损期切换 PS)",
+    "why_it_matters": "海通/广发/国信 PB-ROE:龙头用 ROE 均值非单年,化工 PB 中枢 2.67x/底部 1.4-1.7x(全行业锚非半导体);东海 2026-03 半导体 PE 5y/10y 分位 97.85%/92.22%。验证期/爬坡期未盈利公司 ROE 为负 PB-ROE 失效,只能退到 PS/分部收入(东海:'市值与净利润关联弱,成长空间/技术壁垒定价更关键')。",
+    "data_source": {
+      "availability": "AUTO",
+      "primary": "Tushare daily_basic.pe_ttm/pb/ps_ttm 日频 → 自算 5y/10y 分位;fina_indicator.roe 多年 → PB-ROE 回归(材料票池,MANUAL 组装)",
+      "tushare_api": "daily_basic,fina_indicator",
+      "tushare_field": "pe_ttm,pb,ps_ttm,roe",
+      "manual_required": false
+    },
+    "judgment_logic": {
+      "type": "CYCLE_POSITION",
+      "positive_if": "PE/PS/PB 分位处于中低段且 PB 与 ROE 均值匹配;亏损期 PS 分位中低",
+      "negative_if": "PE/PS/PB 分位 >90%(东海 2026-03 实例)且卡 13 z>+1(峰值利润上高估值);亏损期 PS 分位 >90%",
+      "lookback": "10Y",
+      "threshold": "v0=文献锚/待B4验证(_unvalidated)"
+    },
+    "evidence_tier": "E2",
+    "literature": [
+      "海通证券《周期股估值方法探讨》2019-09;广发策略《PB-ROE 方法论(上)》2024-09-23;国信策略《PB-ROE 再审视》2024-06-09",
+      "东海证券《电子行业月报》2026-03-04 第 1.2 节 半导体估值回顾(PE 5y/10y 分位 97.85%/92.22%,PS 98.93%/99.46%)",
+      "Campbell, J.Y. & Shiller, R.J. (1988). Stock Prices, Earnings and Expected Dividends. NBER WP 2511"
+    ],
+    "falsification": "亏损期 PE 分位为 0%/失真须切 PS/PB;上市不足 5 年的科创板票无足够历史分位;板块分位对个股无直接约束;历史中枢来自化工全行业非半导体材料;国产替代 0→1 公司结构性上台阶,历史分位低估。",
+    "channel_binding": [
+      "BATTERY_估值"
+    ],
+    "status": "REVIEWED",
+    "authored_by": "Claude (Track B synthesis from 3 collectors: issuer FY2025 reports ×8 / academic ×29 / sell-side ×28)",
+    "reviewed_by": "Junyan",
+    "as_of": "20260903",
+    "review_notes": "★★ 双源(卖方+学术)。电池估值维当前只有 PE 一年分位(F-015),本卡扩到三乘数×两窗口+亏损期切换规则。 ‖ Junyan 2026-09-03 整体批准(REVIEWED):卡组系统性认可;阈值取文献锚为 v0,标 _unvalidated,以 B4 三周期点回看验证后再翻 VALIDATED。"
+  }
+]
