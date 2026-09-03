@@ -4676,6 +4676,45 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="Unknown dimension states cannot be treated as successfully measured evidence.",
     ),
     MutationCase(
+        mutation_id="BATTERY_VERDICT_V0_DERIVES_FROM_DIMS",
+        component="Research funnel candidate battery",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_funnel_dag_offline.py",
+        before=(
+            "                # governance-mutation: BATTERY_VERDICT_V0_DERIVES_FROM_DIMS\n"
+            "                if ("
+        ),
+        after=(
+            "                # governance-mutation: BATTERY_VERDICT_V0_DERIVES_FROM_DIMS\n"
+            "                if False and ("
+        ),
+        expected_failure_marker="test_u3_rejects_a_tampered_display_verdict_after_rows_rehash",
+        rationale="U3 must independently recompute each display-only verdict from its frozen dimension evidence.",
+    ),
+    MutationCase(
+        mutation_id="BATTERY_VERDICT_NOT_IN_READY_PATH",
+        component="Research funnel U4 readiness",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_funnel_dag_offline.py",
+        before=(
+            "            # governance-mutation: BATTERY_VERDICT_NOT_IN_READY_PATH\n"
+            '            "ready": not blocked_reasons,'
+        ),
+        after=(
+            "            # governance-mutation: BATTERY_VERDICT_NOT_IN_READY_PATH\n"
+            '            "ready": (\n'
+            "                not blocked_reasons\n"
+            "                and all(\n"
+            "                    evidence.get(BATTERY_VERDICT_FIELD) != \"OUTFLOW\"\n"
+            '                    for evidence in battery_row.get("dims", {}).values()\n'
+            "                    if isinstance(evidence, Mapping)\n"
+            "                )\n"
+            "            ),"
+        ),
+        expected_failure_marker="test_display_verdicts_never_change_u4_readiness",
+        rationale="Unvalidated display labels must never enter U4 completeness or readiness decisions.",
+    ),
+    MutationCase(
         mutation_id="FUNNEL_DAG_TOKENLESS_DEGRADATION",
         component="Nightly funnel wiring DAG",
         source_path="experiments/execution_tracker/run_nightly.py",
@@ -6752,7 +6791,7 @@ mutation_id="U4_PREDECISION_ATOMIC_NO_REPLACE",
         component="Research Closed Loop V1 assembly identity",
         source_path="docs/research/contracts/research_closed_loop.v1.json",
         test_script="tests/test_u4_pre_decision_runtime.py",
-        before="sha256:70b17fefc3ce7a1ac6982192294a7676d793783d8b2cd62e23ce71bd2479bd3f",
+        before="sha256:01c98eba48ffdbdb22870eca8a01a66f8415d6e956b7bf990e386c7e3378f389",
         after="sha256:e84b0e026832420ee1e88e1fcbac2b69a836e97cf29f5d1d7daf15eb3fbe09fa",
         expected_failure_marker="test_fix_forward_task_compiles_and_preserves_the_frozen_assembly",
         rationale="The previously reviewed V1.3 identity must not silently bind changed DAG bytes.",

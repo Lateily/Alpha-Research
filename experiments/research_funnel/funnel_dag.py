@@ -37,8 +37,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "execution_tracker"))
 
 from funnel_pipeline import (  # noqa: E402
+    BATTERY_DIMENSION_VERDICT_CONTRACT,
+    BATTERY_DISPLAY_VERDICT_DIMENSIONS,
     BATTERY_DIMENSIONS,
     BATTERY_U2_SCHEMA,
+    BATTERY_VERDICT_FIELD,
     DISCLAIMER,
     RULE_VERSION,
     SCHEMA_VERSION,
@@ -239,6 +242,8 @@ def run_candidates() -> int:
 def _blocked_row(tk: str, today: str, why: str) -> dict:
     """数据源整体不可用时的逐票 DATA_BLOCKED 行 —— 六维齐全,每维显式阻断。"""
     dims = {d: {"status": "DATA_BLOCKED", "err": why[:80]} for d in BATTERY_DIMENSIONS}
+    for name in BATTERY_DISPLAY_VERDICT_DIMENSIONS:
+        dims[name][BATTERY_VERDICT_FIELD] = None
     return {
         "ts_code": tk, "checked_at": today, "dims": dims,
         "completeness": {"covered": 0, "of": 6, "missing": list(BATTERY_DIMENSIONS),
@@ -294,6 +299,8 @@ def _sanitize_row(row: dict) -> dict:
         if _has_non_finite(dims[name]):
             dims[name] = {"status": "DATA_BLOCKED",
                           "err": "non-finite value from provider (NaN/Inf), refused"}
+    import full_battery  # noqa: WPS433
+    full_battery._apply_verdict_v0_unvalidated(dims)
     missing = [k for k, v in dims.items()
                if isinstance(v, dict) and v.get("status") in ("DATA_BLOCKED", "NOT_RUN")]
     row["completeness"] = {"covered": len(dims) - len(missing), "of": len(dims),
@@ -337,6 +344,7 @@ def run_battery() -> int:
         "run_id": run_id,
         "generated_at": generated_at,
         "manifest_hash": manifest["manifest_hash"],
+        "dimension_verdict_contract": BATTERY_DIMENSION_VERDICT_CONTRACT,
         "provider_state": provider_state,
         "results": results,
         "disclaimer": DISCLAIMER,
