@@ -2,8 +2,8 @@
 
 Status: `PHASE_1 / OFFLINE / NOT_DEPLOYED`
 
-Owner: Jason (H11 Safety/Governance)  
-Independent reviewers: Reed or Simon  
+Owner: Jason (H11 Safety/Governance)
+Independent reviewers: Reed or Simon
 Final merge authority: Junyan
 
 ## 1. Purpose
