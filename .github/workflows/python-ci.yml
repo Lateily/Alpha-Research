@@ -189,6 +189,13 @@ jobs:
         run: |
           python3 tests/test_paper_registration_bridge.py
           python3 scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/paper_registration_bridge_v1.task.json
+      # Model Paper Fund go-live runbook: tomorrow's paper-only operating guide
+      # must keep the Junyan-only authority boundary, registration bridge, and
+      # T+ observation schedule visible.
+      - name: Model Paper Fund go-live runbook contract (offline)
+        run: python3 tests/test_model_paper_fund_go_live_runbook.py
+      - name: Model Paper Fund prelaunch readiness artifacts (offline)
+        run: python3 tests/test_model_paper_fund_prelaunch_readiness.py
       # 终局 paper cycle 五轴归因:thesis/valuation/timing/execution/market beta
       # 独立判定;beta 从冻结样本重算,相对收益不得升格为 alpha。
       - name: Offline five-axis paper-cycle attribution
