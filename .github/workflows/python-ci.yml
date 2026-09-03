@@ -240,6 +240,9 @@ jobs:
         run: |
           python3 tests/test_semiconductor_rerun_checklist.py
           python3 tests/test_semiconductor_preflight_packet.py
+      # WO-A1: canonical LHB appearances render contract (offline, node subprocess)
+      - name: Research API LHB render regression (offline)
+        run: python3 tests/test_research_lhb_render.py
       # ── Macro OS M0-A:源身份/事件分级/双时间点预判/共识冲突语义 ──
       - name: Macro OS M0-A contract selftest
         run: python3 experiments/macro_os/contracts.py --selftest
