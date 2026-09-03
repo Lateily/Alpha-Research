@@ -1,6 +1,6 @@
 {
   "ticker": "688120.SH",
-  "fetched_at": "2026-09-02T12:53:36Z",
+  "fetched_at": "2026-09-03T05:39:19Z",
   "permission_model": "runtime_probe",
   "_status": "partial",
   "data": {
@@ -824,22 +824,9 @@
           "pct_chg": -2.7756,
           "vol": 81615.04,
           "amount": 2053265.501
-        },
-        {
-          "ts_code": "688120.SH",
-          "trade_date": "20260604",
-          "open": 243.65,
-          "high": 258.52,
-          "low": 243.0,
-          "close": 255.08,
-          "pre_close": 247.86,
-          "change": 7.22,
-          "pct_chg": 2.9129,
-          "vol": 85162.58,
-          "amount": 2154096.827
         }
       ],
-      "row_count": 64,
+      "row_count": 63,
       "_status": "ok",
       "as_of": "20260902"
     },
@@ -2104,34 +2091,19 @@
           "free_share": 25419.1104,
           "total_mv": 8770569.3768,
           "circ_mv": 8770569.3768
-        },
-        {
-          "ts_code": "688120.SH",
-          "trade_date": "20260604",
-          "close": 255.08,
-          "turnover_rate": 2.4081,
-          "turnover_rate_f": 3.3503,
-          "volume_ratio": 0.76,
-          "pe": 83.2403,
-          "pe_ttm": 82.1871,
-          "pb": 11.6839,
-          "ps": 19.4073,
-          "ps_ttm": 18.2716,
-          "dv_ratio": 0.144,
-          "dv_ttm": 0.144,
-          "total_share": 35365.1991,
-          "float_share": 35365.1991,
-          "free_share": 25419.1104,
-          "total_mv": 9020954.9864,
-          "circ_mv": 9020954.9864
         }
       ],
-      "row_count": 64,
+      "row_count": 63,
       "_status": "ok",
       "as_of": "20260902"
     },
     "adj_factor": {
       "rows": [
+        {
+          "ts_code": "688120.SH",
+          "trade_date": "20260903",
+          "adj_factor": 4.6652
+        },
         {
           "ts_code": "688120.SH",
           "trade_date": "20260902",
@@ -2446,16 +2418,11 @@
           "ts_code": "688120.SH",
           "trade_date": "20260605",
           "adj_factor": 3.3296
-        },
-        {
-          "ts_code": "688120.SH",
-          "trade_date": "20260604",
-          "adj_factor": 3.3296
         }
       ],
       "row_count": 64,
       "_status": "ok",
-      "as_of": "20260902"
+      "as_of": "20260903"
     },
     "income": {
       "rows": [
