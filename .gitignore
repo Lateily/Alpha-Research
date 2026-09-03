@@ -37,3 +37,12 @@ public/data/iter1*_bootstrap_*.json
 # R-015 事件账本的 flock 句柄与原子写临时文件:运行时产物,不入库
 experiments/execution_tracker/*.jsonl.lock
 experiments/execution_tracker/*.anchor.json.tmp
+
+# 夜链发布运行产物:durable manifest / 发布状态 / 提交指针 —— 运行时文件,不入库。
+# 2026-09-03 事件(WO-OPS1):同步的 stash -u 卷走 untracked 的 runs/<run_id>/manifest.json,
+# 致 COMMITTED 发布不可验证、夜链 fail-closed 三天。gitignore 后 stash -u 不再触碰它们。
+experiments/execution_tracker/runs/
+experiments/execution_tracker/publication_state.json
+experiments/execution_tracker/current_run.json
+public/data/v2/current_run.json
+public/data/v2/runs/

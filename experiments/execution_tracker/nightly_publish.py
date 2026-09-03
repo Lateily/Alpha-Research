@@ -7,6 +7,16 @@ import json
 import os
 import shutil
 
+# ── WO-OPS1 (2026-09-03): operator re-baseline for a lost durable manifest ──
+# A COMMITTED publication whose durable manifest no longer exists cannot be
+# verified and must not be silently accepted. The only compliant exit is an
+# approved, ledgered re-baseline that marks it SUPERSEDED_BY_OPERATOR.
+CONTROL_LEDGER_NAME = "publication_migration_events.jsonl"
+SUPERSEDED_STATUS = "SUPERSEDED_BY_OPERATOR"
+LOST_MANIFEST_EVENT_KIND = "PUBLICATION_MANIFEST_LOST"
+LOST_MANIFEST_EVENT_SCHEMA = "publication_manifest_lost/v1"
+DISCLAIMER = "不是买卖指令；研究信号，human executes."
+
 
 def _fsync_parent(path):
     fd = os.open(os.path.dirname(os.path.abspath(path)), os.O_RDONLY)
@@ -615,6 +625,11 @@ def recover_interrupted_publish(state_path, live_et, live_repo):
         raise RuntimeError(f"publication_state 不可解析: {exc}") from exc
     if state.get("status") == "COMMITTED":
         return verify_committed_publication(state, live_et, live_repo)
+    if state.get("status") == SUPERSEDED_STATUS:
+        # governance-mutation: PUBLISH_SUPERSEDED_REQUIRES_LEDGERED_EVENT
+        rec = _verify_superseded_event(state, _control_ledger_path(live_et))
+        return {"status": SUPERSEDED_STATUS, "run_id": state.get("run_id"),
+                "restored": 0, "rebaseline_event": rec["hash"]}
     if state.get("status") != "PUBLISHING":
         return None
     plan_path = state.get("plan")
@@ -681,3 +696,153 @@ def verify_committed_publication(state, live_et, live_repo):
         "run_id": state.get("run_id"),
         "restored": 0,
     }
+
+
+# ────────────── WO-OPS1: lost durable manifest → operator re-baseline ──────────────
+def _control_ledger_path(live_et):
+    return os.path.join(live_et, CONTROL_LEDGER_NAME)
+
+
+def _read_pointer(path):
+    """Snapshot a commit pointer for the ledger; unreadable pointers are recorded, not hidden."""
+    if not os.path.isfile(path):
+        return {"present": False, "path": path}
+    try:
+        with open(path, encoding="utf-8") as fh:
+            return {"present": True, "path": path, "value": json.load(fh)}
+    except (OSError, json.JSONDecodeError) as exc:
+        return {"present": True, "path": path, "error": str(exc)}
+
+
+def rebaseline_lost_manifest(state_path, live_et, live_repo, *, reason, approved_by,
+                             approval_ref, ledger_path=None, now=None):
+    """Record a lost durable manifest in the append-only control ledger and mark the
+    committed publication SUPERSEDED_BY_OPERATOR so the next nightly may publish anew.
+
+    Never re-creates or edits the lost manifest, never touches public aliases or
+    pointers, and never pretends the old publication is verifiable.
+    """
+    import event_ledger
+    # governance-mutation: PUBLISH_REBASELINE_REQUIRES_APPROVAL
+    if not (str(reason or "").strip() and str(approved_by or "").strip()
+            and str(approval_ref or "").strip()):
+        raise RuntimeError("rebaseline 需要非空 reason / approved_by / approval_ref —— fail-closed")
+    if not os.path.exists(state_path):
+        raise RuntimeError("publication_state 不存在 —— 无可再基线的发布")
+    try:
+        with open(state_path, encoding="utf-8") as fh:
+            state = json.load(fh)
+    except (OSError, json.JSONDecodeError) as exc:
+        raise RuntimeError(f"publication_state 不可解析: {exc}") from exc
+    status = state.get("status")
+    if status == SUPERSEDED_STATUS:
+        raise RuntimeError("publication_state 已为 SUPERSEDED_BY_OPERATOR —— 重复 rebaseline 被拒")
+    if status != "COMMITTED":
+        raise RuntimeError(f"rebaseline 仅适用于 COMMITTED 发布,当前状态 {status!r} —— 拒绝")
+    manifest_path = state.get("manifest")
+    if manifest_path and os.path.isfile(manifest_path):
+        raise RuntimeError("durable manifest 仍存在 —— 无需 rebaseline,拒绝以免掩盖可验证发布")
+    run_id = str(state.get("run_id") or "")
+    if not run_id:
+        raise RuntimeError("publication_state 缺 run_id —— fail-closed")
+    ledger_path = ledger_path or _control_ledger_path(live_et)
+    rec_id = f"rebaseline:{run_id}"
+    for ln in event_ledger._read_lines(ledger_path):
+        rec = json.loads(ln)
+        if rec.get("kind") == LOST_MANIFEST_EVENT_KIND and rec.get("id") == rec_id:
+            raise RuntimeError(f"账本已有 {rec_id} —— 重复 rebaseline 被拒")
+    public_pointer = _read_pointer(
+        os.path.join(live_repo, "public", "data", "v2", "current_run.json"))
+    et_pointer = _read_pointer(os.path.join(live_et, "current_run.json"))
+    pinned = None
+    if public_pointer.get("present") and isinstance(public_pointer.get("value"), dict):
+        pinned = public_pointer["value"].get("manifest_sha256")
+    payload = {
+        "schema": LOST_MANIFEST_EVENT_SCHEMA,
+        "run_id": run_id,
+        "missing_manifest": manifest_path,
+        "pinned_manifest_sha256": pinned,
+        "public_pointer": public_pointer,
+        "et_pointer": et_pointer,
+        "prior_state": state,
+        "reason": str(reason).strip(),
+        "approved_by": str(approved_by).strip(),
+        "approval_ref": str(approval_ref).strip(),
+        "note": "operator re-baseline; the lost publication is recorded as unverifiable, not restored",
+    }
+    rec = event_ledger.append(LOST_MANIFEST_EVENT_KIND, rec_id, payload,
+                              path=ledger_path, now=now)
+    new_state = dict(state)
+    new_state.update({
+        "status": SUPERSEDED_STATUS,
+        "prior_status": "COMMITTED",
+        "superseded_event_kind": LOST_MANIFEST_EVENT_KIND,
+        "superseded_event_id": rec_id,
+        "superseded_event_hash": rec["hash"],
+        "superseded_at": rec["ts"],
+        "approved_by": payload["approved_by"],
+        "approval_ref": payload["approval_ref"],
+    })
+    atomic_json(state_path, new_state)
+    return {"status": SUPERSEDED_STATUS, "run_id": run_id,
+            "event_hash": rec["hash"], "ledger": ledger_path}
+
+
+def _verify_superseded_event(state, ledger_path):
+    """A SUPERSEDED state is honoured only when its ledgered loss event exists and binds."""
+    import event_ledger
+    rec_id = state.get("superseded_event_id")
+    want_hash = state.get("superseded_event_hash")
+    if not rec_id or not want_hash:
+        raise RuntimeError("SUPERSEDED 状态缺账本事件绑定 —— fail-closed")
+    chain = event_ledger.verify(ledger_path)
+    if not chain.get("ok"):
+        raise RuntimeError("控制账本链校验失败 —— fail-closed")
+    for ln in event_ledger._read_lines(ledger_path):
+        rec = json.loads(ln)
+        if rec.get("kind") == LOST_MANIFEST_EVENT_KIND and rec.get("id") == rec_id:
+            if rec.get("hash") != want_hash or event_ledger.record_hash(rec) != want_hash:
+                raise RuntimeError("SUPERSEDED 状态绑定的事件 hash 不符 —— fail-closed")
+            if (rec.get("payload") or {}).get("run_id") != state.get("run_id"):
+                raise RuntimeError("账本事件 run_id 与 publication_state 不一致 —— fail-closed")
+            return rec
+    raise RuntimeError("SUPERSEDED 状态缺账本事件 —— fail-closed")
+
+
+def _cli(argv=None):
+    import argparse
+    here = os.path.dirname(os.path.abspath(__file__))
+    parser = argparse.ArgumentParser(prog="nightly_publish.py")
+    sub = parser.add_subparsers(dest="cmd", required=True)
+    rb = sub.add_parser(
+        "rebaseline",
+        help="record a lost durable manifest and supersede the committed publication",
+    )
+    rb.add_argument("--reason", required=True)
+    rb.add_argument("--approved-by", required=True)
+    rb.add_argument("--approval-ref", required=True)
+    rb.add_argument("--live-et", default=here)
+    rb.add_argument("--live-repo", default=os.path.abspath(os.path.join(here, "..", "..")))
+    rb.add_argument("--state", default=None)
+    rb.add_argument("--ledger", default=None)
+    args = parser.parse_args(argv)
+    if args.cmd == "rebaseline":
+        state_path = args.state or os.path.join(args.live_et, "publication_state.json")
+        try:
+            out = rebaseline_lost_manifest(
+                state_path, args.live_et, args.live_repo, reason=args.reason,
+                approved_by=args.approved_by, approval_ref=args.approval_ref,
+                ledger_path=args.ledger,
+            )
+        except RuntimeError as exc:
+            print(f"REFUSED: {exc}")
+            print(DISCLAIMER)
+            return 2
+        print(json.dumps(out, ensure_ascii=False, sort_keys=True))
+        print(DISCLAIMER)
+        return 0
+    return 2
+
+
+if __name__ == "__main__":
+    raise SystemExit(_cli())

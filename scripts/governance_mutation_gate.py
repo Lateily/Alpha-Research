@@ -4791,6 +4791,39 @@ MUTATIONS: tuple[MutationCase, ...] = (
         ),
         rationale="The manifest must not silently stop enforcing nightly wiring marker coverage.",
     ),
+    MutationCase(
+        mutation_id="PUBLISH_REBASELINE_REQUIRES_APPROVAL",
+        component="Nightly publication operator re-baseline",
+        source_path="experiments/execution_tracker/nightly_publish.py",
+        test_script="tests/test_publish_rebaseline_offline.py",
+        before=(
+            "    # governance-mutation: PUBLISH_REBASELINE_REQUIRES_APPROVAL\n"
+            "    if not (str(reason or \"\").strip() and str(approved_by or \"\").strip()\n"
+            "            and str(approval_ref or \"\").strip()):"
+        ),
+        after=(
+            "    # governance-mutation: PUBLISH_REBASELINE_REQUIRES_APPROVAL\n"
+            "    if False:"
+        ),
+        expected_failure_marker="test_rebaseline_refuses_missing_approval_and_leaves_state_and_ledger_untouched",
+        rationale="A lost-manifest re-baseline is an operator action; without reason/approved_by/approval_ref it must be refused.",
+    ),
+    MutationCase(
+        mutation_id="PUBLISH_SUPERSEDED_REQUIRES_LEDGERED_EVENT",
+        component="Nightly publication operator re-baseline",
+        source_path="experiments/execution_tracker/nightly_publish.py",
+        test_script="tests/test_publish_rebaseline_offline.py",
+        before=(
+            "        # governance-mutation: PUBLISH_SUPERSEDED_REQUIRES_LEDGERED_EVENT\n"
+            "        rec = _verify_superseded_event(state, _control_ledger_path(live_et))"
+        ),
+        after=(
+            "        # governance-mutation: PUBLISH_SUPERSEDED_REQUIRES_LEDGERED_EVENT\n"
+            "        rec = {\"hash\": state.get(\"superseded_event_hash\")}"
+        ),
+        expected_failure_marker="test_hand_edited_superseded_state_without_ledger_event_is_fail_closed",
+        rationale="A hand-edited SUPERSEDED state without its ledgered loss event must not unblock publication.",
+    ),
 )
 
 # #295 replaces the original packet-as-one-event model with candidate events
