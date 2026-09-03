@@ -8,7 +8,7 @@
     "no_position_mutation": true,
     "run_date": "2026-09-03",
     "pilot_start_date": "2026-06-08",
-    "generated_at": "2026-09-03T05:43:45.745421+00:00",
+    "generated_at": "2026-09-03T13:01:33.746554+00:00",
     "fresh_pilot": true,
     "legacy_paper_positions_inherited": false,
     "sources": [
@@ -266,7 +266,7 @@
           },
           "key_indicators": {
             "rsi14": 38.3,
-            "macd_hist": -0.6884,
+            "macd_hist": -0.7017,
             "price_vs_ma20": -3.58,
             "price_vs_ma60": -2.92,
             "change_5d": -5.74,
@@ -355,8 +355,8 @@
             "total": 0
           },
           "key_indicators": {
-            "rsi14": 40.6,
-            "macd_hist": -1.0121,
+            "rsi14": 40.9,
+            "macd_hist": -0.9678,
             "price_vs_ma20": -8.38,
             "price_vs_ma60": -14.02,
             "change_5d": -4.79,
@@ -390,8 +390,8 @@
             "total": 1
           },
           "key_indicators": {
-            "rsi14": 38.4,
-            "macd_hist": -0.1724,
+            "rsi14": 38.7,
+            "macd_hist": -0.0992,
             "price_vs_ma20": -8.46,
             "price_vs_ma60": -21.88,
             "change_5d": -3.35,
@@ -402,7 +402,7 @@
               "type": "MACD_DEATH_CROSS",
               "strength": "strong",
               "bullish": false,
-              "desc": "MACD DIF(-46.873) crossed below DEA(-46.787) below zero — bearish momentum"
+              "desc": "MACD DIF(-46.944) crossed below DEA(-46.894) below zero — bearish momentum"
             }
           ]
         },
@@ -432,8 +432,8 @@
             "total": 0
           },
           "key_indicators": {
-            "rsi14": 49.9,
-            "macd_hist": 0.0183,
+            "rsi14": 50.0,
+            "macd_hist": 0.0155,
             "price_vs_ma20": 0.23,
             "price_vs_ma60": 2.26,
             "change_5d": -0.93,
@@ -521,8 +521,8 @@
             "total": 0
           },
           "key_indicators": {
-            "rsi14": 43.3,
-            "macd_hist": -4.7105,
+            "rsi14": 43.4,
+            "macd_hist": -4.8407,
             "price_vs_ma20": -5.68,
             "price_vs_ma60": -4.35,
             "change_5d": -4.5,
