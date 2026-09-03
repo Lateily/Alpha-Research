@@ -6721,7 +6721,51 @@ MUTATIONS = MUTATIONS + (
         rationale="Every configured daily source must have a target-date row before a same-day rerun handoff.",
     ),
     MutationCase(
-mutation_id="U4_PREDECISION_ATOMIC_NO_REPLACE",
+        mutation_id="U4_PEAK_FLAG_DERIVED_FROM_CYCLICAL_SOURCE",
+        component="Research funnel U4 pre-decision peak-earnings display",
+        source_path="experiments/research_funnel/u4_pre_decision.py",
+        test_script="tests/test_u4_pre_decision_runtime.py",
+        before=(
+            "    # governance-mutation: U4_PEAK_FLAG_DERIVED_FROM_CYCLICAL_SOURCE\n"
+            '    flag = source["peak_earnings_risk"]'
+        ),
+        after=(
+            "    # governance-mutation: U4_PEAK_FLAG_DERIVED_FROM_CYCLICAL_SOURCE\n"
+            "    flag = False"
+        ),
+        expected_failure_marker=(
+            "test_peak_earnings_is_derived_from_cyclical_source_without_changing_u4_gate"
+        ),
+        rationale=(
+            "Peak-earnings display evidence must be derived from cyclical_flag output "
+            "without entering the U4 readiness path."
+        ),
+    ),
+    MutationCase(
+        mutation_id="U4_PEAK_FLAG_OPTIONAL_SOURCE_BOUNDARY",
+        component="Research funnel U4 pre-decision peak-earnings display",
+        source_path="experiments/research_funnel/u4_pre_decision.py",
+        test_script="tests/test_u4_pre_decision_runtime.py",
+        before=(
+            "        # governance-mutation: U4_PEAK_FLAG_OPTIONAL_SOURCE_BOUNDARY\n"
+            "        if os.path.lexists(cyclical_flags_path):\n"
+            "            protected_paths.append(cyclical_flags_path)"
+        ),
+        after=(
+            "        # governance-mutation: U4_PEAK_FLAG_OPTIONAL_SOURCE_BOUNDARY\n"
+            "        if True:\n"
+            "            protected_paths.append(cyclical_flags_path)"
+        ),
+        expected_failure_marker=(
+            "test_missing_default_cyclical_source_does_not_protect_walk_scratch"
+        ),
+        rationale=(
+            "An absent optional cyclical source must not widen the immutable-input "
+            "boundary to cover a sibling walk scratch directory."
+        ),
+    ),
+    MutationCase(
+        mutation_id="U4_PREDECISION_ATOMIC_NO_REPLACE",
         component="Research funnel U4 pre-decision runtime",
         source_path="experiments/research_funnel/u4_pre_decision.py",
         test_script="tests/test_u4_pre_decision_runtime.py",

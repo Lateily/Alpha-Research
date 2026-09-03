@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import os
 import re
 import tempfile
@@ -79,6 +80,7 @@ CANDIDATE_FIELDS = {
     "causal_cluster_identity_state",
     "u2_candidate_row_hash",
     "u3_battery_row_hash",
+    "peak_earnings",
     "positive_channels",
     "red_flag_channels",
     "blocked_reasons",
@@ -131,6 +133,16 @@ SUMMARY_FIELDS = {
     "candidate_count", "allowed_for_review_count", "blocked_count",
     "red_flag_count", "data_blocked_count", "same_day_hash",
 }
+PEAK_EARNINGS_FIELDS = {
+    "flag",
+    "needs_normalized_bridge",
+    "roe_vs_5y_median",
+    "gm_vs_5y_median",
+    "source_hash",
+    "reason",
+}
+CYCLICAL_FLAG_SOURCE = "scripts/cyclical_flag.py"
+CYCLICAL_FLAG_REASON = "CYCLICAL_FLAG_NOT_COMPUTED"
 
 
 class PreDecisionError(RuntimeError):
@@ -167,6 +179,133 @@ def _sha(value: Any) -> str:
 
 def _without_hash(value: Mapping[str, Any]) -> dict[str, Any]:
     return {key: item for key, item in value.items() if key != "packet_hash"}
+
+
+def _default_cyclical_flags_path(feature_health_path: Path) -> Path:
+    """Locate fetch_data's universe output beside the versioned health tree."""
+    return feature_health_path.parent.parent / "universe_a.json"
+
+
+def _ratio_or_none(value: Any, label: str) -> float | int | None:
+    if value is None:
+        return None
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise PreDecisionError(f"cyclical flag {label} must be one finite number or null")
+    if not math.isfinite(float(value)):
+        raise PreDecisionError(f"cyclical flag {label} must be one finite number or null")
+    return value
+
+
+def _load_cyclical_flags(path: Path) -> dict[str, Mapping[str, Any]]:
+    """Read the per-stock output authored by scripts/cyclical_flag.py."""
+    if not os.path.lexists(path):
+        return {}
+    payload = _load(path)
+    stocks = payload.get("stocks")
+    if not isinstance(stocks, list):
+        raise PreDecisionError("cyclical flag source stocks must be a list")
+    metadata = payload.get("_meta")
+    normalization = (
+        metadata.get("cyclical_normalization") if isinstance(metadata, Mapping) else None
+    )
+    has_flags = any(
+        isinstance(row, Mapping) and row.get("cyclical_flag") is not None
+        for row in stocks
+    )
+    if normalization is None:
+        if has_flags:
+            raise PreDecisionError("cyclical flag source identity is missing")
+        return {}
+    if (
+        not isinstance(normalization, Mapping)
+        or normalization.get("source") != CYCLICAL_FLAG_SOURCE
+    ):
+        raise PreDecisionError("cyclical flag source identity is invalid")
+    output: dict[str, Mapping[str, Any]] = {}
+    required = {
+        "peak_earnings_risk",
+        "needs_normalized_bridge",
+        "roe_ttm_vs_median",
+        "gm_ttm_vs_median",
+    }
+    for index, row in enumerate(stocks):
+        if not isinstance(row, Mapping):
+            raise PreDecisionError(f"cyclical source row {index} must be an object")
+        code = str(row.get("ticker") or "")
+        flag = row.get("cyclical_flag")
+        if flag is None:
+            continue
+        if re.fullmatch(r"[0-9A-Z]+\.[A-Z]+", code) is None:
+            raise PreDecisionError(f"cyclical source ticker is invalid: {code}")
+        if code in output:
+            raise PreDecisionError(f"duplicate cyclical source ticker: {code}")
+        if not isinstance(flag, Mapping) or not required.issubset(flag):
+            raise PreDecisionError(f"cyclical flag fields are incomplete: {code}")
+        if type(flag.get("peak_earnings_risk")) is not bool or type(
+            flag.get("needs_normalized_bridge")
+        ) is not bool:
+            raise PreDecisionError(f"cyclical flag booleans are invalid: {code}")
+        _ratio_or_none(flag.get("roe_ttm_vs_median"), "roe_ttm_vs_median")
+        _ratio_or_none(flag.get("gm_ttm_vs_median"), "gm_ttm_vs_median")
+        output[code] = flag
+    return output
+
+
+def _peak_source_projection(peak: Mapping[str, Any]) -> dict[str, Any]:
+    return {
+        "peak_earnings_risk": peak.get("flag"),
+        "needs_normalized_bridge": peak.get("needs_normalized_bridge"),
+        "roe_ttm_vs_median": peak.get("roe_vs_5y_median"),
+        "gm_ttm_vs_median": peak.get("gm_vs_5y_median"),
+    }
+
+
+def _peak_source_hash(code: str, peak: Mapping[str, Any]) -> str:
+    return _sha({"ts_code": code, "cyclical_flag": _peak_source_projection(peak)})
+
+
+def _peak_earnings(code: str, source: Mapping[str, Any] | None) -> dict[str, Any]:
+    if source is None:
+        return {
+            "flag": None,
+            "needs_normalized_bridge": None,
+            "roe_vs_5y_median": None,
+            "gm_vs_5y_median": None,
+            "source_hash": None,
+            "reason": CYCLICAL_FLAG_REASON,
+        }
+    # governance-mutation: U4_PEAK_FLAG_DERIVED_FROM_CYCLICAL_SOURCE
+    flag = source["peak_earnings_risk"]
+    peak = {
+        "flag": flag,
+        "needs_normalized_bridge": source["needs_normalized_bridge"],
+        "roe_vs_5y_median": source["roe_ttm_vs_median"],
+        "gm_vs_5y_median": source["gm_ttm_vs_median"],
+        "source_hash": None,
+        "reason": None,
+    }
+    peak["source_hash"] = _peak_source_hash(code, peak)
+    return peak
+
+
+def _validate_peak_earnings(code: str, value: Any) -> None:
+    if not isinstance(value, Mapping):
+        raise PreDecisionError(f"peak_earnings must be an object: {code}")
+    _require_exact(value, PEAK_EARNINGS_FIELDS, "peak_earnings")
+    if value.get("reason") == CYCLICAL_FLAG_REASON:
+        if any(value.get(field) is not None for field in PEAK_EARNINGS_FIELDS - {"reason"}):
+            raise PreDecisionError(f"uncomputed peak earnings carries invented evidence: {code}")
+        return
+    if value.get("reason") is not None:
+        raise PreDecisionError(f"peak earnings reason is invalid: {code}")
+    if type(value.get("flag")) is not bool or type(
+        value.get("needs_normalized_bridge")
+    ) is not bool:
+        raise PreDecisionError(f"peak earnings booleans are invalid: {code}")
+    _ratio_or_none(value.get("roe_vs_5y_median"), "roe_vs_5y_median")
+    _ratio_or_none(value.get("gm_vs_5y_median"), "gm_vs_5y_median")
+    if value.get("source_hash") != _peak_source_hash(code, value):
+        raise PreDecisionError(f"peak earnings source hash mismatch: {code}")
 
 
 def _require_exact(value: Mapping[str, Any], fields: set[str], label: str) -> None:
@@ -409,7 +548,10 @@ def _red_flags(candidate: Mapping[str, Any], battery_row: Mapping[str, Any]) -> 
     return sorted(result)
 
 
-def _candidate_rows(bundle: Mapping[str, Any], industry: str, method_version: str) -> list[dict[str, Any]]:
+def _candidate_rows(
+    bundle: Mapping[str, Any], industry: str, method_version: str,
+    cyclical_flags: Mapping[str, Mapping[str, Any]],
+) -> list[dict[str, Any]]:
     manifest_codes = set(bundle["candidate_manifest"]["ts_codes"])
     candidates = {
         str(row["ts_code"]): row
@@ -472,6 +614,7 @@ def _candidate_rows(bundle: Mapping[str, Any], industry: str, method_version: st
             ),
             "u2_candidate_row_hash": _sha(candidate),
             "u3_battery_row_hash": _sha(battery_row),
+            "peak_earnings": _peak_earnings(code, cyclical_flags.get(code)),
             "positive_channels": positive_channels,
             "red_flag_channels": red_flag_channels,
             "blocked_reasons": sorted(blocked),
@@ -505,6 +648,7 @@ def _status(publication: Mapping[str, Any], allowed: int) -> str:
 def build_packet(
     *, bundle_dir: Path, feature_health_path: Path, funnel_health_path: Path,
     diagnostic_ref: str, industry: str, method_version: str, generated_at: str,
+    cyclical_flags_path: Path | None = None,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     try:
         packet_generated_at = closure._iso(generated_at, "pre-decision generated_at")
@@ -517,6 +661,10 @@ def build_packet(
         raise PreDecisionError("method_version is invalid")
     feature_health = _load(feature_health_path)
     funnel_health = _load(funnel_health_path)
+    cyclical_flags_path = cyclical_flags_path or _default_cyclical_flags_path(
+        feature_health_path
+    )
+    cyclical_flags = _load_cyclical_flags(cyclical_flags_path)
     funnel_health_generated_at = _validate_funnel_health(
         funnel_health, bundle, bundle_dir
     )
@@ -545,7 +693,7 @@ def build_packet(
         raise PreDecisionError(
             "evidence violates feature -> candidates -> battery -> finalize -> bundle/health order"
         )
-    rows = _candidate_rows(bundle, industry, method_version)
+    rows = _candidate_rows(bundle, industry, method_version, cyclical_flags)
     allowed = sum(row["allowed_for_u4_packet"] is True for row in rows)
     blocked_codes = sorted({code for row in rows for code in row["blocked_reasons"]})
     if publication["daily_source_status"] != "PUBLISHED":
@@ -690,6 +838,7 @@ def _validate_packet_receipt(packet: Mapping[str, Any]) -> None:
             or re.fullmatch(r"sha256:[0-9a-f]{64}", str(row.get("u3_battery_row_hash") or "")) is None
         ):
             raise PreDecisionError(f"candidate identity or evidence binding is invalid: {code}")
+        _validate_peak_earnings(code, row.get("peak_earnings"))
         positive = row.get("positive_channels")
         red_flags = row.get("red_flag_channels")
         blocked = row.get("blocked_reasons")
@@ -832,7 +981,7 @@ def _validate_packet_receipt(packet: Mapping[str, Any]) -> None:
 def validate_packet(
     packet: Mapping[str, Any], *, bundle_dir: Path, feature_health_path: Path,
     funnel_health_path: Path, diagnostic_ref: str, industry: str,
-    method_version: str,
+    method_version: str, cyclical_flags_path: Path | None = None,
 ) -> None:
     """Reopen authoritative sources and reject a merely self-consistent packet."""
     _validate_packet_receipt(packet)
@@ -849,6 +998,7 @@ def validate_packet(
         industry=industry,
         method_version=method_version,
         generated_at=str(packet["generated_at"]),
+        cyclical_flags_path=cyclical_flags_path,
     )
     actual_rows = {
         str(row["ts_code"]): dict(row) for row in packet["candidate_rows"]
@@ -961,6 +1111,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--bundle", required=True, type=Path)
     parser.add_argument("--feature-health", required=True, type=Path)
     parser.add_argument("--funnel-health", required=True, type=Path)
+    parser.add_argument("--cyclical-flags", type=Path)
     parser.add_argument("--generated-at", required=True)
     parser.add_argument("--packet-output", required=True, type=Path)
     parser.add_argument("--diagnostic-output", required=True, type=Path)
@@ -968,6 +1119,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--industry", default=DEFAULT_INDUSTRY)
     parser.add_argument("--method-version", default=DEFAULT_METHOD_VERSION)
     args = parser.parse_args(argv)
+    cyclical_flags_path = args.cyclical_flags or _default_cyclical_flags_path(
+        args.feature_health
+    )
     try:
         packet, diagnostic = build_packet(
             bundle_dir=args.bundle,
@@ -977,6 +1131,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             industry=args.industry,
             method_version=args.method_version,
             generated_at=args.generated_at,
+            cyclical_flags_path=cyclical_flags_path,
         )
         validate_packet(
             packet,
@@ -986,14 +1141,19 @@ def main(argv: Sequence[str] | None = None) -> int:
             diagnostic_ref=args.diagnostic_output.name,
             industry=args.industry,
             method_version=args.method_version,
+            cyclical_flags_path=cyclical_flags_path,
         )
+        protected_paths = [args.bundle, args.feature_health, args.funnel_health]
+        # governance-mutation: U4_PEAK_FLAG_OPTIONAL_SOURCE_BOUNDARY
+        if os.path.lexists(cyclical_flags_path):
+            protected_paths.append(cyclical_flags_path)
         _write_outputs(
             args.scratch_root,
             args.packet_output,
             args.diagnostic_output,
             packet,
             diagnostic,
-            protected_paths=(args.bundle, args.feature_health, args.funnel_health),
+            protected_paths=protected_paths,
         )
     except (PreDecisionError, ValueError) as exc:
         print(f"REFUSED: {exc}")
