@@ -20,6 +20,11 @@ LOST_MANIFEST_EVENT_SCHEMA = "publication_manifest_lost/v1"
 APPROVAL_REF_RE = re.compile(r"session:[0-9A-Za-z][0-9A-Za-z._:-]{3,}")
 APPROVAL_EVIDENCE_STRENGTH = "TRANSCRIPT_ONLY_NOT_CRYPTOGRAPHIC"
 APPROVED_BY_IDENTITY_STATE = "SELF_REPORTED_NOT_AUTHENTICATED"
+SAFE_RUN_ID_RE = re.compile(r"[0-9A-Za-z][0-9A-Za-z._-]{0,127}")
+REBASELINE_APPROVAL_TEMPLATE = (
+    "APPROVE publication_rebaseline run_id={run_id} "
+    "durable_manifest=LOST_UNRECOVERABLE"
+)
 NIGHTLY_LOCK_NAME = "nightly.lock"
 DISCLAIMER = "不是买卖指令；研究信号，human executes."
 
@@ -715,8 +720,26 @@ def _canonical_state_path(live_et):
 
 
 def _same_path(left, right):
-    return os.path.normcase(os.path.abspath(str(left))) == os.path.normcase(
-        os.path.abspath(str(right)))
+    return os.path.normcase(os.path.realpath(os.path.abspath(str(left)))) == os.path.normcase(
+        os.path.realpath(os.path.abspath(str(right))))
+
+
+def _require_rebaseline_layout(live_et, live_repo):
+    """Bind the execution-tracker and public roots to one checkout."""
+    repo_root = os.path.realpath(os.path.abspath(str(live_repo)))
+    actual_et = os.path.realpath(os.path.abspath(str(live_et)))
+    expected_et = os.path.realpath(os.path.join(
+        repo_root, "experiments", "execution_tracker"))
+    # governance-mutation: PUBLISH_REBASELINE_SINGLE_ROOT
+    if actual_et != expected_et:
+        raise RuntimeError(
+            "live_et 必须由同一个 live_repo/experiments/execution_tracker 派生")
+    return actual_et, repo_root
+
+
+def required_rebaseline_approval(run_id):
+    """Return the one closed-form approval decision accepted by this operation."""
+    return REBASELINE_APPROVAL_TEMPLATE.format(run_id=run_id)
 
 
 def _read_pointer(path):
@@ -750,17 +773,12 @@ def _validate_rebaseline_approval(run_id, *, reason, approved_by, approval_ref,
     if str(approval_channel or "") != "session_verbatim":
         raise RuntimeError("approval_channel 必须为 session_verbatim —— 自报身份不构成授权")
     verbatim = str(approval_verbatim or "").strip()
-    # governance-mutation: PUBLISH_REBASELINE_APPROVAL_VERBATIM
-    if len(verbatim) < 12:
-        raise RuntimeError("approval_verbatim 必须逐字携带人类授权原文 —— fail-closed")
-    # A generic action word is not an object binding. Token boundaries also keep
-    # R_OLD from authorising R_OLDER.
-    run_token = re.compile(
-        rf"(?<![0-9A-Za-z_.-]){re.escape(run_id)}(?![0-9A-Za-z_.-])")
-    # governance-mutation: PUBLISH_REBASELINE_APPROVAL_BINDING
-    if run_token.search(verbatim) is None:
+    required_verbatim = required_rebaseline_approval(run_id)
+    # governance-mutation: PUBLISH_REBASELINE_APPROVAL_DECISION
+    if verbatim != required_verbatim:
         raise RuntimeError(
-            "approval_verbatim 必须精确指向本次 run_id —— 通用或旧授权不得复用")
+            "approval_verbatim 必须逐字等于本次 run_id 的闭式 APPROVE 决策 —— "
+            "否定、撤回、扩展或旧授权一律拒绝")
     if not APPROVAL_REF_RE.fullmatch(str(approval_ref or "")):
         raise RuntimeError("approval_ref 必须是非空 session: 锚点 —— fail-closed")
     # governance-mutation: PUBLISH_REBASELINE_APPROVAL_EVIDENCE_STRENGTH
@@ -811,8 +829,9 @@ def _require_consistent_pointers(live_et, live_repo, state):
         raise RuntimeError("publication_state schema 非 nightly_publication_state/v2 —— fail-closed")
     run_id = str(state.get("run_id") or "")
     target = str(state.get("target_trade_date") or "")
-    if not run_id:
-        raise RuntimeError("publication_state 缺 run_id —— fail-closed")
+    # governance-mutation: PUBLISH_REBASELINE_SAFE_RUN_ID
+    if SAFE_RUN_ID_RE.fullmatch(run_id) is None:
+        raise RuntimeError("publication_state run_id 形状非法 —— fail-closed")
     if re.fullmatch(r"[0-9]{8}", target) is None:
         raise RuntimeError("publication_state target_trade_date 非 8 位日期 —— fail-closed")
     expected_manifest = os.path.join(
@@ -992,6 +1011,7 @@ def rebaseline_lost_manifest(state_path, live_et, live_repo, *, reason, approved
     retry by rebuilding that projection instead of appending again.
     """
     import event_ledger
+    live_et, live_repo = _require_rebaseline_layout(live_et, live_repo)
     canonical_state = _canonical_state_path(live_et)
     # governance-mutation: PUBLISH_REBASELINE_CANONICAL_STATE
     if not _same_path(state_path, canonical_state):
@@ -1091,7 +1111,7 @@ def _verify_superseded_event(state, ledger_path, live_et, live_repo):
         raise RuntimeError("SUPERSEDED 状态缺账本事件绑定 —— fail-closed")
     # governance-mutation: PUBLISH_REBASELINE_LEDGER_IDENTITY_BOUND
     bound_ledger = state.get("superseded_event_ledger")
-    if bound_ledger and os.path.abspath(str(bound_ledger)) != os.path.abspath(ledger_path):
+    if bound_ledger and not _same_path(bound_ledger, ledger_path):
         raise RuntimeError(
             "SUPERSEDED 状态绑定的账本路径与生产规范账本不符 —— fail-closed")
     rows = _verified_rebaseline_events(ledger_path)
@@ -1124,18 +1144,23 @@ def _cli(argv=None):
     rb.add_argument("--reason", required=True)
     rb.add_argument("--approved-by", required=True)
     rb.add_argument("--approval-ref", required=True)
-    rb.add_argument("--live-et", default=here)
-    rb.add_argument("--live-repo", default=os.path.abspath(os.path.join(here, "..", "..")))
+    rb.add_argument(
+        "--repo-root",
+        default=os.path.abspath(os.path.join(here, "..", "..")),
+        help="single repository root; execution_tracker is derived from this root",
+    )
     rb.add_argument("--approval-verbatim", required=True,
                     help="逐字转录的人类授权原文(必须精确包含本次 run_id)")
     # --ledger 已移除:生产 recovery 固定读规范账本,允许 override 会造成
     # "rebaseline 成功但恢复永远找不到事件" 的静默停机(复审 MAJOR 1)。
     args = parser.parse_args(argv)
     if args.cmd == "rebaseline":
-        state_path = _canonical_state_path(args.live_et)
+        live_repo = os.path.realpath(os.path.abspath(args.repo_root))
+        live_et = os.path.join(live_repo, "experiments", "execution_tracker")
+        state_path = _canonical_state_path(live_et)
         try:
             out = rebaseline_lost_manifest(
-                state_path, args.live_et, args.live_repo, reason=args.reason,
+                state_path, live_et, live_repo, reason=args.reason,
                 approved_by=args.approved_by, approval_ref=args.approval_ref,
                 approval_verbatim=args.approval_verbatim,
             )

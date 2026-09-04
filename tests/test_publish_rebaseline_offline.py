@@ -44,10 +44,10 @@ def read_bytes(path):
 
 
 def _layout(tmp, run_id="R_LOST"):
-    et = os.path.join(tmp, "et")
-    repo = os.path.join(tmp, "repo")
+    repo = os.path.realpath(os.path.join(tmp, "repo"))
+    et = os.path.join(repo, "experiments", "execution_tracker")
     public = os.path.join(repo, "public", "data", "v2")
-    os.makedirs(et)
+    os.makedirs(et, exist_ok=True)
     os.makedirs(public)
     missing_manifest = os.path.join(et, "runs", run_id, "manifest.json")
     state = {
@@ -74,12 +74,16 @@ def _layout(tmp, run_id="R_LOST"):
     return et, repo, public, state_path, missing_manifest
 
 
-APPROVAL = dict(
-    reason="0828 durable manifest lost; no byte-identical copy anywhere",
-    approved_by="Junyan",
-    approval_ref="session:20260903-nightly-manifest-lost",
-    approval_verbatim="批准对 run_id R_LOST 执行 rebaseline:0828 耐久 manifest 已丢失,不可恢复。",
-)
+def approval_for(run_id):
+    return dict(
+        reason="0828 durable manifest lost; no byte-identical copy anywhere",
+        approved_by="Junyan",
+        approval_ref="session:20260903-nightly-manifest-lost",
+        approval_verbatim=nightly_publish.required_rebaseline_approval(run_id),
+    )
+
+
+APPROVAL = approval_for("R_LOST")
 
 
 class RebaselineTests(unittest.TestCase):
@@ -241,7 +245,7 @@ class RebaselineTests(unittest.TestCase):
                    if not any(s in k.upper() for s in ("KEY", "TOKEN", "SECRET", "PASSWORD"))}
             env["AR_OFFLINE"] = "1"
             base = [sys.executable, str(ET / "nightly_publish.py"), "rebaseline",
-                    "--live-et", et, "--live-repo", repo]
+                    "--repo-root", repo]
             full = base + ["--reason", APPROVAL["reason"], "--approved-by", "Junyan",
                            "--approval-ref", APPROVAL["approval_ref"],
                            "--approval-verbatim", APPROVAL["approval_verbatim"]]
@@ -318,6 +322,37 @@ class RebaselineHardeningTests(unittest.TestCase):
             self.assertFalse(Path(tmp, "untracked-control.txt").exists())
             for rel in rels:
                 self.assertTrue(Path(tmp, rel).is_file(), f"stash -u removed {rel}")
+
+    def test_nightly_lock_inode_survives_stash_and_remains_exclusive(self):
+        import fcntl
+        with tempfile.TemporaryDirectory() as tmp:
+            subprocess.run(["git", "init", "-q", tmp], check=True)
+            subprocess.run(
+                ["git", "-C", tmp, "config", "user.email", "rebaseline@test.invalid"],
+                check=True)
+            subprocess.run(
+                ["git", "-C", tmp, "config", "user.name", "Rebaseline Test"],
+                check=True)
+            Path(tmp, ".gitignore").write_bytes(Path(ROOT, ".gitignore").read_bytes())
+            subprocess.run(["git", "-C", tmp, "add", ".gitignore"], check=True)
+            subprocess.run(
+                ["git", "-C", tmp, "commit", "-qm", "seed ignore policy"], check=True)
+            lock_path = Path(tmp, "experiments", "execution_tracker", "nightly.lock")
+            lock_path.parent.mkdir(parents=True, exist_ok=True)
+            Path(tmp, "untracked-control.txt").write_text("stash me\n", encoding="utf-8")
+            with lock_path.open("w") as first:
+                fcntl.flock(first, fcntl.LOCK_EX)
+                first_inode = os.fstat(first.fileno()).st_ino
+                stashed = subprocess.run(
+                    ["git", "-C", tmp, "stash", "push", "-u", "-m", "sync snapshot"],
+                    capture_output=True, text=True, check=False)
+                self.assertEqual(stashed.returncode, 0, stashed.stderr)
+                self.assertTrue(lock_path.is_file(), "stash -u removed the held nightly.lock")
+                self.assertEqual(lock_path.stat().st_ino, first_inode)
+                with lock_path.open("a") as second:
+                    with self.assertRaises(OSError):
+                        fcntl.flock(second, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                fcntl.flock(first, fcntl.LOCK_UN)
 
     # ── BLOCKER 2: the operator WAL is not R-043's typed migration WAL ──
     def test_rebaseline_uses_a_dedicated_wal_and_leaves_r043_untouched(self):
@@ -468,6 +503,9 @@ class RebaselineHardeningTests(unittest.TestCase):
             capture_output=True, text=True, check=False)
         self.assertNotIn("--ledger", out.stdout)
         self.assertNotIn("--state", out.stdout)
+        self.assertNotIn("--live-et", out.stdout)
+        self.assertNotIn("--live-repo", out.stdout)
+        self.assertIn("--repo-root", out.stdout)
 
     def test_core_api_refuses_foreign_state_and_ledger_paths(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -483,6 +521,21 @@ class RebaselineHardeningTests(unittest.TestCase):
                     state_path, et, repo, ledger_path=os.path.join(tmp, "foreign.jsonl"),
                     now=NOW, **APPROVAL)
             self.assertEqual(read_bytes(state_path), canonical_before)
+
+    def test_execution_tracker_and_public_root_must_share_one_checkout(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            et, repo, _, state_path, _ = _layout(tmp)
+            fake_repo = os.path.join(tmp, "fake-repo")
+            fake_public = os.path.join(fake_repo, "public", "data", "v2")
+            os.makedirs(fake_public, exist_ok=True)
+            write_json(
+                os.path.join(fake_public, "current_run.json"),
+                read_json(os.path.join(et, "current_run.json")),
+            )
+            with self.assertRaisesRegex(RuntimeError, "同一个 live_repo"):
+                nightly_publish.rebaseline_lost_manifest(
+                    state_path, et, fake_repo, now=NOW, **APPROVAL)
+            self.assertEqual(read_json(state_path)["status"], "COMMITTED")
 
     def test_recovery_refuses_a_state_bound_to_a_foreign_ledger(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -581,6 +634,15 @@ class RebaselineHardeningTests(unittest.TestCase):
                     nightly_publish.rebaseline_lost_manifest(
                         state_path, et, repo, now=NOW, **APPROVAL)
 
+    def test_run_id_cannot_escape_the_runs_container(self):
+        run_id = "../../OUTSIDE"
+        with tempfile.TemporaryDirectory() as tmp:
+            et, repo, _, state_path, _ = _layout(tmp, run_id=run_id)
+            with self.assertRaisesRegex(RuntimeError, "run_id 形状非法"):
+                nightly_publish.rebaseline_lost_manifest(
+                    state_path, et, repo, now=NOW, **approval_for(run_id))
+            self.assertEqual(read_json(state_path)["status"], "COMMITTED")
+
     # ── MAJOR 3: approval must bind this action, and must not overclaim identity ──
     def test_placeholder_approval_is_refused(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -591,31 +653,25 @@ class RebaselineHardeningTests(unittest.TestCase):
                 nightly_publish.rebaseline_lost_manifest(state_path, et, repo, now=NOW, **bad)
             self.assertEqual(read_json(state_path)["status"], "COMMITTED")
 
-    def test_short_approval_verbatim_is_refused_even_when_it_names_the_run(self):
-        """Isolates the length rule: this verbatim satisfies the binding rule, so only
-        the minimum-length gate can refuse it."""
-        with tempfile.TemporaryDirectory() as tmp:
-            et, repo, _, state_path, _ = _layout(tmp)
-            bad = dict(APPROVAL, approval_verbatim="R_LOST")
-            with self.assertRaisesRegex(RuntimeError, "逐字携带人类授权原文"):
-                nightly_publish.rebaseline_lost_manifest(state_path, et, repo, now=NOW, **bad)
-            self.assertEqual(read_json(state_path)["status"], "COMMITTED")
+    def test_approval_verbatim_must_match_the_closed_approve_decision(self):
+        rejected = (
+            "禁止对 run_id R_LOST 执行 rebaseline,此操作未经批准。",
+            "批准对 run_id R_LOST 执行 rebaseline:旧 manifest 丢失。",
+            nightly_publish.required_rebaseline_approval("R_LOST") + " NOT APPROVED",
+        )
+        for verbatim in rejected:
+            with self.subTest(verbatim=verbatim), tempfile.TemporaryDirectory() as tmp:
+                et, repo, _, state_path, _ = _layout(tmp)
+                bad = dict(APPROVAL, approval_verbatim=verbatim)
+                with self.assertRaisesRegex(RuntimeError, "闭式 APPROVE 决策"):
+                    nightly_publish.rebaseline_lost_manifest(
+                        state_path, et, repo, now=NOW, **bad)
+                self.assertEqual(read_json(state_path)["status"], "COMMITTED")
 
-    def test_approval_verbatim_must_reference_the_exact_run(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            et, repo, _, state_path, _ = _layout(tmp)
-            bad = dict(APPROVAL, approval_verbatim="同意,按你说的做,辛苦了。")
-            with self.assertRaisesRegex(RuntimeError, "必须精确指向本次 run_id"):
-                nightly_publish.rebaseline_lost_manifest(state_path, et, repo, now=NOW, **bad)
         with tempfile.TemporaryDirectory() as tmp:
             et, repo, _, state_path, _ = _layout(tmp, run_id="R_NEW")
-            stale = dict(
-                APPROVAL,
-                approval_verbatim=(
-                    "批准对 run_id R_OLD 执行 rebaseline:旧发布清单丢失,不可恢复。"
-                ),
-            )
-            with self.assertRaisesRegex(RuntimeError, "必须精确指向本次 run_id"):
+            stale = approval_for("R_OLD")
+            with self.assertRaisesRegex(RuntimeError, "闭式 APPROVE 决策"):
                 nightly_publish.rebaseline_lost_manifest(
                     state_path, et, repo, now=NOW, **stale)
 

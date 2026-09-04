@@ -4818,6 +4818,16 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="A routine git stash -u must not remove the WAL evidence while leaving its state projection behind.",
     ),
     MutationCase(
+        mutation_id="PUBLISH_REBASELINE_NIGHTLY_LOCK_IGNORED",
+        component="Nightly publication operator re-baseline",
+        source_path=".gitignore",
+        test_script="tests/test_publish_rebaseline_offline.py",
+        before="experiments/execution_tracker/nightly.lock",
+        after="# mutation removed the nightly lock ignore",
+        expected_failure_marker="test_nightly_lock_inode_survives_stash_and_remains_exclusive",
+        rationale="Sync stash must preserve the exact locked inode or a second process can acquire a replacement lock path.",
+    ),
+    MutationCase(
         mutation_id="PUBLISH_REBASELINE_REQUIRES_APPROVAL",
         component="Nightly publication operator re-baseline",
         source_path="experiments/execution_tracker/nightly_publish.py",
@@ -4915,36 +4925,20 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="The missing object must be the durable manifest for this exact run, not an arbitrary path.",
     ),
     MutationCase(
-        mutation_id="PUBLISH_REBASELINE_APPROVAL_VERBATIM",
+        mutation_id="PUBLISH_REBASELINE_APPROVAL_DECISION",
         component="Nightly publication operator re-baseline",
         source_path="experiments/execution_tracker/nightly_publish.py",
         test_script="tests/test_publish_rebaseline_offline.py",
         before=(
-            "    # governance-mutation: PUBLISH_REBASELINE_APPROVAL_VERBATIM\n"
-            "    if len(verbatim) < 12:"
+            "    # governance-mutation: PUBLISH_REBASELINE_APPROVAL_DECISION\n"
+            "    if verbatim != required_verbatim:"
         ),
         after=(
-            "    # governance-mutation: PUBLISH_REBASELINE_APPROVAL_VERBATIM\n"
+            "    # governance-mutation: PUBLISH_REBASELINE_APPROVAL_DECISION\n"
             "    if False:"
         ),
-        expected_failure_marker="test_short_approval_verbatim_is_refused_even_when_it_names_the_run",
-        rationale="The ledger must carry the human authorization text verbatim, not a placeholder string.",
-    ),
-    MutationCase(
-        mutation_id="PUBLISH_REBASELINE_APPROVAL_BINDING",
-        component="Nightly publication operator re-baseline",
-        source_path="experiments/execution_tracker/nightly_publish.py",
-        test_script="tests/test_publish_rebaseline_offline.py",
-        before=(
-            "    # governance-mutation: PUBLISH_REBASELINE_APPROVAL_BINDING\n"
-            "    if run_token.search(verbatim) is None:"
-        ),
-        after=(
-            "    # governance-mutation: PUBLISH_REBASELINE_APPROVAL_BINDING\n"
-            "    if False:"
-        ),
-        expected_failure_marker="test_approval_verbatim_must_reference_the_exact_run",
-        rationale="An approval must bind the exact run token; generic action words and stale run approvals are reusable authority.",
+        expected_failure_marker="test_approval_verbatim_must_match_the_closed_approve_decision",
+        rationale="Only one closed APPROVE decision bound to the exact run may authorize rebaseline; negated or extended prose must fail closed.",
     ),
     MutationCase(
         mutation_id="PUBLISH_REBASELINE_APPROVAL_EVIDENCE_STRENGTH",
@@ -4977,6 +4971,38 @@ MUTATIONS: tuple[MutationCase, ...] = (
         ),
         expected_failure_marker="test_core_api_refuses_foreign_state_and_ledger_paths",
         rationale="A successful operator command must mutate the canonical state derived from live_et, never a caller-selected decoy.",
+    ),
+    MutationCase(
+        mutation_id="PUBLISH_REBASELINE_SINGLE_ROOT",
+        component="Nightly publication operator re-baseline",
+        source_path="experiments/execution_tracker/nightly_publish.py",
+        test_script="tests/test_publish_rebaseline_offline.py",
+        before=(
+            "    # governance-mutation: PUBLISH_REBASELINE_SINGLE_ROOT\n"
+            "    if actual_et != expected_et:"
+        ),
+        after=(
+            "    # governance-mutation: PUBLISH_REBASELINE_SINGLE_ROOT\n"
+            "    if False:"
+        ),
+        expected_failure_marker="test_execution_tracker_and_public_root_must_share_one_checkout",
+        rationale="The operator must derive ET and public state from one checkout, never splice a real ET root with a decoy public root.",
+    ),
+    MutationCase(
+        mutation_id="PUBLISH_REBASELINE_SAFE_RUN_ID",
+        component="Nightly publication operator re-baseline",
+        source_path="experiments/execution_tracker/nightly_publish.py",
+        test_script="tests/test_publish_rebaseline_offline.py",
+        before=(
+            "    # governance-mutation: PUBLISH_REBASELINE_SAFE_RUN_ID\n"
+            "    if SAFE_RUN_ID_RE.fullmatch(run_id) is None:"
+        ),
+        after=(
+            "    # governance-mutation: PUBLISH_REBASELINE_SAFE_RUN_ID\n"
+            "    if False:"
+        ),
+        expected_failure_marker="test_run_id_cannot_escape_the_runs_container",
+        rationale="A run_id is a path component and must never escape the immutable runs container.",
     ),
     MutationCase(
         mutation_id="PUBLISH_REBASELINE_CANONICAL_LEDGER",

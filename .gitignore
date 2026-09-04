@@ -37,6 +37,9 @@ public/data/iter1*_bootstrap_*.json
 # R-015 事件账本的 flock 句柄与原子写临时文件:运行时产物,不入库
 experiments/execution_tracker/*.jsonl.lock
 experiments/execution_tracker/*.anchor.json.tmp
+# 夜链与运维再基线共享的 inode 锁。若被 `git stash -u` 删除，已持锁进程
+# 仍锁旧 inode，而第二进程会在同名新 inode 上成功取锁，互斥随即失效。
+experiments/execution_tracker/nightly.lock
 # WO-OPS1 operator rebaseline evidence is runtime control state.  Keep the WAL
 # and its durable anchor out of `git stash -u`, which excludes ignored files.
 experiments/execution_tracker/publication_rebaseline_events.jsonl
