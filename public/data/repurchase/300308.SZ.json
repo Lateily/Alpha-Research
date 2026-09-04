@@ -1,15 +1,60 @@
 {
-  "_status": "empty",
+  "_status": "ok",
   "ticker": "300308.SZ",
-  "fetched_at": "2026-08-05T11:22:44Z",
+  "fetched_at": "2026-09-04T12:54:29Z",
   "api_used": "repurchase",
   "window_days": 180,
-  "events": [],
+  "events": [
+    {
+      "ts_code": "300308.SZ",
+      "ann_date": "20260903",
+      "end_date": "20260903",
+      "proc": "实施",
+      "exp_date": null,
+      "vol": 965600,
+      "amount": 803405547.75,
+      "high_limit": 819.0,
+      "low_limit": 806.93
+    },
+    {
+      "ts_code": "300308.SZ",
+      "ann_date": "20260902",
+      "end_date": "20260902",
+      "proc": "实施",
+      "exp_date": null,
+      "vol": 732500,
+      "amount": 613420778.48,
+      "high_limit": 829.36,
+      "low_limit": 818.04
+    },
+    {
+      "ts_code": "300308.SZ",
+      "ann_date": "20260901",
+      "end_date": "20260901",
+      "proc": "实施",
+      "exp_date": null,
+      "vol": 374100,
+      "amount": 318402795.7,
+      "high_limit": 870.0,
+      "low_limit": 838.16
+    },
+    {
+      "ts_code": "300308.SZ",
+      "ann_date": "20260901",
+      "end_date": null,
+      "proc": "预案",
+      "exp_date": "20270831",
+      "vol": null,
+      "amount": 8000000000.0,
+      "high_limit": 1200.0,
+      "low_limit": null
+    }
+  ],
   "summary": {
-    "total_count": 0,
-    "total_amount_180d": 0.0,
+    "total_count": 4,
+    "total_amount_180d": 9735229121.93,
     "active_program": false,
-    "last_announce_date": null,
-    "signal_level": "LOW"
+    "last_announce_date": "2026-09-03",
+    "signal_level": "HIGH"
   }
 }

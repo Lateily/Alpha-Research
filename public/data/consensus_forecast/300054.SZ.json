@@ -1,13 +1,13 @@
 {
   "ticker": "300054.SZ",
-  "fetched_at": "2026-08-05T11:18:19Z",
+  "fetched_at": "2026-09-04T12:51:23Z",
   "_semantics": "issuer_guidance = 公司业绩预告(forecast) + 业绩快报(express) — 发行人自披露,NOT broker consensus. 卖方预测见 broker_recommend (report_rc, E2).",
   "disclaimer": "不是买卖指令;研究信号,human executes.",
   "_status": "PARTIAL",
   "as_of": "20260710",
   "dimensions": {
     "forecast": {
-      "row_count": 8,
+      "row_count": 7,
       "_status": "OK",
       "as_of": "20260710"
     },
@@ -30,7 +30,7 @@
       "p_change_max": 73.61,
       "eps": null,
       "revenue": null,
-      "summary": "预计:净利润51000-54000"
+      "summary": "预计2026年1-6月归属于上市公司股东的净利润盈利:51,000万元至54,000万元,同比上年增长:63.96%至73.61%。"
     },
     {
       "source": "forecast",
@@ -101,20 +101,6 @@
       "eps": null,
       "revenue": null,
       "summary": "预计:净利润49000-53000"
-    },
-    {
-      "source": "forecast",
-      "ann_date": "20241009",
-      "end_date": "20240930",
-      "type": "预增",
-      "net_profit": 372785000.0,
-      "net_profit_min": 366620000.0,
-      "net_profit_max": 378950000.0,
-      "p_change_min": 108.0,
-      "p_change_max": 115.0,
-      "eps": null,
-      "revenue": null,
-      "summary": "预计:净利润36662-37895"
     },
     {
       "source": "forecast",
@@ -144,7 +130,7 @@
       "p_change_max": 73.61,
       "eps": null,
       "revenue": null,
-      "summary": "预计:净利润51000-54000"
+      "summary": "预计2026年1-6月归属于上市公司股东的净利润盈利:51,000万元至54,000万元,同比上年增长:63.96%至73.61%。"
     },
     {
       "source": "forecast",
@@ -215,20 +201,6 @@
       "eps": null,
       "revenue": null,
       "summary": "预计:净利润49000-53000"
-    },
-    {
-      "source": "forecast",
-      "ann_date": "20241009",
-      "end_date": "20240930",
-      "type": "预增",
-      "net_profit": 372785000.0,
-      "net_profit_min": 366620000.0,
-      "net_profit_max": 378950000.0,
-      "p_change_min": 108.0,
-      "p_change_max": 115.0,
-      "eps": null,
-      "revenue": null,
-      "summary": "预计:净利润36662-37895"
     },
     {
       "source": "forecast",

@@ -1,5 +1,5 @@
 {
-  "fetched_at": "2026-08-05T11:18:49Z",
+  "fetched_at": "2026-09-04T12:51:53Z",
   "_status": "ok",
   "api_used": "ths_index+ths_member",
   "scope": "watchlist_only",
@@ -390,6 +390,18 @@
       ]
     },
     {
+      "ts_code": "700054R.TI",
+      "name": "同花顺金仓200全收益",
+      "type": "TH",
+      "total_count": 200.0,
+      "member_count": 3,
+      "members": [
+        "300054.SZ",
+        "300308.SZ",
+        "688120.SH"
+      ]
+    },
+    {
       "ts_code": "883304.TI",
       "name": "中证500成份股",
       "type": "N",
@@ -689,17 +701,6 @@
     {
       "ts_code": "700054.TI",
       "name": "同花顺金仓200",
-      "type": "TH",
-      "total_count": 200.0,
-      "member_count": 2,
-      "members": [
-        "300308.SZ",
-        "688120.SH"
-      ]
-    },
-    {
-      "ts_code": "700054R.TI",
-      "name": "同花顺金仓200全收益",
       "type": "TH",
       "total_count": 200.0,
       "member_count": 2,
@@ -1716,6 +1717,16 @@
       ]
     },
     {
+      "ts_code": "883426.TI",
+      "name": "同花顺拟回购指数",
+      "type": "S",
+      "total_count": 115.0,
+      "member_count": 1,
+      "members": [
+        "300054.SZ"
+      ]
+    },
+    {
       "ts_code": "883433.TI",
       "name": "先进制造",
       "type": "S",
@@ -1853,6 +1864,16 @@
       "member_count": 1,
       "members": [
         "300054.SZ"
+      ]
+    },
+    {
+      "ts_code": "883959.TI",
+      "name": "近期并购",
+      "type": "S",
+      "total_count": 262.0,
+      "member_count": 1,
+      "members": [
+        "300308.SZ"
       ]
     },
     {
@@ -2493,7 +2514,8 @@
       "700309.TI",
       "700340.TI",
       "883913.TI",
-      "883926.TI"
+      "883926.TI",
+      "883959.TI"
     ],
     "002594.SZ": [
       "700001.TI",
@@ -2788,10 +2810,12 @@
       "886110.TI",
       "886111.TI",
       "700302.TI",
-      "700802.TI"
+      "700802.TI",
+      "883426.TI",
+      "700054R.TI"
     ]
   },
-  "total_concepts": 223,
-  "total_memberships": 383,
+  "total_concepts": 225,
+  "total_memberships": 386,
   "disclaimer": "不是买卖指令;研究信号,human executes."
 }

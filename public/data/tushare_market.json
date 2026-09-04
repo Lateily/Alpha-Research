@@ -1,10 +1,190 @@
 {
-  "fetched_at": "2026-08-05T11:18:03Z",
+  "fetched_at": "2026-09-04T12:51:03Z",
   "permission_model": "runtime_probe",
   "_status": "ok",
   "data": {
     "trade_cal": {
       "rows": [
+        {
+          "exchange": "SSE",
+          "cal_date": "20260904",
+          "is_open": 1,
+          "pretrade_date": "20260903"
+        },
+        {
+          "exchange": "SSE",
+          "cal_date": "20260903",
+          "is_open": 1,
+          "pretrade_date": "20260902"
+        },
+        {
+          "exchange": "SSE",
+          "cal_date": "20260902",
+          "is_open": 1,
+          "pretrade_date": "20260901"
+        },
+        {
+          "exchange": "SSE",
+          "cal_date": "20260901",
+          "is_open": 1,
+          "pretrade_date": "20260831"
+        },
+        {
+          "exchange": "SSE",
+          "cal_date": "20260831",
+          "is_open": 1,
+          "pretrade_date": "20260828"
+        },
+        {
+          "exchange": "SSE",
+          "cal_date": "20260830",
+          "is_open": 0,
+          "pretrade_date": "20260828"
+        },
+        {
+          "exchange": "SSE",
+          "cal_date": "20260829",
+          "is_open": 0,
+          "pretrade_date": "20260828"
+        },
+        {
+          "exchange": "SSE",
+          "cal_date": "20260828",
+          "is_open": 1,
+          "pretrade_date": "20260827"
+        },
+        {
+          "exchange": "SSE",
+          "cal_date": "20260827",
+          "is_open": 1,
+          "pretrade_date": "20260826"
+        },
+        {
+          "exchange": "SSE",
+          "cal_date": "20260826",
+          "is_open": 1,
+          "pretrade_date": "20260825"
+        },
+        {
+          "exchange": "SSE",
+          "cal_date": "20260825",
+          "is_open": 1,
+          "pretrade_date": "20260824"
+        },
+        {
+          "exchange": "SSE",
+          "cal_date": "20260824",
+          "is_open": 1,
+          "pretrade_date": "20260821"
+        },
+        {
+          "exchange": "SSE",
+          "cal_date": "20260823",
+          "is_open": 0,
+          "pretrade_date": "20260821"
+        },
+        {
+          "exchange": "SSE",
+          "cal_date": "20260822",
+          "is_open": 0,
+          "pretrade_date": "20260821"
+        },
+        {
+          "exchange": "SSE",
+          "cal_date": "20260821",
+          "is_open": 1,
+          "pretrade_date": "20260820"
+        },
+        {
+          "exchange": "SSE",
+          "cal_date": "20260820",
+          "is_open": 1,
+          "pretrade_date": "20260819"
+        },
+        {
+          "exchange": "SSE",
+          "cal_date": "20260819",
+          "is_open": 1,
+          "pretrade_date": "20260818"
+        },
+        {
+          "exchange": "SSE",
+          "cal_date": "20260818",
+          "is_open": 1,
+          "pretrade_date": "20260817"
+        },
+        {
+          "exchange": "SSE",
+          "cal_date": "20260817",
+          "is_open": 1,
+          "pretrade_date": "20260814"
+        },
+        {
+          "exchange": "SSE",
+          "cal_date": "20260816",
+          "is_open": 0,
+          "pretrade_date": "20260814"
+        },
+        {
+          "exchange": "SSE",
+          "cal_date": "20260815",
+          "is_open": 0,
+          "pretrade_date": "20260814"
+        },
+        {
+          "exchange": "SSE",
+          "cal_date": "20260814",
+          "is_open": 1,
+          "pretrade_date": "20260813"
+        },
+        {
+          "exchange": "SSE",
+          "cal_date": "20260813",
+          "is_open": 1,
+          "pretrade_date": "20260812"
+        },
+        {
+          "exchange": "SSE",
+          "cal_date": "20260812",
+          "is_open": 1,
+          "pretrade_date": "20260811"
+        },
+        {
+          "exchange": "SSE",
+          "cal_date": "20260811",
+          "is_open": 1,
+          "pretrade_date": "20260810"
+        },
+        {
+          "exchange": "SSE",
+          "cal_date": "20260810",
+          "is_open": 1,
+          "pretrade_date": "20260807"
+        },
+        {
+          "exchange": "SSE",
+          "cal_date": "20260809",
+          "is_open": 0,
+          "pretrade_date": "20260807"
+        },
+        {
+          "exchange": "SSE",
+          "cal_date": "20260808",
+          "is_open": 0,
+          "pretrade_date": "20260807"
+        },
+        {
+          "exchange": "SSE",
+          "cal_date": "20260807",
+          "is_open": 1,
+          "pretrade_date": "20260806"
+        },
+        {
+          "exchange": "SSE",
+          "cal_date": "20260806",
+          "is_open": 1,
+          "pretrade_date": "20260805"
+        },
         {
           "exchange": "SSE",
           "cal_date": "20260805",
@@ -1308,12 +1488,210 @@
           "pretrade_date": "20251231"
         }
       ],
-      "row_count": 217,
+      "row_count": 247,
       "_status": "ok",
-      "as_of": "20260805"
+      "as_of": "20260904"
     },
     "moneyflow_hsgt": {
       "rows": [
+        {
+          "trade_date": "20260904",
+          "ggt_ss": "31943.88",
+          "ggt_sz": "22877.62",
+          "hgt": "126875.65",
+          "sgt": "147288.77",
+          "north_money": "274164.42",
+          "south_money": "54821.5"
+        },
+        {
+          "trade_date": "20260903",
+          "ggt_ss": "31990.96",
+          "ggt_sz": "22930.75",
+          "hgt": "111874.42",
+          "sgt": "130868.09",
+          "north_money": "242742.51",
+          "south_money": "54921.71"
+        },
+        {
+          "trade_date": "20260902",
+          "ggt_ss": "31983.97",
+          "ggt_sz": "22903.78",
+          "hgt": "113980.7",
+          "sgt": "130828.58",
+          "north_money": "244809.28",
+          "south_money": "54887.76"
+        },
+        {
+          "trade_date": "20260901",
+          "ggt_ss": "31926.34",
+          "ggt_sz": "22920.49",
+          "hgt": "126482.03",
+          "sgt": "146777.23",
+          "north_money": "273259.26",
+          "south_money": "54846.82"
+        },
+        {
+          "trade_date": "20260831",
+          "ggt_ss": "31864.14",
+          "ggt_sz": "22905.11",
+          "hgt": "155475.51",
+          "sgt": "170481.65",
+          "north_money": "325957.16",
+          "south_money": "54769.25"
+        },
+        {
+          "trade_date": "20260828",
+          "ggt_ss": "31843.56",
+          "ggt_sz": "22904.3",
+          "hgt": "123405.23",
+          "sgt": "154716.4",
+          "north_money": "278121.63",
+          "south_money": "54747.86"
+        },
+        {
+          "trade_date": "20260827",
+          "ggt_ss": "31834.71",
+          "ggt_sz": "22901.39",
+          "hgt": "134165.33",
+          "sgt": "150743.4",
+          "north_money": "284908.73",
+          "south_money": "54736.1"
+        },
+        {
+          "trade_date": "20260826",
+          "ggt_ss": "31818.96",
+          "ggt_sz": "22885.35",
+          "hgt": "119827.38",
+          "sgt": "135741.86",
+          "north_money": "255569.24",
+          "south_money": "54704.3"
+        },
+        {
+          "trade_date": "20260825",
+          "ggt_ss": "31830.2",
+          "ggt_sz": "22869.57",
+          "hgt": "122860.7",
+          "sgt": "144560.51",
+          "north_money": "267421.21",
+          "south_money": "54699.78"
+        },
+        {
+          "trade_date": "20260824",
+          "ggt_ss": "31875.02",
+          "ggt_sz": "22890.81",
+          "hgt": "135005.55",
+          "sgt": "156029.94",
+          "north_money": "291035.49",
+          "south_money": "54765.83"
+        },
+        {
+          "trade_date": "20260821",
+          "ggt_ss": "31786.1",
+          "ggt_sz": "22864.07",
+          "hgt": "125846.52",
+          "sgt": "142241.02",
+          "north_money": "268087.54",
+          "south_money": "54650.16"
+        },
+        {
+          "trade_date": "20260820",
+          "ggt_ss": "31837.43",
+          "ggt_sz": "22889.03",
+          "hgt": "134857.84",
+          "sgt": "151391.09",
+          "north_money": "286248.93",
+          "south_money": "54726.46"
+        },
+        {
+          "trade_date": "20260819",
+          "ggt_ss": "31888.54",
+          "ggt_sz": "22942.04",
+          "hgt": "155162.66",
+          "sgt": "173302.41",
+          "north_money": "328465.07",
+          "south_money": "54830.58"
+        },
+        {
+          "trade_date": "20260818",
+          "ggt_ss": "31921.64",
+          "ggt_sz": "23015.15",
+          "hgt": "143517.11",
+          "sgt": "164122.86",
+          "north_money": "307639.97",
+          "south_money": "54936.79"
+        },
+        {
+          "trade_date": "20260817",
+          "ggt_ss": "31823.71",
+          "ggt_sz": "22973.06",
+          "hgt": "136873.91",
+          "sgt": "162796.96",
+          "north_money": "299670.87",
+          "south_money": "54796.77"
+        },
+        {
+          "trade_date": "20260814",
+          "ggt_ss": "31803.97",
+          "ggt_sz": "22962.03",
+          "hgt": "125496.5",
+          "sgt": "148972.86",
+          "north_money": "274469.36",
+          "south_money": "54766"
+        },
+        {
+          "trade_date": "20260813",
+          "ggt_ss": "31801.1",
+          "ggt_sz": "22978.06",
+          "hgt": "144941.15",
+          "sgt": "169832.36",
+          "north_money": "314773.51",
+          "south_money": "54779.16"
+        },
+        {
+          "trade_date": "20260812",
+          "ggt_ss": "31763.39",
+          "ggt_sz": "22979.1",
+          "hgt": "132657.52",
+          "sgt": "149629.3",
+          "north_money": "282286.82",
+          "south_money": "54742.49"
+        },
+        {
+          "trade_date": "20260811",
+          "ggt_ss": "31782.21",
+          "ggt_sz": "22989.34",
+          "hgt": "139142.76",
+          "sgt": "157525.3",
+          "north_money": "296668.06",
+          "south_money": "54771.55"
+        },
+        {
+          "trade_date": "20260810",
+          "ggt_ss": "31762.17",
+          "ggt_sz": "23023.15",
+          "hgt": "148463.14",
+          "sgt": "173565.94",
+          "north_money": "322029.08",
+          "south_money": "54785.31"
+        },
+        {
+          "trade_date": "20260807",
+          "ggt_ss": "31734.2",
+          "ggt_sz": "23030.9",
+          "hgt": "157452.06",
+          "sgt": "187698.04",
+          "north_money": "345150.1",
+          "south_money": "54765.11"
+        },
+        {
+          "trade_date": "20260806",
+          "ggt_ss": "31728.5",
+          "ggt_sz": "23044.39",
+          "hgt": "150950.31",
+          "sgt": "175267.24",
+          "north_money": "326217.55",
+          "south_money": "54772.88"
+        },
         {
           "trade_date": "20260805",
           "ggt_ss": "31695.93",
@@ -1520,173 +1898,11 @@
           "sgt": "221405.49",
           "north_money": "396336.82",
           "south_money": "54267.69"
-        },
-        {
-          "trade_date": "20260703",
-          "ggt_ss": "31293.66",
-          "ggt_sz": "22768.74",
-          "hgt": "171764.45",
-          "sgt": "219750.8",
-          "north_money": "391515.25",
-          "south_money": "54062.41"
-        },
-        {
-          "trade_date": "20260702",
-          "ggt_ss": "31248.98",
-          "ggt_sz": "22768.05",
-          "hgt": "183990.44",
-          "sgt": "240027.61",
-          "north_money": "424018.05",
-          "south_money": "54017.03"
-        },
-        {
-          "trade_date": "20260630",
-          "ggt_ss": "31226.21",
-          "ggt_sz": "22810.56",
-          "hgt": "160188.93",
-          "sgt": "204263.48",
-          "north_money": "364452.41",
-          "south_money": "54036.77"
-        },
-        {
-          "trade_date": "20260629",
-          "ggt_ss": "31170.47",
-          "ggt_sz": "22807.35",
-          "hgt": "189777.51",
-          "sgt": "236944.69",
-          "north_money": "426722.2",
-          "south_money": "53977.82"
-        },
-        {
-          "trade_date": "20260626",
-          "ggt_ss": "31225.21",
-          "ggt_sz": "22856",
-          "hgt": "175593.52",
-          "sgt": "237547.11",
-          "north_money": "413140.63",
-          "south_money": "54081.21"
-        },
-        {
-          "trade_date": "20260625",
-          "ggt_ss": "31189.35",
-          "ggt_sz": "22916.9",
-          "hgt": "188060.62",
-          "sgt": "235797.34",
-          "north_money": "423857.96",
-          "south_money": "54106.24"
-        },
-        {
-          "trade_date": "20260624",
-          "ggt_ss": "31235.54",
-          "ggt_sz": "22959.44",
-          "hgt": "187730.5",
-          "sgt": "236625.32",
-          "north_money": "424355.82",
-          "south_money": "54194.99"
-        },
-        {
-          "trade_date": "20260623",
-          "ggt_ss": "31102.98",
-          "ggt_sz": "22934.5",
-          "hgt": "201976.99",
-          "sgt": "241994.58",
-          "north_money": "443971.57",
-          "south_money": "54037.48"
-        },
-        {
-          "trade_date": "20260622",
-          "ggt_ss": "31032.13",
-          "ggt_sz": "22901.64",
-          "hgt": "220128.27",
-          "sgt": "262049.14",
-          "north_money": "482177.41",
-          "south_money": "53933.77"
-        },
-        {
-          "trade_date": "20260618",
-          "ggt_ss": "31015.88",
-          "ggt_sz": "22976.09",
-          "hgt": "202318.27",
-          "sgt": "227025.29",
-          "north_money": "429343.56",
-          "south_money": "53991.97"
-        },
-        {
-          "trade_date": "20260617",
-          "ggt_ss": "31019.38",
-          "ggt_sz": "23040.51",
-          "hgt": "174913.28",
-          "sgt": "210142.56",
-          "north_money": "385055.84",
-          "south_money": "54059.89"
-        },
-        {
-          "trade_date": "20260616",
-          "ggt_ss": "31029.74",
-          "ggt_sz": "23062.36",
-          "hgt": "169210.59",
-          "sgt": "213779.66",
-          "north_money": "382990.25",
-          "south_money": "54092.11"
-        },
-        {
-          "trade_date": "20260615",
-          "ggt_ss": "30980.84",
-          "ggt_sz": "23076.63",
-          "hgt": "189698.04",
-          "sgt": "220025",
-          "north_money": "409723.04",
-          "south_money": "54057.48"
-        },
-        {
-          "trade_date": "20260612",
-          "ggt_ss": "30972.12",
-          "ggt_sz": "23064.26",
-          "hgt": "239113.87",
-          "sgt": "251913.84",
-          "north_money": "491027.71",
-          "south_money": "54036.38"
-        },
-        {
-          "trade_date": "20260611",
-          "ggt_ss": "30987.55",
-          "ggt_sz": "23088.25",
-          "hgt": "159596.74",
-          "sgt": "179724.51",
-          "north_money": "339321.25",
-          "south_money": "54075.8"
-        },
-        {
-          "trade_date": "20260610",
-          "ggt_ss": "30991.74",
-          "ggt_sz": "23111.6",
-          "hgt": "166385.91",
-          "sgt": "183486.1",
-          "north_money": "349872.01",
-          "south_money": "54103.34"
-        },
-        {
-          "trade_date": "20260609",
-          "ggt_ss": "30901.55",
-          "ggt_sz": "23119.36",
-          "hgt": "158455.31",
-          "sgt": "202477.62",
-          "north_money": "360932.93",
-          "south_money": "54020.91"
-        },
-        {
-          "trade_date": "20260608",
-          "ggt_ss": "30902.53",
-          "ggt_sz": "23204.51",
-          "hgt": "164559.14",
-          "sgt": "205506.06",
-          "north_money": "370065.2",
-          "south_money": "54107.05"
         }
       ],
-      "row_count": 41,
+      "row_count": 45,
       "_status": "ok",
-      "as_of": "20260805"
+      "as_of": "20260904"
     }
   }
 }
