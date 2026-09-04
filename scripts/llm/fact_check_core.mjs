@@ -46,7 +46,7 @@ const NUMBER_SOURCE = [
   '(?<currency>RMB|CNY|USD|HKD|HK\\$|¥|￥|\\$)?\\s*',
   '(?<symbolComparator><=|>=|≤|≥|<|>|~|≈)?\\s*',
   '(?<sign>[+\\-−])?\\s*',
-  '(?<value>\\d+(?:\\.\\d+)?)\\s*',
+  '(?<value>\\d{1,3}(?:,\\d{3})+(?:\\.\\d+)?|\\d+(?:\\.\\d+)?)\\s*',
   '(?<unit>%|pp|bps|[Bb](?:n|illion)?|[Mm](?:n|illion)?|亿|万元|万|wfr/month|wafer/month|片/月|x|×)?\\s*',
   '(?<currencySuffix>港元|港币|美元|人民币|元)?',
   '(?![A-Za-z0-9_]|%|pp|bps|亿|万元|万|x|×|\\.\\d)',
@@ -262,7 +262,7 @@ function extractObservations(text, path = [], metadata = {}) {
     const unit = match.groups?.unit || localMetadata.unit || '';
     const currency = canonicalCurrency(match.groups?.currency, match.groups?.currencySuffix, localMetadata.currency);
     if (!unit && currency === 'UNSPECIFIED' && metric === 'unclassified') continue;
-    const unsigned = Number(match.groups.value);
+    const unsigned = Number(String(match.groups.value).replace(/,/g, ''));
     const value = ['-', '−'].includes(match.groups?.sign) ? -unsigned : unsigned;
     observations.push(observationFromNumber(
       match[0].trim(), value, unit, currency,
@@ -593,6 +593,7 @@ export function factCheckThesis(thesis, enrichmentContext = {}, ticker = '', cut
   const mismatches = [];
   const untraced = [];
   const fabricationSuspects = [];
+  const blockingMismatches = [];
 
   for (const leaf of walkClaimLeaves(thesis)) {
     leaf.metadata.entity = leaf.metadata.entity || canonicalTicker;
@@ -610,8 +611,18 @@ export function factCheckThesis(thesis, enrichmentContext = {}, ticker = '', cut
       claims.push(claim);
       for (const item of checked) {
         const row = { path: claim.path, excerpt: claim.excerpt, ...item };
-        if (item.state === 'MISMATCH') mismatches.push(row);
-        else if (item.state === 'UNTRACED') {
+        if (item.state === 'MISMATCH') {
+          mismatches.push(row);
+          // governance-mutation: FACT_CHECK_BLOCKS_MISMATCHED_MONETARY_CLAIMS
+          // For money / orders / contracts / capacity, "the number disagrees with the
+          // source" is at least as serious as "no source at all" — and looks more
+          // credible, so it is the easier lie to ship. No tolerance band: an
+          // unvalidated threshold has no place in a fail-closed gate.
+          if (BLOCKING_ENTITY_CLASSES.has(item.entity_class)) {
+            blockingMismatches.push(row);
+            fabricationSuspects.push(row);
+          }
+        } else if (item.state === 'UNTRACED') {
           untraced.push(row);
           if (BLOCKING_ENTITY_CLASSES.has(item.entity_class)) fabricationSuspects.push(row);
         }
@@ -641,6 +652,7 @@ export function factCheckThesis(thesis, enrichmentContext = {}, ticker = '', cut
       claims: claims.length,
       traced: claims.filter(item => item.state === 'TRACED').length,
       mismatches: mismatches.length,
+      blocking_mismatches: blockingMismatches.length,
       untraced: untraced.length,
       fabrication_suspects: fabricationSuspects.length,
       source_facts: facts.length,
@@ -648,7 +660,8 @@ export function factCheckThesis(thesis, enrichmentContext = {}, ticker = '', cut
       future_source_facts: facts.filter(fact => fact.source_date && fact.source_date > frozenCutoff).length,
       undated_source_facts: facts.filter(fact => !fact.source_date).length,
     },
-    claims, mismatches, untraced, fabrication_suspects: fabricationSuspects,
+    claims, mismatches, blocking_mismatches: blockingMismatches,
+    untraced, fabrication_suspects: fabricationSuspects,
   };
   return { ...receipt, receipt_hash: canonicalHash(receipt) };
 }

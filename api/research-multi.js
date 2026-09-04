@@ -54,6 +54,7 @@ import {
   isPlainObject,
   buildQcFindings,
   attachFactCheck,
+  applyFabricationCap,
 } from './research.js';
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
@@ -979,7 +980,8 @@ export default async function handler(req, res) {
         forensic: { status: forensicRun.status, ms: forensicRun.ms, error: forensicRun.error },
         synth: { status: synthRun.status, ms: synthRun.ms },
       },
-      _quality: qcMeta,
+      // governance-mutation: FACT_CHECK_QUALITY_CAPPED_ON_FABRICATION_MULTI
+      _quality: applyFabricationCap(qcMeta, factChecked.data?._fact_check),
     };
 
     const partialFailures = [bullR1Run, bearR1Run, technicalRun, bullR2Run, bearR2Run, forensicRun]

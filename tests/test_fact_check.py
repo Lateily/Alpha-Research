@@ -208,6 +208,54 @@ class FactCheckTest(unittest.TestCase):
         self.assertEqual(receipt["summary"]["untraced"], 0)
         self.assertGreater(receipt["summary"]["traced"], 0)
 
+    def test_blocking_class_mismatch_blocks_regardless_of_magnitude(self) -> None:
+        """A wrong money/order/contract/capacity number is at least as serious as an
+        unsourced one — and looks more credible, so it is the easier lie to ship.
+        Before this gate, an order book inflated from 8.3B to 99.9B passed as a
+        non-blocking MISMATCH because a same-identity number existed in evidence."""
+        source = _source_payload("FY2025 order book was RMB 8.3B.")
+        for claim, label in (("RMB 9.9B", "19% inflation"), ("RMB 99.9B", "12x inflation")):
+            with self.subTest(label):
+                receipt = fact_check_module.fact_check(
+                    {"claim": f"FY2025 order book was {claim}."},
+                    ticker="688120.SH", cutoff=CUTOFF, source_payloads=source,
+                )
+                self.assertEqual(receipt["status"], "BLOCKED_PENDING_HUMAN")
+                self.assertGreaterEqual(receipt["summary"]["blocking_mismatches"], 1)
+                self.assertTrue(any(claim in row["raw"] for row in receipt["fabrication_suspects"]))
+
+    def test_truthful_blocking_class_claim_still_passes(self) -> None:
+        """The dual failure of reflexive-PASS is reflexive-BLOCK: a number that agrees
+        with its source must not be blocked."""
+        receipt = fact_check_module.fact_check(
+            {"claim": "FY2025 order book was RMB 8.3B."},
+            ticker="688120.SH", cutoff=CUTOFF,
+            source_payloads=_source_payload("FY2025 order book was RMB 8.3B."),
+        )
+        self.assertEqual(receipt["status"], "PASS")
+        self.assertEqual(receipt["summary"]["blocking_mismatches"], 0)
+        self.assertEqual(receipt["summary"]["fabrication_suspects"], 0)
+
+    def test_thousands_separator_is_not_a_mismatch(self) -> None:
+        """Without this, the stricter blocking rule would fire on pure formatting."""
+        receipt = fact_check_module.fact_check(
+            {"claim": "FY2025 revenue was RMB 4.5B."},
+            ticker="688120.SH", cutoff=CUTOFF,
+            source_payloads=_source_payload("FY2025 revenue was RMB 4,500 million."),
+        )
+        self.assertEqual(receipt["status"], "PASS")
+        self.assertEqual(receipt["summary"]["blocking_mismatches"], 0)
+
+    def test_ratio_mismatch_remains_visible_but_unblocking(self) -> None:
+        receipt = fact_check_module.fact_check(
+            {"claim": "FY2025 gross margin was 44.5%."},
+            ticker="688120.SH", cutoff=CUTOFF,
+            source_payloads=_source_payload("FY2025 gross margin was 41.81%."),
+        )
+        self.assertEqual(receipt["status"], "PASS")
+        self.assertEqual(receipt["summary"]["blocking_mismatches"], 0)
+        self.assertGreaterEqual(receipt["summary"]["mismatches"], 1)
+
     def test_mismatch_is_visible_but_does_not_block(self) -> None:
         receipt = fact_check_module.fact_check(
             {"claim": "FY2025 gross margin was 44.5%."},
@@ -547,6 +595,31 @@ class FactCheckTest(unittest.TestCase):
             "BLOCKED_PENDING_HUMAN",
             output["body"]["data"]["_fact_check"]["status"],
         )
+
+    def test_fabrication_caps_the_structural_quality_score(self) -> None:
+        """F-029: a thesis can be perfectly well-FORMED and still invent its numbers.
+        When the gate holds fabrication suspects, the headline score must not read PASS."""
+        runner = """
+import { pathToFileURL } from 'node:url';
+const [apiPath] = process.argv.slice(2);
+const api = await import(pathToFileURL(apiPath).href);
+const quality = { score: 90, severity: 'PASS', missingFields: [], qcChecklistResults: {} };
+process.stdout.write(JSON.stringify({
+  clean: api.applyFabricationCap(quality, { summary: { fabrication_suspects: 0 } }),
+  fabricated: api.applyFabricationCap(quality, { summary: { fabrication_suspects: 106 } }),
+  alreadyLow: api.applyFabricationCap({ score: 12, severity: 'FAIL' }, { summary: { fabrication_suspects: 3 } }),
+  noReceipt: api.applyFabricationCap(quality, undefined),
+}));
+"""
+        output = self._run_node(runner, RESEARCH_API)
+        self.assertEqual(output["clean"]["score"], 90)
+        self.assertEqual(output["clean"]["severity"], "PASS")
+        self.assertEqual(output["fabricated"]["score"], 40)
+        self.assertNotEqual(output["fabricated"]["severity"], "PASS")
+        self.assertTrue(output["fabricated"]["fabrication_capped"])
+        self.assertEqual(output["fabricated"]["fabrication_suspects"], 106)
+        self.assertEqual(output["alreadyLow"]["score"], 12, "the cap must never raise a score")
+        self.assertEqual(output["noReceipt"]["score"], 90)
 
     def test_multi_api_calls_fact_checker_before_returning_generated_thesis(self) -> None:
         output = self._run_node(NODE_HANDLER_RUNNER, RESEARCH_MULTI_API, "multi")

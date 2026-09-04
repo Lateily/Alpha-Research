@@ -7598,6 +7598,37 @@ MUTATIONS = MUTATIONS + (
         rationale="An incomplete U3 row remains DATA_BLOCKED even when E1 is also active.",
     ),
     MutationCase(
+        mutation_id="FACT_CHECK_BLOCKS_MISMATCHED_MONETARY_CLAIMS",
+        component="Research fact-check gate",
+        source_path="scripts/llm/fact_check_core.mjs",
+        test_script="tests/test_fact_check.py",
+        before=(
+            "          // governance-mutation: FACT_CHECK_BLOCKS_MISMATCHED_MONETARY_CLAIMS"
+        ),
+        after=(
+            "          if (false)  // governance-mutation: FACT_CHECK_BLOCKS_MISMATCHED_MONETARY_CLAIMS"
+        ),
+        expected_failure_marker="test_blocking_class_mismatch_blocks_regardless_of_magnitude",
+        rationale=(
+            "A money/order/contract/capacity number that disagrees with its source must "
+            "block exactly as an unsourced one does; a same-identity number in evidence "
+            "cannot downgrade a fabricated magnitude to a non-blocking mismatch."
+        ),
+    ),
+    MutationCase(
+        mutation_id="FACT_CHECK_QUALITY_CAPPED_ON_FABRICATION",
+        component="Research fact-check gate",
+        source_path="api/research.js",
+        test_script="tests/test_fact_check.py",
+        before="const FABRICATION_QUALITY_CAP = 40;",
+        after="const FABRICATION_QUALITY_CAP = 100;",
+        expected_failure_marker="test_fabrication_caps_the_structural_quality_score",
+        rationale=(
+            "A structurally well-formed thesis whose numbers are unsourced must not keep "
+            "a PASS headline score (F-029)."
+        ),
+    ),
+    MutationCase(
         mutation_id="FACT_CHECK_BLOCKS_UNTRACED_MONETARY_CLAIMS",
         component="Research deterministic fact-check core",
         source_path="scripts/llm/fact_check_core.mjs",

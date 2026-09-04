@@ -1401,6 +1401,29 @@ function validateThesisQuality(parsedOutput) {
   return { score, missingFields, qcChecklistResults, severity };
 }
 
+// governance-mutation: FACT_CHECK_QUALITY_CAPPED_ON_FABRICATION
+// A structural score says the thesis is well-FORMED; it says nothing about whether
+// its numbers exist. When the fact-check gate holds unsourced money/order/contract/
+// capacity claims, the headline score must not keep reading PASS — that pairing
+// (quality 90 + BLOCKED_PENDING_HUMAN) is precisely the F-029 failure this gate exists
+// to end. The cap replaces the score; it never raises it.
+const FABRICATION_QUALITY_CAP = 40;
+
+function applyFabricationCap(quality, factCheckReceipt) {
+  if (!quality || typeof quality !== 'object') return quality;
+  const suspects = Number(factCheckReceipt?.summary?.fabrication_suspects || 0);
+  if (!suspects) return quality;
+  const cappedScore = Math.min(Number(quality.score) || 0, FABRICATION_QUALITY_CAP);
+  return {
+    ...quality,
+    score: cappedScore,
+    severity: cappedScore > 60 ? 'WARN' : 'FAIL',
+    fabrication_suspects: suspects,
+    fabrication_capped: true,
+    fabrication_cap: FABRICATION_QUALITY_CAP,
+  };
+}
+
 function buildQcFindings(quality) {
   const failedChecks = QUALITY_CHECK_NAMES
     .filter(name => quality.qcChecklistResults?.[name] === false)
@@ -1873,6 +1896,7 @@ export {
   buildQcFindings,
   factCheckThesis,
   attachFactCheck,
+  applyFabricationCap,
 };
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -2013,6 +2037,11 @@ Rules: 2-4 catalysts, 2-4 risks, 3-5 next actions. All fields bilingual. Return 
     // governance-mutation: FACT_CHECK_SINGLE_API_POSTPROCESS
     const factChecked = attachFactCheck(research, enrichment_context, ticker, factCheckCutoff);
     research = factChecked.data;
+    // The structural score is computed before the gate runs, so it must be re-derived
+    // afterwards; otherwise a fabricated thesis keeps the score it earned on form alone.
+    if (isPlainObject(research._quality)) {
+      research._quality = applyFabricationCap(research._quality, research._fact_check);
+    }
 
     return res.status(200).json({
       success:        true,
