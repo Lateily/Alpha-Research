@@ -125,6 +125,10 @@ A035_GOVERNANCE_PATHS = (
     "scripts/llm/ai_os/harness_eval.py",
 )
 A035_MUTATION_PREFIX = "AIOS_A035_"
+A020_GOVERNANCE_PATHS = (
+    "scripts/llm/ai_os/human_gate.py",
+)
+A020_MUTATION_PREFIX = "AIOS_A020_"
 R043_GOVERNANCE_PATHS = (
     "experiments/execution_tracker/publication_migration.py",
 )
@@ -988,6 +992,220 @@ MUTATIONS: tuple[MutationCase, ...] = (
         test_function="test_rejected_identifiers_never_echo_secret_like_values",
     ),
     MutationCase(
+        mutation_id="AIOS_A020_ATTESTATION_SOURCE",
+        component="AIOS A-020 Human Decision Gate",
+        source_path="scripts/llm/ai_os/human_gate.py",
+        test_script="tests/test_ai_os_a020_human_gate_offline.py",
+        before='    if attestation.get("source") != DECLARED_ATTESTATION_SOURCE:\n'
+        '        errors.append("ATTESTATION_SOURCE_UNTRUSTED")',
+        after='    if False:\n'
+        '        errors.append("ATTESTATION_SOURCE_UNTRUSTED")',
+        expected_failure_marker="test_untrusted_attestation_source_fails_closed",
+        rationale="Raw model or chat data cannot masquerade as a trusted human attestation.",
+        test_function="test_untrusted_attestation_source_fails_closed",
+    ),
+    MutationCase(
+        mutation_id="AIOS_A020_ATTESTATION_HASH",
+        component="AIOS A-020 Human Decision Gate",
+        source_path="scripts/llm/ai_os/human_gate.py",
+        test_script="tests/test_ai_os_a020_human_gate_offline.py",
+        before='    if attestation.get("attestation_hash") != attestation_hash(attestation):\n'
+        '        errors.append("ATTESTATION_HASH_MISMATCH")',
+        after='    if False:\n'
+        '        errors.append("ATTESTATION_HASH_MISMATCH")',
+        expected_failure_marker="test_attestation_hash_tampering_is_blocked",
+        rationale="A self-consistent Human Gate receipt must bind the complete attestation.",
+        test_function="test_attestation_hash_tampering_is_blocked",
+    ),
+    MutationCase(
+        mutation_id="AIOS_A020_TASK_BINDING",
+        component="AIOS A-020 Human Decision Gate",
+        source_path="scripts/llm/ai_os/human_gate.py",
+        test_script="tests/test_ai_os_a020_human_gate_offline.py",
+        before='    if record["task_id"] != context.task_id or proof["task_id"] != context.task_id:\n'
+        '        errors.append("TASK_BINDING_MISMATCH")',
+        after='    if False:\n'
+        '        errors.append("TASK_BINDING_MISMATCH")',
+        expected_failure_marker="test_task_binding_mismatch_is_blocked",
+        rationale="A human decision cannot authorize a different task.",
+        test_function="test_task_binding_mismatch_is_blocked",
+    ),
+    MutationCase(
+        mutation_id="AIOS_A020_GATE_BINDING",
+        component="AIOS A-020 Human Decision Gate",
+        source_path="scripts/llm/ai_os/human_gate.py",
+        test_script="tests/test_ai_os_a020_human_gate_offline.py",
+        before='    if record["gate"] != context.gate or proof["gate"] != context.gate:\n'
+        '        errors.append("GATE_BINDING_MISMATCH")',
+        after='    if False:\n'
+        '        errors.append("GATE_BINDING_MISMATCH")',
+        expected_failure_marker="test_gate_binding_mismatch_is_blocked",
+        rationale="A decision for one gate cannot authorize another gate.",
+        test_function="test_gate_binding_mismatch_is_blocked",
+    ),
+    MutationCase(
+        mutation_id="AIOS_A020_HEAD_BINDING",
+        component="AIOS A-020 Human Decision Gate",
+        source_path="scripts/llm/ai_os/human_gate.py",
+        test_script="tests/test_ai_os_a020_human_gate_offline.py",
+        before=(
+            '    if (\n'
+            '        record["reviewed_head_sha"] != context.current_head_sha\n'
+            '        or proof["reviewed_head_sha"] != context.current_head_sha\n'
+            '    ):\n'
+            '        errors.append("HEAD_BINDING_MISMATCH")'
+        ),
+        after='    if False:\n        errors.append("HEAD_BINDING_MISMATCH")',
+        expected_failure_marker="test_stale_head_is_blocked",
+        rationale="Approval evidence from a stale commit cannot authorize the current head.",
+        test_function="test_stale_head_is_blocked",
+    ),
+    MutationCase(
+        mutation_id="AIOS_A020_ARTIFACT_BINDING",
+        component="AIOS A-020 Human Decision Gate",
+        source_path="scripts/llm/ai_os/human_gate.py",
+        test_script="tests/test_ai_os_a020_human_gate_offline.py",
+        before=(
+            '    if (\n'
+            '        record["reviewed_artifact_hash"] != context.reviewed_artifact_hash\n'
+            '        or proof["reviewed_artifact_hash"] != context.reviewed_artifact_hash\n'
+            '    ):\n'
+            '        errors.append("ARTIFACT_BINDING_MISMATCH")'
+        ),
+        after='    if False:\n        errors.append("ARTIFACT_BINDING_MISMATCH")',
+        expected_failure_marker="test_artifact_hash_mismatch_is_blocked",
+        rationale="A decision cannot authorize bytes other than the reviewed artifact.",
+        test_function="test_artifact_hash_mismatch_is_blocked",
+    ),
+    MutationCase(
+        mutation_id="AIOS_A020_DECISION_ID_BINDING",
+        component="AIOS A-020 Human Decision Gate",
+        source_path="scripts/llm/ai_os/human_gate.py",
+        test_script="tests/test_ai_os_a020_human_gate_offline.py",
+        before='    if record["decision_id"] != proof["decision_id"]:\n'
+        '        errors.append("DECISION_ID_MISMATCH")',
+        after='    if False:\n'
+        '        errors.append("DECISION_ID_MISMATCH")',
+        expected_failure_marker="test_decision_id_binding_mismatch_is_blocked",
+        rationale="The attestation must identify the exact human decision record.",
+        test_function="test_decision_id_binding_mismatch_is_blocked",
+    ),
+    MutationCase(
+        mutation_id="AIOS_A020_ATTESTATION_ID_BINDING",
+        component="AIOS A-020 Human Decision Gate",
+        source_path="scripts/llm/ai_os/human_gate.py",
+        test_script="tests/test_ai_os_a020_human_gate_offline.py",
+        before='    if record["attestation_id"] != proof["attestation_id"]:\n'
+        '        errors.append("ATTESTATION_ID_MISMATCH")',
+        after='    if False:\n'
+        '        errors.append("ATTESTATION_ID_MISMATCH")',
+        expected_failure_marker="test_attestation_id_binding_mismatch_is_blocked",
+        rationale="A decision cannot borrow a different authority attestation.",
+        test_function="test_attestation_id_binding_mismatch_is_blocked",
+    ),
+    MutationCase(
+        mutation_id="AIOS_A020_DECISION_BINDING",
+        component="AIOS A-020 Human Decision Gate",
+        source_path="scripts/llm/ai_os/human_gate.py",
+        test_script="tests/test_ai_os_a020_human_gate_offline.py",
+        before='    if record["decision"] != proof["decision"]:\n'
+        '        errors.append("DECISION_BINDING_MISMATCH")',
+        after='    if False:\n'
+        '        errors.append("DECISION_BINDING_MISMATCH")',
+        expected_failure_marker="test_decision_binding_mismatch_is_blocked",
+        rationale="An attested REVISE cannot be rewritten into APPROVE.",
+        test_function="test_decision_binding_mismatch_is_blocked",
+    ),
+    MutationCase(
+        mutation_id="AIOS_A020_PRINCIPAL_BINDING",
+        component="AIOS A-020 Human Decision Gate",
+        source_path="scripts/llm/ai_os/human_gate.py",
+        test_script="tests/test_ai_os_a020_human_gate_offline.py",
+        before='    if record["decided_by"].casefold() != proof["principal_login"].casefold():\n'
+        '        errors.append("PRINCIPAL_BINDING_MISMATCH")',
+        after='    if False:\n'
+        '        errors.append("PRINCIPAL_BINDING_MISMATCH")',
+        expected_failure_marker="test_principal_binding_mismatch_is_blocked",
+        rationale="The named decider must match the attested human principal.",
+        test_function="test_principal_binding_mismatch_is_blocked",
+    ),
+    MutationCase(
+        mutation_id="AIOS_A020_EVIDENCE_BINDING",
+        component="AIOS A-020 Human Decision Gate",
+        source_path="scripts/llm/ai_os/human_gate.py",
+        test_script="tests/test_ai_os_a020_human_gate_offline.py",
+        before='    if proof["source_ref"] not in record["evidence_refs"]:\n'
+        '        errors.append("EVIDENCE_BINDING_MISMATCH")',
+        after='    if False:\n'
+        '        errors.append("EVIDENCE_BINDING_MISMATCH")',
+        expected_failure_marker="test_evidence_binding_mismatch_is_blocked",
+        rationale="The decision must cite the exact review used by the attestation.",
+        test_function="test_evidence_binding_mismatch_is_blocked",
+    ),
+    MutationCase(
+        mutation_id="AIOS_A020_AUTHORITY_ROLE",
+        component="AIOS A-020 Human Decision Gate",
+        source_path="scripts/llm/ai_os/human_gate.py",
+        test_script="tests/test_ai_os_a020_human_gate_offline.py",
+        before='    if proof["authority_role"] != context.required_authority_role:\n'
+        '        errors.append("AUTHORITY_ROLE_MISMATCH")',
+        after='    if False:\n'
+        '        errors.append("AUTHORITY_ROLE_MISMATCH")',
+        expected_failure_marker="test_required_authority_role_mismatch_is_blocked",
+        rationale="A human principal without the gate role cannot authorize it.",
+        test_function="test_required_authority_role_mismatch_is_blocked",
+    ),
+    MutationCase(
+        mutation_id="AIOS_A020_REVIEW_INDEPENDENCE",
+        component="AIOS A-020 Human Decision Gate",
+        source_path="scripts/llm/ai_os/human_gate.py",
+        test_script="tests/test_ai_os_a020_human_gate_offline.py",
+        before=(
+            '    if (\n'
+            '        proof["principal_id"] == context.executor_principal_id\n'
+            '        or proof["principal_login"].casefold() == context.executor_login.casefold()\n'
+            '    ):\n'
+            '        errors.append("REVIEW_NOT_INDEPENDENT")'
+        ),
+        after='    if False:\n        errors.append("REVIEW_NOT_INDEPENDENT")',
+        expected_failure_marker="test_executor_cannot_supply_the_human_decision",
+        rationale="The executor cannot sign its own Human Gate decision.",
+        test_function="test_executor_cannot_supply_the_human_decision",
+    ),
+    MutationCase(
+        mutation_id="AIOS_A020_FINAL_MERGE_AUTHORITY",
+        component="AIOS A-020 Human Decision Gate",
+        source_path="scripts/llm/ai_os/human_gate.py",
+        test_script="tests/test_ai_os_a020_human_gate_offline.py",
+        before='        if proof["authority_role"] != "JUNYAN_FINAL_GATE":\n'
+        '            errors.append("FINAL_MERGE_AUTHORITY_REQUIRED")',
+        after='        if False:\n'
+        '            errors.append("FINAL_MERGE_AUTHORITY_REQUIRED")',
+        expected_failure_marker="test_final_merge_approval_requires_junyan_authority_role",
+        rationale="Only Junyan authority may approve the final merge gate.",
+        test_function="test_final_merge_approval_requires_junyan_authority_role",
+    ),
+    MutationCase(
+        mutation_id="AIOS_A020_APPROVAL_RESOLVER_FREEZE",
+        component="AIOS A-020 Human Decision Gate",
+        source_path="scripts/llm/ai_os/human_gate.py",
+        test_script="tests/test_ai_os_a020_human_gate_offline.py",
+        before='    if record["decision"] == "APPROVE":\n'
+        '        return _blocked(("AUTHORITY_RESOLVER_UNWIRED",))',
+        after='    if False:\n'
+        '        return _blocked(("AUTHORITY_RESOLVER_UNWIRED",))',
+        expected_failure_marker=(
+            "test_exact_structured_approval_stays_blocked_until_authority_resolver"
+        ),
+        rationale=(
+            "A caller-provided attestation cannot authorize until human identity "
+            "is proven by the future authority resolver."
+        ),
+        test_function=(
+            "test_exact_structured_approval_stays_blocked_until_authority_resolver"
+        ),
+    ),
+    MutationCase(
         mutation_id="AIOS_K1_TASK_REQUIRED_FIELDS",
         component="AIOS K1 Task Compiler",
         source_path="scripts/llm/ai_os/task_compiler.py",
@@ -1107,6 +1325,20 @@ MUTATIONS: tuple[MutationCase, ...] = (
         ),
         expected_failure_marker="test_validate_manifest_enforces_a035_marker_coverage",
         rationale="The mutation manifest must enforce A-035 marker coverage.",
+    ),
+    MutationCase(
+        mutation_id="GOVERNANCE_A020_MARKER_COVERAGE_CALL",
+        component="Governance mutation gate",
+        source_path="scripts/governance_mutation_gate.py",
+        test_script="tests/test_governance_mutation_gate.py",
+        before=("    validate_a020_" "marker_coverage(root, cases)"),
+        after=(
+            "    if False:\n"
+            "        validate_a020_"
+            "marker_coverage(root, cases)"
+        ),
+        expected_failure_marker="test_validate_manifest_enforces_a020_marker_coverage",
+        rationale="The mutation manifest must enforce A-020 marker coverage.",
     ),
     MutationCase(
         mutation_id="GOVERNANCE_R043_MARKER_COVERAGE_CALL",
@@ -7885,6 +8117,7 @@ def validate_manifest(root: Path, cases: Sequence[MutationCase]) -> None:
         _local_test_target(test_script, _target_test(case))
     validate_k1_marker_coverage(root, cases)
     validate_a035_marker_coverage(root, cases)
+    validate_a020_marker_coverage(root, cases)
     validate_r043_marker_coverage(root, cases)
     validate_funnel_marker_coverage(root, cases)
     validate_funnel_nightly_marker_coverage(root, cases)
@@ -7971,6 +8204,53 @@ def validate_a035_marker_coverage(
     if missing_mutations or missing_markers:
         raise MutationGateError(
             "A-035 governance marker drift: "
+            f"markers_without_mutations={missing_mutations}; "
+            f"mutations_without_markers={missing_markers}"
+        )
+
+
+def validate_a020_marker_coverage(
+    root: Path,
+    cases: Sequence[MutationCase],
+    marker_paths: Sequence[str] = A020_GOVERNANCE_PATHS,
+    prefix: str = A020_MUTATION_PREFIX,
+) -> None:
+    declared = {
+        case.mutation_id for case in cases if case.mutation_id.startswith(prefix)
+    }
+    existing_paths = [
+        relative for relative in marker_paths if _resolved_under(root, relative).is_file()
+    ]
+    if not declared and not existing_paths:
+        return
+
+    marked: dict[str, str] = {}
+    for relative in marker_paths:
+        source = _resolved_under(root, relative)
+        if not source.is_file():
+            raise MutationGateError(f"A-020 governance marker source is missing: {relative}")
+        for line_number, line in enumerate(
+            source.read_text(encoding="utf-8").splitlines(), start=1
+        ):
+            match = GOVERNANCE_MARKER_RE.fullmatch(line)
+            if not match:
+                continue
+            mutation_id = match.group("mutation_id")
+            if not mutation_id.startswith(prefix):
+                continue
+            if mutation_id in marked:
+                raise MutationGateError(
+                    f"duplicate A-020 governance marker: {mutation_id} at "
+                    f"{marked[mutation_id]} and {relative}:{line_number}"
+                )
+            marked[mutation_id] = f"{relative}:{line_number}"
+
+    marker_ids = set(marked)
+    missing_mutations = sorted(marker_ids - declared)
+    missing_markers = sorted(declared - marker_ids)
+    if missing_mutations or missing_markers:
+        raise MutationGateError(
+            "A-020 governance marker drift: "
             f"markers_without_mutations={missing_mutations}; "
             f"mutations_without_markers={missing_markers}"
         )
