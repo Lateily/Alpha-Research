@@ -1,10 +1,21 @@
 {
   "_status": "ok",
   "ticker": "300308.SZ",
-  "fetched_at": "2026-09-03T13:00:38Z",
+  "fetched_at": "2026-09-04T05:48:16Z",
   "api_used": "repurchase",
   "window_days": 180,
   "events": [
+    {
+      "ts_code": "300308.SZ",
+      "ann_date": "20260903",
+      "end_date": "20260903",
+      "proc": "实施",
+      "exp_date": null,
+      "vol": 965600,
+      "amount": 803405547.75,
+      "high_limit": 819.0,
+      "low_limit": 806.93
+    },
     {
       "ts_code": "300308.SZ",
       "ann_date": "20260902",
@@ -40,10 +51,10 @@
     }
   ],
   "summary": {
-    "total_count": 3,
-    "total_amount_180d": 8931823574.18,
+    "total_count": 4,
+    "total_amount_180d": 9735229121.93,
     "active_program": false,
-    "last_announce_date": "2026-09-02",
+    "last_announce_date": "2026-09-03",
     "signal_level": "HIGH"
   }
 }
