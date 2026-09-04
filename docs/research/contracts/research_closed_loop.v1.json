@@ -126,7 +126,7 @@
     {"path": "experiments/research_funnel/semiconductor_source_repair.py", "sha256": "sha256:d63f7ae910c198a09e07cbb7ede1510da2204b05f017079e4fe627aa7b6d55c6"},
     {"path": "experiments/research_funnel/industry_taxonomy.v1.json", "sha256": "sha256:0cd06c80c2d0b612b1c8b6168f97e7930db049b610ff07f2d0076e1322175d4e"},
     {"path": "experiments/research_funnel/u4_decision_ledger.py", "sha256": "sha256:06ab2c0718a595809d254f17b81581aa812bc7a35ab09b118c6ba69ec06fff82"},
-    {"path": "experiments/research_funnel/research_method.py", "sha256": "sha256:54ae465de69378497a1d52f17b5cccd170800cfe3ac940943f3523aaf26b7fa5"},
+    {"path": "experiments/research_funnel/research_method.py", "sha256": "sha256:652ecf275fb2d6774774f241c5b6e90388cf4b229ddadd56dcf9ed7edd8e16ff"},
     {"path": "experiments/research_funnel/research_cycle.py", "sha256": "sha256:f42620fa91cf93fe8fbd28930ab4c2530a5e6ed285c0025df5a74175feb59415"},
     {"path": "experiments/research_funnel/five_axis_attribution.py", "sha256": "sha256:c64259070743e11fded500e027597b36cab5465ef39e5ef14857b34ee9b7b6bb"},
     {"path": "experiments/research_funnel/paper_registration_bridge.py", "sha256": "sha256:61f095a6b126ed3aedbaae4d69c18e5dcc2d7eb5bd22b2e82713279382b1bc79"},

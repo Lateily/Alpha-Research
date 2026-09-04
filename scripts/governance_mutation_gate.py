@@ -3452,6 +3452,30 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="An industry adapter must register a later fact capable of testing its load-bearing modeled input.",
     ),
     MutationCase(
+        mutation_id="VALUATION_FORECAST_CONTAINS_ADAPTER_INPUT",
+        component="Research funnel method valuation",
+        source_path="experiments/research_funnel/research_method.py",
+        test_script="tests/test_research_method.py",
+        before='        if not contains_adapter_input:\n'
+        '            raise MethodError(exclusion_message)',
+        after='        if False:\n'
+        '            raise MethodError(exclusion_message)',
+        expected_failure_marker="test_semiconductor_forecast_range_must_contain_adapter_input",
+        rationale="A registered forecast must include the exact modeled input that bears the adapter output.",
+    ),
+    MutationCase(
+        mutation_id="VALUATION_BANDS_NOT_INVERTED",
+        component="Research funnel method valuation",
+        source_path="experiments/research_funnel/research_method.py",
+        test_script="tests/test_research_method.py",
+        before='    if bear_high > base_low or base_high > bull_low:\n'
+        '        raise MethodError("valuation scenario bands overlap or are inverted")',
+        after='    if False:\n'
+        '        raise MethodError("valuation scenario bands overlap or are inverted")',
+        expected_failure_marker="test_valuation_bands_cannot_overlap_or_invert",
+        rationale="Bear, base, and bull valuation bands may touch but cannot overlap or reverse order.",
+    ),
+    MutationCase(
         mutation_id="RESEARCH_METHOD_SMC_STOP_DERIVATION",
         component="Research funnel method manual SMC",
         source_path="experiments/research_funnel/research_method.py",
