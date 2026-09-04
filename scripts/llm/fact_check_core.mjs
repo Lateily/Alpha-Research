@@ -19,6 +19,11 @@ const SOURCE_METADATA_KEYS = new Set([
   'period', 'periods', 'measurement_period', 'report_period', 'end_date',
   'ticker', 'ts_code', 'security_code', 'entity', 'metric', 'entity_class',
 ]);
+const SOURCE_DATE_KEYS = [
+  'source_date', 'published_at', 'ann_date', 'announcement_date', 'observed_at',
+  'fetched_at', 'generated_at', 'context_built_at', 'date', 'as_of', 'trade_date',
+];
+const INLINE_TICKER_RE = /(?<![A-Z0-9.])(?:\d{6}\.(?:SH|SZ|BJ)|\d{1,5}\.HK)(?![A-Z0-9.])/gi;
 
 const METRIC_ALIASES = [
   ['order_book', ['order book', 'backlog', '在手订单', '订单']],
@@ -118,6 +123,14 @@ function periodsFromText(text) {
     .map(match => canonicalPeriod(match[0])))].sort();
 }
 
+function periodMatches(text) {
+  return [...String(text).matchAll(new RegExp(DATE_SOURCE, 'gi'))].map(match => ({
+    start: match.index,
+    end: match.index + match[0].length,
+    period: canonicalPeriod(match[0]),
+  }));
+}
+
 function canonicalCurrency(prefix, suffix, metadataCurrency = '') {
   const raw = String(prefix || suffix || metadataCurrency || '').toUpperCase();
   if (['RMB', 'CNY', '¥', '￥', '人民币', '元'].includes(raw)) return 'CNY';
@@ -170,6 +183,15 @@ function canonicalEntity(value, fallback = '') {
   return raw;
 }
 
+function entityForText(text, fallback = '') {
+  const explicit = [...new Set(
+    [...String(text || '').matchAll(INLINE_TICKER_RE)].map(match => canonicalEntity(match[0])),
+  )];
+  if (explicit.length === 1) return explicit[0];
+  if (explicit.length > 1) return 'AMBIGUOUS_INLINE_ENTITY';
+  return canonicalEntity(fallback);
+}
+
 function eventIdentity(text) {
   for (const [eventType, pattern] of EVENT_ALIASES) {
     if (!pattern.test(text)) continue;
@@ -195,7 +217,18 @@ function periodsFor(text, metadata) {
   return [...new Set(values)].sort();
 }
 
-function observationFromNumber(raw, value, unit, currency, comparator, metric, metadata, text, path) {
+function periodsForPosition(text, metadata, offset) {
+  const matches = periodMatches(text);
+  if (matches.length) {
+    const prior = matches.filter(match => match.end <= offset).at(-1);
+    const selected = prior || matches[0];
+    // governance-mutation: FACT_CHECK_LOCAL_PERIOD_BINDING
+    return selected.period ? [selected.period] : [];
+  }
+  return periodsFor('', metadata);
+}
+
+function observationFromNumber(raw, value, unit, currency, comparator, metric, metadata, periods) {
   const sign = value < 0 ? 'NEGATIVE' : value > 0 ? 'POSITIVE' : 'ZERO';
   const [normalized, normalizedUnit, baseClass] = normalizeNumber(value, unit, currency, metric);
   return {
@@ -208,35 +241,40 @@ function observationFromNumber(raw, value, unit, currency, comparator, metric, m
     sign,
     entity: canonicalEntity(metadata.entity),
     entity_class: entityClass(metric, baseClass),
-    periods: periodsFor(text, metadata),
+    periods,
   };
 }
 
 function extractObservations(text, path = [], metadata = {}) {
   const observations = [];
   const source = String(text);
-  const periods = periodsFor(source, metadata);
-  const dateSpans = [...source.matchAll(new RegExp(DATE_SOURCE, 'gi'))]
-    .map(match => [match.index, match.index + match[0].length]);
+  // governance-mutation: FACT_CHECK_INLINE_ENTITY_BINDING
+  const localMetadata = { ...metadata, entity: entityForText(source, metadata.entity) };
+  const periods = periodsFor(source, localMetadata);
+  const ignoredNumericSpans = [
+    ...source.matchAll(new RegExp(DATE_SOURCE, 'gi')),
+    // governance-mutation: FACT_CHECK_INLINE_ENTITY_NUMERIC_SPAN
+    ...source.matchAll(INLINE_TICKER_RE),
+  ].map(match => [match.index, match.index + match[0].length]);
   for (const match of source.matchAll(new RegExp(NUMBER_SOURCE, 'gi'))) {
-    if (dateSpans.some(([start, end]) => match.index >= start && match.index < end)) continue;
-    const metric = metricFor(source, path, match.index, metadata);
-    const unit = match.groups?.unit || metadata.unit || '';
-    const currency = canonicalCurrency(match.groups?.currency, match.groups?.currencySuffix, metadata.currency);
+    if (ignoredNumericSpans.some(([start, end]) => match.index >= start && match.index < end)) continue;
+    const metric = metricFor(source, path, match.index, localMetadata);
+    const unit = match.groups?.unit || localMetadata.unit || '';
+    const currency = canonicalCurrency(match.groups?.currency, match.groups?.currencySuffix, localMetadata.currency);
     if (!unit && currency === 'UNSPECIFIED' && metric === 'unclassified') continue;
     const unsigned = Number(match.groups.value);
     const value = ['-', '−'].includes(match.groups?.sign) ? -unsigned : unsigned;
     observations.push(observationFromNumber(
       match[0].trim(), value, unit, currency,
-      canonicalComparator(match.groups?.wordComparator, match.groups?.symbolComparator, metadata.comparator),
-      metric, metadata, source, path,
+      canonicalComparator(match.groups?.wordComparator, match.groups?.symbolComparator, localMetadata.comparator),
+      metric, localMetadata, periodsForPosition(source, localMetadata, match.index),
     ));
   }
   for (const match of source.matchAll(new RegExp(DATE_SOURCE, 'gi'))) {
     observations.push({
       raw: match[0], metric: 'date', normalized: canonicalPeriod(match[0]), unit: 'date',
       currency: 'UNSPECIFIED', comparator: 'EQ', sign: 'UNSPECIFIED',
-      entity: canonicalEntity(metadata.entity), entity_class: 'EVENT', periods,
+      entity: canonicalEntity(localMetadata.entity), entity_class: 'EVENT', periods,
     });
   }
   const event = eventIdentity(source);
@@ -244,7 +282,7 @@ function extractObservations(text, path = [], metadata = {}) {
     observations.push({
       raw: source.slice(0, 240), metric: 'event', normalized: null, unit: 'event',
       currency: 'UNSPECIFIED', comparator: 'EQ', sign: 'UNSPECIFIED',
-      entity: canonicalEntity(metadata.entity), entity_class: 'EVENT', periods, ...event,
+      entity: canonicalEntity(localMetadata.entity), entity_class: 'EVENT', periods, ...event,
     });
   }
   return observations;
@@ -259,6 +297,20 @@ function nearestValue(ancestors, keys) {
     }
   }
   return undefined;
+}
+
+function allValues(ancestors, keys) {
+  const output = [];
+  for (const value of ancestors) {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) continue;
+    for (const key of keys) {
+      const candidate = value[key];
+      if (candidate === undefined || candidate === null || candidate === '') continue;
+      if (Array.isArray(candidate)) output.push(...candidate);
+      else output.push(candidate);
+    }
+  }
+  return output;
 }
 
 function leafMetadata(ancestors, path, fallbackEntity = '') {
@@ -292,11 +344,22 @@ function walkClaimLeaves(value, path = [], ancestors = [], output = []) {
 function normalizeDate(rawValue) {
   if (rawValue === undefined || rawValue === null) return '';
   const raw = String(rawValue).trim();
-  if (/^20\d{6}$/.test(raw)) return `${raw.slice(0, 4)}-${raw.slice(4, 6)}-${raw.slice(6, 8)}T00:00:00.000Z`;
+  if (/^20\d{6}$/.test(raw)) {
+    const year = Number(raw.slice(0, 4));
+    const month = Number(raw.slice(4, 6));
+    const day = Number(raw.slice(6, 8));
+    const parsed = new Date(Date.UTC(year, month - 1, day));
+    if (parsed.getUTCFullYear() !== year || parsed.getUTCMonth() !== month - 1 || parsed.getUTCDate() !== day) return '';
+    return parsed.toISOString();
+  }
   if (/^20\d{2}-\d{1,2}-\d{1,2}$/.test(raw)) {
     const [year, month, day] = raw.split('-').map(Number);
-    return new Date(Date.UTC(year, month - 1, day)).toISOString();
+    const parsed = new Date(Date.UTC(year, month - 1, day));
+    if (parsed.getUTCFullYear() !== year || parsed.getUTCMonth() !== month - 1 || parsed.getUTCDate() !== day) return '';
+    return parsed.toISOString();
   }
+  // governance-mutation: FACT_CHECK_EXPLICIT_TIMEZONE
+  if (!/^20\d{2}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,9})?(?:Z|[+\-]\d{2}:\d{2})$/i.test(raw)) return '';
   const parsed = new Date(raw);
   return Number.isNaN(parsed.getTime()) ? '' : parsed.toISOString();
 }
@@ -311,14 +374,17 @@ function datesInText(text) {
 }
 
 function sourceMetadata(ancestors, document, fallbackEntity) {
-  const explicitDate = nearestValue(ancestors, [
-    'source_date', 'published_at', 'ann_date', 'announcement_date', 'observed_at',
-    'fetched_at', 'generated_at', 'context_built_at', 'date', 'as_of', 'trade_date',
-  ]);
+  // governance-mutation: FACT_CHECK_ALL_SOURCE_DATES
+  const explicitDates = [...allValues(ancestors, SOURCE_DATE_KEYS), document.source_date]
+    .filter(value => value !== undefined && value !== null && value !== '');
   const sourceLabel = nearestValue(ancestors, ['source']) || document.label;
-  const dateCandidates = [normalizeDate(explicitDate), ...datesInText(sourceLabel)].filter(Boolean).sort();
+  const normalizedExplicit = explicitDates.map(normalizeDate);
+  const explicitDatesValid = normalizedExplicit.every(Boolean);
+  const dateCandidates = explicitDatesValid
+    ? [...normalizedExplicit, ...datesInText(sourceLabel)].filter(Boolean).sort()
+    : [];
   return {
-    source_date: dateCandidates.at(-1) || normalizeDate(document.source_date),
+    source_date: explicitDatesValid ? (dateCandidates.at(-1) || '') : '',
     source_label: String(sourceLabel || document.label || 'supplied'),
     source_tier: String(nearestValue(ancestors, ['tier', 'source_tier']) || document.tier || 'UNSPECIFIED'),
     entity: canonicalEntity(nearestValue(ancestors, ['ticker', 'ts_code', 'security_code', 'entity']), document.entity || fallbackEntity),
@@ -352,7 +418,7 @@ function observationsForLeaf(leaf, fallbackEntity) {
   const numeric = Number(leaf.value);
   const observation = observationFromNumber(
     String(leaf.value), numeric, metadata.unit || '', currency,
-    canonicalComparator('', '', metadata.comparator), metric, metadata, '', leaf.path,
+    canonicalComparator('', '', metadata.comparator), metric, metadata, periodsFor('', metadata),
   );
   return [{ clause: String(leaf.value), observation }];
 }
@@ -365,7 +431,8 @@ function normalizeSourceDocuments(sourceDocuments, enrichmentContext, ticker) {
     tier: String(document.tier || 'SUPPLIED'),
     entity: canonicalEntity(document.entity, ticker),
     source_date: document.source_date || '',
-    content_hash: String(document.content_hash || canonicalHash(document.payload)),
+    // governance-mutation: FACT_CHECK_RECOMPUTES_CONTENT_HASH
+    content_hash: canonicalHash(document.payload),
   }));
   const context = enrichmentContext || {};
   const contextDate = context?.extras?.context_built_at || context.generated_at || context.as_of || '';

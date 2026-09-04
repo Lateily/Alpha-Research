@@ -174,10 +174,19 @@ class FactCheckTest(unittest.TestCase):
         self.assertTrue(lines, "node runner produced no JSON receipt")
         return json.loads(lines[-1])
 
-    def _run_core_request(self, request: dict[str, object]) -> dict[str, object]:
+    def _run_core_request(
+        self,
+        request: dict[str, object],
+        *,
+        timezone: str | None = None,
+    ) -> dict[str, object]:
+        env = os.environ.copy()
+        if timezone is not None:
+            env["TZ"] = timezone
         completed = subprocess.run(
             ["node", str(CORE_PATH)],
             cwd=ROOT,
+            env=env,
             input=json.dumps(request, ensure_ascii=False, sort_keys=True),
             capture_output=True,
             text=True,
@@ -298,6 +307,85 @@ class FactCheckTest(unittest.TestCase):
         self.assertEqual(undated["status"], "BLOCKED_PENDING_HUMAN")
         self.assertGreater(undated["summary"]["undated_source_facts"], 0)
 
+    def test_latest_of_all_source_dates_controls_pit_admissibility(self) -> None:
+        receipt = fact_check_module.fact_check(
+            {"claim": "FY2025 order book was RMB 8.3B."},
+            ticker="688120.SH",
+            cutoff=CUTOFF,
+            source_payloads=[(
+                {
+                    "source_date": "2026-06-10T00:00:00Z",
+                    "published_at": "2027-01-01T00:00:00Z",
+                    "filing": "FY2025 order book was RMB 8.3B.",
+                },
+                "conflicting-dates.json",
+                "E1",
+            )],
+        )
+        self.assertEqual(receipt["status"], "BLOCKED_PENDING_HUMAN")
+        self.assertGreater(receipt["summary"]["future_source_facts"], 0)
+        self.assertFalse(any(
+            row["state"] == "TRACED" and row["metric"] == "order_book"
+            for row in receipt["claims"][0]["observations"]
+        ))
+
+    def test_timezone_naive_source_timestamp_is_host_independent_and_blocked(self) -> None:
+        request = {
+            "thesis": {"claim": "FY2025 order book was RMB 8.3B."},
+            "ticker": "688120.SH",
+            "cutoff": CUTOFF,
+            "source_documents": [{
+                "payload": {
+                    "published_at": "2026-06-10T12:00:00",
+                    "filing": "FY2025 order book was RMB 8.3B.",
+                },
+                "label": "naive-time.json",
+                "tier": "E1",
+                "entity": "688120.SH",
+                "source_date": SOURCE_DATE,
+            }],
+        }
+        utc = self._run_core_request(request, timezone="UTC")
+        los_angeles = self._run_core_request(request, timezone="America/Los_Angeles")
+        self.assertEqual(utc, los_angeles)
+        self.assertEqual(utc["status"], "BLOCKED_PENDING_HUMAN")
+        self.assertGreater(utc["summary"]["undated_source_facts"], 0)
+
+    def test_each_numeric_observation_binds_only_its_local_period(self) -> None:
+        receipt = fact_check_module.fact_check(
+            {"claim": "FY2024 order book was RMB 8.3B."},
+            ticker="688120.SH",
+            cutoff=CUTOFF,
+            source_payloads=_source_payload(
+                "FY2024 order book was RMB 7.0B, while FY2025 order book was RMB 8.3B."
+            ),
+        )
+        order_rows = [
+            observation
+            for claim in receipt["claims"]
+            for observation in claim["observations"]
+            if observation["metric"] == "order_book"
+        ]
+        self.assertEqual(len(order_rows), 1)
+        self.assertEqual(order_rows[0]["state"], "MISMATCH")
+        self.assertEqual(order_rows[0]["periods"], ["FY2024"])
+        self.assertEqual(order_rows[0]["source"]["raw"], "RMB 7.0B")
+        self.assertEqual(order_rows[0]["source"]["identity"]["periods"], ["FY2024"])
+
+    def test_inline_ticker_cannot_be_relabelled_by_document_entity(self) -> None:
+        receipt = fact_check_module.fact_check(
+            {"claim": "688120.SH FY2025 order book was RMB 8.3B."},
+            ticker="688120.SH",
+            cutoff=CUTOFF,
+            source_payloads=_source_payload(
+                "000001.SZ FY2025 order book was RMB 8.3B."
+            ),
+        )
+        orders = [row for row in receipt["untraced"] if row["metric"] == "order_book"]
+        self.assertEqual(len(orders), 1)
+        self.assertEqual(orders[0]["entity"], "688120.SH")
+        self.assertEqual(receipt["status"], "BLOCKED_PENDING_HUMAN")
+
     def test_numeric_thesis_leaf_is_checked_instead_of_skipped(self) -> None:
         receipt = fact_check_module.fact_check(
             {"order_book": 8_300_000_000, "currency": "CNY", "period": "FY2025"},
@@ -323,6 +411,36 @@ class FactCheckTest(unittest.TestCase):
         self.assertNotEqual(first["source_set_hash"], second["source_set_hash"])
         self.assertNotEqual(first["input_hash"], second["input_hash"])
         self.assertNotEqual(first["receipt_hash"], second["receipt_hash"])
+
+    def test_source_payload_hash_is_recomputed_not_caller_supplied(self) -> None:
+        def request(value: str) -> dict[str, object]:
+            return {
+                "thesis": {"claim": "FY2025 order book was RMB 8.3B."},
+                "ticker": "688120.SH",
+                "cutoff": CUTOFF,
+                "source_documents": [{
+                    "payload": {
+                        "source_date": SOURCE_DATE,
+                        "filing": f"FY2025 order book was RMB {value}B.",
+                    },
+                    "label": "declared-hash.json",
+                    "tier": "E1",
+                    "entity": "688120.SH",
+                    "content_hash": "sha256:" + ("0" * 64),
+                }],
+            }
+
+        first = self._run_core_request(request("8.3"))
+        second = self._run_core_request(request("8.4"))
+        self.assertNotEqual(first["source_set_hash"], second["source_set_hash"])
+        self.assertNotEqual(first["receipt_hash"], second["receipt_hash"])
+        traced = next(
+            observation
+            for claim in first["claims"]
+            for observation in claim["observations"]
+            if observation["metric"] == "order_book"
+        )
+        self.assertNotEqual(traced["source"]["content_hash"], "sha256:" + ("0" * 64))
 
     def test_event_subject_identity_is_not_keyword_only(self) -> None:
         evidence = _source_payload("FDA approval was granted.")

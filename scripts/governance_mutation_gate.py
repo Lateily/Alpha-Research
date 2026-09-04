@@ -7247,6 +7247,104 @@ mutation_id="U4_PREDECISION_ATOMIC_NO_REPLACE",
         rationale="A board approval cannot trace an FDA approval merely because both say approval.",
     ),
     MutationCase(
+        mutation_id="FACT_CHECK_ALL_SOURCE_DATES",
+        component="Research deterministic fact-check PIT boundary",
+        source_path="scripts/llm/fact_check_core.mjs",
+        test_script="tests/test_fact_check.py",
+        before=(
+            "  // governance-mutation: FACT_CHECK_ALL_SOURCE_DATES\n"
+            "  const explicitDates = [...allValues(ancestors, SOURCE_DATE_KEYS), document.source_date]\n"
+            "    .filter(value => value !== undefined && value !== null && value !== '');"
+        ),
+        after=(
+            "  // governance-mutation: FACT_CHECK_ALL_SOURCE_DATES\n"
+            "  const explicitDates = [nearestValue(ancestors, SOURCE_DATE_KEYS), document.source_date]\n"
+            "    .filter(value => value !== undefined && value !== null && value !== '');"
+        ),
+        expected_failure_marker="test_latest_of_all_source_dates_controls_pit_admissibility",
+        rationale="An older source_date cannot hide a later publication or availability timestamp.",
+    ),
+    MutationCase(
+        mutation_id="FACT_CHECK_EXPLICIT_TIMEZONE",
+        component="Research deterministic fact-check PIT boundary",
+        source_path="scripts/llm/fact_check_core.mjs",
+        test_script="tests/test_fact_check.py",
+        before=(
+            "  // governance-mutation: FACT_CHECK_EXPLICIT_TIMEZONE\n"
+            "  if (!/^20\\d{2}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,9})?(?:Z|[+\\-]\\d{2}:\\d{2})$/i.test(raw)) return '';"
+        ),
+        after=(
+            "  // governance-mutation: FACT_CHECK_EXPLICIT_TIMEZONE\n"
+            "  if (false && !/^20\\d{2}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,9})?(?:Z|[+\\-]\\d{2}:\\d{2})$/i.test(raw)) return '';"
+        ),
+        expected_failure_marker="test_timezone_naive_source_timestamp_is_host_independent_and_blocked",
+        rationale="A timezone-naive availability time must not change meaning with the runner host.",
+    ),
+    MutationCase(
+        mutation_id="FACT_CHECK_LOCAL_PERIOD_BINDING",
+        component="Research deterministic fact-check identity",
+        source_path="scripts/llm/fact_check_core.mjs",
+        test_script="tests/test_fact_check.py",
+        before=(
+            "    // governance-mutation: FACT_CHECK_LOCAL_PERIOD_BINDING\n"
+            "    return selected.period ? [selected.period] : [];"
+        ),
+        after=(
+            "    // governance-mutation: FACT_CHECK_LOCAL_PERIOD_BINDING\n"
+            "    return periodsFor(text, metadata);"
+        ),
+        expected_failure_marker="test_each_numeric_observation_binds_only_its_local_period",
+        rationale="One number cannot inherit every reporting period named elsewhere in its clause.",
+    ),
+    MutationCase(
+        mutation_id="FACT_CHECK_INLINE_ENTITY_BINDING",
+        component="Research deterministic fact-check identity",
+        source_path="scripts/llm/fact_check_core.mjs",
+        test_script="tests/test_fact_check.py",
+        before=(
+            "  // governance-mutation: FACT_CHECK_INLINE_ENTITY_BINDING\n"
+            "  const localMetadata = { ...metadata, entity: entityForText(source, metadata.entity) };"
+        ),
+        after=(
+            "  // governance-mutation: FACT_CHECK_INLINE_ENTITY_BINDING\n"
+            "  const localMetadata = { ...metadata, entity: canonicalEntity(metadata.entity) };"
+        ),
+        expected_failure_marker="test_inline_ticker_cannot_be_relabelled_by_document_entity",
+        rationale="An inline peer ticker cannot be relabelled as the requested security by outer metadata.",
+    ),
+    MutationCase(
+        mutation_id="FACT_CHECK_INLINE_ENTITY_NUMERIC_SPAN",
+        component="Research deterministic fact-check parsing",
+        source_path="scripts/llm/fact_check_core.mjs",
+        test_script="tests/test_fact_check.py",
+        before=(
+            "    // governance-mutation: FACT_CHECK_INLINE_ENTITY_NUMERIC_SPAN\n"
+            "    ...source.matchAll(INLINE_TICKER_RE),"
+        ),
+        after=(
+            "    // governance-mutation: FACT_CHECK_INLINE_ENTITY_NUMERIC_SPAN\n"
+            "    ...[],"
+        ),
+        expected_failure_marker="test_inline_ticker_cannot_be_relabelled_by_document_entity",
+        rationale="Ticker digits cannot be emitted as a second monetary observation.",
+    ),
+    MutationCase(
+        mutation_id="FACT_CHECK_RECOMPUTES_CONTENT_HASH",
+        component="Research deterministic fact-check receipt",
+        source_path="scripts/llm/fact_check_core.mjs",
+        test_script="tests/test_fact_check.py",
+        before=(
+            "    // governance-mutation: FACT_CHECK_RECOMPUTES_CONTENT_HASH\n"
+            "    content_hash: canonicalHash(document.payload),"
+        ),
+        after=(
+            "    // governance-mutation: FACT_CHECK_RECOMPUTES_CONTENT_HASH\n"
+            "    content_hash: String(document.content_hash || canonicalHash(document.payload)),"
+        ),
+        expected_failure_marker="test_source_payload_hash_is_recomputed_not_caller_supplied",
+        rationale="Caller-supplied content hashes cannot make different evidence payloads share one receipt identity.",
+    ),
+    MutationCase(
         mutation_id="FACT_CHECK_PYTHON_CANONICAL_CORE",
         component="Research offline fact-check adapter",
         source_path="scripts/llm/fact_check.py",
