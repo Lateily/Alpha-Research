@@ -1937,22 +1937,29 @@ def validate_candidate_battery(
                 raise FunnelError(
                     f"blocked battery dimension lacks a reason: {row.get('ts_code')} {name}"
                 )
-            if name in BATTERY_DISPLAY_VERDICT_DIMENSIONS:
-                has_display_verdict = BATTERY_VERDICT_FIELD in evidence
-                if verdict_contract is None:
-                    if has_display_verdict:
-                        raise FunnelError("battery display verdict lacks its declared contract")
-                    continue
-                expected_display_verdict = _expected_battery_display_verdict(name, evidence)
-                # governance-mutation: BATTERY_VERDICT_V0_DERIVES_FROM_DIMS
-                if (
-                    not has_display_verdict
-                    or evidence.get(BATTERY_VERDICT_FIELD) != expected_display_verdict
-                ):
+            has_display_verdict = BATTERY_VERDICT_FIELD in evidence
+            if name not in BATTERY_DISPLAY_VERDICT_DIMENSIONS:
+                # governance-mutation: BATTERY_VERDICT_FIELD_OWNERSHIP
+                if has_display_verdict:
                     raise FunnelError(
-                        f"battery display verdict does not match dimension evidence: "
+                        f"battery display verdict is forbidden on dimension: "
                         f"{row.get('ts_code')} {name}"
                     )
+                continue
+            if verdict_contract is None:
+                if has_display_verdict:
+                    raise FunnelError("battery display verdict lacks its declared contract")
+                continue
+            expected_display_verdict = _expected_battery_display_verdict(name, evidence)
+            # governance-mutation: BATTERY_VERDICT_V0_DERIVES_FROM_DIMS
+            if (
+                not has_display_verdict
+                or evidence.get(BATTERY_VERDICT_FIELD) != expected_display_verdict
+            ):
+                raise FunnelError(
+                    f"battery display verdict does not match dimension evidence: "
+                    f"{row.get('ts_code')} {name}"
+                )
         _u3_fundamental_red_flag_active(row)
         completeness = row.get("completeness") or {}
         if completeness.get("of") != 6 or "verdict" not in completeness:

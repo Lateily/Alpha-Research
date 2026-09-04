@@ -194,6 +194,13 @@ class BatteryCoverageTests(unittest.TestCase):
         with self.assertRaisesRegex(FunnelError, "does not match dimension evidence"):
             fp.validate_candidate_battery(payload, self.manifest)
 
+    def test_non_display_dimension_cannot_carry_a_self_reported_verdict(self) -> None:
+        rows = [complete_row(tk) for tk in self.codes]
+        rows[0]["dims"]["基本面"][fp.BATTERY_VERDICT_FIELD] = "PASS"
+        payload = battery_for(self.manifest, rows)
+        with self.assertRaisesRegex(FunnelError, "forbidden on dimension"):
+            fp.validate_candidate_battery(payload, self.manifest)
+
     def test_complete_fundamental_dimension_requires_a_red_flag_verdict(self) -> None:
         rows = [complete_row(tk) for tk in self.codes]
         del rows[0]["dims"]["基本面"]["红旗闸门"]

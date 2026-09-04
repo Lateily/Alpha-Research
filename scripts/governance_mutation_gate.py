@@ -4676,17 +4676,38 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="Unknown dimension states cannot be treated as successfully measured evidence.",
     ),
     MutationCase(
+        mutation_id="BATTERY_VERDICT_FIELD_OWNERSHIP",
+        component="Research funnel candidate battery",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_funnel_dag_offline.py",
+        before=(
+            "                # governance-mutation: BATTERY_VERDICT_FIELD_OWNERSHIP\n"
+            "                if has_display_verdict:"
+        ),
+        after=(
+            "                # governance-mutation: BATTERY_VERDICT_FIELD_OWNERSHIP\n"
+            "                if False:"
+        ),
+        expected_failure_marker=(
+            "test_non_display_dimension_cannot_carry_a_self_reported_verdict"
+        ),
+        rationale=(
+            "A dimension outside the display-verdict contract cannot smuggle an "
+            "unrecomputed self-reported verdict into U3."
+        ),
+    ),
+    MutationCase(
         mutation_id="BATTERY_VERDICT_V0_DERIVES_FROM_DIMS",
         component="Research funnel candidate battery",
         source_path="experiments/research_funnel/funnel_pipeline.py",
         test_script="tests/test_funnel_dag_offline.py",
         before=(
-            "                # governance-mutation: BATTERY_VERDICT_V0_DERIVES_FROM_DIMS\n"
-            "                if ("
+            "            # governance-mutation: BATTERY_VERDICT_V0_DERIVES_FROM_DIMS\n"
+            "            if ("
         ),
         after=(
-            "                # governance-mutation: BATTERY_VERDICT_V0_DERIVES_FROM_DIMS\n"
-            "                if False and ("
+            "            # governance-mutation: BATTERY_VERDICT_V0_DERIVES_FROM_DIMS\n"
+            "            if False and ("
         ),
         expected_failure_marker="test_u3_rejects_a_tampered_display_verdict_after_rows_rehash",
         rationale="U3 must independently recompute each display-only verdict from its frozen dimension evidence.",
