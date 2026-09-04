@@ -4736,6 +4736,27 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="Unvalidated display labels must never enter U4 completeness or readiness decisions.",
     ),
     MutationCase(
+        mutation_id="BATTERY_VERDICT_U4_DISPLAY_PROJECTION",
+        component="Research funnel U4 display packet",
+        source_path="experiments/research_funnel/u4_pre_decision.py",
+        test_script="tests/test_u4_pre_decision_runtime.py",
+        before=(
+            "        # governance-mutation: BATTERY_VERDICT_U4_DISPLAY_PROJECTION\n"
+            "        if include_display_verdicts:"
+        ),
+        after=(
+            "        # governance-mutation: BATTERY_VERDICT_U4_DISPLAY_PROJECTION\n"
+            "        if False:"
+        ),
+        expected_failure_marker=(
+            "test_battery_display_verdicts_are_projected_into_u4_packet"
+        ),
+        rationale=(
+            "Validated display-only U3 labels must reach the human U4 packet "
+            "without entering readiness."
+        ),
+    ),
+    MutationCase(
         mutation_id="FUNNEL_DAG_TOKENLESS_DEGRADATION",
         component="Nightly funnel wiring DAG",
         source_path="experiments/execution_tracker/run_nightly.py",
