@@ -8,8 +8,97 @@ Junyan 2026-07-28 指令驱动:股票 = 行情/资金/基本面/技术面/消息
 用法: full_battery.py TS_CODE [TS_CODE...]  → 每票一份六维 JSON
 不是买卖指令;研究信号,human executes.
 """
-import os, sys, json, datetime
+import os, sys, json, datetime, math
 from nightly_context import bind, target_trade_date
+
+
+DIMENSION_VERDICT_CONTRACT = "battery_dimension_verdict_v0_unvalidated"
+VERDICT_FIELD = "verdict_v0_unvalidated"
+DISPLAY_VERDICT_DIMENSIONS = ("行情", "资金", "技术面", "消息面", "估值")
+
+
+def _finite_number(value):
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return None
+    number = float(value)
+    return number if math.isfinite(number) else None
+
+
+def _verdict_v0_unvalidated(name, evidence):
+    """Return one display-only label from already collected dimension evidence.
+
+    These thresholds are explicitly unvalidated.  The result never enters
+    completeness, U4 readiness, selection, sizing, or execution.
+    """
+    if evidence.get("status") in {"DATA_BLOCKED", "NOT_RUN"}:
+        return None
+    if name == "行情":
+        off_high = _finite_number(evidence.get("off_high_pct"))
+        off_low = _finite_number(evidence.get("off_low_pct"))
+        if off_high is None or off_low is None:
+            return None
+        if off_high > -10:
+            return "NEAR_HIGH"
+        if off_low < 20:
+            return "NEAR_LOW"
+        return "MID"
+    if name == "资金":
+        total = _finite_number(evidence.get("主力10日累计亿"))
+        inflow_days = _finite_number(evidence.get("近10日净流入天数"))
+        if total is None or inflow_days is None:
+            return None
+        if total > 0 and inflow_days >= 6:
+            return "INFLOW"
+        if total < 0 and inflow_days <= 4:
+            return "OUTFLOW"
+        return "MIXED"
+    if name == "技术面":
+        ma20 = _finite_number(evidence.get("vs_MA20_pct"))
+        ma60 = _finite_number(evidence.get("vs_MA60_pct"))
+        if ma20 is None or ma60 is None:
+            return None
+        if ma20 > 0 and ma60 > 0:
+            return "BULL"
+        if ma20 < 0 and ma60 < 0:
+            return "BEAR"
+        return "TANGLED"
+    if name == "消息面":
+        recent = _finite_number(evidence.get("近7日公告条数"))
+        if recent is None:
+            return None
+        return "SPIKE" if recent >= 5 else "NORMAL"
+    if name == "估值":
+        percentile = _finite_number(evidence.get("pe_1年分位%"))
+        if percentile is None:
+            return None
+        if percentile < 25:
+            return "LOW"
+        if percentile > 75:
+            return "HIGH"
+        return "MID"
+    raise ValueError(f"unsupported display verdict dimension: {name}")
+
+
+def _apply_verdict_v0_unvalidated(dims):
+    for name in DISPLAY_VERDICT_DIMENSIONS:
+        evidence = dims.get(name)
+        if isinstance(evidence, dict):
+            evidence[VERDICT_FIELD] = _verdict_v0_unvalidated(name, evidence)
+
+
+def _recent_announcement_count(titles, today):
+    end = datetime.datetime.strptime(today, "%Y%m%d").date()
+    start = end - datetime.timedelta(days=6)
+    count = 0
+    for raw_date, _title in titles:
+        compact = str(raw_date or "")[:10].replace("-", "")
+        try:
+            observed = datetime.datetime.strptime(compact, "%Y%m%d").date()
+        except ValueError:
+            continue
+        if start <= observed <= end:
+            count += 1
+    return count
 
 
 def _fetch_anns_eastmoney(ts_code, page_size=30, timeout=10):
@@ -102,6 +191,7 @@ def battery(pro, tk, today):
             D["消息面"] = {"status": "DATA_BLOCKED", "err": "东财+Tushare 公告源均不可用——不伪装为0条"}
         else:
             D["消息面"] = {"最近公告条数": len(titles),
+                           "近7日公告条数": _recent_announcement_count(titles, today),
                            "最新3条": [f"{d0[:10]} {t[:36]}" for d0, t in titles[:3]],
                            "note": "东财公告源;实时快讯层待 M3 宏观面板上线"}
     except Exception as e:
@@ -122,6 +212,7 @@ def battery(pro, tk, today):
                      "note": "峰值利润票 PE 失真,需 normalized 桥(宪法条款)"}
     except Exception as e:
         D["估值"] = {"status": "DATA_BLOCKED", "err": str(e)[:80]}
+    _apply_verdict_v0_unvalidated(D)
     # 完整性戳
     missing = [k for k, v in D.items() if isinstance(v, dict) and v.get("status") in ("DATA_BLOCKED", "NOT_RUN")]
     out["completeness"] = {"covered": 6 - len(missing), "of": 6, "missing": missing,
@@ -144,7 +235,8 @@ def main():
     if not tks:
         print("usage: full_battery.py TS_CODE [...] | --from-watchlist"); return 1
     res = [battery(pro, t, today) for t in tks]
-    out = bind({"battery": "six_dim_v0", "checked_at": today, "results": res,
+    out = bind({"battery": "six_dim_v0", "checked_at": today,
+                "dimension_verdict_contract": DIMENSION_VERDICT_CONTRACT, "results": res,
                 "rule": "分析先跑电池后写观点;缺维必须显式标注。不是买卖指令。"},
                target=today)
     if "--from-watchlist" in sys.argv:

@@ -280,18 +280,28 @@ def _validate_valuation(value: Any, core: Mapping[str, Any], registered_at: str)
     scenarios = core.get("valuation_target_range") or {}
     if valuation.get("scenario_band_hash") != _hash(scenarios):
         raise MethodError("valuation is not bound to the thesis scenario band")
+    bear = scenarios.get("bear") or {}
     base = scenarios.get("base") or {}
-    if not (_number(base.get("low"), "base.low", positive=True) <= exit_reference
-            <= _number(base.get("high"), "base.high", positive=True)):
+    bull = scenarios.get("bull") or {}
+    bear_high = _number(bear.get("high"), "bear.high", positive=True)
+    base_low = _number(base.get("low"), "base.low", positive=True)
+    base_high = _number(base.get("high"), "base.high", positive=True)
+    bull_low = _number(bull.get("low"), "bull.low", positive=True)
+    # governance-mutation: VALUATION_BANDS_NOT_INVERTED
+    if bear_high > base_low or base_high > bull_low:
+        raise MethodError("valuation scenario bands overlap or are inverted")
+    if not base_low <= exit_reference <= base_high:
         raise MethodError("valuation.paper_exit_reference must lie inside the base band")
     if valuation.get("calibrated") is not False:
         raise MethodError("valuation must remain uncalibrated")
     inputs = valuation.get("model_inputs")
     output = _exact(valuation.get("model_output"), VALUATION_OUTPUT_KEYS, "valuation.model_output")
     adapter = str(valuation["adapter"])
+    adapter_forecast_input: tuple[str, float] | None = None
     if adapter == "SEMICONDUCTOR_NORMALIZED_EARNINGS":
         model = _exact(inputs, SEMICONDUCTOR_INPUT_KEYS, "valuation.model_inputs")
         eps = _number(model.get("normalized_eps"), "normalized_eps", positive=True)
+        adapter_forecast_input = ("NORMALIZED_EPS", eps)
         multiple_low = _number(model.get("fair_multiple_low"), "fair_multiple_low", positive=True)
         multiple_high = _number(model.get("fair_multiple_high"), "fair_multiple_high", positive=True)
         if multiple_low >= multiple_high:
@@ -302,6 +312,7 @@ def _validate_valuation(value: Any, core: Mapping[str, Any], registered_at: str)
         model = _exact(inputs, INNOVATIVE_DRUG_INPUT_KEYS, "valuation.model_inputs")
         net_cash = _number(model.get("net_cash_per_share"), "net_cash_per_share")
         pipeline = _number(model.get("pipeline_rnpv_per_share"), "pipeline_rnpv_per_share", positive=True)
+        adapter_forecast_input = ("PIPELINE_RNPV_PER_SHARE", pipeline)
         commercial = _number(model.get("commercial_value_per_share"), "commercial_value_per_share")
         haircut = _number(model.get("dilution_haircut_pct"), "dilution_haircut_pct")
         if not 0 <= haircut < 1:
@@ -323,8 +334,8 @@ def _validate_valuation(value: Any, core: Mapping[str, Any], registered_at: str)
     if output.get("calculation_status") != "MANUAL_UNVALIDATED" or declared != computed:
         raise MethodError("valuation output is not derived from its adapter inputs")
     if declared != (
-        _number(base.get("low"), "base.low", positive=True),
-        _number(base.get("high"), "base.high", positive=True),
+        base_low,
+        base_high,
     ):
         raise MethodError("valuation adapter result is not bound to the thesis base band")
     forecasts = valuation.get("forecasts")
@@ -332,19 +343,22 @@ def _validate_valuation(value: Any, core: Mapping[str, Any], registered_at: str)
         raise MethodError("valuation.forecasts must be non-empty")
     ids: set[str] = set()
     metrics: set[str] = set()
+    ranges_by_metric: dict[str, list[tuple[float, float]]] = {}
     for index, forecast in enumerate(forecasts):
         item = _exact(forecast, FORECAST_KEYS, f"valuation.forecasts[{index}]")
         forecast_id = _nonempty(item.get("forecast_id"), f"forecast[{index}].forecast_id")
         if forecast_id in ids:
             raise MethodError(f"duplicate forecast_id: {forecast_id}")
         ids.add(forecast_id)
-        metrics.add(_nonempty(item.get("metric"), f"forecast {forecast_id}.metric"))
+        metric = _nonempty(item.get("metric"), f"forecast {forecast_id}.metric")
+        metrics.add(metric)
         _nonempty(item.get("source_ref"), f"forecast {forecast_id}.source_ref")
         _nonempty(item.get("measurement_period"), f"forecast {forecast_id}.measurement_period")
         low = _number(item.get("low"), f"forecast {forecast_id}.low")
         high = _number(item.get("high"), f"forecast {forecast_id}.high")
         if not low < high:
             raise MethodError(f"forecast {forecast_id} needs low < high")
+        ranges_by_metric.setdefault(metric, []).append((low, high))
         if item.get("required_tier") not in {"E1", "E2"}:
             raise MethodError(f"forecast {forecast_id} required_tier must be E1 or E2")
         if _date8(item.get("due_date"), f"forecast {forecast_id}.due_date") < registered_at:
@@ -353,6 +367,19 @@ def _validate_valuation(value: Any, core: Mapping[str, Any], registered_at: str)
     # governance-mutation: RESEARCH_METHOD_VALUATION_FORECAST_COVERAGE
     if not required_metrics.issubset(metrics):
         raise MethodError("valuation forecasts omit a load-bearing adapter input")
+    if adapter_forecast_input is not None:
+        metric, model_input = adapter_forecast_input
+        contains_adapter_input = any(
+            low <= model_input <= high for low, high in ranges_by_metric.get(metric, [])
+        )
+        exclusion_message = (
+            "valuation forecast range excludes the adapter input EPS"
+            if metric == "NORMALIZED_EPS"
+            else "valuation forecast range excludes the adapter input RNPV"
+        )
+        # governance-mutation: VALUATION_FORECAST_CONTAINS_ADAPTER_INPUT
+        if not contains_adapter_input:
+            raise MethodError(exclusion_message)
 
 
 def _zone(value: Any, label: str) -> tuple[float, float]:

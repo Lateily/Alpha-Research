@@ -27,6 +27,7 @@ sys.path.insert(0, str(REPO_ROOT / "experiments" / "research_funnel"))
 
 import funnel_dag as dag  # noqa: E402
 import funnel_pipeline as fp  # noqa: E402
+import full_battery  # noqa: E402
 import nightly_funnel  # noqa: E402
 import run_nightly as nightly  # noqa: E402
 import test_research_funnel_closure as closure  # noqa: E402
@@ -47,8 +48,15 @@ def real_scan_and_candidates():
 
 
 def complete_row(tk: str, today: str = TARGET) -> dict:
-    dims = {d: {"ok": True} for d in fp.BATTERY_DIMENSIONS}
-    dims["基本面"] = {"ok": True, "红旗闸门": "PASS"}
+    dims = {
+        "行情": {"off_high_pct": -20.0, "off_low_pct": 30.0},
+        "资金": {"主力10日累计亿": -1.0, "近10日净流入天数": 4},
+        "基本面": {"ok": True, "红旗闸门": "PASS"},
+        "技术面": {"vs_MA20_pct": -1.0, "vs_MA60_pct": -2.0},
+        "消息面": {"近7日公告条数": 2},
+        "估值": {"pe_1年分位%": 50.0},
+    }
+    full_battery._apply_verdict_v0_unvalidated(dims)
     return {"ts_code": tk, "checked_at": today, "dims": dims,
             "completeness": {"covered": 6, "of": 6, "missing": [], "verdict": "COMPLETE"}}
 
@@ -60,6 +68,7 @@ def battery_for(manifest: dict, rows: list[dict], *, run_id: str = RUN_ID,
         "rule_version": fp.RULE_VERSION, "as_of": as_of, "target_trade_date": as_of,
         "checked_at": as_of, "run_id": run_id, "generated_at": "t",
         "manifest_hash": manifest["manifest_hash"], "provider_state": "TEST",
+        "dimension_verdict_contract": fp.BATTERY_DIMENSION_VERDICT_CONTRACT,
         "results": rows, "disclaimer": fp.DISCLAIMER,
     }
     payload["rows_hash"] = fp._hash(rows)
@@ -178,6 +187,20 @@ class BatteryCoverageTests(unittest.TestCase):
         with self.assertRaisesRegex(FunnelError, "completeness does not match"):
             fp.validate_candidate_battery(battery_for(self.manifest, rows), self.manifest)
 
+    def test_u3_rejects_a_tampered_display_verdict_after_rows_rehash(self) -> None:
+        rows = [complete_row(tk) for tk in self.codes]
+        rows[0]["dims"]["资金"][fp.BATTERY_VERDICT_FIELD] = "INFLOW"
+        payload = battery_for(self.manifest, rows)
+        with self.assertRaisesRegex(FunnelError, "does not match dimension evidence"):
+            fp.validate_candidate_battery(payload, self.manifest)
+
+    def test_non_display_dimension_cannot_carry_a_self_reported_verdict(self) -> None:
+        rows = [complete_row(tk) for tk in self.codes]
+        rows[0]["dims"]["基本面"][fp.BATTERY_VERDICT_FIELD] = "PASS"
+        payload = battery_for(self.manifest, rows)
+        with self.assertRaisesRegex(FunnelError, "forbidden on dimension"):
+            fp.validate_candidate_battery(payload, self.manifest)
+
     def test_complete_fundamental_dimension_requires_a_red_flag_verdict(self) -> None:
         rows = [complete_row(tk) for tk in self.codes]
         del rows[0]["dims"]["基本面"]["红旗闸门"]
@@ -192,6 +215,33 @@ class BatteryCoverageTests(unittest.TestCase):
 
 
 class ProviderFailureTests(unittest.TestCase):
+    def test_300236_fixture_gets_five_display_only_verdicts(self) -> None:
+        row = {
+            "ts_code": "300236.SZ",
+            "checked_at": "20260824",
+            "dims": {
+                "行情": {"off_high_pct": -35.1, "off_low_pct": 79.3},
+                "资金": {"主力10日累计亿": -1.65, "近10日净流入天数": 4},
+                "基本面": {"红旗闸门": "PASS", "红旗理由": []},
+                "技术面": {"vs_MA20_pct": -2.0, "vs_MA60_pct": -10.6},
+                "消息面": {"近7日公告条数": 3},
+                "估值": {"pe_1年分位%": 30.0},
+            },
+        }
+        out = dag._sanitize_row(row)
+        observed = {
+            name: out["dims"][name][fp.BATTERY_VERDICT_FIELD]
+            for name in fp.BATTERY_DISPLAY_VERDICT_DIMENSIONS
+        }
+        self.assertEqual({
+            "行情": "MID",
+            "资金": "OUTFLOW",
+            "技术面": "BEAR",
+            "消息面": "NORMAL",
+            "估值": "MID",
+        }, observed)
+        self.assertNotIn(fp.BATTERY_VERDICT_FIELD, out["dims"]["基本面"])
+
     def test_no_token_yields_per_ticker_data_blocked_not_a_step_failure(self) -> None:
         saved = dict(os.environ)
         try:
@@ -207,6 +257,10 @@ class ProviderFailureTests(unittest.TestCase):
         row = dag._blocked_row("000001.SZ", TARGET, "provider down")
         self.assertEqual(set(fp.BATTERY_DIMENSIONS), set(row["dims"]))
         self.assertTrue(all(v["status"] == "DATA_BLOCKED" for v in row["dims"].values()))
+        self.assertTrue(all(
+            row["dims"][name][fp.BATTERY_VERDICT_FIELD] is None
+            for name in fp.BATTERY_DISPLAY_VERDICT_DIMENSIONS
+        ))
         self.assertEqual("PARTIAL", row["completeness"]["verdict"])
         self.assertEqual(6, row["completeness"]["of"])
 
@@ -218,9 +272,19 @@ class ProviderFailureTests(unittest.TestCase):
         out = dag._sanitize_row(row)
         self.assertEqual("DATA_BLOCKED", out["dims"]["估值"]["status"])
         self.assertEqual("DATA_BLOCKED", out["dims"]["资金"]["status"])
-        self.assertEqual({"ok": True}, out["dims"]["行情"], "干净的维度不得被动")
+        self.assertEqual("MID", out["dims"]["行情"][fp.BATTERY_VERDICT_FIELD])
         self.assertEqual("PARTIAL", out["completeness"]["verdict"])
         json.dumps(out)  # 必须能序列化
+
+    def test_data_blocked_dimension_forces_an_explicit_null_display_verdict(self) -> None:
+        row = complete_row("000001.SZ")
+        row["dims"]["资金"] = {
+            "status": "DATA_BLOCKED",
+            "err": "provider unavailable",
+            fp.BATTERY_VERDICT_FIELD: "INFLOW",
+        }
+        out = dag._sanitize_row(row)
+        self.assertIsNone(out["dims"]["资金"][fp.BATTERY_VERDICT_FIELD])
 
 
 class StageChainTests(unittest.TestCase):
@@ -634,6 +698,29 @@ class NightlyWiringTests(unittest.TestCase):
 
 
 class U4GateNotRelaxedTests(unittest.TestCase):
+    def test_display_verdicts_never_change_u4_readiness(self) -> None:
+        candidates = {"rows": [
+            {"ts_code": "000001.SZ", "flags": [], "industry_key": "TEST",
+             "review_status": "MAIN_CHANNEL"},
+            {"ts_code": "000002.SZ", "flags": [], "industry_key": "TEST",
+             "review_status": "MAIN_CHANNEL"},
+        ]}
+        inflow = complete_row("000001.SZ")
+        inflow["dims"]["资金"].update({"主力10日累计亿": 1.0, "近10日净流入天数": 6})
+        full_battery._apply_verdict_v0_unvalidated(inflow["dims"])
+        outflow = complete_row("000002.SZ")
+        battery = {"target_trade_date": TARGET, "results": [inflow, outflow]}
+        queue = fp.build_deep_research_queue(
+            candidate_review=candidates,
+            battery=battery,
+            selected_tickers=(),
+            trade_date=TARGET,
+            generated_at="t",
+        )
+        self.assertEqual([True, True], [row["ready"] for row in queue["ready_pool"]])
+        self.assertEqual("INFLOW", inflow["dims"]["资金"][fp.BATTERY_VERDICT_FIELD])
+        self.assertEqual("OUTFLOW", outflow["dims"]["资金"][fp.BATTERY_VERDICT_FIELD])
+
     def test_deep_queue_still_requires_three_to_five_human_selections(self) -> None:
         """就绪池变大了,U4 的人工门不能跟着松。"""
         src = (REPO_ROOT / "experiments" / "research_funnel" / "funnel_pipeline.py").read_text("utf-8")

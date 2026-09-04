@@ -95,6 +95,10 @@ jobs:
         run: |
           python3 tests/test_publication_migration_offline.py
           python3 experiments/execution_tracker/publication_migration.py --selftest
+      # WO-OPS1(2026-09-03 事件):丢失 durable manifest 的运维再基线 —— 需审批、
+      # 账本留痕、状态不伪装 COMMITTED;手改状态无账本事件 → fail-closed。
+      - name: Publication lost-manifest re-baseline regression (offline)
+        run: python3 tests/test_publish_rebaseline_offline.py
       # AIOS Harness A-013:provider-neutral AgentAdapter 契约(零网络、零成本)
       - name: Agent adapter contract regression (offline)
         run: python3 tests/test_agent_adapter_offline.py
