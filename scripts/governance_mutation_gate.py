@@ -144,6 +144,7 @@ FUNNEL_GOVERNANCE_PATHS = (
     "experiments/research_funnel/semiconductor_source_repair.py",
     "experiments/research_funnel/semiconductor_preflight_packet.py",
     "experiments/research_funnel/u4_pre_decision.py",
+    "experiments/research_funnel/knowledge_cards.py",
     "experiments/research_funnel/feature_store.py",
     "experiments/execution_tracker/event_ledger.py",
     "experiments/execution_tracker/paper_execution_audit.py",
@@ -7611,6 +7612,124 @@ MUTATIONS = MUTATIONS + (
         ),
         expected_failure_marker="test_lhb_render_reads_appearances",
         rationale="The research prompt must consume the canonical appearances array emitted by fetch_lhb.py.",
+    ),
+    MutationCase(
+        mutation_id="CARD_STATUS_GATE",
+        component="Research funnel knowledge-card status boundary",
+        source_path="experiments/research_funnel/knowledge_cards.py",
+        test_script="tests/test_knowledge_cards.py",
+        before=(
+            '    # governance-mutation: CARD_STATUS_GATE\n'
+            '    selected = [card for card in cards if card["status"] in PARTICIPATING_STATUSES]'
+        ),
+        after=(
+            '    # governance-mutation: CARD_STATUS_GATE\n'
+            '    selected = list(cards)'
+        ),
+        expected_failure_marker="test_draft_card_does_not_participate",
+        rationale="Draft knowledge cards cannot enter the display-only evaluation set.",
+    ),
+    MutationCase(
+        mutation_id="CARD_EVAL_DERIVES_FROM_SOURCE",
+        component="Research funnel knowledge-card source-derived evaluation",
+        source_path="experiments/research_funnel/knowledge_cards.py",
+        test_script="tests/test_knowledge_cards.py",
+        before=(
+            '            # governance-mutation: CARD_EVAL_DERIVES_FROM_SOURCE\n'
+            '            comparison = "AT_OR_ABOVE" if observed >= threshold else "BELOW"'
+        ),
+        after=(
+            '            # governance-mutation: CARD_EVAL_DERIVES_FROM_SOURCE\n'
+            '            comparison = str(row.get("comparison_unvalidated") or "BELOW")'
+        ),
+        expected_failure_marker="test_threshold_evaluation_recomputes_from_source_value",
+        rationale="A card evaluation must derive from frozen source values, not a caller-reported label.",
+    ),
+    MutationCase(
+        mutation_id="CARD_SCHEMA_MIN_LENGTHS",
+        component="Research funnel knowledge-card schema parity",
+        source_path="experiments/research_funnel/knowledge_cards.py",
+        test_script="tests/test_knowledge_cards.py",
+        before=(
+            "        # governance-mutation: CARD_SCHEMA_MIN_LENGTHS\n"
+            "        if minimum is not None and len(text) < minimum:"
+        ),
+        after=(
+            "        # governance-mutation: CARD_SCHEMA_MIN_LENGTHS\n"
+            "        if False and minimum is not None and len(text) < minimum:"
+        ),
+        expected_failure_marker="test_schema_minimum_text_lengths_are_enforced",
+        rationale="The runtime validator must retain the reviewed schema's minimum-content gates.",
+    ),
+    MutationCase(
+        mutation_id="CARD_SOURCE_CATALOG_FROM_COLLECTORS",
+        component="Research funnel knowledge-card source catalog",
+        source_path="experiments/research_funnel/knowledge_cards.py",
+        test_script="tests/test_knowledge_cards.py",
+        before=(
+            "    # governance-mutation: CARD_SOURCE_CATALOG_FROM_COLLECTORS\n"
+            "    collected = {\n"
+            "        api: set(_field_names(fields))\n"
+            "        for api, fields in feature_store.ENDPOINT_FIELDS.items()\n"
+            "    }"
+        ),
+        after=(
+            "    # governance-mutation: CARD_SOURCE_CATALOG_FROM_COLLECTORS\n"
+            "    collected = {}"
+        ),
+        expected_failure_marker="test_source_catalog_tracks_current_collector_declarations",
+        rationale=(
+            "Knowledge-card source coverage must follow the repository collectors' "
+            "current field declarations rather than a hand-maintained catalog."
+        ),
+    ),
+    MutationCase(
+        mutation_id="CARD_SOURCE_FIELD_COVERAGE",
+        component="Research funnel knowledge-card source coverage",
+        source_path="experiments/research_funnel/knowledge_cards.py",
+        test_script="tests/test_knowledge_cards.py",
+        before=(
+            "        # governance-mutation: CARD_SOURCE_FIELD_COVERAGE\n"
+            '        "collected_by_repo": bool(pairs) and not missing,'
+        ),
+        after=(
+            "        # governance-mutation: CARD_SOURCE_FIELD_COVERAGE\n"
+            '        "collected_by_repo": bool(pairs),'
+        ),
+        expected_failure_marker="test_source_coverage_is_checked_per_api_field_pair_not_by_union",
+        rationale="A field declared under one API cannot make missing pairs under another API look collected.",
+    ),
+    MutationCase(
+        mutation_id="CARD_AUTO_SOURCE_COLLECTION_GATE",
+        component="Research funnel knowledge-card AUTO availability",
+        source_path="experiments/research_funnel/knowledge_cards.py",
+        test_script="tests/test_knowledge_cards.py",
+        before=(
+            "        # governance-mutation: CARD_AUTO_SOURCE_COLLECTION_GATE\n"
+            '        if not coverage["collected_by_repo"]:'
+        ),
+        after=(
+            "        # governance-mutation: CARD_AUTO_SOURCE_COLLECTION_GATE\n"
+            "        if False:"
+        ),
+        expected_failure_marker="test_uncollected_auto_source_is_visible_and_cannot_look_computable",
+        rationale="An AUTO card cannot be presented as computable when its declared source pairs are not collected.",
+    ),
+    MutationCase(
+        mutation_id="CARD_EVIDENCE_HASH_VERIFIED",
+        component="Research funnel knowledge-card evidence verification",
+        source_path="experiments/research_funnel/knowledge_cards.py",
+        test_script="tests/test_knowledge_cards.py",
+        before=(
+            "    # governance-mutation: CARD_EVIDENCE_HASH_VERIFIED\n"
+            "    if evidence != expected:"
+        ),
+        after=(
+            "    # governance-mutation: CARD_EVIDENCE_HASH_VERIFIED\n"
+            "    if False:"
+        ),
+        expected_failure_marker="test_evaluation_verifier_rejects_result_card_and_envelope_hash_drift",
+        rationale="A rehashed display result must still be rebuilt from the reviewed card and frozen source row.",
     ),
 )
 
