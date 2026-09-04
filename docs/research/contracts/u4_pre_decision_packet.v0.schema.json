@@ -296,6 +296,50 @@
         "OTHER_WITH_NOTE"
       ]
     },
+    "peak_earnings": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "flag",
+            "needs_normalized_bridge",
+            "roe_vs_5y_median",
+            "gm_vs_5y_median",
+            "source_hash",
+            "reason"
+          ],
+          "properties": {
+            "flag": {"type": "boolean"},
+            "needs_normalized_bridge": {"type": "boolean"},
+            "roe_vs_5y_median": {"type": ["number", "null"]},
+            "gm_vs_5y_median": {"type": ["number", "null"]},
+            "source_hash": {"$ref": "#/$defs/sha256"},
+            "reason": {"const": null}
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "flag",
+            "needs_normalized_bridge",
+            "roe_vs_5y_median",
+            "gm_vs_5y_median",
+            "source_hash",
+            "reason"
+          ],
+          "properties": {
+            "flag": {"const": null},
+            "needs_normalized_bridge": {"const": null},
+            "roe_vs_5y_median": {"const": null},
+            "gm_vs_5y_median": {"const": null},
+            "source_hash": {"const": null},
+            "reason": {"const": "CYCLICAL_FLAG_NOT_COMPUTED"}
+          }
+        }
+      ]
+    },
     "candidate_row": {
       "type": "object",
       "additionalProperties": false,
@@ -310,6 +354,7 @@
         "causal_cluster_identity_state",
         "u2_candidate_row_hash",
         "u3_battery_row_hash",
+        "peak_earnings",
         "positive_channels",
         "red_flag_channels",
         "blocked_reasons",
@@ -333,6 +378,7 @@
         },
         "u2_candidate_row_hash": {"$ref": "#/$defs/sha256"},
         "u3_battery_row_hash": {"$ref": "#/$defs/sha256"},
+        "peak_earnings": {"$ref": "#/$defs/peak_earnings"},
         "positive_channels": {
           "type": "array",
           "uniqueItems": true,
