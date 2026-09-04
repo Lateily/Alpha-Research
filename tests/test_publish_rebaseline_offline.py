@@ -56,7 +56,7 @@ def _layout(tmp, run_id="R_LOST"):
         "run_id": run_id,
         "target_trade_date": "20260828",
         "plan": os.path.join(et, "runs", run_id, "publish_plan.json"),
-        "artifact_count": 3,
+        "artifact_count": 0,
         "manifest": missing_manifest,
     }
     state_path = os.path.join(et, "publication_state.json")
@@ -104,7 +104,7 @@ class RebaselineTests(unittest.TestCase):
             self.assertEqual(state["superseded_event_id"], "rebaseline:R_LOST")
             self.assertEqual(state["superseded_event_hash"], out["event_hash"])
             self.assertEqual(state["approved_by"], "Junyan")
-            ledger = os.path.join(et, nightly_publish.CONTROL_LEDGER_NAME)
+            ledger = os.path.join(et, nightly_publish.REBASELINE_LEDGER_NAME)
             lines = event_ledger._read_lines(ledger)
             self.assertEqual(len(lines), 1)
             rec = json.loads(lines[0])
@@ -133,7 +133,7 @@ class RebaselineTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             et, repo, _, state_path, _ = _layout(tmp)
             before = read_bytes(state_path)
-            ledger = os.path.join(et, nightly_publish.CONTROL_LEDGER_NAME)
+            ledger = os.path.join(et, nightly_publish.REBASELINE_LEDGER_NAME)
             for missing_key in ("reason", "approved_by", "approval_ref"):
                 kwargs = dict(APPROVAL)
                 kwargs[missing_key] = "   "
@@ -173,24 +173,22 @@ class RebaselineTests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, "重复"):
                 nightly_publish.rebaseline_lost_manifest(
                     state_path, et, repo, now=LATER, **APPROVAL)
-            ledger = os.path.join(et, nightly_publish.CONTROL_LEDGER_NAME)
+            ledger = os.path.join(et, nightly_publish.REBASELINE_LEDGER_NAME)
             self.assertEqual(len(event_ledger._read_lines(ledger)), 1)
-            # If someone resets the state to COMMITTED, the ledger still refuses a SECOND
-            # event; the call converges on the existing one instead (BLOCKER 2 of the
-            # 2026-09-03 review: a crash between append and state write must have a
-            # recovery path). Behaviour change vs the first draft of this PR, which
-            # refused outright and left production with no convergence route.
+            # A real append-before-state crash leaves the exact prior_state on disk and
+            # is covered below. Merely changing a completed projection back to COMMITTED
+            # is tampering, not a crash shape, and must not be laundered as convergence.
             first_state = read_json(state_path)
             tampered = dict(first_state)
             tampered["status"] = "COMMITTED"
             write_json(state_path, tampered)
-            out = nightly_publish.rebaseline_lost_manifest(
-                state_path, et, repo, now=LATER, **APPROVAL)
-            self.assertEqual(out["converged_from"], "LEDGER_COMMITTED_STATE_MISSING")
+            with self.assertRaisesRegex(RuntimeError, "非崩溃收敛"):
+                nightly_publish.rebaseline_lost_manifest(
+                    state_path, et, repo, now=LATER, **APPROVAL)
             self.assertEqual(len(event_ledger._read_lines(ledger)), 1,
-                             "convergence must never append a second event")
-            self.assertEqual(read_json(state_path), first_state,
-                             "convergence must rebuild the identical projection")
+                             "tamper refusal must never append a second event")
+            self.assertEqual(read_json(state_path), tampered,
+                             "tamper refusal must not rewrite state")
 
     def test_hand_edited_superseded_state_without_ledger_event_is_fail_closed(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -282,18 +280,65 @@ class RebaselineHardeningTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             et, repo, _, state_path, _ = _layout(tmp)
             nightly_publish.rebaseline_lost_manifest(state_path, et, repo, now=NOW, **APPROVAL)
-            ledger = nightly_publish._control_ledger_path(et)
+            ledger = nightly_publish._rebaseline_ledger_path(et)
             with self.assertRaisesRegex(ValueError, "已存在"):
                 event_ledger.append(
                     nightly_publish.LOST_MANIFEST_EVENT_KIND, "rebaseline:R_LOST",
                     {"schema": nightly_publish.LOST_MANIFEST_EVENT_SCHEMA, "run_id": "R_LOST"},
                     path=ledger, now=LATER)
 
+    # ── BLOCKER 1 (second review): runtime evidence survives stash -u ──
+    def test_rebaseline_wal_and_anchor_are_explicitly_gitignored(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            subprocess.run(["git", "init", "-q", tmp], check=True)
+            subprocess.run(
+                ["git", "-C", tmp, "config", "user.email", "rebaseline@test.invalid"],
+                check=True)
+            subprocess.run(
+                ["git", "-C", tmp, "config", "user.name", "Rebaseline Test"],
+                check=True)
+            Path(tmp, ".gitignore").write_bytes(Path(ROOT, ".gitignore").read_bytes())
+            subprocess.run(["git", "-C", tmp, "add", ".gitignore"], check=True)
+            subprocess.run(
+                ["git", "-C", tmp, "commit", "-qm", "seed ignore policy"], check=True)
+            rels = (
+                f"experiments/execution_tracker/{nightly_publish.REBASELINE_LEDGER_NAME}",
+                f"experiments/execution_tracker/{nightly_publish.REBASELINE_LEDGER_NAME}"
+                f"{event_ledger.ANCHOR_SUFFIX}",
+            )
+            for rel in rels:
+                path = Path(tmp, rel)
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text("runtime evidence\n", encoding="utf-8")
+            Path(tmp, "untracked-control.txt").write_text("stash me\n", encoding="utf-8")
+            stashed = subprocess.run(
+                ["git", "-C", tmp, "stash", "push", "-u", "-m", "sync snapshot"],
+                capture_output=True, text=True, check=False)
+            self.assertEqual(stashed.returncode, 0, stashed.stderr)
+            self.assertFalse(Path(tmp, "untracked-control.txt").exists())
+            for rel in rels:
+                self.assertTrue(Path(tmp, rel).is_file(), f"stash -u removed {rel}")
+
+    # ── BLOCKER 2: the operator WAL is not R-043's typed migration WAL ──
+    def test_rebaseline_uses_a_dedicated_wal_and_leaves_r043_untouched(self):
+        import publication_migration
+        self.assertNotEqual(
+            nightly_publish.REBASELINE_LEDGER_NAME,
+            publication_migration.CONTROL_LEDGER_NAME,
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            et, repo, _, state_path, _ = _layout(tmp)
+            nightly_publish.rebaseline_lost_manifest(
+                state_path, et, repo, now=NOW, **APPROVAL)
+            self.assertTrue(os.path.isfile(nightly_publish._rebaseline_ledger_path(et)))
+            self.assertFalse(os.path.exists(
+                os.path.join(et, publication_migration.CONTROL_LEDGER_NAME)))
+
     # ── BLOCKER 2: crash between ledger append and state write ──
     def test_crash_after_ledger_before_state_converges_without_double_append(self):
         with tempfile.TemporaryDirectory() as tmp:
             et, repo, _, state_path, _ = _layout(tmp)
-            ledger = nightly_publish._control_ledger_path(et)
+            ledger = nightly_publish._rebaseline_ledger_path(et)
             original = nightly_publish.atomic_json
 
             def boom(path, value):
@@ -324,12 +369,120 @@ class RebaselineHardeningTests(unittest.TestCase):
             self.assertEqual(len(after), 1, "convergence must not append a second event")
             nightly_publish.recover_interrupted_publish(state_path, et, repo)
 
+    def test_convergence_refuses_a_tampered_unverified_wal(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            et, repo, _, state_path, _ = _layout(tmp)
+            ledger = nightly_publish._rebaseline_ledger_path(et)
+            original = nightly_publish.atomic_json
+
+            def boom(path, value):
+                if os.path.abspath(path) == os.path.abspath(state_path):
+                    raise OSError("injected crash after ledger append")
+                return original(path, value)
+
+            nightly_publish.atomic_json = boom
+            try:
+                with self.assertRaises(OSError):
+                    nightly_publish.rebaseline_lost_manifest(
+                        state_path, et, repo, now=NOW, **APPROVAL)
+            finally:
+                nightly_publish.atomic_json = original
+            rec = json.loads(event_ledger._read_lines(ledger)[0])
+            rec["payload"]["prior_state"]["artifact_count"] = 999999
+            with open(ledger, "w", encoding="utf-8") as fh:
+                fh.write(event_ledger.canonical(rec) + "\n")
+            before = read_bytes(state_path)
+            with self.assertRaisesRegex(RuntimeError, "账本或锚点损坏"):
+                nightly_publish.rebaseline_lost_manifest(
+                    state_path, et, repo, now=LATER, **APPROVAL)
+            self.assertEqual(read_bytes(state_path), before)
+
+    def test_convergence_refuses_a_rehashed_event_with_the_wrong_schema(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            et, repo, _, state_path, _ = _layout(tmp)
+            ledger = nightly_publish._rebaseline_ledger_path(et)
+            original = nightly_publish.atomic_json
+
+            def boom(path, value):
+                if os.path.abspath(path) == os.path.abspath(state_path):
+                    raise OSError("injected crash after ledger append")
+                return original(path, value)
+
+            nightly_publish.atomic_json = boom
+            try:
+                with self.assertRaises(OSError):
+                    nightly_publish.rebaseline_lost_manifest(
+                        state_path, et, repo, now=NOW, **APPROVAL)
+            finally:
+                nightly_publish.atomic_json = original
+            rec = json.loads(event_ledger._read_lines(ledger)[0])
+            rec["payload"]["schema"] = "foreign/v1"
+            rec["hash"] = event_ledger.record_hash(rec)
+            with open(ledger, "w", encoding="utf-8") as fh:
+                fh.write(event_ledger.canonical(rec) + "\n")
+            event_ledger.write_anchor(ledger, 1, rec["hash"])
+            self.assertTrue(event_ledger.verify(ledger)["ok"])
+            self.assertTrue(event_ledger.verify_anchor(ledger)["ok"])
+            with self.assertRaisesRegex(RuntimeError, "schema/id"):
+                nightly_publish.rebaseline_lost_manifest(
+                    state_path, et, repo, now=LATER, **APPROVAL)
+
+    def test_recovery_refuses_a_truncated_wal_even_when_the_chain_is_valid(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            et, repo, _, state_path, _ = _layout(tmp)
+            nightly_publish.rebaseline_lost_manifest(
+                state_path, et, repo, now=NOW, **APPROVAL)
+            ledger = nightly_publish._rebaseline_ledger_path(et)
+            first_line = event_ledger._read_lines(ledger)[0]
+            event_ledger.append(
+                nightly_publish.LOST_MANIFEST_EVENT_KIND,
+                "rebaseline:R_OTHER",
+                {"schema": nightly_publish.LOST_MANIFEST_EVENT_SCHEMA},
+                path=ledger,
+                now=LATER,
+            )
+            with open(ledger, "w", encoding="utf-8") as fh:
+                fh.write(first_line + "\n")
+            self.assertTrue(event_ledger.verify(ledger)["ok"])
+            self.assertFalse(event_ledger.verify_anchor(ledger)["ok"])
+            with self.assertRaisesRegex(RuntimeError, "账本或锚点损坏"):
+                nightly_publish.recover_interrupted_publish(state_path, et, repo)
+
+    def test_recovery_refuses_state_that_is_not_the_event_projection(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            et, repo, _, state_path, _ = _layout(tmp)
+            nightly_publish.rebaseline_lost_manifest(
+                state_path, et, repo, now=NOW, **APPROVAL)
+            state = read_json(state_path)
+            state["approved_by"] = "forged"
+            state["approval_ref"] = "session:forged-ref"
+            state["superseded_at"] = "1900-01-01T00:00:00"
+            write_json(state_path, state)
+            with self.assertRaisesRegex(RuntimeError, "确定性投影"):
+                nightly_publish.recover_interrupted_publish(state_path, et, repo)
+
     # ── MAJOR 1: no ledger override on the production CLI ──
     def test_production_cli_has_no_ledger_override(self):
         out = subprocess.run(
             [sys.executable, str(ET / "nightly_publish.py"), "rebaseline", "--help"],
             capture_output=True, text=True, check=False)
         self.assertNotIn("--ledger", out.stdout)
+        self.assertNotIn("--state", out.stdout)
+
+    def test_core_api_refuses_foreign_state_and_ledger_paths(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            et, repo, _, state_path, _ = _layout(tmp)
+            canonical_before = read_bytes(state_path)
+            foreign_state = os.path.join(tmp, "foreign-state.json")
+            write_json(foreign_state, read_json(state_path))
+            with self.assertRaisesRegex(RuntimeError, "规范 publication_state"):
+                nightly_publish.rebaseline_lost_manifest(
+                    foreign_state, et, repo, now=NOW, **APPROVAL)
+            with self.assertRaisesRegex(RuntimeError, "规范专用 WAL"):
+                nightly_publish.rebaseline_lost_manifest(
+                    state_path, et, repo, ledger_path=os.path.join(tmp, "foreign.jsonl"),
+                    now=NOW, **APPROVAL)
+            self.assertEqual(read_bytes(state_path), canonical_before)
 
     def test_recovery_refuses_a_state_bound_to_a_foreign_ledger(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -386,6 +539,48 @@ class RebaselineHardeningTests(unittest.TestCase):
                 nightly_publish.rebaseline_lost_manifest(
                     state_path, et, repo, now=NOW, **APPROVAL)
 
+    def test_pointer_schema_and_manifest_path_are_strict(self):
+        mutations = (
+            ("schema", "not-a-current-run", "字段集或 schema"),
+            ("manifest_path", None, "字段集或 schema"),
+            ("manifest_path", "runs/R_OTHER/manifest.json", "manifest_path"),
+            ("target_trade_date", "19000101", "target_trade_date"),
+            ("artifacts", [], "artifacts"),
+            ("artifacts", {"public:../escape.json": "0" * 64}, "artifact 绑定"),
+        )
+        for key, value, message in mutations:
+            with self.subTest(key=key, value=value), tempfile.TemporaryDirectory() as tmp:
+                et, repo, public, state_path, _ = _layout(tmp)
+                if key == "artifacts" and isinstance(value, dict):
+                    state = read_json(state_path)
+                    state["artifact_count"] = len(value)
+                    write_json(state_path, state)
+                for path in (os.path.join(et, "current_run.json"),
+                             os.path.join(public, "current_run.json")):
+                    pointer = read_json(path)
+                    if value is None:
+                        pointer.pop(key)
+                    else:
+                        pointer[key] = value
+                    write_json(path, pointer)
+                with self.assertRaisesRegex(RuntimeError, message):
+                    nightly_publish.rebaseline_lost_manifest(
+                        state_path, et, repo, now=NOW, **APPROVAL)
+
+    def test_publication_state_must_name_the_canonical_missing_manifest(self):
+        for value in (None, "/tmp/other/manifest.json"):
+            with self.subTest(value=value), tempfile.TemporaryDirectory() as tmp:
+                et, repo, _, state_path, _ = _layout(tmp)
+                state = read_json(state_path)
+                if value is None:
+                    state.pop("manifest")
+                else:
+                    state["manifest"] = value
+                write_json(state_path, state)
+                with self.assertRaisesRegex(RuntimeError, "manifest 未绑定"):
+                    nightly_publish.rebaseline_lost_manifest(
+                        state_path, et, repo, now=NOW, **APPROVAL)
+
     # ── MAJOR 3: approval must bind this action, and must not overclaim identity ──
     def test_placeholder_approval_is_refused(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -406,12 +601,23 @@ class RebaselineHardeningTests(unittest.TestCase):
                 nightly_publish.rebaseline_lost_manifest(state_path, et, repo, now=NOW, **bad)
             self.assertEqual(read_json(state_path)["status"], "COMMITTED")
 
-    def test_approval_verbatim_must_reference_this_action_or_run(self):
+    def test_approval_verbatim_must_reference_the_exact_run(self):
         with tempfile.TemporaryDirectory() as tmp:
             et, repo, _, state_path, _ = _layout(tmp)
             bad = dict(APPROVAL, approval_verbatim="同意,按你说的做,辛苦了。")
-            with self.assertRaisesRegex(RuntimeError, "approval_verbatim 必须可见地指向"):
+            with self.assertRaisesRegex(RuntimeError, "必须精确指向本次 run_id"):
                 nightly_publish.rebaseline_lost_manifest(state_path, et, repo, now=NOW, **bad)
+        with tempfile.TemporaryDirectory() as tmp:
+            et, repo, _, state_path, _ = _layout(tmp, run_id="R_NEW")
+            stale = dict(
+                APPROVAL,
+                approval_verbatim=(
+                    "批准对 run_id R_OLD 执行 rebaseline:旧发布清单丢失,不可恢复。"
+                ),
+            )
+            with self.assertRaisesRegex(RuntimeError, "必须精确指向本次 run_id"):
+                nightly_publish.rebaseline_lost_manifest(
+                    state_path, et, repo, now=NOW, **stale)
 
     def test_approval_ref_must_be_a_session_anchor(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -432,7 +638,7 @@ class RebaselineHardeningTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             et, repo, _, state_path, _ = _layout(tmp)
             nightly_publish.rebaseline_lost_manifest(state_path, et, repo, now=NOW, **APPROVAL)
-            ledger = nightly_publish._control_ledger_path(et)
+            ledger = nightly_publish._rebaseline_ledger_path(et)
             rec = [json.loads(l) for l in event_ledger._read_lines(ledger)
                    if json.loads(l)["kind"] == nightly_publish.LOST_MANIFEST_EVENT_KIND][0]
             approval = rec["payload"]["approval"]

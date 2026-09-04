@@ -37,6 +37,10 @@ public/data/iter1*_bootstrap_*.json
 # R-015 事件账本的 flock 句柄与原子写临时文件:运行时产物,不入库
 experiments/execution_tracker/*.jsonl.lock
 experiments/execution_tracker/*.anchor.json.tmp
+# WO-OPS1 operator rebaseline evidence is runtime control state.  Keep the WAL
+# and its durable anchor out of `git stash -u`, which excludes ignored files.
+experiments/execution_tracker/publication_rebaseline_events.jsonl
+experiments/execution_tracker/publication_rebaseline_events.jsonl.anchor.json
 
 # 夜链发布运行产物:durable manifest / 发布状态 / 提交指针 —— 运行时文件,不入库。
 # 2026-09-03 事件(WO-OPS1):同步的 stash -u 卷走 untracked 的 runs/<run_id>/manifest.json,

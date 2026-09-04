@@ -4792,6 +4792,32 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="The manifest must not silently stop enforcing nightly wiring marker coverage.",
     ),
     MutationCase(
+        mutation_id="PUBLISH_REBASELINE_DEDICATED_WAL",
+        component="Nightly publication operator re-baseline",
+        source_path="experiments/execution_tracker/nightly_publish.py",
+        test_script="tests/test_publish_rebaseline_offline.py",
+        before='REBASELINE_LEDGER_NAME = "publication_rebaseline_events.jsonl"',
+        after='REBASELINE_LEDGER_NAME = "publication_migration_events.jsonl"',
+        expected_failure_marker="test_rebaseline_uses_a_dedicated_wal_and_leaves_r043_untouched",
+        rationale="Operator re-baseline events must never poison R-043's typed publication-migration WAL.",
+    ),
+    MutationCase(
+        mutation_id="PUBLISH_REBASELINE_RUNTIME_WAL_IGNORED",
+        component="Nightly publication operator re-baseline",
+        source_path=".gitignore",
+        test_script="tests/test_publish_rebaseline_offline.py",
+        before=(
+            "experiments/execution_tracker/publication_rebaseline_events.jsonl\n"
+            "experiments/execution_tracker/publication_rebaseline_events.jsonl.anchor.json"
+        ),
+        after=(
+            "# mutation removed the rebaseline WAL ignore\n"
+            "# mutation removed the rebaseline anchor ignore"
+        ),
+        expected_failure_marker="test_rebaseline_wal_and_anchor_are_explicitly_gitignored",
+        rationale="A routine git stash -u must not remove the WAL evidence while leaving its state projection behind.",
+    ),
+    MutationCase(
         mutation_id="PUBLISH_REBASELINE_REQUIRES_APPROVAL",
         component="Nightly publication operator re-baseline",
         source_path="experiments/execution_tracker/nightly_publish.py",
@@ -4841,6 +4867,54 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="Only a lost manifest may be absorbed; wider pointer corruption must fail closed, not be relabelled.",
     ),
     MutationCase(
+        mutation_id="PUBLISH_REBASELINE_POINTER_SCHEMA",
+        component="Nightly publication operator re-baseline",
+        source_path="experiments/execution_tracker/nightly_publish.py",
+        test_script="tests/test_publish_rebaseline_offline.py",
+        before=(
+            "    # governance-mutation: PUBLISH_REBASELINE_POINTER_SCHEMA\n"
+            "    if set(value) != expected_fields or value.get(\"schema\") != \"nightly_current_run/v2\":"
+        ),
+        after=(
+            "    # governance-mutation: PUBLISH_REBASELINE_POINTER_SCHEMA\n"
+            "    if False:"
+        ),
+        expected_failure_marker="test_pointer_schema_and_manifest_path_are_strict",
+        rationale="A re-baseline may absorb one lost manifest, not a malformed or unknown pointer contract.",
+    ),
+    MutationCase(
+        mutation_id="PUBLISH_REBASELINE_POINTER_MANIFEST_PATH",
+        component="Nightly publication operator re-baseline",
+        source_path="experiments/execution_tracker/nightly_publish.py",
+        test_script="tests/test_publish_rebaseline_offline.py",
+        before=(
+            "    # governance-mutation: PUBLISH_REBASELINE_POINTER_MANIFEST_PATH\n"
+            "    if value.get(\"manifest_path\") != expected_rel:"
+        ),
+        after=(
+            "    # governance-mutation: PUBLISH_REBASELINE_POINTER_MANIFEST_PATH\n"
+            "    if False:"
+        ),
+        expected_failure_marker="test_pointer_schema_and_manifest_path_are_strict",
+        rationale="Both current pointers must name the exact immutable manifest for the state run_id.",
+    ),
+    MutationCase(
+        mutation_id="PUBLISH_REBASELINE_STATE_MANIFEST_IDENTITY",
+        component="Nightly publication operator re-baseline",
+        source_path="experiments/execution_tracker/nightly_publish.py",
+        test_script="tests/test_publish_rebaseline_offline.py",
+        before=(
+            "    # governance-mutation: PUBLISH_REBASELINE_STATE_MANIFEST_IDENTITY\n"
+            "    if not state.get(\"manifest\") or not _same_path(state[\"manifest\"], expected_manifest):"
+        ),
+        after=(
+            "    # governance-mutation: PUBLISH_REBASELINE_STATE_MANIFEST_IDENTITY\n"
+            "    if False:"
+        ),
+        expected_failure_marker="test_publication_state_must_name_the_canonical_missing_manifest",
+        rationale="The missing object must be the durable manifest for this exact run, not an arbitrary path.",
+    ),
+    MutationCase(
         mutation_id="PUBLISH_REBASELINE_APPROVAL_VERBATIM",
         component="Nightly publication operator re-baseline",
         source_path="experiments/execution_tracker/nightly_publish.py",
@@ -4863,14 +4937,14 @@ MUTATIONS: tuple[MutationCase, ...] = (
         test_script="tests/test_publish_rebaseline_offline.py",
         before=(
             "    # governance-mutation: PUBLISH_REBASELINE_APPROVAL_BINDING\n"
-            "    if run_id not in verbatim and \"rebaseline\" not in verbatim.lower() and \"再基线\" not in verbatim:"
+            "    if run_token.search(verbatim) is None:"
         ),
         after=(
             "    # governance-mutation: PUBLISH_REBASELINE_APPROVAL_BINDING\n"
             "    if False:"
         ),
-        expected_failure_marker="test_approval_verbatim_must_reference_this_action_or_run",
-        rationale="An approval must visibly bind to this run and action; a stale generic approval must not be reusable.",
+        expected_failure_marker="test_approval_verbatim_must_reference_the_exact_run",
+        rationale="An approval must bind the exact run token; generic action words and stale run approvals are reusable authority.",
     ),
     MutationCase(
         mutation_id="PUBLISH_REBASELINE_APPROVAL_EVIDENCE_STRENGTH",
@@ -4889,13 +4963,105 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="The ledger must not imply cryptographic proof it does not hold; evidence strength is self-declared.",
     ),
     MutationCase(
+        mutation_id="PUBLISH_REBASELINE_CANONICAL_STATE",
+        component="Nightly publication operator re-baseline",
+        source_path="experiments/execution_tracker/nightly_publish.py",
+        test_script="tests/test_publish_rebaseline_offline.py",
+        before=(
+            "    # governance-mutation: PUBLISH_REBASELINE_CANONICAL_STATE\n"
+            "    if not _same_path(state_path, canonical_state):"
+        ),
+        after=(
+            "    # governance-mutation: PUBLISH_REBASELINE_CANONICAL_STATE\n"
+            "    if False:"
+        ),
+        expected_failure_marker="test_core_api_refuses_foreign_state_and_ledger_paths",
+        rationale="A successful operator command must mutate the canonical state derived from live_et, never a caller-selected decoy.",
+    ),
+    MutationCase(
+        mutation_id="PUBLISH_REBASELINE_CANONICAL_LEDGER",
+        component="Nightly publication operator re-baseline",
+        source_path="experiments/execution_tracker/nightly_publish.py",
+        test_script="tests/test_publish_rebaseline_offline.py",
+        before=(
+            "    # governance-mutation: PUBLISH_REBASELINE_CANONICAL_LEDGER\n"
+            "    if ledger_path is not None and not _same_path(ledger_path, canonical_ledger):"
+        ),
+        after=(
+            "    # governance-mutation: PUBLISH_REBASELINE_CANONICAL_LEDGER\n"
+            "    if False:"
+        ),
+        expected_failure_marker="test_core_api_refuses_foreign_state_and_ledger_paths",
+        rationale="The core API must not report success against a foreign WAL that canonical recovery will never read.",
+    ),
+    MutationCase(
+        mutation_id="PUBLISH_REBASELINE_WAL_CHAIN_AND_ANCHOR",
+        component="Nightly publication operator re-baseline",
+        source_path="experiments/execution_tracker/nightly_publish.py",
+        test_script="tests/test_publish_rebaseline_offline.py",
+        before=(
+            "    # governance-mutation: PUBLISH_REBASELINE_WAL_CHAIN_AND_ANCHOR\n"
+            "    if not chain.get(\"ok\") or not anchor.get(\"ok\"):"
+        ),
+        after=(
+            "    # governance-mutation: PUBLISH_REBASELINE_WAL_CHAIN_AND_ANCHOR\n"
+            "    if not chain.get(\"ok\"):"
+        ),
+        expected_failure_marker="test_recovery_refuses_a_truncated_wal_even_when_the_chain_is_valid",
+        rationale="Hash-chain validity alone cannot detect a truncated tail; recovery must also verify the durable anchor.",
+    ),
+    MutationCase(
+        mutation_id="PUBLISH_REBASELINE_EVENT_SCHEMA",
+        component="Nightly publication operator re-baseline",
+        source_path="experiments/execution_tracker/nightly_publish.py",
+        test_script="tests/test_publish_rebaseline_offline.py",
+        before=(
+            "    if (payload.get(\"schema\") != LOST_MANIFEST_EVENT_SCHEMA\n"
+            "            or rec.get(\"id\") != f\"rebaseline:{run_id}\"):"
+        ),
+        after="    if False:",
+        expected_failure_marker="test_convergence_refuses_a_rehashed_event_with_the_wrong_schema",
+        rationale="A self-consistent R-015 record still must be the exact lost-manifest event contract before it can drive state.",
+    ),
+    MutationCase(
+        mutation_id="PUBLISH_REBASELINE_CONVERGENCE_PRIOR_STATE",
+        component="Nightly publication operator re-baseline",
+        source_path="experiments/execution_tracker/nightly_publish.py",
+        test_script="tests/test_publish_rebaseline_offline.py",
+        before=(
+            "            # governance-mutation: PUBLISH_REBASELINE_CONVERGENCE_PRIOR_STATE\n"
+            "            if state != base_state:"
+        ),
+        after=(
+            "            # governance-mutation: PUBLISH_REBASELINE_CONVERGENCE_PRIOR_STATE\n"
+            "            if False:"
+        ),
+        expected_failure_marker="test_rebaseline_is_not_repeatable",
+        rationale="Only the exact prior state left by an append-before-state crash may converge; a hand reset is tampering.",
+    ),
+    MutationCase(
+        mutation_id="PUBLISH_REBASELINE_STATE_PROJECTION",
+        component="Nightly publication operator re-baseline",
+        source_path="experiments/execution_tracker/nightly_publish.py",
+        test_script="tests/test_publish_rebaseline_offline.py",
+        before=(
+            "            # governance-mutation: PUBLISH_REBASELINE_STATE_PROJECTION\n"
+            "            if state != expected_state:"
+        ),
+        after=(
+            "            # governance-mutation: PUBLISH_REBASELINE_STATE_PROJECTION\n"
+            "            if False:"
+        ),
+        expected_failure_marker="test_recovery_refuses_state_that_is_not_the_event_projection",
+        rationale="Recovery must compare every bearing state field to the deterministic projection of the verified event.",
+    ),
+    MutationCase(
         mutation_id="PUBLISH_REBASELINE_CRASH_CONVERGES",
         component="Nightly publication operator re-baseline",
         source_path="experiments/execution_tracker/nightly_publish.py",
         test_script="tests/test_publish_rebaseline_offline.py",
         before=(
-            "            atomic_json(state_path,\n"
-            "                        _superseded_state(base_state, existing, ledger_path, prior_approval))"
+            "            atomic_json(state_path, expected_state)"
         ),
         after="            pass  # governance-mutation: PUBLISH_REBASELINE_CRASH_CONVERGES",
         expected_failure_marker="test_crash_after_ledger_before_state_converges_without_double_append",
@@ -4934,7 +5100,8 @@ MUTATIONS: tuple[MutationCase, ...] = (
         test_script="tests/test_publish_rebaseline_offline.py",
         before=(
             "        # governance-mutation: PUBLISH_SUPERSEDED_REQUIRES_LEDGERED_EVENT\n"
-            "        rec = _verify_superseded_event(state, _control_ledger_path(live_et))"
+            "        rec = _verify_superseded_event(\n"
+            "            state, _rebaseline_ledger_path(live_et), live_et, live_repo)"
         ),
         after=(
             "        # governance-mutation: PUBLISH_SUPERSEDED_REQUIRES_LEDGERED_EVENT\n"
