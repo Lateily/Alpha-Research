@@ -41,7 +41,10 @@ UNIQUE_KINDS = {"register", "genesis",
                 "u4_decision", "u4_decision_closure",
                 "paper_registration_intent", "paper_registration_commit",
                 "publication_migration_intent", "publication_migration_commit",
-                "publication_migration_abort"}
+                "publication_migration_abort",
+                # 操作员再基线是一次性事件:(kind,id) 唯一性必须在 flock 内的链层强制,
+                # 上层"先扫描后追加"在两进程同时越过扫描时挡不住重复。
+                "PUBLICATION_MANIFEST_LOST"}
 U4_TYPED_KINDS = frozenset({
     "u4_decision_intent", "u4_decision", "u4_decision_closure",
 })
