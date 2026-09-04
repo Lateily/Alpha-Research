@@ -1494,6 +1494,7 @@ def build_deep_research_queue(
         )
         ready_pool.append({
             "ts_code": code,
+            # governance-mutation: BATTERY_VERDICT_NOT_IN_READY_PATH
             "ready": not blocked_reasons,
             "industry_key": candidate.get("industry_key"),
             "sector_os_status": (
@@ -1742,6 +1743,67 @@ def run_pipeline(
 CANDIDATE_MANIFEST_SCHEMA = "ar.research_funnel_candidate_manifest"
 BATTERY_U2_SCHEMA = "ar.research_funnel_candidate_battery"
 BATTERY_DIMENSIONS = ("行情", "资金", "基本面", "技术面", "消息面", "估值")
+BATTERY_DIMENSION_VERDICT_CONTRACT = "battery_dimension_verdict_v0_unvalidated"
+BATTERY_VERDICT_FIELD = "verdict_v0_unvalidated"
+BATTERY_DISPLAY_VERDICT_DIMENSIONS = ("行情", "资金", "技术面", "消息面", "估值")
+
+
+def _battery_numeric(value: Any) -> float | None:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return None
+    number = float(value)
+    return number if math.isfinite(number) else None
+
+
+def _expected_battery_display_verdict(name: str, evidence: Mapping[str, Any]) -> str | None:
+    """Independently recompute producer display labels from frozen U3 evidence."""
+    if evidence.get("status") in {"DATA_BLOCKED", "NOT_RUN"}:
+        return None
+    if name == "行情":
+        off_high = _battery_numeric(evidence.get("off_high_pct"))
+        off_low = _battery_numeric(evidence.get("off_low_pct"))
+        if off_high is None or off_low is None:
+            return None
+        if off_high > -10:
+            return "NEAR_HIGH"
+        if off_low < 20:
+            return "NEAR_LOW"
+        return "MID"
+    if name == "资金":
+        total = _battery_numeric(evidence.get("主力10日累计亿"))
+        inflow_days = _battery_numeric(evidence.get("近10日净流入天数"))
+        if total is None or inflow_days is None:
+            return None
+        if total > 0 and inflow_days >= 6:
+            return "INFLOW"
+        if total < 0 and inflow_days <= 4:
+            return "OUTFLOW"
+        return "MIXED"
+    if name == "技术面":
+        ma20 = _battery_numeric(evidence.get("vs_MA20_pct"))
+        ma60 = _battery_numeric(evidence.get("vs_MA60_pct"))
+        if ma20 is None or ma60 is None:
+            return None
+        if ma20 > 0 and ma60 > 0:
+            return "BULL"
+        if ma20 < 0 and ma60 < 0:
+            return "BEAR"
+        return "TANGLED"
+    if name == "消息面":
+        recent = _battery_numeric(evidence.get("近7日公告条数"))
+        if recent is None:
+            return None
+        return "SPIKE" if recent >= 5 else "NORMAL"
+    if name == "估值":
+        percentile = _battery_numeric(evidence.get("pe_1年分位%"))
+        if percentile is None:
+            return None
+        if percentile < 25:
+            return "LOW"
+        if percentile > 75:
+            return "HIGH"
+        return "MID"
+    raise FunnelError(f"unsupported battery display verdict dimension: {name}")
 
 
 def build_candidate_manifest(
@@ -1822,6 +1884,9 @@ def validate_candidate_battery(
     """
     if battery.get("schema") != BATTERY_U2_SCHEMA or battery.get("schema_version") != SCHEMA_VERSION:
         raise FunnelError("candidate battery schema/version mismatch")
+    verdict_contract = battery.get("dimension_verdict_contract")
+    if verdict_contract not in {None, BATTERY_DIMENSION_VERDICT_CONTRACT}:
+        raise FunnelError("candidate battery dimension verdict contract is invalid")
     # governance-mutation: FUNNEL_BATTERY_MANIFEST_BINDING
     if battery.get("manifest_hash") != manifest.get("manifest_hash"):
         raise FunnelError("candidate battery is not bound to this candidate manifest")
@@ -1871,6 +1936,29 @@ def validate_candidate_battery(
             if status in {"DATA_BLOCKED", "NOT_RUN"} and not str(evidence.get("err") or "").strip():
                 raise FunnelError(
                     f"blocked battery dimension lacks a reason: {row.get('ts_code')} {name}"
+                )
+            has_display_verdict = BATTERY_VERDICT_FIELD in evidence
+            if name not in BATTERY_DISPLAY_VERDICT_DIMENSIONS:
+                # governance-mutation: BATTERY_VERDICT_FIELD_OWNERSHIP
+                if has_display_verdict:
+                    raise FunnelError(
+                        f"battery display verdict is forbidden on dimension: "
+                        f"{row.get('ts_code')} {name}"
+                    )
+                continue
+            if verdict_contract is None:
+                if has_display_verdict:
+                    raise FunnelError("battery display verdict lacks its declared contract")
+                continue
+            expected_display_verdict = _expected_battery_display_verdict(name, evidence)
+            # governance-mutation: BATTERY_VERDICT_V0_DERIVES_FROM_DIMS
+            if (
+                not has_display_verdict
+                or evidence.get(BATTERY_VERDICT_FIELD) != expected_display_verdict
+            ):
+                raise FunnelError(
+                    f"battery display verdict does not match dimension evidence: "
+                    f"{row.get('ts_code')} {name}"
                 )
         _u3_fundamental_red_flag_active(row)
         completeness = row.get("completeness") or {}

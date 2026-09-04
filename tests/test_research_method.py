@@ -323,6 +323,45 @@ class ResearchMethodTests(unittest.TestCase):
                 draft, thesis_core=core, timing_ticket=timing, decision_pack=pack
             )
 
+    def test_semiconductor_forecast_range_must_contain_adapter_input(self) -> None:
+        draft, core, timing, pack = registration_draft()
+        draft["valuation"]["forecasts"][0].update({"low": 10.0, "high": 20.0})
+        with self.assertRaisesRegex(
+            method.MethodError, "valuation forecast range excludes the adapter input EPS"
+        ):
+            method.seal_registration(
+                draft, thesis_core=core, timing_ticket=timing, decision_pack=pack
+            )
+
+    def test_semiconductor_forecast_range_accepts_adapter_input(self) -> None:
+        draft, core, timing, pack = registration_draft()
+        draft["valuation"]["forecasts"][0].update({"low": 3.5, "high": 4.5})
+        registration = method.seal_registration(
+            draft, thesis_core=core, timing_ticket=timing, decision_pack=pack
+        )
+        self.assertEqual(registration["valuation"]["model_inputs"]["normalized_eps"], 4.0)
+
+    def test_valuation_bands_cannot_overlap_or_invert(self) -> None:
+        draft, core, timing, pack = registration_draft()
+        core["valuation_target_range"]["bull"].update({"low": 59.0, "high": 70.0})
+        draft["thesis_core_hash"] = funnel._hash(core)
+        draft["valuation"]["scenario_band_hash"] = funnel._hash(core["valuation_target_range"])
+        with self.assertRaisesRegex(method.MethodError, "scenario bands overlap or are inverted"):
+            method.seal_registration(
+                draft, thesis_core=core, timing_ticket=timing, decision_pack=pack
+            )
+
+    def test_valuation_bands_may_share_an_adjacent_boundary(self) -> None:
+        draft, core, timing, pack = registration_draft()
+        core["valuation_target_range"]["bear"]["high"] = 95.0
+        core["valuation_target_range"]["bull"]["low"] = 105.0
+        draft["thesis_core_hash"] = funnel._hash(core)
+        draft["valuation"]["scenario_band_hash"] = funnel._hash(core["valuation_target_range"])
+        registration = method.seal_registration(
+            draft, thesis_core=core, timing_ticket=timing, decision_pack=pack
+        )
+        self.assertEqual(registration["valuation"]["paper_exit_reference"], 100.0)
+
     def test_innovative_drug_adapter_uses_rnpv_inputs(self) -> None:
         draft, core, timing, pack = registration_draft()
         core["valuation_target_range"]["base"].update({"low": 81.0, "high": 99.0})
@@ -360,6 +399,42 @@ class ResearchMethodTests(unittest.TestCase):
             draft, thesis_core=core, timing_ticket=timing, decision_pack=pack
         )
         self.assertEqual(registration["valuation"]["adapter"], "INNOVATIVE_DRUG_RNPV")
+
+    def test_innovative_drug_forecast_range_must_contain_rnpv_input(self) -> None:
+        draft, core, timing, pack = registration_draft()
+        core["valuation_target_range"]["base"].update({"low": 81.0, "high": 99.0})
+        draft["thesis_core_hash"] = funnel._hash(core)
+        draft["valuation"].update({
+            "adapter": "INNOVATIVE_DRUG_RNPV",
+            "industry": "INNOVATIVE_DRUG",
+            "scenario_band_hash": funnel._hash(core["valuation_target_range"]),
+            "paper_exit_reference": 95.0,
+            "model_inputs": {
+                "net_cash_per_share": 10.0,
+                "pipeline_rnpv_per_share": 60.0,
+                "commercial_value_per_share": 30.0,
+                "dilution_haircut_pct": 0.10,
+            },
+            "model_output": {
+                "computed_base_low": 81.0,
+                "computed_base_high": 99.0,
+                "calculation_status": "MANUAL_UNVALIDATED",
+            },
+            "forecasts": [{
+                "forecast_id": "VALUATION_PIPELINE_RNPV",
+                "metric": "PIPELINE_RNPV_PER_SHARE",
+                "low": 10.0,
+                "high": 20.0,
+                "due_date": "20260817",
+                "required_tier": "E2",
+                "source_ref": "registered pipeline rNPV evidence",
+                "measurement_period": "FY2026_H1",
+            }],
+        })
+        with self.assertRaisesRegex(method.MethodError, "excludes the adapter input"):
+            method.seal_registration(
+                draft, thesis_core=core, timing_ticket=timing, decision_pack=pack
+            )
 
     def test_valuation_forecasts_cover_the_load_bearing_adapter_input(self) -> None:
         draft, core, timing, pack = registration_draft()

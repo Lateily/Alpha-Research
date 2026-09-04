@@ -144,6 +144,7 @@ FUNNEL_GOVERNANCE_PATHS = (
     "experiments/research_funnel/semiconductor_source_repair.py",
     "experiments/research_funnel/semiconductor_preflight_packet.py",
     "experiments/research_funnel/u4_pre_decision.py",
+    "experiments/research_funnel/knowledge_cards.py",
     "experiments/research_funnel/feature_store.py",
     "experiments/execution_tracker/event_ledger.py",
     "experiments/execution_tracker/paper_execution_audit.py",
@@ -505,8 +506,8 @@ MUTATIONS: tuple[MutationCase, ...] = (
         source_path="experiments/execution_tracker/event_ledger.py",
         test_script="tests/test_registry_schema_v2.py",
         before='                "publication_migration_intent", "publication_migration_commit",\n'
-        '                "publication_migration_abort"}',
-        after='                "publication_migration_abort"}',
+        '                "publication_migration_abort",',
+        after='                "publication_migration_abort",',
         expected_failure_marker="test_publication_migration_events_are_unique_and_chain_valid",
         rationale="Publication migration WAL terminal events cannot be duplicated on retry.",
     ),
@@ -3452,6 +3453,30 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="An industry adapter must register a later fact capable of testing its load-bearing modeled input.",
     ),
     MutationCase(
+        mutation_id="VALUATION_FORECAST_CONTAINS_ADAPTER_INPUT",
+        component="Research funnel method valuation",
+        source_path="experiments/research_funnel/research_method.py",
+        test_script="tests/test_research_method.py",
+        before='        if not contains_adapter_input:\n'
+        '            raise MethodError(exclusion_message)',
+        after='        if False:\n'
+        '            raise MethodError(exclusion_message)',
+        expected_failure_marker="test_semiconductor_forecast_range_must_contain_adapter_input",
+        rationale="A registered forecast must include the exact modeled input that bears the adapter output.",
+    ),
+    MutationCase(
+        mutation_id="VALUATION_BANDS_NOT_INVERTED",
+        component="Research funnel method valuation",
+        source_path="experiments/research_funnel/research_method.py",
+        test_script="tests/test_research_method.py",
+        before='    if bear_high > base_low or base_high > bull_low:\n'
+        '        raise MethodError("valuation scenario bands overlap or are inverted")',
+        after='    if False:\n'
+        '        raise MethodError("valuation scenario bands overlap or are inverted")',
+        expected_failure_marker="test_valuation_bands_cannot_overlap_or_invert",
+        rationale="Bear, base, and bull valuation bands may touch but cannot overlap or reverse order.",
+    ),
+    MutationCase(
         mutation_id="RESEARCH_METHOD_SMC_STOP_DERIVATION",
         component="Research funnel method manual SMC",
         source_path="experiments/research_funnel/research_method.py",
@@ -4676,6 +4701,87 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="Unknown dimension states cannot be treated as successfully measured evidence.",
     ),
     MutationCase(
+        mutation_id="BATTERY_VERDICT_FIELD_OWNERSHIP",
+        component="Research funnel candidate battery",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_funnel_dag_offline.py",
+        before=(
+            "                # governance-mutation: BATTERY_VERDICT_FIELD_OWNERSHIP\n"
+            "                if has_display_verdict:"
+        ),
+        after=(
+            "                # governance-mutation: BATTERY_VERDICT_FIELD_OWNERSHIP\n"
+            "                if False:"
+        ),
+        expected_failure_marker=(
+            "test_non_display_dimension_cannot_carry_a_self_reported_verdict"
+        ),
+        rationale=(
+            "A dimension outside the display-verdict contract cannot smuggle an "
+            "unrecomputed self-reported verdict into U3."
+        ),
+    ),
+    MutationCase(
+        mutation_id="BATTERY_VERDICT_V0_DERIVES_FROM_DIMS",
+        component="Research funnel candidate battery",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_funnel_dag_offline.py",
+        before=(
+            "            # governance-mutation: BATTERY_VERDICT_V0_DERIVES_FROM_DIMS\n"
+            "            if ("
+        ),
+        after=(
+            "            # governance-mutation: BATTERY_VERDICT_V0_DERIVES_FROM_DIMS\n"
+            "            if False and ("
+        ),
+        expected_failure_marker="test_u3_rejects_a_tampered_display_verdict_after_rows_rehash",
+        rationale="U3 must independently recompute each display-only verdict from its frozen dimension evidence.",
+    ),
+    MutationCase(
+        mutation_id="BATTERY_VERDICT_NOT_IN_READY_PATH",
+        component="Research funnel U4 readiness",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_funnel_dag_offline.py",
+        before=(
+            "            # governance-mutation: BATTERY_VERDICT_NOT_IN_READY_PATH\n"
+            '            "ready": not blocked_reasons,'
+        ),
+        after=(
+            "            # governance-mutation: BATTERY_VERDICT_NOT_IN_READY_PATH\n"
+            '            "ready": (\n'
+            "                not blocked_reasons\n"
+            "                and all(\n"
+            "                    evidence.get(BATTERY_VERDICT_FIELD) != \"OUTFLOW\"\n"
+            '                    for evidence in battery_row.get("dims", {}).values()\n'
+            "                    if isinstance(evidence, Mapping)\n"
+            "                )\n"
+            "            ),"
+        ),
+        expected_failure_marker="test_display_verdicts_never_change_u4_readiness",
+        rationale="Unvalidated display labels must never enter U4 completeness or readiness decisions.",
+    ),
+    MutationCase(
+        mutation_id="BATTERY_VERDICT_U4_DISPLAY_PROJECTION",
+        component="Research funnel U4 display packet",
+        source_path="experiments/research_funnel/u4_pre_decision.py",
+        test_script="tests/test_u4_pre_decision_runtime.py",
+        before=(
+            "        # governance-mutation: BATTERY_VERDICT_U4_DISPLAY_PROJECTION\n"
+            "        if include_display_verdicts:"
+        ),
+        after=(
+            "        # governance-mutation: BATTERY_VERDICT_U4_DISPLAY_PROJECTION\n"
+            "        if False:"
+        ),
+        expected_failure_marker=(
+            "test_battery_display_verdicts_are_projected_into_u4_packet"
+        ),
+        rationale=(
+            "Validated display-only U3 labels must reach the human U4 packet "
+            "without entering readiness."
+        ),
+    ),
+    MutationCase(
         mutation_id="FUNNEL_DAG_TOKENLESS_DEGRADATION",
         component="Nightly funnel wiring DAG",
         source_path="experiments/execution_tracker/run_nightly.py",
@@ -4790,6 +4896,351 @@ MUTATIONS: tuple[MutationCase, ...] = (
             "test_validate_manifest_enforces_funnel_nightly_marker_coverage"
         ),
         rationale="The manifest must not silently stop enforcing nightly wiring marker coverage.",
+    ),
+    MutationCase(
+        mutation_id="PUBLISH_REBASELINE_DEDICATED_WAL",
+        component="Nightly publication operator re-baseline",
+        source_path="experiments/execution_tracker/nightly_publish.py",
+        test_script="tests/test_publish_rebaseline_offline.py",
+        before='REBASELINE_LEDGER_NAME = "publication_rebaseline_events.jsonl"',
+        after='REBASELINE_LEDGER_NAME = "publication_migration_events.jsonl"',
+        expected_failure_marker="test_rebaseline_uses_a_dedicated_wal_and_leaves_r043_untouched",
+        rationale="Operator re-baseline events must never poison R-043's typed publication-migration WAL.",
+    ),
+    MutationCase(
+        mutation_id="PUBLISH_REBASELINE_RUNTIME_WAL_IGNORED",
+        component="Nightly publication operator re-baseline",
+        source_path=".gitignore",
+        test_script="tests/test_publish_rebaseline_offline.py",
+        before=(
+            "experiments/execution_tracker/publication_rebaseline_events.jsonl\n"
+            "experiments/execution_tracker/publication_rebaseline_events.jsonl.anchor.json"
+        ),
+        after=(
+            "# mutation removed the rebaseline WAL ignore\n"
+            "# mutation removed the rebaseline anchor ignore"
+        ),
+        expected_failure_marker="test_rebaseline_wal_and_anchor_are_explicitly_gitignored",
+        rationale="A routine git stash -u must not remove the WAL evidence while leaving its state projection behind.",
+    ),
+    MutationCase(
+        mutation_id="PUBLISH_REBASELINE_NIGHTLY_LOCK_IGNORED",
+        component="Nightly publication operator re-baseline",
+        source_path=".gitignore",
+        test_script="tests/test_publish_rebaseline_offline.py",
+        before="experiments/execution_tracker/nightly.lock",
+        after="# mutation removed the nightly lock ignore",
+        expected_failure_marker="test_nightly_lock_inode_survives_stash_and_remains_exclusive",
+        rationale="Sync stash must preserve the exact locked inode or a second process can acquire a replacement lock path.",
+    ),
+    MutationCase(
+        mutation_id="PUBLISH_REBASELINE_REQUIRES_APPROVAL",
+        component="Nightly publication operator re-baseline",
+        source_path="experiments/execution_tracker/nightly_publish.py",
+        test_script="tests/test_publish_rebaseline_offline.py",
+        before=(
+            "    # governance-mutation: PUBLISH_REBASELINE_REQUIRES_APPROVAL\n"
+            "    if not (str(reason or \"\").strip() and str(approved_by or \"\").strip()\n"
+            "            and str(approval_ref or \"\").strip()):"
+        ),
+        after=(
+            "    # governance-mutation: PUBLISH_REBASELINE_REQUIRES_APPROVAL\n"
+            "    if False:"
+        ),
+        expected_failure_marker="test_rebaseline_refuses_missing_approval_and_leaves_state_and_ledger_untouched",
+        rationale="A lost-manifest re-baseline is an operator action; without reason/approved_by/approval_ref it must be refused.",
+    ),
+    MutationCase(
+        mutation_id="PUBLISH_REBASELINE_TAKES_NIGHTLY_LOCK",
+        component="Nightly publication operator re-baseline",
+        source_path="experiments/execution_tracker/nightly_publish.py",
+        test_script="tests/test_publish_rebaseline_offline.py",
+        before=(
+            "            # governance-mutation: PUBLISH_REBASELINE_TAKES_NIGHTLY_LOCK\n"
+            "            fcntl.flock(lf, fcntl.LOCK_EX | fcntl.LOCK_NB)"
+        ),
+        after=(
+            "            # governance-mutation: PUBLISH_REBASELINE_TAKES_NIGHTLY_LOCK\n"
+            "            pass"
+        ),
+        expected_failure_marker="test_rebaseline_refuses_while_the_nightly_lock_is_held",
+        rationale="A re-baseline must hold the same nightly lock as the publish chain; without it two operators can interleave.",
+    ),
+    MutationCase(
+        mutation_id="PUBLISH_REBASELINE_POINTERS_MUST_AGREE",
+        component="Nightly publication operator re-baseline",
+        source_path="experiments/execution_tracker/nightly_publish.py",
+        test_script="tests/test_publish_rebaseline_offline.py",
+        before=(
+            "    # governance-mutation: PUBLISH_REBASELINE_POINTERS_MUST_AGREE\n"
+            "    if str(value.get(\"run_id\") or \"\") != run_id:"
+        ),
+        after=(
+            "    # governance-mutation: PUBLISH_REBASELINE_POINTERS_MUST_AGREE\n"
+            "    if False:"
+        ),
+        expected_failure_marker="test_pointer_run_id_must_match_state",
+        rationale="Only a lost manifest may be absorbed; wider pointer corruption must fail closed, not be relabelled.",
+    ),
+    MutationCase(
+        mutation_id="PUBLISH_REBASELINE_POINTER_SCHEMA",
+        component="Nightly publication operator re-baseline",
+        source_path="experiments/execution_tracker/nightly_publish.py",
+        test_script="tests/test_publish_rebaseline_offline.py",
+        before=(
+            "    # governance-mutation: PUBLISH_REBASELINE_POINTER_SCHEMA\n"
+            "    if set(value) != expected_fields or value.get(\"schema\") != \"nightly_current_run/v2\":"
+        ),
+        after=(
+            "    # governance-mutation: PUBLISH_REBASELINE_POINTER_SCHEMA\n"
+            "    if False:"
+        ),
+        expected_failure_marker="test_pointer_schema_and_manifest_path_are_strict",
+        rationale="A re-baseline may absorb one lost manifest, not a malformed or unknown pointer contract.",
+    ),
+    MutationCase(
+        mutation_id="PUBLISH_REBASELINE_POINTER_MANIFEST_PATH",
+        component="Nightly publication operator re-baseline",
+        source_path="experiments/execution_tracker/nightly_publish.py",
+        test_script="tests/test_publish_rebaseline_offline.py",
+        before=(
+            "    # governance-mutation: PUBLISH_REBASELINE_POINTER_MANIFEST_PATH\n"
+            "    if value.get(\"manifest_path\") != expected_rel:"
+        ),
+        after=(
+            "    # governance-mutation: PUBLISH_REBASELINE_POINTER_MANIFEST_PATH\n"
+            "    if False:"
+        ),
+        expected_failure_marker="test_pointer_schema_and_manifest_path_are_strict",
+        rationale="Both current pointers must name the exact immutable manifest for the state run_id.",
+    ),
+    MutationCase(
+        mutation_id="PUBLISH_REBASELINE_STATE_MANIFEST_IDENTITY",
+        component="Nightly publication operator re-baseline",
+        source_path="experiments/execution_tracker/nightly_publish.py",
+        test_script="tests/test_publish_rebaseline_offline.py",
+        before=(
+            "    # governance-mutation: PUBLISH_REBASELINE_STATE_MANIFEST_IDENTITY\n"
+            "    if not state.get(\"manifest\") or not _same_path(state[\"manifest\"], expected_manifest):"
+        ),
+        after=(
+            "    # governance-mutation: PUBLISH_REBASELINE_STATE_MANIFEST_IDENTITY\n"
+            "    if False:"
+        ),
+        expected_failure_marker="test_publication_state_must_name_the_canonical_missing_manifest",
+        rationale="The missing object must be the durable manifest for this exact run, not an arbitrary path.",
+    ),
+    MutationCase(
+        mutation_id="PUBLISH_REBASELINE_APPROVAL_DECISION",
+        component="Nightly publication operator re-baseline",
+        source_path="experiments/execution_tracker/nightly_publish.py",
+        test_script="tests/test_publish_rebaseline_offline.py",
+        before=(
+            "    # governance-mutation: PUBLISH_REBASELINE_APPROVAL_DECISION\n"
+            "    if verbatim != required_verbatim:"
+        ),
+        after=(
+            "    # governance-mutation: PUBLISH_REBASELINE_APPROVAL_DECISION\n"
+            "    if False:"
+        ),
+        expected_failure_marker="test_approval_verbatim_must_match_the_closed_approve_decision",
+        rationale="Only one closed APPROVE decision bound to the exact run may authorize rebaseline; negated or extended prose must fail closed.",
+    ),
+    MutationCase(
+        mutation_id="PUBLISH_REBASELINE_APPROVAL_EVIDENCE_STRENGTH",
+        component="Nightly publication operator re-baseline",
+        source_path="experiments/execution_tracker/nightly_publish.py",
+        test_script="tests/test_publish_rebaseline_offline.py",
+        before=(
+            "    # governance-mutation: PUBLISH_REBASELINE_APPROVAL_EVIDENCE_STRENGTH\n"
+            "    if str(evidence_strength or \"\") != APPROVAL_EVIDENCE_STRENGTH:"
+        ),
+        after=(
+            "    # governance-mutation: PUBLISH_REBASELINE_APPROVAL_EVIDENCE_STRENGTH\n"
+            "    if False:"
+        ),
+        expected_failure_marker="test_evidence_strength_must_be_self_declared_as_transcript_only",
+        rationale="The ledger must not imply cryptographic proof it does not hold; evidence strength is self-declared.",
+    ),
+    MutationCase(
+        mutation_id="PUBLISH_REBASELINE_CANONICAL_STATE",
+        component="Nightly publication operator re-baseline",
+        source_path="experiments/execution_tracker/nightly_publish.py",
+        test_script="tests/test_publish_rebaseline_offline.py",
+        before=(
+            "    # governance-mutation: PUBLISH_REBASELINE_CANONICAL_STATE\n"
+            "    if not _same_path(state_path, canonical_state):"
+        ),
+        after=(
+            "    # governance-mutation: PUBLISH_REBASELINE_CANONICAL_STATE\n"
+            "    if False:"
+        ),
+        expected_failure_marker="test_core_api_refuses_foreign_state_and_ledger_paths",
+        rationale="A successful operator command must mutate the canonical state derived from live_et, never a caller-selected decoy.",
+    ),
+    MutationCase(
+        mutation_id="PUBLISH_REBASELINE_SINGLE_ROOT",
+        component="Nightly publication operator re-baseline",
+        source_path="experiments/execution_tracker/nightly_publish.py",
+        test_script="tests/test_publish_rebaseline_offline.py",
+        before=(
+            "    # governance-mutation: PUBLISH_REBASELINE_SINGLE_ROOT\n"
+            "    if actual_et != expected_et:"
+        ),
+        after=(
+            "    # governance-mutation: PUBLISH_REBASELINE_SINGLE_ROOT\n"
+            "    if False:"
+        ),
+        expected_failure_marker="test_execution_tracker_and_public_root_must_share_one_checkout",
+        rationale="The operator must derive ET and public state from one checkout, never splice a real ET root with a decoy public root.",
+    ),
+    MutationCase(
+        mutation_id="PUBLISH_REBASELINE_SAFE_RUN_ID",
+        component="Nightly publication operator re-baseline",
+        source_path="experiments/execution_tracker/nightly_publish.py",
+        test_script="tests/test_publish_rebaseline_offline.py",
+        before=(
+            "    # governance-mutation: PUBLISH_REBASELINE_SAFE_RUN_ID\n"
+            "    if SAFE_RUN_ID_RE.fullmatch(run_id) is None:"
+        ),
+        after=(
+            "    # governance-mutation: PUBLISH_REBASELINE_SAFE_RUN_ID\n"
+            "    if False:"
+        ),
+        expected_failure_marker="test_run_id_cannot_escape_the_runs_container",
+        rationale="A run_id is a path component and must never escape the immutable runs container.",
+    ),
+    MutationCase(
+        mutation_id="PUBLISH_REBASELINE_CANONICAL_LEDGER",
+        component="Nightly publication operator re-baseline",
+        source_path="experiments/execution_tracker/nightly_publish.py",
+        test_script="tests/test_publish_rebaseline_offline.py",
+        before=(
+            "    # governance-mutation: PUBLISH_REBASELINE_CANONICAL_LEDGER\n"
+            "    if ledger_path is not None and not _same_path(ledger_path, canonical_ledger):"
+        ),
+        after=(
+            "    # governance-mutation: PUBLISH_REBASELINE_CANONICAL_LEDGER\n"
+            "    if False:"
+        ),
+        expected_failure_marker="test_core_api_refuses_foreign_state_and_ledger_paths",
+        rationale="The core API must not report success against a foreign WAL that canonical recovery will never read.",
+    ),
+    MutationCase(
+        mutation_id="PUBLISH_REBASELINE_WAL_CHAIN_AND_ANCHOR",
+        component="Nightly publication operator re-baseline",
+        source_path="experiments/execution_tracker/nightly_publish.py",
+        test_script="tests/test_publish_rebaseline_offline.py",
+        before=(
+            "    # governance-mutation: PUBLISH_REBASELINE_WAL_CHAIN_AND_ANCHOR\n"
+            "    if not chain.get(\"ok\") or not anchor.get(\"ok\"):"
+        ),
+        after=(
+            "    # governance-mutation: PUBLISH_REBASELINE_WAL_CHAIN_AND_ANCHOR\n"
+            "    if not chain.get(\"ok\"):"
+        ),
+        expected_failure_marker="test_recovery_refuses_a_truncated_wal_even_when_the_chain_is_valid",
+        rationale="Hash-chain validity alone cannot detect a truncated tail; recovery must also verify the durable anchor.",
+    ),
+    MutationCase(
+        mutation_id="PUBLISH_REBASELINE_EVENT_SCHEMA",
+        component="Nightly publication operator re-baseline",
+        source_path="experiments/execution_tracker/nightly_publish.py",
+        test_script="tests/test_publish_rebaseline_offline.py",
+        before=(
+            "    if (payload.get(\"schema\") != LOST_MANIFEST_EVENT_SCHEMA\n"
+            "            or rec.get(\"id\") != f\"rebaseline:{run_id}\"):"
+        ),
+        after="    if False:",
+        expected_failure_marker="test_convergence_refuses_a_rehashed_event_with_the_wrong_schema",
+        rationale="A self-consistent R-015 record still must be the exact lost-manifest event contract before it can drive state.",
+    ),
+    MutationCase(
+        mutation_id="PUBLISH_REBASELINE_CONVERGENCE_PRIOR_STATE",
+        component="Nightly publication operator re-baseline",
+        source_path="experiments/execution_tracker/nightly_publish.py",
+        test_script="tests/test_publish_rebaseline_offline.py",
+        before=(
+            "            # governance-mutation: PUBLISH_REBASELINE_CONVERGENCE_PRIOR_STATE\n"
+            "            if state != base_state:"
+        ),
+        after=(
+            "            # governance-mutation: PUBLISH_REBASELINE_CONVERGENCE_PRIOR_STATE\n"
+            "            if False:"
+        ),
+        expected_failure_marker="test_rebaseline_is_not_repeatable",
+        rationale="Only the exact prior state left by an append-before-state crash may converge; a hand reset is tampering.",
+    ),
+    MutationCase(
+        mutation_id="PUBLISH_REBASELINE_STATE_PROJECTION",
+        component="Nightly publication operator re-baseline",
+        source_path="experiments/execution_tracker/nightly_publish.py",
+        test_script="tests/test_publish_rebaseline_offline.py",
+        before=(
+            "            # governance-mutation: PUBLISH_REBASELINE_STATE_PROJECTION\n"
+            "            if state != expected_state:"
+        ),
+        after=(
+            "            # governance-mutation: PUBLISH_REBASELINE_STATE_PROJECTION\n"
+            "            if False:"
+        ),
+        expected_failure_marker="test_recovery_refuses_state_that_is_not_the_event_projection",
+        rationale="Recovery must compare every bearing state field to the deterministic projection of the verified event.",
+    ),
+    MutationCase(
+        mutation_id="PUBLISH_REBASELINE_CRASH_CONVERGES",
+        component="Nightly publication operator re-baseline",
+        source_path="experiments/execution_tracker/nightly_publish.py",
+        test_script="tests/test_publish_rebaseline_offline.py",
+        before=(
+            "            atomic_json(state_path, expected_state)"
+        ),
+        after="            pass  # governance-mutation: PUBLISH_REBASELINE_CRASH_CONVERGES",
+        expected_failure_marker="test_crash_after_ledger_before_state_converges_without_double_append",
+        rationale="A crash between ledger append and state write must converge on retry, not strand production forever.",
+    ),
+    MutationCase(
+        mutation_id="PUBLISH_REBASELINE_LEDGER_IDENTITY_BOUND",
+        component="Nightly publication operator re-baseline",
+        source_path="experiments/execution_tracker/nightly_publish.py",
+        test_script="tests/test_publish_rebaseline_offline.py",
+        before=(
+            "    # governance-mutation: PUBLISH_REBASELINE_LEDGER_IDENTITY_BOUND\n"
+            "    bound_ledger = state.get(\"superseded_event_ledger\")"
+        ),
+        after=(
+            "    # governance-mutation: PUBLISH_REBASELINE_LEDGER_IDENTITY_BOUND\n"
+            "    bound_ledger = None"
+        ),
+        expected_failure_marker="test_recovery_refuses_a_state_bound_to_a_foreign_ledger",
+        rationale="Recovery must verify the state is bound to the canonical control ledger, not a foreign one.",
+    ),
+    MutationCase(
+        mutation_id="LEDGER_LOST_MANIFEST_KIND_UNIQUE",
+        component="R-015 event ledger",
+        source_path="experiments/execution_tracker/event_ledger.py",
+        test_script="tests/test_publish_rebaseline_offline.py",
+        before='                "PUBLICATION_MANIFEST_LOST"}',
+        after='                }',
+        expected_failure_marker="test_duplicate_lost_manifest_event_is_refused_at_the_ledger_layer",
+        rationale="Lost-manifest uniqueness must hold at the ledger layer under flock, not only in an upper-layer scan.",
+    ),
+    MutationCase(
+        mutation_id="PUBLISH_SUPERSEDED_REQUIRES_LEDGERED_EVENT",
+        component="Nightly publication operator re-baseline",
+        source_path="experiments/execution_tracker/nightly_publish.py",
+        test_script="tests/test_publish_rebaseline_offline.py",
+        before=(
+            "        # governance-mutation: PUBLISH_SUPERSEDED_REQUIRES_LEDGERED_EVENT\n"
+            "        rec = _verify_superseded_event(\n"
+            "            state, _rebaseline_ledger_path(live_et), live_et, live_repo)"
+        ),
+        after=(
+            "        # governance-mutation: PUBLISH_SUPERSEDED_REQUIRES_LEDGERED_EVENT\n"
+            "        rec = {\"hash\": state.get(\"superseded_event_hash\")}"
+        ),
+        expected_failure_marker="test_hand_edited_superseded_state_without_ledger_event_is_fail_closed",
+        rationale="A hand-edited SUPERSEDED state without its ledgered loss event must not unblock publication.",
     ),
 )
 
@@ -6721,7 +7172,51 @@ MUTATIONS = MUTATIONS + (
         rationale="Every configured daily source must have a target-date row before a same-day rerun handoff.",
     ),
     MutationCase(
-mutation_id="U4_PREDECISION_ATOMIC_NO_REPLACE",
+        mutation_id="U4_PEAK_FLAG_DERIVED_FROM_CYCLICAL_SOURCE",
+        component="Research funnel U4 pre-decision peak-earnings display",
+        source_path="experiments/research_funnel/u4_pre_decision.py",
+        test_script="tests/test_u4_pre_decision_runtime.py",
+        before=(
+            "    # governance-mutation: U4_PEAK_FLAG_DERIVED_FROM_CYCLICAL_SOURCE\n"
+            '    flag = source["peak_earnings_risk"]'
+        ),
+        after=(
+            "    # governance-mutation: U4_PEAK_FLAG_DERIVED_FROM_CYCLICAL_SOURCE\n"
+            "    flag = False"
+        ),
+        expected_failure_marker=(
+            "test_peak_earnings_is_derived_from_cyclical_source_without_changing_u4_gate"
+        ),
+        rationale=(
+            "Peak-earnings display evidence must be derived from cyclical_flag output "
+            "without entering the U4 readiness path."
+        ),
+    ),
+    MutationCase(
+        mutation_id="U4_PEAK_FLAG_OPTIONAL_SOURCE_BOUNDARY",
+        component="Research funnel U4 pre-decision peak-earnings display",
+        source_path="experiments/research_funnel/u4_pre_decision.py",
+        test_script="tests/test_u4_pre_decision_runtime.py",
+        before=(
+            "        # governance-mutation: U4_PEAK_FLAG_OPTIONAL_SOURCE_BOUNDARY\n"
+            "        if os.path.lexists(cyclical_flags_path):\n"
+            "            protected_paths.append(cyclical_flags_path)"
+        ),
+        after=(
+            "        # governance-mutation: U4_PEAK_FLAG_OPTIONAL_SOURCE_BOUNDARY\n"
+            "        if True:\n"
+            "            protected_paths.append(cyclical_flags_path)"
+        ),
+        expected_failure_marker=(
+            "test_missing_default_cyclical_source_does_not_protect_walk_scratch"
+        ),
+        rationale=(
+            "An absent optional cyclical source must not widen the immutable-input "
+            "boundary to cover a sibling walk scratch directory."
+        ),
+    ),
+    MutationCase(
+        mutation_id="U4_PREDECISION_ATOMIC_NO_REPLACE",
         component="Research funnel U4 pre-decision runtime",
         source_path="experiments/research_funnel/u4_pre_decision.py",
         test_script="tests/test_u4_pre_decision_runtime.py",
@@ -6752,7 +7247,7 @@ mutation_id="U4_PREDECISION_ATOMIC_NO_REPLACE",
         component="Research Closed Loop V1 assembly identity",
         source_path="docs/research/contracts/research_closed_loop.v1.json",
         test_script="tests/test_u4_pre_decision_runtime.py",
-        before="sha256:70b17fefc3ce7a1ac6982192294a7676d793783d8b2cd62e23ce71bd2479bd3f",
+        before="sha256:01c98eba48ffdbdb22870eca8a01a66f8415d6e956b7bf990e386c7e3378f389",
         after="sha256:e84b0e026832420ee1e88e1fcbac2b69a836e97cf29f5d1d7daf15eb3fbe09fa",
         expected_failure_marker="test_fix_forward_task_compiles_and_preserves_the_frozen_assembly",
         rationale="The previously reviewed V1.3 identity must not silently bind changed DAG bytes.",
@@ -7439,6 +7934,124 @@ mutation_id="U4_PREDECISION_ATOMIC_NO_REPLACE",
         ),
         expected_failure_marker="test_lhb_render_reads_appearances",
         rationale="The research prompt must consume the canonical appearances array emitted by fetch_lhb.py.",
+    ),
+    MutationCase(
+        mutation_id="CARD_STATUS_GATE",
+        component="Research funnel knowledge-card status boundary",
+        source_path="experiments/research_funnel/knowledge_cards.py",
+        test_script="tests/test_knowledge_cards.py",
+        before=(
+            '    # governance-mutation: CARD_STATUS_GATE\n'
+            '    selected = [card for card in cards if card["status"] in PARTICIPATING_STATUSES]'
+        ),
+        after=(
+            '    # governance-mutation: CARD_STATUS_GATE\n'
+            '    selected = list(cards)'
+        ),
+        expected_failure_marker="test_draft_card_does_not_participate",
+        rationale="Draft knowledge cards cannot enter the display-only evaluation set.",
+    ),
+    MutationCase(
+        mutation_id="CARD_EVAL_DERIVES_FROM_SOURCE",
+        component="Research funnel knowledge-card source-derived evaluation",
+        source_path="experiments/research_funnel/knowledge_cards.py",
+        test_script="tests/test_knowledge_cards.py",
+        before=(
+            '            # governance-mutation: CARD_EVAL_DERIVES_FROM_SOURCE\n'
+            '            comparison = "AT_OR_ABOVE" if observed >= threshold else "BELOW"'
+        ),
+        after=(
+            '            # governance-mutation: CARD_EVAL_DERIVES_FROM_SOURCE\n'
+            '            comparison = str(row.get("comparison_unvalidated") or "BELOW")'
+        ),
+        expected_failure_marker="test_threshold_evaluation_recomputes_from_source_value",
+        rationale="A card evaluation must derive from frozen source values, not a caller-reported label.",
+    ),
+    MutationCase(
+        mutation_id="CARD_SCHEMA_MIN_LENGTHS",
+        component="Research funnel knowledge-card schema parity",
+        source_path="experiments/research_funnel/knowledge_cards.py",
+        test_script="tests/test_knowledge_cards.py",
+        before=(
+            "        # governance-mutation: CARD_SCHEMA_MIN_LENGTHS\n"
+            "        if minimum is not None and len(text) < minimum:"
+        ),
+        after=(
+            "        # governance-mutation: CARD_SCHEMA_MIN_LENGTHS\n"
+            "        if False and minimum is not None and len(text) < minimum:"
+        ),
+        expected_failure_marker="test_schema_minimum_text_lengths_are_enforced",
+        rationale="The runtime validator must retain the reviewed schema's minimum-content gates.",
+    ),
+    MutationCase(
+        mutation_id="CARD_SOURCE_CATALOG_FROM_COLLECTORS",
+        component="Research funnel knowledge-card source catalog",
+        source_path="experiments/research_funnel/knowledge_cards.py",
+        test_script="tests/test_knowledge_cards.py",
+        before=(
+            "    # governance-mutation: CARD_SOURCE_CATALOG_FROM_COLLECTORS\n"
+            "    collected = {\n"
+            "        api: set(_field_names(fields))\n"
+            "        for api, fields in feature_store.ENDPOINT_FIELDS.items()\n"
+            "    }"
+        ),
+        after=(
+            "    # governance-mutation: CARD_SOURCE_CATALOG_FROM_COLLECTORS\n"
+            "    collected = {}"
+        ),
+        expected_failure_marker="test_source_catalog_tracks_current_collector_declarations",
+        rationale=(
+            "Knowledge-card source coverage must follow the repository collectors' "
+            "current field declarations rather than a hand-maintained catalog."
+        ),
+    ),
+    MutationCase(
+        mutation_id="CARD_SOURCE_FIELD_COVERAGE",
+        component="Research funnel knowledge-card source coverage",
+        source_path="experiments/research_funnel/knowledge_cards.py",
+        test_script="tests/test_knowledge_cards.py",
+        before=(
+            "        # governance-mutation: CARD_SOURCE_FIELD_COVERAGE\n"
+            '        "collected_by_repo": bool(pairs) and not missing,'
+        ),
+        after=(
+            "        # governance-mutation: CARD_SOURCE_FIELD_COVERAGE\n"
+            '        "collected_by_repo": bool(pairs),'
+        ),
+        expected_failure_marker="test_source_coverage_is_checked_per_api_field_pair_not_by_union",
+        rationale="A field declared under one API cannot make missing pairs under another API look collected.",
+    ),
+    MutationCase(
+        mutation_id="CARD_AUTO_SOURCE_COLLECTION_GATE",
+        component="Research funnel knowledge-card AUTO availability",
+        source_path="experiments/research_funnel/knowledge_cards.py",
+        test_script="tests/test_knowledge_cards.py",
+        before=(
+            "        # governance-mutation: CARD_AUTO_SOURCE_COLLECTION_GATE\n"
+            '        if not coverage["collected_by_repo"]:'
+        ),
+        after=(
+            "        # governance-mutation: CARD_AUTO_SOURCE_COLLECTION_GATE\n"
+            "        if False:"
+        ),
+        expected_failure_marker="test_uncollected_auto_source_is_visible_and_cannot_look_computable",
+        rationale="An AUTO card cannot be presented as computable when its declared source pairs are not collected.",
+    ),
+    MutationCase(
+        mutation_id="CARD_EVIDENCE_HASH_VERIFIED",
+        component="Research funnel knowledge-card evidence verification",
+        source_path="experiments/research_funnel/knowledge_cards.py",
+        test_script="tests/test_knowledge_cards.py",
+        before=(
+            "    # governance-mutation: CARD_EVIDENCE_HASH_VERIFIED\n"
+            "    if evidence != expected:"
+        ),
+        after=(
+            "    # governance-mutation: CARD_EVIDENCE_HASH_VERIFIED\n"
+            "    if False:"
+        ),
+        expected_failure_marker="test_evaluation_verifier_rejects_result_card_and_envelope_hash_drift",
+        rationale="A rehashed display result must still be rebuilt from the reviewed card and frozen source row.",
     ),
 )
 
