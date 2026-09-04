@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import re
 import unittest
 from datetime import datetime
@@ -128,6 +129,7 @@ def _frozen_evidence(packet: Mapping[str, Any]) -> dict[str, Any]:
             "causal_cluster_identity_state": row["causal_cluster_identity_state"],
             "u2_candidate_row_hash": row["u2_candidate_row_hash"],
             "u3_battery_row_hash": row["u3_battery_row_hash"],
+            "peak_earnings": json.loads(json.dumps(row["peak_earnings"])),
             "positive_channels": list(row["positive_channels"]),
             "red_flag_channels": list(row["red_flag_channels"]),
             "u3_complete": "U3_BATTERY_INCOMPLETE" not in row["blocked_reasons"],
@@ -198,7 +200,7 @@ def _semantic_errors(packet: Mapping[str, Any], evidence: Mapping[str, Any]) -> 
             "cohort_id", "cohort_identity_state",
             "causal_cluster_id", "causal_cluster_identity_state",
             "u2_candidate_row_hash", "u3_battery_row_hash", "positive_channels",
-            "red_flag_channels", "missing_evidence",
+            "red_flag_channels", "missing_evidence", "peak_earnings",
         ):
             if row.get(field) != source.get(field):
                 errors.append(f"candidate_rows[{index}] {field} differs from frozen evidence")
@@ -270,6 +272,12 @@ def _type_matches(value: Any, expected: str) -> bool:
         return isinstance(value, str)
     if expected == "integer":
         return isinstance(value, int) and not isinstance(value, bool)
+    if expected == "number":
+        return (
+            isinstance(value, (int, float))
+            and not isinstance(value, bool)
+            and math.isfinite(float(value))
+        )
     if expected == "boolean":
         return isinstance(value, bool)
     if expected == "null":
@@ -364,6 +372,14 @@ def _candidate(**updates: Any) -> dict[str, Any]:
         "causal_cluster_identity_state": "UNAVAILABLE_PENDING",
         "u2_candidate_row_hash": "sha256:" + "1" * 64,
         "u3_battery_row_hash": "sha256:" + "2" * 64,
+        "peak_earnings": {
+            "flag": None,
+            "needs_normalized_bridge": None,
+            "roe_vs_5y_median": None,
+            "gm_vs_5y_median": None,
+            "source_hash": None,
+            "reason": "CYCLICAL_FLAG_NOT_COMPUTED",
+        },
         "positive_channels": ["PRICE_VOLUME", "FUNDAMENTAL_VALUATION"],
         "red_flag_channels": [],
         "blocked_reasons": [],
@@ -464,6 +480,7 @@ class U4PreDecisionPacketContractTests(unittest.TestCase):
                 "cohort_identity_state",
                 "causal_cluster_id",
                 "causal_cluster_identity_state",
+                "peak_earnings",
                 "blocked_reasons",
                 "quality_status",
             }.issubset(required)
@@ -471,10 +488,31 @@ class U4PreDecisionPacketContractTests(unittest.TestCase):
         for field in (
             "method_version", "cohort_id", "cohort_identity_state",
             "causal_cluster_id", "causal_cluster_identity_state",
+            "peak_earnings",
         ):
             packet = _packet(candidate_rows=[_candidate()])
             del packet["candidate_rows"][0][field]
             self.assertInvalid(packet, f"missing {field}")
+
+    def test_peak_earnings_has_exact_available_or_explicitly_uncomputed_shape(self) -> None:
+        available = {
+            "flag": True,
+            "needs_normalized_bridge": True,
+            "roe_vs_5y_median": 1.4,
+            "gm_vs_5y_median": 1.2,
+            "source_hash": "sha256:" + "c" * 64,
+            "reason": None,
+        }
+        packet = _packet(candidate_rows=[_candidate(peak_earnings=available)])
+        self.assertValid(packet, _frozen_evidence(packet))
+
+        invented = _packet()
+        invented["candidate_rows"][0]["peak_earnings"]["flag"] = False
+        self.assertInvalid(invented, "oneOf matched")
+
+        malformed = _packet(candidate_rows=[_candidate(peak_earnings=available)])
+        malformed["candidate_rows"][0]["peak_earnings"]["score_total"] = 1
+        self.assertInvalid(malformed, "oneOf matched")
 
     def test_pending_daily_source_cannot_be_reported_ready(self) -> None:
         packet = _packet()

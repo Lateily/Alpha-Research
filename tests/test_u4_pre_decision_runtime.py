@@ -47,6 +47,32 @@ def _write(path: Path, payload: dict) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def _write_cyclical_flags(path: Path, flags: dict[str, dict]) -> None:
+    _write(path, {
+        "_meta": {
+            "cyclical_normalization": {
+                "basis": "filings_5y_median",
+                "source": "scripts/cyclical_flag.py",
+            },
+        },
+        "stocks": [
+            {
+                "ticker": code,
+                "cyclical_flag": {
+                    "cyclical_sector": bool(values["needs_normalized_bridge"]),
+                    "roe_median_5y": 10.0,
+                    "gm_median_5y": 20.0,
+                    "roe_ttm_vs_median": values["roe_ttm_vs_median"],
+                    "gm_ttm_vs_median": values["gm_ttm_vs_median"],
+                    "peak_earnings_risk": values["peak_earnings_risk"],
+                    "needs_normalized_bridge": values["needs_normalized_bridge"],
+                },
+            }
+            for code, values in sorted(flags.items())
+        ],
+    })
+
+
 def _feature_health(
     *, eligible_universe_hash: str, semiconductor_rows_hash: str,
     generated_at: str = GENERATED_AT,
@@ -392,6 +418,156 @@ class U4PreDecisionRuntimeTests(unittest.TestCase):
             self.assertEqual("HUMAN_JUNYAN_ONLY", first["selection_boundary"]["human_selection_authority"])
             self.assertFalse(first["authority"]["paper_order_authority"])
             self.assertEqual([], contract._errors(first, contract.SCHEMA))
+
+    def test_peak_earnings_is_derived_from_cyclical_source_without_changing_u4_gate(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            bundle, feature_health, funnel_health = _fixture_tree(root)
+            baseline, _ = pre.build_packet(
+                bundle_dir=bundle,
+                feature_health_path=feature_health,
+                funnel_health_path=funnel_health,
+                diagnostic_ref="u4_pre_decision_diagnostic.json",
+                industry="TECH",
+                method_version=pre.DEFAULT_METHOD_VERSION,
+                generated_at=GENERATED_AT,
+            )
+            code = baseline["candidate_rows"][0]["ts_code"]
+            source_path = pre._default_cyclical_flags_path(feature_health)
+            _write_cyclical_flags(source_path, {
+                code: {
+                    "peak_earnings_risk": True,
+                    "needs_normalized_bridge": True,
+                    "roe_ttm_vs_median": 1.4,
+                    "gm_ttm_vs_median": 1.2,
+                },
+            })
+            enriched, _ = pre.build_packet(
+                bundle_dir=bundle,
+                feature_health_path=feature_health,
+                funnel_health_path=funnel_health,
+                diagnostic_ref="u4_pre_decision_diagnostic.json",
+                industry="TECH",
+                method_version=pre.DEFAULT_METHOD_VERSION,
+                generated_at=GENERATED_AT,
+            )
+            rows = {row["ts_code"]: row for row in enriched["candidate_rows"]}
+            self.assertEqual(
+                {
+                    "flag": True,
+                    "needs_normalized_bridge": True,
+                    "roe_vs_5y_median": 1.4,
+                    "gm_vs_5y_median": 1.2,
+                    "source_hash": pre._peak_source_hash(code, {
+                        "flag": True,
+                        "needs_normalized_bridge": True,
+                        "roe_vs_5y_median": 1.4,
+                        "gm_vs_5y_median": 1.2,
+                    }),
+                    "reason": None,
+                },
+                rows[code]["peak_earnings"],
+            )
+            missing = next(row for row in enriched["candidate_rows"] if row["ts_code"] != code)
+            self.assertEqual(
+                {
+                    "flag": None,
+                    "needs_normalized_bridge": None,
+                    "roe_vs_5y_median": None,
+                    "gm_vs_5y_median": None,
+                    "source_hash": None,
+                    "reason": "CYCLICAL_FLAG_NOT_COMPUTED",
+                },
+                missing["peak_earnings"],
+            )
+            gate_fields = (
+                "blocked_reasons",
+                "quality_status",
+                "allowed_for_u4_packet",
+                "question_for_junyan",
+            )
+            baseline_rows = {row["ts_code"]: row for row in baseline["candidate_rows"]}
+            for ticker, row in rows.items():
+                self.assertEqual(
+                    {field: baseline_rows[ticker][field] for field in gate_fields},
+                    {field: row[field] for field in gate_fields},
+                )
+            self.assertEqual(baseline["status"], enriched["status"])
+            self.assertEqual(baseline["selection_boundary"], enriched["selection_boundary"])
+            self.assertEqual(baseline["authority"], enriched["authority"])
+            self.assertEqual([], contract._errors(enriched, contract.SCHEMA))
+            _validate(enriched, bundle, feature_health, funnel_health)
+
+    def test_peak_earnings_tampering_is_rejected_by_hash_and_reopened_source(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            bundle, feature_health, funnel_health = _fixture_tree(root)
+            candidates = json.loads((bundle / "candidate_review.json").read_text(encoding="utf-8"))
+            code = next(
+                row["ts_code"] for row in candidates["rows"]
+                if row.get("industry_key") == "TECH"
+            )
+            _write_cyclical_flags(pre._default_cyclical_flags_path(feature_health), {
+                code: {
+                    "peak_earnings_risk": True,
+                    "needs_normalized_bridge": True,
+                    "roe_ttm_vs_median": 1.4,
+                    "gm_ttm_vs_median": 1.2,
+                },
+            })
+            packet, _ = pre.build_packet(
+                bundle_dir=bundle,
+                feature_health_path=feature_health,
+                funnel_health_path=funnel_health,
+                diagnostic_ref="u4_pre_decision_diagnostic.json",
+                industry="TECH",
+                method_version=pre.DEFAULT_METHOD_VERSION,
+                generated_at=GENERATED_AT,
+            )
+            row = next(item for item in packet["candidate_rows"] if item["ts_code"] == code)
+            row["peak_earnings"]["flag"] = False
+            _rehash_packet(packet)
+            with self.assertRaisesRegex(pre.PreDecisionError, "peak earnings source hash mismatch"):
+                pre._validate_packet_receipt(packet)
+
+            row["peak_earnings"]["source_hash"] = pre._peak_source_hash(
+                code, row["peak_earnings"]
+            )
+            _rehash_packet(packet)
+            pre._validate_packet_receipt(packet)
+            with self.assertRaisesRegex(pre.PreDecisionError, "reopened immutable evidence"):
+                _validate(packet, bundle, feature_health, funnel_health)
+
+    def test_missing_default_cyclical_source_does_not_protect_walk_scratch(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            twin = Path(tmp) / "e2e-twin"
+            pack = twin / "input-pack"
+            bundle, nested_feature_health, nested_funnel_health = _fixture_tree(pack)
+            feature_health = pack / "feature_health.json"
+            funnel_health = pack / "funnel_health.json"
+            feature_health.write_bytes(nested_feature_health.read_bytes())
+            funnel_health.write_bytes(nested_funnel_health.read_bytes())
+            scratch = twin / "twin-20260902" / "scratch"
+            scratch.mkdir(parents=True)
+            packet_output = scratch / "u4-pre-decision.json"
+            diagnostic_output = scratch / "u4-pre-diagnostic.json"
+
+            self.assertFalse(pre._default_cyclical_flags_path(feature_health).exists())
+            with contextlib.redirect_stdout(io.StringIO()):
+                rc = pre.main([
+                    "--bundle", str(bundle),
+                    "--feature-health", str(feature_health),
+                    "--funnel-health", str(funnel_health),
+                    "--generated-at", GENERATED_AT,
+                    "--packet-output", str(packet_output),
+                    "--diagnostic-output", str(diagnostic_output),
+                    "--scratch-root", str(scratch),
+                    "--industry", "TECH",
+                ])
+
+            self.assertEqual(0, rc)
+            self.assertTrue(packet_output.is_file())
+            self.assertTrue(diagnostic_output.is_file())
 
     def test_random_controls_and_rows_without_positive_channels_are_not_reviewable(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
