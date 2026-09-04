@@ -7168,6 +7168,28 @@ mutation_id="U4_PREDECISION_ATOMIC_NO_REPLACE",
         rationale="The runtime validator must retain the reviewed schema's minimum-content gates.",
     ),
     MutationCase(
+        mutation_id="CARD_SOURCE_CATALOG_FROM_COLLECTORS",
+        component="Research funnel knowledge-card source catalog",
+        source_path="experiments/research_funnel/knowledge_cards.py",
+        test_script="tests/test_knowledge_cards.py",
+        before=(
+            "    # governance-mutation: CARD_SOURCE_CATALOG_FROM_COLLECTORS\n"
+            "    collected = {\n"
+            "        api: set(_field_names(fields))\n"
+            "        for api, fields in feature_store.ENDPOINT_FIELDS.items()\n"
+            "    }"
+        ),
+        after=(
+            "    # governance-mutation: CARD_SOURCE_CATALOG_FROM_COLLECTORS\n"
+            "    collected = {}"
+        ),
+        expected_failure_marker="test_source_catalog_tracks_current_collector_declarations",
+        rationale=(
+            "Knowledge-card source coverage must follow the repository collectors' "
+            "current field declarations rather than a hand-maintained catalog."
+        ),
+    ),
+    MutationCase(
         mutation_id="CARD_SOURCE_FIELD_COVERAGE",
         component="Research funnel knowledge-card source coverage",
         source_path="experiments/research_funnel/knowledge_cards.py",

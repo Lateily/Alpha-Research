@@ -10,6 +10,7 @@ import tempfile
 import unittest
 from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
+from unittest.mock import patch
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -220,6 +221,36 @@ class KnowledgeCardTests(unittest.TestCase):
         self.assertFalse(by_pair[("fina_indicator", "pe_ttm")])
         self.assertTrue(by_pair[("fina_indicator", "roe")])
         self.assertFalse(coverage["collected_by_repo"])
+
+    def test_source_catalog_tracks_current_collector_declarations(self) -> None:
+        import feature_store
+
+        card = _card()
+        card["data_source"] = {
+            "availability": "AUTO",
+            "primary": "Repository daily-basic collector",
+            "tushare_api": "daily_basic",
+            "tushare_field": "pe_ttm",
+            "manual_required": False,
+        }
+        self.assertTrue(cards.source_coverage(card)["collected_by_repo"])
+
+        without_pe = dict(feature_store.ENDPOINT_FIELDS)
+        without_pe["daily_basic"] = "ts_code,trade_date,turnover_rate"
+        with patch.object(feature_store, "ENDPOINT_FIELDS", without_pe):
+            coverage = cards.source_coverage(card)
+        self.assertFalse(coverage["collected_by_repo"])
+        self.assertEqual(["daily_basic.pe_ttm"], coverage["uncollected_pairs"])
+
+        with_added_api = dict(feature_store.ENDPOINT_FIELDS)
+        with_added_api["collector_probe"] = "ts_code,collector_only_field"
+        card["data_source"].update({
+            "primary": "Dynamically declared repository collector",
+            "tushare_api": "collector_probe",
+            "tushare_field": "collector_only_field",
+        })
+        with patch.object(feature_store, "ENDPOINT_FIELDS", with_added_api):
+            self.assertTrue(cards.source_coverage(card)["collected_by_repo"])
 
     def test_evaluation_verifier_rejects_result_card_and_envelope_hash_drift(self) -> None:
         card = _card()

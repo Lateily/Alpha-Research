@@ -174,6 +174,7 @@ def repo_collected_tushare_fields() -> dict[str, frozenset[str]]:
     import feature_store
     import semiconductor_inputs
 
+    # governance-mutation: CARD_SOURCE_CATALOG_FROM_COLLECTORS
     collected = {
         api: set(_field_names(fields))
         for api, fields in feature_store.ENDPOINT_FIELDS.items()
