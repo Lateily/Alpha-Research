@@ -138,6 +138,10 @@ def _frozen_evidence(packet: Mapping[str, Any]) -> dict[str, Any]:
                 set(row["blocked_reasons"]).intersection(EXTERNAL_ROW_BLOCKERS)
             ),
         }
+        if "battery_dimension_verdicts" in row:
+            rows[row["ts_code"]]["battery_dimension_verdicts"] = dict(
+                row["battery_dimension_verdicts"]
+            )
     return {
         "as_of": packet["as_of"],
         "method_version": packet["method_version"],
@@ -204,6 +208,12 @@ def _semantic_errors(packet: Mapping[str, Any], evidence: Mapping[str, Any]) -> 
         ):
             if row.get(field) != source.get(field):
                 errors.append(f"candidate_rows[{index}] {field} differs from frozen evidence")
+        if row.get("battery_dimension_verdicts") != source.get(
+            "battery_dimension_verdicts"
+        ):
+            errors.append(
+                f"candidate_rows[{index}] battery_dimension_verdicts differs from frozen evidence"
+            )
         if row.get("method_version") != packet.get("method_version"):
             errors.append(f"candidate_rows[{index}] method_version differs from packet")
         expected_blocked = list(source.get("diagnostic_blockers", []))

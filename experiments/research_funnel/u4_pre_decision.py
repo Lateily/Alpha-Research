@@ -69,7 +69,7 @@ PACKET_FIELDS = {
     "authority",
     "packet_hash",
 }
-CANDIDATE_FIELDS = {
+LEGACY_CANDIDATE_FIELDS = {
     "ts_code",
     "display_name",
     "candidate_status",
@@ -88,6 +88,14 @@ CANDIDATE_FIELDS = {
     "quality_status",
     "allowed_for_u4_packet",
     "question_for_junyan",
+}
+CANDIDATE_FIELDS = LEGACY_CANDIDATE_FIELDS | {"battery_dimension_verdicts"}
+BATTERY_DIMENSION_VERDICT_VALUES = {
+    "行情": {"NEAR_HIGH", "MID", "NEAR_LOW", None},
+    "资金": {"INFLOW", "OUTFLOW", "MIXED", None},
+    "技术面": {"BULL", "BEAR", "TANGLED", None},
+    "消息面": {"SPIKE", "NORMAL", None},
+    "估值": {"LOW", "MID", "HIGH", None},
 }
 CHANNEL_MAP = {
     "PRICE_VOLUME": "PRICE_VOLUME",
@@ -560,6 +568,10 @@ def _candidate_rows(
     }
     registry = {str(row["ts_code"]): row for row in bundle["registry"]["rows"]}
     battery = funnel._battery_rows(bundle["battery"], str(bundle["manifest"]["as_of"]))
+    include_display_verdicts = (
+        bundle["battery"].get("dimension_verdict_contract")
+        == funnel.BATTERY_DIMENSION_VERDICT_CONTRACT
+    )
     queue = {str(row["ts_code"]): row for row in bundle["queue"]["ready_pool"]}
     rows: list[dict[str, Any]] = []
     for code in sorted(candidates):
@@ -601,7 +613,7 @@ def _candidate_rows(
             quality = "WARN"
         else:
             quality = "PASS"
-        rows.append({
+        row = {
             "ts_code": code,
             "display_name": str(registry_row.get("name") or UNAVAILABLE),
             "candidate_status": str(candidate.get("review_status") or ""),
@@ -625,7 +637,18 @@ def _candidate_rows(
                 f"是否将 {registry_row.get('name') or code} ({code}) 纳入离线 workflow-debug 深研？"
                 if allowed else None
             ),
-        })
+        }
+        # Old immutable bundles predate the display-only contract and retain
+        # their original packet shape. New bundles project exactly the five
+        # validated U3 labels without letting them influence readiness.
+        # governance-mutation: BATTERY_VERDICT_U4_DISPLAY_PROJECTION
+        if include_display_verdicts:
+            dimensions = battery_row.get("dims") or {}
+            row["battery_dimension_verdicts"] = {
+                name: (dimensions.get(name) or {}).get(funnel.BATTERY_VERDICT_FIELD)
+                for name in funnel.BATTERY_DISPLAY_VERDICT_DIMENSIONS
+            }
+        rows.append(row)
     return rows
 
 
@@ -823,10 +846,16 @@ def _validate_packet_receipt(packet: Mapping[str, Any]) -> None:
     if not isinstance(rows, list):
         raise PreDecisionError("candidate_rows must be a list")
     codes: list[str] = []
+    candidate_shapes: set[frozenset[str]] = set()
     for row in rows:
         if not isinstance(row, Mapping):
             raise PreDecisionError("candidate row must be an object")
-        _require_exact(row, CANDIDATE_FIELDS, "candidate row")
+        row_fields = frozenset(row)
+        if row_fields not in {
+            frozenset(LEGACY_CANDIDATE_FIELDS), frozenset(CANDIDATE_FIELDS)
+        }:
+            raise PreDecisionError("candidate row fields are not exact")
+        candidate_shapes.add(row_fields)
         code = str(row.get("ts_code") or "")
         codes.append(code)
         if (
@@ -854,6 +883,19 @@ def _validate_packet_receipt(packet: Mapping[str, Any]) -> None:
             raise PreDecisionError(f"candidate evidence vocabulary/order is invalid: {code}")
         if not set(blocked).issubset(ROW_BLOCKERS):
             raise PreDecisionError(f"candidate blocker is invalid: {code}")
+        if "battery_dimension_verdicts" in row:
+            display_verdicts = row.get("battery_dimension_verdicts")
+            if (
+                not isinstance(display_verdicts, Mapping)
+                or set(display_verdicts) != set(BATTERY_DIMENSION_VERDICT_VALUES)
+                or any(
+                    display_verdicts.get(name) not in allowed
+                    for name, allowed in BATTERY_DIMENSION_VERDICT_VALUES.items()
+                )
+            ):
+                raise PreDecisionError(
+                    f"candidate battery display verdicts are invalid: {code}"
+                )
         # governance-mutation: U4_PREDECISION_COHORT_IDENTITY
         if (
             row.get("cohort_id") != UNAVAILABLE
@@ -905,6 +947,8 @@ def _validate_packet_receipt(packet: Mapping[str, Any]) -> None:
         )
         if row.get("quality_status") != expected_quality:
             raise PreDecisionError(f"candidate quality is not derived from evidence: {code}")
+    if len(candidate_shapes) > 1:
+        raise PreDecisionError("candidate rows mix legacy and display-verdict shapes")
     if len(codes) != len(set(codes)):
         raise PreDecisionError("candidate rows must be unique")
     summary = packet.get("packet_summary")

@@ -378,6 +378,18 @@
         },
         "u2_candidate_row_hash": {"$ref": "#/$defs/sha256"},
         "u3_battery_row_hash": {"$ref": "#/$defs/sha256"},
+        "battery_dimension_verdicts": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["行情", "资金", "技术面", "消息面", "估值"],
+          "properties": {
+            "行情": {"enum": ["NEAR_HIGH", "MID", "NEAR_LOW", null]},
+            "资金": {"enum": ["INFLOW", "OUTFLOW", "MIXED", null]},
+            "技术面": {"enum": ["BULL", "BEAR", "TANGLED", null]},
+            "消息面": {"enum": ["SPIKE", "NORMAL", null]},
+            "估值": {"enum": ["LOW", "MID", "HIGH", null]}
+          }
+        },
         "peak_earnings": {"$ref": "#/$defs/peak_earnings"},
         "positive_channels": {
           "type": "array",
