@@ -2,9 +2,11 @@
 """Crash-consistent staging and publication for nightly-v4."""
 from __future__ import annotations
 
+import contextlib
 import hashlib
 import json
 import os
+import re
 import shutil
 
 # ── WO-OPS1 (2026-09-03): operator re-baseline for a lost durable manifest ──
@@ -15,6 +17,10 @@ CONTROL_LEDGER_NAME = "publication_migration_events.jsonl"
 SUPERSEDED_STATUS = "SUPERSEDED_BY_OPERATOR"
 LOST_MANIFEST_EVENT_KIND = "PUBLICATION_MANIFEST_LOST"
 LOST_MANIFEST_EVENT_SCHEMA = "publication_manifest_lost/v1"
+APPROVAL_REF_RE = re.compile(r"session:[0-9A-Za-z][0-9A-Za-z._:-]{3,}")
+APPROVAL_EVIDENCE_STRENGTH = "TRANSCRIPT_ONLY_NOT_CRYPTOGRAPHIC"
+APPROVED_BY_IDENTITY_STATE = "SELF_REPORTED_NOT_AUTHENTICATED"
+NIGHTLY_LOCK_NAME = "nightly.lock"
 DISCLAIMER = "不是买卖指令；研究信号，human executes."
 
 
@@ -714,78 +720,225 @@ def _read_pointer(path):
         return {"present": True, "path": path, "error": str(exc)}
 
 
-def rebaseline_lost_manifest(state_path, live_et, live_repo, *, reason, approved_by,
-                             approval_ref, ledger_path=None, now=None):
-    """Record a lost durable manifest in the append-only control ledger and mark the
-    committed publication SUPERSEDED_BY_OPERATOR so the next nightly may publish anew.
+def _validate_rebaseline_approval(run_id, *, reason, approved_by, approval_ref,
+                                  approval_verbatim, approval_channel, evidence_strength):
+    """Bind the operator approval to THIS action and run_id, and refuse to dress a
+    self-reported name up as an authenticated identity.
 
-    Never re-creates or edits the lost manifest, never touches public aliases or
-    pointers, and never pretends the old publication is verifiable.
+    Deliberately NOT checked: approved_by == "Junyan". String equality proves the
+    string, not the authorization — approximating authority by equality is exactly
+    the class of gate this platform keeps getting wrong (see R-043). What bears
+    weight is the verbatim human text, which a reader can diff against the session
+    transcript. The ledger therefore records approved_by as SELF_REPORTED, and the
+    event self-declares that its evidence is a transcript, not cryptography.
     """
-    import event_ledger
     # governance-mutation: PUBLISH_REBASELINE_REQUIRES_APPROVAL
     if not (str(reason or "").strip() and str(approved_by or "").strip()
             and str(approval_ref or "").strip()):
         raise RuntimeError("rebaseline 需要非空 reason / approved_by / approval_ref —— fail-closed")
-    if not os.path.exists(state_path):
-        raise RuntimeError("publication_state 不存在 —— 无可再基线的发布")
-    try:
-        with open(state_path, encoding="utf-8") as fh:
-            state = json.load(fh)
-    except (OSError, json.JSONDecodeError) as exc:
-        raise RuntimeError(f"publication_state 不可解析: {exc}") from exc
-    status = state.get("status")
-    if status == SUPERSEDED_STATUS:
-        raise RuntimeError("publication_state 已为 SUPERSEDED_BY_OPERATOR —— 重复 rebaseline 被拒")
-    if status != "COMMITTED":
-        raise RuntimeError(f"rebaseline 仅适用于 COMMITTED 发布,当前状态 {status!r} —— 拒绝")
-    manifest_path = state.get("manifest")
-    if manifest_path and os.path.isfile(manifest_path):
-        raise RuntimeError("durable manifest 仍存在 —— 无需 rebaseline,拒绝以免掩盖可验证发布")
-    run_id = str(state.get("run_id") or "")
-    if not run_id:
-        raise RuntimeError("publication_state 缺 run_id —— fail-closed")
-    ledger_path = ledger_path or _control_ledger_path(live_et)
-    rec_id = f"rebaseline:{run_id}"
-    for ln in event_ledger._read_lines(ledger_path):
-        rec = json.loads(ln)
-        if rec.get("kind") == LOST_MANIFEST_EVENT_KIND and rec.get("id") == rec_id:
-            raise RuntimeError(f"账本已有 {rec_id} —— 重复 rebaseline 被拒")
-    public_pointer = _read_pointer(
-        os.path.join(live_repo, "public", "data", "v2", "current_run.json"))
-    et_pointer = _read_pointer(os.path.join(live_et, "current_run.json"))
-    pinned = None
-    if public_pointer.get("present") and isinstance(public_pointer.get("value"), dict):
-        pinned = public_pointer["value"].get("manifest_sha256")
-    payload = {
-        "schema": LOST_MANIFEST_EVENT_SCHEMA,
-        "run_id": run_id,
-        "missing_manifest": manifest_path,
-        "pinned_manifest_sha256": pinned,
-        "public_pointer": public_pointer,
-        "et_pointer": et_pointer,
-        "prior_state": state,
+    # governance-mutation: PUBLISH_REBASELINE_APPROVAL_CHANNEL
+    if str(approval_channel or "") != "session_verbatim":
+        raise RuntimeError("approval_channel 必须为 session_verbatim —— 自报身份不构成授权")
+    verbatim = str(approval_verbatim or "").strip()
+    # governance-mutation: PUBLISH_REBASELINE_APPROVAL_VERBATIM
+    if len(verbatim) < 12:
+        raise RuntimeError("approval_verbatim 必须逐字携带人类授权原文 —— fail-closed")
+    # governance-mutation: PUBLISH_REBASELINE_APPROVAL_BINDING
+    if run_id not in verbatim and "rebaseline" not in verbatim.lower() and "再基线" not in verbatim:
+        raise RuntimeError(
+            "approval_verbatim 必须可见地指向本次 rebaseline 或该 run_id —— 旧授权不得复用")
+    if not APPROVAL_REF_RE.fullmatch(str(approval_ref or "")):
+        raise RuntimeError("approval_ref 必须是非空 session: 锚点 —— fail-closed")
+    # governance-mutation: PUBLISH_REBASELINE_APPROVAL_EVIDENCE_STRENGTH
+    if str(evidence_strength or "") != APPROVAL_EVIDENCE_STRENGTH:
+        raise RuntimeError(
+            f"approval 必须自声明 evidence_strength={APPROVAL_EVIDENCE_STRENGTH} "
+            "—— 账本不得暗示它不具备的证明强度")
+    return {
         "reason": str(reason).strip(),
         "approved_by": str(approved_by).strip(),
+        "approved_by_identity_state": APPROVED_BY_IDENTITY_STATE,
         "approval_ref": str(approval_ref).strip(),
-        "note": "operator re-baseline; the lost publication is recorded as unverifiable, not restored",
+        "approval_channel": "session_verbatim",
+        "approval_verbatim": verbatim,
+        "evidence_strength": APPROVAL_EVIDENCE_STRENGTH,
     }
-    rec = event_ledger.append(LOST_MANIFEST_EVENT_KIND, rec_id, payload,
-                              path=ledger_path, now=now)
+
+
+@contextlib.contextmanager
+def _nightly_exclusive(live_et):
+    """Hold the SAME lock the nightly chain uses, so a re-baseline can never
+    interleave with a publish nor with a second operator."""
+    import fcntl
+    lock_path = os.path.join(live_et, NIGHTLY_LOCK_NAME)
+    os.makedirs(os.path.dirname(os.path.abspath(lock_path)) or ".", exist_ok=True)
+    with open(lock_path, "w") as lf:
+        try:
+            # governance-mutation: PUBLISH_REBASELINE_TAKES_NIGHTLY_LOCK
+            fcntl.flock(lf, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except OSError as exc:
+            raise RuntimeError(
+                "夜链锁被持有(nightly.lock)—— 拒绝与发布或另一次 rebaseline 并发") from exc
+        try:
+            yield
+        finally:
+            fcntl.flock(lf, fcntl.LOCK_UN)
+
+
+def _require_consistent_pointers(live_et, live_repo, run_id, manifest_path):
+    """A lost manifest is the ONLY corruption this operation may absorb.
+
+    Both commit pointers must be present, parseable, byte-identical to each other,
+    and agree with publication_state on run_id and manifest identity. Anything else
+    is a wider publication corruption that must not be relabelled as one clean
+    lost-manifest re-baseline.
+    """
+    public_path = os.path.join(live_repo, "public", "data", "v2", "current_run.json")
+    et_path = os.path.join(live_et, "current_run.json")
+    public_pointer = _read_pointer(public_path)
+    et_pointer = _read_pointer(et_path)
+    for label, snap in (("public", public_pointer), ("execution_tracker", et_pointer)):
+        if not snap.get("present"):
+            raise RuntimeError(f"{label} current_run.json 缺失 —— 非单纯 manifest 丢失,fail-closed")
+        if snap.get("error") or not isinstance(snap.get("value"), dict):
+            raise RuntimeError(f"{label} current_run.json 不可解析 —— fail-closed")
+    if public_pointer["value"] != et_pointer["value"]:
+        raise RuntimeError("两个 current_run.json 指针内容不一致 —— 发布损坏范围超出本操作,fail-closed")
+    value = public_pointer["value"]
+    # governance-mutation: PUBLISH_REBASELINE_POINTERS_MUST_AGREE
+    if str(value.get("run_id") or "") != run_id:
+        raise RuntimeError("指针 run_id 与 publication_state 不一致 —— fail-closed")
+    pinned = str(value.get("manifest_sha256") or "")
+    if re.fullmatch(r"[0-9a-f]{64}", pinned) is None:
+        raise RuntimeError("指针 manifest_sha256 不是 64 位十六进制 —— fail-closed")
+    pointer_manifest = value.get("manifest")
+    if pointer_manifest and manifest_path and (
+        os.path.basename(str(pointer_manifest)) != os.path.basename(str(manifest_path))
+    ):
+        raise RuntimeError("指针 manifest 路径与 publication_state 不一致 —— fail-closed")
+    return public_pointer, et_pointer, pinned
+
+
+def _superseded_state(state, rec, ledger_path, approval):
+    """The state projection is a pure function of the ledgered event, so a retry
+    after a crash can rebuild it byte-identically without appending again."""
     new_state = dict(state)
     new_state.update({
         "status": SUPERSEDED_STATUS,
         "prior_status": "COMMITTED",
         "superseded_event_kind": LOST_MANIFEST_EVENT_KIND,
-        "superseded_event_id": rec_id,
+        "superseded_event_id": rec["id"],
         "superseded_event_hash": rec["hash"],
+        "superseded_event_ledger": os.path.abspath(ledger_path),
         "superseded_at": rec["ts"],
-        "approved_by": payload["approved_by"],
-        "approval_ref": payload["approval_ref"],
+        "approved_by": approval["approved_by"],
+        "approved_by_identity_state": approval["approved_by_identity_state"],
+        "approval_ref": approval["approval_ref"],
+        "approval_evidence_strength": approval["evidence_strength"],
     })
-    atomic_json(state_path, new_state)
-    return {"status": SUPERSEDED_STATUS, "run_id": run_id,
-            "event_hash": rec["hash"], "ledger": ledger_path}
+    return new_state
+
+
+def rebaseline_lost_manifest(state_path, live_et, live_repo, *, reason, approved_by,
+                             approval_ref, approval_verbatim=None,
+                             approval_channel="session_verbatim",
+                             evidence_strength=APPROVAL_EVIDENCE_STRENGTH,
+                             ledger_path=None, now=None):
+    """Record a lost durable manifest in the append-only control ledger and mark the
+    committed publication SUPERSEDED_BY_OPERATOR so the next nightly may publish anew.
+
+    Never re-creates or edits the lost manifest, never touches public aliases or
+    pointers, and never pretends the old publication is verifiable.
+
+    Concurrency and crash safety
+    ----------------------------
+    The whole operation runs under the SAME nightly.lock the publish chain takes, and
+    the (kind, id) pair is unique at the ledger layer inside its own flock — so two
+    operators cannot both append a rebaseline for one run_id. The ledger append is the
+    single commit point: the state file is a pure projection of the ledgered event
+    (see `_superseded_state`), so a crash between append and state write converges on
+    retry by rebuilding that projection instead of appending again.
+    """
+    import event_ledger
+    if not os.path.exists(state_path):
+        raise RuntimeError("publication_state 不存在 —— 无可再基线的发布")
+    with _nightly_exclusive(live_et):
+        try:
+            with open(state_path, encoding="utf-8") as fh:
+                state = json.load(fh)
+        except (OSError, json.JSONDecodeError) as exc:
+            raise RuntimeError(f"publication_state 不可解析: {exc}") from exc
+        run_id = str(state.get("run_id") or "")
+        if not run_id:
+            raise RuntimeError("publication_state 缺 run_id —— fail-closed")
+        approval = _validate_rebaseline_approval(
+            run_id, reason=reason, approved_by=approved_by, approval_ref=approval_ref,
+            approval_verbatim=approval_verbatim, approval_channel=approval_channel,
+            evidence_strength=evidence_strength)
+        ledger_path = ledger_path or _control_ledger_path(live_et)
+        rec_id = f"rebaseline:{run_id}"
+        manifest_path = state.get("manifest")
+        status = state.get("status")
+
+        # ── crash recovery:账本已有本次事件 ⇒ 事务已提交,只补 state 投影 ──
+        existing = None
+        for ln in event_ledger._read_lines(ledger_path):
+            rec = json.loads(ln)
+            if rec.get("kind") == LOST_MANIFEST_EVENT_KIND and rec.get("id") == rec_id:
+                existing = rec
+                break
+        if existing is not None:
+            if status == SUPERSEDED_STATUS:
+                if state.get("superseded_event_hash") == existing.get("hash"):
+                    raise RuntimeError(
+                        "publication_state 已为 SUPERSEDED_BY_OPERATOR —— 重复 rebaseline 被拒")
+                raise RuntimeError(
+                    "SUPERSEDED 状态绑定的事件 hash 与账本不符 —— fail-closed,需人工裁决")
+            if status != "COMMITTED":
+                raise RuntimeError(f"账本已有 {rec_id},但状态为 {status!r} —— fail-closed")
+            # 投影是账本事件的纯函数:基态取事件里冻结的 prior_state,而非磁盘上
+            # 可能已被改动的 state —— 收敛必须重建"当初该写的",不是"现在磁盘上的"。
+            payload = existing.get("payload") or {}
+            base_state = payload.get("prior_state")
+            if not isinstance(base_state, dict):
+                raise RuntimeError("账本事件缺 prior_state —— 无法收敛,fail-closed")
+            if str(base_state.get("run_id") or "") != run_id:
+                raise RuntimeError("账本事件 prior_state.run_id 与当前 state 不一致 —— fail-closed")
+            prior_approval = payload.get("approval") or approval
+            atomic_json(state_path,
+                        _superseded_state(base_state, existing, ledger_path, prior_approval))
+            return {"status": SUPERSEDED_STATUS, "run_id": run_id,
+                    "event_hash": existing["hash"], "ledger": ledger_path,
+                    "converged_from": "LEDGER_COMMITTED_STATE_MISSING"}
+
+        if status == SUPERSEDED_STATUS:
+            raise RuntimeError("publication_state 已为 SUPERSEDED_BY_OPERATOR —— 重复 rebaseline 被拒")
+        if status != "COMMITTED":
+            raise RuntimeError(f"rebaseline 仅适用于 COMMITTED 发布,当前状态 {status!r} —— 拒绝")
+        if manifest_path and os.path.isfile(manifest_path):
+            raise RuntimeError("durable manifest 仍存在 —— 无需 rebaseline,拒绝以免掩盖可验证发布")
+        public_pointer, et_pointer, pinned = _require_consistent_pointers(
+            live_et, live_repo, run_id, manifest_path)
+        payload = {
+            "schema": LOST_MANIFEST_EVENT_SCHEMA,
+            "run_id": run_id,
+            "missing_manifest": manifest_path,
+            "pinned_manifest_sha256": pinned,
+            "public_pointer": public_pointer,
+            "et_pointer": et_pointer,
+            "prior_state": state,
+            "approval": approval,
+            "reason": approval["reason"],
+            "approved_by": approval["approved_by"],
+            "approval_ref": approval["approval_ref"],
+            "ledger_path": os.path.abspath(ledger_path),
+            "note": "operator re-baseline; the lost publication is recorded as unverifiable, not restored",
+        }
+        rec = event_ledger.append(LOST_MANIFEST_EVENT_KIND, rec_id, payload,
+                                  path=ledger_path, now=now)
+        atomic_json(state_path, _superseded_state(state, rec, ledger_path, approval))
+        return {"status": SUPERSEDED_STATUS, "run_id": run_id,
+                "event_hash": rec["hash"], "ledger": ledger_path}
 
 
 def _verify_superseded_event(state, ledger_path):
@@ -795,6 +948,11 @@ def _verify_superseded_event(state, ledger_path):
     want_hash = state.get("superseded_event_hash")
     if not rec_id or not want_hash:
         raise RuntimeError("SUPERSEDED 状态缺账本事件绑定 —— fail-closed")
+    # governance-mutation: PUBLISH_REBASELINE_LEDGER_IDENTITY_BOUND
+    bound_ledger = state.get("superseded_event_ledger")
+    if bound_ledger and os.path.abspath(str(bound_ledger)) != os.path.abspath(ledger_path):
+        raise RuntimeError(
+            "SUPERSEDED 状态绑定的账本路径与生产规范账本不符 —— fail-closed")
     chain = event_ledger.verify(ledger_path)
     if not chain.get("ok"):
         raise RuntimeError("控制账本链校验失败 —— fail-closed")
@@ -824,7 +982,10 @@ def _cli(argv=None):
     rb.add_argument("--live-et", default=here)
     rb.add_argument("--live-repo", default=os.path.abspath(os.path.join(here, "..", "..")))
     rb.add_argument("--state", default=None)
-    rb.add_argument("--ledger", default=None)
+    rb.add_argument("--approval-verbatim", required=True,
+                    help="逐字转录的人类授权原文(需可见指向本次 rebaseline 或该 run_id)")
+    # --ledger 已移除:生产 recovery 固定读规范账本,允许 override 会造成
+    # "rebaseline 成功但恢复永远找不到事件" 的静默停机(复审 MAJOR 1)。
     args = parser.parse_args(argv)
     if args.cmd == "rebaseline":
         state_path = args.state or os.path.join(args.live_et, "publication_state.json")
@@ -832,7 +993,7 @@ def _cli(argv=None):
             out = rebaseline_lost_manifest(
                 state_path, args.live_et, args.live_repo, reason=args.reason,
                 approved_by=args.approved_by, approval_ref=args.approval_ref,
-                ledger_path=args.ledger,
+                approval_verbatim=args.approval_verbatim,
             )
         except RuntimeError as exc:
             print(f"REFUSED: {exc}")

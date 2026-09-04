@@ -505,8 +505,8 @@ MUTATIONS: tuple[MutationCase, ...] = (
         source_path="experiments/execution_tracker/event_ledger.py",
         test_script="tests/test_registry_schema_v2.py",
         before='                "publication_migration_intent", "publication_migration_commit",\n'
-        '                "publication_migration_abort"}',
-        after='                "publication_migration_abort"}',
+        '                "publication_migration_abort",',
+        after='                "publication_migration_abort",',
         expected_failure_marker="test_publication_migration_events_are_unique_and_chain_valid",
         rationale="Publication migration WAL terminal events cannot be duplicated on retry.",
     ),
@@ -4807,6 +4807,125 @@ MUTATIONS: tuple[MutationCase, ...] = (
         ),
         expected_failure_marker="test_rebaseline_refuses_missing_approval_and_leaves_state_and_ledger_untouched",
         rationale="A lost-manifest re-baseline is an operator action; without reason/approved_by/approval_ref it must be refused.",
+    ),
+    MutationCase(
+        mutation_id="PUBLISH_REBASELINE_TAKES_NIGHTLY_LOCK",
+        component="Nightly publication operator re-baseline",
+        source_path="experiments/execution_tracker/nightly_publish.py",
+        test_script="tests/test_publish_rebaseline_offline.py",
+        before=(
+            "            # governance-mutation: PUBLISH_REBASELINE_TAKES_NIGHTLY_LOCK\n"
+            "            fcntl.flock(lf, fcntl.LOCK_EX | fcntl.LOCK_NB)"
+        ),
+        after=(
+            "            # governance-mutation: PUBLISH_REBASELINE_TAKES_NIGHTLY_LOCK\n"
+            "            pass"
+        ),
+        expected_failure_marker="test_rebaseline_refuses_while_the_nightly_lock_is_held",
+        rationale="A re-baseline must hold the same nightly lock as the publish chain; without it two operators can interleave.",
+    ),
+    MutationCase(
+        mutation_id="PUBLISH_REBASELINE_POINTERS_MUST_AGREE",
+        component="Nightly publication operator re-baseline",
+        source_path="experiments/execution_tracker/nightly_publish.py",
+        test_script="tests/test_publish_rebaseline_offline.py",
+        before=(
+            "    # governance-mutation: PUBLISH_REBASELINE_POINTERS_MUST_AGREE\n"
+            "    if str(value.get(\"run_id\") or \"\") != run_id:"
+        ),
+        after=(
+            "    # governance-mutation: PUBLISH_REBASELINE_POINTERS_MUST_AGREE\n"
+            "    if False:"
+        ),
+        expected_failure_marker="test_pointer_run_id_must_match_state",
+        rationale="Only a lost manifest may be absorbed; wider pointer corruption must fail closed, not be relabelled.",
+    ),
+    MutationCase(
+        mutation_id="PUBLISH_REBASELINE_APPROVAL_VERBATIM",
+        component="Nightly publication operator re-baseline",
+        source_path="experiments/execution_tracker/nightly_publish.py",
+        test_script="tests/test_publish_rebaseline_offline.py",
+        before=(
+            "    # governance-mutation: PUBLISH_REBASELINE_APPROVAL_VERBATIM\n"
+            "    if len(verbatim) < 12:"
+        ),
+        after=(
+            "    # governance-mutation: PUBLISH_REBASELINE_APPROVAL_VERBATIM\n"
+            "    if False:"
+        ),
+        expected_failure_marker="test_short_approval_verbatim_is_refused_even_when_it_names_the_run",
+        rationale="The ledger must carry the human authorization text verbatim, not a placeholder string.",
+    ),
+    MutationCase(
+        mutation_id="PUBLISH_REBASELINE_APPROVAL_BINDING",
+        component="Nightly publication operator re-baseline",
+        source_path="experiments/execution_tracker/nightly_publish.py",
+        test_script="tests/test_publish_rebaseline_offline.py",
+        before=(
+            "    # governance-mutation: PUBLISH_REBASELINE_APPROVAL_BINDING\n"
+            "    if run_id not in verbatim and \"rebaseline\" not in verbatim.lower() and \"再基线\" not in verbatim:"
+        ),
+        after=(
+            "    # governance-mutation: PUBLISH_REBASELINE_APPROVAL_BINDING\n"
+            "    if False:"
+        ),
+        expected_failure_marker="test_approval_verbatim_must_reference_this_action_or_run",
+        rationale="An approval must visibly bind to this run and action; a stale generic approval must not be reusable.",
+    ),
+    MutationCase(
+        mutation_id="PUBLISH_REBASELINE_APPROVAL_EVIDENCE_STRENGTH",
+        component="Nightly publication operator re-baseline",
+        source_path="experiments/execution_tracker/nightly_publish.py",
+        test_script="tests/test_publish_rebaseline_offline.py",
+        before=(
+            "    # governance-mutation: PUBLISH_REBASELINE_APPROVAL_EVIDENCE_STRENGTH\n"
+            "    if str(evidence_strength or \"\") != APPROVAL_EVIDENCE_STRENGTH:"
+        ),
+        after=(
+            "    # governance-mutation: PUBLISH_REBASELINE_APPROVAL_EVIDENCE_STRENGTH\n"
+            "    if False:"
+        ),
+        expected_failure_marker="test_evidence_strength_must_be_self_declared_as_transcript_only",
+        rationale="The ledger must not imply cryptographic proof it does not hold; evidence strength is self-declared.",
+    ),
+    MutationCase(
+        mutation_id="PUBLISH_REBASELINE_CRASH_CONVERGES",
+        component="Nightly publication operator re-baseline",
+        source_path="experiments/execution_tracker/nightly_publish.py",
+        test_script="tests/test_publish_rebaseline_offline.py",
+        before=(
+            "            atomic_json(state_path,\n"
+            "                        _superseded_state(base_state, existing, ledger_path, prior_approval))"
+        ),
+        after="            pass  # governance-mutation: PUBLISH_REBASELINE_CRASH_CONVERGES",
+        expected_failure_marker="test_crash_after_ledger_before_state_converges_without_double_append",
+        rationale="A crash between ledger append and state write must converge on retry, not strand production forever.",
+    ),
+    MutationCase(
+        mutation_id="PUBLISH_REBASELINE_LEDGER_IDENTITY_BOUND",
+        component="Nightly publication operator re-baseline",
+        source_path="experiments/execution_tracker/nightly_publish.py",
+        test_script="tests/test_publish_rebaseline_offline.py",
+        before=(
+            "    # governance-mutation: PUBLISH_REBASELINE_LEDGER_IDENTITY_BOUND\n"
+            "    bound_ledger = state.get(\"superseded_event_ledger\")"
+        ),
+        after=(
+            "    # governance-mutation: PUBLISH_REBASELINE_LEDGER_IDENTITY_BOUND\n"
+            "    bound_ledger = None"
+        ),
+        expected_failure_marker="test_recovery_refuses_a_state_bound_to_a_foreign_ledger",
+        rationale="Recovery must verify the state is bound to the canonical control ledger, not a foreign one.",
+    ),
+    MutationCase(
+        mutation_id="LEDGER_LOST_MANIFEST_KIND_UNIQUE",
+        component="R-015 event ledger",
+        source_path="experiments/execution_tracker/event_ledger.py",
+        test_script="tests/test_publish_rebaseline_offline.py",
+        before='                "PUBLICATION_MANIFEST_LOST"}',
+        after='                }',
+        expected_failure_marker="test_duplicate_lost_manifest_event_is_refused_at_the_ledger_layer",
+        rationale="Lost-manifest uniqueness must hold at the ledger layer under flock, not only in an upper-layer scan.",
     ),
     MutationCase(
         mutation_id="PUBLISH_SUPERSEDED_REQUIRES_LEDGERED_EVENT",
