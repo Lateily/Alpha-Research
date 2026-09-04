@@ -26,6 +26,9 @@ SAMPLE_PATH = (
 )
 RESEARCH_API = ROOT / "api" / "research.js"
 RESEARCH_MULTI_API = ROOT / "api" / "research-multi.js"
+CORE_PATH = ROOT / "scripts" / "llm" / "fact_check_core.mjs"
+CUTOFF = "2026-06-11T23:59:59Z"
+SOURCE_DATE = "2026-06-10T00:00:00Z"
 
 SPEC = importlib.util.spec_from_file_location("fact_check", MODULE_PATH)
 assert SPEC and SPEC.loader
@@ -63,10 +66,11 @@ import { pathToFileURL } from 'node:url';
 globalThis.fetch = () => { throw new Error('network is forbidden in fact-check tests'); };
 const [researchPath] = process.argv.slice(2);
 const { attachFactCheck } = await import(pathToFileURL(researchPath).href);
-const source = { extras: { filing: 'FY2025 gross margin was 41.81%.' } };
-const traced = attachFactCheck({ claim: 'FY2025 gross margin was 41.81%.' }, source, '688120.SH');
-const mismatch = attachFactCheck({ claim: 'FY2025 gross margin was 44.5%.' }, source, '688120.SH');
-const blocked = attachFactCheck({ claim: 'FY2025 order book was RMB 8.3B.' }, source, '688120.SH');
+const source = { extras: { context_built_at: '2026-06-10T00:00:00Z', filing: 'FY2025 gross margin was 41.81%.' } };
+const cutoff = '2026-06-11T23:59:59Z';
+const traced = attachFactCheck({ claim: 'FY2025 gross margin was 41.81%.' }, source, '688120.SH', cutoff);
+const mismatch = attachFactCheck({ claim: 'FY2025 gross margin was 44.5%.' }, source, '688120.SH', cutoff);
+const blocked = attachFactCheck({ claim: 'FY2025 order book was RMB 8.3B.' }, source, '688120.SH', cutoff);
 process.stdout.write(JSON.stringify({ traced, mismatch, blocked }));
 """
 
@@ -117,15 +121,15 @@ await handler({
     company: 'offline fixture',
     direction: 'NEUTRAL',
     context: 'offline fact-check wiring probe',
-    enrichment_context: { extras: { filing: 'FY2025 gross margin was 41.81%.' } },
+    enrichment_context: { extras: { context_built_at: '2026-06-10T00:00:00Z', filing: 'FY2025 gross margin was 41.81%.' } },
   },
 }, response);
 process.stdout.write(JSON.stringify({ mode, statusCode: response.statusCode, body: response.body }));
 """
 
 
-def _source_payload(text: str) -> list[tuple[object, str, str]]:
-    return [({"filing": text}, "fixture.json", "E1")]
+def _source_payload(text: str, *, source_date: str = SOURCE_DATE) -> list[tuple[object, str, str]]:
+    return [({"source_date": source_date, "filing": text}, "fixture.json", "E1")]
 
 
 class FactCheckTest(unittest.TestCase):
@@ -170,10 +174,24 @@ class FactCheckTest(unittest.TestCase):
         self.assertTrue(lines, "node runner produced no JSON receipt")
         return json.loads(lines[-1])
 
+    def _run_core_request(self, request: dict[str, object]) -> dict[str, object]:
+        completed = subprocess.run(
+            ["node", str(CORE_PATH)],
+            cwd=ROOT,
+            input=json.dumps(request, ensure_ascii=False, sort_keys=True),
+            capture_output=True,
+            text=True,
+            timeout=30,
+            check=False,
+        )
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        return json.loads(completed.stdout)
+
     def test_fully_traceable_fixture_passes(self) -> None:
         receipt = fact_check_module.fact_check(
             {"claim": "FY2025 gross margin was 41.81%."},
             ticker="688120.SH",
+            cutoff=CUTOFF,
             source_payloads=_source_payload("FY2025 gross margin was 41.81%."),
         )
         self.assertEqual(receipt["status"], "PASS")
@@ -185,6 +203,7 @@ class FactCheckTest(unittest.TestCase):
         receipt = fact_check_module.fact_check(
             {"claim": "FY2025 gross margin was 44.5%."},
             ticker="688120.SH",
+            cutoff=CUTOFF,
             source_payloads=_source_payload("FY2025 gross margin was 41.81%."),
         )
         self.assertEqual(receipt["status"], "PASS")
@@ -196,6 +215,7 @@ class FactCheckTest(unittest.TestCase):
         receipt = fact_check_module.fact_check(
             {"claim": "FY2025 order book was RMB 8.3B."},
             ticker="688120.SH",
+            cutoff=CUTOFF,
             source_payloads=_source_payload("FY2025 gross margin was 41.81%."),
         )
         suspect = next(row for row in receipt["fabrication_suspects"] if "8.3B" in row["raw"])
@@ -210,15 +230,143 @@ class FactCheckTest(unittest.TestCase):
                 "claimed_source": "The contract amount was RMB 2.4B.",
             },
             ticker="688120.SH",
+            cutoff=CUTOFF,
         )
         self.assertEqual(receipt["status"], "BLOCKED_PENDING_HUMAN")
         self.assertGreaterEqual(receipt["summary"]["fabrication_suspects"], 1)
+
+    def test_high_risk_identity_includes_sign_currency_comparator_and_period(self) -> None:
+        evidence = _source_payload("FY2025 order book was above RMB 8.3B.")
+        baseline = fact_check_module.fact_check(
+            {"claim": "FY2025 order book was above RMB 8.3B."},
+            ticker="688120.SH",
+            cutoff=CUTOFF,
+            source_payloads=evidence,
+        )
+        self.assertEqual(baseline["status"], "PASS")
+        attacks = (
+            "FY2025 order book was above RMB -8.3B.",
+            "FY2025 order book was above USD 8.3B.",
+            "FY2025 order book was below RMB 8.3B.",
+            "FY2026 order book was above RMB 8.3B.",
+        )
+        for claim in attacks:
+            with self.subTest(claim=claim):
+                receipt = fact_check_module.fact_check(
+                    {"claim": claim}, ticker="688120.SH", cutoff=CUTOFF,
+                    source_payloads=evidence,
+                )
+                orders = [row for row in receipt["untraced"] if row["metric"] == "order_book"]
+                self.assertEqual(len(orders), 1)
+                self.assertEqual(orders[0]["state"], "UNTRACED")
+                self.assertEqual(receipt["status"], "BLOCKED_PENDING_HUMAN")
+        wrong_entity = fact_check_module.fact_check(
+            {"claim": "FY2025 order book was above RMB 8.3B."},
+            ticker="688120.SH",
+            cutoff=CUTOFF,
+            source_payloads=[(
+                {
+                    "source_date": SOURCE_DATE,
+                    "ticker": "000001.SZ",
+                    "filing": "FY2025 order book was above RMB 8.3B.",
+                },
+                "fixture.json",
+                "E1",
+            )],
+        )
+        self.assertEqual(wrong_entity["status"], "BLOCKED_PENDING_HUMAN")
+
+    def test_future_or_undated_source_cannot_cross_the_pit_cutoff(self) -> None:
+        claim = {"claim": "FY2025 order book was RMB 8.3B."}
+        future = fact_check_module.fact_check(
+            claim,
+            ticker="688120.SH",
+            cutoff=CUTOFF,
+            source_payloads=_source_payload(
+                "FY2025 order book was RMB 8.3B.",
+                source_date="2027-01-01T00:00:00Z",
+            ),
+        )
+        undated = fact_check_module.fact_check(
+            claim,
+            ticker="688120.SH",
+            cutoff=CUTOFF,
+            source_payloads=_source_payload("FY2025 order book was RMB 8.3B.", source_date=""),
+        )
+        self.assertEqual(future["status"], "BLOCKED_PENDING_HUMAN")
+        self.assertGreater(future["summary"]["future_source_facts"], 0)
+        self.assertEqual(undated["status"], "BLOCKED_PENDING_HUMAN")
+        self.assertGreater(undated["summary"]["undated_source_facts"], 0)
+
+    def test_numeric_thesis_leaf_is_checked_instead_of_skipped(self) -> None:
+        receipt = fact_check_module.fact_check(
+            {"order_book": 8_300_000_000, "currency": "CNY", "period": "FY2025"},
+            ticker="688120.SH",
+            cutoff=CUTOFF,
+        )
+        orders = [row for row in receipt["fabrication_suspects"] if row["path"] == "order_book"]
+        self.assertEqual(len(orders), 1)
+        self.assertEqual(orders[0]["normalized"], 8_300_000_000)
+        self.assertEqual(receipt["status"], "BLOCKED_PENDING_HUMAN")
+
+    def test_receipt_input_hash_binds_the_evidence_set(self) -> None:
+        thesis = {"claim": "FY2025 gross margin was 41.81%."}
+        first = fact_check_module.fact_check(
+            thesis, ticker="688120.SH", cutoff=CUTOFF,
+            source_payloads=_source_payload("FY2025 gross margin was 41.81%."),
+        )
+        second = fact_check_module.fact_check(
+            thesis, ticker="688120.SH", cutoff=CUTOFF,
+            source_payloads=_source_payload("FY2025 gross margin was 41.82%."),
+        )
+        self.assertEqual(first["thesis_hash"], second["thesis_hash"])
+        self.assertNotEqual(first["source_set_hash"], second["source_set_hash"])
+        self.assertNotEqual(first["input_hash"], second["input_hash"])
+        self.assertNotEqual(first["receipt_hash"], second["receipt_hash"])
+
+    def test_event_subject_identity_is_not_keyword_only(self) -> None:
+        evidence = _source_payload("FDA approval was granted.")
+        traced = fact_check_module.fact_check(
+            {"claim": "FDA approval was granted."}, ticker="688120.SH",
+            cutoff=CUTOFF, source_payloads=evidence,
+        )
+        wrong_subject = fact_check_module.fact_check(
+            {"claim": "Board approval was granted."}, ticker="688120.SH",
+            cutoff=CUTOFF, source_payloads=evidence,
+        )
+        self.assertTrue(any(row["metric"] == "event" and row["state"] == "TRACED" for row in traced["claims"][0]["observations"]))
+        self.assertTrue(any(row["metric"] == "event" and row["state"] == "UNTRACED" for row in wrong_subject["untraced"]))
+        generic_subject = fact_check_module.fact_check(
+            {"claim": "Merger approval was granted."}, ticker="688120.SH",
+            cutoff=CUTOFF, source_payloads=_source_payload("Drug approval was granted."),
+        )
+        self.assertTrue(any(
+            row["metric"] == "event" and row["state"] == "UNTRACED"
+            for row in generic_subject["untraced"]
+        ))
+
+    def test_python_adapter_returns_the_canonical_core_receipt(self) -> None:
+        payload = {"source_date": SOURCE_DATE, "filing": "FY2025 gross margin was 41.81%."}
+        document = fact_check_module._source_document(
+            payload, label="fixture.json", tier="E1", entity="688120.SH"
+        )
+        request = {
+            "thesis": {"claim": "FY2025 gross margin was 41.81%."},
+            "ticker": "688120.SH",
+            "cutoff": CUTOFF,
+            "source_documents": [document],
+        }
+        python_receipt = fact_check_module.fact_check(
+            request["thesis"], ticker="688120.SH", cutoff=CUTOFF,
+            source_facts=[document],
+        )
+        self.assertEqual(python_receipt, self._run_core_request(request))
 
     def test_historical_688120_acceptance_sample(self) -> None:
         payload = json.loads(SAMPLE_PATH.read_text(encoding="utf-8"))
         sources = fact_check_module.load_repo_sources(ROOT, "688120.SH")
         receipt = fact_check_module.fact_check(
-            payload["data"], ticker="688120.SH", source_facts=sources
+            payload["data"], ticker="688120.SH", cutoff=CUTOFF, source_facts=sources
         )
         self.assertEqual(receipt["status"], "BLOCKED_PENDING_HUMAN")
         self.assertTrue(
@@ -245,12 +393,12 @@ class FactCheckTest(unittest.TestCase):
                 encoding="utf-8",
             )
             source_path.write_text(
-                json.dumps({"filing": "FY2025 gross margin was 41.81%."}),
+                json.dumps({"source_date": SOURCE_DATE, "filing": "FY2025 gross margin was 41.81%."}),
                 encoding="utf-8",
             )
             command = [
                 "python3", str(MODULE_PATH), "--input", str(thesis_path),
-                "--source", str(source_path), "--no-repo-sources",
+                "--source", str(source_path), "--no-repo-sources", "--cutoff", CUTOFF,
             ]
             first = subprocess.run(
                 [*command, "--output", str(output_a)], cwd=ROOT, capture_output=True,

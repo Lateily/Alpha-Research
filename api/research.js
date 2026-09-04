@@ -29,7 +29,7 @@
 //   TAVILY_API_KEY    — optional (tavily.com, free 1000 searches/month)
 
 import Anthropic from '@anthropic-ai/sdk';
-import { createHash } from 'node:crypto';
+import { attachFactCheck, factCheckThesis } from '../scripts/llm/fact_check_core.mjs';
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -1850,257 +1850,6 @@ FINAL CHECK — BEFORE EMITTING JSON, verify your output contains:
 Return ONLY the JSON object. No markdown, no explanation.`;
 
 // ════════════════════════════════════════════════════════════════════════════
-// POST-GENERATION FACT TRACE (WO-D1)
-// ════════════════════════════════════════════════════════════════════════════
-// This deliberately does not judge whether a thesis is economically right.
-// It only derives whether numeric/date/event claims are supported by the
-// field-level enrichment context that was present when the thesis was built.
-const FACT_CHECK_SCHEMA = 'fact-check.v1';
-const FACT_CHECK_BLOCKED = 'BLOCKED_PENDING_HUMAN';
-const FACT_CHECK_BLOCKING_CLASSES = new Set(['MONETARY', 'ORDER', 'CONTRACT', 'CAPACITY']);
-const FACT_CHECK_SKIP_KEYS = new Set([
-  '_fact_check', '_quality', 'qc_checklist', 'qcChecklistResults',
-  'ticker', 'ts_code', 'name', 'en', 'sector',
-]);
-const FACT_CHECK_METRICS = [
-  ['order_book', ['order book', 'backlog', '在手订单', '订单']],
-  ['gross_margin', ['gross margin', 'gross_margin', 'gm', '毛利率', '毛利']],
-  ['contract_amount', ['contract amount', 'contract value', '合同金额', '合同额', '合同']],
-  ['capacity', ['capacity', 'wfr/month', 'wafer/month', '产能', '产量']],
-  ['revenue', ['total_revenue', 'revenue', 'sales', '营收', '收入']],
-  ['net_profit', ['net_profit', 'net income', '归母', '净利润', '净利']],
-  ['operating_cash_flow', ['operating cash flow', 'ocf', '经营现金流']],
-  ['market_cap', ['market cap', 'market_cap', 'mktcap', '市值']],
-  ['price', ['target price', 'live_price', 'current price', 'price', '股价', '目标价']],
-  ['eps', ['diluted_eps', 'basic_eps', 'eps', '每股收益']],
-  ['ratio', ['book-to-bill', 'reward_to_risk', 'reward to risk', 'ratio', '比例', '占比']],
-];
-const FACT_CHECK_DATE_SOURCE = '(?:20\\d{2}[-/]\\d{1,2}[-/]\\d{1,2}|20\\d{6}|FY20\\d{2}|FY\\d{2}|20\\d{2}[HQ]\\d|\\d{2}[HQ]\\d|[HQ]\\d\\s*20\\d{2}|20\\d{2})';
-const FACT_CHECK_NUMBER_SOURCE = '(?<![A-Za-z0-9_.])(?<currency>RMB|CNY|USD|HKD|¥|￥|\\$)?\\s*(?<comparator>[<>≤≥~≈]?)\\s*(?<value>\\d+(?:\\.\\d+)?)\\s*(?<unit>%|pp|bps|[Bb](?:n|illion)?|[Mm](?:n|illion)?|亿|万元|万|x|×)?(?![A-Za-z0-9_]|%|pp|bps|亿|万元|万|x|×|\\.\\d)';
-const FACT_CHECK_EVENT_RE = /(?:earnings|report|announcement|tender|award|launch|approval|guidance|业绩|财报|公告|招标|中标|发布|获批|指引|扩产|投产)/i;
-
-function factCheckStableValue(value) {
-  if (Array.isArray(value)) return value.map(factCheckStableValue);
-  if (value && typeof value === 'object') {
-    return Object.fromEntries(Object.keys(value).sort().map(key => [key, factCheckStableValue(value[key])]));
-  }
-  return value;
-}
-
-function factCheckHash(value) {
-  return `sha256:${createHash('sha256').update(JSON.stringify(factCheckStableValue(value))).digest('hex')}`;
-}
-
-function factCheckMetric(text, path, start) {
-  const window = text.toLowerCase().slice(Math.max(0, start - 80), start + 40);
-  const pathHint = path.map(part => String(part).replaceAll('_', ' ')).join(' ').toLowerCase();
-  let best = null;
-  FACT_CHECK_METRICS.forEach(([metric, aliases], rank) => {
-    aliases.forEach(alias => {
-      const position = window.lastIndexOf(alias.toLowerCase());
-      const candidate = position >= 0
-        ? [window.length - position, rank, metric]
-        : pathHint.includes(alias.toLowerCase()) ? [100, rank, metric] : null;
-      if (candidate && (!best || candidate[0] < best[0] || (candidate[0] === best[0] && candidate[1] < best[1]))) {
-        best = candidate;
-      }
-    });
-  });
-  return best ? best[2] : 'unclassified';
-}
-
-function factCheckPeriods(text) {
-  const periods = new Set();
-  for (const match of text.matchAll(new RegExp(FACT_CHECK_DATE_SOURCE, 'gi'))) {
-    const raw = match[0].toUpperCase().replace(/[\s/]/g, '');
-    if (/^20\d{2}-\d{1,2}-\d{1,2}$/.test(raw)) periods.add(raw.replaceAll('-', ''));
-    else if (/^FY20\d{2}$/.test(raw)) periods.add(raw.slice(2, 6));
-    else if (/^FY\d{2}$/.test(raw)) periods.add(`20${raw.slice(2)}`);
-    else if (/^\d{2}[HQ]\d$/.test(raw)) periods.add(`20${raw}`);
-    else if (/^[HQ]\d20\d{2}$/.test(raw)) periods.add(`${raw.slice(2)}${raw.slice(0, 2)}`);
-    else periods.add(raw);
-  }
-  return [...periods].sort();
-}
-
-function factCheckNormalize(value, unit, currency, metric) {
-  const lower = unit.toLowerCase();
-  if (unit === '%') return [value, 'percent', 'RATIO'];
-  if (lower === 'pp') return [value, 'percentage_point', 'RATIO'];
-  if (lower === 'bps') return [value, 'basis_point', 'RATIO'];
-  if (lower === 'x' || unit === '×') return [value, 'multiple', 'RATIO'];
-  let multiplier = 1;
-  if (['b', 'bn', 'billion'].includes(lower)) multiplier = 1e9;
-  else if (['m', 'mn', 'million'].includes(lower)) multiplier = 1e6;
-  else if (unit === '亿') multiplier = 1e8;
-  else if (unit === '万' || unit === '万元') multiplier = 1e4;
-  const moneyMetric = new Set([
-    'order_book', 'contract_amount', 'revenue', 'net_profit',
-    'operating_cash_flow', 'market_cap', 'price',
-  ]).has(metric);
-  if (currency || multiplier !== 1 || moneyMetric) return [value * multiplier, 'money', 'MONETARY'];
-  if (metric === 'gross_margin') return [Math.abs(value) <= 1 ? value * 100 : value, 'percent', 'RATIO'];
-  return [value, 'number', 'OTHER'];
-}
-
-function factCheckEntityClass(metric, baseClass) {
-  if (metric === 'order_book') return 'ORDER';
-  if (metric === 'contract_amount') return 'CONTRACT';
-  if (metric === 'capacity') return 'CAPACITY';
-  return baseClass;
-}
-
-function factCheckObservations(text, path = []) {
-  const observations = [];
-  const periods = factCheckPeriods(text);
-  const dateSpans = [...text.matchAll(new RegExp(FACT_CHECK_DATE_SOURCE, 'gi'))]
-    .map(match => [match.index, match.index + match[0].length]);
-  for (const match of text.matchAll(new RegExp(FACT_CHECK_NUMBER_SOURCE, 'gi'))) {
-    if (dateSpans.some(([start, end]) => match.index >= start && match.index < end)) continue;
-    const metric = factCheckMetric(text, path, match.index);
-    const unit = match.groups?.unit || '';
-    const currency = match.groups?.currency || '';
-    if (!unit && !currency && metric === 'unclassified') continue;
-    const [normalized, normalizedUnit, baseClass] = factCheckNormalize(
-      Number(match.groups.value), unit, currency, metric,
-    );
-    observations.push({
-      raw: match[0].trim(), metric, normalized, unit: normalizedUnit,
-      entity_class: factCheckEntityClass(metric, baseClass), periods,
-    });
-  }
-  for (const match of text.matchAll(new RegExp(FACT_CHECK_DATE_SOURCE, 'gi'))) {
-    observations.push({
-      raw: match[0], metric: 'date', normalized: match[0].toUpperCase().replace(/[\s/-]/g, ''),
-      unit: 'date', entity_class: 'EVENT', periods,
-    });
-  }
-  if (observations.length === 0) {
-    const event = text.match(FACT_CHECK_EVENT_RE);
-    if (event) observations.push({ raw: event[0], metric: 'event', normalized: null, unit: 'event', entity_class: 'EVENT', periods });
-  }
-  return observations;
-}
-
-function factCheckWalk(value, path = [], sourceMode = false, output = []) {
-  if (!sourceMode && path.some(part => FACT_CHECK_SKIP_KEYS.has(part) || String(part).startsWith('_'))) return output;
-  if (typeof value === 'string') output.push([path, value]);
-  else if (sourceMode && typeof value === 'number' && Number.isFinite(value)) output.push([path, String(value)]);
-  else if (Array.isArray(value)) value.forEach((child, index) => factCheckWalk(child, [...path, String(index)], sourceMode, output));
-  else if (value && typeof value === 'object') Object.entries(value).forEach(([key, child]) => factCheckWalk(child, [...path, key], sourceMode, output));
-  return output;
-}
-
-function factCheckSourceFacts(enrichmentContext) {
-  const sourcePayload = {
-    fundamentals: enrichmentContext?.fundamentals || {},
-    extras: enrichmentContext?.extras || {},
-    fact_sources: enrichmentContext?.fact_sources || [],
-  };
-  const facts = [];
-  for (const [path, text] of factCheckWalk(sourcePayload, ['enrichment_context'], true)) {
-    const clauses = text.split(/\r?\n|[;；。！？!?]+/).map(part => part.trim()).filter(Boolean);
-    for (const clause of clauses.length ? clauses : [text]) {
-      for (const observation of factCheckObservations(clause, path)) {
-        facts.push({ observation, source_path: path.join('.'), source_tier: 'SUPPLIED_CONTEXT', source: 'enrichment_context' });
-      }
-    }
-  }
-  const seen = new Set();
-  return facts.filter(fact => {
-    const key = JSON.stringify([fact.observation.metric, fact.observation.normalized, fact.observation.unit, fact.source_path]);
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
-}
-
-function factCheckEqual(left, right, unit) {
-  if (typeof left === 'string' || typeof right === 'string') return left === right;
-  if (!Number.isFinite(left) || !Number.isFinite(right)) return false;
-  const tolerance = ['percent', 'percentage_point', 'number', 'multiple'].includes(unit)
-    ? 0.02 : Math.max(1, Math.abs(left) * 0.0005);
-  return Math.abs(left - right) <= tolerance;
-}
-
-function factCheckOne(observation, facts) {
-  const candidates = facts.filter(fact => observation.metric === 'unclassified'
-    ? fact.observation.unit === observation.unit
-    : fact.observation.metric === observation.metric);
-  const exact = candidates.filter(fact => fact.observation.unit === observation.unit
-    && factCheckEqual(observation.normalized, fact.observation.normalized, observation.unit));
-  const base = {
-    raw: observation.raw, metric: observation.metric, normalized: observation.normalized,
-    unit: observation.unit, entity_class: observation.entity_class,
-  };
-  const sourceRef = fact => ({
-    source_path: fact.source_path, source_tier: fact.source_tier,
-    source: fact.source, raw: fact.observation.raw, normalized: fact.observation.normalized,
-  });
-  if (observation.metric === 'event') {
-    const found = facts.find(fact => fact.observation.metric === 'event'
-      && fact.observation.raw.toLowerCase() === observation.raw.toLowerCase());
-    return found ? { ...base, state: 'TRACED', source: sourceRef(found) } : { ...base, state: 'UNTRACED' };
-  }
-  if (exact.length) return { ...base, state: 'TRACED', source: sourceRef(exact[0]) };
-  if (candidates.length && !['unclassified', 'date'].includes(observation.metric)) {
-    const overlap = candidate => observation.periods.some(period => candidate.observation.periods.includes(period));
-    const sorted = [...candidates].sort((left, right) => Number(overlap(right)) - Number(overlap(left)));
-    return { ...base, state: 'MISMATCH', source: sourceRef(sorted[0]) };
-  }
-  return { ...base, state: 'UNTRACED' };
-}
-
-function factCheckThesis(thesis, enrichmentContext = {}, ticker = '') {
-  const facts = factCheckSourceFacts(enrichmentContext);
-  const claims = [];
-  const mismatches = [];
-  const untraced = [];
-  const fabricationSuspects = [];
-  for (const [path, text] of factCheckWalk(thesis)) {
-    for (const clause of text.split(/\r?\n|[;；。！？!?]+/).map(part => part.trim()).filter(Boolean)) {
-      const observations = factCheckObservations(clause, path);
-      if (!observations.length) continue;
-      const checked = observations.map(observation => factCheckOne(observation, facts));
-      const states = new Set(checked.map(item => item.state));
-      const state = states.has('UNTRACED') ? 'UNTRACED' : states.has('MISMATCH') ? 'MISMATCH' : 'TRACED';
-      const claim = { path: path.join('.'), excerpt: clause.slice(0, 300), state, observations: checked };
-      claims.push(claim);
-      checked.forEach(item => {
-        const row = { path: claim.path, excerpt: claim.excerpt, ...item };
-        if (item.state === 'MISMATCH') mismatches.push(row);
-        else if (item.state === 'UNTRACED') {
-          untraced.push(row);
-          if (FACT_CHECK_BLOCKING_CLASSES.has(item.entity_class)) fabricationSuspects.push(row);
-        }
-      });
-    }
-  }
-  // governance-mutation: FACT_CHECK_API_BLOCKS_UNTRACED_MONETARY_CLAIMS
-  const status = fabricationSuspects.length ? FACT_CHECK_BLOCKED : 'PASS';
-  return {
-    schema_version: FACT_CHECK_SCHEMA,
-    status,
-    ticker,
-    input_hash: factCheckHash(thesis),
-    summary: {
-      claims: claims.length,
-      traced: claims.filter(item => item.state === 'TRACED').length,
-      mismatches: mismatches.length,
-      untraced: untraced.length,
-      fabrication_suspects: fabricationSuspects.length,
-      source_facts: facts.length,
-    },
-    claims, mismatches, untraced, fabrication_suspects: fabricationSuspects,
-  };
-}
-
-function attachFactCheck(thesis, enrichmentContext = {}, ticker = '') {
-  const receipt = factCheckThesis(thesis, enrichmentContext, ticker);
-  return { data: { ...thesis, _fact_check: receipt }, status: receipt.status };
-}
-
-// ════════════════════════════════════════════════════════════════════════════
 // NAMED EXPORTS (test-only — Vercel ignores non-default exports for routing)
 // ════════════════════════════════════════════════════════════════════════════
 // Used by scripts/test_thesis_validator.mjs to validate FC.1 temporal check
@@ -2140,6 +1889,8 @@ export default async function handler(req, res) {
 
   const { ticker, direction, context, company, enrichment_context } = req.body;
   if (!ticker) return res.status(400).json({ error: 'Ticker is required' });
+  // governance-mutation: FACT_CHECK_SINGLE_API_FREEZES_CUTOFF
+  const factCheckCutoff = new Date().toISOString();
 
   if (!process.env.ANTHROPIC_API_KEY) {
     return res.status(500).json({ error: 'ANTHROPIC_API_KEY not configured. Add it in Vercel → Settings → Environment Variables.' });
@@ -2260,7 +2011,7 @@ Rules: 2-4 catalysts, 2-4 risks, 3-5 next actions. All fields bilingual. Return 
     }
 
     // governance-mutation: FACT_CHECK_SINGLE_API_POSTPROCESS
-    const factChecked = attachFactCheck(research, enrichment_context, ticker);
+    const factChecked = attachFactCheck(research, enrichment_context, ticker, factCheckCutoff);
     research = factChecked.data;
 
     return res.status(200).json({

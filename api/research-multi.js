@@ -852,6 +852,8 @@ export default async function handler(req, res) {
 
   const { ticker, direction, context, company, enrichment_context } = req.body;
   if (!ticker) return res.status(400).json({ error: 'ticker required' });
+  // governance-mutation: FACT_CHECK_MULTI_API_FREEZES_CUTOFF
+  const factCheckCutoff = new Date().toISOString();
 
   // Verify env vars per Junyan §6.3 — fail loud not silent
   const missing = [];
@@ -957,7 +959,7 @@ export default async function handler(req, res) {
     const quality = validateThesisQuality(synth);
     const qcMeta = { ...quality, qc_findings: buildQcFindings(quality) };
     // governance-mutation: FACT_CHECK_MULTI_API_POSTPROCESS
-    const factChecked = attachFactCheck(synth, enrichment_context, ticker);
+    const factChecked = attachFactCheck(synth, enrichment_context, ticker, factCheckCutoff);
 
     // ── Assemble final response ─────────────────────────────────────────
     const thesisOut = {
