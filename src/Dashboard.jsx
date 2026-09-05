@@ -3806,6 +3806,11 @@ function DeepResearchPanel({ L, lk, onComplete, C, universeStocks, enrichmentDat
       // Only pass enrichment if we have at least one signal
       if (livePrice || recentNews.length > 0 || sectorRegime || priorPredictions.length > 0 || liveFundamentals) {
         enrichment_context = {
+          // The fact-check gate dates every source document by this stamp. Without it
+          // no enrichment fact is admissible, so every money/order/contract/capacity
+          // claim comes back unsourced and the thesis is blocked on principle rather
+          // than on evidence — a reflexive BLOCK is as useless as a reflexive PASS.
+          context_built_at: new Date().toISOString(),
           live_price: livePrice ? `${livePrice.toFixed(2)}` : null,
           live_change_pct: liveChangePct ?? null,
           recent_news: recentNews,
@@ -3855,6 +3860,9 @@ function DeepResearchPanel({ L, lk, onComplete, C, universeStocks, enrichmentDat
         fundamentals_used:  json.fundamentals_used,
         tavily_enabled:     json.tavily_enabled,
         views_count:        (json.consensus_views || []).length,
+        fact_check_status:  json.data?._fact_check?.status || json._status || null,
+        fabrication_suspects: json.data?._fact_check?.summary?.fabrication_suspects ?? null,
+        blocking_mismatches:  json.data?._fact_check?.summary?.blocking_mismatches ?? null,
       });
       onComplete(tk, json.data);
     } catch (err) {
@@ -3877,6 +3885,27 @@ function DeepResearchPanel({ L, lk, onComplete, C, universeStocks, enrichmentDat
         {L('Search by name or code — Chinese, English, or ticker. Claude AI runs a two-pass analysis (consensus enumeration → differentiated research) in ~30 seconds. Live price, sector regime, and recent news are injected automatically.',
            '输入公司名称（中/英文）或股票代码均可搜索。Claude AI 两阶段生成：先枚举卖方共识，再产出差异化研究，约30秒完成。实时价格、板块政体和最新新闻自动注入。')}
       </div>
+
+      {/* Fact-check gate — a held thesis must be visible to the human it is held for */}
+      {lastResearchMeta?.fact_check_status === 'BLOCKED_PENDING_HUMAN' && (
+        <div style={{
+          marginBottom: 12, padding: '10px 12px', borderRadius: 6,
+          border: '1px solid #b45309', background: '#fffbeb', color: '#92400e',
+          fontSize: 13, lineHeight: 1.5,
+        }}>
+          <strong>{L('Held for human review — fact check', '事实核查:待人工复核')}</strong>
+          <div style={{marginTop: 4}}>
+            {L(
+              `${lastResearchMeta.fabrication_suspects ?? 0} claim(s) could not be traced to any supplied source` +
+              (lastResearchMeta.blocking_mismatches ? `; ${lastResearchMeta.blocking_mismatches} disagree with their source` : '') +
+              '. Treat the figures below as unverified until you check them yourself.',
+              `${lastResearchMeta.fabrication_suspects ?? 0} 条声明无法回溯到任何已提供来源` +
+              (lastResearchMeta.blocking_mismatches ? `;${lastResearchMeta.blocking_mismatches} 条与来源不符` : '') +
+              '。在你自行核对之前,下方数字均属未经验证。'
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Data source status row */}
       <div style={{display:'flex', gap:5, marginBottom:16, flexWrap:'wrap'}}>

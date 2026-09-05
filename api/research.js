@@ -29,6 +29,7 @@
 //   TAVILY_API_KEY    — optional (tavily.com, free 1000 searches/month)
 
 import Anthropic from '@anthropic-ai/sdk';
+import { attachFactCheck, attachFactCheckToBlocks, factCheckThesis } from '../scripts/llm/fact_check_core.mjs';
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -1400,6 +1401,29 @@ function validateThesisQuality(parsedOutput) {
   return { score, missingFields, qcChecklistResults, severity };
 }
 
+// governance-mutation: FACT_CHECK_QUALITY_CAPPED_ON_FABRICATION
+// A structural score says the thesis is well-FORMED; it says nothing about whether
+// its numbers exist. When the fact-check gate holds unsourced money/order/contract/
+// capacity claims, the headline score must not keep reading PASS — that pairing
+// (quality 90 + BLOCKED_PENDING_HUMAN) is precisely the F-029 failure this gate exists
+// to end. The cap replaces the score; it never raises it.
+const FABRICATION_QUALITY_CAP = 40;
+
+function applyFabricationCap(quality, factCheckReceipt) {
+  if (!quality || typeof quality !== 'object') return quality;
+  const suspects = Number(factCheckReceipt?.summary?.fabrication_suspects || 0);
+  if (!suspects) return quality;
+  const cappedScore = Math.min(Number(quality.score) || 0, FABRICATION_QUALITY_CAP);
+  return {
+    ...quality,
+    score: cappedScore,
+    severity: cappedScore > 60 ? 'WARN' : 'FAIL',
+    fabrication_suspects: suspects,
+    fabrication_capped: true,
+    fabrication_cap: FABRICATION_QUALITY_CAP,
+  };
+}
+
 function buildQcFindings(quality) {
   const failedChecks = QUALITY_CHECK_NAMES
     .filter(name => quality.qcChecklistResults?.[name] === false)
@@ -1870,6 +1894,10 @@ export {
   extractJsonPayload,
   isPlainObject,
   buildQcFindings,
+  factCheckThesis,
+  attachFactCheck,
+  attachFactCheckToBlocks,
+  applyFabricationCap,
 };
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -1886,6 +1914,8 @@ export default async function handler(req, res) {
 
   const { ticker, direction, context, company, enrichment_context } = req.body;
   if (!ticker) return res.status(400).json({ error: 'Ticker is required' });
+  // governance-mutation: FACT_CHECK_SINGLE_API_FREEZES_CUTOFF
+  const factCheckCutoff = new Date().toISOString();
 
   if (!process.env.ANTHROPIC_API_KEY) {
     return res.status(500).json({ error: 'ANTHROPIC_API_KEY not configured. Add it in Vercel → Settings → Environment Variables.' });
@@ -2005,10 +2035,20 @@ Rules: 2-4 catalysts, 2-4 risks, 3-5 next actions. All fields bilingual. Return 
       research = { raw_output: raw, _quality: qualityMeta };
     }
 
+    // governance-mutation: FACT_CHECK_SINGLE_API_POSTPROCESS
+    const factChecked = attachFactCheck(research, enrichment_context, ticker, factCheckCutoff);
+    research = factChecked.data;
+    // The structural score is computed before the gate runs, so it must be re-derived
+    // afterwards; otherwise a fabricated thesis keeps the score it earned on form alone.
+    if (isPlainObject(research._quality)) {
+      research._quality = applyFabricationCap(research._quality, research._fact_check);
+    }
+
     return res.status(200).json({
       success:        true,
       ticker,
       data:           research,
+      _status:        factChecked.status,
       model:          message.model,
       usage:          message.usage,
       // Metadata exposed for UI badges and debugging

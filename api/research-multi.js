@@ -53,6 +53,9 @@ import {
   extractJsonPayload,
   isPlainObject,
   buildQcFindings,
+  attachFactCheck,
+  attachFactCheckToBlocks,
+  applyFabricationCap,
 } from './research.js';
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
@@ -851,6 +854,8 @@ export default async function handler(req, res) {
 
   const { ticker, direction, context, company, enrichment_context } = req.body;
   if (!ticker) return res.status(400).json({ error: 'ticker required' });
+  // governance-mutation: FACT_CHECK_MULTI_API_FREEZES_CUTOFF
+  const factCheckCutoff = new Date().toISOString();
 
   // Verify env vars per Junyan §6.3 — fail loud not silent
   const missing = [];
@@ -955,16 +960,19 @@ export default async function handler(req, res) {
     // ── Validate (FC.1+FC.4) ────────────────────────────────────────────
     const quality = validateThesisQuality(synth);
     const qcMeta = { ...quality, qc_findings: buildQcFindings(quality) };
+    // governance-mutation: FACT_CHECK_MULTI_API_POSTPROCESS
+    const factChecked = attachFactCheck(synth, enrichment_context, ticker, factCheckCutoff);
 
     // ── Assemble final response ─────────────────────────────────────────
+    // governance-mutation: FACT_CHECK_MULTI_COVERS_SUB_THESES
+    const subChecked = attachFactCheckToBlocks(
+      { _bull_thesis: bullR2, _bear_thesis: bearR2, _bull_r1: bullR1,
+        _bear_r1: bearR1, _technical: technical, _forensic: forensic },
+      enrichment_context, ticker, factCheckCutoff);
     const thesisOut = {
-      ...synth,
-      _bull_thesis: bullR2,
-      _bear_thesis: bearR2,
-      _bull_r1: bullR1,
-      _bear_r1: bearR1,
-      _technical: technical,
-      _forensic: forensic,
+      ...factChecked.data,
+      ...subChecked.blocks,
+      _fact_check_sub_theses: subChecked.summary,
       _agent_status: {
         bull_r1: { status: bullR1Run.status, ms: bullR1Run.ms, error: bullR1Run.error },
         bear_r1: { status: bearR1Run.status, ms: bearR1Run.ms, error: bearR1Run.error },
@@ -974,18 +982,28 @@ export default async function handler(req, res) {
         forensic: { status: forensicRun.status, ms: forensicRun.ms, error: forensicRun.error },
         synth: { status: synthRun.status, ms: synthRun.ms },
       },
-      _quality: qcMeta,
+      // governance-mutation: FACT_CHECK_QUALITY_CAPPED_ON_FABRICATION_MULTI
+      _quality: applyFabricationCap(qcMeta, {
+        summary: {
+          fabrication_suspects:
+            Number(factChecked.data?._fact_check?.summary?.fabrication_suspects || 0)
+            + Number(subChecked.summary.fabrication_suspects || 0),
+        },
+      }),
     };
 
     const partialFailures = [bullR1Run, bearR1Run, technicalRun, bullR2Run, bearR2Run, forensicRun]
       .filter(r => r.status !== 'success').map(r => r.role);
+    const pipelineStatus = partialFailures.length > 0 ? 'PARTIAL_FAILURE' : 'OK';
 
     return res.status(200).json({
       success: true,
       ticker,
       data: thesisOut,
       models_used: MODELS,
-      _status: partialFailures.length > 0 ? 'PARTIAL_FAILURE' : 'OK',
+      _status: (factChecked.status === 'BLOCKED_PENDING_HUMAN' || subChecked.status === 'BLOCKED_PENDING_HUMAN')
+        ? 'BLOCKED_PENDING_HUMAN' : pipelineStatus,
+      _pipeline_status: pipelineStatus,
       _partial_failures: partialFailures,
       pipeline_ms_total: bullR1Run.ms + (bullR2Run.ms || 0) + forensicRun.ms + synthRun.ms, // approximate (ignores parallel overlap)
     });
