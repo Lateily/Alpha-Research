@@ -3,7 +3,23 @@ import { createRoot } from 'react-dom/client';
 import { Activity, Check, ChevronRight, Cloud, Database, Download, FileCheck2, KeyRound, Layers3, LockKeyhole, Play, RefreshCw, Save, Search, ShieldCheck, Users, X } from 'lucide-react';
 import audit from './audit.json';
 import './style.css';
-const tabs = [['overview', '部署总览', Layers3], ['gateway', 'DeepSeek 入口', Activity], ['configuration', '部署草稿', Cloud], ['cutover', '迁移验收', FileCheck2], ['team', '团队权限', Users]];
+const tabs = [['research', '研究演练', Play], ['overview', '部署总览', Layers3], ['gateway', 'DeepSeek 入口', Activity], ['configuration', '部署草稿', Cloud], ['cutover', '迁移验收', FileCheck2], ['team', '团队权限', Users]];
+const stageLabels = {INPUT: '冻结输入', SCREEN: '筛选与 U3', PACKET: 'U4 packet', U4_RECEIPT: '预写裁决校验', SEAL_CASE: '深研封存', PAPER_REPLAY: 'Paper 回放', FIVE_AXIS: '五轴归因', REVIEW: '预写复盘校验'};
+
+function Research({runs, busy, run, pending, endPending, viewReceipt}) {
+  const [scenario, setScenario] = useState('complete-replay');
+  const [selected, setSelected] = useState(null);
+  const current = runs.find(r => r.command_id === selected) || runs[0];
+  return <>
+    <div className="metrics"><article><span>冻结合成用例</span><strong>2<small>组</small></strong><span>研究日期 2026-08-11</span></article><article><span>完成回放</span><strong>{runs.filter(r => r.status === 'COMPLETED_SYNTHETIC_REPLAY').length}<small>轮</small></strong><span>不计入方法有效性样本</span></article><article><span>停门 / 完整性异常</span><strong className="text-amber">{runs.filter(r => r.status !== 'COMPLETED_SYNTHETIC_REPLAY').length}<small>轮</small></strong><span>无自动修复或绕过</span></article><article><span>模型与云支出</span><strong>0<small>CNY</small></strong><span>本机计算 · 未调用 DeepSeek</span></article></div>
+    <section><div className="section-title"><h2>本地研究回放</h2><Badge tone="amber">SYNTHETIC · 非真实研究</Badge></div>
+      <div className="probe-toolbar"><select aria-label="研究演练用例" value={pending?.scenario || scenario} disabled={busy || !!pending} onChange={e => setScenario(e.target.value)}><option value="complete-replay">单案例完整回放</option><option value="invalid-selection">反例：预写选择数量违规</option></select><button className="primary" disabled={busy} onClick={() => run(scenario)}><Play size={16}/>{busy ? '正在本机执行' : pending ? '核对同一请求' : '运行研究演练'}</button>{pending && !busy && <button onClick={endPending}><X size={16}/>结束待核请求</button>}</div>
+      <div className="replay-boundary"><span>输入：固定测试包</span><span>裁决与复盘：预写 fixture，非人类授权</span><span>3 行合成选择 / 1 个 case 回放</span><span>新生产数据 / 正式注册：未接入</span></div>
+    </section>
+    <section><div className="section-title"><h2>运行记录</h2><span>{runs.length} 轮 · 逐工件哈希复验</span></div>{runs.length ? <div className="table-scroll"><table><thead><tr><th>运行 ID</th><th>用例</th><th>实际终态</th><th>工件</th><th>回执</th></tr></thead><tbody>{runs.map(row => <tr key={row.command_id} className={row.command_id === current?.command_id ? 'replay-selected' : ''}><td><button className="run-link" onClick={() => setSelected(row.command_id)}>{row.command_id}</button></td><td>{row.scenario === 'invalid-selection' ? '停门反例' : row.scenario ? '单案例回放' : '未核实'}</td><td><Badge tone={row.status === 'COMPLETED_SYNTHETIC_REPLAY' ? 'green' : 'amber'}>{row.status === 'COMPLETED_SYNTHETIC_REPLAY' ? '合成回放完成' : row.status}</Badge></td><td>{Object.keys(row.artifacts).length}</td><td><button className="icon-button" title="查看研究回执" aria-label={`查看研究回执 ${row.command_id}`} onClick={() => viewReceipt(row)}><FileCheck2 size={17}/></button></td></tr>)}</tbody></table></div> : <div className="empty"><Play size={28}/><h3>尚无研究演练记录</h3><span>真实模型调用：0 · 正式研究样本：0</span></div>}</section>
+    {current && <section><div className="section-title"><h2>阶段实物</h2><button className="icon-button" title="下载研究回执" aria-label="下载研究回执" onClick={() => download(`${current.command_id}.json`, current)}><Download size={17}/></button></div><ol className="replay-stages">{current.stages.map((step, i) => <li key={step.stage}><span className="step-number">{String(i + 1).padStart(2, '0')}</span><div><h3>{stageLabels[step.stage] || step.stage}</h3><code>{step.stage}</code>{step.reason && <p className="stop-reason">{step.reason}</p>}{step.evidence && <details><summary>实际返回值</summary><pre>{JSON.stringify(step.evidence, null, 2)}</pre></details>}</div><Badge tone={step.status === 'PASS' ? 'green' : 'amber'}>{step.status}</Badge></li>)}</ol>{current.status === 'INTEGRITY_ERROR' && <div role="alert" className="empty">本地工件校验失败，原回放结论不可使用</div>}<div className="replay-hash"><span>回执 SHA256</span><code>{current.receipt_hash || 'UNAVAILABLE'}</code></div></section>}
+  </>;
+}
 const fieldLabels = {
   cloud_provider: '云厂商',
   account_id: '账号标识',
@@ -60,7 +76,7 @@ function ReceiptDialog({
   }}><div className="section-title"><h2>离线回执</h2><div className="actions"><button className="icon-button" title="下载回执" aria-label="下载回执" onClick={() => download(`${receipt.command_id}.json`, receipt)}><Download size={18} /></button><button className="icon-button" autoFocus title="关闭" aria-label="关闭回执" onClick={close}><X size={18} /></button></div></div><Badge tone="amber">SYNTHETIC · 非研究证据</Badge><pre>{JSON.stringify(receipt, null, 2)}</pre></dialog>;
 }
 function App() {
-  const [tab, setTab] = useState('overview');
+  const [tab, setTab] = useState('research');
   const [state, setState] = useState(null);
   const [draft, setDraft] = useState(null);
   const [error, setError] = useState('');
@@ -71,6 +87,21 @@ function App() {
   const [fixture, setFixture] = useState('contract-smoke');
   const [pending, setPending] = useState(null);
   const [receipt, setReceipt] = useState(null);
+  const [researchPending, setResearchPending] = useState(() => {
+    try { return JSON.parse(sessionStorage.getItem('ar-research-pending') || 'null'); } catch { return null; }
+  });
+  async function runResearch(scenario) {
+    setError(''); setNotice(''); setBusy(true);
+    const request = researchPending || {command_id: `replay_${crypto.randomUUID()}`, scenario};
+    setResearchPending(request);
+    sessionStorage.setItem('ar-research-pending', JSON.stringify(request));
+    try {
+      const data = await api('/api/research/replay', request);
+      setResearchPending(null); sessionStorage.removeItem('ar-research-pending');
+      setState(await api('/api/state'));
+      setNotice(data.receipt.status === 'STOP' ? '已在契约门停止，未执行后续阶段' : '合成回放已完成，实物与回执已落本机');
+    } catch (e) { setError(e.message); } finally { setBusy(false); }
+  }
   async function reload() {
     setError('');
     setBusy(true);
@@ -151,6 +182,7 @@ function App() {
         {error && <div role="alert" className="alert error"><X size={17} /><strong>请求未完成</strong><code>{error}</code><button onClick={reload} disabled={busy}>重载状态</button></div>}
         {notice && <div role="status" className="alert success"><Check size={16} />{notice}</div>}
         {!state ? <div className="empty" role="status"><Database size={30} /><h2>{error ? '本地服务不可用' : '正在读取工作台'}</h2><p>未显示任何缓存状态</p></div> : <>
+          {tab === 'research' && <Research runs={state.research_runs || []} busy={busy} run={runResearch} pending={researchPending} endPending={() => {setResearchPending(null); sessionStorage.removeItem('ar-research-pending'); setNotice('已结束等待；原运行目录未修改');}} viewReceipt={setReceipt}/>}
           {tab === 'overview' && <>
             <div className="metrics"><article><span>本地离线回执</span><strong>{state.receipts.length}<small>条</small></strong><span>不是模型真实推理</span></article><article><span>本入口模型支出</span><strong>0<small>CNY</small></strong><span>未联系模型提供方</span></article><article><span>部署草稿待填</span><strong>{state.readiness.missing.length}<small>/ 6 项</small></strong><span>填写不等于批准</span></article><article><span>旧链切换状态</span><strong className="text-amber">HOLD</strong><span>旧写入尚未统一停止</span></article></div>
             <section><div className="section-title"><h2>部署面核对</h2><span>观察日期 {audit.observed_date} · 非实时健康状态</span></div>

@@ -20,6 +20,7 @@ from urllib.parse import urlsplit
 
 from adapters.base import AgentRequest
 from adapters.deepseek import DEFAULT_MODEL, DeepSeekAdapter
+import workbench_research as research
 
 ROOT = Path(__file__).resolve().parents[2]
 PROMPT_VERSION = "workbench_contract_smoke_v1"
@@ -79,7 +80,7 @@ def policy():
 
 
 def require_capability(capability):
-    if capability not in {"offline_probe", "save_deployment_draft"}:
+    if capability not in {"offline_probe", "save_deployment_draft", "research_replay"}:
         raise WorkbenchError("CAPABILITY_DISABLED", 403)
 
 
@@ -175,6 +176,7 @@ class Store:
         with self.connect() as db:
             db.execute("CREATE TABLE IF NOT EXISTS receipts (id TEXT PRIMARY KEY, request_hash TEXT NOT NULL, receipt TEXT NOT NULL)")
             db.execute("CREATE TABLE IF NOT EXISTS drafts (revision INTEGER PRIMARY KEY, payload TEXT NOT NULL)")
+            db.execute("CREATE TABLE IF NOT EXISTS research_runs (id TEXT PRIMARY KEY, request_hash TEXT NOT NULL, receipt TEXT NOT NULL)")
         self.path.chmod(0o600)
 
     def connect(self):
@@ -219,11 +221,61 @@ class Store:
         with self.connect() as db:
             revision, config = self.current(db)
             rows = db.execute("SELECT receipt FROM receipts ORDER BY rowid DESC").fetchall()
+            research_rows = db.execute("SELECT id, receipt FROM research_runs ORDER BY rowid DESC").fetchall()
+        runs = []
+        for command_id, raw in research_rows:
+            try:
+                receipt = json.loads(raw)
+                self.verified_research(command_id, receipt)
+                runs.append(receipt)
+            except (research.ReplayError, WorkbenchError, OSError, ValueError):
+                runs.append({"command_id": command_id, "status": "INTEGRITY_ERROR", **research.boundary(), "stages": [], "artifacts": {}})
         return {
             "schema": "ar-workbench-state.v1", "policy": policy(),
             "revision": revision, "config": config, "readiness": readiness(config),
             "receipts": [json.loads(row[0]) for row in rows],
+            "research_runs": runs,
         }
+
+    def research_directory(self, command_id):
+        research.validate_request({"command_id": command_id, "scenario": "complete-replay"})
+        base = self.path.parent / "research-runs"
+        if any(p.is_symlink() for p in (base, *base.parents)):
+            raise WorkbenchError("RESEARCH_STATE_SYMLINK_REFUSED")
+        base.mkdir(exist_ok=True, mode=0o700)
+        return base / command_id
+
+    def verified_research(self, command_id, receipt):
+        directory = self.research_directory(command_id)
+        if directory.is_symlink() or (directory / "receipt.json").is_symlink():
+            raise research.ReplayError("REPLAY_ARTIFACT_SYMLINK")
+        if json.loads((directory / "receipt.json").read_text()) != receipt:
+            raise research.ReplayError("REPLAY_DISK_RECEIPT_MISMATCH")
+        return research.verify_receipt(directory, receipt)
+
+    def replay(self, payload):
+        try:
+            research.validate_request(payload)
+            request_hash = digest(payload)
+            with self.connect() as db:
+                # Single transaction serializes duplicate browser/server requests.
+                # A crash leaves a reserved directory, which is never overwritten.
+                db.execute("BEGIN IMMEDIATE")
+                row = db.execute("SELECT request_hash, receipt FROM research_runs WHERE id=?", (payload["command_id"],)).fetchone()
+                if row:
+                    if request_hash != row[0]:
+                        raise WorkbenchError("COMMAND_ID_CONFLICT", 409)
+                    receipt = self.verified_research(payload["command_id"], json.loads(row[1]))
+                    return {"disposition": "IDEMPOTENT", "receipt": receipt}
+                directory = self.research_directory(payload["command_id"])
+                if len(list(directory.parent.iterdir())) >= research.MAX_RUNS:
+                    raise WorkbenchError("RESEARCH_SANDBOX_LIMIT", 429)
+                receipt = research.launch(directory, payload)
+                self.verified_research(payload["command_id"], receipt)
+                db.execute("INSERT INTO research_runs VALUES (?, ?, ?)", (payload["command_id"], request_hash, canonical(receipt)))
+            return {"disposition": "CREATED", "receipt": receipt}
+        except research.ReplayError as exc:
+            raise WorkbenchError(str(exc), 409) from None
 
 
 def authorize(headers, origin, session, write=False):
@@ -248,13 +300,15 @@ def serve_host(host):
 
 
 def dispatch(store, path, payload):
-    operations = {"/api/gateway/probe": "offline_probe", "/api/deployment-draft": "save_deployment_draft"}
+    operations = {"/api/gateway/probe": "offline_probe", "/api/deployment-draft": "save_deployment_draft", "/api/research/replay": "research_replay"}
     capability = operations.get(path, "disabled")
     require_capability(capability)
     if capability == "offline_probe":
         return store.probe(payload)
     if capability == "save_deployment_draft":
         return store.save_config(payload)
+    if capability == "research_replay":
+        return store.replay(payload)
     raise WorkbenchError("UNKNOWN_OPERATION", 404)
 
 

@@ -6,13 +6,15 @@ Junyan 是最终裁决者；界面显示这个名字不构成身份认证。
 
 ## 已交付与未交付
 
-已交付一个可以在本机使用的工作台：部署盘点、云配置草稿、DeepSeek 离线入口、
+已交付一个可以在本机使用的工作台：固定合成研究回放、部署盘点、云配置草稿、DeepSeek 离线入口、
 回执查阅/下载、迁移验收清单、权限状态。浏览器只访问自己的本机服务。
 Python 服务复用 AIOS 的 DeepSeekAdapter；不是另写一套模型 SDK。
 
 以下不是本切片的交付，不能提前声称：云端 24 小时调度、正式登录、团队访问、
 跨机协同任务领取、生产数据库、私有对象存储、费用熔断服务、生产 canary。
-它们的云账号、区域、预算与目的地尚待 Junyan 确认。
+Junyan 已批准阿里云由本人控制、生产与非生产隔离，以及 cn-hongkong 作为非生产验证地域。
+具体账号标识、预算、私有目的地尚未验收；正式生产地域仍待网络与数据许可验收。
+用户随后决定先在现有电脑上跑通，再考虑付费云存储；以上批准不构成购买或传输授权。
 
 **“付费调用关闭”仅指这个新入口。旧 Vercel API、GitHub 晨报等尚未停用或重路由。**
 不能把本地工作台的零费用当成全系统已经停费，也不能说旧网页已统一为 DeepSeek。
@@ -33,6 +35,56 @@ python3 -B scripts/llm/nonprod_workbench.py --port 8766
 状态只在当前检出的 `.ai-workspace/nonprod-workbench/workbench.sqlite3`，不入 Git。
 服务重启不会清空回执或草稿。退出用 Ctrl-C，不注册 launchd / Windows Service。
 
+## 本地优先的研究演练增量
+
+默认页面是“研究演练”。它执行真实的现有确定性工具，不调用 DeepSeek，
+不是给旧的固定文本 stub 换一个研究名称。
+
+```text
+固定合成输入哈希
+  -> funnel_pipeline 实算 U1/U2/U3
+  -> closure_experiment packet / 预写 receipt 校验 / replay / verify
+  -> research_cycle seal_case
+  -> 固定 bars + outcomes / paper replay / verify
+  -> five_axis_attribution 五轴独立归因
+  -> 预写复盘 receipt / finalize / verify
+```
+
+两种用例均来自仓内已有测试夹具，冻结为 `tools/nonprod_workbench/fixtures/research.json`：
+
+- `complete-replay`：24 个合成候选，预写 3 行选择，其中 **只回放 1 个已预写 case**。
+  其余 2 行未回放会在回执明确记数；不能称作三笔闭环，更不是新的前瞻样本。
+- `invalid-selection`：固定的 1 行选择草稿被现有 U4 门拒绝，终态 STOP；不修草稿，不跑后续 case。
+
+数据日期固定为 20260811，settled bars 是合成的既知结果。测试稿中的 claimed_reviewer
+与批准措辞只是既有 fixture 字节，**不代表 Junyan 本轮授权**；工作台封套明确
+`human_approval=false`。执行/复盘结果不计入生产账本、注册文件、方法有效性或盈利声称。
+现有 fixture 使用轻量电池维度占位和测试行业身份；这不是生产数据覆盖或行业匹配验收。
+本增量不生成 thesis、估值、SMC 内容，也不替人补材料。
+
+输入包仅可由开发者运行 `freeze_research_fixture.py` 重新生成并经审查改 hash 钉。
+运行时不导入 tests、不改任何草稿。引擎部分 manifest 绑定 JSON 落盘字节，因此生成器
+按真实调用顺序冻结键序与来源绑定；同一输入两次执行须产生完全相同的工件 hash。
+
+每轮输出在 `.ai-workspace/nonprod-workbench/research-runs/<command_id>/`。
+阶段 PASS 只在相应实算与校验返回后记录；STOP 保留前段证据。
+32 份成功工件与回执均在本机，浏览器可查看阶段返回值并下载哈希清单回执。
+每次读取历史或重试都重开磁盘工件校验；篡改显示 INTEGRITY_ERROR，不能继续展示绿色旧结论。
+
+子进程仅接受两个固定场景，30 秒有界，环境显式白名单不继承 key/token/PYTHONPATH。
+实际入口安装 Python audit guard，拒绝 socket、另起进程及运行目录外写入，
+兼容引擎的 fdopen/同目录原子写。这是可信仓库代码的纵深防护，**不是敌对代码的 OS 沙箱**。
+服务的输入/API 没有生产文件路径、任意命令、自由 prompt 或真实授权入口。
+
+本机 SQLite 事务串行化请求。同 ID 同内容返回原件，换内容冲突；异常中断/超时留下的
+目录不覆盖、不自动恢复。浏览器保留待核 ID，允许重试核对；明确结束待核请求只清浏览器
+等待状态，不删除工件、不中止另一个进程、不创建新任务。需要新演练时再由人点击。
+最多 100 个运行目录（包含中断目录），不自动清理，不冒称 append-only 防篡改账本。
+
+这一步是 **LOCAL_FIXTURE_REPLAY_DELIVERED / LIVE_RESEARCH_UNWIRED**。
+尚需独立交付：只读真实证据导入与许可/密钥检查、当前行业 case 身份验收、人类材料与授权接入、
+真实 prospective 调度、两机安全协作。当前电脑休眠或服务退出就停，不能称作云端 24 小时服务。
+
 不能把此 Python 开发服务放到公网、反向代理、端口转发或团队隧道后。
 其本地 cookie 是开发会话，不是 SSO/MFA、Junyan 签名或团队 RBAC。
 共享同一 OS 账号的人也不能靠这个 cookie 被区分。
@@ -44,6 +96,7 @@ python3 -B scripts/llm/nonprod_workbench.py --port 8766
 | `GET /api/state` | 本机 Host + 会话校验，返回本工作台状态；不读生产树 |
 | `POST /api/gateway/probe` | 仅 DeepSeek / offline / 两个固定合成 fixture，禁止自由 prompt、key、URL 与权限参数 |
 | `POST /api/deployment-draft` | 仅六个元数据字段，必须提交 expected_revision；不授予任何权限 |
+| `POST /api/research/replay` | 仅 command_id + 内置 scenario；本地固定合成研究回放，不收外部输入或授权 |
 | team / live model / deploy / migrate / production routes | 一律拒绝；没有可用的生产执行器 |
 | 监听地址 | 只允许 127.0.0.1；0.0.0.0、局域网地址、IPv6 全接口都拒绝 |
 | 浏览器写入 | 精确 Host + Origin + HttpOnly / SameSite=Strict 本地会话；不开放 CORS |
@@ -51,7 +104,8 @@ python3 -B scripts/llm/nonprod_workbench.py --port 8766
 | 凭证 | 不加载 DeepSeek key，不读取 .ar_env，不向前端提供密钥；不得把密钥填进草稿 |
 
 环境变量不能打开付费调用、团队权限或切换模型。更改这些能力需要后续独立工程与审批。
-固定输入只验证适配器契约；它们不是研究任务、评估样本或真实模型输出。
+DeepSeek 页的固定输入只验证适配器契约；研究页的固定输入验证引擎接线。
+两者均不是正式研究任务、有效性评估样本或真实模型输出。
 
 每条回执记录 configured_model / actual_model=null / prompt_version / request_hash /
 receipt_hash / SYNTHETIC_NOT_RESEARCH_EVIDENCE / WORKFLOW_DEBUG / provider_contacted=false。
@@ -144,13 +198,15 @@ Get-CimInstance Win32_Process | Where-Object {
 
 ```bash
 python3 tests/test_nonprod_workbench.py
+python3 tests/test_workbench_research.py
 python3 scripts/governance_mutation_gate.py
 python3 /Users/years/Desktop/Stock/e2e-twin/twin-20260902/tools/ci_local.py
 python3 experiments/execution_tracker/event_ledger.py --ref origin/main
 node node_modules/vite/bin/vite.js build --config tools/nonprod_workbench/vite.config.js
 ```
 
-新增 Python 测试已登记 python-ci，运行时 socket 被拦截；12 条精准变异覆盖权限与接线门。
+新增 Python 测试已登记 python-ci，运行时 socket 被拦截；原 12 条工作台变异保留，
+研究增量另钉输入、权限、入口沙箱、断网、密钥环境、工件/回执、完成态与请求绑定。
 前端另有只读 contents 权限的构建 CI；安装依赖不是模型调用。
 ci_local 会跳过两个 GitHub 上下文步骤，末行必须保留这个说明，不冒称远端 CI 已通过。
 
