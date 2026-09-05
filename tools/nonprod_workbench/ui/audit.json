@@ -1,0 +1,18 @@
+{
+  "status": "OBSERVED_NOT_QUIESCED",
+  "observed_date": "2026-09-05",
+  "source_head": "5702308a1a19c825d3db751d16c346f62e20d69e",
+  "runtime_observed_at": "2026-09-05T11:24:18.458419+00:00",
+  "rows": [
+    {"id":"LOCAL_NIGHTLY","surface":"本机 / 夜链","state":"HOLD","evidence":"launchd 已加载；上次退出码 1；最近报告 08-31 INCOMPLETE。","next":"不能以进程空闲代替停写。切换前重新核验。"},
+    {"id":"LOCAL_EOD_WATCHTOWER","surface":"本机 / EOD 与 Watchtower","state":"OBSERVED","evidence":"两项均已加载；未观察到与夜链共用全局锁。","next":"纳入同一维护窗口，排空后做一致快照。"},
+    {"id":"MANUAL_WRITERS","surface":"本机 / 手工账本与修复入口","state":"OBSERVED","evidence":"U4、paper 注册、数据迁移等入口仍有写入能力。","next":"停写清单必须包括操作者与手工脚本。"},
+    {"id":"GITHUB_ACTIONS","surface":"GitHub / 数据与晨报","state":"OBSERVED","evidence":"日更工作流 active，近期写入数据分支；晨报可 POST 到模型 API。","next":"旧线尚未停用；不得与云端并行写同一正式账。"},
+    {"id":"VERCEL","surface":"Vercel / 网页 API","state":"UNKNOWN","evidence":"有部署记录。连接器不可达；现有本地登录只读请求返回 HTTP 403。","next":"重新登录后核验别名、鉴权、环境名、调用量及费用。"},
+    {"id":"GITHUB_PROTECTION","surface":"GitHub / 环境保护","state":"OBSERVED","evidence":"Production、Production – equity-research 和 Preview 环境未配置 protection_rules；Production 环境 secret 名单为空。","next":"这不证明 Vercel 无保护或无密钥。生产发布审批需独立落实。"},
+    {"id":"SUPABASE","surface":"Supabase / 可选数据同步","state":"UNKNOWN","evidence":"存在 upsert 代码；近期 GitHub 同步步骤 skipped。","next":"外部项目、写入者和密钥状态未核实。"},
+    {"id":"SECOND_HOST","surface":"第二台电脑 / 团队主机","state":"UNKNOWN","evidence":"当前只连接到本机，未获得其他主机运行清单。","next":"收集只读定时器与进程清单，再核对人工写入入口。"},
+    {"id":"CLOUD_TARGET","surface":"目标云 / 私有存储","state":"UNKNOWN","evidence":"账号、区域、预算和私有目的地尚未确认；未创建资源。","next":"Junyan 确认四项，随后做独立非生产验收。"},
+    {"id":"SCHEDULER_TIMEZONE","surface":"调度 / 市场时间","state":"HOLD","evidence":"本机 Asia/Seoul；现有 plist 使用主机时间，未单设市场时区。","next":"云调度显式绑定 Asia/Shanghai 和交易日历。"}
+  ]
+}
