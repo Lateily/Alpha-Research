@@ -3,7 +3,9 @@ import { createRoot } from 'react-dom/client';
 import { Activity, Check, ChevronRight, Cloud, Database, Download, FileCheck2, KeyRound, Layers3, LockKeyhole, Play, RefreshCw, Save, Search, ShieldCheck, Users, X } from 'lucide-react';
 import audit from './audit.json';
 import './style.css';
-const tabs = [['research', '研究演练', Play], ['overview', '部署总览', Layers3], ['gateway', 'DeepSeek 入口', Activity], ['configuration', '部署草稿', Cloud], ['cutover', '迁移验收', FileCheck2], ['team', '团队权限', Users]];
+import Workspace, {workspaceTabs} from './workspace';
+import './workspace.css';
+const tabs = [...workspaceTabs, ['research', '研究演练', Play], ['overview', '部署总览', Layers3], ['gateway', 'DeepSeek 入口', Activity], ['configuration', '部署草稿', Cloud], ['cutover', '迁移验收', FileCheck2], ['team', '团队权限', Users]];
 const stageLabels = {INPUT: '冻结输入', SCREEN: '筛选与 U3', PACKET: 'U4 packet', U4_RECEIPT: '预写裁决校验', SEAL_CASE: '深研封存', PAPER_REPLAY: 'Paper 回放', FIVE_AXIS: '五轴归因', REVIEW: '预写复盘校验'};
 
 function Research({runs, busy, run, pending, endPending, viewReceipt}) {
@@ -39,7 +41,7 @@ async function api(path, body) {
     body: body ? JSON.stringify(body) : undefined
   });
   const json = await result.json();
-  if (!result.ok) throw new Error(json.error || `HTTP ${result.status}`);
+  if (!result.ok) { const error = new Error(json.error || `HTTP ${result.status}`); error.status = result.status; throw error; }
   return json;
 }
 function download(name, value) {
@@ -76,8 +78,9 @@ function ReceiptDialog({
   }}><div className="section-title"><h2>离线回执</h2><div className="actions"><button className="icon-button" title="下载回执" aria-label="下载回执" onClick={() => download(`${receipt.command_id}.json`, receipt)}><Download size={18} /></button><button className="icon-button" autoFocus title="关闭" aria-label="关闭回执" onClick={close}><X size={18} /></button></div></div><Badge tone="amber">SYNTHETIC · 非研究证据</Badge><pre>{JSON.stringify(receipt, null, 2)}</pre></dialog>;
 }
 function App() {
-  const [tab, setTab] = useState('research');
+  const [tab, setTab] = useState('desk');
   const [state, setState] = useState(null);
+  const [workspaceRefresh, setWorkspaceRefresh] = useState(0);
   const [draft, setDraft] = useState(null);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
@@ -109,6 +112,7 @@ function App() {
       const data = await api('/api/state');
       setState(data);
       setDraft(data.config);
+      setWorkspaceRefresh(value => value + 1);
     } catch (e) {
       setError(e.message);
     } finally {
@@ -175,13 +179,14 @@ function App() {
       <div className="sidebar-footer"><ShieldCheck size={18} /><div>最终裁决：Junyan<span>未签发任何团队权限</span></div></div>
     </aside>
     <main>
-      <header><div className="breadcrumb">AR / 部署准备 / <span>{tabs.find(t => t[0] === tab)[1]}</span></div><button className="icon-button" title="重新读取本地状态（会重载未保存草稿）" aria-label="刷新状态" disabled={busy} onClick={reload}><RefreshCw size={17} className={busy ? 'spinning' : ''} /></button></header>
+      <header><div className="breadcrumb">AR / LOCAL WORKSPACE / <span>{tabs.find(t => t[0] === tab)[1]}</span></div><button className="icon-button" title="重新读取本地状态（会重载未保存草稿）" aria-label="刷新状态" disabled={busy} onClick={reload}><RefreshCw size={17} className={busy ? 'spinning' : ''} /></button></header>
       <div className="page">
         <div className="page-heading"><div><div className="eyebrow">WORKSPACE / 01</div><h1>{tabs.find(t => t[0] === tab)[1]}</h1></div><Badge tone="amber"><LockKeyhole size={13} />CUTOVER HOLD</Badge></div>
         <div className="authority-strip"><span><LockKeyhole size={14} />团队访问：关闭</span><span>模型付费调用：关闭</span><span>生产写入：关闭</span><span>会话：本机开发态，未认证人类身份</span></div>
         {error && <div role="alert" className="alert error"><X size={17} /><strong>请求未完成</strong><code>{error}</code><button onClick={reload} disabled={busy}>重载状态</button></div>}
         {notice && <div role="status" className="alert success"><Check size={16} />{notice}</div>}
         {!state ? <div className="empty" role="status"><Database size={30} /><h2>{error ? '本地服务不可用' : '正在读取工作台'}</h2><p>未显示任何缓存状态</p></div> : <>
+          {workspaceTabs.some(t => t[0] === tab) && <Workspace tab={tab} api={api} reloadBase={reload} refreshRevision={workspaceRefresh}/>}
           {tab === 'research' && <Research runs={state.research_runs || []} busy={busy} run={runResearch} pending={researchPending} endPending={() => {setResearchPending(null); sessionStorage.removeItem('ar-research-pending'); setNotice('已结束等待；原运行目录未修改');}} viewReceipt={setReceipt}/>}
           {tab === 'overview' && <>
             <div className="metrics"><article><span>本地离线回执</span><strong>{state.receipts.length}<small>条</small></strong><span>不是模型真实推理</span></article><article><span>本入口模型支出</span><strong>0<small>CNY</small></strong><span>未联系模型提供方</span></article><article><span>部署草稿待填</span><strong>{state.readiness.missing.length}<small>/ 6 项</small></strong><span>填写不等于批准</span></article><article><span>旧链切换状态</span><strong className="text-amber">HOLD</strong><span>旧写入尚未统一停止</span></article></div>
