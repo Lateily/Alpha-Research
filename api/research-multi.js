@@ -54,6 +54,7 @@ import {
   isPlainObject,
   buildQcFindings,
   attachFactCheck,
+  attachFactCheckToBlocks,
   applyFabricationCap,
 } from './research.js';
 
@@ -963,14 +964,15 @@ export default async function handler(req, res) {
     const factChecked = attachFactCheck(synth, enrichment_context, ticker, factCheckCutoff);
 
     // ── Assemble final response ─────────────────────────────────────────
+    // governance-mutation: FACT_CHECK_MULTI_COVERS_SUB_THESES
+    const subChecked = attachFactCheckToBlocks(
+      { _bull_thesis: bullR2, _bear_thesis: bearR2, _bull_r1: bullR1,
+        _bear_r1: bearR1, _technical: technical, _forensic: forensic },
+      enrichment_context, ticker, factCheckCutoff);
     const thesisOut = {
       ...factChecked.data,
-      _bull_thesis: bullR2,
-      _bear_thesis: bearR2,
-      _bull_r1: bullR1,
-      _bear_r1: bearR1,
-      _technical: technical,
-      _forensic: forensic,
+      ...subChecked.blocks,
+      _fact_check_sub_theses: subChecked.summary,
       _agent_status: {
         bull_r1: { status: bullR1Run.status, ms: bullR1Run.ms, error: bullR1Run.error },
         bear_r1: { status: bearR1Run.status, ms: bearR1Run.ms, error: bearR1Run.error },
@@ -981,7 +983,13 @@ export default async function handler(req, res) {
         synth: { status: synthRun.status, ms: synthRun.ms },
       },
       // governance-mutation: FACT_CHECK_QUALITY_CAPPED_ON_FABRICATION_MULTI
-      _quality: applyFabricationCap(qcMeta, factChecked.data?._fact_check),
+      _quality: applyFabricationCap(qcMeta, {
+        summary: {
+          fabrication_suspects:
+            Number(factChecked.data?._fact_check?.summary?.fabrication_suspects || 0)
+            + Number(subChecked.summary.fabrication_suspects || 0),
+        },
+      }),
     };
 
     const partialFailures = [bullR1Run, bearR1Run, technicalRun, bullR2Run, bearR2Run, forensicRun]
@@ -993,7 +1001,8 @@ export default async function handler(req, res) {
       ticker,
       data: thesisOut,
       models_used: MODELS,
-      _status: factChecked.status === 'BLOCKED_PENDING_HUMAN' ? factChecked.status : pipelineStatus,
+      _status: (factChecked.status === 'BLOCKED_PENDING_HUMAN' || subChecked.status === 'BLOCKED_PENDING_HUMAN')
+        ? 'BLOCKED_PENDING_HUMAN' : pipelineStatus,
       _pipeline_status: pipelineStatus,
       _partial_failures: partialFailures,
       pipeline_ms_total: bullR1Run.ms + (bullR2Run.ms || 0) + forensicRun.ms + synthRun.ms, // approximate (ignores parallel overlap)

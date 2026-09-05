@@ -7935,6 +7935,25 @@ MUTATIONS = MUTATIONS + (
         rationale="The single-agent production response cannot bypass deterministic post-generation fact checking.",
     ),
     MutationCase(
+        mutation_id="FACT_CHECK_MULTI_COVERS_SUB_THESES",
+        component="Research multi-agent API fact-check wiring",
+        source_path="api/research-multi.js",
+        test_script="tests/test_fact_check.py",
+        before=(
+            "    // governance-mutation: FACT_CHECK_MULTI_COVERS_SUB_THESES\n"
+            "    const subChecked = attachFactCheckToBlocks("
+        ),
+        after=(
+            "    // governance-mutation: FACT_CHECK_MULTI_COVERS_SUB_THESES\n"
+            "    const subChecked = ((x) => ({ blocks: x, receipts: {}, status: 'PASS', summary: { checked_blocks: 0, blocked_blocks: [], fabrication_suspects: 0 } }))("
+        ),
+        expected_failure_marker="test_multi_api_gates_every_returned_sub_thesis",
+        rationale=(
+            "Every thesis block the multi-agent API returns must pass the fact-check gate; "
+            "checking only the synthesis lets a fabricated number ride out in a sibling key."
+        ),
+    ),
+    MutationCase(
         mutation_id="FACT_CHECK_MULTI_API_POSTPROCESS",
         component="Research multi-agent API fact-check wiring",
         source_path="api/research-multi.js",

@@ -246,6 +246,29 @@ class FactCheckTest(unittest.TestCase):
         self.assertEqual(receipt["status"], "PASS")
         self.assertEqual(receipt["summary"]["blocking_mismatches"], 0)
 
+    def test_multi_figure_sentence_is_not_reported_as_a_contradiction(self) -> None:
+        """A filing sentence usually carries several figures. When the window cannot say
+        which metric a number belongs to, the gate must not assert that the thesis
+        contradicts its source — under the blocking-class rule that assertion would stop
+        a truthful thesis. It may still be UNTRACED (unconfirmed is not the same as
+        contradicted), but it must never be MISMATCH."""
+        source = _source_payload(
+            "FY2025 revenue was RMB 4.648B and net profit was RMB 1.084B.")
+        receipt = fact_check_module.fact_check(
+            {"claim": "FY2025 net profit was RMB 1.084B."},
+            ticker="688120.SH", cutoff=CUTOFF, source_payloads=source,
+        )
+        self.assertEqual(receipt["summary"]["mismatches"], 0,
+                         "a truthful figure must not be reported as contradicting its source")
+        self.assertEqual(receipt["summary"]["blocking_mismatches"], 0)
+        # The unambiguous figure in the same sentence still traces cleanly.
+        clean = fact_check_module.fact_check(
+            {"claim": "FY2025 revenue was RMB 4.648B."},
+            ticker="688120.SH", cutoff=CUTOFF, source_payloads=source,
+        )
+        self.assertEqual(clean["status"], "PASS")
+        self.assertGreater(clean["summary"]["traced"], 0)
+
     def test_ratio_mismatch_remains_visible_but_unblocking(self) -> None:
         receipt = fact_check_module.fact_check(
             {"claim": "FY2025 gross margin was 44.5%."},
@@ -625,10 +648,22 @@ process.stdout.write(JSON.stringify({
         output = self._run_node(NODE_HANDLER_RUNNER, RESEARCH_MULTI_API, "multi")
         self.assertEqual(200, output["statusCode"])
         self.assertEqual("BLOCKED_PENDING_HUMAN", output["body"]["_status"])
-        self.assertEqual(
-            "BLOCKED_PENDING_HUMAN",
-            output["body"]["data"]["_fact_check"]["status"],
-        )
+        # Read defensively: if the synthesis receipt is missing entirely, that is a
+        # failed assertion about the gate, not a KeyError about the test.
+        synth_receipt = output["body"]["data"].get("_fact_check") or {}
+        self.assertEqual("BLOCKED_PENDING_HUMAN", synth_receipt.get("status"))
+
+    def test_multi_api_gates_every_returned_sub_thesis(self) -> None:
+        """Gating only the synthesis leaves six other thesis blocks returned and
+        quotable; a fabricated number would just move one key to the left."""
+        output = self._run_node(NODE_HANDLER_RUNNER, RESEARCH_MULTI_API, "multi")
+        data = output["body"]["data"]
+        summary = data.get("_fact_check_sub_theses") or {}
+        self.assertGreaterEqual(summary.get("checked_blocks", 0), 1)
+        for name in ("_bull_thesis", "_bear_thesis", "_technical", "_forensic"):
+            block = data.get(name)
+            if isinstance(block, dict):
+                self.assertIn("_fact_check", block, f"{name} left the API unchecked")
 
 
 if __name__ == "__main__":

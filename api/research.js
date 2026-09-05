@@ -29,7 +29,7 @@
 //   TAVILY_API_KEY    — optional (tavily.com, free 1000 searches/month)
 
 import Anthropic from '@anthropic-ai/sdk';
-import { attachFactCheck, factCheckThesis } from '../scripts/llm/fact_check_core.mjs';
+import { attachFactCheck, attachFactCheckToBlocks, factCheckThesis } from '../scripts/llm/fact_check_core.mjs';
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -1896,6 +1896,7 @@ export {
   buildQcFindings,
   factCheckThesis,
   attachFactCheck,
+  attachFactCheckToBlocks,
   applyFabricationCap,
 };
 

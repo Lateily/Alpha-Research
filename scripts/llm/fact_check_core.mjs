@@ -671,6 +671,39 @@ export function attachFactCheck(thesis, enrichmentContext = {}, ticker = '', cut
   return { data: { ...thesis, _fact_check: receipt }, status: receipt.status };
 }
 
+// governance-mutation: FACT_CHECK_COVERS_EVERY_RETURNED_BLOCK
+// A multi-agent response ships several thesis blocks. Gating only the synthesis
+// leaves the rest returned, rendered and quotable while the envelope still reads
+// OK — the fabricated number simply moves one key to the left. Every block that
+// leaves the API is checked, and any blocked block blocks the envelope.
+export function attachFactCheckToBlocks(blocks, enrichmentContext = {}, ticker = '', cutoff) {
+  const receipts = {};
+  const checked = {};
+  let blocked = false;
+  for (const [name, block] of Object.entries(blocks || {})) {
+    if (!block || typeof block !== 'object' || Array.isArray(block)) {
+      checked[name] = block;
+      continue;
+    }
+    const receipt = factCheckThesis(block, enrichmentContext, ticker, cutoff);
+    receipts[name] = receipt;
+    checked[name] = { ...block, _fact_check: receipt };
+    if (receipt.status === 'BLOCKED_PENDING_HUMAN') blocked = true;
+  }
+  return {
+    blocks: checked,
+    receipts,
+    status: blocked ? 'BLOCKED_PENDING_HUMAN' : 'PASS',
+    summary: {
+      checked_blocks: Object.keys(receipts).length,
+      blocked_blocks: Object.entries(receipts)
+        .filter(([, r]) => r.status === 'BLOCKED_PENDING_HUMAN').map(([n]) => n),
+      fabrication_suspects: Object.values(receipts)
+        .reduce((total, r) => total + Number(r?.summary?.fabrication_suspects || 0), 0),
+    },
+  };
+}
+
 export function factCheckRequest(request) {
   if (!request || typeof request !== 'object' || Array.isArray(request)) throw new Error('fact-check request must be an object');
   if (!request.thesis || typeof request.thesis !== 'object' || Array.isArray(request.thesis)) throw new Error('fact-check thesis must be an object');
