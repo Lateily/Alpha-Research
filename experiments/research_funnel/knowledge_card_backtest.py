@@ -15,6 +15,9 @@ anchor and is republished as ``thresholds_validated: false``.
 Strict point-in-time rule: for a look-back point ``P`` only fundamentals with
 ``ann_date <= P`` and price/volume rows with ``trade_date <= P`` may reach an
 evaluation.  A row that crosses the boundary is an error, never a silent trim.
+Every stored date is validated as ``YYYYMMDD`` before it is compared with
+``P``; a malformed date is an error and a NULL date is a counted data gap
+(``PIT_DATE_NULL``), never a silently dropped row.
 """
 
 from __future__ import annotations
@@ -79,13 +82,28 @@ LOOK_BACK_POINTS: tuple[Mapping[str, str], ...] = (
 # decision thresholds: the module reports agreement counts and the raw display
 # statistic, and never applies the cards' literature anchors (z=±1, 分位>90%)
 # as a cut.
+#
+# Source: CODEX_WORK_ORDERS_20260902.md, WO-B4 "做什么 ④", quoted verbatim in
+# EXPECTED_SIDE_SOURCE_EXCERPT.  Transcription: 卡13 z>+1 → SEMI_MAT_013 HIGH at
+# TOP; 卡7 CI 高 → SEMI_MAT_007 HIGH at TOP; 卡2 毛利率同比转负 → SEMI_MAT_002
+# DOWN at TOP; 卡23 分位>90% → SEMI_MAT_023 HIGH at TOP; "2019/2023 应相反" →
+# the opposite side at the two BOTTOM points.
+EXPECTED_SIDE_SOURCE_PATH = "CODEX_WORK_ORDERS_20260902.md"
+EXPECTED_SIDE_SOURCE_SECTION = "WO-B4 做什么 ④"
+EXPECTED_SIDE_SOURCE_EXCERPT = (
+    "2021Q3 应集中出现 卡13 z>+1 / 卡7 CI 高 / 卡2 毛利率同比转负 / 卡23 分位>90%;"
+    "2019/2023 应相反"
+)
 EXPECTED_SIDE: Mapping[str, Mapping[str, str]] = {
     "SEMI_MAT_002": {"TOP": "DOWN", "BOTTOM": "UP"},
     "SEMI_MAT_007": {"TOP": "HIGH", "BOTTOM": "LOW"},
     "SEMI_MAT_013": {"TOP": "HIGH", "BOTTOM": "LOW"},
     "SEMI_MAT_023": {"TOP": "HIGH", "BOTTOM": "LOW"},
 }
-EXPECTED_SIDE_PROVENANCE = "WO-B4 brief transcription; unvalidated expectation under test"
+EXPECTED_SIDE_PROVENANCE = (
+    f"{EXPECTED_SIDE_SOURCE_PATH} · {EXPECTED_SIDE_SOURCE_SECTION}: "
+    f"\"{EXPECTED_SIDE_SOURCE_EXCERPT}\" — transcription; unvalidated expectation under test"
+)
 
 # Local point-in-time columns actually persisted by this repository's
 # collectors, keyed by the (tushare_api, tushare_field) pair a card declares.
@@ -135,6 +153,10 @@ LOOKBACK_RE = re.compile(r"^\s*(?P<count>[0-9]+)\s*(?P<unit>[YQ])")
 DATE8_RE = re.compile(r"^[0-9]{8}$")
 TS_CODE_RE = re.compile(r"^[0-9]{6}\.(SH|SZ|BJ)$")
 
+# Any output key containing one of these stems is a selection / trade token and
+# is refused wherever it appears. The stems are broad on purpose (``rank`` also
+# catches ``ranked``, ``position`` also catches ``position_size_x``); the only
+# allowance is the four-false authority block listed below.
 FORBIDDEN_KEY_SUBSTRINGS = (
     "recommend",
     "score_total",
@@ -142,6 +164,14 @@ FORBIDDEN_KEY_SUBSTRINGS = (
     "trade_action",
     "buy_signal",
     "sell_signal",
+    "rank",
+    "buy",
+    "sell",
+    "weight",
+    "pick",
+    "position",
+    "long",
+    "short",
 )
 FORBIDDEN_EXACT_KEYS = frozenset(
     {
@@ -176,6 +206,9 @@ BLOCK_LOOKBACK = "LOOKBACK_UNPARSEABLE"
 BLOCK_PEER_EMPTY = "PEER_COHORT_EMPTY_AT_POINT"
 BLOCK_NOT_NUMERIC = "PIT_VALUE_NOT_NUMERIC"
 BLOCK_STAGE_MANUAL = "STAGE_LADDER_NEEDS_MANUAL_STAGE_INPUT"
+# A stored row whose point-in-time date is NULL cannot be placed relative to
+# any look-back point. It is never an observation; it is counted and reported.
+BLOCK_PIT_DATE_NULL = "PIT_DATE_NULL"
 
 
 class BacktestError(RuntimeError):
@@ -217,6 +250,19 @@ def _date8(value: Any, label: str) -> str:
     return text
 
 
+def _pit_date8(value: Any, context: str) -> str:
+    """Validate one stored point-in-time date before it is ever compared.
+
+    An ISO-dashed ``2021-10-31`` sorts before ``20210930`` and a float-typed
+    ``20210930.0`` sorts after it, so an unvalidated string comparison would
+    leak the first and silently drop the second. Both are refused here.
+    """
+    try:
+        return _date8(value, "pit date")
+    except BacktestError as exc:
+        raise BacktestError(f"non-YYYYMMDD pit date in {context}: {value!r}") from exc
+
+
 def _now_stamp() -> str:
     return datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
 
@@ -256,8 +302,14 @@ def _finite(value: Any) -> float | None:
 def assert_no_future_rows(
     observations: Sequence[Mapping[str, Any]], as_of: str, context: str
 ) -> None:
-    """Refuse loudly; a boundary crossing is never trimmed away in silence."""
-    leaked = sorted({str(item["pit_date"]) for item in observations if str(item["pit_date"]) > as_of})
+    """Refuse loudly; a boundary crossing is never trimmed away in silence.
+
+    Every date is validated as YYYYMMDD before the comparison, so a malformed
+    date can neither hide a crossing nor be mistaken for one.
+    """
+    as_of = _date8(as_of, f"{context} as_of")
+    dates = [_pit_date8(item.get("pit_date"), context) for item in observations]
+    leaked = sorted({date for date in dates if date > as_of})
     if leaked:
         raise PitLeakError(
             f"point-in-time boundary crossed for {context}: as_of={as_of} leaked_dates={leaked}"
@@ -349,6 +401,18 @@ def store_tables(connection: sqlite3.Connection | None) -> frozenset[str]:
     return frozenset(str(row[0]) for row in rows)
 
 
+def null_dated_rows(
+    connection: sqlite3.Connection, table: str, date_column: str, ts_code: str
+) -> int:
+    """Count stored rows for one security whose point-in-time date is NULL.
+
+    Such rows cannot be placed relative to any look-back point. They are never
+    observations; the caller reports them as the ``PIT_DATE_NULL`` data gap.
+    """
+    statement = f'SELECT COUNT(*) FROM "{table}" WHERE ts_code = ? AND "{date_column}" IS NULL'
+    return int(connection.execute(statement, (ts_code,)).fetchone()[0])
+
+
 def pit_rows(
     connection: sqlite3.Connection,
     table: str,
@@ -361,16 +425,24 @@ def pit_rows(
 
     The SQL deliberately carries no date predicate: the point-in-time boundary
     is applied here, in one pinned place, so that removing it is detectable.
+    Every non-NULL stored date is validated as YYYYMMDD *before* that
+    comparison, so a malformed date is an error rather than a leak or a silent
+    drop. NULL-dated rows are excluded here and counted by ``null_dated_rows``.
     """
+    as_of = _date8(as_of, "as_of")
+    context = f"{ts_code}/{table}.{column}[{date_column}]"
     statement = (
         f'SELECT "{date_column}" AS pit_date, "{column}" AS value '
         f'FROM "{table}" WHERE ts_code = ? ORDER BY "{date_column}" ASC, rowid ASC'
     )
     rows = [
-        {"pit_date": str(row[0]), "value": row[1]}
+        {"pit_date": _pit_date8(row[0], context), "value": row[1]}
         for row in connection.execute(statement, (ts_code,)).fetchall()
         if row[0] is not None
     ]
+    # Order by the validated text, not by sqlite storage class (stable sort keeps
+    # the rowid tie-break for equal dates).
+    rows.sort(key=lambda row: row["pit_date"])
     # governance-mutation: CARD_BACKTEST_PIT_BOUND
     bounded = [row for row in rows if row["pit_date"] <= as_of]
     return bounded
@@ -388,16 +460,22 @@ def _observations(
     ts_code: str,
     as_of: str,
     window_floor: str,
-) -> tuple[list[dict[str, Any]], list[str]]:
+) -> tuple[list[dict[str, Any]], list[str], int]:
+    """Return (observations, blocking reason codes, NULL-dated row count).
+
+    The NULL-dated count is a non-blocking data gap: those rows are never
+    observations, and the caller surfaces them as ``PIT_DATE_NULL``.
+    """
     table, column, date_column, _kind = binding
     if connection is None:
-        return [], [BLOCK_STORE_ABSENT]
+        return [], [BLOCK_STORE_ABSENT], 0
     if table not in tables:
-        return [], [BLOCK_TABLE_ABSENT]
+        return [], [BLOCK_TABLE_ABSENT], 0
+    null_dated = null_dated_rows(connection, table, date_column, ts_code)
     rows = pit_rows(connection, table, column, date_column, ts_code, as_of)
     assert_no_future_rows(rows, as_of, f"{ts_code}/{table}.{column}")
     if not rows:
-        return [], [BLOCK_NO_ROWS]
+        return [], [BLOCK_NO_ROWS], null_dated
     windowed = [row for row in rows if row["pit_date"] >= window_floor]
     numeric = [
         {"pit_date": row["pit_date"], "value": _finite(row["value"])}
@@ -406,10 +484,10 @@ def _observations(
     ]
     assert_no_future_rows(numeric, as_of, f"{ts_code}/{table}.{column}")
     if not numeric:
-        return [], [BLOCK_NOT_NUMERIC if windowed else BLOCK_NO_ROWS]
+        return [], [BLOCK_NOT_NUMERIC if windowed else BLOCK_NO_ROWS], null_dated
     if len(numeric) < MIN_PIT_OBSERVATIONS:
-        return numeric, [BLOCK_INSUFFICIENT]
-    return numeric, []
+        return numeric, [BLOCK_INSUFFICIENT], null_dated
+    return numeric, [], null_dated
 
 
 def _card_bindings(card: Mapping[str, Any]) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
@@ -548,11 +626,19 @@ def _evaluate_cell(
     cells: list[dict[str, Any]] = []
     for entry in bindable:
         table, column, date_column, _kind = entry["binding"]
-        observations, reasons = _observations(
+        observations, reasons, null_dated = _observations(
             connection, tables, entry["binding"], ts_code, as_of, floor
         )
         cell_gaps = list(gaps)
         row: Mapping[str, Any] = {}
+        if null_dated:
+            cell_gaps.append(
+                {
+                    "declared_pair": entry["declared_pair"],
+                    "reason": BLOCK_PIT_DATE_NULL,
+                    "null_dated_row_count": null_dated,
+                }
+            )
         if reasons:
             cell_gaps.append({"declared_pair": entry["declared_pair"], "reason": reasons[0]})
         else:
@@ -634,7 +720,7 @@ def _peer_lookup(
                 key = (entry["declared_pair"], months, ts_code)
                 if key in lookup:
                     continue
-                observations, reasons = _observations(
+                observations, reasons, _null_dated = _observations(
                     connection, tables, entry["binding"], ts_code, point["as_of"], floor
                 )
                 lookup[key] = [] if reasons else [float(observations[-1]["value"])]
@@ -835,6 +921,31 @@ def missing_inventory(cells: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]
     return inventory
 
 
+# The only top-level field the verifier does not bind: the rebuild copies the
+# stamp from the payload under test, so it carries no source-derived content.
+VERIFY_UNBOUND_FIELDS = frozenset({"generated_at"})
+
+
+def payload_drift(expected: Mapping[str, Any], actual: Mapping[str, Any]) -> list[str]:
+    """Top-level fields whose canonical JSON differs, ignoring the unbound ones.
+
+    A field present on only one side counts as drift, so an injected or removed
+    top-level key is reported by name rather than passing unnoticed.
+    """
+    names = sorted((set(expected) | set(actual)) - VERIFY_UNBOUND_FIELDS)
+    drifted: list[str] = []
+    for name in names:
+        if name not in expected or name not in actual:
+            drifted.append(name)
+            continue
+        try:
+            if _canonical(expected[name]) != _canonical(actual[name]):
+                drifted.append(name)
+        except (TypeError, ValueError) as exc:
+            raise BacktestError(f"payload field is not canonical JSON: {name}") from exc
+    return drifted
+
+
 def verify_backtest(
     payload: Mapping[str, Any],
     *,
@@ -842,41 +953,59 @@ def verify_backtest(
     db_path: str | Path = DEFAULT_DB,
     registry_path: str | Path = DEFAULT_REGISTRY,
 ) -> dict[str, Any]:
-    """Rebuild every evaluation from the frozen sources and reject any rewrite."""
+    """Rebuild the payload from the frozen sources and reject any rewrite.
+
+    Binding covers the full canonical payload minus ``generated_at`` — status,
+    missing inventory, the three false flags, authority, exclusions, membership,
+    separability table, evaluations and inputs — not only the evaluation cells.
+    The payload under test is also swept for forbidden selection / trade keys
+    before anything is rebuilt.
+    """
     if not isinstance(payload, Mapping):
         raise BacktestError("backtest payload must be an object")
     if payload.get("schema") != BACKTEST_SCHEMA:
         raise BacktestError("backtest schema mismatch")
+    assert_no_forbidden_keys(payload)
     cells = payload.get("evaluations")
     if not isinstance(cells, list):
         raise BacktestError("evaluations must be an array")
     if payload.get("evaluations_hash") != canonical_hash(cells):
         raise BacktestError("evaluations hash mismatch")
+    inputs = payload.get("inputs")
+    if not isinstance(inputs, Mapping):
+        raise BacktestError("inputs must be an object")
+    points = inputs.get("look_back_points")
+    cohort = inputs.get("cohort")
+    if (
+        not isinstance(points, list)
+        or not isinstance(cohort, list)
+        or not all(isinstance(point, Mapping) for point in points)
+        or not all(
+            isinstance(item, Mapping) and "ts_code" in item and "name" in item for item in cohort
+        )
+    ):
+        raise BacktestError("inputs.look_back_points and inputs.cohort must be well-formed arrays")
     rebuilt = build_backtest(
         cards_path=cards_path,
         db_path=db_path,
         registry_path=registry_path,
         generated_at=str(payload.get("generated_at")),
-        points=tuple(
-            {str(k): str(v) for k, v in dict(point).items()}
-            for point in payload["inputs"]["look_back_points"]
-        ),
-        cohort=tuple(
-            (str(item["ts_code"]), str(item["name"]))
-            for item in payload["inputs"]["cohort"]
-        ),
+        points=tuple({str(k): str(v) for k, v in point.items()} for point in points),
+        cohort=tuple((str(item["ts_code"]), str(item["name"])) for item in cohort),
     )
-    if rebuilt["evaluations"] != cells:
-        raise BacktestError("evaluations differ from source-derived result")
-    if rebuilt["separability_table"] != payload.get("separability_table"):
-        raise BacktestError("separability table differs from source-derived result")
-    if rebuilt["inputs"]["cards_hash"] != payload["inputs"]["cards_hash"]:
+    if rebuilt["inputs"]["cards_hash"] != inputs.get("cards_hash"):
         raise BacktestError("knowledge card table hash drifted")
+    drift = payload_drift(rebuilt, payload)
+    if drift:
+        raise BacktestError(
+            "payload differs from source-derived result at: " + ", ".join(drift)
+        )
     return {
         "ok": True,
         "evaluation_count": len(cells),
         "evaluations_hash": payload["evaluations_hash"],
         "status": payload.get("status"),
+        "bound_fields": sorted(set(rebuilt) - VERIFY_UNBOUND_FIELDS),
     }
 
 
@@ -943,6 +1072,39 @@ def _selftest() -> int:
         payload = build_backtest(db_path=db, generated_at="19700101T000000Z")
         verify_backtest(payload, db_path=db)
         checks.append("verify_round_trip")
+        tampered = dict(payload)
+        tampered["status"] = "MEASURED_ALL_CLEAR"
+        try:
+            verify_backtest(tampered, db_path=db)
+        except BacktestError:
+            checks.append("verify_binds_full_payload")
+        else:
+            print("SELFTEST FAIL: top-level status rewrite passed verification", file=sys.stderr)
+            return 1
+        connection = sqlite3.connect(str(db))
+        connection.execute(
+            f'INSERT INTO "{FUNDAMENTAL_TABLE}" (ts_code, as_of, ann_date, roe) VALUES (?,?,?,?)',
+            ("300054.SZ", None, None, 1.0),
+        )
+        connection.commit()
+        if null_dated_rows(connection, FUNDAMENTAL_TABLE, "ann_date", "300054.SZ") != 1:
+            print("SELFTEST FAIL: NULL-dated row was not counted", file=sys.stderr)
+            return 1
+        checks.append("null_dated_counted")
+        connection.execute(
+            f'INSERT INTO "{FUNDAMENTAL_TABLE}" (ts_code, as_of, ann_date, roe) VALUES (?,?,?,?)',
+            ("300054.SZ", "2019-12-31", "2019-12-31", 1.0),
+        )
+        connection.commit()
+        try:
+            pit_rows(connection, FUNDAMENTAL_TABLE, "roe", "ann_date", "300054.SZ", "20191231")
+        except BacktestError:
+            checks.append("pit_date_validated")
+        else:
+            print("SELFTEST FAIL: ISO-dashed pit date was accepted", file=sys.stderr)
+            return 1
+        finally:
+            connection.close()
         try:
             assert_no_forbidden_keys({"nested": [{"buy": 1}]})
         except BacktestError:

@@ -116,15 +116,33 @@ class PointInTimeBoundTests(unittest.TestCase):
         backtest.assert_no_future_rows([{"pit_date": "20210930"}], "20210930", "fixture")
 
     def test_shifting_as_of_one_day_earlier_changes_the_result_or_blocks(self) -> None:
-        """Leakage probe: a card that peeked would be indifferent to the shift."""
+        """Leakage probe (WO-B4 acceptance ②): a card that peeked is indifferent to the shift.
+
+        The shift probe discriminates only when a disclosure sits exactly on the
+        boundary day: moving as_of one day earlier then drops that disclosure, so
+        the result must change or block. When the latest disclosure is earlier
+        than the boundary, the shifted evaluation legitimately sees the same rows
+        and the probe is silent. This fixture places a row on the boundary day
+        and one row dated as_of + 1 day; the latter must never be observed.
+        """
         with tempfile.TemporaryDirectory() as raw:
             tmp = Path(raw)
-            db = _fundamentals_db(tmp, _rising_series(ALWAYS_LISTED, QUARTERS))
+            db = _fundamentals_db(
+                tmp,
+                _rising_series(ALWAYS_LISTED, QUARTERS) + [(ALWAYS_LISTED, "20220101", 99.0)],
+            )
             registry = _registry(
                 tmp, [{"ts_code": ALWAYS_LISTED, "list_date": "20100211", "delist_date": None}]
             )
             on_point = self._cells(db, registry, "20211231")
             one_day_earlier = self._cells(db, registry, "20211230")
+            connection = sqlite3.connect(str(db))
+            try:
+                bounded = backtest.pit_rows(
+                    connection, FUNDAMENTAL_TABLE, "roe", "ann_date", ALWAYS_LISTED, "20211231"
+                )
+            finally:
+                connection.close()
         key = (ALWAYS_LISTED, "SEMI_MAT_013", "fina_indicator.roe")
         self.assertIn(key, on_point)
         self.assertIn(key, one_day_earlier)
@@ -139,6 +157,113 @@ class PointInTimeBoundTests(unittest.TestCase):
         )
         self.assertEqual("20211231", before["pit_latest_date"])
         self.assertEqual("20210930", after["pit_latest_date"])
+        # The as_of + 1 day row is excluded everywhere: the pinned read, the
+        # observation count, and the latest observed date.
+        self.assertNotIn("20220101", [row["pit_date"] for row in bounded])
+        in_window = [day for day in QUARTERS if day >= before["pit_window_start"]]
+        self.assertEqual(len(in_window), before["pit_observation_count"])
+        self.assertNotIn(99.0, [row["value"] for row in bounded])
+
+    def test_dashed_future_row_is_refused_not_leaked(self) -> None:
+        """An ISO-dashed '2021-10-31' sorts before '20210930'; it must error, never leak."""
+        with tempfile.TemporaryDirectory() as raw:
+            tmp = Path(raw)
+            db = _fundamentals_db(
+                tmp,
+                _rising_series(ALWAYS_LISTED, ["20210331", "20210630", "20210930"])
+                + [(ALWAYS_LISTED, "2021-10-31", 4.0)],
+            )
+            connection = sqlite3.connect(str(db))
+            try:
+                with self.assertRaisesRegex(backtest.BacktestError, "non-YYYYMMDD pit date") as ctx:
+                    backtest.pit_rows(
+                        connection, FUNDAMENTAL_TABLE, "roe", "ann_date", ALWAYS_LISTED, "20210930"
+                    )
+            finally:
+                connection.close()
+            self.assertNotIsInstance(ctx.exception, backtest.PitLeakError)
+            registry = _registry(
+                tmp, [{"ts_code": ALWAYS_LISTED, "list_date": "20100211", "delist_date": None}]
+            )
+            # End to end the whole run refuses rather than publishing a leaked cell.
+            with self.assertRaisesRegex(backtest.BacktestError, "non-YYYYMMDD pit date"):
+                self._cells(db, registry, "20210930")
+
+    def test_float_typed_boundary_row_is_refused_not_silently_dropped(self) -> None:
+        """A float 20210930.0 stringifies past the boundary; it must error, never vanish."""
+        with tempfile.TemporaryDirectory() as raw:
+            tmp = Path(raw)
+            db = _fundamentals_db(
+                tmp,
+                _rising_series(ALWAYS_LISTED, ["20210331", "20210630"])
+                + [(ALWAYS_LISTED, 20210930.0, 3.0)],
+            )
+            connection = sqlite3.connect(str(db))
+            try:
+                with self.assertRaisesRegex(backtest.BacktestError, "non-YYYYMMDD pit date"):
+                    backtest.pit_rows(
+                        connection, FUNDAMENTAL_TABLE, "roe", "ann_date", ALWAYS_LISTED, "20210930"
+                    )
+            finally:
+                connection.close()
+
+    def test_null_dated_row_is_a_counted_gap_not_an_observation(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            tmp = Path(raw)
+            db = _fundamentals_db(
+                tmp, _rising_series(ALWAYS_LISTED, QUARTERS) + [(ALWAYS_LISTED, None, 42.0)]
+            )
+            registry = _registry(
+                tmp, [{"ts_code": ALWAYS_LISTED, "list_date": "20100211", "delist_date": None}]
+            )
+            connection = sqlite3.connect(str(db))
+            try:
+                self.assertEqual(
+                    1, backtest.null_dated_rows(connection, FUNDAMENTAL_TABLE, "ann_date", ALWAYS_LISTED)
+                )
+                bounded = backtest.pit_rows(
+                    connection, FUNDAMENTAL_TABLE, "roe", "ann_date", ALWAYS_LISTED, "20211231"
+                )
+            finally:
+                connection.close()
+            payload = backtest.build_backtest(
+                cards_path=COMMITTED_CARDS,
+                db_path=db,
+                registry_path=registry,
+                generated_at=STAMP,
+                points=({"point_id": "P20211231", "as_of": "20211231", "cycle_label": "TOP"},),
+                cohort=((ALWAYS_LISTED, "鼎龙股份"),),
+            )
+        self.assertNotIn(42.0, [row["value"] for row in bounded])
+        self.assertEqual(QUARTERS, [row["pit_date"] for row in bounded])
+        cell = [
+            cell
+            for cell in payload["evaluations"]
+            if cell["card_id"] == "SEMI_MAT_013" and cell["declared_pair"] == "fina_indicator.roe"
+        ][0]
+        self.assertEqual("COMPLETE", cell["evaluation"]["status"])
+        in_window = [day for day in QUARTERS if day >= cell["pit_window_start"]]
+        self.assertEqual(len(in_window), cell["pit_observation_count"])
+        null_gaps = [gap for gap in cell["data_gaps"] if gap["reason"] == backtest.BLOCK_PIT_DATE_NULL]
+        self.assertEqual(1, len(null_gaps))
+        self.assertEqual("PIT_DATE_NULL", null_gaps[0]["reason"])
+        self.assertEqual(1, null_gaps[0]["null_dated_row_count"])
+        self.assertEqual("fina_indicator.roe", null_gaps[0]["declared_pair"])
+        inventory = [
+            entry
+            for entry in payload["missing_inventory"]
+            if entry["card_id"] == "SEMI_MAT_013" and entry["reason"] == "PIT_DATE_NULL"
+        ]
+        self.assertTrue(inventory, "NULL-dated row was dropped silently")
+
+    def test_future_row_guard_validates_dates_before_comparing(self) -> None:
+        for bad in ("2021-10-31", 20210930.0, None, ""):
+            with self.subTest(pit_date=bad):
+                with self.assertRaisesRegex(backtest.BacktestError, "non-YYYYMMDD pit date") as ctx:
+                    backtest.assert_no_future_rows([{"pit_date": bad}], "20210930", "fixture")
+                self.assertNotIsInstance(ctx.exception, backtest.PitLeakError)
+        with self.assertRaises(backtest.BacktestError):
+            backtest.assert_no_future_rows([{"pit_date": "20210930"}], "2021-09-30", "fixture")
 
     @staticmethod
     def _cells(db: Path, registry: Path, as_of: str) -> dict:
@@ -188,6 +313,77 @@ class RecomputeTests(unittest.TestCase):
                 backtest.verify_backtest(
                     tampered, cards_path=COMMITTED_CARDS, db_path=db, registry_path=registry
                 )
+
+    def test_verify_binds_the_full_payload_not_only_the_cells(self) -> None:
+        """Each top-level rewrite fails with its own reason; a nested rank key is refused."""
+        with tempfile.TemporaryDirectory() as raw:
+            tmp = Path(raw)
+            db = _fundamentals_db(tmp, _rising_series(ALWAYS_LISTED, QUARTERS))
+            registry = _registry(
+                tmp, [{"ts_code": ALWAYS_LISTED, "list_date": "20100211", "delist_date": None}]
+            )
+            payload = backtest.build_backtest(
+                cards_path=COMMITTED_CARDS,
+                db_path=db,
+                registry_path=registry,
+                generated_at=STAMP,
+                points=({"point_id": "P20211231", "as_of": "20211231", "cycle_label": "TOP"},),
+                cohort=((ALWAYS_LISTED, "鼎龙股份"),),
+            )
+            receipt = backtest.verify_backtest(
+                payload, cards_path=COMMITTED_CARDS, db_path=db, registry_path=registry
+            )
+            self.assertTrue(receipt["ok"])
+            for name in (
+                "status", "missing_inventory", "thresholds_validated",
+                "thresholds_tuned_by_this_run", "returns_computed", "authority",
+                "excluded_securities", "point_membership", "separability_table",
+                "evaluations", "inputs",
+            ):
+                self.assertIn(name, receipt["bound_fields"])
+            self.assertNotIn("generated_at", receipt["bound_fields"])
+
+            def tamper_status(doc: dict) -> None:
+                doc["status"] = "MEASURED_ALL_CLEAR"
+
+            def tamper_authority(doc: dict) -> None:
+                doc["authority"]["selection"] = True
+
+            def tamper_thresholds(doc: dict) -> None:
+                doc["thresholds_validated"] = True
+
+            def tamper_inventory(doc: dict) -> None:
+                doc["missing_inventory"] = []
+
+            def tamper_nested_rank(doc: dict) -> None:
+                doc["separability_table"][0]["rank"] = 1
+
+            expected_reasons = {
+                "status": "at: status",
+                "authority": "at: authority",
+                "thresholds_validated": "at: thresholds_validated",
+                "missing_inventory": "at: missing_inventory",
+                "nested_rank": "forbidden output key at $.separability_table[0]: rank",
+            }
+            tampers = {
+                "status": tamper_status,
+                "authority": tamper_authority,
+                "thresholds_validated": tamper_thresholds,
+                "missing_inventory": tamper_inventory,
+                "nested_rank": tamper_nested_rank,
+            }
+            reasons: dict[str, str] = {}
+            for label, tamper in tampers.items():
+                with self.subTest(tamper=label):
+                    tampered = json.loads(json.dumps(payload))
+                    tamper(tampered)
+                    with self.assertRaises(backtest.BacktestError) as ctx:
+                        backtest.verify_backtest(
+                            tampered, cards_path=COMMITTED_CARDS, db_path=db, registry_path=registry
+                        )
+                    reasons[label] = str(ctx.exception)
+                    self.assertIn(expected_reasons[label], reasons[label])
+        self.assertEqual(len(tampers), len(set(reasons.values())), reasons)
 
     def test_every_evaluation_carries_the_reviewed_card_hash(self) -> None:
         cards = knowledge_cards.load_cards(COMMITTED_CARDS)
@@ -378,6 +574,64 @@ class BoundaryTests(unittest.TestCase):
                 },
                 set(row),
             )
+
+    def test_forbidden_key_stems_catch_selection_vocabulary_but_not_payload_keys(self) -> None:
+        for legit in (
+            "pit_window_start", "report_period", "cycle_label", "excluded_securities",
+            "pit_latest_date", "percentile_unvalidated", "declared_pair", "block_reason_codes",
+        ):
+            with self.subTest(key=legit):
+                backtest.assert_no_forbidden_keys({legit: 1, "nested": [{legit: []}]})
+        for caught in (
+            "ranked", "buy_list", "top_pick", "position_size_x", "weight", "long", "short",
+            "sell_now", "Rank", "selection",
+        ):
+            with self.subTest(key=caught):
+                with self.assertRaises(backtest.BacktestError):
+                    backtest.assert_no_forbidden_keys({"outer": [{caught: 1}]})
+        backtest.assert_no_forbidden_keys({"authority": {"selection": False}})
+        with self.assertRaises(backtest.BacktestError):
+            backtest.assert_no_forbidden_keys({"authority": {"trade": {"selection": False}}})
+        # The committed payload shape passes on both the blocked and the measured path.
+        with tempfile.TemporaryDirectory() as raw:
+            tmp = Path(raw)
+            blocked = backtest.build_backtest(
+                cards_path=COMMITTED_CARDS,
+                db_path=tmp / "absent.sqlite3",
+                registry_path=COMMITTED_REGISTRY,
+                generated_at=STAMP,
+            )
+            db = _fundamentals_db(tmp, _rising_series(ALWAYS_LISTED, QUARTERS))
+            registry = _registry(
+                tmp, [{"ts_code": ALWAYS_LISTED, "list_date": "20100211", "delist_date": None}]
+            )
+            measured = backtest.build_backtest(
+                cards_path=COMMITTED_CARDS,
+                db_path=db,
+                registry_path=registry,
+                generated_at=STAMP,
+                cohort=((ALWAYS_LISTED, "鼎龙股份"),),
+            )
+        self.assertEqual("DATA_BLOCKED", blocked["status"])
+        self.assertGreater(sum(row["measurable_count"] for row in measured["separability_table"]), 0)
+        backtest.assert_no_forbidden_keys(blocked)
+        backtest.assert_no_forbidden_keys(measured)
+
+    def test_expected_side_provenance_cites_the_brief_verbatim(self) -> None:
+        self.assertIn("CODEX_WORK_ORDERS_20260902.md", backtest.EXPECTED_SIDE_PROVENANCE)
+        self.assertIn("WO-B4", backtest.EXPECTED_SIDE_PROVENANCE)
+        self.assertIn(backtest.EXPECTED_SIDE_SOURCE_EXCERPT, backtest.EXPECTED_SIDE_PROVENANCE)
+        self.assertEqual(
+            "2021Q3 应集中出现 卡13 z>+1 / 卡7 CI 高 / 卡2 毛利率同比转负 / 卡23 分位>90%;2019/2023 应相反",
+            backtest.EXPECTED_SIDE_SOURCE_EXCERPT,
+        )
+        self.assertEqual(
+            {"SEMI_MAT_002", "SEMI_MAT_007", "SEMI_MAT_013", "SEMI_MAT_023"},
+            set(backtest.EXPECTED_SIDE),
+        )
+        for card_id, sides in backtest.EXPECTED_SIDE.items():
+            with self.subTest(card_id=card_id):
+                self.assertNotEqual(sides["TOP"], sides["BOTTOM"], "2019/2023 应相反")
 
     def test_card_thresholds_and_content_are_never_rewritten(self) -> None:
         before = COMMITTED_CARDS.read_bytes()
