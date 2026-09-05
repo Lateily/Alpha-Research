@@ -1,0 +1,29 @@
+name: nonprod-workbench-ui
+on:
+  pull_request:
+    paths:
+      - "tools/nonprod_workbench/**"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/nonprod-workbench-ci.yml"
+  push:
+    branches: [main]
+    paths:
+      - "tools/nonprod_workbench/**"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/nonprod-workbench-ci.yml"
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - run: node node_modules/vite/bin/vite.js build --config tools/nonprod_workbench/vite.config.js

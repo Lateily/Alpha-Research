@@ -1,0 +1,22 @@
+{
+  "schema": "ai-task.v1",
+  "task_id": "CLOUD-NONPROD-WORKBENCH-001",
+  "source_issue": null,
+  "architecture_block": ["team-ai-workspace", "aios-provider-gateway"],
+  "objective": "Deliver a local nonproduction workbench with a DeepSeek-only offline gateway, deployment readiness evidence and hard-denied team, paid-call and production capabilities.",
+  "non_goals": ["No cloud provisioning or transfer", "No production cutover", "No live inference", "No team grants or human authentication claims", "No changes to research engines"],
+  "human_owner": "Junyan",
+  "reviewer": "Junyan",
+  "executor_candidates": ["Codex"],
+  "dependencies": [],
+  "authority_docs": ["AGENTS.md", "docs/team/TEAM_AI_WORKSPACE_V1.md", "scripts/llm/AGENTS.md"],
+  "file_scope": ["scripts/llm/nonprod_workbench.py", "scripts/llm/fixtures/cloud_nonprod_workbench_v1.task.json", "tools/nonprod_workbench", "tests/test_nonprod_workbench.py", "scripts/governance_mutation_gate.py", ".github/workflows/python-ci.yml", ".github/workflows/nonprod-workbench-ci.yml", "docs/team/NONPROD_WORKBENCH_V1.md"],
+  "forbidden_scope": ["experiments", "api", "public", "web", "data_history", "production runtime", "launchd", "cloud resource mutation"],
+  "input_contracts": ["scripts/llm/schemas/task.schema.json", "scripts/llm/adapters/base.py"],
+  "output_artifacts": ["Loopback-only workbench", "Offline gateway receipts", "Deployment audit and cutover runbook", "Behavior tests and mutation pins"],
+  "acceptance_tests": ["python3 tests/test_nonprod_workbench.py", "python3 scripts/governance_mutation_gate.py", "python3 /Users/years/Desktop/Stock/e2e-twin/twin-20260902/tools/ci_local.py", "node node_modules/vite/bin/vite.js build --config tools/nonprod_workbench/vite.config.js", "Desktop/mobile browser acceptance", "git diff --check"],
+  "risk_level": "MEDIUM",
+  "network_policy": "OFFLINE",
+  "budget": {"max_cny": "0", "max_minutes": 180},
+  "approval_gates": ["INDEPENDENT_REVIEW", "JUNYAN_MERGE", "SEPARATE_CLOUD_ACCOUNT_REGION_BUDGET_DESTINATION_APPROVAL", "SEPARATE_CUTOVER_APPROVAL"]
+}
