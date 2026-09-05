@@ -108,6 +108,10 @@ jobs:
         run: |
           python3 tests/test_nonprod_workbench.py
           python3 scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/cloud_nonprod_workbench_v1.task.json
+      - name: Local research replay boundaries (offline, subprocess guard)
+        run: |
+          python3 tests/test_workbench_research.py
+          python3 scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/local_research_replay.task.json
       # AIOS-K1:A-006/A-007/A-008 任务合同、状态重放、只读对账
       - name: AIOS K1 task registry regression (offline)
         run: python3 tests/test_ai_os_k1_offline.py

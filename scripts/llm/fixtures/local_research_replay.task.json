@@ -1,0 +1,22 @@
+{
+  "schema": "ai-task.v1",
+  "task_id": "LOCAL-RESEARCH-REPLAY-001",
+  "source_issue": null,
+  "architecture_block": ["team-ai-workspace", "research-closure"],
+  "objective": "Connect the loopback workbench to a fixed offline research fixture replay with stage evidence, fail-closed stopping and downloadable sandbox artifacts.",
+  "non_goals": ["No production or cloud writes", "No network or paid model calls", "No real stock selection or human approval", "No changes to research engines", "No real-time data or claims of prospective performance"],
+  "human_owner": "Junyan",
+  "reviewer": "Junyan",
+  "executor_candidates": ["Codex"],
+  "dependencies": ["CLOUD-NONPROD-WORKBENCH-001"],
+  "authority_docs": ["AGENTS.md", "scripts/llm/AGENTS.md", "docs/research/RESEARCH_CLOSURE_EXPERIMENT.md", "docs/team/NONPROD_WORKBENCH_V1.md"],
+  "file_scope": ["scripts/llm/nonprod_workbench.py", "scripts/llm/workbench_research.py", "scripts/llm/fixtures/local_research_replay.task.json", "tools/nonprod_workbench", "tests/test_workbench_research.py", "scripts/governance_mutation_gate.py", ".github/workflows/python-ci.yml", "docs/team/NONPROD_WORKBENCH_V1.md"],
+  "forbidden_scope": ["experiments", "api", "public", "web", "production runtime", "cloud mutations", "real ledgers"],
+  "input_contracts": ["ar.research_funnel_bundle", "research_cycle fixed offline contracts"],
+  "output_artifacts": ["Versioned stage receipt", "Isolated replay artifacts", "Workbench research view", "Offline tests and mutation pins"],
+  "acceptance_tests": ["python3 tests/test_workbench_research.py", "python3 scripts/governance_mutation_gate.py", "python3 /Users/years/Desktop/Stock/e2e-twin/twin-20260902/tools/ci_local.py", "node node_modules/vite/bin/vite.js build --config tools/nonprod_workbench/vite.config.js", "Desktop/mobile browser replay and stop path", "git diff --check"],
+  "risk_level": "MEDIUM",
+  "network_policy": "OFFLINE",
+  "budget": {"max_cny": "0", "max_minutes": 180},
+  "approval_gates": ["INDEPENDENT_REVIEW", "JUNYAN_MERGE", "NO_DEPLOYMENT_OR_PAID_CALL_AUTHORITY"]
+}
