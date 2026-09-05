@@ -4,6 +4,16 @@
 The store is research infrastructure only. It persists batch market facts and
 deterministic features; it does not rank securities or produce trade actions.
 One trade date is committed atomically across all required Tushare endpoints.
+
+Store schema v2 (WO-X1-B): ``features_daily`` additionally carries the raw,
+unadjusted ``open``/``high``/``low``/``pct_chg`` copied from ``raw_daily`` of the
+same (ts_code, trade_date).  NULL stays NULL (never 0).  ``initialize`` migrates
+a v1 store in one transaction (``ALTER TABLE ... ADD COLUMN`` per missing column,
+then meta ``schema_version`` -> "2").  Rows derived under v1 are NOT backfilled:
+their ``input_hash`` predates the columns, and rewriting it would break the
+derive-not-accept contract, so they keep NULL and the public health receipt says
+``store.features_daily_ohlc_backfilled: false``.  The four values enter no
+judgment path; they exist for downstream shape/structure work only.
 """
 
 from __future__ import annotations
@@ -36,7 +46,10 @@ import semiconductor_extended_sources as semiconductor_extended
 
 SCHEMA = "ar.feature_store_health"
 SCHEMA_VERSION = "1.0"
-STORE_SCHEMA_VERSION = "1"
+STORE_SCHEMA_VERSION = "2"
+STORE_SCHEMA_VERSION_V1 = "1"
+# Raw (unadjusted) daily fields copied into features_daily since store schema v2.
+OHLC_COLUMNS = ("open", "high", "low", "pct_chg")
 ENDPOINT_FIELDS = {
     "daily": (
         "ts_code,trade_date,open,high,low,close,pre_close,pct_chg,vol,amount"
@@ -215,6 +228,7 @@ def initialize(conn: sqlite3.Connection) -> None:
           pe_ttm REAL, pb REAL, total_mv_cny REAL, circ_mv_cny REAL,
           price_observations INTEGER NOT NULL,
           input_hash TEXT NOT NULL,
+          open REAL, high REAL, low REAL, pct_chg REAL,
           PRIMARY KEY (ts_code, trade_date)
         );
         CREATE INDEX IF NOT EXISTS idx_daily_date ON raw_daily(trade_date);
@@ -227,11 +241,67 @@ def initialize(conn: sqlite3.Connection) -> None:
             "INSERT INTO store_meta(key,value) VALUES('schema_version',?)",
             (STORE_SCHEMA_VERSION,),
         )
-    elif current["value"] != STORE_SCHEMA_VERSION:
+    elif current["value"] == STORE_SCHEMA_VERSION_V1:
+        _migrate_features_daily_v1_to_v2(conn)
+    elif current["value"] == STORE_SCHEMA_VERSION:
+        missing = _missing_ohlc_columns(conn)
+        if missing:
+            raise FeatureStoreError(
+                f"store schema v{STORE_SCHEMA_VERSION} is missing features_daily columns: {missing}"
+            )
+    else:
         raise FeatureStoreError(
             f"store schema mismatch: expected={STORE_SCHEMA_VERSION} actual={current['value']}"
         )
     semiconductor_evidence.initialize(conn)
+
+
+def _missing_ohlc_columns(conn: sqlite3.Connection) -> list[str]:
+    present = {
+        str(row[1]) for row in conn.execute("PRAGMA table_info(features_daily)").fetchall()
+    }
+    return [column for column in OHLC_COLUMNS if column not in present]
+
+
+def _migrate_features_daily_v1_to_v2(conn: sqlite3.Connection) -> None:
+    """Add the raw OHLC columns to a v1 store in one transaction; never backfill.
+
+    Existing rows keep NULL in the new columns because their ``input_hash`` was
+    computed before the columns existed; a later derivation binds them.  The
+    write lock is taken first and the version is re-read inside it so that
+    concurrent initializers cannot both migrate.
+    """
+    owns_transaction = not conn.in_transaction
+    if owns_transaction:
+        conn.execute("BEGIN IMMEDIATE")
+    try:
+        current = conn.execute(
+            "SELECT value FROM store_meta WHERE key='schema_version'"
+        ).fetchone()
+        if current is not None and current["value"] == STORE_SCHEMA_VERSION:
+            if _missing_ohlc_columns(conn):
+                raise FeatureStoreError("concurrent migration left features_daily incomplete")
+            if owns_transaction:
+                conn.execute("COMMIT")
+            return
+        if current is None or current["value"] != STORE_SCHEMA_VERSION_V1:
+            raise FeatureStoreError(
+                "store schema mismatch during migration: "
+                f"expected={STORE_SCHEMA_VERSION_V1} "
+                f"actual={current['value'] if current is not None else None}"
+            )
+        for column in _missing_ohlc_columns(conn):
+            conn.execute(f"ALTER TABLE features_daily ADD COLUMN {column} REAL")
+        conn.execute(
+            "UPDATE store_meta SET value=? WHERE key='schema_version'",
+            (STORE_SCHEMA_VERSION,),
+        )
+        if owns_transaction:
+            conn.execute("COMMIT")
+    except Exception:
+        if owns_transaction and conn.in_transaction:
+            conn.execute("ROLLBACK")
+        raise
 
 
 def _semiconductor_health_summary(
@@ -281,6 +351,7 @@ def _derive_date(conn: sqlite3.Connection, trade_date: str) -> int:
     current = conn.execute(
         """
         SELECT d.ts_code, d.trade_date, d.close, d.amount_cny,
+               d.open, d.high, d.low, d.pct_chg,
                a.adj_factor, b.turnover_rate, b.volume_ratio, b.pe_ttm, b.pb,
                b.total_mv_cny, b.circ_mv_cny
         FROM raw_daily d
@@ -329,16 +400,22 @@ def _derive_date(conn: sqlite3.Connection, trade_date: str) -> int:
             "total_mv_cny": row["total_mv_cny"],
             "circ_mv_cny": row["circ_mv_cny"],
             "price_observations": len(prices),
+            # Raw, unadjusted; NULL in raw_daily stays NULL here (never 0).
+            "open": row["open"],
+            "high": row["high"],
+            "low": row["low"],
+            "pct_chg": row["pct_chg"],
         }
-        values["input_hash"] = _hash(
-            {
-                "history": [dict(item) for item in history],
-                "current": {key: values[key] for key in (
-                    "amount_cny", "turnover_rate", "volume_ratio", "pe_ttm", "pb",
-                    "total_mv_cny", "circ_mv_cny",
-                )},
-            }
-        )
+        # governance-mutation: FEATURES_DAILY_OHLC_HASH_BOUND
+        hashed_payload = {
+            "ohlc": {key: values[key] for key in OHLC_COLUMNS},
+            "history": [dict(item) for item in history],
+            "current": {key: values[key] for key in (
+                "amount_cny", "turnover_rate", "volume_ratio", "pe_ttm", "pb",
+                "total_mv_cny", "circ_mv_cny",
+            )},
+        }
+        values["input_hash"] = _hash(hashed_payload)
         columns = list(values)
         conn.execute(
             f"INSERT INTO features_daily ({','.join(columns)}) VALUES "
@@ -514,6 +591,7 @@ def build_health(
                 "required_endpoints": list(ENDPOINT_FIELDS),
                 "date_commit_policy": "ALL_REQUIRED_ENDPOINTS_ATOMIC",
                 "source_revision_policy": "REJECT_REQUIRES_MIGRATION",
+                "features_daily_ohlc_backfilled": False,
             },
             "coverage": {
                 "committed_dates": conn.execute(
@@ -868,6 +946,9 @@ def _selftest() -> int:
         ).fetchone()["input_hash"]
         conn.close()
         assert feature["return_20d"] is not None and feature["price_observations"] == 21
+        assert (feature["open"], feature["high"], feature["low"], feature["pct_chg"]) == (
+            17.0, 17.0, 17.0, 0.0,
+        ), feature
 
         revised = _fixture(dates[-1], 18.0, 2.0)
         try:
@@ -913,6 +994,21 @@ def _selftest() -> int:
             raise AssertionError("daily/adj code-set mismatch was accepted")
         except FeatureStoreError as exc:
             assert "lack adj_factor" in str(exc)
+
+        ohlc_db = Path(tmp) / "ohlc.sqlite3"
+        sparse = _fixture("20260101", 12.0, 1.0)
+        sparse["daily"][0].update({"open": None, "high": "", "low": 11.5, "pct_chg": -1.25})
+        ingest_trade_date(ohlc_db, "20260101", sparse, eligible, universe_hash)
+        conn = _connect(ohlc_db)
+        assert conn.execute(
+            "SELECT value FROM store_meta WHERE key='schema_version'"
+        ).fetchone()["value"] == STORE_SCHEMA_VERSION
+        sparse_feature = dict(conn.execute(
+            "SELECT * FROM features_daily WHERE trade_date='20260101'"
+        ).fetchone())
+        conn.close()
+        assert sparse_feature["open"] is None and sparse_feature["high"] is None, sparse_feature
+        assert (sparse_feature["low"], sparse_feature["pct_chg"]) == (11.5, -1.25), sparse_feature
 
         split_db = Path(tmp) / "split.sqlite3"
         ingest_trade_date(split_db, "20260101", _fixture("20260101", 10, 1), eligible, universe_hash)
@@ -1003,7 +1099,7 @@ def _selftest() -> int:
             raise AssertionError("bad health coverage was accepted")
         except FeatureStoreError:
             pass
-    print("feature_store selftest: 13/13")
+    print("feature_store selftest: 14/14")
     return 0
 
 

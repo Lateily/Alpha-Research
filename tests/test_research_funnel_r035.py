@@ -153,7 +153,10 @@ class R035Fixture:
             );
             """
         )
-        conn.execute("INSERT INTO store_meta VALUES('schema_version','1')")
+        conn.execute(
+            "INSERT INTO store_meta VALUES('schema_version',?)",
+            (r035.feature_store_contract.STORE_SCHEMA_VERSION,),
+        )
         conn.executemany(
             "INSERT INTO source_batches VALUES(?,?,?,?,?,?)",
             [
