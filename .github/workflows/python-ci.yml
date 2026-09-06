@@ -112,6 +112,10 @@ jobs:
         run: |
           python3 tests/test_workbench_research.py
           python3 scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/local_research_replay.task.json
+      - name: Local workspace evidence and commands (offline)
+        run: |
+          python3 tests/test_workbench_workspace.py
+          python3 scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/local_workspace_system.task.json
       # AIOS-K1:A-006/A-007/A-008 任务合同、状态重放、只读对账
       - name: AIOS K1 task registry regression (offline)
         run: python3 tests/test_ai_os_k1_offline.py

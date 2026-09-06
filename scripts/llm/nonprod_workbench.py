@@ -7,12 +7,14 @@ nonproduction records, not approvals, research evidence, or formal ledgers.
 from __future__ import annotations
 
 import argparse
+import fcntl
 import hashlib
 import json
 import re
 import secrets
 import sqlite3
 import sys
+import threading
 from http.cookies import SimpleCookie
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -21,6 +23,7 @@ from urllib.parse import urlsplit
 from adapters.base import AgentRequest
 from adapters.deepseek import DEFAULT_MODEL, DeepSeekAdapter
 import workbench_research as research
+import workbench_workspace as workspace
 
 ROOT = Path(__file__).resolve().parents[2]
 PROMPT_VERSION = "workbench_contract_smoke_v1"
@@ -299,6 +302,19 @@ def serve_host(host):
     return host
 
 
+def service_lock(directory):
+    lock = directory / "service.lock"
+    if lock.is_symlink():
+        raise WorkbenchError("SERVICE_LOCK_SYMLINK_REFUSED")
+    handle = lock.open("a+")
+    try:
+        fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except BlockingIOError:
+        handle.close()
+        raise WorkbenchError("WORKSPACE_ALREADY_RUNNING", 409) from None
+    return handle
+
+
 def dispatch(store, path, payload):
     operations = {"/api/gateway/probe": "offline_probe", "/api/deployment-draft": "save_deployment_draft", "/api/research/replay": "research_replay"}
     capability = operations.get(path, "disabled")
@@ -328,7 +344,7 @@ def load_assets(directory):
     return assets
 
 
-def make_handler(store, assets, origin, session):
+def make_handler(store, assets, origin, session, system=None):
     class Handler(BaseHTTPRequestHandler):
         def setup(self):
             super().setup()
@@ -364,12 +380,16 @@ def make_handler(store, assets, origin, session):
                 authorize(self.headers, origin, session)
                 if self.path == "/api/state":
                     self.reply(200, store.snapshot())
+                elif self.path == "/api/workspace" and system is not None:
+                    self.reply(200, system.snapshot())
                 elif self.path in assets:
                     content, mime = assets[self.path]
                     self.reply(200, content, mime)
                 else:
                     raise WorkbenchError("NOT_FOUND", 404)
             except WorkbenchError as exc:
+                self.reply(exc.status, {"error": exc.code})
+            except workspace.WorkspaceError as exc:
                 self.reply(exc.status, {"error": exc.code})
             except Exception:
                 self.reply(500, {"error": "LOCAL_STATE_UNAVAILABLE"})
@@ -381,15 +401,25 @@ def make_handler(store, assets, origin, session):
                 if self.headers.get("Transfer-Encoding") or len(lengths) != 1 or not re.fullmatch(r"[0-9]{1,6}", lengths[0]):
                     raise WorkbenchError("BODY_LENGTH_REQUIRED", 411)
                 size = int(lengths[0])
-                if size > MAX_BODY:
+                if self.path.startswith("/api/workspace/") and size > 65536:
                     raise WorkbenchError("BODY_TOO_LARGE", 413)
+                if size > MAX_BODY:
+                    if not self.path.startswith("/api/workspace/"):
+                        raise WorkbenchError("BODY_TOO_LARGE", 413)
                 if self.headers.get("Content-Type") != "application/json":
                     raise WorkbenchError("JSON_REQUIRED", 415)
                 raw = self.rfile.read(size)
                 if len(raw) != size:
                     raise WorkbenchError("BODY_TRUNCATED")
-                self.reply(200, dispatch(store, self.path, decode_json(raw)))
+                payload = decode_json(raw)
+                if self.path.startswith("/api/workspace/") and system is not None:
+                    result = system.dispatch(self.path, payload)
+                else:
+                    result = dispatch(store, self.path, payload)
+                self.reply(200, result)
             except WorkbenchError as exc:
+                self.reply(exc.status, {"error": exc.code})
+            except workspace.WorkspaceError as exc:
                 self.reply(exc.status, {"error": exc.code})
             except Exception:
                 self.reply(500, {"error": "LOCAL_OPERATION_FAILED"})
@@ -401,23 +431,34 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8766)
+    parser.add_argument("--read-only-source-root", type=Path, help="Local AR root; only a fixed public artifact allowlist is read")
+    parser.add_argument("--state-root", type=Path, help="Dedicated nonproduction state directory, separate from code releases")
     args = parser.parse_args(argv)
     host = serve_host(args.host)
     assets = load_assets(ROOT / "tools/nonprod_workbench/dist")
-    state_root = ROOT / ".ai-workspace/nonprod-workbench"
+    state_root = args.state_root or ROOT / ".ai-workspace/nonprod-workbench"
+    if args.read_only_source_root and (state_root.resolve() == args.read_only_source_root.resolve() or args.read_only_source_root.resolve() in state_root.resolve().parents):
+        raise WorkbenchError("STATE_MUST_BE_OUTSIDE_READ_ONLY_SOURCE")
     if (ROOT / ".ai-workspace").is_symlink():
         raise WorkbenchError("STATE_PARENT_SYMLINK_REFUSED")
     store = Store(state_root)
+    lifetime_lock = service_lock(state_root)
+    system = workspace.Workspace(store, args.read_only_source_root)
     origin = f"http://{host}:{args.port}"
-    server = ThreadingHTTPServer((host, args.port), make_handler(store, assets, origin, secrets.token_hex(32)))
+    server = ThreadingHTTPServer((host, args.port), make_handler(store, assets, origin, secrets.token_hex(32), system))
     server.daemon_threads = True
+    worker = threading.Thread(target=system.scheduler, daemon=True)
+    worker.start()
     print(f"NONPRODUCTION_LOCAL {origin} | team=DENY paid=DENY production=DENY", flush=True)
     try:
         server.serve_forever()
     except KeyboardInterrupt:
         pass
     finally:
+        system.stopping.set()
+        worker.join(timeout=35)
         server.server_close()
+        lifetime_lock.close()
     return 0
 
 

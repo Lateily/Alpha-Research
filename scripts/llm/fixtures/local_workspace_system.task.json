@@ -1,0 +1,22 @@
+{
+  "schema": "ai-task.v1",
+  "task_id": "LOCAL-WORKSPACE-SYSTEM-001",
+  "source_issue": null,
+  "architecture_block": ["team-ai-workspace", "research-closure", "operations"],
+  "objective": "Deliver a local visual research workspace with verified read-only evidence snapshots, versioned research submissions and local review records, durable offline schedules, nightly/macro/funnel/paper views and exportable audit history.",
+  "non_goals": ["No production cutover or writes", "No cloud purchases or production transfers", "No live provider or paid model calls", "No team grants", "No real trading or formal U4/registration approval", "No changes to research engines"],
+  "human_owner": "Junyan",
+  "reviewer": "Junyan",
+  "executor_candidates": ["Codex"],
+  "dependencies": ["LOCAL-RESEARCH-REPLAY-001"],
+  "authority_docs": ["AGENTS.md", "scripts/llm/AGENTS.md", "docs/team/NONPROD_WORKBENCH_V1.md"],
+  "file_scope": ["scripts/llm/nonprod_workbench.py", "scripts/llm/workbench_workspace.py", "scripts/llm/workbench_evidence.py", "scripts/llm/workbench_backup.py", "scripts/llm/fixtures/local_workspace_system.task.json", "tools/nonprod_workbench", "tests/test_workbench_workspace.py", "scripts/governance_mutation_gate.py", ".github/workflows/python-ci.yml", "docs/team/LOCAL_WORKSPACE_SYSTEM_V1.md"],
+  "forbidden_scope": ["experiments", "api", "public", "web", "production runtime", "cloud mutations", "real ledgers"],
+  "input_contracts": ["nightly_current_run/v2", "Versioned public research artifacts", "ar-workbench-state.v1", "Human-authored local research drafts"],
+  "output_artifacts": ["Local workspace UI", "Immutable evidence observations", "Append-only workspace review and schedule events", "Offline execution receipts", "Operating guide and acceptance evidence"],
+  "acceptance_tests": ["python3 tests/test_workbench_workspace.py", "python3 tests/test_nonprod_workbench.py", "python3 tests/test_workbench_research.py", "python3 scripts/governance_mutation_gate.py", "python3 /Users/years/Desktop/Stock/e2e-twin/twin-20260902/tools/ci_local.py", "node node_modules/vite/bin/vite.js build --config tools/nonprod_workbench/vite.config.js", "Desktop/mobile end-to-end workspace verification", "git diff --check"],
+  "risk_level": "MEDIUM",
+  "network_policy": "OFFLINE",
+  "budget": {"max_cny": "0", "max_minutes": 240},
+  "approval_gates": ["INDEPENDENT_REVIEW", "JUNYAN_MERGE", "TEAM_AND_PRODUCTION_ACCESS_REMAIN_DISABLED"]
+}
