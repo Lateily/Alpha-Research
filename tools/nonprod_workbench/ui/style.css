@@ -768,3 +768,17 @@ footer {
     animation: none;
   }
 }
+/* Replay evidence is an unframed audit list, not a predicted research result. */
+.replay-boundary { display: flex; flex-wrap: wrap; gap: 10px 24px; padding: 16px 0; font-size: 12px; color: #606b66; }
+.replay-selected { background: #f1f7f3; }
+.run-link { border: 0; background: transparent; color: #206b4a; text-align: left; padding: 0; font-family: monospace; overflow-wrap: anywhere; max-width: 280px; cursor: pointer; }
+.replay-stages { list-style: none; padding: 0; margin: 0; }
+.replay-stages > li { display: grid; grid-template-columns: 32px minmax(0, 1fr) auto; gap: 14px; padding: 18px 0; border-bottom: 1px solid #e3e7e5; align-items: start; }
+.replay-stages h3 { margin: 0 0 6px; font-size: 14px; }
+.replay-stages code { font-size: 11px; color: #68746e; overflow-wrap: anywhere; }
+.replay-stages details { margin-top: 10px; font-size: 12px; }
+.replay-stages summary { cursor: pointer; color: #206b4a; }
+.replay-stages pre { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 11px; }
+.stop-reason { color: #8f4916; font-size: 13px; overflow-wrap: anywhere; }
+.replay-hash { display: grid; gap: 8px; padding: 18px 0; font-size: 12px; }
+.replay-hash code { overflow-wrap: anywhere; color: #68746e; }
