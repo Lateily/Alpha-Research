@@ -145,6 +145,7 @@ FUNNEL_GOVERNANCE_PATHS = (
     "experiments/research_funnel/semiconductor_preflight_packet.py",
     "experiments/research_funnel/u4_pre_decision.py",
     "experiments/research_funnel/knowledge_cards.py",
+    "experiments/research_funnel/knowledge_card_backtest.py",
     "experiments/research_funnel/feature_store.py",
     "experiments/execution_tracker/event_ledger.py",
     "experiments/execution_tracker/paper_execution_audit.py",
@@ -8026,6 +8027,25 @@ MUTATIONS = MUTATIONS + (
         ),
         expected_failure_marker="test_evaluation_verifier_rejects_result_card_and_envelope_hash_drift",
         rationale="A rehashed display result must still be rebuilt from the reviewed card and frozen source row.",
+    ),
+    MutationCase(
+        mutation_id="CARD_BACKTEST_PIT_BOUND",
+        component="Research funnel knowledge-card look-back point-in-time boundary",
+        source_path="experiments/research_funnel/knowledge_card_backtest.py",
+        test_script="tests/test_knowledge_card_backtest.py",
+        before=(
+            "    # governance-mutation: CARD_BACKTEST_PIT_BOUND\n"
+            '    bounded = [row for row in rows if row["pit_date"] <= as_of]'
+        ),
+        after=(
+            "    # governance-mutation: CARD_BACKTEST_PIT_BOUND\n"
+            "    bounded = list(rows)"
+        ),
+        expected_failure_marker="test_pit_bound_excludes_rows_after_the_look_back_point",
+        rationale=(
+            "A look-back evaluation may only read rows dated at or before its "
+            "look-back point; dropping the boundary lets the card table peek ahead."
+        ),
     ),
 )
 
