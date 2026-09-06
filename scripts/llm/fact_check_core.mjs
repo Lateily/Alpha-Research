@@ -170,7 +170,7 @@ function metricFor(text, path, start, metadata = {}, end = start, numberSpans = 
     ...numberSpans.filter(([spanStart]) => spanStart >= end).map(([spanStart]) => spanStart),
   );
   const following = lower.slice(end, segmentEnd);
-  const followingMetric = () => bestAlias(following, position => (position <= FOLLOWING_ALIAS_REACH ? position : null));
+  const followingMetric = (segment = following) => bestAlias(segment, position => (position <= FOLLOWING_ALIAS_REACH ? position : null));
   // A label that already introduced a growth figure may still introduce the level
   // that follows it ("营收同比增长 20% 至 12.3 亿元") — unless a label right AFTER
   // the level claims it ("gross margin 41.8% on RMB 4.6B revenue"): then the ratio
@@ -178,7 +178,10 @@ function metricFor(text, path, start, metadata = {}, end = start, numberSpans = 
   // governance-mutation: FACT_CHECK_FOLLOWING_LABEL_WINS_ACROSS_RATIO
   const ratioBetween = precedingHit !== null && hasRatioSpanBetween(numberSpans, segmentStart + precedingHit.position + precedingHit.length, start);
   if (precedingMetric && ratioBetween) {
-    const claimedAfter = followingMetric();
+    // A conjunction opens the next clause; its prefix label is not this level's suffix.
+    // governance-mutation: FACT_CHECK_RATIO_SUFFIX_STOPS_AT_CONJUNCTION
+    const suffix = following.split(/\band\b|以及|且/i, 1)[0];
+    const claimedAfter = followingMetric(suffix);
     if (claimedAfter) return claimedAfter;
   }
   // governance-mutation: FACT_CHECK_METRIC_ATTRIBUTION_PRECEDES_NUMBER

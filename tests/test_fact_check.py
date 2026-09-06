@@ -132,6 +132,152 @@ def _source_payload(text: str, *, source_date: str = SOURCE_DATE) -> list[tuple[
     return [({"source_date": source_date, "filing": text}, "fixture.json", "E1")]
 
 
+GROWTH_LABEL_CASES = (
+    (
+        "english-and",
+        "FY2025 revenue rose 20% to RMB 4.6B and net income was RMB 1.0B.",
+        "FY2025 revenue was RMB 4.6B.", "FY2025 net income was RMB 4.6B.",
+        "FY2025 revenue was RMB 4.6B; FY2025 net income was RMB 1.0B.", "RMB 1.0B",
+    ),
+    *(
+        (
+            f"chinese-{join}",
+            f"FY2025 营收同比增长 20% 至 12.3 亿元{join}归母净利润 2.1 亿元。",
+            "FY2025 营收 12.3 亿元。", "FY2025 归母净利润 12.3 亿元。",
+            "FY2025 营收 12.3 亿元,归母净利润 2.1 亿元。", "2.1 亿元",
+        )
+        for join in ("以及", "且")
+    ),
+)
+
+
+def _complete_handler_thesis(claim: str) -> dict[str, object]:
+    """Keep quality-required fields complete so repair/missing fields cannot mask attribution."""
+    return {
+        "ticker": "688120.SH", "thesis_protocol_version": "v2",
+        "step_1_catalyst": {
+            "catalyst_event": "Gross margin disclosure", "catalyst_date_or_window": "2026-08-15",
+            "catalyst_type": "earnings_revision", "catalyst_source": "Offline fixture",
+        },
+        "step_2_mechanism": {"mechanism_chain": ["Product mix shifts", "Cost absorption improves", "Gross margin expands"]},
+        "step_3_evidence": {
+            "evidence_quantitative": [claim], "evidence_qualitative": ["Offline sell-side narrative"],
+            "contrarian_view": {
+                "market_consensus": {"e": "Stable mix", "z": "结构稳定"},
+                "our_variant": {"e": "Improving mix", "z": "结构改善"},
+                "what_changes_our_mind": "Gross margin below 40% in Q3 2026",
+            },
+        },
+        "step_4_quantification": {
+            "metric_target": "gross margin", "current_value": "41.8%", "predicted_value": "42%",
+            "predicted_range": {"low": "40%", "mid": "42%", "high": "43%"},
+            "predicted_horizon": "Q3 2026", "confidence": "60%",
+        },
+        "step_5_proves_right_if": ["Gross margin above 42%"],
+        "step_6_proves_wrong_if": ["Gross margin below 40%"],
+        "step_7_variant_view": {
+            "variant_view_one_sentence": "Market expects stable mix; improving product mix would expand gross margin.",
+            "time_to_resolution": "Q3 2026",
+            "expected_pnl_asymmetry": {"upside_if_right": "+20%", "downside_if_wrong": "-5%", "reward_to_risk": "4x"},
+        },
+        "step_8_phase_and_timing": {
+            "phase_1_market_belief": {
+                "duration_estimate": "Q3 2026", "why_market_keeps_buying": ["Stable disclosed mix"],
+                "early_signs_phase_1_weakening": ["Gross margin below 40%"],
+                "optional_long_play": {"direction": "no_position", "sizing": "1%", "exit_trigger": "Margin reversal"},
+            },
+            "phase_2_reality_recognition": {
+                "catalyst_for_reversion": ["Disclosure Q3 2026"], "estimated_timing": "Q3 2026",
+                "short_play": {"direction": "no_position", "sizing": "2%", "entry_trigger": "Disclosure"},
+            },
+            "position_sizing_curve": {
+                "pre_phase_1_weakening": "1%", "phase_1_weakening_confirmed": "2%", "phase_2_catalyst_imminent": "3%",
+            },
+        },
+        "qc_checklist": dict.fromkeys((
+            "all_8_steps_complete", "step_1_specific_not_vague", "step_2_no_unfounded_leaps",
+            "step_3_evidence_includes_quant_qual_contrarian", "step_3_contrarian_view_has_what_changes_our_mind",
+            "step_4_has_specific_numbers_and_horizon", "step_5_observable", "step_6_observable",
+            "step_7_one_sentence_tagline", "step_8_phase_timing_concrete_not_boilerplate",
+            "step_8_early_signs_observable", "step_8_catalyst_for_reversion_predatable",
+            "step_8_position_sizing_curve_monotonic", "reward_to_risk_at_least_threshold",
+        ), True),
+    }
+
+
+GROWTH_SDK_LOADER = r"""
+const source = `export default class Anthropic {
+  constructor() {
+    this.messages = {create: async options => ({
+      content: [{text: options.max_tokens <= 900 ? '[]' : JSON.stringify(globalThis.fixtureClaude(options))}],
+      model: 'offline-stub', usage: {input_tokens: 0, output_tokens: 0}
+    })};
+  }
+}`;
+export async function resolve(specifier, context, nextResolve) {
+  if (specifier === '@anthropic-ai/sdk') return {url: `data:text/javascript,${encodeURIComponent(source)}`, shortCircuit: true};
+  return nextResolve(specifier, context);
+}
+"""
+
+GROWTH_HANDLER_RUNNER = r"""
+import assert from 'node:assert/strict';
+import {pathToFileURL} from 'node:url';
+const [apiPath, fixtureJSON] = process.argv.slice(2);
+const {source, thesis, mode, cutoff} = JSON.parse(fixtureJSON);
+const OriginalDate = Date;
+globalThis.Date = class extends OriginalDate {
+  constructor(...args) {super(...(args.length ? args : [cutoff]));}
+  static now() {return new OriginalDate(cutoff).getTime();}
+};
+let promptChecks = 0;
+const clean = {assessment: 'Offline neutral assessment.'};
+globalThis.fixtureClaude = options => {
+  assert.ok(JSON.stringify(options.messages).includes(source), 'source absent from actual Claude prompt');
+  promptChecks += 1;
+  return options.max_tokens === 16384 ? thesis : clean;
+};
+globalThis.fetch = async (url, options) => {
+  const target = String(url);
+  if (target.includes('generativelanguage.googleapis.com') || target.includes('api.openai.com')) {
+    assert.ok(options.body.includes(source), 'source absent from actual non-Claude prompt');
+    promptChecks += 1;
+    const text = JSON.stringify(clean);
+    return {ok: true, status: 200, json: async () => target.includes('api.openai.com')
+      ? {choices: [{message: {content: text}}]}
+      : {candidates: [{content: {parts: [{text}]}}]}};
+  }
+  return {ok: false, status: 503, json: async () => ({}), text: async () => 'offline source unavailable'};
+};
+const singlePath = new URL('./research.js', pathToFileURL(apiPath));
+const {validateThesisQuality, buildExtrasBlock} = await import(singlePath.href);
+const {default: handler} = await import(pathToFileURL(apiPath).href);
+const extras = {
+  context_built_at: '2026-06-10T00:00:00Z',
+  tushare_suite: {broker_recommend: {
+    _status: 'loaded', ts_code: '688120.SH', tier: 'E2',
+    recommendations: [{ts_code: '688120.SH', org_name: 'Offline fixture broker', rec_date: '2026-06-10', report_title: source, rating: 'NEUTRAL'}],
+    summary: {total_90d: 1, unique_brokers_90d: 1, latest_date: '2026-06-10'}
+  }}
+};
+assert.ok(source.length <= 100 && buildExtrasBlock(extras).includes(source));
+const preQuality = validateThesisQuality(thesis);
+assert.deepEqual(preQuality.missingFields, []);
+assert.equal(preQuality.score, 100);
+assert.equal(preQuality.severity, 'PASS');
+const res = {
+  code: 200, body: null, setHeader() {}, status(code) {this.code = code; return this;},
+  json(body) {this.body = body; return this;}, end() {return this;}
+};
+await handler({method: 'POST', body: {
+  ticker: '688120.SH', company: 'Offline fixture', direction: 'NEUTRAL',
+  enrichment_context: {context_built_at: extras.context_built_at, extras}
+}}, res);
+assert.equal(promptChecks, mode === 'single' ? 1 : 7);
+process.stdout.write(JSON.stringify({statusCode: res.code, body: res.body, preQuality, promptChecks}));
+"""
+
+
 class FactCheckTest(unittest.TestCase):
     def _run_node(
         self,
@@ -755,6 +901,112 @@ class FactCheckTest(unittest.TestCase):
         self.assertEqual(by_raw["12.3 亿元"]["metric"], "revenue")
         self.assertEqual(by_raw["2.1 亿元"]["metric"], "net_profit")
         self.assertEqual(receipt["status"], "PASS")
+
+    def test_ratio_suffix_cannot_cross_a_conjunction(self) -> None:
+        for name, source, truthful, false_claim, independent_source, profit in GROWTH_LABEL_CASES:
+            for claim, expected in ((truthful, "PASS"), (false_claim, "BLOCKED_PENDING_HUMAN")):
+                with self.subTest(name=name, claim=claim):
+                    receipt = fact_check_module.fact_check(
+                        {"claim": claim}, ticker="688120.SH", cutoff=CUTOFF,
+                        source_payloads=_source_payload(source),
+                    )
+                    self.assertEqual(receipt["status"], expected)
+                    money = next(o for c in receipt["claims"] for o in c["observations"] if o["unit"] == "money")
+                    if expected == "PASS":
+                        self.assertEqual(money["metric"], "revenue")
+                        self.assertEqual(money["state"], "TRACED")
+                    else:
+                        self.assertEqual(receipt["summary"]["blocking_mismatches"], 1)
+                        self.assertEqual(money["metric"], "net_profit")
+                        self.assertEqual(money["source"]["raw"], profit)
+            # Parse the combined sentence as the claim too, against independently
+            # expressed evidence so identical parsing mistakes cannot self-confirm.
+            with self.subTest(name=name, side="claim"):
+                receipt = fact_check_module.fact_check(
+                    {"claim": source}, ticker="688120.SH", cutoff=CUTOFF,
+                    source_payloads=_source_payload(independent_source),
+                )
+                self.assertEqual(receipt["status"], "PASS")
+                money = [o for c in receipt["claims"] for o in c["observations"] if o["unit"] == "money"]
+                self.assertEqual([o["metric"] for o in money], ["revenue", "net_profit"])
+                self.assertTrue(all(o["state"] == "TRACED" for o in money))
+
+    def test_true_ratio_suffix_before_a_conjunction_is_preserved(self) -> None:
+        for sentence, independent_source, metric in (
+            (
+                "FY2025 gross margin 41.8% on RMB 4.6B revenue and net income was RMB 1.0B.",
+                "FY2025 revenue was RMB 4.6B; FY2025 net income was RMB 1.0B.", "revenue",
+            ),
+            (
+                "FY2025 毛利率提升至 41.8% 带动 2.1 亿元归母净利润。",
+                "FY2025 归母净利润 2.1 亿元。", "net_profit",
+            ),
+        ):
+            with self.subTest(sentence=sentence):
+                receipt = fact_check_module.fact_check(
+                    {"claim": sentence}, ticker="688120.SH", cutoff=CUTOFF,
+                    source_payloads=_source_payload(independent_source),
+                )
+                self.assertEqual(receipt["status"], "PASS")
+                money = next(o for c in receipt["claims"] for o in c["observations"] if o["unit"] == "money")
+                self.assertEqual(money["metric"], metric)
+                self.assertEqual(money["state"], "TRACED")
+
+    def test_growth_label_cli_checks_true_and_false_claims(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="ar-growth-label-cli-") as tmp:
+            root = Path(tmp)
+            source_path, thesis_path = root / "source.json", root / "thesis.json"
+            for name, source, truthful, false_claim, _, profit in GROWTH_LABEL_CASES:
+                source_path.write_text(json.dumps({"source_date": SOURCE_DATE, "filing": source}), encoding="utf-8")
+                for claim, expected in ((truthful, "PASS"), (false_claim, "BLOCKED_PENDING_HUMAN")):
+                    with self.subTest(name=name, claim=claim):
+                        thesis_path.write_text(json.dumps({"ticker": "688120.SH", "data": {"claim": claim}}), encoding="utf-8")
+                        result = subprocess.run(
+                            [sys.executable, str(MODULE_PATH), "--input", str(thesis_path),
+                             "--source", str(source_path), "--no-repo-sources", "--cutoff", CUTOFF],
+                            cwd=ROOT, capture_output=True, text=True, timeout=30, check=False,
+                        )
+                        self.assertEqual(result.returncode, 0, result.stderr)
+                        receipt = json.loads(result.stdout)
+                        self.assertEqual(receipt["status"], expected)
+                        if expected == "PASS":
+                            self.assertEqual(receipt["summary"]["fabrication_suspects"], 0)
+                        else:
+                            self.assertEqual(receipt["summary"]["blocking_mismatches"], 1)
+                            self.assertEqual(receipt["blocking_mismatches"][0]["source"]["raw"], profit)
+
+    def test_growth_labels_reach_both_real_handlers_with_complete_inputs(self) -> None:
+        for name, source, truthful, false_claim, independent_source, profit in GROWTH_LABEL_CASES:
+            for source_text in (source, independent_source):
+                for claim, false in ((truthful, False), (false_claim, True)):
+                    for mode, api in (("single", RESEARCH_API), ("multi", RESEARCH_MULTI_API)):
+                        with self.subTest(name=name, source=source_text, claim=claim, mode=mode):
+                            result = self._run_node(
+                                GROWTH_HANDLER_RUNNER, api,
+                                json.dumps({"source": source_text, "thesis": _complete_handler_thesis(claim), "mode": mode, "cutoff": CUTOFF}, ensure_ascii=False),
+                                loader_source=GROWTH_SDK_LOADER,
+                            )
+                            self.assertEqual(result["statusCode"], 200)
+                            data = result["body"]["data"]
+                            quality = data["_quality"]
+                            receipt = data["_fact_check"]
+                            expected = "BLOCKED_PENDING_HUMAN" if false else "PASS" if mode == "single" else "OK"
+                            self.assertEqual(result["body"]["_status"], expected)
+                            self.assertEqual(quality["missingFields"], [])
+                            self.assertFalse(quality.get("repairAttempted", False))
+                            self.assertEqual(quality["score"], 40 if false else 100)
+                            self.assertEqual(bool(quality.get("fabrication_capped")), false)
+                            self.assertEqual(receipt["summary"]["undated_source_facts"], 0)
+                            self.assertEqual(receipt["summary"]["future_source_facts"], 0)
+                            self.assertGreater(receipt["summary"]["admissible_source_facts"], 0)
+                            target = next(c for c in receipt["claims"] if c["path"] == "step_3_evidence.evidence_quantitative.0")
+                            money = next(o for o in target["observations"] if o["unit"] == "money")
+                            self.assertEqual(money["state"], "MISMATCH" if false else "TRACED")
+                            self.assertEqual(money["source"]["source_tier"], "E2")
+                            self.assertTrue(money["source"]["source_path"].endswith("recommendations.0.report_title"))
+                            if false:
+                                self.assertEqual(receipt["summary"]["blocking_mismatches"], 1)
+                                self.assertEqual(money["source"]["raw"], profit)
 
     def test_ratio_multiple_is_never_upgraded_to_an_order_class(self) -> None:
         """A book-to-bill multiple introduced by "order book" is a RATIO, not an ORDER

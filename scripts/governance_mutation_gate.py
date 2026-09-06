@@ -8221,6 +8221,19 @@ MUTATIONS = MUTATIONS + (
         ),
     ),
     MutationCase(
+        mutation_id="FACT_CHECK_RATIO_SUFFIX_STOPS_AT_CONJUNCTION",
+        component="Research deterministic fact-check identity",
+        source_path="scripts/llm/fact_check_core.mjs",
+        test_script="tests/test_fact_check.py",
+        before=r"    const suffix = following.split(/\band\b|以及|且/i, 1)[0];",
+        after="    const suffix = following;",
+        expected_failure_marker="test_ratio_suffix_cannot_cross_a_conjunction",
+        rationale=(
+            "A growth-to-level amount cannot borrow the next clause's label across "
+            "and/以及/且; otherwise truthful revenue blocks and invented net profit traces."
+        ),
+    ),
+    MutationCase(
         mutation_id="FACT_CHECK_RATIO_NOT_UPGRADED_TO_ENTITY_CLASS",
         component="Research deterministic fact-check identity",
         source_path="scripts/llm/fact_check_core.mjs",
