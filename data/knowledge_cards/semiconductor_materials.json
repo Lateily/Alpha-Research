@@ -160,7 +160,7 @@
       "availability": "AUTO",
       "primary": "Tushare balancesheet.cip / fix_assets 两期差分;cashflow.depr_fa_coga_dpba(折旧)/ income.revenue;年报'营业成本构成'表中折旧行核对",
       "tushare_api": "balancesheet,cashflow,income",
-      "tushare_field": "cip,fix_assets,depr_fa_coga_dpba,revenue",
+      "tushare_field": "balancesheet.cip,balancesheet.fix_assets,cashflow.depr_fa_coga_dpba,income.revenue",
       "manual_required": false
     },
     "judgment_logic": {
@@ -239,7 +239,7 @@
       "availability": "AUTO",
       "primary": "Tushare cashflow.c_pay_acq_const_fiolta(购建固定资产、无形及其他长期资产支付的现金)构建 CI;balancesheet.cip/fix_assets 辅助",
       "tushare_api": "cashflow,balancesheet",
-      "tushare_field": "c_pay_acq_const_fiolta,cip,fix_assets",
+      "tushare_field": "cashflow.c_pay_acq_const_fiolta,balancesheet.cip,balancesheet.fix_assets",
       "manual_required": false
     },
     "judgment_logic": {
@@ -274,7 +274,7 @@
       "availability": "AUTO",
       "primary": "Tushare fina_indicator.inv_turn / invturn_days;balancesheet.inventories 与 total_assets → ΔInv/TA;存货结构与跌价准备在年报附注'存货'表(SEMI 增强)",
       "tushare_api": "fina_indicator,balancesheet",
-      "tushare_field": "inv_turn,invturn_days,inventories,total_assets",
+      "tushare_field": "fina_indicator.inv_turn,fina_indicator.invturn_days,balancesheet.inventories,balancesheet.total_assets",
       "manual_required": false
     },
     "judgment_logic": {
@@ -583,7 +583,7 @@
       "availability": "AUTO",
       "primary": "客户侧:Tushare fina_indicator.invturn_days(688981 中芯国际、688347 华虹、603986 兆易);自身:balancesheet.contract_liab;稼动率:客户季报文本(SEMI 增强)",
       "tushare_api": "fina_indicator,balancesheet",
-      "tushare_field": "invturn_days,contract_liab",
+      "tushare_field": "fina_indicator.invturn_days,balancesheet.contract_liab",
       "manual_required": false
     },
     "judgment_logic": {
@@ -829,7 +829,7 @@
       "availability": "AUTO",
       "primary": "Tushare daily_basic.pe_ttm/pb/ps_ttm 日频 → 自算 5y/10y 分位;fina_indicator.roe 多年 → PB-ROE 回归(材料票池,MANUAL 组装)",
       "tushare_api": "daily_basic,fina_indicator",
-      "tushare_field": "pe_ttm,pb,ps_ttm,roe",
+      "tushare_field": "daily_basic.pe_ttm,daily_basic.pb,daily_basic.ps_ttm,fina_indicator.roe",
       "manual_required": false
     },
     "judgment_logic": {

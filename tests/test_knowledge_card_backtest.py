@@ -538,6 +538,170 @@ class ListingTests(unittest.TestCase):
         self.assertEqual([], payload["evaluations"])
 
 
+class ExtendedBindingTests(unittest.TestCase):
+    """WO-X1-A: bindings onto the disclosure-history tables, period collapse,
+    metric classes and the structurally-impossible / unbindable gap reasons."""
+
+    def _history_store(self, tmp: Path) -> Path:
+        path = tmp / "store.sqlite3"
+        connection = sqlite3.connect(str(path))
+        for source in ("fina_indicator", "income", "balancesheet", "cashflow", "daily_basic_ext"):
+            connection.execute(backtest._selftest_table_ddl(source))
+        connection.commit()
+        connection.close()
+        return path
+
+    def test_disclosure_pairs_bind_to_history_tables_never_the_as_of_snapshot(self) -> None:
+        for (api, field), (table, column, date_column, _kind) in backtest.LOCAL_PIT_BINDINGS.items():
+            with self.subTest(pair=f"{api}.{field}"):
+                self.assertNotEqual("semiconductor_fina_indicator_pit", table)
+                if api in ("fina_indicator", "income", "balancesheet", "cashflow"):
+                    self.assertEqual("ann_date", date_column)
+                    self.assertIn(table, backtest.PERIOD_COLUMN)
+                    self.assertEqual(column, field)
+        self.assertEqual(
+            (backtest.DAILY_BASIC_EXT_TABLE, "ps_ttm", "trade_date", "PRICE_VOLUME"),
+            backtest.LOCAL_PIT_BINDINGS[("daily_basic", "ps_ttm")],
+        )
+        self.assertIn(("fina_indicator", "inv_turn"), backtest.LOCAL_PIT_BINDINGS)
+        self.assertIn(("income", "rd_exp"), backtest.LOCAL_PIT_BINDINGS)
+        self.assertIn(("balancesheet", "contract_liab"), backtest.LOCAL_PIT_BINDINGS)
+        self.assertIn(("cashflow", "c_pay_acq_const_fiolta"), backtest.LOCAL_PIT_BINDINGS)
+
+    def test_restated_period_collapses_to_the_latest_visible_announcement(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            tmp = Path(raw)
+            db = self._history_store(tmp)
+            connection = sqlite3.connect(str(db))
+            insert = (
+                f'INSERT INTO "{FUNDAMENTAL_TABLE}" (ts_code, report_period, ann_date, roe) '
+                "VALUES (?,?,?,?)"
+            )
+            connection.executemany(insert, [
+                (ALWAYS_LISTED, "20210331", "20210428", 1.0),
+                (ALWAYS_LISTED, "20210630", "20210827", 2.0),
+                (ALWAYS_LISTED, "20210630", "20210915", 2.5),   # restatement, visible at 20210930
+                (ALWAYS_LISTED, "20210630", "20211020", 9.9),   # restatement AFTER the point
+                (ALWAYS_LISTED, "20210930", "20211029", 3.0),   # announced after the point
+            ])
+            connection.commit()
+            rows = backtest.pit_rows(
+                connection, FUNDAMENTAL_TABLE, "roe", "ann_date", ALWAYS_LISTED, "20210930",
+                period_column="report_period",
+            )
+            collapsed = backtest.collapse_report_periods(rows)
+            self.assertEqual(
+                [("20210331", "20210428", 1.0), ("20210630", "20210915", 2.5)],
+                [(r["report_period"], r["pit_date"], r["value"]) for r in collapsed],
+            )
+            # Same period, same ann_date, different values: ambiguous, refused.
+            connection.execute(insert, (ALWAYS_LISTED, "20210331", "20210428", 7.0))
+            connection.commit()
+            rows = backtest.pit_rows(
+                connection, FUNDAMENTAL_TABLE, "roe", "ann_date", ALWAYS_LISTED, "20210930",
+                period_column="report_period",
+            )
+            with self.assertRaises(backtest.BacktestError):
+                backtest.collapse_report_periods(rows)
+            connection.close()
+
+    def test_snapshot_duplicates_would_not_inflate_a_series(self) -> None:
+        """One disclosure stored under five as_of days is one observation, not five."""
+        with tempfile.TemporaryDirectory() as raw:
+            tmp = Path(raw)
+            db = self._history_store(tmp)
+            connection = sqlite3.connect(str(db))
+            connection.executemany(
+                f'INSERT INTO "{FUNDAMENTAL_TABLE}" (ts_code, report_period, ann_date, roe) '
+                "VALUES (?,?,?,?)",
+                [(ALWAYS_LISTED, "20210630", "20210828", 7.5)] * 5,
+            )
+            connection.commit()
+            rows = backtest.pit_rows(
+                connection, FUNDAMENTAL_TABLE, "roe", "ann_date", ALWAYS_LISTED, "20210930",
+                period_column="report_period",
+            )
+            self.assertEqual(1, len(backtest.collapse_report_periods(rows)))
+            connection.close()
+
+    def test_mainbz_pairs_are_unbindable_with_an_explicit_reason(self) -> None:
+        card = next(
+            c for c in knowledge_cards.load_cards(COMMITTED_CARDS) if c["card_id"] == "SEMI_MAT_002"
+        )
+        bindable, gaps = backtest._card_bindings(card)
+        self.assertEqual([], bindable)
+        self.assertTrue(gaps)
+        self.assertEqual({"SEGMENT_DERIVATION_NOT_ENCODED"}, {g["reason"] for g in gaps})
+        self.assertEqual({"SEGMENT_DERIVATION_NOT_ENCODED"}, {g["metric_class"] for g in gaps})
+
+    def test_structurally_impossible_pair_reason_reaches_the_gap_list(self) -> None:
+        card = dict(next(
+            c for c in knowledge_cards.load_cards(COMMITTED_CARDS) if c["card_id"] == "SEMI_MAT_023"
+        ))
+        card["data_source"] = dict(card["data_source"], tushare_field="pe_ttm,roe")
+        _bindable, gaps = backtest._card_bindings(card)
+        reasons = {g["declared_pair"]: g["reason"] for g in gaps}
+        self.assertEqual("DECLARED_PAIR_STRUCTURALLY_IMPOSSIBLE", reasons["daily_basic.roe"])
+        self.assertEqual("DECLARED_PAIR_STRUCTURALLY_IMPOSSIBLE", reasons["fina_indicator.pe_ttm"])
+
+    def test_proxy_cells_are_labelled_and_never_counted_as_measured(self) -> None:
+        peer = "300666.SZ"
+        with tempfile.TemporaryDirectory() as raw:
+            tmp = Path(raw)
+            db = self._history_store(tmp)
+            connection = sqlite3.connect(str(db))
+            # SEMI_MAT_011 (rd_exp / total_revenue, RATIO_VS_PEER): both raw fields
+            # are proxies for the card's ratio; two securities give each a peer.
+            for code, offset in ((ALWAYS_LISTED, 0.0), (peer, 3.0)):
+                for period, ann, rd, rev in (
+                    ("20200331", "20200428", 1.0, 10.0), ("20200630", "20200828", 1.2, 11.0),
+                    ("20200930", "20201028", 1.3, 12.0), ("20201231", "20210428", 1.5, 13.0),
+                    ("20210331", "20210428", 1.6, 14.0), ("20210630", "20210828", 1.8, 15.0),
+                ):
+                    connection.execute(
+                        f'INSERT INTO "{backtest.INCOME_TABLE}" '
+                        "(ts_code, report_period, ann_date, rd_exp, total_revenue) VALUES (?,?,?,?,?)",
+                        (code, period, ann, rd + offset, rev + offset),
+                    )
+            connection.commit()
+            connection.close()
+            registry = _registry(
+                tmp,
+                [
+                    {"ts_code": ALWAYS_LISTED, "list_date": "20100211", "delist_date": None},
+                    {"ts_code": peer, "list_date": "20170615", "delist_date": None},
+                ],
+            )
+            payload = backtest.build_backtest(
+                cards_path=COMMITTED_CARDS, db_path=db, registry_path=registry,
+                generated_at=STAMP, cohort=((ALWAYS_LISTED, "鼎龙股份"), (peer, "江丰电子")),
+            )
+            cells = [c for c in payload["evaluations"] if c["card_id"] == "SEMI_MAT_011"]
+            self.assertTrue(cells)
+            self.assertTrue(all(c["proxy_only"] is True for c in cells))
+            self.assertTrue(all(c["metric_class"] == "DERIVED_METRIC_NOT_ENCODED" for c in cells))
+            self.assertTrue(
+                any(c["evaluation"]["status"] == "COMPLETE" for c in cells),
+                "the fixture must evaluate at least one proxy cell",
+            )
+            self.assertTrue(all(c["separability"]["agrees_with_expected_side"] is None for c in cells))
+            rows = [r for r in payload["separability_table"] if r["card_id"] == "SEMI_MAT_011"]
+            self.assertTrue(rows)
+            for row in rows:
+                self.assertEqual(0, row["measurable_count"])
+                self.assertEqual(0, row["direct_cells"])
+                self.assertNotEqual("MEASURED", row["card_status"])
+            pending = [r for r in rows if r["card_status"] == "DERIVATION_PENDING"]
+            self.assertTrue(pending, "the point with enough history must be DERIVATION_PENDING")
+            self.assertTrue(all(r["proxy_measurable_count"] > 0 for r in pending))
+            inventory = [
+                g for g in payload["missing_inventory"]
+                if g["card_id"] == "SEMI_MAT_011" and g["reason"] == "DERIVED_METRIC_NOT_ENCODED"
+            ]
+            self.assertTrue(inventory)
+            self.assertEqual("WO-X1 transcription; unvalidated", payload["metric_class_provenance"])
+
+
 class BoundaryTests(unittest.TestCase):
     def test_output_carries_no_selection_or_trade_semantics(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
@@ -569,8 +733,10 @@ class BoundaryTests(unittest.TestCase):
             self.assertEqual(
                 {
                     "card_id", "point_id", "as_of", "cycle_label", "expected_side",
-                    "cell_count", "measurable_count", "agree_count", "disagree_count",
-                    "observed_sides", "separability_status", "block_reason_codes",
+                    "cell_count", "direct_cells", "proxy_cells", "measurable_count",
+                    "proxy_measurable_count", "agree_count", "disagree_count",
+                    "observed_sides", "separability_status", "card_status",
+                    "metric_classes", "block_reason_codes",
                 },
                 set(row),
             )
@@ -704,7 +870,9 @@ class CollectionPlanTests(unittest.TestCase):
         self.assertEqual("20090101", plan["date_range"]["start"])
         self.assertEqual("20230331", plan["date_range"]["end"])
         self.assertEqual(6, len(plan["securities"]))
-        self.assertTrue(plan["collector_prerequisites"])
+        # After WO-X1-A every declared pair is collected; the list stays dynamic (see
+        # tests/test_fetch_knowledge_card_history.py for the non-empty case).
+        self.assertIsInstance(plan["collector_prerequisites"], list)
 
     def test_execute_is_refused_without_explicit_human_approval(self) -> None:
         import fetch_knowledge_card_history as planner
