@@ -1,0 +1,22 @@
+{
+  "schema": "ai-task.v1",
+  "task_id": "FEATURE-HEALTH-CONTRACT-20260907",
+  "source_issue": null,
+  "architecture_block": ["research-feature-store", "local-read-only-workbench"],
+  "objective": "Align the complete feature health JSON Schema with producer receipts and verify read-only real-data observation in an isolated workspace.",
+  "non_goals": ["No production synchronization, canary or database migration", "No live collection or paid inference", "No research judgments, team grants or registration", "No relaxation of store v2 identity or missing-data semantics"],
+  "human_owner": "Junyan",
+  "reviewer": "Junyan",
+  "executor_candidates": ["Codex"],
+  "dependencies": [],
+  "authority_docs": ["AGENTS.md", "experiments/AGENTS.md", "scripts/llm/AGENTS.md"],
+  "file_scope": ["docs/research/contracts/feature_store_health.schema.json", "tests/test_feature_health_schema.py", "tests/test_no_network_guard.py", "scripts/governance_mutation_gate.py", ".github/workflows/python-ci.yml", "scripts/llm/fixtures/feature_health_contract.task.json"],
+  "forbidden_scope": ["production runtime", "data_history", "public", "launchd", "research engines", "real ledgers"],
+  "input_contracts": ["experiments/research_funnel/feature_store.py", "experiments/research_funnel/semiconductor_inputs.py", "docs/research/contracts/feature_store_health.schema.json"],
+  "output_artifacts": ["Strict full health schema", "Producer-driven positive and negative regressions", "Mutation pins", "Isolated read-only acceptance report"],
+  "acceptance_tests": ["python3 tests/test_feature_health_schema.py", "python3 scripts/governance_mutation_gate.py", "python3 /Users/years/Desktop/Stock/e2e-twin/twin-20260902/tools/ci_local.py", "Read-only source hashes unchanged", "git diff --check"],
+  "risk_level": "MEDIUM",
+  "network_policy": "OFFLINE",
+  "budget": {"max_cny": "0", "max_minutes": 180},
+  "approval_gates": ["INDEPENDENT_REVIEW", "JUNYAN_MERGE", "SEPARATE_PRODUCTION_SYNC_AND_CANARY_APPROVAL"]
+}

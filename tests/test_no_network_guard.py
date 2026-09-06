@@ -170,6 +170,15 @@ assert industry_cohort_result.wasSuccessful(), (
     "offline industry cohort suite failed under socket guard"
 )
 import test_semiconductor_positive_inputs as semiconductor_input_tests  # noqa: E402
+import test_feature_health_schema as feature_health_schema_tests  # noqa: E402
+feature_health_schema_result = unittest.TextTestRunner(verbosity=0).run(
+    unittest.defaultTestLoader.loadTestsFromTestCase(
+        feature_health_schema_tests.FeatureHealthSchemaTests
+    )
+)
+assert feature_health_schema_result.wasSuccessful(), (
+    "full feature health schema suite failed under socket guard"
+)
 semiconductor_input_result = unittest.TextTestRunner(verbosity=0).run(
     unittest.TestSuite((
         unittest.defaultTestLoader.loadTestsFromTestCase(

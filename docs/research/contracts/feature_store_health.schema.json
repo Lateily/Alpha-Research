@@ -15,12 +15,13 @@
     "coverage",
     "integrity",
     "policy",
-    "disclaimer"
+    "disclaimer",
+    "semiconductor_positive_inputs"
   ],
   "properties": {
     "schema": { "const": "ar.feature_store_health" },
     "schema_version": { "const": "1.0" },
-    "status": { "const": "COMPLETE" },
+    "status": { "enum": ["COMPLETE", "PARTIAL"] },
     "as_of": { "type": "string", "pattern": "^[0-9]{8}$" },
     "generated_at": { "type": "string", "minLength": 1 },
     "registry_ref": {
@@ -120,6 +121,123 @@
         "selection_or_trade_output": { "const": false }
       }
     },
-    "disclaimer": { "type": "string", "minLength": 1 }
+    "disclaimer": { "type": "string", "minLength": 1 },
+    "semiconductor_positive_inputs": { "$ref": "#/$defs/semiconductorSummary" }
+  },
+  "$comment": "Structural contract only. feature_store.validate_health additionally checks count arithmetic, same-date and source/universe bindings. Do not replace semantic validation with schema validation.",
+  "allOf": [{
+    "if": { "properties": { "semiconductor_positive_inputs": { "properties": { "status": { "const": "PARTIAL" } } } } },
+    "then": { "properties": { "status": { "const": "PARTIAL" } } },
+    "else": { "properties": { "status": { "const": "COMPLETE" } } }
+  }],
+  "$defs": {
+    "hash": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "componentCounts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fund_flow", "chips", "fundamentals"],
+      "properties": {
+        "fund_flow": { "type": "integer", "minimum": 0 },
+        "chips": { "type": "integer", "minimum": 0 },
+        "fundamentals": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "semiconductorCoverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["expected", "rows", "complete_by_component", "data_blocked_by_component"],
+      "properties": {
+        "expected": { "type": "integer", "minimum": 1 },
+        "rows": { "type": "integer", "minimum": 1 },
+        "complete_by_component": { "$ref": "#/$defs/componentCounts" },
+        "data_blocked_by_component": { "$ref": "#/$defs/componentCounts" }
+      }
+    },
+    "sourceReceipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "source_hash", "row_count", "universe_hash", "reason_codes"],
+      "properties": {
+        "status": { "enum": ["COMPLETE", "DATA_BLOCKED"] },
+        "source_hash": {},
+        "row_count": { "type": "integer", "minimum": 0 },
+        "universe_hash": {},
+        "reason_codes": { "type": "array", "items": { "type": "string" } }
+      },
+      "oneOf": [
+        {
+          "properties": {
+            "status": { "const": "COMPLETE" },
+            "source_hash": { "$ref": "#/$defs/hash" },
+            "universe_hash": { "$ref": "#/$defs/hash" },
+            "reason_codes": { "const": [] }
+          }
+        },
+        {
+          "properties": {
+            "status": { "const": "DATA_BLOCKED" },
+            "source_hash": { "type": "null" },
+            "row_count": { "const": 0 },
+            "universe_hash": { "type": "null" },
+            "reason_codes": { "const": ["SOURCE_BATCH_UNAVAILABLE"] }
+          }
+        }
+      ]
+    },
+    "semiconductorSources": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["moneyflow_dc", "cyq_perf", "fina_indicator_pit"],
+      "properties": {
+        "moneyflow_dc": { "$ref": "#/$defs/sourceReceipt" },
+        "cyq_perf": { "$ref": "#/$defs/sourceReceipt" },
+        "fina_indicator_pit": { "$ref": "#/$defs/sourceReceipt" }
+      }
+    },
+    "semiconductorPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["point_in_time_only", "missing_to_data_blocked", "cross_channel_score", "u4_selection_authority", "trade_or_portfolio_authority"],
+      "properties": {
+        "point_in_time_only": { "const": true },
+        "missing_to_data_blocked": { "const": true },
+        "cross_channel_score": { "const": false },
+        "u4_selection_authority": { "const": false },
+        "trade_or_portfolio_authority": { "const": false }
+      }
+    },
+    "semiconductorSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "schema_version", "method_version", "status", "as_of", "coverage", "sources", "rows_hash"],
+      "properties": {
+        "schema": { "const": "ar.semiconductor_positive_inputs" },
+        "schema_version": { "const": "1.0" },
+        "method_version": { "const": "semiconductor_positive_inputs_v1_unvalidated" },
+        "status": { "enum": ["COMPLETE", "PARTIAL", "NOT_APPLICABLE"] },
+        "as_of": { "type": "string", "pattern": "^[0-9]{8}$" },
+        "coverage": { "type": "object" },
+        "sources": { "type": "object" },
+        "rows_hash": { "$ref": "#/$defs/hash" },
+        "universe_hash": { "$ref": "#/$defs/hash" },
+        "policy": { "$ref": "#/$defs/semiconductorPolicy" }
+      },
+      "if": { "properties": { "status": { "const": "NOT_APPLICABLE" } } },
+      "then": {
+        "properties": {
+          "coverage": { "const": { "expected": 0, "rows": 0 } },
+          "sources": { "const": {} },
+          "rows_hash": { "const": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945" }
+        },
+        "not": { "anyOf": [{ "required": ["policy"] }, { "required": ["universe_hash"] }] }
+      },
+      "else": {
+        "required": ["universe_hash", "policy"],
+        "properties": {
+          "coverage": { "$ref": "#/$defs/semiconductorCoverage" },
+          "sources": { "$ref": "#/$defs/semiconductorSources" }
+        }
+      }
+    }
   }
 }
