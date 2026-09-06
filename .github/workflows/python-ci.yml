@@ -231,6 +231,14 @@ jobs:
       # status and source-derived evaluation gates must be exercised in CI.
       - name: Research knowledge-card reader (offline)
         run: python3 tests/test_knowledge_cards.py
+      # WO-B4 look-back: the reviewed AUTO cards are replayed on three known
+      # cycle points under a strict point-in-time boundary. The step proves the
+      # boundary holds and that absent history is DATA_BLOCKED with a missing
+      # inventory rather than padded, guessed, or quietly truncated.
+      - name: Knowledge-card look-back point-in-time contract (offline)
+        run: |
+          python3 tests/test_knowledge_card_backtest.py
+          python3 experiments/research_funnel/knowledge_card_backtest.py --selftest
       # Frozen assembly contract over the existing funnel, U4, research method,
       # paper execution, and five-axis modules. This step adds no runtime wiring.
       - name: Research closed loop V1 assembly contract (offline)
