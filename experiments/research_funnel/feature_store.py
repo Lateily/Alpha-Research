@@ -14,6 +14,12 @@ their ``input_hash`` predates the columns, and rewriting it would break the
 derive-not-accept contract, so they keep NULL and the public health receipt says
 ``store.features_daily_ohlc_backfilled: false``.  The four values enter no
 judgment path; they exist for downstream shape/structure work only.
+Transitional window: read-only consumers that pin ``STORE_SCHEMA_VERSION``
+(``r035_evaluation``) refuse a still-v1 store until the first writer
+(``initialize`` in the nightly feature_store step) migrates it; the refusal
+is fail-closed and the store is untouched.  The health contract
+``docs/research/contracts/feature_store_health.schema.json`` pins
+``store.schema_version`` = "2" and carries ``features_daily_ohlc_backfilled``.
 """
 
 from __future__ import annotations

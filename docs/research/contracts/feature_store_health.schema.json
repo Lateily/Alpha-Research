@@ -43,17 +43,19 @@
         "schema_version",
         "required_endpoints",
         "date_commit_policy",
-        "source_revision_policy"
+        "source_revision_policy",
+        "features_daily_ohlc_backfilled"
       ],
       "properties": {
         "engine": { "const": "sqlite" },
         "logical_path": { "const": "data_history/feature_store.sqlite3" },
-        "schema_version": { "const": "1" },
+        "schema_version": { "const": "2" },
         "required_endpoints": {
           "const": ["daily", "daily_basic", "adj_factor"]
         },
         "date_commit_policy": { "const": "ALL_REQUIRED_ENDPOINTS_ATOMIC" },
-        "source_revision_policy": { "const": "REJECT_REQUIRES_MIGRATION" }
+        "source_revision_policy": { "const": "REJECT_REQUIRES_MIGRATION" },
+        "features_daily_ohlc_backfilled": { "type": "boolean" }
       }
     },
     "coverage": {
