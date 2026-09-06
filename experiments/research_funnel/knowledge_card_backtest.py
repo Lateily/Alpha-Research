@@ -37,6 +37,7 @@ from pathlib import Path
 from typing import Any, Mapping, Sequence
 
 import knowledge_cards
+import semiconductor_extended_sources as extended_sources
 
 
 BACKTEST_SCHEMA = "ar.knowledge_card_backtest.v1"
@@ -109,28 +110,51 @@ EXPECTED_SIDE_PROVENANCE = (
 # collectors, keyed by the (tushare_api, tushare_field) pair a card declares.
 # A declared pair absent from this table has no local PIT binding and is
 # reported as a gap; it is never approximated by a neighbouring field.
-FUNDAMENTAL_TABLE = "semiconductor_fina_indicator_pit"
+#
+# Disclosure pairs bind to the WO-X1-A *history* tables (one row per
+# report_period x ann_date), never to the as_of-snapshot table
+# ``semiconductor_fina_indicator_pit``: that snapshot repeats the same
+# disclosure once per as_of day, which would inflate a series with duplicates
+# of a single observation.
+_EXTENDED = extended_sources.EXTENDED_SOURCES
+FUNDAMENTAL_TABLE = _EXTENDED["fina_indicator"].table
+INCOME_TABLE = _EXTENDED["income"].table
+BALANCESHEET_TABLE = _EXTENDED["balancesheet"].table
+CASHFLOW_TABLE = _EXTENDED["cashflow"].table
+DAILY_BASIC_EXT_TABLE = _EXTENDED["daily_basic_ext"].table
+
+
+def _disclosure_bindings(
+    api: str, table: str, fields: Sequence[str]
+) -> dict[tuple[str, str], tuple[str, str, str, str]]:
+    return {(api, field): (table, field, "ann_date", "FUNDAMENTAL") for field in fields}
+
+
 LOCAL_PIT_BINDINGS: Mapping[tuple[str, str], tuple[str, str, str, str]] = {
-    ("fina_indicator", "roe"): (FUNDAMENTAL_TABLE, "roe", "ann_date", "FUNDAMENTAL"),
-    ("fina_indicator", "roa"): (FUNDAMENTAL_TABLE, "roa", "ann_date", "FUNDAMENTAL"),
-    ("fina_indicator", "grossprofit_margin"): (
-        FUNDAMENTAL_TABLE, "grossprofit_margin", "ann_date", "FUNDAMENTAL",
+    **_disclosure_bindings(
+        "fina_indicator",
+        FUNDAMENTAL_TABLE,
+        (
+            "roe", "roa", "grossprofit_margin", "netprofit_margin", "ocf_to_or",
+            "debt_to_assets", "q_sales_yoy", "q_netprofit_yoy", "inv_turn", "invturn_days",
+        ),
     ),
-    ("fina_indicator", "netprofit_margin"): (
-        FUNDAMENTAL_TABLE, "netprofit_margin", "ann_date", "FUNDAMENTAL",
+    **_disclosure_bindings(
+        "income",
+        INCOME_TABLE,
+        ("revenue", "total_revenue", "rd_exp", "oth_income", "total_profit"),
     ),
-    ("fina_indicator", "ocf_to_or"): (FUNDAMENTAL_TABLE, "ocf_to_or", "ann_date", "FUNDAMENTAL"),
-    ("fina_indicator", "debt_to_assets"): (
-        FUNDAMENTAL_TABLE, "debt_to_assets", "ann_date", "FUNDAMENTAL",
+    **_disclosure_bindings(
+        "balancesheet",
+        BALANCESHEET_TABLE,
+        ("cip", "fix_assets", "inventories", "total_assets", "contract_liab"),
     ),
-    ("fina_indicator", "q_sales_yoy"): (
-        FUNDAMENTAL_TABLE, "q_sales_yoy", "ann_date", "FUNDAMENTAL",
+    **_disclosure_bindings(
+        "cashflow", CASHFLOW_TABLE, ("depr_fa_coga_dpba", "c_pay_acq_const_fiolta"),
     ),
-    ("fina_indicator", "q_netprofit_yoy"): (
-        FUNDAMENTAL_TABLE, "q_netprofit_yoy", "ann_date", "FUNDAMENTAL",
-    ),
-    ("daily_basic", "pe_ttm"): ("raw_daily_basic", "pe_ttm", "trade_date", "PRICE_VOLUME"),
-    ("daily_basic", "pb"): ("raw_daily_basic", "pb", "trade_date", "PRICE_VOLUME"),
+    ("daily_basic", "pe_ttm"): (DAILY_BASIC_EXT_TABLE, "pe_ttm", "trade_date", "PRICE_VOLUME"),
+    ("daily_basic", "pb"): (DAILY_BASIC_EXT_TABLE, "pb", "trade_date", "PRICE_VOLUME"),
+    ("daily_basic", "ps_ttm"): (DAILY_BASIC_EXT_TABLE, "ps_ttm", "trade_date", "PRICE_VOLUME"),
     ("daily_basic", "turnover_rate"): (
         "raw_daily_basic", "turnover_rate", "trade_date", "PRICE_VOLUME",
     ),
@@ -144,6 +168,77 @@ LOCAL_PIT_BINDINGS: Mapping[tuple[str, str], tuple[str, str, str, str]] = {
     ("daily", "pct_chg"): ("raw_daily", "pct_chg", "trade_date", "PRICE_VOLUME"),
     ("adj_factor", "adj_factor"): ("raw_adj_factor", "adj_factor", "trade_date", "PRICE_VOLUME"),
 }
+
+# Disclosure tables hold one row per (report_period, ann_date): a restatement
+# is a second row for the same period with a later ann_date. After the pinned
+# point-in-time bound, ``_observations`` collapses each period to the latest
+# ann_date visible at the look-back point and orders the series by period.
+PERIOD_COLUMN: Mapping[str, str] = {
+    FUNDAMENTAL_TABLE: "report_period",
+    INCOME_TABLE: "report_period",
+    BALANCESHEET_TABLE: "report_period",
+    CASHFLOW_TABLE: "report_period",
+}
+
+# Collected pairs that no generic per-security series can carry. fina_mainbz
+# rows are one per (report_period, bz_type, bz_item) segment; reading them as
+# a series needs per-item semantics this module does not encode.
+UNBINDABLE_APIS: Mapping[str, str] = {"fina_mainbz": "SEGMENT_DERIVATION_NOT_ENCODED"}
+
+# How each AUTO card's *judged* metric relates to the raw field it declares.
+# This is a human transcription of the reviewed card text, not something
+# derived from data, and it is unvalidated. Only a DIRECT_SERIES cell measures
+# what the card judges; every other class is a proxy series awaiting a
+# derivation (ratio, delta, segment split, external entity) that this module
+# does not encode. A declared field without a transcription is never counted
+# as direct.
+METRIC_DIRECT_SERIES = "DIRECT_SERIES"
+METRIC_DERIVED_NOT_ENCODED = "DERIVED_METRIC_NOT_ENCODED"
+METRIC_SEGMENT_NOT_ENCODED = "SEGMENT_DERIVATION_NOT_ENCODED"
+METRIC_EXTERNAL_ENTITY = "EXTERNAL_ENTITY_SERIES"
+METRIC_NOT_TRANSCRIBED = "METRIC_CLASS_NOT_TRANSCRIBED"
+METRIC_CLASS_PROVENANCE = "WO-X1 transcription; unvalidated"
+CARD_METRIC_CLASS: Mapping[str, str | Mapping[str, str]] = {
+    "SEMI_MAT_002": METRIC_SEGMENT_NOT_ENCODED,
+    "SEMI_MAT_005": METRIC_DERIVED_NOT_ENCODED,
+    "SEMI_MAT_007": METRIC_DERIVED_NOT_ENCODED,
+    "SEMI_MAT_008": {
+        "inv_turn": METRIC_DIRECT_SERIES,
+        "invturn_days": METRIC_DIRECT_SERIES,
+        "inventories": METRIC_DERIVED_NOT_ENCODED,
+        "total_assets": METRIC_DERIVED_NOT_ENCODED,
+    },
+    "SEMI_MAT_011": METRIC_DERIVED_NOT_ENCODED,
+    "SEMI_MAT_013": METRIC_DIRECT_SERIES,
+    "SEMI_MAT_016": {
+        "invturn_days": METRIC_EXTERNAL_ENTITY,
+        "contract_liab": METRIC_DIRECT_SERIES,
+    },
+    "SEMI_MAT_019": METRIC_SEGMENT_NOT_ENCODED,
+    "SEMI_MAT_020": METRIC_DERIVED_NOT_ENCODED,
+    "SEMI_MAT_022": METRIC_SEGMENT_NOT_ENCODED,
+    "SEMI_MAT_023": {
+        "pe_ttm": METRIC_DIRECT_SERIES,
+        "pb": METRIC_DIRECT_SERIES,
+        "ps_ttm": METRIC_DIRECT_SERIES,
+        "roe": METRIC_DERIVED_NOT_ENCODED,
+    },
+}
+
+
+def metric_class_for(card_id: str, api: str, field: str) -> str:
+    """Transcribed metric class of one declared pair; untranscribed is never direct."""
+    entry = CARD_METRIC_CLASS.get(str(card_id))
+    if entry is None:
+        return METRIC_NOT_TRANSCRIBED
+    if isinstance(entry, str):
+        return entry
+    return str(entry.get(f"{api}.{field}", entry.get(field, METRIC_NOT_TRANSCRIBED)))
+
+
+def is_proxy_only(metric_class: str) -> bool:
+    return metric_class != METRIC_DIRECT_SERIES
+
 
 # Display floor for a look-back observation window. It is a data-sufficiency
 # guard, not a card threshold, and is itself unvalidated.
@@ -217,6 +312,26 @@ class BacktestError(RuntimeError):
 
 class PitLeakError(BacktestError):
     """A row dated after the look-back point reached an evaluation payload."""
+
+
+def _check_local_bindings() -> None:
+    """Every binding onto an extended table must name stored columns (import-time)."""
+    columns_by_table = {spec.table: spec.columns for spec in _EXTENDED.values()}
+    for (api, field), (table, column, date_column, _kind) in LOCAL_PIT_BINDINGS.items():
+        columns = columns_by_table.get(table)
+        if columns is None:
+            continue
+        wanted = {column, date_column}
+        if table in PERIOD_COLUMN:
+            wanted.add(PERIOD_COLUMN[table])
+        missing = sorted(wanted - set(columns))
+        if missing:
+            raise BacktestError(
+                f"binding {api}.{field} names columns absent from {table}: {missing}"
+            )
+
+
+_check_local_bindings()
 
 
 # --------------------------------------------------------------------------
@@ -420,6 +535,7 @@ def pit_rows(
     date_column: str,
     ts_code: str,
     as_of: str,
+    period_column: str | None = None,
 ) -> list[dict[str, Any]]:
     """Return every stored observation for one security at or before as_of.
 
@@ -428,18 +544,27 @@ def pit_rows(
     Every non-NULL stored date is validated as YYYYMMDD *before* that
     comparison, so a malformed date is an error rather than a leak or a silent
     drop. NULL-dated rows are excluded here and counted by ``null_dated_rows``.
+    When ``period_column`` is given each row also carries ``report_period`` so
+    the caller can collapse restatements; the collapse itself happens after
+    the bound, in ``_observations``, never here.
     """
     as_of = _date8(as_of, "as_of")
     context = f"{ts_code}/{table}.{column}[{date_column}]"
+    selected = f'"{date_column}" AS pit_date, "{column}" AS value'
+    if period_column is not None:
+        selected += f', "{period_column}" AS report_period'
     statement = (
-        f'SELECT "{date_column}" AS pit_date, "{column}" AS value '
-        f'FROM "{table}" WHERE ts_code = ? ORDER BY "{date_column}" ASC, rowid ASC'
+        f'SELECT {selected} FROM "{table}" WHERE ts_code = ? '
+        f'ORDER BY "{date_column}" ASC, rowid ASC'
     )
-    rows = [
-        {"pit_date": _pit_date8(row[0], context), "value": row[1]}
-        for row in connection.execute(statement, (ts_code,)).fetchall()
-        if row[0] is not None
-    ]
+    rows: list[dict[str, Any]] = []
+    for raw in connection.execute(statement, (ts_code,)).fetchall():
+        if raw[0] is None:
+            continue
+        row = {"pit_date": _pit_date8(raw[0], context), "value": raw[1]}
+        if period_column is not None:
+            row["report_period"] = _date8(raw[2], f"report_period in {context}")
+        rows.append(row)
     # Order by the validated text, not by sqlite storage class (stable sort keeps
     # the rowid tie-break for equal dates).
     rows.sort(key=lambda row: row["pit_date"])
@@ -451,6 +576,31 @@ def pit_rows(
 # --------------------------------------------------------------------------
 # observation assembly
 # --------------------------------------------------------------------------
+
+
+def collapse_report_periods(rows: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    """Keep the latest ann_date per report_period; order the series by period.
+
+    Rows arrive point-in-time bounded and sorted by pit_date, so the last row
+    seen for a period is the latest restatement visible at the look-back
+    point. Two rows sharing (report_period, pit_date) with different values
+    make the store ambiguous and are refused rather than resolved silently.
+    """
+    latest: dict[str, dict[str, Any]] = {}
+    for row in rows:
+        period = str(row["report_period"])
+        current = latest.get(period)
+        if (
+            current is not None
+            and current["pit_date"] == row["pit_date"]
+            and current["value"] != row["value"]
+        ):
+            raise BacktestError(
+                f"conflicting values for report_period {period} announced {row['pit_date']}"
+            )
+        if current is None or row["pit_date"] >= current["pit_date"]:
+            latest[period] = dict(row)
+    return [latest[period] for period in sorted(latest)]
 
 
 def _observations(
@@ -472,8 +622,13 @@ def _observations(
     if table not in tables:
         return [], [BLOCK_TABLE_ABSENT], 0
     null_dated = null_dated_rows(connection, table, date_column, ts_code)
-    rows = pit_rows(connection, table, column, date_column, ts_code, as_of)
+    period_column = PERIOD_COLUMN.get(table)
+    rows = pit_rows(
+        connection, table, column, date_column, ts_code, as_of, period_column=period_column
+    )
     assert_no_future_rows(rows, as_of, f"{ts_code}/{table}.{column}")
+    if period_column is not None:
+        rows = collapse_report_periods(rows)
     if not rows:
         return [], [BLOCK_NO_ROWS], null_dated
     windowed = [row for row in rows if row["pit_date"] >= window_floor]
@@ -491,23 +646,48 @@ def _observations(
 
 
 def _card_bindings(card: Mapping[str, Any]) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
-    """Split a card's declared source pairs into bindable ones and gaps."""
+    """Split a card's declared source pairs into bindable ones and gaps.
+
+    A gap keeps the coverage reason verbatim, so a reader can tell "collect
+    history" (``SOURCE_FIELDS_NOT_COLLECTED_BY_REPO``) from "re-declare the
+    card" (``DECLARED_PAIR_STRUCTURALLY_IMPOSSIBLE``) from "no generic series
+    can carry this api" (``UNBINDABLE_APIS``). Every entry carries the
+    transcribed metric class of its pair.
+    """
     coverage = knowledge_cards.source_coverage(card)
+    card_id = str(card["card_id"])
     bindable: list[dict[str, Any]] = []
     gaps: list[dict[str, Any]] = []
     for pair in coverage["declared_pairs"]:
         key = (str(pair["api"]), str(pair["field"]))
         label = f"{key[0]}.{key[1]}"
+        metric_class = metric_class_for(card_id, key[0], key[1])
         if not pair["collected_by_repo"]:
-            gaps.append({"declared_pair": label, "reason": "SOURCE_FIELDS_NOT_COLLECTED_BY_REPO"})
+            reason = str(pair.get("reason") or knowledge_cards.REASON_NOT_COLLECTED)
+            gaps.append({"declared_pair": label, "reason": reason, "metric_class": metric_class})
+            continue
+        unbindable = UNBINDABLE_APIS.get(key[0])
+        if unbindable is not None:
+            gaps.append({"declared_pair": label, "reason": unbindable, "metric_class": metric_class})
             continue
         binding = LOCAL_PIT_BINDINGS.get(key)
         if binding is None:
-            gaps.append({"declared_pair": label, "reason": BLOCK_NO_LOCAL_BINDING})
+            gaps.append(
+                {"declared_pair": label, "reason": BLOCK_NO_LOCAL_BINDING, "metric_class": metric_class}
+            )
             continue
-        bindable.append({"declared_pair": label, "binding": binding})
+        bindable.append(
+            {
+                "declared_pair": label,
+                "binding": binding,
+                "metric_class": metric_class,
+                "proxy_only": is_proxy_only(metric_class),
+            }
+        )
     if not coverage["declared_pairs"]:
-        gaps.append({"declared_pair": None, "reason": "CARD_DECLARES_NO_TUSHARE_PAIR"})
+        gaps.append(
+            {"declared_pair": None, "reason": "CARD_DECLARES_NO_TUSHARE_PAIR", "metric_class": None}
+        )
     return bindable, gaps
 
 
@@ -617,9 +797,11 @@ def _evaluate_cell(
                 "pit_window_start": floor if months is not None else None,
                 "pit_observation_count": 0,
                 "pit_latest_date": None,
+                "metric_class": None,
+                "proxy_only": None,
                 "data_gaps": gaps,
                 "evaluation": evaluation,
-                "separability": _separability(card, point, evaluation, None),
+                "separability": _separability(card, point, evaluation, None, None),
             }
         ]
 
@@ -666,11 +848,19 @@ def _evaluate_cell(
                 "pit_source": f"{table}.{column}[{date_column}]",
                 "pit_window_start": floor,
                 "pit_observation_count": len(observations),
-                "pit_latest_date": observations[-1]["pit_date"] if observations else None,
+                "pit_latest_date": (
+                    max(row["pit_date"] for row in observations) if observations else None
+                ),
+                "metric_class": entry["metric_class"],
+                "proxy_only": entry["proxy_only"],
                 "data_gaps": cell_gaps,
                 "evaluation": evaluation,
                 "separability": _separability(
-                    card, point, evaluation, _dispersion_z(observations) if observations else None
+                    card,
+                    point,
+                    evaluation,
+                    _dispersion_z(observations) if observations else None,
+                    entry["proxy_only"],
                 ),
             }
         )
@@ -682,11 +872,17 @@ def _separability(
     point: Mapping[str, str],
     evaluation: Mapping[str, Any],
     dispersion_z: float | None,
+    proxy_only: bool | None,
 ) -> dict[str, Any]:
+    """Side agreement is only ever claimed for a DIRECT_SERIES cell.
+
+    A proxy cell still shows its display side, but ``agrees_with_expected_side``
+    stays None: the raw field is not the metric the card judges.
+    """
     expected = EXPECTED_SIDE.get(str(card["card_id"]), {}).get(point["cycle_label"])
     observed = observed_side(evaluation)
     agrees: bool | None
-    if expected is None or observed is None or observed == "FLAT":
+    if proxy_only is not False or expected is None or observed is None or observed == "FLAT":
         agrees = None
     else:
         agrees = observed == expected
@@ -695,6 +891,7 @@ def _separability(
         "expected_side_provenance": EXPECTED_SIDE_PROVENANCE if expected else None,
         "observed_side": observed,
         "agrees_with_expected_side": agrees,
+        "proxy_only": proxy_only,
         "dispersion_z_unvalidated": dispersion_z,
         "thresholds_applied": False,
     }
@@ -822,10 +1019,12 @@ def build_backtest(
         "separability_table": table,
         "missing_inventory": gaps,
         "missing_inventory_count": len(gaps),
+        "metric_class_provenance": METRIC_CLASS_PROVENANCE,
         "interpretation": (
             "本表只回答一个问题:23 张卡中的 11 张 AUTO 卡,在三个已知周期点上能不能被算出来、"
             "算出来后是否落在文献锚预期的一侧。它不给出任何标的取舍、仓位或买卖含义,"
-            "也没有改动任何卡片阈值。"
+            "也没有改动任何卡片阈值。只有 metric_class=DIRECT_SERIES 的格子计入可测/一致计数;"
+            "proxy_only 格子是原始字段序列,卡片判定的衍生指标尚未编码(DERIVATION_PENDING)。"
         ),
         "disclaimer": DISCLAIMER,
     }
@@ -854,13 +1053,32 @@ def separability_table(
     rows: list[dict[str, Any]] = []
     for card in cards:
         card_id = str(card["card_id"])
+        metric_classes = {
+            f"{pair['api']}.{pair['field']}": metric_class_for(
+                card_id, str(pair["api"]), str(pair["field"])
+            )
+            for pair in knowledge_cards.source_coverage(card)["declared_pairs"]
+        }
         for point in points:
             subset = [
                 cell
                 for cell in cells
                 if cell["card_id"] == card_id and cell["point_id"] == point["point_id"]
             ]
-            measurable = [cell for cell in subset if cell["evaluation"]["status"] == "COMPLETE"]
+            direct = [cell for cell in subset if cell["proxy_only"] is False]
+            proxy = [cell for cell in subset if cell["proxy_only"] is True]
+            # Only a DIRECT_SERIES cell measures the metric the card judges; a
+            # proxy cell that evaluated is "derivation pending", never measured.
+            measurable = [cell for cell in direct if cell["evaluation"]["status"] == "COMPLETE"]
+            proxy_measurable = [
+                cell for cell in proxy if cell["evaluation"]["status"] == "COMPLETE"
+            ]
+            if measurable:
+                card_status = "MEASURED"
+            elif direct or not proxy_measurable:
+                card_status = "DATA_BLOCKED"
+            else:
+                card_status = "DERIVATION_PENDING"
             agree = [cell for cell in measurable if cell["separability"]["agrees_with_expected_side"] is True]
             disagree = [
                 cell for cell in measurable if cell["separability"]["agrees_with_expected_side"] is False
@@ -885,13 +1103,18 @@ def separability_table(
                     "cycle_label": point["cycle_label"],
                     "expected_side": EXPECTED_SIDE.get(card_id, {}).get(point["cycle_label"]),
                     "cell_count": len(subset),
+                    "direct_cells": len(direct),
+                    "proxy_cells": len(proxy),
                     "measurable_count": len(measurable),
+                    "proxy_measurable_count": len(proxy_measurable),
                     "agree_count": len(agree),
                     "disagree_count": len(disagree),
                     "observed_sides": sorted(
                         {str(cell["separability"]["observed_side"]) for cell in measurable}
                     ),
                     "separability_status": "MEASURED" if measurable else "DATA_BLOCKED",
+                    "card_status": card_status,
+                    "metric_classes": metric_classes,
                     "block_reason_codes": reasons,
                 }
             )
@@ -902,9 +1125,22 @@ def missing_inventory(cells: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]
     """Exactly which security, point, card, and field could not be computed."""
     inventory: list[dict[str, Any]] = []
     for cell in cells:
-        if cell["evaluation"]["status"] == "COMPLETE" and not cell["data_gaps"]:
+        complete = cell["evaluation"]["status"] == "COMPLETE"
+        gaps = list(cell["data_gaps"])
+        if complete and cell["proxy_only"] is True:
+            # The raw series evaluated, but the card's judged metric did not:
+            # the pending derivation is inventoried under its metric class.
+            gaps.append(
+                {
+                    "declared_pair": cell["declared_pair"],
+                    "reason": cell["metric_class"],
+                    "metric_class": cell["metric_class"],
+                }
+            )
+        if complete and not gaps:
             continue
-        for gap in cell["data_gaps"] or [{"declared_pair": None, "reason": "UNSPECIFIED"}]:
+        for gap in gaps or [{"declared_pair": None, "reason": "UNSPECIFIED"}]:
+            metric_class = gap.get("metric_class", cell["metric_class"])
             inventory.append(
                 {
                     "point_id": cell["point_id"],
@@ -914,6 +1150,8 @@ def missing_inventory(cells: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]
                     "declared_pair": gap.get("declared_pair"),
                     "pit_source": cell["pit_source"],
                     "reason": gap.get("reason"),
+                    "metric_class": metric_class,
+                    "proxy_only": is_proxy_only(metric_class) if metric_class is not None else None,
                     "evaluation_status": cell["evaluation"]["status"],
                     "evaluation_reason_codes": list(cell["evaluation"].get("reason_codes") or []),
                 }
@@ -1033,35 +1271,52 @@ def write_backtest(payload: Mapping[str, Any], out_dir: str | Path = DEFAULT_OUT
 # --------------------------------------------------------------------------
 
 
+def _selftest_table_ddl(source_name: str) -> str:
+    """The extended history shape without its constraints, so malformed rows can be injected."""
+    spec = _EXTENDED[source_name]
+    columns = ", ".join(f"{name} {kind}" for name, kind in spec.columns.items())
+    return f'CREATE TABLE "{spec.table}" ({columns}, batch_as_of TEXT, input_hash TEXT)'
+
+
 def _selftest() -> int:
-    """Offline round trip on a synthetic store: PIT bound, hashes, blocking."""
+    """Offline round trip on a synthetic store: PIT bound, collapse, hashes, blocking."""
     checks: list[str] = []
     with tempfile.TemporaryDirectory(prefix="ar-b4-selftest-") as tmp:
         db = Path(tmp) / "store.sqlite3"
         connection = sqlite3.connect(str(db))
-        connection.execute(
-            f'CREATE TABLE "{FUNDAMENTAL_TABLE}" (ts_code TEXT, as_of TEXT, ann_date TEXT, '
-            "report_period TEXT, roe REAL, roa REAL, grossprofit_margin REAL, "
-            "netprofit_margin REAL, ocf_to_or REAL, debt_to_assets REAL, "
-            "q_sales_yoy REAL, q_netprofit_yoy REAL, update_flag TEXT, input_hash TEXT)"
-        )
+        connection.execute(_selftest_table_ddl("fina_indicator"))
         rows = [
             ("300054.SZ", f"2019{month:02d}30", f"2019{month:02d}30", value)
             for month, value in ((3, 5.0), (6, 6.0), (9, 7.0), (12, 8.0))
-        ] + [("300054.SZ", "20991231", "20991231", 999.0)]
-        connection.executemany(
-            f'INSERT INTO "{FUNDAMENTAL_TABLE}" (ts_code, as_of, ann_date, roe) VALUES (?,?,?,?)',
-            rows,
+        ] + [
+            # A restatement of 2019Q2 announced later, and a far-future row.
+            ("300054.SZ", "20190630", "20190830", 6.5),
+            ("300054.SZ", "20991231", "20991231", 999.0),
+        ]
+        insert = (
+            f'INSERT INTO "{FUNDAMENTAL_TABLE}" (ts_code, report_period, ann_date, roe) '
+            "VALUES (?,?,?,?)"
         )
+        connection.executemany(insert, rows)
         connection.commit()
         bounded = pit_rows(
-            connection, FUNDAMENTAL_TABLE, "roe", "ann_date", "300054.SZ", "20191231"
+            connection, FUNDAMENTAL_TABLE, "roe", "ann_date", "300054.SZ", "20191231",
+            period_column="report_period",
         )
         connection.close()
-        if [row["pit_date"] for row in bounded] != ["20190330", "20190630", "20190930", "20191230"]:
+        if [row["pit_date"] for row in bounded] != [
+            "20190330", "20190630", "20190830", "20190930", "20191230",
+        ]:
             print("SELFTEST FAIL: point-in-time bound did not exclude the future row", file=sys.stderr)
             return 1
         checks.append("pit_bound")
+        collapsed = collapse_report_periods(bounded)
+        if [(row["report_period"], row["value"]) for row in collapsed] != [
+            ("20190330", 5.0), ("20190630", 6.5), ("20190930", 7.0), ("20191230", 8.0),
+        ]:
+            print("SELFTEST FAIL: restated period did not collapse to the latest ann_date", file=sys.stderr)
+            return 1
+        checks.append("period_collapse")
         try:
             assert_no_future_rows([{"pit_date": "20991231"}], "20191231", "selftest")
         except PitLeakError:
@@ -1072,6 +1327,17 @@ def _selftest() -> int:
         payload = build_backtest(db_path=db, generated_at="19700101T000000Z")
         verify_backtest(payload, db_path=db)
         checks.append("verify_round_trip")
+        if payload.get("metric_class_provenance") != METRIC_CLASS_PROVENANCE:
+            print("SELFTEST FAIL: metric class provenance missing", file=sys.stderr)
+            return 1
+        proxy_rows = [
+            row for row in payload["separability_table"]
+            if row["card_id"] == "SEMI_MAT_023" and row["proxy_measurable_count"] > 0
+        ]
+        if not proxy_rows or any(row["card_status"] == "MEASURED" for row in proxy_rows):
+            print("SELFTEST FAIL: proxy-only cells were counted as measured", file=sys.stderr)
+            return 1
+        checks.append("proxy_not_measured")
         tampered = dict(payload)
         tampered["status"] = "MEASURED_ALL_CLEAR"
         try:
@@ -1082,19 +1348,13 @@ def _selftest() -> int:
             print("SELFTEST FAIL: top-level status rewrite passed verification", file=sys.stderr)
             return 1
         connection = sqlite3.connect(str(db))
-        connection.execute(
-            f'INSERT INTO "{FUNDAMENTAL_TABLE}" (ts_code, as_of, ann_date, roe) VALUES (?,?,?,?)',
-            ("300054.SZ", None, None, 1.0),
-        )
+        connection.execute(insert, ("300054.SZ", None, None, 1.0))
         connection.commit()
         if null_dated_rows(connection, FUNDAMENTAL_TABLE, "ann_date", "300054.SZ") != 1:
             print("SELFTEST FAIL: NULL-dated row was not counted", file=sys.stderr)
             return 1
         checks.append("null_dated_counted")
-        connection.execute(
-            f'INSERT INTO "{FUNDAMENTAL_TABLE}" (ts_code, as_of, ann_date, roe) VALUES (?,?,?,?)',
-            ("300054.SZ", "2019-12-31", "2019-12-31", 1.0),
-        )
+        connection.execute(insert, ("300054.SZ", "2019-12-31", "2019-12-31", 1.0))
         connection.commit()
         try:
             pit_rows(connection, FUNDAMENTAL_TABLE, "roe", "ann_date", "300054.SZ", "20191231")
@@ -1136,10 +1396,12 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
 def _summary_line(payload: Mapping[str, Any], path: Path | None) -> str:
     table = payload["separability_table"]
     measurable = sum(row["measurable_count"] for row in table)
+    proxy_measurable = sum(row["proxy_measurable_count"] for row in table)
     expected = [row for row in table if row["expected_side"] is not None]
     return (
         f"status={payload['status']} auto_cards={payload['inputs']['auto_card_count']} "
         f"cells={len(payload['evaluations'])} measurable={measurable} "
+        f"proxy_measurable={proxy_measurable} "
         f"expected_side_rows={len(expected)} missing={payload['missing_inventory_count']} "
         f"out={path if path is not None else '-'}"
     )

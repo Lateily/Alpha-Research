@@ -146,6 +146,7 @@ FUNNEL_GOVERNANCE_PATHS = (
     "experiments/research_funnel/u4_pre_decision.py",
     "experiments/research_funnel/knowledge_cards.py",
     "experiments/research_funnel/knowledge_card_backtest.py",
+    "experiments/research_funnel/semiconductor_extended_sources.py",
     "experiments/research_funnel/feature_store.py",
     "experiments/execution_tracker/event_ledger.py",
     "experiments/execution_tracker/paper_execution_audit.py",
@@ -8060,6 +8061,44 @@ MUTATIONS = MUTATIONS + (
         rationale=(
             "A look-back evaluation may only read rows dated at or before its "
             "look-back point; dropping the boundary lets the card table peek ahead."
+        ),
+    ),
+    MutationCase(
+        mutation_id="SEMI_SOURCES_PIT_BOUND",
+        component="Research funnel semiconductor extended-source disclosure point-in-time boundary",
+        source_path="experiments/research_funnel/semiconductor_extended_sources.py",
+        test_script="tests/test_semiconductor_extended_sources.py",
+        before=(
+            "    # governance-mutation: SEMI_SOURCES_PIT_BOUND\n"
+            '    return f"{pit_column} <= ?"'
+        ),
+        after=(
+            "    # governance-mutation: SEMI_SOURCES_PIT_BOUND\n"
+            '    return "? IS NOT NULL"'
+        ),
+        expected_failure_marker="test_disclosure_after_as_of_is_invisible_at_as_of",
+        rationale=(
+            "A disclosure read at as_of may only see rows announced at or before as_of; "
+            "dropping the single ann_date predicate lets a later filing leak into the past."
+        ),
+    ),
+    MutationCase(
+        mutation_id="NO_ZERO_FILL_ON_SOURCE_GAP",
+        component="Research funnel semiconductor extended-source gap honesty",
+        source_path="experiments/research_funnel/semiconductor_extended_sources.py",
+        test_script="tests/test_semiconductor_extended_sources.py",
+        before=(
+            "        # governance-mutation: NO_ZERO_FILL_ON_SOURCE_GAP\n"
+            '        return _component_stub(spec, "DATA_BLOCKED", BLOCKED_REASON)'
+        ),
+        after=(
+            "        # governance-mutation: NO_ZERO_FILL_ON_SOURCE_GAP\n"
+            '        return _component_stub(spec, "NOT_OBSERVED", "NOT_IN_PUBLISHED_BATCH")'
+        ),
+        expected_failure_marker="test_uncovered_point_is_data_blocked_never_not_observed",
+        rationale=(
+            "A point no batch covers is DATA_BLOCKED (SOURCE_BATCH_UNAVAILABLE); relabeling "
+            "it NOT_OBSERVED would pass a collection gap off as an observed absence."
         ),
     ),
 )
