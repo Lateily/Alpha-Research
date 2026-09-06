@@ -11,6 +11,8 @@ on:
       - "experiments/execution_tracker/event_ledger.jsonl*"
       - "experiments/execution_tracker/publication_migration_events.jsonl*"
       - "scripts/**/*.py"
+      - "tools/nonprod_workbench/**"
+      - "docs/team/NONPROD_WORKBENCH_V1.md"
       - "scripts/llm/**/*.json"
       - "tests/**"
       - "docs/llm/**"
@@ -102,6 +104,10 @@ jobs:
       # AIOS Harness A-013:provider-neutral AgentAdapter 契约(零网络、零成本)
       - name: Agent adapter contract regression (offline)
         run: python3 tests/test_agent_adapter_offline.py
+      - name: Nonproduction workbench boundaries (offline, sockets blocked)
+        run: |
+          python3 tests/test_nonprod_workbench.py
+          python3 scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/cloud_nonprod_workbench_v1.task.json
       # AIOS-K1:A-006/A-007/A-008 任务合同、状态重放、只读对账
       - name: AIOS K1 task registry regression (offline)
         run: python3 tests/test_ai_os_k1_offline.py
