@@ -2412,6 +2412,26 @@ MUTATIONS: tuple[MutationCase, ...] = (
         ),
     ),
     MutationCase(
+        mutation_id="FEATURES_DAILY_OHLC_HASH_BOUND",
+        component="Research funnel feature store OHLC hash binding",
+        source_path="experiments/research_funnel/feature_store.py",
+        test_script="tests/test_feature_store_ohlc.py",
+        before=(
+            "        # governance-mutation: FEATURES_DAILY_OHLC_HASH_BOUND\n"
+            "        hashed_payload = {\n"
+            '            "ohlc": {key: values[key] for key in OHLC_COLUMNS},\n'
+        ),
+        after=(
+            "        # governance-mutation: FEATURES_DAILY_OHLC_HASH_BOUND\n"
+            "        hashed_payload = {\n"
+        ),
+        expected_failure_marker="test_features_daily_ohlc_is_hash_bound",
+        rationale=(
+            "features_daily.input_hash must bind the raw open/high/low/pct_chg it carries; "
+            "a feature row whose OHLC drifted from raw_daily cannot keep a valid hash."
+        ),
+    ),
+    MutationCase(
         mutation_id="SEMICONDUCTOR_FINANCIAL_LOOKBACK",
         component="Research funnel semiconductor PIT financial coverage",
         source_path="experiments/research_funnel/semiconductor_inputs.py",

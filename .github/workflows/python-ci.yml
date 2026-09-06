@@ -144,6 +144,10 @@ jobs:
         run: python3 experiments/research_funnel/security_registry.py --selftest
       - name: Feature store contract selftest
         run: python3 experiments/research_funnel/feature_store.py --selftest
+      # WO-X1-B: features_daily carries raw open/high/low/pct_chg (store schema v2):
+      # fresh derivation, v1->v2 migration without backfill, OHLC bound into input_hash.
+      - name: Feature store OHLC columns regression (offline)
+        run: python3 tests/test_feature_store_ohlc.py
       # Semiconductor positive inputs stay source-atomic and point-in-time;
       # every scoped security carries evidence or explicit DATA_BLOCKED, while
       # E1 red flags retain unconditional exclusion authority.

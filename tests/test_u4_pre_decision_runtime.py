@@ -403,7 +403,7 @@ class U4PreDecisionRuntimeTests(unittest.TestCase):
         # A future reviewed revision must explicitly update this historical pin.
         frozen = {
             "docs/research/contracts/research_closed_loop.v1.json":
-                "dada0e6dd7cec4e62a046c772a8f44c5f479deda41347aaa1625337aa1042f9c",
+                "e1315a91cb7901f6a996aaaa30496ebad35110ad9e903faa36e337879437060c",
             "experiments/research_funnel/funnel_dag.py":
                 "01c98eba48ffdbdb22870eca8a01a66f8415d6e956b7bf990e386c7e3378f389",
         }
