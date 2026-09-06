@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { statusTone } from './status-tone.mjs';
 import { Activity, ArrowRight, CalendarClock, Check, ClipboardCheck, Database, Download, FileText, Layers3, ListFilter, LockKeyhole, Play, Plus, RefreshCw, Save, Search, Send, ShieldCheck, Wallet, X } from 'lucide-react';
 export const workspaceTabs = [['desk', '研究总览', Layers3], ['nightly', '夜链与计划', CalendarClock], ['macro', '宏观与数据', Activity], ['models', '模型与方法', ShieldCheck], ['candidates', '候选证据', ListFilter], ['drafts', '研究稿', FileText], ['reviews', '提交与审核', ClipboardCheck], ['paper', '模拟盘与归因', Wallet], ['records', '数据与审计', Database]];
 const jobLabels = {
@@ -29,7 +30,7 @@ const dateTime = epoch => new Date(epoch * 1000).toLocaleString('zh-CN', {
 function Status({
   value
 }) {
-  const tone = /MISSING|INVALID|INCOMPLETE|FAILED|ERROR|STOP|REJECT/.test(value || '') ? 'red' : /STALE|BLOCKED|PARTIAL|UNBOUND|WAIT|DRAFT|IN_REVIEW/.test(value || '') ? 'amber' : /OK|SUCCEEDED|MATCH|ACCEPTED/.test(value || '') ? 'green' : 'neutral';
+  const tone = statusTone(value);
   return <span className={`badge ${tone}`}>{value || 'UNAVAILABLE'}</span>;
 }
 function Table({

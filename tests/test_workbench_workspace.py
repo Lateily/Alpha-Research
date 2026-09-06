@@ -3,6 +3,7 @@ import copy
 import json
 import os
 import sqlite3
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -17,6 +18,30 @@ import workbench_evidence as ev
 import workbench_backup as backup
 
 PASSWORD = "test-only-local-password"
+
+
+class StatusToneTests(unittest.TestCase):
+    def tones(self, values):
+        module = (ROOT / "tools/nonprod_workbench/ui/status-tone.mjs").as_uri()
+        script = (f"import {{ statusTone }} from {json.dumps(module)};"
+                  "console.log(JSON.stringify(JSON.parse(process.argv[1]).map(statusTone)));")
+        result = subprocess.run(
+            ["node", "--input-type=module", "-e", script, json.dumps(values)],
+            capture_output=True, text=True, check=True,
+        )
+        return json.loads(result.stdout)
+
+    def test_mismatch_badge_is_red_not_success(self):
+        self.assertEqual(self.tones(["MISMATCH", "HASH_MISMATCH", "MATCH"]),
+                         ["red", "red", "green"])
+
+    def test_only_exact_success_tokens_can_be_green(self):
+        self.assertEqual(self.tones(["NOT_MATCH", "NOT_OK", "UNACCEPTED", "OK / FAILED",
+                                    "MATCH_PENDING", "", None]), ["neutral"] * 7)
+        self.assertEqual(self.tones(["OK", "SUCCEEDED", "ACCEPTED_LOCAL", "LOCAL_INTEGRITY_OK"]),
+                         ["green"] * 4)
+        self.assertEqual(self.tones(["DATA_BLOCKED", "PARTIAL", "UNBOUND", "IN_REVIEW"]),
+                         ["amber"] * 4)
 
 
 def write(root, name, value):

@@ -185,6 +185,21 @@ class MutationCase:
 
 MUTATIONS: tuple[MutationCase, ...] = (
     MutationCase(
+        mutation_id="WORKSPACE_MISMATCH_BADGE", component="AIOS local workspace",
+        source_path="tools/nonprod_workbench/ui/status-tone.mjs", test_script="tests/test_workbench_workspace.py",
+        before="  if (red.has(value)) return 'red';", after="  if (red.has(value)) return 'green';",
+        expected_failure_marker="test_mismatch_badge_is_red_not_success",
+        rationale="An integrity mismatch must render as a failed binding, never as success.",
+    ),
+    MutationCase(
+        mutation_id="WORKSPACE_EXACT_SUCCESS_BADGE", component="AIOS local workspace",
+        source_path="tools/nonprod_workbench/ui/status-tone.mjs", test_script="tests/test_workbench_workspace.py",
+        before="  if (green.has(value)) return 'green';",
+        after="  if (/OK|SUCCEEDED|MATCH|ACCEPTED/.test(value || '')) return 'green';",
+        expected_failure_marker="test_only_exact_success_tokens_can_be_green",
+        rationale="Substring matches must not make unknown or negated states look successful.",
+    ),
+    MutationCase(
         mutation_id="WORKSPACE_SOURCE_PREWRITE_CHECK", component="AIOS local workspace",
         source_path="scripts/llm/nonprod_workbench.py", test_script="tests/test_workbench_workspace.py",
         before='    if args.read_only_source_root and (state_root.resolve() == args.read_only_source_root.resolve() or args.read_only_source_root.resolve() in state_root.resolve().parents):', after='    if False:',
