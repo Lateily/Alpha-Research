@@ -7770,6 +7770,533 @@ MUTATIONS = MUTATIONS + (
         rationale="An incomplete U3 row remains DATA_BLOCKED even when E1 is also active.",
     ),
     MutationCase(
+        mutation_id="FACT_CHECK_BLOCKS_MISMATCHED_MONETARY_CLAIMS",
+        component="Research fact-check gate",
+        source_path="scripts/llm/fact_check_core.mjs",
+        test_script="tests/test_fact_check.py",
+        before=(
+            "          // governance-mutation: FACT_CHECK_BLOCKS_MISMATCHED_MONETARY_CLAIMS"
+        ),
+        after=(
+            "          if (false)  // governance-mutation: FACT_CHECK_BLOCKS_MISMATCHED_MONETARY_CLAIMS"
+        ),
+        expected_failure_marker="test_blocking_class_mismatch_blocks_regardless_of_magnitude",
+        rationale=(
+            "A money/order/contract/capacity number that disagrees with its source must "
+            "block exactly as an unsourced one does; a same-identity number in evidence "
+            "cannot downgrade a fabricated magnitude to a non-blocking mismatch."
+        ),
+    ),
+    MutationCase(
+        mutation_id="FACT_CHECK_QUALITY_CAPPED_ON_FABRICATION",
+        component="Research fact-check gate",
+        source_path="api/research.js",
+        test_script="tests/test_fact_check.py",
+        before="const FABRICATION_QUALITY_CAP = 40;",
+        after="const FABRICATION_QUALITY_CAP = 100;",
+        expected_failure_marker="test_fabrication_caps_the_structural_quality_score",
+        rationale=(
+            "A structurally well-formed thesis whose numbers are unsourced must not keep "
+            "a PASS headline score (F-029)."
+        ),
+    ),
+    MutationCase(
+        mutation_id="FACT_CHECK_BLOCKS_UNTRACED_MONETARY_CLAIMS",
+        component="Research deterministic fact-check core",
+        source_path="scripts/llm/fact_check_core.mjs",
+        test_script="tests/test_fact_check.py",
+        before=(
+            "  // governance-mutation: FACT_CHECK_BLOCKS_UNTRACED_MONETARY_CLAIMS\n"
+            "  const status = fabricationSuspects.length ? FACT_CHECK_BLOCKED : 'PASS';"
+        ),
+        after=(
+            "  // governance-mutation: FACT_CHECK_BLOCKS_UNTRACED_MONETARY_CLAIMS\n"
+            "  const status = 'PASS';"
+        ),
+        expected_failure_marker="test_untraced_monetary_claim_blocks",
+        rationale="An untraced high-risk claim must block the complete thesis receipt.",
+    ),
+    MutationCase(
+        mutation_id="FACT_CHECK_IDENTITY_CURRENCY",
+        component="Research deterministic fact-check identity",
+        source_path="scripts/llm/fact_check_core.mjs",
+        test_script="tests/test_fact_check.py",
+        before="    && left.currency === right.currency",
+        after="    && true",
+        expected_failure_marker="test_high_risk_identity_includes_sign_currency_comparator_and_period",
+        rationale="A source in another currency cannot trace a high-risk monetary claim.",
+    ),
+    MutationCase(
+        mutation_id="FACT_CHECK_IDENTITY_COMPARATOR",
+        component="Research deterministic fact-check identity",
+        source_path="scripts/llm/fact_check_core.mjs",
+        test_script="tests/test_fact_check.py",
+        before="    && comparatorsCompatible(left.comparator, right.comparator)",
+        after="    && true",
+        expected_failure_marker="test_high_risk_identity_includes_sign_currency_comparator_and_period",
+        rationale="An above claim cannot be traced by below evidence or vice versa.",
+    ),
+    MutationCase(
+        mutation_id="FACT_CHECK_IDENTITY_SIGN",
+        component="Research deterministic fact-check identity",
+        source_path="scripts/llm/fact_check_core.mjs",
+        test_script="tests/test_fact_check.py",
+        before="    && left.sign === right.sign",
+        after="    && true",
+        expected_failure_marker="test_high_risk_identity_includes_sign_currency_comparator_and_period",
+        rationale="A negative value cannot be traced by a positive source value.",
+    ),
+    MutationCase(
+        mutation_id="FACT_CHECK_IDENTITY_ENTITY",
+        component="Research deterministic fact-check identity",
+        source_path="scripts/llm/fact_check_core.mjs",
+        test_script="tests/test_fact_check.py",
+        before=(
+            "    && left.sign === right.sign\n"
+            "    && left.entity === right.entity"
+        ),
+        after=(
+            "    && left.sign === right.sign\n"
+            "    && true"
+        ),
+        expected_failure_marker="test_high_risk_identity_includes_sign_currency_comparator_and_period",
+        rationale="Evidence for another security cannot trace the requested security's claim.",
+    ),
+    MutationCase(
+        mutation_id="FACT_CHECK_IDENTITY_PERIOD",
+        component="Research deterministic fact-check identity",
+        source_path="scripts/llm/fact_check_core.mjs",
+        test_script="tests/test_fact_check.py",
+        before=(
+            "    && left.sign === right.sign\n"
+            "    && left.entity === right.entity\n"
+            "    && periodsCompatible(left.periods, right.periods);"
+        ),
+        after=(
+            "    && left.sign === right.sign\n"
+            "    && left.entity === right.entity\n"
+            "    && true;"
+        ),
+        expected_failure_marker="test_high_risk_identity_includes_sign_currency_comparator_and_period",
+        rationale="A fact from another reporting period cannot trace the claim.",
+    ),
+    MutationCase(
+        mutation_id="FACT_CHECK_SOURCE_PIT_CUTOFF",
+        component="Research deterministic fact-check PIT boundary",
+        source_path="scripts/llm/fact_check_core.mjs",
+        test_script="tests/test_fact_check.py",
+        before=(
+            "  // governance-mutation: FACT_CHECK_SOURCE_PIT_CUTOFF\n"
+            "  }).map(fact => ({ ...fact, admissible: Boolean(fact.source_date) && fact.source_date <= cutoff }));"
+        ),
+        after=(
+            "  // governance-mutation: FACT_CHECK_SOURCE_PIT_CUTOFF\n"
+            "  }).map(fact => ({ ...fact, admissible: true }));"
+        ),
+        expected_failure_marker="test_future_or_undated_source_cannot_cross_the_pit_cutoff",
+        rationale="Future and undated evidence must not cross the frozen point-in-time cutoff.",
+    ),
+    MutationCase(
+        mutation_id="FACT_CHECK_NUMERIC_THESIS_LEAVES",
+        component="Research deterministic fact-check traversal",
+        source_path="scripts/llm/fact_check_core.mjs",
+        test_script="tests/test_fact_check.py",
+        before=(
+            "  // governance-mutation: FACT_CHECK_NUMERIC_THESIS_LEAVES\n"
+            "  else if (typeof value === 'number' && Number.isFinite(value)) output.push({ path, kind: 'number', value, metadata: leafMetadata(ancestors, path) });"
+        ),
+        after=(
+            "  // governance-mutation: FACT_CHECK_NUMERIC_THESIS_LEAVES\n"
+            "  else if (false && typeof value === 'number' && Number.isFinite(value)) output.push({ path, kind: 'number', value, metadata: leafMetadata(ancestors, path) });"
+        ),
+        expected_failure_marker="test_numeric_thesis_leaf_is_checked_instead_of_skipped",
+        rationale="Structured numeric thesis leaves cannot disappear from the receipt.",
+    ),
+    MutationCase(
+        mutation_id="FACT_CHECK_RECEIPT_BINDS_EVIDENCE",
+        component="Research deterministic fact-check receipt",
+        source_path="scripts/llm/fact_check_core.mjs",
+        test_script="tests/test_fact_check.py",
+        before=(
+            "  // governance-mutation: FACT_CHECK_RECEIPT_BINDS_EVIDENCE\n"
+            "  const inputHash = canonicalHash({ ticker: canonicalTicker, cutoff: frozenCutoff, thesis_hash: thesisHash, source_set_hash: sourceSetHash });"
+        ),
+        after=(
+            "  // governance-mutation: FACT_CHECK_RECEIPT_BINDS_EVIDENCE\n"
+            "  const inputHash = canonicalHash({ ticker: canonicalTicker, cutoff: frozenCutoff, thesis_hash: thesisHash });"
+        ),
+        expected_failure_marker="test_receipt_input_hash_binds_the_evidence_set",
+        rationale="Changing the evidence set must change the frozen fact-check input identity.",
+    ),
+    MutationCase(
+        mutation_id="FACT_CHECK_EVENT_SUBJECT_IDENTITY",
+        component="Research deterministic event fact identity",
+        source_path="scripts/llm/fact_check_core.mjs",
+        test_script="tests/test_fact_check.py",
+        before=(
+            "  return left.event_type === right.event_type\n"
+            "    && left.event_subject === right.event_subject"
+        ),
+        after=(
+            "  return left.event_type === right.event_type\n"
+            "    && true"
+        ),
+        expected_failure_marker="test_event_subject_identity_is_not_keyword_only",
+        rationale="A board approval cannot trace an FDA approval merely because both say approval.",
+    ),
+    MutationCase(
+        mutation_id="FACT_CHECK_ALL_SOURCE_DATES",
+        component="Research deterministic fact-check PIT boundary",
+        source_path="scripts/llm/fact_check_core.mjs",
+        test_script="tests/test_fact_check.py",
+        before=(
+            "  // governance-mutation: FACT_CHECK_ALL_SOURCE_DATES\n"
+            "  const explicitDates = [...allValues(ancestors, SOURCE_DATE_KEYS), document.source_date]\n"
+            "    .filter(value => value !== undefined && value !== null && value !== '');"
+        ),
+        after=(
+            "  // governance-mutation: FACT_CHECK_ALL_SOURCE_DATES\n"
+            "  const explicitDates = [nearestValue(ancestors, SOURCE_DATE_KEYS), document.source_date]\n"
+            "    .filter(value => value !== undefined && value !== null && value !== '');"
+        ),
+        expected_failure_marker="test_latest_of_all_source_dates_controls_pit_admissibility",
+        rationale="An older source_date cannot hide a later publication or availability timestamp.",
+    ),
+    MutationCase(
+        mutation_id="FACT_CHECK_EXPLICIT_TIMEZONE",
+        component="Research deterministic fact-check PIT boundary",
+        source_path="scripts/llm/fact_check_core.mjs",
+        test_script="tests/test_fact_check.py",
+        before=(
+            "  // governance-mutation: FACT_CHECK_EXPLICIT_TIMEZONE\n"
+            "  if (!/^20\\d{2}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,9})?(?:Z|[+\\-]\\d{2}:\\d{2})$/i.test(raw)) return '';"
+        ),
+        after=(
+            "  // governance-mutation: FACT_CHECK_EXPLICIT_TIMEZONE\n"
+            "  if (false && !/^20\\d{2}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,9})?(?:Z|[+\\-]\\d{2}:\\d{2})$/i.test(raw)) return '';"
+        ),
+        expected_failure_marker="test_timezone_naive_source_timestamp_is_host_independent_and_blocked",
+        rationale="A timezone-naive availability time must not change meaning with the runner host.",
+    ),
+    MutationCase(
+        mutation_id="FACT_CHECK_LOCAL_PERIOD_BINDING",
+        component="Research deterministic fact-check identity",
+        source_path="scripts/llm/fact_check_core.mjs",
+        test_script="tests/test_fact_check.py",
+        before=(
+            "    // governance-mutation: FACT_CHECK_LOCAL_PERIOD_BINDING\n"
+            "    return selected.period ? [selected.period] : [];"
+        ),
+        after=(
+            "    // governance-mutation: FACT_CHECK_LOCAL_PERIOD_BINDING\n"
+            "    return periodsFor(text, metadata);"
+        ),
+        expected_failure_marker="test_each_numeric_observation_binds_only_its_local_period",
+        rationale="One number cannot inherit every reporting period named elsewhere in its clause.",
+    ),
+    MutationCase(
+        mutation_id="FACT_CHECK_INLINE_ENTITY_BINDING",
+        component="Research deterministic fact-check identity",
+        source_path="scripts/llm/fact_check_core.mjs",
+        test_script="tests/test_fact_check.py",
+        before=(
+            "  // governance-mutation: FACT_CHECK_INLINE_ENTITY_BINDING\n"
+            "  const localMetadata = { ...metadata, entity: entityForText(source, metadata.entity) };"
+        ),
+        after=(
+            "  // governance-mutation: FACT_CHECK_INLINE_ENTITY_BINDING\n"
+            "  const localMetadata = { ...metadata, entity: canonicalEntity(metadata.entity) };"
+        ),
+        expected_failure_marker="test_inline_ticker_cannot_be_relabelled_by_document_entity",
+        rationale="An inline peer ticker cannot be relabelled as the requested security by outer metadata.",
+    ),
+    MutationCase(
+        mutation_id="FACT_CHECK_INLINE_ENTITY_NUMERIC_SPAN",
+        component="Research deterministic fact-check parsing",
+        source_path="scripts/llm/fact_check_core.mjs",
+        test_script="tests/test_fact_check.py",
+        before=(
+            "    // governance-mutation: FACT_CHECK_INLINE_ENTITY_NUMERIC_SPAN\n"
+            "    ...source.matchAll(INLINE_TICKER_RE),"
+        ),
+        after=(
+            "    // governance-mutation: FACT_CHECK_INLINE_ENTITY_NUMERIC_SPAN\n"
+            "    ...[],"
+        ),
+        expected_failure_marker="test_inline_ticker_cannot_be_relabelled_by_document_entity",
+        rationale="Ticker digits cannot be emitted as a second monetary observation.",
+    ),
+    MutationCase(
+        mutation_id="FACT_CHECK_RECOMPUTES_CONTENT_HASH",
+        component="Research deterministic fact-check receipt",
+        source_path="scripts/llm/fact_check_core.mjs",
+        test_script="tests/test_fact_check.py",
+        before=(
+            "    // governance-mutation: FACT_CHECK_RECOMPUTES_CONTENT_HASH\n"
+            "    content_hash: canonicalHash(document.payload),"
+        ),
+        after=(
+            "    // governance-mutation: FACT_CHECK_RECOMPUTES_CONTENT_HASH\n"
+            "    content_hash: String(document.content_hash || canonicalHash(document.payload)),"
+        ),
+        expected_failure_marker="test_source_payload_hash_is_recomputed_not_caller_supplied",
+        rationale="Caller-supplied content hashes cannot make different evidence payloads share one receipt identity.",
+    ),
+    MutationCase(
+        mutation_id="FACT_CHECK_PYTHON_CANONICAL_CORE",
+        component="Research offline fact-check adapter",
+        source_path="scripts/llm/fact_check.py",
+        test_script="tests/test_fact_check.py",
+        before=(
+            "        # governance-mutation: FACT_CHECK_PYTHON_CANONICAL_CORE\n"
+            '        ["node", str(CORE_PATH)],'
+        ),
+        after=(
+            "        # governance-mutation: FACT_CHECK_PYTHON_CANONICAL_CORE\n"
+            '        ["node", "-e", "process.stdout.write(\'{}\')"],'
+        ),
+        expected_failure_marker="test_python_adapter_returns_the_canonical_core_receipt",
+        rationale="The Python entry point must delegate to the same executable core used by production APIs.",
+    ),
+    MutationCase(
+        mutation_id="FACT_CHECK_SINGLE_API_FREEZES_CUTOFF",
+        component="Research single-agent API PIT wiring",
+        source_path="api/research.js",
+        test_script="tests/test_fact_check.py",
+        before=(
+            "  // governance-mutation: FACT_CHECK_SINGLE_API_FREEZES_CUTOFF\n"
+            "  const factCheckCutoff = new Date().toISOString();"
+        ),
+        after=(
+            "  // governance-mutation: FACT_CHECK_SINGLE_API_FREEZES_CUTOFF\n"
+            "  const factCheckCutoff = '';"
+        ),
+        expected_failure_marker="test_single_api_calls_fact_checker_before_returning_generated_thesis",
+        rationale="The production fact checker must receive one valid cutoff frozen at request start.",
+    ),
+    MutationCase(
+        mutation_id="FACT_CHECK_MULTI_API_FREEZES_CUTOFF",
+        component="Research multi-agent API PIT wiring",
+        source_path="api/research-multi.js",
+        test_script="tests/test_fact_check.py",
+        before=(
+            "  // governance-mutation: FACT_CHECK_MULTI_API_FREEZES_CUTOFF\n"
+            "  const factCheckCutoff = new Date().toISOString();"
+        ),
+        after=(
+            "  // governance-mutation: FACT_CHECK_MULTI_API_FREEZES_CUTOFF\n"
+            "  const factCheckCutoff = '';"
+        ),
+        expected_failure_marker="test_multi_api_calls_fact_checker_before_returning_generated_thesis",
+        rationale="The multi-agent response must use a frozen point-in-time cutoff too.",
+    ),
+    MutationCase(
+        mutation_id="FACT_CHECK_SINGLE_API_POSTPROCESS",
+        component="Research single-agent API fact-check wiring",
+        source_path="api/research.js",
+        test_script="tests/test_fact_check.py",
+        before=(
+            "    // governance-mutation: FACT_CHECK_SINGLE_API_POSTPROCESS\n"
+            "    const factChecked = attachFactCheck(research, enrichment_context, ticker, factCheckCutoff);"
+        ),
+        after=(
+            "    // governance-mutation: FACT_CHECK_SINGLE_API_POSTPROCESS\n"
+            "    const factChecked = { data: research, status: 'PASS' };"
+        ),
+        expected_failure_marker="test_single_api_calls_fact_checker_before_returning_generated_thesis",
+        rationale="The single-agent production response cannot bypass deterministic post-generation fact checking.",
+    ),
+    MutationCase(
+        mutation_id="FACT_CHECK_MULTI_COVERS_SUB_THESES",
+        component="Research multi-agent API fact-check wiring",
+        source_path="api/research-multi.js",
+        test_script="tests/test_fact_check.py",
+        before=(
+            "    // governance-mutation: FACT_CHECK_MULTI_COVERS_SUB_THESES\n"
+            "    const subChecked = attachFactCheckToBlocks("
+        ),
+        after=(
+            "    // governance-mutation: FACT_CHECK_MULTI_COVERS_SUB_THESES\n"
+            "    const subChecked = ((x) => ({ blocks: x, receipts: {}, status: 'PASS', summary: { checked_blocks: 0, blocked_blocks: [], fabrication_suspects: 0 } }))("
+        ),
+        expected_failure_marker="test_multi_api_gates_every_returned_sub_thesis",
+        rationale=(
+            "Every thesis block the multi-agent API returns must pass the fact-check gate; "
+            "checking only the synthesis lets a fabricated number ride out in a sibling key."
+        ),
+    ),
+    MutationCase(
+        mutation_id="FACT_CHECK_MULTI_API_POSTPROCESS",
+        component="Research multi-agent API fact-check wiring",
+        source_path="api/research-multi.js",
+        test_script="tests/test_fact_check.py",
+        before=(
+            "    // governance-mutation: FACT_CHECK_MULTI_API_POSTPROCESS\n"
+            "    const factChecked = attachFactCheck(synth, enrichment_context, ticker, factCheckCutoff);"
+        ),
+        after=(
+            "    // governance-mutation: FACT_CHECK_MULTI_API_POSTPROCESS\n"
+            "    const factChecked = { data: synth, status: 'PASS' };"
+        ),
+        expected_failure_marker="test_multi_api_calls_fact_checker_before_returning_generated_thesis",
+        rationale="The multi-agent production response cannot bypass deterministic post-generation fact checking.",
+    ),
+    MutationCase(
+        mutation_id="FACT_CHECK_CONTEXT_BUILT_AT_TOP_LEVEL",
+        component="Research deterministic fact-check PIT boundary",
+        source_path="scripts/llm/fact_check_core.mjs",
+        test_script="tests/test_fact_check.py",
+        before=(
+            "  // governance-mutation: FACT_CHECK_CONTEXT_BUILT_AT_TOP_LEVEL\n"
+            "  const contextDate = context?.extras?.context_built_at || context.context_built_at || context.generated_at || context.as_of || '';"
+        ),
+        after=(
+            "  // governance-mutation: FACT_CHECK_CONTEXT_BUILT_AT_TOP_LEVEL\n"
+            "  const contextDate = context?.extras?.context_built_at || context.generated_at || context.as_of || '';"
+        ),
+        expected_failure_marker="test_top_level_context_built_at_dates_dashboard_shaped_context",
+        rationale=(
+            "The Dashboard stamps context_built_at at the top level of enrichment_context; "
+            "ignoring it leaves every browser-built source undated and blocks every thesis "
+            "on principle instead of on evidence."
+        ),
+    ),
+    MutationCase(
+        mutation_id="FACT_CHECK_METRIC_ATTRIBUTION_PRECEDES_NUMBER",
+        component="Research deterministic fact-check identity",
+        source_path="scripts/llm/fact_check_core.mjs",
+        test_script="tests/test_fact_check.py",
+        before=(
+            "  // governance-mutation: FACT_CHECK_METRIC_ATTRIBUTION_PRECEDES_NUMBER\n"
+            "  if (precedingMetric) return precedingMetric;"
+        ),
+        after=(
+            "  // governance-mutation: FACT_CHECK_METRIC_ATTRIBUTION_PRECEDES_NUMBER\n"
+            "  if (false && precedingMetric) return precedingMetric;"
+        ),
+        expected_failure_marker="test_right_number_wrong_label_monetary_claim_blocks",
+        rationale=(
+            "A number belongs to the label that precedes it in its clause; attributing it "
+            "to a following label lets a right-number-wrong-label monetary fabrication pass."
+        ),
+    ),
+    MutationCase(
+        mutation_id="FACT_CHECK_RATIO_SPAN_NOT_A_LABEL_BOUNDARY",
+        component="Research deterministic fact-check identity",
+        source_path="scripts/llm/fact_check_core.mjs",
+        test_script="tests/test_fact_check.py",
+        before=(
+            "    // governance-mutation: FACT_CHECK_RATIO_SPAN_NOT_A_LABEL_BOUNDARY\n"
+            "    ...numberSpans.filter(([, spanEnd, ratio]) => spanEnd <= start && !ratio).map(([, spanEnd]) => spanEnd),"
+        ),
+        after=(
+            "    // governance-mutation: FACT_CHECK_RATIO_SPAN_NOT_A_LABEL_BOUNDARY\n"
+            "    ...numberSpans.filter(([, spanEnd]) => spanEnd <= start).map(([, spanEnd]) => spanEnd),"
+        ),
+        expected_failure_marker="test_growth_then_level_phrasing_keeps_the_preceding_label",
+        rationale=(
+            "A growth percentage between a label and its level figure is not a statement "
+            "boundary; treating it as one strips the label and turns every truthful "
+            "'grew X% to Y' claim into an untraced money figure (reflexive BLOCK)."
+        ),
+    ),
+    MutationCase(
+        mutation_id="FACT_CHECK_FOLLOWING_LABEL_WINS_ACROSS_RATIO",
+        component="Research deterministic fact-check identity",
+        source_path="scripts/llm/fact_check_core.mjs",
+        test_script="tests/test_fact_check.py",
+        before=(
+            "  // governance-mutation: FACT_CHECK_FOLLOWING_LABEL_WINS_ACROSS_RATIO\n"
+            "  const ratioBetween = precedingHit !== null && hasRatioSpanBetween(numberSpans, segmentStart + precedingHit.position + precedingHit.length, start);"
+        ),
+        after=(
+            "  // governance-mutation: FACT_CHECK_FOLLOWING_LABEL_WINS_ACROSS_RATIO\n"
+            "  const ratioBetween = false && precedingHit !== null && hasRatioSpanBetween(numberSpans, segmentStart + precedingHit.position + precedingHit.length, start);"
+        ),
+        expected_failure_marker="test_level_after_a_ratio_goes_to_its_own_following_label",
+        rationale=(
+            "When a ratio sits between a label and a level figure that carries its own "
+            "label right after it, the level belongs to the following label; keeping the "
+            "ratio's label mislabels the level (gross margin 41.8% on RMB 4.6B revenue)."
+        ),
+    ),
+    MutationCase(
+        mutation_id="FACT_CHECK_RATIO_NOT_UPGRADED_TO_ENTITY_CLASS",
+        component="Research deterministic fact-check identity",
+        source_path="scripts/llm/fact_check_core.mjs",
+        test_script="tests/test_fact_check.py",
+        before=(
+            "  // governance-mutation: FACT_CHECK_RATIO_NOT_UPGRADED_TO_ENTITY_CLASS\n"
+            "  if (baseClass === 'RATIO') return baseClass;"
+        ),
+        after=(
+            "  // governance-mutation: FACT_CHECK_RATIO_NOT_UPGRADED_TO_ENTITY_CLASS\n"
+            "  if (false && baseClass === 'RATIO') return baseClass;"
+        ),
+        expected_failure_marker="test_ratio_multiple_is_never_upgraded_to_an_order_class",
+        rationale=(
+            "A multiple or percentage is never an order/contract/capacity amount; "
+            "upgrading it manufactures a blocking-class suspect out of a ratio."
+        ),
+    ),
+    MutationCase(
+        mutation_id="FACT_CHECK_ARRAY_BLOCKS_CHECKED",
+        component="Research multi-agent block fact-check coverage",
+        source_path="scripts/llm/fact_check_core.mjs",
+        test_script="tests/test_fact_check.py",
+        before=(
+            "    // governance-mutation: FACT_CHECK_ARRAY_BLOCKS_CHECKED\n"
+            "    const checkable = block !== null && CHECKABLE_BLOCK_TYPES.has(typeof block);"
+        ),
+        after=(
+            "    // governance-mutation: FACT_CHECK_ARRAY_BLOCKS_CHECKED\n"
+            "    const checkable = block !== null && CHECKABLE_BLOCK_TYPES.has(typeof block) && !Array.isArray(block);"
+        ),
+        expected_failure_marker="test_array_shaped_block_is_checked_and_unsupported_shape_is_explicit",
+        rationale=(
+            "An array-shaped thesis block carries claims and must be checked; it cannot "
+            "leave the API as a silent PASS."
+        ),
+    ),
+    MutationCase(
+        mutation_id="FACT_CHECK_QUALITY_CAPPED_ON_FABRICATION_MULTI",
+        component="Research multi-agent API fact-check wiring",
+        source_path="api/research-multi.js",
+        test_script="tests/test_fact_check.py",
+        before=(
+            "      // governance-mutation: FACT_CHECK_QUALITY_CAPPED_ON_FABRICATION_MULTI\n"
+            "      _quality: applyFabricationCap(qcMeta, {"
+        ),
+        after=(
+            "      // governance-mutation: FACT_CHECK_QUALITY_CAPPED_ON_FABRICATION_MULTI\n"
+            "      _quality: ((quality) => quality)(qcMeta, {"
+        ),
+        expected_failure_marker="test_multi_api_quality_cap_applies_to_fabricated_sub_theses",
+        rationale=(
+            "The multi-agent structural score must be capped when any returned block "
+            "holds fabrication suspects (F-029 on the multi path)."
+        ),
+    ),
+    MutationCase(
+        mutation_id="FACT_CHECK_MULTI_SUBBLOCK_BLOCKS_ENVELOPE",
+        component="Research multi-agent API fact-check wiring",
+        source_path="api/research-multi.js",
+        test_script="tests/test_fact_check.py",
+        before=(
+            "      // governance-mutation: FACT_CHECK_MULTI_SUBBLOCK_BLOCKS_ENVELOPE\n"
+            "      _status: (factChecked.status === 'BLOCKED_PENDING_HUMAN' || subChecked.status === 'BLOCKED_PENDING_HUMAN')"
+        ),
+        after=(
+            "      // governance-mutation: FACT_CHECK_MULTI_SUBBLOCK_BLOCKS_ENVELOPE\n"
+            "      _status: (factChecked.status === 'BLOCKED_PENDING_HUMAN' || false)"
+        ),
+        expected_failure_marker="test_multi_api_sub_block_alone_blocks_the_envelope",
+        rationale=(
+            "A blocked sub-thesis must block the response envelope even when the "
+            "synthesis itself is clean."
+        ),
+    ),
+    MutationCase(
         mutation_id="LHB_RENDER_READS_APPEARANCES",
         component="Research API LHB rendering",
         source_path="api/research.js",
