@@ -31,6 +31,7 @@ from security_registry import (
     validate_registry,
 )
 import semiconductor_inputs as semiconductor_evidence
+import semiconductor_extended_sources as semiconductor_extended
 
 
 SCHEMA = "ar.feature_store_health"
@@ -799,11 +800,27 @@ def run_live(
         if has_semiconductor_scope
         else []
     )
+    # WO-X1-A: extended point-in-time sources ride the same nightly pass and
+    # the same transport seam as the core fetches. Every per-source failure
+    # stays a receipt inside the extended module; health JSON is unchanged.
+    semiconductor_extended_sources = (
+        semiconductor_extended.collect_live_extended(
+            token,
+            _resolve(db_path),
+            registry,
+            latest_trade_date,
+            sleep_seconds=sleep_seconds,
+            fetcher=_tushare_call,
+        )
+        if has_semiconductor_scope
+        else []
+    )
     health = build_health(db_path, registry)
     _atomic_write_json(_resolve(out_path), health)
     return {
         "dates": results,
         "semiconductor_sources": semiconductor_sources,
+        "semiconductor_extended_sources": semiconductor_extended_sources,
         "health": health,
     }
 

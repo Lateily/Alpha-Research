@@ -151,6 +151,13 @@ jobs:
           python3 scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/semiconductor_source_publication_pending.task.json
           python3 scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/semiconductor_daily_source_completeness.task.json
           python3 scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/semiconductor_source_repair_v01.task.json
+      # WO-X1-A extended sources: twelve additional Tushare families are
+      # hash-bound, append-only, point-in-time evidence only. Each source
+      # fails in isolation as a receipt (PENDING/DATA_BLOCKED), never zero-fill.
+      - name: Semiconductor extended-source evidence regression (offline)
+        run: |
+          python3 tests/test_semiconductor_extended_sources.py
+          python3 experiments/research_funnel/semiconductor_extended_sources.py --selftest
       - name: Full-market E1 event layer contract selftest
         run: python3 experiments/research_funnel/e1_event_layer.py --selftest
       # R-033/R-034/R-035:六通道独立并集、U0 状态投影、同池随机控制、
@@ -239,6 +246,11 @@ jobs:
         run: |
           python3 tests/test_knowledge_card_backtest.py
           python3 experiments/research_funnel/knowledge_card_backtest.py --selftest
+      # WO-X1 history collection: the look-back needs a dated history store.
+      # The plan is derived from the cards, the ingest is offline and
+      # append-only, and a missing observation stays NOT_OBSERVED, never 0.
+      - name: Knowledge-card history collection plan and ingest (offline)
+        run: python3 tests/test_fetch_knowledge_card_history.py
       # Frozen assembly contract over the existing funnel, U4, research method,
       # paper execution, and five-axis modules. This step adds no runtime wiring.
       - name: Research closed loop V1 assembly contract (offline)

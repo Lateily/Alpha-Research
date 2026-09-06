@@ -169,9 +169,11 @@ def repo_collected_tushare_fields() -> dict[str, frozenset[str]]:
     ``scripts/fetch_tushare.py`` stores provider-default raw rows and therefore
     has no stable field-level contract to contribute here.  Its API calls are
     not treated as proof that any particular field is available to the
-    all-market feature store.
+    all-market feature store.  The WO-X1-A extended collectors contribute their
+    exact per-api declarations (``CATALOG_DECLARATIONS``, api -> csv).
     """
     import feature_store
+    import semiconductor_extended_sources
     import semiconductor_inputs
 
     # governance-mutation: CARD_SOURCE_CATALOG_FROM_COLLECTORS
@@ -186,11 +188,62 @@ def repo_collected_tushare_fields() -> dict[str, frozenset[str]]:
     }
     for api, fields in exact_semiconductor_sources.items():
         collected.setdefault(api, set()).update(_field_names(fields))
+    # The extended sources are catalogued under the Tushare api name a card
+    # declares (``daily_basic_ext`` rows are catalogued as ``daily_basic``).
+    for api, fields in semiconductor_extended_sources.CATALOG_DECLARATIONS.items():
+        collected.setdefault(api, set()).update(_field_names(fields))
     return {api: frozenset(fields) for api, fields in sorted(collected.items())}
 
 
+QUALIFIED_FIELD_SEPARATOR = "."
+REASON_NOT_COLLECTED = "SOURCE_FIELDS_NOT_COLLECTED_BY_REPO"
+REASON_STRUCTURALLY_IMPOSSIBLE = "DECLARED_PAIR_STRUCTURALLY_IMPOSSIBLE"
+
+
+def declared_source_pairs(
+    apis: Sequence[str], fields: Sequence[str], label: str
+) -> list[dict[str, Any]]:
+    """Expand a card's ``tushare_api`` x ``tushare_field`` declaration into pairs.
+
+    An unqualified field token keeps the deliberate cross-product semantics: it
+    is declared under *every* listed api.  A qualified token ``api.field`` binds
+    to exactly that api, which must itself be listed in ``tushare_api``.  Tokens
+    expand in declaration order, mixing both forms is allowed, and a pair may be
+    declared only once whichever form produced it.
+    """
+    pairs: list[dict[str, Any]] = []
+    seen: set[tuple[str, str]] = set()
+    for token in fields:
+        if QUALIFIED_FIELD_SEPARATOR in token:
+            api, _sep, field = token.partition(QUALIFIED_FIELD_SEPARATOR)
+            if not api or not field or QUALIFIED_FIELD_SEPARATOR in field:
+                raise KnowledgeCardError(f"{label}.tushare_field token is malformed: {token}")
+            if api not in apis:
+                raise KnowledgeCardError(
+                    f"{label}.tushare_field token {token} names an api outside tushare_api"
+                )
+            expansions = [(api, field, True)]
+        else:
+            expansions = [(api, token, False) for api in apis]
+        for api, field, qualified in expansions:
+            if (api, field) in seen:
+                raise KnowledgeCardError(f"{label} declares the pair {api}.{field} more than once")
+            seen.add((api, field))
+            pairs.append({"api": api, "field": field, "qualified": qualified})
+    return pairs
+
+
 def source_coverage(card: Mapping[str, Any]) -> dict[str, Any]:
-    """Report every declared API/field pair without claiming missing collection."""
+    """Report every declared API/field pair without claiming missing collection.
+
+    ``declared_pairs`` carries one entry per pair (see ``declared_source_pairs``)
+    with the catalog verdict and, for an uncollected pair, a reason:
+    ``SOURCE_FIELDS_NOT_COLLECTED_BY_REPO`` when no collector persists it, or
+    ``DECLARED_PAIR_STRUCTURALLY_IMPOSSIBLE`` when an *unqualified* cross-product
+    pair asks one api for a field that only another declared api provides.  The
+    second reason means "re-declare the card with a qualified token", not
+    "collect history": no collection can ever fill that pair.
+    """
     source = card.get("data_source") or {}
     api_value = source.get("tushare_api")
     field_value = source.get("tushare_field")
@@ -199,25 +252,36 @@ def source_coverage(card: Mapping[str, Any]) -> dict[str, Any]:
             "collected_by_repo": False,
             "declared_pairs": [],
             "uncollected_pairs": [],
+            "structurally_impossible_pairs": [],
         }
     apis = _split_csv(str(api_value), "data_source.tushare_api")
     fields = _split_csv(str(field_value), "data_source.tushare_field")
     catalog = repo_collected_tushare_fields()
-    pairs = [
-        {
-            "api": api,
-            "field": field,
-            "collected_by_repo": field in catalog.get(api, frozenset()),
-        }
-        for api in apis
-        for field in fields
-    ]
+    pairs: list[dict[str, Any]] = []
+    for pair in declared_source_pairs(apis, fields, "data_source"):
+        api = pair["api"]
+        field = pair["field"]
+        collected = field in catalog.get(api, frozenset())
+        reason = None
+        if not collected:
+            reason = REASON_NOT_COLLECTED
+            if not pair["qualified"] and any(
+                field in catalog.get(other, frozenset()) for other in apis if other != api
+            ):
+                reason = REASON_STRUCTURALLY_IMPOSSIBLE
+        pairs.append({**pair, "collected_by_repo": collected, "reason": reason})
     missing = [f"{pair['api']}.{pair['field']}" for pair in pairs if not pair["collected_by_repo"]]
+    impossible = [
+        f"{pair['api']}.{pair['field']}"
+        for pair in pairs
+        if pair["reason"] == REASON_STRUCTURALLY_IMPOSSIBLE
+    ]
     return {
         # governance-mutation: CARD_SOURCE_FIELD_COVERAGE
         "collected_by_repo": bool(pairs) and not missing,
         "declared_pairs": pairs,
         "uncollected_pairs": missing,
+        "structurally_impossible_pairs": impossible,
     }
 
 
@@ -245,11 +309,14 @@ def _validate_source(source: Any, label: str) -> None:
     if api_value is None:
         return
 
-    _split_csv(_nonempty_string(api_value, f"{label}.tushare_api"), f"{label}.tushare_api")
-    _split_csv(
+    apis = _split_csv(
+        _nonempty_string(api_value, f"{label}.tushare_api"), f"{label}.tushare_api"
+    )
+    fields = _split_csv(
         _nonempty_string(field_value, f"{label}.tushare_field"),
         f"{label}.tushare_field",
     )
+    declared_source_pairs(apis, fields, label)
 
 
 def _validate_logic(logic: Any, label: str) -> None:

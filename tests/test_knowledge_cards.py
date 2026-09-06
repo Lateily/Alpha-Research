@@ -225,22 +225,25 @@ class KnowledgeCardTests(unittest.TestCase):
     def test_source_catalog_tracks_current_collector_declarations(self) -> None:
         import feature_store
 
+        # turnover_rate is declared by the all-market feature store only; the
+        # extended daily_basic collector declares pe_ttm/pb/ps_ttm, so a field
+        # it also carries could not prove the catalog follows feature_store.
         card = _card()
         card["data_source"] = {
             "availability": "AUTO",
             "primary": "Repository daily-basic collector",
             "tushare_api": "daily_basic",
-            "tushare_field": "pe_ttm",
+            "tushare_field": "turnover_rate",
             "manual_required": False,
         }
         self.assertTrue(cards.source_coverage(card)["collected_by_repo"])
 
-        without_pe = dict(feature_store.ENDPOINT_FIELDS)
-        without_pe["daily_basic"] = "ts_code,trade_date,turnover_rate"
-        with patch.object(feature_store, "ENDPOINT_FIELDS", without_pe):
+        without_turnover = dict(feature_store.ENDPOINT_FIELDS)
+        without_turnover["daily_basic"] = "ts_code,trade_date,pe_ttm"
+        with patch.object(feature_store, "ENDPOINT_FIELDS", without_turnover):
             coverage = cards.source_coverage(card)
         self.assertFalse(coverage["collected_by_repo"])
-        self.assertEqual(["daily_basic.pe_ttm"], coverage["uncollected_pairs"])
+        self.assertEqual(["daily_basic.turnover_rate"], coverage["uncollected_pairs"])
 
         with_added_api = dict(feature_store.ENDPOINT_FIELDS)
         with_added_api["collector_probe"] = "ts_code,collector_only_field"
@@ -251,6 +254,128 @@ class KnowledgeCardTests(unittest.TestCase):
         })
         with patch.object(feature_store, "ENDPOINT_FIELDS", with_added_api):
             self.assertTrue(cards.source_coverage(card)["collected_by_repo"])
+
+    def test_source_catalog_includes_extended_collector_declarations(self) -> None:
+        import semiconductor_extended_sources as extended
+
+        catalog = cards.repo_collected_tushare_fields()
+        for api, fields in extended.CATALOG_DECLARATIONS.items():
+            with self.subTest(api=api):
+                self.assertTrue(set(cards._field_names(fields)).issubset(catalog[api]))
+        card = _card()
+        card["data_source"] = {
+            "availability": "AUTO",
+            "primary": "Three extended disclosure collectors",
+            "tushare_api": "income,balancesheet,cashflow",
+            "tushare_field": "income.revenue,balancesheet.cip,cashflow.depr_fa_coga_dpba",
+            "manual_required": False,
+        }
+        cards.validate_card(card)
+        self.assertTrue(cards.source_coverage(card)["collected_by_repo"])
+
+        without_cip = dict(extended.CATALOG_DECLARATIONS)
+        without_cip["balancesheet"] = "ts_code,ann_date,end_date,fix_assets"
+        with patch.object(extended, "CATALOG_DECLARATIONS", without_cip):
+            coverage = cards.source_coverage(card)
+        self.assertFalse(coverage["collected_by_repo"])
+        self.assertEqual(["balancesheet.cip"], coverage["uncollected_pairs"])
+        self.assertEqual([], coverage["structurally_impossible_pairs"])
+
+    def test_qualified_field_token_binds_to_exactly_one_api(self) -> None:
+        card = _card()
+        card["data_source"] = {
+            "availability": "AUTO",
+            "primary": "Qualified declaration",
+            "tushare_api": "fina_indicator,balancesheet",
+            "tushare_field": "fina_indicator.invturn_days,balancesheet.contract_liab",
+            "manual_required": False,
+        }
+        cards.validate_card(card)
+        coverage = cards.source_coverage(card)
+        self.assertEqual(
+            [("fina_indicator", "invturn_days", True), ("balancesheet", "contract_liab", True)],
+            [(p["api"], p["field"], p["qualified"]) for p in coverage["declared_pairs"]],
+        )
+        self.assertTrue(coverage["collected_by_repo"])
+        self.assertEqual([], coverage["uncollected_pairs"])
+        self.assertEqual([None, None], [p["reason"] for p in coverage["declared_pairs"]])
+
+        # Mixed form: the unqualified token keeps the cross product on purpose.
+        card["data_source"]["tushare_field"] = "fina_indicator.inv_turn,inventories"
+        cards.validate_card(card)
+        coverage = cards.source_coverage(card)
+        self.assertEqual(
+            [
+                ("fina_indicator", "inv_turn", True),
+                ("fina_indicator", "inventories", False),
+                ("balancesheet", "inventories", False),
+            ],
+            [(p["api"], p["field"], p["qualified"]) for p in coverage["declared_pairs"]],
+        )
+        self.assertFalse(coverage["collected_by_repo"])
+        self.assertEqual(["fina_indicator.inventories"], coverage["uncollected_pairs"])
+        self.assertEqual(["fina_indicator.inventories"], coverage["structurally_impossible_pairs"])
+
+        for bad in (
+            "balancesheet.cip,daily_basic.pb",  # api outside tushare_api
+            "fina_indicator.a.b",  # more than one separator
+            "fina_indicator.",  # empty field
+            ".roe",  # empty api
+            "cip,balancesheet.cip",  # same pair declared twice
+        ):
+            with self.subTest(token=bad):
+                card["data_source"]["tushare_field"] = bad
+                with self.assertRaises(cards.KnowledgeCardError):
+                    cards.validate_card(card)
+                with self.assertRaises(cards.KnowledgeCardError):
+                    cards.source_coverage(card)
+
+    def test_structurally_impossible_cross_product_pairs_are_labelled(self) -> None:
+        card = _card()
+        card["data_source"] = {
+            "availability": "AUTO",
+            "primary": "Two exact repository collectors",
+            "tushare_api": "daily_basic,fina_indicator",
+            "tushare_field": "pe_ttm,roe,invented_field",
+            "manual_required": False,
+        }
+        coverage = cards.source_coverage(card)
+        reasons = {f"{p['api']}.{p['field']}": p["reason"] for p in coverage["declared_pairs"]}
+        self.assertIsNone(reasons["daily_basic.pe_ttm"])
+        self.assertIsNone(reasons["fina_indicator.roe"])
+        self.assertEqual(cards.REASON_STRUCTURALLY_IMPOSSIBLE, reasons["fina_indicator.pe_ttm"])
+        self.assertEqual(cards.REASON_STRUCTURALLY_IMPOSSIBLE, reasons["daily_basic.roe"])
+        self.assertEqual(cards.REASON_NOT_COLLECTED, reasons["daily_basic.invented_field"])
+        self.assertEqual(cards.REASON_NOT_COLLECTED, reasons["fina_indicator.invented_field"])
+        self.assertEqual(
+            {"fina_indicator.pe_ttm", "daily_basic.roe"},
+            set(coverage["structurally_impossible_pairs"]),
+        )
+        self.assertTrue(
+            set(coverage["structurally_impossible_pairs"]).issubset(coverage["uncollected_pairs"])
+        )
+        self.assertFalse(coverage["collected_by_repo"])
+
+    def test_committed_auto_cards_are_collected_by_repo_with_qualified_declarations(self) -> None:
+        loaded = cards.load_cards(COMMITTED_CARDS)
+        auto = [card for card in loaded if card["data_source"]["availability"] == "AUTO"]
+        self.assertEqual(11, len(auto))
+        for card in auto:
+            with self.subTest(card_id=card["card_id"]):
+                coverage = cards.source_coverage(card)
+                self.assertTrue(coverage["collected_by_repo"], coverage["uncollected_pairs"])
+                self.assertEqual([], coverage["structurally_impossible_pairs"])
+        multi_api = {
+            card["card_id"] for card in auto if "," in card["data_source"]["tushare_api"]
+        }
+        self.assertEqual(
+            {"SEMI_MAT_005", "SEMI_MAT_007", "SEMI_MAT_008", "SEMI_MAT_016", "SEMI_MAT_023"},
+            multi_api,
+        )
+        for card in auto:
+            if card["card_id"] in multi_api:
+                pairs = cards.source_coverage(card)["declared_pairs"]
+                self.assertTrue(all(p["qualified"] for p in pairs), card["card_id"])
 
     def test_evaluation_verifier_rejects_result_card_and_envelope_hash_drift(self) -> None:
         card = _card()
