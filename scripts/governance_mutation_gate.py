@@ -200,6 +200,20 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="The inventory must refuse to write anywhere inside a scanned root.",
     ),
     MutationCase(
+        mutation_id="MIGRATION_GIT_BLIND_SPOTS_SWEPT", component="Migration inventory",
+        source_path="scripts/migration_inventory.py", test_script="tests/test_migration_inventory.py",
+        before=(
+            "    # governance-mutation: MIGRATION_GIT_BLIND_SPOTS_SWEPT\n"
+            "    yield from _reconcile_checkout(name, root, checkout, accounted, walked_checkouts, prefix,"
+        ),
+        after=(
+            "    # governance-mutation: MIGRATION_GIT_BLIND_SPOTS_SWEPT\n"
+            "    yield from () or _skip_reconcile(name, root, checkout, accounted, walked_checkouts, prefix,"
+        ),
+        expected_failure_marker="test_git_blind_spots_are_swept_without_duplicating_records",
+        rationale="git reports neither special files nor files under an unreadable directory; without the sweep the inventory silently loses them.",
+    ),
+    MutationCase(
         mutation_id="MIGRATION_NESTED_CHECKOUT_SUMMARISED", component="Migration inventory",
         source_path="scripts/migration_inventory.py", test_script="tests/test_migration_inventory.py",
         before=(

@@ -336,14 +336,35 @@ def _walk_git(name: str, root: Path, checkout: Path, *, excludes: Sequence[str],
     state = git_state(checkout)
     prefix = checkout.relative_to(root).as_posix() if checkout != root else ""
     tracked_summary: dict[str, dict[str, int]] = {}
+    # Everything this pass accounted for, checkout-relative: emitted records plus the tracked
+    # files that are only summarised. The reconciliation sweep below uses it to find what git
+    # never reported at all.
+    accounted: set[str] = set(state["tracked"]) | set(state["deleted"])
+    walked_checkouts: set[str] = set()
+
+    def track(record: dict[str, Any]) -> dict[str, Any]:
+        rel = record.get("relpath")
+        if isinstance(rel, str):
+            absolute = root / rel
+            try:
+                accounted.add(absolute.relative_to(checkout).as_posix())
+            except ValueError:
+                pass
+        if record.get("record") == "GIT_TREE" and record.get("checkout") not in (None, "."):
+            nested = root / str(record["checkout"])
+            try:
+                walked_checkouts.add(nested.relative_to(checkout).as_posix())
+            except ValueError:
+                pass
+        return record
     for rel in sorted(state["deleted"]):
-        yield {"record": "TOMBSTONE", "root": name,
+        yield track({"record": "TOMBSTONE", "root": name,
                "relpath": (checkout / rel).relative_to(root).as_posix(), "checkout": prefix or None,
-               "checkout_head": state["head"], "operation": "DELETE", "migration": "APPLY_TOMBSTONE"}
+               "checkout_head": state["head"], "operation": "DELETE", "migration": "APPLY_TOMBSTONE"})
     for rel in sorted(state["tracked"]):
         path = checkout / rel
         if path.is_symlink():
-            yield link_record(name, root, path)
+            yield track(link_record(name, root, path))
             continue
         if not path.is_file():
             continue
@@ -353,23 +374,23 @@ def _walk_git(name: str, root: Path, checkout: Path, *, excludes: Sequence[str],
                                  checkout_head=state["head"], checkout=prefix)
             if record["category"] != "SECRET":
                 record["head_sha256"] = head_blob_sha256(checkout, rel)
-            yield record
+            yield track(record)
             continue
         per_file = any(rel == d or rel.startswith(d.rstrip("/") + "/") for d in tracked_per_file_dirs)
         if per_file:
-            yield file_record(name, root, path, git_class="TRACKED", hash_limit=hash_limit,
-                              checkout_head=state["head"], checkout=prefix)
+            yield track(file_record(name, root, path, git_class="TRACKED", hash_limit=hash_limit,
+                                    checkout_head=state["head"], checkout=prefix))
         else:
             bucket = tracked_summary.setdefault(top, {"files": 0, "bytes": 0})
             bucket["files"] += 1
             bucket["bytes"] += path.stat().st_size
-    yield {
+    yield track({
         "record": "GIT_TREE", "root": name, "checkout": prefix or ".", "head": state["head"],
         "branch": state["branch"], "tracked_files": len(state["tracked"]),
         "git_recovery_status": "LOCAL_HEAD_RECORDED_REMOTE_AVAILABILITY_NOT_VERIFIED",
         "tracked_summary_by_top_dir": tracked_summary, "modified_tracked_files": len(state["modified"]),
         "note": "tracked files are recoverable from Git history at this HEAD; per-file records for data dirs and for MODIFIED working-tree files (whose content is not in Git)",
-    }
+    })
     for cls, paths in (("UNTRACKED", state["untracked"]), ("IGNORED", state["ignored"])):
         for rel in sorted(paths):
             path = checkout / rel
@@ -377,15 +398,79 @@ def _walk_git(name: str, root: Path, checkout: Path, *, excludes: Sequence[str],
             if _excluded(parts, excludes):
                 continue
             if path.is_symlink():
-                yield link_record(name, root, path)
+                yield track(link_record(name, root, path))
                 continue
             if path.is_dir():
-                yield from _walk_loose_dir(name, root, checkout, path, cls, state["head"], prefix,
-                                           excludes=excludes, hash_limit=hash_limit,
-                                           tracked_per_file_dirs=tracked_per_file_dirs)
+                for record in _walk_loose_dir(name, root, checkout, path, cls, state["head"], prefix,
+                                              excludes=excludes, hash_limit=hash_limit,
+                                              tracked_per_file_dirs=tracked_per_file_dirs):
+                    yield track(record)
             else:
-                yield leaf_record(name, root, path, git_class=cls, hash_limit=hash_limit,
-                                  checkout_head=state["head"], checkout=prefix)
+                yield track(leaf_record(name, root, path, git_class=cls, hash_limit=hash_limit,
+                                        checkout_head=state["head"], checkout=prefix))
+    # Git reports neither special files (FIFO/socket) nor anything under a directory it could
+    # not read, so a git-only pass is not a full inventory. Sweep the checkout and register
+    # every entry this pass did not account for.
+    # governance-mutation: MIGRATION_GIT_BLIND_SPOTS_SWEPT
+    yield from _reconcile_checkout(name, root, checkout, accounted, walked_checkouts, prefix,
+                                   state["head"], excludes=excludes, hash_limit=hash_limit,
+                                   tracked_per_file_dirs=tracked_per_file_dirs)
+
+
+def _skip_reconcile(*args: Any, **kwargs: Any) -> Iterable[dict[str, Any]]:
+    """Mutation target only: the disabled form of the reconciliation sweep."""
+    return ()
+
+
+def _reconcile_checkout(name: str, root: Path, checkout: Path, accounted: set[str],
+                        walked_checkouts: set[str], prefix: str, head: str, *,
+                        excludes: Sequence[str], hash_limit: int | None,
+                        tracked_per_file_dirs: Sequence[str]) -> Iterable[dict[str, Any]]:
+    """Register what git never reported: special files, unreadable dirs, and files beneath them.
+
+    Anything already accounted for by the git pass is skipped, so this adds records and never
+    duplicates them. Entries found here carry git_class UNREPORTED_BY_GIT: they exist on disk,
+    Git does not know about them, therefore they must be migrated explicitly."""
+    errors: list[dict[str, Any]] = []
+
+    def onerror(exc: OSError) -> None:
+        errors.append(_unreadable_record(name, root, exc))
+
+    for dirpath, dirnames, filenames in os.walk(checkout, topdown=True, onerror=onerror, followlinks=False):
+        current = Path(dirpath)
+        keep: list[str] = []
+        for child_name in sorted(dirnames):
+            child = current / child_name
+            rel = child.relative_to(checkout).as_posix()
+            if child_name == ".git" or _excluded(child.relative_to(checkout).parts, excludes):
+                continue
+            if rel in walked_checkouts:
+                continue
+            if child.is_symlink():
+                if rel not in accounted:
+                    yield link_record(name, root, child)
+                continue
+            if is_git_root(child):
+                # A checkout git never reported (e.g. hidden under a directory it could not read).
+                yield from _walk_git(name, root, child, excludes=excludes, hash_limit=hash_limit,
+                                     tracked_per_file_dirs=tracked_per_file_dirs)
+                continue
+            keep.append(child_name)
+        dirnames[:] = keep
+        for file_name in sorted(filenames):
+            entry = current / file_name
+            rel = entry.relative_to(checkout).as_posix()
+            if rel in accounted or _excluded(entry.relative_to(checkout).parts, excludes):
+                continue
+            if entry.is_symlink():
+                yield link_record(name, root, entry)
+                continue
+            yield leaf_record(name, root, entry, git_class="UNREPORTED_BY_GIT", hash_limit=hash_limit,
+                              checkout_head=head, checkout=prefix)
+        while errors:
+            yield errors.pop(0)
+    while errors:
+        yield errors.pop(0)
 
 
 def _walk_loose_dir(name: str, root: Path, checkout: Path, top: Path, cls: str, head: str, prefix: str, *,
@@ -402,9 +487,7 @@ def _walk_loose_dir(name: str, root: Path, checkout: Path, top: Path, cls: str, 
     errors: list[dict[str, Any]] = []
 
     def onerror(exc: OSError) -> None:
-        errors.append({"record": "UNREADABLE", "root": name, "relpath": Path(str(exc.filename)).relative_to(root).as_posix()
-                       if exc.filename and str(exc.filename).startswith(str(root)) else str(exc.filename),
-                       "error": type(exc).__name__, "migration": "REVIEW_UNREADABLE"})
+        errors.append(_unreadable_record(name, root, exc))
 
     for dirpath, dirnames, filenames in os.walk(top, topdown=True, onerror=onerror, followlinks=False):
         current = Path(dirpath)
@@ -432,6 +515,20 @@ def _walk_loose_dir(name: str, root: Path, checkout: Path, top: Path, cls: str, 
             yield leaf_record(name, root, sub, git_class=cls, hash_limit=hash_limit, checkout_head=head, checkout=prefix)
         while errors:
             yield errors.pop(0)
+    # os.walk reports a directory it could not read while producing the NEXT item, so the last
+    # error can arrive after the final iteration body; drain again rather than lose it.
+    while errors:
+        yield errors.pop(0)
+
+
+def _unreadable_record(name: str, root: Path, exc: OSError) -> dict[str, Any]:
+    filename = str(exc.filename) if exc.filename else ""
+    try:
+        rel = Path(filename).relative_to(root).as_posix()
+    except ValueError:
+        rel = filename
+    return {"record": "UNREADABLE", "root": name, "relpath": rel,
+            "error": type(exc).__name__, "migration": "REVIEW_UNREADABLE"}
 
 
 def leaf_record(name: str, root: Path, path: Path, *, git_class: str, hash_limit: int | None,
@@ -555,6 +652,13 @@ def summarise(records: Sequence[Mapping[str, Any]], gaps: Sequence[Mapping[str, 
               "| 根 | checkout | HEAD | tracked 文件 | MODIFIED |", "|---|---|---|---:|---:|"]
     for t in trees:
         lines.append(f"| {t['root']} | {t['checkout']} | {t['head'][:12]} | {t['tracked_files']} | {t.get('modified_tracked_files', 0)} |")
+    unreported = [r for r in files if r.get("git_class") == "UNREPORTED_BY_GIT"]
+    specials = [r for r in records if r.get("record") in ("SPECIAL_FILE", "UNREADABLE")]
+    lines += ["", f"## Git 未报告 / 不可读 / 特殊文件({len(unreported)} + {len(specials)})", ""]
+    for r in unreported[:40]:
+        lines.append(f"- 未被 Git 报告 `{r['root']}:{r['relpath']}` ({r['bytes']:,} B)")
+    for r in specials[:40]:
+        lines.append(f"- {r['record']} `{r['root']}:{r.get('relpath')}` {r.get('error') or r.get('mode') or ''}")
     modified = [r for r in files if r["git_class"] == "MODIFIED"]
     lines += ["", f"## 工作树已修改的 tracked 文件(内容不在 Git,必迁,{len(modified)})", ""]
     for r in modified[:120]:

@@ -21,6 +21,8 @@ if str(SCRIPTS) not in sys.path:
 
 import migration_inventory as inv  # noqa: E402
 
+_real_state = inv.git_state
+
 
 def _git(path: Path, *args: str) -> None:
     subprocess.run(["git", "-C", str(path), *args], check=True, capture_output=True, text=True,
@@ -536,6 +538,67 @@ class HardeningR3Tests(unittest.TestCase):
         self.assertEqual("NOT_MIGRATED", kinds[("SPECIAL_FILE", "pipe")]["migration"])
         self.assertTrue((self.out / "run_receipt.json").is_file())
         self.assertEqual(receipt["records"], len(rows))
+
+    def test_git_blind_spots_are_swept_without_duplicating_records(self) -> None:
+        """Governance pin MIGRATION_GIT_BLIND_SPOTS_SWEPT.
+
+        git reports neither special files nor anything under a directory it could not read,
+        so a git-only pass silently loses them. The reconciliation sweep must register them
+        exactly once and must not re-list what the git pass already accounted for."""
+        if os.geteuid() == 0:
+            self.skipTest("permission fixtures need a non-root user")
+        self._repo(self.root, {"base.txt": "outer\n", ".gitignore": "loose/\n",
+                               "public/data/tracked.json": "{}"})
+        loose = self.root / "loose"
+        loose.mkdir()
+        (loose / "seen.json").write_text("{}")
+        (self.root / "untracked.json").write_text("{}")
+        os.mkfifo(self.root / "pipe_at_root")
+        os.mkfifo(loose / "pipe_in_loose")
+        denied = loose / "denied"
+        denied.mkdir()
+        (denied / "hidden.json").write_text("{}")
+        hidden_repo = denied / "hidden_checkout"
+        self._repo(hidden_repo, {"inner.txt": "hidden\n"})
+        denied.chmod(0)
+        self.addCleanup(lambda: denied.chmod(0o700))
+        try:
+            receipt, rows = self.scan()
+        finally:
+            denied.chmod(0o700)
+        seen = [(r["record"], r.get("relpath")) for r in rows]
+        self.assertEqual(len(seen), len(set(seen)), "reconciliation duplicated records")
+        self.assertEqual(receipt["records"], len(rows))
+        self.assertIn(("SPECIAL_FILE", "pipe_at_root"), seen)
+        self.assertIn(("SPECIAL_FILE", "loose/pipe_in_loose"), seen)
+        self.assertIn(("UNREADABLE", "loose/denied"), seen)
+        specials = {r["relpath"]: r for r in rows if r["record"] == "SPECIAL_FILE"}
+        self.assertEqual("NOT_MIGRATED", specials["pipe_at_root"]["migration"])
+        unreadable = next(r for r in rows if r["record"] == "UNREADABLE")
+        self.assertEqual("REVIEW_UNREADABLE", unreadable["migration"])
+        files = {r["relpath"]: r for r in rows if r["record"] == "FILE"}
+        # git DID report these; they keep their git class and are not re-swept
+        self.assertEqual("IGNORED", files["loose/seen.json"]["git_class"])
+        self.assertEqual("UNTRACKED", files["untracked.json"]["git_class"])
+        self.assertEqual("TRACKED", files["public/data/tracked.json"]["git_class"])
+        self.assertNotIn("base.txt", files)  # summarised tracked file, not re-listed by the sweep
+
+    def test_files_git_never_reported_are_registered_as_unreported(self) -> None:
+        self._repo(self.root, {"base.txt": "outer\n"})
+        # A file whose parent directory git could not read is invisible to git status.
+        blind = self.root / "blind"
+        blind.mkdir()
+        (blind / "orphan.json").write_text('{"only": "on disk"}')
+        with mock.patch.object(inv, "git_state", side_effect=lambda checkout: {
+            **{k: v for k, v in _real_state(checkout).items()},
+            "untracked": set(), "ignored": set(),
+        }):
+            _receipt, rows = self.scan()
+        files = {r["relpath"]: r for r in rows if r["record"] == "FILE"}
+        self.assertEqual("UNREPORTED_BY_GIT", files["blind/orphan.json"]["git_class"])
+        self.assertEqual("MIGRATE", files["blind/orphan.json"]["migration"])
+        self.assertEqual(64, len(files["blind/orphan.json"]["sha256"]))
+        self.assertNotIn("base.txt", files)
 
     def test_filesystem_symlinks_carry_the_no_follow_label(self) -> None:
         outside = self.base / "outside.json"
