@@ -76,6 +76,16 @@ def canonical_sectors(codes, token, fallback=None):
         pass   # 取不到就保持 UNKNOWN,由上层标 DATA_BLOCKED
     return out
 INDICES = [("000001.SH", "sh"), ("399001.SZ", "sz"), ("399006.SZ", "cyb")]
+SETTLEMENT_ATTEMPTS = 3
+SETTLEMENT_RETRY_SECONDS = 30
+
+
+class SettlementDateMismatch(SystemExit):
+    """Only this pre-write failure is eligible for a whole-snapshot retry."""
+
+    def __init__(self, message, dates):
+        self.dates = tuple(sorted(str(d) for d in dates if d is not None))
+        super().__init__(message)
 
 
 def _index_chg(token, code):
@@ -96,7 +106,7 @@ def _market_main_flow(token):
         return None
 
 
-def assert_date_consistent(fund_dates, daily_dates, index_dates):
+def assert_date_consistent(fund_dates, daily_dates, index_dates, date_evidence=None):
     """2026-07-02 incident guard. At 15:17 moneyflow_dc had settled for the day
     while `daily` still returned the PRIOR bar -> each source's "latest" was a
     different day and the snapshot mixed 0701 prices with 0702 fund flow
@@ -105,19 +115,22 @@ def assert_date_consistent(fund_dates, daily_dates, index_dates):
     Returns the single agreed trade_date."""
     all_dates = set(fund_dates) | set(daily_dates) | set(index_dates)
     if len(all_dates) != 1 or None in all_dates:
-        raise SystemExit(
+        raise SettlementDateMismatch(
             "DATA_BLOCKED: settlement-date mismatch across sources "
             f"fund={sorted(map(str, set(fund_dates)))} daily={sorted(map(str, set(daily_dates)))} "
-            f"index={sorted(map(str, set(index_dates)))} — 部分源已结算、部分未结算,稍后重跑")
+            f"index={sorted(map(str, set(index_dates)))} — 部分源已结算、部分未结算,稍后重跑"
+            + " source_dates=" + json.dumps(date_evidence or {}, sort_keys=True), all_dates)
     return all_dates.pop()
 
 
 def build(token):
     idx, index_dates = {}, []
+    date_evidence = {"index_daily": {}, "moneyflow_dc": {}, "daily": {}}
     for code, key in INDICES:
         row = _index_chg(token, code)
         idx[key] = {"chg": row.get("pct_chg")}
         index_dates.append(row.get("trade_date"))
+        date_evidence["index_daily"][code] = row.get("trade_date")
         time.sleep(0.4)
     idx["main_flow_total"] = _market_main_flow(token)     # 亿, into the market gate
     holdings = real_holdings()
@@ -137,11 +150,13 @@ def build(token):
         time.sleep(0.4)
         fund_dates.add(f.get("date"))
         daily_dates.add(b.get("date"))
+        date_evidence["moneyflow_dc"][code] = f.get("date")
+        date_evidence["daily"][code] = b.get("date")
         td.append({"ticker": code, "name": name, "sector": sector,
                    "price": b["close"], "change_pct": b["pct_chg"],
                    "main_flow": f["main"], "super_large": f["super_large"], "small": f["small"],
                    "ohlc_bars": b["ohlc_bars"]})
-    trade_date = assert_date_consistent(fund_dates, daily_dates, index_dates)
+    trade_date = assert_date_consistent(fund_dates, daily_dates, index_dates, date_evidence)
     # portfolio_gate 只按真实持仓算(审计 BLOCKER 修复)
     snap = et.build_snapshot(idx, td, sorted(holding_codes),
                              timestamp=f"{trade_date} close (official)")
@@ -155,6 +170,31 @@ def build(token):
         s["official_sample"] = True
         s["data_source"] = "tushare:moneyflow_dc+daily"
     return trade_date, snap, sigs
+
+
+def build_settled(token):
+    """Refresh the entire pre-write snapshot, never blend attempts or use T-1.
+
+    The nightly subprocess still enforces its existing 600-second timeout.
+    Exhaustion, transport/API/schema failures and all post-build writes remain
+    fail-closed; no scheduler, target-date or publication authority is changed.
+    """
+    newest_seen = ""
+    for attempt in range(SETTLEMENT_ATTEMPTS):
+        try:
+            result = build(token)
+            if result[0] < newest_seen:
+                raise SettlementDateMismatch(
+                    "DATA_BLOCKED: settlement retry regressed behind observed date "
+                    + newest_seen + " to " + result[0], (newest_seen, result[0]))
+            return result
+        except SettlementDateMismatch as exc:
+            newest_seen = max((newest_seen,) + exc.dates)
+            if attempt + 1 == SETTLEMENT_ATTEMPTS:
+                raise
+            print(f"SETTLEMENT_WAIT attempt={attempt + 1}/{SETTLEMENT_ATTEMPTS} "
+                  f"retry_in={SETTLEMENT_RETRY_SECONDS}s {exc}", flush=True)
+            time.sleep(SETTLEMENT_RETRY_SECONDS)
 
 
 def build_signals_manifest(sigs):
@@ -315,7 +355,7 @@ def main():
         if not token:
             print("NO TUSHARE_TOKEN — run `source ~/.zprofile` first")
             sys.exit(1)
-        trade_date, snap, sigs = build(token)
+        trade_date, snap, sigs = build_settled(token)
     snap["run_id"] = os.environ.get("AR_RUN_ID", "STANDALONE")
     snap["target_trade_date"] = trade_date
     samples_dir = os.path.join(HERE, "samples")

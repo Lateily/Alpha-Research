@@ -845,9 +845,9 @@ class SemiconductorStoreTests(unittest.TestCase):
         previous = os.environ.get("AR_OFFLINE")
         os.environ["AR_OFFLINE"] = "1"
         try:
-            with self.assertRaisesRegex(si.SemiconductorInputError, "forbids"):
+            with tempfile.TemporaryDirectory() as tmp, self.assertRaisesRegex(si.SemiconductorInputError, "forbids"):
                 si.collect_live(
-                    "not-a-real-key", "/tmp/never-created.sqlite3", registry,
+                    "not-a-real-key", str(Path(tmp) / "never-created.sqlite3"), registry,
                     TRADE_DATE, fetcher=transport,
                 )
         finally:
