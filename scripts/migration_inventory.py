@@ -8,8 +8,9 @@ FILESYSTEM), size, mtime, sha256, category, purpose, version hint and proposed
 destination on the new platform. Nested git checkouts are detected and their
 tracked trees are summarised (recoverable from Git history) while every
 untracked / ignored file — the run data that is NOT in Git — is listed one by
-one. SQLite stores get a read-only table/row-count summary. Secrets are never
-read or hashed: they are registered as SECRET_NOT_MIGRATED so the record shows
+one. SQLite stores are NOT opened: DB/WAL/journal files are inventoried pending
+a consistent snapshot. Path-classified secrets are never read or hashed and are
+registered as SECRET_NOT_MIGRATED so the record shows
 they exist and must be configured, not copied.
 
 The tool writes nothing inside any root. Outputs go to --out:
@@ -29,10 +30,12 @@ import json
 import os
 import re
 import sqlite3
+import stat as stat_mode
 import subprocess
 import sys
 import tempfile
 from datetime import datetime, timezone
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Iterable, Mapping, Sequence
 
@@ -56,10 +59,12 @@ RULES: tuple[tuple[str, str, str, str], ...] = (
     (r"(^|/)knowledge_card_history/", "MARKET_FINANCIAL_FLOW_MACRO_HISTORY",
      "知识卡历史采集原始文件与专用 PIT store", "数据中心 · 研究回放"),
     (r"(^|/)knowledge_cards/backtest_", "RESEARCH_ARCHIVE", "知识卡三周期点回看结果", "个股研究档案 · 方法中心"),
-    (r"(^|/)data_history/panel/|\.parquet$|(^|/)data_history/sector_mapping\.json$", "MARKET_FINANCIAL_FLOW_MACRO_HISTORY",
-     "旧平台市场面板(parquet)与板块映射", "数据中心 · 历史查询"),
-    (r"\.(lock|sqlite3-shm|sqlite3-wal)$|(^|/)\.[a-z0-9_]+\.lock$", "TRANSIENT_NOT_MIGRATED",
-     "运行时锁/WAL 临时文件", "不迁移(新环境自生)"),
+    (r"(^|/)data_history/panel/|\.parquet$|(^|/)data_history/sector_mapping\.json$", "LEGACY_HISTORY",
+     "旧平台市场面板与映射;来源与质量待验证,不得自动用于正式研究", "数据中心 · legacy · 只读"),
+    (r"\.(sqlite3|sqlite|db)-(wal|journal)$", "SQLITE_RECOVERY_COMPONENT",
+     "数据库恢复组件;取得一致性快照前不得丢弃", "数据中心 · 待快照(不独立恢复)"),
+    (r"\.(lock|sqlite3-shm|sqlite-shm|db-shm)$|(^|/)\.[a-z0-9_]+\.lock$", "TRANSIENT_NOT_MIGRATED",
+     "运行时锁/共享内存(不含 WAL 或 journal)", "不迁移(新环境自生)"),
     (r"(^|/)execution_tracker/(publication_migration_events|publication_rebaseline_events)", "OPS_RUNS_PUBLICATION_AUDIT",
      "发布迁移/重基线审批事件(append-only,anchor)", "运行监控 · 审计 · 事故记录"),
     (r"(^|/)execution_tracker/samples/", "PAPER_PORTFOLIO_LEDGER", "逐日信号样本(含'不具备统计声称资格'标记)", "接续原模拟盘 · 样本资格标记保留"),
@@ -122,12 +127,44 @@ def _now() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
 
-def sha256_file(path: Path, limit: int | None = None) -> str | None:
-    size = path.stat().st_size
-    if limit is not None and size > limit:
-        return None
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
+@contextmanager
+def regular_reader(path: Path, root: Path | None = None):
+    """Open relative to pinned directory descriptors; never follow components."""
+    if not hasattr(os, "O_NOFOLLOW") or os.open not in os.supports_dir_fd:
+        raise InventoryError("no-follow directory-relative IO is required on this host")
+    lexical_anchor = Path(os.path.abspath(root or path.parent))
+    anchor = lexical_anchor.resolve()
+    absolute = Path(os.path.abspath(path))
+    try:
+        parts = absolute.relative_to(lexical_anchor).parts
+        if not parts or any(p in (".", "..") for p in parts):
+            raise InventoryError("invalid relative source path")
+        directory = os.open(anchor, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+        try:
+            for part in parts[:-1]:
+                child = os.open(part, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=directory)
+                os.close(directory)
+                directory = child
+            fd = os.open(parts[-1], os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=directory)
+        finally:
+            os.close(directory)
+        with os.fdopen(fd, "rb") as handle:
+            before = os.fstat(handle.fileno())
+            if not stat_mode.S_ISREG(before.st_mode):
+                raise InventoryError("source must be a regular file")
+            yield handle
+            after = os.fstat(handle.fileno())
+            if (before.st_size, before.st_mtime_ns, before.st_ctime_ns) != (after.st_size, after.st_mtime_ns, after.st_ctime_ns):
+                raise InventoryError("source changed during inspection")
+    except (OSError, ValueError) as exc:
+        raise InventoryError(f"unsafe or unreadable source: {path}") from exc
+
+
+def sha256_file(path: Path, limit: int | None = None, *, root: Path | None = None) -> str | None:
+    with regular_reader(path, root) as handle:
+        if limit is not None and os.fstat(handle.fileno()).st_size > limit:
+            return None
+        digest = hashlib.sha256()
         for chunk in iter(lambda: handle.read(1 << 20), b""):
             digest.update(chunk)
     return digest.hexdigest()
@@ -163,7 +200,7 @@ def must_migrate(category: str, git_class: str) -> str:
         return "GIT_RECOVERABLE"
     if category in HISTORY_CATEGORIES or category in ("AGENT_OPS_RECORDS", "UNCLASSIFIED"):
         return "MIGRATE"
-    return "GIT_RECOVERABLE" if category in ("CODE", "DOCS") else "MIGRATE"
+    return "MIGRATE"
 
 
 def version_hint(relpath: str) -> str | None:
@@ -176,11 +213,17 @@ def version_hint(relpath: str) -> str | None:
     return None
 
 
+def _git_result(root: Path, *args: str):
+    env = dict(os.environ, GIT_OPTIONAL_LOCKS="0", GIT_NO_LAZY_FETCH="1", GIT_TERMINAL_PROMPT="0")
+    return subprocess.run(["git", "-c", "protocol.allow=never", "-c", "core.fsmonitor=false",
+                           "-C", str(root), *args], env=env, capture_output=True, check=False)
+
+
 def _git(root: Path, *args: str) -> str:
-    result = subprocess.run(["git", "-C", str(root), *args], capture_output=True, text=True, check=False)
+    result = _git_result(root, *args)
     if result.returncode != 0:
-        raise InventoryError(f"git {' '.join(args)} failed in {root}: {result.stderr.strip()[:200]}")
-    return result.stdout
+        raise InventoryError(f"git {' '.join(args)} failed in {root}; no network fallback")
+    return os.fsdecode(result.stdout)
 
 
 def is_git_root(path: Path) -> bool:
@@ -195,6 +238,7 @@ def git_state(root: Path) -> dict[str, Any]:
     untracked: set[str] = set()
     ignored: set[str] = set()
     modified: set[str] = set()
+    deleted: set[str] = set()
     status = _git(root, "status", "--porcelain=v1", "-z", "--ignored", "-uall")
     entries = status.split("\0")
     index = 0
@@ -204,8 +248,12 @@ def git_state(root: Path) -> dict[str, Any]:
         if len(entry) < 4:
             continue
         code, rel = entry[:2], entry[3:]
-        if code[0] in "RC":  # rename/copy carries the original path as the next NUL field
+        if code[0] in "RC" or code[1] in "RC":
+            if "R" in code:
+                deleted.add(entries[index])
             index += 1
+        if "D" in code:
+            deleted.add(rel)
         if code == "??":
             untracked.add(rel)
         elif code == "!!":
@@ -213,37 +261,22 @@ def git_state(root: Path) -> dict[str, Any]:
         elif any(ch in "MADRCU" for ch in code):
             modified.add(rel)  # tracked, but the working tree differs from HEAD: not in Git
     return {"head": head, "branch": branch, "tracked": tracked, "untracked": untracked,
-            "ignored": ignored, "modified": modified}
+            "ignored": ignored, "modified": modified, "deleted": deleted}
 
 
 def head_blob_sha256(checkout: Path, rel: str) -> str | None:
-    result = subprocess.run(["git", "-C", str(checkout), "show", f"HEAD:{rel}"], capture_output=True, check=False)
+    result = _git_result(checkout, "show", f"HEAD:{rel}")
     if result.returncode != 0:
         return None
     return hashlib.sha256(result.stdout).hexdigest()
 
 
 def sqlite_summary(path: Path) -> dict[str, Any]:
-    try:
-        conn = sqlite3.connect(f"file:{path}?mode=ro", uri=True, timeout=5.0)
-    except sqlite3.Error as exc:
-        return {"error": type(exc).__name__}
-    try:
-        tables = [r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")]
-        counts: dict[str, int] = {}
-        for table in tables:
-            try:
-                counts[table] = int(conn.execute(f'SELECT COUNT(*) FROM "{table}"').fetchone()[0])
-            except sqlite3.Error:
-                counts[table] = -1
-        meta = {}
-        if "store_meta" in tables:
-            meta = {str(k): str(v) for k, v in conn.execute("SELECT key, value FROM store_meta")}
-        return {"tables": counts, "store_meta": meta}
-    except sqlite3.Error as exc:
-        return {"error": type(exc).__name__}
-    finally:
-        conn.close()
+    # mode=ro is not an OS-level no-write guarantee. Inventory never opens SQLite.
+    return {"status": "SNAPSHOT_REQUIRED", "inspection": "ENGINE_NOT_OPENED",
+            "reason": "DB/WAL/journal must be bound to a consistent snapshot before row counts or restore",
+            "components": [path.name, path.name + "-wal", path.name + "-journal"],
+            "row_counts": None, "integrity_verified": False}
 
 
 def _excluded(parts: Sequence[str], excludes: Sequence[str]) -> bool:
@@ -287,15 +320,23 @@ def _walk_git(name: str, root: Path, checkout: Path, *, excludes: Sequence[str],
     state = git_state(checkout)
     prefix = checkout.relative_to(root).as_posix() if checkout != root else ""
     tracked_summary: dict[str, dict[str, int]] = {}
+    for rel in sorted(state["deleted"]):
+        yield {"record": "TOMBSTONE", "root": name,
+               "relpath": (checkout / rel).relative_to(root).as_posix(), "checkout": prefix or None,
+               "checkout_head": state["head"], "operation": "DELETE", "migration": "APPLY_TOMBSTONE"}
     for rel in sorted(state["tracked"]):
         path = checkout / rel
+        if path.is_symlink():
+            yield link_record(name, root, path)
+            continue
         if not path.is_file():
             continue
         top = rel.split("/", 1)[0]
         if rel in state["modified"]:
             record = file_record(name, root, path, git_class="MODIFIED", hash_limit=hash_limit,
                                  checkout_head=state["head"], checkout=prefix)
-            record["head_sha256"] = head_blob_sha256(checkout, rel)
+            if record["category"] != "SECRET":
+                record["head_sha256"] = head_blob_sha256(checkout, rel)
             yield record
             continue
         per_file = any(rel == d or rel.startswith(d.rstrip("/") + "/") for d in tracked_per_file_dirs)
@@ -309,6 +350,7 @@ def _walk_git(name: str, root: Path, checkout: Path, *, excludes: Sequence[str],
     yield {
         "record": "GIT_TREE", "root": name, "checkout": prefix or ".", "head": state["head"],
         "branch": state["branch"], "tracked_files": len(state["tracked"]),
+        "git_recovery_status": "LOCAL_HEAD_RECORDED_REMOTE_AVAILABILITY_NOT_VERIFIED",
         "tracked_summary_by_top_dir": tracked_summary, "modified_tracked_files": len(state["modified"]),
         "note": "tracked files are recoverable from Git history at this HEAD; per-file records for data dirs and for MODIFIED working-tree files (whose content is not in Git)",
     }
@@ -318,9 +360,16 @@ def _walk_git(name: str, root: Path, checkout: Path, *, excludes: Sequence[str],
             parts = Path(rel).parts
             if _excluded(parts, excludes):
                 continue
+            if path.is_symlink():
+                yield link_record(name, root, path)
+                continue
             if path.is_dir():
                 for sub in sorted(path.rglob("*")):
-                    if sub.is_file() and not _excluded(sub.relative_to(checkout).parts, excludes):
+                    if _excluded(sub.relative_to(checkout).parts, excludes):
+                        continue
+                    if sub.is_symlink():
+                        yield link_record(name, root, sub)
+                    elif sub.is_file():
                         if is_git_root(sub.parent) and sub.parent != checkout:
                             continue
                         yield file_record(name, root, sub, git_class=cls, hash_limit=hash_limit,
@@ -330,10 +379,17 @@ def _walk_git(name: str, root: Path, checkout: Path, *, excludes: Sequence[str],
                                   checkout_head=state["head"], checkout=prefix)
 
 
+def link_record(name: str, root: Path, path: Path) -> dict[str, Any]:
+    return {"record": "SYMLINK", "root": name, "relpath": path.relative_to(root).as_posix(),
+            "target": os.readlink(path), "migration": "REVIEW_LINK_NO_FOLLOW"}
+
+
 def file_record(name: str, root: Path, path: Path, *, git_class: str, hash_limit: int | None,
                 checkout_head: str | None = None, checkout: str = "") -> dict[str, Any]:
     rel = path.relative_to(root).as_posix()
-    stat = path.stat()
+    stat = path.lstat()
+    if not stat_mode.S_ISREG(stat.st_mode):
+        raise InventoryError("source is not a regular file")
     record: dict[str, Any] = {
         "record": "FILE", "root": name, "relpath": rel, "checkout": checkout or None,
         "git_class": git_class, "checkout_head": checkout_head,
@@ -346,8 +402,11 @@ def file_record(name: str, root: Path, path: Path, *, git_class: str, hash_limit
     category, purpose, destination = classify(rel, name)
     record.update({"category": category, "purpose": purpose, "destination": destination,
                    "migration": must_migrate(category, git_class),
-                   "sha256": sha256_file(path, hash_limit), "version_hint": version_hint(rel)})
-    if path.suffix == ".sqlite3":
+                   "sha256": sha256_file(path, hash_limit, root=root), "version_hint": version_hint(rel)})
+    if category == "LEGACY_HISTORY":
+        record.update({"quality": "LEGACY_UNVALIDATED", "read_only": True, "active_research_input": False,
+                       "provenance": {"root": name, "relpath": rel, "checkout_head": checkout_head}})
+    if path.suffix in (".sqlite3", ".sqlite", ".db"):
         record["sqlite"] = sqlite_summary(path)
     return record
 
@@ -357,20 +416,34 @@ def referenced_pointers(roots: Mapping[str, Path]) -> list[dict[str, Any]]:
     gaps: list[dict[str, Any]] = []
     for name, root in roots.items():
         for pointer in ("experiments/execution_tracker/current_run.json", "public/data/v2/current_run.json"):
+            root = root.resolve()
             path = root / pointer
             if not path.is_file():
                 continue
             try:
-                payload = json.loads(path.read_text(encoding="utf-8"))
-            except (OSError, ValueError):
+                with regular_reader(path, root) as handle:
+                    payload = json.load(handle)
+                if not isinstance(payload, dict):
+                    raise ValueError("pointer is not an object")
+            except (OSError, ValueError, InventoryError):
                 gaps.append({"root": name, "pointer": pointer, "status": "UNREADABLE_POINTER"})
                 continue
             manifest = payload.get("manifest_path")
             run_id = payload.get("run_id")
             if manifest:
-                target = root / "experiments/execution_tracker" / str(manifest)
+                if not isinstance(manifest, str) or Path(manifest).is_absolute() or ".." in Path(manifest).parts or "\\" in manifest:
+                    gaps.append({"root": name, "pointer": pointer, "status": "INVALID_POINTER"})
+                    continue
+                target = path.parent / manifest
+                status = "MISSING_REFERENCED"
+                if target.is_file() or target.is_symlink():
+                    try:
+                        with regular_reader(target, root):
+                            status = "PRESENT"
+                    except InventoryError:
+                        status = "UNSAFE_REFERENCED"
                 gaps.append({"root": name, "pointer": pointer, "run_id": run_id, "manifest_path": str(manifest),
-                             "status": "PRESENT" if target.is_file() else "MISSING_REFERENCED"})
+                             "status": status})
     return gaps
 
 
@@ -423,12 +496,29 @@ def summarise(records: Sequence[Mapping[str, Any]], gaps: Sequence[Mapping[str, 
     for g in gaps:
         lines.append(f"- {g['root']}: `{g['pointer']}` → {g.get('manifest_path')} · **{g['status']}**")
     stores = [r for r in files if r.get("sqlite")]
-    lines += ["", "## SQLite 仓(只读行数)", ""]
+    lines += ["", "## SQLite 仓(源引擎未打开;一致性快照前不声称行数)", ""]
     for r in stores:
-        tables = r["sqlite"].get("tables") or {}
-        lines.append(f"- `{r['root']}:{r['relpath']}` ({r['bytes']:,} B) meta={r['sqlite'].get('store_meta')} 表={len(tables)} 行合计={sum(v for v in tables.values() if v > 0):,}")
+        lines.append(f"- `{r['root']}:{r['relpath']}` ({r['bytes']:,} B) **{r['sqlite']['status']}**, row_counts=null")
+    tombstones = [r for r in records if r.get("record") == "TOMBSTONE"]
+    lines += ["", "## 工作树删除记录(不得恢复后重新带回)", ""]
+    lines += [f"- `{r['root']}:{r['relpath']}` DELETE @ {r['checkout_head']}" for r in tombstones]
+    lines += ["", "## 范围与一致性边界", "",
+              "逐文件盘点不是跨文件一致性快照;SNAPSHOT_REQUIRED、缺根、缺件与未分类必须在导入前闭环。",
+              "GIT_RECOVERABLE 只记录本地 HEAD,仍须独立证明对应对象在目的地可恢复。",
+              "legacy 面板为 LEGACY_UNVALIDATED、只读、非正式研究输入。",
+              "路径分类不是通用密钥检测;归档与普通文件上传仍须单独检查许可和敏感信息。"]
     lines += ["", DISCLAIMER, ""]
     return "\n".join(lines)
+
+
+def _write_new_file(directory: int, name: str, content: str) -> str:
+    data = content.encode("utf-8")
+    fd = os.open(name, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600, dir_fd=directory)
+    with os.fdopen(fd, "wb") as handle:
+        handle.write(data)
+        handle.flush()
+        os.fsync(handle.fileno())
+    return hashlib.sha256(data).hexdigest()
 
 
 def run(roots: Mapping[str, Path], out_dir: Path, *, excludes: Sequence[str], hash_limit: int | None,
@@ -436,24 +526,37 @@ def run(roots: Mapping[str, Path], out_dir: Path, *, excludes: Sequence[str], ha
     for root in roots.values():
         if out_dir.resolve() == root.resolve() or root.resolve() in out_dir.resolve().parents:
             raise InventoryError("output directory must not live inside a scanned root")
-    out_dir.mkdir(parents=True, exist_ok=True)
+    if not hasattr(os, "O_NOFOLLOW") or os.open not in os.supports_dir_fd:
+        raise InventoryError("no-follow directory-relative IO is required on this host")
+    try:
+        out_dir.mkdir(parents=True, exist_ok=False)
+    except OSError as exc:
+        raise InventoryError("output must be new; cannot exclusively create directory") from exc
     records: list[dict[str, Any]] = []
     for name, root in roots.items():
         records.extend(walk_root(name, root, excludes=excludes, hash_limit=hash_limit,
                                  tracked_per_file_dirs=tracked_per_file_dirs))
     gaps = referenced_pointers(roots)
-    inventory = out_dir / "inventory.jsonl"
-    with inventory.open("w", encoding="utf-8") as handle:
-        for record in records:
-            handle.write(json.dumps(record, ensure_ascii=False, sort_keys=True) + "\n")
-    (out_dir / "INVENTORY_SUMMARY.md").write_text(summarise(records, gaps, roots), encoding="utf-8")
+    inventory_text = "".join(json.dumps(r, ensure_ascii=False, sort_keys=True) + "\n" for r in records)
     receipt = {
         "schema": SCHEMA, "generated_at": _now(), "roots": {k: str(v) for k, v in roots.items()},
-        "records": len(records), "gaps": gaps, "inventory_sha256": sha256_file(inventory),
+        "records": len(records), "gaps": gaps,
+        "consistency": "PER_FILE_INVENTORY_NOT_A_SNAPSHOT",
+        "migration_ready": False, "production_authority": False,
+        "sqlite_inspection": "ENGINE_NOT_OPENED_SNAPSHOT_REQUIRED",
         "tool_sha256": sha256_file(Path(__file__).resolve()), "hash_limit_bytes": hash_limit,
         "excludes": list(excludes), "disclaimer": DISCLAIMER,
     }
-    (out_dir / "run_receipt.json").write_text(json.dumps(receipt, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    try:
+        directory = os.open(out_dir, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+        try:
+            receipt["inventory_sha256"] = _write_new_file(directory, "inventory.jsonl", inventory_text)
+            _write_new_file(directory, "INVENTORY_SUMMARY.md", summarise(records, gaps, roots))
+            _write_new_file(directory, "run_receipt.json", json.dumps(receipt, ensure_ascii=False, indent=2) + "\n")
+        finally:
+            os.close(directory)
+    except OSError as exc:
+        raise InventoryError("output creation refused; existing files were not truncated") from exc
     return receipt
 
 
@@ -484,7 +587,7 @@ def _selftest() -> int:
         records = [json.loads(line) for line in (out / "inventory.jsonl").read_text(encoding="utf-8").splitlines()]
         by_rel = {r["relpath"]: r for r in records if r.get("record") == "FILE"}
         checks = {
-            "sqlite_summarised": by_rel["data_history/feature_store.sqlite3"]["sqlite"]["tables"] == {"raw_daily": 2, "store_meta": 1},
+            "sqlite_snapshot_required": by_rel["data_history/feature_store.sqlite3"]["sqlite"]["status"] == "SNAPSHOT_REQUIRED",
             "category_history": by_rel["data_history/feature_store.sqlite3"]["category"] == "MARKET_FINANCIAL_FLOW_MACRO_HISTORY",
             "category_paper": by_rel["experiments/execution_tracker/model_fund/nav_history.json"]["category"] == "PAPER_PORTFOLIO_LEDGER",
             "secret_not_hashed": by_rel[".ar_env"]["category"] == "SECRET" and by_rel[".ar_env"]["sha256"] is None,

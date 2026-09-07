@@ -72,6 +72,12 @@ from experiments.research_funnel import u4_pre_decision  # noqa: E402,F401
 import paper_execution_audit  # noqa: E402,F401
 
 # ── 在守卫下跑完整离线套件入口(任何隐藏外呼 → NetworkAttempt 崩溃)──
+import test_migration_inventory as migration_inventory_tests  # noqa: E402
+migration_inventory_result = unittest.TextTestRunner(verbosity=0).run(
+    unittest.defaultTestLoader.loadTestsFromModule(migration_inventory_tests)
+)
+assert migration_inventory_result.wasSuccessful(), "migration inventory suite failed under socket guard"
+
 import test_engines_offline as teo        # noqa: E402
 for name in sorted(n for n in dir(teo) if n.startswith("test_")):
     getattr(teo, name)()

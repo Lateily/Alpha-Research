@@ -264,8 +264,8 @@ jobs:
       - name: Knowledge-card history collection plan and ingest (offline)
         run: python3 tests/test_fetch_knowledge_card_history.py
       # Migration step 1 (全量盘点): the read-only inventory classifies every
-      # file by migration category, never reads secrets, and records missing
-      # referenced artifacts as gaps instead of fabricating them.
+      # file by migration category, skips path-classified secrets, preserves
+      # DB recovery components and refuses reused outputs. Source SQLite stays closed.
       - name: Migration inventory (read-only, offline)
         run: |
           python3 tests/test_migration_inventory.py
