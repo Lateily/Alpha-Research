@@ -296,6 +296,37 @@ def authorize(headers, origin, session, write=False):
         raise WorkbenchError("LOCAL_SESSION_REQUIRED", 403)
 
 
+class PrivateAccess:
+    """Trust Serve identity only on loopback; never treat it as research approval.
+
+    Serve strips remote identity headers before inserting its authenticated user.
+    Same-host OS users remain inside this trust boundary, not isolated tenants.
+    """
+
+    def __init__(self, origin, owner_login):
+        if not isinstance(origin, str) or not re.fullmatch(r"https://[a-z0-9]+(?:-[a-z0-9]+)*\.[a-z0-9]+(?:-[a-z0-9]+)*\.ts\.net", origin):
+            raise WorkbenchError("PRIVATE_HTTPS_ORIGIN_REQUIRED")
+        if not isinstance(owner_login, str) or not re.fullmatch(r"[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9.-]+", owner_login):
+            raise WorkbenchError("EXACT_OWNER_LOGIN_REQUIRED")
+        self.origin, self.owner_login = origin, owner_login
+
+    def check(self, headers, peer):
+        if peer != "127.0.0.1":
+            raise WorkbenchError("LOOPBACK_PROXY_REQUIRED", 403)
+        for name in ("Host", "Origin", "Cookie", "Sec-Fetch-Site", "Tailscale-User-Login"):
+            if len(headers.get_all(name, [])) > 1:
+                raise WorkbenchError("AMBIGUOUS_SECURITY_HEADER", 403)
+        login = headers.get("Tailscale-User-Login", "")
+        if not secrets.compare_digest(login.encode("utf-8"), self.owner_login.encode("utf-8")):
+            raise WorkbenchError("PRIVATE_OWNER_REQUIRED", 403)
+
+
+def private_access(origin, owner_login):
+    if origin is None and owner_login is None:
+        return None
+    return PrivateAccess(origin, owner_login)
+
+
 def serve_host(host):
     if host != "127.0.0.1":
         raise WorkbenchError("TEAM_ACCESS_DISABLED_LOOPBACK_ONLY", 403)
@@ -344,7 +375,13 @@ def load_assets(directory):
     return assets
 
 
-def make_handler(store, assets, origin, session, system=None):
+def make_handler(store, assets, origin, session, system=None, private=None):
+    if private is None:
+        if not re.fullmatch(r"http://127\.0\.0\.1:[0-9]{1,5}", origin):
+            raise WorkbenchError("PRIVATE_ACCESS_POLICY_REQUIRED")
+    elif private.origin != origin:
+        raise WorkbenchError("PRIVATE_ORIGIN_MISMATCH")
+
     class Handler(BaseHTTPRequestHandler):
         def setup(self):
             super().setup()
@@ -363,12 +400,15 @@ def make_handler(store, assets, origin, session, system=None):
             self.send_header("Referrer-Policy", "no-referrer")
             self.send_header("Content-Security-Policy", "default-src 'self'; connect-src 'self'; img-src 'self' data:; style-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'")
             if cookie:
-                self.send_header("Set-Cookie", f"ar_workbench={session}; HttpOnly; SameSite=Strict; Path=/")
+                secure = "; Secure" if private is not None else ""
+                self.send_header("Set-Cookie", f"ar_workbench={session}; HttpOnly; SameSite=Strict; Path=/" + secure)
             self.end_headers()
             self.wfile.write(raw)
 
         def do_GET(self):
             try:
+                if private is not None:
+                    private.check(self.headers, self.client_address[0])
                 # Only the exact local entry point may mint a development session.
                 if self.path in {"/", "/index.html"}:
                     headers = dict(self.headers)
@@ -396,6 +436,8 @@ def make_handler(store, assets, origin, session, system=None):
 
         def do_POST(self):
             try:
+                if private is not None:
+                    private.check(self.headers, self.client_address[0])
                 authorize(self.headers, origin, session, write=True)
                 lengths = self.headers.get_all("Content-Length", [])
                 if self.headers.get("Transfer-Encoding") or len(lengths) != 1 or not re.fullmatch(r"[0-9]{1,6}", lengths[0]):
@@ -433,8 +475,11 @@ def main(argv=None):
     parser.add_argument("--port", type=int, default=8766)
     parser.add_argument("--read-only-source-root", type=Path, help="Local AR root; only a fixed public artifact allowlist is read")
     parser.add_argument("--state-root", type=Path, help="Dedicated nonproduction state directory, separate from code releases")
+    parser.add_argument("--private-origin", help="Exact HTTPS Tailscale Serve origin; requires owner login")
+    parser.add_argument("--private-owner-login", help="Exact Serve user login; not a formal approval identity")
     args = parser.parse_args(argv)
     host = serve_host(args.host)
+    private = private_access(args.private_origin, args.private_owner_login)
     assets = load_assets(ROOT / "tools/nonprod_workbench/dist")
     state_root = args.state_root or ROOT / ".ai-workspace/nonprod-workbench"
     if args.read_only_source_root and (state_root.resolve() == args.read_only_source_root.resolve() or args.read_only_source_root.resolve() in state_root.resolve().parents):
@@ -444,12 +489,13 @@ def main(argv=None):
     store = Store(state_root)
     lifetime_lock = service_lock(state_root)
     system = workspace.Workspace(store, args.read_only_source_root)
-    origin = f"http://{host}:{args.port}"
-    server = ThreadingHTTPServer((host, args.port), make_handler(store, assets, origin, secrets.token_hex(32), system))
+    origin = private.origin if private is not None else f"http://{host}:{args.port}"
+    server = ThreadingHTTPServer((host, args.port), make_handler(store, assets, origin, secrets.token_hex(32), system, private))
     server.daemon_threads = True
     worker = threading.Thread(target=system.scheduler, daemon=True)
     worker.start()
-    print(f"NONPRODUCTION_LOCAL {origin} | team=DENY paid=DENY production=DENY", flush=True)
+    mode = "NONPRODUCTION_PRIVATE_OWNER_ONLY" if private is not None else "NONPRODUCTION_LOCAL"
+    print(f"{mode} {origin} | team=DENY paid=DENY production=DENY", flush=True)
     try:
         server.serve_forever()
     except KeyboardInterrupt:
