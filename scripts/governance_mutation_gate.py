@@ -186,6 +186,183 @@ class MutationCase:
 
 MUTATIONS: tuple[MutationCase, ...] = (
     MutationCase(
+        mutation_id="MIGRATION_TRACKED_PATH_RECONCILED", component="Migration inventory",
+        source_path="scripts/migration_inventory.py", test_script="tests/test_migration_inventory.py",
+        before='    accounted: set[str] = set(state["deleted"])',
+        after='    accounted: set[str] = set(state["tracked"]) | set(state["deleted"])',
+        expected_failure_marker="test_tracked_fifo_is_registered_without_relisting_summarised_files",
+        rationale="Tracked paths must not suppress reconciliation before a record or summary exists.",
+    ),
+    MutationCase(
+        mutation_id="MIGRATION_NESTED_SUMMARY_BYTES", component="Migration inventory",
+        source_path="scripts/migration_inventory.py", test_script="tests/test_migration_inventory.py",
+        before='            bucket["bytes"] += path.stat().st_size',
+        after='            bucket["bytes"] += 0',
+        expected_failure_marker="test_nested_checkout_under_ignored_dir_is_summarised_not_merged",
+        rationale="The nested checkout summary must report actual bytes, not pass a constant-only assertion.",
+    ),
+    MutationCase(
+        mutation_id="MIGRATION_OUTPUT_OUTSIDE_ROOTS", component="Migration inventory",
+        source_path="scripts/migration_inventory.py", test_script="tests/test_migration_inventory.py",
+        before=(
+            "        # governance-mutation: MIGRATION_OUTPUT_OUTSIDE_ROOTS\n"
+            "        if out_dir.resolve() == root.resolve() or root.resolve() in out_dir.resolve().parents:"
+        ),
+        after=(
+            "        # governance-mutation: MIGRATION_OUTPUT_OUTSIDE_ROOTS\n"
+            "        if False and (out_dir.resolve() == root.resolve() or root.resolve() in out_dir.resolve().parents):"
+        ),
+        expected_failure_marker="test_output_inside_a_root_is_refused_and_nothing_is_written_into_roots",
+        rationale="The inventory must refuse to write anywhere inside a scanned root.",
+    ),
+    MutationCase(
+        mutation_id="MIGRATION_GIT_BLIND_SPOTS_SWEPT", component="Migration inventory",
+        source_path="scripts/migration_inventory.py", test_script="tests/test_migration_inventory.py",
+        before=(
+            "    # governance-mutation: MIGRATION_GIT_BLIND_SPOTS_SWEPT\n"
+            "    yield from _reconcile_checkout(name, root, checkout, accounted, walked_checkouts, prefix,"
+        ),
+        after=(
+            "    # governance-mutation: MIGRATION_GIT_BLIND_SPOTS_SWEPT\n"
+            "    yield from () or _skip_reconcile(name, root, checkout, accounted, walked_checkouts, prefix,"
+        ),
+        expected_failure_marker="test_git_blind_spots_are_swept_without_duplicating_records",
+        rationale="git reports neither special files nor files under an unreadable directory; without the sweep the inventory silently loses them.",
+    ),
+    MutationCase(
+        mutation_id="MIGRATION_NESTED_CHECKOUT_SUMMARISED", component="Migration inventory",
+        source_path="scripts/migration_inventory.py", test_script="tests/test_migration_inventory.py",
+        before=(
+            "    # governance-mutation: MIGRATION_NESTED_CHECKOUT_SUMMARISED\n"
+            "    if is_git_root(top):"
+        ),
+        after=(
+            "    # governance-mutation: MIGRATION_NESTED_CHECKOUT_SUMMARISED\n"
+            "    if False and is_git_root(top):"
+        ),
+        expected_failure_marker="test_nested_checkout_under_ignored_dir_is_summarised_not_merged",
+        rationale="A checkout nested in an ignored dir must be its own tree; merging it into the outer HEAD hides files.",
+    ),
+    MutationCase(
+        mutation_id="MIGRATION_NEW_OUTPUT", component="Migration inventory",
+        source_path="scripts/migration_inventory.py", test_script="tests/test_migration_inventory.py",
+        before="out_dir.mkdir(parents=True, exist_ok=False)", after="out_dir.mkdir(parents=True, exist_ok=True)",
+        expected_failure_marker="test_existing_empty_output_is_refused",
+        rationale="Inventory revisions must never reuse an existing output directory.",
+    ),
+    MutationCase(
+        mutation_id="MIGRATION_EXCLUSIVE_OUTPUT_LEAF", component="Migration inventory",
+        source_path="scripts/migration_inventory.py", test_script="tests/test_migration_inventory.py",
+        before="os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW",
+        after="os.O_WRONLY | os.O_CREAT | os.O_TRUNC | os.O_NOFOLLOW",
+        expected_failure_marker="test_concurrent_output_leaf_is_never_truncated",
+        rationale="A concurrent hardlink must not redirect a writer into the source.",
+    ),
+    MutationCase(
+        mutation_id="MIGRATION_UNCOMMITTED_CONTENT", component="Migration inventory",
+        source_path="scripts/migration_inventory.py", test_script="tests/test_migration_inventory.py",
+        before='    return "MIGRATE"\n\n\ndef version_hint',
+        after='    return "GIT_RECOVERABLE" if category in ("CODE", "DOCS") else "MIGRATE"\n\n\ndef version_hint',
+        expected_failure_marker="test_untracked_code_and_docs_require_migration",
+        rationale="Uncommitted work cannot be recovered from HEAD merely because it is code.",
+    ),
+    MutationCase(
+        mutation_id="MIGRATION_PRESERVE_WAL", component="Migration inventory",
+        source_path="scripts/migration_inventory.py", test_script="tests/test_migration_inventory.py",
+        before='(r"\\.(sqlite3|sqlite|db)-(wal|journal)$", "SQLITE_RECOVERY_COMPONENT",',
+        after='(r"\\.(sqlite3|sqlite|db)-(wal|journal)$", "TRANSIENT_NOT_MIGRATED",',
+        expected_failure_marker="test_wal_commits_are_not_discardable",
+        rationale="Committed WAL state must remain part of the pending snapshot inventory.",
+    ),
+    MutationCase(
+        mutation_id="MIGRATION_SQLITE_ENGINE_CLOSED", component="Migration inventory",
+        source_path="scripts/migration_inventory.py", test_script="tests/test_migration_inventory.py",
+        before='    # mode=ro is not an OS-level no-write guarantee. Inventory never opens SQLite.',
+        after='    sqlite3.connect(f"file:{path}?mode=ro", uri=True).close()',
+        expected_failure_marker="test_sqlite_scan_never_opens_source_engine",
+        rationale="Reintroducing even mode=ro source-engine access must fail.",
+    ),
+    MutationCase(
+        mutation_id="MIGRATION_LEAF_NOFOLLOW", component="Migration inventory",
+        source_path="scripts/migration_inventory.py", test_script="tests/test_migration_inventory.py",
+        before='fd = os.open(parts[-1], os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=directory)',
+        after='fd = os.open(parts[-1], os.O_RDONLY | os.O_NONBLOCK, dir_fd=directory)',
+        expected_failure_marker="test_low_level_reader_refuses_leaf_symlink",
+        rationale="The actual byte reader must not follow a source alias.",
+    ),
+    MutationCase(
+        mutation_id="MIGRATION_PARENT_NOFOLLOW", component="Migration inventory",
+        source_path="scripts/migration_inventory.py", test_script="tests/test_migration_inventory.py",
+        before='child = os.open(part, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=directory)',
+        after='child = os.open(part, os.O_RDONLY | os.O_DIRECTORY, dir_fd=directory)',
+        expected_failure_marker="test_low_level_reader_refuses_parent_symlink",
+        rationale="Intermediate directories cannot redirect a source read.",
+    ),
+    MutationCase(
+        mutation_id="MIGRATION_SECRET_HEAD_UNREAD", component="Migration inventory",
+        source_path="scripts/migration_inventory.py", test_script="tests/test_migration_inventory.py",
+        before='            if record["category"] != "SECRET":', after='            if True:',
+        expected_failure_marker="test_modified_secret_has_no_historical_hash",
+        rationale="The secret boundary also covers historical Git blobs.",
+    ),
+    MutationCase(
+        mutation_id="MIGRATION_GIT_NO_OPTIONAL_WRITES", component="Migration inventory",
+        source_path="scripts/migration_inventory.py", test_script="tests/test_migration_inventory.py",
+        before='GIT_OPTIONAL_LOCKS="0"', after='GIT_OPTIONAL_LOCKS="1"',
+        expected_failure_marker="test_git_index_is_byte_identical_after_scan",
+        rationale="Git status must not refresh the source index during inventory.",
+    ),
+    MutationCase(
+        mutation_id="MIGRATION_GIT_OFFLINE", component="Migration inventory",
+        source_path="scripts/migration_inventory.py", test_script="tests/test_migration_inventory.py",
+        before='GIT_NO_LAZY_FETCH="1"', after='GIT_NO_LAZY_FETCH="0"',
+        expected_failure_marker="test_git_children_are_offline_even_if_parent_allows_network",
+        rationale="Offline scope must propagate to Git child processes.",
+    ),
+    MutationCase(
+        mutation_id="MIGRATION_POINTER_NAMESPACE", component="Migration inventory",
+        source_path="scripts/migration_inventory.py", test_script="tests/test_migration_inventory.py",
+        before='                target = path.parent / manifest',
+        after='                target = root / "experiments/execution_tracker" / manifest',
+        expected_failure_marker="test_public_and_et_manifest_locations_are_independent",
+        rationale="ET presence cannot hide a missing public manifest or vice versa.",
+    ),
+    MutationCase(
+        mutation_id="MIGRATION_DELETION_TOMBSTONE", component="Migration inventory",
+        source_path="scripts/migration_inventory.py", test_script="tests/test_migration_inventory.py",
+        before='    for rel in sorted(state["deleted"]):', after='    for rel in ():',
+        expected_failure_marker="test_tracked_deletion_is_a_tombstone",
+        rationale="Restore must know the exact paths deleted from the working tree.",
+    ),
+    MutationCase(
+        mutation_id="MIGRATION_RENAME_SOURCE", component="Migration inventory",
+        source_path="scripts/migration_inventory.py", test_script="tests/test_migration_inventory.py",
+        before='                deleted.add(entries[index])', after='                pass',
+        expected_failure_marker="test_staged_deletion_and_rename_keep_original_path",
+        rationale="A rename must preserve a tombstone for its original path.",
+    ),
+    MutationCase(
+        mutation_id="MIGRATION_LEGACY_INACTIVE", component="Migration inventory",
+        source_path="scripts/migration_inventory.py", test_script="tests/test_migration_inventory.py",
+        before='"active_research_input": False', after='"active_research_input": True',
+        expected_failure_marker="test_legacy_history_is_readonly_and_not_an_active_input",
+        rationale="Importing legacy history cannot activate it for formal research.",
+    ),
+    MutationCase(
+        mutation_id="MIGRATION_LEGACY_READONLY", component="Migration inventory",
+        source_path="scripts/migration_inventory.py", test_script="tests/test_migration_inventory.py",
+        before='"read_only": True', after='"read_only": False',
+        expected_failure_marker="test_legacy_history_is_readonly_and_not_an_active_input",
+        rationale="Legacy destinations must retain the human-approved read-only policy.",
+    ),
+    MutationCase(
+        mutation_id="MIGRATION_NO_IMPORT_AUTHORITY", component="Migration inventory",
+        source_path="scripts/migration_inventory.py", test_script="tests/test_migration_inventory.py",
+        before='"migration_ready": False', after='"migration_ready": True',
+        expected_failure_marker="test_inventory_receipt_never_authorizes_import",
+        rationale="An inventory is not a consistent snapshot or permission to import.",
+    ),
+    MutationCase(
         mutation_id="FEATURE_HEALTH_SCHEMA_REQUIRED_SUMMARY", component="Research feature health schema",
         source_path="docs/research/contracts/feature_store_health.schema.json", test_script="tests/test_feature_health_schema.py",
         before='    "disclaimer",\n    "semiconductor_positive_inputs"', after='    "disclaimer"',

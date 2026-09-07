@@ -1,0 +1,22 @@
+{
+  "schema": "ai-task.v1",
+  "task_id": "MIGRATION-INVENTORY-HARDENING-20260907",
+  "source_issue": null,
+  "architecture_block": ["migration-inventory", "read-only-legacy-history"],
+  "objective": "Fix the eight independently reproduced inventory defects and declare legacy parquet as read-only, non-authoritative history in the existing PR 348 branch.",
+  "non_goals": ["No production scan, migration or cutover", "No overwrite of the first inventory", "No paid calls, uploads or team grants", "No changes to research rules or real ledgers"],
+  "human_owner": "Junyan",
+  "reviewer": "Junyan",
+  "executor_candidates": ["Codex"],
+  "dependencies": [],
+  "authority_docs": ["AGENTS.md", "scripts/llm/AGENTS.md"],
+  "file_scope": ["scripts/migration_inventory.py", "tests/test_migration_inventory.py", "tests/test_no_network_guard.py", "scripts/governance_mutation_gate.py", ".github/workflows/python-ci.yml", "docs/team/MIGRATION_INVENTORY_V1.md", "scripts/llm/fixtures/migration_inventory_hardening.task.json"],
+  "forbidden_scope": ["production runtime", "real data_history", "real ledgers", "launchd", "existing inventory outputs"],
+  "input_contracts": ["scripts/migration_inventory.py", "tests/test_migration_inventory.py"],
+  "output_artifacts": ["Read-only inventory hardening", "Legacy provenance and quality labels", "Negative regressions and mutation pins", "Full offline CI evidence"],
+  "acceptance_tests": ["python3 tests/test_migration_inventory.py", "python3 scripts/governance_mutation_gate.py", "python3 /Users/years/Desktop/Stock/e2e-twin/twin-20260902/tools/ci_local.py", "git diff --check"],
+  "risk_level": "MEDIUM",
+  "network_policy": "OFFLINE",
+  "budget": {"max_cny": "0", "max_minutes": 180},
+  "approval_gates": ["INDEPENDENT_REVIEW", "JUNYAN_MERGE", "SEPARATE_PRODUCTION_AND_TRANSFER_APPROVAL"]
+}
