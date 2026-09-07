@@ -472,7 +472,10 @@ class HardeningR3Tests(unittest.TestCase):
         self.assertNotIn("vendor/nested/deep/inner.py", files)
         self.assertEqual(nested_head, files["vendor/nested/loose.json"]["checkout_head"])
         self.assertEqual("vendor/nested", files["vendor/nested/loose.json"]["checkout"])
-        self.assertEqual({"files": 2, "bytes": 13}, {k: v for k, v in trees["vendor/nested"]["tracked_summary_by_top_dir"].get("top.py", {"files": 1, "bytes": 6}).items()} if False else {"files": 2, "bytes": 13})
+        self.assertEqual(
+            {"top.py": {"files": 1, "bytes": 6}, "deep": {"files": 1, "bytes": 6}},
+            trees["vendor/nested"]["tracked_summary_by_top_dir"],
+        )
         self.assertEqual(2, trees["vendor/nested"]["tracked_files"])
         outer_head = trees["."]["head"]
         self.assertTrue(all(r["checkout_head"] != outer_head for r in files.values() if r["relpath"].startswith("vendor/")))
@@ -582,6 +585,24 @@ class HardeningR3Tests(unittest.TestCase):
         self.assertEqual("UNTRACKED", files["untracked.json"]["git_class"])
         self.assertEqual("TRACKED", files["public/data/tracked.json"]["git_class"])
         self.assertNotIn("base.txt", files)  # summarised tracked file, not re-listed by the sweep
+
+    def test_tracked_fifo_is_registered_without_relisting_summarised_files(self) -> None:
+        """A tracked path is not accounted for until it has a record or summary."""
+        self._repo(self.root, {"converted.txt": "old file\n", "kept.txt": "keep\n"})
+        (self.root / "converted.txt").unlink()
+        os.mkfifo(self.root / "converted.txt")
+        os.mkfifo(self.root / "untracked_pipe")
+        _receipt, rows = self.scan()
+        for rel in ("converted.txt", "untracked_pipe"):
+            with self.subTest(rel=rel):
+                matches = [r for r in rows if r.get("relpath") == rel]
+                self.assertEqual(1, len(matches), "FIFO must be recorded exactly once")
+                self.assertEqual("SPECIAL_FILE", matches[0]["record"])
+                self.assertEqual("NOT_MIGRATED", matches[0]["migration"])
+                self.assertTrue(matches[0]["mode"].startswith("p"))
+        tree = next(r for r in rows if r["record"] == "GIT_TREE")
+        self.assertEqual({"kept.txt": {"files": 1, "bytes": 5}}, tree["tracked_summary_by_top_dir"])
+        self.assertFalse(any(r.get("relpath") == "kept.txt" for r in rows))
 
     def test_files_git_never_reported_are_registered_as_unreported(self) -> None:
         self._repo(self.root, {"base.txt": "outer\n"})

@@ -186,6 +186,22 @@ class MutationCase:
 
 MUTATIONS: tuple[MutationCase, ...] = (
     MutationCase(
+        mutation_id="MIGRATION_TRACKED_PATH_RECONCILED", component="Migration inventory",
+        source_path="scripts/migration_inventory.py", test_script="tests/test_migration_inventory.py",
+        before='    accounted: set[str] = set(state["deleted"])',
+        after='    accounted: set[str] = set(state["tracked"]) | set(state["deleted"])',
+        expected_failure_marker="test_tracked_fifo_is_registered_without_relisting_summarised_files",
+        rationale="Tracked paths must not suppress reconciliation before a record or summary exists.",
+    ),
+    MutationCase(
+        mutation_id="MIGRATION_NESTED_SUMMARY_BYTES", component="Migration inventory",
+        source_path="scripts/migration_inventory.py", test_script="tests/test_migration_inventory.py",
+        before='            bucket["bytes"] += path.stat().st_size',
+        after='            bucket["bytes"] += 0',
+        expected_failure_marker="test_nested_checkout_under_ignored_dir_is_summarised_not_merged",
+        rationale="The nested checkout summary must report actual bytes, not pass a constant-only assertion.",
+    ),
+    MutationCase(
         mutation_id="MIGRATION_OUTPUT_OUTSIDE_ROOTS", component="Migration inventory",
         source_path="scripts/migration_inventory.py", test_script="tests/test_migration_inventory.py",
         before=(

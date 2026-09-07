@@ -339,7 +339,8 @@ def _walk_git(name: str, root: Path, checkout: Path, *, excludes: Sequence[str],
     # Everything this pass accounted for, checkout-relative: emitted records plus the tracked
     # files that are only summarised. The reconciliation sweep below uses it to find what git
     # never reported at all.
-    accounted: set[str] = set(state["tracked"]) | set(state["deleted"])
+    # A tracked path may now be a special file; only actual records/summaries count.
+    accounted: set[str] = set(state["deleted"])
     walked_checkouts: set[str] = set()
 
     def track(record: dict[str, Any]) -> dict[str, Any]:
@@ -384,6 +385,7 @@ def _walk_git(name: str, root: Path, checkout: Path, *, excludes: Sequence[str],
             bucket = tracked_summary.setdefault(top, {"files": 0, "bytes": 0})
             bucket["files"] += 1
             bucket["bytes"] += path.stat().st_size
+            accounted.add(rel)
     yield track({
         "record": "GIT_TREE", "root": name, "checkout": prefix or ".", "head": state["head"],
         "branch": state["branch"], "tracked_files": len(state["tracked"]),
