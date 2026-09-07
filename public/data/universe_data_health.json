@@ -1,6 +1,6 @@
 {
-  "verdict": "PASS",
-  "as_of": "2026-09-04T12:49:38.336382+00:00",
+  "verdict": "BLOCKED",
+  "as_of": "2026-09-07T05:53:38.648397+00:00",
   "max_age_days": 2,
   "meta": {
     "fetched_at": "2026-09-04T12:48:51.319143",
@@ -46,7 +46,14 @@
       "median": 50.0
     }
   },
-  "errors": [],
+  "errors": [
+    {
+      "code": "stale_universe_snapshot",
+      "message": "Universe snapshot is 3 calendar days old (max 2). Do not use for execution or entry zones.",
+      "fetched_at": "2026-09-04T12:48:51.319143+00:00",
+      "as_of": "2026-09-07"
+    }
+  ],
   "warnings": [],
   "ticker_checks": []
 }
