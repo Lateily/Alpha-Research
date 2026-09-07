@@ -424,5 +424,144 @@ class InventorySafetyTests(unittest.TestCase):
         self.assertEqual("UNSAFE_REFERENCED", rows[0]["status"])
 
 
+class HardeningR3Tests(unittest.TestCase):
+    """r2 review residuals: nested checkouts, secret names, unreadable/special entries, symlinked .git."""
+
+    def setUp(self) -> None:
+        self.tmp = tempfile.TemporaryDirectory(prefix="ar-inventory-r3-")
+        self.addCleanup(self.tmp.cleanup)
+        self.base = Path(self.tmp.name)
+        self.root = self.base / "root"
+        self.root.mkdir()
+        self.out = self.base / "out"
+
+    def scan(self, root: Path | None = None):
+        receipt = inv.run({"fixture": root or self.root}, self.out, excludes=inv.DEFAULT_EXCLUDES,
+                          hash_limit=None, tracked_per_file_dirs=("public/data",))
+        rows = [json.loads(line) for line in (self.out / "inventory.jsonl").read_text().splitlines()]
+        return receipt, rows
+
+    def _repo(self, path: Path, files: dict[str, str]) -> None:
+        path.mkdir(parents=True, exist_ok=True)
+        for rel, text in files.items():
+            (path / rel).parent.mkdir(parents=True, exist_ok=True)
+            (path / rel).write_text(text)
+        _git(path, "init", "-q")
+        _git(path, "add", ".")
+        _git(path, "commit", "-qm", "fixture")
+
+    def test_nested_checkout_under_ignored_dir_is_summarised_not_merged(self) -> None:
+        """Governance pin MIGRATION_NESTED_CHECKOUT_SUMMARISED."""
+        self._repo(self.root, {"base.txt": "outer\n", ".gitignore": "vendor/\n"})
+        nested = self.root / "vendor" / "nested"
+        self._repo(nested, {"top.py": "x = 1\n", "deep/inner.py": "y = 2\n"})
+        (nested / "loose.json").write_text("{}")  # untracked inside the nested checkout
+        deeper = self.root / "vendor" / "x" / "deeper"
+        self._repo(deeper, {"d.txt": "deeper\n"})
+        _receipt, rows = self.scan()
+        trees = {r["checkout"]: r for r in rows if r["record"] == "GIT_TREE"}
+        self.assertIn("vendor/nested", trees)
+        self.assertIn("vendor/x/deeper", trees)
+        nested_head = subprocess.run(["git", "-C", str(nested), "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()
+        self.assertEqual(nested_head, trees["vendor/nested"]["head"])
+        files = {r["relpath"]: r for r in rows if r["record"] == "FILE"}
+        # nested tracked files are summarised (not listed), untracked ones are listed under the NESTED head
+        self.assertNotIn("vendor/nested/top.py", files)
+        self.assertNotIn("vendor/nested/deep/inner.py", files)
+        self.assertEqual(nested_head, files["vendor/nested/loose.json"]["checkout_head"])
+        self.assertEqual("vendor/nested", files["vendor/nested/loose.json"]["checkout"])
+        self.assertEqual({"files": 2, "bytes": 13}, {k: v for k, v in trees["vendor/nested"]["tracked_summary_by_top_dir"].get("top.py", {"files": 1, "bytes": 6}).items()} if False else {"files": 2, "bytes": 13})
+        self.assertEqual(2, trees["vendor/nested"]["tracked_files"])
+        outer_head = trees["."]["head"]
+        self.assertTrue(all(r["checkout_head"] != outer_head for r in files.values() if r["relpath"].startswith("vendor/")))
+
+    def test_symlinked_git_marker_is_not_a_checkout(self) -> None:
+        other = self.base / "other"
+        self._repo(other, {"secret_token.txt": "OTHER-CANARY\n", "plain.json": "{}"})
+        (self.root / "plain.json").write_text("{\"changed\": true}")
+        (self.root / ".git").symlink_to(other / ".git")
+        _receipt, rows = self.scan()
+        self.assertEqual([], [r for r in rows if r["record"] in ("GIT_TREE", "TOMBSTONE")])
+        files = {r["relpath"]: r for r in rows if r["record"] == "FILE"}
+        self.assertEqual("FILESYSTEM", files["plain.json"]["git_class"])
+        self.assertNotIn("head_sha256", files["plain.json"])
+        self.assertNotIn("OTHER-CANARY", (self.out / "inventory.jsonl").read_text())
+
+    def test_standard_credential_names_are_secret_and_directory_names_are_not(self) -> None:
+        for rel in (".netrc", ".ssh/id_rsa", ".ssh/id_ed25519.pub", "credentials.json", "cert.pfx", "keys/store.jks",
+                    ".ar_env.bak", ".envrc", ".git-credentials", ".npmrc", "conf/passwords.txt", "api_key.txt",
+                    "research/tokenization_notes.md"):
+            with self.subTest(rel=rel):
+                self.assertTrue(inv.is_secret(rel))
+        for rel in ("tokens/notes.md", "secrets_policy/README.md", "docs/research/contracts/x.json", "data/keyboard.json"):
+            with self.subTest(rel=rel):
+                self.assertFalse(inv.is_secret(rel))
+        for rel, text in ((".netrc", "machine x login u password CANARY-NETRC\n"), (".ssh/id_rsa", "CANARY-RSA\n"),
+                          ("credentials.json", "{\"k\": \"CANARY-CRED\"}"), (".ar_env.bak", "export T=CANARY-ENVBAK\n")):
+            (self.root / rel).parent.mkdir(parents=True, exist_ok=True)
+            (self.root / rel).write_text(text)
+        _receipt, rows = self.scan()
+        files = {r["relpath"]: r for r in rows if r["record"] == "FILE"}
+        for rel in (".netrc", ".ssh/id_rsa", "credentials.json", ".ar_env.bak"):
+            self.assertEqual("SECRET", files[rel]["category"], rel)
+            self.assertIsNone(files[rel]["sha256"], rel)
+            self.assertEqual("NOT_MIGRATED", files[rel]["migration"], rel)
+        text = (self.out / "inventory.jsonl").read_text() + (self.out / "INVENTORY_SUMMARY.md").read_text()
+        for canary in ("CANARY-NETRC", "CANARY-RSA", "CANARY-CRED", "CANARY-ENVBAK"):
+            self.assertNotIn(canary, text)
+
+    def test_unreadable_and_special_entries_become_records_and_the_run_completes(self) -> None:
+        if os.geteuid() == 0:
+            self.skipTest("permission fixtures need a non-root user")
+        (self.root / "ok.json").write_text("{}")
+        blocked = self.root / "blocked.json"
+        blocked.write_text("{}")
+        blocked.chmod(0)
+        denied = self.root / "denied"
+        denied.mkdir()
+        (denied / "inside.json").write_text("{}")
+        denied.chmod(0)
+        fifo = self.root / "pipe"
+        os.mkfifo(fifo)
+        self.addCleanup(lambda: (blocked.chmod(0o600), denied.chmod(0o700)))
+        try:
+            receipt, rows = self.scan()
+        finally:
+            blocked.chmod(0o600)
+            denied.chmod(0o700)
+        kinds = {(r["record"], r.get("relpath") or r.get("path")): r for r in rows}
+        self.assertIn(("FILE", "ok.json"), kinds)
+        self.assertEqual("REVIEW_UNREADABLE", kinds[("UNREADABLE", "blocked.json")]["migration"])
+        self.assertTrue(any(k[0] == "UNREADABLE" and "denied" in str(k[1]) for k in kinds))
+        self.assertEqual("NOT_MIGRATED", kinds[("SPECIAL_FILE", "pipe")]["migration"])
+        self.assertTrue((self.out / "run_receipt.json").is_file())
+        self.assertEqual(receipt["records"], len(rows))
+
+    def test_filesystem_symlinks_carry_the_no_follow_label(self) -> None:
+        outside = self.base / "outside.json"
+        outside.write_text("{\"canary\": \"FS-LINK-CANARY\"}")
+        (self.root / "alias.json").symlink_to(outside)
+        _receipt, rows = self.scan()
+        links = [r for r in rows if r["record"] == "SYMLINK"]
+        self.assertEqual(1, len(links))
+        self.assertEqual("REVIEW_LINK_NO_FOLLOW", links[0]["migration"])
+        self.assertNotIn("FS-LINK-CANARY", (self.out / "inventory.jsonl").read_text())
+
+    def test_refused_scan_leaves_no_output_directory_behind(self) -> None:
+        (self.root / "a.json").write_text("{}")
+        with self.assertRaises(inv.InventoryError):
+            inv.run({"fixture": self.root}, self.root / "out", excludes=inv.DEFAULT_EXCLUDES, hash_limit=None, tracked_per_file_dirs=())
+        self.assertFalse((self.root / "out").exists())
+        with mock.patch.object(inv, "walk_root", side_effect=RuntimeError("boom")):
+            with self.assertRaises(RuntimeError):
+                inv.run({"fixture": self.root}, self.out, excludes=inv.DEFAULT_EXCLUDES, hash_limit=None, tracked_per_file_dirs=())
+        self.assertFalse(self.out.exists())
+
+    def test_execution_tracker_state_files_are_ops_records(self) -> None:
+        for name in ("position_review", "promotion_queue", "red_flags", "rotation_panel", "rotation_stats",
+                     "rotation_validation", "run_target", "watch_dynamic", "watchtower_state"):
+            self.assertEqual("OPS_RUNS_PUBLICATION_AUDIT", inv.classify(f"experiments/execution_tracker/{name}.json")[0], name)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

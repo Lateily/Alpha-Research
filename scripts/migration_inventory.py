@@ -18,6 +18,8 @@ The tool writes nothing inside any root. Outputs go to --out:
   INVENTORY_SUMMARY.md     counts and bytes per root × category, gaps, secrets
   run_receipt.json         roots, HEADs, generated_at, tool sha256, inventory sha256
 
+Git child processes run with protocol.allow=never (the effective offline guard on every git
+version) plus GIT_NO_LAZY_FETCH / GIT_OPTIONAL_LOCKS=0 (honoured by newer git only).
 Nothing here migrates, uploads, deletes or rewrites anything. Missing referenced
 artifacts are recorded as gaps, never fabricated. 不是买卖指令;研究信号,human executes.
 """
@@ -43,9 +45,17 @@ SCHEMA = "ar.migration_inventory.v1"
 DISCLAIMER = "盘点清单,不是迁移本身;缺件只登记不补造。不是买卖指令;研究信号,human executes."
 
 DEFAULT_EXCLUDES = ("node_modules", ".git", "__pycache__", ".DS_Store", ".pytest_cache", ".venv", "dist")
+# Path-name classification only (never a content scan). A hit means: never read, never hash,
+# never migrate. Filename component only, so a directory called "tokens/" does not swallow its
+# children. Known false positive kept on purpose: a research note named *token* loses its hash
+# but stays listed — the safe direction.
 SECRET_PATTERNS = (
-    re.compile(r"(^|/)\.ar_env$"), re.compile(r"(^|/)\.env($|\.)"), re.compile(r"token", re.I),
-    re.compile(r"(^|/)[^/]*secret[^/]*$", re.I), re.compile(r"\.(pem|key|p12)$", re.I),
+    re.compile(r"(^|/)\.ar_env($|\.)"), re.compile(r"(^|/)\.env($|\.|rc$)"), re.compile(r"(^|/)\.envrc$"),
+    re.compile(r"(^|/)\.netrc$"), re.compile(r"(^|/)\.git-credentials$"), re.compile(r"(^|/)\.(npmrc|pypirc)$"),
+    re.compile(r"(^|/)id_(rsa|dsa|ecdsa|ed25519)(\.pub)?$"),
+    re.compile(r"(^|/)[^/]*credential[^/]*$", re.I), re.compile(r"(^|/)[^/]*token[^/]*$", re.I),
+    re.compile(r"(^|/)[^/]*secret[^/]*$", re.I), re.compile(r"(^|/)[^/]*(passw(or)?d|apikey|api_key)[^/]*$", re.I),
+    re.compile(r"\.(pem|key|p12|pfx|jks|keystore)$", re.I),
     re.compile(r"(^|/)\.ar_progress_write_key"),
 )
 RUN_ID_RE = re.compile(r"(20\d{6}_\d{6}_\d+_[0-9a-f]{8})")
@@ -105,6 +115,8 @@ RULES: tuple[tuple[str, str, str, str], ...] = (
     (r"(^|/)scripts/governance_mutation_gate\.py$", "METHOD_AND_CODE_VERSIONS", "治理变异门(钉表)", "模型与方法中心"),
     (r"(^|/)(tests/|\.github/workflows/)", "METHOD_AND_CODE_VERSIONS", "测试与 CI 证据", "模型与方法中心"),
     (r"(^|/)execution_tracker/runs/", "OPS_RUNS_PUBLICATION_AUDIT", "夜链 run manifest(durable)", "运行监控 · 审计"),
+    (r"(^|/)execution_tracker/(position_review|promotion_queue|red_flags|rotation_panel|rotation_stats|rotation_validation|run_target|watch_dynamic|watchtower_state)\.json$",
+     "OPS_RUNS_PUBLICATION_AUDIT", "夜链日切状态(工作树,通常领先于提交)", "运行监控 · 审计"),
     (r"(^|/)execution_tracker/(current_run|nightly_run|publication_state|nightly\.lock|launchd/|nowcast_log|overnight_anchor|court_|eod_candidates|momentum_prefilter|lead_precursor|battery\.json|macro_events)",
      "OPS_RUNS_PUBLICATION_AUDIT", "夜链运行状态/发布指针/日切产物", "运行监控 · 审计"),
     (r"(^|/)public/data/v2/(current_run|meta)\.json$", "OPS_RUNS_PUBLICATION_AUDIT", "发布指针", "运行监控 · 审计"),
@@ -227,8 +239,12 @@ def _git(root: Path, *args: str) -> str:
 
 
 def is_git_root(path: Path) -> bool:
-    marker = path / ".git"
-    return marker.is_dir() or marker.is_file()
+    """A checkout marker is a real .git dir or file; a symlinked .git is never followed."""
+    try:
+        marker = os.lstat(path / ".git")
+    except OSError:
+        return False
+    return stat_mode.S_ISDIR(marker.st_mode) or stat_mode.S_ISREG(marker.st_mode)
 
 
 def git_state(root: Path) -> dict[str, Any]:
@@ -307,12 +323,12 @@ def walk_root(name: str, root: Path, *, excludes: Sequence[str], hash_limit: int
             if _excluded(entry.relative_to(root).parts, excludes):
                 continue
             if entry.is_symlink():
-                yield {"record": "SYMLINK", "root": name, "relpath": rel, "target": os.readlink(entry)}
+                yield link_record(name, root, entry)
                 continue
             if entry.is_dir():
                 stack.append(entry)
-            elif entry.is_file():
-                yield file_record(name, root, entry, git_class="FILESYSTEM", hash_limit=hash_limit)
+            else:
+                yield leaf_record(name, root, entry, git_class="FILESYSTEM", hash_limit=hash_limit)
 
 
 def _walk_git(name: str, root: Path, checkout: Path, *, excludes: Sequence[str], hash_limit: int | None,
@@ -364,19 +380,78 @@ def _walk_git(name: str, root: Path, checkout: Path, *, excludes: Sequence[str],
                 yield link_record(name, root, path)
                 continue
             if path.is_dir():
-                for sub in sorted(path.rglob("*")):
-                    if _excluded(sub.relative_to(checkout).parts, excludes):
-                        continue
-                    if sub.is_symlink():
-                        yield link_record(name, root, sub)
-                    elif sub.is_file():
-                        if is_git_root(sub.parent) and sub.parent != checkout:
-                            continue
-                        yield file_record(name, root, sub, git_class=cls, hash_limit=hash_limit,
-                                          checkout_head=state["head"], checkout=prefix)
-            elif path.is_file():
-                yield file_record(name, root, path, git_class=cls, hash_limit=hash_limit,
+                yield from _walk_loose_dir(name, root, checkout, path, cls, state["head"], prefix,
+                                           excludes=excludes, hash_limit=hash_limit,
+                                           tracked_per_file_dirs=tracked_per_file_dirs)
+            else:
+                yield leaf_record(name, root, path, git_class=cls, hash_limit=hash_limit,
                                   checkout_head=state["head"], checkout=prefix)
+
+
+def _walk_loose_dir(name: str, root: Path, checkout: Path, top: Path, cls: str, head: str, prefix: str, *,
+                    excludes: Sequence[str], hash_limit: int | None,
+                    tracked_per_file_dirs: Sequence[str]) -> Iterable[dict[str, Any]]:
+    """Untracked/ignored directory under a checkout. A nested checkout found inside it is
+    summarised as its own GIT_TREE (its files attributed to ITS head), never merged into the
+    outer tree; symlinks are registered, not followed; unreadable dirs become records."""
+    # governance-mutation: MIGRATION_NESTED_CHECKOUT_SUMMARISED
+    if is_git_root(top):
+        yield from _walk_git(name, root, top, excludes=excludes, hash_limit=hash_limit,
+                             tracked_per_file_dirs=tracked_per_file_dirs)
+        return
+    errors: list[dict[str, Any]] = []
+
+    def onerror(exc: OSError) -> None:
+        errors.append({"record": "UNREADABLE", "root": name, "relpath": Path(str(exc.filename)).relative_to(root).as_posix()
+                       if exc.filename and str(exc.filename).startswith(str(root)) else str(exc.filename),
+                       "error": type(exc).__name__, "migration": "REVIEW_UNREADABLE"})
+
+    for dirpath, dirnames, filenames in os.walk(top, topdown=True, onerror=onerror, followlinks=False):
+        current = Path(dirpath)
+        keep: list[str] = []
+        for child_name in sorted(dirnames):
+            child = current / child_name
+            if _excluded(child.relative_to(checkout).parts, excludes):
+                continue
+            if child.is_symlink():
+                yield link_record(name, root, child)
+                continue
+            if is_git_root(child):
+                yield from _walk_git(name, root, child, excludes=excludes, hash_limit=hash_limit,
+                                     tracked_per_file_dirs=tracked_per_file_dirs)
+                continue
+            keep.append(child_name)
+        dirnames[:] = keep
+        for file_name in sorted(filenames):
+            sub = current / file_name
+            if _excluded(sub.relative_to(checkout).parts, excludes):
+                continue
+            if sub.is_symlink():
+                yield link_record(name, root, sub)
+                continue
+            yield leaf_record(name, root, sub, git_class=cls, hash_limit=hash_limit, checkout_head=head, checkout=prefix)
+        while errors:
+            yield errors.pop(0)
+
+
+def leaf_record(name: str, root: Path, path: Path, *, git_class: str, hash_limit: int | None,
+                checkout_head: str | None = None, checkout: str = "") -> dict[str, Any]:
+    """A non-directory, non-symlink entry: FILE, or an explicit SPECIAL_FILE / UNREADABLE record."""
+    rel = path.relative_to(root).as_posix()
+    try:
+        st = path.lstat()
+    except OSError as exc:
+        return {"record": "UNREADABLE", "root": name, "relpath": rel, "error": type(exc).__name__,
+                "migration": "REVIEW_UNREADABLE"}
+    if not stat_mode.S_ISREG(st.st_mode):
+        return {"record": "SPECIAL_FILE", "root": name, "relpath": rel, "mode": stat_mode.filemode(st.st_mode),
+                "migration": "NOT_MIGRATED"}
+    try:
+        return file_record(name, root, path, git_class=git_class, hash_limit=hash_limit,
+                           checkout_head=checkout_head, checkout=checkout)
+    except InventoryError as exc:
+        return {"record": "UNREADABLE", "root": name, "relpath": rel, "git_class": git_class,
+                "error": str(exc)[:160], "migration": "REVIEW_UNREADABLE"}
 
 
 def link_record(name: str, root: Path, path: Path) -> dict[str, Any]:
@@ -524,19 +599,31 @@ def _write_new_file(directory: int, name: str, content: str) -> str:
 def run(roots: Mapping[str, Path], out_dir: Path, *, excludes: Sequence[str], hash_limit: int | None,
         tracked_per_file_dirs: Sequence[str]) -> dict[str, Any]:
     for root in roots.values():
+        # governance-mutation: MIGRATION_OUTPUT_OUTSIDE_ROOTS
         if out_dir.resolve() == root.resolve() or root.resolve() in out_dir.resolve().parents:
             raise InventoryError("output directory must not live inside a scanned root")
     if not hasattr(os, "O_NOFOLLOW") or os.open not in os.supports_dir_fd:
         raise InventoryError("no-follow directory-relative IO is required on this host")
+    # The output directory is claimed exclusively BEFORE the walk (two concurrent runs
+    # cannot both succeed); if the walk then fails, the still-empty directory is removed
+    # so a refused or aborted scan never blocks the retry.
     try:
         out_dir.mkdir(parents=True, exist_ok=False)
     except OSError as exc:
         raise InventoryError("output must be new; cannot exclusively create directory") from exc
     records: list[dict[str, Any]] = []
-    for name, root in roots.items():
-        records.extend(walk_root(name, root, excludes=excludes, hash_limit=hash_limit,
-                                 tracked_per_file_dirs=tracked_per_file_dirs))
-    gaps = referenced_pointers(roots)
+    try:
+        for name, root in roots.items():
+            records.extend(walk_root(name, root, excludes=excludes, hash_limit=hash_limit,
+                                     tracked_per_file_dirs=tracked_per_file_dirs))
+        gaps = referenced_pointers(roots)
+    except BaseException:
+        try:
+            if not any(out_dir.iterdir()):
+                out_dir.rmdir()
+        except OSError:
+            pass
+        raise
     inventory_text = "".join(json.dumps(r, ensure_ascii=False, sort_keys=True) + "\n" for r in records)
     receipt = {
         "schema": SCHEMA, "generated_at": _now(), "roots": {k: str(v) for k, v in roots.items()},

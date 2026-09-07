@@ -186,6 +186,34 @@ class MutationCase:
 
 MUTATIONS: tuple[MutationCase, ...] = (
     MutationCase(
+        mutation_id="MIGRATION_OUTPUT_OUTSIDE_ROOTS", component="Migration inventory",
+        source_path="scripts/migration_inventory.py", test_script="tests/test_migration_inventory.py",
+        before=(
+            "        # governance-mutation: MIGRATION_OUTPUT_OUTSIDE_ROOTS\n"
+            "        if out_dir.resolve() == root.resolve() or root.resolve() in out_dir.resolve().parents:"
+        ),
+        after=(
+            "        # governance-mutation: MIGRATION_OUTPUT_OUTSIDE_ROOTS\n"
+            "        if False and (out_dir.resolve() == root.resolve() or root.resolve() in out_dir.resolve().parents):"
+        ),
+        expected_failure_marker="test_output_inside_a_root_is_refused_and_nothing_is_written_into_roots",
+        rationale="The inventory must refuse to write anywhere inside a scanned root.",
+    ),
+    MutationCase(
+        mutation_id="MIGRATION_NESTED_CHECKOUT_SUMMARISED", component="Migration inventory",
+        source_path="scripts/migration_inventory.py", test_script="tests/test_migration_inventory.py",
+        before=(
+            "    # governance-mutation: MIGRATION_NESTED_CHECKOUT_SUMMARISED\n"
+            "    if is_git_root(top):"
+        ),
+        after=(
+            "    # governance-mutation: MIGRATION_NESTED_CHECKOUT_SUMMARISED\n"
+            "    if False and is_git_root(top):"
+        ),
+        expected_failure_marker="test_nested_checkout_under_ignored_dir_is_summarised_not_merged",
+        rationale="A checkout nested in an ignored dir must be its own tree; merging it into the outer HEAD hides files.",
+    ),
+    MutationCase(
         mutation_id="MIGRATION_NEW_OUTPUT", component="Migration inventory",
         source_path="scripts/migration_inventory.py", test_script="tests/test_migration_inventory.py",
         before="out_dir.mkdir(parents=True, exist_ok=False)", after="out_dir.mkdir(parents=True, exist_ok=True)",
