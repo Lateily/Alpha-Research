@@ -12,6 +12,7 @@ on:
       - "experiments/execution_tracker/publication_migration_events.jsonl*"
       - "scripts/**/*.py"
       - "tools/nonprod_workbench/**"
+      - "tools/isolated_nightly_origin.py"
       - "docs/team/NONPROD_WORKBENCH_V1.md"
       - "scripts/llm/**/*.json"
       - "tests/**"
@@ -337,6 +338,8 @@ jobs:
         run: |
           python3 tests/test_governance_mutation_gate.py
           python3 scripts/governance_mutation_gate.py
+      - name: Isolated nightly origin compatibility (offline)
+        run: python3 tests/test_isolated_nightly_origin.py
       # 既有缺口(#215 复核发现):本文件逐个点名执行测试,无发现机制,
       # 故新增测试若不在此登记就永远不跑。以下两条此前从未在 CI 运行过。
       - name: PIT no-look-ahead regression
