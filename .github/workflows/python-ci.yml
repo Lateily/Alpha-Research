@@ -263,6 +263,13 @@ jobs:
       # append-only, and a missing observation stays NOT_OBSERVED, never 0.
       - name: Knowledge-card history collection plan and ingest (offline)
         run: python3 tests/test_fetch_knowledge_card_history.py
+      # Migration step 1 (全量盘点): the read-only inventory classifies every
+      # file by migration category, never reads secrets, and records missing
+      # referenced artifacts as gaps instead of fabricating them.
+      - name: Migration inventory (read-only, offline)
+        run: |
+          python3 tests/test_migration_inventory.py
+          python3 scripts/migration_inventory.py --selftest
       # Frozen assembly contract over the existing funnel, U4, research method,
       # paper execution, and five-axis modules. This step adds no runtime wiring.
       - name: Research closed loop V1 assembly contract (offline)
