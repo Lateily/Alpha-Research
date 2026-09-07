@@ -95,6 +95,8 @@ jobs:
       # Retry only transport failures; HTTP/API/schema failures remain fail-closed.
       - name: Official sample transport retry regression (offline)
         run: python3 tests/test_fund_source_transport.py
+      - name: Official settlement readiness and publication recovery (offline)
+        run: python3 tests/test_official_settlement_offline.py
       # R-043:已发布 manifest 合法迁移。覆盖审批绑定、同锁、WAL 崩溃恢复、
       # TOCTOU、双 manifest 留档与旧 run_id 拒绝。
       - name: Publication manifest migration regression (offline)
