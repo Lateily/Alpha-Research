@@ -157,6 +157,8 @@ def must_migrate(category: str, git_class: str) -> str:
     """MIGRATE (history not held by Git), GIT_RECOVERABLE, or NOT_MIGRATED."""
     if category in ("SECRET", "TRANSIENT_NOT_MIGRATED", "NEW_PLATFORM_STATE"):
         return "NOT_MIGRATED"
+    if git_class == "MODIFIED":
+        return "MIGRATE"  # live working-tree state ahead of the last commit
     if git_class == "TRACKED":
         return "GIT_RECOVERABLE"
     if category in HISTORY_CATEGORIES or category in ("AGENT_OPS_RECORDS", "UNCLASSIFIED"):
@@ -192,16 +194,33 @@ def git_state(root: Path) -> dict[str, Any]:
     tracked = set(line for line in _git(root, "ls-files", "-z").split("\0") if line)
     untracked: set[str] = set()
     ignored: set[str] = set()
+    modified: set[str] = set()
     status = _git(root, "status", "--porcelain=v1", "-z", "--ignored", "-uall")
-    for entry in status.split("\0"):
+    entries = status.split("\0")
+    index = 0
+    while index < len(entries):
+        entry = entries[index]
+        index += 1
         if len(entry) < 4:
             continue
         code, rel = entry[:2], entry[3:]
+        if code[0] in "RC":  # rename/copy carries the original path as the next NUL field
+            index += 1
         if code == "??":
             untracked.add(rel)
         elif code == "!!":
             ignored.add(rel)
-    return {"head": head, "branch": branch, "tracked": tracked, "untracked": untracked, "ignored": ignored}
+        elif any(ch in "MADRCU" for ch in code):
+            modified.add(rel)  # tracked, but the working tree differs from HEAD: not in Git
+    return {"head": head, "branch": branch, "tracked": tracked, "untracked": untracked,
+            "ignored": ignored, "modified": modified}
+
+
+def head_blob_sha256(checkout: Path, rel: str) -> str | None:
+    result = subprocess.run(["git", "-C", str(checkout), "show", f"HEAD:{rel}"], capture_output=True, check=False)
+    if result.returncode != 0:
+        return None
+    return hashlib.sha256(result.stdout).hexdigest()
 
 
 def sqlite_summary(path: Path) -> dict[str, Any]:
@@ -273,6 +292,12 @@ def _walk_git(name: str, root: Path, checkout: Path, *, excludes: Sequence[str],
         if not path.is_file():
             continue
         top = rel.split("/", 1)[0]
+        if rel in state["modified"]:
+            record = file_record(name, root, path, git_class="MODIFIED", hash_limit=hash_limit,
+                                 checkout_head=state["head"], checkout=prefix)
+            record["head_sha256"] = head_blob_sha256(checkout, rel)
+            yield record
+            continue
         per_file = any(rel == d or rel.startswith(d.rstrip("/") + "/") for d in tracked_per_file_dirs)
         if per_file:
             yield file_record(name, root, path, git_class="TRACKED", hash_limit=hash_limit,
@@ -284,8 +309,8 @@ def _walk_git(name: str, root: Path, checkout: Path, *, excludes: Sequence[str],
     yield {
         "record": "GIT_TREE", "root": name, "checkout": prefix or ".", "head": state["head"],
         "branch": state["branch"], "tracked_files": len(state["tracked"]),
-        "tracked_summary_by_top_dir": tracked_summary,
-        "note": "tracked files are recoverable from Git history at this HEAD; per-file records only for data dirs",
+        "tracked_summary_by_top_dir": tracked_summary, "modified_tracked_files": len(state["modified"]),
+        "note": "tracked files are recoverable from Git history at this HEAD; per-file records for data dirs and for MODIFIED working-tree files (whose content is not in Git)",
     }
     for cls, paths in (("UNTRACKED", state["untracked"]), ("IGNORED", state["ignored"])):
         for rel in sorted(paths):
@@ -378,9 +403,14 @@ def summarise(records: Sequence[Mapping[str, Any]], gaps: Sequence[Mapping[str, 
     for key, bucket in sorted(mig.items()):
         lines.append(f"| {key} | {bucket['files']} | {bucket['bytes']:,} |")
     lines.append(f"| MIGRATE 去重唯一内容 | {len(seen_hash)} | {unique_bytes:,} |")
-    lines += ["", "## Git 树(tracked,按 HEAD 可恢复)", "", "| 根 | checkout | HEAD | tracked 文件 |", "|---|---|---|---:|"]
+    lines += ["", "## Git 树(tracked,按 HEAD 可恢复;MODIFIED = 工作树领先于提交,内容不在 Git)", "",
+              "| 根 | checkout | HEAD | tracked 文件 | MODIFIED |", "|---|---|---|---:|---:|"]
     for t in trees:
-        lines.append(f"| {t['root']} | {t['checkout']} | {t['head'][:12]} | {t['tracked_files']} |")
+        lines.append(f"| {t['root']} | {t['checkout']} | {t['head'][:12]} | {t['tracked_files']} | {t.get('modified_tracked_files', 0)} |")
+    modified = [r for r in files if r["git_class"] == "MODIFIED"]
+    lines += ["", f"## 工作树已修改的 tracked 文件(内容不在 Git,必迁,{len(modified)})", ""]
+    for r in modified[:120]:
+        lines.append(f"- `{r['root']}:{r['relpath']}` ({r['bytes']:,} B) sha={str(r.get('sha256'))[:12]} head={str(r.get('head_sha256'))[:12]}")
     unclassified = [r for r in files if r["category"] == "UNCLASSIFIED"]
     lines += ["", f"## 未归类(需人工,{len(unclassified)})", ""]
     for r in unclassified[:80]:

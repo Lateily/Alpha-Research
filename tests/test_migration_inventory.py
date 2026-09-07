@@ -94,6 +94,8 @@ class WalkTests(unittest.TestCase):
             (repo / "experiments/execution_tracker").mkdir(parents=True)
             (repo / "experiments/execution_tracker/event_ledger.jsonl").write_text("{}\n", encoding="utf-8")
             (root / "loose.md").write_text("# loose\n", encoding="utf-8")
+            # A tracked ledger whose working tree moved on after the last commit.
+            (repo / "public/data/tracked.json").write_text('{"nav": 1}', encoding="utf-8")
             out = tmp / "out"
             receipt = inv.run({"r": root}, out, excludes=inv.DEFAULT_EXCLUDES, hash_limit=None,
                               tracked_per_file_dirs=("public/data",))
@@ -103,7 +105,12 @@ class WalkTests(unittest.TestCase):
             self.assertEqual("checkout", trees[0]["checkout"])
             self.assertIn("experiments", trees[0]["tracked_summary_by_top_dir"])
             files = {r["relpath"]: r for r in records if r["record"] == "FILE"}
-            self.assertEqual("TRACKED", files["checkout/public/data/tracked.json"]["git_class"])
+            modified = files["checkout/public/data/tracked.json"]
+            self.assertEqual("MODIFIED", modified["git_class"])
+            self.assertEqual("MIGRATE", modified["migration"])
+            self.assertEqual(64, len(modified["head_sha256"]))
+            self.assertNotEqual(modified["head_sha256"], modified["sha256"])
+            self.assertEqual(1, trees[0]["modified_tracked_files"])
             self.assertNotIn("checkout/experiments/research_funnel/a.py", files)  # summarised, recoverable from Git
             self.assertEqual("IGNORED", files["checkout/data_history/feature_store.sqlite3"]["git_class"])
             self.assertIn("t", files["checkout/data_history/feature_store.sqlite3"]["sqlite"]["tables"])
