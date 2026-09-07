@@ -210,6 +210,18 @@ def prepare_stage(live_et, live_repo, run_dir):
         stage_macro,
         ignore=shutil.ignore_patterns("__pycache__", "*.pyc", "*.lock", "*.tmp"),
     )
+    # The real research-cycle preflight imports these two pure script modules.
+    # Copy code only, never the scripts directory's private/runtime files.
+    if os.path.isfile(os.path.join(stage_research, "research_cycle.py")):
+        stage_scripts = os.path.join(stage_repo, "scripts")
+        os.makedirs(stage_scripts, exist_ok=True)
+        for name in ("decision_sheet.py", "universe_data_health.py"):
+            source = os.path.join(live_repo, "scripts", name)
+            if os.path.islink(os.path.dirname(source)) or os.path.islink(source):
+                raise RuntimeError("staging dependency is a symlink: " + name)
+            if not os.path.isfile(source):
+                raise RuntimeError("staging dependency missing: " + name)
+            shutil.copy2(source, os.path.join(stage_scripts, name))
     live_public = os.path.join(live_repo, "public", "data", "v2")
     if os.path.isdir(live_public):
         shutil.copytree(live_public, stage_public)

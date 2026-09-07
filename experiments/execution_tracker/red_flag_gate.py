@@ -88,8 +88,8 @@ def watchlist_tickers(limit=25, path=None):
 
 
 def main():
-    import tushare as ts
-    pro = ts.pro_api(os.environ["TUSHARE_TOKEN"])
+    from tushare_https import TushareHTTPS
+    pro = TushareHTTPS(os.environ["TUSHARE_TOKEN"])
     today = target_trade_date()
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
     if "--from-watchlist" in sys.argv:

@@ -262,14 +262,14 @@ def _battery_provider() -> tuple[Callable[[str, str], dict] | None, str]:
     if not token:
         return None, "NO TUSHARE_TOKEN"
     try:
-        import tushare as ts  # noqa: WPS433
+        from tushare_https import TushareHTTPS  # noqa: WPS433
         import full_battery  # noqa: WPS433
     except Exception as exc:  # 缺依赖 = 整体不可用
         return None, f"battery provider unavailable: {type(exc).__name__}"
     try:
-        pro = ts.pro_api(token)
+        pro = TushareHTTPS(token)
     except Exception as exc:
-        return None, f"tushare pro_api failed: {type(exc).__name__}"
+        return None, f"tushare HTTPS reader failed: {type(exc).__name__}"
 
     def one(tk: str, today: str) -> dict:
         return _sanitize_row(full_battery.battery(pro, tk, today))

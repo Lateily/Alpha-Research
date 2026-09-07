@@ -101,8 +101,8 @@ def fetch_auto_anchors(token=None, today=None):
     if not token:
         return {}
     try:
-        import tushare as ts
-        pro = ts.pro_api(token)
+        from tushare_https import TushareHTTPS
+        pro = TushareHTTPS(token)
     except Exception:
         return {}
     # 窗口必须由 **target_trade_date** 推导,不能用系统当天:
