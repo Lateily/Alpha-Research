@@ -1,0 +1,22 @@
+{
+  "schema": "ai-task.v1",
+  "task_id": "OWNER-PRIVATE-WORKBENCH-001",
+  "source_issue": null,
+  "architecture_block": ["team-ai-workspace", "private-access"],
+  "objective": "Provide one owner-only Tailscale Serve HTTPS entry to an isolated local workbench without granting team, production or paid-provider authority.",
+  "non_goals": ["No production access or cutover", "No public Funnel", "No team grants", "No paid calls", "No cloud purchases", "No research or engine changes"],
+  "human_owner": "Junyan",
+  "reviewer": "Junyan",
+  "executor_candidates": ["Codex"],
+  "dependencies": ["LOCAL-WORKSPACE-SYSTEM-001"],
+  "authority_docs": ["AGENTS.md", "scripts/llm/AGENTS.md", "docs/team/LOCAL_WORKSPACE_SYSTEM_V1.md"],
+  "file_scope": ["scripts/llm/nonprod_workbench.py", "scripts/llm/fixtures/owner_private_workbench.task.json", "tests/test_workbench_private_access.py", "scripts/governance_mutation_gate.py", ".github/workflows/python-ci.yml", "docs/team/OWNER_PRIVATE_WORKBENCH_V1.md", "docs/superpowers/plans/2026-09-08-owner-private-workbench.md"],
+  "forbidden_scope": ["experiments", "public", "production runtime", "existing frozen snapshots", "formal ledgers", "team policy", "billing"],
+  "input_contracts": ["Tailscale Serve authenticated identity headers", "Exact machine-local HTTPS origin and owner login", "Frozen read-only snapshot"],
+  "output_artifacts": ["Owner-only private entry", "Negative authorization tests and mutation pins", "Single-Mac acceptance record"],
+  "acceptance_tests": ["python3 tests/test_workbench_private_access.py", "python3 tests/test_nonprod_workbench.py", "python3 tests/test_workbench_workspace.py", "python3 scripts/governance_mutation_gate.py", "python3 /Users/years/Desktop/Stock/e2e-twin/twin-20260902/tools/ci_local.py", "Private HTTPS single-Mac browser acceptance", "git diff --check"],
+  "risk_level": "MEDIUM",
+  "network_policy": "ALLOWLIST",
+  "budget": {"max_cny": "0", "max_minutes": 240},
+  "approval_gates": ["OWNER_ONLY_TAILSCALE_SERVE_AUTHORIZED_BY_CURRENT_REQUEST", "GITHUB_AND_TAILSCALE_CONTROL_PLANE_ONLY", "INDEPENDENT_REVIEW", "JUNYAN_MERGE", "PRODUCTION_TEAM_AND_PAID_CALLS_DISABLED"]
+}
