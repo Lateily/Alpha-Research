@@ -1,10 +1,28 @@
 {
-  "fetched_at": "2026-09-04T12:51:03Z",
+  "fetched_at": "2026-09-07T05:54:59Z",
   "permission_model": "runtime_probe",
   "_status": "ok",
   "data": {
     "trade_cal": {
       "rows": [
+        {
+          "exchange": "SSE",
+          "cal_date": "20260907",
+          "is_open": 1,
+          "pretrade_date": "20260904"
+        },
+        {
+          "exchange": "SSE",
+          "cal_date": "20260906",
+          "is_open": 0,
+          "pretrade_date": "20260904"
+        },
+        {
+          "exchange": "SSE",
+          "cal_date": "20260905",
+          "is_open": 0,
+          "pretrade_date": "20260904"
+        },
         {
           "exchange": "SSE",
           "cal_date": "20260904",
@@ -1488,9 +1506,9 @@
           "pretrade_date": "20251231"
         }
       ],
-      "row_count": 247,
+      "row_count": 250,
       "_status": "ok",
-      "as_of": "20260904"
+      "as_of": "20260907"
     },
     "moneyflow_hsgt": {
       "rows": [
@@ -1871,36 +1889,9 @@
           "sgt": "217822.05",
           "north_money": "400767.76",
           "south_money": "54512.91"
-        },
-        {
-          "trade_date": "20260708",
-          "ggt_ss": "31507.7",
-          "ggt_sz": "22906.9",
-          "hgt": "153861.46",
-          "sgt": "184542.66",
-          "north_money": "338404.12",
-          "south_money": "54414.6"
-        },
-        {
-          "trade_date": "20260707",
-          "ggt_ss": "31437.4",
-          "ggt_sz": "22835.26",
-          "hgt": "151697.8",
-          "sgt": "185294.73",
-          "north_money": "336992.53",
-          "south_money": "54272.66"
-        },
-        {
-          "trade_date": "20260706",
-          "ggt_ss": "31419.19",
-          "ggt_sz": "22848.5",
-          "hgt": "174931.33",
-          "sgt": "221405.49",
-          "north_money": "396336.82",
-          "south_money": "54267.69"
         }
       ],
-      "row_count": 45,
+      "row_count": 42,
       "_status": "ok",
       "as_of": "20260904"
     }
