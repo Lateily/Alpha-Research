@@ -96,6 +96,8 @@ jobs:
       # Retry only transport failures; HTTP/API/schema failures remain fail-closed.
       - name: Official sample transport retry regression (offline)
         run: python3 tests/test_fund_source_transport.py
+      - name: Nightly staged dependencies and HTTPS entry points (offline)
+        run: python3 tests/test_nightly_runtime_dependencies.py
       - name: Official settlement readiness and publication recovery (offline)
         run: python3 tests/test_official_settlement_offline.py
       # R-043:已发布 manifest 合法迁移。覆盖审批绑定、同锁、WAL 崩溃恢复、

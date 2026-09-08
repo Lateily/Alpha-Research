@@ -221,9 +221,9 @@ def battery(pro, tk, today):
 
 
 def main():
-    import tushare as ts
+    from tushare_https import TushareHTTPS
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-    pro = ts.pro_api(os.environ["TUSHARE_TOKEN"])
+    pro = TushareHTTPS(os.environ["TUSHARE_TOKEN"])
     today = target_trade_date()
     if "--from-watchlist" in sys.argv:
         from red_flag_gate import watchlist_tickers
