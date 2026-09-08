@@ -72,6 +72,12 @@ from experiments.research_funnel import u4_pre_decision  # noqa: E402,F401
 import paper_execution_audit  # noqa: E402,F401
 
 # ── 在守卫下跑完整离线套件入口(任何隐藏外呼 → NetworkAttempt 崩溃)──
+import test_paper_settlement_publication as settlement_tests  # noqa: E402
+settlement_result = unittest.TextTestRunner(verbosity=0).run(
+    unittest.defaultTestLoader.loadTestsFromModule(settlement_tests)
+)
+assert settlement_result.wasSuccessful(), "settlement publication suite failed under socket guard"
+
 import test_nightly_runtime_dependencies as runtime_dependency_tests  # noqa: E402
 runtime_dependency_result = unittest.TextTestRunner(verbosity=0).run(
     unittest.defaultTestLoader.loadTestsFromModule(runtime_dependency_tests)

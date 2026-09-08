@@ -19,9 +19,13 @@ Ledger dir (append-only JSON): experiments/execution_tracker/model_fund/
   python3 model_paper_fund.py --init
   python3 model_paper_fund.py --status
 """
+import copy
+import datetime
+import hashlib
 import json
 import math
 import os
+import re
 import sys
 from pathlib import Path
 
@@ -335,10 +339,85 @@ def tighten_stop(orders, decision_log, ticker, new_stop, date, why):
 
 
 # ------------------------------------------------------------- process day ----
+def settlement_hash(value):
+    return hashlib.sha256(json.dumps(value, sort_keys=True, ensure_ascii=False,
+                                     separators=(",", ":"), allow_nan=False).encode()).hexdigest()
+
+
+def validate_settlement_inputs(recording, bars):
+    if (not isinstance(recording, dict)
+            or set(recording) != {"target_trade_date", "run_id"}
+            or re.fullmatch(r"[0-9A-Za-z][0-9A-Za-z._-]{0,127}",
+                            str(recording.get("run_id", ""))) is None):
+        raise ValueError("invalid settlement recording context")
+    target = recording["target_trade_date"]
+    if not isinstance(target, str) or re.fullmatch(r"[0-9]{8}", target) is None:
+        raise ValueError("invalid settlement target date")
+    datetime.datetime.strptime(target, "%Y%m%d")
+    if not isinstance(bars, list):
+        raise ValueError("settlement bars must be a list")
+    previous = ""
+    for row in bars:
+        date = row.get("date") if isinstance(row, dict) else None
+        if not isinstance(date, str) or re.fullmatch(r"[0-9]{8}", date) is None:
+            raise ValueError("invalid settlement bar date")
+        datetime.datetime.strptime(date, "%Y%m%d")
+        if date > target or date <= previous:
+            raise ValueError("settlement bars must be ordered, unique and not future")
+        previous = date
+    settlement_hash(bars)  # Reject non-finite/non-JSON evidence before mutating state.
+
+
+def _recorded_process_day(fund, orders, decision_log, token, series_fn, recording,
+                          require_realistic):
+    """Publishable evidence is created transactionally; the fill engine is unchanged.
+
+    A receipt preserves the source bars, not a claim of their economic correctness.
+    Legacy adjusted-price orders retain their legacy semantics and sample labels.
+    """
+    validate_settlement_inputs(recording, [])
+    next_fund, next_orders, next_log = copy.deepcopy((fund, orders, decision_log))
+    cache, messages = {}, []
+    for before, order in zip(orders, next_orders):
+        if order["status"] == "closed":
+            continue
+        realistic = require_realistic or order.get("execution_mode") == pp.EXECUTION_MODEL_VERSION
+        loader = series_fn or (pp.execution_ohlc_series if realistic else pp.qfq_ohlc_series)
+        key = (order["ticker"], realistic, order["registered_at"])
+        if key not in cache:
+            cache[key] = copy.deepcopy(loader(order["ticker"], token, order["registered_at"]))
+        bars = cache[key]
+        validate_settlement_inputs(recording, bars)
+        start = len(next_log)
+        messages.extend(process_day(next_fund, [order], next_log, None,
+                                    series_fn=lambda *_: copy.deepcopy(bars),
+                                    require_realistic=require_realistic))
+        if order == before:
+            continue
+        identity = settlement_hash(before)
+        order["settlement_receipt"] = {
+            "schema": "paper-settlement/v1", "recording": copy.deepcopy(recording),
+            "before_order_hash": identity, "bars": copy.deepcopy(bars),
+            "bars_hash": settlement_hash(bars),
+        }
+        for row in next_log[start:]:
+            row["settlement_order_hash"] = identity
+    fund.clear()
+    fund.update(next_fund)
+    for original, updated in zip(orders, next_orders):
+        original.clear()
+        original.update(updated)
+    decision_log[:] = next_log
+    return messages
+
+
 def process_day(fund, orders, decision_log, token, series_fn=None, *,
-                require_realistic=False):
+                require_realistic=False, recording=None):
     """Advance fills/exits from SETTLED bars via paper_portfolio._advance (the one
     fill engine), then settle cash. Returns list of events."""
+    if recording is not None:
+        return _recorded_process_day(fund, orders, decision_log, token, series_fn,
+                                     recording, require_realistic)
     events, cache = [], {}
     for o in orders:
         if o["status"] == "closed":
@@ -728,9 +807,11 @@ def main():
         events = []
         if token and not os.environ.get("AR_OFFLINE"):
             try:
-                events = process_day(fund, orders, decision_log, token)
-            except Exception as e:                      # 行情失败不伪造:只是不推进
-                print(f"WARN 推进成交失败(不影响 NAV 标记): {e}")
+                events = process_day(fund, orders, decision_log, token,
+                                     recording={"target_trade_date": date, "run_id": run_id()})
+            except Exception as e:
+                print(f"DATA_BLOCKED: settlement failed; no projections written: {e}")
+                return 1
         marks = None
         if token and not os.environ.get("AR_OFFLINE"):
             marks = {}

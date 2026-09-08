@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import contextlib
+import copy
 import hashlib
 import json
 import os
@@ -332,7 +333,70 @@ def _check_orders(before, after):
     return errs
 
 
-def _check_append_only(name, before, after, target):
+def _check_paper_settlement(before, after, target, run_id):
+    """Reopen original orders and replay captured bars, never trust a receipt verdict.
+
+    Only replay-derived automatic events get an event-time date exception. This
+    is provenance/replay verification, not validation of legacy execution realism.
+    """
+    import model_paper_fund as engine
+    errors, allowed, deltas = [], [], {}
+    bmap, b_errors = _index_orders(before.get("orders.json") or [], "settlement before")
+    amap, a_errors = _index_orders(after.get("orders.json") or [], "settlement after")
+    if b_errors or a_errors:
+        return b_errors + a_errors, [], {}
+    added = (after.get("decision_log.json") or [])[len(before.get("decision_log.json") or []):]
+    for key, order in amap.items():
+        old = bmap.get(key)
+        receipt = order.get("settlement_receipt")
+        if old == order:
+            continue
+        # A missing receipt cannot conceal a newly backdated fill/exit/freeze.
+        historical = old is not None and any(
+            order.get(field) and order.get(field) != old.get(field)
+            and str(order[field]) != target
+            for field in ("fill_date", "exit_date", "execution_freeze_date")
+        )
+        if receipt is None or (old is not None and receipt == old.get("settlement_receipt")):
+            if historical:
+                errors.append("paper settlement: historical transition lacks receipt")
+            continue
+        try:
+            if (old is None or not isinstance(receipt, dict)
+                    or set(receipt) != {"schema", "recording", "before_order_hash", "bars", "bars_hash"}
+                    or receipt["schema"] != "paper-settlement/v1"):
+                raise ValueError("receipt has no original order or invalid fields")
+            if receipt["recording"] != {"target_trade_date": target, "run_id": run_id}:
+                raise ValueError("receipt recording differs from publication")
+            if receipt["before_order_hash"] != engine.settlement_hash(old):
+                raise ValueError("receipt differs from original order")
+            bars = receipt["bars"]
+            engine.validate_settlement_inputs(receipt["recording"], bars)
+            if receipt["bars_hash"] != engine.settlement_hash(bars):
+                raise ValueError("receipt bars hash mismatch")
+            expected_order, expected_log, replay_fund = copy.deepcopy(old), [], {"cash": 0.0}
+            engine.process_day(replay_fund, [expected_order], expected_log, None,
+                               series_fn=lambda *_: copy.deepcopy(bars))
+            expected_order.pop("settlement_receipt", None)
+            actual_order = {k: v for k, v in order.items() if k != "settlement_receipt"}
+            if engine.settlement_hash(expected_order) != engine.settlement_hash(actual_order):
+                raise ValueError("settlement order differs from replay")
+            for row in expected_log:
+                row["settlement_order_hash"] = receipt["before_order_hash"]
+            actual_log = [row for row in added
+                          if row.get("settlement_order_hash") == receipt["before_order_hash"]]
+            if engine.settlement_hash(actual_log) != engine.settlement_hash(expected_log):
+                raise ValueError("settlement events differ from replay")
+            allowed.extend(expected_log)
+            deltas[key] = replay_fund["cash"]
+        except (ValueError, TypeError, KeyError, OverflowError) as exc:
+            errors.append(f"paper settlement: {exc}")
+    if any(row.get("settlement_order_hash") and row not in allowed for row in added):
+        errors.append("paper settlement: event has no verified receipt")
+    return errors, allowed, deltas
+
+
+def _check_append_only(name, before, after, target, settlement_rows=()):
     """既有元素逐字节不变 + 新增元素合法。返回错误列表。"""
     rule = APPEND_ONLY_PROTECTED[name]
     if not isinstance(before, list) or not isinstance(after, list):
@@ -349,7 +413,8 @@ def _check_append_only(name, before, after, target):
     if dk:
         for row in added:
             got = str((row or {}).get(dk) or "")[:8]
-            if target and got != target:
+            replayed = name == "decision_log.json" and row in settlement_rows
+            if target and got != target and not replayed:
                 errs.append(f"model_fund/{name}: 新增行 {dk}={got or '缺失'} ≠ 本轮 {target}")
         if rule.get("one_per_target") and target:
             target_rows = sum(
@@ -362,7 +427,7 @@ def _check_append_only(name, before, after, target):
     return errs
 
 
-def _cash_delta_from_orders(before_orders, after_orders):
+def _cash_delta_from_orders(before_orders, after_orders, settlement_deltas=None):
     """按真实记账规则算出本轮应有的现金变动:
        pending→filled  : -shares*fill_price
        filled →closed  : +shares*exit_price
@@ -375,6 +440,9 @@ def _cash_delta_from_orders(before_orders, after_orders):
     delta, why = 0.0, []
     for o in after_orders:
         key = _order_key(o)
+        if key in (settlement_deltas or {}):
+            delta += settlement_deltas[key]
+            continue
         was = (prev.get(key) or {}).get("status")
         now = o.get("status")
         if was == now:
@@ -391,7 +459,7 @@ def _cash_delta_from_orders(before_orders, after_orders):
     return round(delta, 2), why
 
 
-def _check_fund(before, after, before_orders, after_orders):
+def _check_fund(before, after, before_orders, after_orders, settlement_deltas=None):
     """资金账本:只有 cash 可变,且变动必须能被订单状态迁移解释。
 
     只判"字段名是否在白名单"不够 —— 那样任意改现金都会放行,
@@ -404,12 +472,12 @@ def _check_fund(before, after, before_orders, after_orders):
     if illegal:
         errs.append(f"model_fund/fund.json: 只允许 {sorted(FUND_MUTABLE_FIELDS)} 变动,"
                     f"实际变了 {sorted(illegal)}")
-    if "cash" in diff:
+    if "cash" in diff or settlement_deltas:
         try:
             actual = round(float(after.get("cash")) - float(before.get("cash")), 2)
         except (TypeError, ValueError):
             return errs + ["model_fund/fund.json: cash 非数值"]
-        expected, why = _cash_delta_from_orders(before_orders, after_orders)
+        expected, why = _cash_delta_from_orders(before_orders, after_orders, settlement_deltas)
         errs.extend(why)
         if abs(actual - expected) > 1.0:            # ±1 元容差(四舍五入)
             errs.append(f"model_fund/fund.json: 现金变动 {actual:+.2f} 无成交事件解释"
@@ -440,6 +508,13 @@ def verify_protected_inputs(stage_et, run_dir, target=None):
             continue                                   # 完全未动,其余校验跳过
         after_c = _protected_content(root)
         bmap, amap = before_c.get(rel) or {}, after_c
+        settlement_errors, settlement_rows, settlement_deltas = _check_paper_settlement(
+            bmap, amap, target, os.path.basename(os.path.abspath(run_dir)))
+        errors.extend(settlement_errors)
+        if settlement_deltas:
+            errors.extend(_check_fund(bmap.get("fund.json"), amap.get("fund.json"),
+                                      bmap.get("orders.json"), amap.get("orders.json"),
+                                      settlement_deltas))
         changed = sorted(set(after_h) | set(before_h.get(rel, {})))
         for fname in changed:
             if before_h.get(rel, {}).get(fname) == after_h.get(fname):
@@ -447,10 +522,12 @@ def verify_protected_inputs(stage_et, run_dir, target=None):
             if fname == "orders.json":
                 errors.extend(_check_orders(bmap.get(fname), amap.get(fname)))
             elif fname in APPEND_ONLY_PROTECTED:
-                errors.extend(_check_append_only(fname, bmap.get(fname), amap.get(fname), target))
+                errors.extend(_check_append_only(fname, bmap.get(fname), amap.get(fname), target,
+                                                  settlement_rows))
             elif fname == "fund.json":
-                errors.extend(_check_fund(bmap.get(fname), amap.get(fname),
-                                          bmap.get("orders.json"), amap.get("orders.json")))
+                if not settlement_deltas:
+                    errors.extend(_check_fund(bmap.get(fname), amap.get(fname),
+                                              bmap.get("orders.json"), amap.get("orders.json")))
             else:
                 errors.append(f"受保护输入在 staging 被修改: {rel}/{fname}")
     return errors
