@@ -703,7 +703,7 @@ class U4DecisionLedgerTests(unittest.TestCase):
             packet_version=closure.LEGACY_PACKET_SCHEMA_VERSION,
         )
         closure.validate_review_packet(packet)
-        with self.assertRaisesRegex(ledger.DecisionLedgerError, "requires review packet v1.1"):
+        with self.assertRaisesRegex(ledger.DecisionLedgerError, "requires review packet v1.2"):
             ledger._validate_draft(packet, draft_for(packet))
 
     def test_dual_u3_and_red_flag_block_preserves_both_evidence_reasons(self) -> None:

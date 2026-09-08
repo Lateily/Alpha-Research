@@ -180,7 +180,11 @@ def perform(output, payload):
         passed(stage, {"candidates": len(candidates["rows"]), "bundle_hash": manifest["bundle_hash"]})
 
         stage = "PACKET"
-        packet = closure.build_review_packet(bundle_dir=bundle, battery=frozen["battery"], generated_at=params["packet_at"])
+        # This hash-pinned synthetic fixture was registered under packet v1.1.
+        packet = closure.build_review_packet(
+            bundle_dir=bundle, battery=frozen["battery"], generated_at=params["packet_at"],
+            packet_version="1.1",
+        )
         if packet["packet_hash"] != params["expected_packet_hash"]:
             raise ReplayError("PACKET_DIFFERS_FROM_FROZEN_EXPECTATION")
         write_json(output / "packet.json", packet)

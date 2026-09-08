@@ -34,7 +34,12 @@ RECEIPT_SCHEMA = "ar.u4_review_receipt"
 REPORT_SCHEMA = "ar.research_closure_experiment"
 SCHEMA_VERSION = "1.0"
 LEGACY_PACKET_SCHEMA_VERSION = "1.0"
-PACKET_SCHEMA_VERSION = "1.1"
+PROVENANCE_PACKET_SCHEMA_VERSION = "1.1"
+# governance-mutation: U4_ADMISSION_VERSION_IDENTITY
+PACKET_SCHEMA_VERSION = "1.2"
+PACKET_SCHEMA_VERSIONS = {
+    LEGACY_PACKET_SCHEMA_VERSION, PROVENANCE_PACKET_SCHEMA_VERSION, PACKET_SCHEMA_VERSION,
+}
 COHORT_ID_UNAVAILABLE = "UNAVAILABLE"
 BUNDLE_ARTIFACTS = {
     "all_market_scan.json",
@@ -277,7 +282,7 @@ def build_review_packet(
     *, bundle_dir: Path, battery: Mapping[str, Any] | None, generated_at: str,
     packet_version: str = PACKET_SCHEMA_VERSION,
 ) -> dict[str, Any]:
-    if packet_version not in {LEGACY_PACKET_SCHEMA_VERSION, PACKET_SCHEMA_VERSION}:
+    if packet_version not in PACKET_SCHEMA_VERSIONS:
         raise ClosureError("unsupported review packet version")
     bundle = load_bundle(bundle_dir)
     as_of = str(bundle["manifest"]["as_of"])
@@ -323,6 +328,17 @@ def build_review_packet(
         if candidate is None or registry_row is None or battery_row is None:
             raise ClosureError(f"U4 packet evidence row is missing: {code}")
         enriched = dict(projected)
+        # Historical packets retain their original admission policy and hashes.
+        if packet_version == PACKET_SCHEMA_VERSION:
+            blocked = set(enriched["blocked_reasons"])
+            # governance-mutation: U4_ADMISSION_POSITIVE_CHANNEL
+            if not candidate.get("source_channels"):
+                blocked.add("NO_POSITIVE_CHANNEL")
+            # governance-mutation: U4_ADMISSION_RANDOM_CONTROL
+            if candidate.get("review_status") == "RANDOM_CONTROL":
+                blocked.add("RANDOM_CONTROL_NOT_SELECTABLE")
+            enriched["blocked_reasons"] = sorted(blocked)
+            enriched["ready"] = not blocked
         enriched.update({
             # governance-mutation: FUNNEL_CLOSURE_PACKET_CANDIDATE_EVIDENCE
             "display_name": str(registry_row.get("name") or "UNAVAILABLE"),
@@ -343,7 +359,7 @@ def build_review_packet(
         "as_of": as_of,
         "generated_at": generated_at,
         "source_refs": {
-            **({"run_id": run_id} if packet_version == PACKET_SCHEMA_VERSION else {}),
+            **({"run_id": run_id} if packet_version != LEGACY_PACKET_SCHEMA_VERSION else {}),
             "bundle_hash": bundle["manifest"]["bundle_hash"],
             "scan_rows_hash": bundle["scan"]["rows_hash"],
             "candidate_rows_hash": bundle["candidates"]["rows_hash"],
@@ -383,27 +399,25 @@ def validate_review_packet(packet: Mapping[str, Any]) -> None:
     _require_exact_keys(packet, expected, "review packet")
     version = packet.get("schema_version")
     # governance-mutation: FUNNEL_CLOSURE_PACKET_VERSION_COMPATIBILITY
-    if packet.get("schema") != PACKET_SCHEMA or version not in {
-        LEGACY_PACKET_SCHEMA_VERSION, PACKET_SCHEMA_VERSION,
-    }:
+    if packet.get("schema") != PACKET_SCHEMA or version not in PACKET_SCHEMA_VERSIONS:
         raise ClosureError("review packet schema/version mismatch")
     if packet.get("mode") != "OFFLINE_RESEARCH_REPLAY" or packet.get("status") != "AWAITING_JUNYAN_REVIEW":
         raise ClosureError("review packet mode/status is invalid")
     refs = packet.get("source_refs")
     source_fields = (
         PACKET_SOURCE_REF_FIELDS
-        if version == PACKET_SCHEMA_VERSION
+        if version != LEGACY_PACKET_SCHEMA_VERSION
         else LEGACY_PACKET_SOURCE_REF_FIELDS
     )
     ready_fields = (
         PACKET_READY_ROW_FIELDS
-        if version == PACKET_SCHEMA_VERSION
+        if version != LEGACY_PACKET_SCHEMA_VERSION
         else LEGACY_PACKET_READY_ROW_FIELDS
     )
     if not isinstance(refs, dict) or set(refs) != source_fields:
         raise ClosureError("review packet source references are not exact")
     # governance-mutation: FUNNEL_CLOSURE_PACKET_RUN_ID
-    if version == PACKET_SCHEMA_VERSION and not str(refs.get("run_id") or "").strip():
+    if version != LEGACY_PACKET_SCHEMA_VERSION and not str(refs.get("run_id") or "").strip():
         raise ClosureError("U4 review packet requires the exact U3 run_id")
     if any(
         not isinstance(refs.get(key), str)
@@ -538,7 +552,7 @@ def run_offline_replay(
         "battery_hash": funnel._hash(battery),
         "ready_pool_hash": funnel._hash(packet["ready_pool"]),
     }
-    if packet.get("schema_version") == PACKET_SCHEMA_VERSION:
+    if packet.get("schema_version") != LEGACY_PACKET_SCHEMA_VERSION:
         expected_source_refs["run_id"] = str(
             battery.get("run_id")
             or ((battery.get("data") or {}).get("run_id") if isinstance(battery.get("data"), dict) else "")
