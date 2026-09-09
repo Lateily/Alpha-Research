@@ -25,14 +25,30 @@ The replay order is:
 
 ## Replay Artifacts
 
-`ar.u4_review_packet.v1.1` binds the immutable funnel bundle, U1/U2 hashes,
+`ar.u4_review_packet.v1.2` binds the immutable funnel bundle, U1/U2 hashes,
 same-day battery, ready pool, and random-control frame. Its status is always
 `AWAITING_JUNYAN_REVIEW`.
 
-Previously emitted v1.0 packets remain valid and replayable with their original
-five source references and legacy ready-row shape. New packets use v1.1; the U4
-decision ledger accepts only v1.1 because v1.0 lacks the run and per-candidate
-provenance needed for a durable decision event.
+Previously emitted v1.0 and v1.1 packets remain valid and replayable under their
+original admission rules. V1.0 retains five source references and the legacy
+ready-row shape; v1.1 retains its run and per-candidate provenance. New packets
+use v1.2. The lock-held typed ledger writer accepts only v1.2 for a new intent;
+an already persisted v1.1 intent may resume or retry without rewriting history.
+V1.0 remains ineligible for the ledger because it lacks durable provenance.
+
+V1.2 aligns row admission with `u4_pre_decision.py`: no positive U2 channel adds
+`NO_POSITIVE_CHANNEL`, and random-control membership adds
+`RANDOM_CONTROL_NOT_SELECTABLE`. Both remain visible in the complete decision
+universe, but neither may be SELECT. Existing battery and red-flag blockers
+remain unchanged; all other non-ready rows are also barred from a new SELECT.
+The source-reopening verifier derives these reasons from the immutable U2/U3
+bundle, so rehashing a whitened row does not authorize it. This is a row-level
+admission repair, not a bypass of pre-decision global source-health checks.
+It does not remove reserved or control rows from screening or evaluation.
+
+The workbench's existing hash-pinned synthetic demonstration explicitly replays
+v1.1. Its input fixture, pre-authored receipt, and expected packet hash are not
+rewritten when the default packet version changes.
 
 The current funnel bundle does not contain the separately produced Industry
 Cohort OS artifact. New packets therefore carry `cohort_id=UNAVAILABLE` instead

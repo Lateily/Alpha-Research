@@ -418,7 +418,7 @@ def _ready_rows(packet: Mapping[str, Any]) -> list[dict[str, Any]]:
     except closure.ClosureError as exc:
         raise DecisionLedgerError(f"invalid review packet: {exc}") from exc
     # governance-mutation: U4_LEDGER_PACKET_VERSION_BOUNDARY
-    if packet.get("schema_version") != closure.PACKET_SCHEMA_VERSION:
+    if packet.get("schema_version") not in {closure.PROVENANCE_PACKET_SCHEMA_VERSION, closure.PACKET_SCHEMA_VERSION}:
         raise DecisionLedgerError(
             f"U4 decision ledger requires review packet v{closure.PACKET_SCHEMA_VERSION}"
         )
@@ -594,6 +594,9 @@ def _validate_draft(packet: Mapping[str, Any], draft: Mapping[str, Any]) -> tupl
         elif "E1_RED_FLAG_REQUIRES_SEPARATE_REVIEW" in blocked:
             if decision != "REJECT" or "RED_FLAG_ACTIVE" not in reason_codes:
                 raise DecisionLedgerError("E1 red-flag candidate must remain an explicit REJECT")
+        # governance-mutation: U4_ADMISSION_DRAFT_READY
+        if packet["schema_version"] == closure.PACKET_SCHEMA_VERSION and decision == "SELECT" and not packet_by_code[code]["ready"]:
+            raise DecisionLedgerError("non-ready candidate cannot be SELECT")
         revision = raw.get("decision_revision")
         predecessor = raw.get("supersedes_decision_id")
         if not isinstance(revision, int) or isinstance(revision, bool) or revision < 1:
@@ -766,6 +769,9 @@ def _validate_candidate_intent(
     elif "E1_RED_FLAG_REQUIRES_SEPARATE_REVIEW" in blocked:
         if item.get("decision") != "REJECT" or "RED_FLAG_ACTIVE" not in item.get("reason_codes", []):
             raise DecisionLedgerError("persisted intent hides an E1 red-flag candidate")
+    # governance-mutation: U4_ADMISSION_INTENT_READY
+    if packet["schema_version"] == closure.PACKET_SCHEMA_VERSION and item.get("decision") == "SELECT" and not ready_row["ready"]:
+        raise DecisionLedgerError("non-ready candidate cannot be SELECT")
 
 
 def validate_packet_intent(intent: Mapping[str, Any]) -> None:
@@ -1283,6 +1289,10 @@ def validate_typed_outer_append(
         packet = intent.get("review_packet") if isinstance(intent, Mapping) else None
     if not isinstance(packet, Mapping):
         raise DecisionLedgerError("typed U4 append lacks its frozen review packet")
+    # Existing v1.1 intents can finish/retry; new decisions cannot downgrade.
+    # governance-mutation: U4_ADMISSION_NO_NEW_LEGACY_INTENT
+    if preview["kind"] == INTENT_KIND and packet["schema_version"] != closure.PACKET_SCHEMA_VERSION:
+        raise DecisionLedgerError("new U4 intent requires review packet v1.2")
     # governance-mutation: U4_LEDGER_TYPED_APPEND_SOURCE_BINDING
     _validate_packet_source(packet, Path(bundle_dir))
 
@@ -1531,6 +1541,8 @@ def _validate_packet_source(
             bundle_dir=bundle_dir,
             battery=None,
             generated_at=str(packet.get("generated_at") or ""),
+            # governance-mutation: U4_ADMISSION_HISTORICAL_SOURCE_VERSION
+            packet_version=str(packet.get("schema_version") or ""),
         )
     except closure.ClosureError as exc:
         raise DecisionLedgerError(f"U4 immutable source evidence is invalid: {exc}") from exc

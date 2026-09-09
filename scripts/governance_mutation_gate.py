@@ -883,6 +883,13 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="Enabled schedules cannot run before their first interval; pause safety is pinned at the transactional claim.",
     ),
     MutationCase(
+        mutation_id="WORKBENCH_RESEARCH_PACKET_VERSION", component="AIOS local research replay",
+        source_path="scripts/llm/workbench_research.py", test_script="tests/test_workbench_research.py",
+        before='            packet_version="1.1",', after='            packet_version=closure.PACKET_SCHEMA_VERSION,',
+        expected_failure_marker="test_real_engines_complete_with_five_axes_and_no_claims",
+        rationale="The frozen workbench replay must not silently inherit a newer admission policy.",
+    ),
+    MutationCase(
         mutation_id="WORKBENCH_RESEARCH_FROZEN_INPUT", component="AIOS local research replay",
         source_path="scripts/llm/workbench_research.py", test_script="tests/test_workbench_research.py",
         before='    if sha(raw) != FIXTURE_SHA256:', after='    if False:',
@@ -6845,7 +6852,7 @@ MUTATIONS = MUTATIONS + (
         test_script="tests/test_u4_decision_ledger.py",
         before=(
             '    # governance-mutation: U4_LEDGER_PACKET_VERSION_BOUNDARY\n'
-            '    if packet.get("schema_version") != closure.PACKET_SCHEMA_VERSION:'
+            '    if packet.get("schema_version") not in {closure.PROVENANCE_PACKET_SCHEMA_VERSION, closure.PACKET_SCHEMA_VERSION}:'
         ),
         after=(
             '    # governance-mutation: U4_LEDGER_PACKET_VERSION_BOUNDARY\n'
@@ -7197,6 +7204,76 @@ MUTATIONS = MUTATIONS + (
         rationale="The replay verifier must derive its frozen source set from the embedded manifest.",
     ),
     MutationCase(
+        mutation_id="U4_ADMISSION_POSITIVE_CHANNEL",
+        component="Research funnel U4 admission alignment",
+        source_path="experiments/research_funnel/closure_experiment.py",
+        test_script="tests/test_u4_admission_alignment.py",
+        before="            # governance-mutation: U4_ADMISSION_POSITIVE_CHANNEL\n            if not candidate.get(\"source_channels\"):",
+        after="            # governance-mutation: U4_ADMISSION_POSITIVE_CHANNEL\n            if False:",
+        expected_failure_marker="test_no_positive_channel_is_explicitly_blocked",
+        rationale="Missing positive evidence must remain visible and unselectable.",
+    ),
+    MutationCase(
+        mutation_id="U4_ADMISSION_RANDOM_CONTROL",
+        component="Research funnel U4 admission alignment",
+        source_path="experiments/research_funnel/closure_experiment.py",
+        test_script="tests/test_u4_admission_alignment.py",
+        before="            # governance-mutation: U4_ADMISSION_RANDOM_CONTROL\n            if candidate.get(\"review_status\") == \"RANDOM_CONTROL\":",
+        after="            # governance-mutation: U4_ADMISSION_RANDOM_CONTROL\n            if False:",
+        expected_failure_marker="test_random_control_remains_visible_but_is_not_selectable",
+        rationale="The frozen random-control cohort cannot be human-selected through a different packet entrance.",
+    ),
+    MutationCase(
+        mutation_id="U4_ADMISSION_DRAFT_READY",
+        component="Research funnel U4 admission alignment",
+        source_path="experiments/research_funnel/u4_decision_ledger.py",
+        test_script="tests/test_u4_admission_alignment.py",
+        before="        # governance-mutation: U4_ADMISSION_DRAFT_READY\n        if packet[\"schema_version\"] == closure.PACKET_SCHEMA_VERSION and decision == \"SELECT\" and not packet_by_code[code][\"ready\"]:",
+        after="        # governance-mutation: U4_ADMISSION_DRAFT_READY\n        if False:",
+        expected_failure_marker="test_new_draft_cannot_select_a_nonready_candidate",
+        rationale="New decision drafts must not SELECT any non-ready row.",
+    ),
+    MutationCase(
+        mutation_id="U4_ADMISSION_INTENT_READY",
+        component="Research funnel U4 admission alignment",
+        source_path="experiments/research_funnel/u4_decision_ledger.py",
+        test_script="tests/test_u4_admission_alignment.py",
+        before="    # governance-mutation: U4_ADMISSION_INTENT_READY\n    if packet[\"schema_version\"] == closure.PACKET_SCHEMA_VERSION and item.get(\"decision\") == \"SELECT\" and not ready_row[\"ready\"]:",
+        after="    # governance-mutation: U4_ADMISSION_INTENT_READY\n    if False:",
+        expected_failure_marker="test_persisted_intent_cannot_select_a_nonready_candidate",
+        rationale="Persisted intents must independently enforce the new admission contract.",
+    ),
+    MutationCase(
+        mutation_id="U4_ADMISSION_NO_NEW_LEGACY_INTENT",
+        component="Research funnel U4 admission alignment",
+        source_path="experiments/research_funnel/u4_decision_ledger.py",
+        test_script="tests/test_u4_admission_alignment.py",
+        before="    # governance-mutation: U4_ADMISSION_NO_NEW_LEGACY_INTENT\n    if preview[\"kind\"] == INTENT_KIND and packet[\"schema_version\"] != closure.PACKET_SCHEMA_VERSION:",
+        after="    # governance-mutation: U4_ADMISSION_NO_NEW_LEGACY_INTENT\n    if False:",
+        expected_failure_marker="test_new_legacy_packet_intent_is_refused_by_typed_writer",
+        rationale="The lock-held typed writer must refuse new intents with retired admission semantics.",
+    ),
+    MutationCase(
+        mutation_id="U4_ADMISSION_HISTORICAL_SOURCE_VERSION",
+        component="Research funnel U4 admission alignment",
+        source_path="experiments/research_funnel/u4_decision_ledger.py",
+        test_script="tests/test_u4_admission_alignment.py",
+        before="            # governance-mutation: U4_ADMISSION_HISTORICAL_SOURCE_VERSION\n            packet_version=str(packet.get(\"schema_version\") or \"\"),",
+        after="            # governance-mutation: U4_ADMISSION_HISTORICAL_SOURCE_VERSION\n            packet_version=closure.PACKET_SCHEMA_VERSION,",
+        expected_failure_marker="test_legacy_v11_still_rebuilds_with_original_admission",
+        rationale="Historical source reopening uses the packet version, not the newest admission rules.",
+    ),
+    MutationCase(
+        mutation_id="U4_ADMISSION_VERSION_IDENTITY",
+        component="Research funnel U4 admission alignment",
+        source_path="experiments/research_funnel/closure_experiment.py",
+        test_script="tests/test_u4_admission_alignment.py",
+        before='PACKET_SCHEMA_VERSION = "1.2"',
+        after='PACKET_SCHEMA_VERSION = "1.1"',
+        expected_failure_marker="test_new_packets_have_an_explicit_admission_version",
+        rationale="The admission change must have a new identity, never rewrite v1.1 semantics.",
+    ),
+    MutationCase(
         mutation_id="FUNNEL_CLOSURE_PACKET_VERSION_DEFAULT",
         component="Research funnel U4 review packet",
         source_path="experiments/research_funnel/closure_experiment.py",
@@ -7210,7 +7287,7 @@ MUTATIONS = MUTATIONS + (
             '        "schema_version": LEGACY_PACKET_SCHEMA_VERSION,'
         ),
         expected_failure_marker="test_packet_projects_exact_run_and_candidate_evidence_from_bundle",
-        rationale="New packets must identify the expanded provenance contract as v1.1.",
+        rationale="New packets must identify the current versioned admission and provenance contract.",
     ),
     MutationCase(
         mutation_id="FUNNEL_CLOSURE_PACKET_VERSION_COMPATIBILITY",
@@ -7219,11 +7296,11 @@ MUTATIONS = MUTATIONS + (
         test_script="tests/test_research_closure_experiment.py",
         before=(
             '    # governance-mutation: FUNNEL_CLOSURE_PACKET_VERSION_COMPATIBILITY\n'
-            '    if packet.get("schema") != PACKET_SCHEMA or version not in {'
+            '    if packet.get("schema") != PACKET_SCHEMA or version not in PACKET_SCHEMA_VERSIONS:'
         ),
         after=(
             '    # governance-mutation: FUNNEL_CLOSURE_PACKET_VERSION_COMPATIBILITY\n'
-            '    if packet.get("schema") != PACKET_SCHEMA or version != PACKET_SCHEMA_VERSION or version not in {'
+            '    if packet.get("schema") != PACKET_SCHEMA or version != PACKET_SCHEMA_VERSION:'
         ),
         expected_failure_marker="test_legacy_v1_packet_remains_valid_and_replayable",
         rationale="Previously emitted v1.0 packets must remain valid and replayable after v1.1 ships.",
@@ -7235,7 +7312,7 @@ MUTATIONS = MUTATIONS + (
         test_script="tests/test_research_closure_experiment.py",
         before=(
             '    # governance-mutation: FUNNEL_CLOSURE_PACKET_RUN_ID\n'
-            '    if version == PACKET_SCHEMA_VERSION and not str(refs.get("run_id") or "").strip():'
+            '    if version != LEGACY_PACKET_SCHEMA_VERSION and not str(refs.get("run_id") or "").strip():'
         ),
         after=(
             '    # governance-mutation: FUNNEL_CLOSURE_PACKET_RUN_ID\n'
