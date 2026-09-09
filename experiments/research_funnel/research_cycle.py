@@ -33,11 +33,13 @@ import decision_pack as decision_pack_contract  # noqa: E402
 import decision_sheet as decision_sheet_contract  # noqa: E402
 import funnel_pipeline as funnel  # noqa: E402
 import model_paper_fund as paper_fund  # noqa: E402
+import paper_deadline  # noqa: E402
 import research_method as method_contract  # noqa: E402
 from security_registry import _atomic_write_json  # noqa: E402
 
 
 SCHEMA_VERSION = "1.0"
+DEADLINE_VERSION = "1.1"
 CASE_SCHEMA = "ar.research_cycle_case"
 BARS_SCHEMA = "ar.settled_bar_fixture"
 TRACE_SCHEMA = "ar.research_cycle_trace"
@@ -230,7 +232,7 @@ def _validate_cluster(cluster: Mapping[str, Any], registered_at: str) -> None:
 def validate_case(case: Mapping[str, Any], bundle_dir: Path) -> dict[str, Any]:
     if set(case) != CASE_KEYS:
         raise CycleError("research case fields are not exact")
-    if case.get("schema") != CASE_SCHEMA or case.get("schema_version") != SCHEMA_VERSION:
+    if case.get("schema") != CASE_SCHEMA or case.get("schema_version") not in {SCHEMA_VERSION, DEADLINE_VERSION}:
         raise CycleError("research case schema/version mismatch")
     # governance-mutation: RESEARCH_CYCLE_CASE_HASH
     if case.get("case_hash") != _hash(_without_hash(case, "case_hash")):
@@ -367,8 +369,16 @@ def validate_case(case: Mapping[str, Any], bundle_dir: Path) -> dict[str, Any]:
         raise CycleError("registered valuation industry differs from the research case")
 
     order = case.get("paper_order") or {}
-    if set(order) != {"registered_at", "risk_pct", "setup", "reason", "invalid_if", "gate_state"}:
+    order_fields = {"registered_at", "risk_pct", "setup", "reason", "invalid_if", "gate_state"}
+    if case["schema_version"] == DEADLINE_VERSION:
+        order_fields.add("deadline_policy")
+    if set(order) != order_fields:
         raise CycleError("paper_order fields are not exact")
+    if case["schema_version"] == DEADLINE_VERSION:
+        try:
+            paper_deadline.validate_policy(order["deadline_policy"], registered_at)
+        except (ValueError, TypeError) as exc:
+            raise CycleError(f"paper deadline policy is invalid: {exc}") from exc
     risk_pct = order.get("risk_pct")
     if (
         order.get("gate_state") != timing_ticket.get("posture")
@@ -397,12 +407,15 @@ def seal_case(draft: Mapping[str, Any], bundle_dir: Path) -> dict[str, Any]:
 
 def validate_bars(payload: Mapping[str, Any], case: Mapping[str, Any]) -> None:
     expected = {"schema", "schema_version", "ticker", "source", "generated_at", "rows", "rows_hash", "production_authority"}
-    if set(payload) != expected or payload.get("schema") != BARS_SCHEMA or payload.get("schema_version") != SCHEMA_VERSION:
+    if case["schema_version"] == DEADLINE_VERSION:
+        expected.add("scoring_as_of")
+    if set(payload) != expected or payload.get("schema") != BARS_SCHEMA or payload.get("schema_version") != case["schema_version"]:
         raise CycleError("settled-bar fixture schema/fields are invalid")
     if payload.get("ticker") != case.get("ticker") or payload.get("source") != "OFFLINE_FIXTURE_SETTLED" or payload.get("production_authority") is not False:
         raise CycleError("settled bars are not an offline fixture for this ticker")
     rows = payload.get("rows")
-    if not isinstance(rows, list) or not rows or payload.get("rows_hash") != _hash(rows):
+    empty_rows_allowed = case["schema_version"] == DEADLINE_VERSION
+    if not isinstance(rows, list) or (not rows and not empty_rows_allowed) or payload.get("rows_hash") != _hash(rows):
         raise CycleError("settled bars rows/hash mismatch")
     bars_generated_at = _iso(payload.get("generated_at"), "bars.generated_at")
     if bars_generated_at < _iso(case.get("generated_at"), "case.generated_at"):
@@ -418,11 +431,21 @@ def validate_bars(payload: Mapping[str, Any], case: Mapping[str, Any]) -> None:
             raise CycleError(f"settled execution bar {index} is invalid: {exc}") from exc
         dates.append(date)
     registered_at = case["paper_order"]["registered_at"]
-    bars_invalid = dates != sorted(set(dates)) or dates[0] < registered_at
+    bars_invalid = dates != sorted(set(dates)) or bool(dates and dates[0] < registered_at)
     # governance-mutation: RESEARCH_CYCLE_NO_LOOKAHEAD_BARS
     if bars_invalid:
         raise CycleError("settled bars are unordered, duplicated, or pre-registration")
-    last_session_cutoff = datetime.strptime(dates[-1], "%Y%m%d").replace(
+    scoring_as_of = dates[-1] if dates else None
+    if case["schema_version"] == DEADLINE_VERSION:
+        scoring_as_of = _date8(payload["scoring_as_of"], "bars.scoring_as_of")
+        if dates and scoring_as_of < dates[-1]:
+            raise CycleError("settled bars extend beyond scoring_as_of")
+        try:
+            paper_deadline.open_sessions(case["paper_order"]["deadline_policy"],
+                                         after=registered_at, through=scoring_as_of)
+        except ValueError as exc:
+            raise CycleError(f"scoring calendar is invalid: {exc}") from exc
+    last_session_cutoff = datetime.strptime(scoring_as_of, "%Y%m%d").replace(
         hour=SETTLED_BAR_CUTOFF_HOUR,
         tzinfo=OPERATIONAL_TIMEZONE,
     )
@@ -434,6 +457,8 @@ def validate_bars(payload: Mapping[str, Any], case: Mapping[str, Any]) -> None:
 
 def seal_bars(draft: Mapping[str, Any], case: Mapping[str, Any]) -> dict[str, Any]:
     expected = {"schema", "schema_version", "ticker", "source", "generated_at", "rows", "production_authority"}
+    if case["schema_version"] == DEADLINE_VERSION:
+        expected.add("scoring_as_of")
     if set(draft) != expected:
         raise CycleError("settled-bar draft fields are not exact")
     payload = dict(draft)
@@ -446,10 +471,28 @@ def _transition(sequence: int, state: str, at: str, evidence: Any) -> dict[str, 
     return {"sequence": sequence, "state": state, "at": at, "evidence_hash": _hash(evidence)}
 
 
-def _mechanical_horizons(order: Mapping[str, Any], rows: list[dict[str, Any]]) -> dict[str, Any]:
+def _mechanical_horizons(order: Mapping[str, Any], rows: list[dict[str, Any]], *, as_of: str | None = None) -> dict[str, Any]:
     if order.get("fill_date") is None or order.get("fill_price") is None:
         return {f"T+{h}": {"status": "WINDOW_OPEN", "return": None} for h in HORIZONS}
     future = [row for row in rows if row["date"] > order["fill_date"]]
+    if "deadline_policy" in order:
+        sessions = paper_deadline.open_sessions(order["deadline_policy"], after=order["fill_date"])
+        by_date = {row["date"]: row for row in rows}
+        output = {}
+        for horizon in HORIZONS:
+            if len(sessions) < horizon:
+                output[f"T+{horizon}"] = {"status": "DATA_BLOCKED", "return": None, "reason": "CALENDAR_RANGE_EXHAUSTED"}
+                continue
+            target = sessions[horizon - 1]
+            if as_of is None or target > as_of:
+                output[f"T+{horizon}"] = {"status": "WINDOW_OPEN", "return": None}
+            elif target not in by_date or by_date[target]["suspended"] or order.get("execution_frozen"):
+                output[f"T+{horizon}"] = {"status": "DATA_BLOCKED", "return": None, "date": target,
+                                          "reason": "SETTLED_PRICE_UNAVAILABLE_OR_CHAIN_BROKEN"}
+            else:
+                output[f"T+{horizon}"] = {"status": "SCORED", "date": target,
+                    "return": round(float(by_date[target]["close"]) / float(order["fill_price"]) - 1, 6)}
+        return output
     output: dict[str, Any] = {}
     for horizon in HORIZONS:
         if len(future) < horizon:
@@ -478,8 +521,9 @@ def run_cycle(
         raise CycleError("cycle output predates its settled-bar evidence")
     if _iso(outcomes["generated_at"], "method_outcomes.generated_at") < _iso(bars["generated_at"], "bars.generated_at"):
         raise CycleError("method outcomes predate the settled-bar evidence")
+    scoring_as_of = bars["scoring_as_of"] if case["schema_version"] == DEADLINE_VERSION else bars["rows"][-1]["date"]
     # governance-mutation: RESEARCH_CYCLE_SCORING_ASOF
-    if outcomes["scoring_as_of"] != bars["rows"][-1]["date"]:
+    if outcomes["scoring_as_of"] != scoring_as_of:
         raise CycleError("method outcomes and settled bars do not share one scoring as_of")
     cycle_id = _hash({"source_refs": case["source_refs"], "ticker": case["ticker"], "case_hash": case["case_hash"]})[:24]
     transitions = [
@@ -493,6 +537,7 @@ def run_cycle(
     orders: list[dict[str, Any]] = []
     decisions: list[dict[str, Any]] = []
     nav_history: list[dict[str, Any]] = []
+    unavailable_nav: list[dict[str, str]] = []
     events: list[str] = []
     timing = case["timing_ticket"]
     order: dict[str, Any] | None = None
@@ -515,6 +560,7 @@ def run_cycle(
             cost_model=paper_fund.WORKFLOW_DEBUG_COST_MODEL,
             max_volume_participation=paper_fund.MAX_VOLUME_PARTICIPATION,
             execution_mode=paper_fund.pp.EXECUTION_MODEL_VERSION,
+            deadline_policy=case["paper_order"].get("deadline_policy"),
         )
         if order is None:
             refusal = message
@@ -529,26 +575,57 @@ def run_cycle(
             transitions.append(_transition(5, "PAPER_REGISTERED", case["generated_at"], order))
             seen_status = "pending"
             rows = list(bars["rows"])
-            for index, row in enumerate(rows):
-                prefix = rows[: index + 1]
+            sessions = ([row["date"] for row in rows] if "deadline_policy" not in order else
+                        paper_deadline.open_sessions(order["deadline_policy"],
+                            after=order["registered_at"], through=bars["scoring_as_of"]))
+            by_date = {row["date"]: row for row in rows}
+            for session in sessions:
+                prefix = [row for row in rows if row["date"] <= session]
                 events.extend(paper_fund.process_day(
                     fund, orders, decisions, token=None,
                     series_fn=lambda *_args, p=prefix: p,
                     require_realistic=True,
+                    settlement_as_of=session,
                 ))
-                paper_fund.update_nav(
-                    fund, orders, nav_history, row["date"],
-                    marks={case["ticker"]: row["close"]}, require_complete_marks=True,
-                )
+                if session not in by_date:
+                    unavailable_nav.append({"date": session, "reason": "MISSING_BAR"})
+                elif "deadline_policy" in order and by_date[session]["suspended"]:
+                    unavailable_nav.append({"date": session, "reason": "SUSPENDED"})
+                else:
+                    try:
+                        paper_fund.update_nav(
+                            fund, orders, nav_history, session,
+                            marks={case["ticker"]: by_date[session]["close"]}, require_complete_marks=True,
+                        )
+                    except paper_fund.CorporateActionUnresolved:
+                        if case["schema_version"] != DEADLINE_VERSION:
+                            raise
+                        unavailable_nav.append({"date": session, "reason": "CORPORATE_ACTION_BREAK"})
                 if order["status"] != seen_status:
                     seen_status = order["status"]
                     transitions.append(_transition(
                         len(transitions) + 1,
-                        "FILLED" if seen_status == "filled" else "CLOSED",
-                        order.get("fill_date") if seen_status == "filled" else order.get("exit_date"),
+                        seen_status.upper(),
+                        (session if "deadline_policy" in order else
+                         order.get("fill_date") if seen_status == "filled" else order.get("exit_date")),
                         order,
                     ))
     performance = paper_fund.compute_performance(fund, orders, nav_history)
+    if case["schema_version"] == DEADLINE_VERSION:
+        last_nav = nav_history[-1] if nav_history else None
+        current_nav_available = last_nav is not None and last_nav["date"] == scoring_as_of
+        performance.update({
+            "as_of": scoring_as_of,
+            "nav_as_of": last_nav["date"] if last_nav else None,
+            "last_known_nav": dict(last_nav) if last_nav else None,
+            "nav_quality": ("DATA_BLOCKED" if not current_nav_available else
+                            "PARTIAL" if unavailable_nav else "COMPLETE"),
+            "unavailable_sessions": unavailable_nav,
+        })
+        if not current_nav_available:
+            performance["nav"] = performance["cum_return"] = None
+        if unavailable_nav or not current_nav_available:
+            performance["max_drawdown"] = None
     realism = (
         paper_fund.execution_realism_receipt(order)
         if order is not None else {
@@ -566,7 +643,8 @@ def run_cycle(
     paper_boundary_broken = (
         fund.get("paper_only") is not True
         or performance.get("claim_allowed") is not False
-        or realism.get("status") not in {"PASS_WORKFLOW_DEBUG", "NO_TRADE"}
+        or realism.get("status") not in ({"PASS_WORKFLOW_DEBUG", "NO_TRADE", "DATA_BLOCKED"}
+                                        if case["schema_version"] == DEADLINE_VERSION else {"PASS_WORKFLOW_DEBUG", "NO_TRADE"})
         or realism.get("method_claim_sample_eligible") is not False
         or realism.get("portfolio_promotion_eligible") is not False
         or any(order_row.get("no_trade_flag") is not True for order_row in orders)
@@ -614,7 +692,7 @@ def run_cycle(
         "exit_date": order_for_review.get("exit_date"), "exit_reason": order_for_review.get("exit_reason"),
         "paper_return": order_for_review.get("paper_return"), "realized_R": order_for_review.get("realized_R"),
         "pnl_cny": order_for_review.get("pnl_cny"),
-        "horizons": _mechanical_horizons(order_for_review, list(bars["rows"])),
+        "horizons": _mechanical_horizons(order_for_review, list(bars["rows"]), as_of=outcomes["scoring_as_of"]),
         "method_scorecard_hash": scorecard["scorecard_hash"],
         "machine_attribution": scorecard["machine_attribution"],
         "human_attribution_status": "AWAITING_HUMAN_REVIEW",
@@ -622,6 +700,9 @@ def run_cycle(
         "claim_allowed": False, "no_trade_flag": True, "production_authority": False,
         "disclaimer": DISCLAIMER,
     }
+    if order is not None and "deadline_policy" in order:
+        review["execution_progress"] = paper_deadline.progress(order, outcomes["scoring_as_of"])
+        review["nav_missing_sessions"] = [session for session in sessions if session not in by_date]
     review["review_hash"] = _hash(review)
     return trace, fund_snapshot, scorecard, review
 
