@@ -231,6 +231,10 @@ jobs:
         run: |
           python3 tests/test_paper_registration_bridge.py
           python3 scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/paper_registration_bridge_v1.task.json
+      - name: Opt-in exchange-calendar T+10 deadline (offline)
+        run: |
+          python3 tests/test_paper_t10_execution.py
+          python3 tests/test_paper_t10_integration.py
       # Model Paper Fund go-live runbook: tomorrow's paper-only operating guide
       # must keep the Junyan-only authority boundary, registration bridge, and
       # T+ observation schedule visible.

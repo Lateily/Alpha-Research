@@ -362,8 +362,9 @@ def seal_marks(draft: Mapping[str, Any], orders: Sequence[Mapping[str, Any]]) ->
 
 
 def _registration_projection(order: Mapping[str, Any]) -> dict[str, Any]:
-    projection = {field: copy.deepcopy(order.get(field)) for field in REGISTRATION_PROJECTION_FIELDS}
-    _require_exact(projection, REGISTRATION_PROJECTION_FIELDS, "order registration projection")
+    fields = REGISTRATION_PROJECTION_FIELDS | ({"deadline_policy"} if "deadline_policy" in order else set())
+    projection = {field: copy.deepcopy(order.get(field)) for field in fields}
+    _require_exact(projection, fields, "order registration projection")
     return projection
 
 
@@ -490,6 +491,7 @@ def _compose_registration_projection(
         cost_model=paper_fund.WORKFLOW_DEBUG_COST_MODEL,
         max_volume_participation=paper_fund.MAX_VOLUME_PARTICIPATION,
         execution_mode=paper_fund.pp.EXECUTION_MODEL_VERSION,
+        deadline_policy=case["paper_order"].get("deadline_policy"),
     )
     if order is None or message != "registered":
         raise PaperRegistrationError(f"Model Paper Fund refused the plan: {message}")
@@ -539,6 +541,8 @@ def _compose_registration_projection(
         "execution_mode": paper_fund.pp.EXECUTION_MODEL_VERSION,
         "cost_model": copy.deepcopy(paper_fund.WORKFLOW_DEBUG_COST_MODEL),
     }
+    if "deadline_policy" in case["paper_order"]:
+        request["deadline_policy"] = copy.deepcopy(case["paper_order"]["deadline_policy"])
     projection = {
         "order": order,
         "order_registration_projection": _registration_projection(order),
@@ -627,7 +631,7 @@ def build_plan(
     )
     result: dict[str, Any] = {
         "schema": PLAN_SCHEMA,
-        "schema_version": SCHEMA_VERSION,
+        "schema_version": case["schema_version"],
         "generated_at": generated_at,
         "registration_id": registration_id,
         "source_refs": source_refs,
@@ -645,7 +649,7 @@ def build_plan(
 
 def validate_plan(plan: Mapping[str, Any]) -> None:
     _require_exact(plan, PLAN_FIELDS, "paper registration plan")
-    if plan.get("schema") != PLAN_SCHEMA or plan.get("schema_version") != SCHEMA_VERSION:
+    if plan.get("schema") != PLAN_SCHEMA or plan.get("schema_version") not in {SCHEMA_VERSION, "1.1"}:
         raise PaperRegistrationError("paper registration plan schema/version mismatch")
     if ID_RE.fullmatch(str(plan.get("registration_id") or "")) is None:
         raise PaperRegistrationError("paper registration id is invalid")
@@ -665,7 +669,8 @@ def validate_plan(plan: Mapping[str, Any]) -> None:
     ):
         raise PaperRegistrationError("paper registration plan nested objects are invalid")
     _require_exact(source_refs, SOURCE_REF_FIELDS, "plan source_refs")
-    _require_exact(request, REQUEST_FIELDS, "paper request")
+    policy_fields = {"deadline_policy"} if plan["schema_version"] == "1.1" else set()
+    _require_exact(request, REQUEST_FIELDS | policy_fields, "paper request")
     _require_exact(snapshot, SNAPSHOT_FIELDS, "portfolio snapshot")
     _require_exact(projection, PROJECTION_FIELDS, "plan projection")
     _require_exact(authority, AUTHORITY_FIELDS, "plan authority")
@@ -696,7 +701,7 @@ def validate_plan(plan: Mapping[str, Any]) -> None:
     decision = projection.get("decision_log_event")
     if not isinstance(order, dict) or not isinstance(order_projection, dict) or not isinstance(decision, dict):
         raise PaperRegistrationError("paper registration projections are invalid")
-    _require_exact(order_projection, REGISTRATION_PROJECTION_FIELDS, "order registration projection")
+    _require_exact(order_projection, REGISTRATION_PROJECTION_FIELDS | policy_fields, "order registration projection")
     if order_projection != _registration_projection(order):
         raise PaperRegistrationError("order registration projection differs from the frozen order")
     # governance-mutation: PAPER_REGISTRATION_NO_ACTION_AUTHORITY
@@ -744,6 +749,13 @@ def validate_plan(plan: Mapping[str, Any]) -> None:
         "execution_mode": "execution_mode",
         "cost_model": "cost_model",
     }
+    if policy_fields:
+        import paper_deadline
+        try:
+            paper_deadline.validate_policy(request["deadline_policy"], request["registered_at"])
+        except (ValueError, TypeError) as exc:
+            raise PaperRegistrationError(f"invalid deadline policy: {exc}") from exc
+        request_order_fields["deadline_policy"] = "deadline_policy"
     # governance-mutation: PAPER_REGISTRATION_REQUEST_ORDER_BINDING
     if any(request[source] != order.get(target) for source, target in request_order_fields.items()):
         raise PaperRegistrationError("paper request and frozen order projection differ")
