@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-09T05:55:57.863546+00:00",
+  "generated_at": "2026-09-09T13:09:42.724869+00:00",
   "model_state": "NORMAL_OBSERVATION_MODE",
   "tickers_scored": 9,
   "summary": {
@@ -49,7 +49,7 @@
       "signal_types": [
         "MA20_BOUNCE"
       ],
-      "computed_at": "2026-09-09T05:55:57.862976+00:00"
+      "computed_at": "2026-09-09T13:09:42.724316+00:00"
     },
     {
       "ticker": "300054.SZ",
@@ -92,7 +92,7 @@
       "signal_types": [
         "KDJ_GOLDEN_CROSS"
       ],
-      "computed_at": "2026-09-09T05:55:57.862856+00:00"
+      "computed_at": "2026-09-09T13:09:42.724197+00:00"
     },
     {
       "ticker": "002594.SZ",
@@ -135,7 +135,7 @@
       "signal_types": [
         "RSI_RECOVERING"
       ],
-      "computed_at": "2026-09-09T05:55:57.862613+00:00"
+      "computed_at": "2026-09-09T13:09:42.723959+00:00"
     },
     {
       "ticker": "175.HK",
@@ -178,7 +178,7 @@
       "signal_types": [
         "KDJ_OVERSOLD"
       ],
-      "computed_at": "2026-09-09T05:55:57.862741+00:00"
+      "computed_at": "2026-09-09T13:09:42.724083+00:00"
     },
     {
       "ticker": "6160.HK",
@@ -255,7 +255,7 @@
         "MA60_BOUNCE",
         "MACD_GOLDEN_CROSS"
       ],
-      "computed_at": "2026-09-09T05:55:57.863263+00:00"
+      "computed_at": "2026-09-09T13:09:42.724589+00:00"
     },
     {
       "ticker": "700.HK",
@@ -278,7 +278,7 @@
       "rationale_e": "RSI 41 | Price vs MA20 -3.5%",
       "rationale_z": "RSI 41 | 距MA20 -3.5%",
       "signal_types": [],
-      "computed_at": "2026-09-09T05:55:57.863454+00:00"
+      "computed_at": "2026-09-09T13:09:42.724782+00:00"
     },
     {
       "ticker": "9999.HK",
@@ -301,7 +301,7 @@
       "rationale_e": "RSI 56 | Price vs MA20 +2.8%",
       "rationale_z": "RSI 56 | 距MA20 +2.8%",
       "signal_types": [],
-      "computed_at": "2026-09-09T05:55:57.863530+00:00"
+      "computed_at": "2026-09-09T13:09:42.724856+00:00"
     },
     {
       "ticker": "603233.SH",
@@ -344,7 +344,7 @@
       "signal_types": [
         "KDJ_DEATH_CROSS"
       ],
-      "computed_at": "2026-09-09T05:55:57.863139+00:00"
+      "computed_at": "2026-09-09T13:09:42.724456+00:00"
     },
     {
       "ticker": "688120.SH",
@@ -387,7 +387,7 @@
       "signal_types": [
         "DEATH_CROSS"
       ],
-      "computed_at": "2026-09-09T05:55:57.863365+00:00"
+      "computed_at": "2026-09-09T13:09:42.724695+00:00"
     }
   ]
 }
