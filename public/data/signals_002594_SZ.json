@@ -12,8 +12,8 @@
       "date": "20260908",
       "bullish": true,
       "description": {
-        "e": "RSI recovering 38.1→38.4 — momentum rebuilding",
-        "z": "RSI从38.1回升至38.4，动能修复"
+        "e": "RSI recovering 38.2→38.4 — momentum rebuilding",
+        "z": "RSI从38.2回升至38.4，动能修复"
       }
     }
   ],
@@ -34,9 +34,9 @@
     "change_1d": 0.07,
     "change_5d": -2.41,
     "change_20d": -3.94,
-    "macd_dif": -0.9348,
-    "macd_dea": -0.4565,
-    "macd_hist": -0.9567,
+    "macd_dif": -0.9133,
+    "macd_dea": -0.4247,
+    "macd_hist": -0.9772,
     "bb_upper": 92.93,
     "bb_mid": 89.37,
     "bb_lower": 85.81,
