@@ -236,7 +236,7 @@ def register_order(fund, orders, decision_log, *, ticker, name, theme, setup,
                    invalid_if="", gate_state="", marks=None,
                    max_fill_price=None, cost_model=None,
                    max_volume_participation=MAX_VOLUME_PARTICIPATION,
-                   execution_mode="LEGACY_DAILY_BAR"):
+                   execution_mode="LEGACY_DAILY_BAR", deadline_policy=None):
     """Pre-register a PAPER order under all policy constraints. Refusals are
     logged too — a refused order is itself a decision. Returns (order|None, msg)."""
     nav = current_nav(fund, orders, marks)
@@ -256,6 +256,17 @@ def register_order(fund, orders, decision_log, *, ticker, name, theme, setup,
         return refuse(f"{ticker} already open (adds need profit + fresh signal — v0 refuses)")
 
     realistic = execution_mode == pp.EXECUTION_MODEL_VERSION
+    if deadline_policy is not None:
+        import paper_deadline
+        try:
+            paper_deadline.validate_policy(deadline_policy, registered_at)
+            if not realistic:
+                raise ValueError("deadline policy requires realistic execution")
+            expected_exchange = "SSE" if ticker.endswith(".SH") else "SZSE" if ticker.endswith(".SZ") else None
+            if deadline_policy["calendar"]["exchange"] != expected_exchange:
+                raise ValueError("deadline calendar exchange differs from ticker")
+        except (ValueError, TypeError) as exc:
+            return refuse(str(exc))
     if realistic:
         if not isinstance(max_fill_price, (int, float)) or not entry <= max_fill_price < target:
             return refuse("realistic paper order needs entry <= max_fill_price < target")
@@ -316,6 +327,8 @@ def register_order(fund, orders, decision_log, *, ticker, name, theme, setup,
         "exit_date": None, "exit_price": None, "exit_reason": None,
         "paper_return": None, "realized_R": None, "pnl_cny": None,
     }
+    if deadline_policy is not None:
+        order["deadline_policy"] = copy.deepcopy(deadline_policy)
     orders.append(order)
     decision_log.append({"date": registered_at, "action": "REGISTER_ORDER",
                          "ticker": ticker, "shares": shares, "notional": notional,
@@ -379,7 +392,7 @@ def _recorded_process_day(fund, orders, decision_log, token, series_fn, recordin
     next_fund, next_orders, next_log = copy.deepcopy((fund, orders, decision_log))
     cache, messages = {}, []
     for before, order in zip(orders, next_orders):
-        if order["status"] == "closed":
+        if order["status"] in {"closed", "expired"}:
             continue
         realistic = require_realistic or order.get("execution_mode") == pp.EXECUTION_MODEL_VERSION
         loader = series_fn or (pp.execution_ohlc_series if realistic else pp.qfq_ohlc_series)
@@ -391,7 +404,8 @@ def _recorded_process_day(fund, orders, decision_log, token, series_fn, recordin
         start = len(next_log)
         messages.extend(process_day(next_fund, [order], next_log, None,
                                     series_fn=lambda *_: copy.deepcopy(bars),
-                                    require_realistic=require_realistic))
+                                    require_realistic=require_realistic,
+                                    settlement_as_of=recording["target_trade_date"]))
         if order == before:
             continue
         identity = settlement_hash(before)
@@ -412,7 +426,7 @@ def _recorded_process_day(fund, orders, decision_log, token, series_fn, recordin
 
 
 def process_day(fund, orders, decision_log, token, series_fn=None, *,
-                require_realistic=False, recording=None):
+                require_realistic=False, recording=None, settlement_as_of=None):
     """Advance fills/exits from SETTLED bars via paper_portfolio._advance (the one
     fill engine), then settle cash. Returns list of events."""
     if recording is not None:
@@ -420,7 +434,7 @@ def process_day(fund, orders, decision_log, token, series_fn=None, *,
                                      recording, require_realistic)
     events, cache = [], {}
     for o in orders:
-        if o["status"] == "closed":
+        if o["status"] in {"closed", "expired"}:
             continue
         # governance-mutation: PAPER_REGISTRATION_REALISTIC_MODE_INFERENCE
         order_realistic = (
@@ -435,11 +449,21 @@ def process_day(fund, orders, decision_log, token, series_fn=None, *,
             cache[cache_key] = loader(o["ticker"], token, o["registered_at"])
         was = o["status"]
         was_frozen = o.get("execution_frozen") is True
+        previous_attempts = len(o.get("deadline_attempts", []))
         changed = pp._advance(
             o, cache[cache_key], require_realistic=order_realistic,
+            settlement_as_of=settlement_as_of,
         )
         if not changed:
             continue
+        for attempt in o.get("deadline_attempts", [])[previous_attempts:]:
+            decision_log.append({"date": attempt["date"], "action": "PAPER_DEADLINE_ATTEMPT",
+                                 "ticker": o["ticker"], "attempt": copy.deepcopy(attempt),
+                                 "no_trade_flag": True})
+        if was == "pending" and o["status"] == "expired":
+            decision_log.append({"date": o["expiry_date"], "action": "PAPER_EXPIRED_UNFILLED",
+                                 "ticker": o["ticker"], "no_trade_flag": True})
+            events.append(f"EXPIRED {o['ticker']} ({o['expiry_date']})")
         if was == "pending" and o["status"] in ("filled", "closed"):
             gross = round(o["shares"] * o["fill_price"], 2)
             fee = transaction_cost(gross, "buy", o["cost_model"]) if order_realistic else 0.0
