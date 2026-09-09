@@ -1,69 +1,49 @@
 {
   "ticker": "300308.SZ",
-  "generated_at": "2026-09-08",
-  "price": 898.46,
+  "generated_at": "2026-09-09",
+  "price": 902.37,
   "zone": "NEUTRAL",
   "entry_zone": true,
   "exit_zone": false,
   "signals": [
     {
-      "type": "RSI_RECOVERING",
+      "type": "MA20_BOUNCE",
       "strength": "moderate",
-      "date": "20260907",
+      "date": "20260908",
       "bullish": true,
       "description": {
-        "e": "RSI recovering 38.2→49.3 — momentum rebuilding",
-        "z": "RSI从38.2回升至49.3，动能修复"
-      }
-    },
-    {
-      "type": "MACD_GOLDEN_CROSS",
-      "strength": "moderate",
-      "date": "20260907",
-      "bullish": true,
-      "description": {
-        "e": "MACD DIF(-42.286) crossed above DEA(-47.107) below zero — bullish momentum",
-        "z": "MACD DIF(-42.286)上穿DEA(-47.107)零轴下方金叉看涨"
-      }
-    },
-    {
-      "type": "KDJ_GOLDEN_CROSS",
-      "strength": "moderate",
-      "date": "20260907",
-      "bullish": true,
-      "description": {
-        "e": "KDJ K(35.8) crossed above D(22.5) in oversold — reversal signal",
-        "z": "KDJ K(35.8)上穿D(22.5)，超卖区金叉看涨"
+        "e": "Price bounced off MA20 (887.7) — near-term support held",
+        "z": "股价从MA20(887.7)附近反弹，短期支撑有效"
       }
     }
   ],
   "signal_count": {
-    "bullish": 3,
+    "bullish": 1,
     "bearish": 0,
-    "total": 3
+    "total": 1
   },
   "indicators": {
-    "ma5": 841.43,
-    "ma20": 887.73,
-    "ma60": 1037.86,
-    "rsi14": 49.3,
-    "vol_ma20": 285797,
-    "vol_ratio": 1.51,
-    "price_vs_ma20": 1.21,
-    "price_vs_ma60": -13.43,
-    "change_1d": 10.38,
-    "change_5d": 5.47,
-    "change_20d": 3.92,
-    "macd_dif": -42.2859,
-    "macd_dea": -47.107,
-    "macd_hist": 9.6423,
-    "bb_upper": 991.46,
-    "bb_mid": 887.73,
-    "bb_lower": 784.0,
-    "bb_bandwidth": 23.37,
-    "kdj_k": 35.8,
-    "kdj_d": 22.5,
-    "kdj_j": 62.3,
+    "ma5": 850.05,
+    "ma20": 888.5,
+    "ma60": 1032.15,
+    "rsi14": 49.8,
+    "vol_ma20": 283193,
+    "vol_ratio": 1.02,
+    "price_vs_ma20": 1.56,
+    "price_vs_ma60": -12.57,
+    "change_1d": 0.44,
+    "change_5d": 5.01,
+    "change_20d": 1.74,
+    "macd_dif": -36.0077,
+    "macd_dea": -44.8872,
+    "macd_hist": 17.7589,
+    "bb_upper": 992.43,
+    "bb_mid": 888.5,
+    "bb_lower": 784.57,
+    "bb_bandwidth": 23.39,
+    "kdj_k": 49.1,
+    "kdj_d": 31.3,
+    "kdj_j": 84.5,
     "cvd_latest": null,
     "cvd_slope_5d": null,
     "cvd_chg_1d": null,
