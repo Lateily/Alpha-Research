@@ -6,9 +6,9 @@
     "no_size": true,
     "no_buy_sell": true,
     "no_position_mutation": true,
-    "run_date": "2026-09-09",
+    "run_date": "2026-09-10",
     "pilot_start_date": "2026-06-08",
-    "generated_at": "2026-09-09T13:09:42.869009+00:00",
+    "generated_at": "2026-09-10T05:51:11.548059+00:00",
     "fresh_pilot": true,
     "legacy_paper_positions_inherited": false,
     "sources": [
@@ -63,8 +63,8 @@
         },
         "quant_confluence": {
           "action": "NEUTRAL",
-          "score": 6,
-          "rationale": "Bullish: Rsi Recovering | RSI 38 | Price vs MA20 -3.1% | Regime: PERMISSIVE | VP 48"
+          "score": 10,
+          "rationale": "Bullish: Kdj Oversold | RSI 36 | Price vs MA20 -3.7% | Regime: PERMISSIVE | VP 48"
         }
       },
       "validation_status": "PENDING",
@@ -105,8 +105,8 @@
         },
         "quant_confluence": {
           "action": "NEUTRAL",
-          "score": -8,
-          "rationale": "Bearish: Kdj Death Cross | RSI 50 | Price vs MA20 +0.7% | VP 50"
+          "score": 15,
+          "rationale": "Bullish: Ma20 Bounce, Ma60 Bounce | RSI 51 | Price vs MA20 +0.9% | VP 50"
         }
       },
       "validation_status": "PENDING",
@@ -250,11 +250,11 @@
         "sleeve": "quant_swing",
         "state": "SETUP_WATCH",
         "signal_class": "no_trade_signal",
-        "setup_type": "rsi_recovering",
+        "setup_type": "kdj_oversold",
         "bias": "bullish",
         "why_not_active": "confluence verdict is NEUTRAL — no active swing trade today",
-        "trigger_to_activate": "confluence upgrade to non-neutral, or a volume-confirmed breakout (current vol_ratio 0.76).",
-        "risk_rule": "Setup invalidated on a decisive close below MA20 (89.37); loss of MA60 (89.17) ends it.",
+        "trigger_to_activate": "confluence upgrade to non-neutral, or a volume-confirmed breakout (current vol_ratio 0.7).",
+        "risk_rule": "Setup invalidated on a decisive close below MA20 (89.15); loss of MA60 (89.11) ends it.",
         "technical": {
           "zone": "NEUTRAL",
           "entry_zone": true,
@@ -265,23 +265,23 @@
             "total": 1
           },
           "key_indicators": {
-            "rsi14": 38.4,
-            "macd_hist": -0.9772,
-            "price_vs_ma20": -3.14,
-            "price_vs_ma60": -2.91,
-            "change_5d": -2.41,
-            "vol_ratio": 0.76
+            "rsi14": 36.4,
+            "macd_hist": -0.992,
+            "price_vs_ma20": -3.66,
+            "price_vs_ma60": -3.62,
+            "change_5d": -1.06,
+            "vol_ratio": 0.7
           },
           "signals": [
             {
-              "type": "RSI_RECOVERING",
-              "strength": "moderate",
+              "type": "KDJ_OVERSOLD",
+              "strength": "strong",
               "bullish": true,
-              "desc": "RSI recovering 38.2→38.4 — momentum rebuilding"
+              "desc": "KDJ J=-0.7 (extreme <0) — high-probability reversal zone"
             }
           ]
         },
-        "as_of": "2026-09-09",
+        "as_of": "2026-09-10",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -323,7 +323,7 @@
             }
           ]
         },
-        "as_of": "2026-09-09",
+        "as_of": "2026-09-10",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -334,38 +334,31 @@
         "sleeve": "quant_swing",
         "state": "SETUP_WATCH",
         "signal_class": "no_trade_signal",
-        "setup_type": "kdj_golden_cross",
-        "bias": "mixed",
+        "setup_type": "no_signal",
+        "bias": "bearish",
         "why_not_active": "confluence verdict is NEUTRAL — no active swing trade today",
-        "trigger_to_activate": "confluence upgrade to non-neutral; the setup is unresolved (signals and zone disagree).",
-        "risk_rule": "Unresolved between MA20 (73.06) and MA60 (79.27) — wait for a decisive close before any read.",
+        "trigger_to_activate": "confluence upgrade to non-neutral, or a volume-confirmed breakdown (current vol_ratio 0.61).",
+        "risk_rule": "Bearish read negated on a volume-backed reclaim of MA20 (72.57).",
         "technical": {
           "zone": "BEARISH",
-          "entry_zone": true,
+          "entry_zone": false,
           "exit_zone": false,
           "signal_count": {
-            "bullish": 1,
+            "bullish": 0,
             "bearish": 0,
-            "total": 1
+            "total": 0
           },
           "key_indicators": {
-            "rsi14": 40.9,
-            "macd_hist": -0.876,
-            "price_vs_ma20": -7.55,
-            "price_vs_ma60": -14.78,
-            "change_5d": -2.62,
-            "vol_ratio": 0.73
+            "rsi14": 41.3,
+            "macd_hist": -0.7184,
+            "price_vs_ma20": -6.69,
+            "price_vs_ma60": -14.27,
+            "change_5d": -1.47,
+            "vol_ratio": 0.61
           },
-          "signals": [
-            {
-              "type": "KDJ_GOLDEN_CROSS",
-              "strength": "strong",
-              "bullish": true,
-              "desc": "KDJ K(18.8) crossed above D(18.6) in oversold — reversal signal"
-            }
-          ]
+          "signals": []
         },
-        "as_of": "2026-09-09",
+        "as_of": "2026-09-10",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -379,8 +372,8 @@
         "setup_type": "ma20_bounce",
         "bias": "bullish",
         "why_not_active": "confluence verdict is NEUTRAL — no active swing trade today",
-        "trigger_to_activate": "confluence upgrade to non-neutral, or a volume-confirmed breakout (current vol_ratio 1.02).",
-        "risk_rule": "Setup invalidated on a decisive close below MA20 (888.5); loss of MA60 (1032.15) ends it.",
+        "trigger_to_activate": "confluence upgrade to non-neutral, or a volume-confirmed breakout (current vol_ratio 0.72).",
+        "risk_rule": "Setup invalidated on a decisive close below MA20 (887.89); loss of MA60 (1026.5) ends it.",
         "technical": {
           "zone": "NEUTRAL",
           "entry_zone": true,
@@ -391,23 +384,23 @@
             "total": 1
           },
           "key_indicators": {
-            "rsi14": 49.9,
-            "macd_hist": 18.3049,
-            "price_vs_ma20": 1.56,
-            "price_vs_ma60": -12.57,
-            "change_5d": 5.01,
-            "vol_ratio": 1.02
+            "rsi14": 50.6,
+            "macd_hist": 24.0737,
+            "price_vs_ma20": 2.37,
+            "price_vs_ma60": -11.46,
+            "change_5d": 10.52,
+            "vol_ratio": 0.72
           },
           "signals": [
             {
               "type": "MA20_BOUNCE",
               "strength": "moderate",
               "bullish": true,
-              "desc": "Price bounced off MA20 (887.7) — near-term support held"
+              "desc": "Price bounced off MA20 (888.5) — near-term support held"
             }
           ]
         },
-        "as_of": "2026-09-09",
+        "as_of": "2026-09-10",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -418,38 +411,44 @@
         "sleeve": "quant_swing",
         "state": "SETUP_WATCH",
         "signal_class": "no_trade_signal",
-        "setup_type": "kdj_death_cross",
-        "bias": "mixed",
+        "setup_type": "ma20_bounce / ma60_bounce",
+        "bias": "bullish",
         "why_not_active": "confluence verdict is NEUTRAL — no active swing trade today",
-        "trigger_to_activate": "confluence upgrade to non-neutral; the setup is unresolved (signals and zone disagree).",
-        "risk_rule": "Unresolved between MA20 (18.11) and MA60 (17.8) — wait for a decisive close before any read.",
+        "trigger_to_activate": "confluence upgrade to non-neutral, or a volume-confirmed breakout (current vol_ratio 0.71).",
+        "risk_rule": "Setup invalidated on a decisive close below MA20 (18.12); loss of MA60 (17.83) ends it.",
         "technical": {
           "zone": "BULLISH",
-          "entry_zone": false,
-          "exit_zone": true,
+          "entry_zone": true,
+          "exit_zone": false,
           "signal_count": {
-            "bullish": 0,
-            "bearish": 1,
-            "total": 1
+            "bullish": 2,
+            "bearish": 0,
+            "total": 2
           },
           "key_indicators": {
-            "rsi14": 50.5,
-            "macd_hist": 0.0406,
-            "price_vs_ma20": 0.72,
-            "price_vs_ma60": 2.47,
-            "change_5d": -0.92,
-            "vol_ratio": 0.76
+            "rsi14": 50.9,
+            "macd_hist": 0.0172,
+            "price_vs_ma20": 0.9,
+            "price_vs_ma60": 2.54,
+            "change_5d": 1.11,
+            "vol_ratio": 0.71
           },
           "signals": [
             {
-              "type": "KDJ_DEATH_CROSS",
+              "type": "MA20_BOUNCE",
               "strength": "moderate",
-              "bullish": false,
-              "desc": "KDJ K(64.6) crossed below D(67.2) in overbought — reversal signal"
+              "bullish": true,
+              "desc": "Price bounced off MA20 (18.1) — near-term support held"
+            },
+            {
+              "type": "MA60_BOUNCE",
+              "strength": "strong",
+              "bullish": true,
+              "desc": "Price bounced off MA60 (17.8) — major support held"
             }
           ]
         },
-        "as_of": "2026-09-09",
+        "as_of": "2026-09-10",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -503,7 +502,7 @@
             }
           ]
         },
-        "as_of": "2026-09-09",
+        "as_of": "2026-09-10",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -514,38 +513,44 @@
         "sleeve": "quant_swing",
         "state": "SETUP_WATCH",
         "signal_class": "no_trade_signal",
-        "setup_type": "death_cross",
+        "setup_type": "death_cross / kdj_oversold",
         "bias": "bearish",
         "why_not_active": "confluence verdict is NEUTRAL — no active swing trade today",
-        "trigger_to_activate": "confluence upgrade to non-neutral, or a volume-confirmed breakdown (current vol_ratio 0.66).",
-        "risk_rule": "Bearish read negated on a volume-backed reclaim of MA20 (262.77).",
+        "trigger_to_activate": "confluence upgrade to non-neutral, or a volume-confirmed breakdown (current vol_ratio 0.6).",
+        "risk_rule": "Bearish read negated on a volume-backed reclaim of MA20 (261.12).",
         "technical": {
           "zone": "BEARISH",
-          "entry_zone": false,
+          "entry_zone": true,
           "exit_zone": true,
           "signal_count": {
-            "bullish": 0,
+            "bullish": 1,
             "bearish": 1,
-            "total": 1
+            "total": 2
           },
           "key_indicators": {
-            "rsi14": 41.4,
-            "macd_hist": -5.8699,
-            "price_vs_ma20": -7.9,
-            "price_vs_ma60": -8.88,
-            "change_5d": -4.68,
-            "vol_ratio": 0.66
+            "rsi14": 40.6,
+            "macd_hist": -5.84,
+            "price_vs_ma20": -7.97,
+            "price_vs_ma60": -9.74,
+            "change_5d": -4.03,
+            "vol_ratio": 0.6
           },
           "signals": [
             {
               "type": "DEATH_CROSS",
               "strength": "strong",
               "bullish": false,
-              "desc": "MA20 (262.8) crossed below MA60 (265.6) — bearish trend shift"
+              "desc": "MA20 (261.1) crossed below MA60 (266.2) — bearish trend shift"
+            },
+            {
+              "type": "KDJ_OVERSOLD",
+              "strength": "strong",
+              "bullish": true,
+              "desc": "KDJ J=-1.6 (extreme <0) — high-probability reversal zone"
             }
           ]
         },
-        "as_of": "2026-09-09",
+        "as_of": "2026-09-10",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -580,7 +585,7 @@
           },
           "signals": []
         },
-        "as_of": "2026-09-09",
+        "as_of": "2026-09-10",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -615,7 +620,7 @@
           },
           "signals": []
         },
-        "as_of": "2026-09-09",
+        "as_of": "2026-09-10",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       }
