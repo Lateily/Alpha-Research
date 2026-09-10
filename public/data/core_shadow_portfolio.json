@@ -11,7 +11,7 @@
       "paper": "/home/runner/work/Alpha-Research/Alpha-Research/public/data/positions.json (read-only)",
       "registered": "/home/runner/work/Alpha-Research/Alpha-Research/public/data/thesis_queue.json"
     },
-    "as_of_paper": "2026-09-09T13:04:05"
+    "as_of_paper": "2026-09-10T05:45:26"
   },
   "books": {
     "A_current_paper": {
@@ -20,39 +20,39 @@
           "ticker": "300308.SZ",
           "name": "中际旭创",
           "side": "LONG",
-          "weight_pct": 50.9,
-          "pnl_pct": 33.39
+          "weight_pct": 50.43,
+          "pnl_pct": 30.68
         },
         {
           "ticker": "6160.HK",
           "name": "百济神州",
           "side": "LONG",
-          "weight_pct": 4.34,
+          "weight_pct": 4.39,
           "pnl_pct": 0.0
         },
         {
           "ticker": "700.HK",
           "name": "腾讯控股",
           "side": "LONG",
-          "weight_pct": 25.97,
+          "weight_pct": 26.26,
           "pnl_pct": 0.0
         },
         {
           "ticker": "9999.HK",
           "name": "网易",
           "side": "LONG",
-          "weight_pct": 14.94,
+          "weight_pct": 15.11,
           "pnl_pct": 0.0
         },
         {
           "ticker": "002594.SZ",
           "name": "比亚迪",
           "side": "LONG",
-          "weight_pct": 3.85,
-          "pnl_pct": -10.72
+          "weight_pct": 3.8,
+          "pnl_pct": -12.74
         }
       ],
-      "gross_pct": 100.0,
+      "gross_pct": 99.99,
       "no_trade_flag": true
     },
     "B_thesis_aligned": {
@@ -61,7 +61,7 @@
           "ticker": "002594.SZ",
           "name": "比亚迪",
           "side": "LONG",
-          "paper_weight_pct": 3.85,
+          "paper_weight_pct": 3.8,
           "renorm_weight_pct": 100.0
         }
       ],
@@ -118,7 +118,7 @@
       "name": "比亚迪",
       "in_paper": true,
       "paper_side": "LONG",
-      "paper_weight_pct": 3.85,
+      "paper_weight_pct": 3.8,
       "in_registered": true,
       "registered_direction": "LONG",
       "registered_role": "directional",
@@ -142,7 +142,7 @@
       "name": "中际旭创",
       "in_paper": true,
       "paper_side": "LONG",
-      "paper_weight_pct": 50.9,
+      "paper_weight_pct": 50.43,
       "in_registered": true,
       "registered_direction": "PASS",
       "registered_role": "observer_control",
@@ -166,7 +166,7 @@
       "name": "百济神州",
       "in_paper": true,
       "paper_side": "LONG",
-      "paper_weight_pct": 4.34,
+      "paper_weight_pct": 4.39,
       "in_registered": true,
       "registered_direction": "WATCH_SHORT",
       "registered_role": "directional",
@@ -178,7 +178,7 @@
       "name": "腾讯控股",
       "in_paper": true,
       "paper_side": "LONG",
-      "paper_weight_pct": 25.97,
+      "paper_weight_pct": 26.26,
       "in_registered": true,
       "registered_direction": "WATCH_SHORT",
       "registered_role": "directional",
@@ -190,7 +190,7 @@
       "name": "网易",
       "in_paper": true,
       "paper_side": "LONG",
-      "paper_weight_pct": 14.94,
+      "paper_weight_pct": 15.11,
       "in_registered": true,
       "registered_direction": "WATCH_SHORT",
       "registered_role": "directional",
@@ -214,9 +214,9 @@
     "registered_not_held": [
       "603233.SH"
     ],
-    "paper_gross_pct": 100.0,
-    "paper_weight_aligned_pct": 3.85,
-    "paper_weight_aligned_share": 0.0385
+    "paper_gross_pct": 99.99,
+    "paper_weight_aligned_pct": 3.8,
+    "paper_weight_aligned_share": 0.038
   },
   "performance": {
     "status": "PENDING",
