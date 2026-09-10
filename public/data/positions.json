@@ -1,5 +1,5 @@
 {
-  "as_of": "2026-09-10T05:45:26.844948",
+  "as_of": "2026-09-10T13:01:09.951146",
   "base_currency": "CNY",
   "fx_rates": {
     "HKDCNY": 0.9165
@@ -13,14 +13,14 @@
       "currency": "CNY",
       "quantity": 150,
       "avg_cost": 681.36,
-      "current_price": 890.41,
-      "market_value": 133561.5,
+      "current_price": 890.1,
+      "market_value": 133515.0,
       "cost_value": 102204.0,
-      "pnl_abs": 31357.5,
-      "pnl_pct": 30.68,
-      "market_value_cny": 133561.5,
+      "pnl_abs": 31311.0,
+      "pnl_pct": 30.64,
+      "market_value_cny": 133515.0,
       "cost_value_cny": 102204.0,
-      "pnl_abs_cny": 31357.5,
+      "pnl_abs_cny": 31311.0,
       "fx_rate_used": 1.0,
       "holding_days": 184,
       "as_of": "2026-09-10",
@@ -163,7 +163,7 @@
       },
       "vp_at_entry": 64,
       "wrongIf_at_entry": "New gaming approval freeze lasting >3 months OR revenue_growth < -5% for 2 consecutive quarters",
-      "weight_pct": 26.26
+      "weight_pct": 26.27
     },
     {
       "ticker": "9999.HK",
@@ -213,7 +213,7 @@
       },
       "vp_at_entry": 58,
       "wrongIf_at_entry": "earnings_growth < -30% for 2 consecutive quarters OR Japan revenue contribution fails to reach 15% of total by Q4 2026",
-      "weight_pct": 15.11
+      "weight_pct": 15.12
     },
     {
       "ticker": "002594.SZ",
@@ -223,14 +223,14 @@
       "currency": "CNY",
       "quantity": 120,
       "avg_cost": 96.192,
-      "current_price": 83.94,
-      "market_value": 10072.8,
+      "current_price": 83.52,
+      "market_value": 10022.4,
       "cost_value": 11543.04,
-      "pnl_abs": -1470.24,
-      "pnl_pct": -12.74,
-      "market_value_cny": 10072.8,
+      "pnl_abs": -1520.64,
+      "pnl_pct": -13.17,
+      "market_value_cny": 10022.4,
       "cost_value_cny": 11543.04,
-      "pnl_abs_cny": -1470.24,
+      "pnl_abs_cny": -1520.64,
       "fx_rate_used": 1.0,
       "holding_days": 162,
       "as_of": "2026-09-10",
@@ -258,16 +258,16 @@
       },
       "vp_at_entry": 52,
       "wrongIf_at_entry": "revenue_growth < -10% for 2 consecutive quarters (tariff impact proxy) OR gross_margin drops below 15% OR earnings_growth < -40%",
-      "weight_pct": 3.8
+      "weight_pct": 3.79
     }
   ],
   "summary": {
-    "total_value_cny": 264856.97,
+    "total_value_cny": 264760.07,
     "total_cost_cny": 234969.71,
-    "total_pnl_cny": 29887.26,
-    "total_pnl_pct": 12.72,
-    "total_value": 264856.97,
+    "total_pnl_cny": 29790.36,
+    "total_pnl_pct": 12.68,
+    "total_value": 264760.07,
     "total_cost": 234969.71,
-    "total_pnl": 29887.26
+    "total_pnl": 29790.36
   }
 }
