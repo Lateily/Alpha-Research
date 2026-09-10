@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-09-09T13:09:11Z",
+  "generated_at": "2026-09-10T05:50:36Z",
   "mode": "review_context_only",
   "_contract": "v1 第一版:不预测方向、不改仓位 — 仅作复盘/研究的宏观上下文原料。任何用本文件自动调仓的行为都超出契约。",
-  "_status": "OK",
+  "_status": "PARTIAL",
   "items": [
     {
       "endpoint": "cn_gdp",
@@ -14,31 +14,31 @@
       "previous": 5.0,
       "as_of": "2026Q2",
       "previous_as_of": "2026Q1",
-      "freshness_days": 100
+      "freshness_days": 101
     },
     {
       "endpoint": "cn_cpi",
       "cadence": "monthly",
       "headline": "nt_yoy",
       "unit": "pct_yoy",
-      "_status": "OK",
+      "_status": "STALE",
       "actual": 0.5,
       "previous": 1.0,
       "as_of": "202607",
       "previous_as_of": "202606",
-      "freshness_days": 70
+      "freshness_days": 71
     },
     {
       "endpoint": "cn_ppi",
       "cadence": "monthly",
       "headline": "ppi_yoy",
       "unit": "pct_yoy",
-      "_status": "OK",
+      "_status": "STALE",
       "actual": 3.5,
       "previous": 4.1,
       "as_of": "202607",
       "previous_as_of": "202606",
-      "freshness_days": 70
+      "freshness_days": 71
     },
     {
       "endpoint": "cn_pmi",
@@ -50,7 +50,7 @@
       "previous": 49.2,
       "as_of": "202608",
       "previous_as_of": "202607",
-      "freshness_days": 39,
+      "freshness_days": 40,
       "detail": {
         "制造业PMI": 49.8,
         "非制造业PMI": 49.0,
@@ -63,14 +63,14 @@
       "headline": "1w",
       "unit": "pct_annual",
       "_status": "OK",
-      "actual": 1.392,
-      "previous": 1.38,
-      "as_of": "20260909",
-      "previous_as_of": "20260908",
+      "actual": 1.41,
+      "previous": 1.392,
+      "as_of": "20260910",
+      "previous_as_of": "20260909",
       "freshness_days": 0,
       "detail": {
-        "on": 1.373,
-        "1w": 1.392,
+        "on": 1.404,
+        "1w": 1.41,
         "3m": 1.43,
         "1y": 1.48
       }
@@ -81,14 +81,14 @@
       "headline": "2s10s",
       "unit": "pct_points",
       "_status": "OK",
-      "actual": 0.41,
+      "actual": 0.4,
       "previous": 0.41,
-      "as_of": "20260908",
-      "previous_as_of": "20260904",
+      "as_of": "20260909",
+      "previous_as_of": "20260908",
       "freshness_days": 1,
       "detail": {
-        "y2": 4.39,
-        "y10": 4.8
+        "y2": 4.43,
+        "y10": 4.83
       }
     }
   ],
