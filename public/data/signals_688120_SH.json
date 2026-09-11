@@ -4,18 +4,8 @@
   "price": 243.76,
   "zone": "BEARISH",
   "entry_zone": true,
-  "exit_zone": true,
+  "exit_zone": false,
   "signals": [
-    {
-      "type": "DEATH_CROSS",
-      "strength": "strong",
-      "date": "20260910",
-      "bullish": false,
-      "description": {
-        "e": "MA20 (260.2) crossed below MA60 (266.6) — bearish trend shift",
-        "z": "MA20(260.2)下穿MA60(266.6)死叉看跌"
-      }
-    },
     {
       "type": "KDJ_GOLDEN_CROSS",
       "strength": "strong",
@@ -29,14 +19,14 @@
   ],
   "signal_count": {
     "bullish": 1,
-    "bearish": 1,
-    "total": 2
+    "bearish": 0,
+    "total": 1
   },
   "indicators": {
     "ma5": 243.15,
     "ma20": 260.16,
     "ma60": 266.59,
-    "rsi14": 43.1,
+    "rsi14": 43.0,
     "vol_ma20": 78828,
     "vol_ratio": 0.7,
     "price_vs_ma20": -6.3,
@@ -44,9 +34,9 @@
     "change_1d": 1.44,
     "change_5d": -2.59,
     "change_20d": -7.31,
-    "macd_dif": -5.7871,
-    "macd_dea": -3.3836,
-    "macd_hist": -4.807,
+    "macd_dif": -5.958,
+    "macd_dea": -3.6354,
+    "macd_hist": -4.6453,
     "bb_upper": 286.98,
     "bb_mid": 260.16,
     "bb_lower": 233.33,
