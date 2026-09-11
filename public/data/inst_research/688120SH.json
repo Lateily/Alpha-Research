@@ -1,20 +1,32 @@
 {
-  "_status": "empty",
+  "_status": "ok",
   "ticker": "688120.SH",
-  "fetched_at": "2026-08-05T11:18:58Z",
+  "fetched_at": "2026-09-11T12:57:58Z",
   "api_used": "stk_surv",
   "_attempted_endpoints": [
-    "stk_surv",
-    "stk_holdertrade",
-    "surv_holdertrade",
-    "investor_research"
+    "stk_surv"
   ],
   "window_days": 90,
-  "surveys": [],
+  "surveys": [
+    {
+      "ts_code": "688120.SH",
+      "name": "华海清科",
+      "surv_date": "20260903",
+      "fund_visitors": "--",
+      "rece_place": "全景路演网站(http://rs.p5w.net)",
+      "rece_mode": "业绩说明会",
+      "rece_org": "网络远程参加天津辖区上市公司2026年投资者网上集体接待日暨半年报业绩说明会的投资者",
+      "org_type": "--",
+      "comp_rece": "董事长、总经理 王同庆,独立董事 雷震霖,董事、财务总监 王怀需,董事会秘书 陈圳寅",
+      "inst_count": 1,
+      "surv_type": "业绩说明会",
+      "description": null
+    }
+  ],
   "summary": {
-    "total_30d": 0,
-    "total_90d": 0,
-    "unique_inst_30d": null,
-    "latest_date": null
+    "total_30d": 1,
+    "total_90d": 1,
+    "unique_inst_30d": 1,
+    "latest_date": "2026-09-03"
   }
 }
