@@ -1,13 +1,27 @@
 {
   "_status": "ok",
   "ticker": "002594.SZ",
-  "fetched_at": "2026-09-10T13:03:49Z",
+  "fetched_at": "2026-09-11T05:47:41Z",
   "api_used": "stk_surv",
   "_attempted_endpoints": [
     "stk_surv"
   ],
   "window_days": 90,
   "surveys": [
+    {
+      "ts_code": "002594.SZ",
+      "name": "比亚迪",
+      "surv_date": "20260909",
+      "fund_visitors": "分析师 Nick Lai",
+      "rece_place": "比亚迪六角大楼",
+      "rece_mode": "电话会议",
+      "rece_org": "JPM",
+      "org_type": "--",
+      "comp_rece": "吴越,常恩铭",
+      "inst_count": 2,
+      "surv_type": "电话会议",
+      "description": null
+    },
     {
       "ts_code": "002594.SZ",
       "name": "比亚迪",
@@ -500,9 +514,9 @@
     }
   ],
   "summary": {
-    "total_30d": 30,
-    "total_90d": 35,
-    "unique_inst_30d": 87,
-    "latest_date": "2026-09-08"
+    "total_30d": 31,
+    "total_90d": 36,
+    "unique_inst_30d": 89,
+    "latest_date": "2026-09-09"
   }
 }
