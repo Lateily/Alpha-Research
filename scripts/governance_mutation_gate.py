@@ -9296,6 +9296,59 @@ MUTATIONS = MUTATIONS + (
     ),
 )
 
+MUTATIONS = MUTATIONS + (
+    MutationCase(
+        mutation_id="ISOLATED_PREP_RESPONSE_BODY_HASH",
+        component="Macro isolated preparation frozen-response integrity",
+        source_path="scripts/isolated_publication_prepare.py",
+        test_script="tests/test_isolated_publication_prepare.py",
+        before=(
+            "        # governance-mutation: ISOLATED_PREP_RESPONSE_BODY_HASH\n"
+            '        if len(body) != row["body_bytes"] or _sha256(body) != row["body_sha256"]:'
+        ),
+        after=(
+            "        # governance-mutation: ISOLATED_PREP_RESPONSE_BODY_HASH\n"
+            "        if False:"
+        ),
+        expected_failure_marker="test_tampered_frozen_bytes_stop_before_run_id_creation",
+        rationale="An isolated build must reject changed response bytes before a run_id exists.",
+    ),
+    MutationCase(
+        mutation_id="ISOLATED_PREP_VERIFY_BEFORE_RUN_ID",
+        component="Macro isolated preparation freeze-before-run ordering",
+        source_path="scripts/isolated_publication_prepare.py",
+        test_script="tests/test_isolated_publication_prepare.py",
+        before=(
+            "    # governance-mutation: ISOLATED_PREP_VERIFY_BEFORE_RUN_ID\n"
+            "    manifest = validate_frozen_bundle(\n"
+            "        bundle, specs=planned, as_of=as_of, environment=environment\n"
+            "    )"
+        ),
+        after=(
+            "    # governance-mutation: ISOLATED_PREP_VERIFY_BEFORE_RUN_ID\n"
+            "    manifest = raw_manifest"
+        ),
+        expected_failure_marker="test_local_input_tamper_stops_before_run_id_creation",
+        rationale="The run identifier must not be minted before every frozen local input is reverified.",
+    ),
+    MutationCase(
+        mutation_id="ISOLATED_PREP_NO_CURRENT_RUN",
+        component="Macro isolated preparation publication boundary",
+        source_path="scripts/isolated_publication_prepare.py",
+        test_script="tests/test_isolated_publication_prepare.py",
+        before=(
+            "    # governance-mutation: ISOLATED_PREP_NO_CURRENT_RUN\n"
+            '    if any(path.name == "current_run.json" for path in root.rglob("*")):'
+        ),
+        after=(
+            "    # governance-mutation: ISOLATED_PREP_NO_CURRENT_RUN\n"
+            "    if False:"
+        ),
+        expected_failure_marker="test_isolated_builder_cannot_create_current_run_pointer",
+        rationale="Preparation is not publication and must never create a current_run pointer.",
+    ),
+)
+
 
 @dataclass(frozen=True)
 class CommandResult:
