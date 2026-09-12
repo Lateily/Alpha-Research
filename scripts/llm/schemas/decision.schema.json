@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/Lateily/Alpha-Research/scripts/llm/schemas/decision.schema.json",
-  "$comment": "Documentation contract for future AIOS human decisions. K1 does not consume this schema yet; offline tests guard that status explicitly.",
+  "$comment": "A-020a decision contract consumed by the offline Human Decision Gate. K1 does not consume this schema yet; identity trust still requires a future authority resolver.",
   "title": "AIOS Human Decision",
   "type": "object",
   "additionalProperties": false,
@@ -9,28 +9,49 @@
     "schema",
     "decision_id",
     "task_id",
+    "gate",
     "decision",
-    "decider",
+    "decided_by",
+    "scope",
     "reason",
     "evidence_refs",
-    "timestamp_utc"
+    "decided_at",
+    "reviewed_head_sha",
+    "reviewed_artifact_hash",
+    "attestation_id"
   ],
   "properties": {
     "schema": {"const": "ai-decision.v1"},
-    "decision_id": {"type": "string", "minLength": 1},
-    "task_id": {"type": "string", "minLength": 1},
+    "decision_id": {"$ref": "#/$defs/identifier"},
+    "task_id": {"$ref": "#/$defs/identifier"},
+    "gate": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]{0,63}$"},
     "decision": {"enum": ["APPROVE", "REVISE", "REJECT", "DEFER", "RETIRE"]},
-    "decider": {"type": "string", "minLength": 1},
-    "reason": {"type": "string", "minLength": 1},
+    "decided_by": {"$ref": "#/$defs/identifier"},
+    "scope": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/identifier"}
+    },
+    "reason": {"type": "string", "minLength": 1, "maxLength": 1000},
     "evidence_refs": {
       "type": "array",
       "minItems": 1,
-      "items": {"type": "string", "minLength": 1}
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^https://github\\.com/Lateily/Alpha-Research/(pull|issues)/[1-9][0-9]*#(pullrequestreview|issuecomment)-[1-9][0-9]*$"
+      }
     },
-    "conditions": {
-      "type": "array",
-      "items": {"type": "string", "minLength": 1}
-    },
-    "timestamp_utc": {"type": "string", "minLength": 1}
+    "decided_at": {"type": "string", "format": "date-time"},
+    "reviewed_head_sha": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "reviewed_artifact_hash": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "attestation_id": {"$ref": "#/$defs/identifier"}
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}$"
+    }
   }
 }
