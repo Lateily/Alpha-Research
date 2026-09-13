@@ -76,8 +76,21 @@ def canonical_sectors(codes, token, fallback=None):
         pass   # 取不到就保持 UNKNOWN,由上层标 DATA_BLOCKED
     return out
 INDICES = [("000001.SH", "sh"), ("399001.SZ", "sz"), ("399006.SZ", "cyb")]
-SETTLEMENT_ATTEMPTS = 3
-SETTLEMENT_RETRY_SECONDS = 30
+# 结算等待预算(2026-09-14)。旧值 3 次 x 30 秒 ≈ 90 秒,覆盖不了东财资金流对个别个股
+# 的结算延迟:2026-09-09/10/11 三次 16:35 夜链都因此 DATA_BLOCKED。窗口按墙钟预算收口,
+# 上限必须留在夜链每步 600 秒子进程超时之内,否则超时会把 fail-closed 变成 TIMEOUT。
+SETTLEMENT_ATTEMPTS = 6
+SETTLEMENT_RETRY_SECONDS = 60
+SETTLEMENT_WAIT_BUDGET_SECONDS = 420
+NIGHTLY_STEP_TIMEOUT_SECONDS = 600      # 镜像 run_nightly.py 的 subprocess timeout
+SETTLEMENT_BUDGET_MARGIN_SECONDS = 120  # 留给最后一次 build 与写盘
+
+if (SETTLEMENT_WAIT_BUDGET_SECONDS + SETTLEMENT_BUDGET_MARGIN_SECONDS
+        > NIGHTLY_STEP_TIMEOUT_SECONDS):
+    raise SystemExit(
+        "DATA_BLOCKED: settlement wait budget "
+        f"{SETTLEMENT_WAIT_BUDGET_SECONDS}s + margin {SETTLEMENT_BUDGET_MARGIN_SECONDS}s "
+        f"exceeds the nightly step timeout {NIGHTLY_STEP_TIMEOUT_SECONDS}s")
 
 
 class SettlementDateMismatch(SystemExit):
@@ -172,13 +185,18 @@ def build(token):
     return trade_date, snap, sigs
 
 
-def build_settled(token):
+def build_settled(token, clock=None):
     """Refresh the entire pre-write snapshot, never blend attempts or use T-1.
 
-    The nightly subprocess still enforces its existing 600-second timeout.
-    Exhaustion, transport/API/schema failures and all post-build writes remain
-    fail-closed; no scheduler, target-date or publication authority is changed.
+    Two independent bounds, whichever binds first: SETTLEMENT_ATTEMPTS whole
+    rebuilds, and SETTLEMENT_WAIT_BUDGET_SECONDS of wall clock. The budget keeps
+    the step inside the nightly subprocess timeout, so exhaustion still surfaces
+    as DATA_BLOCKED rather than TIMEOUT. Exhaustion, transport/API/schema
+    failures and all post-build writes remain fail-closed; no scheduler,
+    target-date or publication authority is changed.
     """
+    clock = clock or time.monotonic
+    started = clock()
     newest_seen = ""
     for attempt in range(SETTLEMENT_ATTEMPTS):
         try:
@@ -190,9 +208,16 @@ def build_settled(token):
             return result
         except SettlementDateMismatch as exc:
             newest_seen = max((newest_seen,) + exc.dates)
+            elapsed = clock() - started
             if attempt + 1 == SETTLEMENT_ATTEMPTS:
                 raise
+            if elapsed + SETTLEMENT_RETRY_SECONDS > SETTLEMENT_WAIT_BUDGET_SECONDS:
+                print(f"SETTLEMENT_WAIT budget_exhausted elapsed={elapsed:.0f}s "
+                      f"budget={SETTLEMENT_WAIT_BUDGET_SECONDS}s attempts_used="
+                      f"{attempt + 1}/{SETTLEMENT_ATTEMPTS}", flush=True)
+                raise
             print(f"SETTLEMENT_WAIT attempt={attempt + 1}/{SETTLEMENT_ATTEMPTS} "
+                  f"elapsed={elapsed:.0f}s budget={SETTLEMENT_WAIT_BUDGET_SECONDS}s "
                   f"retry_in={SETTLEMENT_RETRY_SECONDS}s {exc}", flush=True)
             time.sleep(SETTLEMENT_RETRY_SECONDS)
 
