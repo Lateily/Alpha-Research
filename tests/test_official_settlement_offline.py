@@ -108,6 +108,17 @@ class SettlementTest(unittest.TestCase):
         self.assertEqual(official.SETTLEMENT_ATTEMPTS, 6)
         self.assertEqual(official.SETTLEMENT_RETRY_SECONDS, 60)
 
+    def test_actual_nightly_runner_consumes_the_shared_timeout(self):
+        """预算比较的必须是真实 subprocess timeout,不能是 producer 内的镜像常量。"""
+        completed = Mock(returncode=0, stdout="", stderr="")
+        with patch.object(nightly.subprocess, "run", return_value=completed) as run:
+            self.assertEqual((0, ""), nightly._subprocess_runner(["python3", "fixture.py"]))
+        self.assertEqual(600, official.NIGHTLY_STEP_TIMEOUT_SECONDS)
+        self.assertEqual(
+            official.NIGHTLY_STEP_TIMEOUT_SECONDS,
+            run.call_args.kwargs["timeout"],
+        )
+
     def test_budget_exhaustion_stops_before_attempt_cap(self):
         """墙钟预算先于次数上限收口时,必须停在预算处并写明原因,不得继续重试。"""
         ticks = iter([0.0, 200.0, 400.0, 600.0, 800.0, 1000.0, 1200.0, 1400.0])

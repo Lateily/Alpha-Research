@@ -26,6 +26,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import fund_source as fs            # noqa: E402
 import execution_tracker as et     # noqa: E402
+from nightly_limits import NIGHTLY_STEP_TIMEOUT_SECONDS  # noqa: E402
 
 # ⚠ 语义区分(2026-08-01 审计 BLOCKER 修复):
 #   OBSERVE_LIST = 每日扫描的观察universe(产生 ticker_gates 与 paper 观察信号);
@@ -82,7 +83,6 @@ INDICES = [("000001.SH", "sh"), ("399001.SZ", "sz"), ("399006.SZ", "cyb")]
 SETTLEMENT_ATTEMPTS = 6
 SETTLEMENT_RETRY_SECONDS = 60
 SETTLEMENT_WAIT_BUDGET_SECONDS = 420
-NIGHTLY_STEP_TIMEOUT_SECONDS = 600      # 镜像 run_nightly.py 的 subprocess timeout
 SETTLEMENT_BUDGET_MARGIN_SECONDS = 120  # 留给最后一次 build 与写盘
 
 if (SETTLEMENT_WAIT_BUDGET_SECONDS + SETTLEMENT_BUDGET_MARGIN_SECONDS
