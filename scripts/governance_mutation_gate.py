@@ -5404,6 +5404,16 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="os.path.isdir follows symlinks; a link out of the observation area borrows someone else's bundle.",
     ),
     MutationCase(
+        mutation_id="NIGHTLY_ACCEPTANCE_SCHEDULE",
+        component="Nightly production acceptance",
+        source_path="experiments/execution_tracker/nightly_acceptance.py",
+        test_script="tests/test_nightly_acceptance_offline.py",
+        before="NIGHTLY_SCHEDULE_HOUR_MINUTE = (20, 30)",
+        after="NIGHTLY_SCHEDULE_HOUR_MINUTE = (16, 35)",
+        expected_failure_marker="test_schedule_expectation_matches_checked_in_template",
+        rationale="The acceptance schedule and the checked-in launchd template must move together.",
+    ),
+    MutationCase(
         mutation_id="NIGHTLY_ACCEPTANCE_ENTRYPOINT",
         component="Nightly production acceptance",
         source_path="experiments/execution_tracker/nightly_acceptance.py",

@@ -37,6 +37,13 @@ LAUNCHD_LAST_EXIT_RE = re.compile(r"^\s*last exit code = (-?\d+)\s*$", re.MULTIL
 LAUNCHD_RUNS_RE = re.compile(r"^\s*runs = (\d+)\s*$", re.MULTILINE)
 
 
+# 夜链班次。2026-09-14 由 16:35 调整为 20:30:16:35 早于东财资金流对部分个股的结算,
+# 2026-09-09/10/11 三夜连续 DATA_BLOCKED。这里的期望值与仓库内 launchd 模板必须一致,
+# 由 tests/test_nightly_acceptance_offline.py 的模板比对用例守住,避免两边各改一边。
+# governance-mutation: NIGHTLY_ACCEPTANCE_SCHEDULE
+NIGHTLY_SCHEDULE_HOUR_MINUTE = (20, 30)
+
+
 class AcceptanceError(RuntimeError):
     pass
 
@@ -132,7 +139,7 @@ def _validate_plist(inputs: Inputs) -> dict:
         (item.get("Weekday"), item.get("Hour"), item.get("Minute"))
         for item in schedule if isinstance(item, dict)
     }
-    expected = {(weekday, 16, 35) for weekday in range(1, 6)}
+    expected = {(weekday, *NIGHTLY_SCHEDULE_HOUR_MINUTE) for weekday in range(1, 6)}
     if normalized != expected:
         raise AcceptanceError(f"launchd schedule mismatch: {sorted(normalized)!r}")
     return {"label": inputs.launchd_label, "program_arguments": expected_args}
