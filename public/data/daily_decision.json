@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-14T06:03:48.509523+00:00",
+  "generated_at": "2026-09-14T15:13:15.140098+00:00",
   "date": "2026-09-14",
   "model_state": "NORMAL_OBSERVATION_MODE",
   "brief_e": "1 Exposure Review | 1 Risk Review",
@@ -13,15 +13,15 @@
         "action": "REVIEW_STOP",
         "priority": "HIGH",
         "confidence": 9,
-        "pnl_pct": -11.43,
+        "pnl_pct": -11.19,
         "holding_days": 166,
         "weight_pct": 3.9,
         "vp_score": 48,
         "confluence": -9,
-        "reason_e": "Position in drawdown -11.4%. Signal: NEUTRAL (score -9). Review thesis — is the wrongIf condition still intact?",
-        "reason_z": "亏损-11.4%，信号评分-9。复核投资逻辑，检查wrongIf条件是否触发。",
+        "reason_e": "Position in drawdown -11.2%. Signal: NEUTRAL (score -9). Review thesis — is the wrongIf condition still intact?",
+        "reason_z": "亏损-11.2%，信号评分-9。复核投资逻辑，检查wrongIf条件是否触发。",
         "entry_target": null,
-        "exit_trigger": "P&L -11.4% ≤ -10.0% → thesis review required",
+        "exit_trigger": "P&L -11.2% ≤ -10.0% → thesis review required",
         "execution_posture": null
       },
       {
@@ -31,13 +31,13 @@
         "action": "REVIEW_TRIM",
         "priority": "MEDIUM",
         "confidence": 6,
-        "pnl_pct": 27.94,
+        "pnl_pct": 28.13,
         "holding_days": 188,
         "weight_pct": 49.9,
         "vp_score": 48,
         "confluence": 6,
-        "reason_e": "Large unrealised gain +27.9% after 188d. Signal still NEUTRAL (score 6). Exposure-review condition (sizable unrealised gain).",
-        "reason_z": "浮盈+27.9%（持有188天），信号6仍属信号中性，等待，敞口复核条件（浮盈较大）。",
+        "reason_e": "Large unrealised gain +28.1% after 188d. Signal still NEUTRAL (score 6). Exposure-review condition (sizable unrealised gain).",
+        "reason_z": "浮盈+28.1%（持有188天），信号6仍属信号中性，等待，敞口复核条件（浮盈较大）。",
         "entry_target": null,
         "exit_trigger": "P&L > 25.0% → exposure-review condition",
         "execution_posture": null
@@ -87,7 +87,7 @@
         "confidence": 0,
         "pnl_pct": 0.0,
         "holding_days": 174,
-        "weight_pct": 15.3,
+        "weight_pct": 15.2,
         "vp_score": null,
         "confluence": 0,
         "reason_e": "Signal neutral (score 0). P&L +0.0% after 174d. Paper-hold — no new review trigger. RSI 56 | Price vs MA20 +2.8%.",
@@ -175,22 +175,10 @@
   "buy_watches": [],
   "portfolio_risk": [
     "⚠️ CONCENTRATION: 300308.SZ (中际旭创) = 50% of portfolio — above 40.0% limit",
-    "PROFIT REVIEW: 300308.SZ +27.9% — exposure-review condition (sizable unrealised gain)",
-    "🔴 DRAWDOWN REVIEW: 002594.SZ -11.4% — review thesis and wrongIf conditions"
+    "PROFIT REVIEW: 300308.SZ +28.1% — exposure-review condition (sizable unrealised gain)",
+    "🔴 DRAWDOWN REVIEW: 002594.SZ -11.2% — review thesis and wrongIf conditions"
   ],
   "wrongif_alerts": [
-    {
-      "ticker": "300308.SZ",
-      "severity": "NONE",
-      "status": "CLEAR",
-      "wrongIf_e": "1.6T mass production delayed beyond Q3 2026 OR NVDA+MSFT+GOOGL stock prices collectively drop >25% from ATH within 1 quarter (hyperscaler CapEx pullback proxy)",
-      "wrongIf_z": "1.6T量产推迟至2026年Q3后，或英伟达/微软/谷歌股价集体较ATH下跌>25%（超大规模CapEx削减代理指标）",
-      "note_e": "✅ Clear: hyperscaler_basket_drawdown_pct = 6.3 (threshold 25.0)",
-      "note_z": "✅ 正常：hyperscaler_basket_drawdown_pct = 6.3（阈值25.0）",
-      "indicator": "hyperscaler_basket_drawdown_pct",
-      "actual": 6.3,
-      "threshold": 25.0
-    },
     {
       "ticker": "002594.SZ",
       "severity": "LOW",
@@ -202,6 +190,18 @@
       "indicator": "revenue_growth",
       "actual": null,
       "threshold": null
+    },
+    {
+      "ticker": "300308.SZ",
+      "severity": "NONE",
+      "status": "CLEAR",
+      "wrongIf_e": "1.6T mass production delayed beyond Q3 2026 OR NVDA+MSFT+GOOGL stock prices collectively drop >25% from ATH within 1 quarter (hyperscaler CapEx pullback proxy)",
+      "wrongIf_z": "1.6T量产推迟至2026年Q3后，或英伟达/微软/谷歌股价集体较ATH下跌>25%（超大规模CapEx削减代理指标）",
+      "note_e": "✅ Clear: hyperscaler_basket_drawdown_pct = 6.3 (threshold 25.0)",
+      "note_z": "✅ 正常：hyperscaler_basket_drawdown_pct = 6.3（阈值25.0）",
+      "indicator": "hyperscaler_basket_drawdown_pct",
+      "actual": 6.3,
+      "threshold": 25.0
     },
     {
       "ticker": "175.HK",
