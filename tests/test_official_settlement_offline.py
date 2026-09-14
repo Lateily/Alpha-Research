@@ -80,7 +80,7 @@ class SettlementTest(unittest.TestCase):
             out = self.run_entry(root)
             self.assertIsNone(out["error"], str(out["error"]))
             self.assertEqual(out["rounds"], 2)
-            self.assertEqual([s for s in out["sleeps"] if s >= 1], [30])
+            self.assertEqual([s for s in out["sleeps"] if s >= 1], [60])
             self.assertEqual(json.loads((root / "run_target.json").read_text())["trade_date"], TODAY)
             self.assertTrue((root / "samples" / (TODAY + ".json")).is_file())
             out["append"].assert_called_once()
@@ -91,10 +91,53 @@ class SettlementTest(unittest.TestCase):
             out = self.run_entry(root, settle_after=99)
             self.assertIsInstance(out["error"], SystemExit)
             self.assertIn("DATA_BLOCKED", str(out["error"]))
-            self.assertEqual(out["rounds"], 3)
-            self.assertEqual([s for s in out["sleeps"] if s >= 1], [30, 30])
+            self.assertEqual(out["rounds"], 6)
+            self.assertEqual([s for s in out["sleeps"] if s >= 1], [60] * 5)
             self.assertEqual(list(root.iterdir()), [])
             out["append"].assert_not_called()
+
+    def test_wait_budget_stays_below_nightly_step_timeout(self):
+        """结算等待必须留在夜链每步 600 秒超时之内,否则 fail-closed 变成 TIMEOUT。"""
+        self.assertGreaterEqual(official.SETTLEMENT_BUDGET_MARGIN_SECONDS, 120)
+        self.assertLessEqual(
+            official.SETTLEMENT_WAIT_BUDGET_SECONDS + official.SETTLEMENT_BUDGET_MARGIN_SECONDS,
+            official.NIGHTLY_STEP_TIMEOUT_SECONDS)
+        self.assertLessEqual(
+            (official.SETTLEMENT_ATTEMPTS - 1) * official.SETTLEMENT_RETRY_SECONDS,
+            official.SETTLEMENT_WAIT_BUDGET_SECONDS)
+        self.assertEqual(official.SETTLEMENT_ATTEMPTS, 6)
+        self.assertEqual(official.SETTLEMENT_RETRY_SECONDS, 60)
+
+    def test_actual_nightly_runner_consumes_the_shared_timeout(self):
+        """预算比较的必须是真实 subprocess timeout,不能是 producer 内的镜像常量。"""
+        completed = Mock(returncode=0, stdout="", stderr="")
+        with patch.object(nightly.subprocess, "run", return_value=completed) as run:
+            self.assertEqual((0, ""), nightly._subprocess_runner(["python3", "fixture.py"]))
+        self.assertEqual(600, official.NIGHTLY_STEP_TIMEOUT_SECONDS)
+        self.assertEqual(
+            official.NIGHTLY_STEP_TIMEOUT_SECONDS,
+            run.call_args.kwargs["timeout"],
+        )
+
+    def test_budget_exhaustion_stops_before_attempt_cap(self):
+        """墙钟预算先于次数上限收口时,必须停在预算处并写明原因,不得继续重试。"""
+        ticks = iter([0.0, 200.0, 400.0, 600.0, 800.0, 1000.0, 1200.0, 1400.0])
+        builds = []
+
+        def always_pending(_token):
+            builds.append(len(builds) + 1)
+            raise official.SettlementDateMismatch(
+                "DATA_BLOCKED: settlement-date mismatch across sources", (PRIOR, TODAY))
+
+        output = io.StringIO()
+        with contextlib.ExitStack() as stack:
+            stack.enter_context(patch.object(official, "build", side_effect=always_pending))
+            stack.enter_context(patch.object(official.time, "sleep", Mock()))
+            stack.enter_context(contextlib.redirect_stdout(output))
+            with self.assertRaises(official.SettlementDateMismatch):
+                official.build_settled("offline-fixture", clock=lambda: next(ticks))
+        self.assertLess(len(builds), 6)
+        self.assertIn("budget_exhausted", output.getvalue())
 
     def test_mismatch_diagnostic_identifies_source_and_ticker(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -119,7 +162,7 @@ class SettlementTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             out = self.run_entry(Path(tmp), regress=True)
             self.assertIsInstance(out["error"], SystemExit)
-            self.assertEqual(out["rounds"], 3)
+            self.assertEqual(out["rounds"], 6)
             self.assertEqual(list(Path(tmp).iterdir()), [])
             out["append"].assert_not_called()
 
