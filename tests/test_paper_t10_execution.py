@@ -52,7 +52,8 @@ def order(**policy_kwargs):
                                  stop_reference=95., take_profit_reference=115.)
     entry.update(shares=1000, max_volume_participation=.01, max_fill_price=101.,
                  slippage_bps=10., execution_mode=fills.EXECUTION_MODEL_VERSION,
-                 sample_eligible=False, deadline_policy=policy(**policy_kwargs))
+                 sample_eligible=False, deadline_policy=policy(**policy_kwargs),
+                 deadline_policy_bound_at="20260820")
     return entry
 
 
@@ -88,6 +89,50 @@ class T10PolicyTests(unittest.TestCase):
         self.assertEqual(deadline.open_sessions(p, after="20260820", through="20260827"),
                          ["20260821", "20260824", "20260827"])
         self.assertEqual(deadline.open_sessions(p)[0], "20260820")
+
+    def test_registration_refuses_a_calendar_that_cannot_reach_the_deadline(self):
+        """日历只覆盖到挂单有效期是不够的:必须能表达最坏情况下的 T+10 到期日。
+
+        只校验挂单窗口时,这张策略会通过注册、正常成交,然后在结算时才抛日历不覆盖,
+        而那个异常会挡住整本账当日的结算。"""
+        import paper_deadline as deadline
+        short = policy(end="20260909")          # 注册日之后只剩 12 个开市日,需要 13 个
+        with self.assertRaises(ValueError):
+            deadline.validate_policy(short, "20260820")
+        deadline.validate_policy(short, None)   # 不给注册日时只校验形状,仍然合法
+        enough = policy(end="20260910")         # 正好 13 个
+        self.assertEqual(deadline.validate_policy(enough, "20260820"), enough)
+
+    def test_policy_cannot_be_bolted_onto_an_order_registered_without_one(self):
+        """按旧规则注册并推进过的挂单,不得事后补挂策略拿到追溯生效的到期日。"""
+        legacy = order()
+        legacy.pop("deadline_policy")
+        legacy.pop("deadline_policy_bound_at")
+        fills._advance(legacy, [bar("20260821", open=90., high=91., low=89., close=90.)],
+                       require_realistic=True)
+        self.assertEqual(legacy["status"], "pending")
+        legacy["deadline_policy"] = policy()
+        with self.assertRaises(ValueError) as caught:
+            advance(legacy, [bar("20260821", open=90., high=91., low=89., close=90.),
+                             bar("20260824")])
+        self.assertIn("retrospectively", str(caught.exception))
+        self.assertNotIn("deadline_state", legacy)
+        self.assertIsNone(legacy.get("pending_expiry_date"))
+
+    def test_binding_stamp_must_exist_and_match_registration(self):
+        """绑定戳只在 register_order 写入;缺失或与注册时间不符都按追溯处理拒绝。"""
+        missing = order()
+        missing.pop("deadline_policy_bound_at")
+        with self.assertRaises(ValueError):
+            advance(missing, [bar("20260821")])
+        mismatched = order()
+        mismatched["deadline_policy_bound_at"] = "20260821"
+        with self.assertRaises(ValueError):
+            advance(mismatched, [bar("20260821")])
+        good = order()
+        self.assertEqual(good["deadline_policy_bound_at"], good["registered_at"])
+        advance(good, [bar("20260821")])
+        self.assertIn("deadline_state", good)
 
     def test_every_policy_field_is_explicit_and_exact(self):
         import paper_deadline as deadline
@@ -168,6 +213,29 @@ class T10PolicyTests(unittest.TestCase):
         entry["deadline_policy"] = None
         with self.assertRaises(ValueError):
             advance(entry, [bar("20260821")])
+
+    def test_advance_leaves_the_caller_untouched_when_a_session_raises(self):
+        """原子性:任何中途失败都不得留下推进了一半的订单。
+
+        短日历那条用例现在在校验阶段就被拒(注册必须证明日历能到到期日),
+        深拷贝之后的失败路径因此需要单独覆盖,否则原子性无法被证伪。"""
+        from unittest.mock import patch
+        import paper_deadline as deadline
+        entry = order()
+        before = copy.deepcopy(entry)
+        real_session, calls = deadline._session, []
+
+        def flaky(updated, day, day_bar, breaks, engine):
+            calls.append(day)
+            if len(calls) == 2:
+                raise RuntimeError("injected mid-sequence failure")
+            return real_session(updated, day, day_bar, breaks, engine)
+
+        with patch.object(deadline, "_session", side_effect=flaky):
+            with self.assertRaises(RuntimeError):
+                advance(entry, [bar("20260821"), bar("20260824")])
+        self.assertEqual(len(calls), 2)
+        self.assertEqual(entry, before)
 
     def test_short_future_calendar_cannot_guess_due_or_expiry(self):
         entry = order(end="20260828")
@@ -515,6 +583,7 @@ class T10ExecutionTests(unittest.TestCase):
             for case in ("pending", "filled", "target", "stop", "both", "frozen"):
                 legacy = order()
                 legacy.pop("deadline_policy")
+                legacy.pop("deadline_policy_bound_at", None)
                 direct = copy.deepcopy(legacy)
                 data = [bar("20260821"), bar("20260824")]
                 if case == "pending":

@@ -9410,10 +9410,40 @@ MUTATIONS = MUTATIONS + (
         component="Paper execution opt-in T10 calendar",
         source_path="experiments/execution_tracker/paper_deadline.py",
         test_script="tests/test_paper_t10_execution.py",
-        before="_nth_after(entry[\"deadline_policy\"], entry[\"fill_date\"], 10)",
-        after="_nth_after(entry[\"deadline_policy\"], entry[\"fill_date\"], 9)",
+        before=(
+            '            entry["deadline_due_date"] = _nth_after(\n'
+            '                entry["deadline_policy"], entry["fill_date"],\n'
+            '                entry["deadline_policy"]["holding_sessions"])'
+        ),
+        after=(
+            '            entry["deadline_due_date"] = _nth_after(\n'
+            '                entry["deadline_policy"], entry["fill_date"], 9)'
+        ),
         expected_failure_marker="test_t0_then_ten_exchange_opens_not_calendar_days",
-        rationale="The tenth exchange open after fill is mandatory.",
+        rationale="The due date must read the bound holding window, and the tenth exchange open after fill is mandatory.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_T10_CALENDAR_COVERS_DEADLINE",
+        component="Paper T+10 exchange-calendar execution",
+        source_path="experiments/execution_tracker/paper_deadline.py",
+        test_script="tests/test_paper_t10_execution.py",
+        before=(
+            '        _nth_after(policy, _nth_after(policy, registered_at, pending),\n'
+            '                   policy["holding_sessions"])'
+        ),
+        after="        _nth_after(policy, registered_at, pending)",
+        expected_failure_marker="test_registration_refuses_a_calendar_that_cannot_reach_the_deadline",
+        rationale="Registration must prove the calendar reaches the worst-case deadline, not only the pending window.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_T10_NO_RETROACTIVE_BINDING",
+        component="Paper T+10 exchange-calendar execution",
+        source_path="experiments/execution_tracker/paper_deadline.py",
+        test_script="tests/test_paper_t10_execution.py",
+        before='          or entry.get("deadline_policy_bound_at") != registered):',
+        after="          or False):",
+        expected_failure_marker="test_binding_stamp_must_exist_and_match_registration",
+        rationale="A policy may only bind at registration; an order advanced under price-only rules must never acquire one.",
     ),
     MutationCase(
         mutation_id="PAPER_T10_CALENDAR_HASH",
@@ -9492,7 +9522,7 @@ MUTATIONS = MUTATIONS + (
         test_script="tests/test_paper_t10_execution.py",
         before="    updated = copy.deepcopy(entry)",
         after="    updated = entry",
-        expected_failure_marker="test_short_future_calendar_cannot_guess_due_or_expiry",
+        expected_failure_marker="test_advance_leaves_the_caller_untouched_when_a_session_raises",
         rationale="Failure cannot leave a partially advanced order.",
     ),
     MutationCase(

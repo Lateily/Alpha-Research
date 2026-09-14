@@ -329,6 +329,7 @@ def register_order(fund, orders, decision_log, *, ticker, name, theme, setup,
     }
     if deadline_policy is not None:
         order["deadline_policy"] = copy.deepcopy(deadline_policy)
+        order["deadline_policy_bound_at"] = registered_at
     orders.append(order)
     decision_log.append({"date": registered_at, "action": "REGISTER_ORDER",
                          "ticker": ticker, "shares": shares, "notional": notional,
