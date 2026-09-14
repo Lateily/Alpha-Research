@@ -78,7 +78,9 @@ class AcceptanceFixture:
                 "ProgramArguments": [str(wrapper), "/usr/bin/python3", str(runner)],
                 "StandardOutPath": str(self.log),
                 "StartCalendarInterval": [
-                    {"Weekday": weekday, "Hour": 16, "Minute": 35}
+                    {"Weekday": weekday,
+                     "Hour": acceptance.NIGHTLY_SCHEDULE_HOUR_MINUTE[0],
+                     "Minute": acceptance.NIGHTLY_SCHEDULE_HOUR_MINUTE[1]}
                     for weekday in range(1, 6)
                 ],
             }, fh)
@@ -105,6 +107,19 @@ class AcceptanceFixture:
 
 
 class NightlyAcceptanceTests(unittest.TestCase):
+    def test_schedule_expectation_matches_checked_in_template(self):
+        """验收的期望班次必须与仓库内 launchd 模板一致,否则改了一边另一边会静默漂移。"""
+        import plistlib as _plistlib
+        template = (REPO_ROOT / "experiments" / "execution_tracker" / "launchd"
+                    / "com.ar.nightly.plist.template")
+        payload = _plistlib.loads(template.read_bytes())
+        slots = {(item["Hour"], item["Minute"])
+                 for item in payload["StartCalendarInterval"]}
+        self.assertEqual(slots, {acceptance.NIGHTLY_SCHEDULE_HOUR_MINUTE})
+        self.assertEqual(
+            {item["Weekday"] for item in payload["StartCalendarInterval"]},
+            set(range(1, 6)))
+
     def test_clean_scheduled_run_produces_pass_receipt(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             fixture = AcceptanceFixture(Path(tmp))
