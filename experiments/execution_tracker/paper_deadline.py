@@ -127,7 +127,12 @@ def validate_policy(policy, registered_at=None):
         _in_range(policy, registered_at)
         if calendar["as_of"] > registered_at:
             raise ValueError("calendar as_of must not follow registered_at")
-        _nth_after(policy, registered_at, pending)
+        # 覆盖必须证明到最坏情况的到期日,而不只是挂单有效期。只证明前者的话,
+        # 一张日历尾部注册的订单会通过注册、正常成交,然后在结算时才抛"日历不覆盖",
+        # 而那个异常会沿 _recorded_process_day 上抛,挡住整本账的当日结算。
+        # governance-mutation: PAPER_T10_CALENDAR_COVERS_DEADLINE
+        _nth_after(policy, _nth_after(policy, registered_at, pending),
+                   policy["holding_sessions"])
     return policy
 
 
@@ -222,7 +227,9 @@ def _session(entry, day, bar, price_chain_breaks, engine):
         else:
             engine._advance_price(entry, [bar], require_realistic=True)
         if entry["status"] == "filled":
-            entry["deadline_due_date"] = _nth_after(entry["deadline_policy"], entry["fill_date"], 10)
+            entry["deadline_due_date"] = _nth_after(
+                entry["deadline_policy"], entry["fill_date"],
+                entry["deadline_policy"]["holding_sessions"])
         elif day >= entry["pending_expiry_date"]:
             entry["status"] = "expired"
             entry["expiry_date"] = day
@@ -285,7 +292,14 @@ def advance(entry, bars, *, require_realistic=False, settlement_as_of=None):
         for evidence in previous["session_evidence"]:
             if evidence["bar_hash"] != bar_hashes.get(evidence["date"]):
                 raise ValueError("processed session history/evidence changed")
-    elif entry["status"] != "pending" or entry.get("fill_date") is not None or entry.get("deadline_attempts"):
+    elif (entry["status"] != "pending" or entry.get("fill_date") is not None
+          or entry.get("deadline_attempts") or entry.get("execution_blocks")
+          or entry.get("last_execution_blocker")
+          # 绑定戳只在 register_order 写入。少了它,或者它与注册时间不符,说明这张
+          # 订单不是带着策略注册的:一张已按价格规则推进过的挂单不得事后补挂策略,
+          # 否则会拿到按原始注册时间倒推的挂单有效期与 T+10 到期日。
+          # governance-mutation: PAPER_T10_NO_RETROACTIVE_BINDING
+          or entry.get("deadline_policy_bound_at") != registered):
         raise ValueError("deadline policy cannot be applied retrospectively")
 
     updated = copy.deepcopy(entry)
