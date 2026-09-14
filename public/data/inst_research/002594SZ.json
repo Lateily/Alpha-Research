@@ -1,13 +1,55 @@
 {
   "_status": "ok",
   "ticker": "002594.SZ",
-  "fetched_at": "2026-09-11T12:57:53Z",
+  "fetched_at": "2026-09-14T06:00:43Z",
   "api_used": "stk_surv",
   "_attempted_endpoints": [
     "stk_surv"
   ],
   "window_days": 90,
   "surveys": [
+    {
+      "ts_code": "002594.SZ",
+      "name": "比亚迪",
+      "surv_date": "20260910",
+      "fund_visitors": "研究员 任海鑫",
+      "rece_place": "比亚迪六角大楼",
+      "rece_mode": "电话会议",
+      "rece_org": "新华资产",
+      "org_type": "保险资产管理公司",
+      "comp_rece": "吴越,常恩铭",
+      "inst_count": 2,
+      "surv_type": "电话会议",
+      "description": null
+    },
+    {
+      "ts_code": "002594.SZ",
+      "name": "比亚迪",
+      "surv_date": "20260910",
+      "fund_visitors": "分析师 张觉尹",
+      "rece_place": "比亚迪六角大楼",
+      "rece_mode": "电话会议",
+      "rece_org": "国泰海通证券",
+      "org_type": "证券公司",
+      "comp_rece": "吴越",
+      "inst_count": 2,
+      "surv_type": "电话会议",
+      "description": null
+    },
+    {
+      "ts_code": "002594.SZ",
+      "name": "比亚迪",
+      "surv_date": "20260910",
+      "fund_visitors": "Analyst Amit Pansari,Analyst Aayush Bohra",
+      "rece_place": "比亚迪六角大楼",
+      "rece_mode": "电话会议",
+      "rece_org": "DE Shaw",
+      "org_type": "--",
+      "comp_rece": "吴越,常恩铭",
+      "inst_count": 3,
+      "surv_type": "电话会议",
+      "description": null
+    },
     {
       "ts_code": "002594.SZ",
       "name": "比亚迪",
@@ -514,9 +556,9 @@
     }
   ],
   "summary": {
-    "total_30d": 31,
-    "total_90d": 36,
-    "unique_inst_30d": 89,
-    "latest_date": "2026-09-09"
+    "total_30d": 34,
+    "total_90d": 39,
+    "unique_inst_30d": 95,
+    "latest_date": "2026-09-10"
   }
 }
