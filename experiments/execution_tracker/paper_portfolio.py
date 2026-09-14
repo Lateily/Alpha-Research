@@ -255,7 +255,34 @@ def _participation_ok(entry, bar):
     return float(shares) <= float(bar["volume_shares"]) * float(cap)
 
 
-def _advance(entry, bars, *, require_realistic=False):
+def _close_position(entry, b, px, reason, *, require_realistic):
+    """Shared price/deadline exit accounting; fund settlement owns fees and cash."""
+    entry["exit_date"] = b["date"]
+    entry["exit_price"] = round(px, 4)
+    entry["exit_reason"] = reason
+    entry["exit_execution_quality"] = (
+        EXECUTION_MODEL_VERSION if require_realistic else "LEGACY_DAILY_BAR"
+    )
+    entry["status"] = "closed"
+    entry["paper_return"] = round(px / entry["fill_price"] - 1.0, 4)
+    entry["realized_R"] = round(
+        (px - entry["fill_price"]) / (entry["fill_price"] - entry["stop_reference"]), 3)
+
+
+def _advance(entry, bars, *, require_realistic=False, settlement_as_of=None):
+    """Only explicitly policy-bound entries opt into the exchange-session clock."""
+    if "deadline_policy" in entry:
+        import paper_deadline
+        return paper_deadline.advance(
+            entry, bars, require_realistic=require_realistic,
+            settlement_as_of=settlement_as_of,
+        )
+    if "deadline_state" in entry or "deadline_attempts" in entry:
+        raise ValueError("bound deadline policy cannot be removed")
+    return _advance_price(entry, bars, require_realistic=require_realistic)
+
+
+def _advance_price(entry, bars, *, require_realistic=False):
     """Advance one entry through pending->filled->closed. Returns True if state changed.
 
     NO LOOK-AHEAD: only bars STRICTLY AFTER registered_at are eligible to fill;
@@ -351,16 +378,7 @@ def _advance(entry, bars, *, require_realistic=False):
                 reason = "target"
             else:
                 continue
-            entry["exit_date"] = b["date"]
-            entry["exit_price"] = round(px, 4)
-            entry["exit_reason"] = reason
-            entry["exit_execution_quality"] = (
-                EXECUTION_MODEL_VERSION if require_realistic else "LEGACY_DAILY_BAR"
-            )
-            entry["status"] = "closed"
-            entry["paper_return"] = round(px / entry["fill_price"] - 1.0, 4)
-            entry["realized_R"] = round(
-                (px - entry["fill_price"]) / (entry["fill_price"] - entry["stop_reference"]), 3)
+            _close_position(entry, b, px, reason, require_realistic=require_realistic)
             changed = True
             break
     return changed

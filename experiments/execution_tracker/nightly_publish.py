@@ -376,7 +376,8 @@ def _check_paper_settlement(before, after, target, run_id):
                 raise ValueError("receipt bars hash mismatch")
             expected_order, expected_log, replay_fund = copy.deepcopy(old), [], {"cash": 0.0}
             engine.process_day(replay_fund, [expected_order], expected_log, None,
-                               series_fn=lambda *_: copy.deepcopy(bars))
+                               series_fn=lambda *_: copy.deepcopy(bars),
+                               settlement_as_of=receipt["recording"]["target_trade_date"])
             expected_order.pop("settlement_receipt", None)
             actual_order = {k: v for k, v in order.items() if k != "settlement_receipt"}
             if engine.settlement_hash(expected_order) != engine.settlement_hash(actual_order):
