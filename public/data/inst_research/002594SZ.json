@@ -1,13 +1,27 @@
 {
   "_status": "ok",
   "ticker": "002594.SZ",
-  "fetched_at": "2026-09-15T13:46:15Z",
+  "fetched_at": "2026-09-16T05:52:04Z",
   "api_used": "stk_surv",
   "_attempted_endpoints": [
     "stk_surv"
   ],
   "window_days": 90,
   "surveys": [
+    {
+      "ts_code": "002594.SZ",
+      "name": "比亚迪",
+      "surv_date": "20260915",
+      "fund_visitors": "分析师 Kelvin Lau",
+      "rece_place": "比亚迪六角大楼",
+      "rece_mode": "电话会议",
+      "rece_org": "大和证券",
+      "org_type": "投资公司",
+      "comp_rece": "吴越,常恩铭",
+      "inst_count": 2,
+      "surv_type": "电话会议",
+      "description": null
+    },
     {
       "ts_code": "002594.SZ",
       "name": "比亚迪",
@@ -570,9 +584,9 @@
     }
   ],
   "summary": {
-    "total_30d": 35,
-    "total_90d": 40,
-    "unique_inst_30d": 97,
-    "latest_date": "2026-09-11"
+    "total_30d": 36,
+    "total_90d": 41,
+    "unique_inst_30d": 99,
+    "latest_date": "2026-09-15"
   }
 }
