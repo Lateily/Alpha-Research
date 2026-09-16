@@ -1,69 +1,49 @@
 {
   "ticker": "002594.SZ",
-  "generated_at": "2026-09-15",
-  "price": 85.43,
+  "generated_at": "2026-09-16",
+  "price": 84.3,
   "zone": "BEARISH",
-  "entry_zone": true,
+  "entry_zone": false,
   "exit_zone": true,
   "signals": [
     {
       "type": "DEATH_CROSS",
       "strength": "strong",
-      "date": "20260914",
+      "date": "20260915",
       "bullish": false,
       "description": {
-        "e": "MA20 (88.4) crossed below MA60 (88.9) — bearish trend shift",
-        "z": "MA20(88.4)下穿MA60(88.9)死叉看跌"
-      }
-    },
-    {
-      "type": "RSI_RECOVERING",
-      "strength": "moderate",
-      "date": "20260914",
-      "bullish": true,
-      "description": {
-        "e": "RSI recovering 33.1→39.7 — momentum rebuilding",
-        "z": "RSI从33.1回升至39.7，动能修复"
-      }
-    },
-    {
-      "type": "KDJ_GOLDEN_CROSS",
-      "strength": "strong",
-      "date": "20260914",
-      "bullish": true,
-      "description": {
-        "e": "KDJ K(22.2) crossed above D(16.3) in oversold — reversal signal",
-        "z": "KDJ K(22.2)上穿D(16.3)，超卖区金叉看涨"
+        "e": "MA20 (88.1) crossed below MA60 (88.9) — bearish trend shift",
+        "z": "MA20(88.1)下穿MA60(88.9)死叉看跌"
       }
     }
   ],
   "signal_count": {
-    "bullish": 2,
+    "bullish": 0,
     "bearish": 1,
-    "total": 3
+    "total": 1
   },
   "indicators": {
-    "ma5": 85.08,
-    "ma20": 88.37,
-    "ma60": 88.94,
-    "rsi14": 39.7,
-    "vol_ma20": 269791,
-    "vol_ratio": 1.07,
-    "price_vs_ma20": -3.33,
-    "price_vs_ma60": -3.94,
-    "change_1d": 1.7,
-    "change_5d": -1.25,
-    "change_20d": -4.95,
-    "macd_dif": -1.4182,
-    "macd_dea": -0.8843,
-    "macd_hist": -1.0679,
+    "ma5": 84.63,
+    "ma20": 88.11,
+    "ma60": 88.92,
+    "rsi14": 36.6,
+    "vol_ma20": 269150,
+    "vol_ratio": 0.72,
+    "price_vs_ma20": -4.32,
+    "price_vs_ma60": -5.2,
+    "change_1d": -1.32,
+    "change_5d": -2.62,
+    "change_20d": -5.84,
+    "macd_dif": -1.4955,
+    "macd_dea": -1.0065,
+    "macd_hist": -0.9778,
     "bb_upper": 93.52,
-    "bb_mid": 88.37,
-    "bb_lower": 83.22,
-    "bb_bandwidth": 11.65,
-    "kdj_k": 22.2,
-    "kdj_d": 16.3,
-    "kdj_j": 33.9,
+    "bb_mid": 88.11,
+    "bb_lower": 82.7,
+    "bb_bandwidth": 12.28,
+    "kdj_k": 24.1,
+    "kdj_d": 18.9,
+    "kdj_j": 34.4,
     "cvd_latest": null,
     "cvd_slope_5d": null,
     "cvd_chg_1d": null,
