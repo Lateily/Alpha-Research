@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-16T05:55:24.671835+00:00",
+  "generated_at": "2026-09-16T13:43:22.227643+00:00",
   "date": "2026-09-16",
   "model_state": "NORMAL_OBSERVATION_MODE",
   "brief_e": "1 Exposure Review | 1 Risk Review",
@@ -12,16 +12,16 @@
         "status": "HELD",
         "action": "REVIEW_STOP",
         "priority": "HIGH",
-        "confidence": 13,
-        "pnl_pct": -12.45,
+        "confidence": 0,
+        "pnl_pct": -12.72,
         "holding_days": 168,
         "weight_pct": 3.8,
         "vp_score": 48,
-        "confluence": -13,
-        "reason_e": "Position in drawdown -12.4%. Signal: NEUTRAL (score -13). Review thesis — is the wrongIf condition still intact?",
-        "reason_z": "亏损-12.4%，信号评分-13。复核投资逻辑，检查wrongIf条件是否触发。",
+        "confluence": 0,
+        "reason_e": "Position in drawdown -12.7%. Signal: NEUTRAL (score 0). Review thesis — is the wrongIf condition still intact?",
+        "reason_z": "亏损-12.7%，信号评分0。复核投资逻辑，检查wrongIf条件是否触发。",
         "entry_target": null,
-        "exit_trigger": "P&L -12.4% ≤ -10.0% → thesis review required",
+        "exit_trigger": "P&L -12.7% ≤ -10.0% → thesis review required",
         "execution_posture": null
       },
       {
@@ -31,13 +31,13 @@
         "action": "REVIEW_TRIM",
         "priority": "MEDIUM",
         "confidence": 6,
-        "pnl_pct": 32.65,
+        "pnl_pct": 33.23,
         "holding_days": 190,
-        "weight_pct": 50.8,
+        "weight_pct": 50.9,
         "vp_score": 48,
         "confluence": -6,
-        "reason_e": "Large unrealised gain +32.6% after 190d. Signal still NEUTRAL (score -6). Exposure-review condition (sizable unrealised gain).",
-        "reason_z": "浮盈+32.6%（持有190天），信号-6仍属信号中性，等待，敞口复核条件（浮盈较大）。",
+        "reason_e": "Large unrealised gain +33.2% after 190d. Signal still NEUTRAL (score -6). Exposure-review condition (sizable unrealised gain).",
+        "reason_z": "浮盈+33.2%（持有190天），信号-6仍属信号中性，等待，敞口复核条件（浮盈较大）。",
         "entry_target": null,
         "exit_trigger": "P&L > 25.0% → exposure-review condition",
         "execution_posture": null
@@ -51,7 +51,7 @@
         "confidence": 0,
         "pnl_pct": 0.0,
         "holding_days": 190,
-        "weight_pct": 4.4,
+        "weight_pct": 4.3,
         "vp_score": null,
         "confluence": 0,
         "reason_e": "Signal neutral (score 0). P&L +0.0% after 190d. Paper-hold — no new review trigger. RSI 59 | Price vs MA20 +3.0%.",
@@ -69,7 +69,7 @@
         "confidence": 0,
         "pnl_pct": 0.0,
         "holding_days": 183,
-        "weight_pct": 26.1,
+        "weight_pct": 26.0,
         "vp_score": null,
         "confluence": 0,
         "reason_e": "Signal neutral (score 0). P&L +0.0% after 183d. Paper-hold — no new review trigger. RSI 41 | Price vs MA20 -3.5%.",
@@ -175,8 +175,8 @@
   "buy_watches": [],
   "portfolio_risk": [
     "⚠️ CONCENTRATION: 300308.SZ (中际旭创) = 51% of portfolio — above 40.0% limit",
-    "PROFIT REVIEW: 300308.SZ +32.6% — exposure-review condition (sizable unrealised gain)",
-    "🔴 DRAWDOWN REVIEW: 002594.SZ -12.4% — review thesis and wrongIf conditions"
+    "PROFIT REVIEW: 300308.SZ +33.2% — exposure-review condition (sizable unrealised gain)",
+    "🔴 DRAWDOWN REVIEW: 002594.SZ -12.7% — review thesis and wrongIf conditions"
   ],
   "wrongif_alerts": [
     {
@@ -185,10 +185,10 @@
       "status": "CLEAR",
       "wrongIf_e": "1.6T mass production delayed beyond Q3 2026 OR NVDA+MSFT+GOOGL stock prices collectively drop >25% from ATH within 1 quarter (hyperscaler CapEx pullback proxy)",
       "wrongIf_z": "1.6T量产推迟至2026年Q3后，或英伟达/微软/谷歌股价集体较ATH下跌>25%（超大规模CapEx削减代理指标）",
-      "note_e": "✅ Clear: hyperscaler_basket_drawdown_pct = 6.5 (threshold 25.0)",
-      "note_z": "✅ 正常：hyperscaler_basket_drawdown_pct = 6.5（阈值25.0）",
+      "note_e": "✅ Clear: hyperscaler_basket_drawdown_pct = 6.4 (threshold 25.0)",
+      "note_z": "✅ 正常：hyperscaler_basket_drawdown_pct = 6.4（阈值25.0）",
       "indicator": "hyperscaler_basket_drawdown_pct",
-      "actual": 6.5,
+      "actual": 6.4,
       "threshold": 25.0
     },
     {
