@@ -1,11 +1,11 @@
 {
   "ticker": "603233.SH",
-  "fetched_at": "2026-09-17T05:57:55Z",
+  "fetched_at": "2026-09-17T13:41:24Z",
   "trade_date": "20260917",
   "_status": "ok",
   "api_used": "top_list",
   "days_window": 30,
-  "as_of": "20260916",
+  "as_of": "20260917",
   "appearances": [],
   "summary": {
     "total_appearances": 0,

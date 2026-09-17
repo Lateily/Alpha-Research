@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-17T06:00:31.200992+00:00",
+  "generated_at": "2026-09-17T13:44:53.060691+00:00",
   "date": "2026-09-17",
   "model_state": "NORMAL_OBSERVATION_MODE",
   "brief_e": "1 Exposure Review | 1 Risk Review",
@@ -13,15 +13,15 @@
         "action": "REVIEW_STOP",
         "priority": "HIGH",
         "confidence": 0,
-        "pnl_pct": -13.31,
+        "pnl_pct": -11.67,
         "holding_days": 169,
         "weight_pct": 3.8,
         "vp_score": 48,
         "confluence": 0,
-        "reason_e": "Position in drawdown -13.3%. Signal: NEUTRAL (score 0). Review thesis — is the wrongIf condition still intact?",
-        "reason_z": "亏损-13.3%，信号评分0。复核投资逻辑，检查wrongIf条件是否触发。",
+        "reason_e": "Position in drawdown -11.7%. Signal: NEUTRAL (score 0). Review thesis — is the wrongIf condition still intact?",
+        "reason_z": "亏损-11.7%，信号评分0。复核投资逻辑，检查wrongIf条件是否触发。",
         "entry_target": null,
-        "exit_trigger": "P&L -13.3% ≤ -10.0% → thesis review required",
+        "exit_trigger": "P&L -11.7% ≤ -10.0% → thesis review required",
         "execution_posture": null
       },
       {
@@ -31,13 +31,13 @@
         "action": "REVIEW_TRIM",
         "priority": "MEDIUM",
         "confidence": 12,
-        "pnl_pct": 32.78,
+        "pnl_pct": 31.5,
         "holding_days": 191,
-        "weight_pct": 50.8,
+        "weight_pct": 50.6,
         "vp_score": 48,
         "confluence": 12,
-        "reason_e": "Large unrealised gain +32.8% after 191d. Signal still NEUTRAL (score 12). Exposure-review condition (sizable unrealised gain).",
-        "reason_z": "浮盈+32.8%（持有191天），信号12仍属信号中性，等待，敞口复核条件（浮盈较大）。",
+        "reason_e": "Large unrealised gain +31.5% after 191d. Signal still NEUTRAL (score 12). Exposure-review condition (sizable unrealised gain).",
+        "reason_z": "浮盈+31.5%（持有191天），信号12仍属信号中性，等待，敞口复核条件（浮盈较大）。",
         "entry_target": null,
         "exit_trigger": "P&L > 25.0% → exposure-review condition",
         "execution_posture": null
@@ -69,7 +69,7 @@
         "confidence": 0,
         "pnl_pct": 0.0,
         "holding_days": 184,
-        "weight_pct": 26.1,
+        "weight_pct": 26.2,
         "vp_score": null,
         "confluence": 0,
         "reason_e": "Signal neutral (score 0). P&L +0.0% after 184d. Paper-hold — no new review trigger. RSI 41 | Price vs MA20 -3.5%.",
@@ -87,7 +87,7 @@
         "confidence": 0,
         "pnl_pct": 0.0,
         "holding_days": 177,
-        "weight_pct": 15.0,
+        "weight_pct": 15.1,
         "vp_score": null,
         "confluence": 0,
         "reason_e": "Signal neutral (score 0). P&L +0.0% after 177d. Paper-hold — no new review trigger. RSI 56 | Price vs MA20 +2.8%.",
@@ -175,8 +175,8 @@
   "buy_watches": [],
   "portfolio_risk": [
     "⚠️ CONCENTRATION: 300308.SZ (中际旭创) = 51% of portfolio — above 40.0% limit",
-    "PROFIT REVIEW: 300308.SZ +32.8% — exposure-review condition (sizable unrealised gain)",
-    "🔴 DRAWDOWN REVIEW: 002594.SZ -13.3% — review thesis and wrongIf conditions"
+    "PROFIT REVIEW: 300308.SZ +31.5% — exposure-review condition (sizable unrealised gain)",
+    "🔴 DRAWDOWN REVIEW: 002594.SZ -11.7% — review thesis and wrongIf conditions"
   ],
   "wrongif_alerts": [
     {
@@ -197,10 +197,10 @@
       "status": "CLEAR",
       "wrongIf_e": "1.6T mass production delayed beyond Q3 2026 OR NVDA+MSFT+GOOGL stock prices collectively drop >25% from ATH within 1 quarter (hyperscaler CapEx pullback proxy)",
       "wrongIf_z": "1.6T量产推迟至2026年Q3后，或英伟达/微软/谷歌股价集体较ATH下跌>25%（超大规模CapEx削减代理指标）",
-      "note_e": "✅ Clear: hyperscaler_basket_drawdown_pct = 6.9 (threshold 25.0)",
-      "note_z": "✅ 正常：hyperscaler_basket_drawdown_pct = 6.9（阈值25.0）",
+      "note_e": "✅ Clear: hyperscaler_basket_drawdown_pct = 5.5 (threshold 25.0)",
+      "note_z": "✅ 正常：hyperscaler_basket_drawdown_pct = 5.5（阈值25.0）",
       "indicator": "hyperscaler_basket_drawdown_pct",
-      "actual": 6.9,
+      "actual": 5.5,
       "threshold": 25.0
     },
     {
