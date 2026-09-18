@@ -1,6 +1,6 @@
 {
   "ticker": "603233.SH",
-  "fetched_at": "2026-09-17T13:40:19Z",
+  "fetched_at": "2026-09-18T05:43:53Z",
   "permission_model": "runtime_probe",
   "_status": "partial",
   "data": {
@@ -2134,6 +2134,11 @@
       "rows": [
         {
           "ts_code": "603233.SH",
+          "trade_date": "20260918",
+          "adj_factor": 3.2361
+        },
+        {
+          "ts_code": "603233.SH",
           "trade_date": "20260917",
           "adj_factor": 3.2361
         },
@@ -2453,9 +2458,9 @@
           "adj_factor": 3.1365
         }
       ],
-      "row_count": 64,
+      "row_count": 65,
       "_status": "ok",
-      "as_of": "20260917"
+      "as_of": "20260918"
     },
     "income": {
       "rows": [

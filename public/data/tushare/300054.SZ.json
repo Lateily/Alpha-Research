@@ -1,6 +1,6 @@
 {
   "ticker": "300054.SZ",
-  "fetched_at": "2026-09-17T13:40:50Z",
+  "fetched_at": "2026-09-18T05:44:22Z",
   "permission_model": "runtime_probe",
   "_status": "partial",
   "data": {
@@ -2134,6 +2134,11 @@
       "rows": [
         {
           "ts_code": "300054.SZ",
+          "trade_date": "20260918",
+          "adj_factor": 12.967
+        },
+        {
+          "ts_code": "300054.SZ",
           "trade_date": "20260917",
           "adj_factor": 12.967
         },
@@ -2453,9 +2458,9 @@
           "adj_factor": 12.967
         }
       ],
-      "row_count": 64,
+      "row_count": 65,
       "_status": "ok",
-      "as_of": "20260917"
+      "as_of": "20260918"
     },
     "income": {
       "rows": [
