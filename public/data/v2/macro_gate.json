@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-05T11:23:50Z",
+  "generated_at": "2026-09-18T13:09:32Z",
   "mode": "review_context_only",
   "_contract": "v1 第一版:不预测方向、不改仓位 — 仅作复盘/研究的宏观上下文原料。任何用本文件自动调仓的行为都超出契约。",
   "_status": "OK",
@@ -10,11 +10,11 @@
       "headline": "gdp_yoy",
       "unit": "pct_yoy",
       "_status": "OK",
-      "actual": 5.0,
+      "actual": 4.7,
       "previous": 5.0,
-      "as_of": "2026Q1",
-      "previous_as_of": "2025Q4",
-      "freshness_days": 157
+      "as_of": "2026Q2",
+      "previous_as_of": "2026Q1",
+      "freshness_days": 109
     },
     {
       "endpoint": "cn_cpi",
@@ -22,11 +22,11 @@
       "headline": "nt_yoy",
       "unit": "pct_yoy",
       "_status": "OK",
-      "actual": 1.0,
-      "previous": 1.2,
-      "as_of": "202606",
-      "previous_as_of": "202605",
-      "freshness_days": 65
+      "actual": 0.8,
+      "previous": 0.5,
+      "as_of": "202608",
+      "previous_as_of": "202607",
+      "freshness_days": 48
     },
     {
       "endpoint": "cn_ppi",
@@ -34,11 +34,11 @@
       "headline": "ppi_yoy",
       "unit": "pct_yoy",
       "_status": "OK",
-      "actual": 4.1,
-      "previous": 3.9,
-      "as_of": "202606",
-      "previous_as_of": "202605",
-      "freshness_days": 65
+      "actual": 3.8,
+      "previous": 3.5,
+      "as_of": "202608",
+      "previous_as_of": "202607",
+      "freshness_days": 48
     },
     {
       "endpoint": "cn_pmi",
@@ -46,15 +46,15 @@
       "headline": "PMI010000",
       "unit": "index_50_neutral",
       "_status": "OK",
-      "actual": 49.2,
-      "previous": 50.3,
-      "as_of": "202607",
-      "previous_as_of": "202606",
-      "freshness_days": 35,
+      "actual": 49.8,
+      "previous": 49.2,
+      "as_of": "202608",
+      "previous_as_of": "202607",
+      "freshness_days": 48,
       "detail": {
-        "制造业PMI": 49.2,
+        "制造业PMI": 49.8,
         "非制造业PMI": 49.0,
-        "综合PMI": 49.3
+        "综合PMI": 49.5
       }
     },
     {
@@ -63,14 +63,14 @@
       "headline": "1w",
       "unit": "pct_annual",
       "_status": "OK",
-      "actual": 1.377,
-      "previous": 1.388,
-      "as_of": "20260805",
-      "previous_as_of": "20260804",
+      "actual": 1.462,
+      "previous": 1.45,
+      "as_of": "20260918",
+      "previous_as_of": "20260917",
       "freshness_days": 0,
       "detail": {
-        "on": 1.3604,
-        "1w": 1.377,
+        "on": 1.417,
+        "1w": 1.462,
         "3m": 1.43,
         "1y": 1.48
       }
@@ -81,14 +81,14 @@
       "headline": "2s10s",
       "unit": "pct_points",
       "_status": "OK",
-      "actual": 0.43,
-      "previous": 0.45,
-      "as_of": "20260804",
-      "previous_as_of": "20260803",
+      "actual": 0.27,
+      "previous": 0.27,
+      "as_of": "20260917",
+      "previous_as_of": "20260916",
       "freshness_days": 1,
       "detail": {
-        "y2": 4.2,
-        "y10": 4.63
+        "y2": 4.67,
+        "y10": 4.94
       }
     }
   ],
