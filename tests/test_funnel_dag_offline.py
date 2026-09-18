@@ -14,11 +14,15 @@ from __future__ import annotations
 
 import json
 import os
+import signal
 import shutil
 import sys
 import tempfile
+import time
 import unittest
+from functools import partial
 from pathlib import Path
+from unittest import mock
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "tests"))
@@ -35,6 +39,203 @@ from funnel_pipeline import FunnelError  # noqa: E402
 
 RUN_ID = "20260817_163500_1786000000000000000_dag00001"
 TARGET = closure.TRADE_DATE
+
+
+def timed_battery_fixture(tk, today, *, delays=None, error=False, crash=False):
+    """Spawn-safe fake transport; never reads a token or makes a network call."""
+    if crash:
+        os._exit(7)
+    if error:
+        raise RuntimeError("fixture-secret-must-not-appear")
+    # Python 3.9/macOS monotonic epochs differ between spawned processes.
+    # This fixture compares overlaps only; runtime deadlines stay parent-local.
+    started = time.time()
+    time.sleep((delays or {}).get(tk, 0.0))
+    row = complete_row(tk, today)
+    row["fixture_interval"] = [started, time.time()]
+    return row
+
+
+def termination_battery_fixture(directory, code, target):
+    root = Path(directory)
+    (root / (code + ".pid")).write_text(str(os.getpid()))
+    if code == "slow":
+        def keep_running(_signum, _frame):
+            (root / "termination-requested").write_text("yes")
+        signal.signal(signal.SIGTERM, keep_running)
+        time.sleep(30)
+    elif code == "peer":
+        while not (root / "termination-requested").exists():
+            time.sleep(0.005)
+    elif code == "orphan":
+        time.sleep(30)
+    return complete_row(code, target)
+
+
+def collector_signal_fixture(directory):
+    import test_funnel_dag_offline as fixtures
+    dag.collect_rows(["orphan"], TARGET,
+                     partial(fixtures.termination_battery_fixture, directory),
+                     max_workers=1, row_seconds=10, budget_seconds=20)
+
+
+class BoundedCollectionTests(unittest.TestCase):
+    def collect(self, codes, *, delays=None, **kwargs):
+        self.assertTrue(callable(getattr(dag, "collect_rows", None)),
+                        "bounded candidate collector is missing")
+        import test_funnel_dag_offline as fixtures
+        worker = kwargs.pop("worker", partial(fixtures.timed_battery_fixture, delays=delays))
+        return dag.collect_rows(codes, TARGET, worker, **kwargs)
+
+    def test_collection_is_parallel_bounded_and_keeps_manifest_order(self):
+        codes = ["000003.SZ", "000001.SZ", "000004.SZ", "000002.SZ"]
+        outcomes = self.collect(codes, delays=dict.fromkeys(codes, 0.4), max_workers=2,
+                                budget_seconds=8, row_seconds=4)
+        self.assertEqual(codes, [o["ts_code"] for o in outcomes])
+        self.assertTrue(all(o["reason"] is None for o in outcomes), outcomes)
+        intervals = [o["row"]["fixture_interval"] for o in outcomes]
+        peak = max(sum(a <= t < b for a, b in intervals) for t, _ in intervals)
+        self.assertEqual(2, peak, "serial execution or unbounded fan-out is a regression")
+
+    def test_row_timeout_preserves_fast_rows_and_reaps_workers(self):
+        import multiprocessing
+        before = {p.pid for p in multiprocessing.active_children()}
+        codes = ["slow", "fast", "next"]
+        start = time.monotonic()
+        outcomes = self.collect(codes, delays={"slow": 3}, max_workers=2,
+                                row_seconds=1.2, budget_seconds=6)
+        self.assertEqual("CANDIDATE_TIMEOUT", outcomes[0]["reason"])
+        self.assertIsNone(outcomes[1]["reason"])
+        self.assertIsNone(outcomes[2]["reason"])
+        self.assertLess(time.monotonic() - start, 2.8)
+        self.assertEqual(before, {p.pid for p in multiprocessing.active_children()})
+
+    def test_batch_deadline_blocks_unfinished_and_unstarted_without_losing_rows(self):
+        import multiprocessing
+        before = {p.pid for p in multiprocessing.active_children()}
+        codes = ["fast", "slow"] + [f"unstarted-{i}" for i in range(198)]
+        outcomes = self.collect(codes, delays={"slow": 3}, max_workers=1,
+                                row_seconds=4, budget_seconds=1.2)
+        self.assertEqual(codes, [o["ts_code"] for o in outcomes])
+        self.assertIsNone(outcomes[0]["reason"])
+        self.assertEqual(["BATCH_TIMEOUT"] + ["BATCH_NOT_STARTED"] * 198,
+                         [o["reason"] for o in outcomes[1:]])
+        self.assertTrue(all(o["row"] is None for o in outcomes[1:]))
+        try:
+            self.assertEqual(before, {p.pid for p in multiprocessing.active_children()})
+        finally:
+            # A cleanup mutation must fail without leaving its probe running.
+            for process in multiprocessing.active_children():
+                if process.pid not in before:
+                    process.terminate()
+                    process.join(1)
+
+    def test_worker_failure_is_explicit_and_does_not_leak_exception_text(self):
+        import test_funnel_dag_offline as fixtures
+        outcomes = self.collect(["A"], worker=partial(fixtures.timed_battery_fixture, error=True),
+                                row_seconds=4, budget_seconds=8)
+        self.assertEqual("PROVIDER_ERROR:RuntimeError", outcomes[0]["reason"])
+        self.assertNotIn("fixture-secret", json.dumps(outcomes))
+
+    def test_batch_budget_is_a_wall_clock_bound_not_only_a_loop_check(self):
+        started = time.monotonic()
+        outcomes = self.collect(["slow"], delays={"slow": 3}, max_workers=1,
+                                row_seconds=4, budget_seconds=0.25)
+        self.assertEqual("BATCH_TIMEOUT", outcomes[0]["reason"])
+        self.assertLess(time.monotonic() - started, 1.5)
+
+    def test_crashed_worker_does_not_silently_drop_a_candidate(self):
+        import test_funnel_dag_offline as fixtures
+        outcomes = self.collect(["A"], worker=partial(fixtures.timed_battery_fixture, crash=True),
+                                row_seconds=4, budget_seconds=8)
+        self.assertEqual("WORKER_EXIT", outcomes[0]["reason"])
+        self.assertIsNone(outcomes[0]["row"])
+
+    def test_limits_cannot_expand_to_the_outer_nightly_deadline(self):
+        for kwargs in ({"max_workers": 5}, {"max_workers": True},
+                       {"budget_seconds": 600}, {"budget_seconds": float("nan")},
+                       {"row_seconds": 0}, {"row_seconds": 46}):
+            with self.subTest(kwargs=kwargs), self.assertRaises(ValueError):
+                self.collect([], **kwargs)
+
+    def test_spawned_real_provider_respects_offline_guard(self):
+        with mock.patch.dict(os.environ, {"AR_OFFLINE": "1", "TUSHARE_TOKEN": "fixture-only"}):
+            provider, why = dag._battery_provider()
+            self.assertIsNotNone(provider, why)
+            rows = self.collect(["000001.SZ"], worker=provider, row_seconds=5, budget_seconds=8)
+        self.assertIsNone(rows[0]["reason"], rows)
+        dims = rows[0]["row"]["dims"]
+        self.assertEqual(set(fp.BATTERY_DIMENSIONS), set(dims))
+        self.assertTrue(all(dim.get("status") == "DATA_BLOCKED" for dim in dims.values()), dims)
+
+    def test_callback_failure_reaps_other_active_workers(self):
+        import multiprocessing
+        before = {p.pid for p in multiprocessing.active_children()}
+
+        def refuse(_outcome):
+            raise RuntimeError("fixture callback refused")
+
+        try:
+            with self.assertRaisesRegex(RuntimeError, "fixture callback refused"):
+                self.collect(["fast", "slow"], delays={"slow": 3}, max_workers=2,
+                             row_seconds=4, budget_seconds=6, progress=refuse)
+            self.assertEqual(before, {p.pid for p in multiprocessing.active_children()})
+        finally:
+            for process in multiprocessing.active_children():
+                if process.pid not in before:
+                    process.terminate()
+                    process.join(1)
+
+    def test_slow_worker_cleanup_does_not_discard_a_completed_peer(self):
+        import test_funnel_dag_offline as fixtures
+        with tempfile.TemporaryDirectory() as tmp:
+            outcomes = self.collect(
+                ["slow", "early", "peer"], max_workers=2, row_seconds=2,
+                budget_seconds=2.15,
+                worker=partial(fixtures.termination_battery_fixture, tmp))
+        self.assertEqual("CANDIDATE_TIMEOUT", outcomes[0]["reason"])
+        self.assertIsNone(outcomes[2]["reason"], outcomes)
+        self.assertEqual("peer", outcomes[2]["row"]["ts_code"])
+
+    @unittest.skipUnless(os.name == "posix", "POSIX graceful termination contract")
+    def test_sigterm_reaps_provider_before_collector_exits(self):
+        import multiprocessing
+        import test_funnel_dag_offline as fixtures
+        with tempfile.TemporaryDirectory() as tmp:
+            collector = multiprocessing.get_context("spawn").Process(
+                target=fixtures.collector_signal_fixture, args=(tmp,))
+            worker_pid = None
+            try:
+                collector.start()
+                marker = Path(tmp) / "orphan.pid"
+                deadline = time.monotonic() + 5
+                while time.monotonic() < deadline:
+                    if marker.exists() and marker.read_text().strip():
+                        worker_pid = int(marker.read_text())
+                        break
+                    time.sleep(0.02)
+                self.assertIsNotNone(worker_pid, "provider did not start")
+                collector.terminate()
+                collector.join(3)
+                self.assertFalse(collector.is_alive(), "collector failed to stop")
+                self.assertNotEqual(0, collector.exitcode)
+                with self.assertRaises(ProcessLookupError, msg="provider orphaned after SIGTERM"):
+                    os.kill(worker_pid, 0)
+            finally:
+                if collector.is_alive():
+                    collector.kill()
+                    collector.join(1)
+                if worker_pid is not None:
+                    try:
+                        os.kill(worker_pid, signal.SIGKILL)
+                    except ProcessLookupError:
+                        pass
+                collector.close()
+
+    def test_signal_handler_is_restored_after_collection(self):
+        before = signal.getsignal(signal.SIGTERM)
+        self.assertEqual([], self.collect([]))
+        self.assertEqual(before, signal.getsignal(signal.SIGTERM))
 
 
 def write_json(path: Path, payload) -> None:
@@ -409,6 +610,56 @@ class FinalizeEndToEndTests(unittest.TestCase):
                 receipt = json.loads((pv / f"funnel_stage_{stage}.json").read_text("utf-8"))
                 self.assertEqual(RUN_ID, receipt["run_id"])
                 self.assertEqual(TARGET, receipt["as_of"])
+
+    def test_bounded_collection_reaches_persistent_bundle_and_ready_pool(self) -> None:
+        import test_funnel_dag_offline as fixtures
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            pv, obs = self._run_stages(root, "candidates")
+            bundle = obs / TARGET / RUN_ID
+            manifest = json.loads((bundle / "candidate_manifest.json").read_text())
+            codes = manifest["ts_codes"]
+            slow = codes[0]
+            worker = partial(fixtures.timed_battery_fixture, delays={slow: 3})
+            collector = partial(dag.collect_rows, row_seconds=1.2, budget_seconds=8)
+            with mock.patch.dict(os.environ, self._env(root, obs)), \
+                    mock.patch.object(dag, "REPO_ROOT", root), \
+                    mock.patch.object(dag, "_battery_provider", return_value=(worker, "")), \
+                    mock.patch.object(dag, "collect_rows", collector, create=True):
+                self.assertEqual(0, dag.run_battery())
+                self.assertEqual(0, dag.run_finalize())
+            battery = json.loads((bundle / "candidate_battery.json").read_text())
+            self.assertEqual(codes, [r["ts_code"] for r in battery["results"]])
+            self.assertEqual(len(codes), fp.validate_candidate_battery(battery, manifest)["observed"])
+            self.assertEqual("DATA_BLOCKED", battery["results"][0]["dims"]["行情"].get("status"))
+            self.assertEqual("CANDIDATE_TIMEOUT", battery["results"][0]["dims"]["行情"]["err"])
+            self.assertTrue(all(r["completeness"]["verdict"] == "COMPLETE"
+                                for r in battery["results"][1:]))
+            queue = json.loads((bundle / "deep_research_queue.json").read_text())
+            self.assertFalse(next(r for r in queue["ready_pool"] if r["ts_code"] == slow)["ready"])
+            health = json.loads((pv / "funnel_health.json").read_text())
+            self.assertEqual(1, health["battery_coverage"]["data_blocked_rows"])
+            self.assertNotEqual("COMPLETE", health["status"])
+            durable = root / "data_history/funnel" / TARGET / RUN_ID
+            durable.parent.mkdir(parents=True)
+            shutil.copytree(bundle, durable)
+            nightly._verify_funnel_bundle(health, str(root), str(pv / "funnel_health.json"))
+
+    def test_collector_cannot_bypass_row_identity_validation(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            _pv, obs = self._run_stages(root, "candidates")
+            bundle = obs / TARGET / RUN_ID
+            codes = json.loads((bundle / "candidate_manifest.json").read_text())["ts_codes"]
+            outcomes = [{"ts_code": code, "reason": None, "row": complete_row("WRONG.SZ")}
+                        for code in codes]
+            with mock.patch.dict(os.environ, self._env(root, obs)), \
+                    mock.patch.object(dag, "REPO_ROOT", root), \
+                    mock.patch.object(dag, "_battery_provider", return_value=(complete_row, "")), \
+                    mock.patch.object(dag, "collect_rows", return_value=outcomes, create=True):
+                with self.assertRaisesRegex(FunnelError, "when asked for"):
+                    dag.run_battery()
+            self.assertFalse((bundle / "stage_battery.json").exists())
 
     def test_final_bundle_pins_candidate_manifest_and_battery_bytes(self) -> None:
         self.assertEqual(
