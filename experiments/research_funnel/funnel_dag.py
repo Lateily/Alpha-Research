@@ -25,11 +25,17 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
+import multiprocessing
 import os
 import shutil
+import signal
 import sys
 import tempfile
+import time
+from contextlib import contextmanager
 from datetime import datetime, timezone
+from functools import partial
 from pathlib import Path
 from typing import Any, Callable
 
@@ -239,6 +245,154 @@ def run_candidates() -> int:
 
 # ── 段 2:candidate_battery(唯一网络步)─────────────────────────────────────
 
+
+MAX_WORKERS = 4
+BATCH_SECONDS = 540.0
+ROW_SECONDS = 45.0
+
+
+def _execute(worker, code, target, output):
+    try:
+        row = worker(code, target)
+        # Serialize in the worker: a non-JSON response is not usable evidence.
+        encoded = json.dumps({"row": row, "reason": None}, allow_nan=False)
+    except Exception as exc:
+        encoded = json.dumps({"row": None, "reason": "PROVIDER_ERROR:" + type(exc).__name__})
+    Path(output).write_text(encoded, encoding="utf-8")
+
+
+def _reap(process):
+    if process.is_alive():
+        process.terminate()
+    process.join(timeout=0.2)
+    if process.is_alive():
+        process.kill()
+        process.join(timeout=1.0)
+    if process.is_alive():
+        raise RuntimeError("BATTERY_WORKER_CLEANUP_FAILED")
+    process.close()
+
+
+@contextmanager
+def _deferred_sigterm():
+    stopping = []
+
+    def request_stop(signum, _frame):
+        # Do not interrupt the gap between Process.start() and registration.
+        stopping.append(signum)
+
+    previous = signal.signal(signal.SIGTERM, request_stop)
+    try:
+        yield stopping
+    finally:
+        signal.signal(signal.SIGTERM, previous)
+
+
+def collect_rows(codes, target, worker, *, max_workers=MAX_WORKERS,
+                 budget_seconds=BATCH_SECONDS, row_seconds=ROW_SECONDS,
+                 progress=None):
+    """Return exactly one outcome per candidate, in original manifest order.
+
+    A completion is accepted only before both monotonic deadlines. Worker
+    output is read after process exit, so partially written JSON is never
+    consumed while a worker is still writing. Temporary results are not cache.
+    """
+    if type(max_workers) is not int or not 1 <= max_workers <= MAX_WORKERS:
+        raise ValueError("BATTERY_WORKER_LIMIT")
+    for value, ceiling in ((budget_seconds, BATCH_SECONDS), (row_seconds, ROW_SECONDS)):
+        if (isinstance(value, bool) or not isinstance(value, (int, float))
+                or not math.isfinite(value) or not 0 < value <= ceiling):
+            raise ValueError("BATTERY_TIME_LIMIT")
+    if len(codes) != len(set(codes)):
+        raise ValueError("BATTERY_DUPLICATE_CANDIDATE")
+    started = time.monotonic()
+    deadline = started + budget_seconds
+    outcomes = [None] * len(codes)
+    active = {}
+    terminating = {}
+    cursor = 0
+    context = multiprocessing.get_context("spawn")
+
+    def finish(index, row, reason, began):
+        outcomes[index] = {"ts_code": codes[index], "row": row, "reason": reason,
+                           "elapsed_seconds": round(time.monotonic() - began, 3)}
+        if progress is not None:
+            progress({k: v for k, v in outcomes[index].items() if k != "row"})
+
+    with _deferred_sigterm() as stopping, \
+            tempfile.TemporaryDirectory(prefix="ar-candidate-battery-") as temporary:
+        try:
+            while active or cursor < len(codes):
+                if stopping:
+                    raise SystemExit(128 + stopping[0])
+                # Deadline precedes dispatch: no new provider call after budget.
+                if time.monotonic() >= deadline:
+                    for index, (_process, began, _output) in active.items():
+                        if outcomes[index] is None:
+                            finish(index, None, "BATCH_TIMEOUT", began)
+                    break
+                while cursor < len(codes) and len(active) < max_workers:
+                    if stopping or time.monotonic() >= deadline:
+                        break
+                    index = cursor
+                    output = str(Path(temporary) / f"{index}.json")
+                    process = context.Process(target=_execute,
+                                              args=(worker, codes[index], target, output))
+                    process.daemon = True
+                    began = time.monotonic()
+                    try:
+                        process.start()
+                    except Exception:
+                        # Configuration/start failures are not provider data gaps.
+                        if process.pid is not None:
+                            _reap(process)
+                        raise RuntimeError("BATTERY_WORKER_START_FAILED") from None
+                    active[index] = (process, began, output)
+                    cursor += 1
+                for index, (process, began, output) in list(active.items()):
+                    now = time.monotonic()
+                    if now >= deadline:
+                        break
+                    if outcomes[index] is not None:
+                        if process.is_alive():
+                            if now - terminating[index] >= 0.2:
+                                process.kill()
+                            continue
+                        _reap(process)
+                        del active[index]
+                        continue
+                    if now - began >= row_seconds:
+                        finish(index, None, "CANDIDATE_TIMEOUT", began)
+                        # Retiring workers still occupy slots; never block peers.
+                        process.terminate()
+                        terminating[index] = now
+                        continue
+                    elif not process.is_alive():
+                        if process.exitcode != 0 or not Path(output).is_file():
+                            finish(index, None, "WORKER_EXIT", began)
+                        else:
+                            payload = json.loads(Path(output).read_text(encoding="utf-8"))
+                            finish(index, payload["row"], payload["reason"], began)
+                    else:
+                        continue
+                    _reap(process)
+                    del active[index]
+                if active:
+                    time.sleep(min(0.02, max(0.0, deadline - time.monotonic())))
+            for index in range(cursor, len(codes)):
+                finish(index, None, "BATCH_NOT_STARTED", started)
+        finally:
+            # Stop all producers before removing their temporary output directory.
+            for process, _began, _output in active.values():
+                if process.is_alive():
+                    process.terminate()
+            for process, _began, _output in active.values():
+                _reap(process)
+    if stopping:
+        raise SystemExit(128 + stopping[0])
+    return outcomes
+
+
 def _blocked_row(tk: str, today: str, why: str) -> dict:
     """数据源整体不可用时的逐票 DATA_BLOCKED 行 —— 六维齐全,每维显式阻断。"""
     dims = {d: {"status": "DATA_BLOCKED", "err": why[:80]} for d in BATTERY_DIMENSIONS}
@@ -266,15 +420,20 @@ def _battery_provider() -> tuple[Callable[[str, str], dict] | None, str]:
         import full_battery  # noqa: WPS433
     except Exception as exc:  # 缺依赖 = 整体不可用
         return None, f"battery provider unavailable: {type(exc).__name__}"
-    try:
-        pro = TushareHTTPS(token)
-    except Exception as exc:
-        return None, f"tushare HTTPS reader failed: {type(exc).__name__}"
+    # Send only the callable and token to spawn, never a mutable SDK client.
+    return partial(_read_battery_row, token), ""
 
-    def one(tk: str, today: str) -> dict:
-        return _sanitize_row(full_battery.battery(pro, tk, today))
 
-    return one, ""
+def _read_battery_row(token: str, tk: str, today: str) -> dict:
+    from tushare_https import TushareHTTPS
+    import full_battery
+    pro = TushareHTTPS(token)
+    return _sanitize_row(full_battery.battery(pro, tk, today))
+
+
+def _collection_progress(outcome: dict) -> None:
+    print(json.dumps({"step": "candidate_battery", "event": "candidate_collected",
+                      **outcome}, ensure_ascii=False), flush=True)
 
 
 def _has_non_finite(value: Any) -> bool:
@@ -324,13 +483,15 @@ def run_battery() -> int:
         provider_state = f"UNAVAILABLE: {why}"
         results = [_blocked_row(tk, target, why) for tk in codes]
     else:
-        for tk in codes:
-            try:
-                row = provider(tk, target)
-            except Exception as exc:  # 单票整只失败也不许缺行
-                row = _blocked_row(tk, target, f"battery raised {type(exc).__name__}")
-            if row.get("ts_code") != tk:
-                raise FunnelError(f"battery returned a row for {row.get('ts_code')} when asked for {tk}")
+        outcomes = collect_rows(codes, target, provider, progress=_collection_progress)
+        if [o["ts_code"] for o in outcomes] != codes:
+            raise FunnelError("battery collector coverage differs from candidate manifest")
+        for outcome in outcomes:
+            tk = outcome["ts_code"]
+            row = (_blocked_row(tk, target, outcome["reason"])
+                   if outcome["reason"] is not None else outcome["row"])
+            if not isinstance(row, dict) or row.get("ts_code") != tk:
+                raise FunnelError(f"battery returned an invalid identity when asked for {tk}")
             results.append(row)
 
     battery = {
