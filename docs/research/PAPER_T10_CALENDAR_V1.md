@@ -58,6 +58,14 @@ partial-fill model and no guaranteed T+10 liquidation. Each attempt binds the
 order, policy, calendar, session and source bar hash (or explicit missing bar).
 No manually fabricated broker fill or real-capital action is produced.
 
+The existing `tighten_stop` API refuses orders containing `deadline_policy`
+before changing the order or decision log, including orders not yet settled.
+The registered stop is part of the frozen execution binding; this version has
+no amendment protocol. Refusal leaves the original terms and subsequent
+settlement usable. Price-only orders retain their existing tighter-only API.
+This does not grant permission to revise a human-approved plan or re-sign an
+existing deadline binding.
+
 Processed evidence is immutable, including a previously missing bar. Late inserts
 or revisions to processed sessions refuse ordinary replay and require a separate
 reviewed correction, not retroactive economic fills. Repeating unchanged input
@@ -91,6 +99,16 @@ attribution. Expiry is a terminal order outcome, not a successful research sampl
 Thesis, valuation, timing, execution and market beta stay separate. A profit does
 not turn a wrong thesis into RIGHT; no residual is advertised as alpha.
 
+The complete publication verifier accepts `pending -> expired` only with a new
+settlement receipt that replays from the original order. A missing or reused
+pending receipt, invented expiry, changed cash, or forged expiry event refuses.
+`expired` remains a known terminal state in later unchanged snapshots and cannot
+return to pending/filled/closed/cancelled; a filled order cannot expire unfilled.
+Persisted expired records are immutable, including their expiry evidence and null P&L.
+Both fund and portfolio summaries expose `n_expired` for deadline portfolios,
+separately from closed/claim-eligible counts. Price-only summary bytes retain
+their existing shape. An expiry never invents a fill, P&L, or a successful sample.
+
 ## Acceptance
 
 Run `tests/test_paper_t10_execution.py` and `tests/test_paper_t10_integration.py`,
@@ -103,5 +121,10 @@ test data only, never authorization for the three human-named research objects.
 Live rollout requires independent review, human approval of the exact concrete
 paper policy, a published calendar with source evidence, production release
 approval and real operational observation. This PR does none of those actions.
+
+The 2026-09-19 two-P1 closeout does not close the independent review's other
+findings: OPEN pricing's use of the later daily low, the broad v1.1 DATA_BLOCKED
+boundary exception, and the frozen assembly's unbound new dependencies/identity
+revision. Those remain explicit follow-ups, not accepted execution capabilities.
 
 Not a buy/sell instruction; research signals, human executes.

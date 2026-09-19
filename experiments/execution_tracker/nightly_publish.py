@@ -85,10 +85,11 @@ APPEND_ONLY_PROTECTED = {
 # 漏一个状态,守卫就从"防篡改"变成"拦正常运行"。
 ORDER_TRANSITIONS = {
     None:        {"pending", "filled", "closed", "cancelled"},
-    "pending":   {"pending", "filled", "closed", "cancelled"},
+    "pending":   {"pending", "filled", "closed", "cancelled", "expired"},
     "filled":    {"filled", "closed"},
     "closed":    {"closed"},                   # 已了结不可复活
     "cancelled": {"cancelled"},                # 已撤单不可复活
+    "expired":   {"expired"},                  # 未成交到期不可复活
 }
 ORDER_IMMUTABLE_ONCE_SET = ("ticker", "shares", "fill_price", "fill_date",
                             "exit_price", "exit_date", "registered_at")
@@ -326,6 +327,9 @@ def _check_orders(before, after):
                         f"状态机需显式补齐,不得默默放行")
         elif now not in ORDER_TRANSITIONS[was]:
             errs.append(f"model_fund/orders.json: 订单 {k} 状态 {was}→{now} 非法迁移")
+        # governance-mutation: PAPER_T10_EXPIRY_TERMINAL
+        if was == "expired" and json.dumps(b, sort_keys=True) != json.dumps(a, sort_keys=True):
+            errs.append(f"model_fund/orders.json: expired order {k} is immutable")
         for f in ORDER_IMMUTABLE_ONCE_SET:
             if b.get(f) not in (None, "") and b.get(f) != a.get(f):
                 errs.append(f"model_fund/orders.json: 订单 {k} 的 {f} 已定值却被改写"
@@ -358,6 +362,10 @@ def _check_paper_settlement(before, after, target, run_id):
             for field in ("fill_date", "exit_date", "execution_freeze_date")
         )
         if receipt is None or (old is not None and receipt == old.get("settlement_receipt")):
+            # An expiry has no fill/exit date or cash delta to prove it happened.
+            # governance-mutation: PAPER_T10_EXPIRY_REQUIRES_RECEIPT
+            if order.get("status") == "expired" and (old is None or old.get("status") != "expired"):
+                errors.append("paper settlement: expiry requires a new verified receipt")
             if historical:
                 errors.append("paper settlement: historical transition lacks receipt")
             continue

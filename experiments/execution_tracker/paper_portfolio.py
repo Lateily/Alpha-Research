@@ -409,7 +409,7 @@ def summarize(portfolio):
     rets = [e["paper_return"] for e in closed]
     rs = [e["realized_R"] for e in closed]
     wins = sum(1 for r in rets if r > 0)
-    return {
+    result = {
         "n_registered": len(portfolio),
         "n_pending": sum(1 for e in portfolio if e["status"] == "pending"),
         "n_open_filled": sum(1 for e in portfolio if e["status"] == "filled"),
@@ -427,6 +427,10 @@ def summarize(portfolio):
             if n < MIN_CLOSED_FOR_CLAIM else
             f"{n} closed — threshold met; still provisional, not validated alpha"),
     }
+    if any("deadline_policy" in e for e in portfolio):
+        # governance-mutation: PAPER_T10_PORTFOLIO_EXPIRY_COUNT
+        result["n_expired"] = sum(1 for e in portfolio if e["status"] == "expired")
+    return result
 
 
 # ---------------------------------------------------------------- selftest ----

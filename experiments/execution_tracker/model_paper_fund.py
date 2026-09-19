@@ -343,6 +343,10 @@ def tighten_stop(orders, decision_log, ticker, new_stop, date, why):
     """Stops move TIGHTER only — loosening is how paper accounts lie to themselves."""
     for o in orders:
         if o["ticker"] == ticker and o["status"] in ("pending", "filled"):
+            # Deadline terms are frozen at registration; no amendment protocol exists.
+            # governance-mutation: PAPER_T10_STOP_AMENDMENT_REFUSED
+            if "deadline_policy" in o:
+                return False, "refused: deadline-bound stop amendment is not supported"
             if new_stop <= o["stop_reference"]:
                 return False, f"refused: new stop {new_stop} not tighter than {o['stop_reference']}"
             o["stop_reference"] = new_stop
@@ -602,7 +606,7 @@ def compute_performance(fund, orders, nav_history):
         peak = max(peak, v)
         max_dd = min(max_dd, v / peak - 1)
     n = len(closed)
-    return {
+    result = {
         "nav": navs[-1], "cum_return": round(navs[-1] / fund["initial_capital"] - 1, 5),
         "max_drawdown": round(max_dd, 5),
         "n_closed": len(closed_all), "n_claim_eligible": n,
@@ -618,6 +622,11 @@ def compute_performance(fund, orders, nav_history):
                                  if n < MIN_CLOSED_FOR_CLAIM else
                                  f"{n} closed — threshold met; still paper, not real-money validated"),
     }
+    # Preserve the price-only summary shape; deadline portfolios add an expiry bucket.
+    if any("deadline_policy" in o for o in orders):
+        # governance-mutation: PAPER_T10_FUND_EXPIRY_COUNT
+        result["n_expired"] = sum(1 for o in orders if o["status"] == "expired")
+    return result
 
 
 def compare_human_shadow(nav_history, human_history):
