@@ -186,6 +186,45 @@ class MutationCase:
 
 MUTATIONS: tuple[MutationCase, ...] = (
     MutationCase(
+        mutation_id="WORKFLOW_SOURCE_CNINFO_SHARED_CATALOG", component="Independent workflow source capture",
+        source_path="experiments/research_workflows/source_capture.py", test_script="tests/test_research_workflow_sources.py",
+        before="        'sh_catalog': 'https://www.cninfo.com.cn/new/data/szse_stock.json',",
+        after="        'sh_catalog': 'https://www.cninfo.com.cn/new/data/sse_stock.json',",
+        expected_failure_marker="test_shanghai_entry_uses_official_shared_catalog_and_column",
+        rationale="Use the official shared directory, not an invented Shanghai filename.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_SOURCE_CNINFO_SH_COLUMN", component="Independent workflow source capture",
+        source_path="experiments/research_workflows/source_capture.py", test_script="tests/test_research_workflow_sources.py",
+        before="                  'column': 'sse' if log.schema == LEGACY_SOURCE_SCHEMA and code.endswith('SH') else 'szse',",
+        after="                  'column': 'sse' if code.endswith('SH') else 'szse',",
+        expected_failure_marker="test_shanghai_entry_uses_official_shared_catalog_and_column",
+        rationale="The official mainland column is szse; Shanghai is selected by plate=sh.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_SOURCE_CNINFO_LEGACY_BINDING", component="Independent workflow source capture",
+        source_path="experiments/research_workflows/source_capture.py", test_script="tests/test_research_workflow_sources.py",
+        before="            self.urls['sh_catalog'] = 'https://www.cninfo.com.cn/new/data/sse_stock.json'",
+        after="            pass",
+        expected_failure_marker="test_old_live_snapshot_replay_preserves_legacy_url_and_query",
+        rationale="Legacy evidence reopens exactly as captured without rewriting historical failure.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_SOURCE_CNINFO_LEGACY_OFFLINE", component="Independent workflow source capture",
+        source_path="experiments/research_workflows/source_capture.py", test_script="tests/test_research_workflow_sources.py",
+        before="        if schema == LEGACY_SOURCE_SCHEMA and (transport is not None or records is None):",
+        after="        if False:",
+        expected_failure_marker="test_legacy_schema_cannot_trigger_transport",
+        rationale="Old endpoint semantics are replay-only, never another live fallback.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_SOURCE_CNINFO_SCHEMA", component="Independent workflow source capture",
+        source_path="experiments/research_workflows/source_capture.py", test_script="tests/test_research_workflow_sources.py",
+        before="        if schema not in (LEGACY_SOURCE_SCHEMA, SOURCE_SCHEMA):", after="        if False:",
+        expected_failure_marker="test_unsupported_source_snapshot_version_is_not_interpreted_as_current",
+        rationale="Unknown receipt versions cannot silently select current endpoint semantics.",
+    ),
+    MutationCase(
         mutation_id="WORKFLOW_SOURCE_ERROR_HTTP", component="Independent workflow source capture",
         source_path="experiments/research_workflows/source_capture.py", test_script="tests/test_research_workflow_sources.py",
         before="        category, status = 'HTTP_ERROR', exc.code", after="        category, status = 'NETWORK_ERROR', None",

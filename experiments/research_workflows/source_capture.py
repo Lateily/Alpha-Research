@@ -34,13 +34,15 @@ CN = timezone(timedelta(hours=8))
 MAX_BYTES = 4 * 1024 * 1024
 MAX_CALLS = 17  # Six price/factor calls, two catalogs, at most nine listing pages.
 MAX_PAGES = 3
+SOURCE_SCHEMA = 'ar.workflow-sources.v2'
+LEGACY_SOURCE_SCHEMA = 'ar.workflow-sources.v1'
 FIELDS = {
     'daily': ('ts_code', 'trade_date', 'open', 'high', 'low', 'close', 'pre_close', 'vol', 'amount'),
     'adj_factor': ('ts_code', 'trade_date', 'adj_factor'),
 }
 URLS = {'daily': 'https://api.tushare.pro', 'adj_factor': 'https://api.tushare.pro',
         'sz_catalog': 'https://www.cninfo.com.cn/new/data/szse_stock.json',
-        'sh_catalog': 'https://www.cninfo.com.cn/new/data/sse_stock.json',
+        'sh_catalog': 'https://www.cninfo.com.cn/new/data/szse_stock.json',
         'announcements': 'https://www.cninfo.com.cn/new/hisAnnouncement/query'}
 ERROR_CATEGORIES = frozenset({'HTTP_ERROR', 'DNS_ERROR', 'TIMEOUT', 'TLS_CERTIFICATE_ERROR',
                              'TLS_ERROR', 'CONNECTION_ERROR', 'INCOMPLETE_RESPONSE',
@@ -177,7 +179,15 @@ class HttpTransport:
 
 
 class ExchangeLog:
-    def __init__(self, transport=None, records=None):
+    def __init__(self, transport=None, records=None, *, schema=SOURCE_SCHEMA):
+        if schema not in (LEGACY_SOURCE_SCHEMA, SOURCE_SCHEMA):
+            raise SourceError('SOURCE_SCHEMA_INVALID')
+        if schema == LEGACY_SOURCE_SCHEMA and (transport is not None or records is None):
+            raise SourceError('LEGACY_SOURCE_REPLAY_ONLY')
+        self.schema = schema
+        self.urls = dict(URLS)
+        if schema == LEGACY_SOURCE_SCHEMA:
+            self.urls['sh_catalog'] = 'https://www.cninfo.com.cn/new/data/sse_stock.json'
         self.transport = transport
         self.records = [] if records is None else records
         self.position = 0
@@ -187,7 +197,7 @@ class ExchangeLog:
     def ask(self, op, params):
         if self.position >= MAX_CALLS:
             raise SourceError('REQUEST_BUDGET_EXHAUSTED')
-        identity = {'operation': op, 'url': URLS[op], 'params': params}
+        identity = {'operation': op, 'url': self.urls[op], 'params': params}
         if self.transport is None:
             if self.position >= len(self.records) or self.records[self.position]['request'] != identity:
                 raise SourceError('EXCHANGE_REQUEST_BINDING_INVALID')
@@ -331,7 +341,8 @@ def announcements(log, code, org, request, checked_at):
     end = datetime.strptime(request['announcement_end'], '%Y%m%d').strftime('%Y-%m-%d')
     for page in range(1, MAX_PAGES + 1):
         params = {'stock': code[:6] + ',' + org, 'tabName': 'fulltext', 'pageSize': 100, 'pageNum': page,
-                  'column': 'szse' if code.endswith('SZ') else 'sse', 'plate': 'sz' if code.endswith('SZ') else 'sh',
+                  'column': 'sse' if log.schema == LEGACY_SOURCE_SCHEMA and code.endswith('SH') else 'szse',
+                  'plate': 'sz' if code.endswith('SZ') else 'sh',
                   'category': '', 'trade': '', 'seDate': start + '~' + end, 'searchkey': '', 'secid': '',
                   'sortName': '', 'sortType': '', 'isHLtitle': 'false'}
         data = log.ask('announcements', params)
@@ -401,7 +412,7 @@ def derive(request, checked_at, log, mode, prior):
         row['change'] = change
         announcement_rows.append(row)
     blocked = any(r['status'] == 'DATA_BLOCKED' for r in price_rows + announcement_rows)
-    return {'schema': 'ar.workflow-sources.v1', 'sample_purpose': 'WORKFLOW_DEBUG', 'source_mode': mode,
+    return {'schema': log.schema, 'sample_purpose': 'WORKFLOW_DEBUG', 'source_mode': mode,
             'request': request, 'checked_at': checked_at, 'subjects': list(CODES),
             'status': 'DATA_BLOCKED' if blocked else 'COLLECTED_FOR_REVIEW',
             'prices': price_rows, 'announcements': announcement_rows, 'human_review': 'PENDING',
@@ -469,7 +480,7 @@ def verify(output):
     records = load((output / 'exchanges.json').read_bytes())
     if receipt['source_mode'] not in {'LIVE_READ_ONLY', 'INJECTED_TRANSPORT_UNVERIFIED'}:
         raise SourceError('SOURCE_MODE_INVALID')
-    log = ExchangeLog(records=records)
+    log = ExchangeLog(records=records, schema=receipt['schema'])
     result = derive(request, receipt['checked_at'], log, receipt['source_mode'], prior)
     if log.position != len(records) or canonical(result) != canonical(receipt) or (output / 'status.md').read_bytes() != report(result):
         raise SourceError('RECEIPT_DIFFERS_FROM_REOPENED_RESPONSES')

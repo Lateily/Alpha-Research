@@ -47,7 +47,7 @@ class Provider:
             data = {'code': 0, 'msg': '', 'data': {'fields': fields, 'items': rows}}
         elif op in ('sz_catalog', 'sh_catalog'):
             data = {'stockList': [{'code': c[:6], 'orgId': 'org' + c[:6], 'zwjc': 'Synthetic'}
-                                  for c in CODES if c.endswith('SZ' if op == 'sz_catalog' else 'SH')]}
+                                  for c in CODES]}
         elif op == 'announcements':
             data = {'totalAnnouncement': 0, 'hasMore': False, 'announcements': []}
         else:
@@ -77,6 +77,88 @@ class SourceTests(unittest.TestCase):
         self.assertEqual(provider.calls, [('sh_catalog', {})])
         self.assertEqual(log.position, 1)
         return log.records[0]
+
+    def test_shanghai_entry_uses_official_shared_catalog_and_column(self):
+        with patch.dict('os.environ', {'AR_OFFLINE': '0'}):
+            transport = sources.HttpTransport(enabled=True)
+        self.assertEqual(transport.request('sh_catalog', {}).full_url,
+                         'https://www.cninfo.com.cn/new/data/szse_stock.json')
+        provider = Provider()
+        _, result = self.capture(provider)
+        self.assertEqual(result['schema'], 'ar.workflow-sources.v2')
+        sh_queries = [p for op, p in provider.calls if op == 'announcements' and p['plate'] == 'sh']
+        self.assertEqual(len(sh_queries), 2)
+        self.assertEqual({p['column'] for p in sh_queries}, {'szse'})
+
+    def test_old_live_snapshot_replay_preserves_legacy_url_and_query(self):
+        out, result = self.capture()
+        records = json.loads((out / 'exchanges.json').read_bytes())
+        for record in records:
+            req = record['request']
+            if req['operation'] == 'sh_catalog':
+                req['url'] = 'https://www.cninfo.com.cn/new/data/sse_stock.json'
+            if req['operation'] == 'announcements' and req['params']['plate'] == 'sh':
+                req['params']['column'] = 'sse'
+        result['schema'] = 'ar.workflow-sources.v1'
+        (out / 'exchanges.json').write_bytes(sources.canonical(records))
+        (out / 'receipt.json').write_bytes(sources.canonical(result))
+        followup._seal_inventory(out)
+        before = {p.name: p.read_bytes() for p in out.iterdir()}
+        try:
+            reopened = sources.verify(out)
+        except sources.SourceError as exc:
+            self.fail('valid legacy snapshot must reopen: ' + str(exc))
+        self.assertEqual(reopened, result)
+        self.assertEqual({p.name: p.read_bytes() for p in out.iterdir()}, before)
+
+    def test_v2_replay_cannot_relabel_old_url_or_exchange_column(self):
+        out, _ = self.capture()
+        original = json.loads((out / 'exchanges.json').read_bytes())
+        for field in ('url', 'column'):
+            records = copy.deepcopy(original)
+            for record in records:
+                req = record['request']
+                if field == 'url' and req['operation'] == 'sh_catalog':
+                    req['url'] = 'https://www.cninfo.com.cn/new/data/sse_stock.json'
+                if field == 'column' and req['operation'] == 'announcements' and req['params']['plate'] == 'sh':
+                    req['params']['column'] = 'sse'
+            (out / 'exchanges.json').write_bytes(sources.canonical(records))
+            followup._seal_inventory(out)
+            with self.subTest(field=field), self.assertRaises(sources.SourceError):
+                sources.verify(out)
+
+    def test_unsupported_source_snapshot_version_is_not_interpreted_as_current(self):
+        out, receipt = self.capture()
+        receipt['schema'] = 'ar.workflow-sources.v999'
+        (out / 'receipt.json').write_bytes(sources.canonical(receipt))
+        followup._seal_inventory(out)
+        with self.assertRaisesRegex(sources.SourceError, 'SOURCE_SCHEMA_INVALID'):
+            sources.verify(out)
+
+    def test_legacy_schema_cannot_trigger_transport(self):
+        provider = Provider()
+        with self.assertRaisesRegex(sources.SourceError, 'LEGACY_SOURCE_REPLAY_ONLY'):
+            sources.ExchangeLog(provider, schema='ar.workflow-sources.v1')
+        self.assertEqual(provider.calls, [])
+
+    def test_shared_catalog_missing_duplicate_or_wrong_org_remains_blocked(self):
+        for variant in ('missing', 'duplicate', 'wrong_org'):
+            def change(op, params, data):
+                if op == 'sh_catalog':
+                    row = next(r for r in data['stockList'] if r['code'] == '600667')
+                    if variant == 'missing':
+                        data['stockList'].remove(row)
+                    elif variant == 'duplicate':
+                        data['stockList'].append(dict(row))
+                    else:
+                        row['orgId'] = 'mismatched-org'
+                if op == 'announcements':
+                    return {'totalAnnouncement': 1, 'hasMore': False,
+                            'announcements': [listing(params['stock'][:6] + '.SH')]}
+                return data
+            with self.subTest(variant=variant):
+                _, result = self.capture(Provider(change), name=variant)
+                self.assertEqual(result['announcements'][1]['status'], 'DATA_BLOCKED')
 
     def test_http_failure_records_status_without_reason_headers_or_body(self):
         error = urllib.error.HTTPError('https://bad.test/secret', 404, 'secret-reason',
