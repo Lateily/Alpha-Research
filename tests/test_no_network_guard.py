@@ -72,6 +72,12 @@ from experiments.research_funnel import u4_pre_decision  # noqa: E402,F401
 import paper_execution_audit  # noqa: E402,F401
 
 # ── 在守卫下跑完整离线套件入口(任何隐藏外呼 → NetworkAttempt 崩溃)──
+import test_research_workflow_sources as workflow_source_tests  # noqa: E402
+workflow_source_result = unittest.TextTestRunner(verbosity=0).run(
+    unittest.defaultTestLoader.loadTestsFromModule(workflow_source_tests)
+)
+assert workflow_source_result.wasSuccessful(), "workflow sources failed under socket guard"
+
 import test_research_workflow_followup as workflow_followup_tests  # noqa: E402
 workflow_followup_result = unittest.TextTestRunner(verbosity=0).run(
     unittest.defaultTestLoader.loadTestsFromModule(workflow_followup_tests)
