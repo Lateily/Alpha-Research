@@ -186,6 +186,43 @@ class MutationCase:
 
 MUTATIONS: tuple[MutationCase, ...] = (
     MutationCase(
+        mutation_id="WORKFLOW_SOURCE_ERROR_HTTP", component="Independent workflow source capture",
+        source_path="experiments/research_workflows/source_capture.py", test_script="tests/test_research_workflow_sources.py",
+        before="        category, status = 'HTTP_ERROR', exc.code", after="        category, status = 'NETWORK_ERROR', None",
+        expected_failure_marker="test_http_failure_records_status_without_reason_headers_or_body",
+        rationale="HTTP status must survive sanitization without storing reason, headers or body.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_SOURCE_ERROR_WRAPPER", component="Independent workflow source capture",
+        source_path="experiments/research_workflows/source_capture.py", test_script="tests/test_research_workflow_sources.py",
+        before="        exc = exc.reason", after="        pass",
+        expected_failure_marker="test_transport_error_categories_are_type_based_and_token_free",
+        rationale="urllib-wrapped TLS, DNS and timeout errors remain distinguishable by type.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_SOURCE_ERROR_REDACTION", component="Independent workflow source capture",
+        source_path="experiments/research_workflows/source_capture.py", test_script="tests/test_research_workflow_sources.py",
+        before="    return {'category': category, 'http_status': status}",
+        after="    return {'category': category, 'http_status': status, 'message': str(exc)}",
+        expected_failure_marker="test_http_failure_records_status_without_reason_headers_or_body",
+        rationale="Exception text must never become a persisted diagnostic field.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_SOURCE_ERROR_CLOSED_FIELDS", component="Independent workflow source capture",
+        source_path="experiments/research_workflows/source_capture.py", test_script="tests/test_research_workflow_sources.py",
+        before="    if not isinstance(value, dict) or set(value) != {'category', 'http_status'}:",
+        after="    if not isinstance(value, dict):",
+        expected_failure_marker="test_replay_rejects_open_ended_or_inconsistent_error_diagnostic",
+        rationale="Reopened diagnostics cannot smuggle free-form fields into source evidence.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_SOURCE_ERROR_REOPEN", component="Independent workflow source capture",
+        source_path="experiments/research_workflows/source_capture.py", test_script="tests/test_research_workflow_sources.py",
+        before="            validate_diagnostic(record)", after="            pass",
+        expected_failure_marker="test_resealed_bad_diagnostic_is_not_swallowed_as_catalog_unavailable",
+        rationale="Validate diagnostics before derivation can turn an invalid record into a routine blocked catalog.",
+    ),
+    MutationCase(
         mutation_id="WORKFLOW_SOURCE_HISTORY_MODE", component="Independent workflow source capture",
         source_path="experiments/research_workflows/source_capture.py", test_script="tests/test_research_workflow_sources.py",
         before="    if prior and prior['source_mode'] != mode:", after="    if False:",

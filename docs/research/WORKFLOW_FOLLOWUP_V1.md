@@ -203,4 +203,22 @@ question or proves a PDF body unchanged. `human_review=PENDING`,
 are invariant. Scheduler/workbench integration and any refreshed research
 response are later work, not implied by successful collection.
 
+### Safe Transport Diagnostics
+
+New failed exchanges retain only `diagnostic.category` (closed vocabulary) and
+`diagnostic.http_status` (100..599 for HTTP errors, otherwise null). Classification
+uses exception types, never provider text. DNS, timeout, certificate/TLS,
+connection, incomplete response, HTTP protocol and policy refusals remain
+distinct. Exception messages, request headers, failed response bodies and
+credentials are not recorded. Unknown failures stay NETWORK_ERROR; do not infer
+a cause from a missing diagnostic on a historical exchange.
+
+Legacy v1 snapshots still replay without inventing diagnostics. New diagnostics
+are validated before source derivation, so malformed metadata cannot be swallowed
+as an ordinary catalog failure. This is typed observation, not cryptographic proof
+of the remote error. A separate approved Shanghai catalog probe makes one request
+to the existing fixed URL, with no token, retries, alternate sources or subsequent
+announcement query; it is not a rerun of the three-subject capture. Its failure
+does not authorize an endpoint change or turn financial thesis UNRESOLVED green.
+
 Not a trading instruction; research signal, human executes.

@@ -1,10 +1,14 @@
 """Synthetic provider fixtures; no market calls or human research verdicts."""
 import copy
 import http.client
+import io
 import json
+import socket
+import ssl
 import sys
 import tempfile
 import unittest
+import urllib.error
 from pathlib import Path
 from unittest.mock import patch
 
@@ -65,12 +69,88 @@ class SourceTests(unittest.TestCase):
         value = sources.capture(request or REQUEST, out, AT, transport=provider or Provider(), previous=previous)
         return out, value
 
+    def failed_exchange(self, error):
+        provider = Provider(lambda op, params, data: error)
+        log = sources.ExchangeLog(provider)
+        with self.assertRaises(sources.SourceError):
+            log.ask('sh_catalog', {})
+        self.assertEqual(provider.calls, [('sh_catalog', {})])
+        self.assertEqual(log.position, 1)
+        return log.records[0]
+
+    def test_http_failure_records_status_without_reason_headers_or_body(self):
+        error = urllib.error.HTTPError('https://bad.test/secret', 404, 'secret-reason',
+                                       {'Secret': 'secret-header'}, io.BytesIO(b'secret-body'))
+        record = self.failed_exchange(error)
+        self.assertEqual(record.get('diagnostic'), {'category': 'HTTP_ERROR', 'http_status': 404})
+        self.assertEqual(record['error'], 'SOURCE_FAILED')
+        self.assertIsNone(record['body'])
+        self.assertIsNone(record['sha256'])
+        self.assertNotIn('secret', json.dumps(record))
+        self.assertEqual(error.fp.tell(), 0)
+
+    def test_transport_error_categories_are_type_based_and_token_free(self):
+        cases = [(socket.gaierror(-2, 'private-reason'), 'DNS_ERROR'),
+                 (TimeoutError('private-reason'), 'TIMEOUT'),
+                 (ssl.SSLCertVerificationError(1, 'private-reason'), 'TLS_CERTIFICATE_ERROR'),
+                 (ssl.SSLError(1, 'private-reason'), 'TLS_ERROR'),
+                 (ConnectionError('private-reason'), 'CONNECTION_ERROR'),
+                 (http.client.IncompleteRead(b'private-reason', 10), 'INCOMPLETE_RESPONSE'),
+                 (http.client.RemoteDisconnected('private-reason'), 'CONNECTION_ERROR'),
+                 (OSError('private-reason'), 'NETWORK_ERROR'),
+                 (sources.SourceError('private-reason'), 'POLICY_REFUSED'),
+                 (http.client.BadStatusLine('private-reason'), 'HTTP_PROTOCOL_ERROR')]
+        for error, category in cases:
+            for wrapped in (False, True):
+                with self.subTest(category=category, wrapped=wrapped):
+                    # urllib wraps transport exceptions, not local policy errors.
+                    exc = urllib.error.URLError(error) if wrapped else error
+                    record = self.failed_exchange(exc)
+                    self.assertEqual(record.get('diagnostic'), {'category': category, 'http_status': None})
+                    self.assertNotIn('private-reason', json.dumps(record))
+        record = self.failed_exchange(urllib.error.URLError('TLS certificate timeout private-reason'))
+        self.assertEqual(record.get('diagnostic'), {'category': 'NETWORK_ERROR', 'http_status': None})
+
+    def test_replay_rejects_open_ended_or_inconsistent_error_diagnostic(self):
+        record = self.failed_exchange(OSError('not-retained'))
+        for diagnostic in [{'category': 'NETWORK_ERROR', 'http_status': None, 'message': 'secret'},
+                           {'category': 'secret', 'http_status': None},
+                           {'category': 'HTTP_ERROR', 'http_status': True},
+                           {'category': 'HTTP_ERROR', 'http_status': 999},
+                           {'category': 'NETWORK_ERROR', 'http_status': 404},
+                           {'category': 'POLICY_REFUSED', 'http_status': None}]:
+            with self.subTest(diagnostic=diagnostic):
+                with self.assertRaisesRegex(sources.SourceError, 'ERROR_DIAGNOSTIC_INVALID'):
+                    replay = sources.ExchangeLog(records=[dict(record, diagnostic=diagnostic)])
+                    replay.ask('sh_catalog', {})
+
+    def test_legacy_failed_package_replays_without_invented_diagnostics(self):
+        out, result = self.capture(Provider(lambda op, p, data: OSError('offline') if op == 'sh_catalog' else data))
+        records = json.loads((out / 'exchanges.json').read_bytes())
+        for record in records:
+            record.pop('diagnostic', None)
+        (out / 'exchanges.json').write_bytes(sources.canonical(records))
+        followup._seal_inventory(out)
+        before = {p.name: p.read_bytes() for p in out.iterdir()}
+        self.assertEqual(sources.verify(out), result)
+        self.assertEqual({p.name: p.read_bytes() for p in out.iterdir()}, before)
+
     def bad_daily(self, edit):
         def change(op, p, data):
             if op == 'daily' and p['ts_code'] == CODES[0]:
                 edit(data)
             return data
         return self.capture(Provider(change))[1]
+
+    def test_resealed_bad_diagnostic_is_not_swallowed_as_catalog_unavailable(self):
+        out, _ = self.capture(Provider(lambda op, p, data: OSError('offline') if op == 'sh_catalog' else data))
+        records = json.loads((out / 'exchanges.json').read_bytes())
+        failed = next(r for r in records if r['error'])
+        failed['diagnostic'] = {'category': 'NETWORK_ERROR', 'http_status': None, 'message': 'secret'}
+        (out / 'exchanges.json').write_bytes(sources.canonical(records))
+        followup._seal_inventory(out)
+        with self.assertRaisesRegex(sources.SourceError, 'ERROR_DIAGNOSTIC_INVALID'):
+            sources.verify(out)
 
     def bad_ann(self, edit):
         def change(op, p, data):
