@@ -205,6 +205,25 @@ response are later work, not implied by successful collection.
 
 ### Safe Transport Diagnostics
 
+Current captures use `ar.workflow-sources.v2`. CNINFO's official query page links
+`/new/js/app/disclosure/notice/history-notice.js?v=20260710082532` (observed
+2026-09-19). Its `historyMarketMap` maps Shanghai to `szse` (the mainland section),
+`stockStr` selects `szse_stock`, and `getStockList` requests
+`/new/data/szse_stock.json`. Shanghai listing queries use `column=szse, plate=sh`.
+The filename is not an exchange-specific identity contract: exact code/orgId
+binding and unique directory matches remain mandatory.
+
+Official references: [query page](https://www.cninfo.com.cn/new/commonUrl/pageOfSearch?url=disclosure/list/search),
+[linked query implementation](https://www.cninfo.com.cn/new/js/app/disclosure/notice/history-notice.js?v=20260710082532).
+This verifies publicly served website behavior, not a guaranteed API SLA or new
+bulk-data redistribution entitlement. No authentication or access-control bypass.
+
+Historical `ar.workflow-sources.v1` packages retain the old Shanghai URL and
+column only for offline replay. They are not rewritten or retried. New captures
+cannot opt into the old semantics. The source request format is unchanged; new
+receipts bind the query generation to v2. A new success never erases an old
+failure, and metadata comparisons retain the original package hashes.
+
 New failed exchanges retain only `diagnostic.category` (closed vocabulary) and
 `diagnostic.http_status` (100..599 for HTTP errors, otherwise null). Classification
 uses exception types, never provider text. DNS, timeout, certificate/TLS,
@@ -216,9 +235,11 @@ a cause from a missing diagnostic on a historical exchange.
 Legacy v1 snapshots still replay without inventing diagnostics. New diagnostics
 are validated before source derivation, so malformed metadata cannot be swallowed
 as an ordinary catalog failure. This is typed observation, not cryptographic proof
-of the remote error. A separate approved Shanghai catalog probe makes one request
-to the existing fixed URL, with no token, retries, alternate sources or subsequent
-announcement query; it is not a rerun of the three-subject capture. Its failure
-does not authorize an endpoint change or turn financial thesis UNRESOLVED green.
+of the remote error. The earlier one-request Shanghai probe recorded HTTP 404;
+it did not authorize an endpoint substitution. A subsequent explicit human
+authorization permits official-entry discovery and bounded Shanghai-only
+acceptance: one fresh catalog plus at most three index pages per Shanghai subject.
+No price collection, retry, token or PDF fetch is included. This is not a new
+three-subject result and cannot turn financial thesis UNRESOLVED green.
 
 Not a trading instruction; research signal, human executes.
