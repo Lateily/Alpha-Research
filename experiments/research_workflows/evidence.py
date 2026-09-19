@@ -63,7 +63,7 @@ def unique(rows, key):
 
 
 def text(value):
-    rendered = str(value).replace("\\", "\\\\")
+    rendered = (json.dumps(value, ensure_ascii=False, sort_keys=True) if isinstance(value, (dict, list)) else str(value)).replace("\\", "\\\\")
     for char in "`*_[]!|#":
         rendered = rendered.replace(char, "\\" + char)
     return html.escape(rendered, quote=False).replace("\n", "<br>")
@@ -160,3 +160,24 @@ class Evidence:
         value = citation["value"]
         excerpt = json.dumps(value, ensure_ascii=False, sort_keys=True) if not isinstance(value, str) else value
         return f"{text(excerpt)}\n\n原文：[{citation['source']}]({link})，{text(citation['locator'])}；{citation['tier']}；源日期 {citation['published_on']}。\n"
+
+    def observation(self, ref, company, expected_date):
+        citation = self.cite(ref, company)
+        source = self.sources[ref["source"]]
+        if source["format"] == "json":
+            pointer = ref["pointer"]
+            if not pointer.endswith("/close"):
+                raise TrialError("brief JSON observation must reference a dated close row")
+            parent = pointer.rsplit("/", 1)[0]
+            row = self.loaded[ref["source"]]
+            for key in parent.split("/")[1:]:
+                key = key.replace("~1", "/").replace("~0", "~")
+                row = row[int(key)] if isinstance(row, list) else row[key]
+            if row.get("ts_code") != company:
+                raise TrialError("observation row company mismatch")
+            observed = date8(row.get("trade_date"))
+        else:
+            observed = source["published_on"]
+        if observed != expected_date:
+            raise TrialError("observation date does not match comparison date")
+        return {**citation, "observation_date": observed}

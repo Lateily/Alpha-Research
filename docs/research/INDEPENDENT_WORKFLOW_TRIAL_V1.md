@@ -9,7 +9,7 @@ provider, TradingView connection, trading authority, or method approval.
 | --- | --- | --- |
 | `brief` | Before/after evidence, mechanical changes, thesis linkage and draft interpretation | Check source identity, relevance, missing changes and unsupported interpretations |
 | `earnings` | One response for every source-bound thesis question, with disclosure excerpts and missing evidence | Verify periods/units, then judge supports/challenges/unresolved; no automatic prediction score |
-| `smc` | Unapproved rule card, cutoff-limited OHLCV windows and unlabelled annotation forms | Freeze definitions before evaluation; mark structure, confirmation time, NONE/WAIT and failure cases |
+| `smc` | Fixed annotation-only rule card, one cutoff-limited window per package and unlabelled event forms | Do not distribute exposed samples for clean agreement; mark reference/sweep/reclaim dates, NONE/WAIT and failure cases |
 
 Each entry is runnable alone. A failed nightly, another trial, or missing U4
 selection is not an execution dependency. This does not waive data-quality or
@@ -32,6 +32,12 @@ cutoff, authorship, source hashes and payload. The test fixtures in
 Delivered files: `report.md`, `artifact.json`, `receipt.json`,
 `human-review-template.json`, `source-manifest.json`, `SHA256SUMS`, and cited
 evidence copies (brief/earnings) or truncated `samples/*.json` (SMC).
+`human-review.md` is a readable form, not an approval. Brief payloads require
+`comparison.before_date/after_date`: JSON close citations must match the parent
+row's trade_date AND ts_code; text observations use the declared publication day.
+Dates in free-text titles cannot establish this binding. Earnings reports show
+the original metric/operator/threshold/unit/measurement/due_at/wrong_if, including
+missing fields, without inventing a registration or verdict.
 Verification regenerates outputs from reopened input bytes, not from self-reported
 receipt hashes. Identical requests and bytes produce identical artifacts.
 
@@ -58,23 +64,40 @@ U4 SELECT, case seal, SMC PASS, paper approval or production permission.
 
 ## SMC Dataset Boundary
 
-The initial rule proposal is SWEEP_RECLAIM, not an approved strategy. Market,
-timeframe, pivot confirmation windows, sweep tolerance, reclaim window, range
-anchor, invalidation, cooldown and costs must be frozen before a detector or
-evaluation. Null parameters yield SPEC_BLOCKED; fully populated parameters still
-yield UNAPPROVED. The supplied historical windows remain DEVELOPMENT and
-sample_eligible=false. No holdout performance is reported.
+The only supported annotation convention is SMC-ANNOTATION-ONLY-1, SWEEP_RECLAIM.
+Its fixed engineering parameters and complete readable rules live in
+`smc_annotation.py` and are emitted as `annotation-rules.md`; their content hash
+binds every form and sample. They are NOT approved strategy parameters and were
+not selected by fitting labels or returns on the nine exposed pilot windows.
+Null or different parameters are refused, not left to each annotator to invent.
+Method status remains UNAPPROVED and sample_eligible=false.
 
-Annotators receive only cutoff-limited sample JSON and report tables, not the
-full source OHLCV file. The operator retains source hashes for audit. Cutoffs and
+Each request/output accepts exactly ONE window. Annotators receive only that
+package, never the parent operator directory, another window for that company,
+or the full source OHLCV file. The operator retains source hashes for audit. Cutoffs and
 company IDs are verified, but prior familiarity with the market cannot be erased;
-these samples must not be called blind or prospective. Overlapping/company-linked
-windows share a cluster and are not independent samples. Unaudited calendars,
+these samples must not be called blind or prospective. The old nine windows are
+PREVIOUSLY_VIEWED / RETIRED_EXPOSED_DEMONSTRATION and cannot be used to choose
+parameters or as clean agreement samples. The coordinator must freeze NEW samples
+after this convention and keep an exposure/distribution register: one window per
+company per person in a round. Local packaging cannot enforce remote access or
+undo prior knowledge; no new clean cohort is delivered by this PR.
+Overlapping/company-linked windows share a cluster and are not independent samples. Unaudited calendars,
 corporate actions or missing volume are marked DATA_BLOCKED for method validation.
 
 Keep positive, negative, NONE, WAIT, missing-data and ambiguous cases after human
 labelling. Do not tune parameters after viewing validation outcomes. No outcome
 returns, entry/stop/target or automatic paper instructions are produced here.
+
+Forms contain label, reference_date, reference_confirmed_at, sweep_date,
+reclaim_date, invalidation_date, reason, future_seen and sample/rule hashes.
+The source-level human_warning is propagated to the report, sample and forms;
+absent warning provenance becomes UNKNOWN_NOT_CLEARED, never implicit clearance.
+`smc_annotation.compare_annotations(sample, left, right)` checks two distinct
+self-reported identities, bindings, closed labels and event chronology, then
+reports exact per-field matching counts. It does NOT certify those labels are
+financially correct, authenticate people or report strategy win-rate. Exposed,
+data-blocked and ambiguous records are not clean-agreement eligible.
 
 ## Trial Acceptance
 
@@ -87,7 +110,9 @@ returns, entry/stop/target or automatic paper instructions are produced here.
 - Reviewer records actual usefulness, source errors, omissions and time spent.
   Do not replace these human measures with passing test counts.
 
-Only after this trial proves useful should approved earnings context feed the
+First trial brief and earnings with human readers. Keep SMC distribution on HOLD
+until the convention is acknowledged and a fresh exposure-controlled sample set
+exists. Only after this trial proves useful should approved earnings context feed the
 next brief. Publishing a new context version, automatic scheduling, model calls,
 workbench integration, and production are separate bounded changes.
 
