@@ -49,9 +49,9 @@ class AcceptanceFixture:
     def _write_valid(self) -> None:
         self.log.parent.mkdir(parents=True)
         self.log.write_text(
-            "old run output\nresearch_funnel: OK\n"
+            "old run output\nfunnel_candidates: OK\ncandidate_battery: OK\nfunnel_finalize: OK\n"
             f"[run] run_id={RUN_ID} target_trade_date={TARGET}\n"
-            "official_sample: OK\nresearch_funnel: OK\n"
+            "official_sample: OK\nfunnel_candidates: OK\ncandidate_battery: OK\nfunnel_finalize: OK\n"
             f"[report] COMPLETE  data_quality=PARTIAL  run_id={RUN_ID}  target={TARGET}\n",
             encoding="utf-8",
         )
@@ -62,7 +62,11 @@ class AcceptanceFixture:
             "target_trade_date": TARGET,
             "report": "COMPLETE",
             "published": True,
-            "steps": [{"step": "research_funnel", "status": "OK"}],
+            "steps": [
+                {"step": "funnel_candidates", "status": "OK"},
+                {"step": "candidate_battery", "status": "OK"},
+                {"step": "funnel_finalize", "status": "OK"},
+            ],
         })
         write_json(self.health_path, {
             "run_id": RUN_ID,
@@ -120,6 +124,60 @@ class NightlyAcceptanceTests(unittest.TestCase):
             {item["Weekday"] for item in payload["StartCalendarInterval"]},
             set(range(1, 6)))
 
+    def test_required_funnel_steps_are_the_current_nightly_dag(self) -> None:
+        """验收要求的漏斗步骤必须真实存在于夜链步骤表;已退役的单步漏斗不得再被要求。"""
+        self.assertEqual(
+            ("funnel_candidates", "candidate_battery", "funnel_finalize"),
+            acceptance.FUNNEL_DAG_STEPS)
+        dag = [step[0] for step in run_nightly.STEPS]
+        for name in ("funnel_candidates", "candidate_battery", "funnel_finalize"):
+            self.assertEqual(1, dag.count(name), name)
+        self.assertNotIn("research_funnel", dag)
+
+    def test_retired_single_funnel_step_cannot_certify_a_run(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            fixture = AcceptanceFixture(Path(tmp))
+            nightly_path = fixture.et / "nightly_run.json"
+            nightly = json.loads(nightly_path.read_text(encoding="utf-8"))
+            nightly["steps"] = [{"step": "research_funnel", "status": "OK"}]
+            write_json(nightly_path, nightly)
+            with mock.patch.object(run_nightly, "_validate_funnel_health"):
+                receipt = acceptance.audit(fixture.inputs())
+            rows = {row["name"]: row for row in receipt["checks"]}
+            self.assertEqual("FAIL", receipt["status"])
+            self.assertIn("funnel_candidates=OK", rows["nightly_and_funnel_artifacts"]["error"])
+
+    def test_blocked_candidate_battery_fails_acceptance(self) -> None:
+        """发布可以在电池被隔离时继续,但验收不得把 DATA_BLOCKED 的电池记成通过。"""
+        with tempfile.TemporaryDirectory() as tmp:
+            fixture = AcceptanceFixture(Path(tmp))
+            nightly_path = fixture.et / "nightly_run.json"
+            nightly = json.loads(nightly_path.read_text(encoding="utf-8"))
+            for row in nightly["steps"]:
+                if row["step"] == "candidate_battery":
+                    row["status"] = "DATA_BLOCKED"
+            write_json(nightly_path, nightly)
+            with mock.patch.object(run_nightly, "_validate_funnel_health"):
+                receipt = acceptance.audit(fixture.inputs())
+            rows = {row["name"]: row for row in receipt["checks"]}
+            self.assertEqual("FAIL", receipt["status"])
+            self.assertIn("candidate_battery=OK", rows["nightly_and_funnel_artifacts"]["error"])
+
+    def test_log_segment_needs_every_funnel_stage_line(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            fixture = AcceptanceFixture(Path(tmp))
+            fixture.log.write_text(
+                f"[run] run_id={RUN_ID} target_trade_date={TARGET}\n"
+                "funnel_candidates: OK\ncandidate_battery: DATA_BLOCKED\nfunnel_finalize: OK\n"
+                f"[report] COMPLETE  data_quality=PARTIAL  run_id={RUN_ID}  target={TARGET}\n",
+                encoding="utf-8",
+            )
+            with mock.patch.object(run_nightly, "_validate_funnel_health"):
+                receipt = acceptance.audit(fixture.inputs())
+            rows = {row["name"]: row for row in receipt["checks"]}
+            self.assertEqual("FAIL", rows["exact_run_log_segment"]["status"])
+            self.assertIn("candidate_battery", rows["exact_run_log_segment"]["error"])
+
     def test_clean_scheduled_run_produces_pass_receipt(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             fixture = AcceptanceFixture(Path(tmp))
@@ -137,7 +195,7 @@ class NightlyAcceptanceTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             fixture = AcceptanceFixture(Path(tmp))
             fixture.log.write_text(
-                "research_funnel: OK\n"
+                "funnel_candidates: OK\ncandidate_battery: OK\nfunnel_finalize: OK\n"
                 f"[run] run_id={RUN_ID} target_trade_date={TARGET}\n"
                 f"[report] COMPLETE  data_quality=PARTIAL  "
                 f"run_id={RUN_ID}  target={TARGET}\n",
@@ -158,7 +216,7 @@ class NightlyAcceptanceTests(unittest.TestCase):
                 "[report] COMPLETE  data_quality=PARTIAL  "
                 f"run_id={RUN_ID}  target={TARGET}\n"
                 "[run] run_id=later_run target_trade_date=20260818\n"
-                "research_funnel: OK\n"
+                "funnel_candidates: OK\ncandidate_battery: OK\nfunnel_finalize: OK\n"
                 "[report] COMPLETE  data_quality=PARTIAL  "
                 "run_id=later_run  target=20260818\n",
                 encoding="utf-8",
@@ -238,14 +296,14 @@ class NightlyAcceptanceTests(unittest.TestCase):
             "target_trade_date": TARGET,
             "report": "COMPLETE",
             "data_quality": "PARTIAL",
-            "steps": [{"step": "research_funnel", "status": "OK"}],
+            "steps": [{"step": "funnel_finalize", "status": "OK"}],
         }
         stream = io.StringIO()
         with contextlib.redirect_stdout(stream):
             run_nightly._print_terminal_report(result, output_path="nightly_run.json")
         lines = stream.getvalue().splitlines()
         self.assertEqual(f"[run] run_id={RUN_ID} target_trade_date={TARGET}", lines[0])
-        self.assertEqual("research_funnel: OK", lines[1])
+        self.assertEqual("funnel_finalize: OK", lines[1])
         self.assertTrue(lines[2].startswith("[report] COMPLETE"))
 
     def test_strict_json_rejects_duplicate_keys(self) -> None:

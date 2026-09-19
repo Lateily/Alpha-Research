@@ -40,6 +40,12 @@ LAUNCHD_RUNS_RE = re.compile(r"^\s*runs = (\d+)\s*$", re.MULTILINE)
 # 夜链班次。2026-09-14 由 16:35 调整为 20:30:16:35 早于东财资金流对部分个股的结算,
 # 2026-09-09/10/11 三夜连续 DATA_BLOCKED。这里的期望值与仓库内 launchd 模板必须一致,
 # 由 tests/test_nightly_acceptance_offline.py 的模板比对用例守住,避免两边各改一边。
+# The funnel runs as a three-stage DAG in run_nightly.STEPS; the single
+# "research_funnel" step it replaced no longer exists, so requiring it would
+# make every real run fail acceptance.
+# governance-mutation: NIGHTLY_ACCEPTANCE_FUNNEL_DAG_STEPS
+FUNNEL_DAG_STEPS = ("funnel_candidates", "candidate_battery", "funnel_finalize")
+
 # governance-mutation: NIGHTLY_ACCEPTANCE_SCHEDULE
 NIGHTLY_SCHEDULE_HOUR_MINUTE = (20, 30)
 
@@ -192,9 +198,10 @@ def _validate_nightly_result(inputs: Inputs) -> tuple[dict, dict]:
         raise AcceptanceError(f"nightly run_id is not a safe component: {run_id!r}")
     if nightly.get("report") != "COMPLETE" or nightly.get("published") is not True:
         raise AcceptanceError("nightly result is not COMPLETE and published=true")
-    rows = [row for row in nightly.get("steps", []) if isinstance(row, dict) and row.get("step") == "research_funnel"]
-    if len(rows) != 1 or rows[0].get("status") != "OK":
-        raise AcceptanceError("nightly result lacks exactly one research_funnel=OK step")
+    for name in FUNNEL_DAG_STEPS:
+        rows = [row for row in nightly.get("steps", []) if isinstance(row, dict) and row.get("step") == name]
+        if len(rows) != 1 or rows[0].get("status") != "OK":
+            raise AcceptanceError(f"nightly result lacks exactly one {name}=OK step")
     if health.get("run_id") != run_id or health.get("target_trade_date") != target:
         raise AcceptanceError("funnel health is not bound to the nightly run and target")
 
@@ -228,8 +235,12 @@ def _validate_log(inputs: Inputs, run_id: str) -> dict:
     if next_run:
         tail = tail[:len(marker) + next_run.start()]
     # governance-mutation: NIGHTLY_ACCEPTANCE_EXACT_LOG_SEGMENT
-    if not re.search(r"(?m)^research_funnel: OK\s*$", tail):
-        raise AcceptanceError("exact run log segment lacks research_funnel: OK")
+    missing_funnel_lines = [
+        name for name in FUNNEL_DAG_STEPS
+        if not re.search(rf"(?m)^{re.escape(name)}: OK\s*$", tail)
+    ]
+    if missing_funnel_lines:
+        raise AcceptanceError(f"exact run log segment lacks OK lines for: {', '.join(missing_funnel_lines)}")
     report_pattern = (
         rf"(?m)^\[report\] COMPLETE\b.*\brun_id={re.escape(run_id)}\b"
         rf".*\btarget={re.escape(inputs.expected_target)}\b"
