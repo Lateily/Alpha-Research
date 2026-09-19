@@ -12,6 +12,8 @@ import os
 from pathlib import Path
 import re
 import shutil
+import socket
+import ssl
 import sys
 import tempfile
 import urllib.error
@@ -40,6 +42,54 @@ URLS = {'daily': 'https://api.tushare.pro', 'adj_factor': 'https://api.tushare.p
         'sz_catalog': 'https://www.cninfo.com.cn/new/data/szse_stock.json',
         'sh_catalog': 'https://www.cninfo.com.cn/new/data/sse_stock.json',
         'announcements': 'https://www.cninfo.com.cn/new/hisAnnouncement/query'}
+ERROR_CATEGORIES = frozenset({'HTTP_ERROR', 'DNS_ERROR', 'TIMEOUT', 'TLS_CERTIFICATE_ERROR',
+                             'TLS_ERROR', 'CONNECTION_ERROR', 'INCOMPLETE_RESPONSE',
+                             'HTTP_PROTOCOL_ERROR', 'NETWORK_ERROR', 'POLICY_REFUSED'})
+
+
+def safe_error(exc):
+    # Never classify by provider text: URLs, headers and reasons can contain secrets.
+    if isinstance(exc, urllib.error.URLError) and not isinstance(exc, urllib.error.HTTPError):
+        exc = exc.reason
+    status = None
+    if isinstance(exc, urllib.error.HTTPError) and type(exc.code) is int and 100 <= exc.code <= 599:
+        category, status = 'HTTP_ERROR', exc.code
+    elif isinstance(exc, socket.gaierror):
+        category = 'DNS_ERROR'
+    elif isinstance(exc, (TimeoutError, socket.timeout)):
+        category = 'TIMEOUT'
+    elif isinstance(exc, ssl.SSLCertVerificationError):
+        category = 'TLS_CERTIFICATE_ERROR'
+    elif isinstance(exc, ssl.SSLError):
+        category = 'TLS_ERROR'
+    elif isinstance(exc, ConnectionError):
+        category = 'CONNECTION_ERROR'
+    elif isinstance(exc, http.client.IncompleteRead):
+        category = 'INCOMPLETE_RESPONSE'
+    elif isinstance(exc, http.client.HTTPException):
+        category = 'HTTP_PROTOCOL_ERROR'
+    elif isinstance(exc, SourceError):
+        category = 'POLICY_REFUSED'
+    else:
+        category = 'NETWORK_ERROR'
+    return {'category': category, 'http_status': status}
+
+
+def validate_diagnostic(record):
+    # Historical v1 exchanges lack diagnostics; do not invent a cause for them.
+    if 'diagnostic' not in record:
+        return
+    value = record['diagnostic']
+    if not isinstance(value, dict) or set(value) != {'category', 'http_status'}:
+        raise SourceError('ERROR_DIAGNOSTIC_INVALID')
+    category, status = value['category'], value['http_status']
+    if not isinstance(category, str) or category not in ERROR_CATEGORIES:
+        raise SourceError('ERROR_DIAGNOSTIC_INVALID')
+    if (category == 'HTTP_ERROR' and not (type(status) is int and 100 <= status <= 599)
+            or category != 'HTTP_ERROR' and status is not None
+            or record['error'] != ('SOURCE_REFUSED' if category == 'POLICY_REFUSED' else 'SOURCE_FAILED')
+            or record['body'] is not None or record['sha256'] is not None):
+        raise SourceError('ERROR_DIAGNOSTIC_INVALID')
 
 
 def load(raw):
@@ -131,6 +181,8 @@ class ExchangeLog:
         self.transport = transport
         self.records = [] if records is None else records
         self.position = 0
+        for record in self.records:
+            validate_diagnostic(record)
 
     def ask(self, op, params):
         if self.position >= MAX_CALLS:
@@ -148,8 +200,10 @@ class ExchangeLog:
                 record = {'request': identity, 'body': base64.b64encode(raw).decode(), 'sha256': sha(raw), 'error': None}
             except (OSError, http.client.HTTPException, SourceError) as exc:
                 # Provider messages/HTTP error bodies may echo credentials; never retain them.
+                diagnostic = safe_error(exc)
                 record = {'request': identity, 'body': None, 'sha256': None,
-                          'error': 'SOURCE_REFUSED' if isinstance(exc, SourceError) else 'SOURCE_FAILED'}
+                          'error': 'SOURCE_REFUSED' if diagnostic['category'] == 'POLICY_REFUSED' else 'SOURCE_FAILED',
+                          'diagnostic': diagnostic}
             self.records.append(record)
         self.position += 1
         if record['error'] is not None:
