@@ -41,13 +41,19 @@ def build(request, input_root):
     origins = [f"- {text(name)}：{text(source['origin'])}；披露/源日期 {source['published_on']}；实际取得时间 {text(source['observed_at'])}；SHA256 {source['sha256']}。" for name, source in sorted(request["sources"].items())]
     report = "\n\n".join([lines[0], *banner, *lines[1:], "## 来源登记", *origins, "取得时间未知的资料不得用于证明当时已经知悉；本轮只做历史回放。", "## 人工核验", "逐条核对公司、期间、单位、原文定位与解释是否相符。另存核验记录，绑定本报告及 artifact 的 SHA256；不得修改已封存报告。", "不是买卖指令；研究信号，human executes。", ""])
     review = {"schema": "ar.workflow-trial-review-template.v1", "sample_purpose": "WORKFLOW_DEBUG", "status": "PENDING", "reviewer": None, "reviewed_at": None, "identity_status": "NOT_AUTHENTICATED", "report_sha256": sha(report.encode()), "artifact_sha256": sha(canonical(artifact)), "authority": dict(AUTHORITY), "items": [{"id": item, "status": "PENDING", "source_checked": None, "comment": None} for item in review_ids], "instructions": "Save a separate human review record; this template grants no authority. Signing verifies this exact artifact only, not SMC PASS or paper approval."}
+    if request["workflow"] == "smc":
+        review["items"] = [renderers.smc_annotation.annotation_item(sample) for sample in artifact["samples"]]
     files = {"report.md": report.encode(), "artifact.json": canonical(artifact), "human-review-template.json": canonical(review), "source-manifest.json": canonical(request["sources"])}
     review_lines = ["# 人工核验记录（待本人填写）", "状态：PENDING。未有人类签署；本表不授予任何权限。", f"报告 SHA256：{review['report_sha256']}", f"机器工件 SHA256：{review['artifact_sha256']}", "核验人：未填写；时间（含时区）：未填写。", "另存填写后的记录；不要覆盖这份封存模板。"]
     for item in review_ids:
         review_lines += [f"## {text(item)}", "- 原文、公司、日期、单位：待核验", "- 同意 / 修改 / 缺证据：待填写", "- 判断依据与缺口：待填写"]
+    if request["workflow"] == "smc":
+        for item in review["items"]:
+            review_lines += [f"人工警示：{text(item['human_warning'])}", f"曝光状态：{item['exposure_status']}", f"规则 hash：{item['rule_hash']}；样本 hash：{item['sample_sha256']}", "标签 label：SWEEP_RECLAIM / NONE / WAIT / DATA_BLOCKED / AMBIGUOUS（待本人选）", "future_seen：是否已看过窗口后走势（待填 true/false）", *[f"- {field}: 待填写（无该事件填 null；日期 YYYYMMDD）" for field in renderers.smc_annotation.FIELDS[1:]]]
     review_lines += ["签署只表示核验本版本，不保证盈利，不等于选股、SMC PASS 或 paper 批准。", "不是买卖指令；研究信号，human executes。", ""]
     files["human-review.md"] = "\n\n".join(review_lines).encode()
     if request["workflow"] == "smc":
+        files["annotation-rules.md"] = renderers.smc_annotation.RULES.encode()
         for sample in artifact["samples"]:
             files[f"samples/{sample['id']}.json"] = canonical(sample)
     else:
