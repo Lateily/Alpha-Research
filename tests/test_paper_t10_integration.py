@@ -7,6 +7,7 @@ import json
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 from datetime import date, timedelta
 from pathlib import Path
 
@@ -79,6 +80,71 @@ def replay_inputs(case, *, missing_due=False, never_fill=False):
 
 
 class T10IntegrationTests(unittest.TestCase):
+    def test_data_blocked_cannot_hide_sample_eligibility_drift(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            closure, case = new_case(Path(tmp))
+            bars, outcomes = replay_inputs(case)
+            original = fund.register_order
+
+            def drift(*args, **kwargs):
+                order, message = original(*args, **kwargs)
+                self.assertIsNotNone(order, message)
+                order["sample_eligible"] = True
+                return order, message
+
+            with patch.object(fund, "register_order", side_effect=drift):
+                with self.assertRaises(cycle.CycleError):
+                    cycle.run_cycle(bundle_dir=closure, case=case, bars=bars,
+                        outcomes=outcomes, generated_at="2026-08-28T16:10:00+00:00")
+
+    def test_corporate_freeze_does_not_exempt_other_realism_checks(self):
+        mandatory = ("raw_settled_execution_bars", "t_plus_one_sell",
+                     "registered_no_chase_limit", "price_limit_facts_required",
+                     "liquidity_participation_capped", "costs_recorded",
+                     "workflow_debug_sample_excluded")
+        with tempfile.TemporaryDirectory() as tmp:
+            closure, case = new_case(Path(tmp))
+            bars, outcomes = replay_inputs(case)
+            for row in bars["rows"][2:]:
+                row.update(open=50., high=52., low=49., close=50., pre_close=50.)
+            bars["rows_hash"] = digest(bars["rows"])
+            original = fund.execution_realism_receipt
+            for failed in mandatory:
+                for status in ("DATA_BLOCKED", "PASS_WORKFLOW_DEBUG"):
+                    def drift(order):
+                        result = original(order)
+                        result["checks"][failed] = False
+                        result["status"] = status
+                        return result
+                    with self.subTest(failed=failed, status=status), patch.object(
+                            fund, "execution_realism_receipt", side_effect=drift):
+                        with self.assertRaises(cycle.CycleError):
+                            cycle.run_cycle(bundle_dir=closure, case=case, bars=bars,
+                                outcomes=outcomes, generated_at="2026-08-28T16:10:00+00:00")
+
+    def test_realism_checks_require_exact_boolean_contract(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            closure, case = new_case(Path(tmp))
+            bars, outcomes = replay_inputs(case)
+            original = fund.execution_realism_receipt
+            for fault in ("missing", "unknown", "integer_true", "unexplained_block"):
+                def drift(order):
+                    result = original(order)
+                    if fault == "missing":
+                        result["checks"].pop("costs_recorded")
+                    elif fault == "unknown":
+                        result["checks"]["new_unreviewed_check"] = False
+                    elif fault == "integer_true":
+                        result["checks"]["costs_recorded"] = 1
+                    else:
+                        result["status"] = "DATA_BLOCKED"
+                    return result
+                with self.subTest(fault=fault), patch.object(
+                        fund, "execution_realism_receipt", side_effect=drift):
+                    with self.assertRaises(cycle.CycleError):
+                        cycle.run_cycle(bundle_dir=closure, case=case, bars=bars,
+                            outcomes=outcomes, generated_at="2026-08-28T16:10:00+00:00")
+
     def test_new_case_requires_bound_explicit_deadline(self):
         with tempfile.TemporaryDirectory() as tmp:
             closure, codes, *_ = fixtures.build_closure_bundle(Path(tmp))

@@ -47,9 +47,11 @@ eligibility. Corporate-action freezes remain frozen and require separate review.
 
 OPEN attempts precede intraday price exits on the deadline; CLOSE attempts follow
 the original stop-first price path. Earlier stop/target exits still use the same
-engine. Deadline quotes apply the registered adverse sell slippage, bounded by
-the day's low; fees and cash use the existing Model Paper Fund settlement code.
-Daily OHLC cannot prove intraday sequence or actual execution quality.
+engine. OPEN quotes are `open * (1 - slippage_bps / 10000)` without a later
+daily-low bound. CLOSE quotes apply adverse sell slippage and retain the settled
+day's low bound. Fees and cash use the existing Model Paper Fund settlement code.
+Both conventions still use settled-day volume/limit facts for feasibility;
+daily OHLC cannot prove intraday sequence or actual execution quality.
 
 Missing bar, suspension, one-price limit down, insufficient full-position volume
 participation or a broken corporate-action chain retain the holding and an
@@ -122,9 +124,22 @@ Live rollout requires independent review, human approval of the exact concrete
 paper policy, a published calendar with source evidence, production release
 approval and real operational observation. This PR does none of those actions.
 
-The 2026-09-19 two-P1 closeout does not close the independent review's other
-findings: OPEN pricing's use of the later daily low, the broad v1.1 DATA_BLOCKED
-boundary exception, and the frozen assembly's unbound new dependencies/identity
-revision. Those remain explicit follow-ups, not accepted execution capabilities.
+The 2026-09-19 follow-up removes the later daily low from OPEN price arithmetic:
+the synthetic cost-adjusted reference is open multiplied by adverse slippage.
+CLOSE retains its settled-day low bound. This does not certify a fill at the
+opening auction: settled-day volume/limit feasibility still uses daily data,
+and the effective cost-adjusted OPEN reference can fall below the observed low.
+This is an offline daily-bar proxy, not an intraday or broker execution model.
+Neither convention is selected for a real plan by this engineering change.
+
+The v1.1 cycle accepts degraded realism only for an order explicitly frozen by
+`CORPORATE_ACTION_BREAK`; all other mandatory checks must still be exact true.
+Missing/extra checks, non-boolean flags, unexplained DATA_BLOCKED and eligibility
+violations refuse. Missing/suspended NAV remains separately visible as unavailable.
+
+Assembly candidate 1.5 binds this document, the deadline and shared portfolio
+engines, and the full publication verifier. Its identity is explicitly pending
+review with no human freeze timestamp; testing this candidate does not authorize
+human SMC, paper rules, registration, production rollout or merging.
 
 Not a buy/sell instruction; research signals, human executes.

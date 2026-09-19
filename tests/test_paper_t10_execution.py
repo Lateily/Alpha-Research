@@ -249,6 +249,26 @@ class T10PolicyTests(unittest.TestCase):
 
 
 class T10ExecutionTests(unittest.TestCase):
+    def test_open_price_ignores_later_daily_extremes_and_close(self):
+        prices = []
+        for later in ({"low": 98., "high": 102., "close": 100.},
+                      {"low": 100., "high": 108., "close": 106.}):
+            entry = order(exit_price="OPEN")
+            data = rows(entry)
+            data[-1].update(later)
+            advance(entry, data)
+            self.assertEqual(entry["exit_reason"], "deadline_open")
+            prices.append(entry["exit_price"])
+        self.assertEqual(prices, [99.9, 99.9])
+
+    def test_close_keeps_its_settled_low_bound(self):
+        entry = order(exit_price="CLOSE")
+        data = rows(entry)
+        data[-1].update(low=100., high=102., close=100.)
+        advance(entry, data)
+        self.assertEqual(entry["exit_reason"], "deadline_close")
+        self.assertEqual(entry["exit_price"], 100.)
+
     def test_negative_slippage_and_invalid_position_refused_without_mutation(self):
         for key, value in (("slippage_bps", -10.), ("slippage_bps", float("nan")),
                            ("slippage_bps", True), ("shares", -1000), ("shares", True)):

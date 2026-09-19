@@ -640,8 +640,31 @@ def run_cycle(
             "no_trade_flag": True,
         }
     )
+    deadline_realism_valid = True
+    # A named price-chain freeze may degrade data, never the other execution gates.
+    # governance-mutation: RESEARCH_CYCLE_T10_NAMED_DEGRADATION
+    if case["schema_version"] == DEADLINE_VERSION and order is not None:
+        frozen = order.get("execution_frozen") is True
+        expected_checks = {
+            "raw_settled_execution_bars": True,
+            "t_plus_one_sell": True,
+            "registered_no_chase_limit": True,
+            "price_limit_facts_required": True,
+            "liquidity_participation_capped": True,
+            "costs_recorded": True,
+            "workflow_debug_sample_excluded": True,
+            "corporate_action_price_chain_intact": not frozen,
+        }
+        checks = realism.get("checks")
+        deadline_realism_valid = (
+            isinstance(checks, dict) and set(checks) == set(expected_checks)
+            and all(checks.get(key) is value for key, value in expected_checks.items())
+            and realism.get("status") == ("DATA_BLOCKED" if frozen else "PASS_WORKFLOW_DEBUG")
+            and (not frozen or order.get("execution_freeze_reason") == "CORPORATE_ACTION_BREAK")
+        )
     paper_boundary_broken = (
         fund.get("paper_only") is not True
+        or not deadline_realism_valid
         or performance.get("claim_allowed") is not False
         or realism.get("status") not in ({"PASS_WORKFLOW_DEBUG", "NO_TRADE", "DATA_BLOCKED"}
                                         if case["schema_version"] == DEADLINE_VERSION else {"PASS_WORKFLOW_DEBUG", "NO_TRADE"})

@@ -205,7 +205,10 @@ def _attempt(entry, day, bar, engine):
         engine._record_block(entry, {"date": day}, reason)
     else:
         slippage = float(entry.get("slippage_bps") or 0) / 10_000.0
-        price = max(float(bar["low"]), float(bar[policy["exit_price"].lower()]) * (1.0 - slippage))
+        price = float(bar[policy["exit_price"].lower()]) * (1.0 - slippage)
+        # Only the settled CLOSE convention may use the completed day's low.
+        if policy["exit_price"] == "CLOSE":
+            price = max(float(bar["low"]), price)
         engine._close_position(entry, bar, price, "deadline_" + policy["exit_price"].lower(),
                                require_realistic=True)
         attempt["exit_price"] = entry["exit_price"]

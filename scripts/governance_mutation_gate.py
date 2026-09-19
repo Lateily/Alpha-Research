@@ -7466,18 +7466,18 @@ MUTATIONS = MUTATIONS + (
     ),
     MutationCase(
         mutation_id="RESEARCH_V1_4_REVISION_IDENTITY",
-        component="Research Closed Loop V1.4 revision identity",
+        component="Research Closed Loop V1.5 candidate identity",
         source_path="docs/research/contracts/research_closed_loop.v1.json",
         test_script="tests/test_research_closed_loop_v1.py",
         before=(
-            '  "schema_version": "1.4",\n'
-            '  "method_version": "RESEARCH_CLOSED_LOOP_V1_4",'
+            '  "schema_version": "1.5",\n'
+            '  "method_version": "RESEARCH_CLOSED_LOOP_V1_5_CANDIDATE",'
         ),
         after=(
             '  "schema_version": "1.3",\n'
             '  "method_version": "RESEARCH_CLOSED_LOOP_V1_3",'
         ),
-        expected_failure_marker="test_manifest_is_strict_and_frozen",
+        expected_failure_marker="test_manifest_is_strict_review_candidate",
         rationale=(
             "The semiconductor screening assembly must be an explicit reviewed revision, "
             "not a silent byte change under the original V1 method label."
@@ -7485,36 +7485,35 @@ MUTATIONS = MUTATIONS + (
     ),
     MutationCase(
         mutation_id="RESEARCH_V1_4_FROZEN_AT",
-        component="Research Closed Loop V1.4 frozen timestamp",
+        component="Research Closed Loop V1.5 proposal timestamp",
         source_path="docs/research/contracts/research_closed_loop.v1.json",
         test_script="tests/test_research_closed_loop_v1.py",
-        before='  "frozen_at": "2026-08-26T14:44:39+08:00",',
-        after='  "frozen_at": "2026-08-26T01:17:17+08:00",',
-        expected_failure_marker="test_revision_1_4_identity_names_current_review",
+        before='  "proposed_at": "2026-09-19T20:42:25+00:00",',
+        after='  "proposed_at": "2026-08-26T01:17:17+08:00",',
+        expected_failure_marker="test_revision_1_5_identity_names_current_review",
         rationale=(
-            "A new byte-bound assembly revision must carry its own reviewed freeze time, "
-            "not reuse the superseded V1.3 identity."
+            "A pending byte-bound assembly must carry its own proposal time, "
+            "not reuse a historical freeze identity."
         ),
     ),
     MutationCase(
         mutation_id="RESEARCH_V1_4_SOURCE_BASE",
-        component="Research Closed Loop V1.4 source review binding",
+        component="Research Closed Loop V1.5 source review binding",
         source_path="docs/research/contracts/research_closed_loop.v1.json",
         test_script="tests/test_research_closed_loop_v1.py",
         before=(
-            '    "assembly_code_commit": "e0d73dac5a8f8bbc4a427ec15b7efce8c8d5ad8c",\n'
-            '    "base_main": "ad26f1b644d75618a3923267c4dfa5b446d71e67",\n'
-            '    "review_pr": 319,'
+            '    "assembly_base_commit": "e0f0a57471df14a3ed044f30e9497ee2e441dcac",\n'
+            '    "base_main": "e64e3cdd64cda102e802924de8736fce6e45eb3c",\n'
+            '    "review_pr": 357,'
         ),
         after=(
             '    "assembly_code_commit": "a893d0fc28ffcf3f50ab6071d8f5ccf86b74aa0a",\n'
             '    "base_main": "7774e33dbfa6c5554472d3c137ca7b14b4423f4c",\n'
             '    "review_pr": 317,'
         ),
-        expected_failure_marker="test_revision_1_4_identity_names_current_review",
+        expected_failure_marker="test_revision_1_5_identity_names_current_review",
         rationale=(
-            "The frozen source identity must point to the implementation commit, main base, "
-            "and review PR that actually delivered V1.4."
+            "The candidate identity must name its provenance parent, main base and actual review PR."
         ),
     ),
     MutationCase(
@@ -7524,7 +7523,7 @@ MUTATIONS = MUTATIONS + (
         test_script="tests/test_research_closed_loop_v1.py",
         before=(
             '    {"path": "experiments/research_funnel/research_cycle.py", '
-            '"sha256": "sha256:98545dfb3571f9108279a6194b0a7d13135cf36745d4b0bba5371795b38f72e6"},\n'
+            '"sha256": "sha256:a595ab2272ef3efddda7461857301a5160f18b3d9ef8b301a941460c066dbf91"},\n'
         ),
         after="",
         expected_failure_marker="test_every_bound_artifact_matches_its_exact_bytes",
@@ -7576,7 +7575,7 @@ MUTATIONS = MUTATIONS + (
         test_script="tests/test_research_closed_loop_v1.py",
         before='      "id": "PAPER_REGISTRATION",',
         after='      "id": "PAPER_EXECUTION",',
-        expected_failure_marker="test_manifest_is_strict_and_frozen",
+        expected_failure_marker="test_manifest_is_strict_review_candidate",
         rationale=(
             "The human-authorized R-015 registration transaction must remain an explicit "
             "block between research registration and paper execution."
@@ -9664,6 +9663,119 @@ MUTATIONS = MUTATIONS + (
         after='        result["n_expired"] = 0',
         expected_failure_marker="test_expiry_counts_are_explicit_and_excluded_from_closed_samples",
         rationale="Portfolio summaries must expose the same non-claim expiry population.",
+    ),
+)
+
+MUTATIONS = MUTATIONS + (
+    MutationCase(
+        mutation_id="PAPER_T10_OPEN_PRICE_CAUSAL",
+        component="Paper execution opt-in T10 calendar",
+        source_path="experiments/execution_tracker/paper_deadline.py",
+        test_script="tests/test_paper_t10_execution.py",
+        before="        if policy[\"exit_price\"] == \"CLOSE\":",
+        after="        if True:",
+        expected_failure_marker="test_open_price_ignores_later_daily_extremes_and_close",
+        rationale="OPEN price arithmetic cannot use later daily-low information.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_T10_CLOSE_LOW_BOUND",
+        component="Paper execution opt-in T10 calendar",
+        source_path="experiments/execution_tracker/paper_deadline.py",
+        test_script="tests/test_paper_t10_execution.py",
+        before="        if policy[\"exit_price\"] == \"CLOSE\":",
+        after="        if False:",
+        expected_failure_marker="test_close_keeps_its_settled_low_bound",
+        rationale="CLOSE retains its existing settled-day price bound.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_CYCLE_T10_NAMED_DEGRADATION",
+        component="Research funnel T10 mandatory execution boundary",
+        source_path="experiments/research_funnel/research_cycle.py",
+        test_script="tests/test_paper_t10_integration.py",
+        before="    if case[\"schema_version\"] == DEADLINE_VERSION and order is not None:",
+        after="    if False:",
+        expected_failure_marker="test_data_blocked_cannot_hide_sample_eligibility_drift",
+        rationale="A data label cannot exempt the workflow-debug sample exclusion.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_T10_REALISM_EXACT_CHECKS",
+        component="Paper execution opt-in T10 calendar",
+        source_path="experiments/research_funnel/research_cycle.py",
+        test_script="tests/test_paper_t10_integration.py",
+        before="            isinstance(checks, dict) and set(checks) == set(expected_checks)",
+        after="            isinstance(checks, dict)",
+        expected_failure_marker="test_realism_checks_require_exact_boolean_contract",
+        rationale="Unknown mandatory checks cannot be silently ignored.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_T10_REALISM_BOOLEAN_CHECKS",
+        component="Paper execution opt-in T10 calendar",
+        source_path="experiments/research_funnel/research_cycle.py",
+        test_script="tests/test_paper_t10_integration.py",
+        before="            and all(checks.get(key) is value for key, value in expected_checks.items())",
+        after="            and all(checks.get(key) == value for key, value in expected_checks.items())",
+        expected_failure_marker="test_realism_checks_require_exact_boolean_contract",
+        rationale="An integer or coerced truth value is not an execution-check receipt.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_V1_5_PENDING_NOT_APPROVED",
+        component="Research Closed Loop V1.5 review boundary",
+        source_path="docs/research/contracts/research_closed_loop.v1.json",
+        test_script="tests/test_research_closed_loop_v1.py",
+        before="  \"status\": \"REVIEW_PENDING_OFFLINE_WORKFLOW_DEBUG\",",
+        after="  \"status\": \"FROZEN_OFFLINE_WORKFLOW_DEBUG\",",
+        expected_failure_marker="test_t10_revision_is_explicit_and_not_human_frozen",
+        rationale="An engineering candidate cannot self-declare human freeze.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_V1_5_NO_FAKE_FREEZE_TIME",
+        component="Research Closed Loop V1.5 review boundary",
+        source_path="docs/research/contracts/research_closed_loop.v1.json",
+        test_script="tests/test_research_closed_loop_v1.py",
+        before="  \"frozen_at\": null,",
+        after="  \"frozen_at\": \"2026-08-26T14:44:39+08:00\",",
+        expected_failure_marker="test_t10_revision_is_explicit_and_not_human_frozen",
+        rationale="Historical freeze time cannot be reused as approval of new bytes.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_V1_5_BIND_POLICY",
+        component="Research Closed Loop V1.5 deadline dependencies",
+        source_path="docs/research/contracts/research_closed_loop.v1.json",
+        test_script="tests/test_research_closed_loop_v1.py",
+        before="    {\"path\": \"docs/research/PAPER_T10_CALENDAR_V1.md\", \"sha256\": \"sha256:941336e99250b35b81fc4ecc792fa83dcff50b5ba6302608ae98fa0d6125f559\"},\n",
+        after="",
+        expected_failure_marker="test_t10_execution_dependencies_are_all_byte_bound",
+        rationale="The opted-in deadline assembly must bind this exact dependency.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_V1_5_BIND_DEADLINE",
+        component="Research Closed Loop V1.5 deadline dependencies",
+        source_path="docs/research/contracts/research_closed_loop.v1.json",
+        test_script="tests/test_research_closed_loop_v1.py",
+        before="    {\"path\": \"experiments/execution_tracker/paper_deadline.py\", \"sha256\": \"sha256:8c69e4314bd1d1eadfc6d2e48107635220f67633b93e368ac31ade5ce91993f3\"},\n",
+        after="",
+        expected_failure_marker="test_t10_execution_dependencies_are_all_byte_bound",
+        rationale="The opted-in deadline assembly must bind this exact dependency.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_V1_5_BIND_PORTFOLIO",
+        component="Research Closed Loop V1.5 deadline dependencies",
+        source_path="docs/research/contracts/research_closed_loop.v1.json",
+        test_script="tests/test_research_closed_loop_v1.py",
+        before="    {\"path\": \"experiments/execution_tracker/paper_portfolio.py\", \"sha256\": \"sha256:171819b92c720421f6cfc2f0eed6daf7bfbc1ec9d4917138a2c1f64ca9b1382e\"},\n",
+        after="",
+        expected_failure_marker="test_t10_execution_dependencies_are_all_byte_bound",
+        rationale="The opted-in deadline assembly must bind this exact dependency.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_V1_5_BIND_PUBLICATION",
+        component="Research Closed Loop V1.5 deadline dependencies",
+        source_path="docs/research/contracts/research_closed_loop.v1.json",
+        test_script="tests/test_research_closed_loop_v1.py",
+        before="    {\"path\": \"experiments/execution_tracker/nightly_publish.py\", \"sha256\": \"sha256:e0d35f60142eae7b0b17714dd9543793ac44bff328b6581900525664e77725e0\"},\n",
+        after="",
+        expected_failure_marker="test_t10_execution_dependencies_are_all_byte_bound",
+        rationale="The opted-in deadline assembly must bind this exact dependency.",
     ),
 )
 
