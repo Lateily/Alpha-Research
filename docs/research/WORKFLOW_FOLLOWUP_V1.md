@@ -1,7 +1,7 @@
 # Brief / Earnings Follow-up v1
 
-Status: OFFLINE / WORKFLOW_DEBUG, stacked on PR #362. This is the local update
-adapter, not a live announcement collector or an enabled scheduled task. It does
+Status: WORKFLOW_DEBUG, stacked on PR #362. The renderer update adapter remains
+local-only. A separate source-capture CLI is opt-in and not scheduled. It does
 not change nightly, production, SMC, U4, paper, Vercel or paid model settings.
 Human trial feedback and the merge decision are still separate prerequisites.
 
@@ -107,15 +107,100 @@ It cannot authorize U4, case sealing, paper, production, or trading.
    feedback. Neither an AI rereview nor CI is that feedback. Merge separately.
 2. Review this adapter and exercise all four paths using isolated inputs:
    new source, unchanged source, missing source, separate human correction.
-3. Next bounded change: licensed/read-only source collection with successful
-   empty-check vs transport failure distinguished, content deduplication,
-   real observed_at and provider budgets. Do not silently add LIVE to the old
-   renderer: approve a live input contract and its tests first.
+3. The bounded source-capture adapter below now implements licensed/read-only
+   collection. Its automated acceptance uses injected synthetic responses, NOT
+   real provider calls. Real endpoint compatibility/entitlement and human review
+   remain acceptance gates. No LIVE mode was added to the historical renderer.
 4. Then connect versioned receipts to the existing workbench and its owner
    authentication; enable a daily check and weekly unresolved summary only
    after explicit schedule configuration. No automation is activated by this PR.
 
 No new market data, model-generated response, human signature, production
 release or strategy effectiveness is claimed by this adapter's tests.
+
+## Three-Subject Source Capture
+
+Scope: only `002119.SZ`, `600667.SH`, `688035.SH`. This is a separate source
+snapshot, not a research verdict or an automatic update of a financial report.
+The human warning on 600667 and all previous approvals are unaffected. None of
+these source statuses means ready, SELECT, SMC PASS, or paper authorization.
+
+The request file has exactly five fields:
+
+```json
+{
+  "schema": "ar.workflow-source-request.v1",
+  "before_date": "20260917",
+  "after_date": "20260918",
+  "announcement_start": "20260901",
+  "announcement_end": "20260918"
+}
+```
+
+These are explicit source dates, not a claim that an exchange calendar verified
+them as adjacent trading days. The two selected price dates and each ticker must
+match exactly. Valid intervening dates in a range response are checked for
+identity/date uniqueness and excluded from the two-date comparison. Missing
+endpoints, out-of-range dates, duplicate rows, malformed OHLC, nonfinite
+numbers, provider errors, or missing adjustment factors block that subject.
+No watchlist, official-sample or previous-price fallback is used. Volume is
+converted from lots to shares, amount from CNY thousands to CNY. A changed
+adjustment factor retains the bars but suppresses the raw close-change number
+and requires corporate-action review; it does not silently calculate a return.
+
+CNINFO queries use the exchange catalog's exact company identity, the explicit
+date range, all categories, and sequential pages. Each row must bind both
+company code and orgId; future/out-of-range dates are rejected. Totals must stay
+constant, IDs must be unique, and the final count must equal the declared total.
+An exhausted page budget is DATA_BLOCKED, never "no announcements". Even success
+only establishes completeness relative to that provider response and interval;
+it does not prove global disclosure completeness. Unexpected provider shapes
+fail closed, pending a separately tested adapter revision.
+
+### Runtime Boundary
+
+Default network is OFF; `AR_OFFLINE=1` always refuses live transport. The only
+destinations are HTTPS `api.tushare.pro` (daily/adj_factor), the two stock catalogs
+and announcement query at `www.cninfo.com.cn`. No redirect, retry, HTTP fallback,
+URL environment override, paid model, or PDF download. TUSHARE_TOKEN comes only
+from the environment and is omitted from request records; error bodies are not
+retained, and literal/JSON-escaped token echoes are refused before persistence.
+Keep source packages private. Hashes are integrity receipts, not authenticated
+proof that a provider served the bytes or that a human approved them.
+
+Budgets: at most 17 HTTP attempts (6 price/factor, 2 catalogs, 9 listing pages),
+at most 3 pages/company, 100 requested rows/page, and 4 MiB/response. The 20-second
+urllib timeout is a socket timeout, NOT a hard whole-run time budget. No token
+purchase or live invocation was authorized by implementation approval; runtime
+use requires existing entitlement and explicit operator opt-in.
+
+```sh
+# A separate, explicitly authorized source check; NOT a scheduler configuration.
+python3 experiments/research_workflows/source_capture.py check \
+  --request /absolute/operator/source-request.json \
+  --live-read-only --output /absolute/sandbox/source-check-001
+
+python3 experiments/research_workflows/source_capture.py verify \
+  --package /absolute/sandbox/source-check-001
+```
+
+The CLI records actual UTC check time. `--previous <verified-package>` enables
+metadata comparisons within a nonshrinking query interval. A failed previous
+query is not a comparison baseline; the next success is INITIAL_INDEX. Injected
+and live source modes cannot share a comparison history. Preserve
+every parent package. Each new folder contains `request.json`, `receipt.json`,
+`previous.json`, token-free `exchanges.json`, `status.md`, `SHA256SUMS`. Reopening
+replays the exact frozen exchange sequence and recomputes every receipt field
+and report byte. No-overwrite and incomplete-directory refusal follow the same
+application-level storage limits described above.
+
+Prices can be COMPLETE while announcements are DATA_BLOCKED (or vice versa);
+the overall result stays DATA_BLOCKED if either is blocked. Exit 2 means refused
+or blocked, exit 0 means COLLECTED_FOR_REVIEW only. Raw listings remain
+NOT_FETCHED; NEW/REVISED/UNCHANGED listing metadata never answers a financial
+question or proves a PDF body unchanged. `human_review=PENDING`,
+`thesis_status=UNRESOLVED`, WORKFLOW_DEBUG, no claims, no authority, model_calls=0
+are invariant. Scheduler/workbench integration and any refreshed research
+response are later work, not implied by successful collection.
 
 Not a trading instruction; research signal, human executes.
