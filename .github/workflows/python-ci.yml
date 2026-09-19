@@ -53,6 +53,10 @@ jobs:
         with:
           python-version: "3.11"
       - run: pip install pandas jsonschema==4.25.1
+      - name: Independent research workflow trials (offline)
+        run: |
+          python3 tests/test_research_workflow_trial.py
+          python3 scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/independent_workflow_trial.task.json
       - name: Full feature health JSON Schema (producer receipts, offline)
         run: |
           python3 tests/test_feature_health_schema.py
