@@ -4221,7 +4221,7 @@ MUTATIONS: tuple[MutationCase, ...] = (
         component="Research funnel full paper cycle",
         source_path="experiments/research_funnel/research_cycle.py",
         test_script="tests/test_research_cycle.py",
-        before='    if outcomes["scoring_as_of"] != bars["rows"][-1]["date"]:\n'
+        before='    if outcomes["scoring_as_of"] != scoring_as_of:\n'
         '        raise CycleError("method outcomes and settled bars do not share one scoring as_of")',
         after='    if False:\n'
         '        raise CycleError("method outcomes and settled bars do not share one scoring as_of")',
@@ -7466,18 +7466,18 @@ MUTATIONS = MUTATIONS + (
     ),
     MutationCase(
         mutation_id="RESEARCH_V1_4_REVISION_IDENTITY",
-        component="Research Closed Loop V1.4 revision identity",
+        component="Research Closed Loop V1.5 candidate identity",
         source_path="docs/research/contracts/research_closed_loop.v1.json",
         test_script="tests/test_research_closed_loop_v1.py",
         before=(
-            '  "schema_version": "1.4",\n'
-            '  "method_version": "RESEARCH_CLOSED_LOOP_V1_4",'
+            '  "schema_version": "1.5",\n'
+            '  "method_version": "RESEARCH_CLOSED_LOOP_V1_5_CANDIDATE",'
         ),
         after=(
             '  "schema_version": "1.3",\n'
             '  "method_version": "RESEARCH_CLOSED_LOOP_V1_3",'
         ),
-        expected_failure_marker="test_manifest_is_strict_and_frozen",
+        expected_failure_marker="test_manifest_is_strict_review_candidate",
         rationale=(
             "The semiconductor screening assembly must be an explicit reviewed revision, "
             "not a silent byte change under the original V1 method label."
@@ -7485,36 +7485,35 @@ MUTATIONS = MUTATIONS + (
     ),
     MutationCase(
         mutation_id="RESEARCH_V1_4_FROZEN_AT",
-        component="Research Closed Loop V1.4 frozen timestamp",
+        component="Research Closed Loop V1.5 proposal timestamp",
         source_path="docs/research/contracts/research_closed_loop.v1.json",
         test_script="tests/test_research_closed_loop_v1.py",
-        before='  "frozen_at": "2026-08-26T14:44:39+08:00",',
-        after='  "frozen_at": "2026-08-26T01:17:17+08:00",',
-        expected_failure_marker="test_revision_1_4_identity_names_current_review",
+        before='  "proposed_at": "2026-09-19T20:42:25+00:00",',
+        after='  "proposed_at": "2026-08-26T01:17:17+08:00",',
+        expected_failure_marker="test_revision_1_5_identity_names_current_review",
         rationale=(
-            "A new byte-bound assembly revision must carry its own reviewed freeze time, "
-            "not reuse the superseded V1.3 identity."
+            "A pending byte-bound assembly must carry its own proposal time, "
+            "not reuse a historical freeze identity."
         ),
     ),
     MutationCase(
         mutation_id="RESEARCH_V1_4_SOURCE_BASE",
-        component="Research Closed Loop V1.4 source review binding",
+        component="Research Closed Loop V1.5 source review binding",
         source_path="docs/research/contracts/research_closed_loop.v1.json",
         test_script="tests/test_research_closed_loop_v1.py",
         before=(
-            '    "assembly_code_commit": "e0d73dac5a8f8bbc4a427ec15b7efce8c8d5ad8c",\n'
-            '    "base_main": "ad26f1b644d75618a3923267c4dfa5b446d71e67",\n'
-            '    "review_pr": 319,'
+            '    "assembly_base_commit": "e0f0a57471df14a3ed044f30e9497ee2e441dcac",\n'
+            '    "base_main": "e64e3cdd64cda102e802924de8736fce6e45eb3c",\n'
+            '    "review_pr": 357,'
         ),
         after=(
             '    "assembly_code_commit": "a893d0fc28ffcf3f50ab6071d8f5ccf86b74aa0a",\n'
             '    "base_main": "7774e33dbfa6c5554472d3c137ca7b14b4423f4c",\n'
             '    "review_pr": 317,'
         ),
-        expected_failure_marker="test_revision_1_4_identity_names_current_review",
+        expected_failure_marker="test_revision_1_5_identity_names_current_review",
         rationale=(
-            "The frozen source identity must point to the implementation commit, main base, "
-            "and review PR that actually delivered V1.4."
+            "The candidate identity must name its provenance parent, main base and actual review PR."
         ),
     ),
     MutationCase(
@@ -7524,7 +7523,7 @@ MUTATIONS = MUTATIONS + (
         test_script="tests/test_research_closed_loop_v1.py",
         before=(
             '    {"path": "experiments/research_funnel/research_cycle.py", '
-            '"sha256": "sha256:f42620fa91cf93fe8fbd28930ab4c2530a5e6ed285c0025df5a74175feb59415"},\n'
+            '"sha256": "sha256:a595ab2272ef3efddda7461857301a5160f18b3d9ef8b301a941460c066dbf91"},\n'
         ),
         after="",
         expected_failure_marker="test_every_bound_artifact_matches_its_exact_bytes",
@@ -7576,7 +7575,7 @@ MUTATIONS = MUTATIONS + (
         test_script="tests/test_research_closed_loop_v1.py",
         before='      "id": "PAPER_REGISTRATION",',
         after='      "id": "PAPER_EXECUTION",',
-        expected_failure_marker="test_manifest_is_strict_and_frozen",
+        expected_failure_marker="test_manifest_is_strict_review_candidate",
         rationale=(
             "The human-authorized R-015 registration transaction must remain an explicit "
             "block between research registration and paper execution."
@@ -7589,7 +7588,7 @@ MUTATIONS = MUTATIONS + (
         test_script="tests/test_research_closed_loop_v1.py",
         before=(
             '    {"path": "experiments/research_funnel/paper_registration_bridge.py", '
-            '"sha256": "sha256:61f095a6b126ed3aedbaae4d69c18e5dcc2d7eb5bd22b2e82713279382b1bc79"},'
+            '"sha256": "sha256:9c334b6b75aaeef2e3726ba48c851957b395b9a5b353edfd7a792280003be182"},'
         ),
         after=(
             '    {"path": "experiments/research_funnel/paper_registration_bridge.py", '
@@ -9402,6 +9401,383 @@ MUTATIONS = MUTATIONS + (
     ),
 )
 
+
+
+MUTATIONS = MUTATIONS + (
+    MutationCase(
+        mutation_id="PAPER_T10_CLOCK",
+        component="Paper execution opt-in T10 calendar",
+        source_path="experiments/execution_tracker/paper_deadline.py",
+        test_script="tests/test_paper_t10_execution.py",
+        before=(
+            '            entry["deadline_due_date"] = _nth_after(\n'
+            '                entry["deadline_policy"], entry["fill_date"],\n'
+            '                entry["deadline_policy"]["holding_sessions"])'
+        ),
+        after=(
+            '            entry["deadline_due_date"] = _nth_after(\n'
+            '                entry["deadline_policy"], entry["fill_date"], 9)'
+        ),
+        expected_failure_marker="test_t0_then_ten_exchange_opens_not_calendar_days",
+        rationale="The due date must read the bound holding window, and the tenth exchange open after fill is mandatory.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_T10_CALENDAR_COVERS_DEADLINE",
+        component="Paper T+10 exchange-calendar execution",
+        source_path="experiments/execution_tracker/paper_deadline.py",
+        test_script="tests/test_paper_t10_execution.py",
+        before=(
+            '        _nth_after(policy, _nth_after(policy, registered_at, pending),\n'
+            '                   policy["holding_sessions"])'
+        ),
+        after="        _nth_after(policy, registered_at, pending)",
+        expected_failure_marker="test_registration_refuses_a_calendar_that_cannot_reach_the_deadline",
+        rationale="Registration must prove the calendar reaches the worst-case deadline, not only the pending window.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_T10_NO_RETROACTIVE_BINDING",
+        component="Paper T+10 exchange-calendar execution",
+        source_path="experiments/execution_tracker/paper_deadline.py",
+        test_script="tests/test_paper_t10_execution.py",
+        before='          or entry.get("deadline_policy_bound_at") != registered):',
+        after="          or False):",
+        expected_failure_marker="test_binding_stamp_must_exist_and_match_registration",
+        rationale="A policy may only bind at registration; an order advanced under price-only rules must never acquire one.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_T10_CALENDAR_HASH",
+        component="Paper execution opt-in T10 calendar",
+        source_path="experiments/execution_tracker/paper_deadline.py",
+        test_script="tests/test_paper_t10_execution.py",
+        before="    _check_hash(calendar, \"calendar_hash\")",
+        after="    pass",
+        expected_failure_marker="test_calendar_and_policy_hash_tampering_refused_transactionally",
+        rationale="Calendar evidence cannot be replaced by a self-resealed outer policy.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_T10_POLICY_HASH",
+        component="Paper execution opt-in T10 calendar",
+        source_path="experiments/execution_tracker/paper_deadline.py",
+        test_script="tests/test_paper_t10_execution.py",
+        before="    _check_hash(policy, \"policy_hash\")",
+        after="    pass",
+        expected_failure_marker="test_calendar_and_policy_hash_tampering_refused_transactionally",
+        rationale="Execution policy changes must invalidate the bound policy hash.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_T10_LIMIT_DOWN",
+        component="Paper execution opt-in T10 calendar",
+        source_path="experiments/execution_tracker/paper_deadline.py",
+        test_script="tests/test_paper_t10_execution.py",
+        before="        return \"ONE_PRICE_LIMIT_DOWN_NO_SELL\"",
+        after="        return None",
+        expected_failure_marker="test_suspension_limit_down_and_capacity_block_then_retry",
+        rationale="A deadline cannot force a one-price limit-down sale.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_T10_CAPACITY",
+        component="Paper execution opt-in T10 calendar",
+        source_path="experiments/execution_tracker/paper_deadline.py",
+        test_script="tests/test_paper_t10_execution.py",
+        before="        return \"LIQUIDITY_PARTICIPATION_EXCEEDED\"",
+        after="        return None",
+        expected_failure_marker="test_suspension_limit_down_and_capacity_block_then_retry",
+        rationale="A deadline cannot bypass full-position participation.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_T10_PENDING_EXPIRY",
+        component="Paper execution opt-in T10 calendar",
+        source_path="experiments/execution_tracker/paper_deadline.py",
+        test_script="tests/test_paper_t10_execution.py",
+        before="        elif day >= entry[\"pending_expiry_date\"]:",
+        after="        elif False:",
+        expected_failure_marker="test_pending_expiry_is_end_of_nth_open_and_never_invents_pnl",
+        rationale="Pending validity is separate from the holding clock.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_T10_PRICE_PRIORITY",
+        component="Paper execution opt-in T10 calendar",
+        source_path="experiments/execution_tracker/paper_deadline.py",
+        test_script="tests/test_paper_t10_execution.py",
+        before="    if due and entry[\"deadline_policy\"][\"exit_price\"] == \"OPEN\":",
+        after="    if due and entry[\"deadline_policy\"][\"exit_price\"] == \"CLOSE\":",
+        expected_failure_marker="test_same_bar_priority_open_before_stop_close_after_stop",
+        rationale="OPEN and CLOSE conventions must keep their frozen ordering.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_T10_HISTORY_BINDING",
+        component="Paper execution opt-in T10 calendar",
+        source_path="experiments/execution_tracker/paper_deadline.py",
+        test_script="tests/test_paper_t10_execution.py",
+        before="            if evidence[\"bar_hash\"] != bar_hashes.get(evidence[\"date\"]):",
+        after="            if False:",
+        expected_failure_marker="test_prior_bar_revision_removal_and_late_insert_rejected_atomically",
+        rationale="Previously processed missing or present bars cannot be revised retroactively.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_T10_ATOMIC_ADVANCE",
+        component="Paper execution opt-in T10 calendar",
+        source_path="experiments/execution_tracker/paper_deadline.py",
+        test_script="tests/test_paper_t10_execution.py",
+        before="    updated = copy.deepcopy(entry)",
+        after="    updated = entry",
+        expected_failure_marker="test_advance_leaves_the_caller_untouched_when_a_session_raises",
+        rationale="Failure cannot leave a partially advanced order.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_T10_DISPATCH",
+        component="Paper execution opt-in T10 calendar",
+        source_path="experiments/execution_tracker/paper_portfolio.py",
+        test_script="tests/test_paper_t10_execution.py",
+        before="    if \"deadline_policy\" in entry:",
+        after="    if False:",
+        expected_failure_marker="test_t0_then_ten_exchange_opens_not_calendar_days",
+        rationale="The shared execution entry point must call the opt-in clock.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_T10_CASE_POLICY",
+        component="Paper execution opt-in T10 calendar",
+        source_path="experiments/research_funnel/research_cycle.py",
+        test_script="tests/test_paper_t10_integration.py",
+        before="            paper_deadline.validate_policy(order[\"deadline_policy\"], registered_at)",
+        after="            pass",
+        expected_failure_marker="test_case_rejects_resealed_policy_with_bad_calendar_hash",
+        rationale="Case sealing must validate the embedded calendar, not only case bytes.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_T10_PUBLICATION_CLOCK",
+        component="Paper execution opt-in T10 calendar",
+        source_path="experiments/execution_tracker/nightly_publish.py",
+        test_script="tests/test_paper_t10_integration.py",
+        before="settlement_as_of=receipt[\"recording\"][\"target_trade_date\"]",
+        after="settlement_as_of=bars[-1][\"date\"]",
+        expected_failure_marker="test_recorded_missing_bar_attempt_replays_from_publication_clock",
+        rationale="Publication must replay the missing due session, not infer a clock from bars.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_T10_MISSING_HORIZON",
+        component="Paper execution opt-in T10 calendar",
+        source_path="experiments/research_funnel/research_cycle.py",
+        test_script="tests/test_paper_t10_integration.py",
+        before="            elif target not in by_date or by_date[target][\"suspended\"] or order.get(\"execution_frozen\"):\n                output[f\"T+{horizon}\"] = {\"status\": \"DATA_BLOCKED\",",
+        after="            elif target not in by_date or by_date[target][\"suspended\"] or order.get(\"execution_frozen\"):\n                output[f\"T+{horizon}\"] = {\"status\": \"WINDOW_OPEN\",",
+        expected_failure_marker="test_missing_due_bar_is_data_blocked_not_window_open",
+        rationale="An elapsed missing observation is DATA_BLOCKED, not an unelapsed window.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_T10_NAV_FRESHNESS",
+        component="Paper execution opt-in T10 calendar",
+        source_path="experiments/research_funnel/research_cycle.py",
+        test_script="tests/test_paper_t10_integration.py",
+        before='    performance = paper_fund.compute_performance(fund, orders, nav_history)\n    if case["schema_version"] == DEADLINE_VERSION:',
+        after='    performance = paper_fund.compute_performance(fund, orders, nav_history)\n    if False:',
+        expected_failure_marker="test_missing_final_nav_is_dated_and_not_current_performance",
+        rationale="A last-known NAV must not be presented as current or complete-coverage performance.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_T10_EMPTY_SERIES",
+        component="Paper execution opt-in T10 calendar",
+        source_path="experiments/research_funnel/research_cycle.py",
+        test_script="tests/test_paper_t10_integration.py",
+        before='    empty_rows_allowed = case["schema_version"] == DEADLINE_VERSION',
+        after='    empty_rows_allowed = False',
+        expected_failure_marker="test_empty_series_expires_without_inventing_a_completed_sample",
+        rationale="An explicit covered calendar must let an entirely missing series report expiry without a fake fill.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_T10_FROZEN_NAV_REPORT",
+        component="Paper execution opt-in T10 calendar",
+        source_path="experiments/research_funnel/research_cycle.py",
+        test_script="tests/test_paper_t10_integration.py",
+        before='                    except paper_fund.CorporateActionUnresolved:\n                        if case["schema_version"] != DEADLINE_VERSION:',
+        after='                    except paper_fund.CorporateActionUnresolved:\n                        if True:',
+        expected_failure_marker="test_filled_corporate_freeze_delivers_blocked_cycle_without_nav",
+        rationale="The NAV refusal must remain intact while the v1.1 cycle delivers calendar-driven blocked receipts.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_T10_STOP_AMENDMENT_REFUSED",
+        component="Research funnel paper execution opt-in T10 calendar",
+        source_path="experiments/execution_tracker/model_paper_fund.py",
+        test_script="tests/test_paper_t10_integration.py",
+        before='            if "deadline_policy" in o:',
+        after='            if False:',
+        expected_failure_marker="test_bound_stop_refusal_preserves_next_and_deadline_settlement",
+        rationale="Unsupported stop amendments must refuse before poisoning the frozen execution binding.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_T10_EXPIRY_PUBLICATION_TRANSITION",
+        component="Paper execution opt-in T10 calendar",
+        source_path="experiments/execution_tracker/nightly_publish.py",
+        test_script="tests/test_paper_t10_integration.py",
+        before='    "pending":   {"pending", "filled", "closed", "cancelled", "expired"},',
+        after='    "pending":   {"pending", "filled", "closed", "cancelled"},',
+        expected_failure_marker="test_real_expiry_passes_full_publication_without_cash_or_fake_fill",
+        rationale="A real unfilled expiry must pass the complete publication verifier, not only receipt replay.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_T10_EXPIRY_KNOWN_STATE",
+        component="Paper execution opt-in T10 calendar",
+        source_path="experiments/execution_tracker/nightly_publish.py",
+        test_script="tests/test_paper_t10_integration.py",
+        before='    "expired":   {"expired"},',
+        after='    "expiry_removed": {"expiry_removed"},',
+        expected_failure_marker="test_unchanged_expired_order_is_known_terminal_next_publication",
+        rationale="Unchanged expired orders remain valid across later publication snapshots.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_T10_EXPIRY_TERMINAL",
+        component="Paper execution opt-in T10 calendar",
+        source_path="experiments/execution_tracker/nightly_publish.py",
+        test_script="tests/test_paper_t10_integration.py",
+        before='        if was == "expired" and json.dumps(b, sort_keys=True) != json.dumps(a, sort_keys=True):',
+        after='        if False:',
+        expected_failure_marker="test_persisted_expiry_evidence_is_immutable",
+        rationale="Expired records cannot acquire rewritten economic facts in a later publication.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_T10_EXPIRY_REQUIRES_RECEIPT",
+        component="Paper execution opt-in T10 calendar",
+        source_path="experiments/execution_tracker/nightly_publish.py",
+        test_script="tests/test_paper_t10_integration.py",
+        before='            if order.get("status") == "expired" and (old is None or old.get("status") != "expired"):',
+        after='            if False:',
+        expected_failure_marker="test_expiry_requires_a_new_receipt_even_on_publication_date",
+        rationale="An expiry cannot self-authorize via a terminal label with no new replayable receipt.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_T10_FUND_EXPIRY_COUNT",
+        component="Research funnel paper execution opt-in T10 calendar",
+        source_path="experiments/execution_tracker/model_paper_fund.py",
+        test_script="tests/test_paper_t10_integration.py",
+        before='        result["n_expired"] = sum(1 for o in orders if o["status"] == "expired")',
+        after='        result["n_expired"] = 0',
+        expected_failure_marker="test_expiry_counts_are_explicit_and_excluded_from_closed_samples",
+        rationale="Fund summaries must retain unfilled expiries without turning them into closed samples.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_T10_PORTFOLIO_EXPIRY_COUNT",
+        component="Research funnel paper execution opt-in T10 calendar",
+        source_path="experiments/execution_tracker/paper_portfolio.py",
+        test_script="tests/test_paper_t10_integration.py",
+        before='        result["n_expired"] = sum(1 for e in portfolio if e["status"] == "expired")',
+        after='        result["n_expired"] = 0',
+        expected_failure_marker="test_expiry_counts_are_explicit_and_excluded_from_closed_samples",
+        rationale="Portfolio summaries must expose the same non-claim expiry population.",
+    ),
+)
+
+MUTATIONS = MUTATIONS + (
+    MutationCase(
+        mutation_id="PAPER_T10_OPEN_PRICE_CAUSAL",
+        component="Paper execution opt-in T10 calendar",
+        source_path="experiments/execution_tracker/paper_deadline.py",
+        test_script="tests/test_paper_t10_execution.py",
+        before="        if policy[\"exit_price\"] == \"CLOSE\":",
+        after="        if True:",
+        expected_failure_marker="test_open_price_ignores_later_daily_extremes_and_close",
+        rationale="OPEN price arithmetic cannot use later daily-low information.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_T10_CLOSE_LOW_BOUND",
+        component="Paper execution opt-in T10 calendar",
+        source_path="experiments/execution_tracker/paper_deadline.py",
+        test_script="tests/test_paper_t10_execution.py",
+        before="        if policy[\"exit_price\"] == \"CLOSE\":",
+        after="        if False:",
+        expected_failure_marker="test_close_keeps_its_settled_low_bound",
+        rationale="CLOSE retains its existing settled-day price bound.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_CYCLE_T10_NAMED_DEGRADATION",
+        component="Research funnel T10 mandatory execution boundary",
+        source_path="experiments/research_funnel/research_cycle.py",
+        test_script="tests/test_paper_t10_integration.py",
+        before="    if case[\"schema_version\"] == DEADLINE_VERSION and order is not None:",
+        after="    if False:",
+        expected_failure_marker="test_data_blocked_cannot_hide_sample_eligibility_drift",
+        rationale="A data label cannot exempt the workflow-debug sample exclusion.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_T10_REALISM_EXACT_CHECKS",
+        component="Paper execution opt-in T10 calendar",
+        source_path="experiments/research_funnel/research_cycle.py",
+        test_script="tests/test_paper_t10_integration.py",
+        before="            isinstance(checks, dict) and set(checks) == set(expected_checks)",
+        after="            isinstance(checks, dict)",
+        expected_failure_marker="test_realism_checks_require_exact_boolean_contract",
+        rationale="Unknown mandatory checks cannot be silently ignored.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_T10_REALISM_BOOLEAN_CHECKS",
+        component="Paper execution opt-in T10 calendar",
+        source_path="experiments/research_funnel/research_cycle.py",
+        test_script="tests/test_paper_t10_integration.py",
+        before="            and all(checks.get(key) is value for key, value in expected_checks.items())",
+        after="            and all(checks.get(key) == value for key, value in expected_checks.items())",
+        expected_failure_marker="test_realism_checks_require_exact_boolean_contract",
+        rationale="An integer or coerced truth value is not an execution-check receipt.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_V1_5_PENDING_NOT_APPROVED",
+        component="Research Closed Loop V1.5 review boundary",
+        source_path="docs/research/contracts/research_closed_loop.v1.json",
+        test_script="tests/test_research_closed_loop_v1.py",
+        before="  \"status\": \"REVIEW_PENDING_OFFLINE_WORKFLOW_DEBUG\",",
+        after="  \"status\": \"FROZEN_OFFLINE_WORKFLOW_DEBUG\",",
+        expected_failure_marker="test_t10_revision_is_explicit_and_not_human_frozen",
+        rationale="An engineering candidate cannot self-declare human freeze.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_V1_5_NO_FAKE_FREEZE_TIME",
+        component="Research Closed Loop V1.5 review boundary",
+        source_path="docs/research/contracts/research_closed_loop.v1.json",
+        test_script="tests/test_research_closed_loop_v1.py",
+        before="  \"frozen_at\": null,",
+        after="  \"frozen_at\": \"2026-08-26T14:44:39+08:00\",",
+        expected_failure_marker="test_t10_revision_is_explicit_and_not_human_frozen",
+        rationale="Historical freeze time cannot be reused as approval of new bytes.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_V1_5_BIND_POLICY",
+        component="Research Closed Loop V1.5 deadline dependencies",
+        source_path="docs/research/contracts/research_closed_loop.v1.json",
+        test_script="tests/test_research_closed_loop_v1.py",
+        before="    {\"path\": \"docs/research/PAPER_T10_CALENDAR_V1.md\", \"sha256\": \"sha256:941336e99250b35b81fc4ecc792fa83dcff50b5ba6302608ae98fa0d6125f559\"},\n",
+        after="",
+        expected_failure_marker="test_t10_execution_dependencies_are_all_byte_bound",
+        rationale="The opted-in deadline assembly must bind this exact dependency.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_V1_5_BIND_DEADLINE",
+        component="Research Closed Loop V1.5 deadline dependencies",
+        source_path="docs/research/contracts/research_closed_loop.v1.json",
+        test_script="tests/test_research_closed_loop_v1.py",
+        before="    {\"path\": \"experiments/execution_tracker/paper_deadline.py\", \"sha256\": \"sha256:8c69e4314bd1d1eadfc6d2e48107635220f67633b93e368ac31ade5ce91993f3\"},\n",
+        after="",
+        expected_failure_marker="test_t10_execution_dependencies_are_all_byte_bound",
+        rationale="The opted-in deadline assembly must bind this exact dependency.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_V1_5_BIND_PORTFOLIO",
+        component="Research Closed Loop V1.5 deadline dependencies",
+        source_path="docs/research/contracts/research_closed_loop.v1.json",
+        test_script="tests/test_research_closed_loop_v1.py",
+        before="    {\"path\": \"experiments/execution_tracker/paper_portfolio.py\", \"sha256\": \"sha256:171819b92c720421f6cfc2f0eed6daf7bfbc1ec9d4917138a2c1f64ca9b1382e\"},\n",
+        after="",
+        expected_failure_marker="test_t10_execution_dependencies_are_all_byte_bound",
+        rationale="The opted-in deadline assembly must bind this exact dependency.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_V1_5_BIND_PUBLICATION",
+        component="Research Closed Loop V1.5 deadline dependencies",
+        source_path="docs/research/contracts/research_closed_loop.v1.json",
+        test_script="tests/test_research_closed_loop_v1.py",
+        before="    {\"path\": \"experiments/execution_tracker/nightly_publish.py\", \"sha256\": \"sha256:e0d35f60142eae7b0b17714dd9543793ac44bff328b6581900525664e77725e0\"},\n",
+        after="",
+        expected_failure_marker="test_t10_execution_dependencies_are_all_byte_bound",
+        rationale="The opted-in deadline assembly must bind this exact dependency.",
+    ),
+)
 
 @dataclass(frozen=True)
 class CommandResult:

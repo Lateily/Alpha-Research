@@ -28,6 +28,7 @@ EXPECTED_ARTIFACT_PATHS = (
     "docs/research/FIVE_AXIS_ATTRIBUTION_V1.md",
     "docs/research/PAPER_EXECUTION_REALISM_AUDIT_V1.md",
     "docs/research/PAPER_REGISTRATION_BRIDGE_V1.md",
+    "docs/research/PAPER_T10_CALENDAR_V1.md",
     "docs/research/prospective/SEMICONDUCTOR_DAILY_SOURCE_REPAIR_PLAN_V0_1.md",
     "experiments/research_funnel/funnel_pipeline.py",
     "experiments/research_funnel/feature_store.py",
@@ -42,6 +43,9 @@ EXPECTED_ARTIFACT_PATHS = (
     "experiments/research_funnel/paper_registration_bridge.py",
     "experiments/execution_tracker/event_ledger.py",
     "experiments/execution_tracker/model_paper_fund.py",
+    "experiments/execution_tracker/paper_deadline.py",
+    "experiments/execution_tracker/paper_portfolio.py",
+    "experiments/execution_tracker/nightly_publish.py",
     "experiments/execution_tracker/paper_execution_audit.py",
     "experiments/execution_tracker/model_fund/orders.json",
 )
@@ -80,7 +84,7 @@ def _sha(path: Path) -> str:
 def _validate(manifest: dict[str, Any]) -> list[str]:
     errors: list[str] = []
     expected_top = {
-        "schema", "schema_version", "method_version", "status", "frozen_at",
+        "schema", "schema_version", "method_version", "status", "frozen_at", "proposed_at",
         "source_base", "ordered_blocks", "decision_denominator", "authority",
         "sample_policy", "legacy_order_policy", "production", "artifact_bindings",
         "disclaimer",
@@ -96,18 +100,21 @@ def _validate(manifest: dict[str, Any]) -> list[str]:
         errors.append("artifact binding set or order changed")
     if manifest.get("schema") != "ar.research_closed_loop_manifest.v1":
         errors.append("schema changed")
-    if manifest.get("schema_version") != "1.4":
+    if manifest.get("schema_version") != "1.5":
         errors.append("manifest revision changed")
-    if manifest.get("method_version") != "RESEARCH_CLOSED_LOOP_V1_4":
+    if manifest.get("method_version") != "RESEARCH_CLOSED_LOOP_V1_5_CANDIDATE":
         errors.append("method version changed")
-    if manifest.get("status") != "FROZEN_OFFLINE_WORKFLOW_DEBUG":
-        errors.append("frozen status changed")
-    if manifest.get("frozen_at") != "2026-08-26T14:44:39+08:00":
-        errors.append("frozen timestamp changed")
+    if manifest.get("status") != "REVIEW_PENDING_OFFLINE_WORKFLOW_DEBUG":
+        errors.append("review status changed")
+    if manifest.get("frozen_at") is not None:
+        errors.append("candidate cannot claim a human freeze")
+    if manifest.get("proposed_at") != "2026-09-19T20:42:25+00:00":
+        errors.append("proposal timestamp changed")
     if manifest.get("source_base") != {
-        "assembly_code_commit": "e0d73dac5a8f8bbc4a427ec15b7efce8c8d5ad8c",
-        "base_main": "ad26f1b644d75618a3923267c4dfa5b446d71e67",
-        "review_pr": 319,
+        "assembly_base_commit": "e0f0a57471df14a3ed044f30e9497ee2e441dcac",
+        "base_main": "e64e3cdd64cda102e802924de8736fce6e45eb3c",
+        "review_pr": 357,
+        "supersedes_manifest_sha256": "sha256:ab11bebeb44975425f2cef39c01aedca35c6178aed70e7cc1bba51e7eda5fcb9",
         "data_dependency_pr": 297,
         "data_dependency_status": "MERGED_MAIN",
     }:
@@ -192,7 +199,32 @@ class ResearchClosedLoopV1Tests(unittest.TestCase):
     def setUp(self) -> None:
         self.manifest = _load(MANIFEST_PATH)
 
-    def test_manifest_is_strict_and_frozen(self) -> None:
+    def test_t10_revision_is_explicit_and_not_human_frozen(self) -> None:
+        self.assertEqual(self.manifest["schema_version"], "1.5")
+        self.assertEqual(self.manifest["method_version"], "RESEARCH_CLOSED_LOOP_V1_5_CANDIDATE")
+        self.assertEqual(self.manifest["status"], "REVIEW_PENDING_OFFLINE_WORKFLOW_DEBUG")
+        self.assertIsNone(self.manifest["frozen_at"])
+        self.assertEqual(self.manifest.get("proposed_at"), "2026-09-19T20:42:25+00:00")
+        self.assertEqual(self.manifest["source_base"]["review_pr"], 357)
+        self.assertEqual(self.manifest["source_base"].get("supersedes_manifest_sha256"),
+                         "sha256:ab11bebeb44975425f2cef39c01aedca35c6178aed70e7cc1bba51e7eda5fcb9")
+
+    def test_t10_execution_dependencies_are_all_byte_bound(self) -> None:
+        bindings = {row["path"]: row["sha256"] for row in self.manifest["artifact_bindings"]}
+        for path in ("experiments/execution_tracker/paper_deadline.py",
+                     "experiments/execution_tracker/paper_portfolio.py",
+                     "experiments/execution_tracker/nightly_publish.py",
+                     "docs/research/PAPER_T10_CALENDAR_V1.md"):
+            with self.subTest(path=path):
+                self.assertIn(path, bindings)
+                self.assertEqual(bindings[path], _sha(ROOT / path))
+
+    def test_t10_candidate_cannot_self_declare_human_freeze(self) -> None:
+        changed = copy.deepcopy(self.manifest)
+        changed["status"] = "FROZEN_OFFLINE_WORKFLOW_DEBUG"
+        self.assertIn("review status changed", _validate(changed))
+
+    def test_manifest_is_strict_review_candidate(self) -> None:
         self.assertEqual(_validate(self.manifest), [])
 
     def test_every_bound_artifact_matches_its_exact_bytes(self) -> None:
@@ -213,9 +245,9 @@ class ResearchClosedLoopV1Tests(unittest.TestCase):
         ]
         self.assertIn("artifact binding set or order changed", _validate(changed))
 
-    def test_revision_1_4_binds_the_paper_registration_assembly(self) -> None:
-        self.assertEqual(self.manifest["schema_version"], "1.4")
-        self.assertEqual(self.manifest["method_version"], "RESEARCH_CLOSED_LOOP_V1_4")
+    def test_revision_1_5_binds_the_paper_registration_assembly(self) -> None:
+        self.assertEqual(self.manifest["schema_version"], "1.5")
+        self.assertEqual(self.manifest["method_version"], "RESEARCH_CLOSED_LOOP_V1_5_CANDIDATE")
         bound = {row["path"] for row in self.manifest["artifact_bindings"]}
         self.assertTrue({
             "docs/research/RESEARCH_CLOSED_LOOP_V1.md",
@@ -255,21 +287,26 @@ class ResearchClosedLoopV1Tests(unittest.TestCase):
             },
         )
 
-    def test_revision_1_4_identity_names_current_review(self) -> None:
-        self.assertEqual(self.manifest["frozen_at"], "2026-08-26T14:44:39+08:00")
+    def test_revision_1_5_identity_names_current_review(self) -> None:
+        self.assertIsNone(self.manifest["frozen_at"])
+        self.assertEqual(self.manifest["proposed_at"], "2026-09-19T20:42:25+00:00")
         self.assertEqual(
             self.manifest["source_base"],
             {
-                "assembly_code_commit": "e0d73dac5a8f8bbc4a427ec15b7efce8c8d5ad8c",
-                "base_main": "ad26f1b644d75618a3923267c4dfa5b446d71e67",
-                "review_pr": 319,
+                "assembly_base_commit": "e0f0a57471df14a3ed044f30e9497ee2e441dcac",
+                "base_main": "e64e3cdd64cda102e802924de8736fce6e45eb3c",
+                "review_pr": 357,
+                "supersedes_manifest_sha256": "sha256:ab11bebeb44975425f2cef39c01aedca35c6178aed70e7cc1bba51e7eda5fcb9",
                 "data_dependency_pr": 297,
                 "data_dependency_status": "MERGED_MAIN",
             },
         )
         changed = json.loads(json.dumps(self.manifest))
         changed["frozen_at"] = "2026-08-26T01:17:17+08:00"
-        self.assertIn("frozen timestamp changed", _validate(changed))
+        self.assertIn("candidate cannot claim a human freeze", _validate(changed))
+        changed = json.loads(json.dumps(self.manifest))
+        changed["proposed_at"] = "2026-08-26T01:17:17+08:00"
+        self.assertIn("proposal timestamp changed", _validate(changed))
         changed = json.loads(json.dumps(self.manifest))
         changed["source_base"]["review_pr"] = 317
         self.assertIn("source-base review binding changed", _validate(changed))
@@ -358,10 +395,10 @@ class ResearchClosedLoopV1Tests(unittest.TestCase):
         self.assertEqual(task["risk_level"], "CONSTITUTIONAL")
         text = DOC_PATH.read_text(encoding="utf-8")
         normalized = " ".join(text.split())
-        self.assertIn("Research Closed Loop V1.4", normalized)
+        self.assertIn("Research Closed Loop V1.5", normalized)
         self.assertIn("shared R-015 intent/commit WAL", normalized)
         self.assertIn("repaired historical evidence remains `LATE_OBSERVED`", normalized)
-        self.assertIn("FROZEN_OFFLINE_WORKFLOW_DEBUG / PRODUCTION_UNWIRED", normalized)
+        self.assertIn("REVIEW_PENDING_OFFLINE_WORKFLOW_DEBUG / PRODUCTION_UNWIRED", normalized)
         self.assertIn("E1 red flags override every positive channel", normalized)
         self.assertIn("first five to ten semiconductor prospective cycles", normalized)
         self.assertIn("30 independent", normalized)

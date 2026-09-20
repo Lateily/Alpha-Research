@@ -1,6 +1,15 @@
-# Research Closed Loop V1.4
+# Research Closed Loop V1.5 Review Candidate
 
-Status: `FROZEN_OFFLINE_WORKFLOW_DEBUG / PRODUCTION_UNWIRED`
+Status: `REVIEW_PENDING_OFFLINE_WORKFLOW_DEBUG / PRODUCTION_UNWIRED`
+
+Revision 1.5 is proposed in PR #357, not human-frozen. It binds the opt-in
+T+10 policy, deadline engine, shared portfolio engine and publication verifier
+alongside the existing assembly. `frozen_at=null` explicitly withholds a human
+freeze; `proposed_at` records this engineering proposal only. The source-base
+commit is a provenance parent, not a claim that it already contains this patch;
+the artifact hashes identify the proposed bytes. The superseded manifest hash
+can be recovered from that parent in Git. No historical registration, approval,
+paper order, source evidence or production manifest is rewritten.
 
 Revision 1.4 keeps every V1 authority, eligibility, denominator, and promotion
 boundary unchanged. It adds the missing governed bridge between a current U4
@@ -31,7 +40,7 @@ research method output or authority and supersedes the V1.2 assembly identity.
 
 ## What V1 Freezes
 
-V1.4 is the assembly contract for the research blocks already delivered in this
+V1.5 is the proposed assembly contract for the research blocks already delivered in this
 repository. It does not create another screener, thesis engine, fill engine, or
 attribution engine. The machine-readable fact source is
 `docs/research/contracts/research_closed_loop.v1.json`; it pins the exact
@@ -87,7 +96,7 @@ missing E1 fact; and a correct thesis cannot excuse an execution violation.
 ## Frozen Authority
 
 - U4 selection and paper registration remain `HUMAN_JUNYAN_ONLY`.
-- All V1.4 artifacts keep `no_trade_flag=true`, `trade_authority=false`,
+- All V1.5 candidate artifacts keep `no_trade_flag=true`, `trade_authority=false`,
   `production_authority=false`, and `claim_allowed=false`.
 - Rejections and missing-data decisions remain in the decision denominator.
 - The five inherited paper orders are `UNVERIFIED_SIMULATION`; they remain in
@@ -124,9 +133,11 @@ research process unscorable and is forbidden.
 
 Any change to the ordered blocks, authority constants, first-wave eligibility,
 30-cluster threshold, cross-industry promotion gate, or bound implementation
-bytes requires a new reviewed manifest revision. Revision 1.4 is such a
-reviewed revision; it does not rewrite the historical V1 registration or any
-existing paper order. A PR
+bytes requires a new reviewed manifest revision. Revision 1.5 is a pending
+review candidate, not a freeze approved by an AI. A future human freeze must
+record explicit authorization for the exact candidate bytes; merge, testing or
+`SELECT` alone does not supply that authorization. It does not rewrite the
+historical V1 registration or any existing paper order. A PR
 may repair an implementation, but it cannot silently keep an existing method
 label while changing the frozen assembly.
 
