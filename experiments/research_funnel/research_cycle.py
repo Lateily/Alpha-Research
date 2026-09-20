@@ -506,6 +506,23 @@ def _mechanical_horizons(order: Mapping[str, Any], rows: list[dict[str, Any]], *
     return output
 
 
+def registration_refusal(case: Mapping[str, Any]) -> str | None:
+    """Why a validated case may not become a paper order; None if it may.
+
+    Every writer asks this one predicate. The replay and the registration
+    bridge used to decide separately, so the same sealed WAIT / HOLD_OBSERVE
+    case ended as NO_TRADE in the replay and as a pending order through the
+    bridge (audit F1, 2026-09-15). validate_case accepts WAIT because a WAIT
+    case is a legitimate research record; being a valid record is not the same
+    as being registrable. research_method already binds the SMC status to the
+    timing status, so the timing ticket is the single field to read.
+    """
+    # governance-mutation: RESEARCH_CYCLE_REGISTRATION_REFUSAL
+    if case["timing_ticket"]["status"] != "PASS":
+        return "NO_TRADE: timing ticket remains WAIT"
+    return None
+
+
 def run_cycle(
     *, bundle_dir: Path, case: Mapping[str, Any], bars: Mapping[str, Any],
     outcomes: Mapping[str, Any], generated_at: str,
@@ -541,9 +558,8 @@ def run_cycle(
     events: list[str] = []
     timing = case["timing_ticket"]
     order: dict[str, Any] | None = None
-    refusal: str | None = None
-    if timing["status"] == "WAIT":
-        refusal = "NO_TRADE: timing ticket remains WAIT"
+    refusal: str | None = registration_refusal(case)
+    if refusal is not None:
         decisions.append({"date": case["paper_order"]["registered_at"], "action": "NO_TRADE", "ticker": case["ticker"], "reason": refusal, "no_trade_flag": True})
         transitions.append(_transition(5, "NO_TRADE", case["generated_at"], decisions[-1]))
     else:

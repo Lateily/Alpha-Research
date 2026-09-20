@@ -51,6 +51,28 @@ def build_closure_bundle(root: Path) -> tuple[Path, list[str], dict, dict, dict]
     return output, codes[:3], packet, receipt, queue
 
 
+def make_wait_draft(draft: dict) -> dict:
+    """Turn a PASS case draft into a structurally valid WAIT / HOLD_OBSERVE one."""
+    draft["timing_ticket"]["status"] = "WAIT"
+    draft["timing_ticket"]["posture"] = "HOLD_OBSERVE"
+    draft["decision_pack"]["execution_gate"]["posture"] = "HOLD_OBSERVE"
+    draft["paper_order"]["gate_state"] = "HOLD_OBSERVE"
+    registration_draft, _, _, _ = method_fixtures.registration_draft()
+    registration_draft["ticker"] = draft["ticker"]
+    registration_draft["thesis_core_hash"] = funnel._hash(draft["thesis_core"])
+    registration_draft["timing_ticket_hash"] = funnel._hash(draft["timing_ticket"])
+    registration_draft["decision_pack_hash"] = funnel._hash(draft["decision_pack"])
+    registration_draft["valuation"]["scenario_band_hash"] = funnel._hash(
+        draft["thesis_core"]["valuation_target_range"]
+    )
+    registration_draft["smc"]["status"] = "WAIT"
+    draft["method_registration"] = method.seal_registration(
+        registration_draft, thesis_core=draft["thesis_core"],
+        timing_ticket=draft["timing_ticket"], decision_pack=draft["decision_pack"],
+    )
+    return draft
+
+
 def build_case_draft(closure_bundle: Path, ticker: str) -> dict:
     closure_manifest = json.loads((closure_bundle / "manifest.json").read_text())
     receipt = json.loads((closure_bundle / "review_receipt.json").read_text())
@@ -430,29 +452,21 @@ class ResearchCycleTests(unittest.TestCase):
             with self.assertRaisesRegex(cycle.CycleError, "not bound to the timing ticket"):
                 cycle.seal_case(draft, closure_bundle)
 
+    def test_pass_case_is_registrable(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            closure_bundle, codes, _, _, _ = build_closure_bundle(Path(tmp))
+            case = cycle.seal_case(build_case_draft(closure_bundle, codes[0]), closure_bundle)
+            self.assertEqual("PASS", case["timing_ticket"]["status"])
+            self.assertIsNone(cycle.registration_refusal(case))
+
     def test_wait_timing_ticket_ends_honestly_at_no_trade(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             closure_bundle, codes, _, _, _ = build_closure_bundle(root)
-            draft = build_case_draft(closure_bundle, codes[0])
-            draft["timing_ticket"]["status"] = "WAIT"
-            draft["timing_ticket"]["posture"] = "HOLD_OBSERVE"
-            draft["decision_pack"]["execution_gate"]["posture"] = "HOLD_OBSERVE"
-            draft["paper_order"]["gate_state"] = "HOLD_OBSERVE"
-            registration_draft, core, _, _ = method_fixtures.registration_draft()
-            registration_draft["ticker"] = draft["ticker"]
-            registration_draft["thesis_core_hash"] = funnel._hash(draft["thesis_core"])
-            registration_draft["timing_ticket_hash"] = funnel._hash(draft["timing_ticket"])
-            registration_draft["decision_pack_hash"] = funnel._hash(draft["decision_pack"])
-            registration_draft["valuation"]["scenario_band_hash"] = funnel._hash(
-                draft["thesis_core"]["valuation_target_range"]
-            )
-            registration_draft["smc"]["status"] = "WAIT"
-            draft["method_registration"] = method.seal_registration(
-                registration_draft, thesis_core=draft["thesis_core"],
-                timing_ticket=draft["timing_ticket"], decision_pack=draft["decision_pack"],
-            )
+            draft = make_wait_draft(build_case_draft(closure_bundle, codes[0]))
             case = cycle.seal_case(draft, closure_bundle)
+            self.assertEqual(
+                "NO_TRADE: timing ticket remains WAIT", cycle.registration_refusal(case))
             bars = cycle.seal_bars(build_bar_draft(codes[0]), case)
             outcomes = method.seal_outcomes(
                 method_fixtures.outcome_draft(case["method_registration"]),
