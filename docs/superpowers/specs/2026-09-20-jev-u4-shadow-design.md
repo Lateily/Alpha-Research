@@ -1,6 +1,6 @@
 # Jev U4 Shadow Decision Engine Design
 
-**Status:** Proposed for written review  
+**Status:** Approved with Task 5 I/O amendment
 **Date:** 2026-09-20  
 **Owner:** Junyan  
 **Engineering scope:** AIOS / research workflow / nonproduction workbench  
@@ -120,8 +120,11 @@ modify gates, quotas, authority flags, or the formal U4 ledger.
 Responsibilities:
 
 - accept only a versioned shadow request with exact fields;
-- resolve paths only under an explicitly configured read-only artifact root;
-- reject absolute paths, traversal, symlinks, missing evidence, and mixed runs;
+- open each configured absolute root by walking from `/` with retained directory
+  descriptors and `openat`-style relative operations using
+  `O_DIRECTORY | O_NOFOLLOW` for every component;
+- reject absolute request refs, traversal, symlinks, special files, missing
+  evidence, and mixed runs before provider execution;
 - call the existing U4 packet receipt validator and authoritative-source reopen;
 - verify packet hash, source bindings, method version, `as_of`, and row hashes;
 - emit no provider request until validation succeeds.
@@ -137,10 +140,33 @@ Request schema `ar.jev_u4_shadow_request.v1` has exactly these fields:
 - `industry`, `method_version`, and nullable `cyclical_flags_ref`;
 - nullable `fixture_id`.
 
-The CLI receives the absolute artifact root separately. The absolute path is
+The CLI receives absolute artifact and state roots separately. Their paths are
 never written into the canonical request or receipt. `OFFLINE_FIXTURE` requires
-a known `fixture_id`; `POLICY_PREVIEW` requires it to be null. Every reference
-must resolve inside the supplied root without traversing a symbolic link.
+a known `fixture_id`; `POLICY_PREVIEW` requires it to be null. Protected I/O
+must not use `resolve`, convert an fd back into a pathname, traverse `/dev/fd`,
+change process CWD, or reopen a checked path by name.
+
+### 6.1.1 Runtime and Immutable Evidence Boundary
+
+Task 5 requires CPython 3.11 or newer and a successful runtime round trip using
+`sqlite3.Connection.serialize` and `deserialize`. Python 3.9, a missing API, or
+a failed probe returns canonical `SPEC_BLOCKED` with reason
+`RUNTIME_UNSUPPORTED` before state mutation.
+
+A shared `EvidenceView` captures exact raw bytes keyed by normalized logical,
+root-relative references. It opens regular files through retained directory
+capabilities, hashes the same bytes it decodes, and never reserializes JSON
+before checking a file hash. After capture, shadow validation uses only this
+view; there is no filesystem fallback.
+
+The existing `build_packet` and `validate_packet` entry points gain mutually
+exclusive `evidence` and legacy path/ref inputs. Bounded I/O-only extraction is
+permitted in `u4_pre_decision.py` and its transitive loaders in
+`closure_experiment.py`, `funnel_dag.py`, and `nightly_funnel.py`. Legacy Path
+wrappers keep byte and semantic parity, including their existing default
+cyclical-source behavior. In shadow mode, a null `cyclical_flags_ref` means
+explicit absence; it must not activate the legacy default. This amendment may
+not change packet policy, schemas, nightly behavior, or authority rules.
 
 ### 6.2 Deterministic U4 Policy Gate
 
@@ -276,6 +302,10 @@ Receipts live only under the nonproduction workspace state root. They are not
 committed research evidence and are never copied to a formal ledger by this
 subsystem.
 
+The receipt retains the accepted Task 1-4 `request_hash` binding. Every stored
+request field is covered by that hash; changing any field without producing a
+new matching receipt is `INTEGRITY_ERROR`.
+
 ### 6.8 Human Comparison Evaluator
 
 Evaluation is a separate artifact so the original shadow receipt remains
@@ -371,11 +401,26 @@ All routes inherit loopback host, same-origin cookie, body-size, CSP, service
 lock, and receipt-count guards. The store adds a dedicated table and directory;
 it does not reuse deployment probes or formal research-run tables.
 
-The CLI and workbench use one `ShadowStore` abstraction. The CLI may register a
-policy-preview receipt only while holding the store transaction/lock and only
-when its output root is the configured workbench shadow directory. The browser
-cannot choose that directory. This makes a CLI preview visible without adding
-an unchecked filesystem scan or accepting an arbitrary import path.
+The CLI and workbench use one `ShadowStore` abstraction. The store uses only
+stdlib `sqlite3`: each operation loads the database image into
+`sqlite3.connect(":memory:")` with `deserialize`, executes fixed SQL under
+`BEGIN IMMEDIATE`, and publishes the resulting `serialize` image. There is no
+on-disk SQLite connection, WAL dependency, extension loading, ctypes binding,
+or alternate native SQLite library.
+
+A process-local mutex plus an external `flock` protects load, verification,
+receipt publication, transaction, database-image publication, and directory
+fsync. All files are created and replaced relative to retained state-root
+descriptors. Receipt publication is durable and no-replace; an exact orphan may
+be adopted, while a conflicting orphan is preserved and returns
+`INTEGRITY_ERROR`. The database image uses a private temp file, fsync, atomic
+publication, and parent-directory fsync. Cleanup removes only owned temporary
+files.
+
+The CLI may register a policy-preview receipt only through this store and only
+under the configured workbench shadow state root. The browser cannot choose
+that root. Existing current-schema images remain readable without rewriting;
+unbound, older, or corrupt records are rejected rather than upgraded.
 
 On every read, the server verifies disk receipt bytes, receipt hash, and stored
 request hash. Corruption returns `INTEGRITY_ERROR`; it never serves an unchecked
@@ -387,6 +432,7 @@ receipt.
 |---|---|
 | Packet or reopened evidence mismatch | `SPEC_BLOCKED` |
 | Unsafe path or symlink | `SPEC_BLOCKED` |
+| Unsupported Python or SQLite serialize/deserialize | `SPEC_BLOCKED / RUNTIME_UNSUPPORTED` |
 | Mandatory U3 or red-flag rule | deterministic forced result; no provider call |
 | Other blocked/non-reviewable row | `POLICY_STOPPED`; no invented outcome |
 | Missing offline cassette | `MODEL_UNAVAILABLE` |
@@ -405,6 +451,9 @@ synthetic probabilities must never be substituted to make a run appear green.
 
 - No secret is read in the initial delivery.
 - `TYPESAFE_API_KEY` has no reachable code path.
+- Protected roots and files retain descriptor authority from acquisition
+  through capture or persistence; lexical checks are not a security boundary.
+- Imports do not load a custom SQLite library or inspect provider credentials.
 - External packet text is data and cannot change policy or question definitions.
 - Browser writes are limited to the sandbox store and require the existing local
   session and same-origin checks.
@@ -446,6 +495,35 @@ Implementation is test-driven. Required test groups:
 - mismatched packet/ledger candidates fail closed;
 - under-30-cluster result cannot make an effectiveness claim.
 
+### 12.3.1 Task 5 I/O and Durability Acceptance Matrix
+
+- final and ancestor symlinks, including missing descendants below a symlink,
+  are rejected without reading or modifying outside sentinels;
+- deterministic namespace replacement before and after descriptor retention
+  never redirects protected I/O;
+- after `EvidenceView` capture, renaming/replacing the source tree and forcing
+  filesystem reads to fail does not change validation bytes or result;
+- symlink, FIFO, socket, directory, concurrent-content, and manifest-mismatch
+  hazards fail without blocking and before provider execution;
+- legacy Path and evidence entry points have byte/semantic parity for valid
+  fixtures and reject the same forged rows, mixed runs, health, stages,
+  chronology, and diagnostics; explicit, absent, and legacy-default cyclical
+  evidence are distinct and tested;
+- Python 3.11 and 3.12 pass a real serialize/deserialize round trip; Python 3.9
+  and simulated missing APIs fail canonically before writes;
+- mutating any stored request field, database image/schema, receipt bytes/hash,
+  or removing a committed receipt fails closed;
+- 12-thread and 12-process identical writers converge to one `CREATED`, eleven
+  `IDEMPOTENT`, one row, and one receipt; mixed IDs lose no rows;
+- hard-crash injection covers command-directory creation, receipt temp fsync,
+  receipt publication/fsync, row insert, in-memory commit, database temp fsync,
+  database publication, and final directory fsync; a fresh-process retry
+  converges without a row referring to a missing receipt;
+- exact orphan adoption succeeds, conflicting orphan adoption fails without
+  deletion, and lock/name substitution cannot create another writer domain;
+- canonical bytes remain identical across roots, processes, supported Python
+  runtimes, macOS, and Linux while authority remains fixed false.
+
 ### 12.4 Workbench Tests
 
 - local authorization, origin, body-size, path, and run-limit guards;
@@ -473,6 +551,9 @@ mutation case:
 - read-time receipt verification;
 - under-30-cluster claim block;
 - frontend simulation/shadow labeling.
+
+Task 5 also pins ancestor protection, immutable-evidence use, full request
+binding, external lock coverage, and receipt/database publication ordering.
 
 The complete governance mutation gate and every step in `python-ci.yml` must
 pass before a Draft PR is reviewable.
@@ -524,8 +605,18 @@ Slice 1 may add or change only:
 - `scripts/llm/fixtures/jev_u4_shadow.task.json`;
 - `scripts/llm/fixtures/jev_u4_shadow/` synthetic packet and cassette files;
 - `experiments/research_funnel/u4_shadow.py`;
+- `experiments/research_funnel/evidence_view.py`;
+- `experiments/research_funnel/u4_pre_decision.py` (I/O-only extraction);
+- `experiments/research_funnel/closure_experiment.py` (I/O-only extraction);
+- `experiments/research_funnel/funnel_dag.py` (I/O-only extraction);
+- `experiments/research_funnel/nightly_funnel.py` (I/O-only extraction);
 - `tests/test_typed_decision.py`;
 - `tests/test_jev_u4_shadow.py`;
+- `tests/test_jev_u4_shadow_evidence_view.py`;
+- `tests/test_u4_pre_decision_runtime.py` (parity only);
+- `tests/test_research_closure_experiment.py` (parity only);
+- `tests/test_funnel_dag_offline.py` (parity only);
+- `tests/test_funnel_nightly_offline.py` (parity only);
 - `scripts/governance_mutation_gate.py`;
 - `.github/workflows/python-ci.yml`;
 - `docs/llm/JEV_U4_SHADOW_OPERATOR_V1.md`;
@@ -547,6 +638,11 @@ Slice 2 may add or change only:
 Moving responsibility across these boundaries requires a spec revision before
 implementation. In particular, `experiments/research_funnel/u4_shadow.py` stays
 pure and cannot import a provider SDK or initiate network access.
+
+The three rejected Task 5 commits remain in history for audit. The replacement
+must delete, not wrap, the lexical snapshot, `ResolvedRequestPaths`, `_fd_path`
+bridge, and ctypes/custom-SQLite implementation. If the replacement cannot pass
+the Task 5 matrix, Task 5 stops; the rejected architecture is not reactivated.
 
 Forbidden scope:
 
@@ -573,9 +669,12 @@ The initial subsystem is accepted only when:
    `SIMULATED / SHADOW ONLY` labeling;
 7. receipt corruption, packet tampering, and command-ID reuse with different
    input are rejected;
-8. all new tests, full offline CI, and the governance mutation gate pass;
-9. the PR reports code delivery separately from production deployment;
-10. no outcome is described as a buy/sell instruction or method-performance
+8. Task 5 passes the complete I/O/durability matrix above on supported local
+   and CI runtimes;
+9. the focused Jev suite passes on Linux Python 3.11 and 3.12, and all new
+   tests, full offline CI, and the governance mutation gate pass;
+10. the PR reports code delivery separately from production deployment;
+11. no outcome is described as a buy/sell instruction or method-performance
     claim.
 
 ## 16. References

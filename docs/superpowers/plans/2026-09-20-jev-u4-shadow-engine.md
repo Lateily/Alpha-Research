@@ -6,7 +6,7 @@
 
 **Architecture:** The AIOS adapter layer supplies typed judgments, while `experiments/research_funnel/u4_shadow.py` owns pure U4 gate and receipt semantics. `scripts/llm/jev_u4_shadow.py` reopens authoritative evidence, routes the shadow capability, runs the offline adapter, and persists a canonical receipt through an idempotent sandbox store.
 
-**Tech Stack:** Python 3.11, standard-library `dataclasses`, `decimal`, `hashlib`, `json`, `sqlite3`, existing AIOS `AgentAdapter`/capability router, existing U4 packet validator, `unittest`, governance mutation gate.
+**Tech Stack:** CPython 3.11+, standard-library `dataclasses`, `decimal`, `hashlib`, `json`, in-memory `sqlite3` serialize/deserialize, POSIX directory descriptors and `flock`, existing AIOS `AgentAdapter`/capability router, existing U4 packet validator, `unittest`, governance mutation gate.
 
 **Spec:** `docs/superpowers/specs/2026-09-20-jev-u4-shadow-design.md`
 
@@ -18,6 +18,7 @@
 - Real frozen candidate rows without an exact approved cassette return `MODEL_UNAVAILABLE`; never synthesize probabilities.
 - Canonical JSON is ASCII, sorted-key, compact, and rejects non-finite values.
 - The canonical receipt contains caller-supplied `observed_at`, never wall-clock time, a random ID, or an absolute path.
+- Task 5 requires CPython 3.11+ and a passing stdlib SQLite serialize/deserialize probe; unsupported runtimes fail before state mutation.
 - Every new test file must be registered in `.github/workflows/python-ci.yml`; the complete local CI and governance mutation gate must pass.
 - All artifacts remain `WORKFLOW_DEBUG` and end-user text retains “不是买卖指令；研究信号，human executes.”
 
@@ -81,9 +82,19 @@ Create a complete `ai-task.v1` document with these binding values:
     "scripts/llm/jev_u4_shadow.py",
     "scripts/llm/fixtures/jev_u4_shadow.task.json",
     "scripts/llm/fixtures/jev_u4_shadow",
+    "experiments/research_funnel/evidence_view.py",
+    "experiments/research_funnel/u4_pre_decision.py",
+    "experiments/research_funnel/closure_experiment.py",
+    "experiments/research_funnel/funnel_dag.py",
+    "experiments/research_funnel/nightly_funnel.py",
     "experiments/research_funnel/u4_shadow.py",
     "tests/test_typed_decision.py",
     "tests/test_jev_u4_shadow.py",
+    "tests/test_jev_u4_shadow_evidence_view.py",
+    "tests/test_u4_pre_decision_runtime.py",
+    "tests/test_research_closure_experiment.py",
+    "tests/test_funnel_dag_offline.py",
+    "tests/test_funnel_nightly_offline.py",
     "scripts/governance_mutation_gate.py",
     ".github/workflows/python-ci.yml",
     "docs/llm/JEV_U4_SHADOW_OPERATOR_V1.md",
@@ -99,11 +110,12 @@ Create a complete `ai-task.v1` document with these binding values:
   "input_contracts": ["ar.u4_pre_decision_packet", "ar.jev_u4_shadow_request.v1"],
   "output_artifacts": ["ar.jev_u4_shadow_receipt.v1", "ar.jev_u4_shadow_evaluation.v1"],
   "acceptance_tests": [
-    "python3 tests/test_typed_decision.py",
-    "python3 tests/test_jev_u4_shadow.py",
-    "python3 scripts/governance_mutation_gate.py",
-    "python3 scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/jev_u4_shadow.task.json",
-    "python3 /Users/years/Desktop/Stock/e2e-twin/twin-20260902/tools/ci_local.py",
+    "PATH=/Users/years/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin:$PATH AR_OFFLINE=1 TMPDIR=/private/tmp PYTHONDONTWRITEBYTECODE=1 python3 tests/test_typed_decision.py",
+    "PATH=/Users/years/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin:$PATH AR_OFFLINE=1 TMPDIR=/private/tmp PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_jev_u4_shadow*.py' -v",
+    "PATH=/Users/years/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin:$PATH AR_OFFLINE=1 TMPDIR=/private/tmp PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests/test_u4_pre_decision_runtime.py tests/test_research_closure_experiment.py tests/test_funnel_dag_offline.py tests/test_funnel_nightly_offline.py -v",
+    "PATH=/Users/years/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin:$PATH AR_OFFLINE=1 TMPDIR=/private/tmp PYTHONDONTWRITEBYTECODE=1 python3 scripts/governance_mutation_gate.py",
+    "PATH=/Users/years/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin:$PATH python3 scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/jev_u4_shadow.task.json",
+    "PATH=/Users/years/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin:$PATH AR_OFFLINE=1 TMPDIR=/private/tmp PYTHONDONTWRITEBYTECODE=1 python3 /Users/years/Desktop/Stock/e2e-twin/twin-20260902/tools/ci_local.py",
     "git diff --check"
   ],
   "risk_level": "MEDIUM",
@@ -425,124 +437,138 @@ git commit -m "feat(research): add pure U4 shadow policy"
 ### Task 5: Orchestrate Reopened Evidence, Capability Routing, CLI, and Store
 
 **Files:**
-- Create: `scripts/llm/jev_u4_shadow.py`
+- Replace rejected Task 5 implementation: `scripts/llm/jev_u4_shadow.py`
+- Create: `experiments/research_funnel/evidence_view.py`
+- Modify (I/O-only extraction): `experiments/research_funnel/u4_pre_decision.py`
+- Modify (I/O-only extraction): `experiments/research_funnel/closure_experiment.py`
+- Modify (I/O-only extraction): `experiments/research_funnel/funnel_dag.py`
+- Modify (I/O-only extraction): `experiments/research_funnel/nightly_funnel.py`
 - Modify: `tests/test_jev_u4_shadow.py`
+- Create: `tests/test_jev_u4_shadow_evidence_view.py`
+- Modify (parity only): `tests/test_u4_pre_decision_runtime.py`
+- Modify (parity only): `tests/test_research_closure_experiment.py`
+- Modify (parity only): `tests/test_funnel_dag_offline.py`
+- Modify (parity only): `tests/test_funnel_nightly_offline.py`
 
 **Interfaces:**
-- Consumes: `ar.jev_u4_shadow_request.v1`, an absolute read-only artifact root supplied outside the request, and a sandbox state root.
-- Produces: `validate_request(payload)`, `safe_ref(root, ref)`, `offline_capability_registry()`, `run_shadow(...)`, `ShadowStore`, CLI `run`, CLI `verify`, and CLI `evaluate` entry points.
+- Consumes: `ar.jev_u4_shadow_request.v1`, absolute artifact/state roots supplied outside the request, and retained directory capabilities.
+- Produces: runtime probe, `DirectoryCapability`, immutable `EvidenceView`, evidence-aware authoritative validators, `run_shadow(...)`, `ShadowStore`, and canonical CLI `run`/`verify`/`evaluate` results.
 
-- [ ] **Step 1: Add failing request/path/reopen tests**
+The three rejected Task 5 commits stay in history. This task replaces their
+architecture and removes the lexical snapshot, `ResolvedRequestPaths`,
+`_fd_path`/`/dev/fd` bridge, and ctypes/custom-SQLite implementation. It must not
+wrap or reactivate those paths.
 
-Build a temporary artifact tree with packet, bundle, feature health, funnel
-health, and diagnostic. Patch `u4_pre_decision.validate_packet` to record exact
-arguments in the positive test. Add failures for unknown fields, absolute paths,
-`..`, symlink roots/files, mixed method version, and modified packet bytes.
+- [ ] **Step 1: Freeze golden outputs and write failing runtime/path tests**
 
-- [ ] **Step 2: Add the real-packet no-cassette test**
+Preserve current accepted Task 1-4 request, packet, receipt, and authority bytes.
+Add failures for Python below 3.11, missing/failing
+`sqlite3.Connection.serialize`/`deserialize`, final and ancestor symlinks,
+missing descendants under a symlink, absolute refs, traversal, and special
+files. Runtime failures must return canonical `SPEC_BLOCKED` with
+`RUNTIME_UNSUPPORTED` before state mutation or provider import/contact.
 
-The test uses `POLICY_PREVIEW`, a reviewable row, and an empty cassette map:
+- [ ] **Step 2: Implement retained root capabilities**
 
-```python
-receipt = engine.run_shadow(request, artifact_root=root, state_root=state, adapter=OfflineFixtureDecisionAdapter({}))
-ready = next(row for row in receipt["candidate_results"] if row["gate"]["state"] == "ELIGIBLE_FOR_TYPED_JUDGMENT")
-assert ready["provider_result"]["status"] == "MODEL_UNAVAILABLE"
-assert ready["typed_answers"] is None
-assert ready["shadow_outcome"] is None
-assert receipt["provider"]["provider_contacted"] is False
-```
+Open the original absolute path from `/`, one component at a time relative to
+the retained parent descriptor, using `O_DIRECTORY | O_NOFOLLOW`. Create missing
+state descendants only relative to retained descriptors. Protected I/O must not
+call `resolve`, reconstruct an fd pathname, traverse `/dev/fd`, change process
+CWD, or reopen a validated pathname.
 
-- [ ] **Step 3: Add capability and disabled-live tests**
+Use deterministic hooks to replace ancestors before acquisition and after a
+descriptor is retained; operations must use the original object or fail
+canonically and must never touch outside sentinels.
 
-Assert the router selects the deterministic `SHADOW_ONLY` offline capability for
-`mode=SHADOW`, `risk_level=MEDIUM`, `network_policy=deny`, sandbox paths, and no
-tools. An input request with `mode=TYPESAFE_JEV` must return the stable
-`LIVE_PROVIDER_NOT_INSTALLED`/`SPEC_BLOCKED` result before path resolution,
-routing, or any adapter call; an extra `provider` field is rejected by the exact
-request schema. Assert `PRODUCTION`, `provider_only`, or an out-of-scope path is
-also `SPEC_BLOCKED` before an adapter call.
+- [ ] **Step 3: Build the shared immutable `EvidenceView`**
 
-- [ ] **Step 4: Implement request validation and safe resolution**
+Capture required regular files as exact raw bytes keyed by normalized logical
+root-relative refs. Hash and decode the same bytes without JSON
+reserialization. Include packet, diagnostic, health, manifest, all required
+bundle/stage artifacts, and explicit optional sources. Reject symlink, FIFO,
+socket, directory, concurrent-content, and manifest mismatch hazards before any
+provider call and without blocking.
 
-Require the exact request fields in the spec. Resolve each relative path under
-the supplied root by checking every path component with `lstat`; reject symlinks
-before calling `resolve()`. Do not place the absolute root in the request or
-receipt.
+After capture, rename/replace the source tree and force filesystem reads to
+fail; authoritative shadow validation must still succeed with identical bytes.
 
-- [ ] **Step 5: Implement one-pass orchestration**
+- [ ] **Step 4: Extract evidence-driven authoritative validation**
 
-The sequence is fixed:
+Add mutually exclusive `evidence` and legacy path/ref inputs to existing
+`build_packet` and `validate_packet` entry points. Extract only I/O from
+`u4_pre_decision.py`, `closure_experiment.py`, `funnel_dag.py`, and
+`nightly_funnel.py`; keep policy, packet schemas, hashes, chronology, stage
+validation, health derivation, and diagnostics unchanged.
 
-```python
-payload = validate_request(raw_request)
-paths = resolve_request_paths(artifact_root, payload)
-packet = load_exact_json(paths.packet)
-u4_pre_decision.validate_packet(packet, bundle_dir=paths.bundle, feature_health_path=paths.feature_health,
-                                funnel_health_path=paths.funnel_health, diagnostic_ref=payload["diagnostic_ref"],
-                                industry=payload["industry"], method_version=payload["method_version"],
-                                cyclical_flags_path=paths.cyclical_flags)
-decision = route(offline_capability_registry(), route_request(payload))
-if decision.status is not RouteStatus.SELECTED:
-    raise ShadowRunError("SPEC_BLOCKED")
-receipt = execute_candidates_once(packet, payload, adapter)
-verify_receipt(receipt)
-```
+Legacy Path wrappers retain existing default cyclical-source behavior. Shadow
+mode consumes only `EvidenceView`; null `cyclical_flags_ref` is explicit absence
+and has no hidden filesystem/default fallback. Prove byte and rejection parity
+for valid fixtures, forged rows, mixed runs, forged health, stage
+hash/timestamp errors, missing evidence, diagnostic mismatch, and all three
+cyclical-source cases.
 
-Blocked rows do not call `run_adapter`. Eligible rows call it at most once.
-The accepted v1 request modes are only `OFFLINE_FIXTURE` and `POLICY_PREVIEW`.
-`TYPESAFE_JEV` is an explicit unsupported-mode error, not a selectable
-capability. `DisabledTypeSafeJevAdapter` exists only as a negative provider
-interface contract and is never selected by v1 routing.
+- [ ] **Step 5: Rebuild one-pass orchestration and request binding**
 
-- [ ] **Step 6: Add failing store concurrency and integrity tests**
+Probe runtime, validate exact request schema and unsupported `TYPESAFE_JEV`
+precedence, acquire roots once, capture evidence, call the authoritative
+evidence entry point, route the offline capability, execute each eligible row
+at most once, build and verify the receipt. Blocked rows never call a provider;
+real eligible rows without an exact cassette remain `MODEL_UNAVAILABLE`.
 
-Use `ThreadPoolExecutor` to issue 12 identical requests. Assert one `CREATED`, 11
-`IDEMPOTENT`, one receipt row, and identical canonical bytes. Reuse the command
-ID with changed `observed_at` and assert `COMMAND_ID_CONFLICT`. Modify the disk
-receipt and assert `INTEGRITY_ERROR` on read. Add injected failures after the
-receipt file is published but before SQLite insert/commit; retrying the same
-request must converge to one row and the same bytes, while different bytes at
-that path must fail closed.
+Keep the existing `request_hash` receipt field and bind every request field.
+Changing any stored field and recomputing only the database hash must yield
+`INTEGRITY_ERROR`.
 
-- [ ] **Step 7: Implement `ShadowStore` and CLI**
+- [ ] **Step 6: Replace persistence with stdlib in-memory SQLite**
 
-Use a dedicated SQLite file/table, `BEGIN IMMEDIATE`, a primary key on
-`command_id`, stored request hash, canonical receipt bytes, and a separate
-receipt file under `<state_root>/jev-u4-shadow/<command_id>/receipt.json`.
-Publish the receipt bytes atomically with no replace and `fsync` before inserting
-the SQLite row; commit the row only after the final file is visible. A retry may
-adopt an orphaned final file only when its exact bytes and receipt hash equal the
-newly recomputed result. It must never delete or overwrite a conflicting file.
-Refuse symlinked roots, directories, database, or receipt files. Verify stored
-request hash, database canonical bytes, disk bytes, and receipt hash on every
-read. Failure cleanup may remove only private temporary files.
+Use only `sqlite3.connect(":memory:")`, `deserialize`, fixed SQL,
+`BEGIN IMMEDIATE`, and `serialize`. Each operation loads a fresh image while
+holding a process-local mutex plus an external `flock`. Do not open an on-disk
+SQLite database, use WAL/extensions, or load an alternate native library.
 
-CLI commands:
+Hold the lock through load, validation, durable no-replace receipt publication,
+row insert/commit, database-image temp write/fsync, atomic publication, and
+directory fsync. Use fd-relative operations under the retained state
+capability. Exact orphan adoption is allowed; a differing orphan remains
+unchanged and returns `INTEGRITY_ERROR`. Cleanup removes only owned temp files.
+
+- [ ] **Step 7: Prove concurrency, crash convergence, and integrity**
+
+Use deterministic barriers/hooks, not sleeps:
+
+- 12 threads and separately 12 processes running one command yield one
+  `CREATED`, eleven `IDEMPOTENT`, one row, and one byte-identical receipt;
+- mixed command IDs lose no rows; changed input under one ID conflicts;
+- hard-kill after command-directory creation, receipt temp fsync, receipt
+  publication/fsync, insert, in-memory commit, database temp fsync, database
+  publication, and final directory fsync; fresh retry converges with no row
+  referencing a missing receipt;
+- corrupt request fields, database image/schema, receipt bytes/hash, or remove a
+  committed receipt: every read/list fails closed;
+- exact orphan is adopted, differing orphan is preserved, and lock/name
+  substitution cannot redirect I/O or create another writer domain.
+
+- [ ] **Step 8: Implement canonical CLI and cross-runtime acceptance**
+
+Keep `run`, `verify`, and `evaluate`, with canonical JSON for success, help, and
+stable nonzero errors. Imports must not read provider keys or custom libraries.
+Verify deterministic receipt bytes across roots/processes, macOS/Linux, and
+supported Python 3.11/3.12 while authority remains fixed false.
+
+Local focused commands use the bundled Python 3.12 for subprocess parity:
 
 ```bash
-python3 scripts/llm/jev_u4_shadow.py run --request REQUEST.json --artifact-root ROOT --state-root STATE
-python3 scripts/llm/jev_u4_shadow.py verify --state-root STATE --command-id COMMAND_ID
-python3 scripts/llm/jev_u4_shadow.py evaluate --state-root STATE --command-id COMMAND_ID --ledger LEDGER.jsonl
-```
-
-All JSON output is canonical and all errors use stable codes on stderr with
-nonzero exit.
-
-- [ ] **Step 8: Run orchestration tests**
-
-```bash
-python3 tests/test_jev_u4_shadow.py
+export PATH="/Users/years/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin:$PATH"
+export AR_OFFLINE=1 TMPDIR=/private/tmp PYTHONDONTWRITEBYTECODE=1
+python3 -m unittest discover -s tests -p 'test_jev_u4_shadow*.py' -v
 python3 tests/test_typed_decision.py
 ```
 
-Expected: all tests pass, no socket call, no production write.
+- [ ] **Step 9: Commit the architectural replacement**
 
-- [ ] **Step 9: Commit**
-
-```bash
-git add scripts/llm/jev_u4_shadow.py tests/test_jev_u4_shadow.py
-git commit -m "feat(aios): orchestrate U4 shadow receipts"
-```
+Commit the replacement and focused parity tests without starting Task 6. Task 5
+is accepted only after independent review of this replacement and the complete
+matrix above. If it fails, stop Task 5; do not restore the rejected architecture.
 
 ### Task 6: Add Human-Decision Comparison Without Contaminating Receipts
 
@@ -646,15 +672,30 @@ Run the targeted cases or temporarily empty each named test in a disposable
 copy and confirm the exact mutation ID reports `SURVIVED`. Restore the test and
 confirm it reports `KILLED`.
 
-- [ ] **Step 3: Register a dedicated CI step**
+- [ ] **Step 3: Register dedicated cross-runtime CI**
 
-Add after the existing Agent adapter step:
+Add a focused Linux matrix for Python 3.11 and 3.12. It runs the Jev suites and
+task compiler with `AR_OFFLINE=1` and `PYTHONDONTWRITEBYTECODE=1`; it does not
+replace or weaken the existing full Linux CI job:
 
 ```yaml
+  jev-u4-shadow:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
       - name: Jev U4 shadow engine contracts (offline)
+        env:
+          AR_OFFLINE: "1"
+          PYTHONDONTWRITEBYTECODE: "1"
         run: |
           python3 tests/test_typed_decision.py
-          python3 tests/test_jev_u4_shadow.py
+          python3 -m unittest discover -s tests -p 'test_jev_u4_shadow*.py' -v
           python3 scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/jev_u4_shadow.task.json
 ```
 
@@ -668,8 +709,10 @@ cannot write the formal ledger, and cannot authorize paper or trading.
 - [ ] **Step 5: Run focused tests**
 
 ```bash
+export PATH="/Users/years/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin:$PATH"
+export AR_OFFLINE=1 TMPDIR=/private/tmp PYTHONDONTWRITEBYTECODE=1
 python3 tests/test_typed_decision.py
-python3 tests/test_jev_u4_shadow.py
+python3 -m unittest discover -s tests -p 'test_jev_u4_shadow*.py' -v
 python3 scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/jev_u4_shadow.task.json
 ```
 
@@ -678,7 +721,7 @@ Expected: all pass and compiler prints `SPEC_READY`.
 - [ ] **Step 6: Run the full mutation gate**
 
 ```bash
-python3 scripts/governance_mutation_gate.py
+PATH="/Users/years/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin:$PATH" AR_OFFLINE=1 TMPDIR=/private/tmp PYTHONDONTWRITEBYTECODE=1 python3 scripts/governance_mutation_gate.py
 ```
 
 Expected: every mutation killed; no invalid kill.
@@ -686,7 +729,7 @@ Expected: every mutation killed; no invalid kill.
 - [ ] **Step 7: Run the complete local CI**
 
 ```bash
-python3 /Users/years/Desktop/Stock/e2e-twin/twin-20260902/tools/ci_local.py
+PATH="/Users/years/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin:$PATH" AR_OFFLINE=1 TMPDIR=/private/tmp PYTHONDONTWRITEBYTECODE=1 python3 /Users/years/Desktop/Stock/e2e-twin/twin-20260902/tools/ci_local.py
 ```
 
 Expected final line: `✓ all N local steps passed` with the actual integer `N`.
