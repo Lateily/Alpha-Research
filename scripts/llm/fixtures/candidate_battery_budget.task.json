@@ -1,0 +1,42 @@
+{
+  "schema": "ai-task.v1",
+  "task_id": "RESEARCH-CANDIDATE-BATTERY-BUDGET-20260918",
+  "architecture_block": ["A Core Research Funnel", "Candidate battery isolated collection"],
+  "objective": "Bound candidate battery collection below the existing nightly timeout while preserving completed evidence and explicit six-dimension DATA_BLOCKED rows for every unfinished candidate.",
+  "non_goals": ["No live requests or production deployment.", "No changes to red flags, U4 selection, paper execution or method thresholds.", "No increase to the 600 second nightly timeout.", "No TradingView or paid model activation."],
+  "human_owner": "Junyan",
+  "reviewer": "Junyan",
+  "executor_candidates": ["Codex"],
+  "dependencies": ["Current origin/main e64e3cdd", "Existing three-stage funnel DAG"],
+  "authority_docs": ["AGENTS.md", "experiments/AGENTS.md", "docs/research/RESEARCH_CLOSED_LOOP_V1.md"],
+  "file_scope": [
+    "experiments/research_funnel/funnel_dag.py",
+    "tests/test_funnel_dag_offline.py",
+    "tests/test_no_network_guard.py",
+    "tests/test_research_closed_loop_v1.py",
+    "tests/test_u4_pre_decision_runtime.py",
+    "scripts/governance_mutation_gate.py",
+    "scripts/llm/fixtures/candidate_battery_budget.task.json",
+    "docs/research/contracts/research_closed_loop.v1.json",
+    "docs/team/CANDIDATE_BATTERY_RUNTIME_V1.md"
+  ],
+  "forbidden_scope": ["/Users/years/ar-live", "public/data", "data_history", "experiments/execution_tracker/full_battery.py", "experiments/execution_tracker/model_fund", "web"],
+  "input_contracts": ["Hash-bound same-run candidate_manifest", "Existing full_battery six-dimension row"],
+  "output_artifacts": ["Bounded process collector", "Complete coverage candidate_battery including explicit timeout reasons", "Offline regression and mutation evidence", "Runtime limits and deployment caveats"],
+  "acceptance_tests": [
+    "python3 tests/test_funnel_dag_offline.py",
+    "python3 tests/test_nightly_runtime_dependencies.py",
+    "python3 tests/test_no_network_guard.py",
+    "python3 scripts/governance_mutation_gate.py",
+    "python3 /Users/years/Desktop/Stock/e2e-twin/twin-20260902/tools/ci_local.py",
+    "A hung candidate cannot consume the entire batch; completed rows survive and missing work has explicit reasons.",
+    "Budget exhaustion preserves exact manifest membership and cannot produce ready candidates from incomplete rows.",
+    "Wrong identity or malformed successful rows still fail the existing validators.",
+    "Worker processes are joined on success, timeout and errors; no network is used by tests."
+  ],
+  "risk_level": "HIGH",
+  "network_policy": "OFFLINE",
+  "budget": {"max_cny": "0", "max_minutes": 240},
+  "approval_gates": ["Draft PR only after full offline CI passes.", "Independent review and Junyan merge approval required.", "Production synchronization, source quota acceptance and canary require separate authorization."],
+  "created_at": "2026-09-18T18:00:00+01:00"
+}
