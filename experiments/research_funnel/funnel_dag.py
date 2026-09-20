@@ -162,6 +162,27 @@ def _read_stage(bundle_dir: Path, stage: str, *, as_of: str, run_id: str) -> tup
     if not mp.is_file():
         raise FunnelError(f"前段 {stage} 尚未完成(缺 {mp.name}),拒绝跳过")
     manifest = _load_json(mp)
+    _validate_stage_manifest(manifest, stage, as_of=as_of, run_id=run_id)
+    payloads = {}
+    for name, digest in manifest["artifacts"].items():
+        path = bundle_dir / name
+        if not path.is_file() or _sha256(path) != digest:
+            raise FunnelError(f"前段 {stage} 的产物 {name} 缺失或已被改动")
+        payloads[name] = _load_json(path)
+    return _validate_stage(manifest, payloads, stage, as_of=as_of, run_id=run_id)
+
+
+def _validate_stage(
+    manifest: dict, payloads: dict, stage: str, *, as_of: str, run_id: str,
+) -> tuple[dict, dict]:
+    """Validate already-loaded stage bytes without reopening their namespace."""
+    _validate_stage_manifest(manifest, stage, as_of=as_of, run_id=run_id)
+    return manifest, payloads
+
+
+def _validate_stage_manifest(
+    manifest: dict, stage: str, *, as_of: str, run_id: str,
+) -> None:
     # governance-mutation: FUNNEL_DAG_STAGE_BINDING
     if manifest.get("as_of") != as_of or manifest.get("run_id") != run_id:
         raise FunnelError(
@@ -169,13 +190,34 @@ def _read_stage(bundle_dir: Path, stage: str, *, as_of: str, run_id: str) -> tup
         )
     if manifest.get("stage_hash") != _hash({k: v for k, v in manifest.items() if k != "stage_hash"}):
         raise FunnelError(f"前段 {stage} 的 stage manifest 不自洽")
-    payloads = {}
-    for name, digest in manifest["artifacts"].items():
-        path = bundle_dir / name
-        if not path.is_file() or _sha256(path) != digest:
-            raise FunnelError(f"前段 {stage} 的产物 {name} 缺失或已被改动")
-        payloads[name] = _load_json(path)
-    return manifest, payloads
+
+
+def _read_stage_from_evidence(
+    evidence, bundle_ref: str, stage: str, *, as_of: str, run_id: str,
+) -> tuple[dict, dict]:
+    """Read a stage exclusively from one already-captured EvidenceView."""
+    try:
+        try:
+            from .evidence_view import join_ref
+        except ImportError:
+            from evidence_view import join_ref
+
+        manifest_ref = join_ref(bundle_ref, f"stage_{stage}.json")
+        manifest = evidence.json_object(manifest_ref)
+        _validate_stage_manifest(manifest, stage, as_of=as_of, run_id=run_id)
+        payloads = {}
+        for name, digest in manifest.get("artifacts", {}).items():
+            artifact_ref = join_ref(bundle_ref, name)
+            if evidence.sha256(artifact_ref) != digest:
+                raise FunnelError(f"前段 {stage} 的产物 {name} 缺失或已被改动")
+            payloads[name] = evidence.json_object(artifact_ref)
+        return _validate_stage(
+            manifest, payloads, stage, as_of=as_of, run_id=run_id
+        )
+    except Exception as exc:
+        if isinstance(exc, FunnelError):
+            raise
+        raise FunnelError(str(exc)) from exc
 
 
 def _context() -> tuple[str, str, Path, Path, Path]:

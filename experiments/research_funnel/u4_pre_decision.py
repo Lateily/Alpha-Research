@@ -170,14 +170,22 @@ def _load(path: Path) -> dict[str, Any]:
     if not path.is_file() or path.is_symlink():
         raise PreDecisionError(f"JSON input must be one regular file: {path}")
     try:
+        raw = path.read_bytes()
+    except OSError as exc:
+        raise PreDecisionError(f"cannot read valid JSON from {path}: {exc}") from exc
+    return _load_bytes(raw, str(path))
+
+
+def _load_bytes(raw: bytes, label: str) -> dict[str, Any]:
+    try:
         value = json.loads(
-            path.read_text(encoding="utf-8"),
+            raw.decode("utf-8"),
             object_pairs_hook=_strict_object,
         )
-    except (OSError, json.JSONDecodeError) as exc:
-        raise PreDecisionError(f"cannot read valid JSON from {path}: {exc}") from exc
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise PreDecisionError(f"cannot read valid JSON from {label}: {exc}") from exc
     if not isinstance(value, dict):
-        raise PreDecisionError(f"JSON root must be an object: {path}")
+        raise PreDecisionError(f"JSON root must be an object: {label}")
     return value
 
 
@@ -208,7 +216,10 @@ def _load_cyclical_flags(path: Path) -> dict[str, Mapping[str, Any]]:
     """Read the per-stock output authored by scripts/cyclical_flag.py."""
     if not os.path.lexists(path):
         return {}
-    payload = _load(path)
+    return _parse_cyclical_flags(_load(path))
+
+
+def _parse_cyclical_flags(payload: Mapping[str, Any]) -> dict[str, Mapping[str, Any]]:
     stocks = payload.get("stocks")
     if not isinstance(stocks, list):
         raise PreDecisionError("cyclical flag source stocks must be a list")
@@ -408,7 +419,8 @@ def _source_publication(
 
 
 def _validate_funnel_health(
-    health: Mapping[str, Any], bundle: Mapping[str, Any], bundle_path: Path,
+    health: Mapping[str, Any], bundle: Mapping[str, Any], bundle_ref: str,
+    expected: Mapping[str, Any],
 ) -> Any:
     manifest = bundle["manifest"]
     bundle_health = health.get("bundle")
@@ -419,8 +431,7 @@ def _validate_funnel_health(
         or not isinstance(bundle_health, Mapping)
         or bundle_health.get("immutable") is not True
         or bundle_health.get("bundle_hash") != manifest.get("bundle_hash")
-        or bundle_health.get("location")
-        != _source_ref(bundle_path, bundle_path.name)
+        or bundle_health.get("location") != bundle_ref
     ):
         raise PreDecisionError("funnel health is not bound to this immutable bundle")
     try:
@@ -430,13 +441,6 @@ def _validate_funnel_health(
     except closure.ClosureError as exc:
         raise PreDecisionError(str(exc)) from exc
     try:
-        expected = nightly_funnel.build_health(
-            target=str(manifest["as_of"]),
-            run_id=str(manifest["run_id"]),
-            bundle_dir=bundle_path,
-            registry=dict(bundle["registry"]),
-            generated_at=str(health["generated_at"]),
-        )
         battery_coverage = funnel.validate_candidate_battery(
             bundle["battery"], bundle["candidate_manifest"]
         )
@@ -455,7 +459,8 @@ def _validate_funnel_health(
 
 
 def _validate_stage_receipts(
-    bundle: Mapping[str, Any], bundle_path: Path,
+    bundle: Mapping[str, Any], *, bundle_path: Path | None = None,
+    evidence: Any = None, bundle_ref: str | None = None,
 ) -> tuple[str, dict[str, Any]]:
     top = bundle["manifest"]
     candidate_manifest = bundle["candidate_manifest"]
@@ -482,17 +487,30 @@ def _validate_stage_receipts(
     }
     receipts: dict[str, Any] = {}
     for stage, (expected_files, expected_binds) in expected.items():
-        receipt_path = bundle_path / f"stage_{stage}.json"
-        # governance-mutation: U4_PREDECISION_STAGE_RECEIPT_FILE
-        if not receipt_path.is_file() or receipt_path.is_symlink():
-            raise PreDecisionError(f"stage receipt must be a regular file: {stage}")
         try:
-            receipt, payloads = dag._read_stage(
-                bundle_path,
-                stage,
-                as_of=str(top["as_of"]),
-                run_id=str(top["run_id"]),
-            )
+            if evidence is None:
+                if bundle_path is None:
+                    raise PreDecisionError("bundle path is required")
+                receipt_path = bundle_path / f"stage_{stage}.json"
+                # governance-mutation: U4_PREDECISION_STAGE_RECEIPT_FILE
+                if not receipt_path.is_file() or receipt_path.is_symlink():
+                    raise PreDecisionError(f"stage receipt must be a regular file: {stage}")
+                receipt, payloads = dag._read_stage(
+                    bundle_path,
+                    stage,
+                    as_of=str(top["as_of"]),
+                    run_id=str(top["run_id"]),
+                )
+            else:
+                if bundle_ref is None:
+                    raise PreDecisionError("bundle ref is required")
+                receipt, payloads = dag._read_stage_from_evidence(
+                    evidence,
+                    bundle_ref,
+                    stage,
+                    as_of=str(top["as_of"]),
+                    run_id=str(top["run_id"]),
+                )
         except funnel.FunnelError as exc:
             raise PreDecisionError(f"stage receipt validation failed: {exc}") from exc
         # governance-mutation: U4_PREDECISION_STAGE_RECEIPTS
@@ -669,27 +687,116 @@ def _status(publication: Mapping[str, Any], allowed: int) -> str:
 
 
 def build_packet(
-    *, bundle_dir: Path, feature_health_path: Path, funnel_health_path: Path,
-    diagnostic_ref: str, industry: str, method_version: str, generated_at: str,
+    *, diagnostic_ref: str, industry: str, method_version: str, generated_at: str,
+    bundle_dir: Path | None = None, feature_health_path: Path | None = None,
+    funnel_health_path: Path | None = None,
     cyclical_flags_path: Path | None = None,
+    evidence: Any = None, bundle_ref: str | None = None,
+    feature_health_ref: str | None = None, funnel_health_ref: str | None = None,
+    cyclical_flags_ref: str | None = None,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     try:
         packet_generated_at = closure._iso(generated_at, "pre-decision generated_at")
-        bundle = closure.load_bundle(bundle_dir)
-    except closure.ClosureError as exc:
+        if evidence is None:
+            if any(
+                value is None
+                for value in (bundle_dir, feature_health_path, funnel_health_path)
+            ):
+                raise PreDecisionError("legacy packet build requires all source paths")
+            if any(
+                value is not None
+                for value in (bundle_ref, feature_health_ref, funnel_health_ref, cyclical_flags_ref)
+            ):
+                raise PreDecisionError("legacy paths and evidence refs are mutually exclusive")
+            assert bundle_dir is not None
+            assert feature_health_path is not None
+            assert funnel_health_path is not None
+            bundle = closure.load_bundle(bundle_dir)
+            resolved_bundle_ref = _source_ref(bundle_dir, bundle_dir.name)
+            resolved_feature_ref = _source_ref(
+                feature_health_path, feature_health_path.name
+            )
+            resolved_funnel_ref = _source_ref(
+                funnel_health_path, funnel_health_path.name
+            )
+        else:
+            if any(
+                value is not None
+                for value in (
+                    bundle_dir,
+                    feature_health_path,
+                    funnel_health_path,
+                    cyclical_flags_path,
+                )
+            ):
+                raise PreDecisionError("legacy paths and evidence are mutually exclusive")
+            if any(
+                value is None
+                for value in (bundle_ref, feature_health_ref, funnel_health_ref)
+            ):
+                raise PreDecisionError("evidence packet build requires all source refs")
+            assert bundle_ref is not None
+            assert feature_health_ref is not None
+            assert funnel_health_ref is not None
+            bundle = closure.load_bundle_from_evidence(evidence, bundle_ref)
+            resolved_bundle_ref = bundle_ref
+            resolved_feature_ref = feature_health_ref
+            resolved_funnel_ref = funnel_health_ref
+    except (closure.ClosureError, funnel.FunnelError) as exc:
+        raise PreDecisionError(str(exc)) from exc
+    except Exception as exc:
+        if isinstance(exc, PreDecisionError):
+            raise
         raise PreDecisionError(str(exc)) from exc
     if "candidate_manifest" not in bundle or "battery" not in bundle:
         raise PreDecisionError("pre-decision packet requires the final three-stage DAG bundle")
     if re.fullmatch(r"[A-Z][A-Z0-9_]{2,63}_V[0-9]+", method_version) is None:
         raise PreDecisionError("method_version is invalid")
-    feature_health = _load(feature_health_path)
-    funnel_health = _load(funnel_health_path)
-    cyclical_flags_path = cyclical_flags_path or _default_cyclical_flags_path(
-        feature_health_path
-    )
-    cyclical_flags = _load_cyclical_flags(cyclical_flags_path)
+    try:
+        if evidence is None:
+            assert bundle_dir is not None
+            assert feature_health_path is not None
+            assert funnel_health_path is not None
+            feature_health = _load(feature_health_path)
+            funnel_health = _load(funnel_health_path)
+            resolved_cyclical_path = cyclical_flags_path or _default_cyclical_flags_path(
+                feature_health_path
+            )
+            cyclical_flags = _load_cyclical_flags(resolved_cyclical_path)
+            expected_health = nightly_funnel.build_health(
+                target=str(bundle["manifest"]["as_of"]),
+                run_id=str(bundle["manifest"]["run_id"]),
+                bundle_dir=bundle_dir,
+                registry=dict(bundle["registry"]),
+                generated_at=str(funnel_health["generated_at"]),
+            )
+        else:
+            assert bundle_ref is not None
+            assert feature_health_ref is not None
+            assert funnel_health_ref is not None
+            feature_health = evidence.json_object(feature_health_ref)
+            funnel_health = evidence.json_object(funnel_health_ref)
+            cyclical_flags = (
+                {}
+                if cyclical_flags_ref is None
+                else _parse_cyclical_flags(evidence.json_object(cyclical_flags_ref))
+            )
+            expected_health = nightly_funnel.build_health_from_evidence(
+                target=str(bundle["manifest"]["as_of"]),
+                run_id=str(bundle["manifest"]["run_id"]),
+                evidence=evidence,
+                bundle_ref=bundle_ref,
+                registry=dict(bundle["registry"]),
+                generated_at=str(funnel_health["generated_at"]),
+            )
+    except funnel.FunnelError as exc:
+        raise PreDecisionError(str(exc)) from exc
+    except Exception as exc:
+        if isinstance(exc, PreDecisionError):
+            raise
+        raise PreDecisionError(str(exc)) from exc
     funnel_health_generated_at = _validate_funnel_health(
-        funnel_health, bundle, bundle_dir
+        funnel_health, bundle, resolved_bundle_ref, expected_health
     )
     try:
         bundle_generated_at = closure._iso(
@@ -698,7 +805,10 @@ def build_packet(
     except closure.ClosureError as exc:
         raise PreDecisionError(str(exc)) from exc
     stage_receipts_hash, stage_times = _validate_stage_receipts(
-        bundle, bundle_dir
+        bundle,
+        bundle_path=bundle_dir,
+        evidence=evidence,
+        bundle_ref=bundle_ref,
     )
     as_of = str(bundle["manifest"]["as_of"])
     publication, feature_health_generated_at = _source_publication(
@@ -738,13 +848,13 @@ def build_packet(
         "blocker_codes": sorted(set(blocked_codes)),
     }
     refs = {
-        "same_day_bundle_ref": _source_ref(bundle_dir, bundle_dir.name),
+        "same_day_bundle_ref": resolved_bundle_ref,
         "same_day_bundle_hash": _sha(bundle["manifest"]["artifacts"]),
         "u2_candidate_pool_hash": _sha(bundle["candidates"]["rows"]),
         "u3_battery_hash": _sha(bundle["battery"]),
-        "feature_store_health_ref": _source_ref(feature_health_path, feature_health_path.name),
+        "feature_store_health_ref": resolved_feature_ref,
         "feature_store_health_hash": _sha(feature_health),
-        "funnel_health_ref": _source_ref(funnel_health_path, funnel_health_path.name),
+        "funnel_health_ref": resolved_funnel_ref,
         "funnel_health_hash": _sha(funnel_health),
         "stage_receipts_hash": stage_receipts_hash,
         "diagnostic_report_ref": diagnostic_ref,
@@ -1023,11 +1133,60 @@ def _validate_packet_receipt(packet: Mapping[str, Any]) -> None:
 
 
 def validate_packet(
-    packet: Mapping[str, Any], *, bundle_dir: Path, feature_health_path: Path,
-    funnel_health_path: Path, diagnostic_ref: str, industry: str,
-    method_version: str, cyclical_flags_path: Path | None = None,
+    packet: Mapping[str, Any] | None = None, *, diagnostic_ref: str,
+    industry: str, method_version: str, bundle_dir: Path | None = None,
+    feature_health_path: Path | None = None, funnel_health_path: Path | None = None,
+    diagnostic_path: Path | None = None, cyclical_flags_path: Path | None = None,
+    evidence: Any = None, packet_ref: str | None = None,
+    bundle_ref: str | None = None, feature_health_ref: str | None = None,
+    funnel_health_ref: str | None = None, cyclical_flags_ref: str | None = None,
 ) -> None:
     """Reopen authoritative sources and reject a merely self-consistent packet."""
+    if evidence is None:
+        if packet is None:
+            raise PreDecisionError("legacy packet validation requires a packet")
+        if packet_ref is not None or any(
+            value is not None
+            for value in (bundle_ref, feature_health_ref, funnel_health_ref, cyclical_flags_ref)
+        ):
+            raise PreDecisionError("legacy paths and evidence refs are mutually exclusive")
+        if diagnostic_path is not None:
+            external_diagnostic = _load(diagnostic_path)
+            if (
+                external_diagnostic != packet.get("diagnostic")
+                or _sha(external_diagnostic)
+                != packet.get("source_refs", {}).get("diagnostic_report_hash")
+            ):
+                raise PreDecisionError("diagnostic differs from packet binding")
+    else:
+        if packet is not None or any(
+            value is not None
+            for value in (
+                bundle_dir,
+                feature_health_path,
+                funnel_health_path,
+                diagnostic_path,
+                cyclical_flags_path,
+            )
+        ):
+            raise PreDecisionError("legacy packet inputs and evidence are mutually exclusive")
+        if packet_ref is None or any(
+            value is None
+            for value in (bundle_ref, feature_health_ref, funnel_health_ref)
+        ):
+            raise PreDecisionError("evidence packet validation requires all source refs")
+        try:
+            packet = evidence.json_object(packet_ref)
+            external_diagnostic = evidence.json_object(diagnostic_ref)
+        except Exception as exc:
+            raise PreDecisionError(str(exc)) from exc
+        if (
+            external_diagnostic != packet.get("diagnostic")
+            or _sha(external_diagnostic)
+            != packet.get("source_refs", {}).get("diagnostic_report_hash")
+        ):
+            raise PreDecisionError("diagnostic differs from packet binding")
+    assert packet is not None
     _validate_packet_receipt(packet)
     if packet.get("method_version") != method_version:
         raise PreDecisionError("packet method_version differs from the frozen request")
@@ -1043,6 +1202,11 @@ def validate_packet(
         method_version=method_version,
         generated_at=str(packet["generated_at"]),
         cyclical_flags_path=cyclical_flags_path,
+        evidence=evidence,
+        bundle_ref=bundle_ref,
+        feature_health_ref=feature_health_ref,
+        funnel_health_ref=funnel_health_ref,
+        cyclical_flags_ref=cyclical_flags_ref,
     )
     actual_rows = {
         str(row["ts_code"]): dict(row) for row in packet["candidate_rows"]

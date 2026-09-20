@@ -121,14 +121,22 @@ def _object_without_duplicates(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
 
 def _load_object(path: Path) -> dict[str, Any]:
     try:
+        raw = path.read_bytes()
+    except OSError as exc:
+        raise ClosureError(f"cannot read valid JSON from {path}: {exc}") from exc
+    return _load_object_bytes(raw, str(path))
+
+
+def _load_object_bytes(raw: bytes, label: str) -> dict[str, Any]:
+    try:
         value = json.loads(
-            path.read_text(encoding="utf-8"),
+            raw.decode("utf-8"),
             object_pairs_hook=_object_without_duplicates,
         )
-    except (OSError, json.JSONDecodeError) as exc:
-        raise ClosureError(f"cannot read valid JSON from {path}: {exc}") from exc
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise ClosureError(f"cannot read valid JSON from {label}: {exc}") from exc
     if not isinstance(value, dict):
-        raise ClosureError(f"JSON root must be an object: {path}")
+        raise ClosureError(f"JSON root must be an object: {label}")
     return value
 
 
@@ -155,12 +163,12 @@ def _iso(value: Any, label: str) -> datetime:
     return parsed
 
 
-def load_bundle(bundle_dir: Path) -> dict[str, dict[str, Any]]:
-    """Load and contract-check one immutable research-funnel bundle."""
-    if not bundle_dir.is_dir() or bundle_dir.is_symlink():
-        raise ClosureError("bundle_dir must be a real directory")
-    manifest_path = bundle_dir / "manifest.json"
-    manifest = _load_object(manifest_path)
+def _load_bundle(
+    manifest: dict[str, Any],
+    load_object: Any,
+    digest: Any,
+) -> dict[str, dict[str, Any]]:
+    """Contract-check one bundle supplied by an I/O-only adapter."""
     artifacts = manifest.get("artifacts")
     is_dag_bundle = manifest.get("dag") is not None
     expected_manifest_fields = (
@@ -182,22 +190,21 @@ def load_bundle(bundle_dir: Path) -> dict[str, dict[str, Any]]:
     if manifest.get("bundle_hash") != funnel._hash(artifacts):
         raise ClosureError("bundle manifest bundle_hash mismatch")
     for name, expected_hash in artifacts.items():
-        path = bundle_dir / name
-        if not path.is_file() or path.is_symlink() or _sha256_path(path) != expected_hash:
+        if digest(name) != expected_hash:
             raise ClosureError(f"bundle artifact hash mismatch: {name}")
 
-    registry = _load_object(bundle_dir / "security_registry_projected.json")
-    scan = _load_object(bundle_dir / "all_market_scan.json")
-    candidates = _load_object(bundle_dir / "candidate_review.json")
-    queue = _load_object(bundle_dir / "deep_research_queue.json")
+    registry = load_object("security_registry_projected.json")
+    scan = load_object("all_market_scan.json")
+    candidates = load_object("candidate_review.json")
+    queue = load_object("deep_research_queue.json")
     try:
         validate_registry(registry)
         funnel.validate_all_market_scan(scan, registry)
         funnel.validate_candidate_review(candidates, registry, scan)
         funnel.validate_deep_research_queue(queue)
         if is_dag_bundle:
-            candidate_manifest = _load_object(bundle_dir / "candidate_manifest.json")
-            candidate_battery = _load_object(bundle_dir / "candidate_battery.json")
+            candidate_manifest = load_object("candidate_manifest.json")
+            candidate_battery = load_object("candidate_battery.json")
             funnel.validate_candidate_manifest(candidate_manifest)
             expected_candidate_manifest = funnel.build_candidate_manifest(
                 candidate_review=candidates,
@@ -247,6 +254,40 @@ def load_bundle(bundle_dir: Path) -> dict[str, dict[str, Any]]:
         result["candidate_manifest"] = candidate_manifest
         result["battery"] = candidate_battery
     return result
+
+
+def load_bundle(bundle_dir: Path) -> dict[str, dict[str, Any]]:
+    """Load and contract-check one immutable research-funnel bundle."""
+    if not bundle_dir.is_dir() or bundle_dir.is_symlink():
+        raise ClosureError("bundle_dir must be a real directory")
+    manifest = _load_object(bundle_dir / "manifest.json")
+    return _load_bundle(
+        manifest,
+        lambda name: _load_object(bundle_dir / name),
+        lambda name: _sha256_path(bundle_dir / name)
+        if (bundle_dir / name).is_file() and not (bundle_dir / name).is_symlink()
+        else None,
+    )
+
+
+def load_bundle_from_evidence(evidence: Any, bundle_ref: str) -> dict[str, dict[str, Any]]:
+    """Load a bundle exclusively from one already-captured EvidenceView."""
+    try:
+        try:
+            from .evidence_view import join_ref
+        except ImportError:
+            from evidence_view import join_ref
+
+        manifest = evidence.json_object(join_ref(bundle_ref, "manifest.json"))
+        return _load_bundle(
+            manifest,
+            lambda name: evidence.json_object(join_ref(bundle_ref, name)),
+            lambda name: evidence.sha256(join_ref(bundle_ref, name)),
+        )
+    except Exception as exc:
+        if isinstance(exc, ClosureError):
+            raise
+        raise ClosureError(str(exc)) from exc
 
 
 def validate_battery_evidence(battery: Mapping[str, Any], as_of: str) -> None:

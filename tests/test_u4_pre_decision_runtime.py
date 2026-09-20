@@ -407,7 +407,7 @@ class U4PreDecisionRuntimeTests(unittest.TestCase):
             "docs/research/contracts/research_closed_loop.v1.json":
                 "a3d2e4997c628d2a3240fe5ec2461a3ed1e2da54dcd565715c683b1e1865fb28",
             "experiments/research_funnel/funnel_dag.py":
-                "2088d2e2751ff9458e97feba6397a764f3154972bf645e55a855018d0f9a0243",
+                "ee6191cf8cdeeb50f5f27f878e720faaa258e68bf2d8d35a3742e33d8d17b7e3",
         }
         for path, expected in frozen.items():
             self.assertEqual(expected, hashlib.sha256((ROOT / path).read_bytes()).hexdigest(), path)

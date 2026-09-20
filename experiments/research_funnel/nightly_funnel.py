@@ -214,6 +214,16 @@ def read_bundle(bundle_dir: Path, target: str) -> tuple[dict, dict[str, str], di
     等于给"用别处的数据描述这个 bundle"留了门。
     """
     manifest = _load(bundle_dir / "manifest.json")
+    declared, expected_files = _validate_bundle_manifest(manifest, target)
+    measured = {name: _sha256(bundle_dir / name) for name in expected_files}
+    _validate_bundle_hashes(manifest, declared, measured, expected_files)
+    payloads = {name: _load(bundle_dir / name) for name in expected_files}
+    return _validate_bundle_payloads(manifest, measured, payloads)
+
+
+def _validate_bundle_manifest(
+    manifest: dict, target: str,
+) -> tuple[dict, tuple[str, ...]]:
     # governance-mutation: FUNNEL_NIGHTLY_HEALTH_EVIDENCE
     if str(manifest.get("as_of") or "") != target:
         raise FunnelError(
@@ -229,13 +239,24 @@ def read_bundle(bundle_dir: Path, target: str) -> tuple[dict, dict[str, str], di
     expected_files = BUNDLE_FILES + (DAG_EVIDENCE_FILES if manifest.get("dag") is not None else ())
     if not isinstance(declared, dict) or set(declared) != set(expected_files):
         raise FunnelError(f"bundle manifest 的产物清单不完整: {sorted(declared or {})}")
-    measured = {name: _sha256(bundle_dir / name) for name in expected_files}
+    return declared, expected_files
+
+
+def _validate_bundle_hashes(
+    manifest: dict, declared: dict, measured: dict[str, str],
+    expected_files: tuple[str, ...],
+) -> None:
     drifted = sorted(n for n in expected_files if declared[n] != measured[n])
     if drifted:
         raise FunnelError(f"bundle 实物与 manifest 哈希不符: {drifted}")
     if manifest.get("bundle_hash") != _hash(declared):
         raise FunnelError("bundle_hash 与产物清单不自洽")
-    payloads = {name: _load(bundle_dir / name) for name in expected_files}
+
+
+def _validate_bundle_payloads(
+    manifest: dict, measured: dict[str, str], payloads: dict,
+) -> tuple[dict, dict[str, str], dict]:
+    """Validate bundle content supplied by either path or evidence I/O."""
     if manifest.get("dag") is not None:
         candidate_manifest = payloads["candidate_manifest.json"]
         candidate_battery = payloads["candidate_battery.json"]
@@ -254,6 +275,30 @@ def read_bundle(bundle_dir: Path, target: str) -> tuple[dict, dict[str, str], di
         ):
             raise FunnelError("DAG bundle evidence is not bound to its final manifest")
     return manifest, measured, payloads
+
+
+def read_bundle_from_evidence(evidence, bundle_ref: str, target: str) -> tuple[dict, dict[str, str], dict]:
+    """Read a bundle exclusively from one already-captured EvidenceView."""
+    try:
+        try:
+            from .evidence_view import join_ref
+        except ImportError:
+            from evidence_view import join_ref
+
+        manifest = evidence.json_object(join_ref(bundle_ref, "manifest.json"))
+        declared, expected_files = _validate_bundle_manifest(manifest, target)
+        measured = {
+            name: evidence.sha256(join_ref(bundle_ref, name)) for name in expected_files
+        }
+        _validate_bundle_hashes(manifest, declared, measured, expected_files)
+        payloads = {
+            name: evidence.json_object(join_ref(bundle_ref, name)) for name in expected_files
+        }
+        return _validate_bundle_payloads(manifest, measured, payloads)
+    except Exception as exc:
+        if isinstance(exc, FunnelError):
+            raise
+        raise FunnelError(str(exc)) from exc
 
 
 def validate_bundle_contracts(payloads: dict, registry: dict, scan_key: str) -> None:
@@ -286,6 +331,22 @@ def build_health(
     照样报 COMPLETE(已实测)。一份把自己的结论硬编码进去的 health 不是证据。
     """
     manifest, measured, payloads = read_bundle(bundle_dir, target)
+    if manifest.get("dag") is not None and manifest.get("run_id") != run_id:
+        raise FunnelError("DAG bundle manifest belongs to another nightly run")
+    validate_bundle_contracts(payloads, registry, "all_market_scan.json")
+    return compose_health(
+        target=target, run_id=run_id, manifest=manifest, measured=measured,
+        payloads=payloads, generated_at=generated_at,
+    )
+
+
+def build_health_from_evidence(
+    *, target: str, run_id: str, evidence, bundle_ref: str, registry: dict,
+    generated_at: str,
+) -> dict:
+    manifest, measured, payloads = read_bundle_from_evidence(
+        evidence, bundle_ref, target
+    )
     if manifest.get("dag") is not None and manifest.get("run_id") != run_id:
         raise FunnelError("DAG bundle manifest belongs to another nightly run")
     validate_bundle_contracts(payloads, registry, "all_market_scan.json")
