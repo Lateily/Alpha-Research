@@ -130,6 +130,7 @@ for name, payload in (
     )
 """
     environment = dict(os.environ)
+    environment.pop("PYTHONDONTWRITEBYTECODE", None)
     environment["PYTHONHASHSEED"] = str(seed)
     environment["PYTHONPYCACHEPREFIX"] = str(root / "pycache")
     subprocess.run(
@@ -513,6 +514,15 @@ class TypedDecisionContractTests(unittest.TestCase):
             cache_root = generated_root / "pycache"
             self.assertTrue(cache_root.is_dir())
             self.assertTrue(any(cache_root.rglob("*.pyc")))
+
+    def test_fixture_regeneration_ignores_parent_no_bytecode_flag(self) -> None:
+        with mock.patch.dict(os.environ, {"PYTHONDONTWRITEBYTECODE": "1"}):
+            with tempfile.TemporaryDirectory() as temporary:
+                generated_root = Path(temporary)
+                _generate_authoritative_fixture(generated_root, seed=0)
+                cache_root = generated_root / "pycache"
+                self.assertTrue(cache_root.is_dir())
+                self.assertTrue(any(cache_root.rglob("*.pyc")))
 
 
 if __name__ == "__main__":
