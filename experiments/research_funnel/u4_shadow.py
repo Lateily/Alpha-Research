@@ -76,6 +76,7 @@ _TOP_LEVEL_FIELDS = {
 _IDENTITY_FIELDS = {
     "task_id",
     "command_id",
+    "request_hash",
     "run_mode",
     "sample_purpose",
     "observed_at",
@@ -815,6 +816,7 @@ def build_receipt(
         "identity": {
             "task_id": request_item["task_id"],
             "command_id": request_item["command_id"],
+            "request_hash": _canonical_hash(request_item, "shadow request"),
             "run_mode": request_item["mode"],
             "sample_purpose": SAMPLE_PURPOSE,
             "observed_at": request_item["observed_at"],
@@ -1185,6 +1187,7 @@ def verify_receipt(receipt: Mapping[str, Any]) -> None:
     identity = _exact(value["identity"], _IDENTITY_FIELDS, "receipt identity")
     _string(identity["task_id"], "receipt identity.task_id")
     _string(identity["command_id"], "receipt identity.command_id")
+    _digest(identity["request_hash"], "receipt identity.request_hash")
     if identity["run_mode"] not in {"OFFLINE_FIXTURE", "POLICY_PREVIEW"}:
         raise ShadowPolicyError("receipt run_mode is invalid")
     if identity["sample_purpose"] != SAMPLE_PURPOSE:

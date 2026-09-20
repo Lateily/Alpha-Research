@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import copy
+import hashlib
 import json
 import os
 import shutil
@@ -688,6 +689,35 @@ class JevU4ShadowReceiptTests(unittest.TestCase):
         self.assertNotIn("generated_at", receipt["identity"])
         self.assertNotIn("run_id", receipt["identity"])
 
+    def test_receipt_binds_the_exact_canonical_request_hash(self) -> None:
+        receipt = self._receipt()
+        expected = typed.canonical_hash(self.request)
+        mutations = {
+            "schema": "ar.jev_u4_shadow_request.v2",
+            "command_id": "another-command",
+            "task_id": "another-task",
+            "mode": "POLICY_PREVIEW",
+            "observed_at": "2026-08-12T10:30:00+00:00",
+            "packet_ref": "alternate/u4-pre-decision.json",
+            "bundle_ref": "alternate/data_history/funnel/run",
+            "feature_health_ref": "alternate/feature-health.json",
+            "funnel_health_ref": "alternate/funnel-health.json",
+            "diagnostic_ref": "alternate/diagnostic.json",
+            "industry": "BANK",
+            "method_version": "RESEARCH_CLOSED_LOOP_V2",
+            "cyclical_flags_ref": "alternate/cyclical.json",
+            "fixture_id": "another-fixture",
+        }
+
+        self.assertEqual(expected, receipt["identity"]["request_hash"])
+        self.assertEqual(set(self.request), set(mutations))
+        for field, value in mutations.items():
+            with self.subTest(field=field):
+                self.assertNotEqual(
+                    expected,
+                    typed.canonical_hash({**self.request, field: value}),
+                )
+
 
 class _CountingAdapter:
     provider = "offline_fixture"
@@ -737,12 +767,19 @@ class JevU4ShadowEngineTests(unittest.TestCase):
             self.cassettes if cassettes is None else cassettes
         )
 
-    def _run(self, request: dict | None = None, *, adapter=None) -> dict:
+    def _run(
+        self,
+        request: dict | None = None,
+        *,
+        adapter=None,
+        race_injector=None,
+    ) -> dict:
         return engine.run_shadow(
             copy.deepcopy(request if request is not None else self.request),
             artifact_root=self.artifact_root,
             state_root=self.state_root,
             adapter=adapter or self._adapter(),
+            race_injector=race_injector,
         )
 
     def test_request_schema_and_root_relative_references_are_exact(self) -> None:
@@ -789,6 +826,14 @@ class JevU4ShadowEngineTests(unittest.TestCase):
         calls: list[tuple[dict, dict]] = []
 
         def record(packet: dict, **kwargs: object) -> None:
+            self.assertEqual(
+                (self.artifact_root / self.request["packet_ref"]).read_bytes(),
+                Path(self.request["packet_ref"]).read_bytes(),
+            )
+            self.assertEqual(
+                (self.artifact_root / self.request["diagnostic_ref"]).read_bytes(),
+                Path(kwargs["diagnostic_ref"]).read_bytes(),
+            )
             calls.append((packet, kwargs))
 
         with mock.patch.object(engine.u4_pre_decision, "validate_packet", record):
@@ -802,15 +847,9 @@ class JevU4ShadowEngineTests(unittest.TestCase):
         )
         self.assertEqual(
             {
-                "bundle_dir": (
-                    self.artifact_root / self.request["bundle_ref"]
-                ).resolve(),
-                "feature_health_path": (
-                    self.artifact_root / self.request["feature_health_ref"]
-                ).resolve(),
-                "funnel_health_path": (
-                    self.artifact_root / self.request["funnel_health_ref"]
-                ).resolve(),
+                "bundle_dir": Path(self.request["bundle_ref"]),
+                "feature_health_path": Path(self.request["feature_health_ref"]),
+                "funnel_health_path": Path(self.request["funnel_health_ref"]),
                 "diagnostic_ref": self.request["diagnostic_ref"],
                 "industry": self.request["industry"],
                 "method_version": self.request["method_version"],
@@ -849,10 +888,17 @@ class JevU4ShadowEngineTests(unittest.TestCase):
         self.assertFalse(receipt["provider"]["provider_contacted"])
 
     def test_offline_capability_is_deterministic_shadow_only(self) -> None:
-        registry = engine.offline_capability_registry()
+        registry = engine.offline_capability_registry(
+            artifact_root=self.artifact_root,
+            state_root=self.state_root,
+        )
         self.assertEqual(1, len(registry.records))
         capability = registry.records[0]
-        request = engine.route_request(self.request)
+        request = engine.route_request(
+            self.request,
+            artifact_root=self.artifact_root,
+            state_root=self.state_root,
+        )
         decision = route(registry, request)
 
         self.assertEqual("SHADOW_ONLY", capability.status.value)
@@ -863,6 +909,128 @@ class JevU4ShadowEngineTests(unittest.TestCase):
         self.assertEqual("deny", request.network_policy)
         self.assertEqual(RouteStatus.SELECTED, decision.status)
         self.assertEqual("offline_fixture", decision.selected_agent)
+
+    def test_capability_route_is_bound_to_the_supplied_root_objects(self) -> None:
+        other_artifact = Path(self.temporary.name) / "other-artifact"
+        other_state = Path(self.temporary.name) / "other-state"
+        shutil.copytree(self.artifact_root, other_artifact)
+        other_state.mkdir()
+        registry = engine.offline_capability_registry(
+            artifact_root=self.artifact_root,
+            state_root=self.state_root,
+        )
+        other_request = engine.route_request(
+            self.request,
+            artifact_root=other_artifact,
+            state_root=other_state,
+        )
+
+        decision = route(registry, other_request)
+
+        self.assertEqual(RouteStatus.NO_ELIGIBLE_CAPABILITY, decision.status)
+        self.assertIsNone(decision.selected_agent)
+
+    def test_artifact_parent_swap_cannot_redirect_packet_read(self) -> None:
+        parent = self.artifact_root / "packet-parent"
+        moved = self.artifact_root / "packet-parent-moved"
+        parent.mkdir()
+        packet_name = "u4-pre-decision.json"
+        original_bytes = (self.artifact_root / packet_name).read_bytes()
+        (parent / packet_name).write_bytes(original_bytes)
+        external = Path(self.temporary.name) / "external-artifacts"
+        external.mkdir()
+        (external / packet_name).write_bytes(original_bytes + b"\n")
+        request = {**self.request, "packet_ref": f"packet-parent/{packet_name}"}
+        fired = False
+
+        def swap(point: str) -> None:
+            nonlocal fired
+            if point == "artifact_packet_parent_opened" and not fired:
+                fired = True
+                parent.rename(moved)
+                parent.symlink_to(external, target_is_directory=True)
+
+        receipt = self._run(request, race_injector=swap)
+
+        self.assertTrue(fired)
+        self.assertEqual(
+            "sha256:" + hashlib.sha256(original_bytes).hexdigest(),
+            receipt["source_binding"]["packet_file_hash"],
+        )
+
+    def test_import_and_unsupported_mode_do_not_read_provider_environment(self) -> None:
+        script = """
+import json
+import os
+import sys
+
+forbidden = {
+    "TYPESAFE_API_KEY",
+    "DEEPSEEK_API_KEY",
+    "LLM_USD_CNY",
+    "DEEPSEEK_V4_FLASH_CACHE_HIT_USD_PER_1M",
+    "DEEPSEEK_V4_FLASH_CACHE_MISS_USD_PER_1M",
+    "DEEPSEEK_V4_FLASH_OUTPUT_USD_PER_1M",
+    "DEEPSEEK_V4_PRO_CACHE_HIT_USD_PER_1M",
+    "DEEPSEEK_V4_PRO_CACHE_MISS_USD_PER_1M",
+    "DEEPSEEK_V4_PRO_OUTPUT_USD_PER_1M",
+}
+original = os.environ
+
+class Trap(dict):
+    def __getitem__(self, key):
+        if key in forbidden:
+            raise AssertionError(f"environment key read: {key}")
+        return original[key]
+
+    def get(self, key, default=None):
+        if key in forbidden:
+            raise AssertionError(f"environment key read: {key}")
+        return original.get(key, default)
+
+    def __contains__(self, key):
+        if key in forbidden:
+            raise AssertionError(f"environment key read: {key}")
+        return key in original
+
+os.environ = Trap()
+sys.path.insert(0, %r)
+import jev_u4_shadow as engine
+
+request = {
+    "schema": "ar.jev_u4_shadow_request.v1",
+    "command_id": "unsupported-import-probe",
+    "task_id": "JEV-U4-SHADOW-ENGINE-001",
+    "mode": "TYPESAFE_JEV",
+    "observed_at": "2026-08-12T09:30:00+00:00",
+    "packet_ref": "packet.json",
+    "bundle_ref": "bundle",
+    "feature_health_ref": "feature.json",
+    "funnel_health_ref": "funnel.json",
+    "diagnostic_ref": "diagnostic.json",
+    "industry": "TECH",
+    "method_version": "RESEARCH_CLOSED_LOOP_V1",
+    "cyclical_flags_ref": None,
+    "fixture_id": None,
+}
+try:
+    engine.validate_request(request)
+except engine.ShadowRunError as exc:
+    print(json.dumps(exc.to_dict(), sort_keys=True))
+""" % str(REPO_ROOT / "scripts/llm")
+        result = subprocess.run(
+            [sys.executable, "-c", script],
+            cwd=REPO_ROOT,
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertEqual(
+            "LIVE_PROVIDER_NOT_INSTALLED",
+            json.loads(result.stdout)["code"],
+        )
 
     def test_unsupported_modes_and_paths_block_before_resolution_or_execution(self) -> None:
         cases = (
@@ -975,12 +1143,12 @@ class JevU4ShadowStoreTests(JevU4ShadowEngineTests):
         with self.assertRaisesRegex(engine.ShadowRunError, "INTEGRITY_ERROR"):
             store.read(self.request["command_id"])
 
-    def test_read_rebinds_stored_request_identity_to_receipt(self) -> None:
+    def test_read_rebinds_every_stored_request_field_to_receipt_hash(self) -> None:
         store = engine.ShadowStore(self.state_root)
         store.write(self.request, self.receipt)
         changed_request = {
             **self.request,
-            "observed_at": "2026-08-12T10:30:00+00:00",
+            "packet_ref": "alternate/u4-pre-decision.json",
         }
         request_bytes = json.dumps(
             changed_request,
@@ -1000,6 +1168,85 @@ class JevU4ShadowStoreTests(JevU4ShadowEngineTests):
 
         with self.assertRaisesRegex(engine.ShadowRunError, "INTEGRITY_ERROR"):
             store.read(self.request["command_id"])
+
+    def test_database_parent_swap_cannot_redirect_sqlite_or_receipts(self) -> None:
+        state_root = Path(self.temporary.name) / "database-race-state"
+        outside = Path(self.temporary.name) / "database-race-outside"
+        outside.mkdir()
+        base = state_root / "jev-u4-shadow"
+        moved = state_root / "jev-u4-shadow-moved"
+        fired = False
+
+        def swap(point: str) -> None:
+            nonlocal fired
+            if point == "database_parent_opened" and not fired:
+                fired = True
+                base.rename(moved)
+                base.symlink_to(outside, target_is_directory=True)
+
+        store = engine.ShadowStore(state_root, race_injector=swap)
+        result = store.write(self.request, self.receipt)
+
+        self.assertTrue(fired)
+        self.assertEqual("CREATED", result["disposition"])
+        self.assertFalse(any(outside.iterdir()))
+        self.assertTrue((moved / "shadow.sqlite3").is_file())
+        self.assertTrue(
+            (moved / self.request["command_id"] / "receipt.json").is_file()
+        )
+
+    def test_receipt_parent_swap_fails_without_redirect_or_row_commit(self) -> None:
+        state_root = Path(self.temporary.name) / "receipt-race-state"
+        outside = Path(self.temporary.name) / "receipt-race-outside"
+        outside.mkdir()
+        armed = False
+        fired = False
+
+        def swap(point: str) -> None:
+            nonlocal fired
+            if point == "receipt_parent_opened" and armed and not fired:
+                fired = True
+                command_dir = state_root / "jev-u4-shadow" / self.request["command_id"]
+                moved = command_dir.with_name(command_dir.name + "-moved")
+                command_dir.rename(moved)
+                command_dir.symlink_to(outside, target_is_directory=True)
+
+        store = engine.ShadowStore(state_root, race_injector=swap)
+        armed = True
+        with self.assertRaisesRegex(engine.ShadowRunError, "INTEGRITY_ERROR"):
+            store.write(self.request, self.receipt)
+
+        self.assertTrue(fired)
+        self.assertFalse((outside / "receipt.json").exists())
+        with sqlite3.connect(store.database_path) as database:
+            self.assertEqual(
+                0,
+                database.execute("SELECT COUNT(*) FROM receipts").fetchone()[0],
+            )
+
+    def test_command_directory_parent_is_fsynced_before_row_commit(self) -> None:
+        events: list[object] = []
+        store = engine.ShadowStore(
+            Path(self.temporary.name) / "fsync-order-state",
+            fault_injector=events.append,
+        )
+        base_identity = (
+            store.base_directory.stat().st_dev,
+            store.base_directory.stat().st_ino,
+        )
+        original_fsync = os.fsync
+
+        def record_fsync(descriptor: int) -> None:
+            info = os.fstat(descriptor)
+            events.append(("fsync", info.st_dev, info.st_ino))
+            original_fsync(descriptor)
+
+        with mock.patch.object(engine.os, "fsync", record_fsync):
+            store.write(self.request, self.receipt)
+
+        base_fsync = ("fsync", *base_identity)
+        self.assertIn(base_fsync, events)
+        self.assertLess(events.index(base_fsync), events.index("after_insert"))
 
     def test_crashes_after_publish_or_insert_converge_by_exact_orphan_adoption(self) -> None:
         for failure_point in ("after_publish", "after_insert"):
@@ -1164,6 +1411,20 @@ class JevU4ShadowStoreTests(JevU4ShadowEngineTests):
         )
 
         self.assertNotEqual(0, result.returncode)
+        self.assertEqual("SPEC_BLOCKED", json.loads(result.stderr)["code"])
+
+    def test_cli_help_is_refused_as_canonical_json(self) -> None:
+        script = REPO_ROOT / "scripts/llm/jev_u4_shadow.py"
+        result = subprocess.run(
+            [sys.executable, str(script), "--help"],
+            cwd=REPO_ROOT,
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+
+        self.assertNotEqual(0, result.returncode)
+        self.assertEqual("", result.stdout)
         self.assertEqual("SPEC_BLOCKED", json.loads(result.stderr)["code"])
 
 
