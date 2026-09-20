@@ -63,7 +63,13 @@ class DirectoryCapability:
     @classmethod
     def open(cls, root: os.PathLike[str] | str) -> "DirectoryCapability":
         raw = os.fspath(root)
-        if not os.path.isabs(raw) or os.path.normpath(raw) != raw:
+        if (
+            not isinstance(raw, str)
+            or not raw
+            or "\0" in raw
+            or not os.path.isabs(raw)
+            or os.path.normpath(raw) != raw
+        ):
             raise EvidenceError(f"capability root must be one normalized absolute path: {raw}")
         directory_flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW
         directory_flags |= getattr(os, "O_CLOEXEC", 0)
@@ -71,18 +77,38 @@ class DirectoryCapability:
         try:
             descriptor = os.open("/", directory_flags)
             for component in PurePosixPath(raw).parts[1:]:
+                expected = os.stat(component, dir_fd=descriptor, follow_symlinks=False)
+                if not stat.S_ISDIR(expected.st_mode):
+                    raise EvidenceError(
+                        f"capability root component is not a directory: {component}"
+                    )
                 next_descriptor = os.open(
                     component,
                     directory_flags,
                     dir_fd=descriptor,
                 )
-                os.close(descriptor)
+                try:
+                    actual = os.fstat(next_descriptor)
+                    if _inode_identity(expected) != _inode_identity(actual):
+                        raise EvidenceError(
+                            f"capability root changed during acquisition: {raw}"
+                        )
+                except BaseException:
+                    os.close(next_descriptor)
+                    raise
+                previous_descriptor = descriptor
                 descriptor = next_descriptor
-        except OSError as exc:
+                os.close(previous_descriptor)
+            result = cls(descriptor, raw)
+            descriptor = -1
+            return result
+        except EvidenceError:
+            raise
+        except (OSError, ValueError) as exc:
+            raise EvidenceError(f"cannot acquire directory capability {raw}: {exc}") from exc
+        finally:
             if descriptor >= 0:
                 os.close(descriptor)
-            raise EvidenceError(f"cannot acquire directory capability {raw}: {exc}") from exc
-        return cls(descriptor, raw)
 
     def close(self) -> None:
         if self._descriptor >= 0:
@@ -108,13 +134,31 @@ class DirectoryCapability:
         descriptor = -1
         try:
             for component in parts[:-1]:
+                expected = os.stat(component, dir_fd=parent, follow_symlinks=False)
+                if not stat.S_ISDIR(expected.st_mode):
+                    raise EvidenceError(
+                        f"evidence ref ancestor is not a directory: {normalized}"
+                    )
                 next_parent = os.open(component, directory_flags, dir_fd=parent)
-                os.close(parent)
+                try:
+                    actual = os.fstat(next_parent)
+                    if _inode_identity(expected) != _inode_identity(actual):
+                        raise EvidenceError(
+                            f"evidence ref changed during directory acquisition: {normalized}"
+                        )
+                except BaseException:
+                    os.close(next_parent)
+                    raise
+                previous_parent = parent
                 parent = next_parent
+                os.close(previous_parent)
+            expected = os.stat(parts[-1], dir_fd=parent, follow_symlinks=False)
+            if not stat.S_ISREG(expected.st_mode):
+                raise EvidenceError(f"evidence ref is not a regular file: {normalized}")
             descriptor = os.open(parts[-1], file_flags, dir_fd=parent)
             before = os.fstat(descriptor)
-            if not stat.S_ISREG(before.st_mode):
-                raise EvidenceError(f"evidence ref is not a regular file: {normalized}")
+            if _inode_identity(expected) != _inode_identity(before):
+                raise EvidenceError(f"evidence changed before capture: {normalized}")
             chunks: list[bytes] = []
             while True:
                 chunk = os.read(descriptor, 1024 * 1024)
@@ -144,6 +188,10 @@ class DirectoryCapability:
             if descriptor >= 0:
                 os.close(descriptor)
             os.close(parent)
+
+
+def _inode_identity(value: os.stat_result) -> tuple[int, int, int]:
+    return value.st_dev, value.st_ino, stat.S_IFMT(value.st_mode)
 
 
 class EvidenceView:

@@ -167,6 +167,48 @@ class EvidenceViewTests(unittest.TestCase):
             )
             _validate_from_evidence(view, refs)
 
+    def test_prefixed_capture_refs_keep_legacy_canonical_packet_bytes(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            snapshot = root / "snapshot"
+            packet, diagnostic, bundle, feature_health, funnel_health = _build(snapshot)
+            _write_packet(snapshot, packet, diagnostic)
+            lookup_refs = {
+                "bundle_ref": bundle.relative_to(root).as_posix(),
+                "feature_health_ref": feature_health.relative_to(root).as_posix(),
+                "funnel_health_ref": funnel_health.relative_to(root).as_posix(),
+            }
+            packet_lookup_ref = f"snapshot/{PACKET_REF}"
+            diagnostic_lookup_ref = f"snapshot/{DIAGNOSTIC_REF}"
+            with DirectoryCapability.open(root) as capability:
+                view = EvidenceView.capture_u4(
+                    capability,
+                    packet_ref=packet_lookup_ref,
+                    diagnostic_ref=diagnostic_lookup_ref,
+                    cyclical_flags_ref=None,
+                    **lookup_refs,
+                )
+
+            evidence_packet, evidence_diagnostic = _build_from_evidence(
+                view, lookup_refs
+            )
+
+            self.assertEqual(_json_bytes(packet), _json_bytes(evidence_packet))
+            self.assertEqual(_json_bytes(diagnostic), _json_bytes(evidence_diagnostic))
+            pre.validate_packet(
+                evidence=view,
+                packet_ref=packet_lookup_ref,
+                diagnostic_evidence_ref=diagnostic_lookup_ref,
+                diagnostic_ref=DIAGNOSTIC_REF,
+                industry="TECH",
+                method_version=pre.DEFAULT_METHOD_VERSION,
+                cyclical_flags_ref=None,
+                **lookup_refs,
+            )
+            _validate_from_paths(
+                snapshot, packet, bundle, feature_health, funnel_health
+            )
+
     def test_captured_validation_never_reopens_the_filesystem(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp) / "evidence"
@@ -224,6 +266,135 @@ class EvidenceViewTests(unittest.TestCase):
                                 capability.read_file(ref)
             finally:
                 listener.close()
+
+    def test_root_acquisition_rejects_symlinks_and_real_directory_replacement(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            parent = Path(tmp)
+            root = parent / "artifact-root"
+            outside = parent / "outside"
+            root.mkdir()
+            outside.mkdir()
+            (root / "inside.json").write_bytes(b'{"source":"inside"}')
+            sentinel = outside / "inside.json"
+            sentinel.write_bytes(b'{"source":"outside"}')
+
+            root_link = parent / "root-link"
+            os.symlink(outside, root_link)
+            ancestor_link = parent / "ancestor-link"
+            os.symlink(parent, ancestor_link)
+            with self.assertRaises(EvidenceError):
+                DirectoryCapability.open(root_link)
+            with self.assertRaises(EvidenceError):
+                DirectoryCapability.open(ancestor_link / root.name)
+            self.assertEqual(b'{"source":"outside"}', sentinel.read_bytes())
+
+            real_open = os.open
+            real_close = os.close
+            opened: list[int] = []
+            closed: list[int] = []
+            swapped = False
+
+            def racing_open(path, flags, *args, **kwargs):
+                nonlocal swapped
+                if path == root.name and not swapped:
+                    root.rename(parent / "original-root")
+                    outside.rename(root)
+                    swapped = True
+                descriptor = real_open(path, flags, *args, **kwargs)
+                opened.append(descriptor)
+                return descriptor
+
+            def tracking_close(descriptor):
+                closed.append(descriptor)
+                return real_close(descriptor)
+
+            capability = None
+            try:
+                with mock.patch.object(os, "open", side_effect=racing_open), mock.patch.object(
+                    os, "close", side_effect=tracking_close
+                ):
+                    with self.assertRaises(EvidenceError):
+                        capability = DirectoryCapability.open(root)
+            finally:
+                if capability is not None:
+                    capability.close()
+
+            self.assertTrue(swapped)
+            self.assertCountEqual(opened, closed)
+            self.assertEqual(
+                b'{"source":"outside"}', (root / "inside.json").read_bytes()
+            )
+
+    def test_retained_root_rejects_file_replacement_and_concurrent_content(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "root"
+            root.mkdir()
+            target = root / "target.json"
+            target.write_bytes(b'{"source":"inside"}')
+            outside = root / "outside.json"
+            outside.write_bytes(b'{"source":"outside"}')
+
+            with DirectoryCapability.open(root) as capability:
+                real_open = os.open
+                swapped = False
+
+                def racing_open(path, flags, *args, **kwargs):
+                    nonlocal swapped
+                    if path == target.name and not swapped:
+                        target.rename(root / "original.json")
+                        outside.rename(target)
+                        swapped = True
+                    return real_open(path, flags, *args, **kwargs)
+
+                with mock.patch.object(os, "open", side_effect=racing_open):
+                    with self.assertRaises(EvidenceError):
+                        capability.read_file(target.name)
+                self.assertTrue(swapped)
+                self.assertEqual(b'{"source":"outside"}', target.read_bytes())
+
+                racing = root / "racing.json"
+                original = b"A" * (1024 * 1024 + 7)
+                racing.write_bytes(original)
+                real_read = os.read
+                mutated = False
+
+                def racing_read(descriptor, size):
+                    nonlocal mutated
+                    chunk = real_read(descriptor, size)
+                    if chunk and not mutated:
+                        racing.write_bytes(b"B" * len(original))
+                        mutated = True
+                    return chunk
+
+                with mock.patch.object(os, "read", side_effect=racing_read):
+                    with self.assertRaisesRegex(EvidenceError, "changed while being captured"):
+                        capability.read_file(racing.name)
+                self.assertTrue(mutated)
+
+    def test_malformed_root_has_stable_error_and_balanced_descriptors(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            malformed = f"{tmp}/bad\0component"
+            real_open = os.open
+            real_close = os.close
+            opened: list[int] = []
+            closed: list[int] = []
+
+            def tracking_open(path, flags, *args, **kwargs):
+                descriptor = real_open(path, flags, *args, **kwargs)
+                opened.append(descriptor)
+                return descriptor
+
+            def tracking_close(descriptor):
+                closed.append(descriptor)
+                return real_close(descriptor)
+
+            with mock.patch.object(os, "open", side_effect=tracking_open), mock.patch.object(
+                os, "close", side_effect=tracking_close
+            ):
+                with self.assertRaises(EvidenceError):
+                    DirectoryCapability.open(malformed)
+
+            self.assertCountEqual(opened, closed)
 
     def test_packet_and_diagnostic_rejections_match_path_mode(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

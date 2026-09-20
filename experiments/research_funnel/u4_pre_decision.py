@@ -14,7 +14,7 @@ import math
 import os
 import re
 import tempfile
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any, Mapping, Sequence
 
 try:
@@ -333,13 +333,21 @@ def _require_exact(value: Mapping[str, Any], fields: set[str], label: str) -> No
 
 
 def _source_ref(path: Path, fallback: str) -> str:
-    parts = path.resolve().parts
+    return _project_source_ref(path.resolve().parts, fallback)
+
+
+def _logical_source_ref(ref: str) -> str:
+    path = PurePosixPath(ref)
+    return _project_source_ref(path.parts, path.name)
+
+
+def _project_source_ref(parts: Sequence[str], fallback: str) -> str:
     if "data_history" in parts:
         index = parts.index("data_history")
-        return Path(*parts[index:]).as_posix()
+        return PurePosixPath(*parts[index:]).as_posix()
     if "public" in parts:
         index = parts.index("public")
-        return Path(*parts[index:]).as_posix()
+        return PurePosixPath(*parts[index:]).as_posix()
     return fallback
 
 
@@ -739,9 +747,9 @@ def build_packet(
             assert feature_health_ref is not None
             assert funnel_health_ref is not None
             bundle = closure.load_bundle_from_evidence(evidence, bundle_ref)
-            resolved_bundle_ref = bundle_ref
-            resolved_feature_ref = feature_health_ref
-            resolved_funnel_ref = funnel_health_ref
+            resolved_bundle_ref = _logical_source_ref(bundle_ref)
+            resolved_feature_ref = _logical_source_ref(feature_health_ref)
+            resolved_funnel_ref = _logical_source_ref(funnel_health_ref)
     except (closure.ClosureError, funnel.FunnelError) as exc:
         raise PreDecisionError(str(exc)) from exc
     except Exception as exc:
@@ -1138,6 +1146,7 @@ def validate_packet(
     feature_health_path: Path | None = None, funnel_health_path: Path | None = None,
     diagnostic_path: Path | None = None, cyclical_flags_path: Path | None = None,
     evidence: Any = None, packet_ref: str | None = None,
+    diagnostic_evidence_ref: str | None = None,
     bundle_ref: str | None = None, feature_health_ref: str | None = None,
     funnel_health_ref: str | None = None, cyclical_flags_ref: str | None = None,
 ) -> None:
@@ -1145,7 +1154,7 @@ def validate_packet(
     if evidence is None:
         if packet is None:
             raise PreDecisionError("legacy packet validation requires a packet")
-        if packet_ref is not None or any(
+        if packet_ref is not None or diagnostic_evidence_ref is not None or any(
             value is not None
             for value in (bundle_ref, feature_health_ref, funnel_health_ref, cyclical_flags_ref)
         ):
@@ -1177,7 +1186,9 @@ def validate_packet(
             raise PreDecisionError("evidence packet validation requires all source refs")
         try:
             packet = evidence.json_object(packet_ref)
-            external_diagnostic = evidence.json_object(diagnostic_ref)
+            external_diagnostic = evidence.json_object(
+                diagnostic_evidence_ref or diagnostic_ref
+            )
         except Exception as exc:
             raise PreDecisionError(str(exc)) from exc
         if (
