@@ -18,6 +18,7 @@ import typed_decision as typed  # noqa: E402
 import u4_shadow as shadow  # noqa: E402
 from adapters import (  # noqa: E402
     AgentError,
+    AgentRequest,
     AgentResult,
     AgentStatus,
     Usage,
@@ -49,12 +50,43 @@ def _cassette() -> dict:
 def _agent_result(
     output: dict | None = None,
     *,
+    packet: dict | None = None,
+    row: dict | None = None,
+    input_hash: str | None = None,
+    evidence_refs: tuple[str, ...] | None = None,
     run_id: str = "run_a",
     started_at: str = "2026-08-12T09:30:01+00:00",
     finished_at: str = "2026-08-12T09:30:02+00:00",
     duration_ms: int = 1000,
     error: AgentError | None = None,
 ) -> AgentResult:
+    packet = packet or _load("u4-pre-decision.json")
+    row = row or next(
+        candidate
+        for candidate in packet["candidate_rows"]
+        if candidate["allowed_for_u4_packet"] is True
+    )
+    state = shadow.assemble_candidate_state(packet, row)
+    state_hash = typed.canonical_hash(state)
+    if input_hash is None:
+        input_hash = AgentRequest(
+            task_id="JEV-U4-SHADOW-ENGINE-001",
+            task_type="u4_shadow_decision",
+            input_payload={
+                "state": state,
+                "state_hash": state_hash,
+                "question_set": typed.question_set_payload(),
+            },
+            prompt_version=typed.QUESTION_SET_VERSION,
+            evidence_grade="E4",
+            network_policy="deny",
+        ).input_hash()
+    if evidence_refs is None:
+        evidence_refs = (
+            ()
+            if error is not None
+            else (f"offline-cassette:{state_hash}:{typed.QUESTION_SET_VERSION}",)
+        )
     return AgentResult(
         run_id=run_id,
         task_id="JEV-U4-SHADOW-ENGINE-001",
@@ -63,7 +95,7 @@ def _agent_result(
         model=None,
         prompt_version=typed.QUESTION_SET_VERSION,
         evidence_grade="E4",
-        input_hash="sha256:" + "a" * 64,
+        input_hash=input_hash,
         status=AgentStatus.SUCCEEDED if error is None else AgentStatus.FAILED,
         started_at=started_at,
         finished_at=finished_at,
@@ -74,7 +106,7 @@ def _agent_result(
             else None
         ),
         usage=Usage.not_applicable(),
-        evidence_refs=("offline-cassette:synthetic",),
+        evidence_refs=evidence_refs,
         error=error,
     )
 
@@ -84,6 +116,12 @@ def _reseal(receipt: dict) -> dict:
         {key: value for key, value in receipt.items() if key != "receipt_hash"}
     )
     return receipt
+
+
+def _reseal_candidate_state(receipt: dict, index: int) -> dict:
+    candidate = receipt["candidate_results"][index]
+    candidate["state_hash"] = typed.canonical_hash(candidate["state"])
+    return _reseal(receipt)
 
 
 class JevU4ShadowPolicyTests(unittest.TestCase):
@@ -241,7 +279,11 @@ class JevU4ShadowPolicyTests(unittest.TestCase):
         candidate = shadow.compose_candidate_result(
             self.packet,
             self.ready_rows[1],
-            provider_result=_agent_result(error=failure),
+            provider_result=_agent_result(
+                packet=self.packet,
+                row=self.ready_rows[1],
+                error=failure,
+            ),
         )
 
         self.assertEqual("MODEL_UNAVAILABLE", candidate["provider_result"]["status"])
@@ -274,6 +316,19 @@ class JevU4ShadowPolicyTests(unittest.TestCase):
                         provider_result=provider_result,
                     )
 
+    def test_composer_rejects_provider_input_hash_for_another_candidate(self) -> None:
+        foreign_result = _agent_result(
+            packet=self.packet,
+            row=self.ready_rows[1],
+        )
+
+        with self.assertRaisesRegex(shadow.ShadowPolicyError, "input_hash"):
+            shadow.compose_candidate_result(
+                self.packet,
+                self.ready_rows[0],
+                provider_result=foreign_result,
+            )
+
 
 class JevU4ShadowReceiptTests(unittest.TestCase):
     def setUp(self) -> None:
@@ -288,9 +343,11 @@ class JevU4ShadowReceiptTests(unittest.TestCase):
                 results.append(shadow.compose_candidate_result(self.packet, row))
                 continue
             if eligible_index == 0:
-                provider_result = success or _agent_result()
+                provider_result = success or _agent_result(packet=self.packet, row=row)
             else:
                 provider_result = _agent_result(
+                    packet=self.packet,
+                    row=row,
                     error=AgentError(
                         code="MODEL_UNAVAILABLE",
                         message="no cassette for exact state",
@@ -466,6 +523,120 @@ class JevU4ShadowReceiptTests(unittest.TestCase):
         for receipt in (authority, summary):
             with self.assertRaises(shadow.ShadowPolicyError):
                 shadow.verify_receipt(_reseal(receipt))
+
+    def test_authority_contract_cannot_be_mutated_to_accept_action_fields(self) -> None:
+        required = {
+            "production_authority": False,
+            "trade_authority": False,
+            "paper_order_authority": False,
+            "formal_selection_authority": False,
+        }
+        runtime_authority = getattr(shadow, "AUTHORITY", None)
+        original = copy.deepcopy(runtime_authority)
+        try:
+            if isinstance(runtime_authority, dict):
+                runtime_authority.clear()
+                runtime_authority["buy"] = False
+            receipt = self._receipt()
+        finally:
+            if isinstance(runtime_authority, dict):
+                runtime_authority.clear()
+                runtime_authority.update(original)
+
+        self.assertEqual(required, receipt["authority"])
+        malformed = copy.deepcopy(receipt)
+        malformed["authority"] = {"buy": False}
+        with self.assertRaises(shadow.ShadowPolicyError):
+            shadow.verify_receipt(_reseal(malformed))
+
+    def test_verifier_rejects_unsafe_source_and_provider_evidence_refs(self) -> None:
+        unsafe_refs = (
+            "/private/forbidden-health.json",
+            "../../outside.json",
+            "file:///private/forbidden.json",
+            "C:\\private\\forbidden.json",
+        )
+        for unsafe in unsafe_refs:
+            with self.subTest(kind="source", unsafe=unsafe):
+                receipt = self._receipt()
+                receipt["source_binding"]["evidence_refs"][
+                    "diagnostic_report_ref"
+                ] = unsafe
+                with self.assertRaises(shadow.ShadowPolicyError):
+                    shadow.verify_receipt(_reseal(receipt))
+            with self.subTest(kind="provider", unsafe=unsafe):
+                receipt = self._receipt()
+                receipt["candidate_results"][1]["provider_result"][
+                    "evidence_refs"
+                ] = [unsafe]
+                with self.assertRaises(shadow.ShadowPolicyError):
+                    shadow.verify_receipt(_reseal(receipt))
+
+    def test_verifier_rejects_invalid_peak_and_battery_state_semantics(self) -> None:
+        invented_peak = self._receipt()
+        invented_peak["candidate_results"][0]["state"]["peak_earnings"][
+            "flag"
+        ] = False
+
+        invalid_peak_reason = self._receipt()
+        invalid_peak_reason["candidate_results"][0]["state"]["peak_earnings"][
+            "reason"
+        ] = "BUY"
+
+        invalid_battery = self._receipt()
+        invalid_battery["candidate_results"][0]["state"][
+            "battery_dimension_verdicts"
+        ]["资金"] = "BUY"
+
+        for label, receipt in (
+            ("invented_peak", invented_peak),
+            ("invalid_peak_reason", invalid_peak_reason),
+            ("invalid_battery", invalid_battery),
+        ):
+            with self.subTest(label=label):
+                with self.assertRaises(shadow.ShadowPolicyError):
+                    shadow.verify_receipt(_reseal_candidate_state(receipt, 0))
+
+    def test_provider_input_hash_binds_exact_state_and_question_set(self) -> None:
+        receipt = self._receipt()
+        eligible = [
+            row
+            for row in self.packet["candidate_rows"]
+            if row["allowed_for_u4_packet"] is True
+        ]
+        foreign_state_hash = _agent_result(
+            packet=self.packet,
+            row=eligible[1],
+        ).input_hash
+
+        state = receipt["candidate_results"][1]["state"]
+        state_hash = receipt["candidate_results"][1]["state_hash"]
+        wrong_questions = typed.question_set_payload()
+        wrong_questions["questions"][0]["kind"] = "SCORE"
+        foreign_question_hash = AgentRequest(
+            task_id="JEV-U4-SHADOW-ENGINE-001",
+            task_type="u4_shadow_decision",
+            input_payload={
+                "state": state,
+                "state_hash": state_hash,
+                "question_set": wrong_questions,
+            },
+            prompt_version=typed.QUESTION_SET_VERSION,
+            evidence_grade="E4",
+            network_policy="deny",
+        ).input_hash()
+
+        for label, input_hash in (
+            ("foreign_state", foreign_state_hash),
+            ("foreign_questions", foreign_question_hash),
+        ):
+            with self.subTest(label=label):
+                tampered = self._receipt()
+                tampered["candidate_results"][1]["provider_result"][
+                    "input_hash"
+                ] = input_hash
+                with self.assertRaisesRegex(shadow.ShadowPolicyError, "input_hash"):
+                    shadow.verify_receipt(_reseal(tampered))
 
     def test_builder_rejects_caller_supplied_authority_and_action_fields(self) -> None:
         candidate_results = self._candidate_results()

@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import copy
+import hashlib
 import json
+import math
 import re
 from collections import Counter
 from datetime import datetime
@@ -41,14 +43,9 @@ GATE_STATES = (
     "FORCED_REJECT",
     "POLICY_STOPPED",
 )
-AUTHORITY = {
-    "production_authority": False,
-    "trade_authority": False,
-    "paper_order_authority": False,
-    "formal_selection_authority": False,
-}
 
 _DIGEST_PATTERN = re.compile(r"sha256:[0-9a-f]{64}")
+_STABLE_REF_PATTERN = re.compile(r"[A-Za-z0-9._/-]+")
 _REQUEST_FIELDS = {
     "schema",
     "command_id",
@@ -185,7 +182,13 @@ _DIAGNOSTIC_FIELDS = {
     "u4_ready_rows",
     "blocker_codes",
 }
-_BATTERY_DIMENSIONS = {"行情", "资金", "技术面", "消息面", "估值"}
+_BATTERY_VERDICT_VALUES = (
+    ("行情", frozenset({"NEAR_HIGH", "MID", "NEAR_LOW", None})),
+    ("资金", frozenset({"INFLOW", "OUTFLOW", "MIXED", None})),
+    ("技术面", frozenset({"BULL", "BEAR", "TANGLED", None})),
+    ("消息面", frozenset({"SPIKE", "NORMAL", None})),
+    ("估值", frozenset({"LOW", "MID", "HIGH", None})),
+)
 _AGENT_RESULT_FIELDS = {
     "run_id",
     "task_id",
@@ -355,6 +358,63 @@ def canonical_receipt_bytes(receipt: Mapping[str, Any]) -> bytes:
         raise ShadowPolicyError("receipt is not canonical JSON") from exc
 
 
+def _authority_payload() -> dict[str, bool]:
+    return {
+        "production_authority": False,
+        "trade_authority": False,
+        "paper_order_authority": False,
+        "formal_selection_authority": False,
+    }
+
+
+def _typed_request_hash(state: Mapping[str, Any], state_hash: str) -> str:
+    payload = {
+        "state": state,
+        "state_hash": state_hash,
+        "question_set": question_set_payload(),
+    }
+    try:
+        raw = json.dumps(
+            payload,
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+            allow_nan=False,
+        ).encode("utf-8")
+    except (TypeError, ValueError) as exc:
+        raise ShadowPolicyError("typed provider request is not canonical JSON") from exc
+    return "sha256:" + hashlib.sha256(raw).hexdigest()
+
+
+def _stable_source_ref(value: object, field: str, prefix: str | None = None) -> str:
+    ref = _string(value, field)
+    if (
+        _STABLE_REF_PATTERN.fullmatch(ref) is None
+        or ref.startswith(("/", "~"))
+        or "\\" in ref
+        or ":" in ref
+        or any(segment in {"", ".", ".."} for segment in ref.split("/"))
+        or (prefix is not None and not ref.startswith(prefix))
+    ):
+        raise ShadowPolicyError(f"{field} must be a stable root-relative reference")
+    return ref
+
+
+def _provider_evidence_refs(
+    value: object,
+    *,
+    state_hash: str,
+    status: str,
+) -> list[str]:
+    refs = _sorted_strings(value, "candidate evidence_refs")
+    expected = f"offline-cassette:{state_hash}:{QUESTION_SET_VERSION}"
+    if any(ref != expected for ref in refs):
+        raise ShadowPolicyError("candidate evidence_refs contain an unsafe or unknown reference")
+    if status == "SUCCEEDED" and refs != [expected]:
+        raise ShadowPolicyError("successful candidate lacks its exact cassette reference")
+    return refs
+
+
 def _assert_no_forbidden(value: object, field: str, path: str = "$") -> None:
     if isinstance(value, Mapping):
         for key, item in value.items():
@@ -374,8 +434,22 @@ def _assert_no_forbidden(value: object, field: str, path: str = "$") -> None:
 
 
 def _assert_receipt_has_no_forbidden_fields(receipt: Mapping[str, Any]) -> None:
+    allowed_authority = {
+        "production_authority",
+        "trade_authority",
+        "paper_order_authority",
+        "formal_selection_authority",
+    }
     for key, value in receipt.items():
         if key == "authority":
+            authority = _mapping(value, "receipt authority")
+            for authority_key, authority_value in authority.items():
+                if authority_key not in allowed_authority:
+                    _assert_no_forbidden(
+                        {authority_key: authority_value},
+                        "receipt authority",
+                        "$.authority",
+                    )
             continue
         _assert_no_forbidden(value, "receipt", f"$.{key}")
 
@@ -473,7 +547,13 @@ def _usage(value: object, field: str) -> dict[str, Any]:
     return copy.deepcopy(dict(usage))
 
 
-def _canonical_provider_result(result: Mapping[str, Any], status: str) -> dict[str, Any]:
+def _canonical_provider_result(
+    result: Mapping[str, Any],
+    status: str,
+    *,
+    state: Mapping[str, Any],
+    state_hash: str,
+) -> dict[str, Any]:
     provider = _string(result["provider"], "provider_result.provider")
     model = _nullable_string(result["model"], "provider_result.model")
     prompt_version = _string(result["prompt_version"], "provider_result.prompt_version")
@@ -481,7 +561,11 @@ def _canonical_provider_result(result: Mapping[str, Any], status: str) -> dict[s
         raise ShadowPolicyError("provider_result prompt_version is not the frozen question set")
     evidence_grade = _string(result["evidence_grade"], "provider_result.evidence_grade")
     input_hash = _digest(result["input_hash"], "provider_result.input_hash")
-    evidence_refs = _sorted_strings(result["evidence_refs"], "provider_result.evidence_refs")
+    if input_hash != _typed_request_hash(state, state_hash):
+        raise ShadowPolicyError("provider_result input_hash differs from the exact typed request")
+    evidence_refs = _provider_evidence_refs(
+        result["evidence_refs"], state_hash=state_hash, status=status
+    )
     return {
         "status": status,
         "provider": provider,
@@ -543,11 +627,12 @@ def compose_candidate_result(
     row_item = _mapping(row, "candidate row")
     gate = derive_gate(row_item)
     state = assemble_candidate_state(packet, row_item)
+    state_hash = _canonical_hash(state, "candidate state")
     candidate: dict[str, Any] = {
         "row_binding": _row_binding(row_item),
         "gate": gate,
         "state": state,
-        "state_hash": _canonical_hash(state, "candidate state"),
+        "state_hash": state_hash,
         "provider_result": {"status": "NOT_CALLED"},
         "typed_answers": None,
         "shadow_outcome": gate["forced_shadow_outcome"],
@@ -573,7 +658,12 @@ def compose_candidate_result(
         observation = _observation(typed_answers)
         candidate.update(
             {
-                "provider_result": _canonical_provider_result(result, "SUCCEEDED"),
+                "provider_result": _canonical_provider_result(
+                    result,
+                    "SUCCEEDED",
+                    state=state,
+                    state_hash=state_hash,
+                ),
                 "typed_answers": typed_answers,
                 "shadow_outcome": observation["top_choice_label"],
                 "composer_observation": observation,
@@ -588,7 +678,12 @@ def compose_candidate_result(
     message = _string(error["message"], "provider_result.error.message")
     if type(error["retryable"]) is not bool:
         raise ShadowPolicyError("provider_result.error.retryable must be boolean")
-    candidate["provider_result"] = _canonical_provider_result(result, code)
+    candidate["provider_result"] = _canonical_provider_result(
+        result,
+        code,
+        state=state,
+        state_hash=state_hash,
+    )
     candidate["failure"] = {
         "code": code,
         "message": message,
@@ -737,7 +832,7 @@ def build_receipt(
             "question_set": question_set_payload(),
         },
         "provider": provider_payload,
-        "authority": copy.deepcopy(AUTHORITY),
+        "authority": _authority_payload(),
         "candidate_results": copy.deepcopy(results),
         "batch_summary": _summary(results),
     }
@@ -759,6 +854,45 @@ def _validate_source_publication(value: object, field: str) -> Mapping[str, Any]
     if publication["retry_after_utc"] is not None:
         _string(publication["retry_after_utc"], f"{field}.retry_after_utc")
     return publication
+
+
+def _ratio_or_none(value: object, field: str) -> None:
+    if value is None:
+        return
+    if (
+        isinstance(value, bool)
+        or not isinstance(value, (int, float))
+        or not math.isfinite(float(value))
+    ):
+        raise ShadowPolicyError(f"{field} must be a finite number or null")
+
+
+def _validate_peak_earnings(ticker: str, value: object) -> None:
+    peak = _exact(value, _PEAK_EARNINGS_FIELDS, "candidate state.peak_earnings")
+    if peak["reason"] == "CYCLICAL_FLAG_NOT_COMPUTED":
+        if any(peak[field] is not None for field in _PEAK_EARNINGS_FIELDS - {"reason"}):
+            raise ShadowPolicyError("uncomputed peak earnings carries invented evidence")
+        return
+    if peak["reason"] is not None:
+        raise ShadowPolicyError("peak earnings reason is invalid")
+    if type(peak["flag"]) is not bool or type(peak["needs_normalized_bridge"]) is not bool:
+        raise ShadowPolicyError("peak earnings booleans are invalid")
+    _ratio_or_none(peak["roe_vs_5y_median"], "peak earnings roe_vs_5y_median")
+    _ratio_or_none(peak["gm_vs_5y_median"], "peak earnings gm_vs_5y_median")
+    expected_hash = _canonical_hash(
+        {
+            "ts_code": ticker,
+            "cyclical_flag": {
+                "peak_earnings_risk": peak["flag"],
+                "needs_normalized_bridge": peak["needs_normalized_bridge"],
+                "roe_ttm_vs_median": peak["roe_vs_5y_median"],
+                "gm_ttm_vs_median": peak["gm_vs_5y_median"],
+            },
+        },
+        "peak earnings source projection",
+    )
+    if peak["source_hash"] != expected_hash:
+        raise ShadowPolicyError("peak earnings source_hash mismatch")
 
 
 def _validate_state(value: object) -> Mapping[str, Any]:
@@ -783,7 +917,7 @@ def _validate_state(value: object) -> Mapping[str, Any]:
     for name in ("positive_channels", "missing_evidence"):
         if _sorted_strings(state[name], f"candidate state.{name}") != state[name]:
             raise ShadowPolicyError(f"candidate state.{name} is not sorted and unique")
-    _exact(state["peak_earnings"], _PEAK_EARNINGS_FIELDS, "candidate state.peak_earnings")
+    _validate_peak_earnings(state["ticker"], state["peak_earnings"])
     _digest(state["u2_candidate_row_hash"], "candidate state.u2_candidate_row_hash")
     _digest(state["u3_battery_row_hash"], "candidate state.u3_battery_row_hash")
     if state["question_for_junyan"] is not None:
@@ -814,14 +948,17 @@ def _validate_state(value: object) -> Mapping[str, Any]:
     _string(diagnostic["tool"], "diagnostic.tool")
     _string(diagnostic["tool_version"], "diagnostic.tool_version")
     if "battery_dimension_verdicts" in state:
+        allowed_verdicts = dict(_BATTERY_VERDICT_VALUES)
         verdicts = _exact(
             state["battery_dimension_verdicts"],
-            _BATTERY_DIMENSIONS,
+            set(allowed_verdicts),
             "candidate state.battery_dimension_verdicts",
         )
-        for verdict in verdicts.values():
-            if verdict is not None and not isinstance(verdict, str):
-                raise ShadowPolicyError("battery dimension verdict is invalid")
+        for dimension, verdict in verdicts.items():
+            if verdict not in allowed_verdicts[dimension]:
+                raise ShadowPolicyError(
+                    f"battery dimension verdict is invalid: {dimension}"
+                )
     _canonical_hash(state, "candidate state")
     return state
 
@@ -853,7 +990,11 @@ def _validate_gate(value: object) -> Mapping[str, Any]:
 
 
 def _validate_canonical_provider_result(
-    value: object, receipt_provider: Mapping[str, Any]
+    value: object,
+    receipt_provider: Mapping[str, Any],
+    *,
+    state: Mapping[str, Any],
+    state_hash: str,
 ) -> Mapping[str, Any]:
     provider_result = _exact(
         value, _CANONICAL_PROVIDER_RESULT_FIELDS, "candidate provider_result"
@@ -866,11 +1007,17 @@ def _validate_canonical_provider_result(
     if provider_result["prompt_version"] != QUESTION_SET_VERSION:
         raise ShadowPolicyError("candidate prompt version is invalid")
     _string(provider_result["evidence_grade"], "candidate evidence_grade")
-    _digest(provider_result["input_hash"], "candidate input_hash")
+    input_hash = _digest(provider_result["input_hash"], "candidate input_hash")
+    if input_hash != _typed_request_hash(state, state_hash):
+        raise ShadowPolicyError("candidate input_hash differs from the exact typed request")
     _usage(provider_result["usage"], "candidate provider_result.usage")
-    refs = provider_result["evidence_refs"]
-    if _sorted_strings(refs, "candidate evidence_refs") != refs:
-        raise ShadowPolicyError("candidate evidence_refs are not sorted and unique")
+    refs = _provider_evidence_refs(
+        provider_result["evidence_refs"],
+        state_hash=state_hash,
+        status=provider_result["status"],
+    )
+    if provider_result["evidence_refs"] != refs:
+        raise ShadowPolicyError("candidate evidence_refs are not canonical")
     return provider_result
 
 
@@ -881,8 +1028,22 @@ def _count(value: object, field: str) -> int:
 
 
 def _validate_authority(value: object) -> None:
-    authority = _exact(value, set(AUTHORITY), "receipt authority")
-    if any(authority[name] is not False for name in AUTHORITY):
+    authority = _exact(
+        value,
+        {
+            "production_authority",
+            "trade_authority",
+            "paper_order_authority",
+            "formal_selection_authority",
+        },
+        "receipt authority",
+    )
+    if (
+        authority["production_authority"] is not False
+        or authority["trade_authority"] is not False
+        or authority["paper_order_authority"] is not False
+        or authority["formal_selection_authority"] is not False
+    ):
         raise ShadowPolicyError("receipt authority must remain fixed false")
 
 
@@ -974,7 +1135,12 @@ def _validate_candidate_result(
 
     if state["question_for_junyan"] is None:
         raise ShadowPolicyError("eligible candidate lacks the frozen human question")
-    provider_result = _validate_canonical_provider_result(provider_result, receipt_provider)
+    provider_result = _validate_canonical_provider_result(
+        provider_result,
+        receipt_provider,
+        state=state,
+        state_hash=candidate["state_hash"],
+    )
     if provider_result["status"] == "SUCCEEDED":
         if candidate["failure"] is not None or candidate["typed_answers"] is None:
             raise ShadowPolicyError("successful candidate result is incomplete")
@@ -1040,7 +1206,16 @@ def verify_receipt(receipt: Mapping[str, Any]) -> None:
         if name.endswith("_hash"):
             _digest(item, f"source_binding.evidence_refs.{name}")
         else:
-            _string(item, f"source_binding.evidence_refs.{name}")
+            required_prefix = {
+                "same_day_bundle_ref": "data_history/funnel/",
+                "feature_store_health_ref": "public/data/v2/",
+                "funnel_health_ref": "public/data/v2/",
+            }.get(name)
+            _stable_source_ref(
+                item,
+                f"source_binding.evidence_refs.{name}",
+                prefix=required_prefix,
+            )
     _validate_source_publication(
         source["source_publication"], "source_binding.source_publication"
     )
