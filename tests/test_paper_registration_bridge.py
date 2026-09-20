@@ -53,7 +53,7 @@ def write_json(path: Path, value) -> None:
     )
 
 
-def build_context(root: Path) -> dict:
+def build_context(root: Path, *, wait: bool = False) -> dict:
     source_bundle = root / "source-bundle"
     shutil.copytree(u4_fixtures.SOURCE_BUNDLE, source_bundle)
     packet = closure.build_review_packet(
@@ -97,6 +97,8 @@ def build_context(root: Path) -> dict:
         closure_bundle, u4_fixtures.SELECT_CODES[0]
     )
     case_draft["generated_at"] = CASE_AT
+    if wait:
+        case_draft = cycle_fixtures.make_wait_draft(case_draft)
     case = research_cycle.seal_case(case_draft, closure_bundle)
 
     fund_dir = root / "model-fund"
@@ -118,6 +120,13 @@ def build_context(root: Path) -> dict:
         },
         [],
     )
+    if wait:
+        # A WAIT case has no plan; callers exercise build_plan / apply_plan themselves.
+        return {
+            "source_bundle": source_bundle, "closure_bundle": closure_bundle,
+            "packet": packet, "case": case, "ledger_path": ledger_path,
+            "fund_dir": fund_dir, "marks": marks, "nightly_lock": root / "nightly.lock",
+        }
     plan = bridge.build_plan(
         closure_bundle=closure_bundle,
         case=case,
@@ -230,6 +239,49 @@ class PaperRegistrationBridgeTests(unittest.TestCase):
                 )
 
         self.assertFalse(separate.exists())
+
+    def test_wait_case_is_refused_before_any_plan_exists(self) -> None:
+        """审计 F1:同一份封存的 WAIT / HOLD_OBSERVE case,回放得 NO_TRADE,登记桥不得给出计划。"""
+        with tempfile.TemporaryDirectory() as tmp:
+            ctx = build_context(Path(tmp), wait=True)
+            self.assertEqual("WAIT", ctx["case"]["timing_ticket"]["status"])
+            self.assertEqual("HOLD_OBSERVE", ctx["case"]["paper_order"]["gate_state"])
+            before = bridge._state_hashes(bridge._load_fund_state(ctx["fund_dir"]))
+            with self.assertRaises(bridge.PaperRegistrationError) as caught:
+                bridge.build_plan(
+                    closure_bundle=ctx["closure_bundle"], case=ctx["case"],
+                    u4_ledger_path=ctx["ledger_path"], fund_dir=ctx["fund_dir"],
+                    marks=ctx["marks"], generated_at=PLAN_AT,
+                )
+            after = bridge._state_hashes(bridge._load_fund_state(ctx["fund_dir"]))
+            paper_events = bridge._paper_outer_records(ctx["ledger_path"])
+        self.assertIn("not registrable", str(caught.exception))
+        self.assertIn("NO_TRADE: timing ticket remains WAIT", str(caught.exception))
+        self.assertEqual(before, after)
+        self.assertEqual([], paper_events)
+
+    def test_plan_built_elsewhere_for_a_wait_case_writes_no_intent_and_no_order(self) -> None:
+        """旧版本或外部构造的计划对象绕过了 build_plan 的拒绝;apply 必须在写 intent 之前拒绝。"""
+        with tempfile.TemporaryDirectory() as tmp:
+            ctx = build_context(Path(tmp), wait=True)
+            with patch.object(research_cycle, "registration_refusal", return_value=None):
+                plan = bridge.build_plan(
+                    closure_bundle=ctx["closure_bundle"], case=ctx["case"],
+                    u4_ledger_path=ctx["ledger_path"], fund_dir=ctx["fund_dir"],
+                    marks=ctx["marks"], generated_at=PLAN_AT,
+                )
+            self.assertEqual("HOLD_OBSERVE", plan["paper_request"]["gate_state"])
+            ctx["plan"], ctx["approval"] = plan, approval_for(plan)
+            before = bridge._state_hashes(bridge._load_fund_state(ctx["fund_dir"]))
+            with self.assertRaises(bridge.PaperRegistrationError) as caught:
+                apply_context(ctx)
+            state = bridge._load_fund_state(ctx["fund_dir"])
+            paper_events = bridge._paper_outer_records(ctx["ledger_path"])
+        self.assertIn("not registrable", str(caught.exception))
+        self.assertEqual(before, bridge._state_hashes(state))
+        self.assertEqual([], state["orders"])
+        self.assertEqual([], state["decision_log"])
+        self.assertEqual([], paper_events)
 
     def test_apply_registers_one_realistic_paper_order_and_is_idempotent(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

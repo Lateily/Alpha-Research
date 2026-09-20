@@ -552,6 +552,20 @@ def _compose_registration_projection(
     return request, projection
 
 
+def _require_registrable(case: Mapping[str, Any]) -> None:
+    """Refuse a WAIT case before any plan, intent or order can exist.
+
+    The predicate lives in research_cycle so the replay and this bridge cannot
+    drift apart again. It runs in build_plan, which the typed intent boundary
+    re-runs from source, and in _validate_plan_evidence, which guards a plan
+    object that was built elsewhere or by an older version.
+    """
+    # governance-mutation: PAPER_REGISTRATION_WAIT_REFUSAL
+    refusal = research_cycle.registration_refusal(case)
+    if refusal is not None:
+        raise PaperRegistrationError(f"research case is not registrable: {refusal}")
+
+
 def build_plan(
     *, closure_bundle: Path, case: Mapping[str, Any], u4_ledger_path: Path,
     fund_dir: Path, marks: Mapping[str, Any], generated_at: str,
@@ -561,6 +575,7 @@ def build_plan(
         source = research_cycle.validate_case(case, closure_bundle)
     except research_cycle.CycleError as exc:
         raise PaperRegistrationError(f"research case is invalid: {exc}") from exc
+    _require_registrable(case)
     ticker = str(case.get("ticker") or "").upper()
     if TICKER_RE.fullmatch(ticker) is None:
         raise PaperRegistrationError("research case ticker is invalid")
@@ -782,6 +797,7 @@ def _validate_plan_evidence(
         research_cycle.validate_case(case, closure_bundle)
     except research_cycle.CycleError as exc:
         raise PaperRegistrationError(f"research case is invalid: {exc}") from exc
+    _require_registrable(case)
     if _sha_ref(case.get("case_hash"), "research case hash") != plan["source_refs"]["case_hash"]:
         raise PaperRegistrationError("paper plan is bound to a different research case")
     closure_manifest = _load_json(closure_bundle / "manifest.json", dict)

@@ -4636,6 +4636,22 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="The timing layer cannot silently rewrite the reviewed paper levels.",
     ),
     MutationCase(
+        mutation_id="RESEARCH_CYCLE_REGISTRATION_REFUSAL",
+        component="Research funnel full paper cycle",
+        source_path="experiments/research_funnel/research_cycle.py",
+        test_script="tests/test_research_cycle.py",
+        before=(
+            '    # governance-mutation: RESEARCH_CYCLE_REGISTRATION_REFUSAL\n'
+            '    if case["timing_ticket"]["status"] != "PASS":'
+        ),
+        after=(
+            '    # governance-mutation: RESEARCH_CYCLE_REGISTRATION_REFUSAL\n'
+            '    if False:'
+        ),
+        expected_failure_marker="test_wait_timing_ticket_ends_honestly_at_no_trade",
+        rationale="A sealed WAIT case is a valid research record but must never become a paper order; the replay and the bridge share this one predicate.",
+    ),
+    MutationCase(
         mutation_id="RESEARCH_CYCLE_TIMING_EVIDENCE",
         component="Research funnel full paper cycle",
         source_path="experiments/research_funnel/research_cycle.py",
@@ -8315,7 +8331,7 @@ MUTATIONS = MUTATIONS + (
         test_script="tests/test_research_closed_loop_v1.py",
         before=(
             '    {"path": "experiments/research_funnel/research_cycle.py", '
-            '"sha256": "sha256:a595ab2272ef3efddda7461857301a5160f18b3d9ef8b301a941460c066dbf91"},\n'
+            '"sha256": "sha256:2e8deb0888da0b60c10565bf6c241323131187248373e3e80a3eb7500dfbe65d"},\n'
         ),
         after="",
         expected_failure_marker="test_every_bound_artifact_matches_its_exact_bytes",
@@ -8380,7 +8396,7 @@ MUTATIONS = MUTATIONS + (
         test_script="tests/test_research_closed_loop_v1.py",
         before=(
             '    {"path": "experiments/research_funnel/paper_registration_bridge.py", '
-            '"sha256": "sha256:9c334b6b75aaeef2e3726ba48c851957b395b9a5b353edfd7a792280003be182"},'
+            '"sha256": "sha256:ec5d3237102705c55d765cc60676b2879879a8acb9452053d8bf3b6b6db7be18"},'
         ),
         after=(
             '    {"path": "experiments/research_funnel/paper_registration_bridge.py", '
@@ -8737,6 +8753,24 @@ MUTATIONS = MUTATIONS + (
         ),
         expected_failure_marker="test_approval_must_bind_full_plan_and_preserve_unverified_identity",
         rationale="Self-reported approval must remain honestly unverified and unable to grant trade authority.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_REGISTRATION_WAIT_REFUSAL",
+        component="Research funnel paper registration bridge",
+        source_path="experiments/research_funnel/paper_registration_bridge.py",
+        test_script="tests/test_paper_registration_bridge.py",
+        before=(
+            '    # governance-mutation: PAPER_REGISTRATION_WAIT_REFUSAL\n'
+            '    refusal = research_cycle.registration_refusal(case)\n'
+            '    if refusal is not None:'
+        ),
+        after=(
+            '    # governance-mutation: PAPER_REGISTRATION_WAIT_REFUSAL\n'
+            '    refusal = research_cycle.registration_refusal(case)\n'
+            '    if False:'
+        ),
+        expected_failure_marker="test_wait_case_is_refused_before_any_plan_exists",
+        rationale="The bridge must refuse a WAIT / HOLD_OBSERVE case before any plan, intent or order exists, using the same predicate as the replay (audit F1).",
     ),
     MutationCase(
         mutation_id="PAPER_REGISTRATION_TYPED_SOURCE_BINDING",
