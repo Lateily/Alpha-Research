@@ -19,7 +19,7 @@
   "registry_ref": {
     "as_of": "20260811",
     "eligible_count": 1,
-    "eligible_universe_hash": "71193c6ad6f5697b423ca6552cb1c1087176af3918ca6d3f34018395a479d9e4",
+    "eligible_universe_hash": "1105057af720b9ffb259feccb75007083706143e7d2e95a58229e312cfaab5e4",
     "registry_hash": "2222222222222222222222222222222222222222222222222222222222222222"
   },
   "schema": "ar.feature_store_health",

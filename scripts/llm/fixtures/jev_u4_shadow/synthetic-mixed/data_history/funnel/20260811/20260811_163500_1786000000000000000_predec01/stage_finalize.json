@@ -1,18 +1,18 @@
 {
+  "artifacts": {
+    "deep_research_queue.json": "334b81e8ea261f7f984885619bc374bb3de93877b4f2d3618e03946ca4f41d9c",
+    "security_registry_projected.json": "84baa0569e3164a3d0a0a2a6739306be6f6c227616038bef3dd2bb38f391bd5e"
+  },
+  "as_of": "20260811",
+  "binds": {
+    "battery_rows_hash": "48cfc6ddb424fbd70ce8305d3dfd677007ef09c916a8f2a252e7481b19497695",
+    "candidate_manifest_hash": "2a64b6e46ae088d5644bbe5e9ae3606005730d867a4b4ab6d7bfed396c91d8eb"
+  },
+  "generated_at": "2026-08-12T09:00:00+00:00",
+  "rule_version": "research_funnel_v1",
+  "run_id": "20260811_163500_1786000000000000000_predec01",
   "schema": "ar.research_funnel_stage",
   "schema_version": "1.0",
-  "rule_version": "research_funnel_v1",
   "stage": "finalize",
-  "as_of": "20260811",
-  "run_id": "20260811_163500_1786000000000000000_predec01",
-  "generated_at": "2026-08-12T09:00:00+00:00",
-  "binds": {
-    "candidate_manifest_hash": "6457aa63574cc3b598ef694d8ea7d43b5419ce232112256aeb739d50f06c3012",
-    "battery_rows_hash": "069efb70d95453a7942c9b19eea06da81b9b70996aca1f2836f7e9b3f724105d"
-  },
-  "artifacts": {
-    "deep_research_queue.json": "e0a9dde1f40a73ebe22f34b798765a8d2029cf09c667913c13d379b30e612713",
-    "security_registry_projected.json": "bbfff96f4c8899ac24aa53b5fb7f1a28dc373b9e1f4be2a62cdcb26514fe3322"
-  },
-  "stage_hash": "863e253db2f2765aa7f36f0386db6b4374608a84ec0990f627c39d3360dc837f"
+  "stage_hash": "87b58c3720def135bd8e3667593df067724b830bacf8243d3e0c32417ad82e27"
 }

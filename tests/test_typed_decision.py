@@ -4,10 +4,14 @@
 from __future__ import annotations
 
 import copy
+import json
 import math
 import os
+import re
 import socket
+import subprocess
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 from unittest import mock
@@ -15,8 +19,10 @@ from unittest import mock
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "scripts" / "llm"))
+sys.path.insert(0, str(REPO_ROOT / "experiments" / "research_funnel"))
 
 import typed_decision as typed  # noqa: E402
+import u4_pre_decision as pre  # noqa: E402
 from adapters import AgentRequest, AgentStatus, UsageStatus, run_adapter  # noqa: E402
 from adapters.jev_shadow import (  # noqa: E402
     DisabledTypeSafeJevAdapter,
@@ -56,6 +62,84 @@ VALID_RESPONSE = {
     ],
 }
 
+FIXTURE_ROOT = REPO_ROOT / "scripts/llm/fixtures/jev_u4_shadow/synthetic-mixed"
+_AUTHORITATIVE_FIXTURE_FILES = (
+    "data_history",
+    "public",
+    "u4-pre-decision.json",
+    "u4_pre_decision_diagnostic.json",
+)
+
+
+def _fixture_candidate_state(packet: dict, row: dict) -> dict:
+    return {
+        "packet_hash": packet["packet_hash"],
+        "as_of": packet["as_of"],
+        "method_version": packet["method_version"],
+        "source_publication": packet["source_publication"],
+        "ticker": row["ts_code"],
+        "display_name": row["display_name"],
+        "candidate_status": row["candidate_status"],
+        "causal_cluster_id": row["causal_cluster_id"],
+        "causal_cluster_identity_state": row["causal_cluster_identity_state"],
+        "positive_channels": row["positive_channels"],
+        "missing_evidence": row["missing_evidence"],
+        "peak_earnings": row["peak_earnings"],
+        "battery_dimension_verdicts": row["battery_dimension_verdicts"],
+        "u2_candidate_row_hash": row["u2_candidate_row_hash"],
+        "u3_battery_row_hash": row["u3_battery_row_hash"],
+        "question_for_junyan": row["question_for_junyan"],
+        "diagnostic_summary": packet["diagnostic"],
+    }
+
+
+def _authoritative_fixture_paths(root: Path) -> list[Path]:
+    paths: list[Path] = []
+    for relative in _AUTHORITATIVE_FIXTURE_FILES:
+        path = root / relative
+        if path.is_file():
+            paths.append(Path(relative))
+        else:
+            paths.extend(child.relative_to(root) for child in path.rglob("*") if child.is_file())
+    return sorted(paths)
+
+
+def _generate_authoritative_fixture(root: Path, seed: int) -> None:
+    script = """
+import json
+import sys
+from pathlib import Path
+
+output_root = Path(sys.argv[1])
+repo_root = Path(sys.argv[2])
+sys.path.insert(0, str(repo_root / "tests"))
+
+import test_u4_pre_decision_runtime as runtime
+
+packet, diagnostic, _bundle, _feature_health, _funnel_health = runtime._build(
+    output_root, red_flag=True
+)
+for name, payload in (
+    ("u4-pre-decision.json", packet),
+    ("u4_pre_decision_diagnostic.json", diagnostic),
+):
+    (output_root / name).write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True, allow_nan=False)
+        + "\\n",
+        encoding="utf-8",
+    )
+"""
+    environment = dict(os.environ)
+    environment["PYTHONHASHSEED"] = str(seed)
+    environment["PYTHONPYCACHEPREFIX"] = "/private/tmp/pycache-jev-u4-shadow-task3"
+    subprocess.run(
+        [sys.executable, "-c", script, str(root), str(REPO_ROOT)],
+        check=True,
+        env=environment,
+        capture_output=True,
+        text=True,
+    )
+
 
 class _TypeSafeKeyTrap(dict[str, str]):
     """Record every environment access and reject any TypeSafe-key lookup."""
@@ -83,12 +167,15 @@ class _TypeSafeKeyTrap(dict[str, str]):
         return super().__contains__(key)
 
 
-def _adapter_request(state_hash: str) -> AgentRequest:
+def _adapter_request(state_hash: str, state: dict | None = None) -> AgentRequest:
     return AgentRequest(
         task_id="JEV-U4-SHADOW-TYPED-TEST",
         task_type="u4_shadow_fixture",
         input_payload={
-            "state": {"sample_purpose": "WORKFLOW_DEBUG", "candidate": "synthetic"},
+            "state": state or {
+                "sample_purpose": "WORKFLOW_DEBUG",
+                "candidate": "synthetic",
+            },
             "state_hash": state_hash,
             "question_set": typed.question_set_payload(),
         },
@@ -308,6 +395,116 @@ class TypedDecisionContractTests(unittest.TestCase):
         self.assertEqual("LIVE_PROVIDER_NOT_INSTALLED", result.error.code)
         self.assertFalse(result.error.retryable)
         self.assertEqual([], environment.type_safe_key_reads)
+
+    def test_committed_fixture_reopens_and_exercises_one_cassette_hit_and_miss(self) -> None:
+        request = json.loads((FIXTURE_ROOT / "request.json").read_text(encoding="utf-8"))
+        packet = json.loads(
+            (FIXTURE_ROOT / request["packet_ref"]).read_text(encoding="utf-8")
+        )
+        pre.validate_packet(
+            packet,
+            bundle_dir=FIXTURE_ROOT / request["bundle_ref"],
+            feature_health_path=FIXTURE_ROOT / request["feature_health_ref"],
+            funnel_health_path=FIXTURE_ROOT / request["funnel_health_ref"],
+            diagnostic_ref=request["diagnostic_ref"],
+            industry=request["industry"],
+            method_version=request["method_version"],
+        )
+
+        eligible = [row for row in packet["candidate_rows"] if row["allowed_for_u4_packet"]]
+        self.assertEqual(2, len(eligible))
+        self.assertTrue(
+            all(re.fullmatch(r"T[0-9]{6}\.SZ", row["ts_code"]) for row in packet["candidate_rows"])
+        )
+        self.assertTrue(
+            all(
+                row["display_name"] == f"Name {int(row['ts_code'][1:7])}"
+                for row in packet["candidate_rows"]
+            )
+        )
+        battery = json.loads(
+            (
+                FIXTURE_ROOT
+                / request["bundle_ref"]
+                / "candidate_battery.json"
+            ).read_text(encoding="utf-8")
+        )
+        self.assertEqual("FIXTURE", battery["provider_state"])
+        self.assertTrue(
+            all(row["dims"]["基本面"]["fixture"] is True for row in battery["results"])
+        )
+        projected = json.loads(
+            (
+                FIXTURE_ROOT
+                / request["bundle_ref"]
+                / "security_registry_projected.json"
+            ).read_text(encoding="utf-8")
+        )
+        self.assertTrue(
+            all(
+                re.fullmatch(r"T[0-9]{6}\.SZ", row["ts_code"])
+                and row["name"] == f"Name {int(row['ts_code'][1:7])}"
+                for row in projected["rows"]
+            )
+        )
+        scan = json.loads(
+            (
+                FIXTURE_ROOT
+                / request["bundle_ref"]
+                / "all_market_scan.json"
+            ).read_text(encoding="utf-8")
+        )
+        self.assertTrue(
+            all(re.fullmatch(r"T[0-9]{6}\.SZ", row["ts_code"]) for row in scan["rows"])
+        )
+
+        cassette_payload = json.loads(
+            (FIXTURE_ROOT / "cassettes.json").read_text(encoding="utf-8")
+        )
+        self.assertEqual(
+            {"fixture_id": "synthetic-mixed", "sample_purpose": "WORKFLOW_DEBUG"},
+            cassette_payload["_meta"],
+        )
+        cassettes = {key: value for key, value in cassette_payload.items() if key != "_meta"}
+        self.assertEqual(1, len(cassettes))
+        cassette_key, cassette_response = next(iter(cassettes.items()))
+        self.assertEqual(cassette_response, typed.normalize_typed_response(cassette_response))
+
+        states = [_fixture_candidate_state(packet, row) for row in eligible]
+        state_hashes = [typed.canonical_hash(state) for state in states]
+        self.assertEqual(
+            {f"{state_hashes[0]}:{typed.QUESTION_SET_VERSION}"},
+            {cassette_key},
+        )
+        adapter = OfflineFixtureDecisionAdapter(cassettes)
+        cassette_result = run_adapter(
+            adapter,
+            _adapter_request(state_hashes[0], states[0]),
+            run_id_factory=lambda: "fixture_cassette_hit",
+        )
+        missing_result = run_adapter(
+            adapter,
+            _adapter_request(state_hashes[1], states[1]),
+            run_id_factory=lambda: "fixture_cassette_miss",
+        )
+        self.assertEqual(AgentStatus.SUCCEEDED, cassette_result.status)
+        self.assertEqual(AgentStatus.FAILED, missing_result.status)
+        self.assertIsNotNone(missing_result.error)
+        self.assertEqual("MODEL_UNAVAILABLE", missing_result.error.code)
+
+    def test_committed_fixture_is_byte_reproducible_under_hash_seeds_zero_and_one(self) -> None:
+        expected_paths = _authoritative_fixture_paths(FIXTURE_ROOT)
+        for seed in (0, 1):
+            with self.subTest(seed=seed), tempfile.TemporaryDirectory() as temporary:
+                generated_root = Path(temporary)
+                _generate_authoritative_fixture(generated_root, seed)
+                self.assertEqual(expected_paths, _authoritative_fixture_paths(generated_root))
+                for relative in expected_paths:
+                    self.assertEqual(
+                        (FIXTURE_ROOT / relative).read_bytes(),
+                        (generated_root / relative).read_bytes(),
+                        relative.as_posix(),
+                    )
 
 
 if __name__ == "__main__":

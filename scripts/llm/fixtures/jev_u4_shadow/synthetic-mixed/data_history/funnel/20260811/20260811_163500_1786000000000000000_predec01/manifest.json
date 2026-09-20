@@ -1,17 +1,17 @@
 {
   "artifacts": {
-    "all_market_scan.json": "a7a114f9e864baa058b8501a8554434885511d83f9d953e0478bfe5dffb31807",
-    "candidate_battery.json": "0312130bedfdfa71ddff4dc20b5e3bbaf741a2587ae5c1805c81cddf1ad90830",
-    "candidate_manifest.json": "7477bf417c92a70ceb5cfbfc610d1ba1544ae5f8e4c0ad9ac8898b07660c31d8",
-    "candidate_review.json": "4c036a717fcd60b725977e3ac471531fade9f9104d077017107c1494282917ce",
-    "deep_research_queue.json": "e0a9dde1f40a73ebe22f34b798765a8d2029cf09c667913c13d379b30e612713",
-    "security_registry_projected.json": "bbfff96f4c8899ac24aa53b5fb7f1a28dc373b9e1f4be2a62cdcb26514fe3322"
+    "all_market_scan.json": "a2be7449b7015fa5bf58f977133c56355fd3f9a0a9cfa34e0d91618a28f03eae",
+    "candidate_battery.json": "e955de0a0f531d1b01e6821c5f2c4f15f86d312a38ddf2711a7793096f456e1a",
+    "candidate_manifest.json": "90f4fbc73bf3ad7805e7a633556d4702f2d5b78f7cc3dc1fdd54639f7657e778",
+    "candidate_review.json": "62bc19a9f18e37777dd331aee65ef7ddfb70e355115eb14ab4969c76569817c1",
+    "deep_research_queue.json": "334b81e8ea261f7f984885619bc374bb3de93877b4f2d3618e03946ca4f41d9c",
+    "security_registry_projected.json": "84baa0569e3164a3d0a0a2a6739306be6f6c227616038bef3dd2bb38f391bd5e"
   },
   "as_of": "20260811",
-  "bundle_hash": "598627e32af8ed015e8bbe1dafed49f9a488c38b3782a71a9b8e9b081686a5d3",
+  "bundle_hash": "a58513c5b7d976a118b30573c97f074ff087f5f79860ecd46ffde283b4f3eac5",
   "dag": {
-    "battery_rows_hash": "069efb70d95453a7942c9b19eea06da81b9b70996aca1f2836f7e9b3f724105d",
-    "candidate_manifest_hash": "6457aa63574cc3b598ef694d8ea7d43b5419ce232112256aeb739d50f06c3012",
+    "battery_rows_hash": "48cfc6ddb424fbd70ce8305d3dfd677007ef09c916a8f2a252e7481b19497695",
+    "candidate_manifest_hash": "2a64b6e46ae088d5644bbe5e9ae3606005730d867a4b4ab6d7bfed396c91d8eb",
     "stages": [
       "candidates",
       "battery",

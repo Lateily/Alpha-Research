@@ -1,220 +1,220 @@
 {
-  "schema": "ar.deep_research_queue",
-  "schema_version": "1.0",
-  "rule_version": "research_funnel_v1",
-  "status": "PARTIAL",
   "as_of": "20260811",
-  "generated_at": "2026-08-12T09:00:00+00:00",
   "authority": {
     "auto_selection": false,
     "human_selection_required": true,
-    "selection_owner": "Junyan",
-    "machine_identity_verification": "UNAVAILABLE"
+    "machine_identity_verification": "UNAVAILABLE",
+    "selection_owner": "Junyan"
   },
+  "disclaimer": "不是买卖指令；研究信号，human executes.",
+  "generated_at": "2026-08-12T09:00:00+00:00",
+  "next_gate": "JUNYAN_SELECT_3_TO_5_FROM_READY_POOL",
   "ready_pool": [
     {
-      "ts_code": "000002.SZ",
-      "ready": false,
-      "industry_key": "TECH",
-      "sector_os_status": "TASK_REQUIRED",
-      "candidate_status": "MAIN_CHANNEL",
       "battery_verdict": "COMPLETE",
       "blocked_reasons": [
         "E1_RED_FLAG_REQUIRES_SEPARATE_REVIEW"
-      ]
-    },
-    {
-      "ts_code": "000003.SZ",
-      "ready": true,
-      "industry_key": "BANK",
-      "sector_os_status": "TASK_REQUIRED",
+      ],
       "candidate_status": "MAIN_CHANNEL",
-      "battery_verdict": "COMPLETE",
-      "blocked_reasons": []
-    },
-    {
-      "ts_code": "000004.SZ",
-      "ready": true,
-      "industry_key": "PHARMA",
-      "sector_os_status": "TASK_REQUIRED",
-      "candidate_status": "MAIN_CHANNEL",
-      "battery_verdict": "COMPLETE",
-      "blocked_reasons": []
-    },
-    {
-      "ts_code": "000005.SZ",
-      "ready": true,
       "industry_key": "TECH",
+      "ready": false,
       "sector_os_status": "TASK_REQUIRED",
-      "candidate_status": "MAIN_CHANNEL",
-      "battery_verdict": "COMPLETE",
-      "blocked_reasons": []
+      "ts_code": "T000002.SZ"
     },
     {
-      "ts_code": "000006.SZ",
-      "ready": true,
+      "battery_verdict": "COMPLETE",
+      "blocked_reasons": [],
+      "candidate_status": "MAIN_CHANNEL",
       "industry_key": "BANK",
+      "ready": true,
       "sector_os_status": "TASK_REQUIRED",
-      "candidate_status": "MAIN_CHANNEL",
-      "battery_verdict": "COMPLETE",
-      "blocked_reasons": []
+      "ts_code": "T000003.SZ"
     },
     {
-      "ts_code": "000007.SZ",
-      "ready": true,
+      "battery_verdict": "COMPLETE",
+      "blocked_reasons": [],
+      "candidate_status": "MAIN_CHANNEL",
       "industry_key": "PHARMA",
+      "ready": true,
       "sector_os_status": "TASK_REQUIRED",
-      "candidate_status": "MAIN_CHANNEL",
-      "battery_verdict": "COMPLETE",
-      "blocked_reasons": []
+      "ts_code": "T000004.SZ"
     },
     {
-      "ts_code": "000008.SZ",
-      "ready": true,
+      "battery_verdict": "COMPLETE",
+      "blocked_reasons": [],
+      "candidate_status": "MAIN_CHANNEL",
       "industry_key": "TECH",
+      "ready": true,
       "sector_os_status": "TASK_REQUIRED",
-      "candidate_status": "MAIN_CHANNEL",
-      "battery_verdict": "COMPLETE",
-      "blocked_reasons": []
+      "ts_code": "T000005.SZ"
     },
     {
-      "ts_code": "000009.SZ",
-      "ready": true,
+      "battery_verdict": "COMPLETE",
+      "blocked_reasons": [],
+      "candidate_status": "MAIN_CHANNEL",
       "industry_key": "BANK",
+      "ready": true,
       "sector_os_status": "TASK_REQUIRED",
-      "candidate_status": "MAIN_CHANNEL",
-      "battery_verdict": "COMPLETE",
-      "blocked_reasons": []
+      "ts_code": "T000006.SZ"
     },
     {
-      "ts_code": "000010.SZ",
-      "ready": true,
+      "battery_verdict": "COMPLETE",
+      "blocked_reasons": [],
+      "candidate_status": "MAIN_CHANNEL",
       "industry_key": "PHARMA",
+      "ready": true,
       "sector_os_status": "TASK_REQUIRED",
+      "ts_code": "T000007.SZ"
+    },
+    {
+      "battery_verdict": "COMPLETE",
+      "blocked_reasons": [],
+      "candidate_status": "MAIN_CHANNEL",
+      "industry_key": "TECH",
+      "ready": true,
+      "sector_os_status": "TASK_REQUIRED",
+      "ts_code": "T000008.SZ"
+    },
+    {
+      "battery_verdict": "COMPLETE",
+      "blocked_reasons": [],
+      "candidate_status": "MAIN_CHANNEL",
+      "industry_key": "BANK",
+      "ready": true,
+      "sector_os_status": "TASK_REQUIRED",
+      "ts_code": "T000009.SZ"
+    },
+    {
+      "battery_verdict": "COMPLETE",
+      "blocked_reasons": [],
       "candidate_status": "RANDOM_CONTROL",
-      "battery_verdict": "COMPLETE",
-      "blocked_reasons": []
+      "industry_key": "TECH",
+      "ready": true,
+      "sector_os_status": "TASK_REQUIRED",
+      "ts_code": "T000011.SZ"
     },
     {
-      "ts_code": "000011.SZ",
+      "battery_verdict": "COMPLETE",
+      "blocked_reasons": [],
+      "candidate_status": "MAIN_CHANNEL",
+      "industry_key": "BANK",
       "ready": true,
-      "industry_key": "TECH",
       "sector_os_status": "TASK_REQUIRED",
+      "ts_code": "T000012.SZ"
+    },
+    {
+      "battery_verdict": "COMPLETE",
+      "blocked_reasons": [],
+      "candidate_status": "RESERVED_SLOW_BULL",
+      "industry_key": "PHARMA",
+      "ready": true,
+      "sector_os_status": "TASK_REQUIRED",
+      "ts_code": "T000013.SZ"
+    },
+    {
+      "battery_verdict": "COMPLETE",
+      "blocked_reasons": [],
+      "candidate_status": "MAIN_CHANNEL",
+      "industry_key": "BANK",
+      "ready": true,
+      "sector_os_status": "TASK_REQUIRED",
+      "ts_code": "T000015.SZ"
+    },
+    {
+      "battery_verdict": "COMPLETE",
+      "blocked_reasons": [],
       "candidate_status": "RANDOM_CONTROL",
-      "battery_verdict": "COMPLETE",
-      "blocked_reasons": []
-    },
-    {
-      "ts_code": "000012.SZ",
-      "ready": true,
-      "industry_key": "BANK",
-      "sector_os_status": "TASK_REQUIRED",
-      "candidate_status": "MAIN_CHANNEL",
-      "battery_verdict": "COMPLETE",
-      "blocked_reasons": []
-    },
-    {
-      "ts_code": "000013.SZ",
-      "ready": true,
       "industry_key": "PHARMA",
+      "ready": true,
       "sector_os_status": "TASK_REQUIRED",
+      "ts_code": "T000016.SZ"
+    },
+    {
+      "battery_verdict": "COMPLETE",
+      "blocked_reasons": [],
+      "candidate_status": "MAIN_CHANNEL",
+      "industry_key": "BANK",
+      "ready": true,
+      "sector_os_status": "TASK_REQUIRED",
+      "ts_code": "T000018.SZ"
+    },
+    {
+      "battery_verdict": "COMPLETE",
+      "blocked_reasons": [],
+      "candidate_status": "MAIN_CHANNEL",
+      "industry_key": "BANK",
+      "ready": true,
+      "sector_os_status": "TASK_REQUIRED",
+      "ts_code": "T000021.SZ"
+    },
+    {
+      "battery_verdict": "COMPLETE",
+      "blocked_reasons": [],
       "candidate_status": "RESERVED_SLOW_BULL",
-      "battery_verdict": "COMPLETE",
-      "blocked_reasons": []
-    },
-    {
-      "ts_code": "000015.SZ",
-      "ready": true,
-      "industry_key": "BANK",
-      "sector_os_status": "TASK_REQUIRED",
-      "candidate_status": "MAIN_CHANNEL",
-      "battery_verdict": "COMPLETE",
-      "blocked_reasons": []
-    },
-    {
-      "ts_code": "000018.SZ",
-      "ready": true,
-      "industry_key": "BANK",
-      "sector_os_status": "TASK_REQUIRED",
-      "candidate_status": "MAIN_CHANNEL",
-      "battery_verdict": "COMPLETE",
-      "blocked_reasons": []
-    },
-    {
-      "ts_code": "000021.SZ",
-      "ready": true,
-      "industry_key": "BANK",
-      "sector_os_status": "TASK_REQUIRED",
-      "candidate_status": "MAIN_CHANNEL",
-      "battery_verdict": "COMPLETE",
-      "blocked_reasons": []
-    },
-    {
-      "ts_code": "000023.SZ",
-      "ready": true,
       "industry_key": "TECH",
+      "ready": true,
       "sector_os_status": "TASK_REQUIRED",
-      "candidate_status": "RESERVED_SLOW_BULL",
-      "battery_verdict": "COMPLETE",
-      "blocked_reasons": []
+      "ts_code": "T000023.SZ"
     },
     {
-      "ts_code": "000024.SZ",
-      "ready": true,
-      "industry_key": "BANK",
-      "sector_os_status": "TASK_REQUIRED",
+      "battery_verdict": "COMPLETE",
+      "blocked_reasons": [],
       "candidate_status": "MAIN_CHANNEL",
-      "battery_verdict": "COMPLETE",
-      "blocked_reasons": []
+      "industry_key": "BANK",
+      "ready": true,
+      "sector_os_status": "TASK_REQUIRED",
+      "ts_code": "T000024.SZ"
     },
     {
-      "ts_code": "000027.SZ",
+      "battery_verdict": "COMPLETE",
+      "blocked_reasons": [],
+      "candidate_status": "RESERVED_SLOW_BULL",
+      "industry_key": "PHARMA",
       "ready": true,
-      "industry_key": "BANK",
       "sector_os_status": "TASK_REQUIRED",
+      "ts_code": "T000028.SZ"
+    },
+    {
+      "battery_verdict": "COMPLETE",
+      "blocked_reasons": [],
+      "candidate_status": "RESERVED_CONTRARIAN",
+      "industry_key": "TECH",
+      "ready": true,
+      "sector_os_status": "TASK_REQUIRED",
+      "ts_code": "T000032.SZ"
+    },
+    {
+      "battery_verdict": "COMPLETE",
+      "blocked_reasons": [],
+      "candidate_status": "RESERVED_CONTRARIAN",
+      "industry_key": "BANK",
+      "ready": true,
+      "sector_os_status": "TASK_REQUIRED",
+      "ts_code": "T000033.SZ"
+    },
+    {
+      "battery_verdict": "COMPLETE",
+      "blocked_reasons": [],
+      "candidate_status": "RESERVED_CONTRARIAN",
+      "industry_key": "PHARMA",
+      "ready": true,
+      "sector_os_status": "TASK_REQUIRED",
+      "ts_code": "T000034.SZ"
+    },
+    {
+      "battery_verdict": "COMPLETE",
+      "blocked_reasons": [],
       "candidate_status": "RANDOM_CONTROL",
-      "battery_verdict": "COMPLETE",
-      "blocked_reasons": []
-    },
-    {
-      "ts_code": "000028.SZ",
-      "ready": true,
-      "industry_key": "PHARMA",
-      "sector_os_status": "TASK_REQUIRED",
-      "candidate_status": "RESERVED_SLOW_BULL",
-      "battery_verdict": "COMPLETE",
-      "blocked_reasons": []
-    },
-    {
-      "ts_code": "000032.SZ",
-      "ready": true,
-      "industry_key": "TECH",
-      "sector_os_status": "TASK_REQUIRED",
-      "candidate_status": "RESERVED_CONTRARIAN",
-      "battery_verdict": "COMPLETE",
-      "blocked_reasons": []
-    },
-    {
-      "ts_code": "000033.SZ",
-      "ready": true,
       "industry_key": "BANK",
-      "sector_os_status": "TASK_REQUIRED",
-      "candidate_status": "RESERVED_CONTRARIAN",
-      "battery_verdict": "COMPLETE",
-      "blocked_reasons": []
-    },
-    {
-      "ts_code": "000034.SZ",
       "ready": true,
-      "industry_key": "PHARMA",
       "sector_os_status": "TASK_REQUIRED",
-      "candidate_status": "RESERVED_CONTRARIAN",
-      "battery_verdict": "COMPLETE",
-      "blocked_reasons": []
+      "ts_code": "T000036.SZ"
     }
   ],
   "rows": [],
   "rows_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
-  "next_gate": "JUNYAN_SELECT_3_TO_5_FROM_READY_POOL",
-  "disclaimer": "不是买卖指令；研究信号，human executes."
+  "rule_version": "research_funnel_v1",
+  "schema": "ar.deep_research_queue",
+  "schema_version": "1.0",
+  "status": "PARTIAL"
 }

@@ -254,27 +254,29 @@ def _fixture_tree(
         "deep_research_queue.json": queue,
         "security_registry_projected.json": projected,
     }
-    dag._write_stage(
-        bundle, "candidates", stage1, as_of=AS_OF, run_id=RUN_ID,
-        generated_at=candidate_generated_at,
-        binds={"candidate_manifest_hash": manifest["manifest_hash"]},
-    )
-    dag._write_stage(
-        bundle, "battery", stage2, as_of=AS_OF, run_id=RUN_ID,
-        generated_at=battery_generated_at,
-        binds={
-            "candidate_manifest_hash": manifest["manifest_hash"],
-            "battery_rows_hash": battery["rows_hash"],
-        },
-    )
-    dag._write_stage(
-        bundle, "finalize", stage3, as_of=AS_OF, run_id=RUN_ID,
-        generated_at=finalize_generated_at,
-        binds={
-            "candidate_manifest_hash": manifest["manifest_hash"],
-            "battery_rows_hash": battery["rows_hash"],
-        },
-    )
+    # The synthetic helper must be byte-reproducible across hash seeds.
+    with mock.patch.object(dag, "_atomic_write_json", _write):
+        dag._write_stage(
+            bundle, "candidates", stage1, as_of=AS_OF, run_id=RUN_ID,
+            generated_at=candidate_generated_at,
+            binds={"candidate_manifest_hash": manifest["manifest_hash"]},
+        )
+        dag._write_stage(
+            bundle, "battery", stage2, as_of=AS_OF, run_id=RUN_ID,
+            generated_at=battery_generated_at,
+            binds={
+                "candidate_manifest_hash": manifest["manifest_hash"],
+                "battery_rows_hash": battery["rows_hash"],
+            },
+        )
+        dag._write_stage(
+            bundle, "finalize", stage3, as_of=AS_OF, run_id=RUN_ID,
+            generated_at=finalize_generated_at,
+            binds={
+                "candidate_manifest_hash": manifest["manifest_hash"],
+                "battery_rows_hash": battery["rows_hash"],
+            },
+        )
     payloads = {**stage1, **stage2, **stage3}
     artifacts = {
         name: hashlib.sha256((bundle / name).read_bytes()).hexdigest()

@@ -47,9 +47,9 @@
       "red_flag_channels": [
         "FINANCIAL_RED_FLAG"
       ],
-      "ts_code": "000002.SZ",
-      "u2_candidate_row_hash": "sha256:b8954c5639a395dd0f8b900bf4252ecff628153ccfe1e58534f8546cf8278450",
-      "u3_battery_row_hash": "sha256:f6d0ea73bd61a03e10cedf0fa06197ee20ce8900cde7a71b896657006ffdcc88"
+      "ts_code": "T000002.SZ",
+      "u2_candidate_row_hash": "sha256:494622f6e454f6a463a07d9d24932ea1c79bd8e4427a5aa1a8155bf7d42c649a",
+      "u3_battery_row_hash": "sha256:8e1ea12313f110343cafc25a5d05add91c9f4e2b362381b3ee44c280b8b1fff3"
     },
     {
       "allowed_for_u4_packet": true,
@@ -84,11 +84,11 @@
         "PRICE_VOLUME"
       ],
       "quality_status": "WARN",
-      "question_for_junyan": "是否将 Name 5 (000005.SZ) 纳入离线 workflow-debug 深研？",
+      "question_for_junyan": "是否将 Name 5 (T000005.SZ) 纳入离线 workflow-debug 深研？",
       "red_flag_channels": [],
-      "ts_code": "000005.SZ",
-      "u2_candidate_row_hash": "sha256:1762e5664f3ce6d4f1dec16ce4ab5faa9a64fce5fc0cd31e0a60c62695121caf",
-      "u3_battery_row_hash": "sha256:9389ed3f57aed32d636dd2ddcb1563015c16d7b2aae5a143299e93c4d5a2c700"
+      "ts_code": "T000005.SZ",
+      "u2_candidate_row_hash": "sha256:a049ec3127000fa58f0aaadcbdcc485a6a6f81f5d1068265c0a94244df877507",
+      "u3_battery_row_hash": "sha256:8772e6b229072cf80fddbf9438458bedf2a4e81aafe63c1baa227d3386976e3a"
     },
     {
       "allowed_for_u4_packet": true,
@@ -123,11 +123,11 @@
         "PRICE_VOLUME"
       ],
       "quality_status": "WARN",
-      "question_for_junyan": "是否将 Name 8 (000008.SZ) 纳入离线 workflow-debug 深研？",
+      "question_for_junyan": "是否将 Name 8 (T000008.SZ) 纳入离线 workflow-debug 深研？",
       "red_flag_channels": [],
-      "ts_code": "000008.SZ",
-      "u2_candidate_row_hash": "sha256:ae458eb06c7ca8b8d84e85e0fa5fbb497dd5e107a9360ecf91a3e84c526f0ca4",
-      "u3_battery_row_hash": "sha256:4a6d02d95b45fccba4cbe5d663beec5c48c09a1ec6154ce652c012ae853c01cb"
+      "ts_code": "T000008.SZ",
+      "u2_candidate_row_hash": "sha256:696da0f771e88096c4dd71c53f30fd75f9d4115e3b78eb693146f8fc3da5d86a",
+      "u3_battery_row_hash": "sha256:dae5ccf9285e92000168a5c948e3a1f990866ff6da317edc675b741de047f4c2"
     },
     {
       "allowed_for_u4_packet": false,
@@ -165,9 +165,9 @@
       "quality_status": "DATA_BLOCKED",
       "question_for_junyan": null,
       "red_flag_channels": [],
-      "ts_code": "000011.SZ",
-      "u2_candidate_row_hash": "sha256:6d2452d83aa1d6418a54367ef589ab8b4eff1195ff4f932a525e8527cc219620",
-      "u3_battery_row_hash": "sha256:a1833e1aac4c1f0d533198f943477ec627ba21f8831e9469ca3a51b69d99af8e"
+      "ts_code": "T000011.SZ",
+      "u2_candidate_row_hash": "sha256:f4226d31492060660fb4dbdfbe52672e90d68f34f00ec76d273fe7865a944d99",
+      "u3_battery_row_hash": "sha256:bb1df5c7f9e8902993fd4c4499467f0dc34035e3402d1144d333c9ea8f080865"
     },
     {
       "allowed_for_u4_packet": false,
@@ -204,9 +204,9 @@
       "quality_status": "DATA_BLOCKED",
       "question_for_junyan": null,
       "red_flag_channels": [],
-      "ts_code": "000023.SZ",
-      "u2_candidate_row_hash": "sha256:49929fc85b88e88b0fd0a0af9a8f0409f19933ff7e271a3509b04b2dac63f559",
-      "u3_battery_row_hash": "sha256:9440cca911c56c7670242741850eca531561d5463076a0dc88b9eae7161f8e63"
+      "ts_code": "T000023.SZ",
+      "u2_candidate_row_hash": "sha256:3ffe5eb521b209d74e52440f78365fb967ee30d261a95874107c5d2a983e7be0",
+      "u3_battery_row_hash": "sha256:c1fa3f0a4d700b5d5f8dd28b9663e0cfbdd6197d2deb07c163ab2d1173abf489"
     },
     {
       "allowed_for_u4_packet": false,
@@ -243,9 +243,9 @@
       "quality_status": "DATA_BLOCKED",
       "question_for_junyan": null,
       "red_flag_channels": [],
-      "ts_code": "000032.SZ",
-      "u2_candidate_row_hash": "sha256:26276742e9bc3d8ed429eccb4e76ed5ddffbbeb91b2199aea4438250953605c2",
-      "u3_battery_row_hash": "sha256:d5d2fa9560515054a19a8b0ba5a13f9679bfb4a4d2f891793f2695ae9dae9a78"
+      "ts_code": "T000032.SZ",
+      "u2_candidate_row_hash": "sha256:d45276bf7215e5a900107e9fb451cb72e7ae1a3fba350b7fe423222c7ff70e68",
+      "u3_battery_row_hash": "sha256:422106dcf09fd3e7c52b4e94d8ed493716ac70e0eb039ad35c5cec71d7fa8b1f"
     }
   ],
   "diagnostic": {
@@ -266,14 +266,14 @@
   },
   "generated_at": "2026-08-12T09:00:00+00:00",
   "method_version": "RESEARCH_CLOSED_LOOP_V1",
-  "packet_hash": "sha256:744cc99ab3d28f25a1984f277aa0372ab2f59f7034307fc7885c0b4dee616c4b",
+  "packet_hash": "sha256:c9f9cb0813417add351752f7c1e6933cf30ea1f47058f256abb1ef1cc3fc74a3",
   "packet_summary": {
     "allowed_for_review_count": 2,
     "blocked_count": 4,
     "candidate_count": 6,
     "data_blocked_count": 3,
     "red_flag_count": 1,
-    "same_day_hash": "sha256:434d1d544e9794169677914b224f4f10cd3270380a07d45c20d3a3e02c3d401f"
+    "same_day_hash": "sha256:ee031747405398449899a569e0d7addecc319f1b1c888dfe6bc831e718ddc482"
   },
   "packet_version": "0.1",
   "schema": "ar.u4_pre_decision_packet.v0",
@@ -297,15 +297,15 @@
   "source_refs": {
     "diagnostic_report_hash": "sha256:a0d71afb54814ceba27c6e93709268c00153b963fe7eab02a937c82227b20b55",
     "diagnostic_report_ref": "u4_pre_decision_diagnostic.json",
-    "feature_store_health_hash": "sha256:5048d9974754a5c117652537feb22e67bac23566456dc5df860bf549307f2167",
+    "feature_store_health_hash": "sha256:2dbd8331d2784614cad074f0a42b98a45c7b114d924b1d4261eda63f121824df",
     "feature_store_health_ref": "public/data/v2/feature_store_health.json",
-    "funnel_health_hash": "sha256:bc5d9b3dbabdf56c774cce675003f7c49be906e7bc34477e27224f80787627e3",
+    "funnel_health_hash": "sha256:b83ecfb24edea91c604e8dc13c1265d7d4f7de77e735c7693a1ac8ed6940542c",
     "funnel_health_ref": "public/data/v2/funnel_health.json",
-    "same_day_bundle_hash": "sha256:598627e32af8ed015e8bbe1dafed49f9a488c38b3782a71a9b8e9b081686a5d3",
+    "same_day_bundle_hash": "sha256:a58513c5b7d976a118b30573c97f074ff087f5f79860ecd46ffde283b4f3eac5",
     "same_day_bundle_ref": "data_history/funnel/20260811/20260811_163500_1786000000000000000_predec01",
-    "stage_receipts_hash": "sha256:2128f5de1503ea2ebb37fac6a61d6aa49bf710e5fca8af96b66a2fdccd395793",
-    "u2_candidate_pool_hash": "sha256:c49601783edf160a0f6254a67ed0dc88ba53c7647254030ff98a7388b7a56d97",
-    "u3_battery_hash": "sha256:6adb95de5f356517a450f69489dcb3923a6d5cf490a5247449a1a9a251e27bf3"
+    "stage_receipts_hash": "sha256:b7709a42390d0d3a07ff6a06ef992c1ff0b700959ef493bd1325752f27d1033c",
+    "u2_candidate_pool_hash": "sha256:0b972f25056a908b7155fe7c16e5661c85d45dc1ceb3a47f6bbef1a2ddd371d0",
+    "u3_battery_hash": "sha256:71916a8586401255156a8f25607461ca8ee8d320eda6805cfbf82fe6969735b7"
   },
   "status": "READY_FOR_JUNYAN_REVIEW"
 }

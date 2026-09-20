@@ -1,3315 +1,3315 @@
 {
+  "as_of": "20260811",
+  "coverage": {
+    "bse_labeled": 0,
+    "delisted": 0,
+    "liquidity_data_blocked": 0,
+    "listed": 90,
+    "low_liquidity_labeled": 0,
+    "prelisted": 0,
+    "preserved_missing_from_source": 0,
+    "registry_rows": 90,
+    "st_labeled": 0
+  },
+  "eligible_universe_hash": "1105057af720b9ffb259feccb75007083706143e7d2e95a58229e312cfaab5e4",
+  "generated_at": "2026-08-12T09:00:00+00:00",
+  "registry_hash": "b9e4975519f0b83a731babd69eb464cb071e48f55c23c9e84d58b25c3bf78f49",
+  "rows": [
+    {
+      "current_stage": "SCANNED",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "PHARMA",
+      "list_status": "L",
+      "name": "Name 1",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "SCANNED"
+        }
+      ],
+      "ts_code": "T000001.SZ"
+    },
+    {
+      "current_stage": "BATTERY",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "TECH",
+      "list_status": "L",
+      "name": "Name 2",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            },
+            {
+              "artifact": "ar.candidate_review",
+              "hash": "0b972f25056a908b7155fe7c16e5661c85d45dc1ceb3a47f6bbef1a2ddd371d0",
+              "stage": "CANDIDATE"
+            },
+            {
+              "artifact": "battery",
+              "hash": "8e1ea12313f110343cafc25a5d05add91c9f4e2b362381b3ee44c280b8b1fff3",
+              "stage": "BATTERY"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "BATTERY"
+        }
+      ],
+      "ts_code": "T000002.SZ"
+    },
+    {
+      "current_stage": "BATTERY",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "BANK",
+      "list_status": "L",
+      "name": "Name 3",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            },
+            {
+              "artifact": "ar.candidate_review",
+              "hash": "0b972f25056a908b7155fe7c16e5661c85d45dc1ceb3a47f6bbef1a2ddd371d0",
+              "stage": "CANDIDATE"
+            },
+            {
+              "artifact": "battery",
+              "hash": "ab73874c5b8232c5edfa33c34f6f6c8cb75ce0875b3914d850c356cddce04673",
+              "stage": "BATTERY"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "BATTERY"
+        }
+      ],
+      "ts_code": "T000003.SZ"
+    },
+    {
+      "current_stage": "BATTERY",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "PHARMA",
+      "list_status": "L",
+      "name": "Name 4",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            },
+            {
+              "artifact": "ar.candidate_review",
+              "hash": "0b972f25056a908b7155fe7c16e5661c85d45dc1ceb3a47f6bbef1a2ddd371d0",
+              "stage": "CANDIDATE"
+            },
+            {
+              "artifact": "battery",
+              "hash": "09f773d3966d69e1e221d9fc91eb4fcbb85b1b5f6bccc1ca8c2dfaee05d8c048",
+              "stage": "BATTERY"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "BATTERY"
+        }
+      ],
+      "ts_code": "T000004.SZ"
+    },
+    {
+      "current_stage": "BATTERY",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "TECH",
+      "list_status": "L",
+      "name": "Name 5",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            },
+            {
+              "artifact": "ar.candidate_review",
+              "hash": "0b972f25056a908b7155fe7c16e5661c85d45dc1ceb3a47f6bbef1a2ddd371d0",
+              "stage": "CANDIDATE"
+            },
+            {
+              "artifact": "battery",
+              "hash": "8772e6b229072cf80fddbf9438458bedf2a4e81aafe63c1baa227d3386976e3a",
+              "stage": "BATTERY"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "BATTERY"
+        }
+      ],
+      "ts_code": "T000005.SZ"
+    },
+    {
+      "current_stage": "BATTERY",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "BANK",
+      "list_status": "L",
+      "name": "Name 6",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            },
+            {
+              "artifact": "ar.candidate_review",
+              "hash": "0b972f25056a908b7155fe7c16e5661c85d45dc1ceb3a47f6bbef1a2ddd371d0",
+              "stage": "CANDIDATE"
+            },
+            {
+              "artifact": "battery",
+              "hash": "576f544bbe721e4e02d09f091cb94559db7ce78788beb6340c24c7f6981de335",
+              "stage": "BATTERY"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "BATTERY"
+        }
+      ],
+      "ts_code": "T000006.SZ"
+    },
+    {
+      "current_stage": "BATTERY",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "PHARMA",
+      "list_status": "L",
+      "name": "Name 7",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            },
+            {
+              "artifact": "ar.candidate_review",
+              "hash": "0b972f25056a908b7155fe7c16e5661c85d45dc1ceb3a47f6bbef1a2ddd371d0",
+              "stage": "CANDIDATE"
+            },
+            {
+              "artifact": "battery",
+              "hash": "c74e0f7e76fcdf1ea962787f36f200f8d2b69a7bbed0e700dee745f7150decf7",
+              "stage": "BATTERY"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "BATTERY"
+        }
+      ],
+      "ts_code": "T000007.SZ"
+    },
+    {
+      "current_stage": "BATTERY",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "TECH",
+      "list_status": "L",
+      "name": "Name 8",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            },
+            {
+              "artifact": "ar.candidate_review",
+              "hash": "0b972f25056a908b7155fe7c16e5661c85d45dc1ceb3a47f6bbef1a2ddd371d0",
+              "stage": "CANDIDATE"
+            },
+            {
+              "artifact": "battery",
+              "hash": "dae5ccf9285e92000168a5c948e3a1f990866ff6da317edc675b741de047f4c2",
+              "stage": "BATTERY"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "BATTERY"
+        }
+      ],
+      "ts_code": "T000008.SZ"
+    },
+    {
+      "current_stage": "BATTERY",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "BANK",
+      "list_status": "L",
+      "name": "Name 9",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            },
+            {
+              "artifact": "ar.candidate_review",
+              "hash": "0b972f25056a908b7155fe7c16e5661c85d45dc1ceb3a47f6bbef1a2ddd371d0",
+              "stage": "CANDIDATE"
+            },
+            {
+              "artifact": "battery",
+              "hash": "0c01408d512ffdaefc629e44684f591945edf92230f2818f53b34fd7bd4b9d93",
+              "stage": "BATTERY"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "BATTERY"
+        }
+      ],
+      "ts_code": "T000009.SZ"
+    },
+    {
+      "current_stage": "SCANNED",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "PHARMA",
+      "list_status": "L",
+      "name": "Name 10",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "SCANNED"
+        }
+      ],
+      "ts_code": "T000010.SZ"
+    },
+    {
+      "current_stage": "BATTERY",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "TECH",
+      "list_status": "L",
+      "name": "Name 11",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            },
+            {
+              "artifact": "ar.candidate_review",
+              "hash": "0b972f25056a908b7155fe7c16e5661c85d45dc1ceb3a47f6bbef1a2ddd371d0",
+              "stage": "CANDIDATE"
+            },
+            {
+              "artifact": "battery",
+              "hash": "bb1df5c7f9e8902993fd4c4499467f0dc34035e3402d1144d333c9ea8f080865",
+              "stage": "BATTERY"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "BATTERY"
+        }
+      ],
+      "ts_code": "T000011.SZ"
+    },
+    {
+      "current_stage": "BATTERY",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "BANK",
+      "list_status": "L",
+      "name": "Name 12",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            },
+            {
+              "artifact": "ar.candidate_review",
+              "hash": "0b972f25056a908b7155fe7c16e5661c85d45dc1ceb3a47f6bbef1a2ddd371d0",
+              "stage": "CANDIDATE"
+            },
+            {
+              "artifact": "battery",
+              "hash": "50eab95d62fca002cac37802622cb7dbc56f43c545aff99f1f8f091154818cac",
+              "stage": "BATTERY"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "BATTERY"
+        }
+      ],
+      "ts_code": "T000012.SZ"
+    },
+    {
+      "current_stage": "BATTERY",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "PHARMA",
+      "list_status": "L",
+      "name": "Name 13",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            },
+            {
+              "artifact": "ar.candidate_review",
+              "hash": "0b972f25056a908b7155fe7c16e5661c85d45dc1ceb3a47f6bbef1a2ddd371d0",
+              "stage": "CANDIDATE"
+            },
+            {
+              "artifact": "battery",
+              "hash": "70207b34f7a03ff90927d6ef8b75396a3ac5930d64ec080234b885d0ee63ccbb",
+              "stage": "BATTERY"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "BATTERY"
+        }
+      ],
+      "ts_code": "T000013.SZ"
+    },
+    {
+      "current_stage": "SCANNED",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "TECH",
+      "list_status": "L",
+      "name": "Name 14",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "SCANNED"
+        }
+      ],
+      "ts_code": "T000014.SZ"
+    },
+    {
+      "current_stage": "BATTERY",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "BANK",
+      "list_status": "L",
+      "name": "Name 15",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            },
+            {
+              "artifact": "ar.candidate_review",
+              "hash": "0b972f25056a908b7155fe7c16e5661c85d45dc1ceb3a47f6bbef1a2ddd371d0",
+              "stage": "CANDIDATE"
+            },
+            {
+              "artifact": "battery",
+              "hash": "5fa978073598c69b64dbe547ee7a1614d6ab0e95a06276267ebffc510e1208bc",
+              "stage": "BATTERY"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "BATTERY"
+        }
+      ],
+      "ts_code": "T000015.SZ"
+    },
+    {
+      "current_stage": "BATTERY",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "PHARMA",
+      "list_status": "L",
+      "name": "Name 16",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            },
+            {
+              "artifact": "ar.candidate_review",
+              "hash": "0b972f25056a908b7155fe7c16e5661c85d45dc1ceb3a47f6bbef1a2ddd371d0",
+              "stage": "CANDIDATE"
+            },
+            {
+              "artifact": "battery",
+              "hash": "18471bd6926ff5b5ffe98b11bd9c15d171a80fac384047d4d778976428c032dc",
+              "stage": "BATTERY"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "BATTERY"
+        }
+      ],
+      "ts_code": "T000016.SZ"
+    },
+    {
+      "current_stage": "SCANNED",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "TECH",
+      "list_status": "L",
+      "name": "Name 17",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "SCANNED"
+        }
+      ],
+      "ts_code": "T000017.SZ"
+    },
+    {
+      "current_stage": "BATTERY",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "BANK",
+      "list_status": "L",
+      "name": "Name 18",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            },
+            {
+              "artifact": "ar.candidate_review",
+              "hash": "0b972f25056a908b7155fe7c16e5661c85d45dc1ceb3a47f6bbef1a2ddd371d0",
+              "stage": "CANDIDATE"
+            },
+            {
+              "artifact": "battery",
+              "hash": "d7a7874269c964437ccae438434dd89d597bd52047be6c8f0bbff40904422de0",
+              "stage": "BATTERY"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "BATTERY"
+        }
+      ],
+      "ts_code": "T000018.SZ"
+    },
+    {
+      "current_stage": "SCANNED",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "PHARMA",
+      "list_status": "L",
+      "name": "Name 19",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "SCANNED"
+        }
+      ],
+      "ts_code": "T000019.SZ"
+    },
+    {
+      "current_stage": "SCANNED",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "TECH",
+      "list_status": "L",
+      "name": "Name 20",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "SCANNED"
+        }
+      ],
+      "ts_code": "T000020.SZ"
+    },
+    {
+      "current_stage": "BATTERY",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "BANK",
+      "list_status": "L",
+      "name": "Name 21",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            },
+            {
+              "artifact": "ar.candidate_review",
+              "hash": "0b972f25056a908b7155fe7c16e5661c85d45dc1ceb3a47f6bbef1a2ddd371d0",
+              "stage": "CANDIDATE"
+            },
+            {
+              "artifact": "battery",
+              "hash": "0a1db50ab044e44bf9497eeb835300f98c4441f4193eee0e199e48925edadd7a",
+              "stage": "BATTERY"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "BATTERY"
+        }
+      ],
+      "ts_code": "T000021.SZ"
+    },
+    {
+      "current_stage": "SCANNED",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "PHARMA",
+      "list_status": "L",
+      "name": "Name 22",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "SCANNED"
+        }
+      ],
+      "ts_code": "T000022.SZ"
+    },
+    {
+      "current_stage": "BATTERY",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "TECH",
+      "list_status": "L",
+      "name": "Name 23",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            },
+            {
+              "artifact": "ar.candidate_review",
+              "hash": "0b972f25056a908b7155fe7c16e5661c85d45dc1ceb3a47f6bbef1a2ddd371d0",
+              "stage": "CANDIDATE"
+            },
+            {
+              "artifact": "battery",
+              "hash": "c1fa3f0a4d700b5d5f8dd28b9663e0cfbdd6197d2deb07c163ab2d1173abf489",
+              "stage": "BATTERY"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "BATTERY"
+        }
+      ],
+      "ts_code": "T000023.SZ"
+    },
+    {
+      "current_stage": "BATTERY",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "BANK",
+      "list_status": "L",
+      "name": "Name 24",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            },
+            {
+              "artifact": "ar.candidate_review",
+              "hash": "0b972f25056a908b7155fe7c16e5661c85d45dc1ceb3a47f6bbef1a2ddd371d0",
+              "stage": "CANDIDATE"
+            },
+            {
+              "artifact": "battery",
+              "hash": "6baf4d7de5f1e5e3f845c9092a0f8b9b89ae4fc593b3e6bc5dc1444d4aaae79a",
+              "stage": "BATTERY"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "BATTERY"
+        }
+      ],
+      "ts_code": "T000024.SZ"
+    },
+    {
+      "current_stage": "SCANNED",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "PHARMA",
+      "list_status": "L",
+      "name": "Name 25",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "SCANNED"
+        }
+      ],
+      "ts_code": "T000025.SZ"
+    },
+    {
+      "current_stage": "SCANNED",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "TECH",
+      "list_status": "L",
+      "name": "Name 26",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "SCANNED"
+        }
+      ],
+      "ts_code": "T000026.SZ"
+    },
+    {
+      "current_stage": "SCANNED",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "BANK",
+      "list_status": "L",
+      "name": "Name 27",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "SCANNED"
+        }
+      ],
+      "ts_code": "T000027.SZ"
+    },
+    {
+      "current_stage": "BATTERY",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "PHARMA",
+      "list_status": "L",
+      "name": "Name 28",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            },
+            {
+              "artifact": "ar.candidate_review",
+              "hash": "0b972f25056a908b7155fe7c16e5661c85d45dc1ceb3a47f6bbef1a2ddd371d0",
+              "stage": "CANDIDATE"
+            },
+            {
+              "artifact": "battery",
+              "hash": "02ce0abcb7a03c6fe54913d71f1dfc569bf97e79cfdd72b8087d1f70f80b8c81",
+              "stage": "BATTERY"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "BATTERY"
+        }
+      ],
+      "ts_code": "T000028.SZ"
+    },
+    {
+      "current_stage": "SCANNED",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "TECH",
+      "list_status": "L",
+      "name": "Name 29",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "SCANNED"
+        }
+      ],
+      "ts_code": "T000029.SZ"
+    },
+    {
+      "current_stage": "SCANNED",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "BANK",
+      "list_status": "L",
+      "name": "Name 30",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "SCANNED"
+        }
+      ],
+      "ts_code": "T000030.SZ"
+    },
+    {
+      "current_stage": "SCANNED",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "PHARMA",
+      "list_status": "L",
+      "name": "Name 31",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "SCANNED"
+        }
+      ],
+      "ts_code": "T000031.SZ"
+    },
+    {
+      "current_stage": "BATTERY",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "TECH",
+      "list_status": "L",
+      "name": "Name 32",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            },
+            {
+              "artifact": "ar.candidate_review",
+              "hash": "0b972f25056a908b7155fe7c16e5661c85d45dc1ceb3a47f6bbef1a2ddd371d0",
+              "stage": "CANDIDATE"
+            },
+            {
+              "artifact": "battery",
+              "hash": "422106dcf09fd3e7c52b4e94d8ed493716ac70e0eb039ad35c5cec71d7fa8b1f",
+              "stage": "BATTERY"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "BATTERY"
+        }
+      ],
+      "ts_code": "T000032.SZ"
+    },
+    {
+      "current_stage": "BATTERY",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "BANK",
+      "list_status": "L",
+      "name": "Name 33",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            },
+            {
+              "artifact": "ar.candidate_review",
+              "hash": "0b972f25056a908b7155fe7c16e5661c85d45dc1ceb3a47f6bbef1a2ddd371d0",
+              "stage": "CANDIDATE"
+            },
+            {
+              "artifact": "battery",
+              "hash": "64517a2a601821ffd60a839991e8e2b1b092109335edbf34f0078d654e6eed3a",
+              "stage": "BATTERY"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "BATTERY"
+        }
+      ],
+      "ts_code": "T000033.SZ"
+    },
+    {
+      "current_stage": "BATTERY",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "PHARMA",
+      "list_status": "L",
+      "name": "Name 34",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            },
+            {
+              "artifact": "ar.candidate_review",
+              "hash": "0b972f25056a908b7155fe7c16e5661c85d45dc1ceb3a47f6bbef1a2ddd371d0",
+              "stage": "CANDIDATE"
+            },
+            {
+              "artifact": "battery",
+              "hash": "be2bdc5b23592a343a6ded1c44777a22c213ef82b6ad5695663724cc5e8e61d7",
+              "stage": "BATTERY"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "BATTERY"
+        }
+      ],
+      "ts_code": "T000034.SZ"
+    },
+    {
+      "current_stage": "SCANNED",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "TECH",
+      "list_status": "L",
+      "name": "Name 35",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "SCANNED"
+        }
+      ],
+      "ts_code": "T000035.SZ"
+    },
+    {
+      "current_stage": "BATTERY",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "BANK",
+      "list_status": "L",
+      "name": "Name 36",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            },
+            {
+              "artifact": "ar.candidate_review",
+              "hash": "0b972f25056a908b7155fe7c16e5661c85d45dc1ceb3a47f6bbef1a2ddd371d0",
+              "stage": "CANDIDATE"
+            },
+            {
+              "artifact": "battery",
+              "hash": "033651e93ac0a12f5f934f51b7ccb2e94fb8a7777b39d99b5833581e8a17e835",
+              "stage": "BATTERY"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "BATTERY"
+        }
+      ],
+      "ts_code": "T000036.SZ"
+    },
+    {
+      "current_stage": "SCANNED",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "PHARMA",
+      "list_status": "L",
+      "name": "Name 37",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "SCANNED"
+        }
+      ],
+      "ts_code": "T000037.SZ"
+    },
+    {
+      "current_stage": "SCANNED",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "TECH",
+      "list_status": "L",
+      "name": "Name 38",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "SCANNED"
+        }
+      ],
+      "ts_code": "T000038.SZ"
+    },
+    {
+      "current_stage": "SCANNED",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "BANK",
+      "list_status": "L",
+      "name": "Name 39",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "SCANNED"
+        }
+      ],
+      "ts_code": "T000039.SZ"
+    },
+    {
+      "current_stage": "SCANNED",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "PHARMA",
+      "list_status": "L",
+      "name": "Name 40",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "SCANNED"
+        }
+      ],
+      "ts_code": "T000040.SZ"
+    },
+    {
+      "current_stage": "SCANNED",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "TECH",
+      "list_status": "L",
+      "name": "Name 41",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "SCANNED"
+        }
+      ],
+      "ts_code": "T000041.SZ"
+    },
+    {
+      "current_stage": "SCANNED",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "BANK",
+      "list_status": "L",
+      "name": "Name 42",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "SCANNED"
+        }
+      ],
+      "ts_code": "T000042.SZ"
+    },
+    {
+      "current_stage": "SCANNED",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "PHARMA",
+      "list_status": "L",
+      "name": "Name 43",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "SCANNED"
+        }
+      ],
+      "ts_code": "T000043.SZ"
+    },
+    {
+      "current_stage": "SCANNED",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "TECH",
+      "list_status": "L",
+      "name": "Name 44",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "SCANNED"
+        }
+      ],
+      "ts_code": "T000044.SZ"
+    },
+    {
+      "current_stage": "SCANNED",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "BANK",
+      "list_status": "L",
+      "name": "Name 45",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "SCANNED"
+        }
+      ],
+      "ts_code": "T000045.SZ"
+    },
+    {
+      "current_stage": "SCANNED",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "PHARMA",
+      "list_status": "L",
+      "name": "Name 46",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "SCANNED"
+        }
+      ],
+      "ts_code": "T000046.SZ"
+    },
+    {
+      "current_stage": "SCANNED",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "TECH",
+      "list_status": "L",
+      "name": "Name 47",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "SCANNED"
+        }
+      ],
+      "ts_code": "T000047.SZ"
+    },
+    {
+      "current_stage": "SCANNED",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "BANK",
+      "list_status": "L",
+      "name": "Name 48",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "SCANNED"
+        }
+      ],
+      "ts_code": "T000048.SZ"
+    },
+    {
+      "current_stage": "SCANNED",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "PHARMA",
+      "list_status": "L",
+      "name": "Name 49",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "SCANNED"
+        }
+      ],
+      "ts_code": "T000049.SZ"
+    },
+    {
+      "current_stage": "SCANNED",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "TECH",
+      "list_status": "L",
+      "name": "Name 50",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "SCANNED"
+        }
+      ],
+      "ts_code": "T000050.SZ"
+    },
+    {
+      "current_stage": "SCANNED",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "BANK",
+      "list_status": "L",
+      "name": "Name 51",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "SCANNED"
+        }
+      ],
+      "ts_code": "T000051.SZ"
+    },
+    {
+      "current_stage": "SCANNED",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "PHARMA",
+      "list_status": "L",
+      "name": "Name 52",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "SCANNED"
+        }
+      ],
+      "ts_code": "T000052.SZ"
+    },
+    {
+      "current_stage": "SCANNED",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "TECH",
+      "list_status": "L",
+      "name": "Name 53",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "SCANNED"
+        }
+      ],
+      "ts_code": "T000053.SZ"
+    },
+    {
+      "current_stage": "SCANNED",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "BANK",
+      "list_status": "L",
+      "name": "Name 54",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "SCANNED"
+        }
+      ],
+      "ts_code": "T000054.SZ"
+    },
+    {
+      "current_stage": "SCANNED",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "PHARMA",
+      "list_status": "L",
+      "name": "Name 55",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "SCANNED"
+        }
+      ],
+      "ts_code": "T000055.SZ"
+    },
+    {
+      "current_stage": "SCANNED",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "TECH",
+      "list_status": "L",
+      "name": "Name 56",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "SCANNED"
+        }
+      ],
+      "ts_code": "T000056.SZ"
+    },
+    {
+      "current_stage": "SCANNED",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "BANK",
+      "list_status": "L",
+      "name": "Name 57",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "SCANNED"
+        }
+      ],
+      "ts_code": "T000057.SZ"
+    },
+    {
+      "current_stage": "SCANNED",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "PHARMA",
+      "list_status": "L",
+      "name": "Name 58",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "SCANNED"
+        }
+      ],
+      "ts_code": "T000058.SZ"
+    },
+    {
+      "current_stage": "SCANNED",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "TECH",
+      "list_status": "L",
+      "name": "Name 59",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "SCANNED"
+        }
+      ],
+      "ts_code": "T000059.SZ"
+    },
+    {
+      "current_stage": "SCANNED",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "BANK",
+      "list_status": "L",
+      "name": "Name 60",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "SCANNED"
+        }
+      ],
+      "ts_code": "T000060.SZ"
+    },
+    {
+      "current_stage": "SCANNED",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "PHARMA",
+      "list_status": "L",
+      "name": "Name 61",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "SCANNED"
+        }
+      ],
+      "ts_code": "T000061.SZ"
+    },
+    {
+      "current_stage": "SCANNED",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "TECH",
+      "list_status": "L",
+      "name": "Name 62",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "SCANNED"
+        }
+      ],
+      "ts_code": "T000062.SZ"
+    },
+    {
+      "current_stage": "SCANNED",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "BANK",
+      "list_status": "L",
+      "name": "Name 63",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "SCANNED"
+        }
+      ],
+      "ts_code": "T000063.SZ"
+    },
+    {
+      "current_stage": "SCANNED",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "PHARMA",
+      "list_status": "L",
+      "name": "Name 64",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "SCANNED"
+        }
+      ],
+      "ts_code": "T000064.SZ"
+    },
+    {
+      "current_stage": "SCANNED",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "TECH",
+      "list_status": "L",
+      "name": "Name 65",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "SCANNED"
+        }
+      ],
+      "ts_code": "T000065.SZ"
+    },
+    {
+      "current_stage": "SCANNED",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "BANK",
+      "list_status": "L",
+      "name": "Name 66",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "SCANNED"
+        }
+      ],
+      "ts_code": "T000066.SZ"
+    },
+    {
+      "current_stage": "SCANNED",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "PHARMA",
+      "list_status": "L",
+      "name": "Name 67",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "SCANNED"
+        }
+      ],
+      "ts_code": "T000067.SZ"
+    },
+    {
+      "current_stage": "SCANNED",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "TECH",
+      "list_status": "L",
+      "name": "Name 68",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "SCANNED"
+        }
+      ],
+      "ts_code": "T000068.SZ"
+    },
+    {
+      "current_stage": "SCANNED",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "BANK",
+      "list_status": "L",
+      "name": "Name 69",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "SCANNED"
+        }
+      ],
+      "ts_code": "T000069.SZ"
+    },
+    {
+      "current_stage": "SCANNED",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "PHARMA",
+      "list_status": "L",
+      "name": "Name 70",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "SCANNED"
+        }
+      ],
+      "ts_code": "T000070.SZ"
+    },
+    {
+      "current_stage": "SCANNED",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "TECH",
+      "list_status": "L",
+      "name": "Name 71",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "SCANNED"
+        }
+      ],
+      "ts_code": "T000071.SZ"
+    },
+    {
+      "current_stage": "SCANNED",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "BANK",
+      "list_status": "L",
+      "name": "Name 72",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "SCANNED"
+        }
+      ],
+      "ts_code": "T000072.SZ"
+    },
+    {
+      "current_stage": "SCANNED",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "PHARMA",
+      "list_status": "L",
+      "name": "Name 73",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "SCANNED"
+        }
+      ],
+      "ts_code": "T000073.SZ"
+    },
+    {
+      "current_stage": "SCANNED",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "TECH",
+      "list_status": "L",
+      "name": "Name 74",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "SCANNED"
+        }
+      ],
+      "ts_code": "T000074.SZ"
+    },
+    {
+      "current_stage": "SCANNED",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "BANK",
+      "list_status": "L",
+      "name": "Name 75",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "SCANNED"
+        }
+      ],
+      "ts_code": "T000075.SZ"
+    },
+    {
+      "current_stage": "SCANNED",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "PHARMA",
+      "list_status": "L",
+      "name": "Name 76",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "SCANNED"
+        }
+      ],
+      "ts_code": "T000076.SZ"
+    },
+    {
+      "current_stage": "SCANNED",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "TECH",
+      "list_status": "L",
+      "name": "Name 77",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "SCANNED"
+        }
+      ],
+      "ts_code": "T000077.SZ"
+    },
+    {
+      "current_stage": "SCANNED",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "BANK",
+      "list_status": "L",
+      "name": "Name 78",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "SCANNED"
+        }
+      ],
+      "ts_code": "T000078.SZ"
+    },
+    {
+      "current_stage": "SCANNED",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "PHARMA",
+      "list_status": "L",
+      "name": "Name 79",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "SCANNED"
+        }
+      ],
+      "ts_code": "T000079.SZ"
+    },
+    {
+      "current_stage": "SCANNED",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "TECH",
+      "list_status": "L",
+      "name": "Name 80",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "SCANNED"
+        }
+      ],
+      "ts_code": "T000080.SZ"
+    },
+    {
+      "current_stage": "SCANNED",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "BANK",
+      "list_status": "L",
+      "name": "Name 81",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "SCANNED"
+        }
+      ],
+      "ts_code": "T000081.SZ"
+    },
+    {
+      "current_stage": "SCANNED",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "PHARMA",
+      "list_status": "L",
+      "name": "Name 82",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "SCANNED"
+        }
+      ],
+      "ts_code": "T000082.SZ"
+    },
+    {
+      "current_stage": "SCANNED",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "TECH",
+      "list_status": "L",
+      "name": "Name 83",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "SCANNED"
+        }
+      ],
+      "ts_code": "T000083.SZ"
+    },
+    {
+      "current_stage": "SCANNED",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "BANK",
+      "list_status": "L",
+      "name": "Name 84",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "SCANNED"
+        }
+      ],
+      "ts_code": "T000084.SZ"
+    },
+    {
+      "current_stage": "SCANNED",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "PHARMA",
+      "list_status": "L",
+      "name": "Name 85",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "SCANNED"
+        }
+      ],
+      "ts_code": "T000085.SZ"
+    },
+    {
+      "current_stage": "SCANNED",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "TECH",
+      "list_status": "L",
+      "name": "Name 86",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "SCANNED"
+        }
+      ],
+      "ts_code": "T000086.SZ"
+    },
+    {
+      "current_stage": "SCANNED",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "BANK",
+      "list_status": "L",
+      "name": "Name 87",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "SCANNED"
+        }
+      ],
+      "ts_code": "T000087.SZ"
+    },
+    {
+      "current_stage": "SCANNED",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "PHARMA",
+      "list_status": "L",
+      "name": "Name 88",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "SCANNED"
+        }
+      ],
+      "ts_code": "T000088.SZ"
+    },
+    {
+      "current_stage": "SCANNED",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "TECH",
+      "list_status": "L",
+      "name": "Name 89",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "SCANNED"
+        }
+      ],
+      "ts_code": "T000089.SZ"
+    },
+    {
+      "current_stage": "SCANNED",
+      "data_coverage": {
+        "identity": "COMPLETE",
+        "industry": "COMPLETE",
+        "liquidity": "COMPLETE"
+      },
+      "industry_key": "BANK",
+      "list_status": "L",
+      "name": "Name 90",
+      "qualification": {
+        "is_bse": false,
+        "is_st": false,
+        "liquidity_label": "NORMAL",
+        "u1_scan_eligible": true
+      },
+      "source_presence": "CURRENT",
+      "stage_history": [
+        {
+          "as_of": "20260811",
+          "at": "2026-08-12T09:00:00+00:00",
+          "evidence": [
+            {
+              "artifact": "ar.all_market_scan",
+              "hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+              "stage": "SCANNED"
+            }
+          ],
+          "from": "UNSCANNED",
+          "to": "SCANNED"
+        }
+      ],
+      "ts_code": "T000090.SZ"
+    }
+  ],
   "schema": "ar.security_registry",
   "schema_version": "1.0",
-  "status": "COMPLETE",
-  "as_of": "20260811",
-  "generated_at": "2026-08-12T09:00:00+00:00",
   "source": {
     "errors": []
   },
-  "coverage": {
-    "registry_rows": 90,
-    "listed": 90,
-    "delisted": 0,
-    "prelisted": 0,
-    "st_labeled": 0,
-    "bse_labeled": 0,
-    "low_liquidity_labeled": 0,
-    "liquidity_data_blocked": 0,
-    "preserved_missing_from_source": 0
-  },
-  "eligible_universe_hash": "71193c6ad6f5697b423ca6552cb1c1087176af3918ca6d3f34018395a479d9e4",
-  "registry_hash": "0f0267a08b2f9651534023dd670d33caf45f2c73e5aed048fd6a7f944e3afc04",
-  "rows": [
-    {
-      "ts_code": "000001.SZ",
-      "name": "Name 1",
-      "list_status": "L",
-      "industry_key": "PHARMA",
-      "source_presence": "CURRENT",
-      "current_stage": "SCANNED",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "SCANNED",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000002.SZ",
-      "name": "Name 2",
-      "list_status": "L",
-      "industry_key": "TECH",
-      "source_presence": "CURRENT",
-      "current_stage": "BATTERY",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "BATTERY",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            },
-            {
-              "stage": "CANDIDATE",
-              "artifact": "ar.candidate_review",
-              "hash": "c49601783edf160a0f6254a67ed0dc88ba53c7647254030ff98a7388b7a56d97"
-            },
-            {
-              "stage": "BATTERY",
-              "artifact": "battery",
-              "hash": "f6d0ea73bd61a03e10cedf0fa06197ee20ce8900cde7a71b896657006ffdcc88"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000003.SZ",
-      "name": "Name 3",
-      "list_status": "L",
-      "industry_key": "BANK",
-      "source_presence": "CURRENT",
-      "current_stage": "BATTERY",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "BATTERY",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            },
-            {
-              "stage": "CANDIDATE",
-              "artifact": "ar.candidate_review",
-              "hash": "c49601783edf160a0f6254a67ed0dc88ba53c7647254030ff98a7388b7a56d97"
-            },
-            {
-              "stage": "BATTERY",
-              "artifact": "battery",
-              "hash": "94f1bb784e8975e7529936d78a1b1b0eab80b95531869cc7cd8eaacf7743c3ba"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000004.SZ",
-      "name": "Name 4",
-      "list_status": "L",
-      "industry_key": "PHARMA",
-      "source_presence": "CURRENT",
-      "current_stage": "BATTERY",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "BATTERY",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            },
-            {
-              "stage": "CANDIDATE",
-              "artifact": "ar.candidate_review",
-              "hash": "c49601783edf160a0f6254a67ed0dc88ba53c7647254030ff98a7388b7a56d97"
-            },
-            {
-              "stage": "BATTERY",
-              "artifact": "battery",
-              "hash": "0c11eb66f88e33507410bdc9fce65d3fd12de4545d3d95d4983d5aa8e45b8214"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000005.SZ",
-      "name": "Name 5",
-      "list_status": "L",
-      "industry_key": "TECH",
-      "source_presence": "CURRENT",
-      "current_stage": "BATTERY",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "BATTERY",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            },
-            {
-              "stage": "CANDIDATE",
-              "artifact": "ar.candidate_review",
-              "hash": "c49601783edf160a0f6254a67ed0dc88ba53c7647254030ff98a7388b7a56d97"
-            },
-            {
-              "stage": "BATTERY",
-              "artifact": "battery",
-              "hash": "9389ed3f57aed32d636dd2ddcb1563015c16d7b2aae5a143299e93c4d5a2c700"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000006.SZ",
-      "name": "Name 6",
-      "list_status": "L",
-      "industry_key": "BANK",
-      "source_presence": "CURRENT",
-      "current_stage": "BATTERY",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "BATTERY",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            },
-            {
-              "stage": "CANDIDATE",
-              "artifact": "ar.candidate_review",
-              "hash": "c49601783edf160a0f6254a67ed0dc88ba53c7647254030ff98a7388b7a56d97"
-            },
-            {
-              "stage": "BATTERY",
-              "artifact": "battery",
-              "hash": "1c7278f141e9ac07de264d1ffa3a5141ac4c354edbb949aecb457ab66a7c65ce"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000007.SZ",
-      "name": "Name 7",
-      "list_status": "L",
-      "industry_key": "PHARMA",
-      "source_presence": "CURRENT",
-      "current_stage": "BATTERY",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "BATTERY",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            },
-            {
-              "stage": "CANDIDATE",
-              "artifact": "ar.candidate_review",
-              "hash": "c49601783edf160a0f6254a67ed0dc88ba53c7647254030ff98a7388b7a56d97"
-            },
-            {
-              "stage": "BATTERY",
-              "artifact": "battery",
-              "hash": "8856ae2cca16635a13284e673353655d1ab938104813bfffcd18674470545c7d"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000008.SZ",
-      "name": "Name 8",
-      "list_status": "L",
-      "industry_key": "TECH",
-      "source_presence": "CURRENT",
-      "current_stage": "BATTERY",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "BATTERY",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            },
-            {
-              "stage": "CANDIDATE",
-              "artifact": "ar.candidate_review",
-              "hash": "c49601783edf160a0f6254a67ed0dc88ba53c7647254030ff98a7388b7a56d97"
-            },
-            {
-              "stage": "BATTERY",
-              "artifact": "battery",
-              "hash": "4a6d02d95b45fccba4cbe5d663beec5c48c09a1ec6154ce652c012ae853c01cb"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000009.SZ",
-      "name": "Name 9",
-      "list_status": "L",
-      "industry_key": "BANK",
-      "source_presence": "CURRENT",
-      "current_stage": "BATTERY",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "BATTERY",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            },
-            {
-              "stage": "CANDIDATE",
-              "artifact": "ar.candidate_review",
-              "hash": "c49601783edf160a0f6254a67ed0dc88ba53c7647254030ff98a7388b7a56d97"
-            },
-            {
-              "stage": "BATTERY",
-              "artifact": "battery",
-              "hash": "d08e6eaaac3ddf3a85831a863dbacf2031fb96a1dbdf0234797f8f8b7cedcc36"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000010.SZ",
-      "name": "Name 10",
-      "list_status": "L",
-      "industry_key": "PHARMA",
-      "source_presence": "CURRENT",
-      "current_stage": "BATTERY",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "BATTERY",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            },
-            {
-              "stage": "CANDIDATE",
-              "artifact": "ar.candidate_review",
-              "hash": "c49601783edf160a0f6254a67ed0dc88ba53c7647254030ff98a7388b7a56d97"
-            },
-            {
-              "stage": "BATTERY",
-              "artifact": "battery",
-              "hash": "d229a04f2a1804c3ecb11d05996c7e773ecbc60fc0534b8dc8a01b57bc464888"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000011.SZ",
-      "name": "Name 11",
-      "list_status": "L",
-      "industry_key": "TECH",
-      "source_presence": "CURRENT",
-      "current_stage": "BATTERY",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "BATTERY",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            },
-            {
-              "stage": "CANDIDATE",
-              "artifact": "ar.candidate_review",
-              "hash": "c49601783edf160a0f6254a67ed0dc88ba53c7647254030ff98a7388b7a56d97"
-            },
-            {
-              "stage": "BATTERY",
-              "artifact": "battery",
-              "hash": "a1833e1aac4c1f0d533198f943477ec627ba21f8831e9469ca3a51b69d99af8e"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000012.SZ",
-      "name": "Name 12",
-      "list_status": "L",
-      "industry_key": "BANK",
-      "source_presence": "CURRENT",
-      "current_stage": "BATTERY",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "BATTERY",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            },
-            {
-              "stage": "CANDIDATE",
-              "artifact": "ar.candidate_review",
-              "hash": "c49601783edf160a0f6254a67ed0dc88ba53c7647254030ff98a7388b7a56d97"
-            },
-            {
-              "stage": "BATTERY",
-              "artifact": "battery",
-              "hash": "d2a209484f9897083be7dc7df2c2587fd7fa80795e70fc9d38f5120f05a6712a"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000013.SZ",
-      "name": "Name 13",
-      "list_status": "L",
-      "industry_key": "PHARMA",
-      "source_presence": "CURRENT",
-      "current_stage": "BATTERY",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "BATTERY",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            },
-            {
-              "stage": "CANDIDATE",
-              "artifact": "ar.candidate_review",
-              "hash": "c49601783edf160a0f6254a67ed0dc88ba53c7647254030ff98a7388b7a56d97"
-            },
-            {
-              "stage": "BATTERY",
-              "artifact": "battery",
-              "hash": "6ef5e7082496639b668025c0f233269d96f58cc8a7246e118da1a58e66e49b6b"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000014.SZ",
-      "name": "Name 14",
-      "list_status": "L",
-      "industry_key": "TECH",
-      "source_presence": "CURRENT",
-      "current_stage": "SCANNED",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "SCANNED",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000015.SZ",
-      "name": "Name 15",
-      "list_status": "L",
-      "industry_key": "BANK",
-      "source_presence": "CURRENT",
-      "current_stage": "BATTERY",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "BATTERY",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            },
-            {
-              "stage": "CANDIDATE",
-              "artifact": "ar.candidate_review",
-              "hash": "c49601783edf160a0f6254a67ed0dc88ba53c7647254030ff98a7388b7a56d97"
-            },
-            {
-              "stage": "BATTERY",
-              "artifact": "battery",
-              "hash": "d2527e6d038f99716ad766bcfacb7d7a6b2addbf5e08ab6bc92ae28101814957"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000016.SZ",
-      "name": "Name 16",
-      "list_status": "L",
-      "industry_key": "PHARMA",
-      "source_presence": "CURRENT",
-      "current_stage": "SCANNED",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "SCANNED",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000017.SZ",
-      "name": "Name 17",
-      "list_status": "L",
-      "industry_key": "TECH",
-      "source_presence": "CURRENT",
-      "current_stage": "SCANNED",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "SCANNED",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000018.SZ",
-      "name": "Name 18",
-      "list_status": "L",
-      "industry_key": "BANK",
-      "source_presence": "CURRENT",
-      "current_stage": "BATTERY",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "BATTERY",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            },
-            {
-              "stage": "CANDIDATE",
-              "artifact": "ar.candidate_review",
-              "hash": "c49601783edf160a0f6254a67ed0dc88ba53c7647254030ff98a7388b7a56d97"
-            },
-            {
-              "stage": "BATTERY",
-              "artifact": "battery",
-              "hash": "d9a8c6c81f2b9afef1f37a99076f43c49f03afbd782c45d560333cc4d9c218a8"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000019.SZ",
-      "name": "Name 19",
-      "list_status": "L",
-      "industry_key": "PHARMA",
-      "source_presence": "CURRENT",
-      "current_stage": "SCANNED",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "SCANNED",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000020.SZ",
-      "name": "Name 20",
-      "list_status": "L",
-      "industry_key": "TECH",
-      "source_presence": "CURRENT",
-      "current_stage": "SCANNED",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "SCANNED",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000021.SZ",
-      "name": "Name 21",
-      "list_status": "L",
-      "industry_key": "BANK",
-      "source_presence": "CURRENT",
-      "current_stage": "BATTERY",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "BATTERY",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            },
-            {
-              "stage": "CANDIDATE",
-              "artifact": "ar.candidate_review",
-              "hash": "c49601783edf160a0f6254a67ed0dc88ba53c7647254030ff98a7388b7a56d97"
-            },
-            {
-              "stage": "BATTERY",
-              "artifact": "battery",
-              "hash": "ae4d802a43236ff84a545b00f2e3ec533b861586aa75c51f757f78226ed2683e"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000022.SZ",
-      "name": "Name 22",
-      "list_status": "L",
-      "industry_key": "PHARMA",
-      "source_presence": "CURRENT",
-      "current_stage": "SCANNED",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "SCANNED",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000023.SZ",
-      "name": "Name 23",
-      "list_status": "L",
-      "industry_key": "TECH",
-      "source_presence": "CURRENT",
-      "current_stage": "BATTERY",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "BATTERY",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            },
-            {
-              "stage": "CANDIDATE",
-              "artifact": "ar.candidate_review",
-              "hash": "c49601783edf160a0f6254a67ed0dc88ba53c7647254030ff98a7388b7a56d97"
-            },
-            {
-              "stage": "BATTERY",
-              "artifact": "battery",
-              "hash": "9440cca911c56c7670242741850eca531561d5463076a0dc88b9eae7161f8e63"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000024.SZ",
-      "name": "Name 24",
-      "list_status": "L",
-      "industry_key": "BANK",
-      "source_presence": "CURRENT",
-      "current_stage": "BATTERY",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "BATTERY",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            },
-            {
-              "stage": "CANDIDATE",
-              "artifact": "ar.candidate_review",
-              "hash": "c49601783edf160a0f6254a67ed0dc88ba53c7647254030ff98a7388b7a56d97"
-            },
-            {
-              "stage": "BATTERY",
-              "artifact": "battery",
-              "hash": "32cc646d12dca5d8a9f9c667eb856d53acf6ae64a02d189ab67ecac2918fe225"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000025.SZ",
-      "name": "Name 25",
-      "list_status": "L",
-      "industry_key": "PHARMA",
-      "source_presence": "CURRENT",
-      "current_stage": "SCANNED",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "SCANNED",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000026.SZ",
-      "name": "Name 26",
-      "list_status": "L",
-      "industry_key": "TECH",
-      "source_presence": "CURRENT",
-      "current_stage": "SCANNED",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "SCANNED",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000027.SZ",
-      "name": "Name 27",
-      "list_status": "L",
-      "industry_key": "BANK",
-      "source_presence": "CURRENT",
-      "current_stage": "BATTERY",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "BATTERY",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            },
-            {
-              "stage": "CANDIDATE",
-              "artifact": "ar.candidate_review",
-              "hash": "c49601783edf160a0f6254a67ed0dc88ba53c7647254030ff98a7388b7a56d97"
-            },
-            {
-              "stage": "BATTERY",
-              "artifact": "battery",
-              "hash": "1f67e6dab6b23b762ee54415e3dea0c8d8251bc3507ac37bb5d3575cd5c52e3b"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000028.SZ",
-      "name": "Name 28",
-      "list_status": "L",
-      "industry_key": "PHARMA",
-      "source_presence": "CURRENT",
-      "current_stage": "BATTERY",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "BATTERY",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            },
-            {
-              "stage": "CANDIDATE",
-              "artifact": "ar.candidate_review",
-              "hash": "c49601783edf160a0f6254a67ed0dc88ba53c7647254030ff98a7388b7a56d97"
-            },
-            {
-              "stage": "BATTERY",
-              "artifact": "battery",
-              "hash": "05e9c8648e6f734db68d94f16ce08b253cfffdbdaf4df38e0f004e7d1b3f8bda"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000029.SZ",
-      "name": "Name 29",
-      "list_status": "L",
-      "industry_key": "TECH",
-      "source_presence": "CURRENT",
-      "current_stage": "SCANNED",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "SCANNED",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000030.SZ",
-      "name": "Name 30",
-      "list_status": "L",
-      "industry_key": "BANK",
-      "source_presence": "CURRENT",
-      "current_stage": "SCANNED",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "SCANNED",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000031.SZ",
-      "name": "Name 31",
-      "list_status": "L",
-      "industry_key": "PHARMA",
-      "source_presence": "CURRENT",
-      "current_stage": "SCANNED",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "SCANNED",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000032.SZ",
-      "name": "Name 32",
-      "list_status": "L",
-      "industry_key": "TECH",
-      "source_presence": "CURRENT",
-      "current_stage": "BATTERY",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "BATTERY",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            },
-            {
-              "stage": "CANDIDATE",
-              "artifact": "ar.candidate_review",
-              "hash": "c49601783edf160a0f6254a67ed0dc88ba53c7647254030ff98a7388b7a56d97"
-            },
-            {
-              "stage": "BATTERY",
-              "artifact": "battery",
-              "hash": "d5d2fa9560515054a19a8b0ba5a13f9679bfb4a4d2f891793f2695ae9dae9a78"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000033.SZ",
-      "name": "Name 33",
-      "list_status": "L",
-      "industry_key": "BANK",
-      "source_presence": "CURRENT",
-      "current_stage": "BATTERY",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "BATTERY",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            },
-            {
-              "stage": "CANDIDATE",
-              "artifact": "ar.candidate_review",
-              "hash": "c49601783edf160a0f6254a67ed0dc88ba53c7647254030ff98a7388b7a56d97"
-            },
-            {
-              "stage": "BATTERY",
-              "artifact": "battery",
-              "hash": "ec17c3c626801e36c4b334586da07340bbcb61798d50e88876139eec7517ceed"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000034.SZ",
-      "name": "Name 34",
-      "list_status": "L",
-      "industry_key": "PHARMA",
-      "source_presence": "CURRENT",
-      "current_stage": "BATTERY",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "BATTERY",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            },
-            {
-              "stage": "CANDIDATE",
-              "artifact": "ar.candidate_review",
-              "hash": "c49601783edf160a0f6254a67ed0dc88ba53c7647254030ff98a7388b7a56d97"
-            },
-            {
-              "stage": "BATTERY",
-              "artifact": "battery",
-              "hash": "cc68573d6b9d01b52bab446c564fcedd1a2b5a1dba61cd1d307f570da3bf093c"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000035.SZ",
-      "name": "Name 35",
-      "list_status": "L",
-      "industry_key": "TECH",
-      "source_presence": "CURRENT",
-      "current_stage": "SCANNED",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "SCANNED",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000036.SZ",
-      "name": "Name 36",
-      "list_status": "L",
-      "industry_key": "BANK",
-      "source_presence": "CURRENT",
-      "current_stage": "SCANNED",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "SCANNED",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000037.SZ",
-      "name": "Name 37",
-      "list_status": "L",
-      "industry_key": "PHARMA",
-      "source_presence": "CURRENT",
-      "current_stage": "SCANNED",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "SCANNED",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000038.SZ",
-      "name": "Name 38",
-      "list_status": "L",
-      "industry_key": "TECH",
-      "source_presence": "CURRENT",
-      "current_stage": "SCANNED",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "SCANNED",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000039.SZ",
-      "name": "Name 39",
-      "list_status": "L",
-      "industry_key": "BANK",
-      "source_presence": "CURRENT",
-      "current_stage": "SCANNED",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "SCANNED",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000040.SZ",
-      "name": "Name 40",
-      "list_status": "L",
-      "industry_key": "PHARMA",
-      "source_presence": "CURRENT",
-      "current_stage": "SCANNED",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "SCANNED",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000041.SZ",
-      "name": "Name 41",
-      "list_status": "L",
-      "industry_key": "TECH",
-      "source_presence": "CURRENT",
-      "current_stage": "SCANNED",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "SCANNED",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000042.SZ",
-      "name": "Name 42",
-      "list_status": "L",
-      "industry_key": "BANK",
-      "source_presence": "CURRENT",
-      "current_stage": "SCANNED",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "SCANNED",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000043.SZ",
-      "name": "Name 43",
-      "list_status": "L",
-      "industry_key": "PHARMA",
-      "source_presence": "CURRENT",
-      "current_stage": "SCANNED",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "SCANNED",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000044.SZ",
-      "name": "Name 44",
-      "list_status": "L",
-      "industry_key": "TECH",
-      "source_presence": "CURRENT",
-      "current_stage": "SCANNED",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "SCANNED",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000045.SZ",
-      "name": "Name 45",
-      "list_status": "L",
-      "industry_key": "BANK",
-      "source_presence": "CURRENT",
-      "current_stage": "SCANNED",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "SCANNED",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000046.SZ",
-      "name": "Name 46",
-      "list_status": "L",
-      "industry_key": "PHARMA",
-      "source_presence": "CURRENT",
-      "current_stage": "SCANNED",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "SCANNED",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000047.SZ",
-      "name": "Name 47",
-      "list_status": "L",
-      "industry_key": "TECH",
-      "source_presence": "CURRENT",
-      "current_stage": "SCANNED",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "SCANNED",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000048.SZ",
-      "name": "Name 48",
-      "list_status": "L",
-      "industry_key": "BANK",
-      "source_presence": "CURRENT",
-      "current_stage": "SCANNED",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "SCANNED",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000049.SZ",
-      "name": "Name 49",
-      "list_status": "L",
-      "industry_key": "PHARMA",
-      "source_presence": "CURRENT",
-      "current_stage": "SCANNED",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "SCANNED",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000050.SZ",
-      "name": "Name 50",
-      "list_status": "L",
-      "industry_key": "TECH",
-      "source_presence": "CURRENT",
-      "current_stage": "SCANNED",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "SCANNED",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000051.SZ",
-      "name": "Name 51",
-      "list_status": "L",
-      "industry_key": "BANK",
-      "source_presence": "CURRENT",
-      "current_stage": "SCANNED",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "SCANNED",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000052.SZ",
-      "name": "Name 52",
-      "list_status": "L",
-      "industry_key": "PHARMA",
-      "source_presence": "CURRENT",
-      "current_stage": "SCANNED",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "SCANNED",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000053.SZ",
-      "name": "Name 53",
-      "list_status": "L",
-      "industry_key": "TECH",
-      "source_presence": "CURRENT",
-      "current_stage": "SCANNED",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "SCANNED",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000054.SZ",
-      "name": "Name 54",
-      "list_status": "L",
-      "industry_key": "BANK",
-      "source_presence": "CURRENT",
-      "current_stage": "SCANNED",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "SCANNED",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000055.SZ",
-      "name": "Name 55",
-      "list_status": "L",
-      "industry_key": "PHARMA",
-      "source_presence": "CURRENT",
-      "current_stage": "SCANNED",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "SCANNED",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000056.SZ",
-      "name": "Name 56",
-      "list_status": "L",
-      "industry_key": "TECH",
-      "source_presence": "CURRENT",
-      "current_stage": "SCANNED",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "SCANNED",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000057.SZ",
-      "name": "Name 57",
-      "list_status": "L",
-      "industry_key": "BANK",
-      "source_presence": "CURRENT",
-      "current_stage": "SCANNED",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "SCANNED",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000058.SZ",
-      "name": "Name 58",
-      "list_status": "L",
-      "industry_key": "PHARMA",
-      "source_presence": "CURRENT",
-      "current_stage": "SCANNED",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "SCANNED",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000059.SZ",
-      "name": "Name 59",
-      "list_status": "L",
-      "industry_key": "TECH",
-      "source_presence": "CURRENT",
-      "current_stage": "SCANNED",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "SCANNED",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000060.SZ",
-      "name": "Name 60",
-      "list_status": "L",
-      "industry_key": "BANK",
-      "source_presence": "CURRENT",
-      "current_stage": "SCANNED",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "SCANNED",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000061.SZ",
-      "name": "Name 61",
-      "list_status": "L",
-      "industry_key": "PHARMA",
-      "source_presence": "CURRENT",
-      "current_stage": "SCANNED",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "SCANNED",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000062.SZ",
-      "name": "Name 62",
-      "list_status": "L",
-      "industry_key": "TECH",
-      "source_presence": "CURRENT",
-      "current_stage": "SCANNED",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "SCANNED",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000063.SZ",
-      "name": "Name 63",
-      "list_status": "L",
-      "industry_key": "BANK",
-      "source_presence": "CURRENT",
-      "current_stage": "SCANNED",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "SCANNED",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000064.SZ",
-      "name": "Name 64",
-      "list_status": "L",
-      "industry_key": "PHARMA",
-      "source_presence": "CURRENT",
-      "current_stage": "SCANNED",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "SCANNED",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000065.SZ",
-      "name": "Name 65",
-      "list_status": "L",
-      "industry_key": "TECH",
-      "source_presence": "CURRENT",
-      "current_stage": "SCANNED",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "SCANNED",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000066.SZ",
-      "name": "Name 66",
-      "list_status": "L",
-      "industry_key": "BANK",
-      "source_presence": "CURRENT",
-      "current_stage": "SCANNED",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "SCANNED",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000067.SZ",
-      "name": "Name 67",
-      "list_status": "L",
-      "industry_key": "PHARMA",
-      "source_presence": "CURRENT",
-      "current_stage": "SCANNED",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "SCANNED",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000068.SZ",
-      "name": "Name 68",
-      "list_status": "L",
-      "industry_key": "TECH",
-      "source_presence": "CURRENT",
-      "current_stage": "SCANNED",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "SCANNED",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000069.SZ",
-      "name": "Name 69",
-      "list_status": "L",
-      "industry_key": "BANK",
-      "source_presence": "CURRENT",
-      "current_stage": "SCANNED",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "SCANNED",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000070.SZ",
-      "name": "Name 70",
-      "list_status": "L",
-      "industry_key": "PHARMA",
-      "source_presence": "CURRENT",
-      "current_stage": "SCANNED",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "SCANNED",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000071.SZ",
-      "name": "Name 71",
-      "list_status": "L",
-      "industry_key": "TECH",
-      "source_presence": "CURRENT",
-      "current_stage": "SCANNED",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "SCANNED",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000072.SZ",
-      "name": "Name 72",
-      "list_status": "L",
-      "industry_key": "BANK",
-      "source_presence": "CURRENT",
-      "current_stage": "SCANNED",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "SCANNED",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000073.SZ",
-      "name": "Name 73",
-      "list_status": "L",
-      "industry_key": "PHARMA",
-      "source_presence": "CURRENT",
-      "current_stage": "SCANNED",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "SCANNED",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000074.SZ",
-      "name": "Name 74",
-      "list_status": "L",
-      "industry_key": "TECH",
-      "source_presence": "CURRENT",
-      "current_stage": "SCANNED",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "SCANNED",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000075.SZ",
-      "name": "Name 75",
-      "list_status": "L",
-      "industry_key": "BANK",
-      "source_presence": "CURRENT",
-      "current_stage": "SCANNED",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "SCANNED",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000076.SZ",
-      "name": "Name 76",
-      "list_status": "L",
-      "industry_key": "PHARMA",
-      "source_presence": "CURRENT",
-      "current_stage": "SCANNED",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "SCANNED",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000077.SZ",
-      "name": "Name 77",
-      "list_status": "L",
-      "industry_key": "TECH",
-      "source_presence": "CURRENT",
-      "current_stage": "SCANNED",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "SCANNED",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000078.SZ",
-      "name": "Name 78",
-      "list_status": "L",
-      "industry_key": "BANK",
-      "source_presence": "CURRENT",
-      "current_stage": "SCANNED",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "SCANNED",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000079.SZ",
-      "name": "Name 79",
-      "list_status": "L",
-      "industry_key": "PHARMA",
-      "source_presence": "CURRENT",
-      "current_stage": "SCANNED",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "SCANNED",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000080.SZ",
-      "name": "Name 80",
-      "list_status": "L",
-      "industry_key": "TECH",
-      "source_presence": "CURRENT",
-      "current_stage": "SCANNED",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "SCANNED",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000081.SZ",
-      "name": "Name 81",
-      "list_status": "L",
-      "industry_key": "BANK",
-      "source_presence": "CURRENT",
-      "current_stage": "SCANNED",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "SCANNED",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000082.SZ",
-      "name": "Name 82",
-      "list_status": "L",
-      "industry_key": "PHARMA",
-      "source_presence": "CURRENT",
-      "current_stage": "SCANNED",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "SCANNED",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000083.SZ",
-      "name": "Name 83",
-      "list_status": "L",
-      "industry_key": "TECH",
-      "source_presence": "CURRENT",
-      "current_stage": "SCANNED",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "SCANNED",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000084.SZ",
-      "name": "Name 84",
-      "list_status": "L",
-      "industry_key": "BANK",
-      "source_presence": "CURRENT",
-      "current_stage": "SCANNED",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "SCANNED",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000085.SZ",
-      "name": "Name 85",
-      "list_status": "L",
-      "industry_key": "PHARMA",
-      "source_presence": "CURRENT",
-      "current_stage": "SCANNED",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "SCANNED",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000086.SZ",
-      "name": "Name 86",
-      "list_status": "L",
-      "industry_key": "TECH",
-      "source_presence": "CURRENT",
-      "current_stage": "SCANNED",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "SCANNED",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000087.SZ",
-      "name": "Name 87",
-      "list_status": "L",
-      "industry_key": "BANK",
-      "source_presence": "CURRENT",
-      "current_stage": "SCANNED",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "SCANNED",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000088.SZ",
-      "name": "Name 88",
-      "list_status": "L",
-      "industry_key": "PHARMA",
-      "source_presence": "CURRENT",
-      "current_stage": "SCANNED",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "SCANNED",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000089.SZ",
-      "name": "Name 89",
-      "list_status": "L",
-      "industry_key": "TECH",
-      "source_presence": "CURRENT",
-      "current_stage": "SCANNED",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "SCANNED",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "ts_code": "000090.SZ",
-      "name": "Name 90",
-      "list_status": "L",
-      "industry_key": "BANK",
-      "source_presence": "CURRENT",
-      "current_stage": "SCANNED",
-      "qualification": {
-        "u1_scan_eligible": true,
-        "is_st": false,
-        "is_bse": false,
-        "liquidity_label": "NORMAL"
-      },
-      "data_coverage": {
-        "identity": "COMPLETE",
-        "industry": "COMPLETE",
-        "liquidity": "COMPLETE"
-      },
-      "stage_history": [
-        {
-          "from": "UNSCANNED",
-          "to": "SCANNED",
-          "at": "2026-08-12T09:00:00+00:00",
-          "as_of": "20260811",
-          "evidence": [
-            {
-              "stage": "SCANNED",
-              "artifact": "ar.all_market_scan",
-              "hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8"
-            }
-          ]
-        }
-      ]
-    }
-  ],
   "stage_projection": {
     "rule_version": "research_funnel_v1",
-    "source_scan_hash": "bff0d6ba086f2a3486381e55bcc29fc7490ee7fa84b04fef28eb064a8ec171f8",
-    "source_candidate_hash": "c49601783edf160a0f6254a67ed0dc88ba53c7647254030ff98a7388b7a56d97",
+    "source_candidate_hash": "0b972f25056a908b7155fe7c16e5661c85d45dc1ceb3a47f6bbef1a2ddd371d0",
     "source_queue_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "source_scan_hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
     "transitions": {
       "UNSCANNED->BATTERY": 22,
       "UNSCANNED->SCANNED": 68
     }
-  }
+  },
+  "status": "COMPLETE"
 }

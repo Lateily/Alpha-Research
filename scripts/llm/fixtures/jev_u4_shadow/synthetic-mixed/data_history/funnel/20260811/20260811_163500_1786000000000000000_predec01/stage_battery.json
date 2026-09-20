@@ -1,17 +1,17 @@
 {
+  "artifacts": {
+    "candidate_battery.json": "e955de0a0f531d1b01e6821c5f2c4f15f86d312a38ddf2711a7793096f456e1a"
+  },
+  "as_of": "20260811",
+  "binds": {
+    "battery_rows_hash": "48cfc6ddb424fbd70ce8305d3dfd677007ef09c916a8f2a252e7481b19497695",
+    "candidate_manifest_hash": "2a64b6e46ae088d5644bbe5e9ae3606005730d867a4b4ab6d7bfed396c91d8eb"
+  },
+  "generated_at": "2026-08-12T09:00:00+00:00",
+  "rule_version": "research_funnel_v1",
+  "run_id": "20260811_163500_1786000000000000000_predec01",
   "schema": "ar.research_funnel_stage",
   "schema_version": "1.0",
-  "rule_version": "research_funnel_v1",
   "stage": "battery",
-  "as_of": "20260811",
-  "run_id": "20260811_163500_1786000000000000000_predec01",
-  "generated_at": "2026-08-12T09:00:00+00:00",
-  "binds": {
-    "candidate_manifest_hash": "6457aa63574cc3b598ef694d8ea7d43b5419ce232112256aeb739d50f06c3012",
-    "battery_rows_hash": "069efb70d95453a7942c9b19eea06da81b9b70996aca1f2836f7e9b3f724105d"
-  },
-  "artifacts": {
-    "candidate_battery.json": "0312130bedfdfa71ddff4dc20b5e3bbaf741a2587ae5c1805c81cddf1ad90830"
-  },
-  "stage_hash": "281ec9dd080a0b6d58af81e0ce24e228e9d1123910f0bcaa4db86ef941aaf504"
+  "stage_hash": "19207083b9d7a138179371e144a49652800b4575aa26911008c8f9ddc5f90fb3"
 }
