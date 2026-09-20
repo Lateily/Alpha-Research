@@ -1,0 +1,22 @@
+{
+  "schema": "ai-task.v1",
+  "task_id": "RESEARCH-INDEPENDENT-WORKFLOW-TRIAL-20260918",
+  "architecture_block": ["A independent research artifacts", "D SMC offline rule and sample preparation"],
+  "objective": "Deliver independently runnable daily-change, earnings-to-thesis, and SMC preparation trials with hash-bound citations, readable reports and explicitly pending human verification.",
+  "non_goals": ["No nightly dependency or production change.", "No selection, paper registration, strategy parameters approval or model effectiveness claim.", "No TradingView, network data acquisition, paid models, scheduled jobs or team access."],
+  "human_owner": "Junyan",
+  "reviewer": "Junyan",
+  "executor_candidates": ["Codex"],
+  "dependencies": ["origin/main e64e3cdd", "Human-selected first two workflows and SMC preparation from 20260918 workflow drafts"],
+  "authority_docs": ["AGENTS.md", "experiments/AGENTS.md", "docs/research/RESEARCH_CLOSED_LOOP_V1.md"],
+  "file_scope": ["experiments/research_workflows/", "tests/test_research_workflow_trial.py", "tests/test_no_network_guard.py", "scripts/governance_mutation_gate.py", "scripts/llm/fixtures/independent_workflow_trial.task.json", ".github/workflows/python-ci.yml", "docs/research/INDEPENDENT_WORKFLOW_TRIAL_V1.md"],
+  "forbidden_scope": ["/Users/years/ar-live", "public/data", "data_history", "experiments/execution_tracker", "experiments/research_funnel", "tools/nonprod_workbench", "web"],
+  "input_contracts": ["Local frozen source bytes with sha256, company, source tier and time", "Versioned trial request; source-bound prior claim inventory", "Frozen OHLCV windows and unapproved SMC rule draft"],
+  "output_artifacts": ["Three independent report entry points", "Machine receipts and human verification templates bound to report hashes", "Source manifest and negative test/mutation evidence", "Local historical pilot outputs, not committed raw source material"],
+  "acceptance_tests": ["python3 tests/test_research_workflow_trial.py", "python3 tests/test_no_network_guard.py", "python3 scripts/governance_mutation_gate.py", "python3 /Users/years/Desktop/Stock/e2e-twin/twin-20260902/tools/ci_local.py", "Reject changed bytes, invented excerpts, future/foreign-company citations, incomplete thesis coverage and false human approval.", "Run every workflow without nightly or live APIs; unchanged inputs replay identical output hashes.", "SMC remains an unapproved rule/sample preparation artifact; future bars are absent from each annotation window."],
+  "risk_level": "MEDIUM",
+  "network_policy": "OFFLINE",
+  "budget": {"max_cny": "0", "max_minutes": 240},
+  "approval_gates": ["Human verification is pending, never synthesized.", "Draft PR requires full offline CI; merging requires separate approval.", "No production, scheduled task, model provider or trading authorization is implied."],
+  "created_at": "2026-09-18T22:00:00+01:00"
+}
