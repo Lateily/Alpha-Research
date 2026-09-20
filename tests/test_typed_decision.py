@@ -131,7 +131,7 @@ for name, payload in (
 """
     environment = dict(os.environ)
     environment["PYTHONHASHSEED"] = str(seed)
-    environment["PYTHONPYCACHEPREFIX"] = "/private/tmp/pycache-jev-u4-shadow-task3"
+    environment["PYTHONPYCACHEPREFIX"] = str(root / "pycache")
     subprocess.run(
         [sys.executable, "-c", script, str(root), str(REPO_ROOT)],
         check=True,
@@ -505,6 +505,14 @@ class TypedDecisionContractTests(unittest.TestCase):
                         (generated_root / relative).read_bytes(),
                         relative.as_posix(),
                     )
+
+    def test_fixture_regeneration_uses_a_per_test_bytecode_cache(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            generated_root = Path(temporary)
+            _generate_authoritative_fixture(generated_root, seed=0)
+            cache_root = generated_root / "pycache"
+            self.assertTrue(cache_root.is_dir())
+            self.assertTrue(any(cache_root.rglob("*.pyc")))
 
 
 if __name__ == "__main__":
