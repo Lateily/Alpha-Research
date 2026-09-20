@@ -371,6 +371,118 @@ class EvidenceViewTests(unittest.TestCase):
                         capability.read_file(racing.name)
                 self.assertTrue(mutated)
 
+    def test_retained_root_reads_original_bytes_after_directory_replacement(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            parent = Path(tmp)
+            root = parent / "root"
+            outside = parent / "outside"
+            ref = "nested/evidence.json"
+            original = b'{"source":"original"}'
+            sentinel = b'{"source":"outside"}'
+            (root / "nested").mkdir(parents=True)
+            (outside / "nested").mkdir(parents=True)
+            (root / ref).write_bytes(original)
+            outside_path = outside / ref
+            outside_path.write_bytes(sentinel)
+            outside_identity = os.stat(outside_path)
+
+            with DirectoryCapability.open(root) as capability:
+                root.rename(parent / "retained-root")
+                outside.rename(root)
+                real_read = os.read
+
+                def reject_outside_read(descriptor, size):
+                    observed = os.fstat(descriptor)
+                    self.assertNotEqual(
+                        (outside_identity.st_dev, outside_identity.st_ino),
+                        (observed.st_dev, observed.st_ino),
+                        "read attempted on outside replacement sentinel",
+                    )
+                    return real_read(descriptor, size)
+
+                with mock.patch.object(os, "read", side_effect=reject_outside_read):
+                    self.assertEqual(original, capability.read_file(ref))
+
+    def test_retained_root_reads_original_bytes_after_symlink_replacement(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            parent = Path(tmp)
+            root = parent / "root"
+            outside = parent / "outside"
+            ref = "nested/evidence.json"
+            original = b'{"source":"original"}'
+            sentinel = b'{"source":"outside"}'
+            (root / "nested").mkdir(parents=True)
+            (outside / "nested").mkdir(parents=True)
+            (root / ref).write_bytes(original)
+            outside_path = outside / ref
+            outside_path.write_bytes(sentinel)
+            outside_identity = os.stat(outside_path)
+
+            with DirectoryCapability.open(root) as capability:
+                root.rename(parent / "retained-root")
+                os.symlink(outside, root)
+                real_read = os.read
+
+                def reject_outside_read(descriptor, size):
+                    observed = os.fstat(descriptor)
+                    self.assertNotEqual(
+                        (outside_identity.st_dev, outside_identity.st_ino),
+                        (observed.st_dev, observed.st_ino),
+                        "read attempted on outside replacement sentinel",
+                    )
+                    return real_read(descriptor, size)
+
+                with mock.patch.object(os, "read", side_effect=reject_outside_read):
+                    self.assertEqual(original, capability.read_file(ref))
+
+    def test_read_oserror_closes_each_opened_descriptor_once(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "root"
+            ref = "nested/evidence.json"
+            (root / "nested").mkdir(parents=True)
+            (root / ref).write_bytes(b'{"source":"original"}')
+
+            with DirectoryCapability.open(root) as capability:
+                real_dup = os.dup
+                real_open = os.open
+                real_close = os.close
+                duplicated: list[int] = []
+                opened: list[int] = []
+                closed: list[int] = []
+
+                def tracking_dup(descriptor):
+                    duplicate = real_dup(descriptor)
+                    duplicated.append(duplicate)
+                    return duplicate
+
+                def tracking_open(path, flags, *args, **kwargs):
+                    descriptor = real_open(path, flags, *args, **kwargs)
+                    opened.append(descriptor)
+                    return descriptor
+
+                def tracking_close(descriptor):
+                    closed.append(descriptor)
+                    return real_close(descriptor)
+
+                def failing_read(descriptor, size):
+                    self.assertEqual(1, len(duplicated))
+                    self.assertEqual(2, len(opened))
+                    raise OSError("injected read failure")
+
+                with mock.patch.object(os, "dup", side_effect=tracking_dup), mock.patch.object(
+                    os, "open", side_effect=tracking_open
+                ), mock.patch.object(os, "close", side_effect=tracking_close), mock.patch.object(
+                    os, "read", side_effect=failing_read
+                ):
+                    with self.assertRaisesRegex(
+                        EvidenceError, r"cannot read evidence ref nested/evidence.json from "
+                    ):
+                        capability.read_file(ref)
+
+            self.assertEqual(1, len(duplicated))
+            self.assertEqual(2, len(opened))
+            self.assertCountEqual([*duplicated, *opened], closed)
+
     def test_malformed_root_has_stable_error_and_balanced_descriptors(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             malformed = f"{tmp}/bad\0component"
