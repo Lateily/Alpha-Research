@@ -94,6 +94,21 @@ def validate_diagnostic(record):
         raise SourceError('ERROR_DIAGNOSTIC_INVALID')
 
 
+def validate_exchange_record(record, schema):
+    base = {'request', 'body', 'sha256', 'error'}
+    if not isinstance(record, dict) or set(record) not in (base, base | {'diagnostic'}):
+        raise SourceError('EXCHANGE_RECORD_FIELDS_INVALID')
+    if record['error'] not in (None, 'SOURCE_FAILED', 'SOURCE_REFUSED'):
+        raise SourceError('EXCHANGE_RECORD_STATUS_INVALID')
+    if record['error'] is None:
+        if 'diagnostic' in record:
+            raise SourceError('EXCHANGE_RECORD_FIELDS_INVALID')
+    else:
+        if record['body'] is not None or record['sha256'] is not None:
+            raise SourceError('EXCHANGE_FAILURE_PAYLOAD_INVALID')
+    validate_diagnostic(record)
+
+
 def load(raw):
     def pairs(items):
         result = {}
@@ -192,7 +207,7 @@ class ExchangeLog:
         self.records = [] if records is None else records
         self.position = 0
         for record in self.records:
-            validate_diagnostic(record)
+            validate_exchange_record(record, schema)
 
     def ask(self, op, params):
         if self.position >= MAX_CALLS:

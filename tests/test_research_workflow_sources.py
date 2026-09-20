@@ -206,6 +206,15 @@ class SourceTests(unittest.TestCase):
                     replay = sources.ExchangeLog(records=[dict(record, diagnostic=diagnostic)])
                     replay.ask('sh_catalog', {})
 
+    def test_replay_rejects_extra_exchange_record_fields(self):
+        out, _ = self.capture()
+        records = json.loads((out / 'exchanges.json').read_bytes())
+        records[0]['unexpected_sensitive_field'] = 'must-not-survive-replay'
+        (out / 'exchanges.json').write_bytes(sources.canonical(records))
+        followup._seal_inventory(out)
+        with self.assertRaisesRegex(sources.SourceError, 'EXCHANGE_RECORD_FIELDS_INVALID'):
+            sources.verify(out)
+
     def test_legacy_failed_package_replays_without_invented_diagnostics(self):
         out, result = self.capture(Provider(lambda op, p, data: OSError('offline') if op == 'sh_catalog' else data))
         records = json.loads((out / 'exchanges.json').read_bytes())

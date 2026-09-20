@@ -1,9 +1,9 @@
 # Brief / Earnings Follow-up v1
 
-Status: WORKFLOW_DEBUG, stacked on PR #362. The renderer update adapter remains
+Status: WORKFLOW_DEBUG, built on merged PR #362. The renderer update adapter remains
 local-only. A separate source-capture CLI is opt-in and not scheduled. It does
 not change nightly, production, SMC, U4, paper, Vercel or paid model settings.
-Human trial feedback and the merge decision are still separate prerequisites.
+Human trial feedback remains a separate prerequisite for any use beyond workflow-debug.
 
 ## Current Delivery
 
@@ -103,8 +103,8 @@ It cannot authorize U4, case sealing, paper, production, or trading.
 
 ## Rollout Order
 
-1. Complete bounded PR #362 code rereview and obtain actual human usefulness
-   feedback. Neither an AI rereview nor CI is that feedback. Merge separately.
+1. PR #362 has completed bounded code rereview and merged. Obtain actual human
+   usefulness feedback separately; neither an AI rereview nor CI is that feedback.
 2. Review this adapter and exercise all four paths using isolated inputs:
    new source, unchanged source, missing source, separate human correction.
 3. The bounded source-capture adapter below now implements licensed/read-only

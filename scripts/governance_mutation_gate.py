@@ -257,9 +257,17 @@ MUTATIONS: tuple[MutationCase, ...] = (
     MutationCase(
         mutation_id="WORKFLOW_SOURCE_ERROR_REOPEN", component="Independent workflow source capture",
         source_path="experiments/research_workflows/source_capture.py", test_script="tests/test_research_workflow_sources.py",
-        before="            validate_diagnostic(record)", after="            pass",
+        before="            validate_exchange_record(record, schema)", after="            pass",
         expected_failure_marker="test_resealed_bad_diagnostic_is_not_swallowed_as_catalog_unavailable",
         rationale="Validate diagnostics before derivation can turn an invalid record into a routine blocked catalog.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_SOURCE_EXCHANGE_CLOSED_FIELDS", component="Independent workflow source capture",
+        source_path="experiments/research_workflows/source_capture.py", test_script="tests/test_research_workflow_sources.py",
+        before="    if not isinstance(record, dict) or set(record) not in (base, base | {'diagnostic'}):",
+        after="    if not isinstance(record, dict):",
+        expected_failure_marker="test_replay_rejects_extra_exchange_record_fields",
+        rationale="Reopened exchange records cannot carry unvalidated or sensitive side fields.",
     ),
     MutationCase(
         mutation_id="WORKFLOW_SOURCE_HISTORY_MODE", component="Independent workflow source capture",

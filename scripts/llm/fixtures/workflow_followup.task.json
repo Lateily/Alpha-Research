@@ -7,7 +7,7 @@
   "human_owner": "Junyan",
   "reviewer": "Junyan",
   "executor_candidates": ["Codex"],
-  "dependencies": ["PR #362 cfacd6b (stacked dependency, not merged)", "User approved sequential rollout on 20260919"],
+  "dependencies": ["Merged PR #362 at main commit 40b6f9b", "User approved sequential rollout on 20260919"],
   "authority_docs": ["AGENTS.md", "experiments/AGENTS.md", "docs/research/INDEPENDENT_WORKFLOW_TRIAL_V1.md"],
   "file_scope": ["experiments/research_workflows/followup.py", "experiments/research_workflows/source_capture.py", "tests/test_research_workflow_followup.py", "tests/test_research_workflow_sources.py", "tests/test_no_network_guard.py", "scripts/governance_mutation_gate.py", "scripts/llm/fixtures/workflow_followup.task.json", ".github/workflows/python-ci.yml", "docs/research/WORKFLOW_FOLLOWUP_V1.md"],
   "forbidden_scope": ["/Users/years/ar-live", "public/data", "data_history", "experiments/execution_tracker", "experiments/research_funnel", "tools/nonprod_workbench", "web", "vercel.json"],
