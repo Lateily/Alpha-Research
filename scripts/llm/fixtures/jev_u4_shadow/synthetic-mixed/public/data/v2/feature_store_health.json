@@ -1,0 +1,81 @@
+{
+  "as_of": "20260811",
+  "coverage": {
+    "latest_daily_eligible_rows": 1,
+    "latest_endpoint_rows": {
+      "adj_factor": 1,
+      "daily": 1,
+      "daily_basic": 1
+    },
+    "latest_feature_rows": 1,
+    "latest_missing_daily_codes": [],
+    "latest_missing_daily_count": 0
+  },
+  "generated_at": "2026-08-12T09:00:00+00:00",
+  "integrity": {
+    "features_hash": "5555555555555555555555555555555555555555555555555555555555555555",
+    "source_batches_hash": "4444444444444444444444444444444444444444444444444444444444444444"
+  },
+  "registry_ref": {
+    "as_of": "20260811",
+    "eligible_count": 1,
+    "eligible_universe_hash": "71193c6ad6f5697b423ca6552cb1c1087176af3918ca6d3f34018395a479d9e4",
+    "registry_hash": "2222222222222222222222222222222222222222222222222222222222222222"
+  },
+  "schema": "ar.feature_store_health",
+  "schema_version": "1.0",
+  "semiconductor_positive_inputs": {
+    "as_of": "20260811",
+    "coverage": {
+      "complete_by_component": {
+        "chips": 3,
+        "fund_flow": 3,
+        "fundamentals": 3
+      },
+      "data_blocked_by_component": {
+        "chips": 0,
+        "fund_flow": 0,
+        "fundamentals": 0
+      },
+      "expected": 3,
+      "rows": 3
+    },
+    "method_version": "semiconductor_positive_inputs_v1_unvalidated",
+    "policy": {
+      "cross_channel_score": false,
+      "missing_to_data_blocked": true,
+      "point_in_time_only": true,
+      "trade_or_portfolio_authority": false,
+      "u4_selection_authority": false
+    },
+    "rows_hash": "9999999999999999999999999999999999999999999999999999999999999999",
+    "schema": "ar.semiconductor_positive_inputs",
+    "schema_version": "1.0",
+    "sources": {
+      "cyq_perf": {
+        "reason_codes": [],
+        "row_count": 3,
+        "source_hash": "7777777777777777777777777777777777777777777777777777777777777777",
+        "status": "COMPLETE",
+        "universe_hash": "1111111111111111111111111111111111111111111111111111111111111111"
+      },
+      "fina_indicator_pit": {
+        "reason_codes": [],
+        "row_count": 3,
+        "source_hash": "8888888888888888888888888888888888888888888888888888888888888888",
+        "status": "COMPLETE",
+        "universe_hash": "1111111111111111111111111111111111111111111111111111111111111111"
+      },
+      "moneyflow_dc": {
+        "reason_codes": [],
+        "row_count": 3,
+        "source_hash": "6666666666666666666666666666666666666666666666666666666666666666",
+        "status": "COMPLETE",
+        "universe_hash": "1111111111111111111111111111111111111111111111111111111111111111"
+      }
+    },
+    "status": "COMPLETE",
+    "universe_hash": "1111111111111111111111111111111111111111111111111111111111111111"
+  },
+  "status": "COMPLETE"
+}

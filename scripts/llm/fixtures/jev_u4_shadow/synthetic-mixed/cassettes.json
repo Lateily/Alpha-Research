@@ -1,0 +1,37 @@
+{
+  "_meta": {
+    "fixture_id": "synthetic-mixed",
+    "sample_purpose": "WORKFLOW_DEBUG"
+  },
+  "sha256:a03d8333f010da47234e81bf5764cd44ad8421dbc4d97b1fd104d77a1a1a04b8:JEV_U4_SHADOW_QUESTIONS_V1": {
+    "answers": [
+      {
+        "kind": "NOUL",
+        "probability_true": "0.700000",
+        "question_id": "evidence_sufficient"
+      },
+      {
+        "kind": "SCORE",
+        "question_id": "research_priority",
+        "score": "63.500000"
+      },
+      {
+        "kind": "CHOICE",
+        "probabilities": {
+          "DATA_BLOCKED": "0.100000",
+          "DEFER": "0.200000",
+          "NO_TRADE": "0.100000",
+          "REJECT": "0.100000",
+          "SELECT_FOR_DEEP_RESEARCH": "0.500000"
+        },
+        "question_id": "shadow_disposition"
+      },
+      {
+        "kind": "NOUL",
+        "probability_true": "0.800000",
+        "question_id": "needs_human_review"
+      }
+    ],
+    "question_set_version": "JEV_U4_SHADOW_QUESTIONS_V1"
+  }
+}

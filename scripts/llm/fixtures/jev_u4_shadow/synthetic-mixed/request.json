@@ -1,0 +1,16 @@
+{
+  "bundle_ref": "data_history/funnel/20260811/20260811_163500_1786000000000000000_predec01",
+  "command_id": "jev-u4-shadow-synthetic-mixed-001",
+  "cyclical_flags_ref": null,
+  "diagnostic_ref": "u4_pre_decision_diagnostic.json",
+  "feature_health_ref": "public/data/v2/feature_store_health.json",
+  "fixture_id": "synthetic-mixed",
+  "funnel_health_ref": "public/data/v2/funnel_health.json",
+  "industry": "TECH",
+  "method_version": "RESEARCH_CLOSED_LOOP_V1",
+  "mode": "OFFLINE_FIXTURE",
+  "observed_at": "2026-08-12T09:30:00+00:00",
+  "packet_ref": "u4-pre-decision.json",
+  "schema": "ar.jev_u4_shadow_request.v1",
+  "task_id": "JEV-U4-SHADOW-ENGINE-001"
+}

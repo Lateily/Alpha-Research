@@ -1,0 +1,18 @@
+{
+  "schema": "ar.research_funnel_stage",
+  "schema_version": "1.0",
+  "rule_version": "research_funnel_v1",
+  "stage": "candidates",
+  "as_of": "20260811",
+  "run_id": "20260811_163500_1786000000000000000_predec01",
+  "generated_at": "2026-08-12T09:00:00+00:00",
+  "binds": {
+    "candidate_manifest_hash": "6457aa63574cc3b598ef694d8ea7d43b5419ce232112256aeb739d50f06c3012"
+  },
+  "artifacts": {
+    "all_market_scan.json": "a7a114f9e864baa058b8501a8554434885511d83f9d953e0478bfe5dffb31807",
+    "candidate_review.json": "4c036a717fcd60b725977e3ac471531fade9f9104d077017107c1494282917ce",
+    "candidate_manifest.json": "7477bf417c92a70ceb5cfbfc610d1ba1544ae5f8e4c0ad9ac8898b07660c31d8"
+  },
+  "stage_hash": "eb63f28d06ced7979f58e2a8c4e8ce237253ca954594689a02624fbf7c022282"
+}

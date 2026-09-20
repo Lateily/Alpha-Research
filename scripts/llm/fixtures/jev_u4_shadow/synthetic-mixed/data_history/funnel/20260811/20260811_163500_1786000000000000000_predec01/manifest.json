@@ -1,0 +1,26 @@
+{
+  "artifacts": {
+    "all_market_scan.json": "a7a114f9e864baa058b8501a8554434885511d83f9d953e0478bfe5dffb31807",
+    "candidate_battery.json": "0312130bedfdfa71ddff4dc20b5e3bbaf741a2587ae5c1805c81cddf1ad90830",
+    "candidate_manifest.json": "7477bf417c92a70ceb5cfbfc610d1ba1544ae5f8e4c0ad9ac8898b07660c31d8",
+    "candidate_review.json": "4c036a717fcd60b725977e3ac471531fade9f9104d077017107c1494282917ce",
+    "deep_research_queue.json": "e0a9dde1f40a73ebe22f34b798765a8d2029cf09c667913c13d379b30e612713",
+    "security_registry_projected.json": "bbfff96f4c8899ac24aa53b5fb7f1a28dc373b9e1f4be2a62cdcb26514fe3322"
+  },
+  "as_of": "20260811",
+  "bundle_hash": "598627e32af8ed015e8bbe1dafed49f9a488c38b3782a71a9b8e9b081686a5d3",
+  "dag": {
+    "battery_rows_hash": "069efb70d95453a7942c9b19eea06da81b9b70996aca1f2836f7e9b3f724105d",
+    "candidate_manifest_hash": "6457aa63574cc3b598ef694d8ea7d43b5419ce232112256aeb739d50f06c3012",
+    "stages": [
+      "candidates",
+      "battery",
+      "finalize"
+    ]
+  },
+  "generated_at": "2026-08-12T09:00:00+00:00",
+  "rule_version": "research_funnel_v1",
+  "run_id": "20260811_163500_1786000000000000000_predec01",
+  "schema": "ar.research_funnel_bundle",
+  "schema_version": "1.0"
+}

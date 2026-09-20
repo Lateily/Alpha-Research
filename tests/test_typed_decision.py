@@ -5,15 +5,23 @@ from __future__ import annotations
 
 import copy
 import math
+import os
+import socket
 import sys
 import unittest
 from pathlib import Path
+from unittest import mock
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "scripts" / "llm"))
 
 import typed_decision as typed  # noqa: E402
+from adapters import AgentRequest, AgentStatus, UsageStatus, run_adapter  # noqa: E402
+from adapters.jev_shadow import (  # noqa: E402
+    DisabledTypeSafeJevAdapter,
+    OfflineFixtureDecisionAdapter,
+)
 
 
 VALID_RESPONSE = {
@@ -47,6 +55,47 @@ VALID_RESPONSE = {
         },
     ],
 }
+
+
+class _TypeSafeKeyTrap(dict[str, str]):
+    """Record every environment access and reject any TypeSafe-key lookup."""
+
+    def __init__(self, values: dict[str, str]) -> None:
+        super().__init__(values)
+        self.type_safe_key_reads: list[str] = []
+
+    def __getitem__(self, key: str) -> str:
+        if key == "TYPESAFE_API_KEY":
+            self.type_safe_key_reads.append("getitem")
+            raise AssertionError("TYPESAFE_API_KEY must not be read")
+        return super().__getitem__(key)
+
+    def get(self, key: str, default: object = None) -> str | object:
+        if key == "TYPESAFE_API_KEY":
+            self.type_safe_key_reads.append("get")
+            raise AssertionError("TYPESAFE_API_KEY must not be read")
+        return super().get(key, default)
+
+    def __contains__(self, key: object) -> bool:
+        if key == "TYPESAFE_API_KEY":
+            self.type_safe_key_reads.append("contains")
+            raise AssertionError("TYPESAFE_API_KEY must not be read")
+        return super().__contains__(key)
+
+
+def _adapter_request(state_hash: str) -> AgentRequest:
+    return AgentRequest(
+        task_id="JEV-U4-SHADOW-TYPED-TEST",
+        task_type="u4_shadow_fixture",
+        input_payload={
+            "state": {"sample_purpose": "WORKFLOW_DEBUG", "candidate": "synthetic"},
+            "state_hash": state_hash,
+            "question_set": typed.question_set_payload(),
+        },
+        prompt_version="JEV_U4_SHADOW_QUESTIONS_V1",
+        evidence_grade="E4",
+        network_policy="deny",
+    )
 
 
 class TypedDecisionContractTests(unittest.TestCase):
@@ -196,6 +245,69 @@ class TypedDecisionContractTests(unittest.TestCase):
             with self.subTest(value=value):
                 with self.assertRaises(ValueError):
                     typed.canonical_hash({"value": value})
+
+    def test_offline_cassette_succeeds_without_network_or_typesafe_key_access(self) -> None:
+        state_hash = "sha256:synthetic-state"
+        adapter = OfflineFixtureDecisionAdapter({
+            f"{state_hash}:JEV_U4_SHADOW_QUESTIONS_V1": copy.deepcopy(VALID_RESPONSE),
+        })
+        environment = _TypeSafeKeyTrap(dict(os.environ))
+
+        def forbidden_socket(*_args: object, **_kwargs: object) -> None:
+            raise AssertionError("offline fixture must not open a socket")
+
+        with (
+            mock.patch.object(socket, "socket", side_effect=forbidden_socket) as socket_ctor,
+            mock.patch.object(
+                socket, "create_connection", side_effect=forbidden_socket
+            ) as create_connection,
+            mock.patch.object(socket, "getaddrinfo", side_effect=forbidden_socket) as getaddrinfo,
+            mock.patch.object(os, "environ", environment),
+        ):
+            result = run_adapter(
+                adapter,
+                _adapter_request(state_hash),
+                run_id_factory=lambda: "typed_test_run",
+            )
+
+        socket_ctor.assert_not_called()
+        create_connection.assert_not_called()
+        getaddrinfo.assert_not_called()
+        self.assertEqual(AgentStatus.SUCCEEDED, result.status)
+        self.assertEqual("offline_fixture", result.provider)
+        self.assertIsNone(result.model)
+        self.assertEqual(UsageStatus.NOT_APPLICABLE, result.usage.status)
+        self.assertEqual([], environment.type_safe_key_reads)
+
+    def test_offline_cassette_requires_exact_state_hash(self) -> None:
+        adapter = OfflineFixtureDecisionAdapter({})
+
+        result = run_adapter(
+            adapter,
+            _adapter_request("sha256:synthetic-missing-state"),
+            run_id_factory=lambda: "typed_test_run",
+        )
+
+        self.assertEqual(AgentStatus.FAILED, result.status)
+        self.assertIsNotNone(result.error)
+        self.assertEqual("MODEL_UNAVAILABLE", result.error.code)
+        self.assertEqual(UsageStatus.NOT_APPLICABLE, result.usage.status)
+
+    def test_disabled_live_adapter_refuses_before_reading_fake_typesafe_key(self) -> None:
+        environment = _TypeSafeKeyTrap({"TYPESAFE_API_KEY": "fake-key"})
+
+        with mock.patch.object(os, "environ", environment):
+            result = run_adapter(
+                DisabledTypeSafeJevAdapter(),
+                _adapter_request("sha256:synthetic-state"),
+                run_id_factory=lambda: "typed_test_run",
+            )
+
+        self.assertEqual(AgentStatus.FAILED, result.status)
+        self.assertIsNotNone(result.error)
+        self.assertEqual("LIVE_PROVIDER_NOT_INSTALLED", result.error.code)
+        self.assertFalse(result.error.retryable)
+        self.assertEqual([], environment.type_safe_key_reads)
 
 
 if __name__ == "__main__":

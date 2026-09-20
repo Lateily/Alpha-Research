@@ -1,0 +1,875 @@
+{
+  "schema": "ar.research_funnel_candidate_battery",
+  "schema_version": "1.0",
+  "rule_version": "research_funnel_v1",
+  "as_of": "20260811",
+  "target_trade_date": "20260811",
+  "checked_at": "20260811",
+  "run_id": "20260811_163500_1786000000000000000_predec01",
+  "generated_at": "2026-08-12T09:00:00+00:00",
+  "manifest_hash": "6457aa63574cc3b598ef694d8ea7d43b5419ce232112256aeb739d50f06c3012",
+  "provider_state": "FIXTURE",
+  "dimension_verdict_contract": "battery_dimension_verdict_v0_unvalidated",
+  "results": [
+    {
+      "ts_code": "000002.SZ",
+      "checked_at": "20260811",
+      "dims": {
+        "行情": {
+          "off_high_pct": -20.0,
+          "off_low_pct": 30.0,
+          "verdict_v0_unvalidated": "MID"
+        },
+        "资金": {
+          "主力10日累计亿": -1.0,
+          "近10日净流入天数": 4,
+          "verdict_v0_unvalidated": "OUTFLOW"
+        },
+        "基本面": {
+          "fixture": true,
+          "红旗闸门": "RED_FLAG"
+        },
+        "技术面": {
+          "vs_MA20_pct": -1.0,
+          "vs_MA60_pct": -2.0,
+          "verdict_v0_unvalidated": "BEAR"
+        },
+        "消息面": {
+          "近7日公告条数": 2,
+          "verdict_v0_unvalidated": "NORMAL"
+        },
+        "估值": {
+          "pe_1年分位%": 50.0,
+          "verdict_v0_unvalidated": "MID"
+        }
+      },
+      "completeness": {
+        "covered": 6,
+        "of": 6,
+        "missing": [],
+        "verdict": "COMPLETE"
+      }
+    },
+    {
+      "ts_code": "000003.SZ",
+      "checked_at": "20260811",
+      "dims": {
+        "行情": {
+          "off_high_pct": -20.0,
+          "off_low_pct": 30.0,
+          "verdict_v0_unvalidated": "MID"
+        },
+        "资金": {
+          "主力10日累计亿": -1.0,
+          "近10日净流入天数": 4,
+          "verdict_v0_unvalidated": "OUTFLOW"
+        },
+        "基本面": {
+          "fixture": true,
+          "红旗闸门": "PASS"
+        },
+        "技术面": {
+          "vs_MA20_pct": -1.0,
+          "vs_MA60_pct": -2.0,
+          "verdict_v0_unvalidated": "BEAR"
+        },
+        "消息面": {
+          "近7日公告条数": 2,
+          "verdict_v0_unvalidated": "NORMAL"
+        },
+        "估值": {
+          "pe_1年分位%": 50.0,
+          "verdict_v0_unvalidated": "MID"
+        }
+      },
+      "completeness": {
+        "covered": 6,
+        "of": 6,
+        "missing": [],
+        "verdict": "COMPLETE"
+      }
+    },
+    {
+      "ts_code": "000004.SZ",
+      "checked_at": "20260811",
+      "dims": {
+        "行情": {
+          "off_high_pct": -20.0,
+          "off_low_pct": 30.0,
+          "verdict_v0_unvalidated": "MID"
+        },
+        "资金": {
+          "主力10日累计亿": -1.0,
+          "近10日净流入天数": 4,
+          "verdict_v0_unvalidated": "OUTFLOW"
+        },
+        "基本面": {
+          "fixture": true,
+          "红旗闸门": "PASS"
+        },
+        "技术面": {
+          "vs_MA20_pct": -1.0,
+          "vs_MA60_pct": -2.0,
+          "verdict_v0_unvalidated": "BEAR"
+        },
+        "消息面": {
+          "近7日公告条数": 2,
+          "verdict_v0_unvalidated": "NORMAL"
+        },
+        "估值": {
+          "pe_1年分位%": 50.0,
+          "verdict_v0_unvalidated": "MID"
+        }
+      },
+      "completeness": {
+        "covered": 6,
+        "of": 6,
+        "missing": [],
+        "verdict": "COMPLETE"
+      }
+    },
+    {
+      "ts_code": "000005.SZ",
+      "checked_at": "20260811",
+      "dims": {
+        "行情": {
+          "off_high_pct": -20.0,
+          "off_low_pct": 30.0,
+          "verdict_v0_unvalidated": "MID"
+        },
+        "资金": {
+          "主力10日累计亿": -1.0,
+          "近10日净流入天数": 4,
+          "verdict_v0_unvalidated": "OUTFLOW"
+        },
+        "基本面": {
+          "fixture": true,
+          "红旗闸门": "PASS"
+        },
+        "技术面": {
+          "vs_MA20_pct": -1.0,
+          "vs_MA60_pct": -2.0,
+          "verdict_v0_unvalidated": "BEAR"
+        },
+        "消息面": {
+          "近7日公告条数": 2,
+          "verdict_v0_unvalidated": "NORMAL"
+        },
+        "估值": {
+          "pe_1年分位%": 50.0,
+          "verdict_v0_unvalidated": "MID"
+        }
+      },
+      "completeness": {
+        "covered": 6,
+        "of": 6,
+        "missing": [],
+        "verdict": "COMPLETE"
+      }
+    },
+    {
+      "ts_code": "000006.SZ",
+      "checked_at": "20260811",
+      "dims": {
+        "行情": {
+          "off_high_pct": -20.0,
+          "off_low_pct": 30.0,
+          "verdict_v0_unvalidated": "MID"
+        },
+        "资金": {
+          "主力10日累计亿": -1.0,
+          "近10日净流入天数": 4,
+          "verdict_v0_unvalidated": "OUTFLOW"
+        },
+        "基本面": {
+          "fixture": true,
+          "红旗闸门": "PASS"
+        },
+        "技术面": {
+          "vs_MA20_pct": -1.0,
+          "vs_MA60_pct": -2.0,
+          "verdict_v0_unvalidated": "BEAR"
+        },
+        "消息面": {
+          "近7日公告条数": 2,
+          "verdict_v0_unvalidated": "NORMAL"
+        },
+        "估值": {
+          "pe_1年分位%": 50.0,
+          "verdict_v0_unvalidated": "MID"
+        }
+      },
+      "completeness": {
+        "covered": 6,
+        "of": 6,
+        "missing": [],
+        "verdict": "COMPLETE"
+      }
+    },
+    {
+      "ts_code": "000007.SZ",
+      "checked_at": "20260811",
+      "dims": {
+        "行情": {
+          "off_high_pct": -20.0,
+          "off_low_pct": 30.0,
+          "verdict_v0_unvalidated": "MID"
+        },
+        "资金": {
+          "主力10日累计亿": -1.0,
+          "近10日净流入天数": 4,
+          "verdict_v0_unvalidated": "OUTFLOW"
+        },
+        "基本面": {
+          "fixture": true,
+          "红旗闸门": "PASS"
+        },
+        "技术面": {
+          "vs_MA20_pct": -1.0,
+          "vs_MA60_pct": -2.0,
+          "verdict_v0_unvalidated": "BEAR"
+        },
+        "消息面": {
+          "近7日公告条数": 2,
+          "verdict_v0_unvalidated": "NORMAL"
+        },
+        "估值": {
+          "pe_1年分位%": 50.0,
+          "verdict_v0_unvalidated": "MID"
+        }
+      },
+      "completeness": {
+        "covered": 6,
+        "of": 6,
+        "missing": [],
+        "verdict": "COMPLETE"
+      }
+    },
+    {
+      "ts_code": "000008.SZ",
+      "checked_at": "20260811",
+      "dims": {
+        "行情": {
+          "off_high_pct": -20.0,
+          "off_low_pct": 30.0,
+          "verdict_v0_unvalidated": "MID"
+        },
+        "资金": {
+          "主力10日累计亿": -1.0,
+          "近10日净流入天数": 4,
+          "verdict_v0_unvalidated": "OUTFLOW"
+        },
+        "基本面": {
+          "fixture": true,
+          "红旗闸门": "PASS"
+        },
+        "技术面": {
+          "vs_MA20_pct": -1.0,
+          "vs_MA60_pct": -2.0,
+          "verdict_v0_unvalidated": "BEAR"
+        },
+        "消息面": {
+          "近7日公告条数": 2,
+          "verdict_v0_unvalidated": "NORMAL"
+        },
+        "估值": {
+          "pe_1年分位%": 50.0,
+          "verdict_v0_unvalidated": "MID"
+        }
+      },
+      "completeness": {
+        "covered": 6,
+        "of": 6,
+        "missing": [],
+        "verdict": "COMPLETE"
+      }
+    },
+    {
+      "ts_code": "000009.SZ",
+      "checked_at": "20260811",
+      "dims": {
+        "行情": {
+          "off_high_pct": -20.0,
+          "off_low_pct": 30.0,
+          "verdict_v0_unvalidated": "MID"
+        },
+        "资金": {
+          "主力10日累计亿": -1.0,
+          "近10日净流入天数": 4,
+          "verdict_v0_unvalidated": "OUTFLOW"
+        },
+        "基本面": {
+          "fixture": true,
+          "红旗闸门": "PASS"
+        },
+        "技术面": {
+          "vs_MA20_pct": -1.0,
+          "vs_MA60_pct": -2.0,
+          "verdict_v0_unvalidated": "BEAR"
+        },
+        "消息面": {
+          "近7日公告条数": 2,
+          "verdict_v0_unvalidated": "NORMAL"
+        },
+        "估值": {
+          "pe_1年分位%": 50.0,
+          "verdict_v0_unvalidated": "MID"
+        }
+      },
+      "completeness": {
+        "covered": 6,
+        "of": 6,
+        "missing": [],
+        "verdict": "COMPLETE"
+      }
+    },
+    {
+      "ts_code": "000010.SZ",
+      "checked_at": "20260811",
+      "dims": {
+        "行情": {
+          "off_high_pct": -20.0,
+          "off_low_pct": 30.0,
+          "verdict_v0_unvalidated": "MID"
+        },
+        "资金": {
+          "主力10日累计亿": -1.0,
+          "近10日净流入天数": 4,
+          "verdict_v0_unvalidated": "OUTFLOW"
+        },
+        "基本面": {
+          "fixture": true,
+          "红旗闸门": "PASS"
+        },
+        "技术面": {
+          "vs_MA20_pct": -1.0,
+          "vs_MA60_pct": -2.0,
+          "verdict_v0_unvalidated": "BEAR"
+        },
+        "消息面": {
+          "近7日公告条数": 2,
+          "verdict_v0_unvalidated": "NORMAL"
+        },
+        "估值": {
+          "pe_1年分位%": 50.0,
+          "verdict_v0_unvalidated": "MID"
+        }
+      },
+      "completeness": {
+        "covered": 6,
+        "of": 6,
+        "missing": [],
+        "verdict": "COMPLETE"
+      }
+    },
+    {
+      "ts_code": "000011.SZ",
+      "checked_at": "20260811",
+      "dims": {
+        "行情": {
+          "off_high_pct": -20.0,
+          "off_low_pct": 30.0,
+          "verdict_v0_unvalidated": "MID"
+        },
+        "资金": {
+          "主力10日累计亿": -1.0,
+          "近10日净流入天数": 4,
+          "verdict_v0_unvalidated": "OUTFLOW"
+        },
+        "基本面": {
+          "fixture": true,
+          "红旗闸门": "PASS"
+        },
+        "技术面": {
+          "vs_MA20_pct": -1.0,
+          "vs_MA60_pct": -2.0,
+          "verdict_v0_unvalidated": "BEAR"
+        },
+        "消息面": {
+          "近7日公告条数": 2,
+          "verdict_v0_unvalidated": "NORMAL"
+        },
+        "估值": {
+          "pe_1年分位%": 50.0,
+          "verdict_v0_unvalidated": "MID"
+        }
+      },
+      "completeness": {
+        "covered": 6,
+        "of": 6,
+        "missing": [],
+        "verdict": "COMPLETE"
+      }
+    },
+    {
+      "ts_code": "000012.SZ",
+      "checked_at": "20260811",
+      "dims": {
+        "行情": {
+          "off_high_pct": -20.0,
+          "off_low_pct": 30.0,
+          "verdict_v0_unvalidated": "MID"
+        },
+        "资金": {
+          "主力10日累计亿": -1.0,
+          "近10日净流入天数": 4,
+          "verdict_v0_unvalidated": "OUTFLOW"
+        },
+        "基本面": {
+          "fixture": true,
+          "红旗闸门": "PASS"
+        },
+        "技术面": {
+          "vs_MA20_pct": -1.0,
+          "vs_MA60_pct": -2.0,
+          "verdict_v0_unvalidated": "BEAR"
+        },
+        "消息面": {
+          "近7日公告条数": 2,
+          "verdict_v0_unvalidated": "NORMAL"
+        },
+        "估值": {
+          "pe_1年分位%": 50.0,
+          "verdict_v0_unvalidated": "MID"
+        }
+      },
+      "completeness": {
+        "covered": 6,
+        "of": 6,
+        "missing": [],
+        "verdict": "COMPLETE"
+      }
+    },
+    {
+      "ts_code": "000013.SZ",
+      "checked_at": "20260811",
+      "dims": {
+        "行情": {
+          "off_high_pct": -20.0,
+          "off_low_pct": 30.0,
+          "verdict_v0_unvalidated": "MID"
+        },
+        "资金": {
+          "主力10日累计亿": -1.0,
+          "近10日净流入天数": 4,
+          "verdict_v0_unvalidated": "OUTFLOW"
+        },
+        "基本面": {
+          "fixture": true,
+          "红旗闸门": "PASS"
+        },
+        "技术面": {
+          "vs_MA20_pct": -1.0,
+          "vs_MA60_pct": -2.0,
+          "verdict_v0_unvalidated": "BEAR"
+        },
+        "消息面": {
+          "近7日公告条数": 2,
+          "verdict_v0_unvalidated": "NORMAL"
+        },
+        "估值": {
+          "pe_1年分位%": 50.0,
+          "verdict_v0_unvalidated": "MID"
+        }
+      },
+      "completeness": {
+        "covered": 6,
+        "of": 6,
+        "missing": [],
+        "verdict": "COMPLETE"
+      }
+    },
+    {
+      "ts_code": "000015.SZ",
+      "checked_at": "20260811",
+      "dims": {
+        "行情": {
+          "off_high_pct": -20.0,
+          "off_low_pct": 30.0,
+          "verdict_v0_unvalidated": "MID"
+        },
+        "资金": {
+          "主力10日累计亿": -1.0,
+          "近10日净流入天数": 4,
+          "verdict_v0_unvalidated": "OUTFLOW"
+        },
+        "基本面": {
+          "fixture": true,
+          "红旗闸门": "PASS"
+        },
+        "技术面": {
+          "vs_MA20_pct": -1.0,
+          "vs_MA60_pct": -2.0,
+          "verdict_v0_unvalidated": "BEAR"
+        },
+        "消息面": {
+          "近7日公告条数": 2,
+          "verdict_v0_unvalidated": "NORMAL"
+        },
+        "估值": {
+          "pe_1年分位%": 50.0,
+          "verdict_v0_unvalidated": "MID"
+        }
+      },
+      "completeness": {
+        "covered": 6,
+        "of": 6,
+        "missing": [],
+        "verdict": "COMPLETE"
+      }
+    },
+    {
+      "ts_code": "000018.SZ",
+      "checked_at": "20260811",
+      "dims": {
+        "行情": {
+          "off_high_pct": -20.0,
+          "off_low_pct": 30.0,
+          "verdict_v0_unvalidated": "MID"
+        },
+        "资金": {
+          "主力10日累计亿": -1.0,
+          "近10日净流入天数": 4,
+          "verdict_v0_unvalidated": "OUTFLOW"
+        },
+        "基本面": {
+          "fixture": true,
+          "红旗闸门": "PASS"
+        },
+        "技术面": {
+          "vs_MA20_pct": -1.0,
+          "vs_MA60_pct": -2.0,
+          "verdict_v0_unvalidated": "BEAR"
+        },
+        "消息面": {
+          "近7日公告条数": 2,
+          "verdict_v0_unvalidated": "NORMAL"
+        },
+        "估值": {
+          "pe_1年分位%": 50.0,
+          "verdict_v0_unvalidated": "MID"
+        }
+      },
+      "completeness": {
+        "covered": 6,
+        "of": 6,
+        "missing": [],
+        "verdict": "COMPLETE"
+      }
+    },
+    {
+      "ts_code": "000021.SZ",
+      "checked_at": "20260811",
+      "dims": {
+        "行情": {
+          "off_high_pct": -20.0,
+          "off_low_pct": 30.0,
+          "verdict_v0_unvalidated": "MID"
+        },
+        "资金": {
+          "主力10日累计亿": -1.0,
+          "近10日净流入天数": 4,
+          "verdict_v0_unvalidated": "OUTFLOW"
+        },
+        "基本面": {
+          "fixture": true,
+          "红旗闸门": "PASS"
+        },
+        "技术面": {
+          "vs_MA20_pct": -1.0,
+          "vs_MA60_pct": -2.0,
+          "verdict_v0_unvalidated": "BEAR"
+        },
+        "消息面": {
+          "近7日公告条数": 2,
+          "verdict_v0_unvalidated": "NORMAL"
+        },
+        "估值": {
+          "pe_1年分位%": 50.0,
+          "verdict_v0_unvalidated": "MID"
+        }
+      },
+      "completeness": {
+        "covered": 6,
+        "of": 6,
+        "missing": [],
+        "verdict": "COMPLETE"
+      }
+    },
+    {
+      "ts_code": "000023.SZ",
+      "checked_at": "20260811",
+      "dims": {
+        "行情": {
+          "off_high_pct": -20.0,
+          "off_low_pct": 30.0,
+          "verdict_v0_unvalidated": "MID"
+        },
+        "资金": {
+          "主力10日累计亿": -1.0,
+          "近10日净流入天数": 4,
+          "verdict_v0_unvalidated": "OUTFLOW"
+        },
+        "基本面": {
+          "fixture": true,
+          "红旗闸门": "PASS"
+        },
+        "技术面": {
+          "vs_MA20_pct": -1.0,
+          "vs_MA60_pct": -2.0,
+          "verdict_v0_unvalidated": "BEAR"
+        },
+        "消息面": {
+          "近7日公告条数": 2,
+          "verdict_v0_unvalidated": "NORMAL"
+        },
+        "估值": {
+          "pe_1年分位%": 50.0,
+          "verdict_v0_unvalidated": "MID"
+        }
+      },
+      "completeness": {
+        "covered": 6,
+        "of": 6,
+        "missing": [],
+        "verdict": "COMPLETE"
+      }
+    },
+    {
+      "ts_code": "000024.SZ",
+      "checked_at": "20260811",
+      "dims": {
+        "行情": {
+          "off_high_pct": -20.0,
+          "off_low_pct": 30.0,
+          "verdict_v0_unvalidated": "MID"
+        },
+        "资金": {
+          "主力10日累计亿": -1.0,
+          "近10日净流入天数": 4,
+          "verdict_v0_unvalidated": "OUTFLOW"
+        },
+        "基本面": {
+          "fixture": true,
+          "红旗闸门": "PASS"
+        },
+        "技术面": {
+          "vs_MA20_pct": -1.0,
+          "vs_MA60_pct": -2.0,
+          "verdict_v0_unvalidated": "BEAR"
+        },
+        "消息面": {
+          "近7日公告条数": 2,
+          "verdict_v0_unvalidated": "NORMAL"
+        },
+        "估值": {
+          "pe_1年分位%": 50.0,
+          "verdict_v0_unvalidated": "MID"
+        }
+      },
+      "completeness": {
+        "covered": 6,
+        "of": 6,
+        "missing": [],
+        "verdict": "COMPLETE"
+      }
+    },
+    {
+      "ts_code": "000027.SZ",
+      "checked_at": "20260811",
+      "dims": {
+        "行情": {
+          "off_high_pct": -20.0,
+          "off_low_pct": 30.0,
+          "verdict_v0_unvalidated": "MID"
+        },
+        "资金": {
+          "主力10日累计亿": -1.0,
+          "近10日净流入天数": 4,
+          "verdict_v0_unvalidated": "OUTFLOW"
+        },
+        "基本面": {
+          "fixture": true,
+          "红旗闸门": "PASS"
+        },
+        "技术面": {
+          "vs_MA20_pct": -1.0,
+          "vs_MA60_pct": -2.0,
+          "verdict_v0_unvalidated": "BEAR"
+        },
+        "消息面": {
+          "近7日公告条数": 2,
+          "verdict_v0_unvalidated": "NORMAL"
+        },
+        "估值": {
+          "pe_1年分位%": 50.0,
+          "verdict_v0_unvalidated": "MID"
+        }
+      },
+      "completeness": {
+        "covered": 6,
+        "of": 6,
+        "missing": [],
+        "verdict": "COMPLETE"
+      }
+    },
+    {
+      "ts_code": "000028.SZ",
+      "checked_at": "20260811",
+      "dims": {
+        "行情": {
+          "off_high_pct": -20.0,
+          "off_low_pct": 30.0,
+          "verdict_v0_unvalidated": "MID"
+        },
+        "资金": {
+          "主力10日累计亿": -1.0,
+          "近10日净流入天数": 4,
+          "verdict_v0_unvalidated": "OUTFLOW"
+        },
+        "基本面": {
+          "fixture": true,
+          "红旗闸门": "PASS"
+        },
+        "技术面": {
+          "vs_MA20_pct": -1.0,
+          "vs_MA60_pct": -2.0,
+          "verdict_v0_unvalidated": "BEAR"
+        },
+        "消息面": {
+          "近7日公告条数": 2,
+          "verdict_v0_unvalidated": "NORMAL"
+        },
+        "估值": {
+          "pe_1年分位%": 50.0,
+          "verdict_v0_unvalidated": "MID"
+        }
+      },
+      "completeness": {
+        "covered": 6,
+        "of": 6,
+        "missing": [],
+        "verdict": "COMPLETE"
+      }
+    },
+    {
+      "ts_code": "000032.SZ",
+      "checked_at": "20260811",
+      "dims": {
+        "行情": {
+          "off_high_pct": -20.0,
+          "off_low_pct": 30.0,
+          "verdict_v0_unvalidated": "MID"
+        },
+        "资金": {
+          "主力10日累计亿": -1.0,
+          "近10日净流入天数": 4,
+          "verdict_v0_unvalidated": "OUTFLOW"
+        },
+        "基本面": {
+          "fixture": true,
+          "红旗闸门": "PASS"
+        },
+        "技术面": {
+          "vs_MA20_pct": -1.0,
+          "vs_MA60_pct": -2.0,
+          "verdict_v0_unvalidated": "BEAR"
+        },
+        "消息面": {
+          "近7日公告条数": 2,
+          "verdict_v0_unvalidated": "NORMAL"
+        },
+        "估值": {
+          "pe_1年分位%": 50.0,
+          "verdict_v0_unvalidated": "MID"
+        }
+      },
+      "completeness": {
+        "covered": 6,
+        "of": 6,
+        "missing": [],
+        "verdict": "COMPLETE"
+      }
+    },
+    {
+      "ts_code": "000033.SZ",
+      "checked_at": "20260811",
+      "dims": {
+        "行情": {
+          "off_high_pct": -20.0,
+          "off_low_pct": 30.0,
+          "verdict_v0_unvalidated": "MID"
+        },
+        "资金": {
+          "主力10日累计亿": -1.0,
+          "近10日净流入天数": 4,
+          "verdict_v0_unvalidated": "OUTFLOW"
+        },
+        "基本面": {
+          "fixture": true,
+          "红旗闸门": "PASS"
+        },
+        "技术面": {
+          "vs_MA20_pct": -1.0,
+          "vs_MA60_pct": -2.0,
+          "verdict_v0_unvalidated": "BEAR"
+        },
+        "消息面": {
+          "近7日公告条数": 2,
+          "verdict_v0_unvalidated": "NORMAL"
+        },
+        "估值": {
+          "pe_1年分位%": 50.0,
+          "verdict_v0_unvalidated": "MID"
+        }
+      },
+      "completeness": {
+        "covered": 6,
+        "of": 6,
+        "missing": [],
+        "verdict": "COMPLETE"
+      }
+    },
+    {
+      "ts_code": "000034.SZ",
+      "checked_at": "20260811",
+      "dims": {
+        "行情": {
+          "off_high_pct": -20.0,
+          "off_low_pct": 30.0,
+          "verdict_v0_unvalidated": "MID"
+        },
+        "资金": {
+          "主力10日累计亿": -1.0,
+          "近10日净流入天数": 4,
+          "verdict_v0_unvalidated": "OUTFLOW"
+        },
+        "基本面": {
+          "fixture": true,
+          "红旗闸门": "PASS"
+        },
+        "技术面": {
+          "vs_MA20_pct": -1.0,
+          "vs_MA60_pct": -2.0,
+          "verdict_v0_unvalidated": "BEAR"
+        },
+        "消息面": {
+          "近7日公告条数": 2,
+          "verdict_v0_unvalidated": "NORMAL"
+        },
+        "估值": {
+          "pe_1年分位%": 50.0,
+          "verdict_v0_unvalidated": "MID"
+        }
+      },
+      "completeness": {
+        "covered": 6,
+        "of": 6,
+        "missing": [],
+        "verdict": "COMPLETE"
+      }
+    }
+  ],
+  "rows_hash": "069efb70d95453a7942c9b19eea06da81b9b70996aca1f2836f7e9b3f724105d",
+  "disclaimer": "不是买卖指令；研究信号，human executes."
+}
