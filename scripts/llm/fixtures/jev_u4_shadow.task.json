@@ -1,0 +1,67 @@
+{
+  "schema": "ai-task.v1",
+  "task_id": "JEV-U4-SHADOW-ENGINE-001",
+  "source_issue": null,
+  "architecture_block": ["aios-harness", "u4-shadow-decision"],
+  "objective": "Build an offline provider-neutral typed U4 shadow engine with deterministic evidence gates and immutable receipts.",
+  "non_goals": [
+    "Do not call TypeSafe or any paid model provider",
+    "Do not read TYPESAFE_API_KEY or install typesafe-sdk",
+    "Do not write the formal U4 decision ledger",
+    "Do not create a formal U4 selection, paper order, or trade action",
+    "Do not register the engine in the production nightly chain",
+    "Do not claim method effectiveness, win rate, alpha, or profitability"
+  ],
+  "human_owner": "Junyan",
+  "reviewer": "Junyan",
+  "executor_candidates": ["Codex"],
+  "dependencies": [
+    "ar.u4_pre_decision_packet",
+    "U4_DECISION_LEDGER_V1",
+    "AIOS AgentAdapter",
+    "AIOS capability router"
+  ],
+  "authority_docs": [
+    "AGENTS.md",
+    "scripts/llm/AGENTS.md",
+    "experiments/AGENTS.md",
+    "docs/superpowers/specs/2026-09-20-jev-u4-shadow-design.md",
+    "docs/research/U4_DECISION_LEDGER_V1.md"
+  ],
+  "file_scope": [
+    "scripts/llm/typed_decision.py",
+    "scripts/llm/adapters/jev_shadow.py",
+    "scripts/llm/jev_u4_shadow.py",
+    "scripts/llm/fixtures/jev_u4_shadow.task.json",
+    "scripts/llm/fixtures/jev_u4_shadow",
+    "experiments/research_funnel/u4_shadow.py",
+    "tests/test_typed_decision.py",
+    "tests/test_jev_u4_shadow.py",
+    "scripts/governance_mutation_gate.py",
+    ".github/workflows/python-ci.yml",
+    "docs/llm/JEV_U4_SHADOW_OPERATOR_V1.md",
+    "docs/research/JEV_U4_SHADOW_AUTHORITY_V1.md"
+  ],
+  "forbidden_scope": [
+    "/Users/years/ar-live",
+    "experiments/execution_tracker/run_nightly.py",
+    "experiments/execution_tracker/event_ledger.jsonl",
+    "experiments/research_funnel/u4_decision_ledger.py",
+    "public/data/v2"
+  ],
+  "input_contracts": ["ar.u4_pre_decision_packet", "ar.jev_u4_shadow_request.v1"],
+  "output_artifacts": ["ar.jev_u4_shadow_receipt.v1", "ar.jev_u4_shadow_evaluation.v1"],
+  "acceptance_tests": [
+    "python3 tests/test_typed_decision.py",
+    "python3 tests/test_jev_u4_shadow.py",
+    "python3 scripts/governance_mutation_gate.py",
+    "python3 scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/jev_u4_shadow.task.json",
+    "python3 /Users/years/Desktop/Stock/e2e-twin/twin-20260902/tools/ci_local.py",
+    "git diff --check"
+  ],
+  "risk_level": "MEDIUM",
+  "network_policy": "OFFLINE",
+  "budget": {"max_cny": "0", "max_minutes": 240},
+  "approval_gates": ["PR_REVIEW", "JUNYAN_MERGE", "SEPARATE_LIVE_PROVIDER_APPROVAL"],
+  "created_at": "2026-09-20T00:00:00+01:00"
+}
