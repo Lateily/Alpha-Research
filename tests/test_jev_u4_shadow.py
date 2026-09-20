@@ -5,9 +5,16 @@ from __future__ import annotations
 
 import copy
 import json
+import os
+import shutil
+import sqlite3
+import subprocess
 import sys
+import tempfile
 import unittest
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from unittest import mock
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -15,7 +22,10 @@ sys.path.insert(0, str(REPO_ROOT / "scripts" / "llm"))
 sys.path.insert(0, str(REPO_ROOT / "experiments" / "research_funnel"))
 
 import typed_decision as typed  # noqa: E402
+import jev_u4_shadow as engine  # noqa: E402
 import u4_shadow as shadow  # noqa: E402
+from adapters.jev_shadow import OfflineFixtureDecisionAdapter  # noqa: E402
+from capability import RouteStatus, route  # noqa: E402
 from adapters import (  # noqa: E402
     AgentError,
     AgentRequest,
@@ -677,6 +687,484 @@ class JevU4ShadowReceiptTests(unittest.TestCase):
         self.assertNotEqual(receipt["receipt_hash"], changed["receipt_hash"])
         self.assertNotIn("generated_at", receipt["identity"])
         self.assertNotIn("run_id", receipt["identity"])
+
+
+class _CountingAdapter:
+    provider = "offline_fixture"
+    model = None
+
+    def __init__(self, cassettes: dict) -> None:
+        self.calls = 0
+        self._delegate = OfflineFixtureDecisionAdapter(cassettes)
+
+    def execute(self, request: AgentRequest):
+        self.calls += 1
+        return self._delegate.execute(request)
+
+
+class _ExplodingAdapter:
+    provider = "offline_fixture"
+    model = None
+
+    def __init__(self) -> None:
+        self.calls = 0
+
+    def execute(self, _request: AgentRequest):
+        self.calls += 1
+        raise AssertionError("blocked requests must not execute an adapter")
+
+
+class JevU4ShadowEngineTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.temporary = tempfile.TemporaryDirectory()
+        temporary_root = Path(self.temporary.name)
+        self.artifact_root = temporary_root / "synthetic-mixed"
+        shutil.copytree(FIXTURE_ROOT, self.artifact_root)
+        self.state_root = temporary_root / "state"
+        self.request = _load("request.json")
+        cassette_payload = _load("cassettes.json")
+        self.cassettes = {
+            key: copy.deepcopy(value)
+            for key, value in cassette_payload.items()
+            if key != "_meta"
+        }
+
+    def tearDown(self) -> None:
+        self.temporary.cleanup()
+
+    def _adapter(self, cassettes: dict | None = None) -> OfflineFixtureDecisionAdapter:
+        return OfflineFixtureDecisionAdapter(
+            self.cassettes if cassettes is None else cassettes
+        )
+
+    def _run(self, request: dict | None = None, *, adapter=None) -> dict:
+        return engine.run_shadow(
+            copy.deepcopy(request if request is not None else self.request),
+            artifact_root=self.artifact_root,
+            state_root=self.state_root,
+            adapter=adapter or self._adapter(),
+        )
+
+    def test_request_schema_and_root_relative_references_are_exact(self) -> None:
+        self.assertEqual(self.request, engine.validate_request(self.request))
+
+        extra = {**self.request, "provider": "typesafe_jev"}
+        with self.assertRaisesRegex(engine.ShadowRunError, "SPEC_BLOCKED"):
+            engine.validate_request(extra)
+
+        for field, value in (("mode", []), ("fixture_id", [])):
+            with self.subTest(field=field):
+                malformed = {**self.request, field: value}
+                with self.assertRaisesRegex(engine.ShadowRunError, "SPEC_BLOCKED"):
+                    engine.validate_request(malformed)
+
+        for value in (
+            "/private/u4-pre-decision.json",
+            "../u4-pre-decision.json",
+            "nested/../../u4-pre-decision.json",
+            "nested/./u4-pre-decision.json",
+            "nested//u4-pre-decision.json",
+            "C:\\private\\u4-pre-decision.json",
+        ):
+            with self.subTest(value=value):
+                unsafe = {**self.request, "packet_ref": value}
+                with self.assertRaisesRegex(engine.ShadowRunError, "SPEC_BLOCKED"):
+                    engine.validate_request(unsafe)
+
+    def test_safe_ref_rejects_symlink_roots_and_files(self) -> None:
+        real_root = Path(self.temporary.name) / "real-root"
+        real_root.mkdir()
+        (real_root / "packet.json").write_text("{}", encoding="utf-8")
+        linked_root = Path(self.temporary.name) / "linked-root"
+        linked_root.symlink_to(real_root, target_is_directory=True)
+        linked_file = real_root / "linked.json"
+        linked_file.symlink_to(real_root / "packet.json")
+
+        with self.assertRaisesRegex(engine.ShadowRunError, "SPEC_BLOCKED"):
+            engine.safe_ref(linked_root, "packet.json")
+        with self.assertRaisesRegex(engine.ShadowRunError, "SPEC_BLOCKED"):
+            engine.safe_ref(real_root, "linked.json")
+
+    def test_run_reopens_the_exact_packet_with_exact_validator_arguments(self) -> None:
+        calls: list[tuple[dict, dict]] = []
+
+        def record(packet: dict, **kwargs: object) -> None:
+            calls.append((packet, kwargs))
+
+        with mock.patch.object(engine.u4_pre_decision, "validate_packet", record):
+            receipt = self._run()
+
+        self.assertEqual(1, len(calls))
+        packet, kwargs = calls[0]
+        self.assertEqual(
+            json.loads((self.artifact_root / self.request["packet_ref"]).read_text()),
+            packet,
+        )
+        self.assertEqual(
+            {
+                "bundle_dir": (
+                    self.artifact_root / self.request["bundle_ref"]
+                ).resolve(),
+                "feature_health_path": (
+                    self.artifact_root / self.request["feature_health_ref"]
+                ).resolve(),
+                "funnel_health_path": (
+                    self.artifact_root / self.request["funnel_health_ref"]
+                ).resolve(),
+                "diagnostic_ref": self.request["diagnostic_ref"],
+                "industry": self.request["industry"],
+                "method_version": self.request["method_version"],
+                "cyclical_flags_path": None,
+            },
+            kwargs,
+        )
+        self.assertEqual("ar.jev_u4_shadow_receipt.v1", receipt["schema"])
+
+    def test_mixed_method_version_and_modified_packet_fail_closed(self) -> None:
+        mixed = {**self.request, "method_version": "RESEARCH_CLOSED_LOOP_V2"}
+        with self.assertRaisesRegex(engine.ShadowRunError, "SPEC_BLOCKED"):
+            self._run(mixed)
+
+        packet_path = self.artifact_root / self.request["packet_ref"]
+        packet = json.loads(packet_path.read_text(encoding="utf-8"))
+        packet["candidate_rows"][0]["display_name"] = "Modified"
+        packet_path.write_text(json.dumps(packet), encoding="utf-8")
+        with self.assertRaisesRegex(engine.ShadowRunError, "SPEC_BLOCKED"):
+            self._run()
+
+    def test_policy_preview_without_cassette_never_fabricates_output(self) -> None:
+        request = {**self.request, "mode": "POLICY_PREVIEW", "fixture_id": None}
+        receipt = self._run(request, adapter=self._adapter({}))
+        eligible = [
+            row
+            for row in receipt["candidate_results"]
+            if row["gate"]["state"] == "ELIGIBLE_FOR_TYPED_JUDGMENT"
+        ]
+
+        self.assertGreater(len(eligible), 0)
+        for row in eligible:
+            self.assertEqual("MODEL_UNAVAILABLE", row["provider_result"]["status"])
+            self.assertIsNone(row["typed_answers"])
+            self.assertIsNone(row["shadow_outcome"])
+        self.assertFalse(receipt["provider"]["provider_contacted"])
+
+    def test_offline_capability_is_deterministic_shadow_only(self) -> None:
+        registry = engine.offline_capability_registry()
+        self.assertEqual(1, len(registry.records))
+        capability = registry.records[0]
+        request = engine.route_request(self.request)
+        decision = route(registry, request)
+
+        self.assertEqual("SHADOW_ONLY", capability.status.value)
+        self.assertTrue(capability.deterministic)
+        self.assertEqual(frozenset(), capability.tool_access)
+        self.assertEqual(frozenset({"deny"}), capability.network_access)
+        self.assertEqual("MEDIUM", request.risk_level)
+        self.assertEqual("deny", request.network_policy)
+        self.assertEqual(RouteStatus.SELECTED, decision.status)
+        self.assertEqual("offline_fixture", decision.selected_agent)
+
+    def test_unsupported_modes_and_paths_block_before_resolution_or_execution(self) -> None:
+        cases = (
+            ("TYPESAFE_JEV", "LIVE_PROVIDER_NOT_INSTALLED"),
+            ("PRODUCTION", "SPEC_BLOCKED"),
+            ("provider_only", "SPEC_BLOCKED"),
+        )
+        for mode, expected in cases:
+            with self.subTest(mode=mode):
+                adapter = _ExplodingAdapter()
+                request = {**self.request, "mode": mode}
+                with (
+                    mock.patch.object(
+                        engine,
+                        "resolve_request_paths",
+                        side_effect=AssertionError("path resolution reached"),
+                    ),
+                    mock.patch.object(
+                        engine,
+                        "route",
+                        side_effect=AssertionError("router reached"),
+                    ),
+                ):
+                    with self.assertRaisesRegex(engine.ShadowRunError, expected):
+                        self._run(request, adapter=adapter)
+                self.assertEqual(0, adapter.calls)
+
+        adapter = _ExplodingAdapter()
+        outside = {**self.request, "packet_ref": "../outside.json"}
+        with mock.patch.object(
+            engine,
+            "resolve_request_paths",
+            side_effect=AssertionError("path resolution reached"),
+        ):
+            with self.assertRaisesRegex(engine.ShadowRunError, "SPEC_BLOCKED"):
+                self._run(outside, adapter=adapter)
+        self.assertEqual(0, adapter.calls)
+
+    def test_each_eligible_candidate_executes_the_adapter_exactly_once(self) -> None:
+        adapter = _CountingAdapter(self.cassettes)
+        receipt = self._run(adapter=adapter)
+        eligible_count = receipt["batch_summary"]["eligible_count"]
+
+        self.assertEqual(eligible_count, adapter.calls)
+        self.assertEqual(
+            receipt["batch_summary"]["total_candidates"] - eligible_count,
+            receipt["batch_summary"]["provider_result_counts"]["NOT_CALLED"],
+        )
+
+    def test_receipt_is_absolute_root_free_network_free_and_key_free(self) -> None:
+        def forbidden_socket(*_args: object, **_kwargs: object) -> None:
+            raise AssertionError("offline shadow run must not use the network")
+
+        with (
+            mock.patch("socket.socket", side_effect=forbidden_socket),
+            mock.patch("socket.create_connection", side_effect=forbidden_socket),
+            mock.patch("socket.getaddrinfo", side_effect=forbidden_socket),
+        ):
+            receipt = self._run()
+
+        encoded = shadow.canonical_receipt_bytes(receipt)
+        self.assertNotIn(os.fsencode(self.artifact_root), encoded)
+        self.assertNotIn(os.fsencode(self.state_root), encoded)
+        self.assertNotIn(b"TYPESAFE_API_KEY", encoded)
+
+
+class JevU4ShadowStoreTests(JevU4ShadowEngineTests):
+    def setUp(self) -> None:
+        super().setUp()
+        self.receipt = self._run()
+
+    def test_concurrent_identical_writes_create_one_row_and_one_receipt(self) -> None:
+        store = engine.ShadowStore(self.state_root)
+
+        def write_once(_index: int) -> dict:
+            return store.write(self.request, self.receipt)
+
+        with ThreadPoolExecutor(max_workers=12) as pool:
+            results = list(pool.map(write_once, range(12)))
+
+        dispositions = [result["disposition"] for result in results]
+        self.assertEqual(1, dispositions.count("CREATED"))
+        self.assertEqual(11, dispositions.count("IDEMPOTENT"))
+        canonical = shadow.canonical_receipt_bytes(self.receipt)
+        self.assertTrue(
+            all(shadow.canonical_receipt_bytes(result["receipt"]) == canonical for result in results)
+        )
+        with sqlite3.connect(store.database_path) as db:
+            self.assertEqual(1, db.execute("SELECT COUNT(*) FROM receipts").fetchone()[0])
+        self.assertEqual(canonical, store.receipt_path(self.request["command_id"]).read_bytes())
+
+    def test_command_id_reuse_with_changed_observed_at_is_a_conflict(self) -> None:
+        store = engine.ShadowStore(self.state_root)
+        store.write(self.request, self.receipt)
+        changed_request = {
+            **self.request,
+            "observed_at": "2026-08-12T10:30:00+00:00",
+        }
+        changed_receipt = self._run(changed_request)
+
+        with self.assertRaisesRegex(engine.ShadowRunError, "COMMAND_ID_CONFLICT"):
+            store.write(changed_request, changed_receipt)
+
+    def test_read_detects_disk_receipt_tampering(self) -> None:
+        store = engine.ShadowStore(self.state_root)
+        store.write(self.request, self.receipt)
+        receipt_path = store.receipt_path(self.request["command_id"])
+        receipt_path.write_bytes(receipt_path.read_bytes() + b" ")
+
+        with self.assertRaisesRegex(engine.ShadowRunError, "INTEGRITY_ERROR"):
+            store.read(self.request["command_id"])
+
+    def test_read_rebinds_stored_request_identity_to_receipt(self) -> None:
+        store = engine.ShadowStore(self.state_root)
+        store.write(self.request, self.receipt)
+        changed_request = {
+            **self.request,
+            "observed_at": "2026-08-12T10:30:00+00:00",
+        }
+        request_bytes = json.dumps(
+            changed_request,
+            ensure_ascii=True,
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode("utf-8")
+        with sqlite3.connect(store.database_path) as db:
+            db.execute(
+                "UPDATE receipts SET request_hash = ?, request_bytes = ? WHERE command_id = ?",
+                (
+                    typed.canonical_hash(changed_request),
+                    request_bytes,
+                    self.request["command_id"],
+                ),
+            )
+
+        with self.assertRaisesRegex(engine.ShadowRunError, "INTEGRITY_ERROR"):
+            store.read(self.request["command_id"])
+
+    def test_crashes_after_publish_or_insert_converge_by_exact_orphan_adoption(self) -> None:
+        for failure_point in ("after_publish", "after_insert"):
+            with self.subTest(failure_point=failure_point):
+                state_root = Path(self.temporary.name) / failure_point
+                fired = False
+
+                def fail_once(point: str) -> None:
+                    nonlocal fired
+                    if point == failure_point and not fired:
+                        fired = True
+                        raise RuntimeError(f"injected {failure_point}")
+
+                crashing = engine.ShadowStore(state_root, fault_injector=fail_once)
+                with self.assertRaisesRegex(RuntimeError, failure_point):
+                    crashing.write(self.request, self.receipt)
+                receipt_path = crashing.receipt_path(self.request["command_id"])
+                self.assertEqual(shadow.canonical_receipt_bytes(self.receipt), receipt_path.read_bytes())
+                with sqlite3.connect(crashing.database_path) as db:
+                    self.assertEqual(0, db.execute("SELECT COUNT(*) FROM receipts").fetchone()[0])
+
+                recovered = engine.ShadowStore(state_root)
+                result = recovered.write(self.request, self.receipt)
+                self.assertEqual("CREATED", result["disposition"])
+                self.assertEqual(self.receipt, recovered.read(self.request["command_id"]))
+
+    def test_conflicting_orphan_is_never_overwritten_or_deleted(self) -> None:
+        state_root = Path(self.temporary.name) / "conflicting-orphan"
+
+        def fail_after_publish(point: str) -> None:
+            if point == "after_publish":
+                raise RuntimeError("injected after_publish")
+
+        crashing = engine.ShadowStore(state_root, fault_injector=fail_after_publish)
+        with self.assertRaises(RuntimeError):
+            crashing.write(self.request, self.receipt)
+        receipt_path = crashing.receipt_path(self.request["command_id"])
+        original_bytes = receipt_path.read_bytes()
+        changed_request = {
+            **self.request,
+            "observed_at": "2026-08-12T10:30:00+00:00",
+        }
+        changed_receipt = self._run(changed_request)
+
+        with self.assertRaisesRegex(engine.ShadowRunError, "INTEGRITY_ERROR"):
+            engine.ShadowStore(state_root).write(changed_request, changed_receipt)
+        self.assertEqual(original_bytes, receipt_path.read_bytes())
+
+    def test_store_refuses_symlinked_root_database_directory_and_receipt(self) -> None:
+        real_root = Path(self.temporary.name) / "real-state"
+        real_root.mkdir()
+        linked_root = Path(self.temporary.name) / "linked-state"
+        linked_root.symlink_to(real_root, target_is_directory=True)
+        with self.assertRaisesRegex(engine.ShadowRunError, "INTEGRITY_ERROR"):
+            engine.ShadowStore(linked_root)
+
+        base_target = Path(self.temporary.name) / "base-target"
+        base_target.mkdir()
+        base_state = Path(self.temporary.name) / "base-state"
+        base_state.mkdir()
+        (base_state / "jev-u4-shadow").symlink_to(base_target, target_is_directory=True)
+        with self.assertRaisesRegex(engine.ShadowRunError, "INTEGRITY_ERROR"):
+            engine.ShadowStore(base_state)
+
+        store = engine.ShadowStore(Path(self.temporary.name) / "db-state")
+        store.database_path.unlink()
+        store.database_path.symlink_to(Path(self.temporary.name) / "foreign.sqlite3")
+        with self.assertRaisesRegex(engine.ShadowRunError, "INTEGRITY_ERROR"):
+            store.write(self.request, self.receipt)
+
+        receipt_store = engine.ShadowStore(Path(self.temporary.name) / "receipt-state")
+        receipt_dir = receipt_store.receipt_path(self.request["command_id"]).parent
+        receipt_dir.mkdir()
+        foreign = Path(self.temporary.name) / "foreign-receipt.json"
+        foreign.write_text("{}", encoding="utf-8")
+        receipt_store.receipt_path(self.request["command_id"]).symlink_to(foreign)
+        with self.assertRaisesRegex(engine.ShadowRunError, "INTEGRITY_ERROR"):
+            receipt_store.write(self.request, self.receipt)
+
+        read_store = engine.ShadowStore(Path(self.temporary.name) / "read-state")
+        read_store.write(self.request, self.receipt)
+        command_dir = read_store.receipt_path(self.request["command_id"]).parent
+        moved_dir = command_dir.with_name(command_dir.name + "-moved")
+        command_dir.rename(moved_dir)
+        command_dir.symlink_to(moved_dir, target_is_directory=True)
+        with self.assertRaisesRegex(engine.ShadowRunError, "INTEGRITY_ERROR"):
+            read_store.read(self.request["command_id"])
+
+    def test_cli_run_verify_and_evaluate_placeholder(self) -> None:
+        request_path = self.artifact_root / "request.json"
+        script = REPO_ROOT / "scripts/llm/jev_u4_shadow.py"
+        run_result = subprocess.run(
+            [
+                sys.executable,
+                str(script),
+                "run",
+                "--request",
+                str(request_path),
+                "--artifact-root",
+                str(self.artifact_root),
+                "--state-root",
+                str(self.state_root),
+            ],
+            cwd=REPO_ROOT,
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(0, run_result.returncode, run_result.stderr)
+        run_payload = json.loads(run_result.stdout)
+        self.assertEqual("CREATED", run_payload["disposition"])
+
+        verify_result = subprocess.run(
+            [
+                sys.executable,
+                str(script),
+                "verify",
+                "--state-root",
+                str(self.state_root),
+                "--command-id",
+                self.request["command_id"],
+            ],
+            cwd=REPO_ROOT,
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(0, verify_result.returncode, verify_result.stderr)
+        self.assertEqual(self.receipt, json.loads(verify_result.stdout))
+
+        evaluate_result = subprocess.run(
+            [
+                sys.executable,
+                str(script),
+                "evaluate",
+                "--state-root",
+                str(self.state_root),
+                "--command-id",
+                self.request["command_id"],
+                "--ledger",
+                str(self.artifact_root / "not-used.jsonl"),
+            ],
+            cwd=REPO_ROOT,
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        self.assertNotEqual(0, evaluate_result.returncode)
+        self.assertEqual(
+            "EVALUATION_NOT_INSTALLED",
+            json.loads(evaluate_result.stderr)["code"],
+        )
+
+    def test_cli_argument_errors_are_canonical_json(self) -> None:
+        script = REPO_ROOT / "scripts/llm/jev_u4_shadow.py"
+        result = subprocess.run(
+            [sys.executable, str(script), "verify"],
+            cwd=REPO_ROOT,
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+
+        self.assertNotEqual(0, result.returncode)
+        self.assertEqual("SPEC_BLOCKED", json.loads(result.stderr)["code"])
 
 
 if __name__ == "__main__":
