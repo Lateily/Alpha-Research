@@ -5,6 +5,8 @@ from __future__ import annotations
 
 import argparse
 import contextlib
+import ctypes
+import ctypes.util
 import fcntl
 import hashlib
 import importlib.util
@@ -12,7 +14,6 @@ import json
 import os
 import re
 import secrets
-import sqlite3
 import stat
 import sys
 import threading
@@ -111,7 +112,8 @@ _REF_PATTERN = re.compile(r"[A-Za-z0-9._/-]+")
 _TOKEN_PATTERN = re.compile(r"[A-Z][A-Z0-9_]{1,63}")
 _METHOD_PATTERN = re.compile(r"[A-Z][A-Z0-9_]{2,63}_V[0-9]+")
 _DIGEST_PATTERN = re.compile(r"sha256:[0-9a-f]{64}")
-_CWD_LOCK = threading.RLock()
+_DATABASE_LOCKS_GUARD = threading.Lock()
+_DATABASE_LOCKS: dict[tuple[int, int], threading.RLock] = {}
 
 
 class ShadowRunError(RuntimeError):
@@ -245,7 +247,11 @@ def validate_request(payload: object) -> dict[str, Any]:
 _DIRECTORY_FLAGS = (
     os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0)
 )
-_FILE_READ_FLAGS = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
+_FILE_READ_FLAGS = (
+    os.O_RDONLY
+    | getattr(os, "O_NOFOLLOW", 0)
+    | getattr(os, "O_NONBLOCK", 0)
+)
 
 
 @dataclass
@@ -261,6 +267,39 @@ class _DirectoryHandle:
         if self.fd >= 0:
             os.close(self.fd)
             self.fd = -1
+
+
+class RetainedFile:
+    """A no-path file capability that remains bound to the opened inode."""
+
+    def __init__(self, descriptor: int) -> None:
+        self._descriptor = descriptor
+        self._lock = threading.Lock()
+
+    def read_bytes(self) -> bytes:
+        with self._lock:
+            if self._descriptor < 0:
+                raise ValueError("retained file is closed")
+            info = os.fstat(self._descriptor)
+            if not stat.S_ISREG(info.st_mode):
+                raise OSError("retained file is not regular")
+            os.lseek(self._descriptor, 0, os.SEEK_SET)
+            return _read_fd(self._descriptor)
+
+    def close(self) -> None:
+        with self._lock:
+            if self._descriptor >= 0:
+                os.close(self._descriptor)
+                self._descriptor = -1
+
+    def __enter__(self) -> "RetainedFile":
+        return self
+
+    def __exit__(self, *_args: object) -> None:
+        self.close()
+
+    def __del__(self) -> None:
+        self.close()
 
 
 def _fd_path(descriptor: int) -> Path:
@@ -391,13 +430,15 @@ def _remove_directory_contents(directory_fd: int) -> None:
             os.unlink(name, dir_fd=directory_fd)
 
 
-def safe_ref(root: Path | str, ref: str) -> Path:
-    """Resolve one reference through retained, no-follow directory descriptors."""
+def safe_ref(root: Path | str, ref: str) -> RetainedFile:
+    """Open one root-relative regular file as a retained capability."""
     handle = _open_root(root, create=False)
     descriptor = -1
     try:
         descriptor = _open_relative(handle.fd, ref, directory=False)
-        return _fd_path(descriptor)
+        capability = RetainedFile(descriptor)
+        descriptor = -1
+        return capability
     except OSError as exc:
         raise _blocked("reference could not be opened safely") from exc
     finally:
@@ -467,7 +508,12 @@ def _copy_snapshot_file(
     return raw
 
 
-def _copy_directory_contents(source_fd: int, destination_fd: int) -> None:
+def _copy_directory_contents(
+    source_fd: int,
+    destination_fd: int,
+    *,
+    race_injector: Callable[[str], None] | None = None,
+) -> None:
     for name in sorted(os.listdir(source_fd)):
         info = os.stat(name, dir_fd=source_fd, follow_symlinks=False)
         if stat.S_ISLNK(info.st_mode):
@@ -477,13 +523,35 @@ def _copy_directory_contents(source_fd: int, destination_fd: int) -> None:
             source_child = os.open(name, _DIRECTORY_FLAGS, dir_fd=source_fd)
             destination_child = os.open(name, _DIRECTORY_FLAGS, dir_fd=destination_fd)
             try:
-                _copy_directory_contents(source_child, destination_child)
+                opened = os.fstat(source_child)
+                if (
+                    not stat.S_ISDIR(opened.st_mode)
+                    or (opened.st_dev, opened.st_ino) != (info.st_dev, info.st_ino)
+                ):
+                    raise OSError("artifact bundle directory changed while opening")
+                _copy_directory_contents(
+                    source_child,
+                    destination_child,
+                    race_injector=race_injector,
+                )
             finally:
                 os.close(source_child)
                 os.close(destination_child)
         elif stat.S_ISREG(info.st_mode):
-            source_file = os.open(name, _FILE_READ_FLAGS, dir_fd=source_fd)
+            if race_injector is not None:
+                race_injector("artifact_bundle_file_statted")
+            source_file = os.open(
+                name,
+                _FILE_READ_FLAGS | getattr(os, "O_NONBLOCK", 0),
+                dir_fd=source_fd,
+            )
             try:
+                opened = os.fstat(source_file)
+                if (
+                    not stat.S_ISREG(opened.st_mode)
+                    or (opened.st_dev, opened.st_ino) != (info.st_dev, info.st_ino)
+                ):
+                    raise OSError("artifact bundle file changed while opening")
                 raw = _read_fd(source_file)
             finally:
                 os.close(source_file)
@@ -505,7 +573,11 @@ def _copy_directory_contents(source_fd: int, destination_fd: int) -> None:
 
 
 def _copy_snapshot_directory(
-    source_root_fd: int, destination_root_fd: int, ref: str
+    source_root_fd: int,
+    destination_root_fd: int,
+    ref: str,
+    *,
+    race_injector: Callable[[str], None] | None = None,
 ) -> None:
     source_fd = _open_relative(source_root_fd, ref, directory=True)
     destination_fd = -1
@@ -516,7 +588,11 @@ def _copy_snapshot_directory(
             destination_fd = os.open(name, _DIRECTORY_FLAGS, dir_fd=parent_fd)
         finally:
             os.close(parent_fd)
-        _copy_directory_contents(source_fd, destination_fd)
+        _copy_directory_contents(
+            source_fd,
+            destination_fd,
+            race_injector=race_injector,
+        )
     finally:
         os.close(source_fd)
         if destination_fd >= 0:
@@ -540,8 +616,7 @@ def resolve_request_paths(
     state = state_handle or _open_root(state_root, create=True)
     snapshot_name = f".jev-u4-shadow-reopen-{secrets.token_hex(12)}"
     snapshot_fd = -1
-    original_cwd = -1
-    cwd_locked = False
+    snapshot_path: Path | None = None
     try:
         os.mkdir(snapshot_name, mode=0o700, dir_fd=state.fd)
         os.fsync(state.fd)
@@ -553,25 +628,27 @@ def resolve_request_paths(
             race_injector=race_injector,
             event="artifact_packet_parent_opened",
         )
-        _copy_snapshot_directory(artifact.fd, snapshot_fd, payload["bundle_ref"])
+        _copy_snapshot_directory(
+            artifact.fd,
+            snapshot_fd,
+            payload["bundle_ref"],
+            race_injector=race_injector,
+        )
         for field in ("feature_health_ref", "funnel_health_ref", "diagnostic_ref"):
             _copy_snapshot_file(artifact.fd, snapshot_fd, payload[field])
         if payload["cyclical_flags_ref"] is not None:
             _copy_snapshot_file(
                 artifact.fd, snapshot_fd, payload["cyclical_flags_ref"]
             )
-        _CWD_LOCK.acquire()
-        cwd_locked = True
-        original_cwd = os.open(".", _DIRECTORY_FLAGS)
-        os.fchdir(snapshot_fd)
+        snapshot_path = _fd_path(snapshot_fd)
         yield ResolvedRequestPaths(
-            packet=Path(payload["packet_ref"]),
-            bundle=Path(payload["bundle_ref"]),
-            feature_health=Path(payload["feature_health_ref"]),
-            funnel_health=Path(payload["funnel_health_ref"]),
-            diagnostic=Path(payload["diagnostic_ref"]),
+            packet=snapshot_path / payload["packet_ref"],
+            bundle=snapshot_path / payload["bundle_ref"],
+            feature_health=snapshot_path / payload["feature_health_ref"],
+            funnel_health=snapshot_path / payload["funnel_health_ref"],
+            diagnostic=snapshot_path / payload["diagnostic_ref"],
             cyclical_flags=(
-                Path(payload["cyclical_flags_ref"])
+                snapshot_path / payload["cyclical_flags_ref"]
                 if payload["cyclical_flags_ref"] is not None
                 else None
             ),
@@ -582,13 +659,6 @@ def resolve_request_paths(
     except Exception as exc:
         raise _blocked("artifact snapshot could not be opened safely") from exc
     finally:
-        if original_cwd >= 0:
-            try:
-                os.fchdir(original_cwd)
-            finally:
-                os.close(original_cwd)
-        if cwd_locked:
-            _CWD_LOCK.release()
         if snapshot_fd >= 0:
             try:
                 _remove_directory_contents(snapshot_fd)
@@ -918,8 +988,7 @@ def _read_regular_file(path: Path) -> bytes:
         before = path.lstat()
         if stat.S_ISLNK(before.st_mode) or not stat.S_ISREG(before.st_mode):
             raise OSError("not a regular file")
-        flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
-        descriptor = os.open(path, flags)
+        descriptor = os.open(path, _FILE_READ_FLAGS)
         try:
             opened = os.fstat(descriptor)
             if (before.st_dev, before.st_ino) != (opened.st_dev, opened.st_ino):
@@ -931,6 +1000,286 @@ def _read_regular_file(path: Path) -> bytes:
         return raw
     except OSError:
         raise
+
+
+class _SQLiteImageError(RuntimeError):
+    pass
+
+
+def _load_sqlite_library() -> ctypes.CDLL:
+    library_name = ctypes.util.find_library("sqlite3")
+    if library_name is None:
+        raise RuntimeError("system SQLite library is unavailable")
+    library = ctypes.CDLL(library_name)
+    pointer = ctypes.c_void_p
+    integer = ctypes.c_int
+    int64 = ctypes.c_longlong
+
+    library.sqlite3_open_v2.argtypes = [
+        ctypes.c_char_p,
+        ctypes.POINTER(pointer),
+        integer,
+        ctypes.c_char_p,
+    ]
+    library.sqlite3_open_v2.restype = integer
+    library.sqlite3_close.argtypes = [pointer]
+    library.sqlite3_close.restype = integer
+    library.sqlite3_errmsg.argtypes = [pointer]
+    library.sqlite3_errmsg.restype = ctypes.c_char_p
+    library.sqlite3_exec.argtypes = [
+        pointer,
+        ctypes.c_char_p,
+        pointer,
+        pointer,
+        ctypes.POINTER(ctypes.c_char_p),
+    ]
+    library.sqlite3_exec.restype = integer
+    library.sqlite3_prepare_v2.argtypes = [
+        pointer,
+        ctypes.c_char_p,
+        integer,
+        ctypes.POINTER(pointer),
+        ctypes.POINTER(ctypes.c_char_p),
+    ]
+    library.sqlite3_prepare_v2.restype = integer
+    library.sqlite3_bind_text.argtypes = [
+        pointer,
+        integer,
+        ctypes.c_char_p,
+        integer,
+        pointer,
+    ]
+    library.sqlite3_bind_text.restype = integer
+    library.sqlite3_bind_blob.argtypes = [
+        pointer,
+        integer,
+        pointer,
+        integer,
+        pointer,
+    ]
+    library.sqlite3_bind_blob.restype = integer
+    library.sqlite3_step.argtypes = [pointer]
+    library.sqlite3_step.restype = integer
+    library.sqlite3_finalize.argtypes = [pointer]
+    library.sqlite3_finalize.restype = integer
+    library.sqlite3_column_count.argtypes = [pointer]
+    library.sqlite3_column_count.restype = integer
+    library.sqlite3_column_type.argtypes = [pointer, integer]
+    library.sqlite3_column_type.restype = integer
+    library.sqlite3_column_text.argtypes = [pointer, integer]
+    library.sqlite3_column_text.restype = pointer
+    library.sqlite3_column_blob.argtypes = [pointer, integer]
+    library.sqlite3_column_blob.restype = pointer
+    library.sqlite3_column_bytes.argtypes = [pointer, integer]
+    library.sqlite3_column_bytes.restype = integer
+    library.sqlite3_serialize.argtypes = [
+        pointer,
+        ctypes.c_char_p,
+        ctypes.POINTER(int64),
+        ctypes.c_uint,
+    ]
+    library.sqlite3_serialize.restype = pointer
+    library.sqlite3_deserialize.argtypes = [
+        pointer,
+        ctypes.c_char_p,
+        pointer,
+        int64,
+        int64,
+        ctypes.c_uint,
+    ]
+    library.sqlite3_deserialize.restype = integer
+    library.sqlite3_malloc64.argtypes = [ctypes.c_ulonglong]
+    library.sqlite3_malloc64.restype = pointer
+    library.sqlite3_free.argtypes = [pointer]
+    library.sqlite3_free.restype = None
+    return library
+
+
+_SQLITE = _load_sqlite_library()
+_SQLITE_OK = 0
+_SQLITE_ROW = 100
+_SQLITE_DONE = 101
+_SQLITE_OPEN_READWRITE = 0x00000002
+_SQLITE_OPEN_CREATE = 0x00000004
+_SQLITE_OPEN_MEMORY = 0x00000080
+_SQLITE_INTEGER = 1
+_SQLITE_FLOAT = 2
+_SQLITE_TEXT = 3
+_SQLITE_BLOB = 4
+_SQLITE_NULL = 5
+_SQLITE_DESERIALIZE_FREEONCLOSE = 1
+_SQLITE_DESERIALIZE_RESIZEABLE = 2
+_SQLITE_TRANSIENT = ctypes.c_void_p(-1)
+
+
+class _SQLiteResult:
+    def __init__(self, row: tuple[Any, ...] | None) -> None:
+        self._row = row
+
+    def fetchone(self) -> tuple[Any, ...] | None:
+        return self._row
+
+
+class _SQLiteImageDatabase:
+    """A SQLite connection whose complete state lives in memory."""
+
+    def __init__(self, raw: bytes | None) -> None:
+        self._database = ctypes.c_void_p()
+        result = _SQLITE.sqlite3_open_v2(
+            b":memory:",
+            ctypes.byref(self._database),
+            _SQLITE_OPEN_READWRITE | _SQLITE_OPEN_CREATE | _SQLITE_OPEN_MEMORY,
+            None,
+        )
+        if result != _SQLITE_OK:
+            self._raise(result)
+        if raw is not None:
+            capacity = max(len(raw) + 65536, len(raw) * 2)
+            memory = _SQLITE.sqlite3_malloc64(capacity)
+            if not memory:
+                self.close()
+                raise _SQLiteImageError("SQLite image allocation failed")
+            ctypes.memmove(memory, raw, len(raw))
+            result = _SQLITE.sqlite3_deserialize(
+                self._database,
+                b"main",
+                memory,
+                len(raw),
+                capacity,
+                _SQLITE_DESERIALIZE_FREEONCLOSE
+                | _SQLITE_DESERIALIZE_RESIZEABLE,
+            )
+            if result != _SQLITE_OK:
+                self.close()
+                raise _SQLiteImageError(f"SQLite image deserialize failed: {result}")
+
+    def _message(self) -> str:
+        if not self._database:
+            return "SQLite connection is closed"
+        raw = _SQLITE.sqlite3_errmsg(self._database)
+        return raw.decode("utf-8", "replace") if raw else "SQLite error"
+
+    def _raise(self, result: int) -> None:
+        raise _SQLiteImageError(f"SQLite error {result}: {self._message()}")
+
+    def _exec(self, statement: str) -> None:
+        result = _SQLITE.sqlite3_exec(
+            self._database,
+            statement.encode("utf-8"),
+            None,
+            None,
+            None,
+        )
+        if result != _SQLITE_OK:
+            self._raise(result)
+
+    def execute(
+        self, statement: str, parameters: tuple[Any, ...] = ()
+    ) -> _SQLiteResult:
+        prepared = ctypes.c_void_p()
+        result = _SQLITE.sqlite3_prepare_v2(
+            self._database,
+            statement.encode("utf-8"),
+            -1,
+            ctypes.byref(prepared),
+            None,
+        )
+        if result != _SQLITE_OK:
+            self._raise(result)
+        buffers: list[object] = []
+        try:
+            for index, value in enumerate(parameters, start=1):
+                if isinstance(value, str):
+                    encoded = value.encode("utf-8")
+                    result = _SQLITE.sqlite3_bind_text(
+                        prepared,
+                        index,
+                        encoded,
+                        len(encoded),
+                        _SQLITE_TRANSIENT,
+                    )
+                elif isinstance(value, (bytes, bytearray, memoryview)):
+                    encoded = bytes(value)
+                    buffer = ctypes.create_string_buffer(encoded, max(1, len(encoded)))
+                    buffers.append(buffer)
+                    result = _SQLITE.sqlite3_bind_blob(
+                        prepared,
+                        index,
+                        ctypes.cast(buffer, ctypes.c_void_p),
+                        len(encoded),
+                        _SQLITE_TRANSIENT,
+                    )
+                else:
+                    raise TypeError("unsupported SQLite parameter")
+                if result != _SQLITE_OK:
+                    self._raise(result)
+
+            result = _SQLITE.sqlite3_step(prepared)
+            if result == _SQLITE_DONE:
+                return _SQLiteResult(None)
+            if result != _SQLITE_ROW:
+                self._raise(result)
+            row = tuple(
+                self._column(prepared, index)
+                for index in range(_SQLITE.sqlite3_column_count(prepared))
+            )
+            result = _SQLITE.sqlite3_step(prepared)
+            if result == _SQLITE_ROW:
+                raise _SQLiteImageError("SQLite query returned multiple rows")
+            if result != _SQLITE_DONE:
+                self._raise(result)
+            return _SQLiteResult(row)
+        finally:
+            _SQLITE.sqlite3_finalize(prepared)
+
+    def _column(self, statement: ctypes.c_void_p, index: int) -> Any:
+        kind = _SQLITE.sqlite3_column_type(statement, index)
+        if kind == _SQLITE_NULL:
+            return None
+        if kind in {_SQLITE_INTEGER, _SQLITE_FLOAT}:
+            raise _SQLiteImageError("unexpected numeric SQLite value")
+        size = _SQLITE.sqlite3_column_bytes(statement, index)
+        if kind == _SQLITE_TEXT:
+            pointer = _SQLITE.sqlite3_column_text(statement, index)
+            return ctypes.string_at(pointer, size).decode("utf-8")
+        if kind == _SQLITE_BLOB:
+            pointer = _SQLITE.sqlite3_column_blob(statement, index)
+            return ctypes.string_at(pointer, size)
+        raise _SQLiteImageError("unexpected SQLite value type")
+
+    def commit(self) -> None:
+        self._exec("COMMIT")
+
+    def rollback(self) -> None:
+        self._exec("ROLLBACK")
+
+    def serialize(self) -> bytes:
+        size = ctypes.c_longlong()
+        pointer = _SQLITE.sqlite3_serialize(
+            self._database, b"main", ctypes.byref(size), 0
+        )
+        if not pointer:
+            raise _SQLiteImageError("SQLite image serialization failed")
+        try:
+            return ctypes.string_at(pointer, size.value)
+        finally:
+            _SQLITE.sqlite3_free(pointer)
+
+    def close(self) -> None:
+        if self._database:
+            result = _SQLITE.sqlite3_close(self._database)
+            self._database = ctypes.c_void_p()
+            if result != _SQLITE_OK:
+                raise _SQLiteImageError(f"SQLite close failed: {result}")
+
+
+def _database_process_lock(identity: tuple[int, int]) -> threading.RLock:
+    with _DATABASE_LOCKS_GUARD:
+        lock = _DATABASE_LOCKS.get(identity)
+        if lock is None:
+            lock = threading.RLock()
+            _DATABASE_LOCKS[identity] = lock
+        return lock
 
 
 class ShadowStore:
@@ -948,6 +1297,8 @@ class ShadowStore:
         self._race_injector = race_injector
         self._state_handle: _DirectoryHandle | None = None
         self._base_handle: _DirectoryHandle | None = None
+        self._database_lock: threading.RLock | None = None
+        self._lock_fd = -1
         try:
             self._initialize()
         except Exception:
@@ -968,6 +1319,9 @@ class ShadowStore:
         return self.base_directory / "shadow.sqlite3"
 
     def close(self) -> None:
+        if self._lock_fd >= 0:
+            os.close(self._lock_fd)
+            self._lock_fd = -1
         if self._base_handle is not None:
             self._base_handle.close()
             self._base_handle = None
@@ -995,7 +1349,35 @@ class ShadowStore:
             self._base_handle = _DirectoryHandle(
                 os.open("jev-u4-shadow", _DIRECTORY_FLAGS, dir_fd=self._state_handle.fd)
             )
-            with self._connect() as database:
+            lock_created = False
+            try:
+                self._lock_fd = os.open(
+                    ".shadow.lock",
+                    os.O_RDWR
+                    | os.O_CREAT
+                    | os.O_EXCL
+                    | getattr(os, "O_NOFOLLOW", 0),
+                    0o600,
+                    dir_fd=self._base_handle.fd,
+                )
+                lock_created = True
+            except FileExistsError:
+                self._lock_fd = os.open(
+                    ".shadow.lock",
+                    os.O_RDWR | getattr(os, "O_NOFOLLOW", 0),
+                    dir_fd=self._base_handle.fd,
+                )
+            lock_info = os.fstat(self._lock_fd)
+            if not stat.S_ISREG(lock_info.st_mode):
+                raise OSError("database lock is not a regular file")
+            os.fchmod(self._lock_fd, 0o600)
+            if lock_created:
+                os.fsync(self._base_handle.fd)
+            self._database_lock = _database_process_lock(
+                (lock_info.st_dev, lock_info.st_ino)
+            )
+            with self._connect(write=True, allow_missing=True) as database:
+                database.execute("BEGIN IMMEDIATE")
                 database.execute(
                     """
                     CREATE TABLE IF NOT EXISTS receipts (
@@ -1013,65 +1395,170 @@ class ShadowStore:
         except Exception as exc:
             raise self._integrity(exc) from exc
 
-    @contextlib.contextmanager
-    def _connect(self):
-        if self._base_handle is None:
+    def _lock_name_still_bound(self) -> None:
+        if self._base_handle is None or self._lock_fd < 0:
             raise self._integrity()
-        database: sqlite3.Connection | None = None
-        database_fd = -1
-        original_cwd = -1
-        _CWD_LOCK.acquire()
+        descriptor = -1
         try:
-            original_cwd = os.open(".", _DIRECTORY_FLAGS)
-            os.fchdir(self._base_handle.fd)
-            self._race("database_parent_opened")
-            created = False
-            try:
-                database_fd = os.open(
-                    "shadow.sqlite3",
-                    os.O_RDWR
-                    | os.O_CREAT
-                    | os.O_EXCL
-                    | getattr(os, "O_NOFOLLOW", 0),
-                    0o600,
-                )
-                created = True
-            except FileExistsError:
-                database_fd = os.open(
-                    "shadow.sqlite3",
-                    os.O_RDWR | getattr(os, "O_NOFOLLOW", 0),
-                )
-            info = os.fstat(database_fd)
-            if not stat.S_ISREG(info.st_mode):
-                raise OSError("database is not a regular file")
-            os.fchmod(database_fd, 0o600)
-            if created:
-                os.fsync(self._base_handle.fd)
-            current = os.stat("shadow.sqlite3", follow_symlinks=False)
-            if (info.st_dev, info.st_ino) != (current.st_dev, current.st_ino):
-                raise OSError("database changed while opening")
-            database = sqlite3.connect("shadow.sqlite3", timeout=30)
-            reopened = os.stat("shadow.sqlite3", follow_symlinks=False)
-            if (info.st_dev, info.st_ino) != (reopened.st_dev, reopened.st_ino):
-                raise OSError("database changed during connection")
-            database.execute("PRAGMA synchronous=FULL")
-            database.execute("PRAGMA journal_mode=DELETE")
-            yield database
+            descriptor = os.open(
+                ".shadow.lock",
+                os.O_RDWR | getattr(os, "O_NOFOLLOW", 0),
+                dir_fd=self._base_handle.fd,
+            )
+            expected = os.fstat(self._lock_fd)
+            current = os.fstat(descriptor)
+            if (expected.st_dev, expected.st_ino) != (current.st_dev, current.st_ino):
+                raise self._integrity()
         except ShadowRunError:
             raise
-        except (OSError, sqlite3.DatabaseError) as exc:
+        except OSError as exc:
             raise self._integrity(exc) from exc
         finally:
-            if database is not None:
-                database.close()
-            if database_fd >= 0:
-                os.close(database_fd)
-            if original_cwd >= 0:
+            if descriptor >= 0:
+                os.close(descriptor)
+
+    def _read_database_bytes(
+        self, *, allow_missing: bool
+    ) -> tuple[bytes | None, tuple[int, int] | None]:
+        if self._base_handle is None:
+            raise self._integrity()
+        descriptor = -1
+        try:
+            try:
+                descriptor = os.open(
+                    "shadow.sqlite3", _FILE_READ_FLAGS, dir_fd=self._base_handle.fd
+                )
+            except FileNotFoundError:
+                if allow_missing:
+                    return None, None
+                raise
+            info = os.fstat(descriptor)
+            if not stat.S_ISREG(info.st_mode):
+                raise OSError("database is not a regular file")
+            raw = _read_fd(descriptor)
+            if not raw:
+                raise OSError("database is empty")
+            return raw, (info.st_dev, info.st_ino)
+        except ShadowRunError:
+            raise
+        except OSError as exc:
+            raise self._integrity(exc) from exc
+        finally:
+            if descriptor >= 0:
+                os.close(descriptor)
+
+    def _database_name_still_bound(self, expected: tuple[int, int]) -> None:
+        if self._base_handle is None:
+            raise self._integrity()
+        descriptor = -1
+        try:
+            descriptor = os.open(
+                "shadow.sqlite3", _FILE_READ_FLAGS, dir_fd=self._base_handle.fd
+            )
+            current = os.fstat(descriptor)
+            if (current.st_dev, current.st_ino) != expected:
+                raise self._integrity()
+        except ShadowRunError:
+            raise
+        except OSError as exc:
+            raise self._integrity(exc) from exc
+        finally:
+            if descriptor >= 0:
+                os.close(descriptor)
+
+    def _persist_database(
+        self, raw: bytes, expected: tuple[int, int] | None
+    ) -> None:
+        if self._base_handle is None:
+            raise self._integrity()
+        temporary_name = f".shadow.sqlite3-{secrets.token_hex(16)}"
+        descriptor = -1
+        published = False
+        try:
+            descriptor = os.open(
+                temporary_name,
+                os.O_WRONLY
+                | os.O_CREAT
+                | os.O_EXCL
+                | getattr(os, "O_NOFOLLOW", 0),
+                0o600,
+                dir_fd=self._base_handle.fd,
+            )
+            view = memoryview(raw)
+            while view:
+                written = os.write(descriptor, view)
+                view = view[written:]
+            os.fsync(descriptor)
+            self._fault("after_database_temp_fsync")
+            os.close(descriptor)
+            descriptor = -1
+
+            if expected is None:
+                os.link(
+                    temporary_name,
+                    "shadow.sqlite3",
+                    src_dir_fd=self._base_handle.fd,
+                    dst_dir_fd=self._base_handle.fd,
+                    follow_symlinks=False,
+                )
+                published = True
+            else:
+                self._database_name_still_bound(expected)
+                os.rename(
+                    temporary_name,
+                    "shadow.sqlite3",
+                    src_dir_fd=self._base_handle.fd,
+                    dst_dir_fd=self._base_handle.fd,
+                )
+                published = True
+            self._fault("after_database_publish")
+            os.fsync(self._base_handle.fd)
+        except ShadowRunError:
+            raise
+        except OSError as exc:
+            raise self._integrity(exc) from exc
+        finally:
+            if descriptor >= 0:
+                os.close(descriptor)
+            if not published or expected is None:
                 try:
-                    os.fchdir(original_cwd)
-                finally:
-                    os.close(original_cwd)
-            _CWD_LOCK.release()
+                    os.unlink(temporary_name, dir_fd=self._base_handle.fd)
+                except FileNotFoundError:
+                    pass
+
+    @contextlib.contextmanager
+    def _connect(self, *, write: bool, allow_missing: bool = False):
+        if self._database_lock is None or self._lock_fd < 0:
+            raise self._integrity()
+        database: _SQLiteImageDatabase | None = None
+        locked = False
+        with self._database_lock:
+            try:
+                fcntl.flock(self._lock_fd, fcntl.LOCK_EX)
+                locked = True
+                self._lock_name_still_bound()
+                self._race("database_parent_opened")
+                self._lock_name_still_bound()
+                raw, identity = self._read_database_bytes(
+                    allow_missing=allow_missing
+                )
+                database = _SQLiteImageDatabase(raw)
+                yield database
+                if write:
+                    self._lock_name_still_bound()
+                    self._persist_database(database.serialize(), identity)
+            except ShadowRunError:
+                raise
+            except (OSError, _SQLiteImageError) as exc:
+                raise self._integrity(exc) from exc
+            finally:
+                if database is not None:
+                    try:
+                        database.close()
+                    except _SQLiteImageError:
+                        pass
+                if locked:
+                    fcntl.flock(self._lock_fd, fcntl.LOCK_UN)
 
     def receipt_path(self, command_id: str) -> Path:
         self._validate_command_id(command_id)
@@ -1250,7 +1737,7 @@ class ShadowStore:
         )
         command_id = request["command_id"]
         try:
-            with self._connect() as database:
+            with self._connect(write=True) as database:
                 database.execute("BEGIN IMMEDIATE")
                 try:
                     row = database.execute(
@@ -1285,7 +1772,7 @@ class ShadowStore:
                 except Exception:
                     database.rollback()
                     raise
-        except sqlite3.DatabaseError as exc:
+        except _SQLiteImageError as exc:
             raise self._integrity(exc) from exc
 
     def _verified_row(self, command_id: str, row: tuple[Any, ...]) -> dict[str, Any]:
@@ -1330,7 +1817,7 @@ class ShadowStore:
     def read(self, command_id: str) -> dict[str, Any]:
         self._validate_command_id(command_id)
         try:
-            with self._connect() as database:
+            with self._connect(write=False) as database:
                 row = database.execute(
                     """
                     SELECT request_hash, request_bytes, receipt_hash, receipt_bytes
@@ -1343,7 +1830,7 @@ class ShadowStore:
                 return self._verified_row(command_id, row)
         except ShadowRunError:
             raise
-        except sqlite3.DatabaseError as exc:
+        except _SQLiteImageError as exc:
             raise self._integrity(exc) from exc
 
 

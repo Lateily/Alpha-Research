@@ -8,10 +8,12 @@ import hashlib
 import json
 import os
 import shutil
+import socket
 import sqlite3
 import subprocess
 import sys
 import tempfile
+import time
 import unittest
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
@@ -822,17 +824,49 @@ class JevU4ShadowEngineTests(unittest.TestCase):
         with self.assertRaisesRegex(engine.ShadowRunError, "SPEC_BLOCKED"):
             engine.safe_ref(real_root, "linked.json")
 
+    def test_safe_ref_retains_the_original_file_after_parent_replacement(self) -> None:
+        root = Path(self.temporary.name) / "safe-ref-root"
+        parent = root / "parent"
+        moved = root / "parent-moved"
+        external = Path(self.temporary.name) / "safe-ref-external"
+        parent.mkdir(parents=True)
+        external.mkdir()
+        original = b"original packet bytes"
+        (parent / "packet.json").write_bytes(original)
+        (external / "packet.json").write_bytes(b"external replacement")
+
+        capability = engine.safe_ref(root, "parent/packet.json")
+        parent.rename(moved)
+        parent.symlink_to(external, target_is_directory=True)
+        try:
+            self.assertEqual(original, capability.read_bytes())
+        finally:
+            capability.close()
+
     def test_run_reopens_the_exact_packet_with_exact_validator_arguments(self) -> None:
         calls: list[tuple[dict, dict]] = []
 
         def record(packet: dict, **kwargs: object) -> None:
+            anchored_roots = []
+            for argument, reference in (
+                ("bundle_dir", "bundle_ref"),
+                ("feature_health_path", "feature_health_ref"),
+                ("funnel_health_path", "funnel_health_ref"),
+            ):
+                path = Path(kwargs[argument])
+                self.assertTrue(path.is_absolute())
+                root = path
+                for _part in Path(self.request[reference]).parts:
+                    root = root.parent
+                self.assertEqual(
+                    self.request[reference], path.relative_to(root).as_posix()
+                )
+                anchored_roots.append(root)
+            self.assertTrue(all(root == anchored_roots[0] for root in anchored_roots))
+            self.assertTrue(anchored_roots[0].name.startswith(".jev-u4-shadow-reopen-"))
             self.assertEqual(
-                (self.artifact_root / self.request["packet_ref"]).read_bytes(),
-                Path(self.request["packet_ref"]).read_bytes(),
-            )
-            self.assertEqual(
-                (self.artifact_root / self.request["diagnostic_ref"]).read_bytes(),
-                Path(kwargs["diagnostic_ref"]).read_bytes(),
+                (self.artifact_root / self.request["feature_health_ref"]).read_bytes(),
+                Path(kwargs["feature_health_path"]).read_bytes(),
             )
             calls.append((packet, kwargs))
 
@@ -845,18 +879,10 @@ class JevU4ShadowEngineTests(unittest.TestCase):
             json.loads((self.artifact_root / self.request["packet_ref"]).read_text()),
             packet,
         )
-        self.assertEqual(
-            {
-                "bundle_dir": Path(self.request["bundle_ref"]),
-                "feature_health_path": Path(self.request["feature_health_ref"]),
-                "funnel_health_path": Path(self.request["funnel_health_ref"]),
-                "diagnostic_ref": self.request["diagnostic_ref"],
-                "industry": self.request["industry"],
-                "method_version": self.request["method_version"],
-                "cyclical_flags_path": None,
-            },
-            kwargs,
-        )
+        self.assertEqual(self.request["diagnostic_ref"], kwargs["diagnostic_ref"])
+        self.assertEqual(self.request["industry"], kwargs["industry"])
+        self.assertEqual(self.request["method_version"], kwargs["method_version"])
+        self.assertIsNone(kwargs["cyclical_flags_path"])
         self.assertEqual("ar.jev_u4_shadow_receipt.v1", receipt["schema"])
 
     def test_mixed_method_version_and_modified_packet_fail_closed(self) -> None:
@@ -957,6 +983,49 @@ class JevU4ShadowEngineTests(unittest.TestCase):
             "sha256:" + hashlib.sha256(original_bytes).hexdigest(),
             receipt["source_binding"]["packet_file_hash"],
         )
+
+    def test_bundle_entry_post_stat_type_swaps_fail_without_blocking(self) -> None:
+        bundle = self.artifact_root / self.request["bundle_ref"]
+        target = bundle / "all_market_scan.json"
+        original = target.read_bytes()
+        external = Path(self.temporary.name) / "bundle-swap-external.json"
+        external.write_bytes(b"{}")
+
+        for replacement in ("fifo", "symlink", "socket"):
+            with self.subTest(replacement=replacement):
+                moved = target.with_name(f"{target.name}.{replacement}.original")
+                fired = False
+                socket_handle = None
+
+                def swap(point: str) -> None:
+                    nonlocal fired, socket_handle
+                    if point != "artifact_bundle_file_statted" or fired:
+                        return
+                    fired = True
+                    target.rename(moved)
+                    if replacement == "fifo":
+                        os.mkfifo(target)
+                    elif replacement == "symlink":
+                        target.symlink_to(external)
+                    else:
+                        socket_handle = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+                        socket_handle.bind(str(target))
+
+                started = time.monotonic()
+                try:
+                    with self.assertRaisesRegex(engine.ShadowRunError, "SPEC_BLOCKED"):
+                        self._run(race_injector=swap)
+                finally:
+                    if socket_handle is not None:
+                        socket_handle.close()
+                    if os.path.lexists(target) and fired:
+                        target.unlink()
+                    if moved.exists():
+                        moved.rename(target)
+
+                self.assertTrue(fired)
+                self.assertLess(time.monotonic() - started, 2.0)
+                self.assertEqual(original, target.read_bytes())
 
     def test_import_and_unsupported_mode_do_not_read_provider_environment(self) -> None:
         script = """
@@ -1106,7 +1175,11 @@ class JevU4ShadowStoreTests(JevU4ShadowEngineTests):
         store = engine.ShadowStore(self.state_root)
 
         def write_once(_index: int) -> dict:
-            return store.write(self.request, self.receipt)
+            writer = engine.ShadowStore(self.state_root)
+            try:
+                return writer.write(self.request, self.receipt)
+            finally:
+                writer.close()
 
         with ThreadPoolExecutor(max_workers=12) as pool:
             results = list(pool.map(write_once, range(12)))
@@ -1195,6 +1268,218 @@ class JevU4ShadowStoreTests(JevU4ShadowEngineTests):
             (moved / self.request["command_id"] / "receipt.json").is_file()
         )
 
+    def test_store_never_changes_cwd_seen_by_unrelated_relative_io(self) -> None:
+        work = Path(self.temporary.name) / "store-cwd-work"
+        state = Path(self.temporary.name) / "store-cwd-state"
+        work.mkdir()
+        script = """
+import json
+import os
+import sys
+import threading
+from pathlib import Path
+
+sys.path.insert(0, %r)
+import jev_u4_shadow as engine
+
+state = Path(%r)
+entered = threading.Event()
+release = threading.Event()
+errors = []
+
+def race(point):
+    if point == "database_parent_opened":
+        entered.set()
+        if not release.wait(5):
+            raise RuntimeError("probe release timed out")
+
+def worker():
+    try:
+        engine.ShadowStore(state, race_injector=race)
+    except BaseException as exc:
+        errors.append(repr(exc))
+
+initial = os.getcwd()
+thread = threading.Thread(target=worker)
+thread.start()
+if not entered.wait(5):
+    raise RuntimeError("store probe was not reached")
+observed = os.getcwd()
+Path("unrelated-relative.txt").write_text("unrelated", encoding="utf-8")
+release.set()
+thread.join(5)
+print(json.dumps({
+    "initial": initial,
+    "observed": observed,
+    "alive": thread.is_alive(),
+    "errors": errors,
+}))
+""" % (str(REPO_ROOT / "scripts/llm"), str(state))
+        result = subprocess.run(
+            [sys.executable, "-c", script],
+            cwd=work,
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+
+        self.assertEqual(0, result.returncode, result.stderr)
+        payload = json.loads(result.stdout)
+        self.assertEqual(payload["initial"], payload["observed"])
+        self.assertFalse(payload["alive"])
+        self.assertEqual([], payload["errors"])
+        self.assertTrue((work / "unrelated-relative.txt").is_file())
+        self.assertFalse(
+            (state / "jev-u4-shadow" / "unrelated-relative.txt").exists()
+        )
+
+    def test_run_never_changes_cwd_seen_by_unrelated_relative_io(self) -> None:
+        work = Path(self.temporary.name) / "run-cwd-work"
+        state = Path(self.temporary.name) / "run-cwd-state"
+        work.mkdir()
+        script = """
+import json
+import os
+import sys
+import threading
+from pathlib import Path
+
+sys.path.insert(0, %r)
+import jev_u4_shadow as engine
+
+artifact = Path(%r)
+state = Path(%r)
+request = json.loads((artifact / "request.json").read_text(encoding="utf-8"))
+cassette_payload = json.loads((artifact / "cassettes.json").read_text(encoding="utf-8"))
+delegate = engine.OfflineFixtureDecisionAdapter({
+    key: value for key, value in cassette_payload.items() if key != "_meta"
+})
+entered = threading.Event()
+release = threading.Event()
+errors = []
+
+class BlockingAdapter:
+    provider = "offline_fixture"
+    model = None
+
+    def execute(self, request):
+        entered.set()
+        if not release.wait(5):
+            raise RuntimeError("probe release timed out")
+        return delegate.execute(request)
+
+def worker():
+    try:
+        engine.run_shadow(
+            request,
+            artifact_root=artifact,
+            state_root=state,
+            adapter=BlockingAdapter(),
+        )
+    except BaseException as exc:
+        errors.append(repr(exc))
+
+initial = os.getcwd()
+thread = threading.Thread(target=worker)
+thread.start()
+if not entered.wait(5):
+    raise RuntimeError("run probe was not reached")
+observed = os.getcwd()
+Path("unrelated-relative.txt").write_text("unrelated", encoding="utf-8")
+release.set()
+thread.join(5)
+print(json.dumps({
+    "initial": initial,
+    "observed": observed,
+    "alive": thread.is_alive(),
+    "errors": errors,
+}))
+""" % (
+            str(REPO_ROOT / "scripts/llm"),
+            str(self.artifact_root),
+            str(state),
+        )
+        result = subprocess.run(
+            [sys.executable, "-c", script],
+            cwd=work,
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+
+        self.assertEqual(0, result.returncode, result.stderr)
+        payload = json.loads(result.stdout)
+        self.assertEqual(payload["initial"], payload["observed"])
+        self.assertFalse(payload["alive"])
+        self.assertEqual([], payload["errors"])
+        self.assertTrue((work / "unrelated-relative.txt").is_file())
+        self.assertEqual([], list(state.glob(".jev-u4-shadow-reopen-*/unrelated-relative.txt")))
+
+    def test_unrelated_chdir_cannot_redirect_database_creation(self) -> None:
+        work = Path(self.temporary.name) / "external-chdir-work"
+        state = Path(self.temporary.name) / "external-chdir-state"
+        outside = Path(self.temporary.name) / "external-chdir-outside"
+        work.mkdir()
+        outside.mkdir()
+        script = """
+import json
+import os
+import sys
+import threading
+from pathlib import Path
+
+sys.path.insert(0, %r)
+import jev_u4_shadow as engine
+
+state = Path(%r)
+outside = Path(%r)
+entered = threading.Event()
+release = threading.Event()
+errors = []
+
+def race(point):
+    if point == "database_parent_opened":
+        entered.set()
+        if not release.wait(5):
+            raise RuntimeError("probe release timed out")
+
+def worker():
+    try:
+        engine.ShadowStore(state, race_injector=race)
+    except BaseException as exc:
+        errors.append(repr(exc))
+
+thread = threading.Thread(target=worker)
+thread.start()
+if not entered.wait(5):
+    raise RuntimeError("database probe was not reached")
+os.chdir(outside)
+release.set()
+thread.join(5)
+print(json.dumps({"alive": thread.is_alive(), "errors": errors}))
+""" % (
+            str(REPO_ROOT / "scripts/llm"),
+            str(state),
+            str(outside),
+        )
+        result = subprocess.run(
+            [sys.executable, "-c", script],
+            cwd=work,
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+
+        self.assertEqual(0, result.returncode, result.stderr)
+        payload = json.loads(result.stdout)
+        self.assertFalse(payload["alive"])
+        self.assertEqual([], payload["errors"])
+        self.assertTrue((state / "jev-u4-shadow" / "shadow.sqlite3").is_file())
+        self.assertFalse((outside / "shadow.sqlite3").exists())
+
     def test_receipt_parent_swap_fails_without_redirect_or_row_commit(self) -> None:
         state_root = Path(self.temporary.name) / "receipt-race-state"
         outside = Path(self.temporary.name) / "receipt-race-outside"
@@ -1271,6 +1556,45 @@ class JevU4ShadowStoreTests(JevU4ShadowEngineTests):
                 recovered = engine.ShadowStore(state_root)
                 result = recovered.write(self.request, self.receipt)
                 self.assertEqual("CREATED", result["disposition"])
+                self.assertEqual(self.receipt, recovered.read(self.request["command_id"]))
+
+    def test_database_image_publish_crashes_converge(self) -> None:
+        cases = (
+            ("after_database_temp_fsync", 0, "CREATED"),
+            ("after_database_publish", 1, "IDEMPOTENT"),
+        )
+        for failure_point, row_count, retry_disposition in cases:
+            with self.subTest(failure_point=failure_point):
+                state_root = Path(self.temporary.name) / failure_point
+                armed = False
+                fired = False
+
+                def fail_once(point: str) -> None:
+                    nonlocal fired
+                    if point == failure_point and armed and not fired:
+                        fired = True
+                        raise RuntimeError(f"injected {failure_point}")
+
+                crashing = engine.ShadowStore(
+                    state_root, fault_injector=fail_once
+                )
+                armed = True
+                with self.assertRaisesRegex(RuntimeError, failure_point):
+                    crashing.write(self.request, self.receipt)
+
+                self.assertTrue(fired)
+                with sqlite3.connect(crashing.database_path) as database:
+                    self.assertEqual(
+                        row_count,
+                        database.execute("SELECT COUNT(*) FROM receipts").fetchone()[0],
+                    )
+                self.assertEqual(
+                    [], list(crashing.base_directory.glob(".shadow.sqlite3-*"))
+                )
+
+                recovered = engine.ShadowStore(state_root)
+                result = recovered.write(self.request, self.receipt)
+                self.assertEqual(retry_disposition, result["disposition"])
                 self.assertEqual(self.receipt, recovered.read(self.request["command_id"]))
 
     def test_conflicting_orphan_is_never_overwritten_or_deleted(self) -> None:
