@@ -22,6 +22,8 @@ import sys
 import time
 import uuid
 
+from nightly_limits import NIGHTLY_STEP_TIMEOUT_SECONDS
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "nightly_run.json")
 ALARM_FLAG = "/tmp/ar-nightly-incomplete"
@@ -932,11 +934,12 @@ def run_steps(
 def _subprocess_runner(cmd, cwd=None, env=None):
     try:
         p = subprocess.run(cmd, cwd=cwd or HERE, env=env, text=True,
-                           capture_output=True, timeout=600)
+                           capture_output=True, timeout=NIGHTLY_STEP_TIMEOUT_SECONDS)
     except subprocess.TimeoutExpired as e:
         # 审查F2:挂死的步必须变成 FAILED 并继续走完报警,绝不让编排器整体崩掉
         out = ((e.stdout or "") if isinstance(e.stdout, str) else "") +               ((e.stderr or "") if isinstance(e.stderr, str) else "")
-        return 124, out + f"\nTIMEOUT after 600s: {' '.join(cmd)}"
+        return 124, out + (f"\nTIMEOUT after {NIGHTLY_STEP_TIMEOUT_SECONDS}s: "
+                           f"{' '.join(cmd)}")
     return p.returncode, (p.stdout + p.stderr)
 
 

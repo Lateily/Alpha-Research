@@ -80,7 +80,7 @@ class SettlementTest(unittest.TestCase):
             out = self.run_entry(root)
             self.assertIsNone(out["error"], str(out["error"]))
             self.assertEqual(out["rounds"], 2)
-            self.assertEqual([s for s in out["sleeps"] if s >= 1], [30])
+            self.assertEqual([s for s in out["sleeps"] if s >= 1], [60])
             self.assertEqual(json.loads((root / "run_target.json").read_text())["trade_date"], TODAY)
             self.assertTrue((root / "samples" / (TODAY + ".json")).is_file())
             out["append"].assert_called_once()
@@ -91,10 +91,138 @@ class SettlementTest(unittest.TestCase):
             out = self.run_entry(root, settle_after=99)
             self.assertIsInstance(out["error"], SystemExit)
             self.assertIn("DATA_BLOCKED", str(out["error"]))
-            self.assertEqual(out["rounds"], 3)
-            self.assertEqual([s for s in out["sleeps"] if s >= 1], [30, 30])
+            self.assertEqual(out["rounds"], 6)
+            self.assertEqual([s for s in out["sleeps"] if s >= 1], [60] * 5)
             self.assertEqual(list(root.iterdir()), [])
             out["append"].assert_not_called()
+
+    def test_wait_budget_stays_below_nightly_step_timeout(self):
+        """结算等待必须留在夜链每步 600 秒超时之内,否则 fail-closed 变成 TIMEOUT。"""
+        self.assertGreaterEqual(official.SETTLEMENT_BUDGET_MARGIN_SECONDS, 120)
+        self.assertLessEqual(
+            official.SETTLEMENT_WAIT_BUDGET_SECONDS + official.SETTLEMENT_BUDGET_MARGIN_SECONDS,
+            official.NIGHTLY_STEP_TIMEOUT_SECONDS)
+        self.assertLessEqual(
+            (official.SETTLEMENT_ATTEMPTS - 1) * official.SETTLEMENT_RETRY_SECONDS,
+            official.SETTLEMENT_WAIT_BUDGET_SECONDS)
+        self.assertEqual(official.SETTLEMENT_ATTEMPTS, 6)
+        self.assertEqual(official.SETTLEMENT_RETRY_SECONDS, 60)
+
+    def test_actual_nightly_runner_consumes_the_shared_timeout(self):
+        """预算比较的必须是真实 subprocess timeout,不能是 producer 内的镜像常量。"""
+        completed = Mock(returncode=0, stdout="", stderr="")
+        with patch.object(nightly.subprocess, "run", return_value=completed) as run:
+            self.assertEqual((0, ""), nightly._subprocess_runner(["python3", "fixture.py"]))
+        self.assertEqual(600, official.NIGHTLY_STEP_TIMEOUT_SECONDS)
+        self.assertEqual(
+            official.NIGHTLY_STEP_TIMEOUT_SECONDS,
+            run.call_args.kwargs["timeout"],
+        )
+
+    def test_budget_exhaustion_stops_before_attempt_cap(self):
+        """墙钟预算先于次数上限收口时,必须停在预算处并写明原因,不得继续重试。"""
+        ticks = iter([0.0, 200.0, 400.0, 600.0, 800.0, 1000.0, 1200.0, 1400.0])
+        builds = []
+
+        def always_pending(_token):
+            builds.append(len(builds) + 1)
+            raise official.SettlementDateMismatch(
+                "DATA_BLOCKED: settlement-date mismatch across sources", (PRIOR, TODAY))
+
+        output = io.StringIO()
+        with contextlib.ExitStack() as stack:
+            stack.enter_context(patch.object(official, "build", side_effect=always_pending))
+            stack.enter_context(patch.object(official.time, "sleep", Mock()))
+            stack.enter_context(contextlib.redirect_stdout(output))
+            # 预算与硬截止的终态都是 SystemExit;按类型断言,才能区分"预算收口"
+            # 与"预算失效后被硬截止兜住",后者必须以断言失败呈现。
+            with self.assertRaises(SystemExit) as caught:
+                official.build_settled("offline-fixture", clock=lambda: next(ticks))
+        self.assertIsInstance(caught.exception, official.SettlementDateMismatch)
+        self.assertLess(len(builds), 6)
+        self.assertIn("budget_exhausted", output.getvalue())
+
+    def test_hard_deadline_is_step_timeout_minus_write_margin(self):
+        """硬截止必须是字面量 480 秒:600 秒步骤超时减去 120 秒写盘余量。"""
+        self.assertEqual(480, official.SETTLEMENT_HARD_DEADLINE_SECONDS)
+        self.assertEqual(600, official.NIGHTLY_STEP_TIMEOUT_SECONDS)
+
+    def test_slow_build_finishing_after_hard_deadline_is_refused(self):
+        """审计 F5 的原场景:360 秒 build + 60 秒等待 + 240 秒 build = 660 秒,不得成功返回。"""
+        ticks = iter([0.0, 0.0, 360.0, 420.0, 660.0])
+        builds = []
+
+        def slow_then_settled(_token):
+            builds.append(len(builds) + 1)
+            if len(builds) == 1:
+                raise official.SettlementDateMismatch(
+                    "DATA_BLOCKED: settlement-date mismatch across sources", (PRIOR, TODAY))
+            return (TODAY, {"snap": True}, [])
+
+        with contextlib.ExitStack() as stack:
+            stack.enter_context(patch.object(official, "build", side_effect=slow_then_settled))
+            stack.enter_context(patch.object(official.time, "sleep", Mock()))
+            stack.enter_context(contextlib.redirect_stdout(io.StringIO()))
+            with self.assertRaises(official.SettlementHardDeadline) as caught:
+                official.build_settled("offline-fixture", clock=lambda: next(ticks))
+        self.assertEqual([1, 2], builds)
+        self.assertIn("refusing to start writes", str(caught.exception))
+        self.assertIn("DATA_BLOCKED", str(caught.exception))
+
+    def test_no_attempt_starts_after_hard_deadline(self):
+        ticks = iter([0.0, 0.0, 100.0, 500.0, 900.0, 1300.0])
+        builds = []
+
+        def always_pending(_token):
+            builds.append(len(builds) + 1)
+            raise official.SettlementDateMismatch(
+                "DATA_BLOCKED: settlement-date mismatch across sources", (PRIOR, TODAY))
+
+        with contextlib.ExitStack() as stack:
+            stack.enter_context(patch.object(official, "build", side_effect=always_pending))
+            stack.enter_context(patch.object(official.time, "sleep", Mock()))
+            stack.enter_context(contextlib.redirect_stdout(io.StringIO()))
+            # 两种终态都是 SystemExit;按类型断言,错误的终态才会以断言失败呈现。
+            with self.assertRaises(SystemExit) as caught:
+                official.build_settled("offline-fixture", clock=lambda: next(ticks))
+        self.assertIsInstance(caught.exception, official.SettlementHardDeadline)
+        self.assertEqual([1], builds)
+        self.assertIn("before attempt 2", str(caught.exception))
+
+    @unittest.skipUnless(hasattr(official.signal, "SIGALRM"), "SIGALRM is POSIX-only")
+    def test_running_build_is_interrupted_at_hard_deadline(self):
+        """一次卡住的 build 必须在硬截止处被打断,而不是等父进程超时来杀。"""
+        import time as real_time
+
+        def hung(_token):
+            real_time.sleep(5)
+            return (TODAY, {"snap": True}, [])
+
+        began = real_time.monotonic()
+        with contextlib.ExitStack() as stack:
+            stack.enter_context(patch.object(official, "build", side_effect=hung))
+            stack.enter_context(patch.object(official, "SETTLEMENT_HARD_DEADLINE_SECONDS", 0.3))
+            stack.enter_context(contextlib.redirect_stdout(io.StringIO()))
+            with self.assertRaises(official.SettlementHardDeadline) as caught:
+                official.build_settled("offline-fixture")
+        self.assertLess(real_time.monotonic() - began, 3.0)
+        self.assertIn("reached during build", str(caught.exception))
+        self.assertEqual(0.0, official.signal.getitimer(official.signal.ITIMER_REAL)[0])
+
+    def test_hard_deadline_is_terminal_not_a_retry_trigger(self):
+        builds = []
+
+        def expired(_token):
+            builds.append(1)
+            raise official.SettlementHardDeadline("DATA_BLOCKED: settlement hard deadline")
+
+        with contextlib.ExitStack() as stack:
+            stack.enter_context(patch.object(official, "build", side_effect=expired))
+            stack.enter_context(patch.object(official.time, "sleep", Mock()))
+            stack.enter_context(contextlib.redirect_stdout(io.StringIO()))
+            with self.assertRaises(official.SettlementHardDeadline):
+                official.build_settled("offline-fixture", clock=lambda: 0.0)
+        self.assertEqual([1], builds)
 
     def test_mismatch_diagnostic_identifies_source_and_ticker(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -119,7 +247,7 @@ class SettlementTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             out = self.run_entry(Path(tmp), regress=True)
             self.assertIsInstance(out["error"], SystemExit)
-            self.assertEqual(out["rounds"], 3)
+            self.assertEqual(out["rounds"], 6)
             self.assertEqual(list(Path(tmp).iterdir()), [])
             out["append"].assert_not_called()
 
