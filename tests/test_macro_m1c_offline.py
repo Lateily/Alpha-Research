@@ -419,7 +419,7 @@ class MacroM1CNightlyWiringTests(unittest.TestCase):
     def test_persistent_macro_db_is_injected_only_as_runtime_environment(self) -> None:
         captured = {}
 
-        def fake_subprocess(cmd, cwd=None, env=None):
+        def fake_subprocess(cmd, cwd=None, env=None, timeout=None):
             if cmd[1].endswith("m1c.py"):
                 captured.update(env or {})
             return 0, "OK"

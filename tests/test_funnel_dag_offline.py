@@ -152,11 +152,22 @@ class BoundedCollectionTests(unittest.TestCase):
         self.assertIsNone(outcomes[0]["row"])
 
     def test_limits_cannot_expand_to_the_outer_nightly_deadline(self):
-        for kwargs in ({"max_workers": 5}, {"max_workers": True},
-                       {"budget_seconds": 600}, {"budget_seconds": float("nan")},
+        for kwargs in ({"max_workers": 7}, {"max_workers": True},
+                       {"budget_seconds": 1681}, {"budget_seconds": float("nan")},
                        {"row_seconds": 0}, {"row_seconds": 46}):
             with self.subTest(kwargs=kwargs), self.assertRaises(ValueError):
                 self.collect([], **kwargs)
+
+    def test_battery_budget_is_derived_from_its_own_step_ceiling(self):
+        """预算 = 电池步骤自己的时限 - 收尾余量;不得再写死 540,也不得超出时限。"""
+        import nightly_limits
+        self.assertEqual(1800, nightly_limits.CANDIDATE_BATTERY_STEP_TIMEOUT_SECONDS)
+        self.assertEqual(1800, nightly_limits.step_timeout("candidate_battery"))
+        self.assertEqual(600, nightly_limits.step_timeout("official_sample"))
+        self.assertEqual(600, nightly_limits.step_timeout("funnel_finalize"))
+        self.assertEqual(1680.0, dag.BATCH_SECONDS)
+        self.assertEqual(6, dag.MAX_WORKERS)
+        self.assertLess(dag.BATCH_SECONDS, nightly_limits.step_timeout("candidate_battery"))
 
     def test_spawned_real_provider_respects_offline_guard(self):
         with mock.patch.dict(os.environ, {"AR_OFFLINE": "1", "TUSHARE_TOKEN": "fixture-only"}):
@@ -826,6 +837,110 @@ class FinalizeEndToEndTests(unittest.TestCase):
         self.assertEqual(len(codes), sum(b["expected"] for b in collection["by_board"].values()))
         self.assertEqual(len(order) - cut, sum(b["zero"] for b in collection["by_board"].values()))
         self.assertEqual(cut, sum(b["complete"] for b in collection["by_board"].values()))
+
+    @staticmethod
+    def _read_failed_row(tk):
+        row = complete_row(tk)
+        row["dims"]["资金"] = {"status": "DATA_BLOCKED", "err": "TUSHARE_READ_FAILED:ReadTimeout"}
+        full_battery._apply_verdict_v0_unvalidated(row["dims"])  # keep the display verdict honest
+        row["completeness"] = {"covered": 5, "of": 6, "missing": ["资金"], "verdict": "PARTIAL"}
+        return row
+
+    def _retry_setup(self, root):
+        _pv, obs = self._run_stages(root, "candidates")
+        bundle = obs / TARGET / RUN_ID
+        codes = json.loads((bundle / "candidate_manifest.json").read_text("utf-8"))["ts_codes"]
+        return obs, bundle, codes, fp.battery_dispatch_order(codes, TARGET)
+
+    def test_individually_failed_candidates_get_one_bounded_retry(self) -> None:
+        """采全:单只超时/进程退出/数据源报错,以及行内读取失败的,补采一次;批次截断不补。"""
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            obs, bundle, codes, order = self._retry_setup(root)
+            first = {order[0]: "CANDIDATE_TIMEOUT", order[1]: "WORKER_EXIT",
+                     order[2]: "PROVIDER_ERROR:ValueError", order[3]: "READ", order[4]: "BATCH_NOT_STARTED"}
+            calls: list[tuple[list[str], dict]] = []
+
+            def collector(asked, target, worker, **kwargs):
+                calls.append((list(asked), kwargs))
+                if len(calls) == 1:
+                    return [{"ts_code": tk,
+                             "reason": None if first.get(tk) in (None, "READ") else first[tk],
+                             "row": (self._read_failed_row(tk) if first.get(tk) == "READ"
+                                     else None if tk in first else complete_row(tk))} for tk in asked]
+                return [{"ts_code": tk, "reason": None, "row": complete_row(tk)} for tk in asked]
+
+            # The first pass takes 200s of the 1680s budget, so the retry gets 1480s.
+            with mock.patch.object(dag.time, "monotonic", side_effect=[100.0, 300.0]):
+                self.assertEqual(0, self._collect(root, obs, collector))
+            battery = json.loads((bundle / "candidate_battery.json").read_text("utf-8"))
+        self.assertEqual(2, len(calls), "a second, bounded pass must run for individually failed rows")
+        self.assertEqual([order[0], order[1], order[2], order[3]], calls[1][0])
+        self.assertEqual(1480.0, calls[1][1].get("budget_seconds"))
+        self.assertEqual({"attempted": 4, "recovered": 4, "cut_by_batch": 0}, battery["collection_retry"])
+        by_code = {row["ts_code"]: row for row in battery["results"]}
+        for tk in order[:4]:
+            self.assertEqual("COMPLETE", by_code[tk]["completeness"]["verdict"], tk)
+        self.assertEqual("BATCH_NOT_STARTED", by_code[order[4]]["dims"]["行情"]["err"])
+        self.assertEqual(codes, [row["ts_code"] for row in battery["results"]])
+
+    def test_a_batch_cutoff_during_the_retry_is_reported(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            obs, bundle, codes, order = self._retry_setup(root)
+            calls = []
+
+            def collector(asked, target, worker, **_kwargs):
+                calls.append(list(asked))
+                if len(calls) == 1:
+                    return [{"ts_code": tk, "reason": "CANDIDATE_TIMEOUT" if tk == order[0] else None,
+                             "row": None if tk == order[0] else complete_row(tk)} for tk in asked]
+                return [{"ts_code": tk, "reason": "BATCH_TIMEOUT", "row": None} for tk in asked]
+
+            self.assertEqual(0, self._collect(root, obs, collector))
+            battery = json.loads((bundle / "candidate_battery.json").read_text("utf-8"))
+        row = next(r for r in battery["results"] if r["ts_code"] == order[0])
+        self.assertEqual("BATCH_TIMEOUT", row["dims"]["行情"]["err"])
+        self.assertEqual({"attempted": 1, "recovered": 0, "cut_by_batch": 1}, battery["collection_retry"])
+        self.assertTrue(fp.battery_collection_summary(battery)["budget_exhausted"])
+
+    def test_a_partial_row_is_not_replaced_by_a_worse_retry(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            obs, bundle, codes, order = self._retry_setup(root)
+            calls = []
+
+            def collector(asked, target, worker, **_kwargs):
+                calls.append(list(asked))
+                if len(calls) == 1:
+                    return [{"ts_code": tk, "reason": None,
+                             "row": self._read_failed_row(tk) if tk == order[0] else complete_row(tk)} for tk in asked]
+                return [{"ts_code": tk, "reason": "CANDIDATE_TIMEOUT", "row": None} for tk in asked]
+
+            self.assertEqual(0, self._collect(root, obs, collector))
+            battery = json.loads((bundle / "candidate_battery.json").read_text("utf-8"))
+        self.assertEqual([order[0]], calls[1])
+        row = next(r for r in battery["results"] if r["ts_code"] == order[0])
+        self.assertEqual(5, row["completeness"]["covered"])
+        self.assertEqual({"attempted": 1, "recovered": 0, "cut_by_batch": 0}, battery["collection_retry"])
+
+    def test_retry_is_skipped_when_the_budget_has_no_room_for_a_row(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            obs, bundle, codes, order = self._retry_setup(root)
+            calls: list[list[str]] = []
+
+            def collector(asked, target, worker, **_kwargs):
+                calls.append(list(asked))
+                return [{"ts_code": tk, "reason": "CANDIDATE_TIMEOUT" if tk == order[0] else None,
+                         "row": None if tk == order[0] else complete_row(tk)} for tk in asked]
+
+            # 1680s budget: the first pass "ended" 10s before the deadline, less than one 45s row.
+            with mock.patch.object(dag.time, "monotonic", side_effect=[100.0, 100.0 + 1680.0 - 10.0]):
+                self.assertEqual(0, self._collect(root, obs, collector))
+            battery = json.loads((bundle / "candidate_battery.json").read_text("utf-8"))
+        self.assertEqual(1, len(calls))
+        self.assertEqual({"attempted": 1, "recovered": 0, "cut_by_batch": 0}, battery["collection_retry"])
 
     def test_bounded_collection_reaches_persistent_bundle_and_ready_pool(self) -> None:
         import test_funnel_dag_offline as fixtures

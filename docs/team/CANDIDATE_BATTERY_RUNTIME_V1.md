@@ -1,6 +1,6 @@
 # Candidate Battery Runtime v1
 
-Status: bounded collector deployed with #361 (2026-09-20); dispatch order revised 2026-09-21.
+Status: bounded collector deployed with #361 (2026-09-20); dispatch order revised with #367 (2026-09-21); step ceiling, six workers and the bounded retry added 2026-09-21 so every candidate is collected.
 
 ## Evidence and scope
 
@@ -15,17 +15,75 @@ recorded. No production request is replayed in this task.
 
 ## Design
 
-Keep the nightly 600 second outer limit and all admission rules unchanged.
-Collect at most four candidates concurrently in spawned, terminable processes.
-Use a monotonic 540 second batch budget and a 45 second candidate deadline,
-including process startup. Reserve the remaining outer time for cleanup,
-validation and stage publication. A late row is never accepted as on time.
+Revised 2026-09-21: the owner requires every candidate to be collected every
+night, and allowed a longer battery step or faster collection. So:
+
+- `candidate_battery` has its own step ceiling,
+  `nightly_limits.CANDIDATE_BATTERY_STEP_TIMEOUT_SECONDS = 1800`. The orchestrator
+  passes `step_timeout(name)` to every step; all other steps keep the shared 600s.
+- The batch budget is derived from that ceiling, not hard-coded:
+  `BATCH_SECONDS = 1800 - 120 = 1680`. The 120s reserve covers cleanup,
+  validation and stage publication. The candidate deadline stays 45 seconds,
+  including process startup. A late row is never accepted as on time.
+- At most six candidates are collected concurrently in spawned, terminable
+  processes. Evidence from the authorized live canary (London, 2026-09-21
+  17:11-17:25 BST, real 20260921 manifest, isolated copy, no production writes):
+
+  | Workers | Candidates | Wall | Collected | Seconds per slot | Rate-limit errors |
+  |---:|---:|---:|---:|---:|---:|
+  | 4 | 60 | 239.5s | 60/60 | 16.0 | 0 |
+  | 6 | 184 | 477.9s | 184/184 | 15.6 | 0 |
+  | 8 | 60 | 110.1s | 60/60 | 14.7 | 0 |
+
+  Per-slot time did not rise with concurrency, so throughput scaled linearly.
+  At six workers a 200-candidate night needs about 520-550s against a 1680s
+  budget, roughly three times headroom even on the slowest London night seen
+  (16.5s per slot on 9/21). The canary ran after the Beijing close; the Tushare
+  rate limit for this token is still not documented, only observed clean up to
+  about 33 candidates (about 300 calls) per minute.
+- One bounded retry pass, run once the first pass is done and only while the
+  remaining budget still exceeds one 45s row. It covers:
+  - candidates that failed on their own: `CANDIDATE_TIMEOUT`, `WORKER_EXIT`,
+    `PROVIDER_ERROR:*`;
+  - collected rows with a Tushare read failure inside a dimension
+    (`err` starting `TUSHARE_READ_FAILED:`). `full_battery` wraps every
+    dimension in its own try/except, so a network blip or a rate limit shows up
+    here, inside a row whose reason is `None`; this is the transient failure
+    most worth retrying.
+
+  Batch-level cut-offs (`BATCH_NOT_STARTED`, `BATCH_TIMEOUT`) are never retried:
+  the budget is already spent. A candidate that failed outright keeps the retry's
+  outcome, success or not, so a batch cut-off during the retry is reported and
+  sets `budget_exhausted`. A collected row with read failures is replaced only by
+  a retried row that covers at least as many dimensions. The battery records
+  `collection_retry = {attempted, recovered, cut_by_batch}`.
+
+What "every candidate collected" means: every candidate in the manifest gets a
+full collection attempt inside the budget, each Tushare call already retries
+transport failures up to three times (#366), and whole-row or read failures get
+one more attempt. It does not mean every dimension is non-empty. Genuine data
+gaps are not collection failures and are not retried: a new listing with fewer
+than 60 daily bars, or a provider field that is empty, stays an honest
+`DATA_BLOCKED` dimension. A provider outage longer than the retry still leaves
+rows blocked, and the published `battery_collection` says so.
+
+Rate limit. The canary's keyword detector would not have recognised a masked
+rate-limit error (`TUSHARE_READ_FAILED:RuntimeError`); the zero rests on the fact
+that every canary row's dimension errors were only the two known data-gap
+messages. The highest call rate observed clean is about 300 calls per minute
+(32.7 candidates/min x about 9 calls). `docs/strategy/DATA_SOURCES_CHECKLIST.md`
+still says 100 calls/min for a 500-point account; the observations exceed that,
+so treat that line as unverified rather than as the limit. Latency from the
+Hong Kong host will be far lower (about 0.27s per call was seen in China against
+about 1.5s from London), so six workers there could reach roughly 1,200 calls
+per minute, which has never been tested: re-run a canary before that cutover and
+lower `MAX_WORKERS` if it shows read failures.
 
 Each worker only calls the existing provider. It has no public-artifact or
 ledger write path. The parent consumes a completed worker result, preserves
 manifest order, converts collection failures into the existing six-dimension
 blocked row, validates all rows, and writes the existing stage/receipt chain.
-No retry, fallback, candidate truncation or old evidence reuse is added.
+No fallback, candidate truncation or old evidence reuse is added; the only retry is the bounded pass above.
 Collection progress reports identity, durations and fixed reason codes; the
 final stage receipt reports coverage counts. Logs never add raw exception text,
 provider responses or credentials.
@@ -61,10 +119,11 @@ sha256(`trade_date|ts_code`), so which names are cut changes daily. Replaying th
 actually started collection records `dispatch = {policy, order_hash}`, and
 validation replays it from the manifest; a null record is rejected.
 
-This spreads a shortfall; it does not recover it. On a 9/21-like night the same
-~51 unstarted rows are still lost, now in proportion to board size. No research
-signal enters the order. Completed rows are still not an unbiased sample in
-general, and a live coverage/rate-limit failure still blocks rollout.
+On its own the stratified order spreads a shortfall rather than recovering it.
+With the step ceiling, six workers and the retry pass above, the observed nights
+no longer have a shortfall; the stratified order stays as the safety net for a
+night slower than any seen, so that such a night still does not wipe out one
+board. No research signal enters the order.
 
 `funnel_health.battery_collection` publishes per board `expected`, `complete`,
 `partial` and `zero`, zero-row reasons from a closed vocabulary
@@ -84,7 +143,8 @@ itself make the status PARTIAL.
 - [x] Write failing offline tests for bounded concurrency, candidate deadline,
   batch deadline, exact coverage, identity rejection and worker cleanup.
 - [x] Implement `collect_rows(codes, target, worker, *, max_workers=4,
-  budget_seconds=540, row_seconds=45)` in the already hash-bound `funnel_dag.py`.
+  budget_seconds=540, row_seconds=45)` in the already hash-bound `funnel_dag.py`
+  (limits revised 2026-09-21 to 6 workers and a 1680s budget; see Design).
   Outcomes carry `ts_code`, `row` or a fixed `reason`, and elapsed time.
 - [x] Integrate only the network stage in `funnel_dag.py`; preserve validators,
   the tokenless path, isolation and the watchlist consumer.

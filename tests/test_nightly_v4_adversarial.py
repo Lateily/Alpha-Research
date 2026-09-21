@@ -916,6 +916,34 @@ class UnifiedRunContextTest(unittest.TestCase):
             )
             self.assertEqual(bad_status, "FAILED")
 
+    def test_candidate_battery_step_gets_its_own_ceiling(self) -> None:
+        """2026-09-21:采全要求电池单独放宽时限;其余步骤仍是统一 600 秒。"""
+        with tempfile.TemporaryDirectory() as tmp:
+            old_steps, old_artifacts = nightly.STEPS, nightly.ARTIFACTS
+            nightly.STEPS = [
+                ("official_sample", ["python3", "official.py"], False, []),
+                ("candidate_battery", ["python3", "battery.py"], False, ["official_sample"]),
+            ]
+            nightly.ARTIFACTS = {"official_sample": [("run_target.json", "trade_date", True)]}
+            seen = {}
+
+            def fake_run(cmd, cwd=None, env=None, text=None, capture_output=None, timeout=None):
+                # The real subprocess.run: the timeout must survive both run_steps and the runner.
+                seen[env["AR_NIGHTLY_STEP"]] = timeout
+                if cmd[1] == "official.py":
+                    write_json(os.path.join(cwd, "run_target.json"), {
+                        "trade_date": "20260804", "target_trade_date": "20260804",
+                        "run_id": env["AR_RUN_ID"],
+                    })
+                return mock.Mock(returncode=0, stdout="ok", stderr="")
+
+            try:
+                with mock.patch.object(nightly.subprocess, "run", side_effect=fake_run):
+                    nightly.run_steps(require_live=False, verify=True, base=tmp, run_id="CTX9")
+            finally:
+                nightly.STEPS, nightly.ARTIFACTS = old_steps, old_artifacts
+        self.assertEqual({"official_sample": 600, "candidate_battery": 1800}, seen)
+
     def test_target_is_propagated_and_every_step_gets_status_file(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             old_steps, old_artifacts = nightly.STEPS, nightly.ARTIFACTS
@@ -928,7 +956,7 @@ class UnifiedRunContextTest(unittest.TestCase):
                 "child": [("child.json", "as_of", True)],
             }
 
-            def fake(cmd, cwd=None, env=None):
+            def fake(cmd, cwd=None, env=None, timeout=None):
                 if cmd[1] == "official.py":
                     write_json(os.path.join(cwd, "run_target.json"), {
                         "trade_date": "20260804", "target_trade_date": "20260804",
@@ -1540,7 +1568,7 @@ class ResearchDataLaneTest(unittest.TestCase):
     def test_persistent_feature_db_is_injected_into_subprocess(self) -> None:
         captured = {}
 
-        def fake(cmd, cwd=None, env=None):
+        def fake(cmd, cwd=None, env=None, timeout=None):
             if cmd[1].endswith("feature_store.py"):
                 captured["db"] = env.get("AR_FEATURE_STORE_DB")
             return 0, "ok"
