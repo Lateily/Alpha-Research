@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import ast
 import io
 import json
 import os
 from pathlib import Path
+import socket
 import ssl
 import sys
 import unittest
@@ -17,6 +19,22 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "experiments" / "execution_tracker"))
 
 import fund_source as fs  # noqa: E402
+
+
+def _named_in_tuple(module_file: str, name: str) -> set[str]:
+    """Element expressions of a module-level tuple, read from source.
+
+    On Python 3.11+ socket.timeout IS TimeoutError, so a runtime membership check
+    cannot tell whether socket.timeout was named. The 3.9 production interpreter
+    needs it named, so the guard reads the source instead.
+    """
+    tree = ast.parse(Path(module_file).read_text(encoding="utf-8"))
+    for node in tree.body:
+        if isinstance(node, ast.Assign) and any(
+            isinstance(target, ast.Name) and target.id == name for target in node.targets
+        ):
+            return {ast.unparse(element) for element in node.value.elts}
+    raise AssertionError(f"{name} is not a module-level tuple in {module_file}")
 
 
 class _Response(io.BytesIO):
@@ -52,6 +70,28 @@ def _moneyflow_response() -> _Response:
 
 
 class FundSourceTransportTests(unittest.TestCase):
+    def test_socket_timeout_is_retryable_on_python39(self) -> None:
+        """在 3.9 上 socket.timeout 不是 TimeoutError;CI 的 3.11 恰好把它当别名,测不出这个缺口。"""
+        self.assertIn("socket.timeout", _named_in_tuple(fs.__file__, "TRANSIENT_TRANSPORT_ERRORS"))
+        self.assertIn(socket.timeout, fs.TRANSIENT_TRANSPORT_ERRORS)
+
+    def test_tushare_call_recovers_from_one_read_timeout(self) -> None:
+        with mock.patch.object(
+            fs.urllib.request,
+            "urlopen",
+            side_effect=[socket.timeout("The read operation timed out"), _success_response()],
+        ) as urlopen, mock.patch.object(fs.time, "sleep") as sleep:
+            try:
+                result = fs._tushare_call(
+                    "trade_cal", "fixture-token",
+                    {"exchange": "SSE", "start_date": "20260821"}, "exchange,cal_date,is_open",
+                )
+            except socket.timeout as exc:
+                self.fail(f"a single read timeout must be retried, got {exc!r}")
+        self.assertEqual(result["items"], [["SSE", "20260821", "1"]])
+        self.assertEqual(urlopen.call_count, 2)
+        sleep.assert_called_once_with(0.5)
+
     def test_tushare_call_recovers_from_one_tls_eof(self) -> None:
         transient = urllib.error.URLError(
             ssl.SSLEOFError(8, "EOF occurred in violation of protocol")
