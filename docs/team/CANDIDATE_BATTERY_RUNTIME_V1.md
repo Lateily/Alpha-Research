@@ -15,17 +15,48 @@ recorded. No production request is replayed in this task.
 
 ## Design
 
-Keep the nightly 600 second outer limit and all admission rules unchanged.
-Collect at most four candidates concurrently in spawned, terminable processes.
-Use a monotonic 540 second batch budget and a 45 second candidate deadline,
-including process startup. Reserve the remaining outer time for cleanup,
-validation and stage publication. A late row is never accepted as on time.
+Revised 2026-09-21: the owner requires every candidate to be collected every
+night, and allowed a longer battery step or faster collection. So:
+
+- `candidate_battery` has its own step ceiling,
+  `nightly_limits.CANDIDATE_BATTERY_STEP_TIMEOUT_SECONDS = 1800`. The orchestrator
+  passes `step_timeout(name)` to every step; all other steps keep the shared 600s.
+- The batch budget is derived from that ceiling, not hard-coded:
+  `BATCH_SECONDS = 1800 - 120 = 1680`. The 120s reserve covers cleanup,
+  validation and stage publication. The candidate deadline stays 45 seconds,
+  including process startup. A late row is never accepted as on time.
+- At most six candidates are collected concurrently in spawned, terminable
+  processes. Evidence from the authorized live canary (London, 2026-09-21
+  17:11-17:25 BST, real 20260921 manifest, isolated copy, no production writes):
+
+  | Workers | Candidates | Wall | Collected | Seconds per slot | Rate-limit errors |
+  |---:|---:|---:|---:|---:|---:|
+  | 4 | 60 | 239.5s | 60/60 | 16.0 | 0 |
+  | 6 | 184 | 477.9s | 184/184 | 15.6 | 0 |
+  | 8 | 60 | 110.1s | 60/60 | 14.7 | 0 |
+
+  Per-slot time did not rise with concurrency, so throughput scaled linearly.
+  At six workers a 200-candidate night needs about 520-550s against a 1680s
+  budget, roughly three times headroom even on the slowest London night seen
+  (16.5s per slot on 9/21). The canary ran after the Beijing close; the Tushare
+  rate limit for this token is still not documented, only observed clean up to
+  about 33 candidates (about 300 calls) per minute.
+- One bounded retry pass: candidates that failed on their own
+  (`CANDIDATE_TIMEOUT`, `WORKER_EXIT`, `PROVIDER_ERROR:*`) are collected once more
+  if the remaining budget still exceeds one 45s row. Batch-level cut-offs
+  (`BATCH_NOT_STARTED`, `BATCH_TIMEOUT`) are never retried: if they occur, the
+  budget is already spent. The battery records
+  `collection_retry = {attempted, recovered}`.
+
+Genuine data gaps are not collection failures and are not retried: a new listing
+with fewer than 60 daily bars, or a provider field that is empty, stays an honest
+`DATA_BLOCKED` dimension inside an otherwise collected row.
 
 Each worker only calls the existing provider. It has no public-artifact or
 ledger write path. The parent consumes a completed worker result, preserves
 manifest order, converts collection failures into the existing six-dimension
 blocked row, validates all rows, and writes the existing stage/receipt chain.
-No retry, fallback, candidate truncation or old evidence reuse is added.
+No fallback, candidate truncation or old evidence reuse is added; the only retry is the bounded pass above.
 Collection progress reports identity, durations and fixed reason codes; the
 final stage receipt reports coverage counts. Logs never add raw exception text,
 provider responses or credentials.
@@ -84,7 +115,8 @@ itself make the status PARTIAL.
 - [x] Write failing offline tests for bounded concurrency, candidate deadline,
   batch deadline, exact coverage, identity rejection and worker cleanup.
 - [x] Implement `collect_rows(codes, target, worker, *, max_workers=4,
-  budget_seconds=540, row_seconds=45)` in the already hash-bound `funnel_dag.py`.
+  budget_seconds=540, row_seconds=45)` in the already hash-bound `funnel_dag.py`
+  (limits revised 2026-09-21 to 6 workers and a 1680s budget; see Design).
   Outcomes carry `ts_code`, `row` or a fixed `reason`, and elapsed time.
 - [x] Integrate only the network stage in `funnel_dag.py`; preserve validators,
   the tokenless path, isolation and the watchlist consumer.

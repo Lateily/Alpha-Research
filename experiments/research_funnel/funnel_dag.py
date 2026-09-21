@@ -42,6 +42,8 @@ from typing import Any, Callable
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "execution_tracker"))
 
+from nightly_limits import CANDIDATE_BATTERY_STEP_TIMEOUT_SECONDS  # noqa: E402
+
 from funnel_pipeline import (  # noqa: E402
     BATTERY_DIMENSION_VERDICT_CONTRACT,
     BATTERY_DISPATCH_POLICY,
@@ -249,8 +251,19 @@ def run_candidates() -> int:
 # ── 段 2:candidate_battery(唯一网络步)─────────────────────────────────────
 
 
-MAX_WORKERS = 4
-BATCH_SECONDS = 540.0
+# Six workers (2026-09-21 authorized live canary, London, real 9/21 manifest):
+# 184 of 184 collected in 477.9s at about 15.6s per candidate slot, no rate-limit
+# errors; four workers ran at 16.0s and eight at 14.7s, so throughput scaled linearly.
+# governance-mutation: FUNNEL_BATTERY_WORKER_CEILING
+MAX_WORKERS = 6
+# Candidates that failed on their own (not because the batch ran out of time) get one
+# more attempt while the batch budget still has room for a full row.
+RETRYABLE_REASONS = ("CANDIDATE_TIMEOUT", "WORKER_EXIT")
+# The batch budget is derived from the step's own ceiling in nightly_limits, keeping
+# a reserve for cleanup, validation and stage publication inside that ceiling.
+BATTERY_RESERVE_SECONDS = 120.0
+# governance-mutation: FUNNEL_BATTERY_BUDGET_DERIVED
+BATCH_SECONDS = float(CANDIDATE_BATTERY_STEP_TIMEOUT_SECONDS) - BATTERY_RESERVE_SECONDS
 ROW_SECONDS = 45.0
 
 
@@ -396,6 +409,12 @@ def collect_rows(codes, target, worker, *, max_workers=MAX_WORKERS,
     return outcomes
 
 
+def _retryable(reason: str | None) -> bool:
+    """A candidate that failed on its own; batch-level cut-offs are never retried."""
+    # governance-mutation: FUNNEL_BATTERY_RETRY_SCOPE
+    return reason is not None and (reason in RETRYABLE_REASONS or reason.startswith("PROVIDER_ERROR:"))
+
+
 def _blocked_row(tk: str, today: str, why: str) -> dict:
     """数据源整体不可用时的逐票 DATA_BLOCKED 行 —— 六维齐全,每维显式阻断。"""
     dims = {d: {"status": "DATA_BLOCKED", "err": why[:80]} for d in BATTERY_DIMENSIONS}
@@ -488,10 +507,25 @@ def run_battery() -> int:
         provider_state = f"UNAVAILABLE: {why}"
         results = [_blocked_row(tk, target, why) for tk in codes]
     else:
+        started = time.monotonic()
         outcomes = collect_rows(order, target, provider, progress=_collection_progress)
         if [o["ts_code"] for o in outcomes] != order:
             raise FunnelError("battery collector coverage differs from candidate manifest")
         by_code = {o["ts_code"]: o for o in outcomes}
+        retry = [o["ts_code"] for o in outcomes if _retryable(o["reason"])]
+        remaining = BATCH_SECONDS - (time.monotonic() - started)
+        recovered = 0
+        # governance-mutation: FUNNEL_BATTERY_RETRY_PASS
+        if retry and remaining > ROW_SECONDS:
+            second = collect_rows(retry, target, provider, budget_seconds=remaining,
+                                  progress=_collection_progress)
+            if [o["ts_code"] for o in second] != retry:
+                raise FunnelError("battery retry coverage differs from the retried candidates")
+            for outcome in second:
+                if outcome["reason"] is None:
+                    by_code[outcome["ts_code"]] = outcome
+                    recovered += 1
+        collection_retry = {"attempted": len(retry), "recovered": recovered}
         outcomes = [by_code[tk] for tk in codes]
         for outcome in outcomes:
             tk = outcome["ts_code"]
@@ -520,6 +554,7 @@ def run_battery() -> int:
     if provider is not None:
         # Only a battery that actually started collection records the order it used.
         battery["dispatch"] = {"policy": BATTERY_DISPATCH_POLICY, "order_hash": _hash(order)}
+        battery["collection_retry"] = collection_retry
     battery["rows_hash"] = _hash(results)
     coverage = validate_candidate_battery(battery, manifest)  # 自校验:集合相等 + 六维
     _write_stage(

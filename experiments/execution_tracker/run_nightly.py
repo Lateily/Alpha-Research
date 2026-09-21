@@ -22,7 +22,7 @@ import sys
 import time
 import uuid
 
-from nightly_limits import NIGHTLY_STEP_TIMEOUT_SECONDS
+from nightly_limits import NIGHTLY_STEP_TIMEOUT_SECONDS, step_timeout
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "nightly_run.json")
@@ -835,7 +835,8 @@ def run_steps(
                 env["AR_TARGET_TRADE_DATE"] = target
             else:
                 env.pop("AR_TARGET_TRADE_DATE", None)
-            code, out = _subprocess_runner(cmd, cwd=base, env=env)
+            # governance-mutation: NIGHTLY_RUNNER_PER_STEP_TIMEOUT
+            code, out = _subprocess_runner(cmd, cwd=base, env=env, timeout=step_timeout(name))
         else:
             code, out = runner(cmd)
         status = _classify(code, out)
@@ -937,14 +938,14 @@ def run_steps(
             "note": "nightly v4;COMPLETE 由结构化状态、实物、run_id 与统一交易日共同背书。不是买卖指令。"}
 
 
-def _subprocess_runner(cmd, cwd=None, env=None):
+def _subprocess_runner(cmd, cwd=None, env=None, timeout=NIGHTLY_STEP_TIMEOUT_SECONDS):
     try:
         p = subprocess.run(cmd, cwd=cwd or HERE, env=env, text=True,
-                           capture_output=True, timeout=NIGHTLY_STEP_TIMEOUT_SECONDS)
+                           capture_output=True, timeout=timeout)
     except subprocess.TimeoutExpired as e:
         # 审查F2:挂死的步必须变成 FAILED 并继续走完报警,绝不让编排器整体崩掉
         out = ((e.stdout or "") if isinstance(e.stdout, str) else "") +               ((e.stderr or "") if isinstance(e.stderr, str) else "")
-        return 124, out + (f"\nTIMEOUT after {NIGHTLY_STEP_TIMEOUT_SECONDS}s: "
+        return 124, out + (f"\nTIMEOUT after {timeout}s: "
                            f"{' '.join(cmd)}")
     return p.returncode, (p.stdout + p.stderr)
 
