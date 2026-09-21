@@ -1,6 +1,6 @@
 # Candidate Battery Runtime v1
 
-Status: engineering proposal; not deployed, no live requests authorized.
+Status: bounded collector deployed with #361 (2026-09-20); dispatch order revised 2026-09-21.
 
 ## Evidence and scope
 
@@ -42,26 +42,41 @@ Fast rows can still contain DATA_BLOCKED dimensions. A completed stage is not a
 claim that its research evidence is complete. Provider concurrency/rate limits
 and genuine fresh coverage must be checked in a separately authorized canary.
 Dispatch no longer follows manifest order (2026-09-21). The manifest is
-ts_code-sorted, so the unstarted tail was always 688 STAR and then .BJ BSE: on
-20260921, 50 of 58 STAR candidates had zero dimensions while every main-board
-and ChiNext candidate was complete. Candidates now start in the order
-`BOARD_STRATIFIED_DATE_HASH_V1` (`funnel_pipeline.battery_dispatch_order`):
-bucket by board from the ts_code alone, order each bucket by
-sha256(`trade_date|ts_code`), and merge buckets by fractional position, so every
-prefix holds each board within one of its proportional share. Results, rows_hash
-and every consumer keep manifest order. The battery records
-`dispatch = {policy, order_hash}` and validation replays it from the manifest.
+ts_code-sorted, so the unstarted tail was always 688 STAR and then .BJ BSE. On
+20260921 (184 candidates: 87 main, 34 ChiNext, 58 STAR, 5 BSE) 133 were started
+before the budget ran out: 87 main, 34 ChiNext, 12 STAR, 0 BSE. 50 of 58 STAR
+and all 5 BSE candidates ended with zero dimensions; no main-board or ChiNext
+candidate did (5 main-board rows were partial).
 
-This spreads a shortfall across boards; it does not recover it. On a 9/21-like
-night the same ~55 rows still go uncollected, now split in proportion to board
-size, and which names within a board are cut moves from day to day. Missingness
-is therefore no longer concentrated on one board, but completed rows are still
-not an unbiased sample in general. `funnel_health.battery_collection` publishes
-the per-board split (`expected`, `complete`, `zero`), the zero-row reasons and
-`budget_exhausted`; both production verifiers recompute it from the rows, and a
-battery carrying `dispatch` must publish it. No research signal enters the
-order. A live coverage/rate-limit failure blocks rollout, even if the isolated
-stage can now finish and honestly report those gaps.
+Candidates now start in `BOARD_STRATIFIED_DATE_HASH_V1`
+(`funnel_pipeline.battery_dispatch_order`). The board comes from the ts_code
+alone: 688/689 STAR (including CDRs), 300/301/302 ChiNext, `.BJ` BSE, else main.
+Which board starts next follows Tijdeman's chairman assignment, so for every
+prefix of the order each board is within `1 - 1/(2m-2)` of its proportional
+share (m = boards present; at most 5/6 with four boards). That rhythm depends only
+on board sizes; inside each board names are ordered by
+sha256(`trade_date|ts_code`), so which names are cut changes daily. Replaying the
+20260921 manifest with the same 133 starts gives 63 main, 25 ChiNext, 42 STAR,
+3 BSE. Results, rows_hash and every consumer keep manifest order. A battery that
+actually started collection records `dispatch = {policy, order_hash}`, and
+validation replays it from the manifest; a null record is rejected.
+
+This spreads a shortfall; it does not recover it. On a 9/21-like night the same
+~51 unstarted rows are still lost, now in proportion to board size. No research
+signal enters the order. Completed rows are still not an unbiased sample in
+general, and a live coverage/rate-limit failure still blocks rollout.
+
+`funnel_health.battery_collection` publishes per board `expected`, `complete`,
+`partial` and `zero`, zero-row reasons from a closed vocabulary
+(`BATCH_NOT_STARTED`, `BATCH_TIMEOUT`, `CANDIDATE_TIMEOUT`, `WORKER_EXIT`,
+`PROVIDER_ERROR`, `PROVIDER_UNAVAILABLE`, `DATA_BLOCKED`, `MIXED`; raw provider
+text is never published), and `budget_exhausted` (any `BATCH_NOT_STARTED` or
+`BATCH_TIMEOUT` row). It is a new key because `battery_coverage` is compared for
+exact equality against health files already published. Both production
+verifiers recompute it, and a battery that records dispatch must publish it.
+Out of scope: the funnel's top-level status does not yet depend on battery
+coverage, so a starved battery is visible in `battery_collection` but does not by
+itself make the status PARTIAL.
 
 ## Implementation and acceptance
 

@@ -294,7 +294,7 @@ def _deferred_sigterm():
 def collect_rows(codes, target, worker, *, max_workers=MAX_WORKERS,
                  budget_seconds=BATCH_SECONDS, row_seconds=ROW_SECONDS,
                  progress=None):
-    """Return exactly one outcome per candidate, in original manifest order.
+    """Return exactly one outcome per candidate, in the order the codes were given.
 
     A completion is accepted only before both monotonic deadlines. Worker
     output is read after process exit, so partially written JSON is never
@@ -514,10 +514,12 @@ def run_battery() -> int:
         "manifest_hash": manifest["manifest_hash"],
         "dimension_verdict_contract": BATTERY_DIMENSION_VERDICT_CONTRACT,
         "provider_state": provider_state,
-        "dispatch": {"policy": BATTERY_DISPATCH_POLICY, "order_hash": _hash(order)},
         "results": results,
         "disclaimer": DISCLAIMER,
     }
+    if provider is not None:
+        # Only a battery that actually started collection records the order it used.
+        battery["dispatch"] = {"policy": BATTERY_DISPATCH_POLICY, "order_hash": _hash(order)}
     battery["rows_hash"] = _hash(results)
     coverage = validate_candidate_battery(battery, manifest)  # 自校验:集合相等 + 六维
     _write_stage(
