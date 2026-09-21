@@ -533,6 +533,107 @@ class StageChainTests(unittest.TestCase):
                                  as_of=TARGET, run_id=RUN_ID, generated_at="t", binds={})
 
 
+class BatteryDispatchOrderTests(unittest.TestCase):
+    """2026-09-21:按代码排序派发时,预算一耗尽就总是先饿死 688 科创板与北交所。"""
+
+    CODES = ([f"{i:06d}.SZ" for i in range(87)] + [f"300{i:03d}.SZ" for i in range(34)]
+             + [f"688{i:03d}.SH" for i in range(58)] + [f"920{i:03d}.BJ" for i in range(5)])
+
+    @staticmethod
+    def _codes(main, chinext, star, bse):
+        return ([f"{i:06d}.SZ" for i in range(main)] + [f"300{i:03d}.SZ" for i in range(chinext)]
+                + [f"688{i:03d}.SH" for i in range(star)] + [f"920{i:03d}.BJ" for i in range(bse)])
+
+    def _worst_prefix_deviation(self, codes, as_of):
+        from fractions import Fraction
+        order = fp.battery_dispatch_order(codes, as_of)
+        sizes = {b: sum(1 for c in codes if fp.battery_board(c) == b) for b in ("MAIN", "CHINEXT", "STAR", "BSE")}
+        seen = {b: 0 for b in sizes}
+        worst = Fraction(0)
+        for k, code in enumerate(order, 1):
+            seen[fp.battery_board(code)] += 1
+            for board, size in sizes.items():
+                if size:
+                    worst = max(worst, abs(seen[board] - Fraction(k * size, len(codes))))
+        return worst, sum(1 for size in sizes.values() if size)
+
+    def test_dispatch_order_is_board_stratified_and_replayable(self) -> None:
+        order = fp.battery_dispatch_order(self.CODES, "20260921")
+        self.assertEqual(sorted(self.CODES), sorted(order))
+        self.assertEqual(order, fp.battery_dispatch_order(list(reversed(self.CODES)), "20260921"))
+        self.assertNotEqual(order, fp.battery_dispatch_order(self.CODES, "20260922"))
+        self.assertEqual("BOARD_STRATIFIED_DATE_HASH_V1", fp.BATTERY_DISPATCH_POLICY)
+        # 9/21 实际只派发出 133 个:按代码顺序时科创板只轮到 12 个,分层后各板块同比例。
+        started = [fp.battery_board(code) for code in order[:133]]
+        self.assertEqual(
+            {"MAIN": 63, "CHINEXT": 25, "STAR": 42, "BSE": 3},
+            {board: started.count(board) for board in ("MAIN", "CHINEXT", "STAR", "BSE")},
+        )
+
+    def test_every_prefix_stays_within_one_of_each_board_share(self) -> None:
+        """Tijdeman 上界:偏离 <= 1 - 1/(2m-2)。含复审给出的三个旧算法反例与真实名单。"""
+        from fractions import Fraction
+        shapes = [(87, 34, 58, 5), (1, 1, 1, 3), (1, 1, 1, 11), (4, 48, 1, 10), (66, 21, 7, 7),
+                  (84, 25, 7, 3), (68, 17, 20, 4), (200, 0, 0, 0), (0, 3, 0, 1), (5, 0, 90, 0), (1, 1, 1, 1)]
+        for shape in shapes:
+            for as_of in ("20260109", "20260117", "20260921", "20261008"):
+                worst, boards = self._worst_prefix_deviation(self._codes(*shape), as_of)
+                bound = Fraction(0) if boards == 1 else 1 - Fraction(1, 2 * (boards - 1))
+                self.assertLessEqual(worst, bound, (shape, as_of))
+                self.assertLess(worst, 1, (shape, as_of))
+
+    def test_board_is_read_from_the_code_alone(self) -> None:
+        self.assertEqual(
+            ["MAIN", "MAIN", "MAIN", "CHINEXT", "CHINEXT", "CHINEXT", "STAR", "STAR", "STAR", "BSE", "BSE", "BSE"],
+            [fp.battery_board(c) for c in
+             ("000001.SZ", "600000.SH", "200002.SZ", "300750.SZ", "301001.SZ", "302132.SZ",
+              "688981.SH", "689009.SH", " 688001.sh", "920118.BJ", "430047.BJ", "830799.bj")],
+        )
+
+    @staticmethod
+    def _row(code, errs=None):
+        if errs is None:
+            return complete_row(code)
+        dims = {d: {"status": "DATA_BLOCKED", "err": errs[i % len(errs)]} for i, d in enumerate(fp.BATTERY_DIMENSIONS)}
+        return {"ts_code": code, "checked_at": TARGET, "dims": dims,
+                "completeness": {"covered": 0, "of": 6, "missing": list(fp.BATTERY_DIMENSIONS), "verdict": "PARTIAL"}}
+
+    def test_collection_summary_uses_a_closed_reason_vocabulary(self) -> None:
+        partial = complete_row("000002.SZ")
+        partial["dims"]["估值"] = {"status": "DATA_BLOCKED", "err": "K线不足60根"}
+        partial["completeness"] = {"covered": 5, "of": 6, "missing": ["估值"], "verdict": "PARTIAL"}
+        battery = {"provider_state": "AVAILABLE", "dispatch": {"policy": "BOARD_STRATIFIED_DATE_HASH_V1"}, "results": [
+            self._row("000001.SZ"), partial,
+            self._row("300001.SZ", ["BATCH_NOT_STARTED"]),
+            self._row("688001.SH", ["BATCH_TIMEOUT"]),
+            self._row("688002.SH", ["PROVIDER_ERROR:ValueError"]),
+            self._row("689009.SH", ["float() argument must be a string or a number, not 'NoneType'"]),
+            self._row("920001.BJ", ["CANDIDATE_TIMEOUT", "K线不足60根"]),
+        ]}
+        summary = fp.battery_collection_summary(battery)
+        self.assertEqual({
+            "dispatch_policy": "BOARD_STRATIFIED_DATE_HASH_V1",
+            "budget_exhausted": True,
+            "zero_row_reasons": {"BATCH_NOT_STARTED": 1, "BATCH_TIMEOUT": 1, "DATA_BLOCKED": 1,
+                                 "MIXED": 1, "PROVIDER_ERROR": 1},
+            "by_board": {"MAIN": {"expected": 2, "complete": 1, "partial": 1, "zero": 0},
+                         "CHINEXT": {"expected": 1, "complete": 0, "partial": 0, "zero": 1},
+                         "STAR": {"expected": 3, "complete": 0, "partial": 0, "zero": 3},
+                         "BSE": {"expected": 1, "complete": 0, "partial": 0, "zero": 1}},
+        }, summary)
+        self.assertNotIn("float()", json.dumps(summary, ensure_ascii=False))
+
+    def test_budget_is_exhausted_when_only_started_rows_timed_out(self) -> None:
+        battery = {"provider_state": "AVAILABLE", "results": [
+            self._row("600000.SH", ["BATCH_TIMEOUT"]), self._row("688001.SH", ["BATCH_TIMEOUT"])]}
+        self.assertTrue(fp.battery_collection_summary(battery)["budget_exhausted"])
+        unavailable = {"provider_state": "UNAVAILABLE: NO TUSHARE_TOKEN", "results": [
+            self._row("600000.SH", ["NO TUSHARE_TOKEN"])]}
+        self.assertEqual({"PROVIDER_UNAVAILABLE": 1},
+                         fp.battery_collection_summary(unavailable)["zero_row_reasons"])
+        self.assertFalse(fp.battery_collection_summary(unavailable)["budget_exhausted"])
+
+
 class FinalizeEndToEndTests(unittest.TestCase):
     """真跑三段(纯计算两段 + 无 token 的电池段),然后攻击 finalize 的两道门。"""
 
@@ -611,6 +712,121 @@ class FinalizeEndToEndTests(unittest.TestCase):
                 self.assertEqual(RUN_ID, receipt["run_id"])
                 self.assertEqual(TARGET, receipt["as_of"])
 
+    def _collect(self, root, obs, outcomes_for):
+        with mock.patch.dict(os.environ, self._env(root, obs)), \
+                mock.patch.object(dag, "REPO_ROOT", root), \
+                mock.patch.object(dag, "_battery_provider", return_value=(complete_row, "")), \
+                mock.patch.object(dag, "collect_rows", outcomes_for, create=True):
+            return dag.run_battery()
+
+    def test_battery_dispatch_record_must_replay(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            _pv, obs = self._run_stages(root, "candidates")
+            bundle = obs / TARGET / RUN_ID
+            manifest = json.loads((bundle / "candidate_manifest.json").read_text("utf-8"))
+            self.assertEqual(0, self._collect(root, obs, lambda order, target, worker, **_: [
+                {"ts_code": tk, "reason": None, "row": complete_row(tk)} for tk in order]))
+            battery = json.loads((bundle / "candidate_battery.json").read_text("utf-8"))
+        self.assertEqual(
+            {"policy": "BOARD_STRATIFIED_DATE_HASH_V1",
+             "order_hash": fp._hash(fp.battery_dispatch_order(manifest["ts_codes"], TARGET))},
+            battery["dispatch"],
+        )
+        for forged_dispatch in (dict(battery["dispatch"], order_hash="0" * 64),
+                                dict(battery["dispatch"], policy="TS_CODE_ORDER"),
+                                None):
+            with self.assertRaisesRegex(FunnelError, "dispatch order does not replay"):
+                fp.validate_candidate_battery(dict(battery, dispatch=forged_dispatch), manifest)
+        legacy = {key: value for key, value in battery.items() if key != "dispatch"}
+        self.assertEqual(len(manifest["ts_codes"]),
+                         fp.validate_candidate_battery(legacy, manifest)["observed"])
+
+    def test_unavailable_provider_records_no_dispatch(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            _pv, obs = self._run_stages(root, "candidates", "battery")
+            battery = json.loads((obs / TARGET / RUN_ID / "candidate_battery.json").read_text("utf-8"))
+        self.assertIn("UNAVAILABLE", battery["provider_state"])
+        self.assertNotIn("dispatch", battery)
+
+    def test_legacy_battery_cannot_publish_a_forged_collection_split(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            pv, obs = self._run_stages(root, "candidates", "battery", "finalize")
+            bundle = obs / TARGET / RUN_ID
+            health = json.loads((pv / "funnel_health.json").read_text("utf-8"))
+            self.assertNotIn("dispatch", json.loads((bundle / "candidate_battery.json").read_text("utf-8")))
+            durable = root / "data_history/funnel" / TARGET / RUN_ID
+            durable.parent.mkdir(parents=True)
+            shutil.copytree(bundle, durable)
+            nightly._verify_funnel_bundle(health, str(root), str(pv / "funnel_health.json"))
+            forged = json.loads(json.dumps(health))
+            forged["battery_collection"]["by_board"]["MAIN"]["complete"] += 1
+            with self.assertRaisesRegex(ValueError, "battery_collection"):
+                nightly._verify_funnel_bundle(forged, str(root), str(pv / "funnel_health.json"))
+
+    def test_collection_follows_dispatch_order_and_results_keep_manifest_order(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            _pv, obs = self._run_stages(root, "candidates")
+            bundle = obs / TARGET / RUN_ID
+            codes = json.loads((bundle / "candidate_manifest.json").read_text("utf-8"))["ts_codes"]
+            asked: list[list[str]] = []
+
+            def recording_collector(order, target, worker, **_kwargs):
+                asked.append(list(order))
+                return [{"ts_code": tk, "reason": None, "row": complete_row(tk)} for tk in order]
+
+            with mock.patch.dict(os.environ, self._env(root, obs)), \
+                    mock.patch.object(dag, "REPO_ROOT", root), \
+                    mock.patch.object(dag, "_battery_provider", return_value=(complete_row, "")), \
+                    mock.patch.object(dag, "collect_rows", recording_collector, create=True):
+                try:
+                    dag.run_battery()
+                except FunnelError as exc:
+                    self.fail(f"run_battery must record the order it dispatched: {exc}")
+            battery = json.loads((bundle / "candidate_battery.json").read_text("utf-8"))
+        self.assertEqual([fp.battery_dispatch_order(codes, TARGET)], asked)
+        self.assertNotEqual(codes, asked[0])
+        self.assertEqual(codes, [row["ts_code"] for row in battery["results"]])
+
+    def test_health_publishes_per_board_collection_split(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            pv, obs = self._run_stages(root, "candidates")
+            bundle = obs / TARGET / RUN_ID
+            codes = json.loads((bundle / "candidate_manifest.json").read_text("utf-8"))["ts_codes"]
+            order = fp.battery_dispatch_order(codes, TARGET)
+            cut = len(order) // 2
+            outcomes = ([{"ts_code": tk, "reason": None, "row": complete_row(tk)} for tk in order[:cut]]
+                        + [{"ts_code": tk, "reason": "BATCH_NOT_STARTED", "row": None} for tk in order[cut:]])
+            with mock.patch.dict(os.environ, self._env(root, obs)), \
+                    mock.patch.object(dag, "REPO_ROOT", root), \
+                    mock.patch.object(dag, "_battery_provider", return_value=(complete_row, "")), \
+                    mock.patch.object(dag, "collect_rows", return_value=outcomes, create=True):
+                self.assertEqual(0, dag.run_battery())
+                self.assertEqual(0, dag.run_finalize())
+            health = json.loads((pv / "funnel_health.json").read_text("utf-8"))
+            durable = root / "data_history/funnel" / TARGET / RUN_ID
+            durable.parent.mkdir(parents=True)
+            shutil.copytree(bundle, durable)
+            nightly._verify_funnel_bundle(health, str(root), str(pv / "funnel_health.json"))
+            forged = json.loads(json.dumps(health))
+            forged["battery_collection"]["zero_row_reasons"]["BATCH_NOT_STARTED"] -= 1
+            with self.assertRaisesRegex(ValueError, "battery_collection"):
+                nightly._verify_funnel_bundle(forged, str(root), str(pv / "funnel_health.json"))
+            stripped = {key: value for key, value in health.items() if key != "battery_collection"}
+            with self.assertRaisesRegex(ValueError, "battery_collection"):
+                nightly._verify_funnel_bundle(stripped, str(root), str(pv / "funnel_health.json"))
+        collection = health["battery_collection"]
+        self.assertEqual("BOARD_STRATIFIED_DATE_HASH_V1", collection["dispatch_policy"])
+        self.assertTrue(collection["budget_exhausted"])
+        self.assertEqual({"BATCH_NOT_STARTED": len(order) - cut}, collection["zero_row_reasons"])
+        self.assertEqual(len(codes), sum(b["expected"] for b in collection["by_board"].values()))
+        self.assertEqual(len(order) - cut, sum(b["zero"] for b in collection["by_board"].values()))
+        self.assertEqual(cut, sum(b["complete"] for b in collection["by_board"].values()))
+
     def test_bounded_collection_reaches_persistent_bundle_and_ready_pool(self) -> None:
         import test_funnel_dag_offline as fixtures
         with tempfile.TemporaryDirectory() as tmp:
@@ -651,8 +867,9 @@ class FinalizeEndToEndTests(unittest.TestCase):
             _pv, obs = self._run_stages(root, "candidates")
             bundle = obs / TARGET / RUN_ID
             codes = json.loads((bundle / "candidate_manifest.json").read_text())["ts_codes"]
+            # The collector answers in the order it was asked, which is the dispatch order.
             outcomes = [{"ts_code": code, "reason": None, "row": complete_row("WRONG.SZ")}
-                        for code in codes]
+                        for code in fp.battery_dispatch_order(codes, TARGET)]
             with mock.patch.dict(os.environ, self._env(root, obs)), \
                     mock.patch.object(dag, "REPO_ROOT", root), \
                     mock.patch.object(dag, "_battery_provider", return_value=(complete_row, "")), \

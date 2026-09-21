@@ -166,6 +166,7 @@ def _fixture_tree(
     bundle_generated_at: str = GENERATED_AT,
     feature_generated_at: str = GENERATED_AT,
     funnel_generated_at: str = GENERATED_AT,
+    dispatch: bool = False,
 ) -> tuple[Path, Path, Path]:
     registry, _features, scan, candidates = fixture.build_candidates(n=90)
     semiconductor_rows_hash = "9" * 64
@@ -225,6 +226,11 @@ def _fixture_tree(
         "rows_hash": fp._hash(battery_rows),
         "disclaimer": fp.DISCLAIMER,
     }
+    if dispatch:
+        battery["dispatch"] = {
+            "policy": fp.BATTERY_DISPATCH_POLICY,
+            "order_hash": fp._hash(fp.battery_dispatch_order(manifest["ts_codes"], AS_OF)),
+        }
     fp.validate_candidate_battery(battery, manifest)
     queue = fp.build_deep_research_queue(
         candidate_review=candidates,
@@ -315,6 +321,8 @@ def _fixture_tree(
         fp.validate_candidate_battery(battery, manifest),
         provider_state=battery["provider_state"],
     )
+    if dispatch:
+        health["battery_collection"] = fp.battery_collection_summary(battery)
     health["retention"] = {
         "removed": [],
         "skipped_not_a_directory": [],
@@ -403,9 +411,9 @@ class U4PreDecisionRuntimeTests(unittest.TestCase):
         # A future reviewed revision must explicitly update this historical pin.
         frozen = {
             "docs/research/contracts/research_closed_loop.v1.json":
-                "8ee57519a43c6eea3420d0cfb38367c4fc191f3e097ff74320dac0ad3def3871",
+                "b79ae19da275fc387e7bc6a998fa3182e371c6392f58c835ec2cf457b5247474",
             "experiments/research_funnel/funnel_dag.py":
-                "2088d2e2751ff9458e97feba6397a764f3154972bf645e55a855018d0f9a0243",
+                "1ba536526dfc0f21f531c665947c47b4e6fa9b3e1895d05f0d30b793ce356a20",
         }
         for path, expected in frozen.items():
             self.assertEqual(expected, hashlib.sha256((ROOT / path).read_bytes()).hexdigest(), path)
@@ -928,6 +936,37 @@ class U4PreDecisionRuntimeTests(unittest.TestCase):
                     method_version=pre.DEFAULT_METHOD_VERSION,
                     generated_at=GENERATED_AT,
                 )
+
+    def _packet(self, bundle: Path, feature_health: Path, funnel_health: Path):
+        return pre.build_packet(
+            bundle_dir=bundle,
+            feature_health_path=feature_health,
+            funnel_health_path=funnel_health,
+            diagnostic_ref="diagnostic.json",
+            industry="TECH",
+            method_version=pre.DEFAULT_METHOD_VERSION,
+            generated_at=GENERATED_AT,
+        )
+
+    def test_battery_collection_split_is_recomputed_from_u3(self) -> None:
+        """分板块统计必须由 U3 实物重算;带派发记录的电池不得省略它。"""
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            bundle, feature_health, funnel_health = _fixture_tree(root, dispatch=True)
+            health = json.loads(funnel_health.read_text(encoding="utf-8"))
+            self.assertEqual("BOARD_STRATIFIED_DATE_HASH_V1", health["battery_collection"]["dispatch_policy"])
+            try:
+                self._packet(bundle, feature_health, funnel_health)
+            except pre.PreDecisionError as exc:
+                self.fail(f"a faithful battery_collection must be accepted: {exc}")
+            forged = json.loads(json.dumps(health))
+            forged["battery_collection"]["by_board"]["MAIN"]["zero"] += 1
+            _write(funnel_health, forged)
+            with self.assertRaisesRegex(pre.PreDecisionError, "battery collection is not derived"):
+                self._packet(bundle, feature_health, funnel_health)
+            _write(funnel_health, {k: v for k, v in health.items() if k != "battery_collection"})
+            with self.assertRaisesRegex(pre.PreDecisionError, "battery collection is not derived"):
+                self._packet(bundle, feature_health, funnel_health)
 
     def test_stage_receipt_self_report_is_crosschecked_against_the_dag(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

@@ -431,6 +431,12 @@ def _verify_funnel_bundle(data, repo_root, artifact_path=None):
                 f"health 的 battery_coverage 与实物不符: "
                 f"{data.get('battery_coverage')} != {measured_battery}"
             )
+        # A battery that records its dispatch order must publish the per-board split,
+        # and whatever split is published must be recomputed from the rows.
+        # governance-mutation: FUNNEL_DAG_BATTERY_COLLECTION_RECOMPUTED
+        if "battery_collection" in data or "dispatch" in candidate_battery:
+            if data.get("battery_collection") != nightly_funnel.battery_collection_summary(candidate_battery):
+                raise ValueError("health 的 battery_collection 缺失或与实物不符")
 
     # status 与 counts 由实物重算,health 只是转述,不是权威
     scan = payloads["all_market_scan.json"]

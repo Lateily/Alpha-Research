@@ -44,6 +44,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "execution_tracker"
 
 from funnel_pipeline import (  # noqa: E402
     BATTERY_DIMENSION_VERDICT_CONTRACT,
+    BATTERY_DISPATCH_POLICY,
     BATTERY_DISPLAY_VERDICT_DIMENSIONS,
     BATTERY_DIMENSIONS,
     BATTERY_U2_SCHEMA,
@@ -57,6 +58,8 @@ from funnel_pipeline import (  # noqa: E402
     _hash,
     _load_json,
     advance_registry,
+    battery_collection_summary,
+    battery_dispatch_order,
     build_all_market_scan,
     build_candidate_manifest,
     build_candidate_review,
@@ -291,7 +294,7 @@ def _deferred_sigterm():
 def collect_rows(codes, target, worker, *, max_workers=MAX_WORKERS,
                  budget_seconds=BATCH_SECONDS, row_seconds=ROW_SECONDS,
                  progress=None):
-    """Return exactly one outcome per candidate, in original manifest order.
+    """Return exactly one outcome per candidate, in the order the codes were given.
 
     A completion is accepted only before both monotonic deadlines. Worker
     output is read after process exit, so partially written JSON is never
@@ -477,15 +480,19 @@ def run_battery() -> int:
     generated_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
 
     provider, why = _battery_provider()
+    # Start order is board-stratified and date-keyed; results stay in manifest order.
+    order = battery_dispatch_order(codes, target)
     results: list[dict] = []
     provider_state = "AVAILABLE"
     if provider is None:
         provider_state = f"UNAVAILABLE: {why}"
         results = [_blocked_row(tk, target, why) for tk in codes]
     else:
-        outcomes = collect_rows(codes, target, provider, progress=_collection_progress)
-        if [o["ts_code"] for o in outcomes] != codes:
+        outcomes = collect_rows(order, target, provider, progress=_collection_progress)
+        if [o["ts_code"] for o in outcomes] != order:
             raise FunnelError("battery collector coverage differs from candidate manifest")
+        by_code = {o["ts_code"]: o for o in outcomes}
+        outcomes = [by_code[tk] for tk in codes]
         for outcome in outcomes:
             tk = outcome["ts_code"]
             row = (_blocked_row(tk, target, outcome["reason"])
@@ -510,6 +517,9 @@ def run_battery() -> int:
         "results": results,
         "disclaimer": DISCLAIMER,
     }
+    if provider is not None:
+        # Only a battery that actually started collection records the order it used.
+        battery["dispatch"] = {"policy": BATTERY_DISPATCH_POLICY, "order_hash": _hash(order)}
     battery["rows_hash"] = _hash(results)
     coverage = validate_candidate_battery(battery, manifest)  # 自校验:集合相等 + 六维
     _write_stage(
@@ -523,6 +533,7 @@ def run_battery() -> int:
     print(json.dumps({
         "step": "candidate_battery", "target_trade_date": target, "run_id": run_id,
         "provider_state": provider_state, **coverage,
+        "collection": battery_collection_summary(battery),
     }, ensure_ascii=False))
     print(DISCLAIMER)
     return 0
@@ -596,6 +607,9 @@ def run_finalize() -> int:
     health = build_health(target=target, run_id=run_id, bundle_dir=bundle_dir,
                           registry=registry, generated_at=generated_at)
     health["battery_coverage"] = dict(coverage, provider_state=battery["provider_state"])
+    # New key rather than new fields in battery_coverage: that dict is compared for
+    # exact equality against health files already published before 2026-09-21.
+    health["battery_collection"] = battery_collection_summary(battery)
     previously = published_bundle_date(public_v2)
     protected = {target} | ({previously} if previously else set())
     pruned = prune_observation_area(output_root, keep, protect=protected)
