@@ -451,6 +451,10 @@ def _validate_funnel_health(
     )
     if health.get("battery_coverage") != expected_battery_coverage:
         raise PreDecisionError("funnel health battery coverage is not derived from U3")
+    # governance-mutation: U4_PREDECISION_BATTERY_COLLECTION_DERIVATION
+    if "battery_collection" in health or "dispatch" in bundle["battery"]:
+        if health.get("battery_collection") != funnel.battery_collection_summary(bundle["battery"]):
+            raise PreDecisionError("funnel health battery collection is not derived from U3")
     return health_generated_at
 
 

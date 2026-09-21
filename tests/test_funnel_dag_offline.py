@@ -533,6 +533,38 @@ class StageChainTests(unittest.TestCase):
                                  as_of=TARGET, run_id=RUN_ID, generated_at="t", binds={})
 
 
+class BatteryDispatchOrderTests(unittest.TestCase):
+    """2026-09-21:按代码排序派发时,预算一耗尽就总是先饿死 688 科创板与北交所。"""
+
+    CODES = ([f"{i:06d}.SZ" for i in range(87)] + [f"300{i:03d}.SZ" for i in range(34)]
+             + [f"688{i:03d}.SH" for i in range(58)] + [f"920{i:03d}.BJ" for i in range(5)])
+
+    def test_dispatch_order_is_board_stratified_and_replayable(self) -> None:
+        order = fp.battery_dispatch_order(self.CODES, "20260921")
+        self.assertEqual(sorted(self.CODES), sorted(order))
+        self.assertEqual(order, fp.battery_dispatch_order(list(reversed(self.CODES)), "20260921"))
+        self.assertNotEqual(order, fp.battery_dispatch_order(self.CODES, "20260922"))
+        self.assertEqual("BOARD_STRATIFIED_DATE_HASH_V1", fp.BATTERY_DISPATCH_POLICY)
+        # 9/21 实际只派发出 133 个:按代码顺序时科创板只轮到 8 个,分层后各板块同比例。
+        started = [fp.battery_board(code) for code in order[:133]]
+        self.assertEqual(
+            {"MAIN": 63, "CHINEXT": 24, "STAR": 42, "BSE": 4},
+            {board: started.count(board) for board in ("MAIN", "CHINEXT", "STAR", "BSE")},
+        )
+        sizes = {"MAIN": 87, "CHINEXT": 34, "STAR": 58, "BSE": 5}
+        for k in range(1, len(order) + 1):
+            prefix = [fp.battery_board(code) for code in order[:k]]
+            for board, size in sizes.items():
+                self.assertLess(abs(prefix.count(board) - k * size / 184), 1, (k, board))
+
+    def test_board_is_read_from_the_code_alone(self) -> None:
+        self.assertEqual(
+            ["MAIN", "MAIN", "CHINEXT", "CHINEXT", "STAR", "BSE"],
+            [fp.battery_board(c) for c in
+             ("000001.SZ", "600000.SH", "300750.SZ", "301001.SZ", "688981.SH", "920118.BJ")],
+        )
+
+
 class FinalizeEndToEndTests(unittest.TestCase):
     """真跑三段(纯计算两段 + 无 token 的电池段),然后攻击 finalize 的两道门。"""
 
@@ -611,6 +643,86 @@ class FinalizeEndToEndTests(unittest.TestCase):
                 self.assertEqual(RUN_ID, receipt["run_id"])
                 self.assertEqual(TARGET, receipt["as_of"])
 
+    def test_battery_dispatch_record_must_replay(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            _pv, obs = self._run_stages(root, "candidates", "battery")
+            bundle = obs / TARGET / RUN_ID
+            manifest = json.loads((bundle / "candidate_manifest.json").read_text("utf-8"))
+            battery = json.loads((bundle / "candidate_battery.json").read_text("utf-8"))
+        self.assertEqual(
+            {"policy": "BOARD_STRATIFIED_DATE_HASH_V1",
+             "order_hash": fp._hash(fp.battery_dispatch_order(manifest["ts_codes"], TARGET))},
+            battery["dispatch"],
+        )
+        forged = dict(battery, dispatch=dict(battery["dispatch"], order_hash="0" * 64))
+        with self.assertRaisesRegex(FunnelError, "dispatch order does not replay"):
+            fp.validate_candidate_battery(forged, manifest)
+        legacy = {key: value for key, value in battery.items() if key != "dispatch"}
+        self.assertEqual(len(manifest["ts_codes"]),
+                         fp.validate_candidate_battery(legacy, manifest)["observed"])
+
+    def test_collection_follows_dispatch_order_and_results_keep_manifest_order(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            _pv, obs = self._run_stages(root, "candidates")
+            bundle = obs / TARGET / RUN_ID
+            codes = json.loads((bundle / "candidate_manifest.json").read_text("utf-8"))["ts_codes"]
+            asked: list[list[str]] = []
+
+            def recording_collector(order, target, worker, **_kwargs):
+                asked.append(list(order))
+                return [{"ts_code": tk, "reason": None, "row": complete_row(tk)} for tk in order]
+
+            with mock.patch.dict(os.environ, self._env(root, obs)), \
+                    mock.patch.object(dag, "REPO_ROOT", root), \
+                    mock.patch.object(dag, "_battery_provider", return_value=(complete_row, "")), \
+                    mock.patch.object(dag, "collect_rows", recording_collector, create=True):
+                try:
+                    dag.run_battery()
+                except FunnelError as exc:
+                    self.fail(f"run_battery must record the order it dispatched: {exc}")
+            battery = json.loads((bundle / "candidate_battery.json").read_text("utf-8"))
+        self.assertEqual([fp.battery_dispatch_order(codes, TARGET)], asked)
+        self.assertNotEqual(codes, asked[0])
+        self.assertEqual(codes, [row["ts_code"] for row in battery["results"]])
+
+    def test_health_publishes_per_board_collection_split(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            pv, obs = self._run_stages(root, "candidates")
+            bundle = obs / TARGET / RUN_ID
+            codes = json.loads((bundle / "candidate_manifest.json").read_text("utf-8"))["ts_codes"]
+            order = fp.battery_dispatch_order(codes, TARGET)
+            cut = len(order) // 2
+            outcomes = ([{"ts_code": tk, "reason": None, "row": complete_row(tk)} for tk in order[:cut]]
+                        + [{"ts_code": tk, "reason": "BATCH_NOT_STARTED", "row": None} for tk in order[cut:]])
+            with mock.patch.dict(os.environ, self._env(root, obs)), \
+                    mock.patch.object(dag, "REPO_ROOT", root), \
+                    mock.patch.object(dag, "_battery_provider", return_value=(complete_row, "")), \
+                    mock.patch.object(dag, "collect_rows", return_value=outcomes, create=True):
+                self.assertEqual(0, dag.run_battery())
+                self.assertEqual(0, dag.run_finalize())
+            health = json.loads((pv / "funnel_health.json").read_text("utf-8"))
+            durable = root / "data_history/funnel" / TARGET / RUN_ID
+            durable.parent.mkdir(parents=True)
+            shutil.copytree(bundle, durable)
+            nightly._verify_funnel_bundle(health, str(root), str(pv / "funnel_health.json"))
+            forged = json.loads(json.dumps(health))
+            forged["battery_collection"]["zero_row_reasons"]["BATCH_NOT_STARTED"] -= 1
+            with self.assertRaisesRegex(ValueError, "battery_collection"):
+                nightly._verify_funnel_bundle(forged, str(root), str(pv / "funnel_health.json"))
+            stripped = {key: value for key, value in health.items() if key != "battery_collection"}
+            with self.assertRaisesRegex(ValueError, "battery_collection"):
+                nightly._verify_funnel_bundle(stripped, str(root), str(pv / "funnel_health.json"))
+        collection = health["battery_collection"]
+        self.assertEqual("BOARD_STRATIFIED_DATE_HASH_V1", collection["dispatch_policy"])
+        self.assertTrue(collection["budget_exhausted"])
+        self.assertEqual({"BATCH_NOT_STARTED": len(order) - cut}, collection["zero_row_reasons"])
+        self.assertEqual(len(codes), sum(b["expected"] for b in collection["by_board"].values()))
+        self.assertEqual(len(order) - cut, sum(b["zero"] for b in collection["by_board"].values()))
+        self.assertEqual(cut, sum(b["complete"] for b in collection["by_board"].values()))
+
     def test_bounded_collection_reaches_persistent_bundle_and_ready_pool(self) -> None:
         import test_funnel_dag_offline as fixtures
         with tempfile.TemporaryDirectory() as tmp:
@@ -651,8 +763,9 @@ class FinalizeEndToEndTests(unittest.TestCase):
             _pv, obs = self._run_stages(root, "candidates")
             bundle = obs / TARGET / RUN_ID
             codes = json.loads((bundle / "candidate_manifest.json").read_text())["ts_codes"]
+            # The collector answers in the order it was asked, which is the dispatch order.
             outcomes = [{"ts_code": code, "reason": None, "row": complete_row("WRONG.SZ")}
-                        for code in codes]
+                        for code in fp.battery_dispatch_order(codes, TARGET)]
             with mock.patch.dict(os.environ, self._env(root, obs)), \
                     mock.patch.object(dag, "REPO_ROOT", root), \
                     mock.patch.object(dag, "_battery_provider", return_value=(complete_row, "")), \

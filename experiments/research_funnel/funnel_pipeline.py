@@ -21,6 +21,7 @@ import sqlite3
 import tempfile
 from collections import Counter, defaultdict
 from datetime import datetime, timezone
+from fractions import Fraction
 from pathlib import Path
 from typing import Any, Iterable, Mapping, Sequence
 
@@ -1873,6 +1874,79 @@ def validate_candidate_manifest(payload: Mapping[str, Any]) -> None:
         raise FunnelError("candidate manifest hash mismatch")
 
 
+# Battery dispatch order (2026-09-21). The manifest is ts_code-sorted, so when the
+# collection budget ran out the unstarted tail was always 688 STAR and then .BJ BSE:
+# on 20260921 50 of 58 STAR candidates had zero dimensions while every main-board and
+# ChiNext candidate was complete. Dispatch is stratified by board and keyed by the
+# trade date, so a shortfall lands on every board in proportion to its size and moves
+# between names from day to day. No research signal enters the order; results stay in
+# manifest order, so rows_hash and every consumer are unaffected.
+BATTERY_DISPATCH_POLICY = "BOARD_STRATIFIED_DATE_HASH_V1"
+BATTERY_BOARDS = ("MAIN", "CHINEXT", "STAR", "BSE")
+
+
+def battery_board(ts_code: str) -> str:
+    code = str(ts_code).upper()
+    if code.endswith(".BJ"):
+        return "BSE"
+    if code.startswith("688"):
+        return "STAR"
+    if code[:3] in {"300", "301"}:
+        return "CHINEXT"
+    return "MAIN"
+
+
+def battery_dispatch_order(ts_codes: Sequence[str], as_of: str) -> list[str]:
+    """Replayable start order: every prefix holds each board within one of its share."""
+    codes = [str(code) for code in ts_codes]
+    if len(set(codes)) != len(codes):
+        raise FunnelError("battery dispatch order needs unique ts_codes")
+    date = _date8(str(as_of))
+
+    def key(code: str) -> str:
+        return hashlib.sha256(f"{date}|{code}".encode("utf-8")).hexdigest()
+
+    buckets: dict[str, list[str]] = defaultdict(list)
+    for code in codes:
+        buckets[battery_board(code)].append(code)
+    placed: list[tuple[Fraction, str, str]] = []
+    for members in buckets.values():
+        ordered = sorted(members, key=lambda code: (key(code), code))
+        size = len(ordered)
+        for index, code in enumerate(ordered):
+            # governance-mutation: FUNNEL_BATTERY_DISPATCH_STRATIFIED
+            placed.append((Fraction(2 * index + 1, 2 * size), key(code), code))
+    order = [code for _position, _key, code in sorted(placed)]
+    if sorted(order) != sorted(codes):
+        raise FunnelError("battery dispatch order is not a permutation of the manifest")
+    return order
+
+
+def battery_collection_summary(battery: Mapping[str, Any]) -> dict[str, Any]:
+    """Per-board coverage and zero-row reasons, derived from the rows alone."""
+    boards = {name: {"expected": 0, "complete": 0, "zero": 0} for name in BATTERY_BOARDS}
+    reasons: Counter = Counter()
+    for row in battery.get("results") or []:
+        counts = boards[battery_board(str(row.get("ts_code") or ""))]
+        counts["expected"] += 1
+        completeness = row.get("completeness") or {}
+        if completeness.get("verdict") == "COMPLETE":
+            counts["complete"] += 1
+        if completeness.get("covered") == 0:
+            counts["zero"] += 1
+            errors = {
+                str((evidence or {}).get("err") or "")
+                for evidence in (row.get("dims") or {}).values()
+            }
+            reasons[errors.pop() if len(errors) == 1 else "MIXED"] += 1
+    return {
+        "dispatch_policy": (battery.get("dispatch") or {}).get("policy"),
+        "budget_exhausted": reasons.get("BATCH_NOT_STARTED", 0) > 0,
+        "zero_row_reasons": dict(sorted(reasons.items())),
+        "by_board": boards,
+    }
+
+
 def validate_candidate_battery(
     battery: Mapping[str, Any], manifest: Mapping[str, Any],
 ) -> dict[str, int]:
@@ -1983,6 +2057,14 @@ def validate_candidate_battery(
             blocked_rows += 1
     if battery.get("rows_hash") != _hash(rows):
         raise FunnelError("candidate battery rows_hash mismatch")
+    # Batteries from before 2026-09-21 carry no dispatch record and stay readable.
+    dispatch = battery.get("dispatch")
+    # governance-mutation: FUNNEL_BATTERY_DISPATCH_REPLAYED
+    if dispatch is not None and dispatch != {
+        "policy": BATTERY_DISPATCH_POLICY,
+        "order_hash": _hash(battery_dispatch_order(manifest["ts_codes"], manifest["as_of"])),
+    }:
+        raise FunnelError("candidate battery dispatch order does not replay from the manifest")
     return {
         "expected": len(expected),
         "observed": len(observed),

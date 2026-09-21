@@ -41,10 +41,27 @@ The limits bound resource use; they do not guarantee 200 complete batteries.
 Fast rows can still contain DATA_BLOCKED dimensions. A completed stage is not a
 claim that its research evidence is complete. Provider concurrency/rate limits
 and genuine fresh coverage must be checked in a separately authorized canary.
-Dispatch follows manifest order. Budget exhaustion can therefore create
-non-random missingness; completed rows must not be treated as an unbiased sample
-of the entire candidate pool. A live coverage/rate-limit failure blocks rollout,
-even if the isolated stage can now finish and honestly report those gaps.
+Dispatch no longer follows manifest order (2026-09-21). The manifest is
+ts_code-sorted, so the unstarted tail was always 688 STAR and then .BJ BSE: on
+20260921, 50 of 58 STAR candidates had zero dimensions while every main-board
+and ChiNext candidate was complete. Candidates now start in the order
+`BOARD_STRATIFIED_DATE_HASH_V1` (`funnel_pipeline.battery_dispatch_order`):
+bucket by board from the ts_code alone, order each bucket by
+sha256(`trade_date|ts_code`), and merge buckets by fractional position, so every
+prefix holds each board within one of its proportional share. Results, rows_hash
+and every consumer keep manifest order. The battery records
+`dispatch = {policy, order_hash}` and validation replays it from the manifest.
+
+This spreads a shortfall across boards; it does not recover it. On a 9/21-like
+night the same ~55 rows still go uncollected, now split in proportion to board
+size, and which names within a board are cut moves from day to day. Missingness
+is therefore no longer concentrated on one board, but completed rows are still
+not an unbiased sample in general. `funnel_health.battery_collection` publishes
+the per-board split (`expected`, `complete`, `zero`), the zero-row reasons and
+`budget_exhausted`; both production verifiers recompute it from the rows, and a
+battery carrying `dispatch` must publish it. No research signal enters the
+order. A live coverage/rate-limit failure blocks rollout, even if the isolated
+stage can now finish and honestly report those gaps.
 
 ## Implementation and acceptance
 

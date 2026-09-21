@@ -42,6 +42,7 @@ from funnel_pipeline import (  # noqa: E402
     _atomic_write_json,
     _date8,
     _hash,
+    battery_collection_summary,
     run_pipeline,
     validate_all_market_scan,
     validate_candidate_battery,
