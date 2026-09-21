@@ -106,6 +106,8 @@ jobs:
       # Retry only transport failures; HTTP/API/schema failures remain fail-closed.
       - name: Official sample transport retry regression (offline)
         run: python3 tests/test_fund_source_transport.py
+      - name: U0 security registry transport retry
+        run: python3 tests/test_security_registry_transport.py
       - name: Nightly staged dependencies and HTTPS entry points (offline)
         run: python3 tests/test_nightly_runtime_dependencies.py
       - name: Paper settlement publication replay

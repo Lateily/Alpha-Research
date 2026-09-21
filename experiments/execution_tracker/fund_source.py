@@ -31,6 +31,7 @@ import argparse
 import http.client
 import json
 import os
+import socket
 import ssl
 import sys
 import time
@@ -62,6 +63,14 @@ def _secid(ticker):
     raise ValueError(f"unknown market for {ticker}")
 
 
+# socket.timeout is listed on purpose: on Python 3.9, the production interpreter, it
+# is NOT a TimeoutError, so a read timeout ("The read operation timed out") was never
+# retried even though CI on 3.11 passed. (2026-09-21)
+# governance-mutation: FUND_SOURCE_READ_TIMEOUT_RETRY
+TRANSIENT_TRANSPORT_ERRORS = (urllib.error.URLError, socket.timeout, TimeoutError,
+                              ConnectionError, http.client.RemoteDisconnected, ssl.SSLError)
+
+
 def _http_json(url=None, data=None, headers=None, timeout=12, attempts=1,
                opener=None, sleeper=None):
     """Read JSON with bounded retries for transient transport failures only."""
@@ -69,8 +78,7 @@ def _http_json(url=None, data=None, headers=None, timeout=12, attempts=1,
         raise ValueError("attempts must be >= 1")
     opener = opener or urllib.request.urlopen
     sleeper = sleeper or time.sleep
-    retryable = (urllib.error.URLError, TimeoutError, ConnectionError,
-                 http.client.RemoteDisconnected, ssl.SSLError)
+    retryable = TRANSIENT_TRANSPORT_ERRORS
     last_error = None
     for attempt in range(attempts):
         req = urllib.request.Request(url, data=data, headers=headers or _HEADERS)

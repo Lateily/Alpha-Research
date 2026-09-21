@@ -6,6 +6,7 @@ import io
 import json
 import os
 from pathlib import Path
+import socket
 import ssl
 import sys
 import unittest
@@ -52,6 +53,27 @@ def _moneyflow_response() -> _Response:
 
 
 class FundSourceTransportTests(unittest.TestCase):
+    def test_socket_timeout_is_retryable_on_python39(self) -> None:
+        """在 3.9 上 socket.timeout 不是 TimeoutError;CI 的 3.11 恰好把它当别名,测不出这个缺口。"""
+        self.assertIn(socket.timeout, fs.TRANSIENT_TRANSPORT_ERRORS)
+
+    def test_tushare_call_recovers_from_one_read_timeout(self) -> None:
+        with mock.patch.object(
+            fs.urllib.request,
+            "urlopen",
+            side_effect=[socket.timeout("The read operation timed out"), _success_response()],
+        ) as urlopen, mock.patch.object(fs.time, "sleep") as sleep:
+            try:
+                result = fs._tushare_call(
+                    "trade_cal", "fixture-token",
+                    {"exchange": "SSE", "start_date": "20260821"}, "exchange,cal_date,is_open",
+                )
+            except socket.timeout as exc:
+                self.fail(f"a single read timeout must be retried, got {exc!r}")
+        self.assertEqual(result["items"], [["SSE", "20260821", "1"]])
+        self.assertEqual(urlopen.call_count, 2)
+        sleep.assert_called_once_with(0.5)
+
     def test_tushare_call_recovers_from_one_tls_eof(self) -> None:
         transient = urllib.error.URLError(
             ssl.SSLEOFError(8, "EOF occurred in violation of protocol")

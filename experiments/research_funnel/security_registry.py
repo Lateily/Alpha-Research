@@ -10,11 +10,16 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import http.client
 import json
 import os
 import re
+import socket
+import ssl
 import statistics
 import tempfile
+import time
+import urllib.error
 import urllib.request
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
@@ -171,20 +176,63 @@ def validate_registry(payload: dict[str, Any]) -> None:
         )
 
 
+# Transport retry (2026-09-21). The liquidity window makes ~20 sequential `daily`
+# calls; one read timeout used to become a source error, which makes E1 refuse the
+# join and leaves the whole nightly unpublished. Only transport failures are retried:
+# provider errors (code != 0), HTTP errors and malformed payloads still fail at once.
+TUSHARE_TIMEOUT_SECONDS = 60
+TUSHARE_TRANSPORT_ATTEMPTS = 3
+TUSHARE_RETRY_BACKOFF_SECONDS = (2.0, 5.0)
+# A retry may start only if a full attempt still ends inside this budget, so the added
+# time stays well within the nightly's 600s step timeout.
+TUSHARE_RETRY_BUDGET_SECONDS = 300
+# socket.timeout is listed on purpose: on Python 3.9, the production interpreter, it
+# is NOT a TimeoutError, so "The read operation timed out" escaped every retry tuple.
+# governance-mutation: SECURITY_REGISTRY_READ_TIMEOUT_RETRY
+TRANSIENT_TRANSPORT_ERRORS = (
+    socket.timeout, TimeoutError, ConnectionError,
+    http.client.RemoteDisconnected, ssl.SSLError, urllib.error.URLError,
+)
+_STEP_STARTED = time.monotonic()
+
+
+def _retry_fits(attempt: int) -> bool:
+    elapsed = time.monotonic() - _STEP_STARTED
+    backoff = TUSHARE_RETRY_BACKOFF_SECONDS[min(attempt, len(TUSHARE_RETRY_BACKOFF_SECONDS)) - 1]
+    # governance-mutation: SECURITY_REGISTRY_RETRY_BUDGET
+    return elapsed + backoff + TUSHARE_TIMEOUT_SECONDS <= TUSHARE_RETRY_BUDGET_SECONDS
+
+
 def _tushare_call(token: str, api_name: str, params: dict[str, Any], fields: str) -> list[dict[str, Any]]:
     body = json.dumps(
         {"api_name": api_name, "token": token, "params": params, "fields": fields}
     ).encode("utf-8")
-    request = urllib.request.Request(
-        TUSHARE_URL,
-        data=body,
-        headers={"Content-Type": "application/json", "User-Agent": "ar-u0-registry/1.0"},
-    )
-    try:
-        with urllib.request.urlopen(request, timeout=60) as response:
-            payload = json.loads(response.read().decode("utf-8"))
-    except Exception as exc:  # network/provider boundary
-        raise RegistryError(f"Tushare {api_name} request failed: {exc}") from exc
+    payload: Any = None
+    for attempt in range(1, TUSHARE_TRANSPORT_ATTEMPTS + 1):
+        request = urllib.request.Request(
+            TUSHARE_URL,
+            data=body,
+            headers={"Content-Type": "application/json", "User-Agent": "ar-u0-registry/1.0"},
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=TUSHARE_TIMEOUT_SECONDS) as response:
+                payload = json.loads(response.read().decode("utf-8"))
+            break
+        except urllib.error.HTTPError as exc:
+            raise RegistryError(f"Tushare {api_name} request failed: {exc}") from exc
+        except TRANSIENT_TRANSPORT_ERRORS as exc:
+            if attempt == TUSHARE_TRANSPORT_ATTEMPTS or not _retry_fits(attempt):
+                raise RegistryError(
+                    f"Tushare {api_name} request failed after {attempt} attempt(s): {exc}"
+                ) from exc
+            print(
+                f"U0_TRANSIENT_RETRY api={api_name} attempt={attempt + 1}/{TUSHARE_TRANSPORT_ATTEMPTS} "
+                f"reason={type(exc).__name__}",
+                flush=True,
+            )
+            time.sleep(TUSHARE_RETRY_BACKOFF_SECONDS[attempt - 1])
+        except Exception as exc:  # network/provider boundary
+            raise RegistryError(f"Tushare {api_name} request failed: {exc}") from exc
     if not isinstance(payload, dict):
         raise RegistryError(f"Tushare {api_name} returned a non-object response")
     if payload.get("code") != 0:
