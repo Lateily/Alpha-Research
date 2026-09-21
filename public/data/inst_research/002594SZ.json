@@ -1,13 +1,55 @@
 {
   "_status": "ok",
   "ticker": "002594.SZ",
-  "fetched_at": "2026-09-18T13:06:41Z",
+  "fetched_at": "2026-09-21T06:04:44Z",
   "api_used": "stk_surv",
   "_attempted_endpoints": [
     "stk_surv"
   ],
   "window_days": 90,
   "surveys": [
+    {
+      "ts_code": "002594.SZ",
+      "name": "比亚迪",
+      "surv_date": "20260918",
+      "fund_visitors": "分析师 Eunice Lee",
+      "rece_place": "比亚迪六角大楼",
+      "rece_mode": "特定对象调研",
+      "rece_org": "Bernstein",
+      "org_type": "证券公司",
+      "comp_rece": "吴越,常恩铭",
+      "inst_count": 2,
+      "surv_type": "特定对象调研",
+      "description": null
+    },
+    {
+      "ts_code": "002594.SZ",
+      "name": "比亚迪",
+      "surv_date": "20260917",
+      "fund_visitors": "--",
+      "rece_place": "香港",
+      "rece_mode": "中金公司秋季策略会",
+      "rece_org": "策略会受邀投资者",
+      "org_type": "--",
+      "comp_rece": "吴越,黄悦",
+      "inst_count": 1,
+      "surv_type": "中金公司秋季策略会",
+      "description": null
+    },
+    {
+      "ts_code": "002594.SZ",
+      "name": "比亚迪",
+      "surv_date": "20260917",
+      "fund_visitors": "分析师 邓学,常菁",
+      "rece_place": "香港",
+      "rece_mode": "中金公司秋季策略会",
+      "rece_org": "中金公司",
+      "org_type": "证券公司",
+      "comp_rece": "吴越,黄悦",
+      "inst_count": 3,
+      "surv_type": "中金公司秋季策略会",
+      "description": null
+    },
     {
       "ts_code": "002594.SZ",
       "name": "比亚迪",
@@ -598,9 +640,9 @@
     }
   ],
   "summary": {
-    "total_30d": 37,
-    "total_90d": 42,
-    "unique_inst_30d": 100,
-    "latest_date": "2026-09-16"
+    "total_30d": 40,
+    "total_90d": 45,
+    "unique_inst_30d": 105,
+    "latest_date": "2026-09-18"
   }
 }

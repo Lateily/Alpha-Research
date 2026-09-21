@@ -1,13 +1,97 @@
 {
   "_status": "ok",
   "ticker": "300054.SZ",
-  "fetched_at": "2026-09-18T13:06:47Z",
+  "fetched_at": "2026-09-21T06:04:50Z",
   "api_used": "stk_surv",
   "_attempted_endpoints": [
     "stk_surv"
   ],
   "window_days": 90,
   "surveys": [
+    {
+      "ts_code": "300054.SZ",
+      "name": "鼎龙股份",
+      "surv_date": "20260917",
+      "fund_visitors": "李衡,王逸峰,王曦,陈柯,付万丛,黄皓,华丁垚",
+      "rece_place": "公司9楼会议室",
+      "rece_mode": "特定对象调研",
+      "rece_org": "阳光资产",
+      "org_type": "保险资产管理公司",
+      "comp_rece": "投资者关系总监 熊亚威",
+      "inst_count": 8,
+      "surv_type": "特定对象调研",
+      "description": null
+    },
+    {
+      "ts_code": "300054.SZ",
+      "name": "鼎龙股份",
+      "surv_date": "20260917",
+      "fund_visitors": "滕光耀",
+      "rece_place": "公司9楼会议室",
+      "rece_mode": "特定对象调研",
+      "rece_org": "长盛基金",
+      "org_type": "基金管理公司",
+      "comp_rece": "投资者关系总监 熊亚威",
+      "inst_count": 2,
+      "surv_type": "特定对象调研",
+      "description": null
+    },
+    {
+      "ts_code": "300054.SZ",
+      "name": "鼎龙股份",
+      "surv_date": "20260917",
+      "fund_visitors": "赵中兴,张保和,李新",
+      "rece_place": "公司9楼会议室",
+      "rece_mode": "特定对象调研",
+      "rece_org": "银河证券",
+      "org_type": "证券公司",
+      "comp_rece": "投资者关系总监 熊亚威",
+      "inst_count": 4,
+      "surv_type": "特定对象调研",
+      "description": null
+    },
+    {
+      "ts_code": "300054.SZ",
+      "name": "鼎龙股份",
+      "surv_date": "20260917",
+      "fund_visitors": "于鹏,陈乐",
+      "rece_place": "公司9楼会议室",
+      "rece_mode": "特定对象调研",
+      "rece_org": "富国基金",
+      "org_type": "基金管理公司",
+      "comp_rece": "投资者关系总监 熊亚威",
+      "inst_count": 3,
+      "surv_type": "特定对象调研",
+      "description": null
+    },
+    {
+      "ts_code": "300054.SZ",
+      "name": "鼎龙股份",
+      "surv_date": "20260917",
+      "fund_visitors": "闫凌云,李梅,赵斯彤,刘哲铭,陈烈钦,郭琳,洪奕昕",
+      "rece_place": "公司9楼会议室",
+      "rece_mode": "特定对象调研",
+      "rece_org": "国寿",
+      "org_type": "--",
+      "comp_rece": "投资者关系总监 熊亚威",
+      "inst_count": 8,
+      "surv_type": "特定对象调研",
+      "description": null
+    },
+    {
+      "ts_code": "300054.SZ",
+      "name": "鼎龙股份",
+      "surv_date": "20260917",
+      "fund_visitors": "汪洁,朱源哲,陈姝宏",
+      "rece_place": "公司9楼会议室",
+      "rece_mode": "特定对象调研",
+      "rece_org": "中信建投",
+      "org_type": "证券公司",
+      "comp_rece": "投资者关系总监 熊亚威",
+      "inst_count": 4,
+      "surv_type": "特定对象调研",
+      "description": null
+    },
     {
       "ts_code": "300054.SZ",
       "name": "鼎龙股份",
@@ -1312,9 +1396,9 @@
     }
   ],
   "summary": {
-    "total_30d": 16,
-    "total_90d": 93,
-    "unique_inst_30d": 32,
-    "latest_date": "2026-08-26"
+    "total_30d": 22,
+    "total_90d": 99,
+    "unique_inst_30d": 60,
+    "latest_date": "2026-09-17"
   }
 }
