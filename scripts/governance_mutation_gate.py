@@ -10746,8 +10746,8 @@ MUTATIONS = MUTATIONS + (
     MutationCase(
         mutation_id="PRIVATE_ACCESS_OWNER", component="AIOS private workbench",
         source_path="scripts/llm/nonprod_workbench.py", test_script="tests/test_workbench_private_access.py",
-        before='        if not secrets.compare_digest(login.encode("utf-8"), self.owner_login.encode("utf-8")):', after="        if False:",
-        expected_failure_marker="test_foreign_identity_cannot_read_with_valid_session",
+        before='        if secrets.compare_digest(login, self.owner_login):', after="        if True:",
+        expected_failure_marker="test_unauthenticated_entry_cannot_mint_cookie",
         rationale="A valid local session must not admit another Tailnet identity.",
     ),
     MutationCase(
@@ -10767,16 +10767,16 @@ MUTATIONS = MUTATIONS + (
     MutationCase(
         mutation_id="PRIVATE_ACCESS_GET_CALLSITE", component="AIOS private workbench",
         source_path="scripts/llm/nonprod_workbench.py", test_script="tests/test_workbench_private_access.py",
-        before="        def do_GET(self):\n            try:\n                if private is not None:\n                    private.check(self.headers, self.client_address[0])",
-        after="        def do_GET(self):\n            try:\n                pass",
+        before="        def do_GET(self):\n            try:\n                login, role = None, \"LOCAL\"\n                if private is not None:\n                    login, role = private.check(self.headers, self.client_address[0])",
+        after="        def do_GET(self):\n            try:\n                login, role = None, \"LOCAL\"\n                if private is not None:\n                    login, role = None, \"LOCAL\"",
         expected_failure_marker="test_unauthenticated_entry_cannot_mint_cookie",
         rationale="The actual entry point must check identity before minting sessions.",
     ),
     MutationCase(
         mutation_id="PRIVATE_ACCESS_POST_CALLSITE", component="AIOS private workbench",
         source_path="scripts/llm/nonprod_workbench.py", test_script="tests/test_workbench_private_access.py",
-        before="        def do_POST(self):\n            try:\n                if private is not None:\n                    private.check(self.headers, self.client_address[0])",
-        after="        def do_POST(self):\n            try:\n                pass",
+        before="        def do_POST(self):\n            try:\n                login, role = None, \"LOCAL\"\n                if private is not None:\n                    login, role = private.check(self.headers, self.client_address[0])",
+        after="        def do_POST(self):\n            try:\n                login, role = None, \"LOCAL\"\n                if private is not None:\n                    login, role = None, \"LOCAL\"",
         expected_failure_marker="test_private_post_guard_precedes_any_state_write",
         rationale="A session alone cannot authorize a write from a different identity.",
     ),
@@ -10814,6 +10814,35 @@ MUTATIONS = MUTATIONS + (
         before='            raise WorkbenchError("EXACT_OWNER_LOGIN_REQUIRED")', after="            pass",
         expected_failure_marker="test_private_login_must_be_exact_nonempty_single_identity",
         rationale="An empty or broad identity configuration must fail before serving.",
+    ),
+    MutationCase(
+        mutation_id="PRIVATE_ACCESS_TEAM_ALLOWLIST", component="AIOS private workbench",
+        source_path="scripts/llm/nonprod_workbench.py", test_script="tests/test_workbench_private_access.py",
+        before='        if login in self.developer_logins:', after='        if True:',
+        expected_failure_marker="test_unlisted_identity_does_not_gain_entry_or_cookie",
+        rationale="Only explicitly approved exact Serve logins may enter the team sandbox.",
+    ),
+    MutationCase(
+        mutation_id="PRIVATE_ACCESS_TEAM_ROLE", component="AIOS private workbench",
+        source_path="scripts/llm/nonprod_workbench.py", test_script="tests/test_workbench_private_access.py",
+        before='                if role == "DEVELOPER" and self.path not in {', after='                if False and self.path not in {',
+        expected_failure_marker="test_named_developer_can_enter_and_run_only_offline_sandbox_jobs",
+        rationale="A developer cannot call owner-only workspace routes or configuration writes.",
+    ),
+    MutationCase(
+        mutation_id="PRIVATE_ACCESS_TEAM_SESSION", component="AIOS private workbench",
+        source_path="scripts/llm/nonprod_workbench.py", test_script="tests/test_workbench_private_access.py",
+        before='        return hmac.new(session.encode(), login.encode(), hashlib.sha256).hexdigest()', after='        return session',
+        expected_failure_marker="test_named_developer_can_enter_and_run_only_offline_sandbox_jobs",
+        rationale="Team member browser cookies must not be shared with the owner.",
+    ),
+    MutationCase(
+        mutation_id="PRIVATE_ACCESS_TEAM_CONFIG", component="AIOS private workbench",
+        source_path="scripts/llm/nonprod_workbench.py", test_script="tests/test_workbench_private_access.py",
+        before='                    or not re.fullmatch(r"[A-Za-z0-9.!#$%&\'*+/=?^_`{|}~-]+@[A-Za-z0-9.-]+", login)):',
+        after='                    or False):',
+        expected_failure_marker="test_invalid_developer_grants_fail_before_state_open",
+        rationale="Wildcard, whitespace, and malformed grants cannot reach the listener.",
     ),
 )
 

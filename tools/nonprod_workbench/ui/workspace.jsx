@@ -218,7 +218,7 @@ export default function Workspace({
       </>}
       {tab === 'nightly' && <>
         <section><div className="section-title"><h2>旧生产最近尝试</h2><Status value={attempt.report} /></div><div className="step-grid">{(attempt.steps || []).map((s, i) => <article key={s.step} className={s.status === 'OK' ? 'step-ok' : 'step-gap'}><span>{String(i + 1).padStart(2, '0')}</span><h3>{s.step}</h3><Status value={s.status} /><small>{s.elapsed_sec == null ? '—' : `${s.elapsed_sec}s`}</small></article>)}</div>{!attempt.steps?.length && <Empty title="尚无夜链状态快照" />}</section>
-        <section><div className="section-title"><h2>本地计划任务</h2><Status value={state.scheduler.status} /></div><div className="source-strip"><span>服务器运行且电脑唤醒时执行</span><span>错过时段不补跑</span><span>新任务默认不启用 · 无实时采集权</span></div><div className="toolbar">{Object.entries(jobLabels).map(([kind, label]) => <button key={kind} disabled={busy || !!pending} onClick={() => run(kind)}><Play size={14} />{label}</button>)}</div><Table heads={['任务', '频率', '状态', '变更']}>{state.schedules.map(s => <tr key={s.schedule_id}><td>{jobLabels[s.kind]}</td><td>{s.interval_minutes} 分钟</td><td><Status value={s.enabled ? 'ENABLED_LOCAL' : 'PAUSED'} /></td><td><button disabled={busy || !password || !!pending} onClick={() => act('/api/workspace/schedule', {
+        <section><div className="section-title"><h2>本地计划任务</h2><Status value={state.scheduler.status} /></div><div className="source-strip"><span>服务器运行且电脑唤醒时执行</span><span>错过时段不补跑</span><span>新任务默认不启用 · 无实时采集权</span></div><div className="toolbar">{Object.entries(jobLabels).map(([kind, label]) => <button key={kind} disabled={busy || !!pending} onClick={() => run(kind)}><Play size={14} />{label}</button>)}</div><Table heads={['任务', '频率', '状态', '变更']}>{state.schedules.map(s => <tr key={s.schedule_id}><td>{jobLabels[s.kind]}</td><td>{s.interval_minutes} 分钟</td><td><Status value={s.enabled ? 'ENABLED_LOCAL' : 'PAUSED'} /></td><td>{state.access_role !== 'DEVELOPER' && <button disabled={busy || !password || !!pending} onClick={() => act('/api/workspace/schedule', {
                   command_id: id('schedule'),
                   schedule_id: s.schedule_id,
                   expected_revision: s.revision,
@@ -226,8 +226,8 @@ export default function Workspace({
                   interval_minutes: s.interval_minutes,
                   enabled: !s.enabled,
                   password
-                })}>{s.enabled ? '暂停' : '启用'}</button></td></tr>)}</Table>
-          <form className="schedule-form" onSubmit={e => {
+                })}>{s.enabled ? '暂停' : '启用'}</button>}</td></tr>)}</Table>
+          {state.access_role !== 'DEVELOPER' && <form className="schedule-form" onSubmit={e => {
             e.preventDefault();
             act('/api/workspace/schedule', {
               command_id: id('schedule'),
@@ -238,7 +238,7 @@ export default function Workspace({
               enabled: false,
               password
             }, '计划已保存为暂停状态');
-          }}><label>任务类型<select value={scheduleKind} onChange={e => setScheduleKind(e.target.value)}>{Object.entries(jobLabels).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></label><label>间隔（分钟）<input type="number" min="10" max="10080" value={intervalMinutes} onChange={e => setIntervalMinutes(e.target.value)} /></label><label>本地管理员口令<input type="password" autoComplete="current-password" value={password} onChange={e => setPassword(e.target.value)} /></label><button type="submit" disabled={busy || !state.owner_configured || !!pending}><Plus size={16} />新增暂停计划</button></form></section>
+          }}><label>任务类型<select value={scheduleKind} onChange={e => setScheduleKind(e.target.value)}>{Object.entries(jobLabels).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></label><label>间隔（分钟）<input type="number" min="10" max="10080" value={intervalMinutes} onChange={e => setIntervalMinutes(e.target.value)} /></label><label>本地管理员口令<input type="password" autoComplete="current-password" value={password} onChange={e => setPassword(e.target.value)} /></label><button type="submit" disabled={busy || !state.owner_configured || !!pending}><Plus size={16} />新增暂停计划</button></form>}</section>
         <section><div className="section-title"><h2>新载体执行记录</h2><Status value="OFFLINE ONLY" /></div><Table heads={['任务 ID', '类型', '状态', '实物结果']}>{[...state.jobs].reverse().map(j => <tr key={j.job_id}><td><code>{j.job_id}</code></td><td>{jobLabels[j.kind]}</td><td><Status value={j.status} />{j.status === 'STARTED' && <p>运行中或中断未收尾；不自动重复</p>}</td><td><JsonEvidence title="结果回执" value={j.result} /></td></tr>)}</Table></section>
       </>}
       {tab === 'macro' && <>
@@ -299,7 +299,8 @@ export default function Workspace({
                   content_hash: selectedDoc.content_hash
                 }, '版本已冻结并进入本地待审核')}><Send size={16} />提交审核</button></div></div></form>{selectedDoc?.review && <JsonEvidence title="上一轮审核记录" value={selectedDoc.review} />}</section>
       </>}
-      {tab === 'reviews' && <>
+      {tab === 'reviews' && state.access_role === 'DEVELOPER' && <section><div className="section-title"><h2>待审核稿件</h2><span>{inReview.length} 份</span></div>{inReview.map(d => <article className="review-item" key={d.document_id}><h3>{d.content.title} · v{d.revision}</h3><JsonEvidence title="冻结全文" value={d.content} /></article>)}{!inReview.length && <Empty title="没有待审核稿件" />}<p>审核由 owner 另行完成；本页不能签发 U4 或 paper 批准。</p></section>}
+      {tab === 'reviews' && state.access_role !== 'DEVELOPER' && <>
         <section><div className="section-title"><h2>本地审核身份</h2><Status value={state.owner_configured ? 'LOCAL OWNER CONFIGURED' : 'NOT CONFIGURED'} /></div>{!state.owner_configured ? <form className="config-form" onSubmit={e => {
             e.preventDefault();
             act('/api/workspace/owner', {

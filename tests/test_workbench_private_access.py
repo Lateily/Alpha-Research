@@ -32,9 +32,9 @@ class PrivateAccessTests(unittest.TestCase):
         with self.assertRaises(wb.WorkbenchError):
             wb.make_handler(self.store, self.assets, ORIGIN, "test-session")
 
-    def http(self, path="/", body=None, overrides=None, duplicates=(), peer="127.0.0.1"):
-        policy = wb.private_access(ORIGIN, OWNER)
-        Handler = wb.make_handler(self.store, self.assets, ORIGIN, "test-session", private=policy)
+    def http(self, path="/", body=None, overrides=None, duplicates=(), peer="127.0.0.1", developers=(), system=None):
+        policy = wb.private_access(ORIGIN, OWNER, developers)
+        Handler = wb.make_handler(self.store, self.assets, ORIGIN, "test-session", system=system, private=policy)
         handler = object.__new__(Handler)
         handler.path = path
         handler.client_address = (peer, 12345)
@@ -148,6 +148,61 @@ class PrivateAccessTests(unittest.TestCase):
     def test_read_paths_stay_a_closed_asset_allowlist(self):
         for path in ("/../../.env", "/api/state?path=/etc/passwd", "/data/workspace.sqlite3", "/api/production"):
             self.assertIn(b"404 Not Found", self.http(path))
+
+    def test_named_developer_can_enter_and_run_only_offline_sandbox_jobs(self):
+        developer = "simon@example.test"
+        entry = self.http(overrides={"Tailscale-User-Login": developer, "Cookie": None, "Origin": None}, developers=(developer,))
+        self.assertIn(b"200 OK", entry)
+        cookie = entry.split(b"Set-Cookie: ar_workbench=", 1)[1].split(b";", 1)[0].decode()
+        self.assertNotEqual(cookie, "test-session")
+        headers = {"Tailscale-User-Login": developer, "Cookie": f"ar_workbench={cookie}"}
+        state = self.http("/api/state", overrides=headers, developers=(developer,))
+        self.assertIn(b'"team_access_enabled":true', state)
+        self.assertIn(b"200 OK", self.http("/api/gateway/probe", self.probe(), headers, developers=(developer,)))
+        self.assertEqual(len(self.store.snapshot()["receipts"]), 1)
+        for path in ("/api/deployment-draft", "/api/workspace/owner", "/api/workspace/review", "/api/workspace/schedule", "/api/production/write"):
+            raw = self.http(path, {"approved_by": "Junyan"}, headers, developers=(developer,))
+            self.assertIn(b"403 Forbidden", raw)
+            self.assertIn(b"PRIVATE_ROLE_REQUIRED", raw)
+        self.assertEqual(self.store.snapshot()["revision"], 0)
+        self.assertIn(b"403 Forbidden", self.http("/api/state", overrides={"Tailscale-User-Login": OWNER, "Cookie": f"ar_workbench={cookie}"}, developers=(developer,)))
+        self.assertIn(b"403 Forbidden", self.http("/api/state", overrides={"Tailscale-User-Login": developer}, developers=(developer,)))
+
+    def test_unlisted_identity_does_not_gain_entry_or_cookie(self):
+        for login in ("simon@example.test.evil", "SIMON@example.test", "other@example.test", ""):
+            raw = self.http(overrides={"Tailscale-User-Login": login}, developers=("simon@example.test",))
+            self.assertIn(b"403 Forbidden", raw)
+            self.assertNotIn(b"Set-Cookie", raw)
+
+    def test_three_developers_share_sandbox_capabilities_not_owner_routes(self):
+        developers = ("simon@example.test", "jason@example.test", "better@example.test")
+        system = mock.Mock()
+        system.snapshot.return_value = {"authority": {"team_access": False}, "events": []}
+        system.dispatch.return_value = {"status": "DRAFT_ONLY"}
+        for login in developers:
+            entry = self.http(overrides={"Tailscale-User-Login": login, "Cookie": None, "Origin": None}, developers=developers, system=system)
+            token = entry.split(b"Set-Cookie: ar_workbench=", 1)[1].split(b";", 1)[0].decode()
+            headers = {"Tailscale-User-Login": login, "Cookie": f"ar_workbench={token}"}
+            snapshot = self.http("/api/workspace", overrides=headers, developers=developers, system=system)
+            self.assertIn(b'"team_access":true', snapshot)
+            self.assertIn(b'"access_role":"DEVELOPER"', snapshot)
+            for path in ("/api/workspace/draft", "/api/workspace/submit", "/api/workspace/job"):
+                self.assertIn(b"200 OK", self.http(path, {"command_id": "sandbox-123"}, headers, developers=developers, system=system))
+            before = system.dispatch.call_count
+            for path in ("/api/workspace/owner", "/api/workspace/review", "/api/workspace/schedule"):
+                self.assertIn(b"PRIVATE_ROLE_REQUIRED", self.http(path, {"password": "known-owner-password"}, headers, developers=developers, system=system))
+            self.assertEqual(system.dispatch.call_count, before)
+        owner = self.http("/api/workspace/review", {"password": "known-owner-password"}, developers=developers, system=system)
+        self.assertIn(b"200 OK", owner)
+
+    def test_invalid_developer_grants_fail_before_state_open(self):
+        for developers in ((OWNER,), ("simon@example.test", "simon@example.test"), ("*",), (" simon@example.test",), ("simon@example.test\n",), (["not-a-string"],)):
+            with self.assertRaises(wb.WorkbenchError):
+                wb.private_access(ORIGIN, OWNER, developers)
+        root = Path(self.tmp.name) / "must-not-exist"
+        with self.assertRaises(wb.WorkbenchError):
+            wb.main(["--state-root", str(root), "--private-developer-login", "simon@example.test"])
+        self.assertFalse(root.exists())
 
 
 if __name__ == "__main__":
