@@ -256,9 +256,15 @@ def run_candidates() -> int:
 # errors; four workers ran at 16.0s and eight at 14.7s, so throughput scaled linearly.
 # governance-mutation: FUNNEL_BATTERY_WORKER_CEILING
 MAX_WORKERS = 6
-# Candidates that failed on their own (not because the batch ran out of time) get one
-# more attempt while the batch budget still has room for a full row.
+# One more attempt, while the batch budget still has room for a full row, for
+# candidates that failed on their own (not because the batch ran out of time), and for
+# collected rows where a Tushare read failed inside a dimension. full_battery wraps each
+# dimension in its own try/except, so a network blip or a rate limit surfaces as a
+# DATA_BLOCKED dimension with err "TUSHARE_READ_FAILED:<type>" inside a row whose
+# reason is None; that is the transient failure most worth retrying.
 RETRYABLE_REASONS = ("CANDIDATE_TIMEOUT", "WORKER_EXIT")
+READ_FAILURE_PREFIX = "TUSHARE_READ_FAILED:"
+BATCH_CUTOFF_REASONS = ("BATCH_TIMEOUT", "BATCH_NOT_STARTED")
 # The batch budget is derived from the step's own ceiling in nightly_limits, keeping
 # a reserve for cleanup, validation and stage publication inside that ceiling.
 BATTERY_RESERVE_SECONDS = 120.0
@@ -409,10 +415,39 @@ def collect_rows(codes, target, worker, *, max_workers=MAX_WORKERS,
     return outcomes
 
 
-def _retryable(reason: str | None) -> bool:
-    """A candidate that failed on its own; batch-level cut-offs are never retried."""
+def _read_failed_dims(row: dict | None) -> int:
+    dims = (row or {}).get("dims") or {}
+    return sum(1 for evidence in dims.values()
+               if isinstance(evidence, dict) and str(evidence.get("err") or "").startswith(READ_FAILURE_PREFIX))
+
+
+def _covered(outcome: dict) -> int:
+    if outcome["reason"] is not None:
+        return -1
+    return int(((outcome["row"] or {}).get("completeness") or {}).get("covered") or 0)
+
+
+def _retryable(outcome: dict) -> bool:
+    """Batch-level cut-offs are never retried: the budget is already spent."""
+    reason = outcome["reason"]
+    if reason is None:
+        # governance-mutation: FUNNEL_BATTERY_RETRY_READ_FAILURES
+        return _read_failed_dims(outcome["row"]) > 0
     # governance-mutation: FUNNEL_BATTERY_RETRY_SCOPE
-    return reason is not None and (reason in RETRYABLE_REASONS or reason.startswith("PROVIDER_ERROR:"))
+    return reason in RETRYABLE_REASONS or reason.startswith("PROVIDER_ERROR:")
+
+
+def _retry_wins(previous: dict, retried: dict) -> bool:
+    """Which outcome a retried candidate keeps.
+
+    A candidate that failed outright takes the latest attempt, success or not, so a
+    batch cut-off during the retry is reported as such. A collected row that had read
+    failures is replaced only by a collected row covering at least as much.
+    """
+    # governance-mutation: FUNNEL_BATTERY_RETRY_LATEST
+    if previous["reason"] is not None:
+        return True
+    return retried["reason"] is None and _covered(retried) >= _covered(previous)
 
 
 def _blocked_row(tk: str, today: str, why: str) -> dict:
@@ -512,20 +547,25 @@ def run_battery() -> int:
         if [o["ts_code"] for o in outcomes] != order:
             raise FunnelError("battery collector coverage differs from candidate manifest")
         by_code = {o["ts_code"]: o for o in outcomes}
-        retry = [o["ts_code"] for o in outcomes if _retryable(o["reason"])]
+        retry = [o["ts_code"] for o in outcomes if _retryable(o)]
         remaining = BATCH_SECONDS - (time.monotonic() - started)
-        recovered = 0
+        recovered = cut_by_batch = 0
         # governance-mutation: FUNNEL_BATTERY_RETRY_PASS
         if retry and remaining > ROW_SECONDS:
-            second = collect_rows(retry, target, provider, budget_seconds=remaining,
+            second = collect_rows(retry, target, provider,
+                                  # governance-mutation: FUNNEL_BATTERY_RETRY_BUDGET_PASSED
+                                  budget_seconds=remaining,
                                   progress=_collection_progress)
             if [o["ts_code"] for o in second] != retry:
                 raise FunnelError("battery retry coverage differs from the retried candidates")
             for outcome in second:
-                if outcome["reason"] is None:
+                if outcome["reason"] in BATCH_CUTOFF_REASONS:
+                    cut_by_batch += 1
+                if _retry_wins(by_code[outcome["ts_code"]], outcome):
                     by_code[outcome["ts_code"]] = outcome
-                    recovered += 1
-        collection_retry = {"attempted": len(retry), "recovered": recovered}
+            recovered = sum(1 for tk in retry
+                            if by_code[tk]["reason"] is None and _read_failed_dims(by_code[tk]["row"]) == 0)
+        collection_retry = {"attempted": len(retry), "recovered": recovered, "cut_by_batch": cut_by_batch}
         outcomes = [by_code[tk] for tk in codes]
         for outcome in outcomes:
             tk = outcome["ts_code"]

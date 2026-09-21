@@ -927,17 +927,18 @@ class UnifiedRunContextTest(unittest.TestCase):
             nightly.ARTIFACTS = {"official_sample": [("run_target.json", "trade_date", True)]}
             seen = {}
 
-            def fake(cmd, cwd=None, env=None, timeout=None):
+            def fake_run(cmd, cwd=None, env=None, text=None, capture_output=None, timeout=None):
+                # The real subprocess.run: the timeout must survive both run_steps and the runner.
                 seen[env["AR_NIGHTLY_STEP"]] = timeout
                 if cmd[1] == "official.py":
                     write_json(os.path.join(cwd, "run_target.json"), {
                         "trade_date": "20260804", "target_trade_date": "20260804",
                         "run_id": env["AR_RUN_ID"],
                     })
-                return 0, "ok"
+                return mock.Mock(returncode=0, stdout="ok", stderr="")
 
             try:
-                with mock.patch.object(nightly, "_subprocess_runner", side_effect=fake):
+                with mock.patch.object(nightly.subprocess, "run", side_effect=fake_run):
                     nightly.run_steps(require_live=False, verify=True, base=tmp, run_id="CTX9")
             finally:
                 nightly.STEPS, nightly.ARTIFACTS = old_steps, old_artifacts

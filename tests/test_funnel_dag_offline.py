@@ -838,44 +838,96 @@ class FinalizeEndToEndTests(unittest.TestCase):
         self.assertEqual(len(order) - cut, sum(b["zero"] for b in collection["by_board"].values()))
         self.assertEqual(cut, sum(b["complete"] for b in collection["by_board"].values()))
 
+    @staticmethod
+    def _read_failed_row(tk):
+        row = complete_row(tk)
+        row["dims"]["资金"] = {"status": "DATA_BLOCKED", "err": "TUSHARE_READ_FAILED:ReadTimeout"}
+        full_battery._apply_verdict_v0_unvalidated(row["dims"])  # keep the display verdict honest
+        row["completeness"] = {"covered": 5, "of": 6, "missing": ["资金"], "verdict": "PARTIAL"}
+        return row
+
+    def _retry_setup(self, root):
+        _pv, obs = self._run_stages(root, "candidates")
+        bundle = obs / TARGET / RUN_ID
+        codes = json.loads((bundle / "candidate_manifest.json").read_text("utf-8"))["ts_codes"]
+        return obs, bundle, codes, fp.battery_dispatch_order(codes, TARGET)
+
     def test_individually_failed_candidates_get_one_bounded_retry(self) -> None:
-        """采全:单只超时/进程退出/数据源报错的补采一次;批次截断(未开始)不补。"""
+        """采全:单只超时/进程退出/数据源报错,以及行内读取失败的,补采一次;批次截断不补。"""
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            _pv, obs = self._run_stages(root, "candidates")
-            bundle = obs / TARGET / RUN_ID
-            codes = json.loads((bundle / "candidate_manifest.json").read_text("utf-8"))["ts_codes"]
-            order = fp.battery_dispatch_order(codes, TARGET)
-            first_reasons = {order[0]: "CANDIDATE_TIMEOUT", order[1]: "WORKER_EXIT",
-                             order[2]: "PROVIDER_ERROR:ValueError", order[3]: "CANDIDATE_TIMEOUT",
-                             order[4]: "BATCH_NOT_STARTED"}
-            calls: list[list[str]] = []
+            obs, bundle, codes, order = self._retry_setup(root)
+            first = {order[0]: "CANDIDATE_TIMEOUT", order[1]: "WORKER_EXIT",
+                     order[2]: "PROVIDER_ERROR:ValueError", order[3]: "READ", order[4]: "BATCH_NOT_STARTED"}
+            calls: list[tuple[list[str], dict]] = []
 
-            def collector(asked, target, worker, **_kwargs):
-                calls.append(list(asked))
+            def collector(asked, target, worker, **kwargs):
+                calls.append((list(asked), kwargs))
                 if len(calls) == 1:
-                    return [{"ts_code": tk, "reason": first_reasons.get(tk),
-                             "row": None if tk in first_reasons else complete_row(tk)} for tk in asked]
+                    return [{"ts_code": tk,
+                             "reason": None if first.get(tk) in (None, "READ") else first[tk],
+                             "row": (self._read_failed_row(tk) if first.get(tk) == "READ"
+                                     else None if tk in first else complete_row(tk))} for tk in asked]
                 return [{"ts_code": tk, "reason": None, "row": complete_row(tk)} for tk in asked]
 
-            self.assertEqual(0, self._collect(root, obs, collector))
+            # The first pass takes 200s of the 1680s budget, so the retry gets 1480s.
+            with mock.patch.object(dag.time, "monotonic", side_effect=[100.0, 300.0]):
+                self.assertEqual(0, self._collect(root, obs, collector))
             battery = json.loads((bundle / "candidate_battery.json").read_text("utf-8"))
         self.assertEqual(2, len(calls), "a second, bounded pass must run for individually failed rows")
-        self.assertEqual([order[0], order[1], order[2], order[3]], calls[1])
-        self.assertEqual({"attempted": 4, "recovered": 4}, battery["collection_retry"])
+        self.assertEqual([order[0], order[1], order[2], order[3]], calls[1][0])
+        self.assertEqual(1480.0, calls[1][1].get("budget_seconds"))
+        self.assertEqual({"attempted": 4, "recovered": 4, "cut_by_batch": 0}, battery["collection_retry"])
         by_code = {row["ts_code"]: row for row in battery["results"]}
         for tk in order[:4]:
             self.assertEqual("COMPLETE", by_code[tk]["completeness"]["verdict"], tk)
         self.assertEqual("BATCH_NOT_STARTED", by_code[order[4]]["dims"]["行情"]["err"])
         self.assertEqual(codes, [row["ts_code"] for row in battery["results"]])
 
+    def test_a_batch_cutoff_during_the_retry_is_reported(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            obs, bundle, codes, order = self._retry_setup(root)
+            calls = []
+
+            def collector(asked, target, worker, **_kwargs):
+                calls.append(list(asked))
+                if len(calls) == 1:
+                    return [{"ts_code": tk, "reason": "CANDIDATE_TIMEOUT" if tk == order[0] else None,
+                             "row": None if tk == order[0] else complete_row(tk)} for tk in asked]
+                return [{"ts_code": tk, "reason": "BATCH_TIMEOUT", "row": None} for tk in asked]
+
+            self.assertEqual(0, self._collect(root, obs, collector))
+            battery = json.loads((bundle / "candidate_battery.json").read_text("utf-8"))
+        row = next(r for r in battery["results"] if r["ts_code"] == order[0])
+        self.assertEqual("BATCH_TIMEOUT", row["dims"]["行情"]["err"])
+        self.assertEqual({"attempted": 1, "recovered": 0, "cut_by_batch": 1}, battery["collection_retry"])
+        self.assertTrue(fp.battery_collection_summary(battery)["budget_exhausted"])
+
+    def test_a_partial_row_is_not_replaced_by_a_worse_retry(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            obs, bundle, codes, order = self._retry_setup(root)
+            calls = []
+
+            def collector(asked, target, worker, **_kwargs):
+                calls.append(list(asked))
+                if len(calls) == 1:
+                    return [{"ts_code": tk, "reason": None,
+                             "row": self._read_failed_row(tk) if tk == order[0] else complete_row(tk)} for tk in asked]
+                return [{"ts_code": tk, "reason": "CANDIDATE_TIMEOUT", "row": None} for tk in asked]
+
+            self.assertEqual(0, self._collect(root, obs, collector))
+            battery = json.loads((bundle / "candidate_battery.json").read_text("utf-8"))
+        self.assertEqual([order[0]], calls[1])
+        row = next(r for r in battery["results"] if r["ts_code"] == order[0])
+        self.assertEqual(5, row["completeness"]["covered"])
+        self.assertEqual({"attempted": 1, "recovered": 0, "cut_by_batch": 0}, battery["collection_retry"])
+
     def test_retry_is_skipped_when_the_budget_has_no_room_for_a_row(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            _pv, obs = self._run_stages(root, "candidates")
-            bundle = obs / TARGET / RUN_ID
-            codes = json.loads((bundle / "candidate_manifest.json").read_text("utf-8"))["ts_codes"]
-            order = fp.battery_dispatch_order(codes, TARGET)
+            obs, bundle, codes, order = self._retry_setup(root)
             calls: list[list[str]] = []
 
             def collector(asked, target, worker, **_kwargs):
@@ -888,7 +940,7 @@ class FinalizeEndToEndTests(unittest.TestCase):
                 self.assertEqual(0, self._collect(root, obs, collector))
             battery = json.loads((bundle / "candidate_battery.json").read_text("utf-8"))
         self.assertEqual(1, len(calls))
-        self.assertEqual({"attempted": 1, "recovered": 0}, battery["collection_retry"])
+        self.assertEqual({"attempted": 1, "recovered": 0, "cut_by_batch": 0}, battery["collection_retry"])
 
     def test_bounded_collection_reaches_persistent_bundle_and_ready_pool(self) -> None:
         import test_funnel_dag_offline as fixtures

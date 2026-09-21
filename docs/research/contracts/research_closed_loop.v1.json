@@ -124,7 +124,7 @@
     {"path": "docs/research/prospective/SEMICONDUCTOR_DAILY_SOURCE_REPAIR_PLAN_V0_1.md", "sha256": "sha256:105ca70b8a152d90905e27871b5dc6a4aae2d56b6d3d170c482c1d152706a934"},
     {"path": "experiments/research_funnel/funnel_pipeline.py", "sha256": "sha256:becaedf69c3b7d1da84a74f2dfc39133a9c28db6c805b7510749aa1ece855f13"},
     {"path": "experiments/research_funnel/feature_store.py", "sha256": "sha256:6be02ed4034b4a05b4a3656830c046e1013697acaa8ab9655c097461f7a43356"},
-    {"path": "experiments/research_funnel/funnel_dag.py", "sha256": "sha256:30c0bce08ad6192ac58dad407a75c6e5a9f7804d74b1efb400a3350620bc6c82"},
+    {"path": "experiments/research_funnel/funnel_dag.py", "sha256": "sha256:cd1ccb7843737732c8382e892f0d5334eef91725dd16561b4fe87b77d5c77018"},
     {"path": "experiments/research_funnel/semiconductor_inputs.py", "sha256": "sha256:6701258484cc92bc3280a9086a33bd8ee216161bc0bde9bfed67b7bd94a9aaec"},
     {"path": "experiments/research_funnel/semiconductor_source_repair.py", "sha256": "sha256:d63f7ae910c198a09e07cbb7ede1510da2204b05f017079e4fe627aa7b6d55c6"},
     {"path": "experiments/research_funnel/industry_taxonomy.v1.json", "sha256": "sha256:0cd06c80c2d0b612b1c8b6168f97e7930db049b610ff07f2d0076e1322175d4e"},

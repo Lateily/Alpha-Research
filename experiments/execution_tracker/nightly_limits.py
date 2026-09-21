@@ -1,7 +1,7 @@
 """Shared fail-closed process limits for the nightly orchestrator and its steps."""
 
-# One authority source: child steps may reserve time inside this limit, while
-# run_nightly must pass the same value to subprocess.run.
+# One authority source: child steps may reserve time inside their limit, and
+# run_nightly passes step_timeout(step) to subprocess.run for every step.
 NIGHTLY_STEP_TIMEOUT_SECONDS = 600
 
 # candidate_battery has its own ceiling (2026-09-21). The owner requires every
