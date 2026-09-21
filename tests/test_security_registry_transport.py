@@ -8,6 +8,7 @@ retry tuple must name it explicitly.
 
 from __future__ import annotations
 
+import ast
 import io
 import json
 import socket
@@ -22,6 +23,22 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "experiments" / "research_funnel"))
 
 import security_registry as registry  # noqa: E402
+
+
+def _named_in_tuple(module_file: str, name: str) -> set[str]:
+    """Element expressions of a module-level tuple, read from source.
+
+    On Python 3.11+ socket.timeout IS TimeoutError, so a runtime membership check
+    cannot tell whether socket.timeout was named. The 3.9 production interpreter
+    needs it named, so the guard reads the source instead.
+    """
+    tree = ast.parse(Path(module_file).read_text(encoding="utf-8"))
+    for node in tree.body:
+        if isinstance(node, ast.Assign) and any(
+            isinstance(target, ast.Name) and target.id == name for target in node.targets
+        ):
+            return {ast.unparse(element) for element in node.value.elts}
+    raise AssertionError(f"{name} is not a module-level tuple in {module_file}")
 
 
 class _Response(io.BytesIO):
@@ -58,6 +75,8 @@ class SecurityRegistryTransportTests(unittest.TestCase):
 
     def test_socket_timeout_is_retryable_on_python39(self) -> None:
         """在 3.9 上 socket.timeout 不是 TimeoutError,必须在元组里点名,否则读超时永不重试。"""
+        named = _named_in_tuple(registry.__file__, "TRANSIENT_TRANSPORT_ERRORS")
+        self.assertIn("socket.timeout", named)
         self.assertIn(socket.timeout, registry.TRANSIENT_TRANSPORT_ERRORS)
         self.assertNotIn(urllib.error.HTTPError, registry.TRANSIENT_TRANSPORT_ERRORS)
 
@@ -74,7 +93,7 @@ class SecurityRegistryTransportTests(unittest.TestCase):
         self.assertEqual([{"cal_date": "20260921", "is_open": "1"}], rows)
         self.assertEqual(2, urlopen.call_count)
         sleep.assert_called_once_with(2.0)
-        self.assertIn("U0_TRANSIENT_RETRY api=trade_cal attempt=2/3 reason=timeout", out.getvalue())
+        self.assertIn("U0_TRANSIENT_RETRY api=trade_cal attempt=2/3 reason=TIMEOUT", out.getvalue())
 
     def test_exhausted_retries_fail_closed_with_the_attempt_count(self) -> None:
         with mock.patch.object(

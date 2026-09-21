@@ -196,6 +196,22 @@ TRANSIENT_TRANSPORT_ERRORS = (
 _STEP_STARTED = time.monotonic()
 
 
+def _transport_reason(exc: BaseException) -> str:
+    """A reason token that reads the same on every interpreter.
+
+    type(exc).__name__ is 'timeout' on Python 3.9 and 'TimeoutError' on 3.11+,
+    because socket.timeout became an alias; operators should not see two names
+    for one event.
+    """
+    if isinstance(exc, (socket.timeout, TimeoutError)):
+        return "TIMEOUT"
+    if isinstance(exc, ssl.SSLError):
+        return "TLS"
+    if isinstance(exc, (ConnectionError, http.client.RemoteDisconnected)):
+        return "CONNECTION"
+    return "TRANSPORT"
+
+
 def _retry_fits(attempt: int) -> bool:
     elapsed = time.monotonic() - _STEP_STARTED
     backoff = TUSHARE_RETRY_BACKOFF_SECONDS[min(attempt, len(TUSHARE_RETRY_BACKOFF_SECONDS)) - 1]
@@ -227,7 +243,7 @@ def _tushare_call(token: str, api_name: str, params: dict[str, Any], fields: str
                 ) from exc
             print(
                 f"U0_TRANSIENT_RETRY api={api_name} attempt={attempt + 1}/{TUSHARE_TRANSPORT_ATTEMPTS} "
-                f"reason={type(exc).__name__}",
+                f"reason={_transport_reason(exc)}",
                 flush=True,
             )
             time.sleep(TUSHARE_RETRY_BACKOFF_SECONDS[attempt - 1])
