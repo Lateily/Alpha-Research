@@ -1,5 +1,5 @@
 {
-  "fetched_at": "2026-09-21T06:03:51Z",
+  "fetched_at": "2026-09-21T15:15:54Z",
   "permission_model": "runtime_probe",
   "_status": "ok",
   "data": {
@@ -1597,6 +1597,15 @@
     "moneyflow_hsgt": {
       "rows": [
         {
+          "trade_date": "20260921",
+          "ggt_ss": "32196.94",
+          "ggt_sz": "22986.44",
+          "hgt": "133832.25",
+          "sgt": "150079.61",
+          "north_money": "283911.86",
+          "south_money": "55183.37"
+        },
+        {
           "trade_date": "20260918",
           "ggt_ss": "32165.76",
           "ggt_sz": "22976.88",
@@ -1975,9 +1984,9 @@
           "south_money": "54867.74"
         }
       ],
-      "row_count": 42,
+      "row_count": 43,
       "_status": "ok",
-      "as_of": "20260918"
+      "as_of": "20260921"
     }
   }
 }
