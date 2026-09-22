@@ -141,7 +141,8 @@ class NightlyAcceptanceTests(unittest.TestCase):
             nightly = json.loads(nightly_path.read_text(encoding="utf-8"))
             nightly["steps"] = [{"step": "research_funnel", "status": "OK"}]
             write_json(nightly_path, nightly)
-            with mock.patch.object(run_nightly, "_validate_funnel_health"):
+            with mock.patch.object(run_nightly, "_validate_funnel_health_shape"), \
+                 mock.patch.object(run_nightly, "_verify_funnel_bundle"):
                 receipt = acceptance.audit(fixture.inputs())
             rows = {row["name"]: row for row in receipt["checks"]}
             self.assertEqual("FAIL", receipt["status"])
@@ -157,7 +158,8 @@ class NightlyAcceptanceTests(unittest.TestCase):
                 if row["step"] == "candidate_battery":
                     row["status"] = "DATA_BLOCKED"
             write_json(nightly_path, nightly)
-            with mock.patch.object(run_nightly, "_validate_funnel_health"):
+            with mock.patch.object(run_nightly, "_validate_funnel_health_shape"), \
+                 mock.patch.object(run_nightly, "_verify_funnel_bundle"):
                 receipt = acceptance.audit(fixture.inputs())
             rows = {row["name"]: row for row in receipt["checks"]}
             self.assertEqual("FAIL", receipt["status"])
@@ -172,7 +174,8 @@ class NightlyAcceptanceTests(unittest.TestCase):
                 f"[report] COMPLETE  data_quality=PARTIAL  run_id={RUN_ID}  target={TARGET}\n",
                 encoding="utf-8",
             )
-            with mock.patch.object(run_nightly, "_validate_funnel_health"):
+            with mock.patch.object(run_nightly, "_validate_funnel_health_shape"), \
+                 mock.patch.object(run_nightly, "_verify_funnel_bundle"):
                 receipt = acceptance.audit(fixture.inputs())
             rows = {row["name"]: row for row in receipt["checks"]}
             self.assertEqual("FAIL", rows["exact_run_log_segment"]["status"])
@@ -181,7 +184,8 @@ class NightlyAcceptanceTests(unittest.TestCase):
     def test_clean_scheduled_run_produces_pass_receipt(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             fixture = AcceptanceFixture(Path(tmp))
-            with mock.patch.object(run_nightly, "_validate_funnel_health") as verifier:
+            with mock.patch.object(run_nightly, "_validate_funnel_health_shape"), \
+                 mock.patch.object(run_nightly, "_verify_funnel_bundle") as verifier:
                 receipt = acceptance.audit(fixture.inputs())
             self.assertEqual("PASS", receipt["status"])
             self.assertTrue(all(row["status"] == "PASS" for row in receipt["checks"]))
@@ -201,7 +205,8 @@ class NightlyAcceptanceTests(unittest.TestCase):
                 f"run_id={RUN_ID}  target={TARGET}\n",
                 encoding="utf-8",
             )
-            with mock.patch.object(run_nightly, "_validate_funnel_health"):
+            with mock.patch.object(run_nightly, "_validate_funnel_health_shape"), \
+                 mock.patch.object(run_nightly, "_verify_funnel_bundle"):
                 receipt = acceptance.audit(fixture.inputs())
             rows = {row["name"]: row for row in receipt["checks"]}
             self.assertEqual("FAIL", receipt["status"])
@@ -221,7 +226,8 @@ class NightlyAcceptanceTests(unittest.TestCase):
                 "run_id=later_run  target=20260818\n",
                 encoding="utf-8",
             )
-            with mock.patch.object(run_nightly, "_validate_funnel_health"):
+            with mock.patch.object(run_nightly, "_validate_funnel_health_shape"), \
+                 mock.patch.object(run_nightly, "_verify_funnel_bundle"):
                 receipt = acceptance.audit(fixture.inputs())
             rows = {row["name"]: row for row in receipt["checks"]}
             self.assertEqual("FAIL", rows["exact_run_log_segment"]["status"])
@@ -230,7 +236,8 @@ class NightlyAcceptanceTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             fixture = AcceptanceFixture(Path(tmp))
             fixture.state.write_text("runs = 11\nlast exit code = 0\n", encoding="utf-8")
-            with mock.patch.object(run_nightly, "_validate_funnel_health"):
+            with mock.patch.object(run_nightly, "_validate_funnel_health_shape"), \
+                 mock.patch.object(run_nightly, "_verify_funnel_bundle"):
                 receipt = acceptance.audit(fixture.inputs())
             rows = {row["name"]: row for row in receipt["checks"]}
             self.assertEqual("FAIL", rows["launchd_process_state"]["status"])
@@ -239,7 +246,8 @@ class NightlyAcceptanceTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             fixture = AcceptanceFixture(Path(tmp))
             fixture.state.write_text("runs = 12\nlast exit code = 1\n", encoding="utf-8")
-            with mock.patch.object(run_nightly, "_validate_funnel_health"):
+            with mock.patch.object(run_nightly, "_validate_funnel_health_shape"), \
+                 mock.patch.object(run_nightly, "_verify_funnel_bundle"):
                 receipt = acceptance.audit(fixture.inputs())
             rows = {row["name"]: row for row in receipt["checks"]}
             self.assertEqual("FAIL", rows["launchd_process_state"]["status"])
@@ -252,7 +260,8 @@ class NightlyAcceptanceTests(unittest.TestCase):
             payload["ProgramArguments"][0] = "/tmp/bypass-wrapper.sh"
             with fixture.plist.open("wb") as fh:
                 plistlib.dump(payload, fh)
-            with mock.patch.object(run_nightly, "_validate_funnel_health"):
+            with mock.patch.object(run_nightly, "_validate_funnel_health_shape"), \
+                 mock.patch.object(run_nightly, "_verify_funnel_bundle"):
                 receipt = acceptance.audit(fixture.inputs())
             rows = {row["name"]: row for row in receipt["checks"]}
             self.assertEqual("FAIL", rows["launchd_plist_binding"]["status"])
@@ -261,7 +270,8 @@ class NightlyAcceptanceTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             fixture = AcceptanceFixture(Path(tmp))
             fixture.alarm.write_text("incomplete", encoding="utf-8")
-            with mock.patch.object(run_nightly, "_validate_funnel_health"):
+            with mock.patch.object(run_nightly, "_validate_funnel_health_shape"), \
+                 mock.patch.object(run_nightly, "_verify_funnel_bundle"):
                 receipt = acceptance.audit(fixture.inputs())
             rows = {row["name"]: row for row in receipt["checks"]}
             self.assertEqual("FAIL", rows["no_incomplete_alarm"]["status"])
@@ -269,9 +279,10 @@ class NightlyAcceptanceTests(unittest.TestCase):
     def test_funnel_health_must_survive_the_production_bundle_verifier(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             fixture = AcceptanceFixture(Path(tmp))
-            with mock.patch.object(
+            with mock.patch.object(run_nightly, "_validate_funnel_health_shape"), \
+                 mock.patch.object(
                 run_nightly,
-                "_validate_funnel_health",
+                "_verify_funnel_bundle",
                 side_effect=ValueError("injected bundle drift"),
             ):
                 receipt = acceptance.audit(fixture.inputs())
@@ -285,7 +296,8 @@ class NightlyAcceptanceTests(unittest.TestCase):
             health = json.loads(fixture.health_path.read_text(encoding="utf-8"))
             health["run_id"] = RUN_ID + "_other"
             write_json(fixture.health_path, health)
-            with mock.patch.object(run_nightly, "_validate_funnel_health"):
+            with mock.patch.object(run_nightly, "_validate_funnel_health_shape"), \
+                 mock.patch.object(run_nightly, "_verify_funnel_bundle"):
                 receipt = acceptance.audit(fixture.inputs())
             rows = {row["name"]: row for row in receipt["checks"]}
             self.assertEqual("FAIL", rows["nightly_and_funnel_artifacts"]["status"])

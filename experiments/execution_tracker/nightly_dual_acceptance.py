@@ -16,12 +16,21 @@ import subprocess
 import sys
 from pathlib import Path, PurePosixPath
 
+CODE_ROOT = Path(__file__).resolve().parents[2]
+if str(CODE_ROOT) not in sys.path:
+    sys.path.insert(0, str(CODE_ROOT))
+
 import nightly_acceptance
 import run_nightly
 
 
 SCHEMA = "ar.nightly_dual_acceptance.v1"
 HEX64 = re.compile(r"[0-9a-f]{64}")
+GIT_OID = re.compile(r"(?:[0-9a-f]{40}|[0-9a-f]{64})")
+REQUIRED_PUBLIC = {
+    "public:meta.json", "public:funnel_health.json",
+    "public:macro/source_health.json", "public:macro/macro_events.json",
+}
 
 
 class AuditError(RuntimeError):
@@ -64,7 +73,8 @@ def _installed_head(root: Path) -> str:
         capture_output=True, text=True, timeout=5,
     )
     head = result.stdout.strip()
-    if result.returncode != 0 or not HEX64.fullmatch(head):
+    # governance-mutation: NIGHTLY_ACCEPTANCE_GIT_OID
+    if result.returncode != 0 or not GIT_OID.fullmatch(head):
         raise AuditError("cannot identify installed repository HEAD")
     return head
 
@@ -111,7 +121,9 @@ def validate_publication(root: Path, run_id: str, target: str) -> dict:
     if manifest.get("run_id") != run_id or manifest.get("target_trade_date") != target:
         raise AuditError("manifest run/target binding differs")
     artifacts = manifest.get("artifacts")
-    if not isinstance(artifacts, dict) or pointer.get("artifacts") != artifacts:
+    # governance-mutation: NIGHTLY_ACCEPTANCE_REQUIRED_ARTIFACTS
+    if (not isinstance(artifacts, dict) or pointer.get("artifacts") != artifacts
+            or not REQUIRED_PUBLIC.issubset(artifacts)):
         raise AuditError("manifest artifacts differ from current_run pointer")
     count = 0
     for name, digest in artifacts.items():
@@ -131,6 +143,8 @@ def validate_publication(root: Path, run_id: str, target: str) -> dict:
 
 
 def summarize_research(root: Path, run_id: str, target: str) -> dict:
+    from experiments.macro_os import collectors, m1a
+
     public = root / "public" / "data" / "v2"
     source = _read(public / "macro" / "source_health.json")
     events = _read(public / "macro" / "macro_events.json")
@@ -153,11 +167,40 @@ def summarize_research(root: Path, run_id: str, target: str) -> dict:
     )
     if any(not isinstance(row, dict) for row in event_rows):
         raise AuditError("malformed macro event row")
+    expected_sources = {
+        (spec.source_id, metric.series_id, metric.metric_key)
+        for spec in collectors.collection_plan() for metric in spec.metrics
+    }
+    observed_sources = [
+        (row.get("source_id"), row.get("series_id"), row.get("metric_key"))
+        for row in sources
+    ]
+    expected_events = {
+        f"{rule['source_id']}:{rule['series_id']}:{rule['metric_key']}"
+        for rules in m1a.load_rules()["regions"].values() for rule in rules
+    }
+    observed_events = [row.get("context_id") for row in event_rows]
+    source_coverage_complete = (
+        len(observed_sources) == len(expected_sources)
+        and set(observed_sources) == expected_sources
+    )
+    event_coverage_complete = (
+        len(observed_events) == len(expected_events)
+        and set(observed_events) == expected_events
+    )
     macro = {
         "step": "macro_m1c", "run_id": run_id, "target_trade_date": target,
-        "quality": "DATA_BLOCKED" if not sources or not event_rows or unavailable or missing_consensus
+        # governance-mutation: NIGHTLY_ACCEPTANCE_MACRO_UNIVERSE
+        "quality": "DATA_BLOCKED" if (not source_coverage_complete or not event_coverage_complete
+                                      or unavailable or missing_consensus)
                    else "REVIEW_REQUIRED",
         "sources_total": len(sources), "unavailable_sources": len(unavailable),
+        "expected_sources": len(expected_sources),
+        "missing_source_rows": len(expected_sources - set(observed_sources)),
+        "expected_events": len(expected_events),
+        "missing_event_rows": len(expected_events - set(observed_events)),
+        "source_coverage_complete": source_coverage_complete,
+        "event_coverage_complete": event_coverage_complete,
         "unavailable_detail": [{"source_id": row.get("source_id"), "metric_key": row.get("metric_key"),
                                 "status": row.get("status"), "error": row.get("last_error_code")}
                                for row in unavailable],

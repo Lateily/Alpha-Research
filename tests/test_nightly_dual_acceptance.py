@@ -9,6 +9,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import patch
 
 
@@ -34,13 +35,19 @@ class DualAcceptanceTest(unittest.TestCase):
     def _publication(self) -> tuple[Path, Path]:
         public = self.root / "public" / "data" / "v2"
         et = self.root / "experiments" / "execution_tracker"
-        manifest = {"run_id": self.run_id, "target_trade_date": self.target, "artifacts": {}}
+        artifacts = {}
+        for name in ("meta.json", "funnel_health.json", "macro/source_health.json",
+                     "macro/macro_events.json"):
+            path = public / name
+            write_json(path, {"run_id": self.run_id})
+            artifacts[f"public:{name}"] = hashlib.sha256(path.read_bytes()).hexdigest()
+        manifest = {"run_id": self.run_id, "target_trade_date": self.target, "artifacts": artifacts}
         rel = f"runs/{self.run_id}/manifest.json"
         write_json(public / rel, manifest)
         write_json(et / rel, manifest)
         digest = hashlib.sha256((public / rel).read_bytes()).hexdigest()
         pointer = {"run_id": self.run_id, "target_trade_date": self.target,
-                   "manifest_path": rel, "manifest_sha256": digest, "artifacts": {}}
+                   "manifest_path": rel, "manifest_sha256": digest, "artifacts": artifacts}
         write_json(public / "current_run.json", pointer)
         write_json(et / "current_run.json", pointer)
         return public, et
@@ -66,7 +73,53 @@ class DualAcceptanceTest(unittest.TestCase):
         self._publication()
         receipt = dual.validate_publication(self.root, self.run_id, self.target)
         self.assertEqual(self.run_id, receipt["run_id"])
-        self.assertEqual(0, receipt["public_artifacts"])
+        self.assertEqual(4, receipt["public_artifacts"])
+
+    def test_publication_refuses_empty_artifact_map(self) -> None:
+        public, et = self._publication()
+        rel = f"runs/{self.run_id}/manifest.json"
+        manifest = {"run_id": self.run_id, "target_trade_date": self.target, "artifacts": {}}
+        write_json(public / rel, manifest)
+        write_json(et / rel, manifest)
+        digest = hashlib.sha256((public / rel).read_bytes()).hexdigest()
+        pointer = {"run_id": self.run_id, "target_trade_date": self.target,
+                   "manifest_path": rel, "manifest_sha256": digest, "artifacts": {}}
+        write_json(public / "current_run.json", pointer)
+        write_json(et / "current_run.json", pointer)
+        with self.assertRaisesRegex(dual.AuditError, "manifest artifacts"):
+            dual.validate_publication(self.root, self.run_id, self.target)
+
+    def test_installed_head_accepts_real_git_object_id(self) -> None:
+        actual = "a" * 40
+        with patch.object(dual.subprocess, "run", return_value=SimpleNamespace(
+                returncode=0, stdout=actual + "\n")):
+            try:
+                observed = dual._installed_head(ROOT)
+            except dual.AuditError:
+                observed = None
+        self.assertEqual(actual, observed)
+
+    def test_external_repo_root_is_used_for_bundle_validation(self) -> None:
+        health = {"run_id": self.run_id, "target_trade_date": self.target,
+                  "bundle": {"location": f"data_history/funnel/{self.target}/{self.run_id}"}}
+        nightly = {"run_id": self.run_id, "target_trade_date": self.target,
+                   "report": "COMPLETE", "published": True,
+                   "steps": [{"step": name, "status": "OK"}
+                             for name in dual.nightly_acceptance.FUNNEL_DAG_STEPS]}
+        bundle = self.root / health["bundle"]["location"]
+        bundle.mkdir(parents=True)
+        inputs = dual.nightly_acceptance.Inputs(
+            repo_root=self.root, expected_start=dt.datetime.now(dt.timezone.utc),
+            expected_target=self.target, runs_before=0, log_path=self.root / "log",
+            alarm_path=self.root / "alarm", plist_path=self.root / "plist",
+            launchd_label="com.ar.nightly",
+        )
+        with patch.object(dual.nightly_acceptance, "_path_mtime_is_fresh"), \
+             patch.object(dual.nightly_acceptance, "_load_json", side_effect=[nightly, health]), \
+             patch.object(run_nightly, "_validate_funnel_health_shape"), \
+             patch.object(run_nightly, "_verify_funnel_bundle") as verify:
+            dual.nightly_acceptance._validate_nightly_result(inputs)
+        verify.assert_called_once_with(health, str(self.root), str(self.root / "public/data/v2/funnel_health.json"))
 
     def test_step_sheet_requires_entire_current_dag(self) -> None:
         steps = [{"step": name, "status": "OK"} for name, *_ in run_nightly.STEPS]
@@ -115,6 +168,31 @@ class DualAcceptanceTest(unittest.TestCase):
                    "target_trade_date": self.target, "bundle": {"location": "missing"}})
         with self.assertRaisesRegex(dual.AuditError, "run_id"):
             dual.summarize_research(self.root, self.run_id, self.target)
+
+    def test_research_sheet_does_not_hide_missing_macro_rows(self) -> None:
+        self.test_research_sheet_keeps_missing_macro_and_zero_dim_rows_visible()
+        public = self.root / "public" / "data" / "v2"
+        bundle = self.root / "data_history" / "funnel" / self.target / self.run_id
+        write_json(public / "macro" / "source_health.json", {
+            "data": [{"source_id": "cboe_vix", "series_id": "vix", "metric_key": "vix_close", "status": "OK"}],
+        })
+        write_json(public / "macro" / "macro_events.json", {
+            "run_id": self.run_id,
+            "data": [{"context_id": "cboe_vix:vix:vix_close", "consensus": 1, "consensus_status": "OK", "surprise": 1}],
+        })
+        write_json(bundle / "candidate_battery.json", {
+            "run_id": self.run_id, "target_trade_date": self.target,
+            "results": [{"ts_code": "688035.SH", "completeness": {"covered": 6, "of": 6,
+                         "verdict": "COMPLETE"}, "dims": {name: {"value": 1} for name in
+                         ("行情", "资金", "基本面", "技术面", "消息面", "估值")}}],
+        })
+        write_json(bundle / "deep_research_queue.json", {
+            "ready_pool": [{"ts_code": "688035.SH", "ready": True, "blocked_reasons": []}],
+        })
+        sheet = dual.summarize_research(self.root, self.run_id, self.target)
+        self.assertEqual("OBSERVED_WITH_GAPS", sheet["status"])
+        self.assertGreater(sheet["macro"]["missing_source_rows"], 0)
+        self.assertGreater(sheet["macro"]["missing_event_rows"], 0)
 
     def test_empty_research_inputs_are_not_review_ready(self) -> None:
         public = self.root / "public" / "data" / "v2"
