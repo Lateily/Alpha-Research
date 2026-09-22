@@ -125,6 +125,40 @@ def validate_publication(root: Path, run_id: str, target: str) -> dict:
     if (not isinstance(artifacts, dict) or pointer.get("artifacts") != artifacts
             or not REQUIRED_PUBLIC.issubset(artifacts)):
         raise AuditError("manifest artifacts differ from current_run pointer")
+    state = _read(et / "publication_state.json")
+    plan_path = et / "runs" / run_id / "publish_plan.json"
+    if (state.get("schema") != "nightly_publication_state/v2"
+            or state.get("status") != "COMMITTED"
+            or state.get("run_id") != run_id
+            or state.get("target_trade_date") != target
+            or state.get("manifest") != str(durable_manifest)
+            or state.get("plan") != str(plan_path)):
+        raise AuditError("publication state is not bound to this committed run")
+    plan = _read(plan_path)
+    entries = plan.get("entries")
+    if (plan.get("schema") != "nightly_publish/v2" or plan.get("run_id") != run_id
+            or plan.get("target_trade_date") != target or not isinstance(entries, list)):
+        raise AuditError("publish plan is not bound to this run")
+    planned = {}
+    for entry in entries:
+        if not isinstance(entry, dict):
+            raise AuditError("invalid publish plan entry")
+        scope, rel_path, digest = (entry.get("scope"), entry.get("rel"), entry.get("source_hash"))
+        if not isinstance(rel_path, str):
+            raise AuditError("invalid publish plan path")
+        rel_parts = PurePosixPath(rel_path)
+        if (scope not in {"et", "public"} or rel_parts.is_absolute()
+                or ".." in rel_parts.parts or not rel_parts.parts
+                or not isinstance(digest, str) or not HEX64.fullmatch(digest)):
+            raise AuditError("invalid publish plan entry")
+        key = f"{scope}:{rel_path}"
+        if key in planned:
+            raise AuditError("duplicate publish plan entry")
+        planned[key] = digest
+    # governance-mutation: NIGHTLY_ACCEPTANCE_PLAN_ARTIFACT_SET
+    if (planned != artifacts or type(state.get("artifact_count")) is not int
+            or state["artifact_count"] != len(entries)):
+        raise AuditError("manifest artifacts differ from publish plan")
     count = 0
     for name, digest in artifacts.items():
         if not name.startswith("public:"):
@@ -143,7 +177,7 @@ def validate_publication(root: Path, run_id: str, target: str) -> dict:
 
 
 def summarize_research(root: Path, run_id: str, target: str) -> dict:
-    from experiments.macro_os import collectors, m1a
+    from experiments.macro_os import collectors, contracts, m1a
 
     public = root / "public" / "data" / "v2"
     source = _read(public / "macro" / "source_health.json")
@@ -154,6 +188,13 @@ def summarize_research(root: Path, run_id: str, target: str) -> dict:
         raise AuditError("macro_events run_id is not the accepted run_id")
     if health.get("run_id") != run_id or health.get("target_trade_date") != target:
         raise AuditError("funnel_health run_id/target is not the accepted run")
+    registry = contracts.load_json(contracts.SOURCE_REGISTRY)
+    contracts.validate_source_registry(registry)
+    rules = m1a.load_rules()
+    # governance-mutation: NIGHTLY_ACCEPTANCE_MACRO_CONTRACT_BINDING
+    if (source.get("source_registry_hash") != registry["registry_hash"]
+            or events.get("rules_hash") != rules["rules_hash"]):
+        raise AuditError("Macro contract version differs from accepted run")
     sources = source.get("data")
     event_rows = events.get("data")
     if not isinstance(sources, list) or not isinstance(event_rows, list):
@@ -177,7 +218,7 @@ def summarize_research(root: Path, run_id: str, target: str) -> dict:
     ]
     expected_events = {
         f"{rule['source_id']}:{rule['series_id']}:{rule['metric_key']}"
-        for rules in m1a.load_rules()["regions"].values() for rule in rules
+        for region_rules in rules["regions"].values() for rule in region_rules
     }
     observed_events = [row.get("context_id") for row in event_rows]
     source_coverage_complete = (

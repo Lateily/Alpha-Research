@@ -17,6 +17,10 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "experiments" / "execution_tracker"))
 import nightly_dual_acceptance as dual
 import run_nightly
+from experiments.macro_os import contracts, m1a
+
+SOURCE_REGISTRY_HASH = contracts.load_json(contracts.SOURCE_REGISTRY)["registry_hash"]
+RULES_HASH = m1a.load_rules()["rules_hash"]
 
 
 def write_json(path: Path, value: dict) -> None:
@@ -37,7 +41,7 @@ class DualAcceptanceTest(unittest.TestCase):
         et = self.root / "experiments" / "execution_tracker"
         artifacts = {}
         for name in ("meta.json", "funnel_health.json", "macro/source_health.json",
-                     "macro/macro_events.json"):
+                     "macro/macro_events.json", "trade_cards.json"):
             path = public / name
             write_json(path, {"run_id": self.run_id})
             artifacts[f"public:{name}"] = hashlib.sha256(path.read_bytes()).hexdigest()
@@ -50,6 +54,20 @@ class DualAcceptanceTest(unittest.TestCase):
                    "manifest_path": rel, "manifest_sha256": digest, "artifacts": artifacts}
         write_json(public / "current_run.json", pointer)
         write_json(et / "current_run.json", pointer)
+        run_dir = et / "runs" / self.run_id
+        plan_path = run_dir / "publish_plan.json"
+        write_json(plan_path, {
+            "schema": "nightly_publish/v2", "run_id": self.run_id,
+            "target_trade_date": self.target,
+            "entries": [{"scope": "public", "rel": name.removeprefix("public:"),
+                         "source_hash": value} for name, value in artifacts.items()],
+        })
+        write_json(et / "publication_state.json", {
+            "schema": "nightly_publication_state/v2", "status": "COMMITTED",
+            "run_id": self.run_id, "target_trade_date": self.target,
+            "manifest": str(et / rel), "plan": str(plan_path),
+            "artifact_count": len(artifacts),
+        })
         return public, et
 
     def test_publication_refuses_divergent_pointers(self) -> None:
@@ -73,7 +91,22 @@ class DualAcceptanceTest(unittest.TestCase):
         self._publication()
         receipt = dual.validate_publication(self.root, self.run_id, self.target)
         self.assertEqual(self.run_id, receipt["run_id"])
-        self.assertEqual(4, receipt["public_artifacts"])
+        self.assertEqual(5, receipt["public_artifacts"])
+
+    def test_publication_refuses_resealed_missing_noncore_artifact(self) -> None:
+        public, et = self._publication()
+        rel = f"runs/{self.run_id}/manifest.json"
+        manifest = json.loads((public / rel).read_text())
+        manifest["artifacts"].pop("public:trade_cards.json")
+        write_json(public / rel, manifest)
+        write_json(et / rel, manifest)
+        pointer = json.loads((public / "current_run.json").read_text())
+        pointer["artifacts"] = manifest["artifacts"]
+        pointer["manifest_sha256"] = hashlib.sha256((public / rel).read_bytes()).hexdigest()
+        write_json(public / "current_run.json", pointer)
+        write_json(et / "current_run.json", pointer)
+        with self.assertRaisesRegex(dual.AuditError, "publish plan"):
+            dual.validate_publication(self.root, self.run_id, self.target)
 
     def test_publication_refuses_empty_artifact_map(self) -> None:
         public, et = self._publication()
@@ -86,6 +119,14 @@ class DualAcceptanceTest(unittest.TestCase):
                    "manifest_path": rel, "manifest_sha256": digest, "artifacts": {}}
         write_json(public / "current_run.json", pointer)
         write_json(et / "current_run.json", pointer)
+        plan_path = et / "runs" / self.run_id / "publish_plan.json"
+        plan = json.loads(plan_path.read_text())
+        plan["entries"] = []
+        write_json(plan_path, plan)
+        state_path = et / "publication_state.json"
+        state = json.loads(state_path.read_text())
+        state["artifact_count"] = 0
+        write_json(state_path, state)
         with self.assertRaisesRegex(dual.AuditError, "manifest artifacts"):
             dual.validate_publication(self.root, self.run_id, self.target)
 
@@ -131,11 +172,13 @@ class DualAcceptanceTest(unittest.TestCase):
         public = self.root / "public" / "data" / "v2"
         bundle = self.root / "data_history" / "funnel" / self.target / self.run_id
         write_json(public / "macro" / "source_health.json", {
+            "source_registry_hash": SOURCE_REGISTRY_HASH,
             "data": [{"source_id": "one", "status": "OK"},
                      {"source_id": "two", "status": "DATA_BLOCKED", "last_error_code": "MISSING"}],
         })
         write_json(public / "macro" / "macro_events.json", {
             "run_id": self.run_id,
+            "rules_hash": RULES_HASH,
             "data": [{"consensus_status": "DATA_BLOCKED", "surprise_status": "DATA_BLOCKED"}],
         })
         write_json(public / "funnel_health.json", {
@@ -174,10 +217,12 @@ class DualAcceptanceTest(unittest.TestCase):
         public = self.root / "public" / "data" / "v2"
         bundle = self.root / "data_history" / "funnel" / self.target / self.run_id
         write_json(public / "macro" / "source_health.json", {
+            "source_registry_hash": SOURCE_REGISTRY_HASH,
             "data": [{"source_id": "cboe_vix", "series_id": "vix", "metric_key": "vix_close", "status": "OK"}],
         })
         write_json(public / "macro" / "macro_events.json", {
             "run_id": self.run_id,
+            "rules_hash": RULES_HASH,
             "data": [{"context_id": "cboe_vix:vix:vix_close", "consensus": 1, "consensus_status": "OK", "surprise": 1}],
         })
         write_json(bundle / "candidate_battery.json", {
@@ -194,11 +239,24 @@ class DualAcceptanceTest(unittest.TestCase):
         self.assertGreater(sheet["macro"]["missing_source_rows"], 0)
         self.assertGreater(sheet["macro"]["missing_event_rows"], 0)
 
+    def test_research_sheet_refuses_a_different_rules_version(self) -> None:
+        self.test_research_sheet_keeps_missing_macro_and_zero_dim_rows_visible()
+        path = self.root / "public/data/v2/macro/macro_events.json"
+        events = json.loads(path.read_text())
+        events["rules_hash"] = "0" * 64
+        write_json(path, events)
+        with self.assertRaisesRegex(dual.AuditError, "Macro contract"):
+            dual.summarize_research(self.root, self.run_id, self.target)
+
     def test_empty_research_inputs_are_not_review_ready(self) -> None:
         public = self.root / "public" / "data" / "v2"
         bundle = self.root / "data_history" / "funnel" / self.target / self.run_id
-        write_json(public / "macro" / "source_health.json", {"data": []})
-        write_json(public / "macro" / "macro_events.json", {"run_id": self.run_id, "data": []})
+        write_json(public / "macro" / "source_health.json", {
+            "source_registry_hash": SOURCE_REGISTRY_HASH, "data": [],
+        })
+        write_json(public / "macro" / "macro_events.json", {
+            "run_id": self.run_id, "rules_hash": RULES_HASH, "data": [],
+        })
         write_json(public / "funnel_health.json", {
             "run_id": self.run_id, "target_trade_date": self.target,
             "bundle": {"location": f"data_history/funnel/{self.target}/{self.run_id}"},

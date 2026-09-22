@@ -6379,6 +6379,15 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="An empty self-consistent manifest cannot certify the required publication.",
     ),
     MutationCase(
+        mutation_id="NIGHTLY_ACCEPTANCE_PLAN_ARTIFACT_SET", component="Nightly production acceptance",
+        source_path="experiments/execution_tracker/nightly_dual_acceptance.py",
+        test_script="tests/test_nightly_dual_acceptance.py",
+        before='    if (planned != artifacts or type(state.get("artifact_count")) is not int',
+        after='    if (False or type(state.get("artifact_count")) is not int',
+        expected_failure_marker="test_publication_refuses_resealed_missing_noncore_artifact",
+        rationale="A self-consistent pointer and manifest cannot omit an entry from the frozen publish plan.",
+    ),
+    MutationCase(
         mutation_id="NIGHTLY_ACCEPTANCE_EXTERNAL_ROOT", component="Nightly production acceptance",
         source_path="experiments/execution_tracker/nightly_acceptance.py",
         test_script="tests/test_nightly_dual_acceptance.py",
@@ -6396,6 +6405,16 @@ MUTATIONS: tuple[MutationCase, ...] = (
         after='        "quality": "DATA_BLOCKED" if (unavailable or missing_consensus)',
         expected_failure_marker="test_research_sheet_does_not_hide_missing_macro_rows",
         rationale="One good source/event cannot stand in for the full registered Macro universe.",
+    ),
+    MutationCase(
+        mutation_id="NIGHTLY_ACCEPTANCE_MACRO_CONTRACT_BINDING", component="Nightly production acceptance",
+        source_path="experiments/execution_tracker/nightly_dual_acceptance.py",
+        test_script="tests/test_nightly_dual_acceptance.py",
+        before='    if (source.get("source_registry_hash") != registry["registry_hash"]\n'
+               '            or events.get("rules_hash") != rules["rules_hash"]):',
+        after='    if False:',
+        expected_failure_marker="test_research_sheet_refuses_a_different_rules_version",
+        rationale="A verifier checkout may not apply changed Macro rules to an older published run.",
     ),
     MutationCase(
         mutation_id="NIGHTLY_ACCEPTANCE_MACRO_RUN_BINDING",
