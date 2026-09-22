@@ -1,29 +1,11 @@
 {
-  "generated_at": "2026-09-22T06:11:03.477727+00:00",
+  "generated_at": "2026-09-22T13:39:00.430618+00:00",
   "date": "2026-09-22",
   "model_state": "NORMAL_OBSERVATION_MODE",
-  "brief_e": "1 Exposure Review | 1 Risk Review",
-  "brief_z": "1 敞口复核 | 1 风险复核",
+  "brief_e": "1 Exposure Review",
+  "brief_z": "1 敞口复核",
   "decisions": {
     "held": [
-      {
-        "ticker": "002594.SZ",
-        "name": "比亚迪",
-        "status": "HELD",
-        "action": "REVIEW_STOP",
-        "priority": "HIGH",
-        "confidence": 6,
-        "pnl_pct": -10.14,
-        "holding_days": 174,
-        "weight_pct": 3.8,
-        "vp_score": 48,
-        "confluence": 6,
-        "reason_e": "Position in drawdown -10.1%. Signal: NEUTRAL (score 6). Review thesis — is the wrongIf condition still intact?",
-        "reason_z": "亏损-10.1%，信号评分6。复核投资逻辑，检查wrongIf条件是否触发。",
-        "entry_target": null,
-        "exit_trigger": "P&L -10.1% ≤ -10.0% → thesis review required",
-        "execution_posture": null
-      },
       {
         "ticker": "300308.SZ",
         "name": "中际旭创",
@@ -31,13 +13,13 @@
         "action": "REVIEW_TRIM",
         "priority": "MEDIUM",
         "confidence": 0,
-        "pnl_pct": 37.08,
+        "pnl_pct": 36.16,
         "holding_days": 196,
-        "weight_pct": 51.6,
+        "weight_pct": 51.4,
         "vp_score": 48,
         "confluence": 0,
-        "reason_e": "Large unrealised gain +37.1% after 196d. Signal still NEUTRAL (score 0). Exposure-review condition (sizable unrealised gain).",
-        "reason_z": "浮盈+37.1%（持有196天），信号0仍属信号中性，等待，敞口复核条件（浮盈较大）。",
+        "reason_e": "Large unrealised gain +36.2% after 196d. Signal still NEUTRAL (score 0). Exposure-review condition (sizable unrealised gain).",
+        "reason_z": "浮盈+36.2%（持有196天），信号0仍属信号中性，等待，敞口复核条件（浮盈较大）。",
         "entry_target": null,
         "exit_trigger": "P&L > 25.0% → exposure-review condition",
         "execution_posture": null
@@ -69,7 +51,7 @@
         "confidence": 0,
         "pnl_pct": 0.0,
         "holding_days": 189,
-        "weight_pct": 25.6,
+        "weight_pct": 25.7,
         "vp_score": null,
         "confluence": 0,
         "reason_e": "Signal neutral (score 0). P&L +0.0% after 189d. Paper-hold — no new review trigger. RSI 41 | Price vs MA20 -3.5%.",
@@ -87,11 +69,29 @@
         "confidence": 0,
         "pnl_pct": 0.0,
         "holding_days": 182,
-        "weight_pct": 14.7,
+        "weight_pct": 14.8,
         "vp_score": null,
         "confluence": 0,
         "reason_e": "Signal neutral (score 0). P&L +0.0% after 182d. Paper-hold — no new review trigger. RSI 56 | Price vs MA20 +2.8%.",
         "reason_z": "信号中性（评分0），浮盈+0.0%，持有182天，无新触发条件。RSI 56 | 距MA20 +2.8%。",
+        "entry_target": null,
+        "exit_trigger": "Score ≤ -60 OR P&L ≤ -10.0%",
+        "execution_posture": null
+      },
+      {
+        "ticker": "002594.SZ",
+        "name": "比亚迪",
+        "status": "HELD",
+        "action": "HOLD",
+        "priority": "LOW",
+        "confidence": 6,
+        "pnl_pct": -9.99,
+        "holding_days": 174,
+        "weight_pct": 3.8,
+        "vp_score": 48,
+        "confluence": 6,
+        "reason_e": "Signal neutral (score 6). P&L -10.0% after 174d. Paper-hold — no new review trigger. Bullish: Rsi Recovering | RSI 43 | Price vs MA20 -2.1% | Regime: PERMISSIVE | VP 48.",
+        "reason_z": "信号中性（评分6），浮盈-10.0%，持有174天，无新触发条件。多头：RSI回升 | RSI 43 | 距MA20 -2.1% | 政策顺风 | VP 48。",
         "entry_target": null,
         "exit_trigger": "Score ≤ -60 OR P&L ≤ -10.0%",
         "execution_posture": null
@@ -174,9 +174,8 @@
   },
   "buy_watches": [],
   "portfolio_risk": [
-    "⚠️ CONCENTRATION: 300308.SZ (中际旭创) = 52% of portfolio — above 40.0% limit",
-    "PROFIT REVIEW: 300308.SZ +37.1% — exposure-review condition (sizable unrealised gain)",
-    "🔴 DRAWDOWN REVIEW: 002594.SZ -10.1% — review thesis and wrongIf conditions"
+    "⚠️ CONCENTRATION: 300308.SZ (中际旭创) = 51% of portfolio — above 40.0% limit",
+    "PROFIT REVIEW: 300308.SZ +36.2% — exposure-review condition (sizable unrealised gain)"
   ],
   "wrongif_alerts": [
     {
@@ -197,10 +196,10 @@
       "status": "CLEAR",
       "wrongIf_e": "1.6T mass production delayed beyond Q3 2026 OR NVDA+MSFT+GOOGL stock prices collectively drop >25% from ATH within 1 quarter (hyperscaler CapEx pullback proxy)",
       "wrongIf_z": "1.6T量产推迟至2026年Q3后，或英伟达/微软/谷歌股价集体较ATH下跌>25%（超大规模CapEx削减代理指标）",
-      "note_e": "✅ Clear: hyperscaler_basket_drawdown_pct = 3.1 (threshold 25.0)",
-      "note_z": "✅ 正常：hyperscaler_basket_drawdown_pct = 3.1（阈值25.0）",
+      "note_e": "✅ Clear: hyperscaler_basket_drawdown_pct = 2.5 (threshold 25.0)",
+      "note_z": "✅ 正常：hyperscaler_basket_drawdown_pct = 2.5（阈值25.0）",
       "indicator": "hyperscaler_basket_drawdown_pct",
-      "actual": 3.1,
+      "actual": 2.5,
       "threshold": 25.0
     },
     {
