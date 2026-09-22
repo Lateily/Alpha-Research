@@ -71,6 +71,65 @@ def source(root):
     return pointer
 
 
+def source_with_quality(root):
+    pointer = source(root)
+    rid = pointer["run_id"]
+    base = "public/data/v2/"
+    location = f"data_history/funnel/20260828/{rid}"
+    dims = ("行情", "资金", "基本面", "技术面", "消息面", "估值")
+    rows = [
+        {"ts_code": "000001.SZ", "dims": {name: {"value": 1} for name in dims},
+         "completeness": {"covered": 6, "of": 6, "missing": [], "verdict": "COMPLETE"}},
+        {"ts_code": "000002.SZ", "dims": {name: ({"status": "DATA_BLOCKED", "err": "SOURCE_ROW_MISSING"} if name in dims[3:] else {"value": 1}) for name in dims},
+         "completeness": {"covered": 3, "of": 6, "missing": list(dims[3:]), "verdict": "PARTIAL"}},
+        {"ts_code": "000003.SZ", "dims": {name: {"status": "DATA_BLOCKED", "err": "BATCH_NOT_STARTED"} for name in dims},
+         "completeness": {"covered": 0, "of": 6, "missing": list(dims), "verdict": "PARTIAL"}},
+    ]
+    battery_hash = write(root, location + "/candidate_battery.json", {
+        "run_id": rid, "as_of": "20260828", "results": rows,
+    })
+    manifest_hash = write(root, location + "/candidate_manifest.json", {
+        "run_id": rid, "as_of": "20260828", "ts_codes": [row["ts_code"] for row in rows],
+    })
+    health_path = base + "funnel_health.json"
+    health = json.loads((root / health_path).read_text())
+    health["bundle"]["artifacts"].update({
+        "candidate_battery.json": battery_hash,
+        "candidate_manifest.json": manifest_hash,
+    })
+    pointer["artifacts"]["public:funnel_health.json"] = write(root, health_path, health)
+    pointer["artifacts"]["public:macro/source_health.json"] = write(root, base + "macro/source_health.json", {
+        "data": [
+            {"source_id": "bls", "metric_key": "cpi", "status": "DATA_INVALID", "last_error_code": "INVALID_NUMBER"},
+            {"source_id": "bea", "metric_key": "gdp", "status": "DATA_BLOCKED", "last_error_code": "BEA_API_KEY_MISSING"},
+            {"source_id": "fred", "metric_key": "y2", "status": "OK", "last_error_code": None},
+        ],
+    })
+    pointer["artifacts"]["public:macro/macro_events.json"] = write(root, base + "macro/macro_events.json", {
+        "run_id": rid, "data": [
+            {"consensus": None, "consensus_status": "DATA_BLOCKED"},
+            {"consensus": 1.0, "consensus_status": "AVAILABLE"},
+        ],
+    })
+    write(root, base + "current_run.json", pointer)
+    return pointer
+
+
+def rewrite_bound_battery(root, change):
+    battery_path = next(root.glob("data_history/funnel/*/*/candidate_battery.json"))
+    battery = json.loads(battery_path.read_text())
+    change(battery)
+    battery_hash = write(root, str(battery_path.relative_to(root)), battery)
+    health_path = root / "public/data/v2/funnel_health.json"
+    health = json.loads(health_path.read_text())
+    health["bundle"]["artifacts"]["candidate_battery.json"] = battery_hash
+    health_hash = write(root, "public/data/v2/funnel_health.json", health)
+    pointer_path = root / "public/data/v2/current_run.json"
+    pointer = json.loads(pointer_path.read_text())
+    pointer["artifacts"]["public:funnel_health.json"] = health_hash
+    write(root, "public/data/v2/current_run.json", pointer)
+
+
 class EvidenceTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
@@ -92,6 +151,58 @@ class EvidenceTests(unittest.TestCase):
         self.assertEqual(view["files"][2]["binding"], "MATCH")
         self.assertNotIn("tail", view["attempt"]["steps"][0])
         self.assertEqual(before, {str(p): p.read_bytes() for p in self.root.rglob("*") if p.is_file()})
+
+    def test_quality_counts_are_bound_to_published_run_and_derived_from_dims(self):
+        source_with_quality(self.root)
+        view = ev.view(self.capture())
+        quality = view["research_quality"]
+        self.assertEqual("BOUND_OBSERVATION_ONLY", quality["status"])
+        self.assertEqual(view["published_run_id"], quality["run_id"])
+        self.assertEqual(2, quality["macro"]["unavailable_sources"])
+        self.assertEqual(1, quality["macro"]["missing_consensus"])
+        self.assertEqual({"complete": 1, "partial": 1, "zero": 1}, quality["funnel"]["coverage"])
+        self.assertEqual(1, quality["funnel"]["batch_not_started"])
+        self.assertFalse(quality["formal_authority"])
+
+    def test_quality_survives_canonical_snapshot_persistence(self):
+        source_with_quality(self.root)
+        snapshot = self.capture()
+        persisted = json.loads(ev.canonical(snapshot))
+        quality = ev.view(persisted)["research_quality"]
+        self.assertEqual("BOUND_OBSERVATION_ONLY", quality["status"])
+        self.assertEqual({"complete": 1, "partial": 1, "zero": 1}, quality["funnel"]["coverage"])
+
+    def test_quality_refuses_unbound_battery_with_valid_content(self):
+        source_with_quality(self.root)
+        battery_path = next(self.root.glob("data_history/funnel/*/*/candidate_battery.json"))
+        battery = json.loads(battery_path.read_text())
+        battery["results"][0]["dims"]["行情"]["value"] = 2
+        write(self.root, str(battery_path.relative_to(self.root)), battery)
+        self.assertEqual("NOT_EVALUATED", ev.view(self.capture())["research_quality"]["status"])
+
+    def test_quality_refuses_self_reported_battery_completeness(self):
+        source_with_quality(self.root)
+        rewrite_bound_battery(self.root, lambda battery: battery["results"][2]["completeness"].update(covered=6))
+        self.assertEqual("NOT_EVALUATED", ev.view(self.capture())["research_quality"]["status"])
+
+    def test_quality_rejects_malformed_and_wrong_run_rows_after_resealing(self):
+        source_with_quality(self.root)
+        rewrite_bound_battery(self.root, lambda battery: battery["results"][0].update(completeness="COMPLETE"))
+        self.assertEqual("NOT_EVALUATED", ev.view(self.capture())["research_quality"]["status"])
+        source_with_quality(self.root)
+        rewrite_bound_battery(self.root, lambda battery: battery["results"][0]["dims"]["行情"].update(status="PARTIAL"))
+        self.assertEqual("NOT_EVALUATED", ev.view(self.capture())["research_quality"]["status"])
+        source_with_quality(self.root)
+        rewrite_bound_battery(self.root, lambda battery: battery.update(run_id="another_run"))
+        self.assertEqual("NOT_EVALUATED", ev.view(self.capture())["research_quality"]["status"])
+
+    def test_quality_rejects_resealed_missing_list_and_verdict(self):
+        source_with_quality(self.root)
+        rewrite_bound_battery(self.root, lambda battery: battery["results"][2]["completeness"].update(missing=[]))
+        self.assertEqual("NOT_EVALUATED", ev.view(self.capture())["research_quality"]["status"])
+        source_with_quality(self.root)
+        rewrite_bound_battery(self.root, lambda battery: battery["results"][2]["completeness"].update(verdict="COMPLETE"))
+        self.assertEqual("NOT_EVALUATED", ev.view(self.capture())["research_quality"]["status"])
 
     def test_hash_mismatch_is_visible_not_complete(self):
         write(self.root, "public/data/v2/macro/macro_panel.json", {"status": "COMPLETE", "changed": True})

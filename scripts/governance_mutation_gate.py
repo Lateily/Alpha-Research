@@ -1872,6 +1872,55 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="Oversize input must be refused before parsing or persistence.",
     ),
     MutationCase(
+        mutation_id="WORKBENCH_QUALITY_SOURCE_BINDING", component="AIOS nonproduction workbench",
+        source_path="scripts/llm/workbench_evidence.py", test_script="tests/test_workbench_workspace.py",
+        before=(
+            '    # governance-mutation: WORKBENCH_QUALITY_SOURCE_BINDING\n'
+            '    if any(records.get(path, {}).get("binding") != "MATCH" or\n'
+            '           records[path].get("status") != "OBSERVED" for path in paths.values()):'
+        ),
+        after=(
+            '    # governance-mutation: WORKBENCH_QUALITY_SOURCE_BINDING\n'
+            '    if False:'
+        ),
+        expected_failure_marker="test_quality_refuses_unbound_battery_with_valid_content",
+        rationale="Unbound published artifacts must not feed the workbench research-quality counts.",
+    ),
+    MutationCase(
+        mutation_id="WORKBENCH_QUALITY_DERIVE_COVERAGE", component="AIOS nonproduction workbench",
+        source_path="scripts/llm/workbench_evidence.py", test_script="tests/test_workbench_workspace.py",
+        before=(
+            '        # governance-mutation: WORKBENCH_QUALITY_DERIVE_COVERAGE\n'
+            '        if (stamp.get("covered") != derived or stamp.get("of") != 6\n'
+            '                or stamp.get("verdict") != ("COMPLETE" if derived == 6 else "PARTIAL")):'
+        ),
+        after=(
+            '        # governance-mutation: WORKBENCH_QUALITY_DERIVE_COVERAGE\n'
+            '        if False:'
+        ),
+        expected_failure_marker="test_quality_refuses_self_reported_battery_completeness",
+        rationale="Battery completeness must be checked against dimensions before a quality count appears.",
+    ),
+    MutationCase(
+        mutation_id="WORKBENCH_QUALITY_MISSING_LIST", component="AIOS nonproduction workbench",
+        source_path="scripts/llm/workbench_evidence.py", test_script="tests/test_workbench_workspace.py",
+        before=(
+            '        if (not isinstance(reported_missing, list)\n'
+            '                or any(not isinstance(name, str) for name in reported_missing)\n'
+            '                or len(reported_missing) != len(missing)\n'
+            '                or set(reported_missing) != set(missing)):\n'
+            '            # governance-mutation: WORKBENCH_QUALITY_MISSING_LIST\n'
+            '            return {**blocked, "reason": "SELF_REPORTED_COMPLETENESS_MISMATCH"}'
+        ),
+        after=(
+            '        # governance-mutation: WORKBENCH_QUALITY_MISSING_LIST\n'
+            '        if False:\n'
+            '            return {**blocked, "reason": "SELF_REPORTED_COMPLETENESS_MISMATCH"}'
+        ),
+        expected_failure_marker="test_quality_rejects_resealed_missing_list_and_verdict",
+        rationale="A resealed battery must not claim an incomplete dimension set is complete.",
+    ),
+    MutationCase(
         mutation_id="MACRO_M0B_FRED_KEYLESS_ROUTE",
         component="Macro M0-B collection",
         source_path="experiments/macro_os/collectors.py",

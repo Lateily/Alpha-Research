@@ -191,6 +191,109 @@ def verify(snapshot):
     return snapshot
 
 
+def research_quality(snapshot):
+    records = snapshot["records"]
+    run_id = snapshot.get("published_run_id")
+    target = snapshot.get("target_trade_date")
+    blocked = {"status": "NOT_EVALUATED", "run_id": run_id,
+               "formal_authority": False}
+    if not isinstance(run_id, str) or not re.fullmatch(ID, run_id) or not isinstance(target, str) or not re.fullmatch(r"\d{8}", target):
+        return {**blocked, "reason": "PUBLISHED_RUN_BINDING_INVALID"}
+    base = "public/data/v2/"
+    bundle = f"data_history/funnel/{target}/{run_id}/"
+    paths = {
+        "health": base + "funnel_health.json",
+        "sources": base + "macro/source_health.json",
+        "events": base + "macro/macro_events.json",
+        "manifest": bundle + "candidate_manifest.json",
+        "battery": bundle + "candidate_battery.json",
+    }
+    # governance-mutation: WORKBENCH_QUALITY_SOURCE_BINDING
+    if any(records.get(path, {}).get("binding") != "MATCH" or
+           records[path].get("status") != "OBSERVED" for path in paths.values()):
+        return {**blocked, "reason": "MISSING_OR_UNBOUND_SOURCE"}
+    payloads = {name: records[path]["payload"] for name, path in paths.items()}
+    health, manifest, battery = (payloads[name] for name in ("health", "manifest", "battery"))
+    if not isinstance(health.get("bundle"), dict):
+        return {**blocked, "reason": "ROW_SHAPE_INVALID"}
+    if (health.get("run_id") != run_id or health.get("as_of") != target
+            or health["bundle"].get("location") != bundle[:-1]
+            or manifest.get("run_id") != run_id or manifest.get("as_of") != target
+            or battery.get("run_id") != run_id or battery.get("as_of") != target
+            or battery.get("target_trade_date", target) != target
+            or payloads["events"].get("run_id") != run_id):
+        return {**blocked, "reason": "RUN_BINDING_INVALID"}
+    source_rows = payloads["sources"].get("data")
+    event_rows = payloads["events"].get("data")
+    rows = battery.get("results")
+    codes = manifest.get("ts_codes")
+    if (not isinstance(source_rows, list) or not isinstance(event_rows, list)
+            or not isinstance(rows, list) or not isinstance(codes, list)
+            or any(not isinstance(row, dict) for row in (*source_rows, *event_rows, *rows))):
+        return {**blocked, "reason": "ROW_SHAPE_INVALID"}
+    observed_codes = [row.get("ts_code") for row in rows]
+    if (any(not isinstance(code, str) for code in (*codes, *observed_codes))
+            or len(codes) != len(set(codes)) or len(observed_codes) != len(set(observed_codes))
+            or set(codes) != set(observed_codes)):
+        return {**blocked, "reason": "COVERAGE_SET_INVALID"}
+    dimensions = {"行情", "资金", "基本面", "技术面", "消息面", "估值"}
+    coverage = {"complete": 0, "partial": 0, "zero": 0}
+    not_started = 0
+    for row in rows:
+        dims = row.get("dims")
+        if (not isinstance(dims, dict) or set(dims) != dimensions
+                or any(not isinstance(value, dict) or not value for value in dims.values())):
+            return {**blocked, "reason": "ROW_SHAPE_INVALID"}
+        if any(value.get("status") not in {None, "DATA_BLOCKED", "NOT_RUN"}
+               for value in dims.values()):
+            return {**blocked, "reason": "ROW_SHAPE_INVALID"}
+        missing = [name for name, value in dims.items()
+                   if value.get("status") in {"DATA_BLOCKED", "NOT_RUN"}]
+        if any(not str(dims[name].get("err") or "").strip() for name in missing):
+            return {**blocked, "reason": "ROW_SHAPE_INVALID"}
+        derived = 6 - len(missing)
+        stamp = row.get("completeness")
+        if not isinstance(stamp, dict):
+            return {**blocked, "reason": "ROW_SHAPE_INVALID"}
+        reported_missing = stamp.get("missing")
+        if (not isinstance(reported_missing, list)
+                or any(not isinstance(name, str) for name in reported_missing)
+                or len(reported_missing) != len(missing)
+                or set(reported_missing) != set(missing)):
+            # governance-mutation: WORKBENCH_QUALITY_MISSING_LIST
+            return {**blocked, "reason": "SELF_REPORTED_COMPLETENESS_MISMATCH"}
+        # governance-mutation: WORKBENCH_QUALITY_DERIVE_COVERAGE
+        if (stamp.get("covered") != derived or stamp.get("of") != 6
+                or stamp.get("verdict") != ("COMPLETE" if derived == 6 else "PARTIAL")):
+            return {**blocked, "reason": "SELF_REPORTED_COMPLETENESS_MISMATCH"}
+        coverage["zero" if derived == 0 else "partial" if derived < 6 else "complete"] += 1
+        not_started += any(dims[name].get("err") == "BATCH_NOT_STARTED" for name in missing)
+    if not source_rows or not event_rows:
+        return {**blocked, "reason": "EMPTY_MACRO_EVIDENCE"}
+    if any(not isinstance(row.get("status"), str) or not isinstance(row.get("source_id"), str)
+           for row in source_rows):
+        return {**blocked, "reason": "ROW_SHAPE_INVALID"}
+    unavailable = [row for row in source_rows if row["status"] != "OK"]
+    missing_consensus = sum(row.get("consensus") is None or
+                            row.get("consensus_status") == "DATA_BLOCKED" for row in event_rows)
+    return {
+        "status": "BOUND_OBSERVATION_ONLY", "run_id": run_id,
+        "target_trade_date": target, "formal_authority": False,
+        "gaps_present": bool(unavailable or missing_consensus or coverage["partial"] or coverage["zero"]),
+        "macro": {
+            "sources_total": len(source_rows), "unavailable_sources": len(unavailable),
+            "missing_consensus": missing_consensus, "events_total": len(event_rows),
+            "unavailable_detail": [
+                {"source_id": row["source_id"], "metric_key": row.get("metric_key"),
+                 "status": row["status"], "reason": row.get("last_error_code")}
+                for row in unavailable
+            ],
+        },
+        "funnel": {"candidate_count": len(rows), "coverage": coverage,
+                   "batch_not_started": not_started},
+    }
+
+
 def view(snapshot, now=None):
     verify(snapshot)
     records = snapshot["records"]
@@ -210,6 +313,7 @@ def view(snapshot, now=None):
         "freshness": freshness(snapshot.get("target_trade_date"), now or utc_now()),
         "attempt": (records.get("experiments/execution_tracker/nightly_run.json", {}).get("payload") or {}),
         "funnel": value("funnel_health.json"), "feature": value("feature_store_health.json"),
+        "research_quality": research_quality(snapshot),
         "macro": {name: artifact("macro/" + name + ".json") for name in ("macro_panel", "macro_state", "macro_events", "source_health", "portfolio_macro_exposure", "macro_risk_gate")},
         "macro_legacy": value("macro_gate.json"),
         "candidates": candidate.get("rows", []), "candidate_coverage": candidate.get("coverage", {}),
