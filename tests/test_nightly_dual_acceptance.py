@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import datetime as dt
 import json
+import shutil
 import sys
 import tempfile
 import unittest
@@ -35,15 +36,23 @@ class DualAcceptanceTest(unittest.TestCase):
         self.root = Path(self.temp.name)
         self.run_id = "20260922_203000_test"
         self.target = "20260922"
+        for source in (contracts.SOURCE_REGISTRY, m1a.RULES_PATH,
+                       ROOT / "experiments/macro_os/collectors.py"):
+            destination = self.root / source.relative_to(ROOT)
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(source, destination)
 
     def _publication(self) -> tuple[Path, Path]:
         public = self.root / "public" / "data" / "v2"
         et = self.root / "experiments" / "execution_tracker"
         artifacts = {}
         for name in ("meta.json", "funnel_health.json", "macro/source_health.json",
-                     "macro/macro_events.json", "trade_cards.json"):
+                     "macro/macro_events.json", *sorted(dual.REQUIRED_EXPORTED)):
             path = public / name
-            write_json(path, {"run_id": self.run_id})
+            payload = {"run_id": self.run_id, "target_trade_date": self.target}
+            if name == "meta.json":
+                payload["contracts"] = {contract: {} for contract in dual.REQUIRED_EXPORTED}
+            write_json(path, payload)
             artifacts[f"public:{name}"] = hashlib.sha256(path.read_bytes()).hexdigest()
         manifest = {"run_id": self.run_id, "target_trade_date": self.target, "artifacts": artifacts}
         rel = f"runs/{self.run_id}/manifest.json"
@@ -91,7 +100,7 @@ class DualAcceptanceTest(unittest.TestCase):
         self._publication()
         receipt = dual.validate_publication(self.root, self.run_id, self.target)
         self.assertEqual(self.run_id, receipt["run_id"])
-        self.assertEqual(5, receipt["public_artifacts"])
+        self.assertEqual(4 + len(dual.REQUIRED_EXPORTED), receipt["public_artifacts"])
 
     def test_publication_refuses_resealed_missing_noncore_artifact(self) -> None:
         public, et = self._publication()
@@ -106,6 +115,69 @@ class DualAcceptanceTest(unittest.TestCase):
         write_json(public / "current_run.json", pointer)
         write_json(et / "current_run.json", pointer)
         with self.assertRaisesRegex(dual.AuditError, "publish plan"):
+            dual.validate_publication(self.root, self.run_id, self.target)
+
+    def _omit_trade_cards_from_plan(self) -> Path:
+        public, et = self._publication()
+        rel = f"runs/{self.run_id}/manifest.json"
+        manifest = json.loads((public / rel).read_text())
+        manifest["artifacts"].pop("public:trade_cards.json")
+        write_json(public / rel, manifest)
+        write_json(et / rel, manifest)
+        pointer = json.loads((public / "current_run.json").read_text())
+        pointer["artifacts"] = manifest["artifacts"]
+        pointer["manifest_sha256"] = hashlib.sha256((public / rel).read_bytes()).hexdigest()
+        write_json(public / "current_run.json", pointer)
+        write_json(et / "current_run.json", pointer)
+        plan_path = et / "runs" / self.run_id / "publish_plan.json"
+        plan = json.loads(plan_path.read_text())
+        plan["entries"] = [entry for entry in plan["entries"] if entry["rel"] != "trade_cards.json"]
+        write_json(plan_path, plan)
+        state_path = et / "publication_state.json"
+        state = json.loads(state_path.read_text())
+        state["artifact_count"] = len(plan["entries"])
+        write_json(state_path, state)
+        return public
+
+    def test_publication_refuses_missing_export_even_when_plan_and_manifest_agree(self) -> None:
+        public = self._omit_trade_cards_from_plan()
+        # An unchanged, current-run file may legitimately be absent from this
+        # run's changed-file plan. Removing that file must still fail.
+        self.assertEqual(4 + len(dual.REQUIRED_EXPORTED) - 1,
+                         dual.validate_publication(self.root, self.run_id, self.target)["public_artifacts"])
+        (public / "trade_cards.json").unlink()
+        with self.assertRaisesRegex(dual.AuditError, "trade_cards.json"):
+            dual.validate_publication(self.root, self.run_id, self.target)
+
+    def test_publication_refuses_stale_unchanged_export(self) -> None:
+        public = self._omit_trade_cards_from_plan()
+        write_json(public / "trade_cards.json", {
+            "run_id": "old-run", "target_trade_date": self.target,
+        })
+        with self.assertRaisesRegex(dual.AuditError, "stale: trade_cards.json"):
+            dual.validate_publication(self.root, self.run_id, self.target)
+
+    def test_publication_refuses_resealed_meta_missing_export_declaration(self) -> None:
+        public, et = self._publication()
+        meta = json.loads((public / "meta.json").read_text())
+        meta["contracts"].pop("trade_cards.json")
+        write_json(public / "meta.json", meta)
+        meta_hash = hashlib.sha256((public / "meta.json").read_bytes()).hexdigest()
+        rel = f"runs/{self.run_id}/manifest.json"
+        manifest = json.loads((public / rel).read_text())
+        manifest["artifacts"]["public:meta.json"] = meta_hash
+        write_json(public / rel, manifest)
+        write_json(et / rel, manifest)
+        pointer = json.loads((public / "current_run.json").read_text())
+        pointer["artifacts"]["public:meta.json"] = meta_hash
+        pointer["manifest_sha256"] = hashlib.sha256((public / rel).read_bytes()).hexdigest()
+        write_json(public / "current_run.json", pointer)
+        write_json(et / "current_run.json", pointer)
+        plan_path = et / "runs" / self.run_id / "publish_plan.json"
+        plan = json.loads(plan_path.read_text())
+        next(entry for entry in plan["entries"] if entry["rel"] == "meta.json")["source_hash"] = meta_hash
+        write_json(plan_path, plan)
+        with self.assertRaisesRegex(dual.AuditError, "exported contract set"):
             dual.validate_publication(self.root, self.run_id, self.target)
 
     def test_publication_refuses_empty_artifact_map(self) -> None:
@@ -246,6 +318,31 @@ class DualAcceptanceTest(unittest.TestCase):
         events["rules_hash"] = "0" * 64
         write_json(path, events)
         with self.assertRaisesRegex(dual.AuditError, "Macro contract"):
+            dual.summarize_research(self.root, self.run_id, self.target)
+
+    def test_research_sheet_uses_installed_rules_not_verifier_rules(self) -> None:
+        self.test_research_sheet_keeps_missing_macro_and_zero_dim_rows_visible()
+        path = self.root / m1a.RULES_PATH.relative_to(ROOT)
+        rules = json.loads(path.read_text())
+        rules["regions"]["GLOBAL_US"][0]["supportive_when"]["value"] = 2.6
+        rules["rules_hash"] = m1a.rules_hash(rules)
+        m1a.validate_rules(rules)
+        write_json(path, rules)
+        events_path = self.root / "public/data/v2/macro/macro_events.json"
+        events = json.loads(events_path.read_text())
+        events["rules_hash"] = rules["rules_hash"]
+        write_json(events_path, events)
+        try:
+            status = dual.summarize_research(self.root, self.run_id, self.target)["status"]
+        except dual.AuditError:
+            status = "AUDIT_FAILED"
+        self.assertEqual("OBSERVED_WITH_GAPS", status)
+
+    def test_research_sheet_refuses_different_installed_collector_code(self) -> None:
+        self.test_research_sheet_keeps_missing_macro_and_zero_dim_rows_visible()
+        path = self.root / "experiments/macro_os/collectors.py"
+        path.write_text(path.read_text() + "\n# changed collection plan\n")
+        with self.assertRaisesRegex(dual.AuditError, "collector implementation differs"):
             dual.summarize_research(self.root, self.run_id, self.target)
 
     def test_empty_research_inputs_are_not_review_ready(self) -> None:

@@ -31,6 +31,13 @@ REQUIRED_PUBLIC = {
     "public:meta.json", "public:funnel_health.json",
     "public:macro/source_health.json", "public:macro/macro_events.json",
 }
+# Independent v2.2 exporter contract set. A plan and manifest may both omit a
+# file when its bytes are unchanged, but the run must still expose this file.
+REQUIRED_EXPORTED = {
+    "model_portfolio_state.json", "trade_cards.json", "premarket_frame.json",
+    "rotation_panel.json", "red_flags.json", "battery.json",
+    "position_review.json",
+}
 
 
 class AuditError(RuntimeError):
@@ -159,6 +166,21 @@ def validate_publication(root: Path, run_id: str, target: str) -> dict:
     if (planned != artifacts or type(state.get("artifact_count")) is not int
             or state["artifact_count"] != len(entries)):
         raise AuditError("manifest artifacts differ from publish plan")
+    meta = _read(public / "meta.json")
+    # governance-mutation: NIGHTLY_ACCEPTANCE_EXPORTED_CONTRACT_SET
+    if (meta.get("run_id") != run_id or meta.get("target_trade_date") != target
+            or not isinstance(meta.get("contracts"), dict)
+            or set(meta["contracts"]) != REQUIRED_EXPORTED):
+        raise AuditError("exported contract set is incomplete or from another run")
+    # governance-mutation: NIGHTLY_ACCEPTANCE_EXPORTED_CONTRACT_EXISTS
+    for name in REQUIRED_EXPORTED:
+        path = public / name
+        if path.is_symlink():
+            raise AuditError(f"exported contract is symlinked: {name}")
+        contract = _read(path)
+        # governance-mutation: NIGHTLY_ACCEPTANCE_EXPORTED_CONTRACT_IDENTITY
+        if contract.get("run_id") != run_id or contract.get("target_trade_date") != target:
+            raise AuditError(f"exported contract is missing or stale: {name}")
     count = 0
     for name, digest in artifacts.items():
         if not name.startswith("public:"):
@@ -179,6 +201,13 @@ def validate_publication(root: Path, run_id: str, target: str) -> dict:
 def summarize_research(root: Path, run_id: str, target: str) -> dict:
     from experiments.macro_os import collectors, contracts, m1a
 
+    installed_collectors = root / "experiments/macro_os/collectors.py"
+    # governance-mutation: NIGHTLY_ACCEPTANCE_COLLECTOR_CODE_MATCH
+    if _sha(installed_collectors) != _sha(Path(collectors.__file__)):
+        raise AuditError("Macro collector implementation differs from verifier; research coverage is not comparable")
+    registry_path = root / contracts.SOURCE_REGISTRY.relative_to(CODE_ROOT)
+    rules_path = root / m1a.RULES_PATH.relative_to(CODE_ROOT)
+
     public = root / "public" / "data" / "v2"
     source = _read(public / "macro" / "source_health.json")
     events = _read(public / "macro" / "macro_events.json")
@@ -188,9 +217,10 @@ def summarize_research(root: Path, run_id: str, target: str) -> dict:
         raise AuditError("macro_events run_id is not the accepted run_id")
     if health.get("run_id") != run_id or health.get("target_trade_date") != target:
         raise AuditError("funnel_health run_id/target is not the accepted run")
-    registry = contracts.load_json(contracts.SOURCE_REGISTRY)
+    registry = contracts.load_json(registry_path)
     contracts.validate_source_registry(registry)
-    rules = m1a.load_rules()
+    # governance-mutation: NIGHTLY_ACCEPTANCE_INSTALLED_RULES
+    rules = m1a.load_rules(rules_path)
     # governance-mutation: NIGHTLY_ACCEPTANCE_MACRO_CONTRACT_BINDING
     if (source.get("source_registry_hash") != registry["registry_hash"]
             or events.get("rules_hash") != rules["rules_hash"]):
