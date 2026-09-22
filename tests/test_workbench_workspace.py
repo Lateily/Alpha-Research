@@ -56,7 +56,7 @@ def write(root, name, value):
 def source(root):
     rid = "20260828_163504_test"
     base = "public/data/v2/"
-    manifest = {"schema": "nightly_manifest/v2", "run_id": rid}
+    manifest = {"schema": "nightly_manifest/v2", "run_id": rid, "target_trade_date": "20260828"}
     mh = write(root, base + f"runs/{rid}/manifest.json", manifest)
     health = {"as_of": "20260828", "run_id": rid, "status": "PARTIAL", "bundle": {"location": f"data_history/funnel/20260828/{rid}", "artifacts": {}}}
     for name in ev.BUNDLE:
@@ -198,6 +198,7 @@ class EvidenceTests(unittest.TestCase):
             self.root, base + "macro/macro_events.json",
             {"run_id": pointer["run_id"], "rules_hash": m1a.load_rules()["rules_hash"],
              "data": [{"context_id": "cboe_vix:vix:vix_close",
+                                                "actual_status": "AVAILABLE", "freshness_status": "CURRENT",
                                                 "consensus": 1, "consensus_status": "OK"}]})
         write(self.root, base + "current_run.json", pointer)
         quality = ev.view(self.capture())["research_quality"]
@@ -209,9 +210,31 @@ class EvidenceTests(unittest.TestCase):
     def test_quality_refuses_unbound_publication_manifest(self):
         source_with_quality(self.root)
         manifest = self.root / "public/data/v2/runs" / self.pointer["run_id"] / "manifest.json"
-        write(self.root, str(manifest.relative_to(self.root)), {"run_id": "tampered"})
+        payload = json.loads(manifest.read_text())
+        payload["audit_probe"] = "tampered"
+        write(self.root, str(manifest.relative_to(self.root)), payload)
         quality = ev.view(self.capture())["research_quality"]
         self.assertEqual("NOT_EVALUATED", quality["status"])
+
+    def test_quality_refuses_resealed_wrong_run_manifest(self):
+        source_with_quality(self.root)
+        path = f"public/data/v2/runs/{self.pointer['run_id']}/manifest.json"
+        payload = json.loads((self.root / path).read_text())
+        payload.update(run_id="another_run", target_trade_date="20260828")
+        pointer = json.loads((self.root / "public/data/v2/current_run.json").read_text())
+        pointer["manifest_sha256"] = write(self.root, path, payload)
+        write(self.root, "public/data/v2/current_run.json", pointer)
+        quality = ev.view(self.capture())["research_quality"]
+        self.assertEqual("NOT_EVALUATED", quality["status"])
+        self.assertEqual("RUN_BINDING_INVALID", quality["reason"])
+
+    def test_collector_plan_comparison_is_not_reported_as_run_verified(self):
+        source_with_quality(self.root)
+        with mock.patch.object(collectors, "collection_plan", return_value=()):
+            quality = ev.view(self.capture())["research_quality"]
+        self.assertEqual("BOUND_OBSERVATION_ONLY", quality["status"])
+        self.assertIsNone(quality["macro"]["source_coverage_complete"])
+        self.assertEqual("CURRENT_CHECKOUT_UNVERIFIED", quality["macro"]["source_plan_basis"])
 
     def test_quality_refuses_resealed_different_macro_contract(self):
         source_with_quality(self.root)
@@ -249,7 +272,8 @@ class EvidenceTests(unittest.TestCase):
         sources = [dict(source_id=spec.source_id, series_id=m.series_id, metric_key=m.metric_key, status="OK")
                    for spec in collectors.collection_plan() for m in spec.metrics]
         events = [dict(context_id=context_id,
-                       actual_status="AVAILABLE", consensus=1, consensus_status="AVAILABLE")
+                       actual_status="AVAILABLE", freshness_status="CURRENT",
+                       consensus=1, consensus_status="AVAILABLE")
                   for context_id in sorted({f"{rule['source_id']}:{rule['series_id']}:{rule['metric_key']}"
                                             for region in m1a.load_rules()["regions"].values() for rule in region})]
         events[0]["actual_status"] = "DATA_BLOCKED"
@@ -264,9 +288,22 @@ class EvidenceTests(unittest.TestCase):
         write(self.root, base + "current_run.json", pointer)
         quality = ev.view(self.capture())["research_quality"]
         self.assertEqual("BOUND_OBSERVATION_ONLY", quality["status"])
-        self.assertTrue(quality["macro"]["source_coverage_complete"])
+        self.assertIsNone(quality["macro"]["source_coverage_complete"])
         self.assertTrue(quality["macro"]["event_coverage_complete"])
         self.assertEqual(1, quality["macro"]["actual_blocked_events"])
+        self.assertTrue(quality["gaps_present"])
+
+        events_path = self.root / (base + "macro/macro_events.json")
+        latest = json.loads(events_path.read_text())
+        latest["data"][0]["actual_status"] = "AVAILABLE"
+        latest["data"][0]["freshness_status"] = "STALE"
+        pointer = json.loads((self.root / (base + "current_run.json")).read_text())
+        pointer["artifacts"]["public:macro/macro_events.json"] = write(
+            self.root, base + "macro/macro_events.json", latest)
+        write(self.root, base + "current_run.json", pointer)
+        quality = ev.view(self.capture())["research_quality"]
+        self.assertEqual(0, quality["macro"]["actual_blocked_events"])
+        self.assertEqual(1, quality["macro"]["stale_actual_events"])
         self.assertTrue(quality["gaps_present"])
 
     def test_quality_refuses_unbound_battery_with_valid_content(self):

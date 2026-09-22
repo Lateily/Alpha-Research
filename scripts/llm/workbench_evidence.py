@@ -220,6 +220,8 @@ def research_quality(snapshot):
         return {**blocked, "reason": "ROW_SHAPE_INVALID"}
     if (health.get("run_id") != run_id or health.get("as_of") != target
             or health["bundle"].get("location") != bundle[:-1]
+            or payloads["publication"].get("run_id") != run_id
+            or payloads["publication"].get("target_trade_date") != target
             or manifest.get("run_id") != run_id or manifest.get("as_of") != target
             or battery.get("run_id") != run_id or battery.get("as_of") != target
             or battery.get("target_trade_date", target) != target
@@ -306,7 +308,7 @@ def research_quality(snapshot):
         source_set, event_set = set(observed_sources), set(observed_events)
     except TypeError:
         return {**blocked, "reason": "ROW_SHAPE_INVALID"}
-    source_coverage_complete = (
+    source_plan_current_match = (
         len(observed_sources) == len(expected_sources) and source_set == expected_sources
     )
     event_coverage_complete = (
@@ -317,19 +319,26 @@ def research_quality(snapshot):
                             row.get("consensus_status") == "DATA_BLOCKED" for row in event_rows)
     # governance-mutation: WORKBENCH_QUALITY_ACTUAL_STATUS
     actual_blocked = sum(row.get("actual_status") != "AVAILABLE" for row in event_rows)
+    # governance-mutation: WORKBENCH_QUALITY_ACTUAL_FRESHNESS
+    stale_actual = sum(row.get("actual_status") == "AVAILABLE"
+                       and row.get("freshness_status") != "CURRENT" for row in event_rows)
+    known_gaps = bool(not event_coverage_complete or unavailable or missing_consensus
+                      or actual_blocked or stale_actual or coverage["partial"] or coverage["zero"])
     return {
         "status": "BOUND_OBSERVATION_ONLY", "run_id": run_id,
         "target_trade_date": target, "formal_authority": False,
         # governance-mutation: WORKBENCH_QUALITY_MACRO_UNIVERSE
-        "gaps_present": bool(not source_coverage_complete or not event_coverage_complete
-                             or unavailable or missing_consensus or actual_blocked or coverage["partial"] or coverage["zero"]),
+        "gaps_present": True if known_gaps else None,
         "macro": {
             "sources_total": len(source_rows), "unavailable_sources": len(unavailable),
             "missing_consensus": missing_consensus, "events_total": len(event_rows),
             "actual_blocked_events": actual_blocked,
+            "stale_actual_events": stale_actual,
             "expected_sources": len(expected_sources),
             "missing_source_rows": len(expected_sources - source_set),
-            "source_coverage_complete": source_coverage_complete,
+            "source_coverage_complete": None,
+            "source_plan_current_match": source_plan_current_match,
+            "source_plan_basis": "CURRENT_CHECKOUT_UNVERIFIED",
             "expected_events": len(expected_events),
             "missing_event_rows": len(expected_events - event_set),
             "event_coverage_complete": event_coverage_complete,
