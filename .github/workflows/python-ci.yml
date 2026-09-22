@@ -215,6 +215,8 @@ jobs:
       # launchctl 计数/退出码、精确 run 日志段、持久 bundle 与报警旗,全程只读。
       - name: Scheduled nightly production acceptance regression (offline)
         run: python3 tests/test_nightly_acceptance_offline.py
+      - name: Scheduled nightly dual acceptance regression (offline)
+        run: python3 tests/test_nightly_dual_acceptance.py
       # U1-U5 离线闭环:冻结随机对照、同日 U3、packet-bound U4 人工复审,
       # 且 U5 在 factpack/wrong-if/因果簇完成前必须保持 DATA_BLOCKED。
       - name: Offline research closure experiment
