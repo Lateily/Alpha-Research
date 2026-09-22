@@ -1,59 +1,49 @@
 {
   "ticker": "300054.SZ",
-  "generated_at": "2026-09-21",
-  "price": 72.58,
+  "generated_at": "2026-09-22",
+  "price": 72.11,
   "zone": "NEUTRAL",
-  "entry_zone": true,
+  "entry_zone": false,
   "exit_zone": true,
   "signals": [
     {
-      "type": "MA20_BOUNCE",
-      "strength": "moderate",
-      "date": "20260918",
-      "bullish": true,
-      "description": {
-        "e": "Price bounced off MA20 (70.0) — near-term support held",
-        "z": "股价从MA20(70.0)附近反弹，短期支撑有效"
-      }
-    },
-    {
       "type": "KDJ_OVERBOUGHT",
       "strength": "strong",
-      "date": "20260918",
+      "date": "20260921",
       "bullish": false,
       "description": {
-        "e": "KDJ J=114.0 (extreme >100) — high pullback risk",
-        "z": "KDJ J=114.0极度超买，回调风险高"
+        "e": "KDJ J=104.7 (extreme >100) — high pullback risk",
+        "z": "KDJ J=104.7极度超买，回调风险高"
       }
     }
   ],
   "signal_count": {
-    "bullish": 1,
+    "bullish": 0,
     "bearish": 1,
-    "total": 2
+    "total": 1
   },
   "indicators": {
-    "ma5": 69.82,
-    "ma20": 69.89,
-    "ma60": 76.15,
-    "rsi14": 53.5,
-    "vol_ma20": 212451,
-    "vol_ratio": 1.41,
-    "price_vs_ma20": 3.85,
-    "price_vs_ma60": -4.69,
-    "change_1d": 2.01,
-    "change_5d": 8.91,
-    "change_20d": -1.71,
-    "macd_dif": -1.5312,
-    "macd_dea": -2.2871,
-    "macd_hist": 1.5117,
-    "bb_upper": 75.05,
-    "bb_mid": 69.89,
-    "bb_lower": 64.73,
-    "bb_bandwidth": 14.77,
-    "kdj_k": 76.5,
-    "kdj_d": 57.7,
-    "kdj_j": 114.0,
+    "ma5": 70.85,
+    "ma20": 69.81,
+    "ma60": 75.62,
+    "rsi14": 52.3,
+    "vol_ma20": 208530,
+    "vol_ratio": 0.97,
+    "price_vs_ma20": 3.29,
+    "price_vs_ma60": -4.64,
+    "change_1d": -0.65,
+    "change_5d": 7.72,
+    "change_20d": -2.05,
+    "macd_dif": -1.2283,
+    "macd_dea": -2.0753,
+    "macd_hist": 1.694,
+    "bb_upper": 74.8,
+    "bb_mid": 69.81,
+    "bb_lower": 64.83,
+    "bb_bandwidth": 14.28,
+    "kdj_k": 77.8,
+    "kdj_d": 64.4,
+    "kdj_j": 104.7,
     "cvd_latest": null,
     "cvd_slope_5d": null,
     "cvd_chg_1d": null,
