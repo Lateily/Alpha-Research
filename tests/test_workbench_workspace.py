@@ -172,6 +172,35 @@ class EvidenceTests(unittest.TestCase):
         self.assertEqual("BOUND_OBSERVATION_ONLY", quality["status"])
         self.assertEqual({"complete": 1, "partial": 1, "zero": 1}, quality["funnel"]["coverage"])
 
+    def test_quality_exposes_missing_macro_universe_after_resealing(self):
+        source_with_quality(self.root)
+
+        def all_complete(battery):
+            for row in battery["results"]:
+                row["dims"] = {name: {"value": 1} for name in
+                               ("行情", "资金", "基本面", "技术面", "消息面", "估值")}
+                row["completeness"] = {"covered": 6, "of": 6, "missing": [],
+                                       "verdict": "COMPLETE"}
+
+        rewrite_bound_battery(self.root, all_complete)
+        base = "public/data/v2/"
+        pointer_path = self.root / (base + "current_run.json")
+        pointer = json.loads(pointer_path.read_text())
+        pointer["artifacts"]["public:macro/source_health.json"] = write(
+            self.root, base + "macro/source_health.json",
+            {"data": [{"source_id": "cboe_vix", "series_id": "vix",
+                        "metric_key": "vix_close", "status": "OK"}]})
+        pointer["artifacts"]["public:macro/macro_events.json"] = write(
+            self.root, base + "macro/macro_events.json",
+            {"run_id": pointer["run_id"], "data": [{"context_id": "cboe_vix:vix:vix_close",
+                                                "consensus": 1, "consensus_status": "OK"}]})
+        write(self.root, base + "current_run.json", pointer)
+        quality = ev.view(self.capture())["research_quality"]
+        self.assertEqual("BOUND_OBSERVATION_ONLY", quality["status"])
+        self.assertTrue(quality["gaps_present"])
+        self.assertGreater(quality["macro"]["missing_source_rows"], 0)
+        self.assertGreater(quality["macro"]["missing_event_rows"], 0)
+
     def test_quality_refuses_unbound_battery_with_valid_content(self):
         source_with_quality(self.root)
         battery_path = next(self.root.glob("data_history/funnel/*/*/candidate_battery.json"))

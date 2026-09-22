@@ -1921,6 +1921,21 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="A resealed battery must not claim an incomplete dimension set is complete.",
     ),
     MutationCase(
+        mutation_id="WORKBENCH_QUALITY_MACRO_UNIVERSE", component="AIOS nonproduction workbench",
+        source_path="scripts/llm/workbench_evidence.py", test_script="tests/test_workbench_workspace.py",
+        before=(
+            '        # governance-mutation: WORKBENCH_QUALITY_MACRO_UNIVERSE\n'
+            '        "gaps_present": bool(not source_coverage_complete or not event_coverage_complete\n'
+            '                             or unavailable or missing_consensus or coverage["partial"] or coverage["zero"]),'
+        ),
+        after=(
+            '        # governance-mutation: WORKBENCH_QUALITY_MACRO_UNIVERSE\n'
+            '        "gaps_present": bool(unavailable or missing_consensus or coverage["partial"] or coverage["zero"]),'
+        ),
+        expected_failure_marker="test_quality_exposes_missing_macro_universe_after_resealing",
+        rationale="A one-row all-OK sample cannot hide missing registered Macro sources and events.",
+    ),
+    MutationCase(
         mutation_id="MACRO_M0B_FRED_KEYLESS_ROUTE",
         component="Macro M0-B collection",
         source_path="experiments/macro_os/collectors.py",
