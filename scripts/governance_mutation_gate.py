@@ -1872,6 +1872,24 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="Oversize input must be refused before parsing or persistence.",
     ),
     MutationCase(
+        mutation_id="MACRO_M0B_BLS_MISSING_CELL",
+        component="Macro M0-B collection",
+        source_path="experiments/macro_os/collectors.py",
+        test_script="tests/test_macro_m0b_offline.py",
+        before=(
+            '            # governance-mutation: MACRO_M0B_BLS_MISSING_CELL\n'
+            '            if str(row.get("value", "")).strip() == "-":\n'
+            '                continue'
+        ),
+        after=(
+            '            # governance-mutation: MACRO_M0B_BLS_MISSING_CELL\n'
+            '            if str(row.get("value", "")).strip() == "-":\n'
+            '                row = {**row, "value": "0"}'
+        ),
+        expected_failure_marker="test_bls_historical_dash_preserves_other_observations",
+        rationale="A historical BLS missing cell must not become a zero-valued observation or invalidate the batch.",
+    ),
+    MutationCase(
         mutation_id="MACRO_M0B_FRED_KEYLESS_ROUTE",
         component="Macro M0-B collection",
         source_path="experiments/macro_os/collectors.py",
