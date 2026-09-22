@@ -217,10 +217,14 @@ def summarize_research(root: Path, run_id: str, target: str) -> dict:
         raise AuditError("macro_events run_id is not the accepted run_id")
     if health.get("run_id") != run_id or health.get("target_trade_date") != target:
         raise AuditError("funnel_health run_id/target is not the accepted run")
-    registry = contracts.load_json(registry_path)
-    contracts.validate_source_registry(registry)
-    # governance-mutation: NIGHTLY_ACCEPTANCE_INSTALLED_RULES
-    rules = m1a.load_rules(rules_path)
+    try:
+        registry = contracts.load_json(registry_path)
+        contracts.validate_source_registry(registry)
+        # governance-mutation: NIGHTLY_ACCEPTANCE_INSTALLED_RULES
+        # governance-mutation: NIGHTLY_ACCEPTANCE_INSTALLED_REGISTRY_FOR_RULES
+        rules = m1a.load_rules(rules_path, source_registry_path=registry_path)
+    except (contracts.ContractError, m1a.M1AError, OSError, ValueError, TypeError) as exc:
+        raise AuditError(f"installed Macro contracts cannot be validated: {exc}") from exc
     # governance-mutation: NIGHTLY_ACCEPTANCE_MACRO_CONTRACT_BINDING
     if (source.get("source_registry_hash") != registry["registry_hash"]
             or events.get("rules_hash") != rules["rules_hash"]):

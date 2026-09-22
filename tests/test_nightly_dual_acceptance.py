@@ -6,6 +6,7 @@ import hashlib
 import datetime as dt
 import json
 import shutil
+import copy
 import sys
 import tempfile
 import unittest
@@ -335,6 +336,37 @@ class DualAcceptanceTest(unittest.TestCase):
         try:
             status = dual.summarize_research(self.root, self.run_id, self.target)["status"]
         except dual.AuditError:
+            status = "AUDIT_FAILED"
+        self.assertEqual("OBSERVED_WITH_GAPS", status)
+
+    def test_research_sheet_validates_installed_registry_and_rules_together(self) -> None:
+        self.test_research_sheet_keeps_missing_macro_and_zero_dim_rows_visible()
+        registry_path = self.root / contracts.SOURCE_REGISTRY.relative_to(ROOT)
+        rules_path = self.root / m1a.RULES_PATH.relative_to(ROOT)
+        registry = json.loads(registry_path.read_text())
+        source = copy.deepcopy(next(row for row in registry["sources"]
+                                    if row["source_id"] == "bea_public_api"))
+        source["source_id"] = "bea_valid_revision"
+        registry["sources"].append(source)
+        registry["registry_hash"] = contracts.source_registry_hash(registry)
+        contracts.validate_source_registry(registry)
+        write_json(registry_path, registry)
+        rules = json.loads(rules_path.read_text())
+        rules["regions"]["GLOBAL_US"][0]["source_id"] = "bea_valid_revision"
+        rules["rules_hash"] = m1a.rules_hash(rules)
+        m1a.validate_rules(rules, source_registry_path=registry_path)
+        write_json(rules_path, rules)
+        source_path = self.root / "public/data/v2/macro/source_health.json"
+        health = json.loads(source_path.read_text())
+        health["source_registry_hash"] = registry["registry_hash"]
+        write_json(source_path, health)
+        events_path = self.root / "public/data/v2/macro/macro_events.json"
+        events = json.loads(events_path.read_text())
+        events["rules_hash"] = rules["rules_hash"]
+        write_json(events_path, events)
+        try:
+            status = dual.summarize_research(self.root, self.run_id, self.target)["status"]
+        except (dual.AuditError, m1a.M1AError):
             status = "AUDIT_FAILED"
         self.assertEqual("OBSERVED_WITH_GAPS", status)
 
