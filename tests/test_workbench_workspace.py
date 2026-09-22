@@ -11,11 +11,13 @@ from pathlib import Path
 from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts/llm"))
 import nonprod_workbench as wb
 import workbench_workspace as ws
 import workbench_evidence as ev
 import workbench_backup as backup
+from experiments.macro_os import collectors, contracts, m1a
 
 PASSWORD = "test-only-local-password"
 
@@ -99,6 +101,7 @@ def source_with_quality(root):
     })
     pointer["artifacts"]["public:funnel_health.json"] = write(root, health_path, health)
     pointer["artifacts"]["public:macro/source_health.json"] = write(root, base + "macro/source_health.json", {
+        "source_registry_hash": contracts.load_json(contracts.SOURCE_REGISTRY)["registry_hash"],
         "data": [
             {"source_id": "bls", "metric_key": "cpi", "status": "DATA_INVALID", "last_error_code": "INVALID_NUMBER"},
             {"source_id": "bea", "metric_key": "gdp", "status": "DATA_BLOCKED", "last_error_code": "BEA_API_KEY_MISSING"},
@@ -106,7 +109,7 @@ def source_with_quality(root):
         ],
     })
     pointer["artifacts"]["public:macro/macro_events.json"] = write(root, base + "macro/macro_events.json", {
-        "run_id": rid, "data": [
+        "run_id": rid, "rules_hash": m1a.load_rules()["rules_hash"], "data": [
             {"consensus": None, "consensus_status": "DATA_BLOCKED"},
             {"consensus": 1.0, "consensus_status": "AVAILABLE"},
         ],
@@ -188,11 +191,13 @@ class EvidenceTests(unittest.TestCase):
         pointer = json.loads(pointer_path.read_text())
         pointer["artifacts"]["public:macro/source_health.json"] = write(
             self.root, base + "macro/source_health.json",
-            {"data": [{"source_id": "cboe_vix", "series_id": "vix",
+            {"source_registry_hash": contracts.load_json(contracts.SOURCE_REGISTRY)["registry_hash"],
+             "data": [{"source_id": "cboe_vix", "series_id": "vix",
                         "metric_key": "vix_close", "status": "OK"}]})
         pointer["artifacts"]["public:macro/macro_events.json"] = write(
             self.root, base + "macro/macro_events.json",
-            {"run_id": pointer["run_id"], "data": [{"context_id": "cboe_vix:vix:vix_close",
+            {"run_id": pointer["run_id"], "rules_hash": m1a.load_rules()["rules_hash"],
+             "data": [{"context_id": "cboe_vix:vix:vix_close",
                                                 "consensus": 1, "consensus_status": "OK"}]})
         write(self.root, base + "current_run.json", pointer)
         quality = ev.view(self.capture())["research_quality"]
@@ -200,6 +205,69 @@ class EvidenceTests(unittest.TestCase):
         self.assertTrue(quality["gaps_present"])
         self.assertGreater(quality["macro"]["missing_source_rows"], 0)
         self.assertGreater(quality["macro"]["missing_event_rows"], 0)
+
+    def test_quality_refuses_unbound_publication_manifest(self):
+        source_with_quality(self.root)
+        manifest = self.root / "public/data/v2/runs" / self.pointer["run_id"] / "manifest.json"
+        write(self.root, str(manifest.relative_to(self.root)), {"run_id": "tampered"})
+        quality = ev.view(self.capture())["research_quality"]
+        self.assertEqual("NOT_EVALUATED", quality["status"])
+
+    def test_quality_refuses_resealed_different_macro_contract(self):
+        source_with_quality(self.root)
+        path = "public/data/v2/macro/macro_events.json"
+        payload = json.loads((self.root / path).read_text())
+        payload["rules_hash"] = "0" * 64
+        pointer = json.loads((self.root / "public/data/v2/current_run.json").read_text())
+        pointer["artifacts"]["public:macro/macro_events.json"] = write(self.root, path, payload)
+        write(self.root, "public/data/v2/current_run.json", pointer)
+        quality = ev.view(self.capture())["research_quality"]
+        self.assertEqual("NOT_EVALUATED", quality["status"])
+        self.assertEqual("MACRO_CONTRACT_MISMATCH", quality["reason"])
+
+    def test_quality_refuses_resealed_different_source_registry(self):
+        source_with_quality(self.root)
+        path = "public/data/v2/macro/source_health.json"
+        payload = json.loads((self.root / path).read_text())
+        payload["source_registry_hash"] = "0" * 64
+        pointer = json.loads((self.root / "public/data/v2/current_run.json").read_text())
+        pointer["artifacts"]["public:macro/source_health.json"] = write(self.root, path, payload)
+        write(self.root, "public/data/v2/current_run.json", pointer)
+        quality = ev.view(self.capture())["research_quality"]
+        self.assertEqual("NOT_EVALUATED", quality["status"])
+        self.assertEqual("MACRO_CONTRACT_MISMATCH", quality["reason"])
+
+    def test_quality_shows_actual_blocked_when_every_row_exists(self):
+        source_with_quality(self.root)
+
+        def complete(battery):
+            for row in battery["results"]:
+                row["dims"] = {name: {"value": 1} for name in ("行情", "资金", "基本面", "技术面", "消息面", "估值")}
+                row["completeness"] = {"covered": 6, "of": 6, "missing": [], "verdict": "COMPLETE"}
+
+        rewrite_bound_battery(self.root, complete)
+        sources = [dict(source_id=spec.source_id, series_id=m.series_id, metric_key=m.metric_key, status="OK")
+                   for spec in collectors.collection_plan() for m in spec.metrics]
+        events = [dict(context_id=context_id,
+                       actual_status="AVAILABLE", consensus=1, consensus_status="AVAILABLE")
+                  for context_id in sorted({f"{rule['source_id']}:{rule['series_id']}:{rule['metric_key']}"
+                                            for region in m1a.load_rules()["regions"].values() for rule in region})]
+        events[0]["actual_status"] = "DATA_BLOCKED"
+        pointer = json.loads((self.root / "public/data/v2/current_run.json").read_text())
+        base = "public/data/v2/"
+        pointer["artifacts"]["public:macro/source_health.json"] = write(
+            self.root, base + "macro/source_health.json",
+            {"source_registry_hash": contracts.load_json(contracts.SOURCE_REGISTRY)["registry_hash"], "data": sources})
+        pointer["artifacts"]["public:macro/macro_events.json"] = write(
+            self.root, base + "macro/macro_events.json",
+            {"run_id": pointer["run_id"], "rules_hash": m1a.load_rules()["rules_hash"], "data": events})
+        write(self.root, base + "current_run.json", pointer)
+        quality = ev.view(self.capture())["research_quality"]
+        self.assertEqual("BOUND_OBSERVATION_ONLY", quality["status"])
+        self.assertTrue(quality["macro"]["source_coverage_complete"])
+        self.assertTrue(quality["macro"]["event_coverage_complete"])
+        self.assertEqual(1, quality["macro"]["actual_blocked_events"])
+        self.assertTrue(quality["gaps_present"])
 
     def test_quality_refuses_unbound_battery_with_valid_content(self):
         source_with_quality(self.root)

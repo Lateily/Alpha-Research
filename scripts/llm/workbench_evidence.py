@@ -203,6 +203,7 @@ def research_quality(snapshot):
     base = "public/data/v2/"
     bundle = f"data_history/funnel/{target}/{run_id}/"
     paths = {
+        "publication": base + f"runs/{run_id}/manifest.json",
         "health": base + "funnel_health.json",
         "sources": base + "macro/source_health.json",
         "events": base + "macro/macro_events.json",
@@ -278,17 +279,24 @@ def research_quality(snapshot):
     if str(code_root) not in sys.path:
         sys.path.insert(0, str(code_root))
     try:
-        from experiments.macro_os import collectors, m1a
+        from experiments.macro_os import collectors, contracts, m1a
+        registry = contracts.load_json(contracts.SOURCE_REGISTRY)
+        contracts.validate_source_registry(registry)
+        rules = m1a.load_rules()
         expected_sources = {
             (spec.source_id, metric.series_id, metric.metric_key)
             for spec in collectors.collection_plan() for metric in spec.metrics
         }
         expected_events = {
             f"{rule['source_id']}:{rule['series_id']}:{rule['metric_key']}"
-            for rules in m1a.load_rules()["regions"].values() for rule in rules
+            for region in rules["regions"].values() for rule in region
         }
     except (ImportError, OSError, RuntimeError, ValueError, KeyError, TypeError):
         return {**blocked, "reason": "MACRO_CONTRACT_UNAVAILABLE"}
+    # governance-mutation: WORKBENCH_QUALITY_MACRO_CONTRACT_BINDING
+    if (payloads["sources"].get("source_registry_hash") != registry["registry_hash"]
+            or payloads["events"].get("rules_hash") != rules["rules_hash"]):
+        return {**blocked, "reason": "MACRO_CONTRACT_MISMATCH"}
     observed_sources = [
         (row.get("source_id"), row.get("series_id"), row.get("metric_key"))
         for row in source_rows
@@ -307,15 +315,18 @@ def research_quality(snapshot):
     unavailable = [row for row in source_rows if row["status"] != "OK"]
     missing_consensus = sum(row.get("consensus") is None or
                             row.get("consensus_status") == "DATA_BLOCKED" for row in event_rows)
+    # governance-mutation: WORKBENCH_QUALITY_ACTUAL_STATUS
+    actual_blocked = sum(row.get("actual_status") != "AVAILABLE" for row in event_rows)
     return {
         "status": "BOUND_OBSERVATION_ONLY", "run_id": run_id,
         "target_trade_date": target, "formal_authority": False,
         # governance-mutation: WORKBENCH_QUALITY_MACRO_UNIVERSE
         "gaps_present": bool(not source_coverage_complete or not event_coverage_complete
-                             or unavailable or missing_consensus or coverage["partial"] or coverage["zero"]),
+                             or unavailable or missing_consensus or actual_blocked or coverage["partial"] or coverage["zero"]),
         "macro": {
             "sources_total": len(source_rows), "unavailable_sources": len(unavailable),
             "missing_consensus": missing_consensus, "events_total": len(event_rows),
+            "actual_blocked_events": actual_blocked,
             "expected_sources": len(expected_sources),
             "missing_source_rows": len(expected_sources - source_set),
             "source_coverage_complete": source_coverage_complete,

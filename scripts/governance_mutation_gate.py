@@ -1926,7 +1926,7 @@ MUTATIONS: tuple[MutationCase, ...] = (
         before=(
             '        # governance-mutation: WORKBENCH_QUALITY_MACRO_UNIVERSE\n'
             '        "gaps_present": bool(not source_coverage_complete or not event_coverage_complete\n'
-            '                             or unavailable or missing_consensus or coverage["partial"] or coverage["zero"]),'
+            '                             or unavailable or missing_consensus or actual_blocked or coverage["partial"] or coverage["zero"]),'
         ),
         after=(
             '        # governance-mutation: WORKBENCH_QUALITY_MACRO_UNIVERSE\n'
@@ -1934,6 +1934,51 @@ MUTATIONS: tuple[MutationCase, ...] = (
         ),
         expected_failure_marker="test_quality_exposes_missing_macro_universe_after_resealing",
         rationale="A one-row all-OK sample cannot hide missing registered Macro sources and events.",
+    ),
+    MutationCase(
+        mutation_id="WORKBENCH_QUALITY_PUBLICATION_MANIFEST", component="AIOS nonproduction workbench",
+        source_path="scripts/llm/workbench_evidence.py", test_script="tests/test_workbench_workspace.py",
+        before='        "publication": base + f"runs/{run_id}/manifest.json",',
+        after='        "publication": base + "funnel_health.json",',
+        expected_failure_marker="test_quality_refuses_unbound_publication_manifest",
+        rationale="Research quality must depend on this run's bound publication manifest.",
+    ),
+    MutationCase(
+        mutation_id="WORKBENCH_QUALITY_MACRO_CONTRACT_BINDING", component="AIOS nonproduction workbench",
+        source_path="scripts/llm/workbench_evidence.py", test_script="tests/test_workbench_workspace.py",
+        before=(
+            '    # governance-mutation: WORKBENCH_QUALITY_MACRO_CONTRACT_BINDING\n'
+            '    if (payloads["sources"].get("source_registry_hash") != registry["registry_hash"]\n'
+            '            or payloads["events"].get("rules_hash") != rules["rules_hash"]):'
+        ),
+        after=(
+            '    # governance-mutation: WORKBENCH_QUALITY_MACRO_CONTRACT_BINDING\n'
+            '    if False:'
+        ),
+        expected_failure_marker="test_quality_refuses_resealed_different_macro_contract",
+        rationale="A resealed historical Macro payload must match the registered contract version.",
+    ),
+    MutationCase(
+        mutation_id="WORKBENCH_QUALITY_SOURCE_REGISTRY_BINDING", component="AIOS nonproduction workbench",
+        source_path="scripts/llm/workbench_evidence.py", test_script="tests/test_workbench_workspace.py",
+        before='    if (payloads["sources"].get("source_registry_hash") != registry["registry_hash"]',
+        after='    if (False',
+        expected_failure_marker="test_quality_refuses_resealed_different_source_registry",
+        rationale="Source coverage cannot be judged under a different registered source universe.",
+    ),
+    MutationCase(
+        mutation_id="WORKBENCH_QUALITY_ACTUAL_STATUS", component="AIOS nonproduction workbench",
+        source_path="scripts/llm/workbench_evidence.py", test_script="tests/test_workbench_workspace.py",
+        before=(
+            '    # governance-mutation: WORKBENCH_QUALITY_ACTUAL_STATUS\n'
+            '    actual_blocked = sum(row.get("actual_status") != "AVAILABLE" for row in event_rows)'
+        ),
+        after=(
+            '    # governance-mutation: WORKBENCH_QUALITY_ACTUAL_STATUS\n'
+            '    actual_blocked = 0'
+        ),
+        expected_failure_marker="test_quality_shows_actual_blocked_when_every_row_exists",
+        rationale="Present Macro event rows without actual observations must remain visible as gaps.",
     ),
     MutationCase(
         mutation_id="MACRO_M0B_FRED_KEYLESS_ROUTE",
