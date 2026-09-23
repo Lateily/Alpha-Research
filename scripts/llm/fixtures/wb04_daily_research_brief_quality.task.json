@@ -1,0 +1,59 @@
+{
+  "schema": "ai-task.v1",
+  "task_id": "WB-04-DAILY-RESEARCH-BRIEF-QUALITY-20260923",
+  "source_issue": null,
+  "architecture_block": ["nonproduction-workbench", "research-quality-review"],
+  "objective": "Define evidence-bound daily brief content rules, prepare the first isolated brief review record, and specify earnings questions for unresolved theses without changing engineering input contracts or granting research authority.",
+  "non_goals": [
+    "Do not modify workbench input schemas or runtime code",
+    "Do not create or infer a human approval",
+    "Do not run production, market-data, paid-model, U4, paper or trading actions",
+    "Do not mark an unavailable first isolated brief as reviewed"
+  ],
+  "human_owner": "Reed",
+  "reviewer": "Junyan",
+  "executor_candidates": ["Codex"],
+  "dependencies": ["WB-01 frozen input contract", "first isolated daily brief artifact"],
+  "authority_docs": [
+    "AGENTS.md",
+    "docs/research/RESEARCH_QUALITY_SCORECARD_V0.md",
+    "docs/research/WORKFLOW_FOLLOWUP_V1.md",
+    "docs/team/NONPROD_WORKBENCH_V1.md"
+  ],
+  "file_scope": [
+    "docs/research/DAILY_RESEARCH_BRIEF_CONTENT_RULES_V0.md",
+    "docs/research/review/FIRST_ISOLATED_DAILY_BRIEF_REVIEW_20260923.md",
+    "docs/research/EARNINGS_UNRESOLVED_THESIS_QUESTIONS_V0.md",
+    "tests/test_daily_research_brief_docs.py",
+    ".github/workflows/python-ci.yml",
+    "scripts/llm/fixtures/wb04_daily_research_brief_quality.task.json"
+  ],
+  "forbidden_scope": [
+    "scripts/llm/workbench_evidence.py",
+    "tools/nonprod_workbench/ui",
+    "public/data",
+    "data_history",
+    "experiments/execution_tracker",
+    "production runtime and formal ledgers"
+  ],
+  "input_contracts": [
+    "WB-01 frozen daily brief input contract (pending)",
+    "Frozen isolated daily brief and source artifacts (pending)",
+    "ar.workflow-sources.v2",
+    "ar.research_quality_scorecard.v0"
+  ],
+  "output_artifacts": [
+    "Daily brief content and attribution rules with Jason field request and Better readable layout",
+    "First isolated brief review record with explicit waiting status until the frozen artifact exists",
+    "Earnings questions for unresolved theses"
+  ],
+  "acceptance_tests": [
+    "python3 tests/test_daily_research_brief_docs.py",
+    "python3 scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/wb04_daily_research_brief_quality.task.json",
+    "git diff --check"
+  ],
+  "risk_level": "LOW",
+  "network_policy": "OFFLINE",
+  "budget": {"max_cny": "0", "max_minutes": 120},
+  "approval_gates": ["INDEPENDENT_REVIEW", "JUNYAN_MERGE"]
+}
