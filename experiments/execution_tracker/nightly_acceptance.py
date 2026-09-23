@@ -211,7 +211,9 @@ def _validate_nightly_result(inputs: Inputs) -> tuple[dict, dict]:
     import run_nightly  # imported only for its production, read-only verifier
 
     # governance-mutation: NIGHTLY_ACCEPTANCE_PERSISTENT_BUNDLE
-    run_nightly._validate_funnel_health(health, str(health_path))
+    run_nightly._validate_funnel_health_shape(health)
+    # governance-mutation: NIGHTLY_ACCEPTANCE_EXTERNAL_ROOT
+    run_nightly._verify_funnel_bundle(health, str(inputs.repo_root), str(health_path))
     bundle = inputs.repo_root / str((health.get("bundle") or {}).get("location") or "")
     if bundle.is_symlink() or not bundle.is_dir():
         raise AcceptanceError(f"immutable funnel bundle is missing or symlinked: {bundle}")

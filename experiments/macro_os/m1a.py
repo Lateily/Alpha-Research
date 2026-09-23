@@ -99,9 +99,9 @@ def rules_hash(payload: Mapping[str, Any]) -> str:
     return content_hash({key: value for key, value in payload.items() if key != "rules_hash"})
 
 
-def load_rules(path: str | Path = RULES_PATH) -> dict[str, Any]:
+def load_rules(path: str | Path = RULES_PATH, *, source_registry_path: str | Path = contracts.SOURCE_REGISTRY) -> dict[str, Any]:
     payload = contracts.load_json(path)
-    validate_rules(payload)
+    validate_rules(payload, source_registry_path=source_registry_path)
     return payload
 
 
@@ -123,7 +123,7 @@ def _validate_condition(condition: Any, label: str) -> None:
             raise M1AError(f"{label} low exceeds high")
 
 
-def validate_rules(payload: Any) -> None:
+def validate_rules(payload: Any, *, source_registry_path: str | Path = contracts.SOURCE_REGISTRY) -> None:
     if not isinstance(payload, dict):
         raise M1AError("state rules must be an object")
     required = {
@@ -146,7 +146,7 @@ def validate_rules(payload: Any) -> None:
     if set(payload["regions"]) != set(REGIONS):
         raise M1AError("state rules must keep GLOBAL_US and CHINA separate")
 
-    source_payload = contracts.load_json(contracts.SOURCE_REGISTRY)
+    source_payload = contracts.load_json(source_registry_path)
     contracts.validate_source_registry(source_payload)
     sources = contracts.source_index(source_payload)
     factor_ids: set[str] = set()
