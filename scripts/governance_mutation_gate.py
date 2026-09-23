@@ -1873,6 +1873,145 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="Oversize input must be refused before parsing or persistence.",
     ),
     MutationCase(
+        mutation_id="WORKBENCH_QUALITY_SOURCE_BINDING", component="AIOS nonproduction workbench",
+        source_path="scripts/llm/workbench_evidence.py", test_script="tests/test_workbench_workspace.py",
+        before=(
+            '    # governance-mutation: WORKBENCH_QUALITY_SOURCE_BINDING\n'
+            '    if any(records.get(path, {}).get("binding") != "MATCH" or\n'
+            '           records[path].get("status") != "OBSERVED" for path in paths.values()):'
+        ),
+        after=(
+            '    # governance-mutation: WORKBENCH_QUALITY_SOURCE_BINDING\n'
+            '    if False:'
+        ),
+        expected_failure_marker="test_quality_refuses_unbound_battery_with_valid_content",
+        rationale="Unbound published artifacts must not feed the workbench research-quality counts.",
+    ),
+    MutationCase(
+        mutation_id="WORKBENCH_QUALITY_DERIVE_COVERAGE", component="AIOS nonproduction workbench",
+        source_path="scripts/llm/workbench_evidence.py", test_script="tests/test_workbench_workspace.py",
+        before=(
+            '        # governance-mutation: WORKBENCH_QUALITY_DERIVE_COVERAGE\n'
+            '        if (stamp.get("covered") != derived or stamp.get("of") != 6\n'
+            '                or stamp.get("verdict") != ("COMPLETE" if derived == 6 else "PARTIAL")):'
+        ),
+        after=(
+            '        # governance-mutation: WORKBENCH_QUALITY_DERIVE_COVERAGE\n'
+            '        if False:'
+        ),
+        expected_failure_marker="test_quality_refuses_self_reported_battery_completeness",
+        rationale="Battery completeness must be checked against dimensions before a quality count appears.",
+    ),
+    MutationCase(
+        mutation_id="WORKBENCH_QUALITY_MISSING_LIST", component="AIOS nonproduction workbench",
+        source_path="scripts/llm/workbench_evidence.py", test_script="tests/test_workbench_workspace.py",
+        before=(
+            '        if (not isinstance(reported_missing, list)\n'
+            '                or any(not isinstance(name, str) for name in reported_missing)\n'
+            '                or len(reported_missing) != len(missing)\n'
+            '                or set(reported_missing) != set(missing)):\n'
+            '            # governance-mutation: WORKBENCH_QUALITY_MISSING_LIST\n'
+            '            return {**blocked, "reason": "SELF_REPORTED_COMPLETENESS_MISMATCH"}'
+        ),
+        after=(
+            '        # governance-mutation: WORKBENCH_QUALITY_MISSING_LIST\n'
+            '        if False:\n'
+            '            return {**blocked, "reason": "SELF_REPORTED_COMPLETENESS_MISMATCH"}'
+        ),
+        expected_failure_marker="test_quality_rejects_resealed_missing_list_and_verdict",
+        rationale="A resealed battery must not claim an incomplete dimension set is complete.",
+    ),
+    MutationCase(
+        mutation_id="WORKBENCH_QUALITY_MACRO_UNIVERSE", component="AIOS nonproduction workbench",
+        source_path="scripts/llm/workbench_evidence.py", test_script="tests/test_workbench_workspace.py",
+        before=(
+            '    known_gaps = bool(not event_coverage_complete or unavailable or missing_consensus\n'
+            '                      or actual_blocked or stale_actual or coverage["partial"] or coverage["zero"])'
+        ),
+        after=(
+            '    known_gaps = bool(unavailable or missing_consensus\n'
+            '                      or actual_blocked or stale_actual or coverage["partial"] or coverage["zero"])'
+        ),
+        expected_failure_marker="test_quality_exposes_missing_macro_universe_after_resealing",
+        rationale="A one-row all-OK sample cannot hide missing registered Macro sources and events.",
+    ),
+    MutationCase(
+        mutation_id="WORKBENCH_QUALITY_PUBLICATION_MANIFEST", component="AIOS nonproduction workbench",
+        source_path="scripts/llm/workbench_evidence.py", test_script="tests/test_workbench_workspace.py",
+        before='           records[path].get("status") != "OBSERVED" for path in paths.values()):',
+        after='           records[path].get("status") != "OBSERVED" for path in paths.values() if path != paths["publication"]):',
+        expected_failure_marker="test_quality_refuses_unbound_publication_manifest",
+        rationale="Research quality must depend on this run's bound publication manifest.",
+    ),
+    MutationCase(
+        mutation_id="WORKBENCH_QUALITY_MACRO_CONTRACT_BINDING", component="AIOS nonproduction workbench",
+        source_path="scripts/llm/workbench_evidence.py", test_script="tests/test_workbench_workspace.py",
+        before=(
+            '    # governance-mutation: WORKBENCH_QUALITY_MACRO_CONTRACT_BINDING\n'
+            '    if (payloads["sources"].get("source_registry_hash") != registry["registry_hash"]\n'
+            '            or payloads["events"].get("rules_hash") != rules["rules_hash"]):'
+        ),
+        after=(
+            '    # governance-mutation: WORKBENCH_QUALITY_MACRO_CONTRACT_BINDING\n'
+            '    if False:'
+        ),
+        expected_failure_marker="test_quality_refuses_resealed_different_macro_contract",
+        rationale="A resealed historical Macro payload must match the registered contract version.",
+    ),
+    MutationCase(
+        mutation_id="WORKBENCH_QUALITY_SOURCE_REGISTRY_BINDING", component="AIOS nonproduction workbench",
+        source_path="scripts/llm/workbench_evidence.py", test_script="tests/test_workbench_workspace.py",
+        before='    if (payloads["sources"].get("source_registry_hash") != registry["registry_hash"]',
+        after='    if (False',
+        expected_failure_marker="test_quality_refuses_resealed_different_source_registry",
+        rationale="Source coverage cannot be judged under a different registered source universe.",
+    ),
+    MutationCase(
+        mutation_id="WORKBENCH_QUALITY_ACTUAL_STATUS", component="AIOS nonproduction workbench",
+        source_path="scripts/llm/workbench_evidence.py", test_script="tests/test_workbench_workspace.py",
+        before=(
+            '    # governance-mutation: WORKBENCH_QUALITY_ACTUAL_STATUS\n'
+            '    actual_blocked = sum(row.get("actual_status") != "AVAILABLE" for row in event_rows)'
+        ),
+        after=(
+            '    # governance-mutation: WORKBENCH_QUALITY_ACTUAL_STATUS\n'
+            '    actual_blocked = 0'
+        ),
+        expected_failure_marker="test_quality_shows_actual_blocked_when_every_row_exists",
+        rationale="Present Macro event rows without actual observations must remain visible as gaps.",
+    ),
+    MutationCase(
+        mutation_id="WORKBENCH_QUALITY_ACTUAL_FRESHNESS", component="AIOS nonproduction workbench",
+        source_path="scripts/llm/workbench_evidence.py", test_script="tests/test_workbench_workspace.py",
+        before=(
+            '    # governance-mutation: WORKBENCH_QUALITY_ACTUAL_FRESHNESS\n'
+            '    stale_actual = sum(row.get("actual_status") == "AVAILABLE"\n'
+            '                       and row.get("freshness_status") != "CURRENT" for row in event_rows)'
+        ),
+        after=(
+            '    # governance-mutation: WORKBENCH_QUALITY_ACTUAL_FRESHNESS\n'
+            '    stale_actual = 0'
+        ),
+        expected_failure_marker="test_quality_shows_actual_blocked_when_every_row_exists",
+        rationale="Available but stale Macro actuals must remain visible as quality gaps.",
+    ),
+    MutationCase(
+        mutation_id="WORKBENCH_QUALITY_SOURCE_PLAN_UNVERIFIED", component="AIOS nonproduction workbench",
+        source_path="scripts/llm/workbench_evidence.py", test_script="tests/test_workbench_workspace.py",
+        before='            "source_coverage_complete": None,',
+        after='            "source_coverage_complete": source_plan_current_match,',
+        expected_failure_marker="test_collector_plan_comparison_is_not_reported_as_run_verified",
+        rationale="Current checkout's collector plan cannot certify coverage of an older run.",
+    ),
+    MutationCase(
+        mutation_id="WORKBENCH_QUALITY_PUBLICATION_RUN_BINDING", component="AIOS nonproduction workbench",
+        source_path="scripts/llm/workbench_evidence.py", test_script="tests/test_workbench_workspace.py",
+        before='            or payloads["publication"].get("run_id") != run_id',
+        after='            or False',
+        expected_failure_marker="test_quality_refuses_resealed_wrong_run_manifest",
+        rationale="A correctly hashed manifest for another run is not this publication.",
+    ),
+    MutationCase(
         mutation_id="MACRO_M0B_BLS_MISSING_CELL",
         component="Macro M0-B collection",
         source_path="experiments/macro_os/collectors.py",

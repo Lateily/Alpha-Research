@@ -1,0 +1,22 @@
+{
+  "schema": "ai-task.v1",
+  "task_id": "WORKBENCH-RESEARCH-QUALITY-20260922",
+  "source_issue": null,
+  "architecture_block": ["local-read-only-workbench", "research-quality-observation"],
+  "objective": "Display run-bound macro and funnel missing-data quality in the nonproduction workbench without granting publication or research authority.",
+  "non_goals": ["No production sync, nightly execution or scheduling change", "No API calls, paid model or collection", "No U4 selection, paper registration or trading authority", "No false COMPLETE claim from unbound or self-reported evidence"],
+  "human_owner": "Junyan",
+  "reviewer": "Independent reviewer",
+  "executor_candidates": ["Codex"],
+  "dependencies": [],
+  "authority_docs": ["AGENTS.md", "scripts/llm/AGENTS.md"],
+  "file_scope": ["scripts/llm/workbench_evidence.py", "tools/nonprod_workbench/ui/workspace.jsx", "tests/test_workbench_workspace.py", "scripts/governance_mutation_gate.py", "scripts/llm/fixtures/workbench_research_quality.task.json"],
+  "forbidden_scope": ["/Users/years/ar-live", "public/data", "data_history", "experiments/execution_tracker", "production launchd", "formal ledgers"],
+  "input_contracts": ["public/data/v2/current_run.json", "public/data/v2/funnel_health.json", "public/data/v2/macro/source_health.json", "public/data/v2/macro/macro_events.json", "data_history/funnel/<target>/<run_id>/candidate_manifest.json", "data_history/funnel/<target>/<run_id>/candidate_battery.json"],
+  "output_artifacts": ["Run-bound research quality observation", "Macro source gap and candidate battery coverage panels", "Negative tests and mutation pins"],
+  "acceptance_tests": ["python3 tests/test_workbench_workspace.py", "python3 scripts/governance_mutation_gate.py", "python3 /Users/years/Desktop/Stock/e2e-twin/twin-20260902/tools/ci_local.py", "node node_modules/vite/bin/vite.js build --config tools/nonprod_workbench/vite.config.js", "Read-only production snapshot reproduction", "Desktop/mobile browser verification", "git diff --check"],
+  "risk_level": "MEDIUM",
+  "network_policy": "OFFLINE",
+  "budget": {"max_cny": "0", "max_minutes": 180},
+  "approval_gates": ["INDEPENDENT_REVIEW", "JUNYAN_MERGE", "SEPARATE_PRODUCTION_SYNC_AND_CANARY_APPROVAL"]
+}

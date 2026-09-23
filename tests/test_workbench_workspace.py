@@ -11,11 +11,13 @@ from pathlib import Path
 from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts/llm"))
 import nonprod_workbench as wb
 import workbench_workspace as ws
 import workbench_evidence as ev
 import workbench_backup as backup
+from experiments.macro_os import collectors, contracts, m1a
 
 PASSWORD = "test-only-local-password"
 
@@ -54,7 +56,7 @@ def write(root, name, value):
 def source(root):
     rid = "20260828_163504_test"
     base = "public/data/v2/"
-    manifest = {"schema": "nightly_manifest/v2", "run_id": rid}
+    manifest = {"schema": "nightly_manifest/v2", "run_id": rid, "target_trade_date": "20260828"}
     mh = write(root, base + f"runs/{rid}/manifest.json", manifest)
     health = {"as_of": "20260828", "run_id": rid, "status": "PARTIAL", "bundle": {"location": f"data_history/funnel/20260828/{rid}", "artifacts": {}}}
     for name in ev.BUNDLE:
@@ -69,6 +71,66 @@ def source(root):
     write(root, base + "current_run.json", pointer)
     write(root, "experiments/execution_tracker/nightly_run.json", {"run_id": "failed-newer-run", "target_trade_date": "20260831", "report": "INCOMPLETE", "steps": [{"step": "official_sample", "status": "FAILED", "tail": "untrusted stdout omitted"}]})
     return pointer
+
+
+def source_with_quality(root):
+    pointer = source(root)
+    rid = pointer["run_id"]
+    base = "public/data/v2/"
+    location = f"data_history/funnel/20260828/{rid}"
+    dims = ("行情", "资金", "基本面", "技术面", "消息面", "估值")
+    rows = [
+        {"ts_code": "000001.SZ", "dims": {name: {"value": 1} for name in dims},
+         "completeness": {"covered": 6, "of": 6, "missing": [], "verdict": "COMPLETE"}},
+        {"ts_code": "000002.SZ", "dims": {name: ({"status": "DATA_BLOCKED", "err": "SOURCE_ROW_MISSING"} if name in dims[3:] else {"value": 1}) for name in dims},
+         "completeness": {"covered": 3, "of": 6, "missing": list(dims[3:]), "verdict": "PARTIAL"}},
+        {"ts_code": "000003.SZ", "dims": {name: {"status": "DATA_BLOCKED", "err": "BATCH_NOT_STARTED"} for name in dims},
+         "completeness": {"covered": 0, "of": 6, "missing": list(dims), "verdict": "PARTIAL"}},
+    ]
+    battery_hash = write(root, location + "/candidate_battery.json", {
+        "run_id": rid, "as_of": "20260828", "results": rows,
+    })
+    manifest_hash = write(root, location + "/candidate_manifest.json", {
+        "run_id": rid, "as_of": "20260828", "ts_codes": [row["ts_code"] for row in rows],
+    })
+    health_path = base + "funnel_health.json"
+    health = json.loads((root / health_path).read_text())
+    health["bundle"]["artifacts"].update({
+        "candidate_battery.json": battery_hash,
+        "candidate_manifest.json": manifest_hash,
+    })
+    pointer["artifacts"]["public:funnel_health.json"] = write(root, health_path, health)
+    pointer["artifacts"]["public:macro/source_health.json"] = write(root, base + "macro/source_health.json", {
+        "source_registry_hash": contracts.load_json(contracts.SOURCE_REGISTRY)["registry_hash"],
+        "data": [
+            {"source_id": "bls", "metric_key": "cpi", "status": "DATA_INVALID", "last_error_code": "INVALID_NUMBER"},
+            {"source_id": "bea", "metric_key": "gdp", "status": "DATA_BLOCKED", "last_error_code": "BEA_API_KEY_MISSING"},
+            {"source_id": "fred", "metric_key": "y2", "status": "OK", "last_error_code": None},
+        ],
+    })
+    pointer["artifacts"]["public:macro/macro_events.json"] = write(root, base + "macro/macro_events.json", {
+        "run_id": rid, "rules_hash": m1a.load_rules()["rules_hash"], "data": [
+            {"consensus": None, "consensus_status": "DATA_BLOCKED"},
+            {"consensus": 1.0, "consensus_status": "AVAILABLE"},
+        ],
+    })
+    write(root, base + "current_run.json", pointer)
+    return pointer
+
+
+def rewrite_bound_battery(root, change):
+    battery_path = next(root.glob("data_history/funnel/*/*/candidate_battery.json"))
+    battery = json.loads(battery_path.read_text())
+    change(battery)
+    battery_hash = write(root, str(battery_path.relative_to(root)), battery)
+    health_path = root / "public/data/v2/funnel_health.json"
+    health = json.loads(health_path.read_text())
+    health["bundle"]["artifacts"]["candidate_battery.json"] = battery_hash
+    health_hash = write(root, "public/data/v2/funnel_health.json", health)
+    pointer_path = root / "public/data/v2/current_run.json"
+    pointer = json.loads(pointer_path.read_text())
+    pointer["artifacts"]["public:funnel_health.json"] = health_hash
+    write(root, "public/data/v2/current_run.json", pointer)
 
 
 class EvidenceTests(unittest.TestCase):
@@ -92,6 +154,189 @@ class EvidenceTests(unittest.TestCase):
         self.assertEqual(view["files"][2]["binding"], "MATCH")
         self.assertNotIn("tail", view["attempt"]["steps"][0])
         self.assertEqual(before, {str(p): p.read_bytes() for p in self.root.rglob("*") if p.is_file()})
+
+    def test_quality_counts_are_bound_to_published_run_and_derived_from_dims(self):
+        source_with_quality(self.root)
+        view = ev.view(self.capture())
+        quality = view["research_quality"]
+        self.assertEqual("BOUND_OBSERVATION_ONLY", quality["status"])
+        self.assertEqual(view["published_run_id"], quality["run_id"])
+        self.assertEqual(2, quality["macro"]["unavailable_sources"])
+        self.assertEqual(1, quality["macro"]["missing_consensus"])
+        self.assertEqual({"complete": 1, "partial": 1, "zero": 1}, quality["funnel"]["coverage"])
+        self.assertEqual(1, quality["funnel"]["batch_not_started"])
+        self.assertFalse(quality["formal_authority"])
+
+    def test_quality_survives_canonical_snapshot_persistence(self):
+        source_with_quality(self.root)
+        snapshot = self.capture()
+        persisted = json.loads(ev.canonical(snapshot))
+        quality = ev.view(persisted)["research_quality"]
+        self.assertEqual("BOUND_OBSERVATION_ONLY", quality["status"])
+        self.assertEqual({"complete": 1, "partial": 1, "zero": 1}, quality["funnel"]["coverage"])
+
+    def test_quality_exposes_missing_macro_universe_after_resealing(self):
+        source_with_quality(self.root)
+
+        def all_complete(battery):
+            for row in battery["results"]:
+                row["dims"] = {name: {"value": 1} for name in
+                               ("行情", "资金", "基本面", "技术面", "消息面", "估值")}
+                row["completeness"] = {"covered": 6, "of": 6, "missing": [],
+                                       "verdict": "COMPLETE"}
+
+        rewrite_bound_battery(self.root, all_complete)
+        base = "public/data/v2/"
+        pointer_path = self.root / (base + "current_run.json")
+        pointer = json.loads(pointer_path.read_text())
+        pointer["artifacts"]["public:macro/source_health.json"] = write(
+            self.root, base + "macro/source_health.json",
+            {"source_registry_hash": contracts.load_json(contracts.SOURCE_REGISTRY)["registry_hash"],
+             "data": [{"source_id": "cboe_vix", "series_id": "vix",
+                        "metric_key": "vix_close", "status": "OK"}]})
+        pointer["artifacts"]["public:macro/macro_events.json"] = write(
+            self.root, base + "macro/macro_events.json",
+            {"run_id": pointer["run_id"], "rules_hash": m1a.load_rules()["rules_hash"],
+             "data": [{"context_id": "cboe_vix:vix:vix_close",
+                                                "actual_status": "AVAILABLE", "freshness_status": "CURRENT",
+                                                "consensus": 1, "consensus_status": "OK"}]})
+        write(self.root, base + "current_run.json", pointer)
+        quality = ev.view(self.capture())["research_quality"]
+        self.assertEqual("BOUND_OBSERVATION_ONLY", quality["status"])
+        self.assertTrue(quality["gaps_present"])
+        self.assertGreater(quality["macro"]["missing_source_rows"], 0)
+        self.assertGreater(quality["macro"]["missing_event_rows"], 0)
+
+    def test_quality_refuses_unbound_publication_manifest(self):
+        source_with_quality(self.root)
+        manifest = self.root / "public/data/v2/runs" / self.pointer["run_id"] / "manifest.json"
+        payload = json.loads(manifest.read_text())
+        payload["audit_probe"] = "tampered"
+        write(self.root, str(manifest.relative_to(self.root)), payload)
+        quality = ev.view(self.capture())["research_quality"]
+        self.assertEqual("NOT_EVALUATED", quality["status"])
+
+    def test_quality_refuses_resealed_wrong_run_manifest(self):
+        source_with_quality(self.root)
+        path = f"public/data/v2/runs/{self.pointer['run_id']}/manifest.json"
+        payload = json.loads((self.root / path).read_text())
+        payload.update(run_id="another_run", target_trade_date="20260828")
+        pointer = json.loads((self.root / "public/data/v2/current_run.json").read_text())
+        pointer["manifest_sha256"] = write(self.root, path, payload)
+        write(self.root, "public/data/v2/current_run.json", pointer)
+        quality = ev.view(self.capture())["research_quality"]
+        self.assertEqual("NOT_EVALUATED", quality["status"])
+        self.assertEqual("RUN_BINDING_INVALID", quality["reason"])
+
+    def test_collector_plan_comparison_is_not_reported_as_run_verified(self):
+        source_with_quality(self.root)
+        with mock.patch.object(collectors, "collection_plan", return_value=()):
+            quality = ev.view(self.capture())["research_quality"]
+        self.assertEqual("BOUND_OBSERVATION_ONLY", quality["status"])
+        self.assertIsNone(quality["macro"]["source_coverage_complete"])
+        self.assertEqual("CURRENT_CHECKOUT_UNVERIFIED", quality["macro"]["source_plan_basis"])
+
+    def test_quality_refuses_resealed_different_macro_contract(self):
+        source_with_quality(self.root)
+        path = "public/data/v2/macro/macro_events.json"
+        payload = json.loads((self.root / path).read_text())
+        payload["rules_hash"] = "0" * 64
+        pointer = json.loads((self.root / "public/data/v2/current_run.json").read_text())
+        pointer["artifacts"]["public:macro/macro_events.json"] = write(self.root, path, payload)
+        write(self.root, "public/data/v2/current_run.json", pointer)
+        quality = ev.view(self.capture())["research_quality"]
+        self.assertEqual("NOT_EVALUATED", quality["status"])
+        self.assertEqual("MACRO_CONTRACT_MISMATCH", quality["reason"])
+
+    def test_quality_refuses_resealed_different_source_registry(self):
+        source_with_quality(self.root)
+        path = "public/data/v2/macro/source_health.json"
+        payload = json.loads((self.root / path).read_text())
+        payload["source_registry_hash"] = "0" * 64
+        pointer = json.loads((self.root / "public/data/v2/current_run.json").read_text())
+        pointer["artifacts"]["public:macro/source_health.json"] = write(self.root, path, payload)
+        write(self.root, "public/data/v2/current_run.json", pointer)
+        quality = ev.view(self.capture())["research_quality"]
+        self.assertEqual("NOT_EVALUATED", quality["status"])
+        self.assertEqual("MACRO_CONTRACT_MISMATCH", quality["reason"])
+
+    def test_quality_shows_actual_blocked_when_every_row_exists(self):
+        source_with_quality(self.root)
+
+        def complete(battery):
+            for row in battery["results"]:
+                row["dims"] = {name: {"value": 1} for name in ("行情", "资金", "基本面", "技术面", "消息面", "估值")}
+                row["completeness"] = {"covered": 6, "of": 6, "missing": [], "verdict": "COMPLETE"}
+
+        rewrite_bound_battery(self.root, complete)
+        sources = [dict(source_id=spec.source_id, series_id=m.series_id, metric_key=m.metric_key, status="OK")
+                   for spec in collectors.collection_plan() for m in spec.metrics]
+        events = [dict(context_id=context_id,
+                       actual_status="AVAILABLE", freshness_status="CURRENT",
+                       consensus=1, consensus_status="AVAILABLE")
+                  for context_id in sorted({f"{rule['source_id']}:{rule['series_id']}:{rule['metric_key']}"
+                                            for region in m1a.load_rules()["regions"].values() for rule in region})]
+        events[0]["actual_status"] = "DATA_BLOCKED"
+        pointer = json.loads((self.root / "public/data/v2/current_run.json").read_text())
+        base = "public/data/v2/"
+        pointer["artifacts"]["public:macro/source_health.json"] = write(
+            self.root, base + "macro/source_health.json",
+            {"source_registry_hash": contracts.load_json(contracts.SOURCE_REGISTRY)["registry_hash"], "data": sources})
+        pointer["artifacts"]["public:macro/macro_events.json"] = write(
+            self.root, base + "macro/macro_events.json",
+            {"run_id": pointer["run_id"], "rules_hash": m1a.load_rules()["rules_hash"], "data": events})
+        write(self.root, base + "current_run.json", pointer)
+        quality = ev.view(self.capture())["research_quality"]
+        self.assertEqual("BOUND_OBSERVATION_ONLY", quality["status"])
+        self.assertIsNone(quality["macro"]["source_coverage_complete"])
+        self.assertTrue(quality["macro"]["event_coverage_complete"])
+        self.assertEqual(1, quality["macro"]["actual_blocked_events"])
+        self.assertTrue(quality["gaps_present"])
+
+        events_path = self.root / (base + "macro/macro_events.json")
+        latest = json.loads(events_path.read_text())
+        latest["data"][0]["actual_status"] = "AVAILABLE"
+        latest["data"][0]["freshness_status"] = "STALE"
+        pointer = json.loads((self.root / (base + "current_run.json")).read_text())
+        pointer["artifacts"]["public:macro/macro_events.json"] = write(
+            self.root, base + "macro/macro_events.json", latest)
+        write(self.root, base + "current_run.json", pointer)
+        quality = ev.view(self.capture())["research_quality"]
+        self.assertEqual(0, quality["macro"]["actual_blocked_events"])
+        self.assertEqual(1, quality["macro"]["stale_actual_events"])
+        self.assertTrue(quality["gaps_present"])
+
+    def test_quality_refuses_unbound_battery_with_valid_content(self):
+        source_with_quality(self.root)
+        battery_path = next(self.root.glob("data_history/funnel/*/*/candidate_battery.json"))
+        battery = json.loads(battery_path.read_text())
+        battery["results"][0]["dims"]["行情"]["value"] = 2
+        write(self.root, str(battery_path.relative_to(self.root)), battery)
+        self.assertEqual("NOT_EVALUATED", ev.view(self.capture())["research_quality"]["status"])
+
+    def test_quality_refuses_self_reported_battery_completeness(self):
+        source_with_quality(self.root)
+        rewrite_bound_battery(self.root, lambda battery: battery["results"][2]["completeness"].update(covered=6))
+        self.assertEqual("NOT_EVALUATED", ev.view(self.capture())["research_quality"]["status"])
+
+    def test_quality_rejects_malformed_and_wrong_run_rows_after_resealing(self):
+        source_with_quality(self.root)
+        rewrite_bound_battery(self.root, lambda battery: battery["results"][0].update(completeness="COMPLETE"))
+        self.assertEqual("NOT_EVALUATED", ev.view(self.capture())["research_quality"]["status"])
+        source_with_quality(self.root)
+        rewrite_bound_battery(self.root, lambda battery: battery["results"][0]["dims"]["行情"].update(status="PARTIAL"))
+        self.assertEqual("NOT_EVALUATED", ev.view(self.capture())["research_quality"]["status"])
+        source_with_quality(self.root)
+        rewrite_bound_battery(self.root, lambda battery: battery.update(run_id="another_run"))
+        self.assertEqual("NOT_EVALUATED", ev.view(self.capture())["research_quality"]["status"])
+
+    def test_quality_rejects_resealed_missing_list_and_verdict(self):
+        source_with_quality(self.root)
+        rewrite_bound_battery(self.root, lambda battery: battery["results"][2]["completeness"].update(missing=[]))
+        self.assertEqual("NOT_EVALUATED", ev.view(self.capture())["research_quality"]["status"])
+        source_with_quality(self.root)
+        rewrite_bound_battery(self.root, lambda battery: battery["results"][2]["completeness"].update(verdict="COMPLETE"))
+        self.assertEqual("NOT_EVALUATED", ev.view(self.capture())["research_quality"]["status"])
 
     def test_hash_mismatch_is_visible_not_complete(self):
         write(self.root, "public/data/v2/macro/macro_panel.json", {"status": "COMPLETE", "changed": True})
