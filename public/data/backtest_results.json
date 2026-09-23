@@ -1,56 +1,56 @@
 {
   "as_of": "2026-09-23",
-  "generated": "2026-09-23T05:43:19.360014",
+  "generated": "2026-09-23T13:46:04.072547",
   "status": "ok",
   "config": {
     "vp_threshold": 60,
     "min_positions": 1,
     "forward_days": 20,
-    "benchmark": "proxy (175.HK, flat)",
+    "benchmark": "proxy (700.HK, flat)",
     "risk_free_annual": 0.02
   },
   "summary": {
     "periods": 5,
-    "annualised_return_pct": -74.27,
+    "annualised_return_pct": -73.92,
     "benchmark_return_pct": 0.0,
-    "alpha_annual_pct": -74.27,
+    "alpha_annual_pct": -73.92,
     "beta": 1.0,
-    "sharpe_ratio": -6.224,
+    "sharpe_ratio": -6.195,
     "benchmark_sharpe": 0.0,
     "annualised_vol_pct": 12.25,
     "benchmark_vol_pct": 0.0,
-    "max_drawdown_pct": -43.38,
+    "max_drawdown_pct": -43.06,
     "benchmark_max_dd_pct": -0.0,
-    "cumulative_return_pct": -43.38,
+    "cumulative_return_pct": -43.06,
     "benchmark_cumulative_pct": 0.0,
     "hit_rate_pct": 0.0,
-    "bootstrap_ci_lo_pct": -13.32,
-    "bootstrap_ci_hi_pct": -7.83
+    "bootstrap_ci_lo_pct": -13.22,
+    "bootstrap_ci_hi_pct": -7.73
   },
   "nav_series": [
     {
       "date": "2025-11-28",
-      "portfolio": 0.9197,
+      "portfolio": 0.9207,
       "benchmark": 1.0
     },
     {
       "date": "2025-12-31",
-      "portfolio": 0.8109,
+      "portfolio": 0.8127,
       "benchmark": 1.0
     },
     {
       "date": "2026-01-30",
-      "portfolio": 0.6847,
+      "portfolio": 0.687,
       "benchmark": 1.0
     },
     {
       "date": "2026-02-27",
-      "portfolio": 0.6058,
+      "portfolio": 0.6086,
       "benchmark": 1.0
     },
     {
       "date": "2026-03-31",
-      "portfolio": 0.5662,
+      "portfolio": 0.5694,
       "benchmark": 1.0
     }
   ],
@@ -68,14 +68,14 @@
         }
       ],
       "num_positions": 2,
-      "portfolio_return": -8.03,
+      "portfolio_return": -7.93,
       "benchmark_return": 0,
-      "excess_return": -8.03,
+      "excess_return": -7.93,
       "stock_detail": [
         {
           "ticker": "300308.SZ",
-          "raw_return": -19.16,
-          "net_return": -19.36,
+          "raw_return": -18.96,
+          "net_return": -19.16,
           "tx_cost": 0.2
         },
         {
@@ -99,14 +99,14 @@
         }
       ],
       "num_positions": 2,
-      "portfolio_return": -11.83,
+      "portfolio_return": -11.73,
       "benchmark_return": 0,
-      "excess_return": -11.83,
+      "excess_return": -11.73,
       "stock_detail": [
         {
           "ticker": "300308.SZ",
-          "raw_return": -19.16,
-          "net_return": -19.36,
+          "raw_return": -18.96,
+          "net_return": -19.16,
           "tx_cost": 0.2
         },
         {
@@ -130,14 +130,14 @@
         }
       ],
       "num_positions": 2,
-      "portfolio_return": -15.56,
+      "portfolio_return": -15.46,
       "benchmark_return": 0,
-      "excess_return": -15.56,
+      "excess_return": -15.46,
       "stock_detail": [
         {
           "ticker": "300308.SZ",
-          "raw_return": -19.16,
-          "net_return": -19.36,
+          "raw_return": -18.96,
+          "net_return": -19.16,
           "tx_cost": 0.2
         },
         {
@@ -161,14 +161,14 @@
         }
       ],
       "num_positions": 2,
-      "portfolio_return": -11.52,
+      "portfolio_return": -11.42,
       "benchmark_return": 0,
-      "excess_return": -11.52,
+      "excess_return": -11.42,
       "stock_detail": [
         {
           "ticker": "300308.SZ",
-          "raw_return": -19.16,
-          "net_return": -19.36,
+          "raw_return": -18.96,
+          "net_return": -19.16,
           "tx_cost": 0.2
         },
         {
@@ -192,14 +192,14 @@
         }
       ],
       "num_positions": 2,
-      "portfolio_return": -6.54,
+      "portfolio_return": -6.44,
       "benchmark_return": 0,
-      "excess_return": -6.54,
+      "excess_return": -6.44,
       "stock_detail": [
         {
           "ticker": "300308.SZ",
-          "raw_return": -19.16,
-          "net_return": -19.36,
+          "raw_return": -18.96,
+          "net_return": -19.16,
           "tx_cost": 0.2
         },
         {

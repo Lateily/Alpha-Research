@@ -1,5 +1,5 @@
 {
-  "as_of": "2026-09-23T05:43:19.295470",
+  "as_of": "2026-09-23T13:46:04.025314",
   "base_currency": "CNY",
   "fx_rates": {
     "HKDCNY": 0.9165
@@ -13,14 +13,14 @@
       "currency": "CNY",
       "quantity": 150,
       "avg_cost": 681.36,
-      "current_price": 922.04,
-      "market_value": 138306.0,
+      "current_price": 922.5,
+      "market_value": 138375.0,
       "cost_value": 102204.0,
-      "pnl_abs": 36102.0,
-      "pnl_pct": 35.32,
-      "market_value_cny": 138306.0,
+      "pnl_abs": 36171.0,
+      "pnl_pct": 35.39,
+      "market_value_cny": 138375.0,
       "cost_value_cny": 102204.0,
-      "pnl_abs_cny": 36102.0,
+      "pnl_abs_cny": 36171.0,
       "fx_rate_used": 1.0,
       "holding_days": 197,
       "as_of": "2026-09-23",
@@ -58,7 +58,7 @@
       },
       "vp_at_entry": 79,
       "wrongIf_at_entry": "1.6T mass production delayed beyond Q3 2026 OR NVDA+MSFT+GOOGL stock prices collectively drop >25% from ATH within 1 quarter",
-      "weight_pct": 51.25
+      "weight_pct": 51.27
     },
     {
       "ticker": "6160.HK",
@@ -163,7 +163,7 @@
       },
       "vp_at_entry": 64,
       "wrongIf_at_entry": "New gaming approval freeze lasting >3 months OR revenue_growth < -5% for 2 consecutive quarters",
-      "weight_pct": 25.78
+      "weight_pct": 25.77
     },
     {
       "ticker": "9999.HK",
@@ -223,14 +223,14 @@
       "currency": "CNY",
       "quantity": 120,
       "avg_cost": 96.192,
-      "current_price": 85.92,
-      "market_value": 10310.4,
+      "current_price": 85.85,
+      "market_value": 10302.0,
       "cost_value": 11543.04,
-      "pnl_abs": -1232.64,
-      "pnl_pct": -10.68,
-      "market_value_cny": 10310.4,
+      "pnl_abs": -1241.04,
+      "pnl_pct": -10.75,
+      "market_value_cny": 10302.0,
       "cost_value_cny": 11543.04,
-      "pnl_abs_cny": -1232.64,
+      "pnl_abs_cny": -1241.04,
       "fx_rate_used": 1.0,
       "holding_days": 175,
       "as_of": "2026-09-23",
@@ -262,12 +262,12 @@
     }
   ],
   "summary": {
-    "total_value_cny": 269839.07,
+    "total_value_cny": 269899.67,
     "total_cost_cny": 234969.71,
-    "total_pnl_cny": 34869.36,
-    "total_pnl_pct": 14.84,
-    "total_value": 269839.07,
+    "total_pnl_cny": 34929.96,
+    "total_pnl_pct": 14.87,
+    "total_value": 269899.67,
     "total_cost": 234969.71,
-    "total_pnl": 34869.36
+    "total_pnl": 34929.96
   }
 }
