@@ -294,6 +294,38 @@ def build_review_draft(trace: dict, review: dict, *, bound: bool = True) -> dict
 
 
 class ResearchCycleTests(unittest.TestCase):
+    def test_legacy_case_replays_but_cannot_be_newly_sealed(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            bundle, codes, _, _, _ = build_closure_bundle(Path(directory))
+            draft = build_case_draft(bundle, codes[0])
+            legacy = copy.deepcopy(draft)
+            registration = legacy["method_registration"]
+            registration["schema_version"] = "1.0"
+            registration["thesis_expectations"][2]["operator"] = "GTE"
+            registration["registration_hash"] = funnel._hash(
+                {k: v for k, v in registration.items() if k != "registration_hash"}
+            )
+            legacy["case_hash"] = funnel._hash(legacy)
+            cycle.validate_case(legacy, bundle)
+            with self.assertRaisesRegex(cycle.CycleError, "current method registration"):
+                cycle.seal_case({k: v for k, v in legacy.items() if k != "case_hash"}, bundle)
+            bars = cycle.seal_bars(build_bar_draft(codes[0]), legacy)
+            outcomes = method.seal_outcomes(
+                method_fixtures.outcome_draft(registration), registration,
+            )
+            _trace, _fund, review, _scorecard = cycle.run_cycle(
+                bundle_dir=bundle, case=legacy, bars=bars, outcomes=outcomes,
+                generated_at="2026-08-17T16:10:00+00:00",
+            )
+            self.assertEqual("UNRESOLVED", review["machine_attribution"])
+            new_case = copy.deepcopy(legacy)
+            new_case["schema_version"] = cycle.DEADLINE_VERSION
+            new_case["case_hash"] = funnel._hash(
+                {k: v for k, v in new_case.items() if k != "case_hash"}
+            )
+            with self.assertRaisesRegex(cycle.CycleError, "cannot carry a legacy"):
+                cycle.validate_case(new_case, bundle)
+
     def test_cli_runs_the_entire_u4_to_reviewed_chain(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

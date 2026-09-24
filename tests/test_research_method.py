@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import copy
+import json
 import sys
 import unittest
 from pathlib import Path
@@ -296,6 +297,61 @@ def settled_bars() -> list[dict]:
 
 
 class ResearchMethodTests(unittest.TestCase):
+    def test_frozen_v1_registration_is_read_only_and_unscored(self) -> None:
+        fixture = json.loads((ROOT / "tools/nonprod_workbench/fixtures/research.json").read_text())
+        case = fixture["case_draft"]
+        registration = case["method_registration"]
+        self.assertEqual("1.0", registration["schema_version"])
+        try:
+            method.validate_registration(
+                registration, thesis_core=case["thesis_core"],
+                timing_ticket=case["timing_ticket"], decision_pack=case["decision_pack"],
+                allow_legacy_readonly=True,
+            )
+        except method.MethodError as exc:
+            self.fail(f"frozen v1 registration must remain readable: {exc}")
+        with self.assertRaisesRegex(method.MethodError, "schema/version"):
+            method.seal_registration(
+                {k: v for k, v in registration.items() if k != "registration_hash"},
+                thesis_core=case["thesis_core"], timing_ticket=case["timing_ticket"],
+                decision_pack=case["decision_pack"],
+            )
+
+    def test_legacy_wrong_if_cannot_gain_new_machine_attribution(self) -> None:
+        draft, core, timing, pack = registration_draft()
+        draft["schema_version"] = "1.0"
+        draft["thesis_expectations"][2]["operator"] = "GTE"
+        registration = {**draft, "registration_hash": funnel._hash(draft)}
+        try:
+            method.validate_registration(
+                registration, thesis_core=core, timing_ticket=timing,
+                decision_pack=pack, allow_legacy_readonly=True,
+            )
+        except method.MethodError as exc:
+            self.fail(f"legacy replay must use the legacy semantic contract: {exc}")
+        outcomes = method.seal_outcomes(outcome_draft(registration), registration)
+        try:
+            scorecard = method.build_scorecard(
+                registration, outcomes, order=None, bars=[], fund_snapshot={},
+                generated_at="2026-08-17T16:06:00+00:00",
+            )
+        except method.MethodError as exc:
+            self.fail(f"legacy replay must not run current thesis scoring: {exc}")
+        self.assertEqual("UNRESOLVED", scorecard["thesis"]["status"])
+        self.assertEqual("UNRESOLVED", scorecard["machine_attribution"])
+        forged = copy.deepcopy(scorecard)
+        forged["thesis"]["status"] = "RIGHT"
+        forged["scorecard_hash"] = funnel._hash({k: v for k, v in forged.items() if k != "scorecard_hash"})
+        with self.assertRaisesRegex(method.MethodError, "legacy"):
+            method.validate_scorecard(forged, registration, outcomes)
+        row_forgery = copy.deepcopy(scorecard)
+        row_forgery["thesis"]["claims"] = [{"claim_id": "INVALID_GM", "status": "RIGHT"}]
+        row_forgery["scorecard_hash"] = funnel._hash(
+            {k: v for k, v in row_forgery.items() if k != "scorecard_hash"}
+        )
+        with self.assertRaisesRegex(method.MethodError, "legacy"):
+            method.validate_scorecard(row_forgery, registration, outcomes)
+
     def test_semiconductor_registration_binds_thesis_valuation_smc_and_levels(self) -> None:
         registration = valid_registration()
         self.assertEqual(registration["valuation"]["model_output"]["computed_base_low"], 95.0)

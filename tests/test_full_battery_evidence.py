@@ -153,6 +153,17 @@ class BatteryEvidenceTests(unittest.TestCase):
         self.assertIn("ANNOUNCEMENT_AFTER_AS_OF_EXCLUDED", news["reason_codes"])
         self.assertEqual("COMPLETE", row["completeness"]["verdict"])
 
+    def test_full_eastmoney_page_cannot_claim_historical_counts_complete(self):
+        titles = [("2026-09-24", f"future {i}") for i in range(29)]
+        titles.append(("2026-09-23", "at cutoff"))
+        row = self.run_battery(titles=titles)
+        self.assert_blocked(row, NEWS)
+        news = row["dims"][NEWS]
+        self.assertEqual(["2026-09-23 at cutoff"], news["最新3条"])
+        self.assertIsNone(news["最近公告条数"])
+        self.assertIsNone(news["近7日公告条数"])
+        self.assertIn("ANNOUNCEMENT_PAGE_COVERAGE_UNVERIFIED", news["reason_codes"])
+
     def test_only_future_announcements_are_unknown_not_zero(self):
         row = self.run_battery(titles=[("2026-09-24", "future")])
         self.assert_blocked(row, NEWS)
@@ -202,6 +213,13 @@ class BatteryEvidenceTests(unittest.TestCase):
         self.assertEqual(["20260923 known"], news["最新3条"])
         self.assertEqual(1, news["最近公告条数"])
         self.assertEqual(1, news["excluded_after_as_of_count"])
+
+    def test_fallback_news_does_not_truncate_after_eight_rows(self):
+        provider = FakeProvider(announcements=[(TARGET, f"filing {i}") for i in range(12)])
+        row = self.run_battery(provider, titles=None)
+        news = row["dims"][NEWS]
+        self.assertEqual(12, news["最近公告条数"])
+        self.assertEqual("COMPLETE", row["completeness"]["verdict"])
 
 
 if __name__ == "__main__":

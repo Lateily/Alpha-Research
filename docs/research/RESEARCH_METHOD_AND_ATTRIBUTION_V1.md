@@ -94,6 +94,11 @@ alone is not semantic equality. Free text, event predicates, and ranges cannot
 become machine-scored invalidations under this version; they remain human
 research notes until a separately reviewed typed contract exists. The outcome
 and scorecard shapes remain schema `1.0`, bound to the registration hash.
+Frozen registration `1.0` remains readable only for historical case validation
+and offline replay. New case seals require registration `1.1`; a legacy replay
+reports thesis and machine attribution as `UNRESOLVED` with reason
+`LEGACY_WRONG_IF_SEMANTICS_UNVALIDATED`. It cannot retrospectively gain the
+new typed wrong-if scoring eligibility.
 
 ## Block 3: Industry Valuation
 

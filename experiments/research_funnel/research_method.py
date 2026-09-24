@@ -240,6 +240,7 @@ def _wrong_if_semantics(trigger: Mapping[str, Any]) -> tuple[str, float]:
 
 def _validate_claims(
     claims: Any, registered_at: str, wrong_if_triggers: Sequence[Mapping[str, Any]],
+    *, enforce_semantics: bool = True,
 ) -> None:
     if not isinstance(claims, list) or len(claims) < 2:
         raise MethodError("thesis_expectations needs at least two claims")
@@ -284,6 +285,8 @@ def _validate_claims(
     # governance-mutation: RESEARCH_METHOD_WRONG_IF_ONE_TO_ONE
     if duplicate_trigger_mapping:
         raise MethodError("each thesis wrong-if trigger must map to exactly one invalidation claim")
+    if not enforce_semantics:
+        return
     trigger_by_hash = {_hash(trigger): trigger for trigger in wrong_if_triggers}
     for claim in claims:
         if claim["kind"] != "INVALIDATION":
@@ -532,11 +535,15 @@ def _validate_smc(
 def validate_registration(
     registration: Mapping[str, Any], *, thesis_core: Mapping[str, Any],
     timing_ticket: Mapping[str, Any], decision_pack: Mapping[str, Any],
+    allow_legacy_readonly: bool = False,
 ) -> None:
     _exact(registration, REGISTRATION_KEYS, "method registration")
     if FORBIDDEN_KEYS.intersection(_walk_keys(registration)):
         raise MethodError("method registration acquired trading or blocking authority")
-    if registration.get("schema") != REGISTRATION_SCHEMA or registration.get("schema_version") != REGISTRATION_VERSION:
+    version = registration.get("schema_version")
+    if registration.get("schema") != REGISTRATION_SCHEMA or not (
+        version == REGISTRATION_VERSION or (allow_legacy_readonly and version == SCHEMA_VERSION)
+    ):
         raise MethodError("method registration schema/version mismatch")
     # governance-mutation: RESEARCH_METHOD_REGISTRATION_HASH
     if registration.get("registration_hash") != _hash(_without(registration, "registration_hash")):
@@ -562,7 +569,12 @@ def validate_registration(
     if registration.get("method_status") != "MANUAL_UNVALIDATED" or registration.get("no_trade_flag") is not True or registration.get("production_authority") is not False or registration.get("disclaimer") != DISCLAIMER:
         raise MethodError("method registration calibration or authority boundary changed")
     wrong_if_triggers = (thesis_core.get("wrong_if") or {}).get("triggers") or []
-    _validate_claims(registration.get("thesis_expectations"), registered_at, wrong_if_triggers)
+    # governance-mutation: RESEARCH_METHOD_LEGACY_READONLY
+    # governance-mutation: RESEARCH_METHOD_LEGACY_SEMANTICS
+    _validate_claims(
+        registration.get("thesis_expectations"), registered_at, wrong_if_triggers,
+        enforce_semantics=version == REGISTRATION_VERSION,
+    )
     _validate_valuation(registration.get("valuation"), thesis_core, registered_at)
     _validate_smc(
         registration.get("smc"), registered_at=registered_at,
@@ -897,6 +909,15 @@ def validate_scorecard(
     )
     if scorecard.get("machine_attribution") != expected:
         raise MethodError("machine attribution is not derived from thesis and timing ledgers")
+    # governance-mutation: RESEARCH_METHOD_LEGACY_UNSCORED
+    if registration.get("schema_version") == SCHEMA_VERSION and (
+        scorecard.get("thesis") != {
+            "status": "UNRESOLVED", "claims": [],
+            "reason": "LEGACY_WRONG_IF_SEMANTICS_UNVALIDATED",
+        }
+        or scorecard.get("machine_attribution") != "UNRESOLVED"
+    ):
+        raise MethodError("legacy registration cannot gain a new machine thesis score")
 
 
 def build_scorecard(
@@ -908,7 +929,12 @@ def build_scorecard(
     facts = {str(item["claim_id"]): item for item in outcomes["facts"]}
     # governance-mutation: RESEARCH_METHOD_SCORING_DATE_NORMALIZATION
     scoring_as_of = _date8(outcomes["scoring_as_of"], "outcomes.scoring_as_of")
-    thesis = _score_thesis(registration, facts, scoring_as_of)
+    # governance-mutation: RESEARCH_METHOD_LEGACY_SCORE_BUILD
+    thesis = (
+        {"status": "UNRESOLVED", "claims": [], "reason": "LEGACY_WRONG_IF_SEMANTICS_UNVALIDATED"}
+        if registration.get("schema_version") == SCHEMA_VERSION
+        else _score_thesis(registration, facts, scoring_as_of)
+    )
     valuation = _score_valuation(registration, facts, scoring_as_of)
     timing = _score_timing(registration, order, bars)
     execution = _score_execution(registration, order)

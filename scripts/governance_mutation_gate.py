@@ -5361,6 +5361,56 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="The machine-scored invalidation direction must match the thesis wrong-if predicate.",
     ),
     MutationCase(
+        mutation_id="RESEARCH_METHOD_LEGACY_READONLY",
+        component="Research funnel method registration",
+        source_path="experiments/research_funnel/research_method.py",
+        test_script="tests/test_research_method.py",
+        before="allow_legacy_readonly and version == SCHEMA_VERSION",
+        after="False",
+        expected_failure_marker="test_frozen_v1_registration_is_read_only_and_unscored",
+        rationale="Frozen v1 registrations remain readable only through an explicit historical path.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_METHOD_LEGACY_SEMANTICS",
+        component="Research funnel method registration",
+        source_path="experiments/research_funnel/research_method.py",
+        test_script="tests/test_research_method.py",
+        before="        enforce_semantics=version == REGISTRATION_VERSION,",
+        after="        enforce_semantics=True,",
+        expected_failure_marker="test_legacy_wrong_if_cannot_gain_new_machine_attribution",
+        rationale="Legacy replay must not retroactively apply the v1.1 typed wrong-if contract.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_METHOD_LEGACY_UNSCORED",
+        component="Research funnel method registration",
+        source_path="experiments/research_funnel/research_method.py",
+        test_script="tests/test_research_method.py",
+        before='    if registration.get("schema_version") == SCHEMA_VERSION and (\n'
+        '        scorecard.get("thesis") != {\n'
+        '            "status": "UNRESOLVED", "claims": [],\n'
+        '            "reason": "LEGACY_WRONG_IF_SEMANTICS_UNVALIDATED",\n'
+        '        }\n'
+        '        or scorecard.get("machine_attribution") != "UNRESOLVED"\n'
+        '    ):\n'
+        '        raise MethodError("legacy registration cannot gain a new machine thesis score")',
+        after='    if False:\n'
+        '        raise MethodError("legacy registration cannot gain a new machine thesis score")',
+        expected_failure_marker="test_legacy_wrong_if_cannot_gain_new_machine_attribution",
+        rationale="A historical v1 scorecard cannot be forged into a current thesis verdict.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_METHOD_LEGACY_SCORE_BUILD",
+        component="Research funnel method registration",
+        source_path="experiments/research_funnel/research_method.py",
+        test_script="tests/test_research_method.py",
+        before='        if registration.get("schema_version") == SCHEMA_VERSION\n'
+        '        else _score_thesis(registration, facts, scoring_as_of)',
+        after='        if False\n'
+        '        else _score_thesis(registration, facts, scoring_as_of)',
+        expected_failure_marker="test_legacy_wrong_if_cannot_gain_new_machine_attribution",
+        rationale="The replay builder must explicitly withhold thesis scoring for old predicates.",
+    ),
+    MutationCase(
         mutation_id="RESEARCH_METHOD_VALUATION_DERIVATION",
         component="Research funnel method valuation",
         source_path="experiments/research_funnel/research_method.py",
@@ -8959,7 +9009,7 @@ MUTATIONS = MUTATIONS + (
         test_script="tests/test_research_closed_loop_v1.py",
         before=(
             '    {"path": "experiments/research_funnel/research_cycle.py", '
-            '"sha256": "sha256:4af8669c77a687245e59de351fd5186f2d8334d7e297ee0b86ab0c3168790e73"},\n'
+            '"sha256": "sha256:30374298c9595ff84f7075d8f6c632b286f902c671a582e86ed2a4aa3729aa0a"},\n'
         ),
         after="",
         expected_failure_marker="test_every_bound_artifact_matches_its_exact_bytes",
@@ -11356,8 +11406,8 @@ MUTATIONS = MUTATIONS + (
         component="U3 announcement evidence coverage",
         source_path="experiments/execution_tracker/full_battery.py",
         test_script="tests/test_full_battery_evidence.py",
-        before="    blocked = bool(unknown_count or (titles and not eligible))",
-        after="    blocked = bool(unknown_count)",
+        before="    blocked = bool(not page_complete or unknown_count or (titles and not eligible))",
+        after="    blocked = bool(not page_complete or unknown_count)",
         expected_failure_marker="test_only_future_announcements_are_unknown_not_zero",
         rationale="A feed with only excluded future rows cannot establish historical zero.",
     ),
@@ -11366,10 +11416,30 @@ MUTATIONS = MUTATIONS + (
         component="U3 announcement evidence coverage",
         source_path="experiments/execution_tracker/full_battery.py",
         test_script="tests/test_full_battery_evidence.py",
-        before="    blocked = bool(unknown_count or (titles and not eligible))",
-        after="    blocked = bool(titles and not eligible)",
+        before="    blocked = bool(not page_complete or unknown_count or (titles and not eligible))",
+        after="    blocked = bool(not page_complete or (titles and not eligible))",
         expected_failure_marker="test_mixed_unknown_dates_keep_known_titles_but_block_counts",
         rationale="One known row cannot turn undated evidence into a complete count.",
+    ),
+    MutationCase(
+        mutation_id="BATTERY_ANNOUNCEMENT_PAGE_COVERAGE",
+        component="U3 announcement evidence coverage",
+        source_path="experiments/execution_tracker/full_battery.py",
+        test_script="tests/test_full_battery_evidence.py",
+        before="                titles, today, page_complete=not eastmoney_source or len(titles) < 30,",
+        after="                titles, today, page_complete=True,",
+        expected_failure_marker="test_full_eastmoney_page_cannot_claim_historical_counts_complete",
+        rationale="A full single page does not prove the as-of announcement window is complete.",
+    ),
+    MutationCase(
+        mutation_id="BATTERY_ANNOUNCEMENT_FALLBACK_COMPLETE",
+        component="U3 announcement evidence coverage",
+        source_path="experiments/execution_tracker/full_battery.py",
+        test_script="tests/test_full_battery_evidence.py",
+        before='for r in an.iterrows()',
+        after='for r in an.head(8).iterrows()',
+        expected_failure_marker="test_fallback_news_does_not_truncate_after_eight_rows",
+        rationale="The Tushare fallback cannot silently truncate a bounded query to eight announcements.",
     ),
     MutationCase(
         mutation_id="MACRO_MONTHLY_LOOKBACK_CONTIGUITY",

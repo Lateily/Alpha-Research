@@ -101,7 +101,7 @@ def _recent_announcement_count(titles, today):
     return count
 
 
-def _announcement_evidence(titles, today):
+def _announcement_evidence(titles, today, *, page_complete=True):
     cutoff = datetime.datetime.strptime(today, "%Y%m%d").date()
     eligible = []
     future_count = 0
@@ -124,8 +124,11 @@ def _announcement_evidence(titles, today):
         reasons.append("ANNOUNCEMENT_DATE_UNVERIFIABLE")
     if titles and not eligible:
         reasons.append("NO_ANNOUNCEMENT_AT_OR_BEFORE_AS_OF")
+    # governance-mutation: BATTERY_ANNOUNCEMENT_PAGE_COVERAGE
+    if not page_complete:
+        reasons.append("ANNOUNCEMENT_PAGE_COVERAGE_UNVERIFIED")
     # A truncated current feed with no usable dated rows does not prove zero at T.
-    blocked = bool(unknown_count or (titles and not eligible))
+    blocked = bool(not page_complete or unknown_count or (titles and not eligible))
     evidence = {
         "最近公告条数": None if blocked else len(eligible),
         "近7日公告条数": None if blocked else _recent_announcement_count(eligible, today),
@@ -226,18 +229,22 @@ def battery(pro, tk, today):
     # ── 5 消息面(公告扫描:东财免费源为主,Tushare anns_d 为备;快讯层待 M3)──
     try:
         titles = _fetch_anns_eastmoney(tk)
+        eastmoney_source = titles is not None
         if titles is None:  # 东财失败再试 tushare(部分 token 无 anns_d 权限)
             try:
                 an = pro.anns_d(ts_code=tk, start_date=(datetime.datetime.strptime(today, "%Y%m%d")
                      - datetime.timedelta(days=30)).strftime("%Y%m%d"), end_date=today)
                 col = "title" if "title" in an.columns else an.columns[-1]
-                titles = [(str(r[1].get("ann_date", "")), str(r[1][col])) for r in an.head(8).iterrows()]
+                # governance-mutation: BATTERY_ANNOUNCEMENT_FALLBACK_COMPLETE
+                titles = [(str(r[1].get("ann_date", "")), str(r[1][col])) for r in an.iterrows()]
             except Exception:
                 titles = None
         if titles is None:
             D["消息面"] = {"status": "DATA_BLOCKED", "err": "东财+Tushare 公告源均不可用——不伪装为0条"}
         else:
-            D["消息面"] = _announcement_evidence(titles, today)
+            D["消息面"] = _announcement_evidence(
+                titles, today, page_complete=not eastmoney_source or len(titles) < 30,
+            )
     except Exception as e:
         D["消息面"] = {"status": "NOT_RUN", "err": str(e)[:80]}
     # ── 6 估值 ──

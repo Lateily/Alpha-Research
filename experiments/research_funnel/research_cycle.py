@@ -357,10 +357,13 @@ def validate_case(case: Mapping[str, Any], bundle_dir: Path) -> dict[str, Any]:
     registration = case.get("method_registration")
     if not isinstance(registration, dict):
         raise CycleError("method_registration must be a sealed object")
+    if case["schema_version"] == DEADLINE_VERSION and registration.get("schema_version") != method_contract.REGISTRATION_VERSION:
+        raise CycleError("new research case cannot carry a legacy method registration")
     try:
         method_contract.validate_registration(
             registration, thesis_core=core, timing_ticket=timing_ticket,
             decision_pack=decision_pack,
+            allow_legacy_readonly=True,
         )
     except method_contract.MethodError as exc:
         raise CycleError(f"registered research method is invalid: {exc}") from exc
@@ -410,6 +413,8 @@ def validate_case(case: Mapping[str, Any], bundle_dir: Path) -> dict[str, Any]:
 def seal_case(draft: Mapping[str, Any], bundle_dir: Path) -> dict[str, Any]:
     if set(draft) != CASE_DRAFT_KEYS:
         raise CycleError("research case draft fields are not exact")
+    if (draft.get("method_registration") or {}).get("schema_version") != method_contract.REGISTRATION_VERSION:
+        raise CycleError("new research case requires current method registration version")
     case = dict(draft)
     case["case_hash"] = _hash(case)
     validate_case(case, bundle_dir)
