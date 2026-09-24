@@ -78,6 +78,9 @@ def build_case_draft(closure_bundle: Path, ticker: str) -> dict:
     receipt = json.loads((closure_bundle / "review_receipt.json").read_text())
     queue = json.loads((closure_bundle / "deep_research_queue.json").read_text())
     core = decision_sheet_contract._valid_core()
+    core["wrong_if"]["triggers"] = copy.deepcopy(
+        method_fixtures.method_inputs()[0]["wrong_if"]["triggers"]
+    )
     core["identity"]["ticker"] = ticker
     core["identity"]["name"] = {"zh": "闭环样本", "en": "Closure Fixture"}
     core["identity"]["as_of"] = "2026-08-11"

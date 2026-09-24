@@ -12,11 +12,13 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+import re
 from datetime import datetime
 from typing import Any, Mapping, Sequence
 
 
 SCHEMA_VERSION = "1.0"
+REGISTRATION_VERSION = "1.1"
 REGISTRATION_SCHEMA = "ar.research_method_registration"
 OUTCOME_SCHEMA = "ar.research_method_outcomes"
 SCORECARD_SCHEMA = "ar.research_method_scorecard"
@@ -214,6 +216,28 @@ def _validate_threshold(operator: str, threshold: Any, label: str) -> None:
         raise MethodError(f"{label} must be true for event operators")
 
 
+_WRONG_IF_NUMERIC = re.compile(
+    r"^(<=|>=|=|≤|≥)\s*(-?(?:\d+(?:\.\d*)?|\.\d+))\s*(%)?$"
+)
+_WRONG_IF_OPERATORS = {"<=": "LTE", "≤": "LTE", ">=": "GTE", "≥": "GTE", "=": "EQ"}
+_WRONG_IF_KEYS = {"metric", "threshold", "source", "check_date", "measurement_period"}
+
+
+def _wrong_if_semantics(trigger: Mapping[str, Any]) -> tuple[str, float]:
+    if set(trigger) != _WRONG_IF_KEYS:
+        raise MethodError("wrong-if semantics require exact typed trigger fields")
+    metric = _nonempty(trigger.get("metric"), "wrong-if metric")
+    if re.fullmatch(r"[A-Z][A-Z0-9_]*", metric) is None:
+        raise MethodError("wrong-if semantics require a canonical metric identifier")
+    match = _WRONG_IF_NUMERIC.fullmatch(str(trigger.get("threshold") or "").strip())
+    if match is None or bool(match.group(3)) != metric.endswith("_PCT"):
+        raise MethodError("wrong-if semantics require an explicit numeric predicate and unit")
+    _nonempty(trigger.get("source"), "wrong-if source")
+    _nonempty(trigger.get("measurement_period"), "wrong-if measurement_period")
+    _date8(trigger.get("check_date"), "wrong-if check_date")
+    return _WRONG_IF_OPERATORS[match.group(1)], float(match.group(2))
+
+
 def _validate_claims(
     claims: Any, registered_at: str, wrong_if_triggers: Sequence[Mapping[str, Any]],
 ) -> None:
@@ -260,6 +284,25 @@ def _validate_claims(
     # governance-mutation: RESEARCH_METHOD_WRONG_IF_ONE_TO_ONE
     if duplicate_trigger_mapping:
         raise MethodError("each thesis wrong-if trigger must map to exactly one invalidation claim")
+    trigger_by_hash = {_hash(trigger): trigger for trigger in wrong_if_triggers}
+    for claim in claims:
+        if claim["kind"] != "INVALIDATION":
+            continue
+        trigger = trigger_by_hash[str(claim["wrong_if_trigger_hash"])]
+        operator, threshold = _wrong_if_semantics(trigger)
+        # governance-mutation: RESEARCH_METHOD_WRONG_IF_SEMANTICS
+        if (
+            claim["metric"] != trigger["metric"]
+            or claim["source_ref"] != trigger["source"]
+            or claim["measurement_period"] != trigger["measurement_period"]
+            or _date8(claim["due_date"], "claim due_date")
+            != _date8(trigger["check_date"], "wrong-if check_date")
+            or claim["operator"] != operator
+            or not isinstance(claim["threshold"], (int, float))
+            or isinstance(claim["threshold"], bool)
+            or not math.isclose(float(claim["threshold"]), threshold, rel_tol=0, abs_tol=1e-12)
+        ):
+            raise MethodError("wrong-if semantics differ from the scoreable invalidation claim")
 
 
 def _validate_valuation(value: Any, core: Mapping[str, Any], registered_at: str) -> None:
@@ -493,7 +536,7 @@ def validate_registration(
     _exact(registration, REGISTRATION_KEYS, "method registration")
     if FORBIDDEN_KEYS.intersection(_walk_keys(registration)):
         raise MethodError("method registration acquired trading or blocking authority")
-    if registration.get("schema") != REGISTRATION_SCHEMA or registration.get("schema_version") != SCHEMA_VERSION:
+    if registration.get("schema") != REGISTRATION_SCHEMA or registration.get("schema_version") != REGISTRATION_VERSION:
         raise MethodError("method registration schema/version mismatch")
     # governance-mutation: RESEARCH_METHOD_REGISTRATION_HASH
     if registration.get("registration_hash") != _hash(_without(registration, "registration_hash")):

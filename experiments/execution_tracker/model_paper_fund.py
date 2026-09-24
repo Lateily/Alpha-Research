@@ -583,14 +583,100 @@ def execution_realism_receipt(order):
 def update_nav(fund, orders, nav_history, date, marks=None, *,
                require_complete_marks=False):
     nav = current_nav(fund, orders, marks, require_complete_marks=require_complete_marks)
-    prev = nav_history[-1]["nav"] if nav_history else fund["initial_capital"]
+    prev = next((row["nav"] for row in reversed(nav_history)
+                 if _usable_mark(row.get("nav")) is not None), fund["initial_capital"])
     rec = {"date": date, "nav": nav, "cash": fund["cash"],
            "n_positions": sum(1 for o in orders if o["status"] == "filled"),
-           "daily_return": round(nav / prev - 1, 5),
+           "daily_return": (None if nav_history and nav_history[-1].get("nav") is None
+                            else round(nav / prev - 1, 5)),
            "cum_return": round(nav / fund["initial_capital"] - 1, 5)}
     if not any(x["date"] == date for x in nav_history):     # append-only, one per day
         nav_history.append(rec)
     return rec
+
+
+_DAILY_PROJECTIONS = ("fund.json", "orders.json", "decision_log.json", "nav_history.json")
+_DAILY_INTENT = ".daily_projection_intent.json"
+
+
+def _projection_digest(value):
+    raw = json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"),
+                     allow_nan=False).encode("utf-8")
+    return hashlib.sha256(raw).hexdigest()
+
+
+def _finish_daily_intent(fund_dir, *, expected_target=None, expected_run=None):
+    path = _path(_DAILY_INTENT, fund_dir)
+    if not os.path.exists(path):
+        return False
+    journal = load(_DAILY_INTENT, None, fund_dir)
+    if (not isinstance(journal, dict) or journal.get("schema") != "paper-daily-intent/v1"
+            or set(journal.get("before", {})) != set(_DAILY_PROJECTIONS)
+            or set(journal.get("after", {})) != set(_DAILY_PROJECTIONS)
+            or journal.get("intent_hash") != _projection_digest(
+                {key: value for key, value in journal.items() if key != "intent_hash"}
+            )):
+        raise ValueError("daily projection intent is malformed or changed")
+    if ((expected_target is not None and journal.get("target_trade_date") != expected_target)
+            or (expected_run is not None and journal.get("run_id") != expected_run)):
+        raise ValueError("daily projection intent is bound to another run")
+    for name in _DAILY_PROJECTIONS:
+        current = load(name, None, fund_dir)
+        if _projection_digest(current) not in {
+            journal["before"][name], _projection_digest(journal["after"][name])
+        }:
+            raise ValueError(f"daily projection {name} differs from both intent states")
+    for name in _DAILY_PROJECTIONS:
+        save(name, journal["after"][name], fund_dir)
+    os.unlink(path)
+    if os.name != "nt":
+        directory = os.open(os.path.abspath(fund_dir), os.O_RDONLY)
+        try:
+            os.fsync(directory)
+        finally:
+            os.close(directory)
+    return True
+
+
+def _commit_daily_projections(fund_dir, target, run, fund, orders, decision_log, nav_history):
+    if os.path.exists(_path(_DAILY_INTENT, fund_dir)):
+        raise ValueError("unrecovered daily projection intent")
+    after = dict(zip(_DAILY_PROJECTIONS, (fund, orders, decision_log, nav_history)))
+    before = {name: _projection_digest(load(name, None, fund_dir)) for name in _DAILY_PROJECTIONS}
+    journal = {"schema": "paper-daily-intent/v1", "target_trade_date": target,
+               "run_id": run, "before": before, "after": copy.deepcopy(after)}
+    journal["intent_hash"] = _projection_digest(journal)
+    save(_DAILY_INTENT, journal, fund_dir)
+    _finish_daily_intent(fund_dir)
+
+
+def record_unavailable_nav(fund, orders, nav_history, date, missing):
+    if any(row.get("date") == date for row in nav_history):
+        raise ValueError("cannot replace an existing NAV observation")
+    rec = {"date": date, "nav": None, "cash": fund["cash"],
+           "n_positions": sum(1 for order in orders if order["status"] == "filled"),
+           "daily_return": None, "cum_return": None, "status": "DATA_BLOCKED",
+           "reason": "MISSING_TARGET_CLOSE", "missing_tickers": sorted(set(missing))}
+    nav_history.append(rec)
+    return rec
+
+
+def _committed_daily_row_is_consistent(row, fund, orders):
+    if not isinstance(row, dict) or not isinstance(orders, list):
+        return False
+    open_orders = [order for order in orders if order.get("status") == "filled"]
+    if row.get("cash") != fund.get("cash") or row.get("n_positions") != len(open_orders):
+        return False
+    if row.get("nav") is not None:
+        return _usable_mark(row["nav"]) is not None and row.get("status") != "DATA_BLOCKED"
+    missing = row.get("missing_tickers")
+    filled = {order.get("ticker") for order in open_orders}
+    return (row.get("status") == "DATA_BLOCKED"
+            and row.get("reason") == "MISSING_TARGET_CLOSE"
+            and isinstance(missing, list) and bool(missing)
+            and all(isinstance(ticker, str) and ticker for ticker in missing)
+            and missing == sorted(set(missing)) and set(missing) <= filled
+            and row.get("daily_return") is None and row.get("cum_return") is None)
 
 
 # -------------------------------------------------------------- performance ----
@@ -600,14 +686,18 @@ def compute_performance(fund, orders, nav_history):
     closed = [o for o in closed_all if o.get("sample_eligible") is True]
     wins = [o for o in closed if (o["paper_return"] or 0) > 0]
     rs = [o["realized_R"] for o in closed if o.get("realized_R") is not None]
-    navs = [x["nav"] for x in nav_history] or [fund["initial_capital"]]
+    navs = [x["nav"] for x in nav_history if _usable_mark(x.get("nav")) is not None]
+    navs = navs or [fund["initial_capital"]]
+    nav_blocked = bool(nav_history and nav_history[-1].get("nav") is None)
     peak, max_dd = navs[0], 0.0
     for v in navs:
         peak = max(peak, v)
         max_dd = min(max_dd, v / peak - 1)
     n = len(closed)
     result = {
-        "nav": navs[-1], "cum_return": round(navs[-1] / fund["initial_capital"] - 1, 5),
+        "nav": None if nav_blocked else navs[-1],
+        "cum_return": (None if nav_blocked else
+                       round(navs[-1] / fund["initial_capital"] - 1, 5)),
         "max_drawdown": round(max_dd, 5),
         "n_closed": len(closed_all), "n_claim_eligible": n,
         "n_workflow_debug_closed": len(closed_all) - n,
@@ -634,7 +724,7 @@ def compare_human_shadow(nav_history, human_history):
     h = {x["date"]: x["nav"] for x in human_history}
     out = []
     for rec in nav_history:
-        if rec["date"] in h and human_history:
+        if rec["date"] in h and human_history and rec.get("cum_return") is not None:
             h0 = human_history[0]["nav"]
             out.append({"date": rec["date"], "model_cum": rec["cum_return"],
                         "human_cum": round(h[rec["date"]] / h0 - 1, 5),
@@ -825,6 +915,12 @@ def main():
         if not date:
             print("DATA_BLOCKED: 无 target_trade_date"); return 1
         try:
+            _finish_daily_intent(args.fund_dir or FUND_DIR,
+                                 expected_target=date, expected_run=run_id())
+        except Exception as exc:
+            print(f"DATA_BLOCKED: daily projection recovery refused: {exc}")
+            return 1
+        try:
             # governance-mutation: PAPER_REGISTRATION_DAILY_CALLSITE
             assert_paper_registration_ready(args.fund_dir, args.event_ledger)
         except Exception as exc:
@@ -838,6 +934,14 @@ def main():
         decision_log = load("decision_log.json", [], args.fund_dir)
         navh = load("nav_history.json", [], args.fund_dir)
         token = os.environ.get("TUSHARE_TOKEN", "").strip()
+        if token and not os.environ.get("AR_OFFLINE") and navh and navh[-1].get("date") == date:
+            last = navh[-1]
+            if not _committed_daily_row_is_consistent(last, fund, orders):
+                print("DATA_BLOCKED: daily retry projection is inconsistent")
+                return 1
+            print(f"[daily] {date} already committed; NAV status={last.get('status', 'COMPLETE')}")
+            print("不是买卖指令；研究信号，human executes。")
+            return 0
         events = []
         if token and not os.environ.get("AR_OFFLINE"):
             try:
@@ -875,19 +979,19 @@ def main():
             if marks:
                 print(f"  marks: {marks}")
             else:
-                print("  WARN 无可用收盘价 ⇒ NAV 按成本标记(不是市值)")
+                print("  WARN 无可用收盘价 ⇒ NAV 标为不可用")
         try:
             rec = update_nav(fund, orders, navh, date, marks=marks,
                              require_complete_marks=True)
         except NavMarksIncomplete as e:
-            # 官方 NAV 宁可不出,也不出混合口径。不写任何账本、非零退出、显式 DATA_BLOCKED。
-            print(f"DATA_BLOCKED: {date} 有 filled 持仓未取到目标日定盘价 {e.missing} —— "
-                  f"拒绝写入 NAV(不接受部分市值+部分成本的混合口径)")
-            print("不是买卖指令；研究信号，human executes。")
-            return 1
-        save("fund.json", fund, args.fund_dir); save("orders.json", orders, args.fund_dir)
-        save("decision_log.json", decision_log, args.fund_dir); save("nav_history.json", navh, args.fund_dir)
-        print(f"[daily] {date} nav={rec['nav']:,.0f} cash={rec['cash']:,.0f} "
+            if not token or os.environ.get("AR_OFFLINE"):
+                print(f"DATA_BLOCKED: {date} 无实时数据,未生成结算证据")
+                return 1
+            rec = record_unavailable_nav(fund, orders, navh, date, e.missing)
+        _commit_daily_projections(args.fund_dir or FUND_DIR, date, run_id(),
+                                  fund, orders, decision_log, navh)
+        nav_label = f"{rec['nav']:,.0f}" if rec["nav"] is not None else "DATA_BLOCKED"
+        print(f"[daily] {date} nav={nav_label} cash={rec['cash']:,.0f} "
               f"n_pos={rec['n_positions']} events={len(events)} run_id={run_id()}")
         for e in events:
             print("  ", e)
