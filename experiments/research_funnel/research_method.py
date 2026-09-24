@@ -724,7 +724,11 @@ def _score_timing(
     smc = registration["smc"]
     stop = float(smc["structure_stop"] if registration["strategy_mode"] == "SWING" else smc["disaster_line"])
     risk = float(fill_price) - stop
+    exit_date = order.get("exit_date") if order.get("status") == "closed" else None
     eligible = [row for row in bars if str(row.get("date")) >= str(fill_date)]
+    # governance-mutation: RESEARCH_METHOD_TIMING_EXIT_BOUND
+    if exit_date is not None:
+        eligible = [row for row in eligible if str(row.get("date")) <= str(exit_date)]
     if risk <= 0 or not eligible:
         raise MethodError("timing score lacks a positive registered risk or post-fill bars")
     mfe = max(float(row["high"]) for row in eligible) - float(fill_price)

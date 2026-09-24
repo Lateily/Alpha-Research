@@ -587,6 +587,29 @@ class ResearchMethodTests(unittest.TestCase):
         self.assertEqual(scorecard["machine_attribution"], "THESIS_WRONG_TIMING_RIGHT")
         self.assertEqual(scorecard["pnl"]["status"], "PROFIT")
 
+    def test_timing_excursions_exclude_post_exit_prices(self) -> None:
+        registration = valid_registration()
+        order = closed_order()
+        bars = settled_bars()
+        original = method._score_timing(registration, order, bars)
+        post_exit = {"date": "20260818", "open": 100.0, "high": 200.0,
+                     "low": 50.0, "close": 100.0}
+        self.assertEqual(method._score_timing(registration, order, bars + [post_exit]),
+                         original)
+
+    def test_open_position_timing_keeps_later_prices(self) -> None:
+        registration = valid_registration()
+        order = closed_order()
+        order.update(status="filled", exit_date=None, exit_reason=None)
+        bars = settled_bars()
+        original = method._score_timing(registration, order, bars)
+        post = {"date": "20260818", "open": 100.0, "high": 200.0,
+                "low": 50.0, "close": 100.0}
+        later = method._score_timing(registration, order, bars + [post])
+        self.assertEqual(later["status"], "UNRESOLVED")
+        self.assertGreater(later["mfe_R"], original["mfe_R"])
+        self.assertLess(later["mae_R"], original["mae_R"])
+
     def test_scorecard_tampering_and_authority_injection_are_rejected(self) -> None:
         registration = valid_registration()
         outcomes = method.seal_outcomes(outcome_draft(registration), registration)

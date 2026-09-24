@@ -412,6 +412,35 @@ class ResearchCycleTests(unittest.TestCase):
             with self.assertRaisesRegex(cycle.CycleError, "lacks load-bearing E1"):
                 cycle.seal_case(draft, closure_bundle)
 
+    def test_smc_timestamp_cannot_follow_case_seal(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            closure_bundle, codes, _, _, _ = build_closure_bundle(Path(tmp))
+            draft = build_case_draft(closure_bundle, codes[0])
+            registration = draft["method_registration"]
+            for separator in ("T", " ", "t"):
+                with self.subTest(separator=separator):
+                    registration["smc"]["evidence_as_of"] = f"2026-08-13{separator}10:10:01+00:00"
+                    registration["registration_hash"] = method._hash(
+                        method._without(registration, "registration_hash")
+                    )
+                    with self.assertRaisesRegex(cycle.CycleError, "SMC evidence.*case seal"):
+                        cycle.seal_case(draft, closure_bundle)
+
+    def test_smc_timestamp_compares_instants_not_local_clock_strings(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            closure_bundle, codes, _, _, _ = build_closure_bundle(Path(tmp))
+            draft = build_case_draft(closure_bundle, codes[0])
+            registration = draft["method_registration"]
+            for evidence_at in ("2026-08-13T18:10:00+08:00", "2026-08-13 10:09:59+00:00",
+                                "2026-08-13t10:10:00+00:00", "20260813", "2026-08-13"):
+                with self.subTest(evidence_at=evidence_at):
+                    registration["smc"]["evidence_as_of"] = evidence_at
+                    registration["registration_hash"] = method._hash(
+                        method._without(registration, "registration_hash")
+                    )
+                    case = cycle.seal_case(draft, closure_bundle)
+                    self.assertEqual(case["method_registration"]["smc"]["evidence_as_of"], evidence_at)
+
     def test_unqualified_thesis_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             closure_bundle, codes, _, _, _ = build_closure_bundle(Path(tmp))

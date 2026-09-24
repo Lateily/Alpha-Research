@@ -364,6 +364,17 @@ def validate_case(case: Mapping[str, Any], bundle_dir: Path) -> dict[str, Any]:
         )
     except method_contract.MethodError as exc:
         raise CycleError(f"registered research method is invalid: {exc}") from exc
+    smc_as_of = str(registration["smc"]["evidence_as_of"]).strip()
+    # Legacy date-only evidence does not establish intraday availability.
+    # When an instant is supplied, do not discard its time before comparing.
+    date_only = (
+        (len(smc_as_of) == 8 and smc_as_of.isdigit())
+        or (len(smc_as_of) == 10 and smc_as_of[4] == "-" and smc_as_of[7] == "-")
+    )
+    smc_after_seal = not date_only and _iso(smc_as_of, "smc.evidence_as_of") > generated_at
+    # governance-mutation: RESEARCH_CYCLE_SMC_SEAL_CHRONOLOGY
+    if smc_after_seal:
+        raise CycleError("SMC evidence timestamp is later than the case seal")
     # governance-mutation: RESEARCH_CYCLE_INDUSTRY_BINDING
     if registration["valuation"]["industry"] != case.get("industry_code"):
         raise CycleError("registered valuation industry differs from the research case")

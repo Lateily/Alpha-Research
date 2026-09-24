@@ -101,6 +101,45 @@ def _recent_announcement_count(titles, today):
     return count
 
 
+def _announcement_evidence(titles, today):
+    cutoff = datetime.datetime.strptime(today, "%Y%m%d").date()
+    eligible = []
+    future_count = 0
+    unknown_count = 0
+    for raw_date, title in titles:
+        date_text = str(raw_date or "")[:10]
+        try:
+            observed = datetime.datetime.strptime(date_text.replace("-", ""), "%Y%m%d").date()
+        except ValueError:
+            unknown_count += 1
+            continue
+        if observed > cutoff:
+            future_count += 1
+            continue
+        eligible.append((date_text, title))
+    reasons = []
+    if future_count:
+        reasons.append("ANNOUNCEMENT_AFTER_AS_OF_EXCLUDED")
+    if unknown_count:
+        reasons.append("ANNOUNCEMENT_DATE_UNVERIFIABLE")
+    if titles and not eligible:
+        reasons.append("NO_ANNOUNCEMENT_AT_OR_BEFORE_AS_OF")
+    # A truncated current feed with no usable dated rows does not prove zero at T.
+    blocked = bool(unknown_count or (titles and not eligible))
+    evidence = {
+        "最近公告条数": None if blocked else len(eligible),
+        "近7日公告条数": None if blocked else _recent_announcement_count(eligible, today),
+        "最新3条": [f"{date_text} {title[:36]}" for date_text, title in eligible[:3]],
+        "excluded_after_as_of_count": future_count,
+        "unverifiable_date_count": unknown_count,
+        "reason_codes": reasons,
+        "note": "东财公告源;实时快讯层待 M3 宏观面板上线",
+    }
+    if blocked:
+        evidence.update(status="DATA_BLOCKED", err=";".join(reasons))
+    return evidence
+
+
 def _fetch_anns_eastmoney(ts_code, page_size=30, timeout=10):
     """东财公告接口(免费无token)。返回 [(date, title), ...] 或 None(源不可用)。
     外部内容按不可信数据处理:只取日期与标题文本,不执行不解析任何指令。"""
@@ -160,6 +199,14 @@ def battery(pro, tk, today):
                        "最新E1日期": g["latest_e1_date"],
                        "最新期归母亿": round(float(inc.n_income_attr_p.iloc[-1])/1e8, 2) if len(inc) else None,
                        "毛利率轨迹": [round(float(x), 1) for x in fi.grossprofit_margin.tail(3)] if len(fi) else None})
+        missing_sources = []
+        if inc.empty:
+            missing_sources.append("INCOME_EMPTY")
+        if fi.empty:
+            missing_sources.append("FINA_INDICATOR_EMPTY")
+        if missing_sources:
+            D["基本面"].update(status="DATA_BLOCKED", reason_codes=missing_sources,
+                             err=";".join(missing_sources))
     except Exception as e:
         D["基本面"] = {"status": "DATA_BLOCKED", "err": str(e)[:80]}
     # ── 4 技术面(结构位,v0 用均线+量;SMC 层待 Line D)──
@@ -190,10 +237,7 @@ def battery(pro, tk, today):
         if titles is None:
             D["消息面"] = {"status": "DATA_BLOCKED", "err": "东财+Tushare 公告源均不可用——不伪装为0条"}
         else:
-            D["消息面"] = {"最近公告条数": len(titles),
-                           "近7日公告条数": _recent_announcement_count(titles, today),
-                           "最新3条": [f"{d0[:10]} {t[:36]}" for d0, t in titles[:3]],
-                           "note": "东财公告源;实时快讯层待 M3 宏观面板上线"}
+            D["消息面"] = _announcement_evidence(titles, today)
     except Exception as e:
         D["消息面"] = {"status": "NOT_RUN", "err": str(e)[:80]}
     # ── 6 估值 ──
@@ -201,6 +245,8 @@ def battery(pro, tk, today):
         db = pro.daily_basic(ts_code=tk, start_date=(datetime.datetime.strptime(today, "%Y%m%d")
              - datetime.timedelta(days=400)).strftime("%Y%m%d"), end_date=today,
              fields="trade_date,pe_ttm,pb,total_mv").sort_values("trade_date")
+        if db.empty:
+            raise ValueError("DAILY_BASIC_EMPTY")
         pe = db.pe_ttm  # 亏损票最新行为 NaN:如实报 None,不许回捞历史正值伪装现值
         last = pe.iloc[-1] if len(pe) else None
         cur = float(last) if last is not None and last == last else None

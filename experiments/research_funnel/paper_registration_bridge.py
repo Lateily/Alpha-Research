@@ -1082,6 +1082,17 @@ def validate_typed_outer_append(
     if not isinstance(payload, dict):
         raise PaperRegistrationError("typed paper registration payload is not an object")
     if preview.get("kind") == INTENT_KIND:
+        # New appends must be prospective; historical replay and retries stay unchanged.
+        registration_date = payload["plan"]["paper_request"]["registered_at"]
+        approval_date = _iso(payload["approval"]["approved_at"], "approval approved_at").astimezone(
+            event_ledger.OPERATIONAL_TIMEZONE
+        ).strftime("%Y%m%d")
+        intent_date = _iso(payload["registered_at"], "intent registered_at").astimezone(
+            event_ledger.OPERATIONAL_TIMEZONE
+        ).strftime("%Y%m%d")
+        # governance-mutation: PAPER_REGISTRATION_PROSPECTIVE_INTENT_DATE
+        if max(approval_date, intent_date) > registration_date:
+            raise PaperRegistrationError("new paper intent follows its registration date; rebuild and reapprove the plan")
         context_case = source_context.get("case")
         if not isinstance(context_case, Mapping):
             raise PaperRegistrationError("typed paper registration context lacks the research case")
@@ -1124,6 +1135,46 @@ def _registration_state(path: Path, *, allow_missing: bool = False) -> dict[str,
     return _replay_registration_records(_paper_outer_records(path))
 
 
+def _validate_executable_stop(
+    order: Mapping[str, Any], plan: Mapping[str, Any],
+    decision_log: Sequence[Mapping[str, Any]],
+) -> None:
+    expected_stop = plan["projection"]["order_registration_projection"]["registered_stop_reference"]
+    current_stop = order.get("stop_reference")
+    if type(current_stop) not in (int, float) or not math.isfinite(current_stop):
+        raise PaperRegistrationError("committed paper order executable stop must be finite")
+    if "deadline_policy" in order:
+        # governance-mutation: PAPER_REGISTRATION_EXECUTABLE_STOP_BINDING
+        if current_stop != expected_stop:
+            raise PaperRegistrationError("committed deadline order executable stop differs from its registered value")
+        return
+
+    # The legacy API logs ticker-only TIGHTEN_STOP events, not signed amendments.
+    registration_index = decision_log.index(plan["projection"]["decision_log_event"])
+    previous_date = order["registered_at"]
+    for event in decision_log[registration_index + 1:]:
+        if event.get("ticker") != order["ticker"]:
+            continue
+        if event.get("action") in {"REGISTER_ORDER", "PAPER_EXIT"}:
+            break
+        if event.get("action") != "TIGHTEN_STOP":
+            continue
+        next_stop = event.get("new_stop")
+        amendment_date = _date8(event.get("date"), "executable stop amendment date")
+        if (
+            type(next_stop) not in (int, float) or not math.isfinite(next_stop)
+            or event.get("no_trade_flag") is not True or amendment_date < previous_date
+        ):
+            raise PaperRegistrationError("committed paper order executable stop has invalid tightening evidence")
+        # governance-mutation: PAPER_REGISTRATION_LEGACY_STOP_MONOTONIC
+        if next_stop <= expected_stop:
+            raise PaperRegistrationError("committed paper order executable stop amendment is not tighter")
+        expected_stop, previous_date = next_stop, amendment_date
+    # governance-mutation: PAPER_REGISTRATION_LEGACY_STOP_EVIDENCE
+    if current_stop != expected_stop:
+        raise PaperRegistrationError("committed paper order executable stop lacks matching tightening evidence")
+
+
 def verify_registration_state(*, event_ledger_path: Path, fund_dir: Path) -> dict[str, Any]:
     try:
         ledger_state = _registration_state(event_ledger_path, allow_missing=True)
@@ -1157,6 +1208,7 @@ def verify_registration_state(*, event_ledger_path: Path, fund_dir: Path) -> dic
             # governance-mutation: PAPER_REGISTRATION_COMMITTED_DECISION_PROJECTION
             if decisions[0] != expected_plan["projection"]["decision_log_event"]:
                 raise PaperRegistrationError("committed paper registration decision changed")
+            _validate_executable_stop(orders[0], expected_plan, fund_state["decision_log"])
         return {
             "ok": True,
             "intents": len(ledger_state["intents"]),
