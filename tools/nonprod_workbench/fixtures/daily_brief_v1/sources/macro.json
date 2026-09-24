@@ -1,0 +1,17 @@
+{
+  "schema": "ar.synthetic_macro.v1",
+  "sample_purpose": "WORKFLOW_DEBUG",
+  "run_id": "SYNTHETIC_20260922_BRIEF_001",
+  "as_of": "20260922",
+  "mode": "CALIBRATING",
+  "formal_blocking_authority": false,
+  "data_quality": "DATA_BLOCKED",
+  "expected_source_count": 3,
+  "available_source_count": 1,
+  "source_rows": [
+    {"id": "MOCK-MACRO-A", "status": "AVAILABLE", "value": 20, "source_tier": "SYNTHETIC_FIXTURE"},
+    {"id": "MOCK-MACRO-B", "status": "DATA_BLOCKED", "value": null, "reason": "SYNTHETIC_SOURCE_NOT_PROVIDED"},
+    {"id": "MOCK-MACRO-C", "status": "DATA_BLOCKED", "value": null, "reason": "SYNTHETIC_SOURCE_NOT_PROVIDED"}
+  ],
+  "interpretation": "No market or portfolio conclusion may be inferred from these incomplete mock observations."
+}

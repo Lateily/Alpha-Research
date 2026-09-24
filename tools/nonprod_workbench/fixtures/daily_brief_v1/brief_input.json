@@ -1,0 +1,80 @@
+{
+  "schema": "ar.workbench_daily_brief_input.v1",
+  "sample_purpose": "WORKFLOW_DEBUG",
+  "data_origin": "FULLY_SYNTHETIC_NO_LICENSED_DATA",
+  "production_authority": false,
+  "trade_authority": false,
+  "human_review_status": "PENDING",
+  "run_id": "SYNTHETIC_20260922_BRIEF_001",
+  "target_trade_date": "20260922",
+  "generated_at": "2026-09-22T20:45:00+08:00",
+  "data_cutoff": "2026-09-22T20:30:00+08:00",
+  "code_version": "WB01_SYNTHETIC_FIXTURE_V1",
+  "latest_attempt": {
+    "run_id": "SYNTHETIC_20260922_BRIEF_001",
+    "target_trade_date": "20260922",
+    "attempted_at": "2026-09-22T20:40:00+08:00",
+    "pipeline_status": "COMPLETE",
+    "research_data_quality": "PARTIAL"
+  },
+  "last_successful_publication": {
+    "run_id": "SYNTHETIC_20260922_BRIEF_001",
+    "target_trade_date": "20260922",
+    "published_at": "2026-09-22T20:44:00+08:00",
+    "status": "SYNTHETIC_FIXTURE_ONLY"
+  },
+  "displayed_run_id": "SYNTHETIC_20260922_BRIEF_001",
+  "sources": [
+    {
+      "role": "MARKET",
+      "path": "sources/market.json",
+      "source_date": "20260922",
+      "data_cutoff": "2026-09-22T15:00:00+08:00",
+      "sha256": "5d1a81e5e18822d79b45a89cdffc68694d7d5fa8eace80db6fb67561a255dbc2",
+      "quality_status": "AVAILABLE"
+    },
+    {
+      "role": "PORTFOLIO",
+      "path": "sources/portfolio.json",
+      "source_date": "20260922",
+      "data_cutoff": "2026-09-22T16:00:00+08:00",
+      "sha256": "08c38fd6d531896fb772befefc51d6c5e72e169db74de5e2de8edbeb0af8395e",
+      "quality_status": "AVAILABLE"
+    },
+    {
+      "role": "ORDERS",
+      "path": "sources/orders.json",
+      "source_date": "20260922",
+      "data_cutoff": "2026-09-22T16:00:00+08:00",
+      "sha256": "b80311d2d9967180dcdfe971f831b069d6331bd934b72006aea4c44d7eb6bacf",
+      "quality_status": "AVAILABLE"
+    },
+    {
+      "role": "MACRO",
+      "path": "sources/macro.json",
+      "source_date": "20260922",
+      "data_cutoff": "2026-09-22T18:00:00+08:00",
+      "sha256": "1879e1ffde6c0dea5164d7df32bb9175aa8b6248550492841a0057af3865f47a",
+      "quality_status": "DATA_BLOCKED"
+    },
+    {
+      "role": "FUNNEL",
+      "path": "sources/funnel.json",
+      "source_date": "20260922",
+      "data_cutoff": "2026-09-22T19:30:00+08:00",
+      "sha256": "ef8bf270fee4bad053b262389a759b0b120f8a32497123b6e0015dab5880b9fa",
+      "quality_status": "PARTIAL"
+    }
+  ],
+  "evidence_refs": [
+    {"claim": "Broad market change", "source_role": "MARKET", "json_pointer": "/benchmarks/0/close_change_pct", "evidence_strength": "SYNTHETIC_FACT"},
+    {"claim": "Portfolio NAV change", "source_role": "PORTFOLIO", "json_pointer": "/current_snapshot/nav_change", "evidence_strength": "SYNTHETIC_FACT"},
+    {"claim": "Paper fill and fee", "source_role": "ORDERS", "json_pointer": "/orders/0", "evidence_strength": "SYNTHETIC_FACT"},
+    {"claim": "Macro source unavailable", "source_role": "MACRO", "json_pointer": "/source_rows/1", "evidence_strength": "SYNTHETIC_FACT"},
+    {"claim": "Red-flag candidate not ready", "source_role": "FUNNEL", "json_pointer": "/candidates/2", "evidence_strength": "SYNTHETIC_FACT"}
+  ],
+  "market_to_portfolio_attribution": {
+    "status": "NOT_ESTABLISHED",
+    "reason": "A market move and portfolio move in the same session do not establish causation."
+  }
+}

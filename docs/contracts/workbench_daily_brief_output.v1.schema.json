@@ -1,0 +1,134 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Lateily/Alpha-Research/docs/contracts/workbench_daily_brief_output.v1.schema.json",
+  "title": "AR Workbench Daily Brief Acceptance v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "status", "sample_purpose", "formal_authority", "issues", "result", "receipt_hash"],
+  "properties": {
+    "schema": {"const": "ar.workbench_daily_brief_acceptance.v1"},
+    "status": {"enum": ["ACCEPTED", "SPEC_BLOCKED"]},
+    "sample_purpose": {"const": "WORKFLOW_DEBUG"},
+    "formal_authority": {"const": false},
+    "issues": {"type": "array", "items": {"$ref": "#/$defs/issue"}},
+    "result": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/result"}]},
+    "receipt_hash": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "run_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,100}$"},
+    "trade_date": {"type": "string", "pattern": "^[0-9]{8}$"},
+    "timestamp": {"type": "string", "format": "date-time"},
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "decimal": {"type": "string", "pattern": "^-?[0-9]+(?:\\.[0-9]+)?$"},
+    "issue": {
+      "type": "object", "additionalProperties": false,
+      "required": ["code", "subject"],
+      "properties": {
+        "code": {"type": "string", "pattern": "^[A-Z0-9_]+$"},
+        "subject": {"type": "string", "minLength": 1}
+      }
+    },
+    "attempt": {
+      "type": "object", "additionalProperties": false,
+      "required": ["run_id", "target_trade_date", "attempted_at", "pipeline_status", "research_data_quality"],
+      "properties": {
+        "run_id": {"$ref": "#/$defs/run_id"},
+        "target_trade_date": {"$ref": "#/$defs/trade_date"},
+        "attempted_at": {"$ref": "#/$defs/timestamp"},
+        "pipeline_status": {"enum": ["COMPLETE", "FAILED", "BLOCKED", "PARTIAL"]},
+        "research_data_quality": {"enum": ["COMPLETE", "PARTIAL", "DATA_BLOCKED", "UNKNOWN"]}
+      }
+    },
+    "publication": {
+      "type": "object", "additionalProperties": false,
+      "required": ["run_id", "target_trade_date", "published_at", "status"],
+      "properties": {
+        "run_id": {"$ref": "#/$defs/run_id"},
+        "target_trade_date": {"$ref": "#/$defs/trade_date"},
+        "published_at": {"$ref": "#/$defs/timestamp"},
+        "status": {"const": "SYNTHETIC_FIXTURE_ONLY"}
+      }
+    },
+    "source": {
+      "type": "object", "additionalProperties": false,
+      "required": ["role", "path", "source_date", "data_cutoff", "source_sha256", "quality_status"],
+      "properties": {
+        "role": {"enum": ["MARKET", "PORTFOLIO", "ORDERS", "MACRO", "FUNNEL"]},
+        "path": {"type": "string", "pattern": "^sources/[a-z_]+\\.json$"},
+        "source_date": {"$ref": "#/$defs/trade_date"},
+        "data_cutoff": {"$ref": "#/$defs/timestamp"},
+        "source_sha256": {"$ref": "#/$defs/sha256"},
+        "quality_status": {"enum": ["AVAILABLE", "PARTIAL", "DATA_BLOCKED", "NO_ACTIVITY"]}
+      }
+    },
+    "evidence_ref": {
+      "type": "object", "additionalProperties": false,
+      "required": ["claim", "source_role", "json_pointer", "evidence_strength"],
+      "properties": {
+        "claim": {"type": "string", "minLength": 1},
+        "source_role": {"enum": ["MARKET", "PORTFOLIO", "ORDERS", "MACRO", "FUNNEL"]},
+        "json_pointer": {"type": "string", "pattern": "^/"},
+        "evidence_strength": {"const": "SYNTHETIC_FACT"}
+      }
+    },
+    "result": {
+      "type": "object", "additionalProperties": false,
+      "required": ["identity", "run_state", "sources", "portfolio", "orders", "quality", "evidence_refs"],
+      "properties": {
+        "identity": {
+          "type": "object", "additionalProperties": false,
+          "required": ["run_id", "target_trade_date", "generated_at", "data_cutoff", "code_version"],
+          "properties": {
+            "run_id": {"$ref": "#/$defs/run_id"},
+            "target_trade_date": {"$ref": "#/$defs/trade_date"},
+            "generated_at": {"$ref": "#/$defs/timestamp"},
+            "data_cutoff": {"$ref": "#/$defs/timestamp"},
+            "code_version": {"type": "string", "minLength": 1}
+          }
+        },
+        "run_state": {
+          "type": "object", "additionalProperties": false,
+          "required": ["latest_attempt", "last_successful_publication", "displayed_run_id", "displayed_is_latest_attempt"],
+          "properties": {
+            "latest_attempt": {"$ref": "#/$defs/attempt"},
+            "last_successful_publication": {"$ref": "#/$defs/publication"},
+            "displayed_run_id": {"$ref": "#/$defs/run_id"},
+            "displayed_is_latest_attempt": {"type": "boolean"}
+          }
+        },
+        "sources": {"type": "array", "minItems": 5, "maxItems": 5, "items": {"$ref": "#/$defs/source"}},
+        "portfolio": {
+          "type": "object", "additionalProperties": false,
+          "required": ["currency", "paper_only", "previous_cash", "current_cash", "previous_nav", "current_nav", "nav_change", "nav_change_pct", "current_position_value", "position_count"],
+          "properties": {
+            "currency": {"const": "CNY"}, "paper_only": {"const": true},
+            "previous_cash": {"$ref": "#/$defs/decimal"}, "current_cash": {"$ref": "#/$defs/decimal"},
+            "previous_nav": {"$ref": "#/$defs/decimal"}, "current_nav": {"$ref": "#/$defs/decimal"},
+            "nav_change": {"$ref": "#/$defs/decimal"}, "nav_change_pct": {"$ref": "#/$defs/decimal"},
+            "current_position_value": {"$ref": "#/$defs/decimal"}, "position_count": {"type": "integer"}
+          }
+        },
+        "orders": {
+          "type": "object", "additionalProperties": false,
+          "required": ["activity_status", "order_count", "filled_count", "not_filled_count", "total_cash_effect", "total_fees"],
+          "properties": {
+            "activity_status": {"enum": ["ACTIVITY_PRESENT", "NO_ACTIVITY"]},
+            "order_count": {"type": "integer"}, "filled_count": {"type": "integer"}, "not_filled_count": {"type": "integer"},
+            "total_cash_effect": {"$ref": "#/$defs/decimal"}, "total_fees": {"$ref": "#/$defs/decimal"}
+          }
+        },
+        "quality": {
+          "type": "object", "additionalProperties": false,
+          "required": ["status", "blocked_reasons", "missing_values_zero_filled", "market_to_portfolio_attribution"],
+          "properties": {
+            "status": {"enum": ["COMPLETE", "PARTIAL"]},
+            "blocked_reasons": {"type": "array", "items": {"type": "string", "pattern": "^[A-Z0-9_]+$"}},
+            "missing_values_zero_filled": {"const": false},
+            "market_to_portfolio_attribution": {"const": "NOT_ESTABLISHED"}
+          }
+        },
+        "evidence_refs": {"type": "array", "items": {"$ref": "#/$defs/evidence_ref"}}
+      }
+    }
+  }
+}

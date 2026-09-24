@@ -1,0 +1,14 @@
+{
+  "schema": "ar.workbench_daily_brief_negative_cases.v1",
+  "cases": [
+    {"id": "missing-orders-artifact", "expected": "SOURCE_MISSING"},
+    {"id": "missing-macro-artifact", "expected": "SOURCE_MISSING"},
+    {"id": "market-bytes-changed-without-rebind", "expected": "SOURCE_HASH_MISMATCH"},
+    {"id": "macro-cross-date-after-rebind", "expected": "SOURCE_DATE_MISMATCH"},
+    {"id": "funnel-cross-run-after-rebind", "expected": "SOURCE_RUN_ID_MISMATCH"},
+    {"id": "unfilled-order-has-effect-after-rebind", "expected": "UNFILLED_ORDER_HAS_EFFECT"},
+    {"id": "missing-orders-is-not-no-activity", "expected": "SOURCE_MISSING"},
+    {"id": "explicit-empty-orders-with-consistent-portfolio", "expected": "ACCEPTED_NO_ACTIVITY"},
+    {"id": "newer-failed-attempt-keeps-old-publication-visible", "expected": "ACCEPTED_DISTINCT_RUN_STATES"}
+  ]
+}

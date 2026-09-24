@@ -1,0 +1,12 @@
+{
+  "schema": "ar.synthetic_market.v1",
+  "sample_purpose": "WORKFLOW_DEBUG",
+  "run_id": "SYNTHETIC_20260922_BRIEF_001",
+  "as_of": "20260922",
+  "source_tier": "SYNTHETIC_FIXTURE",
+  "benchmarks": [
+    {"id": "BROAD.TEST", "close_change_pct": -0.8, "observation_status": "AVAILABLE"},
+    {"id": "SEMI.TEST", "close_change_pct": 1.2, "observation_status": "AVAILABLE"}
+  ],
+  "market_note": "Fictional broad market declined while the fictional semiconductor basket rose. No causal attribution is established."
+}

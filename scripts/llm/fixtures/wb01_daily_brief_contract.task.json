@@ -1,0 +1,77 @@
+{
+  "schema": "ai-task.v1",
+  "task_id": "WB-01-DAILY-BRIEF-CONTRACT-20260924",
+  "source_issue": 374,
+  "architecture_block": ["nonproduction-workbench", "daily-brief-data-contract", "research-evidence-boundary"],
+  "objective": "Freeze and validate one deterministic nonproduction daily Portfolio x Market brief input/output contract and synthetic fixture with source, date, run, hash, quality, portfolio arithmetic and publication-state traceability for Simon, Jason and Better.",
+  "non_goals": [
+    "Do not wire the workbench runtime or scheduler",
+    "Do not build or modify the workbench UI",
+    "Do not run production, nightly, ledger, market-data or model providers",
+    "Do not use real portfolio, order, account or market data",
+    "Do not grant U4, paper, publication, human approval or trading authority"
+  ],
+  "human_owner": "Jason",
+  "reviewer": "Better / Junyan",
+  "executor_candidates": ["Codex"],
+  "dependencies": [
+    "Issue #374 task card",
+    "Outer and internal SHA256 verification of workbench_brief_fixture_20260922.zip",
+    "PR #372 content rules consumed as guidance without taking its file scope",
+    "Shared python-ci and mutation files must be rebased line-by-line after concurrent work"
+  ],
+  "authority_docs": [
+    "AGENTS.md",
+    "scripts/llm/AGENTS.md",
+    "docs/team/NONPROD_WORKBENCH_V1.md",
+    "docs/llm/AI_PROGRESS_PROTOCOL.md",
+    "PR #372 docs/research/DAILY_RESEARCH_BRIEF_CONTENT_RULES_V0.md"
+  ],
+  "file_scope": [
+    "docs/contracts/WORKBENCH_DAILY_BRIEF_V1.md",
+    "docs/contracts/workbench_daily_brief_input.v1.schema.json",
+    "docs/contracts/workbench_daily_brief_output.v1.schema.json",
+    "scripts/llm/workbench_daily_brief.py",
+    "scripts/llm/fixtures/wb01_daily_brief_contract.task.json",
+    "tools/nonprod_workbench/fixtures/daily_brief_v1",
+    "tests/test_workbench_daily_brief.py",
+    "scripts/governance_mutation_gate.py",
+    "tests/test_governance_mutation_gate.py",
+    ".github/workflows/python-ci.yml"
+  ],
+  "forbidden_scope": [
+    "experiments/execution_tracker",
+    "public/data",
+    "data_history",
+    "production runtime and formal ledgers",
+    "scripts/llm/nonprod_workbench.py",
+    "tools/nonprod_workbench/ui",
+    "live market or account data",
+    "model/provider APIs",
+    "cloud deployment"
+  ],
+  "input_contracts": [
+    "scripts/llm/schemas/task.schema.json",
+    "Verified synthetic fixture ZIP sha256:67d09ccdc74919e9ae19bc4a25b3789306c935170d677bc3ea4522fe04e6b201",
+    "ar.workbench_daily_brief_input.v1 and ar.workbench_daily_brief_acceptance.v1",
+    "PR #372 daily brief content-rule field requirements"
+  ],
+  "output_artifacts": [
+    "Versioned daily-brief input and output JSON Schemas",
+    "Deterministic synthetic .TEST fixture with manifest and SHA256 bindings",
+    "Offline validator and acceptance command",
+    "Negative regressions for missing, hash drift, cross-date, stale run, Macro DATA_BLOCKED and orders semantics",
+    "Acceptance receipt separating latest attempt, last successful publication, displayed run and source dates"
+  ],
+  "acceptance_tests": [
+    "python3 tests/test_workbench_daily_brief.py",
+    "python3 scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/wb01_daily_brief_contract.task.json",
+    "python3 scripts/governance_mutation_gate.py",
+    "python3 tests/test_no_network_guard.py",
+    "git diff --check"
+  ],
+  "risk_level": "MEDIUM",
+  "network_policy": "OFFLINE",
+  "budget": {"max_cny": "0", "max_minutes": 240},
+  "approval_gates": ["BETTER_CONTRACT_CONSUMER_REVIEW", "INDEPENDENT_REVIEW", "JUNYAN_MERGE", "SEPARATE_RUNTIME_AND_DEPLOYMENT_APPROVAL"]
+}

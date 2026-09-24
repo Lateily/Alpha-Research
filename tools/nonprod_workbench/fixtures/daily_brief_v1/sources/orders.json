@@ -1,0 +1,13 @@
+{
+  "schema": "ar.synthetic_orders.v1",
+  "sample_purpose": "WORKFLOW_DEBUG",
+  "run_id": "SYNTHETIC_20260922_BRIEF_001",
+  "as_of": "20260922",
+  "paper_only": true,
+  "orders": [
+    {"order_id": "MOCK-O-001", "instrument_id": "DEMO001.TEST", "side": "sell", "status": "FILLED", "filled_shares": 100, "fill_price": 20, "fee": 5, "cash_effect": 1995},
+    {"order_id": "MOCK-O-002", "instrument_id": "DEMO002.TEST", "side": "buy", "status": "FILLED", "filled_shares": 100, "fill_price": 39, "fee": 5, "cash_effect": -3905},
+    {"order_id": "MOCK-O-003", "instrument_id": "DEMO001.TEST", "side": "buy", "status": "NOT_FILLED", "filled_shares": 0, "fill_price": null, "fee": 0, "cash_effect": 0}
+  ],
+  "execution_note": "Fictional paper fills only. NOT_FILLED has no position or cash effect."
+}
