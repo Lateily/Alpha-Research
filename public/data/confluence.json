@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-24T06:05:31.478701+00:00",
+  "generated_at": "2026-09-24T13:46:48.031747+00:00",
   "model_state": "NORMAL_OBSERVATION_MODE",
   "tickers_scored": 9,
   "summary": {
@@ -49,7 +49,7 @@
       "signal_types": [
         "MA20_BOUNCE"
       ],
-      "computed_at": "2026-09-24T06:05:31.478016+00:00"
+      "computed_at": "2026-09-24T13:46:48.031108+00:00"
     },
     {
       "ticker": "002594.SZ",
@@ -69,10 +69,10 @@
       },
       "contributing": [],
       "contributing_signals": [],
-      "rationale_e": "RSI 46 | Price vs MA20 -0.7% | Regime: PERMISSIVE | VP 48",
-      "rationale_z": "RSI 46 | 距MA20 -0.7% | 政策顺风 | VP 48",
+      "rationale_e": "RSI 47 | Price vs MA20 -0.7% | Regime: PERMISSIVE | VP 48",
+      "rationale_z": "RSI 47 | 距MA20 -0.7% | 政策顺风 | VP 48",
       "signal_types": [],
-      "computed_at": "2026-09-24T06:05:31.477763+00:00"
+      "computed_at": "2026-09-24T13:46:48.030817+00:00"
     },
     {
       "ticker": "175.HK",
@@ -115,7 +115,7 @@
       "signal_types": [
         "KDJ_OVERSOLD"
       ],
-      "computed_at": "2026-09-24T06:05:31.477894+00:00"
+      "computed_at": "2026-09-24T13:46:48.030954+00:00"
     },
     {
       "ticker": "6160.HK",
@@ -192,7 +192,7 @@
         "MA60_BOUNCE",
         "MACD_GOLDEN_CROSS"
       ],
-      "computed_at": "2026-09-24T06:05:31.478400+00:00"
+      "computed_at": "2026-09-24T13:46:48.031460+00:00"
     },
     {
       "ticker": "700.HK",
@@ -215,7 +215,7 @@
       "rationale_e": "RSI 41 | Price vs MA20 -3.5%",
       "rationale_z": "RSI 41 | 距MA20 -3.5%",
       "signal_types": [],
-      "computed_at": "2026-09-24T06:05:31.478612+00:00"
+      "computed_at": "2026-09-24T13:46:48.031655+00:00"
     },
     {
       "ticker": "9999.HK",
@@ -238,7 +238,7 @@
       "rationale_e": "RSI 56 | Price vs MA20 +2.8%",
       "rationale_z": "RSI 56 | 距MA20 +2.8%",
       "signal_types": [],
-      "computed_at": "2026-09-24T06:05:31.478688+00:00"
+      "computed_at": "2026-09-24T13:46:48.031734+00:00"
     },
     {
       "ticker": "300308.SZ",
@@ -281,7 +281,7 @@
       "signal_types": [
         "KDJ_DEATH_CROSS"
       ],
-      "computed_at": "2026-09-24T06:05:31.478125+00:00"
+      "computed_at": "2026-09-24T13:46:48.031219+00:00"
     },
     {
       "ticker": "688120.SH",
@@ -324,7 +324,7 @@
       "signal_types": [
         "KDJ_DEATH_CROSS"
       ],
-      "computed_at": "2026-09-24T06:05:31.478521+00:00"
+      "computed_at": "2026-09-24T13:46:48.031565+00:00"
     },
     {
       "ticker": "603233.SH",
@@ -367,7 +367,7 @@
       "signal_types": [
         "DEATH_CROSS"
       ],
-      "computed_at": "2026-09-24T06:05:31.478244+00:00"
+      "computed_at": "2026-09-24T13:46:48.031339+00:00"
     }
   ]
 }
