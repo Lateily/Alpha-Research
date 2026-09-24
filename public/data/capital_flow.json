@@ -1,12 +1,194 @@
 {
-  "fetched_at": "2026-09-24T06:00:39Z",
+  "fetched_at": "2026-09-24T13:42:09Z",
   "trade_date": "20260924",
   "tier": 15000,
   "_status": "partial",
   "hot_concepts": [],
   "cold_concepts": [],
-  "hot_industries": [],
-  "cold_industries": [],
+  "hot_industries": [
+    {
+      "name": "大飞机",
+      "ts_code": "BK0814.DC",
+      "net_inflow_yuan": 10467326400000.0,
+      "pct_chg": -1.04
+    },
+    {
+      "name": "机器人执行器",
+      "ts_code": "BK1145.DC",
+      "net_inflow_yuan": 10405217280000.0,
+      "pct_chg": 0.74
+    },
+    {
+      "name": "汽车零部件",
+      "ts_code": "BK0481.DC",
+      "net_inflow_yuan": 9896064640000.0,
+      "pct_chg": -0.64
+    },
+    {
+      "name": "国防军工",
+      "ts_code": "BK1204.DC",
+      "net_inflow_yuan": 8841493760000.0,
+      "pct_chg": -0.94
+    },
+    {
+      "name": "空间站概念",
+      "ts_code": "BK0994.DC",
+      "net_inflow_yuan": 8144933600000.0,
+      "pct_chg": -0.41
+    },
+    {
+      "name": "军工电子Ⅲ",
+      "ts_code": "BK1386.DC",
+      "net_inflow_yuan": 7496319360000.0,
+      "pct_chg": -0.74
+    },
+    {
+      "name": "军工电子Ⅱ",
+      "ts_code": "BK1233.DC",
+      "net_inflow_yuan": 7496319360000.0,
+      "pct_chg": -0.74
+    },
+    {
+      "name": "风电设备",
+      "ts_code": "BK1032.DC",
+      "net_inflow_yuan": 6966230240000.0,
+      "pct_chg": 2.15
+    },
+    {
+      "name": "风电零部件",
+      "ts_code": "BK1313.DC",
+      "net_inflow_yuan": 6929314720000.0,
+      "pct_chg": 2.67
+    },
+    {
+      "name": "汽车",
+      "ts_code": "BK1211.DC",
+      "net_inflow_yuan": 6876756480000.0,
+      "pct_chg": -0.65
+    },
+    {
+      "name": "金属制品",
+      "ts_code": "BK1396.DC",
+      "net_inflow_yuan": 6496352960000.0,
+      "pct_chg": -0.35
+    },
+    {
+      "name": "林业Ⅲ",
+      "ts_code": "BK1502.DC",
+      "net_inflow_yuan": 6388585310000.0,
+      "pct_chg": 5.83
+    },
+    {
+      "name": "林业Ⅱ",
+      "ts_code": "BK1255.DC",
+      "net_inflow_yuan": 6388585310000.0,
+      "pct_chg": 5.83
+    },
+    {
+      "name": "减速器",
+      "ts_code": "BK1100.DC",
+      "net_inflow_yuan": 6381329600000.0,
+      "pct_chg": 0.27
+    },
+    {
+      "name": "家用电器",
+      "ts_code": "BK0456.DC",
+      "net_inflow_yuan": 5983900480000.0,
+      "pct_chg": -0.39
+    },
+    {
+      "name": "卫星导航",
+      "ts_code": "BK0629.DC",
+      "net_inflow_yuan": 5915762560000.0,
+      "pct_chg": -0.56
+    },
+    {
+      "name": "汽车电子电气系统",
+      "ts_code": "BK1529.DC",
+      "net_inflow_yuan": 5837826240000.0,
+      "pct_chg": -1.28
+    },
+    {
+      "name": "煤炭",
+      "ts_code": "BK0437.DC",
+      "net_inflow_yuan": 5497831200000.0,
+      "pct_chg": 0.66
+    },
+    {
+      "name": "军民融合",
+      "ts_code": "BK0808.DC",
+      "net_inflow_yuan": 5348241920000.0,
+      "pct_chg": -0.99
+    },
+    {
+      "name": "通用设备",
+      "ts_code": "BK0545.DC",
+      "net_inflow_yuan": 5231933440000.0,
+      "pct_chg": -0.71
+    }
+  ],
+  "cold_industries": [
+    {
+      "name": "融资融券",
+      "ts_code": "BK0596.DC",
+      "net_inflow_yuan": -642413035520000.0,
+      "pct_chg": -1.54
+    },
+    {
+      "name": "MSCI中国",
+      "ts_code": "BK0821.DC",
+      "net_inflow_yuan": -465859379200000.0,
+      "pct_chg": -1.87
+    },
+    {
+      "name": "富时罗素",
+      "ts_code": "BK0867.DC",
+      "net_inflow_yuan": -427674664960000.0,
+      "pct_chg": -1.42
+    },
+    {
+      "name": "大盘股",
+      "ts_code": "BK1663.DC",
+      "net_inflow_yuan": -352890890240000.0,
+      "pct_chg": -1.67
+    },
+    {
+      "name": "2026中报预增",
+      "ts_code": "BK1749.DC",
+      "net_inflow_yuan": -331563338240000.0,
+      "pct_chg": -2.0
+    },
+    {
+      "name": "深股通",
+      "ts_code": "BK0804.DC",
+      "net_inflow_yuan": -319836119040000.0,
+      "pct_chg": -1.53
+    },
+    {
+      "name": "标准普尔",
+      "ts_code": "BK0879.DC",
+      "net_inflow_yuan": -316741378560000.0,
+      "pct_chg": -1.34
+    },
+    {
+      "name": "沪股通",
+      "ts_code": "BK0707.DC",
+      "net_inflow_yuan": -308858224640000.0,
+      "pct_chg": -1.54
+    },
+    {
+      "name": "HS300_",
+      "ts_code": "BK0500.DC",
+      "net_inflow_yuan": -302126466560000.0,
+      "pct_chg": -1.49
+    },
+    {
+      "name": "深成500",
+      "ts_code": "BK0568.DC",
+      "net_inflow_yuan": -274183971840000.0,
+      "pct_chg": -1.86
+    }
+  ],
   "concept_meta": {
     "api_used": null,
     "_attempted_endpoints": [
@@ -23,7 +205,7 @@
     "_attempted_endpoints": [
       "moneyflow_ind_dc"
     ],
-    "row_count": 0,
+    "row_count": 1031,
     "_status": "ok"
   }
 }

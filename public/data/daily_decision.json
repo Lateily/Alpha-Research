@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-24T06:05:31.567798+00:00",
+  "generated_at": "2026-09-24T13:46:48.138406+00:00",
   "date": "2026-09-24",
   "model_state": "NORMAL_OBSERVATION_MODE",
   "brief_e": "1 Exposure Review | 1 Risk Review",
@@ -13,7 +13,7 @@
         "action": "REVIEW_STOP",
         "priority": "HIGH",
         "confidence": 0,
-        "pnl_pct": -12.28,
+        "pnl_pct": -12.32,
         "holding_days": 176,
         "weight_pct": 3.8,
         "vp_score": 48,
@@ -31,13 +31,13 @@
         "action": "REVIEW_TRIM",
         "priority": "MEDIUM",
         "confidence": 6,
-        "pnl_pct": 31.65,
+        "pnl_pct": 31.48,
         "holding_days": 198,
         "weight_pct": 50.6,
         "vp_score": 48,
         "confluence": -6,
-        "reason_e": "Large unrealised gain +31.6% after 198d. Signal still NEUTRAL (score -6). Exposure-review condition (sizable unrealised gain).",
-        "reason_z": "浮盈+31.6%（持有198天），信号-6仍属信号中性，等待，敞口复核条件（浮盈较大）。",
+        "reason_e": "Large unrealised gain +31.5% after 198d. Signal still NEUTRAL (score -6). Exposure-review condition (sizable unrealised gain).",
+        "reason_z": "浮盈+31.5%（持有198天），信号-6仍属信号中性，等待，敞口复核条件（浮盈较大）。",
         "entry_target": null,
         "exit_trigger": "P&L > 25.0% → exposure-review condition",
         "execution_posture": null
@@ -175,10 +175,22 @@
   "buy_watches": [],
   "portfolio_risk": [
     "⚠️ CONCENTRATION: 300308.SZ (中际旭创) = 51% of portfolio — above 40.0% limit",
-    "PROFIT REVIEW: 300308.SZ +31.6% — exposure-review condition (sizable unrealised gain)",
+    "PROFIT REVIEW: 300308.SZ +31.5% — exposure-review condition (sizable unrealised gain)",
     "🔴 DRAWDOWN REVIEW: 002594.SZ -12.3% — review thesis and wrongIf conditions"
   ],
   "wrongif_alerts": [
+    {
+      "ticker": "300308.SZ",
+      "severity": "NONE",
+      "status": "CLEAR",
+      "wrongIf_e": "1.6T mass production delayed beyond Q3 2026 OR NVDA+MSFT+GOOGL stock prices collectively drop >25% from ATH within 1 quarter (hyperscaler CapEx pullback proxy)",
+      "wrongIf_z": "1.6T量产推迟至2026年Q3后，或英伟达/微软/谷歌股价集体较ATH下跌>25%（超大规模CapEx削减代理指标）",
+      "note_e": "✅ Clear: hyperscaler_basket_drawdown_pct = 5.8 (threshold 25.0)",
+      "note_z": "✅ 正常：hyperscaler_basket_drawdown_pct = 5.8（阈值25.0）",
+      "indicator": "hyperscaler_basket_drawdown_pct",
+      "actual": 5.8,
+      "threshold": 25.0
+    },
     {
       "ticker": "002594.SZ",
       "severity": "LOW",
@@ -190,18 +202,6 @@
       "indicator": "revenue_growth",
       "actual": null,
       "threshold": null
-    },
-    {
-      "ticker": "300308.SZ",
-      "severity": "NONE",
-      "status": "CLEAR",
-      "wrongIf_e": "1.6T mass production delayed beyond Q3 2026 OR NVDA+MSFT+GOOGL stock prices collectively drop >25% from ATH within 1 quarter (hyperscaler CapEx pullback proxy)",
-      "wrongIf_z": "1.6T量产推迟至2026年Q3后，或英伟达/微软/谷歌股价集体较ATH下跌>25%（超大规模CapEx削减代理指标）",
-      "note_e": "✅ Clear: hyperscaler_basket_drawdown_pct = 5.0 (threshold 25.0)",
-      "note_z": "✅ 正常：hyperscaler_basket_drawdown_pct = 5.0（阈值25.0）",
-      "indicator": "hyperscaler_basket_drawdown_pct",
-      "actual": 5.0,
-      "threshold": 25.0
     },
     {
       "ticker": "300054.SZ",
