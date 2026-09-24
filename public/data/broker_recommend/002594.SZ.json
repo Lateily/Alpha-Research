@@ -1,7 +1,7 @@
 {
   "_status": "ok",
   "ticker": "002594.SZ",
-  "fetched_at": "2026-09-24T06:04:12Z",
+  "fetched_at": "2026-09-24T13:45:37Z",
   "api_used": "report_rc",
   "_attempted_endpoints": [
     "broker_recommend",
@@ -11,6 +11,64 @@
   "_evidence_tier": "E2",
   "_valuation_note": "目标价不作为模型估值结论",
   "recommendations": [
+    {
+      "ts_code": "002594.SZ",
+      "name": "比亚迪",
+      "report_date": "20260924",
+      "report_title": "新能源汽车：问界合作模式调整，鸿蒙智行迈向新阶段",
+      "report_type": "一般",
+      "classify": "一般报告",
+      "org_name": "中金公司",
+      "author_name": "邓学,常菁,吕沛航",
+      "quarter": "2027Q4",
+      "op_rt": 100536000.0,
+      "op_pr": null,
+      "tp": null,
+      "np": 4807800.0,
+      "eps": null,
+      "pe": 16.3,
+      "rd": null,
+      "roe": null,
+      "ev_ebitda": null,
+      "rating": null,
+      "max_price": null,
+      "min_price": null,
+      "rec_date": "20260924",
+      "broker": "中金公司",
+      "analyst": null,
+      "recommendation": null,
+      "target_price": null,
+      "report_id": null
+    },
+    {
+      "ts_code": "002594.SZ",
+      "name": "比亚迪",
+      "report_date": "20260924",
+      "report_title": "新能源汽车：问界合作模式调整，鸿蒙智行迈向新阶段",
+      "report_type": "一般",
+      "classify": "一般报告",
+      "org_name": "中金公司",
+      "author_name": "邓学,常菁,吕沛航",
+      "quarter": "2026Q4",
+      "op_rt": 89829600.0,
+      "op_pr": null,
+      "tp": null,
+      "np": 3902600.0,
+      "eps": null,
+      "pe": 20.1,
+      "rd": null,
+      "roe": null,
+      "ev_ebitda": null,
+      "rating": null,
+      "max_price": null,
+      "min_price": null,
+      "rec_date": "20260924",
+      "broker": "中金公司",
+      "analyst": null,
+      "recommendation": null,
+      "target_price": null,
+      "report_id": null
+    },
     {
       "ts_code": "002594.SZ",
       "name": "比亚迪",
@@ -3290,11 +3348,11 @@
     }
   ],
   "summary": {
-    "total_90d": 113,
+    "total_90d": 115,
     "unique_brokers_90d": 23,
-    "latest_recommendation": "买入",
+    "latest_recommendation": null,
     "avg_target_price": null,
     "target_price_count": 0,
-    "latest_date": "2026-09-19"
+    "latest_date": "2026-09-24"
   }
 }
