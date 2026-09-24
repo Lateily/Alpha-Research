@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import datetime
+import io
+import json
 import os
 from pathlib import Path
 import sys
@@ -200,6 +202,43 @@ class BatteryEvidenceTests(unittest.TestCase):
         self.assertEqual(0, news["近7日公告条数"])
         self.assertEqual([], news["最新3条"])
         self.assertEqual("COMPLETE", row["completeness"]["verdict"])
+
+    def test_eastmoney_error_envelopes_do_not_claim_zero_announcements(self):
+        responses = (
+            {"code": 500, "data": None},
+            {"code": 500, "data": {"list": []}},
+            {"success": False, "data": {"list": []}},
+            {"data": {}},
+            {"data": {"list": None}},
+        )
+        for response in responses:
+            with self.subTest(response=response):
+                body = json.dumps(response).encode("utf-8")
+                with mock.patch.dict(os.environ, {"AR_OFFLINE": ""}), \
+                        mock.patch("urllib.request.urlopen", side_effect=lambda *_args, **_kwargs: io.BytesIO(body)):
+                    self.assertIsNone(full_battery._fetch_anns_eastmoney(CODE))
+                    with mock.patch.object(red_flag_gate, "check_ticker", return_value={
+                        "verdict": "PASS", "reasons": [], "latest_e1_date": "20260820",
+                    }):
+                        row = funnel_dag._sanitize_row(
+                            full_battery.battery(FakeProvider(), CODE, TARGET)
+                        )
+                self.assert_blocked(row, NEWS)
+
+    def test_eastmoney_successful_empty_page_remains_zero(self):
+        body = b'{"code":1,"success":true,"data":{"list":[]}}'
+        with mock.patch.dict(os.environ, {"AR_OFFLINE": ""}), \
+                mock.patch("urllib.request.urlopen", return_value=io.BytesIO(body)):
+            self.assertEqual([], full_battery._fetch_anns_eastmoney(CODE))
+
+    def test_latest_announcements_are_ordered_by_date(self):
+        row = self.run_battery(titles=[
+            ("2026-09-01", "old"), ("2026-09-20", "newer"),
+            ("2026-09-10", "middle"), ("2026-09-23", "latest"),
+        ])
+        self.assertEqual([
+            "2026-09-23 latest", "2026-09-20 newer", "2026-09-10 middle",
+        ], row["dims"][NEWS]["最新3条"])
 
     def test_failed_news_sources_are_not_zero(self):
         row = self.run_battery(titles=None)

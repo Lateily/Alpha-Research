@@ -116,7 +116,9 @@ def _announcement_evidence(titles, today, *, page_complete=True):
         if observed > cutoff:
             future_count += 1
             continue
-        eligible.append((date_text, title))
+        eligible.append((observed, date_text, title))
+    eligible.sort(key=lambda item: item[0], reverse=True)
+    dated_titles = [(date_text, title) for _, date_text, title in eligible]
     reasons = []
     if future_count:
         reasons.append("ANNOUNCEMENT_AFTER_AS_OF_EXCLUDED")
@@ -131,8 +133,8 @@ def _announcement_evidence(titles, today, *, page_complete=True):
     blocked = bool(not page_complete or unknown_count or (titles and not eligible))
     evidence = {
         "最近公告条数": None if blocked else len(eligible),
-        "近7日公告条数": None if blocked else _recent_announcement_count(eligible, today),
-        "最新3条": [f"{date_text} {title[:36]}" for date_text, title in eligible[:3]],
+        "近7日公告条数": None if blocked else _recent_announcement_count(dated_titles, today),
+        "最新3条": [f"{date_text} {title[:36]}" for date_text, title in dated_titles[:3]],
         "excluded_after_as_of_count": future_count,
         "unverifiable_date_count": unknown_count,
         "reason_codes": reasons,
@@ -156,7 +158,14 @@ def _fetch_anns_eastmoney(ts_code, page_size=30, timeout=10):
         req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0",
                                                    "Referer": "https://data.eastmoney.com/"})
         d = json.load(urllib.request.urlopen(req, timeout=timeout))
-        lst = (d.get("data") or {}).get("list") or []
+        if not isinstance(d, dict) or d.get("success", True) is not True:
+            return None
+        if "code" in d and d["code"] not in (0, 1, "0", "1"):
+            return None
+        data = d.get("data")
+        if not isinstance(data, dict) or not isinstance(data.get("list"), list):
+            return None
+        lst = data["list"]
         return [(str(a.get("notice_date", ""))[:10], str(a.get("title", ""))) for a in lst]
     except Exception:
         return None
