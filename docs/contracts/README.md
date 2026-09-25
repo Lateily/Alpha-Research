@@ -20,8 +20,8 @@ disclaimer` 八个外层字段。status ∈ {OK, STALE_INPUT, DATA_BLOCKED}:上�
 battery.json(及漏斗候选电池)`基本面` 的描述字段 `最新期归母亿` / `毛利率轨迹`:
 供应商没报(如银行、保险没有毛利率)时逐项写 `null`,不补 0,并附可选字段
 `缺失原因: {字段名: NOT_REPORTED_BY_PROVIDER | NO_REPORTED_PERIOD}`。
-红旗闸门结论在,该维就计为覆盖。NaN/Inf 不转成 `null`:漏斗候选电池照旧整维拒收为
-`DATA_BLOCKED`(funnel_dag._sanitize_row)。
+字段为 `null` 不让该维失去覆盖(红旗闸门结论在即可);整窗无报告期只加标注,覆盖规则不变。
+NaN/Inf 不转成 `null`:漏斗候选电池照旧整维拒收为 `DATA_BLOCKED`(funnel_dag._sanitize_row)。
 
 生产者:experiments/execution_tracker/export_contracts.py(夜链末步)。
 状态为草案 v0,字段规格的最终解释权 = Junyan(章程接口:研究契约)。

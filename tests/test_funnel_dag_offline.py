@@ -582,17 +582,28 @@ class FinancialFundamentalsTests(unittest.TestCase):
         # Before the fix this row was DATA_BLOCKED and U3 read it as "no red flag".
         self.assertTrue(fp._u3_fundamental_red_flag_active(row))
 
-    def test_missing_net_income_and_periods_are_explicit_nulls_not_zero(self) -> None:
+    def test_missing_net_income_is_an_explicit_null_not_zero(self) -> None:
         _watchlist_row, row = self.collect(financial_wire_tables(
-            margins=(), net_income=(None, None, None, None), forecast_type="预亏"))
+            net_income=(None, None, None, None), forecast_type="预亏"))
         fundamental = row["dims"]["基本面"]
         self.assertNotIn("status", fundamental, fundamental)
         self.assertEqual("RED_FLAG", fundamental.get("红旗闸门"))
         self.assertIsNone(fundamental.get("最新期归母亿"))
-        self.assertIsNone(fundamental.get("毛利率轨迹"))
+        self.assertEqual([None, None, None], fundamental.get("毛利率轨迹"))
         self.assertEqual({"最新期归母亿": full_battery.FIELD_NOT_REPORTED,
-                          "毛利率轨迹": full_battery.NO_REPORTED_PERIOD},
+                          "毛利率轨迹": full_battery.FIELD_NOT_REPORTED},
                          fundamental.get(full_battery.FUNDAMENTAL_MISSING_FIELD))
+
+    def test_empty_report_window_is_labelled_not_zero(self) -> None:
+        # Labelling only; whether an empty window blocks the dimension is battery()'s rule.
+        import pandas as pd
+        inc = pd.DataFrame([], columns=["end_date", "report_type", "revenue", "n_income_attr_p"])
+        fi = pd.DataFrame([], columns=["end_date", "grossprofit_margin", "roe"])
+        self.assertEqual({"最新期归母亿": None, "毛利率轨迹": None,
+                          full_battery.FUNDAMENTAL_MISSING_FIELD: {
+                              "最新期归母亿": full_battery.NO_REPORTED_PERIOD,
+                              "毛利率轨迹": full_battery.NO_REPORTED_PERIOD}},
+                         full_battery._fundamental_descriptors(inc, fi))
 
     def test_non_finite_gross_margin_is_still_refused_by_the_funnel(self) -> None:
         # A null beside reported numbers becomes NaN inside pandas; Inf is Inf.

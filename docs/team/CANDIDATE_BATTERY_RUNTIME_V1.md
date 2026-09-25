@@ -74,11 +74,13 @@ whole 基本面 dimension with the red-flag verdict already computed (5–7
 financials a night, 2026-09-22..24). A provider null is now written as `null`
 element by element, never 0, and `缺失原因` names the field:
 `NOT_REPORTED_BY_PROVIDER` (the period is there, the field is null) or
-`NO_REPORTED_PERIOD` (no period in the window). The dimension counts as covered
-because the red-flag verdict is present; a red-flag gate `DATA_BLOCKED` still
-blocks it. NaN/Inf are not converted: they still reach the non-finite refusal in
-`funnel_dag._sanitize_row`. Pandas turns a null next to reported numbers into
-NaN, so a window with some periods reported and some not is still refused.
+`NO_REPORTED_PERIOD` (no period in the window). A null field does not cost the
+dimension its coverage while the red-flag verdict is present; a red-flag gate
+`DATA_BLOCKED` still blocks it. An empty window keeps its existing coverage
+rule and only gains the label. NaN/Inf are not converted: they still reach the
+non-finite refusal in `funnel_dag._sanitize_row`. Pandas turns a null next to
+reported numbers into NaN, so a window with some periods reported and some not
+is still refused.
 
 Rate limit. The canary's keyword detector would not have recognised a masked
 rate-limit error (`TUSHARE_READ_FAILED:RuntimeError`); the zero rests on the fact

@@ -150,7 +150,6 @@ FUNNEL_GOVERNANCE_PATHS = (
     "experiments/research_funnel/feature_store.py",
     "experiments/execution_tracker/event_ledger.py",
     "experiments/execution_tracker/paper_execution_audit.py",
-    "experiments/execution_tracker/full_battery.py",
 )
 # 夜链接入方式(隔离 / 产物销毁 / 不进发布树)同样是漏斗治理,必须同样被 marker
 # 覆盖 —— 否则新的 wiring 规则可以靠改组件名绕开检查。但它不能并进上面那条规则:
@@ -7011,8 +7010,8 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="A recorded dispatch order (or a null record) must replay from the manifest, or a battery could claim an order it never used.",
     ),
     MutationCase(
-        mutation_id="FUNNEL_BATTERY_FUNDAMENTAL_NULL_ELEMENT",
-        component="Research funnel candidate battery",
+        mutation_id="BATTERY_FUNDAMENTAL_NULL_ELEMENT",
+        component="U3 fundamental evidence",
         source_path="experiments/execution_tracker/full_battery.py",
         test_script="tests/test_funnel_dag_offline.py",
         before="    if value is None:\n        return None",
@@ -7021,8 +7020,8 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="Banks and insurers report no gross margin; float(None) blocked the whole 基本面 dimension and discarded its red-flag verdict every night.",
     ),
     MutationCase(
-        mutation_id="FUNNEL_BATTERY_FUNDAMENTAL_NULL_REASON",
-        component="Research funnel candidate battery",
+        mutation_id="BATTERY_FUNDAMENTAL_NULL_REASON",
+        component="U3 fundamental evidence",
         source_path="experiments/execution_tracker/full_battery.py",
         test_script="tests/test_funnel_dag_offline.py",
         before="        if any(m is None for m in margins):",
@@ -7031,8 +7030,8 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="A null descriptive field must say why it is null; an unexplained null is a silent gap.",
     ),
     MutationCase(
-        mutation_id="FUNNEL_BATTERY_FUNDAMENTAL_NON_FINITE_REFUSED",
-        component="Research funnel candidate battery",
+        mutation_id="BATTERY_FUNDAMENTAL_NON_FINITE_REFUSED",
+        component="U3 fundamental evidence",
         source_path="experiments/execution_tracker/full_battery.py",
         test_script="tests/test_funnel_dag_offline.py",
         before="    return round(float(value) / scale, digits)",

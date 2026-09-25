@@ -135,10 +135,10 @@ def _reported(value, scale=1.0, digits=1):
     (2026-09-22..24 每晚 5–7 只金融股)。NaN/Inf 故意不在这里吞掉,照旧交给
     漏斗的非有限值拒收(funnel_dag._sanitize_row)。
     """
-    # governance-mutation: FUNNEL_BATTERY_FUNDAMENTAL_NULL_ELEMENT
+    # governance-mutation: BATTERY_FUNDAMENTAL_NULL_ELEMENT
     if value is None:
         return None
-    # governance-mutation: FUNNEL_BATTERY_FUNDAMENTAL_NON_FINITE_REFUSED
+    # governance-mutation: BATTERY_FUNDAMENTAL_NON_FINITE_REFUSED
     return round(float(value) / scale, digits)
 
 
@@ -155,7 +155,7 @@ def _fundamental_descriptors(inc, fi):
     margins = None
     if len(fi):
         margins = [_reported(x) for x in fi.grossprofit_margin.tail(3)]
-        # governance-mutation: FUNNEL_BATTERY_FUNDAMENTAL_NULL_REASON
+        # governance-mutation: BATTERY_FUNDAMENTAL_NULL_REASON
         if any(m is None for m in margins):
             missing["毛利率轨迹"] = FIELD_NOT_REPORTED
     else:
