@@ -551,7 +551,7 @@ class FinancialFundamentalsTests(unittest.TestCase):
     """
 
     def collect(self, tables: dict) -> tuple[dict, dict]:
-        titles = [("2026-08-29", "fixture: 2026年半年度报告")]
+        titles = [("2026-08-10", "fixture: 2026年半年度报告")]  # at or before TARGET
         with mock.patch.dict(os.environ, {"AR_OFFLINE": ""}), \
                 mock.patch.object(fund_source, "_tushare_call", side_effect=financial_wire(tables)), \
                 mock.patch.object(full_battery, "_fetch_anns_eastmoney", return_value=titles):
