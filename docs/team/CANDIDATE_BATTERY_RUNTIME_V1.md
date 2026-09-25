@@ -67,6 +67,19 @@ than 60 daily bars, or a provider field that is empty, stays an honest
 `DATA_BLOCKED` dimension. A provider outage longer than the retry still leaves
 rows blocked, and the published `battery_collection` says so.
 
+Exception (2026-09-25): the two descriptive 基本面 fields, `最新期归母亿` and
+`毛利率轨迹`, do not block the dimension. Tushare `fina_indicator` returns no
+gross margin for banks and insurers, and `float(None)` used to throw away the
+whole 基本面 dimension with the red-flag verdict already computed (5–7
+financials a night, 2026-09-22..24). A provider null is now written as `null`
+element by element, never 0, and `缺失原因` names the field:
+`NOT_REPORTED_BY_PROVIDER` (the period is there, the field is null) or
+`NO_REPORTED_PERIOD` (no period in the window). The dimension counts as covered
+because the red-flag verdict is present; a red-flag gate `DATA_BLOCKED` still
+blocks it. NaN/Inf are not converted: they still reach the non-finite refusal in
+`funnel_dag._sanitize_row`. Pandas turns a null next to reported numbers into
+NaN, so a window with some periods reported and some not is still refused.
+
 Rate limit. The canary's keyword detector would not have recognised a masked
 rate-limit error (`TUSHARE_READ_FAILED:RuntimeError`); the zero rests on the fact
 that every canary row's dimension errors were only the two known data-gap

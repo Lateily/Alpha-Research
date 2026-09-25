@@ -20,6 +20,7 @@ import sys
 import tempfile
 import time
 import unittest
+from datetime import datetime, timedelta
 from functools import partial
 from pathlib import Path
 from unittest import mock
@@ -31,11 +32,13 @@ sys.path.insert(0, str(REPO_ROOT / "experiments" / "research_funnel"))
 
 import funnel_dag as dag  # noqa: E402
 import funnel_pipeline as fp  # noqa: E402
+import fund_source  # noqa: E402
 import full_battery  # noqa: E402
 import nightly_funnel  # noqa: E402
 import run_nightly as nightly  # noqa: E402
 import test_research_funnel_closure as closure  # noqa: E402
 from funnel_pipeline import FunnelError  # noqa: E402
+from tushare_https import TushareHTTPS  # noqa: E402
 
 RUN_ID = "20260817_163500_1786000000000000000_dag00001"
 TARGET = closure.TRADE_DATE
@@ -497,6 +500,119 @@ class ProviderFailureTests(unittest.TestCase):
         }
         out = dag._sanitize_row(row)
         self.assertIsNone(out["dims"]["资金"][fp.BATTERY_VERDICT_FIELD])
+
+
+# 601166.SH 是 2026-09-22..24 生产里基本面被 float(None) 作废的银行之一;
+# 下面的数字全是合成夹具,不是它的财报。
+BANK = "601166.SH"
+REPORT_PERIODS = ("20250930", "20251231", "20260331", "20260630")
+
+
+def financial_wire_tables(*, margins=(None, None, None, None),
+                          net_income=(6.2e10, 7.7e10, 2.3e10, 4.4e10),
+                          express_yoy=3.1, forecast_type=None) -> dict:
+    """银行式 Tushare 应答:报告期都在,fina_indicator 的 grossprofit_margin 是 null。"""
+    start = datetime(2025, 9, 1)
+    dates = [(start + timedelta(days=i)).strftime("%Y%m%d") for i in range(260)]
+    forecast = [] if forecast_type is None else [{
+        "ann_date": "20260715", "end_date": "20260630", "type": forecast_type,
+        "net_profit_min": -1.0e5, "net_profit_max": -5.0e4}]
+    return {
+        "daily": [{"trade_date": d, "close": 20 + i * 0.01, "high": 20.2 + i * 0.01,
+                   "low": 19.8 + i * 0.01, "pct_chg": 0.1, "amount": 2.0e6, "vol": 1.0e6}
+                  for i, d in enumerate(dates)],
+        "moneyflow_dc": [{"trade_date": d, "net_amount": 1000.0} for d in dates[-10:]],
+        "forecast": forecast,
+        "express": [{"ann_date": "20260820", "end_date": "20260630",
+                     "yoy_net_profit": express_yoy}],
+        "income": [{"end_date": e, "report_type": "1", "revenue": 1.1e11, "n_income_attr_p": v}
+                   for e, v in zip(REPORT_PERIODS, net_income)],
+        "fina_indicator": [{"end_date": e, "grossprofit_margin": m, "roe": 2.5}
+                           for e, m in zip(REPORT_PERIODS, margins)],
+        "daily_basic": [{"trade_date": d, "pe_ttm": 5.0 + i * 0.001, "pb": 0.55, "total_mv": 3.9e7}
+                        for i, d in enumerate(dates[-100:])],
+    }
+
+
+def financial_wire(tables: dict):
+    """Fake only the wire: JSON rows with nulls, projected onto the requested fields."""
+    def call(api, _token, _params, fields):
+        columns = fields.split(",")
+        return {"fields": columns,
+                "items": [[row.get(column) for column in columns] for row in tables[api]]}
+    return call
+
+
+class FinancialFundamentalsTests(unittest.TestCase):
+    """Banks and insurers: no gross margin must not discard the red-flag verdict.
+
+    The real TushareHTTPS reader builds the DataFrame, so pandas decides None vs NaN
+    exactly as in production; full_battery and the funnel worker run unmodified.
+    """
+
+    def collect(self, tables: dict) -> tuple[dict, dict]:
+        titles = [("2026-08-29", "fixture: 2026年半年度报告")]
+        with mock.patch.dict(os.environ, {"AR_OFFLINE": ""}), \
+                mock.patch.object(fund_source, "_tushare_call", side_effect=financial_wire(tables)), \
+                mock.patch.object(full_battery, "_fetch_anns_eastmoney", return_value=titles):
+            watchlist_row = full_battery.battery(TushareHTTPS("fixture-token"), BANK, TARGET)
+            funnel_row = dag._read_battery_row("fixture-token", BANK, TARGET)
+        return watchlist_row, funnel_row
+
+    def test_bank_without_gross_margin_keeps_red_flag_verdict_and_explicit_nulls(self) -> None:
+        watchlist_row, funnel_row = self.collect(financial_wire_tables())
+        for row in (watchlist_row, funnel_row):
+            fundamental = row["dims"]["基本面"]
+            self.assertNotIn("status", fundamental, fundamental)
+            self.assertEqual("PASS", fundamental.get("红旗闸门"))
+            self.assertEqual([None, None, None], fundamental.get("毛利率轨迹"))
+            self.assertEqual({"毛利率轨迹": full_battery.FIELD_NOT_REPORTED},
+                             fundamental.get(full_battery.FUNDAMENTAL_MISSING_FIELD))
+            self.assertEqual(440.0, fundamental.get("最新期归母亿"))
+            self.assertEqual({"covered": 6, "of": 6, "missing": [], "verdict": "COMPLETE"},
+                             row["completeness"])
+        json.dumps(funnel_row, allow_nan=False)
+
+    def test_red_flag_on_a_bank_survives_missing_gross_margin(self) -> None:
+        _watchlist_row, row = self.collect(financial_wire_tables(express_yoy=-45.0))
+        fundamental = row["dims"]["基本面"]
+        self.assertNotIn("status", fundamental, fundamental)
+        self.assertEqual("RED_FLAG", fundamental.get("红旗闸门"))
+        self.assertEqual([None, None, None], fundamental.get("毛利率轨迹"))
+        # Before the fix this row was DATA_BLOCKED and U3 read it as "no red flag".
+        self.assertTrue(fp._u3_fundamental_red_flag_active(row))
+
+    def test_missing_net_income_and_periods_are_explicit_nulls_not_zero(self) -> None:
+        _watchlist_row, row = self.collect(financial_wire_tables(
+            margins=(), net_income=(None, None, None, None), forecast_type="预亏"))
+        fundamental = row["dims"]["基本面"]
+        self.assertNotIn("status", fundamental, fundamental)
+        self.assertEqual("RED_FLAG", fundamental.get("红旗闸门"))
+        self.assertIsNone(fundamental.get("最新期归母亿"))
+        self.assertIsNone(fundamental.get("毛利率轨迹"))
+        self.assertEqual({"最新期归母亿": full_battery.FIELD_NOT_REPORTED,
+                          "毛利率轨迹": full_battery.NO_REPORTED_PERIOD},
+                         fundamental.get(full_battery.FUNDAMENTAL_MISSING_FIELD))
+
+    def test_non_finite_gross_margin_is_still_refused_by_the_funnel(self) -> None:
+        # A null beside reported numbers becomes NaN inside pandas; Inf is Inf.
+        for margins in ((24.1, None, 25.0, 24.6), (24.1, 24.3, float("inf"), 24.6)):
+            _watchlist_row, row = self.collect(financial_wire_tables(margins=margins))
+            self.assertEqual({"status": "DATA_BLOCKED",
+                              "err": "non-finite value from provider (NaN/Inf), refused"},
+                             row["dims"]["基本面"], margins)
+            self.assertEqual(["基本面"], row["completeness"]["missing"], margins)
+            self.assertEqual("PARTIAL", row["completeness"]["verdict"], margins)
+
+    def test_bank_row_passes_the_u3_battery_contract_as_complete(self) -> None:
+        _watchlist_row, row = self.collect(financial_wire_tables())
+        manifest = {"manifest_hash": "fixture-manifest", "as_of": TARGET,
+                    "run_id": RUN_ID, "ts_codes": [BANK]}
+        battery = battery_for(manifest, [row])
+        self.assertEqual({"expected": 1, "observed": 1, "data_blocked_rows": 0, "complete_rows": 1},
+                         fp.validate_candidate_battery(battery, manifest))
+        self.assertEqual({"expected": 1, "complete": 1, "partial": 0, "zero": 0},
+                         fp.battery_collection_summary(battery)["by_board"]["MAIN"])
 
 
 class StageChainTests(unittest.TestCase):
