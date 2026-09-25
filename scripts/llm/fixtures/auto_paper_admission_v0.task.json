@@ -31,6 +31,7 @@
   ],
   "file_scope": [
     ".gitattributes",
+    ".github/workflows/python-ci.yml",
     "experiments/execution_tracker/auto_paper_admission.py",
     "tests/test_auto_paper_admission.py",
     "scripts/llm/fixtures/auto_paper_admission_v0.task.json"

@@ -381,6 +381,18 @@ class AutoPaperAdmissionTests(unittest.TestCase):
         self.assertEqual(result["plan"]["nav_basis"], "CURRENT_SETTLED_MARKS")
         self.assertRegex(result["plan"]["nav_marks_hash"], r"^[0-9a-f]{64}$")
 
+    def test_ci_runs_behavior_tests_and_compiles_task_contract(self) -> None:
+        workflow = (ROOT / ".github" / "workflows" / "python-ci.yml").read_text(
+            encoding="utf-8",
+        )
+
+        self.assertIn("python3 tests/test_auto_paper_admission.py", workflow)
+        self.assertIn(
+            "python3 scripts/llm/ai_os/cli.py compile --input "
+            "scripts/llm/fixtures/auto_paper_admission_v0.task.json",
+            workflow,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
