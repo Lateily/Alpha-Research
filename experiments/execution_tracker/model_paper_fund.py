@@ -915,6 +915,19 @@ def main():
         if not date:
             print("DATA_BLOCKED: 无 target_trade_date"); return 1
         try:
+            pending = _path(_DAILY_INTENT, args.fund_dir or FUND_DIR)
+            if os.path.exists(pending):
+                journal = load(_DAILY_INTENT, None, args.fund_dir or FUND_DIR)
+                prior_date = journal.get("target_trade_date") if isinstance(journal, dict) else None
+                prior_run = journal.get("run_id") if isinstance(journal, dict) else None
+                if (not isinstance(prior_date, str) or len(prior_date) != 8
+                        or not prior_date.isdigit() or prior_date > date
+                        or not isinstance(prior_run, str) or not prior_run):
+                    raise ValueError("daily projection intent has no valid prior run binding")
+                if (prior_date, prior_run) != (date, run_id()):
+                    _finish_daily_intent(args.fund_dir or FUND_DIR)
+                    print("DATA_BLOCKED: previous daily intent recovered; rerun current run")
+                    return 1
             _finish_daily_intent(args.fund_dir or FUND_DIR,
                                  expected_target=date, expected_run=run_id())
         except Exception as exc:

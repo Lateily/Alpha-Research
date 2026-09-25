@@ -226,10 +226,69 @@ class BatteryEvidenceTests(unittest.TestCase):
                 self.assert_blocked(row, NEWS)
 
     def test_eastmoney_successful_empty_page_remains_zero(self):
-        body = b'{"code":1,"success":true,"data":{"list":[]}}'
+        body = b'{"code":1,"success":true,"data":{"list":[],"total_hits":0}}'
         with mock.patch.dict(os.environ, {"AR_OFFLINE": ""}), \
                 mock.patch("urllib.request.urlopen", return_value=io.BytesIO(body)):
             self.assertEqual([], full_battery._fetch_anns_eastmoney(CODE))
+
+    def test_eastmoney_proven_short_page_remains_usable(self):
+        body = b'{"code":1,"success":true,"data":{"list":[{"notice_date":"2026-09-22","title":"Fixture disclosure"}],"total_hits":1}}'
+        with mock.patch.dict(os.environ, {"AR_OFFLINE": ""}), \
+                mock.patch("urllib.request.urlopen", return_value=io.BytesIO(body)):
+            self.assertEqual([("2026-09-22", "Fixture disclosure")],
+                             full_battery._fetch_anns_eastmoney(CODE))
+
+    def test_eastmoney_ambiguous_empty_response_blocks_u4(self):
+        responses = (
+            {"code": 0, "message": "backend unavailable", "data": {"list": [], "total_hits": 0}},
+            {"code": 1, "data": {"list": [], "total_hits": 0}},
+            {"code": 500, "success": True, "data": {"list": [], "total_hits": 0}},
+        )
+        for response in responses:
+            with self.subTest(response=response):
+                body = json.dumps(response).encode("utf-8")
+                with mock.patch.dict(os.environ, {"AR_OFFLINE": ""}), \
+                        mock.patch("urllib.request.urlopen", side_effect=lambda *_args, **_kwargs: io.BytesIO(body)), \
+                        mock.patch.object(red_flag_gate, "check_ticker", return_value={
+                            "verdict": "PASS", "reasons": [], "latest_e1_date": "20260820",
+                        }):
+                    row = funnel_dag._sanitize_row(full_battery.battery(FakeProvider(), CODE, TARGET))
+                self.assert_blocked(row, NEWS)
+
+    def test_eastmoney_malformed_success_page_blocks_u4(self):
+        responses = (
+            {"code": 1, "success": True, "data": {"total_hits": 0}},
+            {"code": 1, "success": True, "data": {"list": None, "total_hits": 0}},
+        )
+        for response in responses:
+            with self.subTest(response=response):
+                body = json.dumps(response).encode("utf-8")
+                with mock.patch.dict(os.environ, {"AR_OFFLINE": ""}), \
+                        mock.patch("urllib.request.urlopen", side_effect=lambda *_args, **_kwargs: io.BytesIO(body)), \
+                        mock.patch.object(red_flag_gate, "check_ticker", return_value={
+                            "verdict": "PASS", "reasons": [], "latest_e1_date": "20260820",
+                        }):
+                    row = funnel_dag._sanitize_row(full_battery.battery(FakeProvider(), CODE, TARGET))
+                self.assert_blocked(row, NEWS)
+
+    def test_eastmoney_short_page_requires_matching_total_hits(self):
+        responses = (
+            {"code": 1, "success": True, "data": {"list": []}},
+            {"code": 1, "success": True, "data": {"list": [], "total_hits": 42}},
+            {"code": 1, "success": True, "data": {"list": [
+                {"notice_date": "2026-09-22", "title": "Fixture disclosure"},
+            ], "total_hits": 0}},
+        )
+        for response in responses:
+            with self.subTest(response=response):
+                body = json.dumps(response).encode("utf-8")
+                with mock.patch.dict(os.environ, {"AR_OFFLINE": ""}), \
+                        mock.patch("urllib.request.urlopen", side_effect=lambda *_args, **_kwargs: io.BytesIO(body)), \
+                        mock.patch.object(red_flag_gate, "check_ticker", return_value={
+                            "verdict": "PASS", "reasons": [], "latest_e1_date": "20260820",
+                        }):
+                    row = funnel_dag._sanitize_row(full_battery.battery(FakeProvider(), CODE, TARGET))
+                self.assert_blocked(row, NEWS)
 
     def test_latest_announcements_are_ordered_by_date(self):
         row = self.run_battery(titles=[

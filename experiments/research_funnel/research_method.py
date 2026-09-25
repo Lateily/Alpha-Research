@@ -876,6 +876,7 @@ def _attribution(thesis: str, timing: str) -> str:
 
 def validate_scorecard(
     scorecard: Mapping[str, Any], registration: Mapping[str, Any], outcomes: Mapping[str, Any],
+    *, legacy_readonly: bool = False,
 ) -> None:
     _exact(scorecard, SCORECARD_KEYS, "method scorecard")
     if FORBIDDEN_KEYS.intersection(_walk_keys(scorecard)):
@@ -909,8 +910,18 @@ def validate_scorecard(
     )
     if scorecard.get("machine_attribution") != expected:
         raise MethodError("machine attribution is not derived from thesis and timing ledgers")
+    if legacy_readonly:
+        if registration.get("schema_version") != SCHEMA_VERSION:
+            raise MethodError("legacy read-only scoring requires a v1 registration")
+        facts = {str(item["claim_id"]): item for item in outcomes["facts"]}
+        historical_thesis = _score_thesis(
+            registration, facts, _date8(outcomes["scoring_as_of"], "outcomes.scoring_as_of")
+        )
+        # governance-mutation: RESEARCH_METHOD_LEGACY_READONLY_DERIVATION
+        if scorecard.get("thesis") != historical_thesis:
+            raise MethodError("legacy read-only thesis differs from historical evidence")
     # governance-mutation: RESEARCH_METHOD_LEGACY_UNSCORED
-    if registration.get("schema_version") == SCHEMA_VERSION and (
+    if registration.get("schema_version") == SCHEMA_VERSION and not legacy_readonly and (
         scorecard.get("thesis") != {
             "status": "UNRESOLVED", "claims": [],
             "reason": "LEGACY_WRONG_IF_SEMANTICS_UNVALIDATED",
@@ -924,6 +935,7 @@ def build_scorecard(
     registration: Mapping[str, Any], outcomes: Mapping[str, Any], *,
     order: Mapping[str, Any] | None, bars: Sequence[Mapping[str, Any]],
     fund_snapshot: Mapping[str, Any], generated_at: str,
+    legacy_readonly: bool = False,
 ) -> dict[str, Any]:
     validate_outcomes(outcomes, registration)
     facts = {str(item["claim_id"]): item for item in outcomes["facts"]}
@@ -932,7 +944,7 @@ def build_scorecard(
     # governance-mutation: RESEARCH_METHOD_LEGACY_SCORE_BUILD
     thesis = (
         {"status": "UNRESOLVED", "claims": [], "reason": "LEGACY_WRONG_IF_SEMANTICS_UNVALIDATED"}
-        if registration.get("schema_version") == SCHEMA_VERSION
+        if registration.get("schema_version") == SCHEMA_VERSION and not legacy_readonly
         else _score_thesis(registration, facts, scoring_as_of)
     )
     valuation = _score_valuation(registration, facts, scoring_as_of)
@@ -952,5 +964,5 @@ def build_scorecard(
         "production_authority": False, "disclaimer": DISCLAIMER,
     }
     scorecard["scorecard_hash"] = _hash(scorecard)
-    validate_scorecard(scorecard, registration, outcomes)
+    validate_scorecard(scorecard, registration, outcomes, legacy_readonly=legacy_readonly)
     return scorecard

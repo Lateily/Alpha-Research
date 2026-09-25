@@ -17,7 +17,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 FIXTURE = ROOT / "tools/nonprod_workbench/fixtures/research_method_v1_1.json"
-FIXTURE_SHA256 = "a85821e84539cdce044c4dc7fb777ac24ad8b55b6026d1a93be1cd9705114224"
+FIXTURE_SHA256 = "86b9ed8a0a330565e8abc395fc8e54ee4ca05e858443618d510c37cd51c52c03"
 SCENARIOS = {"complete-replay", "invalid-selection"}
 STAGES = ("INPUT", "SCREEN", "PACKET", "U4_RECEIPT", "SEAL_CASE", "PAPER_REPLAY", "FIVE_AXIS", "REVIEW")
 MAX_RUNS = 100

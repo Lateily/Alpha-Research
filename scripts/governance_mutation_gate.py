@@ -996,6 +996,22 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="A pending daily intent must not be recovered under a different nightly run.",
     ),
     MutationCase(
+        mutation_id="PAPER_DAILY_CROSS_RUN_CONVERGENCE", component="Nightly settlement publication",
+        source_path="experiments/execution_tracker/model_paper_fund.py", test_script="tests/test_paper_settlement_publication.py",
+        before='                if (prior_date, prior_run) != (date, run_id()):',
+        after='                if False:',
+        expected_failure_marker="test_next_daily_run_recovers_every_prior_projection_crash_point",
+        rationale="Every prior projection crash point must converge before a later run can proceed.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_DAILY_FUTURE_INTENT_REFUSAL", component="Nightly settlement publication",
+        source_path="experiments/execution_tracker/model_paper_fund.py", test_script="tests/test_paper_settlement_publication.py",
+        before='                        or not prior_date.isdigit() or prior_date > date',
+        after='                        or not prior_date.isdigit() or False',
+        expected_failure_marker="test_next_daily_run_refuses_future_or_malformed_intent",
+        rationale="A later intent cannot be relabeled as historical recovery.",
+    ),
+    MutationCase(
         mutation_id="PAPER_BLOCKED_NAV_PUBLICATION_BINDING", component="Nightly settlement publication",
         source_path="experiments/execution_tracker/nightly_publish.py", test_script="tests/test_paper_settlement_publication.py",
         before='                if fname == "nav_history.json":\n                    errors.extend(_check_blocked_nav_rows(',
@@ -5279,6 +5295,26 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="Self-consistent rehashing cannot rewrite the mechanical outcome.",
     ),
     MutationCase(
+        mutation_id="RESEARCH_CYCLE_LEGACY_READONLY_REPLAY",
+        component="Research funnel full paper cycle",
+        source_path="experiments/research_funnel/research_cycle.py",
+        test_script="tests/test_research_cycle.py",
+        before='        generated_at=stored[0]["generated_at"], _legacy_readonly=legacy_readonly,',
+        after='        generated_at=stored[0]["generated_at"], _legacy_readonly=False,',
+        expected_failure_marker="test_historical_resolved_v1_bundle_verifies_without_new_scoring_authority",
+        rationale="Historical resolved v1 bundles must verify deterministically without new score authority.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_CYCLE_LEGACY_NO_NEW_REVIEW",
+        component="Research funnel full paper cycle",
+        source_path="experiments/research_funnel/research_cycle.py",
+        test_script="tests/test_research_cycle.py",
+        before='    if verified["status"] == "VERIFIED_LEGACY_READONLY":',
+        after='    if False:',
+        expected_failure_marker="test_historical_resolved_v1_bundle_verifies_without_new_scoring_authority",
+        rationale="A historical read-only scorecard cannot be given a new reviewed-cycle terminal state.",
+    ),
+    MutationCase(
         mutation_id="RESEARCH_CYCLE_MANIFEST_AUTHORITY",
         component="Research funnel full paper cycle",
         source_path="experiments/research_funnel/research_cycle.py",
@@ -5385,7 +5421,7 @@ MUTATIONS: tuple[MutationCase, ...] = (
         component="Research funnel method registration",
         source_path="experiments/research_funnel/research_method.py",
         test_script="tests/test_research_method.py",
-        before='    if registration.get("schema_version") == SCHEMA_VERSION and (\n'
+        before='    if registration.get("schema_version") == SCHEMA_VERSION and not legacy_readonly and (\n'
         '        scorecard.get("thesis") != {\n'
         '            "status": "UNRESOLVED", "claims": [],\n'
         '            "reason": "LEGACY_WRONG_IF_SEMANTICS_UNVALIDATED",\n'
@@ -5403,12 +5439,22 @@ MUTATIONS: tuple[MutationCase, ...] = (
         component="Research funnel method registration",
         source_path="experiments/research_funnel/research_method.py",
         test_script="tests/test_research_method.py",
-        before='        if registration.get("schema_version") == SCHEMA_VERSION\n'
+        before='        if registration.get("schema_version") == SCHEMA_VERSION and not legacy_readonly\n'
         '        else _score_thesis(registration, facts, scoring_as_of)',
         after='        if False\n'
         '        else _score_thesis(registration, facts, scoring_as_of)',
         expected_failure_marker="test_legacy_wrong_if_cannot_gain_new_machine_attribution",
         rationale="The replay builder must explicitly withhold thesis scoring for old predicates.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_METHOD_LEGACY_READONLY_DERIVATION",
+        component="Research funnel method registration",
+        source_path="experiments/research_funnel/research_method.py",
+        test_script="tests/test_research_cycle.py",
+        before='        if scorecard.get("thesis") != historical_thesis:',
+        after='        if False:',
+        expected_failure_marker="test_historical_resolved_v1_bundle_verifies_without_new_scoring_authority",
+        rationale="Legacy read-only verification must recompute old thesis claims, not trust a resealed scorecard.",
     ),
     MutationCase(
         mutation_id="RESEARCH_METHOD_VALUATION_DERIVATION",
@@ -9009,7 +9055,7 @@ MUTATIONS = MUTATIONS + (
         test_script="tests/test_research_closed_loop_v1.py",
         before=(
             '    {"path": "experiments/research_funnel/research_cycle.py", '
-            '"sha256": "sha256:30374298c9595ff84f7075d8f6c632b286f902c671a582e86ed2a4aa3729aa0a"},\n'
+            '"sha256": "sha256:b20b3ddc331ddd5acc9dba4389a857b0699397b1109eb6d146dec48d6119e44c"},\n'
         ),
         after="",
         expected_failure_marker="test_every_bound_artifact_matches_its_exact_bytes",
@@ -11352,6 +11398,15 @@ MUTATIONS = MUTATIONS + (
         rationale="A same-day future SMC instant must not enter an already sealed case.",
     ),
     MutationCase(
+        mutation_id="RESEARCH_CYCLE_SMC_SEAL_REQUIRES_INSTANT",
+        component="Research funnel case evidence chronology",
+        source_path="experiments/research_funnel/research_cycle.py",
+        test_script="tests/test_research_cycle.py",
+        before='    if date_only_smc:', after='    if False:',
+        expected_failure_marker="test_new_case_seal_refuses_date_only_smc_evidence",
+        rationale="A new case cannot be sealed with date-only SMC evidence that hides intraday lookahead.",
+    ),
+    MutationCase(
         mutation_id="RESEARCH_METHOD_TIMING_EXIT_BOUND",
         component="Research funnel timing measurement window",
         source_path="experiments/research_funnel/research_method.py",
@@ -11446,9 +11501,9 @@ MUTATIONS = MUTATIONS + (
         component="U3 announcement source response",
         source_path="experiments/execution_tracker/full_battery.py",
         test_script="tests/test_full_battery_evidence.py",
-        before='        if "code" in d and d["code"] not in (0, 1, "0", "1"):\n            return None',
-        after='        if "code" in d and d["code"] not in (0, 1, "0", "1"):\n            pass',
-        expected_failure_marker="test_eastmoney_error_envelopes_do_not_claim_zero_announcements",
+        before='        if "code" in d and d["code"] not in (1, "1"):\n            return None',
+        after='        if "code" in d and d["code"] not in (1, "1"):\n            pass',
+        expected_failure_marker="test_eastmoney_ambiguous_empty_response_blocks_u4",
         rationale="A failed business response cannot be reported as confirmed zero announcements.",
     ),
     MutationCase(
@@ -11456,10 +11511,20 @@ MUTATIONS = MUTATIONS + (
         component="U3 announcement source response",
         source_path="experiments/execution_tracker/full_battery.py",
         test_script="tests/test_full_battery_evidence.py",
-        before='        if not isinstance(d, dict) or d.get("success", True) is not True:',
+        before='        if not isinstance(d, dict) or d.get("success") is not True:',
         after='        if not isinstance(d, dict) or False:',
-        expected_failure_marker="test_eastmoney_error_envelopes_do_not_claim_zero_announcements",
+        expected_failure_marker="test_eastmoney_ambiguous_empty_response_blocks_u4",
         rationale="An explicitly unsuccessful response cannot satisfy the U3 news dimension.",
+    ),
+    MutationCase(
+        mutation_id="BATTERY_ANNOUNCEMENT_TOTAL_HITS_PROOF",
+        component="U3 announcement source response",
+        source_path="experiments/execution_tracker/full_battery.py",
+        test_script="tests/test_full_battery_evidence.py",
+        before='        total_hits = data.get("total_hits")',
+        after='        total_hits = len(lst)',
+        expected_failure_marker="test_eastmoney_short_page_requires_matching_total_hits",
+        rationale="A short page requires source-provided total hits, not inferred coverage.",
     ),
     MutationCase(
         mutation_id="BATTERY_ANNOUNCEMENT_RESPONSE_SHAPE",
@@ -11468,7 +11533,7 @@ MUTATIONS = MUTATIONS + (
         test_script="tests/test_full_battery_evidence.py",
         before='        if not isinstance(data, dict) or not isinstance(data.get("list"), list):\n            return None',
         after='        if not isinstance(data, dict) or not isinstance(data.get("list"), list):\n            return []',
-        expected_failure_marker="test_eastmoney_error_envelopes_do_not_claim_zero_announcements",
+        expected_failure_marker="test_eastmoney_malformed_success_page_blocks_u4",
         rationale="A missing announcement list is source failure, not a verified empty page.",
     ),
     MutationCase(

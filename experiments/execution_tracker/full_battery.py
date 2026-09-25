@@ -158,14 +158,18 @@ def _fetch_anns_eastmoney(ts_code, page_size=30, timeout=10):
         req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0",
                                                    "Referer": "https://data.eastmoney.com/"})
         d = json.load(urllib.request.urlopen(req, timeout=timeout))
-        if not isinstance(d, dict) or d.get("success", True) is not True:
+        if not isinstance(d, dict) or d.get("success") is not True:
             return None
-        if "code" in d and d["code"] not in (0, 1, "0", "1"):
+        if "code" in d and d["code"] not in (1, "1"):
             return None
         data = d.get("data")
         if not isinstance(data, dict) or not isinstance(data.get("list"), list):
             return None
         lst = data["list"]
+        total_hits = data.get("total_hits")
+        if (type(total_hits) is not int or total_hits < len(lst)
+                or total_hits < 0 or (len(lst) < page_size and total_hits != len(lst))):
+            return None
         return [(str(a.get("notice_date", ""))[:10], str(a.get("title", ""))) for a in lst]
     except Exception:
         return None

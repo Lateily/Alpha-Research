@@ -413,11 +413,19 @@ def validate_case(case: Mapping[str, Any], bundle_dir: Path) -> dict[str, Any]:
 def seal_case(draft: Mapping[str, Any], bundle_dir: Path) -> dict[str, Any]:
     if set(draft) != CASE_DRAFT_KEYS:
         raise CycleError("research case draft fields are not exact")
-    if (draft.get("method_registration") or {}).get("schema_version") != method_contract.REGISTRATION_VERSION:
+    registration = draft.get("method_registration")
+    if not isinstance(registration, dict) or registration.get("schema_version") != method_contract.REGISTRATION_VERSION:
         raise CycleError("new research case requires current method registration version")
     case = dict(draft)
     case["case_hash"] = _hash(case)
     validate_case(case, bundle_dir)
+    smc_as_of = str(registration["smc"]["evidence_as_of"]).strip()
+    date_only_smc = (len(smc_as_of) == 8 and smc_as_of.isdigit()) or (
+        len(smc_as_of) == 10 and smc_as_of[4] == "-" and smc_as_of[7] == "-"
+    )
+    # governance-mutation: RESEARCH_CYCLE_SMC_SEAL_REQUIRES_INSTANT
+    if date_only_smc:
+        raise CycleError("SMC evidence instant required for a new case seal")
     return case
 
 
@@ -542,6 +550,7 @@ def registration_refusal(case: Mapping[str, Any]) -> str | None:
 def run_cycle(
     *, bundle_dir: Path, case: Mapping[str, Any], bars: Mapping[str, Any],
     outcomes: Mapping[str, Any], generated_at: str,
+    _legacy_readonly: bool = False,
 ) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any], dict[str, Any]]:
     source = validate_case(case, bundle_dir)
     validate_bars(bars, case)
@@ -735,7 +744,7 @@ def run_cycle(
         scorecard = method_contract.build_scorecard(
             case["method_registration"], outcomes, order=order,
             bars=list(bars["rows"]), fund_snapshot=fund_snapshot,
-            generated_at=generated_at,
+            generated_at=generated_at, legacy_readonly=_legacy_readonly,
         )
     except method_contract.MethodError as exc:
         raise CycleError(f"method scorecard cannot be built: {exc}") from exc
@@ -831,9 +840,19 @@ def verify_cycle_bundle(bundle_dir: Path, closure_bundle: Path) -> dict[str, Any
         _load_object(bundle_dir / "method_scorecard.json"),
         _load_object(bundle_dir / "mechanical_review.json"),
     )
+    registration = case.get("method_registration")
+    legacy_readonly = (
+        isinstance(registration, dict)
+        and registration.get("schema_version") == method_contract.SCHEMA_VERSION
+        and stored[2].get("thesis") != {
+            "status": "UNRESOLVED", "claims": [],
+            "reason": "LEGACY_WRONG_IF_SEMANTICS_UNVALIDATED",
+        }
+    )
+    # governance-mutation: RESEARCH_CYCLE_LEGACY_READONLY_REPLAY
     rebuilt = run_cycle(
         bundle_dir=closure_bundle, case=case, bars=bars, outcomes=outcomes,
-        generated_at=stored[0]["generated_at"],
+        generated_at=stored[0]["generated_at"], _legacy_readonly=legacy_readonly,
     )
     projection_changed = rebuilt != stored
     # governance-mutation: RESEARCH_CYCLE_DETERMINISTIC_VERIFY
@@ -842,7 +861,8 @@ def verify_cycle_bundle(bundle_dir: Path, closure_bundle: Path) -> dict[str, Any
     if manifest.get("research_cycle_id") != stored[0]["research_cycle_id"]:
         raise CycleError("cycle manifest id differs from trace")
     return {
-        "status": "VERIFIED", "research_cycle_id": stored[0]["research_cycle_id"],
+        "status": "VERIFIED_LEGACY_READONLY" if legacy_readonly else "VERIFIED",
+        "research_cycle_id": stored[0]["research_cycle_id"],
         "final_state": stored[0]["final_state"], "claim_allowed": False,
         "production_authority": False,
     }
@@ -918,7 +938,10 @@ def seal_review_receipt(draft: Mapping[str, Any], review: Mapping[str, Any]) -> 
 
 
 def finalize_review(cycle_bundle: Path, closure_bundle: Path, receipt: Mapping[str, Any]) -> dict[str, Any]:
-    verify_cycle_bundle(cycle_bundle, closure_bundle)
+    verified = verify_cycle_bundle(cycle_bundle, closure_bundle)
+    # governance-mutation: RESEARCH_CYCLE_LEGACY_NO_NEW_REVIEW
+    if verified["status"] == "VERIFIED_LEGACY_READONLY":
+        raise CycleError("legacy read-only cycle cannot be newly finalized")
     review = _load_object(cycle_bundle / "mechanical_review.json")
     trace = _load_object(cycle_bundle / "cycle_trace.json")
     validate_review_receipt(receipt, review)

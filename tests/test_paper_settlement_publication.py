@@ -398,6 +398,84 @@ class PaperSettlementPublicationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "differs from both intent states"):
             engine._finish_daily_intent(str(directory))
 
+    def test_next_daily_run_recovers_every_prior_projection_crash_point(self):
+        for crash_name in (engine._DAILY_INTENT, *engine._DAILY_PROJECTIONS):
+            with self.subTest(crash_after=crash_name), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                before = {
+                    "fund.json": copy.deepcopy(self.fund),
+                    "orders.json": copy.deepcopy(self.orders),
+                    "decision_log.json": copy.deepcopy(self.log),
+                    "nav_history.json": [],
+                }
+                after = {
+                    **before,
+                    "fund.json": {**self.fund, "cash": self.fund["cash"] + 100.0},
+                    "decision_log.json": self.log + [{"date": TARGET, "action": "PAPER_DEADLINE_ATTEMPT"}],
+                    "nav_history.json": [{"date": TARGET, "status": "DATA_BLOCKED", "nav": None}],
+                }
+                for name, value in before.items():
+                    engine.save(name, value, directory)
+                original_save = engine.save
+
+                def crash(name, obj, fund_dir=None):
+                    original_save(name, obj, fund_dir)
+                    if name == crash_name:
+                        raise OSError("injected projection crash")
+
+                with mock.patch.object(engine, "save", side_effect=crash):
+                    with self.assertRaisesRegex(OSError, "injected projection crash"):
+                        engine._commit_daily_projections(
+                            directory, TARGET, RID, *(after[name] for name in engine._DAILY_PROJECTIONS)
+                        )
+                self.assertTrue((root / engine._DAILY_INTENT).exists())
+                with mock.patch.dict("os.environ", {
+                    "TUSHARE_TOKEN": "", "AR_OFFLINE": "1",
+                    "AR_RUN_ID": "SECOND_RUN", "AR_TARGET_TRADE_DATE": "20260908",
+                }), mock.patch.object(sys, "argv", [
+                    "model_paper_fund", "--daily", "--fund-dir", directory,
+                ]), mock.patch.object(engine, "assert_paper_registration_ready"):
+                    self.assertEqual(1, engine.main())
+                self.assertFalse((root / engine._DAILY_INTENT).exists())
+                self.assertEqual(
+                    {name: engine.load(name, None, directory) for name in engine._DAILY_PROJECTIONS},
+                    after,
+                )
+
+    def test_next_daily_run_refuses_future_or_malformed_intent(self):
+        for prior_date, prior_run in (("20260909", "FUTURE_RUN"), ("20260907", "")):
+            with self.subTest(prior_date=prior_date, prior_run=prior_run), \
+                    tempfile.TemporaryDirectory() as directory:
+                before = {
+                    "fund.json": copy.deepcopy(self.fund),
+                    "orders.json": copy.deepcopy(self.orders),
+                    "decision_log.json": copy.deepcopy(self.log),
+                    "nav_history.json": [],
+                }
+                for name, value in before.items():
+                    engine.save(name, value, directory)
+                after = {**before, "fund.json": {**self.fund, "cash": self.fund["cash"] + 100.0}}
+                journal = {
+                    "schema": "paper-daily-intent/v1", "target_trade_date": prior_date,
+                    "run_id": prior_run,
+                    "before": {name: engine._projection_digest(value) for name, value in before.items()},
+                    "after": after,
+                }
+                journal["intent_hash"] = engine._projection_digest(journal)
+                engine.save(engine._DAILY_INTENT, journal, directory)
+                original = {name: Path(directory, name).read_bytes()
+                            for name in (*engine._DAILY_PROJECTIONS, engine._DAILY_INTENT)}
+                with mock.patch.dict("os.environ", {
+                    "TUSHARE_TOKEN": "", "AR_OFFLINE": "1",
+                    "AR_RUN_ID": "SECOND_RUN", "AR_TARGET_TRADE_DATE": "20260908",
+                }), mock.patch.object(sys, "argv", [
+                    "model_paper_fund", "--daily", "--fund-dir", directory,
+                ]), mock.patch.object(engine, "assert_paper_registration_ready"):
+                    self.assertEqual(1, engine.main())
+                self.assertTrue(Path(directory, engine._DAILY_INTENT).exists())
+                self.assertEqual(original, {name: Path(directory, name).read_bytes()
+                                            for name in original})
+
     def test_blocked_nav_requires_matching_open_position_and_cash_at_publication(self):
         directory = self.et / "model_fund"
         previous = [{"date": "20260904", "nav": 1000000.0, "cash": 900000.0,
