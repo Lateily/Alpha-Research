@@ -95,7 +95,7 @@ def verify_trial(request, input_root, output):
         raise TrialError("output symlink refused")
     if any(not p.is_file() and not p.is_dir() for p in inventory):
         raise TrialError("unexpected special output")
-    actual = {str(p.relative_to(output)): p for p in inventory if p.is_file()}
+    actual = {p.relative_to(output).as_posix(): p for p in inventory if p.is_file()}
     if set(actual) != set(expected):
         raise TrialError("output file set changed")
     for name, raw in expected.items():

@@ -40,6 +40,14 @@ class FollowupTests(unittest.TestCase):
         self.source("filing", "Cash 1\n")
         self.set_claims()
 
+    def symlink_or_skip(self, link, target, *, target_is_directory=False):
+        try:
+            link.symlink_to(target, target_is_directory=target_is_directory)
+        except OSError as exc:
+            if getattr(exc, "winerror", None) == 1314:
+                self.skipTest("Windows symlink privilege is unavailable")
+            raise
+
     def source(self, name, body, kind="text"):
         raw = trial.canonical(body) if kind == "json" else body.encode()
         path = name + (".json" if kind == "json" else ".txt")
@@ -56,6 +64,15 @@ class FollowupTests(unittest.TestCase):
         output = self.root / name
         receipt = followup.capture(self.request, self.inputs, output, self.at, previous)
         return output, receipt
+
+    def test_inventory_names_are_platform_neutral(self):
+        nested = self.root / "inventory" / "evidence"
+        nested.mkdir(parents=True)
+        (nested / "filing.txt").write_text("fixture", encoding="utf-8")
+        self.assertEqual(
+            set(followup._inventory(self.root / "inventory")),
+            {"evidence/filing.txt"},
+        )
 
     def draft(self, package):
         record = json.loads((package / "report/human-review-template.json").read_text())
@@ -92,7 +109,7 @@ class FollowupTests(unittest.TestCase):
         output, result = self.run_check("run2", first)
         self.assertEqual(result["status"], "NEW_EVIDENCE_REVIEW_REQUIRED")
         self.assertEqual(result["changed_sources"], ["filing"])
-        self.assertIn("UNRESOLVED", (output / "report/report.md").read_text())
+        self.assertIn("UNRESOLVED", (output / "report/report.md").read_text(encoding="utf-8"))
         self.assertEqual(result["human_review"], "PENDING")
 
     def test_changed_draft_is_not_new_evidence(self):
@@ -171,11 +188,11 @@ class FollowupTests(unittest.TestCase):
         target = self.root / "outside.txt"
         target.write_bytes(original.read_bytes())
         original.unlink()
-        original.symlink_to(target)
+        self.symlink_or_skip(original, target)
         _, receipt = self.run_check()
         self.assertEqual(receipt["status"], "DATA_BLOCKED")
         link = self.root / "linked"
-        link.symlink_to(self.root / "run1", target_is_directory=True)
+        self.symlink_or_skip(link, self.root / "run1", target_is_directory=True)
         with self.assertRaises(trial.TrialError):
             followup.verify(link)
 
@@ -213,7 +230,7 @@ class FollowupTests(unittest.TestCase):
     def test_readable_status_keeps_partial_quality_visible(self):
         output, result = self.run_check()
         self.assertEqual(result["data_status"], "PARTIAL")
-        self.assertIn("PARTIAL", (output / "status.md").read_text())
+        self.assertIn("PARTIAL", (output / "status.md").read_text(encoding="utf-8"))
 
     def test_failed_cli_has_nonzero_exit_and_visible_receipt(self):
         import subprocess

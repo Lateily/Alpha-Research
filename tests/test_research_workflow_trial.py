@@ -29,6 +29,14 @@ class WorkflowTrialTests(unittest.TestCase):
         bars = [{"trade_date": f"2026090{i}", "ts_code": "688035.SH", "open": 10, "high": 12, "low": 9, "close": i + 9, "volume_shares": 100} for i in range(1, 4)]
         self.add_source("bars", {"bars": bars, "human_warning": None}, "20260903", tier="E3")
 
+    def symlink_or_skip(self, link, target, *, target_is_directory=False):
+        try:
+            link.symlink_to(target, target_is_directory=target_is_directory)
+        except OSError as exc:
+            if getattr(exc, "winerror", None) == 1314:
+                self.skipTest("Windows symlink privilege is unavailable")
+            raise
+
     def add_source(self, name, content, date, kind="json", tier="E2"):
         raw = (json.dumps(content) if kind == "json" else content).encode()
         path = name + (".json" if kind == "json" else ".txt")
@@ -105,7 +113,7 @@ class WorkflowTrialTests(unittest.TestCase):
         with self.assertRaises(trial.TrialError):
             trial.build(req, self.root)
         req = self.brief()
-        (self.root / "link.txt").symlink_to(self.root / "filing.txt")
+        self.symlink_or_skip(self.root / "link.txt", self.root / "filing.txt")
         req["sources"]["filing"]["path"] = "link.txt"
         with self.assertRaises(trial.TrialError):
             trial.build(req, self.root)
@@ -235,6 +243,9 @@ class WorkflowTrialTests(unittest.TestCase):
         self.assertEqual(first, trial.write_trial(req, self.root, Path(self.temp.name) / "again"))
         with self.assertRaises(trial.TrialError):
             trial.write_trial(req, self.root, output)
+        manifest = (output / "SHA256SUMS").read_text(encoding="utf-8")
+        self.assertIn("  evidence/filing.txt\n", manifest)
+        self.assertNotIn("\\", manifest)
         self.assertTrue(trial.verify_trial(req, self.root, output))
         (output / "report.md").write_text("Changed report")
         with self.assertRaises(trial.TrialError):
@@ -244,7 +255,7 @@ class WorkflowTrialTests(unittest.TestCase):
         req = self.smc()
         output = Path(self.temp.name) / "annotator"
         trial.write_trial(req, self.root, output)
-        (output / "full-source").symlink_to(self.root, target_is_directory=True)
+        self.symlink_or_skip(output / "full-source", self.root, target_is_directory=True)
         with self.assertRaisesRegex(trial.TrialError, "symlink"):
             trial.verify_trial(req, self.root, output)
 
@@ -377,7 +388,14 @@ class WorkflowTrialTests(unittest.TestCase):
         receipt = json.loads((output / "receipt.json").read_bytes())
         receipt["human_review"] = "VERIFIED"
         (output / "receipt.json").write_bytes(canonical(receipt))
-        (output / "SHA256SUMS").write_text("".join(f"{sha(p.read_bytes())}  {p.relative_to(output)}\n" for p in sorted(output.rglob("*")) if p.is_file() and p.name != "SHA256SUMS"))
+        (output / "SHA256SUMS").write_text(
+            "".join(
+                f"{sha(p.read_bytes())}  {p.relative_to(output).as_posix()}\n"
+                for p in sorted(output.rglob("*"))
+                if p.is_file() and p.name != "SHA256SUMS"
+            ),
+            encoding="utf-8",
+        )
         with self.assertRaisesRegex(trial.TrialError, "output bytes"):
             trial.verify_trial(req, self.root, output)
 
@@ -391,7 +409,7 @@ class WorkflowTrialTests(unittest.TestCase):
                 trial.build(req, self.root)
 
     def test_source_symlink_guard_reaches_real_file(self):
-        (self.root / "linked.txt").symlink_to(self.root / "filing.txt")
+        self.symlink_or_skip(self.root / "linked.txt", self.root / "filing.txt")
         req = self.brief()
         req["sources"]["filing"]["path"] = "linked.txt"
         with self.assertRaisesRegex(trial.TrialError, "source symlink"):

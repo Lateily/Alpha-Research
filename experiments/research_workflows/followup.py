@@ -46,7 +46,7 @@ def _inventory(root):
         if path.is_symlink() or not (path.is_dir() or path.is_file()):
             raise TrialError("package symlink or special file refused")
         if path.is_file() and path != root / "SHA256SUMS":
-            result[str(path.relative_to(root))] = sha(path.read_bytes())
+            result[path.relative_to(root).as_posix()] = sha(path.read_bytes())
     return result
 
 
