@@ -28,6 +28,7 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import fund_source as fs   # noqa: E402
+import market_clock as mc  # noqa: E402
 
 # [unvalidated intuition] thresholds
 GAP_RISK = 0.02       # avg basket gap <= -2% + all-down -> PREMARKET_RISK
@@ -146,11 +147,19 @@ def nowcast_from_read(r):
     return None                                                     # quiet tape -> no nowcast
 
 
-def log_nowcasts(reads, date, checkpoint, log_path=NOWCAST_LOG):
+def log_nowcasts(reads, date, checkpoint, log_path=None, captured_at=None):
     """Append nowcasts for the given reads. Append-only + dedup on
     (ticker,date,checkpoint) — a record is NEVER retro-edited (no-lookahead DNA).
+    captured_at: aware instant the reads were taken (default: now). Fail-closed:
+    nothing is read or written unless it falls in [09:15, 15:00) Asia/Shanghai
+    on `date` itself — a post-close read would predict a flow it already saw.
     Returns the list of newly appended records."""
     import hashlib
+    captured = mc.shanghai_now() if captured_at is None else mc.to_shanghai(captured_at)
+    # governance-mutation: EXECUTION_CLOCK_NOWCAST_WRITE_SESSION
+    if mc.capture_verdict(date, captured) != mc.IN_SESSION:
+        return []
+    log_path = log_path or NOWCAST_LOG
     log = json.load(open(log_path)) if os.path.exists(log_path) else []
     seen = {(x["ticker"], x["date"], x["checkpoint"]) for x in log}
     added = []
@@ -166,6 +175,8 @@ def log_nowcasts(reads, date, checkpoint, log_path=NOWCAST_LOG):
             "nowcast_id": hashlib.md5(f"{key[0]}|{date}|{checkpoint}|{state}".encode()).hexdigest()[:12],
             "ticker": r.get("ticker"), "name": r.get("name"),
             "date": date, "checkpoint": checkpoint,
+            # governance-mutation: EXECUTION_CLOCK_CAPTURED_AT
+            "captured_at": mc.stamp(captured),
             "state": state, "confidence": round(conf, 2),
             "predicted_flow_dir": NOWCAST_PREDICTS.get(state),   # None for DATA_INSUFFICIENT
             "features": {k: r.get(k) for k in ("gap", "from_open", "from_high", "intraday_range")},
@@ -177,17 +188,10 @@ def log_nowcasts(reads, date, checkpoint, log_path=NOWCAST_LOG):
     return added
 
 
-def is_market_open_now(token=None, now=None):
-    """Trading-session guard. Incident (2026-06 weekend run): the monitor pulled
-    STALE last-session quotes while the market was closed and classified them as
-    HIGH_REFLEXIVITY. Never classify stale data — check session time + trade_cal.
+def is_trading_day(date, token=None):
+    """SSE trade_cal for one 'YYYYMMDD' date; weekday fallback when unreachable.
     Returns (open: bool, reason: str)."""
     import datetime
-    now = now or datetime.datetime.now()
-    hm = now.strftime("%H%M")
-    if not ("0910" <= hm <= "1505"):                     # auction 09:15 .. close 15:00, small slack
-        return False, f"当前 {now.strftime('%H:%M')} 不在交易时段(09:10-15:05)"
-    date = now.strftime("%Y%m%d")
     try:
         d = fs._tushare_call("trade_cal", token or os.environ.get("TUSHARE_TOKEN", ""),
                              {"exchange": "SSE", "start_date": date, "end_date": date},
@@ -197,9 +201,23 @@ def is_market_open_now(token=None, now=None):
             return False, f"{date} 非交易日(trade_cal)"
         return True, "open"
     except Exception:                                     # noqa: BLE001 — trade_cal unreachable
-        if now.weekday() >= 5:
+        if datetime.datetime.strptime(date, "%Y%m%d").weekday() >= 5:
             return False, f"{date} 周末(trade_cal 不可达,按 weekday 判)"
         return True, "open(trade_cal 不可达,按 weekday 判)"
+
+
+def is_market_open_now(token=None, now=None):
+    """Trading-session guard. Incident (2026-06 weekend run): the monitor pulled
+    STALE last-session quotes while the market was closed and classified them as
+    HIGH_REFLEXIVITY. Never classify stale data — check session time + trade_cal.
+    `now` must be timezone-aware (default: now); the window is Asia/Shanghai,
+    never the machine's local clock (2026-09 London-clock incident).
+    Returns (open: bool, reason: str)."""
+    now = mc.shanghai_now() if now is None else mc.to_shanghai(now)
+    hm = now.strftime("%H%M")
+    if not ("0910" <= hm <= "1505"):                     # auction 09:15 .. close 15:00, small slack
+        return False, f"当前 {now.strftime('%H:%M')} Asia/Shanghai 不在交易时段(09:10-15:05)"
+    return is_trading_day(now.strftime("%Y%m%d"), token)
 
 
 def monitor(token, portfolio=PORTFOLIO, indices=INDICES, quote_fn=None, market_open=None):
@@ -310,9 +328,10 @@ def selftest():
     ck("closed -> still sample_eligible False", closed["sample_eligible"] is False)
     ck("closed -> still carries overnight anchor", "overnight_anchor" in closed)
     import datetime as _dt
-    ok_evening, why_evening = is_market_open_now(token="", now=_dt.datetime(2026, 7, 2, 20, 0))
+    ok_evening, why_evening = is_market_open_now(
+        token="", now=_dt.datetime(2026, 7, 2, 20, 0, tzinfo=mc.SHANGHAI))
     ck("20:00 -> closed (time window, offline)", ok_evening is False and "不在交易时段" in why_evening)
-    ok_early, _ = is_market_open_now(token="", now=_dt.datetime(2026, 7, 2, 8, 0))
+    ok_early, _ = is_market_open_now(token="", now=_dt.datetime(2026, 7, 2, 8, 0, tzinfo=mc.SHANGHAI))
     ck("08:00 -> closed (time window, offline)", ok_early is False)
 
     # ---- nowcast layer (P3): state mapping + append-only log ----
@@ -339,14 +358,20 @@ def selftest():
     tmp = tempfile.mktemp(suffix=".json")
     try:
         reads = [_r(-0.02, -0.02, -0.03), _r(0.001, 0.0, -0.02)]   # 1 signal + 1 quiet
-        added = log_nowcasts(reads, "20260703", "1030", log_path=tmp)
+        at_1030 = _dt.datetime(2026, 7, 3, 10, 30, tzinfo=mc.SHANGHAI)
+        added = log_nowcasts(reads, "20260703", "1030", log_path=tmp, captured_at=at_1030)
         ck("log appends only pattern-firing reads", len(added) == 1)
         ck("logged record sample_eligible false", added[0]["sample_eligible"] is False)
         ck("logged record carries predicted dir", added[0]["predicted_flow_dir"] == -1)
         ck("logged record starts unscored", added[0]["scored"] is False)
-        again = log_nowcasts(reads, "20260703", "1030", log_path=tmp)
+        ck("logged record stamps capture instant +08:00",
+           added[0]["captured_at"] == "2026-07-03T10:30:00+08:00")
+        again = log_nowcasts(reads, "20260703", "1030", log_path=tmp, captured_at=at_1030)
         ck("dedup on (ticker,date,checkpoint)", len(again) == 0)
         ck("log persisted", len(json.load(open(tmp))) == 1)
+        late = log_nowcasts(reads, "20260703", "1500", log_path=tmp,
+                            captured_at=_dt.datetime(2026, 7, 3, 15, 0, tzinfo=mc.SHANGHAI))
+        ck("15:00 read is post-close -> nothing logged", late == [] and len(json.load(open(tmp))) == 1)
     finally:
         os.path.exists(tmp) and os.remove(tmp)
 
@@ -381,10 +406,9 @@ def main():
         if obs["market_state"] == "MARKET_CLOSED":
             print(obs["note"]); print("不是买卖指令；研究信号，human executes。"); return
         if args.nowcast:
-            import datetime
-            now = datetime.datetime.now()
-            cp = args.checkpoint or now.strftime("%H%M")
-            added = log_nowcasts(obs["holdings"], now.strftime("%Y%m%d"), cp)
+            now = mc.shanghai_now()
+            cp = args.checkpoint or mc.hhmm(now)
+            added = log_nowcasts(obs["holdings"], mc.trade_date(now), cp, captured_at=now)
             print(f"nowcast: +{len(added)} logged @checkpoint {cp} (prediction-not-truth, scored post-close)")
             for a in added:
                 print(f"  {a['name']}: {a['state']} conf{a['confidence']} predict_flow={'+' if a['predicted_flow_dir']==1 else '-' if a['predicted_flow_dir']==-1 else '?'}")

@@ -274,6 +274,49 @@ class GovernanceMutationGateTests(unittest.TestCase):
             ):
                 gate.validate_manifest(root, [case])
 
+    def test_validate_manifest_enforces_execution_clock_marker_coverage(self) -> None:
+        case = gate.MutationCase(
+            mutation_id="EXECUTION_CLOCK_SYNTHETIC_GATE",
+            component="Execution tracker Asia/Shanghai clock synthetic",
+            source_path="source.py",
+            test_script="test_source.py",
+            before="guard = True",
+            after="guard = False",
+            expected_failure_marker="synthetic",
+            rationale="Synthetic case used to prove clock marker coverage is load-bearing.",
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "source.py").write_text("guard = True\n", encoding="utf-8")
+            (root / "test_source.py").write_text(
+                "def synthetic():\n    pass\n",
+                encoding="utf-8",
+            )
+            for relative in (*gate.K1_GOVERNANCE_PATHS, *gate.R043_GOVERNANCE_PATHS):
+                marker_path = root / relative
+                marker_path.parent.mkdir(parents=True, exist_ok=True)
+                marker_path.write_text("# no relevant markers\n", encoding="utf-8")
+            for relative in gate.EXECUTION_CLOCK_GOVERNANCE_PATHS:
+                marker_path = root / relative
+                marker_path.parent.mkdir(parents=True, exist_ok=True)
+                marker_path.write_text("# missing clock marker\n", encoding="utf-8")
+            with self.assertRaisesRegex(
+                gate.MutationGateError,
+                "execution clock governance marker drift.*"
+                "mutations_without_markers.*EXECUTION_CLOCK_SYNTHETIC_GATE",
+            ):
+                gate.validate_manifest(root, [case])
+            (root / gate.EXECUTION_CLOCK_GOVERNANCE_PATHS[0]).write_text(
+                "# governance-mutation: EXECUTION_CLOCK_ORPHAN\n",
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(
+                gate.MutationGateError,
+                "execution clock governance marker drift.*"
+                "markers_without_mutations.*EXECUTION_CLOCK_ORPHAN",
+            ):
+                gate.validate_manifest(root, [])
+
     def test_k1_marker_coverage_rejects_missing_or_orphaned_mutations(self) -> None:
         k1_case = next(
             case for case in gate.MUTATIONS if case.component.startswith("AIOS K1")

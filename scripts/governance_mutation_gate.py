@@ -128,6 +128,16 @@ A035_MUTATION_PREFIX = "AIOS_A035_"
 R043_GOVERNANCE_PATHS = (
     "experiments/execution_tracker/publication_migration.py",
 )
+# 盘中执行层的 Asia/Shanghai 时钟(2026-09 伦敦时钟事故):交易日、时段窗、
+# checkpoint 标签、capture 时间戳与判分准入,每条守卫都带 marker、按前缀双向配对。
+EXECUTION_CLOCK_GOVERNANCE_PATHS = (
+    "experiments/execution_tracker/market_clock.py",
+    "experiments/execution_tracker/run_premarket_monitor.py",
+    "experiments/execution_tracker/watchtower.py",
+    "experiments/execution_tracker/run_eod_decision.py",
+    "experiments/execution_tracker/nowcast_evaluator.py",
+)
+EXECUTION_CLOCK_MUTATION_PREFIX = "EXECUTION_CLOCK_"
 FUNNEL_GOVERNANCE_PATHS = (
     "experiments/research_funnel/funnel_pipeline.py",
     "experiments/research_funnel/r035_evaluation.py",
@@ -10809,6 +10819,159 @@ MUTATIONS = MUTATIONS + (
 
 MUTATIONS = MUTATIONS + (
     MutationCase(
+        mutation_id='EXECUTION_CLOCK_ABSOLUTE_NOW',
+        component="Execution tracker Asia/Shanghai clock",
+        source_path="experiments/execution_tracker/market_clock.py",
+        test_script="tests/test_execution_clock.py",
+        before='        return datetime.datetime.now(SHANGHAI)\n',
+        after='        return datetime.datetime.now().replace(tzinfo=SHANGHAI)\n',
+        expected_failure_marker='test_absolute_instant_ignores_machine_local_zone',
+        rationale='The London wall clock relabelled +08:00 is exactly the 2026-09 incident.',
+    ),
+    MutationCase(
+        mutation_id='EXECUTION_CLOCK_CONVERT_INSTANT',
+        component="Execution tracker Asia/Shanghai clock",
+        source_path="experiments/execution_tracker/market_clock.py",
+        test_script="tests/test_execution_clock.py",
+        before='    return dt.astimezone(SHANGHAI)\n',
+        after='    return dt.replace(tzinfo=SHANGHAI)\n',
+        expected_failure_marker='test_london_instant_converts_to_beijing_wall_clock',
+        rationale='A 09:14 London fire is 16:14 in Shanghai, not 09:14.',
+    ),
+    MutationCase(
+        mutation_id='EXECUTION_CLOCK_NAIVE_REFUSED',
+        component="Execution tracker Asia/Shanghai clock",
+        source_path="experiments/execution_tracker/market_clock.py",
+        test_script="tests/test_execution_clock.py",
+        before='    if dt.tzinfo is None or dt.utcoffset() is None:\n        raise ValueError(',
+        after='    if False:\n        raise ValueError(',
+        expected_failure_marker='test_naive_datetime_is_refused',
+        rationale='A naive datetime has no instant; converting it silently reads machine local time.',
+    ),
+    MutationCase(
+        mutation_id='EXECUTION_CLOCK_NAIVE_STAMP_UNPROVEN',
+        component="Execution tracker Asia/Shanghai clock",
+        source_path="experiments/execution_tracker/market_clock.py",
+        test_script="tests/test_execution_clock.py",
+        before='    if parsed.tzinfo is None or parsed.utcoffset() is None:\n        return None\n',
+        after='    if parsed.tzinfo is None:\n        parsed = parsed.replace(tzinfo=SHANGHAI)\n',
+        expected_failure_marker='test_naive_captured_at_is_unproven',
+        rationale='A capture stamp without an offset cannot prove which clock it was read on.',
+    ),
+    MutationCase(
+        mutation_id='EXECUTION_CLOCK_POST_CLOSE_VERDICT',
+        component="Execution tracker Asia/Shanghai clock",
+        source_path="experiments/execution_tracker/market_clock.py",
+        test_script="tests/test_execution_clock.py",
+        before='    if day > date or (day == date and clock_time >= SESSION_CLOSE):\n',
+        after='    if False:\n',
+        expected_failure_marker='test_post_close_capture_is_counted_separately',
+        rationale='A read at or after 15:00 Shanghai saw the settled session it predicts.',
+    ),
+    MutationCase(
+        mutation_id='EXECUTION_CLOCK_LEGACY_CUTOVER',
+        component="Execution tracker Asia/Shanghai clock",
+        source_path="experiments/execution_tracker/market_clock.py",
+        test_script="tests/test_execution_clock.py",
+        before='    if date >= LEGACY_CLOCK_CUTOVER:\n',
+        after='    if False:\n',
+        expected_failure_marker='test_post_cutover_legacy_label_is_unproven',
+        rationale='Labels written on the London machine clock cannot prove an in-session read.',
+    ),
+    MutationCase(
+        mutation_id='EXECUTION_CLOCK_NOWCAST_WRITE_SESSION',
+        component="Execution tracker Asia/Shanghai clock",
+        source_path="experiments/execution_tracker/run_premarket_monitor.py",
+        test_script="tests/test_execution_clock.py",
+        before='    if mc.capture_verdict(date, captured) != mc.IN_SESSION:\n        return []\n',
+        after='    if False:\n        return []\n',
+        expected_failure_marker='test_london_misfire_read_logs_nothing',
+        rationale='The one nowcast writer must refuse reads taken outside the Shanghai session.',
+    ),
+    MutationCase(
+        mutation_id='EXECUTION_CLOCK_CAPTURED_AT',
+        component="Execution tracker Asia/Shanghai clock",
+        source_path="experiments/execution_tracker/run_premarket_monitor.py",
+        test_script="tests/test_execution_clock.py",
+        before='            "captured_at": mc.stamp(captured),\n',
+        after='',
+        expected_failure_marker='test_beijing_session_read_records_captured_at',
+        rationale='New nowcasts carry the capture instant with its +08:00 offset.',
+    ),
+    MutationCase(
+        mutation_id='EXECUTION_CLOCK_WATCHTOWER_START_WINDOW',
+        component="Execution tracker Asia/Shanghai clock",
+        source_path="experiments/execution_tracker/watchtower.py",
+        test_script="tests/test_execution_clock.py",
+        before='    if not (START_FROM <= hm < START_UNTIL):\n',
+        after='    if False:\n',
+        expected_failure_marker='test_london_clock_start_is_outside_market_hours',
+        rationale='A launchd fire outside the Shanghai session fails closed before any quote.',
+    ),
+    MutationCase(
+        mutation_id='EXECUTION_CLOCK_WATCHTOWER_TRADING_DAY',
+        component="Execution tracker Asia/Shanghai clock",
+        source_path="experiments/execution_tracker/watchtower.py",
+        test_script="tests/test_execution_clock.py",
+        before='    if not is_open:\n        return NON_TRADING_DAY, why\n',
+        after='    if False:\n        return NON_TRADING_DAY, why\n',
+        expected_failure_marker='test_non_trading_day_start_is_refused',
+        rationale='A non-trading day never admits the daemon.',
+    ),
+    MutationCase(
+        mutation_id='EXECUTION_CLOCK_WATCHTOWER_DAEMON_REFUSES',
+        component="Execution tracker Asia/Shanghai clock",
+        source_path="experiments/execution_tracker/watchtower.py",
+        test_script="tests/test_execution_clock.py",
+        before='    if status != ADMITTED:\n        report_status(status, why)\n        return status\n',
+        after='    if False:\n        report_status(status, why)\n        return status\n',
+        expected_failure_marker='test_london_daemon_exits_without_polling_or_logging',
+        rationale='The daemon exits with an explicit status instead of starting its loop.',
+    ),
+    MutationCase(
+        mutation_id='EXECUTION_CLOCK_EOD_SESSION',
+        component="Execution tracker Asia/Shanghai clock",
+        source_path="experiments/execution_tracker/run_eod_decision.py",
+        test_script="tests/test_execution_clock.py",
+        before='    if not mc.in_trading_session(now):\n',
+        after='    if False:\n',
+        expected_failure_marker='test_london_clock_eod_fire_is_outside_market_hours',
+        rationale='The 14:26 London fire (21:26 Shanghai) is outside market hours, not merely off-window.',
+    ),
+    MutationCase(
+        mutation_id='EXECUTION_CLOCK_EOD_TRADING_DAY',
+        component="Execution tracker Asia/Shanghai clock",
+        source_path="experiments/execution_tracker/run_eod_decision.py",
+        test_script="tests/test_execution_clock.py",
+        before='    if not is_open:\n        print(f"{NON_TRADING_DAY}',
+        after='    if False:\n        print(f"{NON_TRADING_DAY}',
+        expected_failure_marker='test_non_trading_day_eod_is_refused',
+        rationale='A holiday EOD run would read the previous session as today.',
+    ),
+    MutationCase(
+        mutation_id='EXECUTION_CLOCK_SCORE_ADMISSION',
+        component="Execution tracker Asia/Shanghai clock",
+        source_path="experiments/execution_tracker/nowcast_evaluator.py",
+        test_script="tests/test_execution_clock.py",
+        before='        if mc.nowcast_admission(rec) != mc.IN_SESSION:     # post-close / unprovable\n            continue\n',
+        after='        if False:\n            continue\n',
+        expected_failure_marker='test_post_close_capture_is_never_scored',
+        rationale='The scorer never grades a read it cannot prove was in-session.',
+    ),
+    MutationCase(
+        mutation_id='EXECUTION_CLOCK_AGGREGATE_ADMISSION',
+        component="Execution tracker Asia/Shanghai clock",
+        source_path="experiments/execution_tracker/nowcast_evaluator.py",
+        test_script="tests/test_execution_clock.py",
+        before='        if not rec.get("scored") or mc.nowcast_admission(rec) != mc.IN_SESSION:\n',
+        after='        if not rec.get("scored"):\n',
+        expected_failure_marker='test_already_scored_excluded_record_never_reaches_hit_rate',
+        rationale='A record scored elsewhere still cannot enter the hit rate without admission.',
+    ),
+)
+
+MUTATIONS = MUTATIONS + (
+    MutationCase(
         mutation_id="PAPER_T10_CLOCK",
         component="Paper execution opt-in T10 calendar",
         source_path="experiments/execution_tracker/paper_deadline.py",
@@ -11335,6 +11498,7 @@ def validate_manifest(root: Path, cases: Sequence[MutationCase]) -> None:
     validate_k1_marker_coverage(root, cases)
     validate_a035_marker_coverage(root, cases)
     validate_r043_marker_coverage(root, cases)
+    validate_execution_clock_marker_coverage(root, cases)
     validate_funnel_marker_coverage(root, cases)
     validate_funnel_nightly_marker_coverage(root, cases)
     validate_nightly_acceptance_marker_coverage(root, cases)
@@ -11460,6 +11624,54 @@ def validate_r043_marker_coverage(
     if missing_mutations or missing_markers:
         raise MutationGateError(
             "R-043 governance marker drift: "
+            f"markers_without_mutations={missing_mutations}; "
+            f"mutations_without_markers={missing_markers}"
+        )
+
+
+def validate_execution_clock_marker_coverage(
+    root: Path,
+    cases: Sequence[MutationCase],
+    marker_paths: Sequence[str] = EXECUTION_CLOCK_GOVERNANCE_PATHS,
+    prefix: str = EXECUTION_CLOCK_MUTATION_PREFIX,
+) -> None:
+    """Every Asia/Shanghai clock guard carries a marker and a pinned mutation."""
+    declared = {
+        case.mutation_id for case in cases if case.mutation_id.startswith(prefix)
+    }
+    existing_paths = [
+        relative for relative in marker_paths if _resolved_under(root, relative).is_file()
+    ]
+    if not declared and not existing_paths:
+        return
+
+    marked: dict[str, str] = {}
+    for relative in marker_paths:
+        source = _resolved_under(root, relative)
+        if not source.is_file():
+            raise MutationGateError(
+                f"execution clock governance marker source is missing: {relative}"
+            )
+        for line_number, line in enumerate(
+            source.read_text(encoding="utf-8").splitlines(), start=1
+        ):
+            match = GOVERNANCE_MARKER_RE.fullmatch(line)
+            if not match:
+                continue
+            mutation_id = match.group("mutation_id")
+            if not mutation_id.startswith(prefix):
+                continue
+            if mutation_id in marked:
+                raise MutationGateError(
+                    f"duplicate execution clock governance marker: {mutation_id} at "
+                    f"{marked[mutation_id]} and {relative}:{line_number}"
+                )
+            marked[mutation_id] = f"{relative}:{line_number}"
+    missing_mutations = sorted(set(marked) - declared)
+    missing_markers = sorted(declared - set(marked))
+    if missing_mutations or missing_markers:
+        raise MutationGateError(
+            "execution clock governance marker drift: "
             f"markers_without_mutations={missing_mutations}; "
             f"mutations_without_markers={missing_markers}"
         )
