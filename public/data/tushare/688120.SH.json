@@ -1,6 +1,6 @@
 {
   "ticker": "688120.SH",
-  "fetched_at": "2026-09-24T13:41:44Z",
+  "fetched_at": "2026-09-25T06:02:02Z",
   "permission_model": "runtime_probe",
   "_status": "partial",
   "data": {
@@ -837,22 +837,9 @@
           "pct_chg": 20.0,
           "vol": 183248.82,
           "amount": 5260505.401
-        },
-        {
-          "ts_code": "688120.SH",
-          "trade_date": "20260626",
-          "open": 250.0,
-          "high": 265.99,
-          "low": 246.2,
-          "close": 263.6,
-          "pre_close": 252.5,
-          "change": 11.1,
-          "pct_chg": 4.396,
-          "vol": 136011.1,
-          "amount": 3488699.778
         }
       ],
-      "row_count": 65,
+      "row_count": 64,
       "_status": "ok",
       "as_of": "20260924"
     },
@@ -2137,29 +2124,9 @@
           "free_share": 33073.0527,
           "total_mv": 15649334.1552,
           "circ_mv": 15649334.1552
-        },
-        {
-          "ts_code": "688120.SH",
-          "trade_date": "20260626",
-          "close": 263.6,
-          "turnover_rate": 2.7492,
-          "turnover_rate_f": 4.1124,
-          "volume_ratio": 0.94,
-          "pe": 120.336,
-          "pe_ttm": 118.8135,
-          "pb": 16.8908,
-          "ps": 28.0561,
-          "ps_ttm": 26.4143,
-          "dv_ratio": 0.0996,
-          "dv_ttm": 0.1082,
-          "total_share": 49473.1127,
-          "float_share": 49473.1127,
-          "free_share": 33073.0527,
-          "total_mv": 13041111.796,
-          "circ_mv": 13041111.796
         }
       ],
-      "row_count": 65,
+      "row_count": 64,
       "_status": "ok",
       "as_of": "20260924"
     },
@@ -2484,14 +2451,9 @@
           "ts_code": "688120.SH",
           "trade_date": "20260629",
           "adj_factor": 4.6652
-        },
-        {
-          "ts_code": "688120.SH",
-          "trade_date": "20260626",
-          "adj_factor": 4.6652
         }
       ],
-      "row_count": 65,
+      "row_count": 64,
       "_status": "ok",
       "as_of": "20260924"
     },

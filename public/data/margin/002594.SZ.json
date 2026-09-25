@@ -1,23 +1,10 @@
 {
   "_status": "ok",
   "ticker": "002594.SZ",
-  "fetched_at": "2026-09-24T13:46:05Z",
+  "fetched_at": "2026-09-25T06:06:39Z",
   "api_used": "margin_detail",
   "window_days": 30,
   "records": [
-    {
-      "trade_date": "20260825",
-      "ts_code": "002594.SZ",
-      "rzye": 12718607056.0,
-      "rqye": 40956962.0,
-      "rzmre": 162276558.0,
-      "rqyl": 448303.0,
-      "rzche": 204585713.0,
-      "rqchl": 15500,
-      "rqmcl": 11500,
-      "rzrqye": 12759564018.0,
-      "name": null
-    },
     {
       "trade_date": "20260826",
       "ts_code": "002594.SZ",
@@ -293,13 +280,13 @@
     }
   ],
   "summary": {
-    "total_count": 22,
+    "total_count": 21,
     "latest_date": "2026-09-23",
     "latest_rzye": 12895908691.0,
     "latest_rqye": 41019388.0,
-    "rzye_change_30d_pct": 1.394033436360926,
-    "rqye_change_30d_pct": 0.1524185314330687,
-    "net_leverage_change_30d": 1.2416149049278573,
+    "rzye_change_30d_pct": 1.4624420483385316,
+    "rqye_change_30d_pct": -2.4476028554597695,
+    "net_leverage_change_30d": 3.910044903798301,
     "signal_level": "NEUTRAL"
   }
 }
