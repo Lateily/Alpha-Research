@@ -124,9 +124,19 @@ jobs:
       # ── Step 4: Call morning-report API ──────────────────────────────────
       - name: Generate morning report
         id: report
+        # /api/morning-report requires X-AR-LLM-Key (api/_lib/llm-route-guard.js).
+        # The secret reaches Python only through this env var; it is never
+        # interpolated into the script text and never printed.
+        env:
+          AR_LLM_ROUTE_KEY: ${{ secrets.AR_LLM_ROUTE_KEY }}
         run: |
           python3 - << 'PYEOF'
-          import json, urllib.request, urllib.error, sys
+          import json, os, urllib.request, urllib.error, sys
+
+          llm_route_key = os.environ.get('AR_LLM_ROUTE_KEY', '').strip()
+          if not llm_route_key:
+            print("AR_LLM_ROUTE_KEY secret is not configured; /api/morning-report would return 401/503.")
+            sys.exit(1)
           from datetime import datetime, timezone, timedelta
 
           # Read all data
@@ -161,7 +171,8 @@ jobs:
           body = json.dumps(payload).encode('utf-8')
           url  = "${{ env.VERCEL_URL }}/api/morning-report"
           req  = urllib.request.Request(url, data=body,
-                   headers={'Content-Type': 'application/json', 'User-Agent': 'AR-Morning-Report/1.0'},
+                   headers={'Content-Type': 'application/json', 'User-Agent': 'AR-Morning-Report/1.0',
+                            'X-AR-LLM-Key': llm_route_key},
                    method='POST')
 
           try:

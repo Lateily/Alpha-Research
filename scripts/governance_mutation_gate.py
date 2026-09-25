@@ -12271,6 +12271,222 @@ MUTATIONS = MUTATIONS + (
     ),
 )
 
+# Paid-model Vercel routes (2026-09-25 re-review P1 #7): every route that spends
+# the owner's Anthropic / OpenAI / Gemini keys must fail closed without the server
+# key, refuse foreign Origins, rate-limit per IP, and run the gate before any
+# provider call; the browser client stays locked and the CLI caller never sends
+# an unauthenticated request.
+MUTATIONS = MUTATIONS + (
+    MutationCase(
+        mutation_id="LLM_ROUTE_FAILS_CLOSED_WITHOUT_SERVER_KEY",
+        component="Paid-model route gate",
+        source_path="api/_lib/llm-route-guard.js",
+        test_script="tests/test_llm_route_guard.py",
+        before=(
+            "  // governance-mutation: LLM_ROUTE_FAILS_CLOSED_WITHOUT_SERVER_KEY\n"
+            "  if (typeof configuredKey !== 'string' || configuredKey.length < MIN_KEY_LENGTH) {"
+        ),
+        after=(
+            "  // governance-mutation: LLM_ROUTE_FAILS_CLOSED_WITHOUT_SERVER_KEY\n"
+            "  if (false) {"
+        ),
+        expected_failure_marker="test_guard_fails_closed_without_server_key",
+        rationale="A missing or short AR_LLM_ROUTE_KEY must disable the route (503), never open it.",
+    ),
+    MutationCase(
+        mutation_id="LLM_ROUTE_REQUIRES_KEY_MATCH",
+        component="Paid-model route gate",
+        source_path="api/_lib/llm-route-guard.js",
+        test_script="tests/test_llm_route_guard.py",
+        before=(
+            "  // governance-mutation: LLM_ROUTE_REQUIRES_KEY_MATCH\n"
+            "  if (!timingSafeEqualString(typeof providedKey === 'string' ? providedKey : '', configuredKey)) {"
+        ),
+        after=(
+            "  // governance-mutation: LLM_ROUTE_REQUIRES_KEY_MATCH\n"
+            "  if (false) {"
+        ),
+        expected_failure_marker="test_guard_rejects_missing_or_wrong_key",
+        rationale="Only a request carrying the exact server key may reach a paid provider.",
+    ),
+    MutationCase(
+        mutation_id="LLM_ROUTE_ORIGIN_ALLOWLIST",
+        component="Paid-model route gate",
+        source_path="api/_lib/llm-route-guard.js",
+        test_script="tests/test_llm_route_guard.py",
+        before=(
+            "  // governance-mutation: LLM_ROUTE_ORIGIN_ALLOWLIST\n"
+            "  if (origin !== undefined && !originAllowed) {"
+        ),
+        after=(
+            "  // governance-mutation: LLM_ROUTE_ORIGIN_ALLOWLIST\n"
+            "  if (false) {"
+        ),
+        expected_failure_marker="test_guard_refuses_foreign_origin_even_with_key",
+        rationale="A browser page on a foreign origin must be refused even if it holds the key.",
+    ),
+    MutationCase(
+        mutation_id="LLM_ROUTE_RATE_LIMIT",
+        component="Paid-model route gate",
+        source_path="api/_lib/llm-route-guard.js",
+        test_script="tests/test_llm_route_guard.py",
+        before=(
+            "  // governance-mutation: LLM_ROUTE_RATE_LIMIT\n"
+            "  if (retryAfter) {"
+        ),
+        after=(
+            "  // governance-mutation: LLM_ROUTE_RATE_LIMIT\n"
+            "  if (false) {"
+        ),
+        expected_failure_marker="test_guard_rate_limits_authenticated_bursts",
+        rationale="Even an authenticated caller is bounded per IP per warm instance.",
+    ),
+    MutationCase(
+        mutation_id="LLM_ROUTE_GUARD_RESEARCH_MULTI",
+        component="Paid-model route wiring",
+        source_path="api/research-multi.js",
+        test_script="tests/test_llm_route_guard.py",
+        before=(
+            "  // governance-mutation: LLM_ROUTE_GUARD_RESEARCH_MULTI\n"
+            "  if (!guardLlmRoute(req, res, 'research-multi')) return;"
+        ),
+        after=(
+            "  // governance-mutation: LLM_ROUTE_GUARD_RESEARCH_MULTI\n"
+            "  if (false) return;"
+        ),
+        expected_failure_marker="test_every_paid_handler_rejects_before_provider",
+        rationale="api/research-multi.js must run the key/origin/rate gate before any provider call.",
+    ),
+    MutationCase(
+        mutation_id="LLM_ROUTE_GUARD_RESEARCH",
+        component="Paid-model route wiring",
+        source_path="api/research.js",
+        test_script="tests/test_llm_route_guard.py",
+        before=(
+            "  // governance-mutation: LLM_ROUTE_GUARD_RESEARCH\n"
+            "  if (!guardLlmRoute(req, res, 'research')) return;"
+        ),
+        after=(
+            "  // governance-mutation: LLM_ROUTE_GUARD_RESEARCH\n"
+            "  if (false) return;"
+        ),
+        expected_failure_marker="test_every_paid_handler_rejects_before_provider",
+        rationale="api/research.js must run the key/origin/rate gate before any provider call.",
+    ),
+    MutationCase(
+        mutation_id="LLM_ROUTE_GUARD_CHAT",
+        component="Paid-model route wiring",
+        source_path="api/chat.js",
+        test_script="tests/test_llm_route_guard.py",
+        before=(
+            "  // governance-mutation: LLM_ROUTE_GUARD_CHAT\n"
+            "  if (!guardLlmRoute(req, res, 'chat')) return;"
+        ),
+        after=(
+            "  // governance-mutation: LLM_ROUTE_GUARD_CHAT\n"
+            "  if (false) return;"
+        ),
+        expected_failure_marker="test_every_paid_handler_rejects_before_provider",
+        rationale="api/chat.js must run the key/origin/rate gate before any provider call.",
+    ),
+    MutationCase(
+        mutation_id="LLM_ROUTE_GUARD_DEBATE",
+        component="Paid-model route wiring",
+        source_path="api/debate.js",
+        test_script="tests/test_llm_route_guard.py",
+        before=(
+            "  // governance-mutation: LLM_ROUTE_GUARD_DEBATE\n"
+            "  if (!guardLlmRoute(req, res, 'debate')) return;"
+        ),
+        after=(
+            "  // governance-mutation: LLM_ROUTE_GUARD_DEBATE\n"
+            "  if (false) return;"
+        ),
+        expected_failure_marker="test_every_paid_handler_rejects_before_provider",
+        rationale="api/debate.js must run the key/origin/rate gate before any provider call.",
+    ),
+    MutationCase(
+        mutation_id="LLM_ROUTE_GUARD_MACRO",
+        component="Paid-model route wiring",
+        source_path="api/macro.js",
+        test_script="tests/test_llm_route_guard.py",
+        before=(
+            "  // governance-mutation: LLM_ROUTE_GUARD_MACRO\n"
+            "  if (!guardLlmRoute(req, res, 'macro')) return;"
+        ),
+        after=(
+            "  // governance-mutation: LLM_ROUTE_GUARD_MACRO\n"
+            "  if (false) return;"
+        ),
+        expected_failure_marker="test_every_paid_handler_rejects_before_provider",
+        rationale="api/macro.js must run the key/origin/rate gate before any provider call.",
+    ),
+    MutationCase(
+        mutation_id="LLM_ROUTE_GUARD_MORNING_REPORT",
+        component="Paid-model route wiring",
+        source_path="api/morning-report.js",
+        test_script="tests/test_llm_route_guard.py",
+        before=(
+            "  // governance-mutation: LLM_ROUTE_GUARD_MORNING_REPORT\n"
+            "  if (!guardLlmRoute(req, res, 'morning-report')) return;"
+        ),
+        after=(
+            "  // governance-mutation: LLM_ROUTE_GUARD_MORNING_REPORT\n"
+            "  if (false) return;"
+        ),
+        expected_failure_marker="test_every_paid_handler_rejects_before_provider",
+        rationale="api/morning-report.js must run the key/origin/rate gate before any provider call.",
+    ),
+    MutationCase(
+        mutation_id="LLM_ROUTE_GUARD_RESEARCH_PULSE",
+        component="Paid-model route wiring",
+        source_path="api/research-pulse.js",
+        test_script="tests/test_llm_route_guard.py",
+        before=(
+            "  // governance-mutation: LLM_ROUTE_GUARD_RESEARCH_PULSE\n"
+            "  if (!guardLlmRoute(req, res, 'research-pulse')) return;"
+        ),
+        after=(
+            "  // governance-mutation: LLM_ROUTE_GUARD_RESEARCH_PULSE\n"
+            "  if (false) return;"
+        ),
+        expected_failure_marker="test_every_paid_handler_rejects_before_provider",
+        rationale="api/research-pulse.js must run the key/origin/rate gate before any provider call.",
+    ),
+    MutationCase(
+        mutation_id="LLM_BROWSER_LOCKED_WITHOUT_KEY",
+        component="Paid-model browser client",
+        source_path="src/llmRouteClient.js",
+        test_script="tests/test_llm_route_guard.py",
+        before=(
+            "  // governance-mutation: LLM_BROWSER_LOCKED_WITHOUT_KEY\n"
+            "  if (!browserRoutesEnabled) throw new LlmRouteLockedError('FLAG_OFF');"
+        ),
+        after=(
+            "  // governance-mutation: LLM_BROWSER_LOCKED_WITHOUT_KEY\n"
+            "  if (false) throw new LlmRouteLockedError('FLAG_OFF');"
+        ),
+        expected_failure_marker="test_browser_client_is_locked_without_flag_and_key",
+        rationale="With the build flag off the dashboard must not call a paid route at all.",
+    ),
+    MutationCase(
+        mutation_id="LLM_CALLER_RUN_RESEARCH_REQUIRES_KEY",
+        component="Paid-model CLI caller",
+        source_path="scripts/run_research.py",
+        test_script="tests/test_llm_route_guard.py",
+        before=(
+            "    # governance-mutation: LLM_CALLER_RUN_RESEARCH_REQUIRES_KEY\n"
+            "    if not key:"
+        ),
+        after=(
+            "    # governance-mutation: LLM_CALLER_RUN_RESEARCH_REQUIRES_KEY\n"
+            "    if False:"
+        ),
+        expected_failure_marker="test_run_research_refuses_to_call_without_key",
+        rationale="The CLI must not send an unauthenticated request to a paid route.",
+    ),
+)
+
 @dataclass(frozen=True)
 class CommandResult:
     returncode: int
