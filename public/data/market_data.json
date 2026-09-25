@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "fetched_at": "2026-09-24T13:40:32.852694",
+    "fetched_at": "2026-09-25T06:01:04.723610",
     "version": "4.1",
     "tickers": [
       "300308.SZ",
@@ -22,7 +22,7 @@
         "change_pct": -2.888,
         "high": 936.58,
         "low": 895.86,
-        "volume": 18486600,
+        "volume": 1848662800,
         "avg_volume_20d": null,
         "volume_ratio": null,
         "high_52w": 936.58,
@@ -95,7 +95,7 @@
         "change_pct": -1.759,
         "high": 86.02,
         "low": 84.23,
-        "volume": 18221600,
+        "volume": 1822159600,
         "avg_volume_20d": null,
         "volume_ratio": null,
         "high_52w": 86.02,
@@ -164,15 +164,15 @@
     "175.HK": {
       "price": {
         "last": 15.77,
-        "prev_close": 15.76,
-        "change_pct": 0.063,
-        "high": 15.92,
-        "low": 15.56,
-        "volume": 2014045500,
+        "prev_close": 15.64,
+        "change_pct": 0.831,
+        "high": 15.65,
+        "low": 15.36,
+        "volume": -95,
         "avg_volume_20d": null,
         "volume_ratio": null,
-        "high_52w": 15.92,
-        "low_52w": 15.56
+        "high_52w": 15.65,
+        "low_52w": 15.36
       },
       "technical": {
         "sma_20": null,
@@ -241,7 +241,7 @@
         "change_pct": -2.337,
         "high": 18.21,
         "low": 17.51,
-        "volume": 7448300,
+        "volume": 744826900,
         "avg_volume_20d": null,
         "volume_ratio": null,
         "high_52w": 18.21,
@@ -387,7 +387,7 @@
         "change_pct": -1.434,
         "high": 71.02,
         "low": 69.53,
-        "volume": 13367400,
+        "volume": 1336737300,
         "avg_volume_20d": null,
         "volume_ratio": null,
         "high_52w": 71.02,
@@ -461,14 +461,14 @@
       "5d_cumulative": 0.0,
       "20d_cumulative": 0.0,
       "trend": "outflow",
-      "updated": "2026-09-24"
+      "updated": "2026-09-25"
     },
     "southbound": {
       "latest_net_flow": 28.9977,
       "5d_cumulative": 243.0646,
       "20d_cumulative": 637.666,
       "trend": "inflow",
-      "updated": "2026-09-24"
+      "updated": "2026-09-25"
     },
     "dragon_tiger": [
       {
