@@ -316,6 +316,8 @@ class PaperSettlementPublicationTests(unittest.TestCase):
         after_orders = engine.load("orders.json", [], str(directory))
         after_log = engine.load("decision_log.json", [], str(directory))
         after_nav = engine.load("nav_history.json", [], str(directory))
+        self.assertIn("deadline_attempts", after_orders[0])
+        self.assertTrue(after_orders[0]["deadline_attempts"])
         self.assertEqual(after_orders[0]["deadline_attempts"][-1]["reason"], "MISSING_BAR")
         self.assertEqual(after_orders[1]["status"], "closed")
         self.assertTrue(any(row["action"] == "PAPER_DEADLINE_ATTEMPT" for row in after_log))
@@ -358,7 +360,7 @@ class PaperSettlementPublicationTests(unittest.TestCase):
         directory = self.et / "model_fund"
         publish.atomic_json(str(directory / "nav_history.json"), [])
         before = {name: (directory / name).read_bytes() for name in engine._DAILY_PROJECTIONS}
-        after_fund = {**self.fund, "cash": self.fund["cash"] + 100.0}
+        after_fund = copy.deepcopy(self.fund)
         after_log = self.log + [{"date": TARGET, "action": "PAPER_DEADLINE_ATTEMPT",
                                  "ticker": "600001.SH", "no_trade_flag": True}]
         after_nav = [{"date": TARGET, "nav": None, "cash": after_fund["cash"],
@@ -368,20 +370,20 @@ class PaperSettlementPublicationTests(unittest.TestCase):
         original_save = engine.save
 
         def crash(name, obj, root=None):
-            if name == "orders.json":
+            original_save(name, obj, root)
+            if name == "nav_history.json":
                 raise OSError("crash after first projection")
-            return original_save(name, obj, root)
 
         with mock.patch.object(engine, "save", side_effect=crash):
             with self.assertRaisesRegex(OSError, "crash after first projection"):
                 engine._commit_daily_projections(str(directory), TARGET, RID,
                                                  after_fund, self.orders, after_log, after_nav)
-        self.assertNotEqual((directory / "fund.json").read_bytes(), before["fund.json"])
+        self.assertNotEqual((directory / "nav_history.json").read_bytes(), before["nav_history.json"])
         self.assertTrue((directory / engine._DAILY_INTENT).exists())
         with self.assertRaisesRegex(ValueError, "bound to another run"):
             engine._finish_daily_intent(str(directory), expected_target=TARGET,
                                         expected_run="OTHER_RUN")
-        self.assertEqual((directory / "orders.json").read_bytes(), before["orders.json"])
+        self.assertEqual(engine.load("orders.json", [], str(directory)), self.orders)
         self.assertTrue(engine._finish_daily_intent(str(directory)))
         self.assertFalse((directory / engine._DAILY_INTENT).exists())
         self.assertEqual(engine.load("fund.json", None, str(directory)), after_fund)
@@ -393,7 +395,12 @@ class PaperSettlementPublicationTests(unittest.TestCase):
 
         with mock.patch.object(engine, "save", side_effect=crash):
             with self.assertRaises(OSError):
-                after_nav[0]["date"] = "20260908"
+                after_nav.append({
+                    "date": "20260908", "nav": None, "cash": after_fund["cash"],
+                    "n_positions": 1, "daily_return": None, "cum_return": None,
+                    "status": "DATA_BLOCKED", "reason": "MISSING_TARGET_CLOSE",
+                    "missing_tickers": ["600001.SH"],
+                })
                 engine._commit_daily_projections(str(directory), "20260908", "NEXT",
                                                  after_fund, self.orders, after_log, after_nav)
         publish.atomic_json(str(directory / "orders.json"), [{"unexpected": "state"}])
@@ -412,11 +419,11 @@ class PaperSettlementPublicationTests(unittest.TestCase):
                 }
                 after = {
                     **before,
-                    "fund.json": {**self.fund, "cash": self.fund["cash"] + 100.0},
+                    "fund.json": copy.deepcopy(self.fund),
                     "decision_log.json": self.log + [{"date": TARGET, "action": "PAPER_DEADLINE_ATTEMPT"}],
                     "nav_history.json": [{
                         "date": TARGET, "status": "DATA_BLOCKED", "nav": None,
-                        "cash": self.fund["cash"] + 100.0, "n_positions": 1,
+                        "cash": self.fund["cash"], "n_positions": 1,
                         "daily_return": None, "cum_return": None,
                         "reason": "MISSING_TARGET_CLOSE", "missing_tickers": ["600001.SH"],
                     }],
@@ -466,10 +473,10 @@ class PaperSettlementPublicationTests(unittest.TestCase):
                 }
                 after = {
                     **before,
-                    "fund.json": {**self.fund, "cash": self.fund["cash"] + 100.0},
+                    "fund.json": copy.deepcopy(self.fund),
                     "nav_history.json": [{
                         "date": TARGET, "status": "DATA_BLOCKED", "nav": None,
-                        "cash": self.fund["cash"] + 100.0, "n_positions": 1,
+                        "cash": self.fund["cash"], "n_positions": 1,
                         "daily_return": None, "cum_return": None,
                         "reason": "MISSING_TARGET_CLOSE", "missing_tickers": ["600001.SH"],
                     }],
@@ -517,7 +524,7 @@ class PaperSettlementPublicationTests(unittest.TestCase):
                 }
                 for name, value in before.items():
                     engine.save(name, value, str(fund_dir))
-                after_fund = {**self.fund, "cash": self.fund["cash"] + 100.0}
+                after_fund = copy.deepcopy(self.fund)
                 after = {
                     **before,
                     "fund.json": after_fund,
@@ -583,6 +590,144 @@ class PaperSettlementPublicationTests(unittest.TestCase):
             self.assertEqual(original, {path.name: path.read_bytes()
                                         for path in fund_dir.iterdir()})
 
+    def test_daily_intent_rejects_unexplained_numeric_cash_loss_before_writes(self):
+        with tempfile.TemporaryDirectory() as directory:
+            fund_dir = Path(directory)
+            before = {
+                "fund.json": copy.deepcopy(self.fund),
+                "orders.json": copy.deepcopy(self.orders),
+                "decision_log.json": copy.deepcopy(self.log),
+                "nav_history.json": [],
+            }
+            for name, value in before.items():
+                engine.save(name, value, directory)
+            after_fund = {**self.fund, "cash": self.fund["cash"] - 500.0}
+            after = {
+                **before,
+                "fund.json": after_fund,
+                "nav_history.json": [{
+                    "date": TARGET, "status": "DATA_BLOCKED", "nav": None,
+                    "cash": after_fund["cash"], "n_positions": 1,
+                    "daily_return": None, "cum_return": None,
+                    "reason": "MISSING_TARGET_CLOSE", "missing_tickers": ["600001.SH"],
+                }],
+            }
+            journal = {
+                "schema": "paper-daily-intent/v1", "target_trade_date": TARGET,
+                "run_id": RID,
+                "before": {name: engine._projection_digest(value)
+                           for name, value in before.items()},
+                "after": after,
+            }
+            journal["intent_hash"] = engine._projection_digest(journal)
+            engine.save(engine._DAILY_INTENT, journal, directory)
+            original = {path.name: path.read_bytes() for path in fund_dir.iterdir()}
+            with self.assertRaisesRegex(ValueError, "cannot prove|fund.json"):
+                engine._finish_daily_intent(directory)
+            self.assertEqual(original, {path.name: path.read_bytes()
+                                        for path in fund_dir.iterdir()})
+            journal["schema"] = "paper-daily-intent/v2"
+            journal["before_content"] = before
+            journal["intent_hash"] = engine._projection_digest({
+                key: value for key, value in journal.items() if key != "intent_hash"
+            })
+            engine.save(engine._DAILY_INTENT, journal, directory)
+            v2_original = {path.name: path.read_bytes() for path in fund_dir.iterdir()}
+            with self.assertRaisesRegex(ValueError, "fund.json"):
+                engine._finish_daily_intent(directory)
+            self.assertEqual(v2_original, {path.name: path.read_bytes()
+                                           for path in fund_dir.iterdir()})
+            journal.pop("before_content")
+            journal["schema"] = "paper-daily-intent/v1"
+            journal["intent_hash"] = engine._projection_digest({
+                key: value for key, value in journal.items() if key != "intent_hash"
+            })
+            engine.save(engine._DAILY_INTENT, journal, directory)
+            engine.save("fund.json", after_fund, directory)
+            partial = {path.name: path.read_bytes() for path in fund_dir.iterdir()}
+            with self.assertRaisesRegex(ValueError, "cannot prove legacy"):
+                engine._finish_daily_intent(directory)
+            self.assertEqual(partial, {path.name: path.read_bytes()
+                                       for path in fund_dir.iterdir()})
+
+    def test_daily_intent_recovery_accepts_unchanged_cancelled_order(self):
+        with tempfile.TemporaryDirectory() as directory:
+            orders = copy.deepcopy(self.orders)
+            cancelled = copy.deepcopy(orders[0])
+            cancelled.update(entry_id="CANCELLED_FIXTURE", ticker="600002.SH",
+                             status="cancelled")
+            orders.append(cancelled)
+            fund = copy.deepcopy(self.fund)
+            log = copy.deepcopy(self.log)
+            before = {
+                "fund.json": fund, "orders.json": orders,
+                "decision_log.json": log, "nav_history.json": [],
+            }
+            for name, value in before.items():
+                engine.save(name, value, directory)
+            nav = engine.record_unavailable_nav(
+                fund, orders, [], TARGET, ["600001.SH"],
+            )
+            self.assertEqual("DATA_BLOCKED", nav["status"])
+            try:
+                engine._commit_daily_projections(directory, TARGET, RID, fund, orders, log, [nav])
+            except ValueError as exc:
+                self.fail(f"unchanged cancelled order must not strand recovery: {exc}")
+            self.assertFalse(Path(directory, engine._DAILY_INTENT).exists())
+            self.assertEqual("cancelled", engine.load("orders.json", [], directory)[1]["status"])
+
+    def test_daily_intent_refuses_subunit_unexplained_cash_change(self):
+        before = {
+            "fund.json": copy.deepcopy(self.fund),
+            "orders.json": copy.deepcopy(self.orders),
+            "decision_log.json": copy.deepcopy(self.log),
+            "nav_history.json": [],
+        }
+        after = copy.deepcopy(before)
+        for loss in (0.01, 0.5):
+            with self.subTest(loss=loss):
+                after["fund.json"]["cash"] = before["fund.json"]["cash"] - loss
+                self.assertTrue(publish.validate_daily_projection_transition(
+                    before, after, TARGET, RID,
+                ))
+
+    def test_completed_legacy_daily_intent_only_clears_journal(self):
+        with tempfile.TemporaryDirectory() as directory:
+            before = {
+                "fund.json": copy.deepcopy(self.fund),
+                "orders.json": copy.deepcopy(self.orders),
+                "decision_log.json": copy.deepcopy(self.log),
+                "nav_history.json": [],
+            }
+            after = copy.deepcopy(before)
+            after["nav_history.json"] = [{
+                "date": TARGET, "status": "DATA_BLOCKED", "nav": None,
+                "cash": self.fund["cash"], "n_positions": 1,
+                "daily_return": None, "cum_return": None,
+                "reason": "MISSING_TARGET_CLOSE", "missing_tickers": ["600001.SH"],
+            }]
+            for name, value in after.items():
+                engine.save(name, value, directory)
+            journal = {
+                "schema": "paper-daily-intent/v1", "target_trade_date": TARGET,
+                "run_id": RID,
+                "before": {name: engine._projection_digest(value)
+                           for name, value in before.items()},
+                "after": after,
+            }
+            journal["intent_hash"] = engine._projection_digest(journal)
+            engine.save(engine._DAILY_INTENT, journal, directory)
+            original = {name: (Path(directory, name).read_bytes(),
+                               Path(directory, name).stat().st_mtime_ns)
+                        for name in engine._DAILY_PROJECTIONS}
+            self.assertTrue(engine._finish_daily_intent(directory))
+            self.assertFalse(Path(directory, engine._DAILY_INTENT).exists())
+            self.assertEqual(original, {
+                name: (Path(directory, name).read_bytes(),
+                       Path(directory, name).stat().st_mtime_ns)
+                for name in engine._DAILY_PROJECTIONS
+            })
+
     def test_next_daily_run_refuses_future_or_malformed_intent(self):
         for prior_date, prior_run in (("20260909", "FUTURE_RUN"), ("20260907", "")):
             with self.subTest(prior_date=prior_date, prior_run=prior_run), \
@@ -595,7 +740,7 @@ class PaperSettlementPublicationTests(unittest.TestCase):
                 }
                 for name, value in before.items():
                     engine.save(name, value, directory)
-                after_fund = {**self.fund, "cash": self.fund["cash"] + 100.0}
+                after_fund = copy.deepcopy(self.fund)
                 after = {
                     **before,
                     "fund.json": after_fund,

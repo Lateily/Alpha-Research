@@ -405,6 +405,43 @@ def _check_paper_settlement(before, after, target, run_id):
     return errors, allowed, deltas
 
 
+def validate_daily_projection_transition(before, after, target, run_id):
+    """Apply the publication ledger rules before replaying a daily WAL after-state."""
+    before = dict(before)
+    for name in ("decision_log.json", "nav_history.json"):
+        if before.get(name) is None:
+            before[name] = []
+    errors, settlement_rows, settlement_deltas = _check_paper_settlement(
+        before, after, target, run_id,
+    )
+    errors.extend(_check_orders(before.get("orders.json"), after.get("orders.json")))
+    errors.extend(_check_fund(
+        before.get("fund.json"), after.get("fund.json"),
+        before.get("orders.json"), after.get("orders.json"), settlement_deltas,
+    ))
+    before_fund, after_fund = before.get("fund.json"), after.get("fund.json")
+    if isinstance(before_fund, dict) and isinstance(after_fund, dict):
+        try:
+            actual = round(float(after_fund["cash"]) - float(before_fund["cash"]), 2)
+            expected, why = _cash_delta_from_orders(
+                before.get("orders.json"), after.get("orders.json"), settlement_deltas,
+            )
+            errors.extend(why)
+            if round(actual - expected, 2) != 0:
+                errors.append("model_fund/fund.json: daily cash delta has no order explanation")
+        except (KeyError, TypeError, ValueError):
+            errors.append("model_fund/fund.json: daily cash delta cannot be verified")
+    for name in ("decision_log.json", "nav_history.json"):
+        errors.extend(_check_append_only(
+            name, before.get(name), after.get(name), target, settlement_rows,
+        ))
+    errors.extend(_check_blocked_nav_rows(
+        before.get("nav_history.json"), after.get("nav_history.json"),
+        after.get("orders.json"), after.get("fund.json"),
+    ))
+    return errors
+
+
 def _check_append_only(name, before, after, target, settlement_rows=()):
     """既有元素逐字节不变 + 新增元素合法。返回错误列表。"""
     rule = APPEND_ONLY_PROTECTED[name]

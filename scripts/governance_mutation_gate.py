@@ -974,16 +974,19 @@ MUTATIONS: tuple[MutationCase, ...] = (
     MutationCase(
         mutation_id="PAPER_DAILY_MISSING_NAV_PERSISTS_EXECUTION", component="Nightly settlement publication",
         source_path="experiments/execution_tracker/model_paper_fund.py", test_script="tests/test_paper_settlement_publication.py",
-        before="            rec = record_unavailable_nav(fund, orders, navh, date, e.missing)",
-        after='            rec = record_unavailable_nav(fund, orders, navh, date, e.missing)\n            decision_log = []',
+        before=(
+            '        _commit_daily_projections(args.fund_dir or FUND_DIR, date, run_id(),\n'
+            '                                  fund, orders, decision_log, navh)'
+        ),
+        after='        pass',
         expected_failure_marker="test_missing_nav_preserves_due_attempt_and_other_exit_for_publication",
-        rationale="A missing close must preserve the valid NAV block and the day's exit and attempt events.",
+        rationale="A missing close must persist the valid NAV block and the day's exit and attempt events.",
     ),
     MutationCase(
         mutation_id="PAPER_DAILY_INTENT_RECOVERY", component="Nightly settlement publication",
         source_path="experiments/execution_tracker/model_paper_fund.py", test_script="tests/test_paper_settlement_publication.py",
-        before='        if _projection_digest(current) not in {',
-        after='        if False and _projection_digest(current) not in {',
+        before='        if _projection_digest(current_content[name]) not in {',
+        after='        if False and _projection_digest(current_content[name]) not in {',
         expected_failure_marker="test_daily_projection_crash_replays_or_rejects_without_mixed_files",
         rationale="A crash recovery must refuse a projection not in either frozen intent state.",
     ),
@@ -11369,7 +11372,7 @@ MUTATIONS = MUTATIONS + (
         component="Research Closed Loop V1.5 deadline dependencies",
         source_path="docs/research/contracts/research_closed_loop.v1.json",
         test_script="tests/test_research_closed_loop_v1.py",
-        before="    {\"path\": \"experiments/execution_tracker/nightly_publish.py\", \"sha256\": \"sha256:62ca2c04ca5b100c90ce7318f75684efbf0cdfb61161e878edbf4520ec8d720d\"},\n",
+        before="    {\"path\": \"experiments/execution_tracker/nightly_publish.py\", \"sha256\": \"sha256:9a286f4cc8e49bccc646b9fab499cf4b6dd8122616239e09b25fa28b3ab29adf\"},\n",
         after="",
         expected_failure_marker="test_t10_execution_dependencies_are_all_byte_bound",
         rationale="The opted-in deadline assembly must bind this exact dependency.",
@@ -11652,10 +11655,34 @@ MUTATIONS = MUTATIONS + (
         component="Research funnel paper daily projection recovery",
         source_path="experiments/execution_tracker/model_paper_fund.py",
         test_script="tests/test_paper_settlement_publication.py",
-        before="    _validate_daily_intent_after(journal)\n    for name in _DAILY_PROJECTIONS:",
-        after="    for name in _DAILY_PROJECTIONS:",
+        before="    _validate_daily_intent_after(journal)\n    before_content = journal.get(\"before_content\")",
+        after="    before_content = journal.get(\"before_content\")",
         expected_failure_marker="test_nightly_refuses_self_hashed_invalid_daily_projection_before_any_write",
         rationale="A self-hashed intent cannot replay malformed projections into the live paper fund.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_DAILY_INTENT_TRANSITION_REPLAY",
+        component="Research funnel paper daily projection recovery",
+        source_path="experiments/execution_tracker/model_paper_fund.py",
+        test_script="tests/test_paper_settlement_publication.py",
+        before=(
+            '        problems = nightly_publish.validate_daily_projection_transition(\n'
+            '            before_content, journal["after"], journal["target_trade_date"], journal["run_id"],\n'
+            '        )'
+        ),
+        after='        problems = []',
+        expected_failure_marker="test_daily_intent_rejects_unexplained_numeric_cash_loss_before_writes",
+        rationale="A self-hashed numeric cash delta needs order and event evidence before replay writes.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_DAILY_CANCELLED_STATUS",
+        component="Research funnel paper daily projection recovery",
+        source_path="experiments/execution_tracker/model_paper_fund.py",
+        test_script="tests/test_paper_settlement_publication.py",
+        before='{"pending", "filled", "closed", "expired", "cancelled"} for order in orders):',
+        after='{"pending", "filled", "closed", "expired"} for order in orders):',
+        expected_failure_marker="test_daily_intent_recovery_accepts_unchanged_cancelled_order",
+        rationale="Existing cancelled orders are legitimate immutable history, not a recovery blocker.",
     ),
     MutationCase(
         mutation_id="RESEARCH_CYCLE_LEGACY_NO_NEW_BUNDLE",

@@ -620,8 +620,9 @@ def _validate_daily_intent_after(journal):
             raise ValueError(f"daily projection fund.{key} is invalid")
     if fund["initial_capital"] <= 0:
         raise ValueError("daily projection initial capital is invalid")
+    # governance-mutation: PAPER_DAILY_CANCELLED_STATUS
     if any(not isinstance(order, dict) or order.get("status") not in
-           {"pending", "filled", "closed", "expired"} for order in orders):
+           {"pending", "filled", "closed", "expired", "cancelled"} for order in orders):
         raise ValueError("daily projection orders are invalid")
     if any(not isinstance(row, dict) for row in decision_log):
         raise ValueError("daily projection decision log is invalid")
@@ -647,7 +648,8 @@ def _finish_daily_intent(fund_dir, *, expected_target=None, expected_run=None):
     if not os.path.exists(path):
         return False
     journal = load(_DAILY_INTENT, None, fund_dir)
-    if (not isinstance(journal, dict) or journal.get("schema") != "paper-daily-intent/v1"
+    if (not isinstance(journal, dict) or journal.get("schema") not in
+            {"paper-daily-intent/v1", "paper-daily-intent/v2"}
             or set(journal.get("before", {})) != set(_DAILY_PROJECTIONS)
             or set(journal.get("after", {})) != set(_DAILY_PROJECTIONS)
             or journal.get("intent_hash") != _projection_digest(
@@ -657,16 +659,39 @@ def _finish_daily_intent(fund_dir, *, expected_target=None, expected_run=None):
     if ((expected_target is not None and journal.get("target_trade_date") != expected_target)
             or (expected_run is not None and journal.get("run_id") != expected_run)):
         raise ValueError("daily projection intent is bound to another run")
+    current_content = {name: load(name, None, fund_dir) for name in _DAILY_PROJECTIONS}
     for name in _DAILY_PROJECTIONS:
-        current = load(name, None, fund_dir)
-        if _projection_digest(current) not in {
+        if _projection_digest(current_content[name]) not in {
             journal["before"][name], _projection_digest(journal["after"][name])
         }:
             raise ValueError(f"daily projection {name} differs from both intent states")
     # governance-mutation: PAPER_DAILY_INTENT_AFTER_VALIDATION
     _validate_daily_intent_after(journal)
-    for name in _DAILY_PROJECTIONS:
-        save(name, journal["after"][name], fund_dir)
+    before_content = journal.get("before_content")
+    if journal["schema"] == "paper-daily-intent/v2":
+        if (not isinstance(before_content, dict)
+                or set(before_content) != set(_DAILY_PROJECTIONS)
+                or any(_projection_digest(before_content[name]) != journal["before"][name]
+                       for name in _DAILY_PROJECTIONS)):
+            raise ValueError("daily projection before-state snapshot is invalid")
+    elif all(_projection_digest(current_content[name]) == journal["before"][name]
+             for name in _DAILY_PROJECTIONS):
+        before_content = current_content
+    elif all(_projection_digest(current_content[name]) ==
+             _projection_digest(journal["after"][name]) for name in _DAILY_PROJECTIONS):
+        before_content = None
+    else:
+        raise ValueError("cannot prove legacy daily intent transition after partial write")
+    if before_content is not None:
+        import nightly_publish
+        # governance-mutation: PAPER_DAILY_INTENT_TRANSITION_REPLAY
+        problems = nightly_publish.validate_daily_projection_transition(
+            before_content, journal["after"], journal["target_trade_date"], journal["run_id"],
+        )
+        if problems:
+            raise ValueError("daily projection transition is invalid: " + "; ".join(problems))
+        for name in _DAILY_PROJECTIONS:
+            save(name, journal["after"][name], fund_dir)
     os.unlink(path)
     if os.name != "nt":
         directory = os.open(os.path.abspath(fund_dir), os.O_RDONLY)
@@ -701,9 +726,18 @@ def _commit_daily_projections(fund_dir, target, run, fund, orders, decision_log,
     if os.path.exists(_path(_DAILY_INTENT, fund_dir)):
         raise ValueError("unrecovered daily projection intent")
     after = dict(zip(_DAILY_PROJECTIONS, (fund, orders, decision_log, nav_history)))
-    before = {name: _projection_digest(load(name, None, fund_dir)) for name in _DAILY_PROJECTIONS}
-    journal = {"schema": "paper-daily-intent/v1", "target_trade_date": target,
-               "run_id": run, "before": before, "after": copy.deepcopy(after)}
+    before_content = {name: load(name, None, fund_dir) for name in _DAILY_PROJECTIONS}
+    before = {name: _projection_digest(value) for name, value in before_content.items()}
+    journal = {"schema": "paper-daily-intent/v2", "target_trade_date": target,
+               "run_id": run, "before": before,
+               "before_content": before_content, "after": copy.deepcopy(after)}
+    _validate_daily_intent_after(journal)
+    import nightly_publish
+    problems = nightly_publish.validate_daily_projection_transition(
+        before_content, journal["after"], target, run,
+    )
+    if problems:
+        raise ValueError("daily projection transition is invalid: " + "; ".join(problems))
     journal["intent_hash"] = _projection_digest(journal)
     save(_DAILY_INTENT, journal, fund_dir)
     _finish_daily_intent(fund_dir)
