@@ -254,6 +254,16 @@ class BatteryEvidenceTests(unittest.TestCase):
         self.assertNotIn("ANNOUNCEMENT_PAGE_COVERAGE_UNVERIFIED",
                          row["dims"][NEWS]["reason_codes"])
 
+    def test_eastmoney_overlength_page_is_not_trusted(self):
+        page = [{"notice_date": "2026-09-23", "title": f"Fixture {i}"}
+                for i in range(31)]
+        body = json.dumps({"code": 1, "success": True, "data": {
+            "list": page, "total_hits": len(page),
+        }}).encode("utf-8")
+        with mock.patch.dict(os.environ, {"AR_OFFLINE": ""}), \
+                mock.patch("urllib.request.urlopen", return_value=io.BytesIO(body)):
+            self.assertIsNone(full_battery._fetch_anns_eastmoney(CODE, page_size=30))
+
     def test_eastmoney_ambiguous_empty_response_blocks_u4(self):
         responses = (
             {"code": 0, "message": "backend unavailable", "data": {"list": [], "total_hits": 0}},

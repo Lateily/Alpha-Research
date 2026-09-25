@@ -605,6 +605,43 @@ def _projection_digest(value):
     return hashlib.sha256(raw).hexdigest()
 
 
+def _validate_daily_intent_after(journal):
+    after = journal["after"]
+    fund, orders = after["fund.json"], after["orders.json"]
+    decision_log, nav_history = after["decision_log.json"], after["nav_history.json"]
+    if (not isinstance(fund, dict) or fund.get("paper_only") is not True
+            or not isinstance(orders, list) or not isinstance(decision_log, list)
+            or not isinstance(nav_history, list) or not nav_history):
+        raise ValueError("daily projection after-state structure is invalid")
+    for key in ("cash", "initial_capital"):
+        value = fund.get(key)
+        if (isinstance(value, bool) or not isinstance(value, (int, float))
+                or not math.isfinite(value) or value < 0):
+            raise ValueError(f"daily projection fund.{key} is invalid")
+    if fund["initial_capital"] <= 0:
+        raise ValueError("daily projection initial capital is invalid")
+    if any(not isinstance(order, dict) or order.get("status") not in
+           {"pending", "filled", "closed", "expired"} for order in orders):
+        raise ValueError("daily projection orders are invalid")
+    if any(not isinstance(row, dict) for row in decision_log):
+        raise ValueError("daily projection decision log is invalid")
+    dates = []
+    for row in nav_history:
+        if not isinstance(row, dict):
+            raise ValueError("daily projection NAV row is invalid")
+        date = row.get("date")
+        if not isinstance(date, str) or len(date) != 8 or not date.isdigit():
+            raise ValueError("daily projection NAV date is invalid")
+        try:
+            datetime.datetime.strptime(date, "%Y%m%d")
+        except ValueError as exc:
+            raise ValueError("daily projection NAV date is invalid") from exc
+        dates.append(date)
+    if (dates != sorted(set(dates)) or dates[-1] != journal["target_trade_date"]
+            or not _committed_daily_row_is_consistent(nav_history[-1], fund, orders)):
+        raise ValueError("daily projection NAV is not bound to fund, orders, and target")
+
+
 def _finish_daily_intent(fund_dir, *, expected_target=None, expected_run=None):
     path = _path(_DAILY_INTENT, fund_dir)
     if not os.path.exists(path):
@@ -626,6 +663,8 @@ def _finish_daily_intent(fund_dir, *, expected_target=None, expected_run=None):
             journal["before"][name], _projection_digest(journal["after"][name])
         }:
             raise ValueError(f"daily projection {name} differs from both intent states")
+    # governance-mutation: PAPER_DAILY_INTENT_AFTER_VALIDATION
+    _validate_daily_intent_after(journal)
     for name in _DAILY_PROJECTIONS:
         save(name, journal["after"][name], fund_dir)
     os.unlink(path)

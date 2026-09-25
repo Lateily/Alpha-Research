@@ -788,9 +788,8 @@ def validate_plan(plan: Mapping[str, Any]) -> None:
         raise PaperRegistrationError("paper decision and frozen order projection differ")
 
 
-def _validate_plan_evidence(
-    *, plan: Mapping[str, Any], closure_bundle: Path, case: Mapping[str, Any],
-    u4_ledger_path: Path, fund_dir: Path,
+def _validate_frozen_case_binding(
+    plan: Mapping[str, Any], closure_bundle: Path, case: Mapping[str, Any]
 ) -> None:
     validate_plan(plan)
     try:
@@ -805,6 +804,13 @@ def _validate_plan_evidence(
         closure_manifest.get("bundle_hash"), "closure bundle hash"
     ) != plan["source_refs"]["closure_bundle_hash"]:
         raise PaperRegistrationError("paper plan is bound to a different closure bundle")
+
+
+def _validate_plan_evidence(
+    *, plan: Mapping[str, Any], closure_bundle: Path, case: Mapping[str, Any],
+    u4_ledger_path: Path, fund_dir: Path,
+) -> None:
+    _validate_frozen_case_binding(plan, closure_bundle, case)
     _packet, _projection, decision = _current_u4_selection(
         closure_bundle=closure_bundle,
         u4_ledger_path=u4_ledger_path,
@@ -1288,6 +1294,8 @@ def apply_plan(
             "U4 decisions and paper registration must share one R-015 ledger"
         )
     with _nightly_lock(nightly_lock_path):
+        # governance-mutation: PAPER_REGISTRATION_RETRY_CASE_BINDING
+        _validate_frozen_case_binding(plan, closure_bundle, case)
         source_context = {
             "closure_bundle": closure_bundle,
             "case": copy.deepcopy(dict(case)),

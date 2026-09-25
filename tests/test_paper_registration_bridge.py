@@ -220,6 +220,32 @@ def source_context_for(ctx: dict) -> dict:
 
 
 class PaperRegistrationBridgeTests(unittest.TestCase):
+    def test_pending_and_committed_retry_revalidate_frozen_case(self) -> None:
+        for state in ("pending", "committed"):
+            with self.subTest(state=state), tempfile.TemporaryDirectory() as tmp:
+                ctx = build_context(Path(tmp))
+                if state == "pending":
+                    with self.assertRaisesRegex(bridge.PaperRegistrationError, "injected interruption"):
+                        apply_context(ctx, fail_after="intent")
+                else:
+                    self.assertEqual("APPLIED", apply_context(ctx)["status"])
+                case = copy.deepcopy(ctx["case"])
+                registration = case["method_registration"]
+                registration["smc"]["evidence_as_of"] = "20260813"
+                registration["registration_hash"] = research_cycle._hash({
+                    key: value for key, value in registration.items() if key != "registration_hash"
+                })
+                case["case_hash"] = research_cycle._hash({
+                    key: value for key, value in case.items() if key != "case_hash"
+                })
+                ctx["case"] = case
+                ledger_before = ctx["ledger_path"].read_bytes()
+                fund_before = bridge._state_hashes(bridge._load_fund_state(ctx["fund_dir"]))
+                with self.assertRaisesRegex(bridge.PaperRegistrationError, "SMC evidence instant required"):
+                    apply_context(ctx)
+                self.assertEqual(ledger_before, ctx["ledger_path"].read_bytes())
+                self.assertEqual(fund_before, bridge._state_hashes(bridge._load_fund_state(ctx["fund_dir"])))
+
     def test_rehashed_current_case_with_date_only_smc_cannot_build_plan(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             ctx = build_context(Path(tmp))

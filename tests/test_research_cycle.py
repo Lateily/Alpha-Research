@@ -396,6 +396,53 @@ class ResearchCycleTests(unittest.TestCase):
             receipt = cycle.seal_review_receipt(build_review_draft(trace, old_review), old_review)
             with self.assertRaisesRegex(cycle.CycleError, "legacy read-only cycle cannot be newly finalized"):
                 cycle.finalize_review(historical, closure_bundle, receipt)
+            old_final = {
+                "schema": cycle.FINAL_SCHEMA, "schema_version": cycle.SCHEMA_VERSION,
+                "research_cycle_id": trace["research_cycle_id"], "status": "REVIEWED",
+                "cycle_bundle_hash": manifest["bundle_hash"],
+                "mechanical_review_hash": old_review["review_hash"],
+                "review_receipt_hash": receipt["receipt_hash"],
+                "reviewed_at": receipt["reviewed_at"],
+                "machine_attribution": receipt["machine_attribution"],
+                "review_disposition": receipt["review_disposition"],
+                "human_attribution": receipt["human_attribution"],
+                "disagreement_reason": receipt["disagreement_reason"],
+                "evidence_refs": receipt["evidence_refs"],
+                "lessons": receipt["lessons"],
+                "rule_change_proposals": receipt["rule_change_proposals"],
+                "rule_changes_effective_prospectively_only": True,
+                "claim_allowed": False, "no_trade_flag": True,
+                "production_authority": False, "disclaimer": cycle.DISCLAIMER,
+            }
+            old_final["final_hash"] = funnel._hash(old_final)
+            reviewed = root / "historical-reviewed"
+            reviewed.mkdir()
+            cycle._atomic_write_json(reviewed / "review_receipt.json", receipt)
+            cycle._atomic_write_json(reviewed / "reviewed_cycle.json", old_final)
+            final_artifacts = {
+                name: cycle._sha256_path(reviewed / name)
+                for name in sorted(cycle.FINAL_ARTIFACTS)
+            }
+            cycle._atomic_write_json(reviewed / "manifest.json", {
+                "schema": "ar.research_cycle_reviewed_bundle",
+                "schema_version": cycle.SCHEMA_VERSION,
+                "research_cycle_id": trace["research_cycle_id"],
+                "artifacts": final_artifacts,
+                "bundle_hash": funnel._hash(final_artifacts),
+                "claim_allowed": False, "no_trade_flag": True,
+                "production_authority": False, "disclaimer": cycle.DISCLAIMER,
+            })
+            reviewed_before = {path.name: path.read_bytes() for path in reviewed.iterdir()}
+            try:
+                final_status = cycle.verify_final_bundle(
+                    reviewed, historical, closure_bundle,
+                )["status"]
+            except cycle.CycleError as exc:
+                self.fail(f"historical reviewed bundle must verify read-only: {exc}")
+            self.assertEqual("VERIFIED_REVIEWED", final_status)
+            self.assertEqual(reviewed_before, {
+                path.name: path.read_bytes() for path in reviewed.iterdir()
+            })
 
     def test_newly_assembled_legacy_cycle_cannot_gain_review_authority(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -417,15 +464,12 @@ class ResearchCycleTests(unittest.TestCase):
                 generated_at="2026-08-17T16:10:00+00:00",
             )
             cycle_bundle = root / "new-legacy-cycle"
-            cycle._write_cycle_outputs(
-                cycle_bundle, closure_bundle, case, bars, outcomes,
-                trace, fund, scorecard, review,
-            )
-            verified = cycle.verify_cycle_bundle(cycle_bundle, closure_bundle)
-            self.assertEqual("VERIFIED_LEGACY_READONLY", verified["status"])
-            receipt = cycle.seal_review_receipt(build_review_draft(trace, review), review)
-            with self.assertRaisesRegex(cycle.CycleError, "legacy read-only cycle cannot be newly finalized"):
-                cycle.finalize_review(cycle_bundle, closure_bundle, receipt)
+            with self.assertRaisesRegex(cycle.CycleError, "legacy read-only cycle cannot be newly written"):
+                cycle._write_cycle_outputs(
+                    cycle_bundle, closure_bundle, case, bars, outcomes,
+                    trace, fund, scorecard, review,
+                )
+            self.assertFalse(cycle_bundle.exists())
 
     def test_legacy_case_replays_but_cannot_be_newly_sealed(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

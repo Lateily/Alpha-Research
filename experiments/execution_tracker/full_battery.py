@@ -173,7 +173,8 @@ def _fetch_anns_eastmoney(ts_code, page_size=30, timeout=10):
             return None
         lst = data["list"]
         total_hits = data.get("total_hits")
-        if (type(total_hits) is not int or total_hits < len(lst)
+        # governance-mutation: BATTERY_EASTMONEY_PAGE_BOUNDS
+        if (type(total_hits) is not int or len(lst) > page_size or total_hits < len(lst)
                 or total_hits < 0 or (len(lst) < page_size and total_hits != len(lst))):
             return None
         return AnnouncementPage(

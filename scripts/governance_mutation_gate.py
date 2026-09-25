@@ -975,9 +975,9 @@ MUTATIONS: tuple[MutationCase, ...] = (
         mutation_id="PAPER_DAILY_MISSING_NAV_PERSISTS_EXECUTION", component="Nightly settlement publication",
         source_path="experiments/execution_tracker/model_paper_fund.py", test_script="tests/test_paper_settlement_publication.py",
         before="            rec = record_unavailable_nav(fund, orders, navh, date, e.missing)",
-        after='            rec = {"nav": None, "cash": fund["cash"], "n_positions": 0}',
+        after='            rec = record_unavailable_nav(fund, orders, navh, date, e.missing)\n            decision_log = []',
         expected_failure_marker="test_missing_nav_preserves_due_attempt_and_other_exit_for_publication",
-        rationale="A missing close must not discard the daily exit attempts or leave the NAV series stale.",
+        rationale="A missing close must preserve the valid NAV block and the day's exit and attempt events.",
     ),
     MutationCase(
         mutation_id="PAPER_DAILY_INTENT_RECOVERY", component="Nightly settlement publication",
@@ -5348,7 +5348,7 @@ MUTATIONS: tuple[MutationCase, ...] = (
             '    )'
         ),
         after='    legacy_readonly = False',
-        expected_failure_marker="test_newly_assembled_legacy_cycle_cannot_gain_review_authority",
+        expected_failure_marker="test_historical_resolved_v1_bundle_verifies_without_new_scoring_authority",
         rationale="An unresolved v1 projection is still historical and cannot gain new review authority.",
     ),
     MutationCase(
@@ -9092,7 +9092,7 @@ MUTATIONS = MUTATIONS + (
         test_script="tests/test_research_closed_loop_v1.py",
         before=(
             '    {"path": "experiments/research_funnel/research_cycle.py", '
-            '"sha256": "sha256:306f0332dab16369db9f4457951e3497143a8f6f5a18e61e42636e87ce463b44"},\n'
+            '"sha256": "sha256:c826bb98f749a2fb2337351b68bcbd340476fb44b09f00f69b5d3a7d5274f373"},\n'
         ),
         after="",
         expected_failure_marker="test_every_bound_artifact_matches_its_exact_bytes",
@@ -9167,7 +9167,7 @@ MUTATIONS = MUTATIONS + (
         test_script="tests/test_research_closed_loop_v1.py",
         before=(
             '    {"path": "experiments/research_funnel/paper_registration_bridge.py", '
-            '"sha256": "sha256:ba54e17b06eb18aac8d33d0935e45f67ae6b5e35dadd89fd311c994e6e74b28d"},'
+            '"sha256": "sha256:35c756cd2e4ff7c1cc4fe042845da9e77c20ac40481b237e02e80a1299838c9d"},'
         ),
         after=(
             '    {"path": "experiments/research_funnel/paper_registration_bridge.py", '
@@ -11636,6 +11636,56 @@ MUTATIONS = MUTATIONS + (
         after="        \"unit\": rule[\"unit\"],",
         expected_failure_marker="test_transformed_factor_units_describe_values",
         rationale="Transformed percentages and percentage-point deltas must not retain raw input units.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_REGISTRATION_RETRY_CASE_BINDING",
+        component="Research funnel paper registration",
+        source_path="experiments/research_funnel/paper_registration_bridge.py",
+        test_script="tests/test_paper_registration_bridge.py",
+        before="        _validate_frozen_case_binding(plan, closure_bundle, case)\n        source_context = {",
+        after="        source_context = {",
+        expected_failure_marker="test_pending_and_committed_retry_revalidate_frozen_case",
+        rationale="Pending and committed retries must revalidate the current frozen case before convergence.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_DAILY_INTENT_AFTER_VALIDATION",
+        component="Research funnel paper daily projection recovery",
+        source_path="experiments/execution_tracker/model_paper_fund.py",
+        test_script="tests/test_paper_settlement_publication.py",
+        before="    _validate_daily_intent_after(journal)\n    for name in _DAILY_PROJECTIONS:",
+        after="    for name in _DAILY_PROJECTIONS:",
+        expected_failure_marker="test_nightly_refuses_self_hashed_invalid_daily_projection_before_any_write",
+        rationale="A self-hashed intent cannot replay malformed projections into the live paper fund.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_CYCLE_LEGACY_NO_NEW_BUNDLE",
+        component="Research funnel full paper cycle",
+        source_path="experiments/research_funnel/research_cycle.py",
+        test_script="tests/test_research_cycle.py",
+        before='    if isinstance(registration, dict) and registration.get("schema_version") == method_contract.SCHEMA_VERSION:\n        raise CycleError("legacy read-only cycle cannot be newly written")',
+        after='    if False:\n        raise CycleError("legacy read-only cycle cannot be newly written")',
+        expected_failure_marker="test_newly_assembled_legacy_cycle_cannot_gain_review_authority",
+        rationale="Legacy cases remain verifiable but cannot create a new persisted cycle bundle.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_CYCLE_LEGACY_FINAL_READONLY_VERIFY",
+        component="Research funnel full paper cycle",
+        source_path="experiments/research_funnel/research_cycle.py",
+        test_script="tests/test_research_cycle.py",
+        before="    expected = _review_projection(cycle_bundle, receipt)",
+        after="    expected = finalize_review(cycle_bundle, closure_bundle, receipt)",
+        expected_failure_marker="test_historical_resolved_v1_bundle_verifies_without_new_scoring_authority",
+        rationale="Existing reviewed legacy bundles must verify without granting new review authority.",
+    ),
+    MutationCase(
+        mutation_id="BATTERY_EASTMONEY_PAGE_BOUNDS",
+        component="U3 announcement source response",
+        source_path="experiments/execution_tracker/full_battery.py",
+        test_script="tests/test_full_battery_evidence.py",
+        before='type(total_hits) is not int or len(lst) > page_size or total_hits < len(lst)',
+        after='type(total_hits) is not int or total_hits < len(lst)',
+        expected_failure_marker="test_eastmoney_overlength_page_is_not_trusted",
+        rationale="A response longer than the requested page cannot prove announcement coverage.",
     ),
 )
 

@@ -773,6 +773,10 @@ def _write_cycle_outputs(
     bars: Mapping[str, Any], outcomes: Mapping[str, Any], trace: Mapping[str, Any],
     fund: Mapping[str, Any], scorecard: Mapping[str, Any], review: Mapping[str, Any],
 ) -> None:
+    registration = case.get("method_registration")
+    # governance-mutation: RESEARCH_CYCLE_LEGACY_NO_NEW_BUNDLE
+    if isinstance(registration, dict) and registration.get("schema_version") == method_contract.SCHEMA_VERSION:
+        raise CycleError("legacy read-only cycle cannot be newly written")
     if os.path.lexists(output_dir):
         raise CycleError(f"output directory already exists: {output_dir}")
     output_dir.parent.mkdir(parents=True, exist_ok=True)
@@ -942,6 +946,10 @@ def finalize_review(cycle_bundle: Path, closure_bundle: Path, receipt: Mapping[s
     # governance-mutation: RESEARCH_CYCLE_LEGACY_NO_NEW_REVIEW
     if verified["status"] == "VERIFIED_LEGACY_READONLY":
         raise CycleError("legacy read-only cycle cannot be newly finalized")
+    return _review_projection(cycle_bundle, receipt)
+
+
+def _review_projection(cycle_bundle: Path, receipt: Mapping[str, Any]) -> dict[str, Any]:
     review = _load_object(cycle_bundle / "mechanical_review.json")
     trace = _load_object(cycle_bundle / "cycle_trace.json")
     validate_review_receipt(receipt, review)
@@ -1013,7 +1021,8 @@ def verify_final_bundle(output_dir: Path, cycle_bundle: Path, closure_bundle: Pa
             raise CycleError(f"reviewed-cycle artifact hash mismatch: {name}")
     receipt = _load_object(output_dir / "review_receipt.json")
     final = _load_object(output_dir / "reviewed_cycle.json")
-    expected = finalize_review(cycle_bundle, closure_bundle, receipt)
+    # governance-mutation: RESEARCH_CYCLE_LEGACY_FINAL_READONLY_VERIFY
+    expected = _review_projection(cycle_bundle, receipt)
     if final != expected or final.get("final_hash") != _hash(_without_hash(final, "final_hash")):
         raise CycleError("reviewed cycle is not the deterministic projection of its receipt")
     return {"status": "VERIFIED_REVIEWED", "research_cycle_id": final["research_cycle_id"], "claim_allowed": False, "production_authority": False}

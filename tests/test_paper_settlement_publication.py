@@ -393,6 +393,7 @@ class PaperSettlementPublicationTests(unittest.TestCase):
 
         with mock.patch.object(engine, "save", side_effect=crash):
             with self.assertRaises(OSError):
+                after_nav[0]["date"] = "20260908"
                 engine._commit_daily_projections(str(directory), "20260908", "NEXT",
                                                  after_fund, self.orders, after_log, after_nav)
         publish.atomic_json(str(directory / "orders.json"), [{"unexpected": "state"}])
@@ -413,7 +414,12 @@ class PaperSettlementPublicationTests(unittest.TestCase):
                     **before,
                     "fund.json": {**self.fund, "cash": self.fund["cash"] + 100.0},
                     "decision_log.json": self.log + [{"date": TARGET, "action": "PAPER_DEADLINE_ATTEMPT"}],
-                    "nav_history.json": [{"date": TARGET, "status": "DATA_BLOCKED", "nav": None}],
+                    "nav_history.json": [{
+                        "date": TARGET, "status": "DATA_BLOCKED", "nav": None,
+                        "cash": self.fund["cash"] + 100.0, "n_positions": 1,
+                        "daily_return": None, "cum_return": None,
+                        "reason": "MISSING_TARGET_CLOSE", "missing_tickers": ["600001.SH"],
+                    }],
                 }
                 for name, value in before.items():
                     engine.save(name, value, directory)
@@ -461,7 +467,12 @@ class PaperSettlementPublicationTests(unittest.TestCase):
                 after = {
                     **before,
                     "fund.json": {**self.fund, "cash": self.fund["cash"] + 100.0},
-                    "nav_history.json": [{"date": TARGET, "status": "DATA_BLOCKED", "nav": None}],
+                    "nav_history.json": [{
+                        "date": TARGET, "status": "DATA_BLOCKED", "nav": None,
+                        "cash": self.fund["cash"] + 100.0, "n_positions": 1,
+                        "daily_return": None, "cum_return": None,
+                        "reason": "MISSING_TARGET_CLOSE", "missing_tickers": ["600001.SH"],
+                    }],
                 }
                 for name, value in before.items():
                     engine.save(name, value, str(fund_dir))
@@ -506,12 +517,23 @@ class PaperSettlementPublicationTests(unittest.TestCase):
                 }
                 for name, value in before.items():
                     engine.save(name, value, str(fund_dir))
+                after_fund = {**self.fund, "cash": self.fund["cash"] + 100.0}
+                after = {
+                    **before,
+                    "fund.json": after_fund,
+                    "nav_history.json": [{
+                        "date": prior_date, "status": "DATA_BLOCKED", "nav": None,
+                        "cash": after_fund["cash"], "n_positions": 1,
+                        "daily_return": None, "cum_return": None,
+                        "reason": "MISSING_TARGET_CLOSE", "missing_tickers": ["600001.SH"],
+                    }],
+                }
                 journal = {
                     "schema": "paper-daily-intent/v1", "target_trade_date": prior_date,
                     "run_id": prior_run,
                     "before": {name: engine._projection_digest(value)
                                for name, value in before.items()},
-                    "after": {**before, "fund.json": {**self.fund, "cash": self.fund["cash"] + 100.0}},
+                    "after": after,
                 }
                 journal["intent_hash"] = engine._projection_digest(journal)
                 engine.save(engine._DAILY_INTENT, journal, str(fund_dir))
@@ -520,6 +542,46 @@ class PaperSettlementPublicationTests(unittest.TestCase):
                     self.assertIs(nightly._recover_phase(base=str(live_et)), False)
                 self.assertEqual(original, {path.name: path.read_bytes()
                                             for path in fund_dir.iterdir()})
+
+    def test_nightly_refuses_self_hashed_invalid_daily_projection_before_any_write(self):
+        with tempfile.TemporaryDirectory() as directory:
+            live_et = Path(directory) / "experiments" / "execution_tracker"
+            fund_dir = live_et / "model_fund"
+            fund_dir.mkdir(parents=True)
+            before = {
+                "fund.json": copy.deepcopy(self.fund),
+                "orders.json": copy.deepcopy(self.orders),
+                "decision_log.json": copy.deepcopy(self.log),
+                "nav_history.json": [],
+            }
+            for name, value in before.items():
+                engine.save(name, value, str(fund_dir))
+            after = {
+                **before,
+                "fund.json": {**self.fund, "cash": "invalid-cash"},
+                "nav_history.json": [{
+                    "date": TARGET, "status": "DATA_BLOCKED", "nav": None,
+                    "cash": "invalid-cash", "n_positions": 1,
+                    "daily_return": None, "cum_return": None,
+                    "reason": "MISSING_TARGET_CLOSE", "missing_tickers": ["600001.SH"],
+                }],
+            }
+            journal = {
+                "schema": "paper-daily-intent/v1", "target_trade_date": TARGET,
+                "run_id": RID,
+                "before": {name: engine._projection_digest(value)
+                           for name, value in before.items()},
+                "after": after,
+            }
+            journal["intent_hash"] = engine._projection_digest(journal)
+            engine.save(engine._DAILY_INTENT, journal, str(fund_dir))
+            original = {path.name: path.read_bytes() for path in fund_dir.iterdir()}
+            with self.assertRaisesRegex(ValueError, "fund.cash is invalid"):
+                engine._finish_daily_intent(str(fund_dir))
+            with mock.patch.dict("os.environ", {"AR_TARGET_TRADE_DATE": "20260908"}):
+                self.assertIs(nightly._recover_phase(base=str(live_et)), False)
+            self.assertEqual(original, {path.name: path.read_bytes()
+                                        for path in fund_dir.iterdir()})
 
     def test_next_daily_run_refuses_future_or_malformed_intent(self):
         for prior_date, prior_run in (("20260909", "FUTURE_RUN"), ("20260907", "")):
@@ -533,7 +595,17 @@ class PaperSettlementPublicationTests(unittest.TestCase):
                 }
                 for name, value in before.items():
                     engine.save(name, value, directory)
-                after = {**before, "fund.json": {**self.fund, "cash": self.fund["cash"] + 100.0}}
+                after_fund = {**self.fund, "cash": self.fund["cash"] + 100.0}
+                after = {
+                    **before,
+                    "fund.json": after_fund,
+                    "nav_history.json": [{
+                        "date": prior_date, "status": "DATA_BLOCKED", "nav": None,
+                        "cash": after_fund["cash"], "n_positions": 1,
+                        "daily_return": None, "cum_return": None,
+                        "reason": "MISSING_TARGET_CLOSE", "missing_tickers": ["600001.SH"],
+                    }],
+                }
                 journal = {
                     "schema": "paper-daily-intent/v1", "target_trade_date": prior_date,
                     "run_id": prior_run,
