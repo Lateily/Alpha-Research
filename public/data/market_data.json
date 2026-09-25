@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "fetched_at": "2026-09-25T06:01:04.723610",
+    "fetched_at": "2026-09-25T14:00:12.903402",
     "version": "4.1",
     "tickers": [
       "300308.SZ",
@@ -168,7 +168,7 @@
         "change_pct": 0.831,
         "high": 15.65,
         "low": 15.36,
-        "volume": -95,
+        "volume": -107,
         "avg_volume_20d": null,
         "volume_ratio": null,
         "high_52w": 15.65,
