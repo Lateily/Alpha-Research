@@ -397,6 +397,36 @@ class ResearchCycleTests(unittest.TestCase):
             with self.assertRaisesRegex(cycle.CycleError, "legacy read-only cycle cannot be newly finalized"):
                 cycle.finalize_review(historical, closure_bundle, receipt)
 
+    def test_newly_assembled_legacy_cycle_cannot_gain_review_authority(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            closure_bundle, codes, _, _, _ = build_closure_bundle(root)
+            draft = build_case_draft(closure_bundle, codes[0])
+            registration = draft["method_registration"]
+            registration["schema_version"] = "1.0"
+            registration["registration_hash"] = funnel._hash({
+                key: value for key, value in registration.items() if key != "registration_hash"
+            })
+            case = dict(draft, case_hash=funnel._hash(draft))
+            bars = cycle.seal_bars(build_bar_draft(codes[0]), case)
+            outcomes = method.seal_outcomes(
+                method_fixtures.outcome_draft(registration), registration,
+            )
+            trace, fund, scorecard, review = cycle.run_cycle(
+                bundle_dir=closure_bundle, case=case, bars=bars, outcomes=outcomes,
+                generated_at="2026-08-17T16:10:00+00:00",
+            )
+            cycle_bundle = root / "new-legacy-cycle"
+            cycle._write_cycle_outputs(
+                cycle_bundle, closure_bundle, case, bars, outcomes,
+                trace, fund, scorecard, review,
+            )
+            verified = cycle.verify_cycle_bundle(cycle_bundle, closure_bundle)
+            self.assertEqual("VERIFIED_LEGACY_READONLY", verified["status"])
+            receipt = cycle.seal_review_receipt(build_review_draft(trace, review), review)
+            with self.assertRaisesRegex(cycle.CycleError, "legacy read-only cycle cannot be newly finalized"):
+                cycle.finalize_review(cycle_bundle, closure_bundle, receipt)
+
     def test_legacy_case_replays_but_cannot_be_newly_sealed(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             bundle, codes, _, _, _ = build_closure_bundle(Path(directory))

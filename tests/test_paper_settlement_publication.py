@@ -15,6 +15,7 @@ sys.path.insert(0, str(ROOT / "tests"))
 sys.path.insert(0, str(ROOT / "experiments" / "execution_tracker"))
 import model_paper_fund as engine
 import nightly_publish as publish
+import run_nightly as nightly
 
 TARGET = "20260907"
 RID = "20260907_fixture"
@@ -441,6 +442,84 @@ class PaperSettlementPublicationTests(unittest.TestCase):
                     {name: engine.load(name, None, directory) for name in engine._DAILY_PROJECTIONS},
                     after,
                 )
+
+    def test_nightly_recovers_prior_daily_intent_in_live_tree_before_staging(self):
+        for crash_name in (engine._DAILY_INTENT, *engine._DAILY_PROJECTIONS):
+            with self.subTest(crash_after=crash_name), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                live_et = root / "live" / "experiments" / "execution_tracker"
+                fund_dir = live_et / "model_fund"
+                fund_dir.mkdir(parents=True)
+                (root / "live" / "experiments" / "research_funnel").mkdir()
+                (root / "live" / "experiments" / "macro_os").mkdir()
+                before = {
+                    "fund.json": copy.deepcopy(self.fund),
+                    "orders.json": copy.deepcopy(self.orders),
+                    "decision_log.json": copy.deepcopy(self.log),
+                    "nav_history.json": [],
+                }
+                after = {
+                    **before,
+                    "fund.json": {**self.fund, "cash": self.fund["cash"] + 100.0},
+                    "nav_history.json": [{"date": TARGET, "status": "DATA_BLOCKED", "nav": None}],
+                }
+                for name, value in before.items():
+                    engine.save(name, value, str(fund_dir))
+                original_save = engine.save
+
+                def crash(name, obj, target_dir=None):
+                    original_save(name, obj, target_dir)
+                    if name == crash_name:
+                        raise OSError("injected projection crash")
+
+                with mock.patch.object(engine, "save", side_effect=crash):
+                    with self.assertRaisesRegex(OSError, "injected projection crash"):
+                        engine._commit_daily_projections(
+                            str(fund_dir), TARGET, RID,
+                            *(after[name] for name in engine._DAILY_PROJECTIONS),
+                        )
+                with mock.patch.dict("os.environ", {"AR_TARGET_TRADE_DATE": "20260908"}):
+                    self.assertIsNot(nightly._recover_phase(base=str(live_et)), False)
+                self.assertFalse((fund_dir / engine._DAILY_INTENT).exists())
+                stage = publish.prepare_stage(str(live_et), str(root / "live"), str(root / "run"))
+                self.assertFalse((Path(stage["et"]) / "model_fund" / engine._DAILY_INTENT).exists())
+                self.assertEqual(
+                    {name: engine.load(name, None, str(fund_dir)) for name in engine._DAILY_PROJECTIONS},
+                    after,
+                )
+                with mock.patch.dict("os.environ", {"AR_TARGET_TRADE_DATE": "20260908"}):
+                    self.assertIsNone(nightly._recover_phase(base=str(live_et)))
+
+    def test_nightly_refuses_future_or_malformed_live_daily_intent_without_writes(self):
+        for prior_date, prior_run in (("20260909", "FUTURE"), ("20260230", "INVALID_DATE"),
+                                      (TARGET, "")):
+            with self.subTest(prior_date=prior_date, prior_run=prior_run), \
+                    tempfile.TemporaryDirectory() as directory:
+                live_et = Path(directory) / "experiments" / "execution_tracker"
+                fund_dir = live_et / "model_fund"
+                fund_dir.mkdir(parents=True)
+                before = {
+                    "fund.json": copy.deepcopy(self.fund),
+                    "orders.json": copy.deepcopy(self.orders),
+                    "decision_log.json": copy.deepcopy(self.log),
+                    "nav_history.json": [],
+                }
+                for name, value in before.items():
+                    engine.save(name, value, str(fund_dir))
+                journal = {
+                    "schema": "paper-daily-intent/v1", "target_trade_date": prior_date,
+                    "run_id": prior_run,
+                    "before": {name: engine._projection_digest(value)
+                               for name, value in before.items()},
+                    "after": {**before, "fund.json": {**self.fund, "cash": self.fund["cash"] + 100.0}},
+                }
+                journal["intent_hash"] = engine._projection_digest(journal)
+                engine.save(engine._DAILY_INTENT, journal, str(fund_dir))
+                original = {path.name: path.read_bytes() for path in fund_dir.iterdir()}
+                with mock.patch.dict("os.environ", {"AR_TARGET_TRADE_DATE": "20260908"}):
+                    self.assertIs(nightly._recover_phase(base=str(live_et)), False)
+                self.assertEqual(original, {path.name: path.read_bytes()
+                                            for path in fund_dir.iterdir()})
 
     def test_next_daily_run_refuses_future_or_malformed_intent(self):
         for prior_date, prior_run in (("20260909", "FUTURE_RUN"), ("20260907", "")):

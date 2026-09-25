@@ -62,6 +62,7 @@ SEMICONDUCTOR_DIAGNOSTIC_SCRIPT = (
 
 sys.path.insert(0, str(ROOT / "experiments" / "research_funnel"))
 import semiconductor_evidence_diagnostic as semiconductor_diag  # noqa: E402
+import research_method  # noqa: E402
 
 
 def _strict_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
@@ -132,6 +133,10 @@ def _validate(manifest: dict[str, Any]) -> list[str]:
             errors.append(f"block surface changed: {row.get('id')}")
         if not row.get("honest_stop_states"):
             errors.append(f"block lost honest stop states: {row.get('id')}")
+        if row.get("id") == "RESEARCH_REGISTRATION" and row.get("output") != (
+            "AR_RESEARCH_METHOD_REGISTRATION_V" + research_method.REGISTRATION_VERSION.replace(".", "_")
+        ):
+            errors.append("research registration output version differs from runtime")
 
     denominator = manifest.get("decision_denominator", {})
     if denominator.get("required_decisions") != [

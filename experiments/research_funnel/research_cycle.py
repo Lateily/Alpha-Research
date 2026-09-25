@@ -374,6 +374,10 @@ def validate_case(case: Mapping[str, Any], bundle_dir: Path) -> dict[str, Any]:
         (len(smc_as_of) == 8 and smc_as_of.isdigit())
         or (len(smc_as_of) == 10 and smc_as_of[4] == "-" and smc_as_of[7] == "-")
     )
+    # governance-mutation: RESEARCH_CYCLE_SMC_SEAL_REQUIRES_INSTANT
+    # governance-mutation: RESEARCH_CYCLE_SMC_REGISTRATION_ENTRY
+    if registration["schema_version"] == method_contract.REGISTRATION_VERSION and date_only:
+        raise CycleError("SMC evidence instant required for a new case seal")
     smc_after_seal = not date_only and _iso(smc_as_of, "smc.evidence_as_of") > generated_at
     # governance-mutation: RESEARCH_CYCLE_SMC_SEAL_CHRONOLOGY
     if smc_after_seal:
@@ -419,13 +423,6 @@ def seal_case(draft: Mapping[str, Any], bundle_dir: Path) -> dict[str, Any]:
     case = dict(draft)
     case["case_hash"] = _hash(case)
     validate_case(case, bundle_dir)
-    smc_as_of = str(registration["smc"]["evidence_as_of"]).strip()
-    date_only_smc = (len(smc_as_of) == 8 and smc_as_of.isdigit()) or (
-        len(smc_as_of) == 10 and smc_as_of[4] == "-" and smc_as_of[7] == "-"
-    )
-    # governance-mutation: RESEARCH_CYCLE_SMC_SEAL_REQUIRES_INSTANT
-    if date_only_smc:
-        raise CycleError("SMC evidence instant required for a new case seal")
     return case
 
 
@@ -841,10 +838,13 @@ def verify_cycle_bundle(bundle_dir: Path, closure_bundle: Path) -> dict[str, Any
         _load_object(bundle_dir / "mechanical_review.json"),
     )
     registration = case.get("method_registration")
+    # governance-mutation: RESEARCH_CYCLE_LEGACY_IDENTITY_READONLY
     legacy_readonly = (
         isinstance(registration, dict)
         and registration.get("schema_version") == method_contract.SCHEMA_VERSION
-        and stored[2].get("thesis") != {
+    )
+    replay_resolved_legacy = (
+        legacy_readonly and stored[2].get("thesis") != {
             "status": "UNRESOLVED", "claims": [],
             "reason": "LEGACY_WRONG_IF_SEMANTICS_UNVALIDATED",
         }
@@ -852,7 +852,7 @@ def verify_cycle_bundle(bundle_dir: Path, closure_bundle: Path) -> dict[str, Any
     # governance-mutation: RESEARCH_CYCLE_LEGACY_READONLY_REPLAY
     rebuilt = run_cycle(
         bundle_dir=closure_bundle, case=case, bars=bars, outcomes=outcomes,
-        generated_at=stored[0]["generated_at"], _legacy_readonly=legacy_readonly,
+        generated_at=stored[0]["generated_at"], _legacy_readonly=replay_resolved_legacy,
     )
     projection_changed = rebuilt != stored
     # governance-mutation: RESEARCH_CYCLE_DETERMINISTIC_VERIFY

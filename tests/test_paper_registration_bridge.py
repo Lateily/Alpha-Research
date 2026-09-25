@@ -220,6 +220,27 @@ def source_context_for(ctx: dict) -> dict:
 
 
 class PaperRegistrationBridgeTests(unittest.TestCase):
+    def test_rehashed_current_case_with_date_only_smc_cannot_build_plan(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            ctx = build_context(Path(tmp))
+            case = copy.deepcopy(ctx["case"])
+            registration = case["method_registration"]
+            registration["smc"]["evidence_as_of"] = "20260813"
+            registration["registration_hash"] = research_cycle._hash({
+                key: value for key, value in registration.items() if key != "registration_hash"
+            })
+            case["case_hash"] = research_cycle._hash({
+                key: value for key, value in case.items() if key != "case_hash"
+            })
+            with self.assertRaisesRegex(
+                bridge.PaperRegistrationError, "SMC evidence instant required"
+            ):
+                bridge.build_plan(
+                    closure_bundle=ctx["closure_bundle"], case=case,
+                    u4_ledger_path=ctx["ledger_path"], fund_dir=ctx["fund_dir"],
+                    marks=ctx["marks"], generated_at=PLAN_AT,
+                )
+
     def test_u4_and_registration_require_one_r015_ledger(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             ctx = build_context(Path(tmp))

@@ -238,6 +238,22 @@ class BatteryEvidenceTests(unittest.TestCase):
             self.assertEqual([("2026-09-22", "Fixture disclosure")],
                              full_battery._fetch_anns_eastmoney(CODE))
 
+    def test_eastmoney_proven_full_page_is_not_marked_incomplete(self):
+        page = [{"notice_date": "2026-09-23", "title": f"Fixture {i}"}
+                for i in range(30)]
+        body = json.dumps({"code": 1, "success": True, "data": {
+            "list": page, "total_hits": len(page),
+        }}).encode("utf-8")
+        with mock.patch.dict(os.environ, {"AR_OFFLINE": ""}), \
+                mock.patch("urllib.request.urlopen", return_value=io.BytesIO(body)), \
+                mock.patch.object(red_flag_gate, "check_ticker", return_value={
+                    "verdict": "PASS", "reasons": [], "latest_e1_date": "20260820",
+                }):
+            row = funnel_dag._sanitize_row(full_battery.battery(FakeProvider(), CODE, TARGET))
+        self.assertEqual(30, row["dims"][NEWS]["最近公告条数"])
+        self.assertNotIn("ANNOUNCEMENT_PAGE_COVERAGE_UNVERIFIED",
+                         row["dims"][NEWS]["reason_codes"])
+
     def test_eastmoney_ambiguous_empty_response_blocks_u4(self):
         responses = (
             {"code": 0, "message": "backend unavailable", "data": {"list": [], "total_hits": 0}},

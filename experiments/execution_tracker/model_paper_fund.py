@@ -638,6 +638,26 @@ def _finish_daily_intent(fund_dir, *, expected_target=None, expected_run=None):
     return True
 
 
+def recover_prior_daily_intent(fund_dir, *, latest_target):
+    """Finish a committed daily projection in the live tree before staging is copied."""
+    path = _path(_DAILY_INTENT, fund_dir)
+    if not os.path.exists(path):
+        return None
+    journal = load(_DAILY_INTENT, None, fund_dir)
+    prior_date = journal.get("target_trade_date") if isinstance(journal, dict) else None
+    prior_run = journal.get("run_id") if isinstance(journal, dict) else None
+    try:
+        datetime.datetime.strptime(prior_date, "%Y%m%d")
+        datetime.datetime.strptime(latest_target, "%Y%m%d")
+    except (TypeError, ValueError) as exc:
+        raise ValueError("daily projection intent has no valid prior date") from exc
+    if (len(prior_date) != 8 or not prior_date.isdigit() or prior_date > latest_target
+            or not isinstance(prior_run, str) or not prior_run):
+        raise ValueError("daily projection intent has no valid prior run binding")
+    _finish_daily_intent(fund_dir, expected_target=prior_date, expected_run=prior_run)
+    return {"target_trade_date": prior_date, "run_id": prior_run}
+
+
 def _commit_daily_projections(fund_dir, target, run, fund, orders, decision_log, nav_history):
     if os.path.exists(_path(_DAILY_INTENT, fund_dir)):
         raise ValueError("unrecovered daily projection intent")

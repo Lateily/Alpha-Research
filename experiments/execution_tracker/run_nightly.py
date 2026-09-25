@@ -1312,10 +1312,18 @@ def _recover_phase(base=None):
         base = base or HERE
         sys.path.insert(0, HERE)
         import registry as _reg
+        import model_paper_fund as _paper_fund
+        from nightly_context import target_trade_date as _target_trade_date
+        paper_recovery = _paper_fund.recover_prior_daily_intent(
+            os.path.join(base, "model_fund"), latest_target=_target_trade_date()
+        )
+        if paper_recovery:
+            print(f"[recover] 纸面日投影已在 live 收敛: "
+                  f"{paper_recovery['target_trade_date']} / {paper_recovery['run_id']}")
         _log = os.path.join(base, "paper_signal_log.json")
         _lp = _reg.ledger_path_for(_log)
         if not os.path.exists(_lp):
-            return None
+            return {"paper_daily": paper_recovery} if paper_recovery else None
         r = _reg.recover_pending(_lp, _log)
         er = _reg.recover_evaluations(_lp, _log)
         if r["pending_examined"]:
@@ -1324,7 +1332,7 @@ def _recover_phase(base=None):
         if er["pending_examined"]:
             print(f"[recover] 悬空判分处理: 检查 {er['pending_examined']} · "
                   f"前滚 {er['rolled_forward']}")
-        return {"registration": r, "evaluation": er}
+        return {"registration": r, "evaluation": er, "paper_daily": paper_recovery}
     except Exception as e:                       # noqa: BLE001
         print(f"[recover] 恢复阶段失败: {e} —— fail-closed,本轮判 INCOMPLETE,引擎不得启动")
         return False

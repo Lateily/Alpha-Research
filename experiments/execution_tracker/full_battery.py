@@ -17,6 +17,12 @@ VERDICT_FIELD = "verdict_v0_unvalidated"
 DISPLAY_VERDICT_DIMENSIONS = ("行情", "资金", "技术面", "消息面", "估值")
 
 
+class AnnouncementPage(list):
+    def __init__(self, rows, total_hits):
+        super().__init__(rows)
+        self.complete = total_hits == len(self)
+
+
 def _finite_number(value):
     if isinstance(value, bool) or not isinstance(value, (int, float)):
         return None
@@ -170,7 +176,10 @@ def _fetch_anns_eastmoney(ts_code, page_size=30, timeout=10):
         if (type(total_hits) is not int or total_hits < len(lst)
                 or total_hits < 0 or (len(lst) < page_size and total_hits != len(lst))):
             return None
-        return [(str(a.get("notice_date", ""))[:10], str(a.get("title", ""))) for a in lst]
+        return AnnouncementPage(
+            [(str(a.get("notice_date", ""))[:10], str(a.get("title", ""))) for a in lst],
+            total_hits,
+        )
     except Exception:
         return None
 
@@ -256,7 +265,8 @@ def battery(pro, tk, today):
             D["消息面"] = {"status": "DATA_BLOCKED", "err": "东财+Tushare 公告源均不可用——不伪装为0条"}
         else:
             D["消息面"] = _announcement_evidence(
-                titles, today, page_complete=not eastmoney_source or len(titles) < 30,
+                titles, today, page_complete=(not eastmoney_source or
+                    (titles.complete if isinstance(titles, AnnouncementPage) else len(titles) < 30)),
             )
     except Exception as e:
         D["消息面"] = {"status": "NOT_RUN", "err": str(e)[:80]}
