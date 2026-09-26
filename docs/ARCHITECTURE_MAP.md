@@ -1,6 +1,8 @@
 # AR 平台总架构图(唯一进度总览,每周五随周报刷新)
 
-> 生效 2026-07-29,最近同步 2026-08-09。取代已冻结的 STATUS.md/ROADMAP.md 成为进度事实源。
+> 生效 2026-07-29,最近同步 2026-09-14。取代已冻结的 STATUS.md/ROADMAP.md 成为进度事实源。
+> 刷新纪律自查:上一次同步是 2026-08-16,中间停更四周;本次由 Claude 按实物重测后补写。
+> 块完成度是工程成熟度 E4 估计,不代表收益能力,也不代表该块在跑。
 > Track 规则:每个 PR/Issue 必挂一个块标签;新任务先答归属块,归不进=不做。
 > 不是买卖指令;研究信号,human executes.
 
@@ -44,13 +46,26 @@
 | 块 | 一句话 | 载体 | 负责人 | 完成度(E4) |
 |---|---|---|---|---|
 | 1 研究框架 | 怎么想:宪法v1.5/全市场漏斗/Macro OS/两票/双层线/E1-E4/判分 | docs/research/ + docs/team/ | Junyan | 75% |
-| 2 数据源 | 原料:Tushare/东财/yfinance/FRED/BLS/BEA;宏观历史仓、官方采集器和全市场漏斗已进入 M1-C/#269 夜链并完成手动生产 canary,官方发布日历物化器仍缺 | scripts/fetch_*.py + experiments/macro_os/ + experiments/research_funnel/ | Junyan+Macro Agent | 55% |
-| 3 引擎层 | 车间:夜链v4/哨兵/模型基金/判分/闸门/电池/归因;Macro M1-C 与研究漏斗观察步已部署并完成手动生产 canary,首次 launchd 自动验收待 2026-08-17 | experiments/execution_tracker/ + experiments/macro_os/ + experiments/research_funnel/ | Claude+Macro Agent | 80%(自动调度仍待验收) |
-| 4 契约层 | 传送带:引擎→v2 JSON→前端只读;Macro 同轮 manifest、失败上浮和漏斗 health 已产出正式运行实物,大型漏斗 bundle 留在不可变观察区而不进发布树 | public/data/v2/ + docs/contracts/ + experiments/*/schemas/ | Junyan定稿+Claude | 70%(Macro/漏斗仍为 VALIDATING) |
-| 5 前端载体 | 展厅(七面板+工作台)+工具间;旧Dashboard=legacy | src/(旧) → web/(新) | Better | 10% |
-| 6 AI系统 | 工人:Claude(架构审核)/Codex(结对)/Kimi(考核中);评测/prompt库/成本 | scripts/llm/ + docs/llm/ + AGENTS.md | Reed | 15% |
-| 7 团队流程 | 神经:main保护/PR口令/认领协议/Notion审阅/周消化 | GitHub 设置 + TEAM_CHARTER_v2 | Junyan | 60% |
-| 8 运维 | 电力:launchd/Actions/Vercel(API停用)/凭证 | plist + .github/workflows/ | Claude | 55% |
+| 2 数据源 | 原料:Tushare/东财/yfinance/FRED/BLS/BEA;WO-X1 十二源扩展已合并并完成历史采集,特征库新增 16 张半导体表;官方发布日历物化器仍缺;宏观库五源中 BEA/BLS/Census 至今 0 行 | scripts/fetch_*.py + experiments/macro_os/ + experiments/research_funnel/ | Junyan+Macro Agent | 65% |
+| 3 引擎层 | 车间:夜链v4 共 24 步/哨兵/模型基金/判分/闸门/电池/归因;代码成熟但**自动调度自 2026-09-09 起连续三次失败**,班次已于 2026-09-14 由 16:35 改 20:30,待首次验收 | experiments/execution_tracker/ + experiments/macro_os/ + experiments/research_funnel/ | Claude+Macro Agent | 80%(运行中断,见本周实况) |
+| 4 契约层 | 传送带:引擎→v2 JSON→前端只读;2026-09-08 那轮 48 件工件哈希复验一致,2026-09-14 补跑后当前发布面为 20260911、35 件工件、状态 COMMITTED。**缺口:契约没有新鲜度字段**,停更期间仍报 COMPLETE | public/data/v2/ + docs/contracts/ + experiments/*/schemas/ | Junyan定稿+Claude | 75%(缺过期标记) |
+| 5 前端载体 | 展厅(七面板+工作台)+工具间;旧 Dashboard 仍是唯一对外站点,`web/` 至今只有一个 AGENTS.md;本机只读工作台是实际在用的查看入口 | src/(旧) → web/(新) | Better | 10% |
+| 6 AI系统 | 工人:Claude(建设与独立复审)/Codex(工单实现)/Kimi(考核中);只读工作台已发布并常驻,AIOS 人工闸门 #290 仍 Draft | scripts/llm/ + docs/llm/ + AGENTS.md | Reed | 20% |
+| 7 团队流程 | 神经:main保护/PR口令/认领协议/Notion审阅/周消化;**周报自 2026-W31(08-03)停更**,PM 验收节奏事实上中断 | GitHub 设置 + TEAM_CHARTER_v2 | Junyan | 50%(下调,周节奏停摆) |
+| 8 运维 | 电力:launchd 五个服务(夜链20:30/EOD14:26/哨兵09:14/工作台常驻+观测)/Actions/Vercel(API停用)/凭证 | plist + .github/workflows/ | Claude | 55% |
+
+## 本周实况(2026-09-14,由实物重测)
+
+| 事项 | 状态 |
+|---|---|
+| 夜链 | 9/09、9/10、9/11 三次 16:35 班次全部 INCOMPLETE,目标交易日为空。根因是 `run_official_sample.py` 的全源结算日一致性检查:东财资金流对部分个股晚于日线结算,而重试只有 3 次 × 30 秒。2026-09-14 已把 `com.ar.nightly` 改为 20:30,取自唯一成功样本 9/08 20:26;同日 01:02 的补跑以 20260911 为目标跑通 24 步并发布,证明阻塞只在第一步。重试窗口本身由 PR #359 收口为 6 次 × 60 秒且受 420 秒墙钟预算约束;仓库内 plist 模板仍写 16:35,另由一个 PR 对齐。首次调度验收看当晚 `nightly_run.json` 是否 COMPLETE |
+| 发布面 | 2026-09-14 01:05 的补跑已把发布面推进到目标交易日 20260911,35 件工件 COMMITTED;此前停在 9/08 20:26 那一轮(48 件,哈希复验一致)。`meta.json` 仍无过期字段,停更期间照报 COMPLETE,记为契约层新债 |
+| 两道闸门 | 第一道已于 2026-09-09 15:17 触发:packet `78306352ac44`,002119.SZ / 600667.SH / 688035.SH 仅进深研,600667 警示保留。第二道未开:研究包 `research_pack_20260911` v2.1 的三条 paper 计划处于 PROPOSED,等 8 项执行口径裁定 |
+| 模拟盘 | 100 万元虚拟盘,历史 5 笔订单全部了结,当前 0 持仓,NAV 自 7/06 起 +2.54%,最后一笔平仓 9/04 |
+| 引擎缺口 | 两日成交有效期、T+10 退出尝试、三票共用一个集群额度均未实现;PR #357 仍 Draft。批准计划后这三项要人工执行 |
+| Macro | `macro_gate.json` 停在 2026-08-06;M1-C 契约维持 CALIBRATING / DATA_BLOCKED,无正式阻断权 |
+| 代码同步 | `~/ar-live` 仍停在 2b1eb5ad,比远端 main 少一个提交(9/09 合并的 #356);#358 与 #359 合并后需要一次同步 |
+| 文档 | 本次同时修正 `CLAUDE.md`:它仍把已冻结的 STATUS.md 列为必读,并保留 2026-06-07 的推荐制 PIVOT 说明,与现行"只给姿态、不给买卖"章程冲突 |
 
 ### Macro 线状态快照(2026-08-15)
 
@@ -77,7 +92,7 @@
 | U1 | #267 六通道独立扫描,#269 不可变观察 bundle;手动 canary 33,258 行 | `VALIDATING / PARTIAL` | 补 DATA_BLOCKED 通道,不得用复合总分 |
 | U2 | #267 候选并集/配额/控制抽样;手动 canary 105 个 U3-ready | `VALIDATING / PARTIAL` | 修慢牛 0/15 与目标短缺 95;接 R-035 判分 |
 | U3 | 既有动态名单六维电池可用 | `IN_PROGRESS` | 把 U2-ready 批量送入同日电池复审 |
-| U4 | 契约与人工权威门已交付;生产队列 0 | `HUMAN_GATE` | Junyan 从 ready pool 明确选择每周 3–5 家 |
+| U4 | 契约与人工权威门已交付;2026-09-09 首次正式登记 148 条决策(3 SELECT / 40 REJECT / 3 DATA_BLOCKED / 21 NO_TRADE / 81 DEFER),账本累计 263 事件 | `HUMAN_GATE` | 第二道闸门待批 paper 规则;夜链停摆期间 deep queue 仍为 0 |
 | U5 | 注册、判分、法庭与组合链可继续运行 | `VALIDATING` | R-039/040/041 完成前不得解锁因果簇 claim |
 
 ## 块间接口(章程 §4 的载体化)
@@ -107,3 +122,10 @@
 - 2026-08-15 生产地基更新:#256/#258/#259/#267/#269 已合并并同步 `~/ar-live`;
   R-043 迁移在 0806 现场完成 WAL/双 manifest/双 pointer 实战验收;#269 手动 canary
   22/22 步通过。自动状态仍保持 PENDING,等 2026-08-17 launchd 首轮 receipt。
+- 2026-09-14 复测更新:2:55→65(WO-X1 十二源与历史采集已合并),4:70→75(48 件工件实盘发布并复验),
+  6:15→20(只读工作台常驻),7:60→50(周报停更六周,如实下调);3 与 8 维持,但夜链自动调度
+  自 09-09 起中断,班次改为 20:30 待验收。基准 = Claude 对 `~/ar-live` 运行时、launchd、
+  发布面与账本的只读重测,以及三个只读测绘代理的交叉核对。
+- 2026-09-14 01:10 补记:同日 01:02 的补跑以 20260911 为目标跑通并发布(35 件工件),
+  特征库补入 09-09 至 09-11,样本与信号补回 9/11;09-09、09-10 两天的样本与 NAV 行不补,
+  因为一次运行只锁定一个目标交易日,回填历史交易日没有合法入口。夜链重试窗口见 PR #359。
