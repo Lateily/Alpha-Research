@@ -1,4 +1,5 @@
 .gitattributes text eol=lf
+.github/workflows/python-ci.yml text eol=lf
 docs/research/RESEARCH_CLOSED_LOOP_V1.md text eol=lf
 docs/research/ALL_MARKET_RESEARCH_FUNNEL.md text eol=lf
 docs/research/U4_DECISION_LEDGER_SPEC_V1.md text eol=lf
@@ -22,4 +23,7 @@ experiments/research_funnel/paper_registration_bridge.py text eol=lf
 experiments/execution_tracker/event_ledger.py text eol=lf
 experiments/execution_tracker/model_paper_fund.py text eol=lf
 experiments/execution_tracker/paper_execution_audit.py text eol=lf
+experiments/execution_tracker/auto_paper_admission.py text eol=lf
 experiments/execution_tracker/model_fund/orders.json text eol=lf
+scripts/llm/fixtures/auto_paper_admission_v0.task.json text eol=lf
+tests/test_auto_paper_admission.py text eol=lf
