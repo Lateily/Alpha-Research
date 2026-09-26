@@ -362,8 +362,9 @@ def seal_marks(draft: Mapping[str, Any], orders: Sequence[Mapping[str, Any]]) ->
 
 
 def _registration_projection(order: Mapping[str, Any]) -> dict[str, Any]:
-    projection = {field: copy.deepcopy(order.get(field)) for field in REGISTRATION_PROJECTION_FIELDS}
-    _require_exact(projection, REGISTRATION_PROJECTION_FIELDS, "order registration projection")
+    fields = REGISTRATION_PROJECTION_FIELDS | ({"deadline_policy"} if "deadline_policy" in order else set())
+    projection = {field: copy.deepcopy(order.get(field)) for field in fields}
+    _require_exact(projection, fields, "order registration projection")
     return projection
 
 
@@ -490,6 +491,7 @@ def _compose_registration_projection(
         cost_model=paper_fund.WORKFLOW_DEBUG_COST_MODEL,
         max_volume_participation=paper_fund.MAX_VOLUME_PARTICIPATION,
         execution_mode=paper_fund.pp.EXECUTION_MODEL_VERSION,
+        deadline_policy=case["paper_order"].get("deadline_policy"),
     )
     if order is None or message != "registered":
         raise PaperRegistrationError(f"Model Paper Fund refused the plan: {message}")
@@ -539,6 +541,8 @@ def _compose_registration_projection(
         "execution_mode": paper_fund.pp.EXECUTION_MODEL_VERSION,
         "cost_model": copy.deepcopy(paper_fund.WORKFLOW_DEBUG_COST_MODEL),
     }
+    if "deadline_policy" in case["paper_order"]:
+        request["deadline_policy"] = copy.deepcopy(case["paper_order"]["deadline_policy"])
     projection = {
         "order": order,
         "order_registration_projection": _registration_projection(order),
@@ -546,6 +550,20 @@ def _compose_registration_projection(
         "post_state": post_state,
     }
     return request, projection
+
+
+def _require_registrable(case: Mapping[str, Any]) -> None:
+    """Refuse a WAIT case before any plan, intent or order can exist.
+
+    The predicate lives in research_cycle so the replay and this bridge cannot
+    drift apart again. It runs in build_plan, which the typed intent boundary
+    re-runs from source, and in _validate_plan_evidence, which guards a plan
+    object that was built elsewhere or by an older version.
+    """
+    # governance-mutation: PAPER_REGISTRATION_WAIT_REFUSAL
+    refusal = research_cycle.registration_refusal(case)
+    if refusal is not None:
+        raise PaperRegistrationError(f"research case is not registrable: {refusal}")
 
 
 def build_plan(
@@ -557,6 +575,7 @@ def build_plan(
         source = research_cycle.validate_case(case, closure_bundle)
     except research_cycle.CycleError as exc:
         raise PaperRegistrationError(f"research case is invalid: {exc}") from exc
+    _require_registrable(case)
     ticker = str(case.get("ticker") or "").upper()
     if TICKER_RE.fullmatch(ticker) is None:
         raise PaperRegistrationError("research case ticker is invalid")
@@ -627,7 +646,7 @@ def build_plan(
     )
     result: dict[str, Any] = {
         "schema": PLAN_SCHEMA,
-        "schema_version": SCHEMA_VERSION,
+        "schema_version": case["schema_version"],
         "generated_at": generated_at,
         "registration_id": registration_id,
         "source_refs": source_refs,
@@ -645,7 +664,7 @@ def build_plan(
 
 def validate_plan(plan: Mapping[str, Any]) -> None:
     _require_exact(plan, PLAN_FIELDS, "paper registration plan")
-    if plan.get("schema") != PLAN_SCHEMA or plan.get("schema_version") != SCHEMA_VERSION:
+    if plan.get("schema") != PLAN_SCHEMA or plan.get("schema_version") not in {SCHEMA_VERSION, "1.1"}:
         raise PaperRegistrationError("paper registration plan schema/version mismatch")
     if ID_RE.fullmatch(str(plan.get("registration_id") or "")) is None:
         raise PaperRegistrationError("paper registration id is invalid")
@@ -665,7 +684,8 @@ def validate_plan(plan: Mapping[str, Any]) -> None:
     ):
         raise PaperRegistrationError("paper registration plan nested objects are invalid")
     _require_exact(source_refs, SOURCE_REF_FIELDS, "plan source_refs")
-    _require_exact(request, REQUEST_FIELDS, "paper request")
+    policy_fields = {"deadline_policy"} if plan["schema_version"] == "1.1" else set()
+    _require_exact(request, REQUEST_FIELDS | policy_fields, "paper request")
     _require_exact(snapshot, SNAPSHOT_FIELDS, "portfolio snapshot")
     _require_exact(projection, PROJECTION_FIELDS, "plan projection")
     _require_exact(authority, AUTHORITY_FIELDS, "plan authority")
@@ -696,7 +716,7 @@ def validate_plan(plan: Mapping[str, Any]) -> None:
     decision = projection.get("decision_log_event")
     if not isinstance(order, dict) or not isinstance(order_projection, dict) or not isinstance(decision, dict):
         raise PaperRegistrationError("paper registration projections are invalid")
-    _require_exact(order_projection, REGISTRATION_PROJECTION_FIELDS, "order registration projection")
+    _require_exact(order_projection, REGISTRATION_PROJECTION_FIELDS | policy_fields, "order registration projection")
     if order_projection != _registration_projection(order):
         raise PaperRegistrationError("order registration projection differs from the frozen order")
     # governance-mutation: PAPER_REGISTRATION_NO_ACTION_AUTHORITY
@@ -744,6 +764,13 @@ def validate_plan(plan: Mapping[str, Any]) -> None:
         "execution_mode": "execution_mode",
         "cost_model": "cost_model",
     }
+    if policy_fields:
+        import paper_deadline
+        try:
+            paper_deadline.validate_policy(request["deadline_policy"], request["registered_at"])
+        except (ValueError, TypeError) as exc:
+            raise PaperRegistrationError(f"invalid deadline policy: {exc}") from exc
+        request_order_fields["deadline_policy"] = "deadline_policy"
     # governance-mutation: PAPER_REGISTRATION_REQUEST_ORDER_BINDING
     if any(request[source] != order.get(target) for source, target in request_order_fields.items()):
         raise PaperRegistrationError("paper request and frozen order projection differ")
@@ -761,15 +788,15 @@ def validate_plan(plan: Mapping[str, Any]) -> None:
         raise PaperRegistrationError("paper decision and frozen order projection differ")
 
 
-def _validate_plan_evidence(
-    *, plan: Mapping[str, Any], closure_bundle: Path, case: Mapping[str, Any],
-    u4_ledger_path: Path, fund_dir: Path,
+def _validate_frozen_case_binding(
+    plan: Mapping[str, Any], closure_bundle: Path, case: Mapping[str, Any]
 ) -> None:
     validate_plan(plan)
     try:
         research_cycle.validate_case(case, closure_bundle)
     except research_cycle.CycleError as exc:
         raise PaperRegistrationError(f"research case is invalid: {exc}") from exc
+    _require_registrable(case)
     if _sha_ref(case.get("case_hash"), "research case hash") != plan["source_refs"]["case_hash"]:
         raise PaperRegistrationError("paper plan is bound to a different research case")
     closure_manifest = _load_json(closure_bundle / "manifest.json", dict)
@@ -777,6 +804,13 @@ def _validate_plan_evidence(
         closure_manifest.get("bundle_hash"), "closure bundle hash"
     ) != plan["source_refs"]["closure_bundle_hash"]:
         raise PaperRegistrationError("paper plan is bound to a different closure bundle")
+
+
+def _validate_plan_evidence(
+    *, plan: Mapping[str, Any], closure_bundle: Path, case: Mapping[str, Any],
+    u4_ledger_path: Path, fund_dir: Path,
+) -> None:
+    _validate_frozen_case_binding(plan, closure_bundle, case)
     _packet, _projection, decision = _current_u4_selection(
         closure_bundle=closure_bundle,
         u4_ledger_path=u4_ledger_path,
@@ -1054,6 +1088,17 @@ def validate_typed_outer_append(
     if not isinstance(payload, dict):
         raise PaperRegistrationError("typed paper registration payload is not an object")
     if preview.get("kind") == INTENT_KIND:
+        # New appends must be prospective; historical replay and retries stay unchanged.
+        registration_date = payload["plan"]["paper_request"]["registered_at"]
+        approval_date = _iso(payload["approval"]["approved_at"], "approval approved_at").astimezone(
+            event_ledger.OPERATIONAL_TIMEZONE
+        ).strftime("%Y%m%d")
+        intent_date = _iso(payload["registered_at"], "intent registered_at").astimezone(
+            event_ledger.OPERATIONAL_TIMEZONE
+        ).strftime("%Y%m%d")
+        # governance-mutation: PAPER_REGISTRATION_PROSPECTIVE_INTENT_DATE
+        if max(approval_date, intent_date) > registration_date:
+            raise PaperRegistrationError("new paper intent follows its registration date; rebuild and reapprove the plan")
         context_case = source_context.get("case")
         if not isinstance(context_case, Mapping):
             raise PaperRegistrationError("typed paper registration context lacks the research case")
@@ -1096,6 +1141,46 @@ def _registration_state(path: Path, *, allow_missing: bool = False) -> dict[str,
     return _replay_registration_records(_paper_outer_records(path))
 
 
+def _validate_executable_stop(
+    order: Mapping[str, Any], plan: Mapping[str, Any],
+    decision_log: Sequence[Mapping[str, Any]],
+) -> None:
+    expected_stop = plan["projection"]["order_registration_projection"]["registered_stop_reference"]
+    current_stop = order.get("stop_reference")
+    if type(current_stop) not in (int, float) or not math.isfinite(current_stop):
+        raise PaperRegistrationError("committed paper order executable stop must be finite")
+    if "deadline_policy" in order:
+        # governance-mutation: PAPER_REGISTRATION_EXECUTABLE_STOP_BINDING
+        if current_stop != expected_stop:
+            raise PaperRegistrationError("committed deadline order executable stop differs from its registered value")
+        return
+
+    # The legacy API logs ticker-only TIGHTEN_STOP events, not signed amendments.
+    registration_index = decision_log.index(plan["projection"]["decision_log_event"])
+    previous_date = order["registered_at"]
+    for event in decision_log[registration_index + 1:]:
+        if event.get("ticker") != order["ticker"]:
+            continue
+        if event.get("action") in {"REGISTER_ORDER", "PAPER_EXIT"}:
+            break
+        if event.get("action") != "TIGHTEN_STOP":
+            continue
+        next_stop = event.get("new_stop")
+        amendment_date = _date8(event.get("date"), "executable stop amendment date")
+        if (
+            type(next_stop) not in (int, float) or not math.isfinite(next_stop)
+            or event.get("no_trade_flag") is not True or amendment_date < previous_date
+        ):
+            raise PaperRegistrationError("committed paper order executable stop has invalid tightening evidence")
+        # governance-mutation: PAPER_REGISTRATION_LEGACY_STOP_MONOTONIC
+        if next_stop <= expected_stop:
+            raise PaperRegistrationError("committed paper order executable stop amendment is not tighter")
+        expected_stop, previous_date = next_stop, amendment_date
+    # governance-mutation: PAPER_REGISTRATION_LEGACY_STOP_EVIDENCE
+    if current_stop != expected_stop:
+        raise PaperRegistrationError("committed paper order executable stop lacks matching tightening evidence")
+
+
 def verify_registration_state(*, event_ledger_path: Path, fund_dir: Path) -> dict[str, Any]:
     try:
         ledger_state = _registration_state(event_ledger_path, allow_missing=True)
@@ -1129,6 +1214,7 @@ def verify_registration_state(*, event_ledger_path: Path, fund_dir: Path) -> dic
             # governance-mutation: PAPER_REGISTRATION_COMMITTED_DECISION_PROJECTION
             if decisions[0] != expected_plan["projection"]["decision_log_event"]:
                 raise PaperRegistrationError("committed paper registration decision changed")
+            _validate_executable_stop(orders[0], expected_plan, fund_state["decision_log"])
         return {
             "ok": True,
             "intents": len(ledger_state["intents"]),
@@ -1208,6 +1294,8 @@ def apply_plan(
             "U4 decisions and paper registration must share one R-015 ledger"
         )
     with _nightly_lock(nightly_lock_path):
+        # governance-mutation: PAPER_REGISTRATION_RETRY_CASE_BINDING
+        _validate_frozen_case_binding(plan, closure_bundle, case)
         source_context = {
             "closure_bundle": closure_bundle,
             "case": copy.deepcopy(dict(case)),

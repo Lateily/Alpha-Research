@@ -53,7 +53,7 @@ def write_json(path: Path, value) -> None:
     )
 
 
-def build_context(root: Path) -> dict:
+def build_context(root: Path, *, wait: bool = False) -> dict:
     source_bundle = root / "source-bundle"
     shutil.copytree(u4_fixtures.SOURCE_BUNDLE, source_bundle)
     packet = closure.build_review_packet(
@@ -97,6 +97,8 @@ def build_context(root: Path) -> dict:
         closure_bundle, u4_fixtures.SELECT_CODES[0]
     )
     case_draft["generated_at"] = CASE_AT
+    if wait:
+        case_draft = cycle_fixtures.make_wait_draft(case_draft)
     case = research_cycle.seal_case(case_draft, closure_bundle)
 
     fund_dir = root / "model-fund"
@@ -118,6 +120,13 @@ def build_context(root: Path) -> dict:
         },
         [],
     )
+    if wait:
+        # A WAIT case has no plan; callers exercise build_plan / apply_plan themselves.
+        return {
+            "source_bundle": source_bundle, "closure_bundle": closure_bundle,
+            "packet": packet, "case": case, "ledger_path": ledger_path,
+            "fund_dir": fund_dir, "marks": marks, "nightly_lock": root / "nightly.lock",
+        }
     plan = bridge.build_plan(
         closure_bundle=closure_bundle,
         case=case,
@@ -211,6 +220,53 @@ def source_context_for(ctx: dict) -> dict:
 
 
 class PaperRegistrationBridgeTests(unittest.TestCase):
+    def test_pending_and_committed_retry_revalidate_frozen_case(self) -> None:
+        for state in ("pending", "committed"):
+            with self.subTest(state=state), tempfile.TemporaryDirectory() as tmp:
+                ctx = build_context(Path(tmp))
+                if state == "pending":
+                    with self.assertRaisesRegex(bridge.PaperRegistrationError, "injected interruption"):
+                        apply_context(ctx, fail_after="intent")
+                else:
+                    self.assertEqual("APPLIED", apply_context(ctx)["status"])
+                case = copy.deepcopy(ctx["case"])
+                registration = case["method_registration"]
+                registration["smc"]["evidence_as_of"] = "20260813"
+                registration["registration_hash"] = research_cycle._hash({
+                    key: value for key, value in registration.items() if key != "registration_hash"
+                })
+                case["case_hash"] = research_cycle._hash({
+                    key: value for key, value in case.items() if key != "case_hash"
+                })
+                ctx["case"] = case
+                ledger_before = ctx["ledger_path"].read_bytes()
+                fund_before = bridge._state_hashes(bridge._load_fund_state(ctx["fund_dir"]))
+                with self.assertRaisesRegex(bridge.PaperRegistrationError, "SMC evidence instant required"):
+                    apply_context(ctx)
+                self.assertEqual(ledger_before, ctx["ledger_path"].read_bytes())
+                self.assertEqual(fund_before, bridge._state_hashes(bridge._load_fund_state(ctx["fund_dir"])))
+
+    def test_rehashed_current_case_with_date_only_smc_cannot_build_plan(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            ctx = build_context(Path(tmp))
+            case = copy.deepcopy(ctx["case"])
+            registration = case["method_registration"]
+            registration["smc"]["evidence_as_of"] = "20260813"
+            registration["registration_hash"] = research_cycle._hash({
+                key: value for key, value in registration.items() if key != "registration_hash"
+            })
+            case["case_hash"] = research_cycle._hash({
+                key: value for key, value in case.items() if key != "case_hash"
+            })
+            with self.assertRaisesRegex(
+                bridge.PaperRegistrationError, "SMC evidence instant required"
+            ):
+                bridge.build_plan(
+                    closure_bundle=ctx["closure_bundle"], case=case,
+                    u4_ledger_path=ctx["ledger_path"], fund_dir=ctx["fund_dir"],
+                    marks=ctx["marks"], generated_at=PLAN_AT,
+                )
+
     def test_u4_and_registration_require_one_r015_ledger(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             ctx = build_context(Path(tmp))
@@ -230,6 +286,49 @@ class PaperRegistrationBridgeTests(unittest.TestCase):
                 )
 
         self.assertFalse(separate.exists())
+
+    def test_wait_case_is_refused_before_any_plan_exists(self) -> None:
+        """审计 F1:同一份封存的 WAIT / HOLD_OBSERVE case,回放得 NO_TRADE,登记桥不得给出计划。"""
+        with tempfile.TemporaryDirectory() as tmp:
+            ctx = build_context(Path(tmp), wait=True)
+            self.assertEqual("WAIT", ctx["case"]["timing_ticket"]["status"])
+            self.assertEqual("HOLD_OBSERVE", ctx["case"]["paper_order"]["gate_state"])
+            before = bridge._state_hashes(bridge._load_fund_state(ctx["fund_dir"]))
+            with self.assertRaises(bridge.PaperRegistrationError) as caught:
+                bridge.build_plan(
+                    closure_bundle=ctx["closure_bundle"], case=ctx["case"],
+                    u4_ledger_path=ctx["ledger_path"], fund_dir=ctx["fund_dir"],
+                    marks=ctx["marks"], generated_at=PLAN_AT,
+                )
+            after = bridge._state_hashes(bridge._load_fund_state(ctx["fund_dir"]))
+            paper_events = bridge._paper_outer_records(ctx["ledger_path"])
+        self.assertIn("not registrable", str(caught.exception))
+        self.assertIn("NO_TRADE: timing ticket remains WAIT", str(caught.exception))
+        self.assertEqual(before, after)
+        self.assertEqual([], paper_events)
+
+    def test_plan_built_elsewhere_for_a_wait_case_writes_no_intent_and_no_order(self) -> None:
+        """旧版本或外部构造的计划对象绕过了 build_plan 的拒绝;apply 必须在写 intent 之前拒绝。"""
+        with tempfile.TemporaryDirectory() as tmp:
+            ctx = build_context(Path(tmp), wait=True)
+            with patch.object(research_cycle, "registration_refusal", return_value=None):
+                plan = bridge.build_plan(
+                    closure_bundle=ctx["closure_bundle"], case=ctx["case"],
+                    u4_ledger_path=ctx["ledger_path"], fund_dir=ctx["fund_dir"],
+                    marks=ctx["marks"], generated_at=PLAN_AT,
+                )
+            self.assertEqual("HOLD_OBSERVE", plan["paper_request"]["gate_state"])
+            ctx["plan"], ctx["approval"] = plan, approval_for(plan)
+            before = bridge._state_hashes(bridge._load_fund_state(ctx["fund_dir"]))
+            with self.assertRaises(bridge.PaperRegistrationError) as caught:
+                apply_context(ctx)
+            state = bridge._load_fund_state(ctx["fund_dir"])
+            paper_events = bridge._paper_outer_records(ctx["ledger_path"])
+        self.assertIn("not registrable", str(caught.exception))
+        self.assertEqual(before, bridge._state_hashes(state))
+        self.assertEqual([], state["orders"])
+        self.assertEqual([], state["decision_log"])
+        self.assertEqual([], paper_events)
 
     def test_apply_registers_one_realistic_paper_order_and_is_idempotent(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -345,6 +444,96 @@ class PaperRegistrationBridgeTests(unittest.TestCase):
             bad["generated_at"] = "2026-08-13T10:30:01+00:00"
             with self.assertRaisesRegex(bridge.PaperRegistrationError, "plan hash mismatch"):
                 bridge.validate_plan(bad)
+
+    def test_new_intent_rejects_late_approval_without_writes(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            ctx = build_context(Path(tmp))
+            draft = bridge._without(ctx["approval"], "approval_hash")
+            draft["approved_at"] = "2026-08-17T10:31:00+00:00"
+            ctx["approval"] = bridge.seal_approval(draft, ctx["plan"])
+            before = bridge._state_hashes(bridge._load_fund_state(ctx["fund_dir"]))
+            ledger_before = ctx["ledger_path"].read_bytes()
+            with self.assertRaisesRegex(bridge.PaperRegistrationError, "registration date"):
+                apply_context(ctx, now="2026-08-17T18:32:00")
+            self.assertEqual(ctx["ledger_path"].read_bytes(), ledger_before)
+            self.assertEqual(before, bridge._state_hashes(bridge._load_fund_state(ctx["fund_dir"])))
+
+    def test_new_intent_rejects_next_operational_day_apply_without_writes(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            ctx = build_context(Path(tmp))
+            before = bridge._state_hashes(bridge._load_fund_state(ctx["fund_dir"]))
+            ledger_before = ctx["ledger_path"].read_bytes()
+            # UTC still says Aug 13; R-015 Shanghai has crossed into Aug 14.
+            with self.assertRaisesRegex(bridge.PaperRegistrationError, "registration date"):
+                apply_context(ctx, now="2026-08-13T19:00:00+00:00")
+            self.assertEqual(ctx["ledger_path"].read_bytes(), ledger_before)
+            self.assertEqual(before, bridge._state_hashes(bridge._load_fund_state(ctx["fund_dir"])))
+
+    def test_new_intent_uses_operational_day_not_timestamp_date_text(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            ctx = build_context(Path(tmp))
+            draft = bridge._without(ctx["approval"], "approval_hash")
+            draft["approved_at"] = "2026-08-14T00:31:00+14:00"
+            ctx["approval"] = bridge.seal_approval(draft, ctx["plan"])
+            result = apply_context(ctx, now="2026-08-14T00:32:00+14:00")
+            self.assertEqual(result["status"], "APPLIED")
+            state = bridge._load_fund_state(ctx["fund_dir"])
+            rows = [cycle_fixtures.execution_row("20260814", 100., 102., 98., 100.)]
+            paper_fund.process_day(state["fund"], state["orders"], state["decision_log"],
+                                   None, series_fn=lambda *_: rows)
+            self.assertEqual(state["orders"][0]["fill_date"], "20260814")
+
+    def test_typed_new_intent_rejects_stale_date_without_apply_wrapper(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            ctx = build_context(Path(tmp))
+            ledger_before = ctx["ledger_path"].read_bytes()
+
+            def builder(outer_ts):
+                intent = bridge._build_intent(ctx["plan"], ctx["approval"], outer_ts)
+                return intent["intent_id"], intent
+
+            with patch.object(event_ledger, "_runtime_timestamp", return_value="2026-08-14T00:00:00"):
+                with self.assertRaisesRegex(bridge.PaperRegistrationError, "registration date"):
+                    event_ledger.append_paper_registration_stamped(
+                        bridge.INTENT_KIND, builder,
+                        source_context=source_context_for(ctx), path=str(ctx["ledger_path"]),
+                    )
+            self.assertEqual(ctx["ledger_path"].read_bytes(), ledger_before)
+
+    def test_existing_intent_recovery_and_committed_retry_allow_later_days(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            ctx = build_context(Path(tmp))
+            with self.assertRaisesRegex(bridge.PaperRegistrationError, "injected interruption"):
+                apply_context(ctx, fail_after="intent")
+            intent_before = bridge._paper_outer_records(ctx["ledger_path"])[0]
+            recovered = apply_context(ctx, now="2026-08-14T18:32:00")
+            self.assertEqual(recovered["status"], "RECOVERED")
+            before = bridge._state_hashes(bridge._load_fund_state(ctx["fund_dir"]))
+            ledger_before = ctx["ledger_path"].read_bytes()
+            repeated = apply_context(ctx, now="2026-08-17T18:32:00")
+            self.assertEqual(repeated["status"], "IDEMPOTENT")
+            self.assertEqual(ctx["ledger_path"].read_bytes(), ledger_before)
+            self.assertEqual(before, bridge._state_hashes(bridge._load_fund_state(ctx["fund_dir"])))
+            self.assertEqual(bridge._paper_outer_records(ctx["ledger_path"])[0], intent_before)
+
+    def test_historical_late_commit_still_verifies_and_retries_without_rewrite(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            ctx = build_context(Path(tmp))
+            draft = bridge._without(ctx["approval"], "approval_hash")
+            draft["approved_at"] = "2026-08-17T10:31:00+00:00"
+            ctx["approval"] = bridge.seal_approval(draft, ctx["plan"])
+            # Seed the pre-fix historical artifact; replay/retry below use real validators.
+            with patch.object(bridge, "validate_typed_outer_append", return_value=None):
+                apply_context(ctx, now="2026-08-17T18:32:00")
+            before = bridge._state_hashes(bridge._load_fund_state(ctx["fund_dir"]))
+            ledger_before = ctx["ledger_path"].read_bytes()
+            verified = bridge.verify_registration_state(
+                event_ledger_path=ctx["ledger_path"], fund_dir=ctx["fund_dir"])
+            self.assertTrue(verified["ok"], verified)
+            repeated = apply_context(ctx, now="2026-09-24T18:32:00")
+            self.assertEqual(repeated["status"], "IDEMPOTENT")
+            self.assertEqual(ctx["ledger_path"].read_bytes(), ledger_before)
+            self.assertEqual(before, bridge._state_hashes(bridge._load_fund_state(ctx["fund_dir"])))
 
     def test_plan_nested_post_state_fails_closed_as_a_contract_error(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -547,6 +736,141 @@ class PaperRegistrationBridgeTests(unittest.TestCase):
             )
             self.assertFalse(result["ok"])
             self.assertIn("registration decision changed", result["errors"][0])
+
+    def test_committed_execution_stop_must_match_approved_value(self) -> None:
+        from test_paper_t10_execution import policy
+
+        for deadline in (False, True):
+            with self.subTest(deadline=deadline), tempfile.TemporaryDirectory() as tmp:
+                ctx = build_context(Path(tmp))
+                if deadline:
+                    draft = bridge._without(ctx["case"], "case_hash")
+                    draft["schema_version"] = "1.1"
+                    draft["paper_order"]["deadline_policy"] = policy(
+                        start="20260813", exchange="SZSE", closed=())
+                    ctx["case"] = research_cycle.seal_case(draft, ctx["closure_bundle"])
+                    ctx["plan"] = bridge.build_plan(
+                        closure_bundle=ctx["closure_bundle"], case=ctx["case"],
+                        u4_ledger_path=ctx["ledger_path"], fund_dir=ctx["fund_dir"],
+                        marks=ctx["marks"], generated_at=PLAN_AT)
+                    ctx["approval"] = approval_for(ctx["plan"])
+                apply_context(ctx)
+                state = bridge._load_fund_state(ctx["fund_dir"])
+                ledger_before = ctx["ledger_path"].read_bytes()
+                for settled in (False, True):
+                    if settled:
+                        rows = [cycle_fixtures.execution_row("20260814", 100., 102., 98., 100.)]
+                        paper_fund.process_day(
+                            state["fund"], state["orders"], state["decision_log"], None,
+                            series_fn=lambda *_: rows, settlement_as_of="20260814")
+                        self.assertEqual(state["orders"][0]["status"], "filled")
+                    for stop in (90., 96., None):
+                        with self.subTest(settled=settled, stop=stop):
+                            orders = copy.deepcopy(state["orders"])
+                            orders[0]["stop_reference"] = stop
+                            self.assertEqual(orders[0]["registered_stop_reference"], 95.)
+                            paper_fund.save("orders.json", orders, str(ctx["fund_dir"]))
+                            before = bridge._state_hashes(bridge._load_fund_state(ctx["fund_dir"]))
+                            result = bridge.verify_registration_state(
+                                event_ledger_path=ctx["ledger_path"], fund_dir=ctx["fund_dir"])
+                            self.assertFalse(result["ok"], result)
+                            self.assertIn("executable stop", result["errors"][0])
+                            with self.assertRaises(bridge.PaperRegistrationError):
+                                paper_fund.assert_paper_registration_ready(
+                                    str(ctx["fund_dir"]), str(ctx["ledger_path"]))
+                            self.assertEqual(before, bridge._state_hashes(
+                                bridge._load_fund_state(ctx["fund_dir"])))
+                            self.assertEqual(ctx["ledger_path"].read_bytes(), ledger_before)
+                    paper_fund.save("orders.json", state["orders"], str(ctx["fund_dir"]))
+                    restored = bridge.verify_registration_state(
+                        event_ledger_path=ctx["ledger_path"], fund_dir=ctx["fund_dir"])
+                    self.assertTrue(restored["ok"], restored)
+
+    def test_price_only_tighten_stop_keeps_committed_registration_usable(self) -> None:
+        for filled in (False, True):
+            with self.subTest(filled=filled), tempfile.TemporaryDirectory() as tmp:
+                ctx = build_context(Path(tmp))
+                apply_context(ctx)
+                state = bridge._load_fund_state(ctx["fund_dir"])
+                ledger_before = ctx["ledger_path"].read_bytes()
+                rows = [cycle_fixtures.execution_row("20260814", 100., 102., 98., 100.)]
+                if filled:
+                    paper_fund.process_day(state["fund"], state["orders"], state["decision_log"],
+                                           None, series_fn=lambda *_: rows)
+                for stop in (96., 97.):
+                    changed, _ = paper_fund.tighten_stop(
+                        state["orders"], state["decision_log"], ctx["case"]["ticker"],
+                        stop, "20260814" if filled else "20260813", "fixture tighter risk")
+                    self.assertTrue(changed)
+                self.assertEqual(state["decision_log"][-1]["action"], "TIGHTEN_STOP")
+                for key, name in (("fund", "fund.json"), ("orders", "orders.json"),
+                                  ("decision_log", "decision_log.json")):
+                    paper_fund.save(name, state[key], str(ctx["fund_dir"]))
+                verified = bridge.verify_registration_state(
+                    event_ledger_path=ctx["ledger_path"], fund_dir=ctx["fund_dir"])
+                self.assertTrue(verified["ok"], verified)
+                paper_fund.assert_paper_registration_ready(str(ctx["fund_dir"]), str(ctx["ledger_path"]))
+                self.assertEqual(apply_context(ctx, now="2026-08-17T18:32:00")["status"], "IDEMPOTENT")
+                rows.append(cycle_fixtures.execution_row("20260817", 100., 102., 96., 100.))
+                paper_fund.process_day(state["fund"], state["orders"], state["decision_log"],
+                                       None, series_fn=lambda *_: rows)
+                self.assertEqual(state["orders"][0]["exit_reason"], "stop")
+                self.assertEqual(state["orders"][0]["exit_price"], 96.9515)
+                for key, name in (("orders", "orders.json"), ("decision_log", "decision_log.json")):
+                    paper_fund.save(name, state[key], str(ctx["fund_dir"]))
+                self.assertTrue(bridge.verify_registration_state(
+                    event_ledger_path=ctx["ledger_path"], fund_dir=ctx["fund_dir"])["ok"])
+                self.assertEqual(ctx["ledger_path"].read_bytes(), ledger_before)
+
+    def test_price_only_stop_cannot_loosen_below_latest_logged_amendment(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            ctx = build_context(Path(tmp))
+            apply_context(ctx)
+            state = bridge._load_fund_state(ctx["fund_dir"])
+            changed, _ = paper_fund.tighten_stop(
+                state["orders"], state["decision_log"], ctx["case"]["ticker"],
+                97., "20260813", "fixture tighter risk")
+            self.assertTrue(changed)
+            paper_fund.save("decision_log.json", state["decision_log"], str(ctx["fund_dir"]))
+            for stop in (90., 95., 96.):
+                with self.subTest(stop=stop):
+                    state["orders"][0]["stop_reference"] = stop
+                    paper_fund.save("orders.json", state["orders"], str(ctx["fund_dir"]))
+                    result = bridge.verify_registration_state(
+                        event_ledger_path=ctx["ledger_path"], fund_dir=ctx["fund_dir"])
+                    self.assertFalse(result["ok"], result)
+                    self.assertIn("executable stop", result["errors"][0])
+
+    def test_price_only_stop_evidence_must_be_monotonic_and_order_scoped(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            ctx = build_context(Path(tmp))
+            apply_context(ctx)
+            state = bridge._load_fund_state(ctx["fund_dir"])
+            paper_fund.tighten_stop(state["orders"], state["decision_log"],
+                                   ctx["case"]["ticker"], 97., "20260814", "fixture risk")
+            registration, amendment = state["decision_log"]
+            scenarios = (
+                ("lower_after_higher", 96., [registration, amendment,
+                    {**amendment, "new_stop": 96.}]),
+                ("before_registration", 97., [amendment, registration]),
+                ("other_ticker", 97., [registration, {**amendment, "ticker": "600000.SH"}]),
+                ("next_order", 97., [registration,
+                    {"action": "REGISTER_ORDER", "ticker": ctx["case"]["ticker"]}, amendment]),
+                ("after_exit", 97., [registration,
+                    {"action": "PAPER_EXIT", "ticker": ctx["case"]["ticker"]}, amendment]),
+                ("backwards_date", 98., [registration, amendment,
+                    {**amendment, "new_stop": 98., "date": "20260813"}]),
+                ("wrong_boundary", 97., [registration, {**amendment, "no_trade_flag": False}]),
+            )
+            for label, stop, decisions in scenarios:
+                with self.subTest(label=label):
+                    state["orders"][0]["stop_reference"] = stop
+                    paper_fund.save("orders.json", state["orders"], str(ctx["fund_dir"]))
+                    paper_fund.save("decision_log.json", decisions, str(ctx["fund_dir"]))
+                    result = bridge.verify_registration_state(
+                        event_ledger_path=ctx["ledger_path"], fund_dir=ctx["fund_dir"])
+                    self.assertFalse(result["ok"], result)
+                    self.assertIn("executable stop", result["errors"][0])
 
     def test_daily_engine_infers_realistic_mode_from_registered_order(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

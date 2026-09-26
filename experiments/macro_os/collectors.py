@@ -337,6 +337,10 @@ def _bls_parser(raw: bytes, fetched_at: str, spec: RequestSpec) -> list[Observat
                 year = int(row["year"])
             except (KeyError, TypeError, ValueError) as exc:
                 raise CollectionError("DATA_INVALID", "BLS_PERIOD", "BLS year is invalid") from exc
+            # Keep the raw snapshot's missing cell, but never turn it into an observation.
+            # governance-mutation: MACRO_M0B_BLS_MISSING_CELL
+            if str(row.get("value", "")).strip() == "-":
+                continue
             value_text, value = _number_text(row.get("value"))
             observations.append(
                 Observation(

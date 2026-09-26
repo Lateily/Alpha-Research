@@ -23,7 +23,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from experiments.macro_os import contracts
+from experiments.macro_os import collectors, contracts, official_releases
 from experiments.macro_os.storage import MacroHistoryStore, MacroStoreError, source_identity_hash
 
 
@@ -42,6 +42,12 @@ POLICY = {
 }
 AXES = ("GROWTH", "INFLATION", "LIQUIDITY", "RISK")
 REGIONS = ("GLOBAL_US", "CHINA")
+_MONTHLY_METRICS = {
+    (spec.source_id, metric.series_id, metric.metric_key)
+    for spec in (*collectors.collection_plan(), *official_releases.release_plan())
+    for metric in spec.metrics
+    if metric.cadence == "monthly"
+}
 FACTOR_SIGNALS = {"SUPPORTIVE", "NEUTRAL", "RESTRICTIVE"}
 DATA_STATUSES = {"CURRENT", "STALE", "DATA_BLOCKED"}
 MRG_STATUSES = {"GREEN", "YELLOW", "RED", "DATA_BLOCKED"}
@@ -99,9 +105,9 @@ def rules_hash(payload: Mapping[str, Any]) -> str:
     return content_hash({key: value for key, value in payload.items() if key != "rules_hash"})
 
 
-def load_rules(path: str | Path = RULES_PATH) -> dict[str, Any]:
+def load_rules(path: str | Path = RULES_PATH, *, source_registry_path: str | Path = contracts.SOURCE_REGISTRY) -> dict[str, Any]:
     payload = contracts.load_json(path)
-    validate_rules(payload)
+    validate_rules(payload, source_registry_path=source_registry_path)
     return payload
 
 
@@ -123,7 +129,7 @@ def _validate_condition(condition: Any, label: str) -> None:
             raise M1AError(f"{label} low exceeds high")
 
 
-def validate_rules(payload: Any) -> None:
+def validate_rules(payload: Any, *, source_registry_path: str | Path = contracts.SOURCE_REGISTRY) -> None:
     if not isinstance(payload, dict):
         raise M1AError("state rules must be an object")
     required = {
@@ -146,7 +152,7 @@ def validate_rules(payload: Any) -> None:
     if set(payload["regions"]) != set(REGIONS):
         raise M1AError("state rules must keep GLOBAL_US and CHINA separate")
 
-    source_payload = contracts.load_json(contracts.SOURCE_REGISTRY)
+    source_payload = contracts.load_json(source_registry_path)
     contracts.validate_source_registry(source_payload)
     sources = contracts.source_index(source_payload)
     factor_ids: set[str] = set()
@@ -294,6 +300,13 @@ def _transform(rows: list[dict[str, Any]], rule: Mapping[str, Any]) -> float:
         values.append(_finite(row["value_real"], "observation.value_real"))
     if rule["transform"] == "latest":
         return values[0]
+    metric = (rule["source_id"], rule["series_id"], rule["metric_key"])
+    if metric in _MONTHLY_METRICS:
+        # Missing cells must not turn a monthly window into a longer row window.
+        periods = [_iso(row["observation_at"], "observation_at") for row in rows[:needed]]
+        months = [period.year * 12 + period.month for period in periods]
+        if any(newer - older != 1 for newer, older in zip(months, months[1:])):
+            raise M1AError("monthly transform requires consecutive calendar months")
     latest, base = values[0], values[lookback]
     if rule["transform"] == "delta_n":
         return latest - base
@@ -305,6 +318,16 @@ def _transform(rows: list[dict[str, Any]], rule: Mapping[str, Any]) -> float:
     if ratio <= 0:
         raise M1AError("annualized percentage transform requires positive values")
     return (ratio ** (12.0 / lookback) - 1.0) * 100.0
+
+
+def _transformed_unit(rule: Mapping[str, Any]) -> str:
+    if rule["transform"] == "annualized_pct_change":
+        return "pct_annualized"
+    if rule["transform"] == "pct_change_n":
+        return "pct"
+    if rule["transform"] == "delta_n" and rule["unit"].startswith("pct"):
+        return "pct_points"
+    return rule["unit"]
 
 
 def build_factor(
@@ -329,7 +352,7 @@ def build_factor(
         "data_status": "DATA_BLOCKED",
         "signal": None,
         "value": None,
-        "unit": rule["unit"],
+        "unit": _transformed_unit(rule),
         "observation_at": None,
         "vintage_at": None,
         "age_seconds": None,

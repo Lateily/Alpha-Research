@@ -85,10 +85,11 @@ APPEND_ONLY_PROTECTED = {
 # 漏一个状态,守卫就从"防篡改"变成"拦正常运行"。
 ORDER_TRANSITIONS = {
     None:        {"pending", "filled", "closed", "cancelled"},
-    "pending":   {"pending", "filled", "closed", "cancelled"},
+    "pending":   {"pending", "filled", "closed", "cancelled", "expired"},
     "filled":    {"filled", "closed"},
     "closed":    {"closed"},                   # 已了结不可复活
     "cancelled": {"cancelled"},                # 已撤单不可复活
+    "expired":   {"expired"},                  # 未成交到期不可复活
 }
 ORDER_IMMUTABLE_ONCE_SET = ("ticker", "shares", "fill_price", "fill_date",
                             "exit_price", "exit_date", "registered_at")
@@ -326,6 +327,9 @@ def _check_orders(before, after):
                         f"状态机需显式补齐,不得默默放行")
         elif now not in ORDER_TRANSITIONS[was]:
             errs.append(f"model_fund/orders.json: 订单 {k} 状态 {was}→{now} 非法迁移")
+        # governance-mutation: PAPER_T10_EXPIRY_TERMINAL
+        if was == "expired" and json.dumps(b, sort_keys=True) != json.dumps(a, sort_keys=True):
+            errs.append(f"model_fund/orders.json: expired order {k} is immutable")
         for f in ORDER_IMMUTABLE_ONCE_SET:
             if b.get(f) not in (None, "") and b.get(f) != a.get(f):
                 errs.append(f"model_fund/orders.json: 订单 {k} 的 {f} 已定值却被改写"
@@ -358,6 +362,10 @@ def _check_paper_settlement(before, after, target, run_id):
             for field in ("fill_date", "exit_date", "execution_freeze_date")
         )
         if receipt is None or (old is not None and receipt == old.get("settlement_receipt")):
+            # An expiry has no fill/exit date or cash delta to prove it happened.
+            # governance-mutation: PAPER_T10_EXPIRY_REQUIRES_RECEIPT
+            if order.get("status") == "expired" and (old is None or old.get("status") != "expired"):
+                errors.append("paper settlement: expiry requires a new verified receipt")
             if historical:
                 errors.append("paper settlement: historical transition lacks receipt")
             continue
@@ -376,7 +384,8 @@ def _check_paper_settlement(before, after, target, run_id):
                 raise ValueError("receipt bars hash mismatch")
             expected_order, expected_log, replay_fund = copy.deepcopy(old), [], {"cash": 0.0}
             engine.process_day(replay_fund, [expected_order], expected_log, None,
-                               series_fn=lambda *_: copy.deepcopy(bars))
+                               series_fn=lambda *_: copy.deepcopy(bars),
+                               settlement_as_of=receipt["recording"]["target_trade_date"])
             expected_order.pop("settlement_receipt", None)
             actual_order = {k: v for k, v in order.items() if k != "settlement_receipt"}
             if engine.settlement_hash(expected_order) != engine.settlement_hash(actual_order):
@@ -394,6 +403,43 @@ def _check_paper_settlement(before, after, target, run_id):
     if any(row.get("settlement_order_hash") and row not in allowed for row in added):
         errors.append("paper settlement: event has no verified receipt")
     return errors, allowed, deltas
+
+
+def validate_daily_projection_transition(before, after, target, run_id):
+    """Apply the publication ledger rules before replaying a daily WAL after-state."""
+    before = dict(before)
+    for name in ("decision_log.json", "nav_history.json"):
+        if before.get(name) is None:
+            before[name] = []
+    errors, settlement_rows, settlement_deltas = _check_paper_settlement(
+        before, after, target, run_id,
+    )
+    errors.extend(_check_orders(before.get("orders.json"), after.get("orders.json")))
+    errors.extend(_check_fund(
+        before.get("fund.json"), after.get("fund.json"),
+        before.get("orders.json"), after.get("orders.json"), settlement_deltas,
+    ))
+    before_fund, after_fund = before.get("fund.json"), after.get("fund.json")
+    if isinstance(before_fund, dict) and isinstance(after_fund, dict):
+        try:
+            actual = round(float(after_fund["cash"]) - float(before_fund["cash"]), 2)
+            expected, why = _cash_delta_from_orders(
+                before.get("orders.json"), after.get("orders.json"), settlement_deltas,
+            )
+            errors.extend(why)
+            if round(actual - expected, 2) != 0:
+                errors.append("model_fund/fund.json: daily cash delta has no order explanation")
+        except (KeyError, TypeError, ValueError):
+            errors.append("model_fund/fund.json: daily cash delta cannot be verified")
+    for name in ("decision_log.json", "nav_history.json"):
+        errors.extend(_check_append_only(
+            name, before.get(name), after.get(name), target, settlement_rows,
+        ))
+    errors.extend(_check_blocked_nav_rows(
+        before.get("nav_history.json"), after.get("nav_history.json"),
+        after.get("orders.json"), after.get("fund.json"),
+    ))
+    return errors
 
 
 def _check_append_only(name, before, after, target, settlement_rows=()):
@@ -425,6 +471,37 @@ def _check_append_only(name, before, after, target, settlement_rows=()):
                 errs.append(f"model_fund/{name}: 本轮日期 {target} 共 {target_rows} 行,"
                             "该文件每个交易日只许一行")
     return errs
+
+
+def _check_blocked_nav_rows(before_nav, after_nav, after_orders, after_fund):
+    if not isinstance(before_nav, list) or not isinstance(after_nav, list):
+        return []  # _check_append_only reports malformed series.
+    if not isinstance(after_orders, list) or not isinstance(after_fund, dict):
+        return ["model_fund/nav_history.json: cannot bind blocked NAV to orders/fund"]
+    open_orders = [order for order in after_orders
+                   if isinstance(order, dict) and order.get("status") == "filled"]
+    filled = {order.get("ticker") for order in open_orders}
+    errors = []
+    for row in after_nav[len(before_nav):]:
+        if not isinstance(row, dict):
+            errors.append("model_fund/nav_history.json: new row is not an object")
+            continue
+        if row.get("nav") is not None:
+            if row.get("status") == "DATA_BLOCKED":
+                errors.append("model_fund/nav_history.json: blocked status has numeric NAV")
+            continue
+        missing = row.get("missing_tickers")
+        if (row.get("status") != "DATA_BLOCKED"
+                or row.get("reason") != "MISSING_TARGET_CLOSE"
+                or not isinstance(missing, list) or not missing
+                or not all(isinstance(ticker, str) and ticker for ticker in missing)
+                or missing != sorted(set(missing)) or not set(missing) <= filled
+                or row.get("cash") != after_fund.get("cash")
+                or row.get("n_positions") != len(open_orders)
+                or row.get("daily_return") is not None
+                or row.get("cum_return") is not None):
+            errors.append("model_fund/nav_history.json: blocked NAV is not bound to open positions and cash")
+    return errors
 
 
 def _cash_delta_from_orders(before_orders, after_orders, settlement_deltas=None):
@@ -524,6 +601,10 @@ def verify_protected_inputs(stage_et, run_dir, target=None):
             elif fname in APPEND_ONLY_PROTECTED:
                 errors.extend(_check_append_only(fname, bmap.get(fname), amap.get(fname), target,
                                                   settlement_rows))
+                if fname == "nav_history.json":
+                    errors.extend(_check_blocked_nav_rows(
+                        bmap.get(fname), amap.get(fname), amap.get("orders.json"),
+                        amap.get("fund.json")))
             elif fname == "fund.json":
                 if not settlement_deltas:
                     errors.extend(_check_fund(bmap.get(fname), amap.get(fname),

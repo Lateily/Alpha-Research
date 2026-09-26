@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import copy
+import json
 import sys
 import unittest
 from pathlib import Path
@@ -24,6 +25,12 @@ def method_inputs() -> tuple[dict, dict, dict]:
     core = decision_sheet_contract._valid_core()
     core["identity"]["ticker"] = "688001.SH"
     core["identity"]["as_of"] = "2026-08-11"
+    core["wrong_if"]["triggers"] = [
+        {"metric": "GM_PCT", "threshold": "<=16.5%", "source": "issuer settled results",
+         "check_date": "2026-08-17", "measurement_period": "FY2026_H1"},
+        {"metric": "NP_YOY_PCT", "threshold": "<=-40%", "source": "issuer settled results",
+         "check_date": "2026-08-17", "measurement_period": "FY2026_H1"},
+    ]
     pack = decision_pack_contract._complete_pack()
     pack["execution_gate"]["posture"] = "RECLAIM_REVIEW"
     pack["paper_plan"] = {
@@ -59,7 +66,7 @@ def registration_draft() -> tuple[dict, dict, dict, dict]:
     wrong_if = core["wrong_if"]["triggers"]
     draft = {
         "schema": method.REGISTRATION_SCHEMA,
-        "schema_version": method.SCHEMA_VERSION,
+        "schema_version": method.REGISTRATION_VERSION,
         "ticker": "688001.SH",
         "as_of": "20260811",
         "registered_at": "20260813",
@@ -290,6 +297,61 @@ def settled_bars() -> list[dict]:
 
 
 class ResearchMethodTests(unittest.TestCase):
+    def test_frozen_v1_registration_is_read_only_and_unscored(self) -> None:
+        fixture = json.loads((ROOT / "tools/nonprod_workbench/fixtures/research.json").read_text())
+        case = fixture["case_draft"]
+        registration = case["method_registration"]
+        self.assertEqual("1.0", registration["schema_version"])
+        try:
+            method.validate_registration(
+                registration, thesis_core=case["thesis_core"],
+                timing_ticket=case["timing_ticket"], decision_pack=case["decision_pack"],
+                allow_legacy_readonly=True,
+            )
+        except method.MethodError as exc:
+            self.fail(f"frozen v1 registration must remain readable: {exc}")
+        with self.assertRaisesRegex(method.MethodError, "schema/version"):
+            method.seal_registration(
+                {k: v for k, v in registration.items() if k != "registration_hash"},
+                thesis_core=case["thesis_core"], timing_ticket=case["timing_ticket"],
+                decision_pack=case["decision_pack"],
+            )
+
+    def test_legacy_wrong_if_cannot_gain_new_machine_attribution(self) -> None:
+        draft, core, timing, pack = registration_draft()
+        draft["schema_version"] = "1.0"
+        draft["thesis_expectations"][2]["operator"] = "GTE"
+        registration = {**draft, "registration_hash": funnel._hash(draft)}
+        try:
+            method.validate_registration(
+                registration, thesis_core=core, timing_ticket=timing,
+                decision_pack=pack, allow_legacy_readonly=True,
+            )
+        except method.MethodError as exc:
+            self.fail(f"legacy replay must use the legacy semantic contract: {exc}")
+        outcomes = method.seal_outcomes(outcome_draft(registration), registration)
+        try:
+            scorecard = method.build_scorecard(
+                registration, outcomes, order=None, bars=[], fund_snapshot={},
+                generated_at="2026-08-17T16:06:00+00:00",
+            )
+        except method.MethodError as exc:
+            self.fail(f"legacy replay must not run current thesis scoring: {exc}")
+        self.assertEqual("UNRESOLVED", scorecard["thesis"]["status"])
+        self.assertEqual("UNRESOLVED", scorecard["machine_attribution"])
+        forged = copy.deepcopy(scorecard)
+        forged["thesis"]["status"] = "RIGHT"
+        forged["scorecard_hash"] = funnel._hash({k: v for k, v in forged.items() if k != "scorecard_hash"})
+        with self.assertRaisesRegex(method.MethodError, "legacy"):
+            method.validate_scorecard(forged, registration, outcomes)
+        row_forgery = copy.deepcopy(scorecard)
+        row_forgery["thesis"]["claims"] = [{"claim_id": "INVALID_GM", "status": "RIGHT"}]
+        row_forgery["scorecard_hash"] = funnel._hash(
+            {k: v for k, v in row_forgery.items() if k != "scorecard_hash"}
+        )
+        with self.assertRaisesRegex(method.MethodError, "legacy"):
+            method.validate_scorecard(row_forgery, registration, outcomes)
+
     def test_semiconductor_registration_binds_thesis_valuation_smc_and_levels(self) -> None:
         registration = valid_registration()
         self.assertEqual(registration["valuation"]["model_output"]["computed_base_low"], 95.0)
@@ -311,6 +373,46 @@ class ResearchMethodTests(unittest.TestCase):
         duplicate["threshold"] = 25.0
         draft["thesis_expectations"].append(duplicate)
         with self.assertRaisesRegex(method.MethodError, "exactly one invalidation"):
+            method.seal_registration(
+                draft, thesis_core=core, timing_ticket=timing, decision_pack=pack
+            )
+
+    def test_wrong_if_reversed_predicate_is_refused_even_with_valid_hash(self) -> None:
+        draft, core, timing, pack = registration_draft()
+        draft["thesis_expectations"][2]["operator"] = "GTE"
+        with self.assertRaisesRegex(method.MethodError, "wrong-if semantics"):
+            method.seal_registration(
+                draft, thesis_core=core, timing_ticket=timing, decision_pack=pack
+            )
+
+    def test_wrong_if_metric_source_date_and_unit_must_match(self) -> None:
+        changes = (
+            ("metric", "OTHER_GM_PCT"),
+            ("source_ref", "another issuer"),
+            ("measurement_period", "FY2025_H1"),
+            ("due_date", "20260818"),
+            ("threshold", 0.165),
+        )
+        for key, value in changes:
+            with self.subTest(field=key):
+                draft, core, timing, pack = registration_draft()
+                draft["thesis_expectations"][2][key] = value
+                with self.assertRaisesRegex(method.MethodError, "wrong-if semantics"):
+                    method.seal_registration(
+                        draft, thesis_core=core, timing_ticket=timing,
+                        decision_pack=pack,
+                    )
+
+    def test_wrong_if_free_text_cannot_gain_machine_score(self) -> None:
+        draft, core, timing, pack = registration_draft()
+        core["wrong_if"]["triggers"][0]["threshold"] = "毛利率可能低于预期"
+        draft["thesis_core_hash"] = funnel._hash(core)
+        draft["wrong_if_hash"] = funnel._hash(core["wrong_if"]["triggers"])
+        draft["smc"]["thesis_line_hash"] = draft["wrong_if_hash"]
+        draft["thesis_expectations"][2]["wrong_if_trigger_hash"] = funnel._hash(
+            core["wrong_if"]["triggers"][0]
+        )
+        with self.assertRaisesRegex(method.MethodError, "wrong-if semantics"):
             method.seal_registration(
                 draft, thesis_core=core, timing_ticket=timing, decision_pack=pack
             )
@@ -586,6 +688,29 @@ class ResearchMethodTests(unittest.TestCase):
         )
         self.assertEqual(scorecard["machine_attribution"], "THESIS_WRONG_TIMING_RIGHT")
         self.assertEqual(scorecard["pnl"]["status"], "PROFIT")
+
+    def test_timing_excursions_exclude_post_exit_prices(self) -> None:
+        registration = valid_registration()
+        order = closed_order()
+        bars = settled_bars()
+        original = method._score_timing(registration, order, bars)
+        post_exit = {"date": "20260818", "open": 100.0, "high": 200.0,
+                     "low": 50.0, "close": 100.0}
+        self.assertEqual(method._score_timing(registration, order, bars + [post_exit]),
+                         original)
+
+    def test_open_position_timing_keeps_later_prices(self) -> None:
+        registration = valid_registration()
+        order = closed_order()
+        order.update(status="filled", exit_date=None, exit_reason=None)
+        bars = settled_bars()
+        original = method._score_timing(registration, order, bars)
+        post = {"date": "20260818", "open": 100.0, "high": 200.0,
+                "low": 50.0, "close": 100.0}
+        later = method._score_timing(registration, order, bars + [post])
+        self.assertEqual(later["status"], "UNRESOLVED")
+        self.assertGreater(later["mfe_R"], original["mfe_R"])
+        self.assertLess(later["mae_R"], original["mae_R"])
 
     def test_scorecard_tampering_and_authority_injection_are_rejected(self) -> None:
         registration = valid_registration()

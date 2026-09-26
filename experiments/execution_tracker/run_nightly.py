@@ -22,6 +22,8 @@ import sys
 import time
 import uuid
 
+from nightly_limits import NIGHTLY_STEP_TIMEOUT_SECONDS, step_timeout
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "nightly_run.json")
 ALARM_FLAG = "/tmp/ar-nightly-incomplete"
@@ -429,6 +431,12 @@ def _verify_funnel_bundle(data, repo_root, artifact_path=None):
                 f"health 的 battery_coverage 与实物不符: "
                 f"{data.get('battery_coverage')} != {measured_battery}"
             )
+        # A battery that records its dispatch order must publish the per-board split,
+        # and whatever split is published must be recomputed from the rows.
+        # governance-mutation: FUNNEL_DAG_BATTERY_COLLECTION_RECOMPUTED
+        if "battery_collection" in data or "dispatch" in candidate_battery:
+            if data.get("battery_collection") != nightly_funnel.battery_collection_summary(candidate_battery):
+                raise ValueError("health 的 battery_collection 缺失或与实物不符")
 
     # status 与 counts 由实物重算,health 只是转述,不是权威
     scan = payloads["all_market_scan.json"]
@@ -827,7 +835,8 @@ def run_steps(
                 env["AR_TARGET_TRADE_DATE"] = target
             else:
                 env.pop("AR_TARGET_TRADE_DATE", None)
-            code, out = _subprocess_runner(cmd, cwd=base, env=env)
+            # governance-mutation: NIGHTLY_RUNNER_PER_STEP_TIMEOUT
+            code, out = _subprocess_runner(cmd, cwd=base, env=env, timeout=step_timeout(name))
         else:
             code, out = runner(cmd)
         status = _classify(code, out)
@@ -929,14 +938,15 @@ def run_steps(
             "note": "nightly v4;COMPLETE 由结构化状态、实物、run_id 与统一交易日共同背书。不是买卖指令。"}
 
 
-def _subprocess_runner(cmd, cwd=None, env=None):
+def _subprocess_runner(cmd, cwd=None, env=None, timeout=NIGHTLY_STEP_TIMEOUT_SECONDS):
     try:
         p = subprocess.run(cmd, cwd=cwd or HERE, env=env, text=True,
-                           capture_output=True, timeout=600)
+                           capture_output=True, timeout=timeout)
     except subprocess.TimeoutExpired as e:
         # 审查F2:挂死的步必须变成 FAILED 并继续走完报警,绝不让编排器整体崩掉
         out = ((e.stdout or "") if isinstance(e.stdout, str) else "") +               ((e.stderr or "") if isinstance(e.stderr, str) else "")
-        return 124, out + f"\nTIMEOUT after 600s: {' '.join(cmd)}"
+        return 124, out + (f"\nTIMEOUT after {timeout}s: "
+                           f"{' '.join(cmd)}")
     return p.returncode, (p.stdout + p.stderr)
 
 
@@ -1302,10 +1312,18 @@ def _recover_phase(base=None):
         base = base or HERE
         sys.path.insert(0, HERE)
         import registry as _reg
+        import model_paper_fund as _paper_fund
+        from nightly_context import target_trade_date as _target_trade_date
+        paper_recovery = _paper_fund.recover_prior_daily_intent(
+            os.path.join(base, "model_fund"), latest_target=_target_trade_date()
+        )
+        if paper_recovery:
+            print(f"[recover] 纸面日投影已在 live 收敛: "
+                  f"{paper_recovery['target_trade_date']} / {paper_recovery['run_id']}")
         _log = os.path.join(base, "paper_signal_log.json")
         _lp = _reg.ledger_path_for(_log)
         if not os.path.exists(_lp):
-            return None
+            return {"paper_daily": paper_recovery} if paper_recovery else None
         r = _reg.recover_pending(_lp, _log)
         er = _reg.recover_evaluations(_lp, _log)
         if r["pending_examined"]:
@@ -1314,7 +1332,7 @@ def _recover_phase(base=None):
         if er["pending_examined"]:
             print(f"[recover] 悬空判分处理: 检查 {er['pending_examined']} · "
                   f"前滚 {er['rolled_forward']}")
-        return {"registration": r, "evaluation": er}
+        return {"registration": r, "evaluation": er, "paper_daily": paper_recovery}
     except Exception as e:                       # noqa: BLE001
         print(f"[recover] 恢复阶段失败: {e} —— fail-closed,本轮判 INCOMPLETE,引擎不得启动")
         return False

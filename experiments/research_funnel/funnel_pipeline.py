@@ -21,6 +21,7 @@ import sqlite3
 import tempfile
 from collections import Counter, defaultdict
 from datetime import datetime, timezone
+from fractions import Fraction
 from pathlib import Path
 from typing import Any, Iterable, Mapping, Sequence
 
@@ -1873,6 +1874,137 @@ def validate_candidate_manifest(payload: Mapping[str, Any]) -> None:
         raise FunnelError("candidate manifest hash mismatch")
 
 
+# Battery dispatch order (2026-09-21). The manifest is ts_code-sorted, so when the
+# collection budget ran out the unstarted tail was always 688 STAR and then .BJ BSE:
+# on 20260921 50 of 58 STAR candidates had zero dimensions while no main-board or
+# ChiNext candidate was left at zero. Candidates now start in a board-stratified,
+# date-keyed order, so a shortfall lands on every board in proportion to its size and
+# moves between names from day to day. No research signal enters the order; results
+# stay in manifest order, so rows_hash and every consumer are unaffected.
+BATTERY_DISPATCH_POLICY = "BOARD_STRATIFIED_DATE_HASH_V1"
+BATTERY_BOARDS = ("MAIN", "CHINEXT", "STAR", "BSE")
+BATTERY_COLLECTOR_REASONS = ("BATCH_NOT_STARTED", "BATCH_TIMEOUT", "CANDIDATE_TIMEOUT", "WORKER_EXIT")
+
+
+def battery_board(ts_code: str) -> str:
+    """Board from the code alone: 688/689 STAR (incl. CDRs), 300/301/302 ChiNext, .BJ BSE."""
+    code = str(ts_code).strip().upper()
+    if code.endswith(".BJ"):
+        return "BSE"
+    # governance-mutation: FUNNEL_BATTERY_BOARD_PREFIXES
+    if code[:3] in {"688", "689"}:
+        return "STAR"
+    if code[:3] in {"300", "301", "302"}:
+        return "CHINEXT"
+    return "MAIN"
+
+
+def _board_sequence(sizes: Mapping[str, int]) -> list[str]:
+    """Which board starts next, so every prefix stays within one of each board's share.
+
+    Tijdeman's chairman assignment (Discrete Math. 1980): with m boards of share
+    lambda_b, step t picks, among boards whose deficit lambda_b*t - taken_b is at least
+    gamma = 1/(2m-2), the one whose next item is due earliest, (taken_b + 1 - gamma) /
+    lambda_b. Then |taken_b(t) - lambda_b*t| <= 1 - 1/(2m-2) < 1 for every prefix t.
+    Exact fractions; ties go to BATTERY_BOARDS order. It depends only on board sizes,
+    so the between-board rhythm is the same every day; the date only reorders names
+    inside each board.
+    """
+    boards = [board for board in BATTERY_BOARDS if sizes.get(board)]
+    total = sum(sizes[board] for board in boards)
+    if len(boards) <= 1:
+        return boards * total
+    gamma = Fraction(1, 2 * (len(boards) - 1))
+    taken = {board: 0 for board in boards}
+    sequence: list[str] = []
+    for step in range(1, total + 1):
+        eligible = [
+            board for board in boards
+            if taken[board] < sizes[board]
+            # governance-mutation: FUNNEL_BATTERY_DISPATCH_BOUND
+            and Fraction(sizes[board] * step, total) - taken[board] >= gamma
+        ]
+        if not eligible:
+            raise FunnelError("battery dispatch has no eligible board; stratification is broken")
+        pick = min(
+            eligible,
+            # governance-mutation: FUNNEL_BATTERY_DISPATCH_DEADLINE
+            key=lambda board: ((taken[board] + 1 - gamma) * total / sizes[board], BATTERY_BOARDS.index(board)),
+        )
+        taken[pick] += 1
+        sequence.append(pick)
+    return sequence
+
+
+def battery_dispatch_order(ts_codes: Sequence[str], as_of: str) -> list[str]:
+    """Replayable start order from (ts_codes, as_of) alone."""
+    codes = [str(code) for code in ts_codes]
+    if len(set(codes)) != len(codes):
+        raise FunnelError("battery dispatch order needs unique ts_codes")
+    date = _date8(str(as_of))
+
+    def key(code: str) -> str:
+        return hashlib.sha256(f"{date}|{code}".encode("utf-8")).hexdigest()
+
+    buckets: dict[str, list[str]] = defaultdict(list)
+    for code in codes:
+        buckets[battery_board(code)].append(code)
+    queues = {board: sorted(members, key=lambda code: (key(code), code)) for board, members in buckets.items()}
+    cursor = {board: 0 for board in queues}
+    order: list[str] = []
+    # governance-mutation: FUNNEL_BATTERY_DISPATCH_STRATIFIED
+    for board in _board_sequence({board: len(members) for board, members in queues.items()}):
+        order.append(queues[board][cursor[board]])
+        cursor[board] += 1
+    if sorted(order) != sorted(codes):
+        raise FunnelError("battery dispatch order is not a permutation of the manifest")
+    return order
+
+
+def _zero_row_reason(errors: set[str], provider_available: bool) -> str:
+    """Closed vocabulary: raw provider text never reaches the public health file."""
+    if not provider_available:
+        return "PROVIDER_UNAVAILABLE"
+    if len(errors) != 1:
+        return "MIXED"
+    (err,) = errors
+    if err in BATTERY_COLLECTOR_REASONS:
+        return err
+    if err.startswith("PROVIDER_ERROR:"):
+        return "PROVIDER_ERROR"
+    # governance-mutation: FUNNEL_BATTERY_REASON_VOCABULARY
+    return "DATA_BLOCKED"
+
+
+def battery_collection_summary(battery: Mapping[str, Any]) -> dict[str, Any]:
+    """Per-board coverage and zero-row reasons, derived from the rows alone."""
+    boards = {name: {"expected": 0, "complete": 0, "partial": 0, "zero": 0} for name in BATTERY_BOARDS}
+    reasons: Counter = Counter()
+    provider_available = battery.get("provider_state") == "AVAILABLE"
+    for row in battery.get("results") or []:
+        counts = boards[battery_board(str(row.get("ts_code") or ""))]
+        counts["expected"] += 1
+        completeness = row.get("completeness") or {}
+        if completeness.get("verdict") == "COMPLETE":
+            counts["complete"] += 1
+        elif completeness.get("covered") == 0:
+            counts["zero"] += 1
+            errors = {
+                str((evidence or {}).get("err") or "")
+                for evidence in (row.get("dims") or {}).values()
+            }
+            reasons[_zero_row_reason(errors, provider_available)] += 1
+        else:
+            counts["partial"] += 1
+    return {
+        "dispatch_policy": (battery.get("dispatch") or {}).get("policy"),
+        # governance-mutation: FUNNEL_BATTERY_BUDGET_EXHAUSTED
+        "budget_exhausted": reasons.get("BATCH_NOT_STARTED", 0) + reasons.get("BATCH_TIMEOUT", 0) > 0,
+        "zero_row_reasons": dict(sorted(reasons.items())),
+        "by_board": boards,
+    }
+
+
 def validate_candidate_battery(
     battery: Mapping[str, Any], manifest: Mapping[str, Any],
 ) -> dict[str, int]:
@@ -1983,6 +2115,14 @@ def validate_candidate_battery(
             blocked_rows += 1
     if battery.get("rows_hash") != _hash(rows):
         raise FunnelError("candidate battery rows_hash mismatch")
+    # Batteries from before 2026-09-21 carry no dispatch record and stay readable.
+    # A present-but-null record is rejected, matching both production verifiers.
+    # governance-mutation: FUNNEL_BATTERY_DISPATCH_REPLAYED
+    if "dispatch" in battery and battery["dispatch"] != {
+        "policy": BATTERY_DISPATCH_POLICY,
+        "order_hash": _hash(battery_dispatch_order(manifest["ts_codes"], manifest["as_of"])),
+    }:
+        raise FunnelError("candidate battery dispatch order does not replay from the manifest")
     return {
         "expected": len(expected),
         "observed": len(observed),

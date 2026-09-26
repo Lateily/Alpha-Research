@@ -274,6 +274,49 @@ class GovernanceMutationGateTests(unittest.TestCase):
             ):
                 gate.validate_manifest(root, [case])
 
+    def test_validate_manifest_enforces_execution_clock_marker_coverage(self) -> None:
+        case = gate.MutationCase(
+            mutation_id="EXECUTION_CLOCK_SYNTHETIC_GATE",
+            component="Execution tracker Asia/Shanghai clock synthetic",
+            source_path="source.py",
+            test_script="test_source.py",
+            before="guard = True",
+            after="guard = False",
+            expected_failure_marker="synthetic",
+            rationale="Synthetic case used to prove clock marker coverage is load-bearing.",
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "source.py").write_text("guard = True\n", encoding="utf-8")
+            (root / "test_source.py").write_text(
+                "def synthetic():\n    pass\n",
+                encoding="utf-8",
+            )
+            for relative in (*gate.K1_GOVERNANCE_PATHS, *gate.R043_GOVERNANCE_PATHS):
+                marker_path = root / relative
+                marker_path.parent.mkdir(parents=True, exist_ok=True)
+                marker_path.write_text("# no relevant markers\n", encoding="utf-8")
+            for relative in gate.EXECUTION_CLOCK_GOVERNANCE_PATHS:
+                marker_path = root / relative
+                marker_path.parent.mkdir(parents=True, exist_ok=True)
+                marker_path.write_text("# missing clock marker\n", encoding="utf-8")
+            with self.assertRaisesRegex(
+                gate.MutationGateError,
+                "execution clock governance marker drift.*"
+                "mutations_without_markers.*EXECUTION_CLOCK_SYNTHETIC_GATE",
+            ):
+                gate.validate_manifest(root, [case])
+            (root / gate.EXECUTION_CLOCK_GOVERNANCE_PATHS[0]).write_text(
+                "# governance-mutation: EXECUTION_CLOCK_ORPHAN\n",
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(
+                gate.MutationGateError,
+                "execution clock governance marker drift.*"
+                "markers_without_mutations.*EXECUTION_CLOCK_ORPHAN",
+            ):
+                gate.validate_manifest(root, [])
+
     def test_k1_marker_coverage_rejects_missing_or_orphaned_mutations(self) -> None:
         k1_case = next(
             case for case in gate.MUTATIONS if case.component.startswith("AIOS K1")
@@ -634,6 +677,239 @@ class GovernanceMutationGateTests(unittest.TestCase):
         self.assertEqual("kept", environment["SAFE_VALUE"])
         self.assertEqual("1", environment["AR_OFFLINE"])
 
+
+def synthetic_cases(count: int) -> tuple[gate.MutationCase, ...]:
+    return tuple(
+        gate.MutationCase(
+            mutation_id=f"SYNTHETIC_SHARD_{position}",
+            component="synthetic shard",
+            source_path="source.py",
+            test_script="test_source.py",
+            before=f"GUARD_{position} = True",
+            after=f"GUARD_{position} = False",
+            expected_failure_marker=f"test_guard_{position}",
+            rationale="Synthetic shard accounting fixture.",
+        )
+        for position in range(count)
+    )
+
+
+def write_synthetic_repo(root: Path, cases: tuple[gate.MutationCase, ...]) -> None:
+    (root / "source.py").write_text(
+        "".join(f"{case.before}\n" for case in cases), encoding="utf-8"
+    )
+    (root / "test_source.py").write_text(
+        "import unittest\n"
+        "import source\n"
+        "class ShardTests(unittest.TestCase):\n"
+        + "".join(
+            f"    def test_guard_{position}(self):\n"
+            f"        self.assertTrue(source.GUARD_{position})\n"
+            for position in range(len(cases))
+        ),
+        encoding="utf-8",
+    )
+    for relative in (
+        *gate.K1_GOVERNANCE_PATHS,
+        *gate.R043_GOVERNANCE_PATHS,
+        *gate.FUNNEL_GOVERNANCE_PATHS,
+        *gate.FUNNEL_NIGHTLY_GOVERNANCE_PATHS,
+        *gate.NIGHTLY_ACCEPTANCE_GOVERNANCE_PATHS,
+    ):
+        path = root / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("# no governance markers in synthetic fixture\n", encoding="utf-8")
+
+
+class GovernanceMutationShardTests(unittest.TestCase):
+    def write_all_receipts(self, receipt_dir: Path, cases, count: int) -> None:
+        for index in range(1, count + 1):
+            shard = gate.Shard(index, count)
+            gate.write_shard_receipt(
+                receipt_dir / f"shard-{index}.json",
+                cases,
+                shard,
+                [case.mutation_id for case in gate.select_shard(cases, shard)],
+            )
+
+    def test_parse_shard_accepts_only_one_based_in_range_specs(self) -> None:
+        self.assertEqual(gate.Shard(3, 4), gate.parse_shard("3/4"))
+        for invalid in ("0/4", "5/4", "1/0", "a/b", "1-4", " 1/4", "01/4", "1/4/2"):
+            with self.subTest(spec=invalid), self.assertRaises(
+                gate.argparse.ArgumentTypeError
+            ):
+                gate.parse_shard(invalid)
+
+    def test_shards_partition_the_ordered_manifest_round_robin(self) -> None:
+        cases = synthetic_cases(10)
+        shards = [gate.select_shard(cases, gate.Shard(index, 4)) for index in range(1, 5)]
+        self.assertEqual(
+            [case.mutation_id for case in shards[1]],
+            ["SYNTHETIC_SHARD_1", "SYNTHETIC_SHARD_5", "SYNTHETIC_SHARD_9"],
+        )
+        merged = [case for shard in shards for case in shard]
+        self.assertEqual(len(cases), len(merged))
+        self.assertEqual(set(cases), set(merged))
+        self.assertEqual(tuple(cases), gate.select_shard(cases, None))
+        self.assertEqual((), gate.select_shard(synthetic_cases(2), gate.Shard(3, 3)))
+
+    def test_production_shards_cover_every_mutation_exactly_once(self) -> None:
+        for count in (1, 4, 7):
+            with self.subTest(count=count):
+                ids = [
+                    case.mutation_id
+                    for index in range(1, count + 1)
+                    for case in gate.select_shard(gate.MUTATIONS, gate.Shard(index, count))
+                ]
+                self.assertEqual(
+                    sorted(case.mutation_id for case in gate.MUTATIONS), sorted(ids)
+                )
+
+    def test_manifest_digest_binds_every_case_field_and_order(self) -> None:
+        cases = synthetic_cases(3)
+        digest = gate.manifest_digest(cases)
+        self.assertEqual(digest, gate.manifest_digest(synthetic_cases(3)))
+        self.assertNotEqual(digest, gate.manifest_digest(tuple(reversed(cases))))
+        changed = (cases[0], cases[1], gate.MutationCase(**{**gate.asdict(cases[2]), "after": ""}))
+        self.assertNotEqual(digest, gate.manifest_digest(changed))
+
+    def test_merge_accepts_complete_exact_receipts(self) -> None:
+        cases = synthetic_cases(9)
+        with tempfile.TemporaryDirectory() as tmp:
+            receipt_dir = Path(tmp)
+            self.write_all_receipts(receipt_dir, cases, 4)
+            with mock.patch("sys.stdout"):
+                self.assertEqual(9, gate.merge_shard_receipts(receipt_dir, cases))
+
+    def test_merge_accepts_empty_shards_when_shards_outnumber_cases(self) -> None:
+        cases = synthetic_cases(2)
+        with tempfile.TemporaryDirectory() as tmp:
+            receipt_dir = Path(tmp)
+            self.write_all_receipts(receipt_dir, cases, 3)
+            with mock.patch("sys.stdout"):
+                self.assertEqual(2, gate.merge_shard_receipts(receipt_dir, cases))
+
+    def test_merge_rejects_missing_duplicate_and_disagreeing_shards(self) -> None:
+        cases = synthetic_cases(9)
+        with tempfile.TemporaryDirectory() as tmp:
+            receipt_dir = Path(tmp)
+            with self.assertRaisesRegex(gate.MutationGateError, "no shard receipts"):
+                gate.merge_shard_receipts(receipt_dir, cases)
+            self.write_all_receipts(receipt_dir, cases, 4)
+            (receipt_dir / "shard-3.json").unlink()
+            with self.assertRaisesRegex(gate.MutationGateError, r"missing=\[3\]"):
+                gate.merge_shard_receipts(receipt_dir, cases)
+            shard_four = (receipt_dir / "shard-4.json").read_text(encoding="utf-8")
+            (receipt_dir / "shard-3.json").write_text(shard_four, encoding="utf-8")
+            with self.assertRaisesRegex(gate.MutationGateError, r"duplicated=\[4\]"):
+                gate.merge_shard_receipts(receipt_dir, cases)
+            gate.write_shard_receipt(
+                receipt_dir / "shard-3.json", cases, gate.Shard(3, 5), []
+            )
+            with self.assertRaisesRegex(gate.MutationGateError, "disagree on the shard count"):
+                gate.merge_shard_receipts(receipt_dir, cases)
+
+    def test_merge_rejects_wrong_manifest_and_inexact_kill_lists(self) -> None:
+        cases = synthetic_cases(9)
+        with tempfile.TemporaryDirectory() as tmp:
+            receipt_dir = Path(tmp)
+            self.write_all_receipts(receipt_dir, cases, 2)
+            gate.write_shard_receipt(
+                receipt_dir / "shard-1.json",
+                synthetic_cases(10),
+                gate.Shard(1, 2),
+                [case.mutation_id for case in gate.select_shard(cases, gate.Shard(1, 2))],
+            )
+            with mock.patch("sys.stdout"), self.assertRaisesRegex(
+                gate.MutationGateError, "different mutation manifest"
+            ):
+                gate.merge_shard_receipts(receipt_dir, cases)
+            assigned = [
+                case.mutation_id for case in gate.select_shard(cases, gate.Shard(1, 2))
+            ]
+            for killed, message in (
+                (assigned[:-1], "not_killed=.*SYNTHETIC_SHARD_8"),
+                (assigned + ["SYNTHETIC_SHARD_1"], "unassigned=.*SYNTHETIC_SHARD_1"),
+                (list(reversed(assigned)), "does not match its assigned"),
+            ):
+                with self.subTest(killed=killed):
+                    gate.write_shard_receipt(
+                        receipt_dir / "shard-1.json", cases, gate.Shard(1, 2), killed
+                    )
+                    with mock.patch("sys.stdout"), self.assertRaisesRegex(
+                        gate.MutationGateError, message
+                    ):
+                        gate.merge_shard_receipts(receipt_dir, cases)
+
+    def test_merge_rejects_malformed_receipts(self) -> None:
+        cases = synthetic_cases(3)
+        with tempfile.TemporaryDirectory() as tmp:
+            receipt_dir = Path(tmp)
+            path = receipt_dir / "shard-1.json"
+            for payload, message in (
+                ("not json", "unreadable"),
+                ('{"schema": "ar-governance-mutation-shard-receipt.v1"}', "shape"),
+                (
+                    '{"schema": "other", "shard_index": 1, "shard_count": 1,'
+                    ' "manifest_sha256": "x", "manifest_size": 3, "killed": []}',
+                    "schema",
+                ),
+                (
+                    '{"schema": "ar-governance-mutation-shard-receipt.v1",'
+                    ' "shard_index": 2, "shard_count": 1,'
+                    ' "manifest_sha256": "x", "manifest_size": 3, "killed": []}',
+                    "out of range",
+                ),
+                (
+                    '{"schema": "ar-governance-mutation-shard-receipt.v1",'
+                    ' "shard_index": true, "shard_count": 1,'
+                    ' "manifest_sha256": "x", "manifest_size": 3, "killed": []}',
+                    "count is invalid",
+                ),
+            ):
+                with self.subTest(message=message):
+                    path.write_text(payload, encoding="utf-8")
+                    with self.assertRaisesRegex(gate.MutationGateError, message):
+                        gate.merge_shard_receipts(receipt_dir, cases)
+
+    def test_shard_runs_only_its_cases_but_validates_the_full_manifest(self) -> None:
+        cases = synthetic_cases(4)
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write_synthetic_repo(root, cases)
+            with mock.patch("sys.stdout"):
+                killed = gate.run_gate(root, cases, gate.Shard(2, 2))
+            self.assertEqual(("SYNTHETIC_SHARD_1", "SYNTHETIC_SHARD_3"), killed)
+            broken = cases[:2] + (
+                gate.MutationCase(**{**gate.asdict(cases[2]), "before": "MISSING = True"}),
+                cases[3],
+            )
+            self.assertNotIn(broken[2], gate.select_shard(broken, gate.Shard(2, 2)))
+            with self.assertRaisesRegex(gate.MutationGateError, "SYNTHETIC_SHARD_2"):
+                gate.run_gate(root, broken, gate.Shard(2, 2))
+
+    def test_cli_shard_receipt_then_merge_round_trip(self) -> None:
+        cases = synthetic_cases(3)
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "repo"
+            receipt_dir = Path(tmp) / "receipts"
+            root.mkdir()
+            write_synthetic_repo(root, cases)
+            with mock.patch.object(gate, "MUTATIONS", cases), mock.patch.object(
+                gate, "REPO_ROOT", root
+            ), mock.patch("sys.stdout"):
+                for index in (1, 2):
+                    self.assertEqual(
+                        0,
+                        gate.main([
+                            "--shard", f"{index}/2",
+                            "--receipt", str(receipt_dir / f"shard-{index}.json"),
+                        ]),
+                    )
+                self.assertEqual(0, gate.main(["--merge-receipts", str(receipt_dir)]))
+                (receipt_dir / "shard-2.json").unlink()
+                with mock.patch("sys.stderr"):
+                    self.assertEqual(1, gate.main(["--merge-receipts", str(receipt_dir)]))
 
 if __name__ == "__main__":
     unittest.main()

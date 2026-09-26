@@ -17,6 +17,12 @@ state. NO accuracy claim below 30 scored nowcasts (claim_allowed=false).
 Calibration reminder baked into the report: flow accuracy != return edge
 (20260701 利通: settle confirmed +4.95亿 inflow; next day limit-down).
 
+Capture admission (2026-09 London-clock incident, market_clock.py): a record is
+scored/aggregated only if it provably read in-session data — captured_at in
+[09:15, 15:00) Asia/Shanghai on its own date, or (legacy, no captured_at) a
+checkpoint label from before the 2026-09-17 clock switch. Post-close captures and
+unprovable checkpoints are skipped and counted separately; never rewritten.
+
   python3 nowcast_evaluator.py --selftest        # offline, injected fetchers
   python3 nowcast_evaluator.py --score           # score unscored records (needs TUSHARE_TOKEN)
   python3 nowcast_evaluator.py --report          # aggregate only
@@ -29,6 +35,7 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import fund_source as fs                    # noqa: E402
+import market_clock as mc                   # noqa: E402
 import run_post_close_report as rpc         # noqa: E402
 
 NOWCAST_LOG = os.path.join(HERE, "nowcast_log.json")
@@ -69,6 +76,9 @@ def score_log(log, token, settle_fn=None, ret_fn=None):
     for rec in log:
         if rec.get("predicted_flow_dir") is None:          # DATA_INSUFFICIENT etc.
             continue
+        # governance-mutation: EXECUTION_CLOCK_SCORE_ADMISSION
+        if mc.nowcast_admission(rec) != mc.IN_SESSION:     # post-close / unprovable
+            continue
         if not rec.get("scored"):
             main = settle_fn(rec["ticker"], rec["date"])
             if main is not None:
@@ -87,11 +97,22 @@ def score_log(log, token, settle_fn=None, ret_fn=None):
     return n_flow, n_ret
 
 
+def admission_counts(log):
+    """Directional records by capture admission (IN_SESSION / POST_CLOSE / UNPROVEN)."""
+    counts = {mc.IN_SESSION: 0, mc.POST_CLOSE: 0, mc.UNPROVEN_IN_SESSION: 0}
+    for rec in log:
+        if rec.get("predicted_flow_dir") is not None:
+            counts[mc.nowcast_admission(rec)] += 1
+    return counts
+
+
 def aggregate(log):
-    """Per-state + overall hit rates, next-day return by state, <30 claim gate."""
+    """Per-state + overall hit rates, next-day return by state, <30 claim gate.
+    Records failing capture admission never count, even if scored elsewhere."""
     by_state = {}
     for rec in log:
-        if not rec.get("scored"):
+        # governance-mutation: EXECUTION_CLOCK_AGGREGATE_ADMISSION
+        if not rec.get("scored") or mc.nowcast_admission(rec) != mc.IN_SESSION:
             continue
         s = by_state.setdefault(rec["state"], {"n": 0, "hits": 0, "flat": 0, "rets": []})
         if rec.get("flow_hit") is None:
@@ -101,6 +122,7 @@ def aggregate(log):
             s["hits"] += 1 if rec["flow_hit"] else 0
         if rec.get("next_day_return") is not None:
             s["rets"].append(rec["next_day_return"])
+    counts = admission_counts(log)
     out, total_n, total_hits = {}, 0, 0
     for state, s in sorted(by_state.items()):
         total_n += s["n"]; total_hits += s["hits"]
@@ -115,6 +137,10 @@ def aggregate(log):
         "overall_flow_hit_rate": round(total_hits / total_n, 3) if total_n else None,
         "min_required": MIN_SCORED_FOR_CLAIM,
         "claim_allowed": total_n >= MIN_SCORED_FOR_CLAIM,
+        "excluded_post_close": counts[mc.POST_CLOSE],
+        "excluded_unproven_in_session": counts[mc.UNPROVEN_IN_SESSION],
+        "admission_rule": ("captured_at in [09:15,15:00) Asia/Shanghai on the record date; "
+                           f"legacy checkpoint labels trusted only before {mc.LEGACY_CLOCK_CUTOVER}"),
         "calibration_note": "flow accuracy != return edge (20260701 利通: settle +4.95亿 inflow -> next day limit-down)",
     }
 
@@ -127,17 +153,17 @@ def selftest():
         checks.append((n, bool(c)))
 
     log = [
-        {"nowcast_id": "a", "ticker": "A.SZ", "date": "20260702", "state": "DISTRIBUTION_PROBABLE",
+        {"nowcast_id": "a", "ticker": "A.SZ", "date": "20260702", "checkpoint": "wt1000", "state": "DISTRIBUTION_PROBABLE",
          "predicted_flow_dir": -1, "scored": False},
-        {"nowcast_id": "b", "ticker": "B.SZ", "date": "20260702", "state": "ACCUMULATION_PROBABLE",
+        {"nowcast_id": "b", "ticker": "B.SZ", "date": "20260702", "checkpoint": "wt1000", "state": "ACCUMULATION_PROBABLE",
          "predicted_flow_dir": 1, "scored": False},
-        {"nowcast_id": "c", "ticker": "C.SZ", "date": "20260702", "state": "RECLAIM_ATTEMPT",
+        {"nowcast_id": "c", "ticker": "C.SZ", "date": "20260702", "checkpoint": "wt1000", "state": "RECLAIM_ATTEMPT",
          "predicted_flow_dir": 1, "scored": False},
-        {"nowcast_id": "d", "ticker": "D.SZ", "date": "20260702", "state": "FAKE_STRENGTH",
+        {"nowcast_id": "d", "ticker": "D.SZ", "date": "20260702", "checkpoint": "wt1000", "state": "FAKE_STRENGTH",
          "predicted_flow_dir": -1, "scored": False},
-        {"nowcast_id": "e", "ticker": "E.SZ", "date": "20260702", "state": "DATA_INSUFFICIENT",
+        {"nowcast_id": "e", "ticker": "E.SZ", "date": "20260702", "checkpoint": "wt1000", "state": "DATA_INSUFFICIENT",
          "predicted_flow_dir": None, "scored": False},
-        {"nowcast_id": "f", "ticker": "F.SZ", "date": "20260702", "state": "OPENING_FADE",
+        {"nowcast_id": "f", "ticker": "F.SZ", "date": "20260702", "checkpoint": "wt1000", "state": "OPENING_FADE",
          "predicted_flow_dir": -1, "scored": False},
     ]
     settle = {"A.SZ": -7.37, "B.SZ": 2.04, "C.SZ": -10.0, "D.SZ": -16.67, "F.SZ": 0.05}
@@ -163,9 +189,24 @@ def selftest():
 
     # settle not yet published -> stays unscored (no look-ahead / no guess)
     pend = [{"nowcast_id": "p", "ticker": "P.SZ", "date": "20260703",
-             "state": "OPENING_FADE", "predicted_flow_dir": -1, "scored": False}]
+             "checkpoint": "wt1000", "state": "OPENING_FADE", "predicted_flow_dir": -1, "scored": False}]
     score_log(pend, token=None, settle_fn=lambda t, d: None, ret_fn=lambda t, d: None)
     ck("unsettled stays unscored", pend[0]["scored"] is False)
+
+    # capture admission: post-close / unprovable reads are skipped + counted, never edited
+    late = [
+        {"nowcast_id": "q1", "ticker": "Q1.SZ", "date": "20260923", "checkpoint": "wt1614",
+         "captured_at": "2026-09-23T16:14:00+08:00", "state": "OPENING_FADE",
+         "predicted_flow_dir": -1, "scored": False},
+        {"nowcast_id": "q2", "ticker": "Q2.SZ", "date": "20260923", "checkpoint": "wt0926",
+         "state": "OPENING_FADE", "predicted_flow_dir": -1, "scored": False},
+    ]
+    frozen = json.dumps(late, sort_keys=True)
+    n_late, _ = score_log(late, token=None, settle_fn=lambda t, d: -5.0, ret_fn=lambda t, d: 0.0)
+    ck("post-close + post-cutover legacy never scored", n_late == 0)
+    ck("skipped records are not rewritten", json.dumps(late, sort_keys=True) == frozen)
+    counts = admission_counts(late)
+    ck("counted separately", counts[mc.POST_CLOSE] == 1 and counts[mc.UNPROVEN_IN_SESSION] == 1)
 
     agg = aggregate(log)
     ck("aggregate counts 4 directional (flat excluded)", agg["total_scored"] == 4)
@@ -200,7 +241,9 @@ def main():
         n_flow, n_ret = score_log(log, token)
         with open(NOWCAST_LOG, "w") as fh:
             json.dump(log, fh, ensure_ascii=False, indent=2)
-        print(f"scored {n_flow} flow / filled {n_ret} next-day returns")
+        counts = admission_counts(log)
+        print(f"scored {n_flow} flow / filled {n_ret} next-day returns · skipped "
+              f"{counts[mc.POST_CLOSE]} post-close + {counts[mc.UNPROVEN_IN_SESSION]} unproven-in-session")
     if args.score or args.report:
         print(json.dumps(aggregate(log), ensure_ascii=False, indent=2))
         print("不是买卖指令；研究信号，human executes。")

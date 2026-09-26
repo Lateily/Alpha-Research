@@ -298,6 +298,25 @@ def main():
     fund = _load(os.path.join(HERE, "model_fund", "fund.json"), {})
     navh = _load(os.path.join(HERE, "model_fund", "nav_history.json"), [])
     nav = navh[-1]["nav"] if navh else fund.get("initial_capital", 1_000_000)
+    if nav is None:
+        target = target_trade_date()
+        blocked = [
+            {"ticker": s["ticker"], "why": "DATA_BLOCKED: 当日组合 NAV 不可用"}
+            for s in signals
+            if s.get("setup_type") == "execution_gate"
+            and s.get("outcome_status", "pending") == "pending"
+            and not s.get("official_sample") and "." in str(s.get("ticker") or "")
+        ]
+        result = bind({"market_state": market_state, "queue": [],
+                       "data_blocked": blocked, "qc_blocked_stats": {},
+                       "nav_quality": "DATA_BLOCKED",
+                       "note": "当日 NAV 不可用,本轮无晋级提案。"}, target=target)
+        result["as_of"] = target
+        with open(OUT, "w", encoding="utf-8") as fh:
+            json.dump(result, fh, ensure_ascii=False, indent=1)
+        print(f"[written] {OUT} (NAV DATA_BLOCKED)")
+        print("不是买卖指令；研究信号，human executes.")
+        return
     bars = {}
     for s in signals:
         t = s.get("ticker") or ""

@@ -19,7 +19,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Iterable, Sequence
 
@@ -128,6 +128,16 @@ A035_MUTATION_PREFIX = "AIOS_A035_"
 R043_GOVERNANCE_PATHS = (
     "experiments/execution_tracker/publication_migration.py",
 )
+# 盘中执行层的 Asia/Shanghai 时钟(2026-09 伦敦时钟事故):交易日、时段窗、
+# checkpoint 标签、capture 时间戳与判分准入,每条守卫都带 marker、按前缀双向配对。
+EXECUTION_CLOCK_GOVERNANCE_PATHS = (
+    "experiments/execution_tracker/market_clock.py",
+    "experiments/execution_tracker/run_premarket_monitor.py",
+    "experiments/execution_tracker/watchtower.py",
+    "experiments/execution_tracker/run_eod_decision.py",
+    "experiments/execution_tracker/nowcast_evaluator.py",
+)
+EXECUTION_CLOCK_MUTATION_PREFIX = "EXECUTION_CLOCK_"
 FUNNEL_GOVERNANCE_PATHS = (
     "experiments/research_funnel/funnel_pipeline.py",
     "experiments/research_funnel/r035_evaluation.py",
@@ -162,6 +172,7 @@ FUNNEL_NIGHTLY_GOVERNANCE_PATHS = (
 FUNNEL_NIGHTLY_MUTATION_PREFIX = "FUNNEL_NIGHTLY_"
 NIGHTLY_ACCEPTANCE_GOVERNANCE_PATHS = (
     "experiments/execution_tracker/nightly_acceptance.py",
+    "experiments/execution_tracker/nightly_dual_acceptance.py",
     "experiments/execution_tracker/run_nightly.py",
 )
 NIGHTLY_ACCEPTANCE_MUTATION_PREFIX = "NIGHTLY_ACCEPTANCE_"
@@ -289,6 +300,699 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="A replaced temporary filename is not owned cleanup work.",
     ),
     MutationCase(
+        mutation_id="WORKFLOW_SOURCE_CNINFO_SHARED_CATALOG", component="Independent workflow source capture",
+        source_path="experiments/research_workflows/source_capture.py", test_script="tests/test_research_workflow_sources.py",
+        before="        'sh_catalog': 'https://www.cninfo.com.cn/new/data/szse_stock.json',",
+        after="        'sh_catalog': 'https://www.cninfo.com.cn/new/data/sse_stock.json',",
+        expected_failure_marker="test_shanghai_entry_uses_official_shared_catalog_and_column",
+        rationale="Use the official shared directory, not an invented Shanghai filename.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_SOURCE_CNINFO_SH_COLUMN", component="Independent workflow source capture",
+        source_path="experiments/research_workflows/source_capture.py", test_script="tests/test_research_workflow_sources.py",
+        before="                  'column': 'sse' if log.schema == LEGACY_SOURCE_SCHEMA and code.endswith('SH') else 'szse',",
+        after="                  'column': 'sse' if code.endswith('SH') else 'szse',",
+        expected_failure_marker="test_shanghai_entry_uses_official_shared_catalog_and_column",
+        rationale="The official mainland column is szse; Shanghai is selected by plate=sh.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_SOURCE_CNINFO_LEGACY_BINDING", component="Independent workflow source capture",
+        source_path="experiments/research_workflows/source_capture.py", test_script="tests/test_research_workflow_sources.py",
+        before="            self.urls['sh_catalog'] = 'https://www.cninfo.com.cn/new/data/sse_stock.json'",
+        after="            pass",
+        expected_failure_marker="test_old_live_snapshot_replay_preserves_legacy_url_and_query",
+        rationale="Legacy evidence reopens exactly as captured without rewriting historical failure.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_SOURCE_CNINFO_LEGACY_OFFLINE", component="Independent workflow source capture",
+        source_path="experiments/research_workflows/source_capture.py", test_script="tests/test_research_workflow_sources.py",
+        before="        if schema == LEGACY_SOURCE_SCHEMA and (transport is not None or records is None):",
+        after="        if False:",
+        expected_failure_marker="test_legacy_schema_cannot_trigger_transport",
+        rationale="Old endpoint semantics are replay-only, never another live fallback.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_SOURCE_CNINFO_SCHEMA", component="Independent workflow source capture",
+        source_path="experiments/research_workflows/source_capture.py", test_script="tests/test_research_workflow_sources.py",
+        before="        if schema not in (LEGACY_SOURCE_SCHEMA, SOURCE_SCHEMA):", after="        if False:",
+        expected_failure_marker="test_unsupported_source_snapshot_version_is_not_interpreted_as_current",
+        rationale="Unknown receipt versions cannot silently select current endpoint semantics.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_SOURCE_ERROR_HTTP", component="Independent workflow source capture",
+        source_path="experiments/research_workflows/source_capture.py", test_script="tests/test_research_workflow_sources.py",
+        before="        category, status = 'HTTP_ERROR', exc.code", after="        category, status = 'NETWORK_ERROR', None",
+        expected_failure_marker="test_http_failure_records_status_without_reason_headers_or_body",
+        rationale="HTTP status must survive sanitization without storing reason, headers or body.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_SOURCE_ERROR_WRAPPER", component="Independent workflow source capture",
+        source_path="experiments/research_workflows/source_capture.py", test_script="tests/test_research_workflow_sources.py",
+        before="        exc = exc.reason", after="        pass",
+        expected_failure_marker="test_transport_error_categories_are_type_based_and_token_free",
+        rationale="urllib-wrapped TLS, DNS and timeout errors remain distinguishable by type.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_SOURCE_ERROR_REDACTION", component="Independent workflow source capture",
+        source_path="experiments/research_workflows/source_capture.py", test_script="tests/test_research_workflow_sources.py",
+        before="    return {'category': category, 'http_status': status}",
+        after="    return {'category': category, 'http_status': status, 'message': str(exc)}",
+        expected_failure_marker="test_http_failure_records_status_without_reason_headers_or_body",
+        rationale="Exception text must never become a persisted diagnostic field.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_SOURCE_ERROR_CLOSED_FIELDS", component="Independent workflow source capture",
+        source_path="experiments/research_workflows/source_capture.py", test_script="tests/test_research_workflow_sources.py",
+        before="    if not isinstance(value, dict) or set(value) != {'category', 'http_status'}:",
+        after="    if not isinstance(value, dict):",
+        expected_failure_marker="test_replay_rejects_open_ended_or_inconsistent_error_diagnostic",
+        rationale="Reopened diagnostics cannot smuggle free-form fields into source evidence.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_SOURCE_ERROR_REOPEN", component="Independent workflow source capture",
+        source_path="experiments/research_workflows/source_capture.py", test_script="tests/test_research_workflow_sources.py",
+        before="            validate_exchange_record(record, schema)", after="            pass",
+        expected_failure_marker="test_resealed_bad_diagnostic_is_not_swallowed_as_catalog_unavailable",
+        rationale="Validate diagnostics before derivation can turn an invalid record into a routine blocked catalog.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_SOURCE_EXCHANGE_CLOSED_FIELDS", component="Independent workflow source capture",
+        source_path="experiments/research_workflows/source_capture.py", test_script="tests/test_research_workflow_sources.py",
+        before="    if not isinstance(record, dict) or set(record) not in (base, base | {'diagnostic'}):",
+        after="    if not isinstance(record, dict):",
+        expected_failure_marker="test_replay_rejects_extra_exchange_record_fields",
+        rationale="Reopened exchange records cannot carry unvalidated or sensitive side fields.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_SOURCE_HISTORY_MODE", component="Independent workflow source capture",
+        source_path="experiments/research_workflows/source_capture.py", test_script="tests/test_research_workflow_sources.py",
+        before="    if prior and prior['source_mode'] != mode:", after="    if False:",
+        expected_failure_marker="test_synthetic_history_cannot_become_live_comparison_baseline",
+        rationale="An injected test stream cannot become a live comparison baseline.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_SOURCE_RANGE_ENDPOINTS", component="Independent workflow source capture",
+        source_path="experiments/research_workflows/source_capture.py", test_script="tests/test_research_workflow_sources.py",
+        before="        if not min(dates) <= day <= max(dates) or day in result:",
+        after="        if day not in dates or day in result:",
+        expected_failure_marker="test_valid_intermediate_dates_do_not_replace_comparison_endpoints",
+        rationale="A valid range response must preserve the requested comparison endpoints.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_SOURCE_UNICODE", component="Independent workflow source capture",
+        source_path="experiments/research_workflows/source_capture.py", test_script="tests/test_research_workflow_sources.py",
+        before="                value.encode('utf-8')", after="                pass",
+        expected_failure_marker="test_invalid_unicode_is_blocked_before_report_rendering",
+        rationale="Unencodable source text is blocked before it can destroy the attempt receipt.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_SOURCE_NETWORK_OPT_IN", component="Independent workflow source capture",
+        source_path="experiments/research_workflows/source_capture.py", test_script="tests/test_research_workflow_sources.py",
+        before="        if not enabled or os.environ.get('AR_OFFLINE') == '1':", after="        if os.environ.get('AR_OFFLINE') == '1':",
+        expected_failure_marker="test_network_off_by_default_and_no_partial_output",
+        rationale="Network requires explicit runtime opt-in, separate from implementation approval.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_SOURCE_CALL_BUDGET", component="Independent workflow source capture",
+        source_path="experiments/research_workflows/source_capture.py", test_script="tests/test_research_workflow_sources.py",
+        before="        if self.position >= MAX_CALLS:", after="        if False:",
+        expected_failure_marker="test_total_call_budget_is_a_hard_call_count",
+        rationale="At most seventeen provider requests, including failed attempts.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_SOURCE_RESPONSE_LIMIT", component="Independent workflow source capture",
+        source_path="experiments/research_workflows/source_capture.py", test_script="tests/test_research_workflow_sources.py",
+        before="        if len(raw) > MAX_BYTES:", after="        if False:",
+        expected_failure_marker="test_response_size_bound_is_enforced_before_recording",
+        rationale="Oversized provider responses cannot enter a source snapshot.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_SOURCE_ESCAPED_SECRET", component="Independent workflow source capture",
+        source_path="experiments/research_workflows/source_capture.py", test_script="tests/test_research_workflow_sources.py",
+        before="            if isinstance(value, str) and self.token and self.token in value:", after="            if False:",
+        expected_failure_marker="test_json_escaped_token_echo_is_not_frozen",
+        rationale="JSON escaping must not bypass token echo refusal.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_SOURCE_EXCHANGE_BINDING", component="Independent workflow source capture",
+        source_path="experiments/research_workflows/source_capture.py", test_script="tests/test_research_workflow_sources.py",
+        before="or self.records[self.position]['request'] != identity:", after="or False:",
+        expected_failure_marker="test_resealed_exchange_request_cannot_change_company",
+        rationale="Reopened response must bind exact operation, endpoint and query.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_SOURCE_RESPONSE_HASH", component="Independent workflow source capture",
+        source_path="experiments/research_workflows/source_capture.py", test_script="tests/test_research_workflow_sources.py",
+        before="        if len(raw) > MAX_BYTES or sha(raw) != record['sha256']:", after="        if len(raw) > MAX_BYTES:",
+        expected_failure_marker="test_resealed_raw_response_needs_its_own_hash",
+        rationale="Outer package resealing cannot bypass inner response hash.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_SOURCE_TIME_SCOPE", component="Independent workflow source capture",
+        source_path="experiments/research_workflows/source_capture.py", test_script="tests/test_research_workflow_sources.py",
+        before="    if not (request['before_date'] < request['after_date'] <= today", after="    if False and not (request['before_date'] < request['after_date'] <= today",
+        expected_failure_marker="test_future_or_reversed_dates_refused_before_transport",
+        rationale="Future and reversed ranges are rejected before any request.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_SOURCE_HISTORY_SCOPE", component="Independent workflow source capture",
+        source_path="experiments/research_workflows/source_capture.py", test_script="tests/test_research_workflow_sources.py",
+        before="    if prior and (timestamp(prior['checked_at']) > timestamp(checked_at)", after="    if False and prior and (timestamp(prior['checked_at']) > timestamp(checked_at)",
+        expected_failure_marker="test_prior_scope_and_time_cannot_silently_regress",
+        rationale="Comparisons cannot silently shrink their listing-query window.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_SOURCE_PRICE_IDENTITY", component="Independent workflow source capture",
+        source_path="experiments/research_workflows/source_capture.py", test_script="tests/test_research_workflow_sources.py",
+        before="        if row['ts_code'] != code:", after="        if False:",
+        expected_failure_marker="test_wrong_price_company_cannot_replace_missing_subject",
+        rationale="Another company cannot fill a missing subject.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_SOURCE_PRICE_DIRECTION", component="Independent workflow source capture",
+        source_path="experiments/research_workflows/source_capture.py", test_script="tests/test_research_workflow_sources.py",
+        before="    dates = [request['before_date'], request['after_date']]", after="    dates = [request['after_date'], request['before_date']]",
+        expected_failure_marker="test_two_dates_and_three_subjects_are_frozen_and_replayed",
+        rationale="The comparison dates are structured inputs, not just report labels.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_SOURCE_CORPORATE_ACTION", component="Independent workflow source capture",
+        source_path="experiments/research_workflows/source_capture.py", test_script="tests/test_research_workflow_sources.py",
+        before="    comparable = rows[0]['adj_factor'] == rows[1]['adj_factor']", after="    comparable = True",
+        expected_failure_marker="test_corporate_action_does_not_create_false_price_return",
+        rationale="Changed adjustment factor suppresses naive raw-price return.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_SOURCE_ANNOUNCEMENT_IDENTITY", component="Independent workflow source capture",
+        source_path="experiments/research_workflows/source_capture.py", test_script="tests/test_research_workflow_sources.py",
+        before="    if not isinstance(row, dict) or row.get('secCode') != code[:6] or row.get('orgId') != org:", after="    if not isinstance(row, dict):",
+        expected_failure_marker="test_wrong_announcement_company_refused",
+        rationale="Announcement identity must agree with requested company and catalog.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_SOURCE_ANNOUNCEMENT_DATE", component="Independent workflow source capture",
+        source_path="experiments/research_workflows/source_capture.py", test_script="tests/test_research_workflow_sources.py",
+        before="    if not request['announcement_start'] <= day <= request['announcement_end'] or dt > timestamp(checked_at):", after="    if False:",
+        expected_failure_marker="test_out_of_window_announcement_refused",
+        rationale="Out-of-window listings cannot make a query complete.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_SOURCE_TOTAL_STABILITY", component="Independent workflow source capture",
+        source_path="experiments/research_workflows/source_capture.py", test_script="tests/test_research_workflow_sources.py",
+        before="        if total is not None and total != count:", after="        if False:",
+        expected_failure_marker="test_changed_total_even_with_matching_final_count_is_rejected",
+        rationale="Changing total during pagination means an unstable index.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_SOURCE_FINAL_COUNT", component="Independent workflow source capture",
+        source_path="experiments/research_workflows/source_capture.py", test_script="tests/test_research_workflow_sources.py",
+        before="            if len(items) != total:", after="            if False:",
+        expected_failure_marker="test_total_and_more_must_be_explicit_not_truthy",
+        rationale="Final unique count must match provider-declared total.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_SOURCE_PAGE_BUDGET", component="Independent workflow source capture",
+        source_path="experiments/research_workflows/source_capture.py", test_script="tests/test_research_workflow_sources.py",
+        before="MAX_PAGES = 3", after="MAX_PAGES = 4",
+        expected_failure_marker="test_page_budget_exhaustion_is_not_empty_success",
+        rationale="Per-company page budget is enforced even before global exhaustion.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_SOURCE_PDF_LOCATION", component="Independent workflow source capture",
+        source_path="experiments/research_workflows/source_capture.py", test_script="tests/test_research_workflow_sources.py",
+        before="    if not isinstance(path, str) or not re.fullmatch(r'finalpage/[0-9]{4}-[0-9]{2}-[0-9]{2}/[A-Za-z0-9_-]+\\.[Pp][Dd][Ff]', path):", after="    if False:",
+        expected_failure_marker="test_bad_pdf_path_stays_blocked_never_followed",
+        rationale="Report links remain in the fixed official PDF namespace.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_SOURCE_BLOCKED_ROLLUP", component="Independent workflow source capture",
+        source_path="experiments/research_workflows/source_capture.py", test_script="tests/test_research_workflow_sources.py",
+        before="    blocked = any(r['status'] == 'DATA_BLOCKED' for r in price_rows + announcement_rows)", after="    blocked = False",
+        expected_failure_marker="test_missing_price_row_has_no_zero_or_carried_quote",
+        rationale="One missing price prevents a top-level collected result.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_SOURCE_NO_THESIS_VERDICT", component="Independent workflow source capture",
+        source_path="experiments/research_workflows/source_capture.py", test_script="tests/test_research_workflow_sources.py",
+        before="'thesis_status': 'UNRESOLVED', 'authority': dict(followup.AUTHORITY)", after="'thesis_status': 'CONFIRMED', 'authority': dict(followup.AUTHORITY)",
+        expected_failure_marker="test_missing_listing_body_is_not_complete_financial_evidence",
+        rationale="Finding a listing cannot confirm a thesis.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_SOURCE_HUMAN_PENDING", component="Independent workflow source capture",
+        source_path="experiments/research_workflows/source_capture.py", test_script="tests/test_research_workflow_sources.py",
+        before="'human_review': 'PENDING',", after="'human_review': 'VERIFIED',",
+        expected_failure_marker="test_new_and_revised_listing_do_not_answer_thesis",
+        rationale="Automatic capture cannot invent a human review.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_SOURCE_REOPEN_DERIVATION", component="Independent workflow source capture",
+        source_path="experiments/research_workflows/source_capture.py", test_script="tests/test_research_workflow_sources.py",
+        before="    if log.position != len(records) or canonical(result) != canonical(receipt) or (output / 'status.md').read_bytes() != report(result):", after="    if False:",
+        expected_failure_marker="test_resealed_receipt_and_raw_source_tamper_rejected",
+        rationale="Recompute status from responses instead of trusting a resealed receipt.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_FOLLOWUP_MIXED_SOURCE", component="Independent research follow-up",
+        source_path="experiments/research_workflows/followup.py", test_script="tests/test_research_workflow_followup.py",
+        before='                for name, source in request["sources"].items()}',
+        after='                for name, source in request["sources"].items() if name != request["payload"]["claims"]["source"]}',
+        expected_failure_marker="test_mixed_claim_disclosure_source_changes_stay_visible",
+        rationale="A file used for claims can also contain financial evidence; neither role hides byte changes.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_FOLLOWUP_JSON_FAILURE_RECEIPT", component="Independent research follow-up",
+        source_path="experiments/research_workflows/followup.py", test_script="tests/test_research_workflow_followup.py",
+        before='    except (json.JSONDecodeError, UnicodeError) as exc:', after='    except (UnicodeError,) as exc:',
+        expected_failure_marker="test_malformed_source_is_recorded_as_blocked",
+        rationale="A malformed JSON source must leave a visible blocked attempt.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_FOLLOWUP_UTF_FAILURE_RECEIPT", component="Independent research follow-up",
+        source_path="experiments/research_workflows/followup.py", test_script="tests/test_research_workflow_followup.py",
+        before='    except (json.JSONDecodeError, UnicodeError) as exc:', after='    except (json.JSONDecodeError,) as exc:',
+        expected_failure_marker="test_malformed_source_is_recorded_as_blocked",
+        rationale="An undecodable source must leave a visible blocked attempt.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_FOLLOWUP_MODE_CUTOFF", component="Independent research follow-up",
+        source_path="experiments/research_workflows/followup.py", test_script="tests/test_research_workflow_followup.py",
+        before='        if previous["mode"] != request["mode"] or request["as_of"] < previous["as_of"]:', after='        if False:',
+        expected_failure_marker="test_mode_and_cutoff_cannot_regress_in_one_history",
+        rationale="A stream cannot silently switch synthetic identity or rewind its source cutoff.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_FOLLOWUP_NO_AUTHORITY", component="Independent research follow-up",
+        source_path="experiments/research_workflows/followup.py", test_script="tests/test_research_workflow_followup.py",
+        before='AUTHORITY = dict(trial.AUTHORITY)', after='AUTHORITY = {**trial.AUTHORITY, "trade": True}',
+        expected_failure_marker="test_first_snapshot_freezes_bytes_and_never_approves",
+        rationale="Observation and human-review storage cannot grant trading authority.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_FOLLOWUP_NO_CHANGE", component="Independent research follow-up",
+        source_path="experiments/research_workflows/followup.py", test_script="tests/test_research_workflow_followup.py",
+        before='            status = "NO_NEW_EVIDENCE"', after='            status = "NEW_EVIDENCE_REVIEW_REQUIRED"',
+        expected_failure_marker="test_unchanged_bytes_are_not_new_evidence",
+        rationale="Polling the same evidence must not fabricate new information.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_FOLLOWUP_QUESTION_VERSION", component="Independent research follow-up",
+        source_path="experiments/research_workflows/followup.py", test_script="tests/test_research_workflow_followup.py",
+        before='        elif question_version != last["question_version"]:', after='        elif False:',
+        expected_failure_marker="test_changed_question_is_versioned_not_a_hit",
+        rationale="A changed criterion is not a result under the old question.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_FOLLOWUP_NEW_SOURCE", component="Independent research follow-up",
+        source_path="experiments/research_workflows/followup.py", test_script="tests/test_research_workflow_followup.py",
+        before='            status = "NEW_EVIDENCE_REVIEW_REQUIRED"', after='            status = "NO_NEW_EVIDENCE"',
+        expected_failure_marker="test_new_source_requires_review_not_automatic_answer",
+        rationale="Source changes must remain visible without automatic confirmation.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_FOLLOWUP_REPLAY", component="Independent research follow-up",
+        source_path="experiments/research_workflows/followup.py", test_script="tests/test_research_workflow_followup.py",
+        before='        trial.verify_trial(request, output / "inputs", output / "report")', after='        pass',
+        expected_failure_marker="test_resealed_report_is_recomputed_not_trusted",
+        rationale="Re-sealing a false report cannot replace replay verification.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_FOLLOWUP_REVIEW_BINDING", component="Independent research follow-up",
+        source_path="experiments/research_workflows/followup.py", test_script="tests/test_research_workflow_followup.py",
+        before='    if any(draft[key] != template[key] for key in ("report_sha256", "artifact_sha256")):', after='    if False:',
+        expected_failure_marker="test_review_binding_rejects_another_version",
+        rationale="A review only applies to its exact report and artifact.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_FOLLOWUP_REVIEW_COVERAGE", component="Independent research follow-up",
+        source_path="experiments/research_workflows/followup.py", test_script="tests/test_research_workflow_followup.py",
+        before='    if not isinstance(draft["items"], list) or sorted(item.get("id", "") for item in draft["items"]) != sorted(wanted):', after='    if False:',
+        expected_failure_marker="test_review_requires_all_items_once",
+        rationale="Missing or repeated review rows cannot count as complete coverage.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_FOLLOWUP_REVIEW_SOURCE_CHECK", component="Independent research follow-up",
+        source_path="experiments/research_workflows/followup.py", test_script="tests/test_research_workflow_followup.py",
+        before='        if item["status"] == "PASS" and not item["source_checked"]:', after='        if False:',
+        expected_failure_marker="test_review_pass_requires_source_check_and_reason",
+        rationale="A PASS declaration requires the human to record a source check.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_FOLLOWUP_TIME", component="Independent research follow-up",
+        source_path="experiments/research_workflows/followup.py", test_script="tests/test_research_workflow_followup.py",
+        before='    if now < timestamp(request["generated_at"]):', after='    if False:',
+        expected_failure_marker="test_check_time_cannot_precede_generation",
+        rationale="A follow-up cannot pretend to precede its draft generation.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_FOLLOWUP_SUBJECT", component="Independent research follow-up",
+        source_path="experiments/research_workflows/followup.py", test_script="tests/test_research_workflow_followup.py",
+        before='        if previous["subjects"] != _subjects(request):', after='        if False:',
+        expected_failure_marker="test_different_company_cannot_share_history",
+        rationale="Cross-company evidence cannot silently replace one tracking stream.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_FOLLOWUP_QUALITY_DISPLAY", component="Independent research follow-up",
+        source_path="experiments/research_workflows/followup.py", test_script="tests/test_research_workflow_followup.py",
+        before='             f"本次资料完整度：{receipt[\'data_status\']}；完成检查不代表证据齐全。",',
+        after='             "本次资料完整度：COMPLETE。",',
+        expected_failure_marker="test_readable_status_keeps_partial_quality_visible",
+        rationale="A completed check must not hide PARTIAL evidence from the reader.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_FOLLOWUP_PENDING", component="Independent research follow-up",
+        source_path="experiments/research_workflows/followup.py", test_script="tests/test_research_workflow_followup.py",
+        before='            "human_review": "PENDING", "authority": dict(AUTHORITY), "claim_allowed": False,',
+        after='            "human_review": "VERIFIED", "authority": dict(AUTHORITY), "claim_allowed": False,',
+        expected_failure_marker="test_first_snapshot_freezes_bytes_and_never_approves",
+        rationale="Completing a machine check cannot manufacture a human signature.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_TRIAL_ANNOTATION_PENDING", component="Independent research trial",
+        source_path="experiments/research_workflows/smc_annotation.py", test_script="tests/test_research_workflow_trial.py",
+        before='return {"id": sample["id"], "status": "PENDING", "source_checked": None',
+        after='return {"id": sample["id"], "status": "VERIFIED", "source_checked": None',
+        expected_failure_marker="test_receipt_never_self_certifies_human_review",
+        rationale="SMC-specific annotation items also cannot prefill a completed human review.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_TRIAL_ANNOTATION_SAMPLE_RULE", component="Independent research trial",
+        source_path="experiments/research_workflows/smc_annotation.py", test_script="tests/test_research_workflow_trial.py",
+        before="    if sample[\"annotation_rule_hash\"] != rule_hash() or sample[\"price_basis\"] != \"raw\":", after="    if False:",
+        expected_failure_marker="test_annotation_sample_rule_hash_is_bound",
+        rationale="Pin the independently reproduced review defect with a behavioral regression.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_TRIAL_ANNOTATION_CONFIRMATION", component="Independent research trial",
+        source_path="experiments/research_workflows/smc_annotation.py", test_script="tests/test_research_workflow_trial.py",
+        before="        if (ref is not None or confirmed is not None) and (ref is None or confirmed is None or ref < PARAMETERS[\"pivot_left\"] or confirmed != ref + PARAMETERS[\"pivot_right\"]):", after="        if False:",
+        expected_failure_marker="test_annotation_pivot_confirmation_requires_closed_right_bars",
+        rationale="Pin the independently reproduced review defect with a behavioral regression.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_TRIAL_SMC_RAW_ONLY", component="Independent research trial",
+        source_path="experiments/research_workflows/renderers.py", test_script="tests/test_research_workflow_trial.py",
+        before="        if sample[\"price_basis\"] != \"raw\":", after="        if False:",
+        expected_failure_marker="test_raw_codebook_refuses_adjusted_samples",
+        rationale="Pin the independently reproduced review defect with a behavioral regression.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_TRIAL_EARNINGS_CRITERIA", component="Independent research trial",
+        source_path="experiments/research_workflows/renderers.py", test_script="tests/test_research_workflow_trial.py",
+        before="        criteria = {key: claim.get(key) for key in (\"metric\", \"operator\", \"threshold\", \"unit\", \"measurement\", \"due_at\", \"wrong_if\")}", after="        criteria = {}",
+        expected_failure_marker="test_earnings_shows_original_threshold_and_wrong_if",
+        rationale="Pin the independently reproduced review defect with a behavioral regression.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_TRIAL_BRIEF_DATES", component="Independent research trial",
+        source_path="experiments/research_workflows/evidence.py", test_script="tests/test_research_workflow_trial.py",
+        before="        if observed != expected_date:", after="        if False:",
+        expected_failure_marker="test_brief_bar_date_is_bound_not_just_the_price",
+        rationale="A real price from another bar date is not today's comparison.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_TRIAL_BRIEF_ROW_COMPANY", component="Independent research trial",
+        source_path="experiments/research_workflows/evidence.py", test_script="tests/test_research_workflow_trial.py",
+        before="            if row.get(\"ts_code\") != company:", after="            if False:",
+        expected_failure_marker="test_brief_dated_bar_positive_and_row_identity",
+        rationale="The quoted row must match the company, not only source metadata.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_TRIAL_BRIEF_DATE_ORDER", component="Independent research trial",
+        source_path="experiments/research_workflows/renderers.py", test_script="tests/test_research_workflow_trial.py",
+        before="    if after_date > as_of or (before_date is not None and date8(before_date) >= after_date):", after="    if False:",
+        expected_failure_marker="test_brief_comparison_cannot_be_reversed_or_future",
+        rationale="Comparison dates cannot exceed cutoff or reverse order.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_TRIAL_SMC_SINGLE_DELIVERY", component="Independent research trial",
+        source_path="experiments/research_workflows/renderers.py", test_script="tests/test_research_workflow_trial.py",
+        before="    if len(payload[\"samples\"]) != 1:", after="    if False:",
+        expected_failure_marker="test_adjacent_smc_windows_cannot_share_delivery",
+        rationale="Per-window truncation is insufficient when future windows are co-delivered.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_TRIAL_SMC_FIXED_CODEBOOK", component="Independent research trial",
+        source_path="experiments/research_workflows/renderers.py", test_script="tests/test_research_workflow_trial.py",
+        before='    if payload["rule_version"] != smc_annotation.VERSION or payload["setup"] != "SWEEP_RECLAIM" or canonical(payload["parameters"]) != canonical(smc_annotation.PARAMETERS):', after="    if False:",
+        expected_failure_marker="test_smc_unfrozen_rules_cannot_start_annotation",
+        rationale="No annotation task with null or unfrozen assumptions.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_TRIAL_SMC_ANNOTATION_FORM", component="Independent research trial",
+        source_path="experiments/research_workflows/smc_annotation.py", test_script="tests/test_research_workflow_trial.py",
+        before="**{key: None for key in FIELDS}", after="**{key: None for key in FIELDS if key != \"label\"}",
+        expected_failure_marker="test_smc_has_actual_annotation_fields",
+        rationale="A generic source review is not an SMC annotation record.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_TRIAL_SMC_WARNING", component="Independent research trial",
+        source_path="experiments/research_workflows/renderers.py", test_script="tests/test_research_workflow_trial.py",
+        before="        warning = source_document.get(\"human_warning\", \"UNKNOWN_NOT_CLEARED\")", after="        warning = None",
+        expected_failure_marker="test_smc_warning_reaches_all_delivered_surfaces",
+        rationale="Source warning reaches report, human forms and sample without clearance.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_TRIAL_SMC_WARNING_UNKNOWN", component="Independent research trial",
+        source_path="experiments/research_workflows/renderers.py", test_script="tests/test_research_workflow_trial.py",
+        before="source_document.get(\"human_warning\", \"UNKNOWN_NOT_CLEARED\")", after="source_document.get(\"human_warning\", None)",
+        expected_failure_marker="test_smc_missing_warning_never_becomes_cleared",
+        rationale="Missing warning provenance is not evidence of clearance.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_TRIAL_SMC_EXPOSURE", component="Independent research trial",
+        source_path="experiments/research_workflows/renderers.py", test_script="tests/test_research_workflow_trial.py",
+        before="\"RETIRED_EXPOSED_DEMONSTRATION\" if sample[\"exposure_status\"] == \"PREVIOUSLY_VIEWED\" else \"ANNOTATION_ONLY\"", after="\"ANNOTATION_ONLY\"",
+        expected_failure_marker="test_exposed_smc_sample_cannot_be_clean_agreement_sample",
+        rationale="Already viewed samples cannot become a new clean agreement cohort.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_TRIAL_RECEIPT_PENDING", component="Independent research trial",
+        source_path="experiments/research_workflows/trial.py", test_script="tests/test_research_workflow_trial.py",
+        before="\"human_review\": \"PENDING\", \"network_calls\": 0", after="\"human_review\": \"VERIFIED\", \"network_calls\": 0",
+        expected_failure_marker="test_receipt_never_self_certifies_human_review",
+        rationale="The receipt itself must not self-certify human review.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_TRIAL_ARTIFACT_PENDING", component="Independent research trial",
+        source_path="experiments/research_workflows/trial.py", test_script="tests/test_research_workflow_trial.py",
+        before="\"authoring\": request[\"authoring\"], \"human_review\": \"PENDING\"", after="\"authoring\": request[\"authoring\"], \"human_review\": \"VERIFIED\"",
+        expected_failure_marker="test_receipt_never_self_certifies_human_review",
+        rationale="Artifact and receipt human-review status must remain pending.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_TRIAL_AUTHORITY_FALSE", component="Independent research trial",
+        source_path="experiments/research_workflows/trial.py", test_script="tests/test_research_workflow_trial.py",
+        before="AUTHORITY = {\"production\": False, \"u4_selection\": False, \"paper_registration\": False, \"trade\": False}", after="AUTHORITY = {\"production\": True, \"u4_selection\": True, \"paper_registration\": True, \"trade\": True}",
+        expected_failure_marker="test_receipt_never_self_certifies_human_review",
+        rationale="Offline artifacts grant no production or trade authority.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_TRIAL_CLAIM_FALSE", component="Independent research trial",
+        source_path="experiments/research_workflows/trial.py", test_script="tests/test_research_workflow_trial.py",
+        before="\"claim_allowed\": False, \"authority\": dict(AUTHORITY)", after="\"claim_allowed\": True, \"authority\": dict(AUTHORITY)",
+        expected_failure_marker="test_receipt_never_self_certifies_human_review",
+        rationale="A renderer cannot grant statistical claims.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_TRIAL_SOURCE_PATH", component="Independent research trial",
+        source_path="experiments/research_workflows/evidence.py", test_script="tests/test_research_workflow_trial.py",
+        before="            if relative.is_absolute() or not relative.parts or any(p in {\"..\", \".\"} for p in relative.parts):", after="            if False:",
+        expected_failure_marker="test_source_path_guard_blocks_existing_outside_file",
+        rationale="Path tests reach a real outside file instead of accidentally failing on missing files.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_TRIAL_SOURCE_LINK", component="Independent research trial",
+        source_path="experiments/research_workflows/evidence.py", test_script="tests/test_research_workflow_trial.py",
+        before="                if path.is_symlink():", after="                if False:",
+        expected_failure_marker="test_source_symlink_guard_reaches_real_file",
+        rationale="A valid linked source must still be refused.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_TRIAL_SOURCE_TIER", component="Independent research trial",
+        source_path="experiments/research_workflows/evidence.py", test_script="tests/test_research_workflow_trial.py",
+        before="            if source[\"tier\"] not in {\"E1\", \"E2\", \"E3\", \"E4\"} or not source[\"origin\"]:", after="            if False:",
+        expected_failure_marker="test_source_metadata_and_alias_guards",
+        rationale="Source tier and origin are mandatory.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_TRIAL_SOURCE_ALIAS", component="Independent research trial",
+        source_path="experiments/research_workflows/evidence.py", test_script="tests/test_research_workflow_trial.py",
+        before="            if path in paths or not path.is_file():", after="            if not path.is_file():",
+        expected_failure_marker="test_source_metadata_and_alias_guards",
+        rationale="Aliased source files must not be accepted as independent inputs.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_TRIAL_MODE", component="Independent research trial",
+        source_path="experiments/research_workflows/trial.py", test_script="tests/test_research_workflow_trial.py",
+        before="    if request[\"mode\"] not in {\"HISTORICAL_REPLAY\", \"SYNTHETIC\"}:", after="    if False:",
+        expected_failure_marker="test_mode_and_authorship_guards",
+        rationale="Offline trial cannot be labelled live.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_TRIAL_AUTHORSHIP", component="Independent research trial",
+        source_path="experiments/research_workflows/trial.py", test_script="tests/test_research_workflow_trial.py",
+        before="    if request[\"authoring\"][\"kind\"] not in {\"AI_DRAFT\", \"HUMAN_DRAFT\", \"DETERMINISTIC\"} or not request[\"authoring\"][\"prompt_version\"]:", after="    if False:",
+        expected_failure_marker="test_mode_and_authorship_guards",
+        rationale="AI output cannot claim human approval.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_TRIAL_EARNINGS_ENUM", component="Independent research trial",
+        source_path="experiments/research_workflows/renderers.py", test_script="tests/test_research_workflow_trial.py",
+        before="        if assessment not in {\"SUPPORTS\", \"CHALLENGES\", \"MIXED\", \"UNRESOLVED\"}:", after="        if False:",
+        expected_failure_marker="test_earnings_enum_and_registration_guards",
+        rationale="No automatic HIT label can enter a draft response.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_TRIAL_EARNINGS_REGISTRATION", component="Independent research trial",
+        source_path="experiments/research_workflows/renderers.py", test_script="tests/test_research_workflow_trial.py",
+        before="    if registered and registered.strftime(\"%Y%m%d\") > as_of:", after="    if False:",
+        expected_failure_marker="test_earnings_enum_and_registration_guards",
+        rationale="Future registration does not belong in the cutoff.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_TRIAL_SMC_PROVENANCE", component="Independent research trial",
+        source_path="experiments/research_workflows/renderers.py", test_script="tests/test_research_workflow_trial.py",
+        before="        if not sample[\"cluster_id\"] or type(sample[\"calendar_audited\"]) is not bool or type(sample[\"corporate_actions_audited\"]) is not bool:", after="        if False:",
+        expected_failure_marker="test_smc_provenance_guards",
+        rationale="SMC provenance booleans and cluster identity are typed.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_TRIAL_SMC_BAR_ORDER", component="Independent research trial",
+        source_path="experiments/research_workflows/renderers.py", test_script="tests/test_research_workflow_trial.py",
+        before="            if day <= previous:", after="            if False:",
+        expected_failure_marker="test_smc_bar_integrity_guards",
+        rationale="Duplicate or unsorted bars must not be silently used.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_TRIAL_SMC_VOLUME", component="Independent research trial",
+        source_path="experiments/research_workflows/renderers.py", test_script="tests/test_research_workflow_trial.py",
+        before="            if volume is not None and (type(volume) not in (int, float) or not math.isfinite(volume) or volume < 0):", after="            if False:",
+        expected_failure_marker="test_smc_bar_integrity_guards",
+        rationale="Negative volume is invalid, not a normal observation.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_TRIAL_SMC_CUTOFF_BAR", component="Independent research trial",
+        source_path="experiments/research_workflows/renderers.py", test_script="tests/test_research_workflow_trial.py",
+        before="        if not window or cutoff not in {bar[\"trade_date\"] for bar in window}:", after="        if False:",
+        expected_failure_marker="test_empty_or_missing_cutoff_window_is_refused",
+        rationale="A missing cutoff bar must not be presented as a complete window.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_TRIAL_OUTPUT_BYTES", component="Independent research trial",
+        source_path="experiments/research_workflows/trial.py", test_script="tests/test_research_workflow_trial.py",
+        before="        if actual[name].is_symlink() or actual[name].read_bytes() != raw:", after="        if False:",
+        expected_failure_marker="test_resealed_forged_receipt_is_rejected",
+        rationale="Rehashed forged review status is caught by source regeneration.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_TRIAL_ANNOTATION_BINDING", component="Independent research trial",
+        source_path="experiments/research_workflows/smc_annotation.py", test_script="tests/test_research_workflow_trial.py",
+        before="        if record[\"sample_sha256\"] != sha(canonical(sample)) or record[\"rule_hash\"] != rule_hash():", after="        if False:",
+        expected_failure_marker="test_smc_annotation_records_bind_sample_rule_and_identity",
+        rationale="Agreement compares the same sample and rule only.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_TRIAL_ANNOTATION_REVIEWERS", component="Independent research trial",
+        source_path="experiments/research_workflows/smc_annotation.py", test_script="tests/test_research_workflow_trial.py",
+        before="    if left[\"reviewer\"] == right[\"reviewer\"]:", after="    if False:",
+        expected_failure_marker="test_smc_annotation_records_bind_sample_rule_and_identity",
+        rationale="One reviewer cannot count as two.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_TRIAL_NULL_EVIDENCE", component="Independent research trial",
+        source_path="experiments/research_workflows/renderers.py", test_script="tests/test_research_workflow_trial.py",
+        before='        evidence_complete = bool(refs) and all(substantive(ref["value"]) for ref in refs)', after='        evidence_complete = bool(refs)',
+        expected_failure_marker="test_null_citation_cannot_support_a_claim",
+        rationale="A hash-bound null remains missing, not a supported thesis.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_TRIAL_NULL_BRIEF", component="Independent research trial",
+        source_path="experiments/research_workflows/renderers.py", test_script="tests/test_research_workflow_trial.py",
+        before='        if not substantive(after["value"]) or (before is not None and not substantive(before["value"])):', after='        if False:',
+        expected_failure_marker="test_null_brief_is_blocked_but_zero_is_valid",
+        rationale="Two missing observations are not an unchanged valid observation.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_TRIAL_OUTPUT_SYMLINK", component="Independent research trial",
+        source_path="experiments/research_workflows/trial.py", test_script="tests/test_research_workflow_trial.py",
+        before='    if output.is_symlink() or any(p.is_symlink() for p in inventory):', after='    if False:',
+        expected_failure_marker="test_verifier_refuses_directory_symlink_leaking_future",
+        rationale="Annotation output cannot expose future source bars through an added directory symlink.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_TRIAL_SERIALIZED_REPLAY", component="Independent research trial",
+        source_path="experiments/research_workflows/evidence.py", test_script="tests/test_research_workflow_trial.py",
+        before='json.dumps(value, ensure_ascii=False, sort_keys=True) if isinstance(value, (dict, list))',
+        after='json.dumps(value, ensure_ascii=False, sort_keys=False) if isinstance(value, (dict, list))',
+        expected_failure_marker="test_serialized_smc_request_replays_identically",
+        rationale="JSON object key order must not change canonical workflow output.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_TRIAL_LF_LINES", component="Independent research trial",
+        source_path="experiments/research_workflows/evidence.py", test_script="tests/test_research_workflow_trial.py",
+        before='            lines = value.split("\\n")', after='            lines = value.splitlines()',
+        expected_failure_marker="test_pdf_form_feed_does_not_renumber_lines",
+        rationale="PDF form feeds must not shift source line citations.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_TRIAL_SOURCE_HASH", component="Independent research trial",
+        source_path="experiments/research_workflows/evidence.py", test_script="tests/test_research_workflow_trial.py",
+        before='            if sha(raw) != source["sha256"]:', after="            if False:",
+        expected_failure_marker="test_source_hash_cannot_be_forged",
+        rationale="Frozen source bytes must be checked before rendering.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_TRIAL_EXCERPT", component="Independent research trial",
+        source_path="experiments/research_workflows/evidence.py", test_script="tests/test_research_workflow_trial.py",
+        before='        if canonical(value) != canonical(ref["expected"]):', after="        if False:",
+        expected_failure_marker="test_quote_must_match_original_lines",
+        rationale="A declared quote must match the reopened local original.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_TRIAL_COMPANY", component="Independent research trial",
+        source_path="experiments/research_workflows/evidence.py", test_script="tests/test_research_workflow_trial.py",
+        before='        if source["company"] != company:', after="        if False:",
+        expected_failure_marker="test_wrong_company_is_refused",
+        rationale="Evidence must belong to the declared company.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_TRIAL_CUTOFF", component="Independent research trial",
+        source_path="experiments/research_workflows/evidence.py", test_script="tests/test_research_workflow_trial.py",
+        before='            if date8(source["published_on"]) > as_of:', after="            if False:",
+        expected_failure_marker="test_future_source_is_refused",
+        rationale="Future publication cannot enter a historical cutoff.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_TRIAL_CLAIM_COVERAGE", component="Independent research trial",
+        source_path="experiments/research_workflows/renderers.py", test_script="tests/test_research_workflow_trial.py",
+        before='    if set(response_ids) != set(claim_ids):', after="    if False:",
+        expected_failure_marker="test_every_old_claim_requires_one_response",
+        rationale="Every frozen claim requires a response, even if unresolved.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_TRIAL_ASSESSMENT_EVIDENCE", component="Independent research trial",
+        source_path="experiments/research_workflows/renderers.py", test_script="tests/test_research_workflow_trial.py",
+        before='        if not evidence_complete and (assessment != "UNRESOLVED" or not response["missing_evidence"]):', after="        if False:",
+        expected_failure_marker="test_support_without_evidence_is_refused",
+        rationale="No evidence cannot become a supported thesis response.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_TRIAL_FUTURE_BARS", component="Independent research trial",
+        source_path="experiments/research_workflows/renderers.py", test_script="tests/test_research_workflow_trial.py",
+        before='            if start <= day <= cutoff:', after="            if start <= day:",
+        expected_failure_marker="test_smc_window_has_no_future_bars",
+        rationale="Annotation windows must not reveal future bars.",
+    ),
+    MutationCase(
+        mutation_id="WORKFLOW_TRIAL_HUMAN_PENDING", component="Independent research trial",
+        source_path="experiments/research_workflows/trial.py", test_script="tests/test_research_workflow_trial.py",
+        before='"items": [{"id": item, "status": "PENDING", "source_checked": None, "comment": None} for item in review_ids]',
+        after='"items": [{"id": item, "status": "VERIFIED", "source_checked": None, "comment": None} for item in review_ids]',
+        expected_failure_marker="test_brief_is_readable_and_review_pending",
+        rationale="AI must not prefill human verification as completed.",
+    ),
+    MutationCase(
         mutation_id="PAPER_SETTLEMENT_FAILURE_STOPS_DAILY", component="Nightly settlement publication",
         source_path="experiments/execution_tracker/model_paper_fund.py", test_script="tests/test_paper_settlement_publication.py",
         before='                print(f"DATA_BLOCKED: settlement failed; no projections written: {e}")\n                return 1',
@@ -379,6 +1083,87 @@ MUTATIONS: tuple[MutationCase, ...] = (
         before="            replayed = name == \"decision_log.json\" and row in settlement_rows", after="            replayed = name == \"decision_log.json\"",
         expected_failure_marker="test_unrelated_backdated_action_does_not_get_exception",
         rationale="Publication must replay bounded settlement evidence without rewriting event time or relaxing the ledger.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_DAILY_MISSING_NAV_PERSISTS_EXECUTION", component="Nightly settlement publication",
+        source_path="experiments/execution_tracker/model_paper_fund.py", test_script="tests/test_paper_settlement_publication.py",
+        before=(
+            '        _commit_daily_projections(args.fund_dir or FUND_DIR, date, run_id(),\n'
+            '                                  fund, orders, decision_log, navh)'
+        ),
+        after='        pass',
+        expected_failure_marker="test_missing_nav_preserves_due_attempt_and_other_exit_for_publication",
+        rationale="A missing close must persist the valid NAV block and the day's exit and attempt events.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_DAILY_INTENT_RECOVERY", component="Nightly settlement publication",
+        source_path="experiments/execution_tracker/model_paper_fund.py", test_script="tests/test_paper_settlement_publication.py",
+        before='        if _projection_digest(current_content[name]) not in {',
+        after='        if False and _projection_digest(current_content[name]) not in {',
+        expected_failure_marker="test_daily_projection_crash_replays_or_rejects_without_mixed_files",
+        rationale="A crash recovery must refuse a projection not in either frozen intent state.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_DAILY_INTENT_RUN_BINDING", component="Nightly settlement publication",
+        source_path="experiments/execution_tracker/model_paper_fund.py", test_script="tests/test_paper_settlement_publication.py",
+        before='            or (expected_run is not None and journal.get("run_id") != expected_run)):',
+        after='            or False):',
+        expected_failure_marker="test_daily_projection_crash_replays_or_rejects_without_mixed_files",
+        rationale="A pending daily intent must not be recovered under a different nightly run.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_DAILY_CROSS_RUN_CONVERGENCE", component="Nightly settlement publication",
+        source_path="experiments/execution_tracker/model_paper_fund.py", test_script="tests/test_paper_settlement_publication.py",
+        before='                if (prior_date, prior_run) != (date, run_id()):',
+        after='                if False:',
+        expected_failure_marker="test_next_daily_run_recovers_every_prior_projection_crash_point",
+        rationale="Every prior projection crash point must converge before a later run can proceed.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_DAILY_FUTURE_INTENT_REFUSAL", component="Nightly settlement publication",
+        source_path="experiments/execution_tracker/model_paper_fund.py", test_script="tests/test_paper_settlement_publication.py",
+        before='                        or not prior_date.isdigit() or prior_date > date',
+        after='                        or not prior_date.isdigit() or False',
+        expected_failure_marker="test_next_daily_run_refuses_future_or_malformed_intent",
+        rationale="A later intent cannot be relabeled as historical recovery.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_DAILY_LIVE_RECOVERY_BEFORE_STAGE", component="Nightly settlement publication",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_paper_settlement_publication.py",
+        before=(
+            '        paper_recovery = _paper_fund.recover_prior_daily_intent(\n'
+            '            os.path.join(base, "model_fund"), latest_target=_target_trade_date()\n'
+            '        )'
+        ),
+        after='        paper_recovery = None',
+        expected_failure_marker="test_nightly_recovers_prior_daily_intent_in_live_tree_before_staging",
+        rationale="A valid prior projection intent must converge in live before staging snapshots it.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_DAILY_LIVE_FUTURE_REFUSAL", component="Nightly settlement publication",
+        source_path="experiments/execution_tracker/model_paper_fund.py",
+        test_script="tests/test_paper_settlement_publication.py",
+        before='    if (len(prior_date) != 8 or not prior_date.isdigit() or prior_date > latest_target',
+        after='    if (len(prior_date) != 8 or not prior_date.isdigit() or False',
+        expected_failure_marker="test_nightly_refuses_future_or_malformed_live_daily_intent_without_writes",
+        rationale="A future pending projection cannot be silently recovered into live state.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_BLOCKED_NAV_PUBLICATION_BINDING", component="Nightly settlement publication",
+        source_path="experiments/execution_tracker/nightly_publish.py", test_script="tests/test_paper_settlement_publication.py",
+        before='                if fname == "nav_history.json":\n                    errors.extend(_check_blocked_nav_rows(',
+        after='                if False:\n                    errors.extend(_check_blocked_nav_rows(',
+        expected_failure_marker="test_blocked_nav_requires_matching_open_position_and_cash_at_publication",
+        rationale="Append-only dates do not prove a missing NAV row is bound to real positions and cash.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_NAV_QUALITY_EXPORT", component="Nightly settlement publication",
+        source_path="experiments/execution_tracker/export_contracts.py", test_script="tests/test_paper_settlement_publication.py",
+        before='        result["data_quality"] = "BLOCKED"',
+        after='        result["data_quality"] = "COMPLETE"',
+        expected_failure_marker="test_missing_nav_preserves_due_attempt_and_other_exit_for_publication",
+        rationale="A persisted missing NAV cannot be advertised as complete portfolio data.",
     ),
     MutationCase(
         mutation_id="NIGHTLY_RUNTIME_STAGE_IMPORT", component="Nightly runtime integration",
@@ -557,6 +1342,46 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="Helper-only changes must trigger the actual regression and mutation jobs.",
     ),
     MutationCase(
+        mutation_id="SECURITY_REGISTRY_READ_TIMEOUT_RETRY",
+        component="U0 security registry transport",
+        source_path="experiments/research_funnel/security_registry.py",
+        test_script="tests/test_security_registry_transport.py",
+        before='    socket.timeout, TimeoutError, ConnectionError,\n',
+        after='    TimeoutError, ConnectionError,\n',
+        expected_failure_marker="test_socket_timeout_is_retryable_on_python39",
+        rationale="On Python 3.9, the production interpreter, socket.timeout is not a TimeoutError; without naming it a read timeout is never retried.",
+    ),
+    MutationCase(
+        mutation_id="SECURITY_REGISTRY_TRANSPORT_RETRY",
+        component="U0 security registry transport",
+        source_path="experiments/research_funnel/security_registry.py",
+        test_script="tests/test_security_registry_transport.py",
+        before='TUSHARE_TRANSPORT_ATTEMPTS = 3\n',
+        after='TUSHARE_TRANSPORT_ATTEMPTS = 1\n',
+        expected_failure_marker="test_read_timeout_then_success_is_retried",
+        rationale="One transient read timeout in the liquidity window must not become a source error that makes E1 refuse and leaves the nightly unpublished (2026-09-21).",
+    ),
+    MutationCase(
+        mutation_id="SECURITY_REGISTRY_RETRY_BUDGET",
+        component="U0 security registry transport",
+        source_path="experiments/research_funnel/security_registry.py",
+        test_script="tests/test_security_registry_transport.py",
+        before='    return elapsed + backoff + TUSHARE_TIMEOUT_SECONDS <= TUSHARE_RETRY_BUDGET_SECONDS\n',
+        after='    return True\n',
+        expected_failure_marker="test_no_retry_once_budget_is_spent",
+        rationale="Retries must stop once a full attempt no longer fits the budget, so the step stays inside the 600s nightly timeout.",
+    ),
+    MutationCase(
+        mutation_id="FUND_SOURCE_READ_TIMEOUT_RETRY",
+        component="Official sample fund source transport",
+        source_path="experiments/execution_tracker/fund_source.py",
+        test_script="tests/test_fund_source_transport.py",
+        before='TRANSIENT_TRANSPORT_ERRORS = (urllib.error.URLError, socket.timeout, TimeoutError,\n',
+        after='TRANSIENT_TRANSPORT_ERRORS = (urllib.error.URLError, TimeoutError,\n',
+        expected_failure_marker="test_socket_timeout_is_retryable_on_python39",
+        rationale="CI on 3.11 treats socket.timeout as TimeoutError, so only an explicit entry protects the 3.9 production path from unretried read timeouts.",
+    ),
+    MutationCase(
         mutation_id="OFFICIAL_SETTLEMENT_MAIN_RETRY", component="Official nightly entry",
         source_path="experiments/execution_tracker/run_official_sample.py",
         test_script="tests/test_official_settlement_offline.py",
@@ -569,9 +1394,88 @@ MUTATIONS: tuple[MutationCase, ...] = (
         mutation_id="OFFICIAL_SETTLEMENT_ATTEMPT_BOUND", component="Official nightly entry",
         source_path="experiments/execution_tracker/run_official_sample.py",
         test_script="tests/test_official_settlement_offline.py",
-        before="SETTLEMENT_ATTEMPTS = 3", after="SETTLEMENT_ATTEMPTS = 4",
+        before="SETTLEMENT_ATTEMPTS = 6", after="SETTLEMENT_ATTEMPTS = 7",
         expected_failure_marker="test_persistent_mismatch_is_bounded_and_writes_nothing",
-        rationale="Pending sources have a fixed three-attempt budget and cannot silently publish.",
+        rationale="Pending sources have a fixed attempt budget and cannot silently publish.",
+    ),
+    MutationCase(
+        mutation_id="OFFICIAL_SETTLEMENT_BUDGET_MARGIN", component="Official nightly entry",
+        source_path="experiments/execution_tracker/run_official_sample.py",
+        test_script="tests/test_official_settlement_offline.py",
+        before="SETTLEMENT_BUDGET_MARGIN_SECONDS = 120", after="SETTLEMENT_BUDGET_MARGIN_SECONDS = 0",
+        expected_failure_marker="test_wait_budget_stays_below_nightly_step_timeout",
+        rationale="The wait budget must leave room for the final build and write inside the 600s step timeout.",
+    ),
+    MutationCase(
+        mutation_id="OFFICIAL_SETTLEMENT_RETRY_FITS_BUDGET", component="Official nightly entry",
+        source_path="experiments/execution_tracker/run_official_sample.py",
+        test_script="tests/test_official_settlement_offline.py",
+        before="SETTLEMENT_RETRY_SECONDS = 60", after="SETTLEMENT_RETRY_SECONDS = 120",
+        expected_failure_marker="test_wait_budget_stays_below_nightly_step_timeout",
+        rationale="Attempt count times retry interval must fit the wall-clock budget.",
+    ),
+    MutationCase(
+        mutation_id="OFFICIAL_SETTLEMENT_HARD_DEADLINE_VALUE", component="Official nightly entry",
+        source_path="experiments/execution_tracker/run_official_sample.py",
+        test_script="tests/test_official_settlement_offline.py",
+        before='SETTLEMENT_HARD_DEADLINE_SECONDS = NIGHTLY_STEP_TIMEOUT_SECONDS - SETTLEMENT_BUDGET_MARGIN_SECONDS',
+        after='SETTLEMENT_HARD_DEADLINE_SECONDS = NIGHTLY_STEP_TIMEOUT_SECONDS',
+        expected_failure_marker="test_hard_deadline_is_step_timeout_minus_write_margin",
+        rationale="The hard deadline must reserve the write margin inside the step timeout.",
+    ),
+    MutationCase(
+        mutation_id="OFFICIAL_SETTLEMENT_HARD_DEADLINE_PRE_BUILD", component="Official nightly entry",
+        source_path="experiments/execution_tracker/run_official_sample.py",
+        test_script="tests/test_official_settlement_offline.py",
+        before='            if remaining <= 0:',
+        after='            if False:',
+        expected_failure_marker="test_no_attempt_starts_after_hard_deadline",
+        rationale="No rebuild may start once the hard deadline has passed.",
+    ),
+    MutationCase(
+        mutation_id="OFFICIAL_SETTLEMENT_HARD_DEADLINE_POST_BUILD", component="Official nightly entry",
+        source_path="experiments/execution_tracker/run_official_sample.py",
+        test_script="tests/test_official_settlement_offline.py",
+        before='            if finished > SETTLEMENT_HARD_DEADLINE_SECONDS:',
+        after='            if False:',
+        expected_failure_marker="test_slow_build_finishing_after_hard_deadline_is_refused",
+        rationale="A build that finishes after the hard deadline must not proceed to writes; the retry budget alone does not bound a slow build.",
+    ),
+    MutationCase(
+        mutation_id="OFFICIAL_SETTLEMENT_HARD_DEADLINE_INTERRUPT", component="Official nightly entry",
+        source_path="experiments/execution_tracker/run_official_sample.py",
+        test_script="tests/test_official_settlement_offline.py",
+        before='    signal.setitimer(signal.ITIMER_REAL, seconds)',
+        after='    signal.setitimer(signal.ITIMER_REAL, 0)',
+        expected_failure_marker="test_running_build_is_interrupted_at_hard_deadline",
+        rationale="A hung build must be interrupted at the deadline into DATA_BLOCKED, not left for the parent timeout.",
+    ),
+    MutationCase(
+        mutation_id="OFFICIAL_SETTLEMENT_BUDGET_STOPS_RETRY", component="Official nightly entry",
+        source_path="experiments/execution_tracker/run_official_sample.py",
+        test_script="tests/test_official_settlement_offline.py",
+        before="            if elapsed + SETTLEMENT_RETRY_SECONDS > SETTLEMENT_WAIT_BUDGET_SECONDS:",
+        after="            if False:",
+        expected_failure_marker="test_budget_exhaustion_stops_before_attempt_cap",
+        rationale="Exhausting the wall clock must stop the retry loop, not run into the step timeout.",
+    ),
+    MutationCase(
+        mutation_id="OFFICIAL_SETTLEMENT_SHARED_TIMEOUT_VALUE", component="Official nightly entry",
+        source_path="experiments/execution_tracker/nightly_limits.py",
+        test_script="tests/test_official_settlement_offline.py",
+        before="NIGHTLY_STEP_TIMEOUT_SECONDS = 600",
+        after="NIGHTLY_STEP_TIMEOUT_SECONDS = 540",
+        expected_failure_marker="test_actual_nightly_runner_consumes_the_shared_timeout",
+        rationale="The reviewed nightly step timeout remains explicit and cannot drift with the wait budget.",
+    ),
+    MutationCase(
+        mutation_id="OFFICIAL_SETTLEMENT_ACTUAL_TIMEOUT_BINDING", component="Official nightly entry",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_official_settlement_offline.py",
+        before="def _subprocess_runner(cmd, cwd=None, env=None, timeout=NIGHTLY_STEP_TIMEOUT_SECONDS):",
+        after="def _subprocess_runner(cmd, cwd=None, env=None, timeout=NIGHTLY_STEP_TIMEOUT_SECONDS - 1):",
+        expected_failure_marker="test_actual_nightly_runner_consumes_the_shared_timeout",
+        rationale="The orchestrator must consume the same timeout authority used by the settlement budget guard.",
     ),
     MutationCase(
         mutation_id="OFFICIAL_SETTLEMENT_TYPED_RETRY", component="Official nightly entry",
@@ -1161,6 +2065,163 @@ MUTATIONS: tuple[MutationCase, ...] = (
         before='                if size > MAX_BODY:', after='                if False:',
         expected_failure_marker="test_http_body_limit_and_content_type",
         rationale="Oversize input must be refused before parsing or persistence.",
+    ),
+    MutationCase(
+        mutation_id="WORKBENCH_QUALITY_SOURCE_BINDING", component="AIOS nonproduction workbench",
+        source_path="scripts/llm/workbench_evidence.py", test_script="tests/test_workbench_workspace.py",
+        before=(
+            '    # governance-mutation: WORKBENCH_QUALITY_SOURCE_BINDING\n'
+            '    if any(records.get(path, {}).get("binding") != "MATCH" or\n'
+            '           records[path].get("status") != "OBSERVED" for path in paths.values()):'
+        ),
+        after=(
+            '    # governance-mutation: WORKBENCH_QUALITY_SOURCE_BINDING\n'
+            '    if False:'
+        ),
+        expected_failure_marker="test_quality_refuses_unbound_battery_with_valid_content",
+        rationale="Unbound published artifacts must not feed the workbench research-quality counts.",
+    ),
+    MutationCase(
+        mutation_id="WORKBENCH_QUALITY_DERIVE_COVERAGE", component="AIOS nonproduction workbench",
+        source_path="scripts/llm/workbench_evidence.py", test_script="tests/test_workbench_workspace.py",
+        before=(
+            '        # governance-mutation: WORKBENCH_QUALITY_DERIVE_COVERAGE\n'
+            '        if (stamp.get("covered") != derived or stamp.get("of") != 6\n'
+            '                or stamp.get("verdict") != ("COMPLETE" if derived == 6 else "PARTIAL")):'
+        ),
+        after=(
+            '        # governance-mutation: WORKBENCH_QUALITY_DERIVE_COVERAGE\n'
+            '        if False:'
+        ),
+        expected_failure_marker="test_quality_refuses_self_reported_battery_completeness",
+        rationale="Battery completeness must be checked against dimensions before a quality count appears.",
+    ),
+    MutationCase(
+        mutation_id="WORKBENCH_QUALITY_MISSING_LIST", component="AIOS nonproduction workbench",
+        source_path="scripts/llm/workbench_evidence.py", test_script="tests/test_workbench_workspace.py",
+        before=(
+            '        if (not isinstance(reported_missing, list)\n'
+            '                or any(not isinstance(name, str) for name in reported_missing)\n'
+            '                or len(reported_missing) != len(missing)\n'
+            '                or set(reported_missing) != set(missing)):\n'
+            '            # governance-mutation: WORKBENCH_QUALITY_MISSING_LIST\n'
+            '            return {**blocked, "reason": "SELF_REPORTED_COMPLETENESS_MISMATCH"}'
+        ),
+        after=(
+            '        # governance-mutation: WORKBENCH_QUALITY_MISSING_LIST\n'
+            '        if False:\n'
+            '            return {**blocked, "reason": "SELF_REPORTED_COMPLETENESS_MISMATCH"}'
+        ),
+        expected_failure_marker="test_quality_rejects_resealed_missing_list_and_verdict",
+        rationale="A resealed battery must not claim an incomplete dimension set is complete.",
+    ),
+    MutationCase(
+        mutation_id="WORKBENCH_QUALITY_MACRO_UNIVERSE", component="AIOS nonproduction workbench",
+        source_path="scripts/llm/workbench_evidence.py", test_script="tests/test_workbench_workspace.py",
+        before=(
+            '    known_gaps = bool(not event_coverage_complete or unavailable or missing_consensus\n'
+            '                      or actual_blocked or stale_actual or coverage["partial"] or coverage["zero"])'
+        ),
+        after=(
+            '    known_gaps = bool(unavailable or missing_consensus\n'
+            '                      or actual_blocked or stale_actual or coverage["partial"] or coverage["zero"])'
+        ),
+        expected_failure_marker="test_quality_exposes_missing_macro_universe_after_resealing",
+        rationale="A one-row all-OK sample cannot hide missing registered Macro sources and events.",
+    ),
+    MutationCase(
+        mutation_id="WORKBENCH_QUALITY_PUBLICATION_MANIFEST", component="AIOS nonproduction workbench",
+        source_path="scripts/llm/workbench_evidence.py", test_script="tests/test_workbench_workspace.py",
+        before='           records[path].get("status") != "OBSERVED" for path in paths.values()):',
+        after='           records[path].get("status") != "OBSERVED" for path in paths.values() if path != paths["publication"]):',
+        expected_failure_marker="test_quality_refuses_unbound_publication_manifest",
+        rationale="Research quality must depend on this run's bound publication manifest.",
+    ),
+    MutationCase(
+        mutation_id="WORKBENCH_QUALITY_MACRO_CONTRACT_BINDING", component="AIOS nonproduction workbench",
+        source_path="scripts/llm/workbench_evidence.py", test_script="tests/test_workbench_workspace.py",
+        before=(
+            '    # governance-mutation: WORKBENCH_QUALITY_MACRO_CONTRACT_BINDING\n'
+            '    if (payloads["sources"].get("source_registry_hash") != registry["registry_hash"]\n'
+            '            or payloads["events"].get("rules_hash") != rules["rules_hash"]):'
+        ),
+        after=(
+            '    # governance-mutation: WORKBENCH_QUALITY_MACRO_CONTRACT_BINDING\n'
+            '    if False:'
+        ),
+        expected_failure_marker="test_quality_refuses_resealed_different_macro_contract",
+        rationale="A resealed historical Macro payload must match the registered contract version.",
+    ),
+    MutationCase(
+        mutation_id="WORKBENCH_QUALITY_SOURCE_REGISTRY_BINDING", component="AIOS nonproduction workbench",
+        source_path="scripts/llm/workbench_evidence.py", test_script="tests/test_workbench_workspace.py",
+        before='    if (payloads["sources"].get("source_registry_hash") != registry["registry_hash"]',
+        after='    if (False',
+        expected_failure_marker="test_quality_refuses_resealed_different_source_registry",
+        rationale="Source coverage cannot be judged under a different registered source universe.",
+    ),
+    MutationCase(
+        mutation_id="WORKBENCH_QUALITY_ACTUAL_STATUS", component="AIOS nonproduction workbench",
+        source_path="scripts/llm/workbench_evidence.py", test_script="tests/test_workbench_workspace.py",
+        before=(
+            '    # governance-mutation: WORKBENCH_QUALITY_ACTUAL_STATUS\n'
+            '    actual_blocked = sum(row.get("actual_status") != "AVAILABLE" for row in event_rows)'
+        ),
+        after=(
+            '    # governance-mutation: WORKBENCH_QUALITY_ACTUAL_STATUS\n'
+            '    actual_blocked = 0'
+        ),
+        expected_failure_marker="test_quality_shows_actual_blocked_when_every_row_exists",
+        rationale="Present Macro event rows without actual observations must remain visible as gaps.",
+    ),
+    MutationCase(
+        mutation_id="WORKBENCH_QUALITY_ACTUAL_FRESHNESS", component="AIOS nonproduction workbench",
+        source_path="scripts/llm/workbench_evidence.py", test_script="tests/test_workbench_workspace.py",
+        before=(
+            '    # governance-mutation: WORKBENCH_QUALITY_ACTUAL_FRESHNESS\n'
+            '    stale_actual = sum(row.get("actual_status") == "AVAILABLE"\n'
+            '                       and row.get("freshness_status") != "CURRENT" for row in event_rows)'
+        ),
+        after=(
+            '    # governance-mutation: WORKBENCH_QUALITY_ACTUAL_FRESHNESS\n'
+            '    stale_actual = 0'
+        ),
+        expected_failure_marker="test_quality_shows_actual_blocked_when_every_row_exists",
+        rationale="Available but stale Macro actuals must remain visible as quality gaps.",
+    ),
+    MutationCase(
+        mutation_id="WORKBENCH_QUALITY_SOURCE_PLAN_UNVERIFIED", component="AIOS nonproduction workbench",
+        source_path="scripts/llm/workbench_evidence.py", test_script="tests/test_workbench_workspace.py",
+        before='            "source_coverage_complete": None,',
+        after='            "source_coverage_complete": source_plan_current_match,',
+        expected_failure_marker="test_collector_plan_comparison_is_not_reported_as_run_verified",
+        rationale="Current checkout's collector plan cannot certify coverage of an older run.",
+    ),
+    MutationCase(
+        mutation_id="WORKBENCH_QUALITY_PUBLICATION_RUN_BINDING", component="AIOS nonproduction workbench",
+        source_path="scripts/llm/workbench_evidence.py", test_script="tests/test_workbench_workspace.py",
+        before='            or payloads["publication"].get("run_id") != run_id',
+        after='            or False',
+        expected_failure_marker="test_quality_refuses_resealed_wrong_run_manifest",
+        rationale="A correctly hashed manifest for another run is not this publication.",
+    ),
+    MutationCase(
+        mutation_id="MACRO_M0B_BLS_MISSING_CELL",
+        component="Macro M0-B collection",
+        source_path="experiments/macro_os/collectors.py",
+        test_script="tests/test_macro_m0b_offline.py",
+        before=(
+            '            # governance-mutation: MACRO_M0B_BLS_MISSING_CELL\n'
+            '            if str(row.get("value", "")).strip() == "-":\n'
+            '                continue'
+        ),
+        after=(
+            '            # governance-mutation: MACRO_M0B_BLS_MISSING_CELL\n'
+            '            if str(row.get("value", "")).strip() == "-":\n'
+            '                row = {**row, "value": "0"}'
+        ),
+        expected_failure_marker="test_bls_historical_dash_preserves_other_observations",
+        rationale="A historical BLS missing cell must not become a zero-valued observation or invalidate the batch.",
     ),
     MutationCase(
         mutation_id="MACRO_M0B_FRED_KEYLESS_ROUTE",
@@ -3967,6 +5028,22 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="The timing layer cannot silently rewrite the reviewed paper levels.",
     ),
     MutationCase(
+        mutation_id="RESEARCH_CYCLE_REGISTRATION_REFUSAL",
+        component="Research funnel full paper cycle",
+        source_path="experiments/research_funnel/research_cycle.py",
+        test_script="tests/test_research_cycle.py",
+        before=(
+            '    # governance-mutation: RESEARCH_CYCLE_REGISTRATION_REFUSAL\n'
+            '    if case["timing_ticket"]["status"] != "PASS":'
+        ),
+        after=(
+            '    # governance-mutation: RESEARCH_CYCLE_REGISTRATION_REFUSAL\n'
+            '    if False:'
+        ),
+        expected_failure_marker="test_wait_timing_ticket_ends_honestly_at_no_trade",
+        rationale="A sealed WAIT case is a valid research record but must never become a paper order; the replay and the bridge share this one predicate.",
+    ),
+    MutationCase(
         mutation_id="RESEARCH_CYCLE_TIMING_EVIDENCE",
         component="Research funnel full paper cycle",
         source_path="experiments/research_funnel/research_cycle.py",
@@ -4324,7 +5401,7 @@ MUTATIONS: tuple[MutationCase, ...] = (
         component="Research funnel full paper cycle",
         source_path="experiments/research_funnel/research_cycle.py",
         test_script="tests/test_research_cycle.py",
-        before='    if outcomes["scoring_as_of"] != bars["rows"][-1]["date"]:\n'
+        before='    if outcomes["scoring_as_of"] != scoring_as_of:\n'
         '        raise CycleError("method outcomes and settled bars do not share one scoring as_of")',
         after='    if False:\n'
         '        raise CycleError("method outcomes and settled bars do not share one scoring as_of")',
@@ -4354,6 +5431,41 @@ MUTATIONS: tuple[MutationCase, ...] = (
         '        raise CycleError("cycle bundle is not the deterministic projection of its evidence")',
         expected_failure_marker="test_cycle_verifier_rebuilds_outputs_after_self_consistent_rehash",
         rationale="Self-consistent rehashing cannot rewrite the mechanical outcome.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_CYCLE_LEGACY_READONLY_REPLAY",
+        component="Research funnel full paper cycle",
+        source_path="experiments/research_funnel/research_cycle.py",
+        test_script="tests/test_research_cycle.py",
+        before='        generated_at=stored[0]["generated_at"], _legacy_readonly=replay_resolved_legacy,',
+        after='        generated_at=stored[0]["generated_at"], _legacy_readonly=False,',
+        expected_failure_marker="test_historical_resolved_v1_bundle_verifies_without_new_scoring_authority",
+        rationale="Historical resolved v1 bundles must verify deterministically without new score authority.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_CYCLE_LEGACY_NO_NEW_REVIEW",
+        component="Research funnel full paper cycle",
+        source_path="experiments/research_funnel/research_cycle.py",
+        test_script="tests/test_research_cycle.py",
+        before='    if verified["status"] == "VERIFIED_LEGACY_READONLY":',
+        after='    if False:',
+        expected_failure_marker="test_historical_resolved_v1_bundle_verifies_without_new_scoring_authority",
+        rationale="A historical read-only scorecard cannot be given a new reviewed-cycle terminal state.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_CYCLE_LEGACY_IDENTITY_READONLY",
+        component="Research funnel full paper cycle",
+        source_path="experiments/research_funnel/research_cycle.py",
+        test_script="tests/test_research_cycle.py",
+        before=(
+            '    legacy_readonly = (\n'
+            '        isinstance(registration, dict)\n'
+            '        and registration.get("schema_version") == method_contract.SCHEMA_VERSION\n'
+            '    )'
+        ),
+        after='    legacy_readonly = False',
+        expected_failure_marker="test_historical_resolved_v1_bundle_verifies_without_new_scoring_authority",
+        rationale="An unresolved v1 projection is still historical and cannot gain new review authority.",
     ),
     MutationCase(
         mutation_id="RESEARCH_CYCLE_MANIFEST_AUTHORITY",
@@ -4426,6 +5538,76 @@ MUTATIONS: tuple[MutationCase, ...] = (
         '        raise MethodError("each thesis wrong-if trigger must map to exactly one invalidation claim")',
         expected_failure_marker="test_wrong_if_trigger_maps_to_only_one_invalidation_claim",
         rationale="Conflicting duplicate invalidation claims cannot share one registered wrong-if trigger.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_METHOD_WRONG_IF_SEMANTICS",
+        component="Research funnel method registration",
+        source_path="experiments/research_funnel/research_method.py",
+        test_script="tests/test_research_method.py",
+        before='            or claim["operator"] != operator',
+        after='            or False',
+        expected_failure_marker="test_wrong_if_reversed_predicate_is_refused_even_with_valid_hash",
+        rationale="The machine-scored invalidation direction must match the thesis wrong-if predicate.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_METHOD_LEGACY_READONLY",
+        component="Research funnel method registration",
+        source_path="experiments/research_funnel/research_method.py",
+        test_script="tests/test_research_method.py",
+        before="allow_legacy_readonly and version == SCHEMA_VERSION",
+        after="False",
+        expected_failure_marker="test_frozen_v1_registration_is_read_only_and_unscored",
+        rationale="Frozen v1 registrations remain readable only through an explicit historical path.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_METHOD_LEGACY_SEMANTICS",
+        component="Research funnel method registration",
+        source_path="experiments/research_funnel/research_method.py",
+        test_script="tests/test_research_method.py",
+        before="        enforce_semantics=version == REGISTRATION_VERSION,",
+        after="        enforce_semantics=True,",
+        expected_failure_marker="test_legacy_wrong_if_cannot_gain_new_machine_attribution",
+        rationale="Legacy replay must not retroactively apply the v1.1 typed wrong-if contract.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_METHOD_LEGACY_UNSCORED",
+        component="Research funnel method registration",
+        source_path="experiments/research_funnel/research_method.py",
+        test_script="tests/test_research_method.py",
+        before='    if registration.get("schema_version") == SCHEMA_VERSION and not legacy_readonly and (\n'
+        '        scorecard.get("thesis") != {\n'
+        '            "status": "UNRESOLVED", "claims": [],\n'
+        '            "reason": "LEGACY_WRONG_IF_SEMANTICS_UNVALIDATED",\n'
+        '        }\n'
+        '        or scorecard.get("machine_attribution") != "UNRESOLVED"\n'
+        '    ):\n'
+        '        raise MethodError("legacy registration cannot gain a new machine thesis score")',
+        after='    if False:\n'
+        '        raise MethodError("legacy registration cannot gain a new machine thesis score")',
+        expected_failure_marker="test_legacy_wrong_if_cannot_gain_new_machine_attribution",
+        rationale="A historical v1 scorecard cannot be forged into a current thesis verdict.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_METHOD_LEGACY_SCORE_BUILD",
+        component="Research funnel method registration",
+        source_path="experiments/research_funnel/research_method.py",
+        test_script="tests/test_research_method.py",
+        before='        if registration.get("schema_version") == SCHEMA_VERSION and not legacy_readonly\n'
+        '        else _score_thesis(registration, facts, scoring_as_of)',
+        after='        if False\n'
+        '        else _score_thesis(registration, facts, scoring_as_of)',
+        expected_failure_marker="test_legacy_wrong_if_cannot_gain_new_machine_attribution",
+        rationale="The replay builder must explicitly withhold thesis scoring for old predicates.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_METHOD_LEGACY_READONLY_DERIVATION",
+        component="Research funnel method registration",
+        source_path="experiments/research_funnel/research_method.py",
+        test_script="tests/test_research_cycle.py",
+        before='        if scorecard.get("thesis") != historical_thesis:',
+        after='        if False:',
+        expected_failure_marker="test_historical_resolved_v1_bundle_verifies_without_new_scoring_authority",
+        rationale="Legacy read-only verification must recompute old thesis claims, not trust a resealed scorecard.",
     ),
     MutationCase(
         mutation_id="RESEARCH_METHOD_VALUATION_DERIVATION",
@@ -5507,6 +6689,26 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="os.path.isdir follows symlinks; a link out of the observation area borrows someone else's bundle.",
     ),
     MutationCase(
+        mutation_id="NIGHTLY_ACCEPTANCE_FUNNEL_DAG_STEPS",
+        component="Nightly production acceptance",
+        source_path="experiments/execution_tracker/nightly_acceptance.py",
+        test_script="tests/test_nightly_acceptance_offline.py",
+        before='FUNNEL_DAG_STEPS = ("funnel_candidates", "candidate_battery", "funnel_finalize")',
+        after='FUNNEL_DAG_STEPS = ("research_funnel",)',
+        expected_failure_marker="test_required_funnel_steps_are_the_current_nightly_dag",
+        rationale="Acceptance must require the funnel stages the nightly DAG actually runs; a retired step name makes every real run unacceptable.",
+    ),
+    MutationCase(
+        mutation_id="NIGHTLY_ACCEPTANCE_SCHEDULE",
+        component="Nightly production acceptance",
+        source_path="experiments/execution_tracker/nightly_acceptance.py",
+        test_script="tests/test_nightly_acceptance_offline.py",
+        before="NIGHTLY_SCHEDULE_HOUR_MINUTE = (20, 30)",
+        after="NIGHTLY_SCHEDULE_HOUR_MINUTE = (16, 35)",
+        expected_failure_marker="test_schedule_expectation_matches_checked_in_template",
+        rationale="The acceptance schedule and the checked-in launchd template must move together.",
+    ),
+    MutationCase(
         mutation_id="NIGHTLY_ACCEPTANCE_ENTRYPOINT",
         component="Nightly production acceptance",
         source_path="experiments/execution_tracker/nightly_acceptance.py",
@@ -5544,7 +6746,7 @@ MUTATIONS: tuple[MutationCase, ...] = (
         component="Nightly production acceptance",
         source_path="experiments/execution_tracker/nightly_acceptance.py",
         test_script="tests/test_nightly_acceptance_offline.py",
-        before="    run_nightly._validate_funnel_health(health, str(health_path))",
+        before="    run_nightly._verify_funnel_bundle(health, str(inputs.repo_root), str(health_path))",
         after="    pass",
         expected_failure_marker="test_funnel_health_must_survive_the_production_bundle_verifier",
         rationale="The health summary cannot attest to its own immutable bundle; the production verifier must inspect the persisted bytes.",
@@ -5554,7 +6756,7 @@ MUTATIONS: tuple[MutationCase, ...] = (
         component="Nightly production acceptance",
         source_path="experiments/execution_tracker/nightly_acceptance.py",
         test_script="tests/test_nightly_acceptance_offline.py",
-        before='    if not re.search(r"(?m)^research_funnel: OK\\s*$", tail):',
+        before="    if missing_funnel_lines:",
         after="    if False:",
         expected_failure_marker="test_old_funnel_ok_before_exact_run_marker_cannot_pass",
         rationale="An OK line from an older append-only log segment must not certify the current scheduled run.",
@@ -5593,6 +6795,166 @@ MUTATIONS: tuple[MutationCase, ...] = (
         after='    print("[run] context unavailable")',
         expected_failure_marker="test_terminal_report_emits_run_marker_before_step_lines",
         rationale="A reusable launchd log needs an exact run boundary before any step status can be accepted.",
+    ),
+    MutationCase(
+        mutation_id="NIGHTLY_ACCEPTANCE_DUAL_POINTER",
+        component="Nightly production acceptance",
+        source_path="experiments/execution_tracker/nightly_dual_acceptance.py",
+        test_script="tests/test_nightly_dual_acceptance.py",
+        before="    if _sha(public_pointer_path) != _sha(et_pointer_path):",
+        after="    if False:",
+        expected_failure_marker="test_publication_refuses_divergent_pointers",
+        rationale="The public and execution-tracker pointers must be byte-identical for one run.",
+    ),
+    MutationCase(
+        mutation_id="NIGHTLY_ACCEPTANCE_DUAL_MANIFEST",
+        component="Nightly production acceptance",
+        source_path="experiments/execution_tracker/nightly_dual_acceptance.py",
+        test_script="tests/test_nightly_dual_acceptance.py",
+        before="    if _sha(public_manifest) != expected_hash or _sha(durable_manifest) != expected_hash:",
+        after="    if False:",
+        expected_failure_marker="test_publication_refuses_manifest_hash_drift",
+        rationale="A matching pointer is insufficient when its manifest hash no longer matches.",
+    ),
+    MutationCase(
+        mutation_id="NIGHTLY_ACCEPTANCE_GIT_OID", component="Nightly production acceptance",
+        source_path="experiments/execution_tracker/nightly_dual_acceptance.py",
+        test_script="tests/test_nightly_dual_acceptance.py",
+        before='    if result.returncode != 0 or not GIT_OID.fullmatch(head):',
+        after='    if result.returncode != 0 or not HEX64.fullmatch(head):',
+        expected_failure_marker="test_installed_head_accepts_real_git_object_id",
+        rationale="A real SHA-1 installation must not be rejected as an invalid SHA-256 digest.",
+    ),
+    MutationCase(
+        mutation_id="NIGHTLY_ACCEPTANCE_REQUIRED_ARTIFACTS", component="Nightly production acceptance",
+        source_path="experiments/execution_tracker/nightly_dual_acceptance.py",
+        test_script="tests/test_nightly_dual_acceptance.py",
+        before='            or not REQUIRED_PUBLIC.issubset(artifacts)):',
+        after='            or False):',
+        expected_failure_marker="test_publication_refuses_empty_artifact_map",
+        rationale="An empty self-consistent manifest cannot certify the required publication.",
+    ),
+    MutationCase(
+        mutation_id="NIGHTLY_ACCEPTANCE_PLAN_ARTIFACT_SET", component="Nightly production acceptance",
+        source_path="experiments/execution_tracker/nightly_dual_acceptance.py",
+        test_script="tests/test_nightly_dual_acceptance.py",
+        before='    if (planned != artifacts or type(state.get("artifact_count")) is not int',
+        after='    if (False or type(state.get("artifact_count")) is not int',
+        expected_failure_marker="test_publication_refuses_resealed_missing_noncore_artifact",
+        rationale="A self-consistent pointer and manifest cannot omit an entry from the frozen publish plan.",
+    ),
+    MutationCase(
+        mutation_id="NIGHTLY_ACCEPTANCE_EXPORTED_CONTRACT_EXISTS", component="Nightly production acceptance",
+        source_path="experiments/execution_tracker/nightly_dual_acceptance.py",
+        test_script="tests/test_nightly_dual_acceptance.py",
+        before='    for name in REQUIRED_EXPORTED:',
+        after='    for name in ():',
+        expected_failure_marker="test_publication_refuses_missing_export_even_when_plan_and_manifest_agree",
+        rationale="Plan and manifest may omit unchanged files, but every exported contract must still exist for this run.",
+    ),
+    MutationCase(
+        mutation_id="NIGHTLY_ACCEPTANCE_EXPORTED_CONTRACT_IDENTITY", component="Nightly production acceptance",
+        source_path="experiments/execution_tracker/nightly_dual_acceptance.py",
+        test_script="tests/test_nightly_dual_acceptance.py",
+        before='        if contract.get("run_id") != run_id or contract.get("target_trade_date") != target:',
+        after='        if False:',
+        expected_failure_marker="test_publication_refuses_stale_unchanged_export",
+        rationale="An omitted unchanged file still has to belong to the accepted run and target.",
+    ),
+    MutationCase(
+        mutation_id="NIGHTLY_ACCEPTANCE_EXPORTED_CONTRACT_SET", component="Nightly production acceptance",
+        source_path="experiments/execution_tracker/nightly_dual_acceptance.py",
+        test_script="tests/test_nightly_dual_acceptance.py",
+        before='            or set(meta["contracts"]) != REQUIRED_EXPORTED):',
+        after='            or False):',
+        expected_failure_marker="test_publication_refuses_resealed_meta_missing_export_declaration",
+        rationale="The independently registered exported contract set must match the run metadata.",
+    ),
+    MutationCase(
+        mutation_id="NIGHTLY_ACCEPTANCE_EXTERNAL_ROOT", component="Nightly production acceptance",
+        source_path="experiments/execution_tracker/nightly_acceptance.py",
+        test_script="tests/test_nightly_dual_acceptance.py",
+        before='    run_nightly._verify_funnel_bundle(health, str(inputs.repo_root), str(health_path))',
+        after='    run_nightly._verify_funnel_bundle(health, str(run_nightly.REPO_ROOT), str(health_path))',
+        expected_failure_marker="test_external_repo_root_is_used_for_bundle_validation",
+        rationale="The verifier must inspect the selected production root, not its own code checkout.",
+    ),
+    MutationCase(
+        mutation_id="NIGHTLY_ACCEPTANCE_MACRO_UNIVERSE", component="Nightly production acceptance",
+        source_path="experiments/execution_tracker/nightly_dual_acceptance.py",
+        test_script="tests/test_nightly_dual_acceptance.py",
+        before='        "quality": "DATA_BLOCKED" if (not source_coverage_complete or not event_coverage_complete\n'
+               '                                      or unavailable or missing_consensus)',
+        after='        "quality": "DATA_BLOCKED" if (unavailable or missing_consensus)',
+        expected_failure_marker="test_research_sheet_does_not_hide_missing_macro_rows",
+        rationale="One good source/event cannot stand in for the full registered Macro universe.",
+    ),
+    MutationCase(
+        mutation_id="NIGHTLY_ACCEPTANCE_MACRO_CONTRACT_BINDING", component="Nightly production acceptance",
+        source_path="experiments/execution_tracker/nightly_dual_acceptance.py",
+        test_script="tests/test_nightly_dual_acceptance.py",
+        before='    if (source.get("source_registry_hash") != registry["registry_hash"]\n'
+               '            or events.get("rules_hash") != rules["rules_hash"]):',
+        after='    if False:',
+        expected_failure_marker="test_research_sheet_refuses_a_different_rules_version",
+        rationale="A verifier checkout may not apply changed Macro rules to an older published run.",
+    ),
+    MutationCase(
+        mutation_id="NIGHTLY_ACCEPTANCE_INSTALLED_RULES", component="Nightly production acceptance",
+        source_path="experiments/execution_tracker/nightly_dual_acceptance.py",
+        test_script="tests/test_nightly_dual_acceptance.py",
+        before='        rules = m1a.load_rules(rules_path, source_registry_path=registry_path)',
+        after='        rules = m1a.load_rules(source_registry_path=registry_path)',
+        expected_failure_marker="test_research_sheet_uses_installed_rules_not_verifier_rules",
+        rationale="The accepted root's versioned Macro rules, not the verifier checkout's, define event coverage.",
+    ),
+    MutationCase(
+        mutation_id="NIGHTLY_ACCEPTANCE_INSTALLED_REGISTRY_FOR_RULES", component="Nightly production acceptance",
+        source_path="experiments/execution_tracker/nightly_dual_acceptance.py",
+        test_script="tests/test_nightly_dual_acceptance.py",
+        before='        rules = m1a.load_rules(rules_path, source_registry_path=registry_path)',
+        after='        rules = m1a.load_rules(rules_path)',
+        expected_failure_marker="test_research_sheet_validates_installed_registry_and_rules_together",
+        rationale="Installed rules must be validated against their paired installed source registry.",
+    ),
+    MutationCase(
+        mutation_id="NIGHTLY_ACCEPTANCE_COLLECTOR_CODE_MATCH", component="Nightly production acceptance",
+        source_path="experiments/execution_tracker/nightly_dual_acceptance.py",
+        test_script="tests/test_nightly_dual_acceptance.py",
+        before='    if _sha(installed_collectors) != _sha(Path(collectors.__file__)):',
+        after='    if False:',
+        expected_failure_marker="test_research_sheet_refuses_different_installed_collector_code",
+        rationale="Coverage under a different installed collector plan is not comparable.",
+    ),
+    MutationCase(
+        mutation_id="NIGHTLY_ACCEPTANCE_MACRO_RUN_BINDING",
+        component="Nightly production acceptance",
+        source_path="experiments/execution_tracker/nightly_dual_acceptance.py",
+        test_script="tests/test_nightly_dual_acceptance.py",
+        before='    if events.get("run_id") != run_id:',
+        after="    if False:",
+        expected_failure_marker="test_research_sheet_refuses_cross_run_macro",
+        rationale="Research quality must not borrow macro events from another run.",
+    ),
+    MutationCase(
+        mutation_id="NIGHTLY_ACCEPTANCE_ZERO_DIMENSION_QUALITY",
+        component="Nightly production acceptance",
+        source_path="experiments/execution_tracker/nightly_dual_acceptance.py",
+        test_script="tests/test_nightly_dual_acceptance.py",
+        before='"quality": "DATA_BLOCKED" if not rows or zero else "PARTIAL" if partial else "REVIEW_REQUIRED",',
+        after='"quality": "REVIEW_REQUIRED" if not rows or zero else "PARTIAL" if partial else "REVIEW_REQUIRED",',
+        expected_failure_marker="test_research_sheet_keeps_missing_macro_and_zero_dim_rows_visible",
+        rationale="Zero-dimensional candidate rows cannot be reported as research-ready.",
+    ),
+    MutationCase(
+        mutation_id="NIGHTLY_ACCEPTANCE_RESEARCH_RUN_SEPARATION",
+        component="Nightly production acceptance",
+        source_path="experiments/execution_tracker/nightly_dual_acceptance.py",
+        test_script="tests/test_nightly_dual_acceptance.py",
+        before='        result["research"] = {"status": "AUDIT_FAILED", "run_id": nightly["run_id"],',
+        after='        result["operational"]["status"] = "FAIL"\n        result["research"] = {"status": "AUDIT_FAILED", "run_id": nightly["run_id"],',
+        expected_failure_marker="test_research_artifact_failure_does_not_relabel_scheduled_run",
+        rationale="Research artifact failure must not rewrite a successful scheduled run as an engine failure.",
     ),
     MutationCase(
         mutation_id="GOVERNANCE_NIGHTLY_ACCEPTANCE_MARKER_COVERAGE_CALL",
@@ -5795,7 +7157,7 @@ MUTATIONS: tuple[MutationCase, ...] = (
         component="Nightly funnel wiring DAG",
         source_path="experiments/research_funnel/funnel_dag.py",
         test_script="tests/test_funnel_dag_offline.py",
-        before="MAX_WORKERS = 4",
+        before="MAX_WORKERS = 6",
         after="MAX_WORKERS = 8",
         expected_failure_marker="test_limits_cannot_expand_to_the_outer_nightly_deadline",
         rationale="Runtime overrides may reduce but not expand the reviewed concurrency/time limits.",
@@ -5877,12 +7239,265 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="Graceful collector termination must reap provider workers, not orphan live requests.",
     ),
     MutationCase(
+        mutation_id="FUNNEL_BATTERY_DISPATCH_STRATIFIED",
+        component="Research funnel candidate battery",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_funnel_dag_offline.py",
+        before='    for board in _board_sequence({board: len(members) for board, members in queues.items()}):',
+        after='    for board in [b for b in BATTERY_BOARDS for _ in range(len(queues.get(b, [])))]:',
+        expected_failure_marker="test_dispatch_order_is_board_stratified_and_replayable",
+        rationale="Starting candidates board by board brings back the 20260921 failure: 688 STAR and .BJ wait until every other board is done.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_BATTERY_DISPATCH_BOUND",
+        component="Research funnel candidate battery",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_funnel_dag_offline.py",
+        before='            and Fraction(sizes[board] * step, total) - taken[board] >= gamma',
+        after='            and True',
+        expected_failure_marker="test_every_prefix_stays_within_one_of_each_board_share",
+        rationale="Without the deficit filter a board can run ahead of its share; Tijdeman's bound 1 - 1/(2m-2) no longer holds.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_BATTERY_DISPATCH_DEADLINE",
+        component="Research funnel candidate battery",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_funnel_dag_offline.py",
+        before='            key=lambda board: ((taken[board] + 1 - gamma) * total / sizes[board], BATTERY_BOARDS.index(board)),',
+        after='            key=lambda board: (taken[board], BATTERY_BOARDS.index(board)),',
+        expected_failure_marker="test_every_prefix_stays_within_one_of_each_board_share",
+        rationale="Picking by count instead of by earliest deadline ignores board size and lets a board fall more than one behind its share.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_BATTERY_BOARD_PREFIXES",
+        component="Research funnel candidate battery",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_funnel_dag_offline.py",
+        before='    if code[:3] in {"688", "689"}:',
+        after='    if code[:3] in {"688"}:',
+        expected_failure_marker="test_board_is_read_from_the_code_alone",
+        rationale="689xxx STAR CDRs (e.g. 689009.SH, a real candidate) and 302xxx ChiNext must not be stratified as main board.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_BATTERY_BUDGET_EXHAUSTED",
+        component="Research funnel candidate battery",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_funnel_dag_offline.py",
+        before='        "budget_exhausted": reasons.get("BATCH_NOT_STARTED", 0) + reasons.get("BATCH_TIMEOUT", 0) > 0,',
+        after='        "budget_exhausted": reasons.get("BATCH_NOT_STARTED", 0) > 0,',
+        expected_failure_marker="test_budget_is_exhausted_when_only_started_rows_timed_out",
+        rationale="The budget can run out after every candidate started; BATCH_TIMEOUT rows alone must still report budget_exhausted.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_BATTERY_REASON_VOCABULARY",
+        component="Research funnel candidate battery",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_funnel_dag_offline.py",
+        before='    return "DATA_BLOCKED"\n\n\ndef battery_collection_summary',
+        after='    return err\n\n\ndef battery_collection_summary',
+        expected_failure_marker="test_collection_summary_uses_a_closed_reason_vocabulary",
+        rationale="Raw provider exception text must never become a key in the public funnel_health.json.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_BATTERY_DISPATCH_REPLAYED",
+        component="Research funnel candidate battery",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_funnel_dag_offline.py",
+        before='    if "dispatch" in battery and battery["dispatch"] != {',
+        after='    if False and battery["dispatch"] != {',
+        expected_failure_marker="test_battery_dispatch_record_must_replay",
+        rationale="A recorded dispatch order (or a null record) must replay from the manifest, or a battery could claim an order it never used.",
+    ),
+    MutationCase(
+        mutation_id="BATTERY_FUNDAMENTAL_NULL_ELEMENT",
+        component="U3 fundamental evidence",
+        source_path="experiments/execution_tracker/full_battery.py",
+        test_script="tests/test_funnel_dag_offline.py",
+        before="    if value is None:\n        return None",
+        after="    if False:\n        return None",
+        expected_failure_marker="test_bank_without_gross_margin_keeps_red_flag_verdict_and_explicit_nulls",
+        rationale="Banks and insurers report no gross margin; float(None) blocked the whole 基本面 dimension and discarded its red-flag verdict every night.",
+    ),
+    MutationCase(
+        mutation_id="BATTERY_FUNDAMENTAL_NULL_REASON",
+        component="U3 fundamental evidence",
+        source_path="experiments/execution_tracker/full_battery.py",
+        test_script="tests/test_funnel_dag_offline.py",
+        before="        if any(m is None for m in margins):",
+        after="        if False:",
+        expected_failure_marker="test_bank_without_gross_margin_keeps_red_flag_verdict_and_explicit_nulls",
+        rationale="A null descriptive field must say why it is null; an unexplained null is a silent gap.",
+    ),
+    MutationCase(
+        mutation_id="BATTERY_FUNDAMENTAL_NON_FINITE_REFUSED",
+        component="U3 fundamental evidence",
+        source_path="experiments/execution_tracker/full_battery.py",
+        test_script="tests/test_funnel_dag_offline.py",
+        before="    return round(float(value) / scale, digits)",
+        after=(
+            "    number = float(value)\n"
+            "    return round(number / scale, digits) if math.isfinite(number) else None"
+        ),
+        expected_failure_marker="test_non_finite_gross_margin_is_still_refused_by_the_funnel",
+        rationale="Only a provider null becomes None; NaN/Inf must keep reaching the funnel's non-finite refusal instead of turning into a quiet null.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_BATTERY_BUDGET_DERIVED",
+        component="Nightly funnel wiring DAG",
+        source_path="experiments/research_funnel/funnel_dag.py",
+        test_script="tests/test_funnel_dag_offline.py",
+        before='BATCH_SECONDS = float(CANDIDATE_BATTERY_STEP_TIMEOUT_SECONDS) - BATTERY_RESERVE_SECONDS',
+        after='BATCH_SECONDS = 540.0',
+        expected_failure_marker="test_battery_budget_is_derived_from_its_own_step_ceiling",
+        rationale="A hard-coded 540s budget cut off the ts_code tail from London; the budget must come from the battery's own step ceiling.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_BATTERY_RETRY_PASS",
+        component="Nightly funnel wiring DAG",
+        source_path="experiments/research_funnel/funnel_dag.py",
+        test_script="tests/test_funnel_dag_offline.py",
+        before='        if retry and remaining > ROW_SECONDS:',
+        after='        if False:',
+        expected_failure_marker="test_individually_failed_candidates_get_one_bounded_retry",
+        rationale="The owner requires every candidate collected; one bounded retry recovers candidates that failed on their own.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_BATTERY_RETRY_BUDGET",
+        component="Nightly funnel wiring DAG",
+        source_path="experiments/research_funnel/funnel_dag.py",
+        test_script="tests/test_funnel_dag_offline.py",
+        before='        if retry and remaining > ROW_SECONDS:',
+        after='        if retry and remaining > 0:',
+        expected_failure_marker="test_retry_is_skipped_when_the_budget_has_no_room_for_a_row",
+        rationale="A retry that cannot fit one full row would only overrun the step ceiling.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_BATTERY_RETRY_SCOPE",
+        component="Nightly funnel wiring DAG",
+        source_path="experiments/research_funnel/funnel_dag.py",
+        test_script="tests/test_funnel_dag_offline.py",
+        before='    return reason in RETRYABLE_REASONS or reason.startswith("PROVIDER_ERROR:")',
+        after='    return True',
+        expected_failure_marker="test_individually_failed_candidates_get_one_bounded_retry",
+        rationale="Batch-level cut-offs mean the budget is spent; retrying them would only overrun.",
+    ),
+    MutationCase(
+        mutation_id="NIGHTLY_BATTERY_STEP_CEILING",
+        component="Official nightly entry",
+        source_path="experiments/execution_tracker/nightly_limits.py",
+        test_script="tests/test_nightly_v4_adversarial.py",
+        before='CANDIDATE_BATTERY_STEP_TIMEOUT_SECONDS = 1800',
+        after='CANDIDATE_BATTERY_STEP_TIMEOUT_SECONDS = 600',
+        expected_failure_marker="test_candidate_battery_step_gets_its_own_ceiling",
+        rationale="Under the shared 600s the battery cannot collect every candidate from London.",
+    ),
+    MutationCase(
+        mutation_id="NIGHTLY_STEP_TIMEOUT_OVERRIDE",
+        component="Official nightly entry",
+        source_path="experiments/execution_tracker/nightly_limits.py",
+        test_script="tests/test_nightly_v4_adversarial.py",
+        before='    return STEP_TIMEOUT_OVERRIDES.get(step, NIGHTLY_STEP_TIMEOUT_SECONDS)',
+        after='    return NIGHTLY_STEP_TIMEOUT_SECONDS',
+        expected_failure_marker="test_candidate_battery_step_gets_its_own_ceiling",
+        rationale="The battery's ceiling must reach the orchestrator; every other step keeps the shared limit.",
+    ),
+    MutationCase(
+        mutation_id="NIGHTLY_RUNNER_PER_STEP_TIMEOUT",
+        component="Official nightly entry",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_nightly_v4_adversarial.py",
+        before='            code, out = _subprocess_runner(cmd, cwd=base, env=env, timeout=step_timeout(name))',
+        after='            code, out = _subprocess_runner(cmd, cwd=base, env=env)',
+        expected_failure_marker="test_candidate_battery_step_gets_its_own_ceiling",
+        rationale="The production step loop must pass each step its own timeout, or the battery is killed at 600s.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_BATTERY_RETRY_READ_FAILURES",
+        component="Nightly funnel wiring DAG",
+        source_path="experiments/research_funnel/funnel_dag.py",
+        test_script="tests/test_funnel_dag_offline.py",
+        before='        return _read_failed_dims(outcome["row"]) > 0',
+        after='        return False',
+        expected_failure_marker="test_individually_failed_candidates_get_one_bounded_retry",
+        rationale="A Tushare read failure inside a row is the transient failure most worth retrying; without it the retry only repeats deterministic errors.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_BATTERY_RETRY_LATEST",
+        component="Nightly funnel wiring DAG",
+        source_path="experiments/research_funnel/funnel_dag.py",
+        test_script="tests/test_funnel_dag_offline.py",
+        before='    if previous["reason"] is not None:\n        return True',
+        after='    if previous["reason"] is not None:\n        return retried["reason"] is None',
+        expected_failure_marker="test_a_batch_cutoff_during_the_retry_is_reported",
+        rationale="A batch cut-off during the retry must replace the stale first-pass reason, or budget_exhausted under-reports.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_BATTERY_RETRY_NO_DOWNGRADE",
+        component="Nightly funnel wiring DAG",
+        source_path="experiments/research_funnel/funnel_dag.py",
+        test_script="tests/test_funnel_dag_offline.py",
+        before='    return retried["reason"] is None and _covered(retried) >= _covered(previous)',
+        after='    return True',
+        expected_failure_marker="test_a_partial_row_is_not_replaced_by_a_worse_retry",
+        rationale="A retry that collects less must not overwrite a row that already has most of its dimensions.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_BATTERY_RETRY_BUDGET_PASSED",
+        component="Nightly funnel wiring DAG",
+        source_path="experiments/research_funnel/funnel_dag.py",
+        test_script="tests/test_funnel_dag_offline.py",
+        before='                                  budget_seconds=remaining,\n',
+        after='',
+        expected_failure_marker="test_individually_failed_candidates_get_one_bounded_retry",
+        rationale="The retry must get only the remaining budget; the full budget would let it outlive the step ceiling.",
+    ),
+    MutationCase(
+        mutation_id="NIGHTLY_RUNNER_TIMEOUT_REACHES_SUBPROCESS",
+        component="Official nightly entry",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_nightly_v4_adversarial.py",
+        before='                           capture_output=True, timeout=timeout)',
+        after='                           capture_output=True, timeout=NIGHTLY_STEP_TIMEOUT_SECONDS)',
+        expected_failure_marker="test_candidate_battery_step_gets_its_own_ceiling",
+        rationale="The per-step ceiling must survive the runner down to subprocess.run, or the battery is killed at 600s.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_DAG_FAIR_DISPATCH",
+        component="Nightly funnel wiring DAG",
+        source_path="experiments/research_funnel/funnel_dag.py",
+        test_script="tests/test_funnel_dag_offline.py",
+        before='    order = battery_dispatch_order(codes, target)',
+        after='    order = list(codes)',
+        expected_failure_marker="test_collection_follows_dispatch_order_and_results_keep_manifest_order",
+        rationale="The real battery stage must start candidates in the stratified order, not in ts_code order.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_DAG_BATTERY_COLLECTION_RECOMPUTED",
+        component="Nightly funnel wiring DAG",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_funnel_dag_offline.py",
+        before='        if "battery_collection" in data or "dispatch" in candidate_battery:',
+        after='        if False:',
+        expected_failure_marker="test_health_publishes_per_board_collection_split",
+        rationale="The published per-board split must be recomputed from the rows and cannot be dropped for a dispatch-recording battery.",
+    ),
+    MutationCase(
+        mutation_id="U4_PREDECISION_BATTERY_COLLECTION_DERIVATION",
+        component="Research funnel U4 pre-decision runtime",
+        source_path="experiments/research_funnel/u4_pre_decision.py",
+        test_script="tests/test_u4_pre_decision_runtime.py",
+        before='    if "battery_collection" in health or "dispatch" in bundle["battery"]:',
+        after='    if False:',
+        expected_failure_marker="test_battery_collection_split_is_recomputed_from_u3",
+        rationale="U4 pre-decision must not trust a self-reported per-board split; it is recomputed from U3 rows.",
+    ),
+    MutationCase(
         mutation_id="FUNNEL_BATTERY_DAG_CALLSITE",
         component="Nightly funnel wiring DAG",
         source_path="experiments/research_funnel/funnel_dag.py",
         test_script="tests/test_funnel_dag_offline.py",
-        before="        outcomes = collect_rows(codes, target, provider, progress=_collection_progress)",
-        after='        outcomes = [{"ts_code": tk, "reason": None, "row": provider(tk, target)} for tk in codes]',
+        before="        outcomes = collect_rows(order, target, provider, progress=_collection_progress)",
+        after='        outcomes = [{"ts_code": tk, "reason": None, "row": provider(tk, target)} for tk in order]',
         expected_failure_marker="test_bounded_collection_reaches_persistent_bundle_and_ready_pool",
         rationale="The real three-stage DAG must use bounded collection and keep timed-out rows out of readiness.",
     ),
@@ -7569,18 +9184,18 @@ MUTATIONS = MUTATIONS + (
     ),
     MutationCase(
         mutation_id="RESEARCH_V1_4_REVISION_IDENTITY",
-        component="Research Closed Loop V1.4 revision identity",
+        component="Research Closed Loop V1.5 candidate identity",
         source_path="docs/research/contracts/research_closed_loop.v1.json",
         test_script="tests/test_research_closed_loop_v1.py",
         before=(
-            '  "schema_version": "1.4",\n'
-            '  "method_version": "RESEARCH_CLOSED_LOOP_V1_4",'
+            '  "schema_version": "1.5",\n'
+            '  "method_version": "RESEARCH_CLOSED_LOOP_V1_5_CANDIDATE",'
         ),
         after=(
             '  "schema_version": "1.3",\n'
             '  "method_version": "RESEARCH_CLOSED_LOOP_V1_3",'
         ),
-        expected_failure_marker="test_manifest_is_strict_and_frozen",
+        expected_failure_marker="test_manifest_is_strict_review_candidate",
         rationale=(
             "The semiconductor screening assembly must be an explicit reviewed revision, "
             "not a silent byte change under the original V1 method label."
@@ -7588,36 +9203,35 @@ MUTATIONS = MUTATIONS + (
     ),
     MutationCase(
         mutation_id="RESEARCH_V1_4_FROZEN_AT",
-        component="Research Closed Loop V1.4 frozen timestamp",
+        component="Research Closed Loop V1.5 proposal timestamp",
         source_path="docs/research/contracts/research_closed_loop.v1.json",
         test_script="tests/test_research_closed_loop_v1.py",
-        before='  "frozen_at": "2026-08-26T14:44:39+08:00",',
-        after='  "frozen_at": "2026-08-26T01:17:17+08:00",',
-        expected_failure_marker="test_revision_1_4_identity_names_current_review",
+        before='  "proposed_at": "2026-09-19T20:42:25+00:00",',
+        after='  "proposed_at": "2026-08-26T01:17:17+08:00",',
+        expected_failure_marker="test_revision_1_5_identity_names_current_review",
         rationale=(
-            "A new byte-bound assembly revision must carry its own reviewed freeze time, "
-            "not reuse the superseded V1.3 identity."
+            "A pending byte-bound assembly must carry its own proposal time, "
+            "not reuse a historical freeze identity."
         ),
     ),
     MutationCase(
         mutation_id="RESEARCH_V1_4_SOURCE_BASE",
-        component="Research Closed Loop V1.4 source review binding",
+        component="Research Closed Loop V1.5 source review binding",
         source_path="docs/research/contracts/research_closed_loop.v1.json",
         test_script="tests/test_research_closed_loop_v1.py",
         before=(
-            '    "assembly_code_commit": "e0d73dac5a8f8bbc4a427ec15b7efce8c8d5ad8c",\n'
-            '    "base_main": "ad26f1b644d75618a3923267c4dfa5b446d71e67",\n'
-            '    "review_pr": 319,'
+            '    "assembly_base_commit": "e0f0a57471df14a3ed044f30e9497ee2e441dcac",\n'
+            '    "base_main": "e64e3cdd64cda102e802924de8736fce6e45eb3c",\n'
+            '    "review_pr": 357,'
         ),
         after=(
             '    "assembly_code_commit": "a893d0fc28ffcf3f50ab6071d8f5ccf86b74aa0a",\n'
             '    "base_main": "7774e33dbfa6c5554472d3c137ca7b14b4423f4c",\n'
             '    "review_pr": 317,'
         ),
-        expected_failure_marker="test_revision_1_4_identity_names_current_review",
+        expected_failure_marker="test_revision_1_5_identity_names_current_review",
         rationale=(
-            "The frozen source identity must point to the implementation commit, main base, "
-            "and review PR that actually delivered V1.4."
+            "The candidate identity must name its provenance parent, main base and actual review PR."
         ),
     ),
     MutationCase(
@@ -7627,13 +9241,23 @@ MUTATIONS = MUTATIONS + (
         test_script="tests/test_research_closed_loop_v1.py",
         before=(
             '    {"path": "experiments/research_funnel/research_cycle.py", '
-            '"sha256": "sha256:f42620fa91cf93fe8fbd28930ab4c2530a5e6ed285c0025df5a74175feb59415"},\n'
+            '"sha256": "sha256:c826bb98f749a2fb2337351b68bcbd340476fb44b09f00f69b5d3a7d5274f373"},\n'
         ),
         after="",
         expected_failure_marker="test_every_bound_artifact_matches_its_exact_bytes",
         rationale=(
             "A frozen assembly cannot silently drop one reviewed artifact while all remaining hashes stay valid."
         ),
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_REGISTRATION_CONTRACT_VERSION",
+        component="Research Closed Loop registration identity",
+        source_path="docs/research/contracts/research_closed_loop.v1.json",
+        test_script="tests/test_research_closed_loop_v1.py",
+        before='      "output": "AR_RESEARCH_METHOD_REGISTRATION_V1_1",',
+        after='      "output": "AR_RESEARCH_METHOD_REGISTRATION_V1_0",',
+        expected_failure_marker="test_manifest_is_strict_review_candidate",
+        rationale="The frozen assembly must name the runtime registration version exactly.",
     ),
     MutationCase(
         mutation_id="RESEARCH_V1_4_SEMICONDUCTOR_ASSEMBLY_BINDING",
@@ -7679,7 +9303,7 @@ MUTATIONS = MUTATIONS + (
         test_script="tests/test_research_closed_loop_v1.py",
         before='      "id": "PAPER_REGISTRATION",',
         after='      "id": "PAPER_EXECUTION",',
-        expected_failure_marker="test_manifest_is_strict_and_frozen",
+        expected_failure_marker="test_manifest_is_strict_review_candidate",
         rationale=(
             "The human-authorized R-015 registration transaction must remain an explicit "
             "block between research registration and paper execution."
@@ -7692,7 +9316,7 @@ MUTATIONS = MUTATIONS + (
         test_script="tests/test_research_closed_loop_v1.py",
         before=(
             '    {"path": "experiments/research_funnel/paper_registration_bridge.py", '
-            '"sha256": "sha256:61f095a6b126ed3aedbaae4d69c18e5dcc2d7eb5bd22b2e82713279382b1bc79"},'
+            '"sha256": "sha256:35c756cd2e4ff7c1cc4fe042845da9e77c20ac40481b237e02e80a1299838c9d"},'
         ),
         after=(
             '    {"path": "experiments/research_funnel/paper_registration_bridge.py", '
@@ -8049,6 +9673,24 @@ MUTATIONS = MUTATIONS + (
         ),
         expected_failure_marker="test_approval_must_bind_full_plan_and_preserve_unverified_identity",
         rationale="Self-reported approval must remain honestly unverified and unable to grant trade authority.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_REGISTRATION_WAIT_REFUSAL",
+        component="Research funnel paper registration bridge",
+        source_path="experiments/research_funnel/paper_registration_bridge.py",
+        test_script="tests/test_paper_registration_bridge.py",
+        before=(
+            '    # governance-mutation: PAPER_REGISTRATION_WAIT_REFUSAL\n'
+            '    refusal = research_cycle.registration_refusal(case)\n'
+            '    if refusal is not None:'
+        ),
+        after=(
+            '    # governance-mutation: PAPER_REGISTRATION_WAIT_REFUSAL\n'
+            '    refusal = research_cycle.registration_refusal(case)\n'
+            '    if False:'
+        ),
+        expected_failure_marker="test_wait_case_is_refused_before_any_plan_exists",
+        rationale="The bridge must refuse a WAIT / HOLD_OBSERVE case before any plan, intent or order exists, using the same predicate as the replay (audit F1).",
     ),
     MutationCase(
         mutation_id="PAPER_REGISTRATION_TYPED_SOURCE_BINDING",
@@ -8422,7 +10064,7 @@ MUTATIONS = MUTATIONS + (
         component="Research Closed Loop V1 assembly identity",
         source_path="docs/research/contracts/research_closed_loop.v1.json",
         test_script="tests/test_u4_pre_decision_runtime.py",
-        before="sha256:ee6191cf8cdeeb50f5f27f878e720faaa258e68bf2d8d35a3742e33d8d17b7e3",
+        before="sha256:67ebc78991c07ed3166fa10e93d726ac2b1ca6c0c81678a0ce026ff6fefd8058",
         after="sha256:e84b0e026832420ee1e88e1fcbac2b69a836e97cf29f5d1d7daf15eb3fbe09fa",
         expected_failure_marker="test_fix_forward_task_compiles_and_preserves_the_frozen_assembly",
         rationale="The previously reviewed V1.3 identity must not silently bind changed DAG bytes.",
@@ -9506,6 +11148,900 @@ MUTATIONS = MUTATIONS + (
 )
 
 
+
+MUTATIONS = MUTATIONS + (
+    MutationCase(
+        mutation_id='EXECUTION_CLOCK_ABSOLUTE_NOW',
+        component="Execution tracker Asia/Shanghai clock",
+        source_path="experiments/execution_tracker/market_clock.py",
+        test_script="tests/test_execution_clock.py",
+        before='        return datetime.datetime.now(SHANGHAI)\n',
+        after='        return datetime.datetime.now().replace(tzinfo=SHANGHAI)\n',
+        expected_failure_marker='test_absolute_instant_ignores_machine_local_zone',
+        rationale='The London wall clock relabelled +08:00 is exactly the 2026-09 incident.',
+    ),
+    MutationCase(
+        mutation_id='EXECUTION_CLOCK_CONVERT_INSTANT',
+        component="Execution tracker Asia/Shanghai clock",
+        source_path="experiments/execution_tracker/market_clock.py",
+        test_script="tests/test_execution_clock.py",
+        before='    return dt.astimezone(SHANGHAI)\n',
+        after='    return dt.replace(tzinfo=SHANGHAI)\n',
+        expected_failure_marker='test_london_instant_converts_to_beijing_wall_clock',
+        rationale='A 09:14 London fire is 16:14 in Shanghai, not 09:14.',
+    ),
+    MutationCase(
+        mutation_id='EXECUTION_CLOCK_NAIVE_REFUSED',
+        component="Execution tracker Asia/Shanghai clock",
+        source_path="experiments/execution_tracker/market_clock.py",
+        test_script="tests/test_execution_clock.py",
+        before='    if dt.tzinfo is None or dt.utcoffset() is None:\n        raise ValueError(',
+        after='    if False:\n        raise ValueError(',
+        expected_failure_marker='test_naive_datetime_is_refused',
+        rationale='A naive datetime has no instant; converting it silently reads machine local time.',
+    ),
+    MutationCase(
+        mutation_id='EXECUTION_CLOCK_NAIVE_STAMP_UNPROVEN',
+        component="Execution tracker Asia/Shanghai clock",
+        source_path="experiments/execution_tracker/market_clock.py",
+        test_script="tests/test_execution_clock.py",
+        before='    if parsed.tzinfo is None or parsed.utcoffset() is None:\n        return None\n',
+        after='    if parsed.tzinfo is None:\n        parsed = parsed.replace(tzinfo=SHANGHAI)\n',
+        expected_failure_marker='test_naive_captured_at_is_unproven',
+        rationale='A capture stamp without an offset cannot prove which clock it was read on.',
+    ),
+    MutationCase(
+        mutation_id='EXECUTION_CLOCK_POST_CLOSE_VERDICT',
+        component="Execution tracker Asia/Shanghai clock",
+        source_path="experiments/execution_tracker/market_clock.py",
+        test_script="tests/test_execution_clock.py",
+        before='    if day > date or (day == date and clock_time >= SESSION_CLOSE):\n',
+        after='    if False:\n',
+        expected_failure_marker='test_post_close_capture_is_counted_separately',
+        rationale='A read at or after 15:00 Shanghai saw the settled session it predicts.',
+    ),
+    MutationCase(
+        mutation_id='EXECUTION_CLOCK_LEGACY_CUTOVER',
+        component="Execution tracker Asia/Shanghai clock",
+        source_path="experiments/execution_tracker/market_clock.py",
+        test_script="tests/test_execution_clock.py",
+        before='    if date >= LEGACY_CLOCK_CUTOVER:\n',
+        after='    if False:\n',
+        expected_failure_marker='test_post_cutover_legacy_label_is_unproven',
+        rationale='Labels written on the London machine clock cannot prove an in-session read.',
+    ),
+    MutationCase(
+        mutation_id='EXECUTION_CLOCK_NOWCAST_WRITE_SESSION',
+        component="Execution tracker Asia/Shanghai clock",
+        source_path="experiments/execution_tracker/run_premarket_monitor.py",
+        test_script="tests/test_execution_clock.py",
+        before='    if mc.capture_verdict(date, captured) != mc.IN_SESSION:\n        return []\n',
+        after='    if False:\n        return []\n',
+        expected_failure_marker='test_london_misfire_read_logs_nothing',
+        rationale='The one nowcast writer must refuse reads taken outside the Shanghai session.',
+    ),
+    MutationCase(
+        mutation_id='EXECUTION_CLOCK_CAPTURED_AT',
+        component="Execution tracker Asia/Shanghai clock",
+        source_path="experiments/execution_tracker/run_premarket_monitor.py",
+        test_script="tests/test_execution_clock.py",
+        before='            "captured_at": mc.stamp(captured),\n',
+        after='',
+        expected_failure_marker='test_beijing_session_read_records_captured_at',
+        rationale='New nowcasts carry the capture instant with its +08:00 offset.',
+    ),
+    MutationCase(
+        mutation_id='EXECUTION_CLOCK_WATCHTOWER_START_WINDOW',
+        component="Execution tracker Asia/Shanghai clock",
+        source_path="experiments/execution_tracker/watchtower.py",
+        test_script="tests/test_execution_clock.py",
+        before='    if not (START_FROM <= hm < START_UNTIL):\n',
+        after='    if False:\n',
+        expected_failure_marker='test_london_clock_start_is_outside_market_hours',
+        rationale='A launchd fire outside the Shanghai session fails closed before any quote.',
+    ),
+    MutationCase(
+        mutation_id='EXECUTION_CLOCK_WATCHTOWER_TRADING_DAY',
+        component="Execution tracker Asia/Shanghai clock",
+        source_path="experiments/execution_tracker/watchtower.py",
+        test_script="tests/test_execution_clock.py",
+        before='    if not is_open:\n        return NON_TRADING_DAY, why\n',
+        after='    if False:\n        return NON_TRADING_DAY, why\n',
+        expected_failure_marker='test_non_trading_day_start_is_refused',
+        rationale='A non-trading day never admits the daemon.',
+    ),
+    MutationCase(
+        mutation_id='EXECUTION_CLOCK_WATCHTOWER_DAEMON_REFUSES',
+        component="Execution tracker Asia/Shanghai clock",
+        source_path="experiments/execution_tracker/watchtower.py",
+        test_script="tests/test_execution_clock.py",
+        before='    if status != ADMITTED:\n        report_status(status, why)\n        return status\n',
+        after='    if False:\n        report_status(status, why)\n        return status\n',
+        expected_failure_marker='test_london_daemon_exits_without_polling_or_logging',
+        rationale='The daemon exits with an explicit status instead of starting its loop.',
+    ),
+    MutationCase(
+        mutation_id='EXECUTION_CLOCK_EOD_SESSION',
+        component="Execution tracker Asia/Shanghai clock",
+        source_path="experiments/execution_tracker/run_eod_decision.py",
+        test_script="tests/test_execution_clock.py",
+        before='    if not mc.in_trading_session(now):\n',
+        after='    if False:\n',
+        expected_failure_marker='test_london_clock_eod_fire_is_outside_market_hours',
+        rationale='The 14:26 London fire (21:26 Shanghai) is outside market hours, not merely off-window.',
+    ),
+    MutationCase(
+        mutation_id='EXECUTION_CLOCK_EOD_TRADING_DAY',
+        component="Execution tracker Asia/Shanghai clock",
+        source_path="experiments/execution_tracker/run_eod_decision.py",
+        test_script="tests/test_execution_clock.py",
+        before='    if not is_open:\n        print(f"{NON_TRADING_DAY}',
+        after='    if False:\n        print(f"{NON_TRADING_DAY}',
+        expected_failure_marker='test_non_trading_day_eod_is_refused',
+        rationale='A holiday EOD run would read the previous session as today.',
+    ),
+    MutationCase(
+        mutation_id='EXECUTION_CLOCK_SCORE_ADMISSION',
+        component="Execution tracker Asia/Shanghai clock",
+        source_path="experiments/execution_tracker/nowcast_evaluator.py",
+        test_script="tests/test_execution_clock.py",
+        before='        if mc.nowcast_admission(rec) != mc.IN_SESSION:     # post-close / unprovable\n            continue\n',
+        after='        if False:\n            continue\n',
+        expected_failure_marker='test_post_close_capture_is_never_scored',
+        rationale='The scorer never grades a read it cannot prove was in-session.',
+    ),
+    MutationCase(
+        mutation_id='EXECUTION_CLOCK_AGGREGATE_ADMISSION',
+        component="Execution tracker Asia/Shanghai clock",
+        source_path="experiments/execution_tracker/nowcast_evaluator.py",
+        test_script="tests/test_execution_clock.py",
+        before='        if not rec.get("scored") or mc.nowcast_admission(rec) != mc.IN_SESSION:\n',
+        after='        if not rec.get("scored"):\n',
+        expected_failure_marker='test_already_scored_excluded_record_never_reaches_hit_rate',
+        rationale='A record scored elsewhere still cannot enter the hit rate without admission.',
+    ),
+)
+
+MUTATIONS = MUTATIONS + (
+    MutationCase(
+        mutation_id="PAPER_T10_CLOCK",
+        component="Paper execution opt-in T10 calendar",
+        source_path="experiments/execution_tracker/paper_deadline.py",
+        test_script="tests/test_paper_t10_execution.py",
+        before=(
+            '            entry["deadline_due_date"] = _nth_after(\n'
+            '                entry["deadline_policy"], entry["fill_date"],\n'
+            '                entry["deadline_policy"]["holding_sessions"])'
+        ),
+        after=(
+            '            entry["deadline_due_date"] = _nth_after(\n'
+            '                entry["deadline_policy"], entry["fill_date"], 9)'
+        ),
+        expected_failure_marker="test_t0_then_ten_exchange_opens_not_calendar_days",
+        rationale="The due date must read the bound holding window, and the tenth exchange open after fill is mandatory.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_T10_CALENDAR_COVERS_DEADLINE",
+        component="Paper T+10 exchange-calendar execution",
+        source_path="experiments/execution_tracker/paper_deadline.py",
+        test_script="tests/test_paper_t10_execution.py",
+        before=(
+            '        _nth_after(policy, _nth_after(policy, registered_at, pending),\n'
+            '                   policy["holding_sessions"])'
+        ),
+        after="        _nth_after(policy, registered_at, pending)",
+        expected_failure_marker="test_registration_refuses_a_calendar_that_cannot_reach_the_deadline",
+        rationale="Registration must prove the calendar reaches the worst-case deadline, not only the pending window.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_T10_NO_RETROACTIVE_BINDING",
+        component="Paper T+10 exchange-calendar execution",
+        source_path="experiments/execution_tracker/paper_deadline.py",
+        test_script="tests/test_paper_t10_execution.py",
+        before='          or entry.get("deadline_policy_bound_at") != registered):',
+        after="          or False):",
+        expected_failure_marker="test_binding_stamp_must_exist_and_match_registration",
+        rationale="A policy may only bind at registration; an order advanced under price-only rules must never acquire one.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_T10_CALENDAR_HASH",
+        component="Paper execution opt-in T10 calendar",
+        source_path="experiments/execution_tracker/paper_deadline.py",
+        test_script="tests/test_paper_t10_execution.py",
+        before="    _check_hash(calendar, \"calendar_hash\")",
+        after="    pass",
+        expected_failure_marker="test_calendar_and_policy_hash_tampering_refused_transactionally",
+        rationale="Calendar evidence cannot be replaced by a self-resealed outer policy.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_T10_POLICY_HASH",
+        component="Paper execution opt-in T10 calendar",
+        source_path="experiments/execution_tracker/paper_deadline.py",
+        test_script="tests/test_paper_t10_execution.py",
+        before="    _check_hash(policy, \"policy_hash\")",
+        after="    pass",
+        expected_failure_marker="test_calendar_and_policy_hash_tampering_refused_transactionally",
+        rationale="Execution policy changes must invalidate the bound policy hash.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_T10_LIMIT_DOWN",
+        component="Paper execution opt-in T10 calendar",
+        source_path="experiments/execution_tracker/paper_deadline.py",
+        test_script="tests/test_paper_t10_execution.py",
+        before="        return \"ONE_PRICE_LIMIT_DOWN_NO_SELL\"",
+        after="        return None",
+        expected_failure_marker="test_suspension_limit_down_and_capacity_block_then_retry",
+        rationale="A deadline cannot force a one-price limit-down sale.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_T10_CAPACITY",
+        component="Paper execution opt-in T10 calendar",
+        source_path="experiments/execution_tracker/paper_deadline.py",
+        test_script="tests/test_paper_t10_execution.py",
+        before="        return \"LIQUIDITY_PARTICIPATION_EXCEEDED\"",
+        after="        return None",
+        expected_failure_marker="test_suspension_limit_down_and_capacity_block_then_retry",
+        rationale="A deadline cannot bypass full-position participation.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_T10_PENDING_EXPIRY",
+        component="Paper execution opt-in T10 calendar",
+        source_path="experiments/execution_tracker/paper_deadline.py",
+        test_script="tests/test_paper_t10_execution.py",
+        before="        elif day >= entry[\"pending_expiry_date\"]:",
+        after="        elif False:",
+        expected_failure_marker="test_pending_expiry_is_end_of_nth_open_and_never_invents_pnl",
+        rationale="Pending validity is separate from the holding clock.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_T10_PRICE_PRIORITY",
+        component="Paper execution opt-in T10 calendar",
+        source_path="experiments/execution_tracker/paper_deadline.py",
+        test_script="tests/test_paper_t10_execution.py",
+        before="    if due and entry[\"deadline_policy\"][\"exit_price\"] == \"OPEN\":",
+        after="    if due and entry[\"deadline_policy\"][\"exit_price\"] == \"CLOSE\":",
+        expected_failure_marker="test_same_bar_priority_open_before_stop_close_after_stop",
+        rationale="OPEN and CLOSE conventions must keep their frozen ordering.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_T10_HISTORY_BINDING",
+        component="Paper execution opt-in T10 calendar",
+        source_path="experiments/execution_tracker/paper_deadline.py",
+        test_script="tests/test_paper_t10_execution.py",
+        before="            if evidence[\"bar_hash\"] != bar_hashes.get(evidence[\"date\"]):",
+        after="            if False:",
+        expected_failure_marker="test_prior_bar_revision_removal_and_late_insert_rejected_atomically",
+        rationale="Previously processed missing or present bars cannot be revised retroactively.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_T10_ATOMIC_ADVANCE",
+        component="Paper execution opt-in T10 calendar",
+        source_path="experiments/execution_tracker/paper_deadline.py",
+        test_script="tests/test_paper_t10_execution.py",
+        before="    updated = copy.deepcopy(entry)",
+        after="    updated = entry",
+        expected_failure_marker="test_advance_leaves_the_caller_untouched_when_a_session_raises",
+        rationale="Failure cannot leave a partially advanced order.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_T10_DISPATCH",
+        component="Paper execution opt-in T10 calendar",
+        source_path="experiments/execution_tracker/paper_portfolio.py",
+        test_script="tests/test_paper_t10_execution.py",
+        before="    if \"deadline_policy\" in entry:",
+        after="    if False:",
+        expected_failure_marker="test_t0_then_ten_exchange_opens_not_calendar_days",
+        rationale="The shared execution entry point must call the opt-in clock.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_T10_CASE_POLICY",
+        component="Paper execution opt-in T10 calendar",
+        source_path="experiments/research_funnel/research_cycle.py",
+        test_script="tests/test_paper_t10_integration.py",
+        before="            paper_deadline.validate_policy(order[\"deadline_policy\"], registered_at)",
+        after="            pass",
+        expected_failure_marker="test_case_rejects_resealed_policy_with_bad_calendar_hash",
+        rationale="Case sealing must validate the embedded calendar, not only case bytes.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_T10_PUBLICATION_CLOCK",
+        component="Paper execution opt-in T10 calendar",
+        source_path="experiments/execution_tracker/nightly_publish.py",
+        test_script="tests/test_paper_t10_integration.py",
+        before="settlement_as_of=receipt[\"recording\"][\"target_trade_date\"]",
+        after="settlement_as_of=bars[-1][\"date\"]",
+        expected_failure_marker="test_recorded_missing_bar_attempt_replays_from_publication_clock",
+        rationale="Publication must replay the missing due session, not infer a clock from bars.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_T10_MISSING_HORIZON",
+        component="Paper execution opt-in T10 calendar",
+        source_path="experiments/research_funnel/research_cycle.py",
+        test_script="tests/test_paper_t10_integration.py",
+        before="            elif target not in by_date or by_date[target][\"suspended\"] or order.get(\"execution_frozen\"):\n                output[f\"T+{horizon}\"] = {\"status\": \"DATA_BLOCKED\",",
+        after="            elif target not in by_date or by_date[target][\"suspended\"] or order.get(\"execution_frozen\"):\n                output[f\"T+{horizon}\"] = {\"status\": \"WINDOW_OPEN\",",
+        expected_failure_marker="test_missing_due_bar_is_data_blocked_not_window_open",
+        rationale="An elapsed missing observation is DATA_BLOCKED, not an unelapsed window.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_T10_NAV_FRESHNESS",
+        component="Paper execution opt-in T10 calendar",
+        source_path="experiments/research_funnel/research_cycle.py",
+        test_script="tests/test_paper_t10_integration.py",
+        before='    performance = paper_fund.compute_performance(fund, orders, nav_history)\n    if case["schema_version"] == DEADLINE_VERSION:',
+        after='    performance = paper_fund.compute_performance(fund, orders, nav_history)\n    if False:',
+        expected_failure_marker="test_missing_final_nav_is_dated_and_not_current_performance",
+        rationale="A last-known NAV must not be presented as current or complete-coverage performance.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_T10_EMPTY_SERIES",
+        component="Paper execution opt-in T10 calendar",
+        source_path="experiments/research_funnel/research_cycle.py",
+        test_script="tests/test_paper_t10_integration.py",
+        before='    empty_rows_allowed = case["schema_version"] == DEADLINE_VERSION',
+        after='    empty_rows_allowed = False',
+        expected_failure_marker="test_empty_series_expires_without_inventing_a_completed_sample",
+        rationale="An explicit covered calendar must let an entirely missing series report expiry without a fake fill.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_T10_FROZEN_NAV_REPORT",
+        component="Paper execution opt-in T10 calendar",
+        source_path="experiments/research_funnel/research_cycle.py",
+        test_script="tests/test_paper_t10_integration.py",
+        before='                    except paper_fund.CorporateActionUnresolved:\n                        if case["schema_version"] != DEADLINE_VERSION:',
+        after='                    except paper_fund.CorporateActionUnresolved:\n                        if True:',
+        expected_failure_marker="test_filled_corporate_freeze_delivers_blocked_cycle_without_nav",
+        rationale="The NAV refusal must remain intact while the v1.1 cycle delivers calendar-driven blocked receipts.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_T10_STOP_AMENDMENT_REFUSED",
+        component="Research funnel paper execution opt-in T10 calendar",
+        source_path="experiments/execution_tracker/model_paper_fund.py",
+        test_script="tests/test_paper_t10_integration.py",
+        before='            if "deadline_policy" in o:',
+        after='            if False:',
+        expected_failure_marker="test_bound_stop_refusal_preserves_next_and_deadline_settlement",
+        rationale="Unsupported stop amendments must refuse before poisoning the frozen execution binding.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_T10_EXPIRY_PUBLICATION_TRANSITION",
+        component="Paper execution opt-in T10 calendar",
+        source_path="experiments/execution_tracker/nightly_publish.py",
+        test_script="tests/test_paper_t10_integration.py",
+        before='    "pending":   {"pending", "filled", "closed", "cancelled", "expired"},',
+        after='    "pending":   {"pending", "filled", "closed", "cancelled"},',
+        expected_failure_marker="test_real_expiry_passes_full_publication_without_cash_or_fake_fill",
+        rationale="A real unfilled expiry must pass the complete publication verifier, not only receipt replay.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_T10_EXPIRY_KNOWN_STATE",
+        component="Paper execution opt-in T10 calendar",
+        source_path="experiments/execution_tracker/nightly_publish.py",
+        test_script="tests/test_paper_t10_integration.py",
+        before='    "expired":   {"expired"},',
+        after='    "expiry_removed": {"expiry_removed"},',
+        expected_failure_marker="test_unchanged_expired_order_is_known_terminal_next_publication",
+        rationale="Unchanged expired orders remain valid across later publication snapshots.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_T10_EXPIRY_TERMINAL",
+        component="Paper execution opt-in T10 calendar",
+        source_path="experiments/execution_tracker/nightly_publish.py",
+        test_script="tests/test_paper_t10_integration.py",
+        before='        if was == "expired" and json.dumps(b, sort_keys=True) != json.dumps(a, sort_keys=True):',
+        after='        if False:',
+        expected_failure_marker="test_persisted_expiry_evidence_is_immutable",
+        rationale="Expired records cannot acquire rewritten economic facts in a later publication.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_T10_EXPIRY_REQUIRES_RECEIPT",
+        component="Paper execution opt-in T10 calendar",
+        source_path="experiments/execution_tracker/nightly_publish.py",
+        test_script="tests/test_paper_t10_integration.py",
+        before='            if order.get("status") == "expired" and (old is None or old.get("status") != "expired"):',
+        after='            if False:',
+        expected_failure_marker="test_expiry_requires_a_new_receipt_even_on_publication_date",
+        rationale="An expiry cannot self-authorize via a terminal label with no new replayable receipt.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_T10_FUND_EXPIRY_COUNT",
+        component="Research funnel paper execution opt-in T10 calendar",
+        source_path="experiments/execution_tracker/model_paper_fund.py",
+        test_script="tests/test_paper_t10_integration.py",
+        before='        result["n_expired"] = sum(1 for o in orders if o["status"] == "expired")',
+        after='        result["n_expired"] = 0',
+        expected_failure_marker="test_expiry_counts_are_explicit_and_excluded_from_closed_samples",
+        rationale="Fund summaries must retain unfilled expiries without turning them into closed samples.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_T10_PORTFOLIO_EXPIRY_COUNT",
+        component="Research funnel paper execution opt-in T10 calendar",
+        source_path="experiments/execution_tracker/paper_portfolio.py",
+        test_script="tests/test_paper_t10_integration.py",
+        before='        result["n_expired"] = sum(1 for e in portfolio if e["status"] == "expired")',
+        after='        result["n_expired"] = 0',
+        expected_failure_marker="test_expiry_counts_are_explicit_and_excluded_from_closed_samples",
+        rationale="Portfolio summaries must expose the same non-claim expiry population.",
+    ),
+)
+
+MUTATIONS = MUTATIONS + (
+    MutationCase(
+        mutation_id="PAPER_T10_OPEN_PRICE_CAUSAL",
+        component="Paper execution opt-in T10 calendar",
+        source_path="experiments/execution_tracker/paper_deadline.py",
+        test_script="tests/test_paper_t10_execution.py",
+        before="        if policy[\"exit_price\"] == \"CLOSE\":",
+        after="        if True:",
+        expected_failure_marker="test_open_price_ignores_later_daily_extremes_and_close",
+        rationale="OPEN price arithmetic cannot use later daily-low information.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_T10_CLOSE_LOW_BOUND",
+        component="Paper execution opt-in T10 calendar",
+        source_path="experiments/execution_tracker/paper_deadline.py",
+        test_script="tests/test_paper_t10_execution.py",
+        before="        if policy[\"exit_price\"] == \"CLOSE\":",
+        after="        if False:",
+        expected_failure_marker="test_close_keeps_its_settled_low_bound",
+        rationale="CLOSE retains its existing settled-day price bound.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_CYCLE_T10_NAMED_DEGRADATION",
+        component="Research funnel T10 mandatory execution boundary",
+        source_path="experiments/research_funnel/research_cycle.py",
+        test_script="tests/test_paper_t10_integration.py",
+        before="    if case[\"schema_version\"] == DEADLINE_VERSION and order is not None:",
+        after="    if False:",
+        expected_failure_marker="test_data_blocked_cannot_hide_sample_eligibility_drift",
+        rationale="A data label cannot exempt the workflow-debug sample exclusion.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_T10_REALISM_EXACT_CHECKS",
+        component="Paper execution opt-in T10 calendar",
+        source_path="experiments/research_funnel/research_cycle.py",
+        test_script="tests/test_paper_t10_integration.py",
+        before="            isinstance(checks, dict) and set(checks) == set(expected_checks)",
+        after="            isinstance(checks, dict)",
+        expected_failure_marker="test_realism_checks_require_exact_boolean_contract",
+        rationale="Unknown mandatory checks cannot be silently ignored.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_T10_REALISM_BOOLEAN_CHECKS",
+        component="Paper execution opt-in T10 calendar",
+        source_path="experiments/research_funnel/research_cycle.py",
+        test_script="tests/test_paper_t10_integration.py",
+        before="            and all(checks.get(key) is value for key, value in expected_checks.items())",
+        after="            and all(checks.get(key) == value for key, value in expected_checks.items())",
+        expected_failure_marker="test_realism_checks_require_exact_boolean_contract",
+        rationale="An integer or coerced truth value is not an execution-check receipt.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_V1_5_PENDING_NOT_APPROVED",
+        component="Research Closed Loop V1.5 review boundary",
+        source_path="docs/research/contracts/research_closed_loop.v1.json",
+        test_script="tests/test_research_closed_loop_v1.py",
+        before="  \"status\": \"REVIEW_PENDING_OFFLINE_WORKFLOW_DEBUG\",",
+        after="  \"status\": \"FROZEN_OFFLINE_WORKFLOW_DEBUG\",",
+        expected_failure_marker="test_t10_revision_is_explicit_and_not_human_frozen",
+        rationale="An engineering candidate cannot self-declare human freeze.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_V1_5_NO_FAKE_FREEZE_TIME",
+        component="Research Closed Loop V1.5 review boundary",
+        source_path="docs/research/contracts/research_closed_loop.v1.json",
+        test_script="tests/test_research_closed_loop_v1.py",
+        before="  \"frozen_at\": null,",
+        after="  \"frozen_at\": \"2026-08-26T14:44:39+08:00\",",
+        expected_failure_marker="test_t10_revision_is_explicit_and_not_human_frozen",
+        rationale="Historical freeze time cannot be reused as approval of new bytes.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_V1_5_BIND_POLICY",
+        component="Research Closed Loop V1.5 deadline dependencies",
+        source_path="docs/research/contracts/research_closed_loop.v1.json",
+        test_script="tests/test_research_closed_loop_v1.py",
+        before="    {\"path\": \"docs/research/PAPER_T10_CALENDAR_V1.md\", \"sha256\": \"sha256:941336e99250b35b81fc4ecc792fa83dcff50b5ba6302608ae98fa0d6125f559\"},\n",
+        after="",
+        expected_failure_marker="test_t10_execution_dependencies_are_all_byte_bound",
+        rationale="The opted-in deadline assembly must bind this exact dependency.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_V1_5_BIND_DEADLINE",
+        component="Research Closed Loop V1.5 deadline dependencies",
+        source_path="docs/research/contracts/research_closed_loop.v1.json",
+        test_script="tests/test_research_closed_loop_v1.py",
+        before="    {\"path\": \"experiments/execution_tracker/paper_deadline.py\", \"sha256\": \"sha256:8c69e4314bd1d1eadfc6d2e48107635220f67633b93e368ac31ade5ce91993f3\"},\n",
+        after="",
+        expected_failure_marker="test_t10_execution_dependencies_are_all_byte_bound",
+        rationale="The opted-in deadline assembly must bind this exact dependency.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_V1_5_BIND_PORTFOLIO",
+        component="Research Closed Loop V1.5 deadline dependencies",
+        source_path="docs/research/contracts/research_closed_loop.v1.json",
+        test_script="tests/test_research_closed_loop_v1.py",
+        before="    {\"path\": \"experiments/execution_tracker/paper_portfolio.py\", \"sha256\": \"sha256:171819b92c720421f6cfc2f0eed6daf7bfbc1ec9d4917138a2c1f64ca9b1382e\"},\n",
+        after="",
+        expected_failure_marker="test_t10_execution_dependencies_are_all_byte_bound",
+        rationale="The opted-in deadline assembly must bind this exact dependency.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_V1_5_BIND_PUBLICATION",
+        component="Research Closed Loop V1.5 deadline dependencies",
+        source_path="docs/research/contracts/research_closed_loop.v1.json",
+        test_script="tests/test_research_closed_loop_v1.py",
+        before="    {\"path\": \"experiments/execution_tracker/nightly_publish.py\", \"sha256\": \"sha256:9a286f4cc8e49bccc646b9fab499cf4b6dd8122616239e09b25fa28b3ab29adf\"},\n",
+        after="",
+        expected_failure_marker="test_t10_execution_dependencies_are_all_byte_bound",
+        rationale="The opted-in deadline assembly must bind this exact dependency.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_REGISTRATION_PROSPECTIVE_INTENT_DATE",
+        component="Research funnel paper registration chronology",
+        source_path="experiments/research_funnel/paper_registration_bridge.py",
+        test_script="tests/test_paper_registration_bridge.py",
+        before="        if max(approval_date, intent_date) > registration_date:",
+        after="        if False:",
+        expected_failure_marker="test_new_intent_rejects_late_approval_without_writes",
+        rationale="The first intent cannot authorize fills earlier than real approval/application.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_REGISTRATION_INTENT_OPERATIONAL_TIMEZONE",
+        component="Paper registration operational day",
+        source_path="experiments/research_funnel/paper_registration_bridge.py",
+        test_script="tests/test_paper_registration_bridge.py",
+        before="        intent_date = _iso(payload[\"registered_at\"], \"intent registered_at\").astimezone(\n            event_ledger.OPERATIONAL_TIMEZONE\n        ).strftime(\"%Y%m%d\")",
+        after="        intent_date = _iso(preview[\"ts\"], \"intent outer timestamp\").strftime(\"%Y%m%d\")",
+        expected_failure_marker="test_new_intent_rejects_next_operational_day_apply_without_writes",
+        rationale="A UTC text date cannot conceal that the operating day has already advanced.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_REGISTRATION_EXECUTABLE_STOP_BINDING",
+        component="Research funnel paper stop integrity",
+        source_path="experiments/research_funnel/paper_registration_bridge.py",
+        test_script="tests/test_paper_registration_bridge.py",
+        before="        # governance-mutation: PAPER_REGISTRATION_EXECUTABLE_STOP_BINDING\n        if current_stop != expected_stop:",
+        after="        # governance-mutation: PAPER_REGISTRATION_EXECUTABLE_STOP_BINDING\n        if current_stop < expected_stop:",
+        expected_failure_marker="test_committed_execution_stop_must_match_approved_value",
+        rationale="Deadline terms forbid both loosening and unapproved tightening.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_REGISTRATION_LEGACY_STOP_EVIDENCE",
+        component="Research funnel paper stop integrity",
+        source_path="experiments/research_funnel/paper_registration_bridge.py",
+        test_script="tests/test_paper_registration_bridge.py",
+        before="    # governance-mutation: PAPER_REGISTRATION_LEGACY_STOP_EVIDENCE\n    if current_stop != expected_stop:",
+        after="    # governance-mutation: PAPER_REGISTRATION_LEGACY_STOP_EVIDENCE\n    if False:",
+        expected_failure_marker="test_price_only_stop_cannot_loosen_below_latest_logged_amendment",
+        rationale="A legacy stop must match its last scoped amendment, not merely its original floor.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_REGISTRATION_LEGACY_STOP_MONOTONIC",
+        component="Research funnel paper stop integrity",
+        source_path="experiments/research_funnel/paper_registration_bridge.py",
+        test_script="tests/test_paper_registration_bridge.py",
+        before="        # governance-mutation: PAPER_REGISTRATION_LEGACY_STOP_MONOTONIC\n        if next_stop <= expected_stop:",
+        after="        # governance-mutation: PAPER_REGISTRATION_LEGACY_STOP_MONOTONIC\n        if False:",
+        expected_failure_marker="test_price_only_stop_evidence_must_be_monotonic_and_order_scoped",
+        rationale="A mutable log cannot legitimize a nonmonotonic stop sequence.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_REGISTRATION_LEGACY_STOP_ORDER_BOUNDARY",
+        component="Paper registration legacy amendment scope",
+        source_path="experiments/research_funnel/paper_registration_bridge.py",
+        test_script="tests/test_paper_registration_bridge.py",
+        before="        if event.get(\"action\") in {\"REGISTER_ORDER\", \"PAPER_EXIT\"}:\n            break",
+        after="        if event.get(\"action\") in set():\n            break",
+        expected_failure_marker="test_price_only_stop_evidence_must_be_monotonic_and_order_scoped",
+        rationale="A later trade in the same ticker cannot supply the earlier order's amendment.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_CYCLE_SMC_SEAL_CHRONOLOGY",
+        component="Research funnel case evidence chronology",
+        source_path="experiments/research_funnel/research_cycle.py",
+        test_script="tests/test_research_cycle.py",
+        before="    if smc_after_seal:",
+        after="    if False:",
+        expected_failure_marker="test_smc_timestamp_cannot_follow_case_seal",
+        rationale="A same-day future SMC instant must not enter an already sealed case.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_CYCLE_SMC_SEAL_REQUIRES_INSTANT",
+        component="Research funnel case evidence chronology",
+        source_path="experiments/research_funnel/research_cycle.py",
+        test_script="tests/test_research_cycle.py",
+        before='    if registration["schema_version"] == method_contract.REGISTRATION_VERSION and date_only:',
+        after='    if False:',
+        expected_failure_marker="test_new_case_seal_refuses_date_only_smc_evidence",
+        rationale="A new case cannot be sealed with date-only SMC evidence that hides intraday lookahead.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_CYCLE_SMC_REGISTRATION_ENTRY",
+        component="Research funnel case evidence chronology",
+        source_path="experiments/research_funnel/research_cycle.py",
+        test_script="tests/test_paper_registration_bridge.py",
+        before='    if registration["schema_version"] == method_contract.REGISTRATION_VERSION and date_only:',
+        after='    if False:',
+        expected_failure_marker="test_rehashed_current_case_with_date_only_smc_cannot_build_plan",
+        rationale="The paper-registration consumer must enforce the same SMC instant bound as sealing.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_METHOD_TIMING_EXIT_BOUND",
+        component="Research funnel timing measurement window",
+        source_path="experiments/research_funnel/research_method.py",
+        test_script="tests/test_research_method.py",
+        before="    if exit_date is not None:\n        eligible = [row for row in eligible if str(row.get(\"date\")) <= str(exit_date)]",
+        after="    if False:\n        eligible = [row for row in eligible if str(row.get(\"date\")) <= str(exit_date)]",
+        expected_failure_marker="test_timing_excursions_exclude_post_exit_prices",
+        rationale="Later prices cannot rewrite holding-period excursions of a closed order.",
+    ),
+    MutationCase(
+        mutation_id="BATTERY_EMPTY_INCOME_BLOCKS_U4",
+        component="U3 evidence completeness",
+        source_path="experiments/execution_tracker/full_battery.py",
+        test_script="tests/test_full_battery_evidence.py",
+        before="        if inc.empty:\n            missing_sources.append(\"INCOME_EMPTY\")",
+        after="        if False:\n            missing_sources.append(\"INCOME_EMPTY\")",
+        expected_failure_marker="test_empty_income_cannot_reach_u4",
+        rationale="An empty income frame cannot become COMPLETE or U4-ready.",
+    ),
+    MutationCase(
+        mutation_id="BATTERY_EMPTY_INDICATOR_BLOCKS_U4",
+        component="U3 evidence completeness",
+        source_path="experiments/execution_tracker/full_battery.py",
+        test_script="tests/test_full_battery_evidence.py",
+        before="        if fi.empty:\n            missing_sources.append(\"FINA_INDICATOR_EMPTY\")",
+        after="        if False:\n            missing_sources.append(\"FINA_INDICATOR_EMPTY\")",
+        expected_failure_marker="test_empty_fina_indicator_cannot_reach_u4",
+        rationale="Empty financial indicators cannot pass the actual downstream U4 gate.",
+    ),
+    MutationCase(
+        mutation_id="BATTERY_EMPTY_VALUATION_BLOCKS_U4",
+        component="U3 evidence completeness",
+        source_path="experiments/execution_tracker/full_battery.py",
+        test_script="tests/test_full_battery_evidence.py",
+        before="        if db.empty:\n            raise ValueError(\"DAILY_BASIC_EMPTY\")",
+        after="        if False:\n            raise ValueError(\"DAILY_BASIC_EMPTY\")",
+        expected_failure_marker="test_empty_daily_basic_cannot_reach_u4",
+        rationale="An empty valuation response differs from a valid loss-making PE null.",
+    ),
+    MutationCase(
+        mutation_id="BATTERY_NEWS_TARGET_DATE_FILTER",
+        component="U3 announcement evidence date",
+        source_path="experiments/execution_tracker/full_battery.py",
+        test_script="tests/test_full_battery_evidence.py",
+        before="        if observed > cutoff:\n            future_count += 1\n            continue",
+        after="        if False:\n            future_count += 1\n            continue",
+        expected_failure_marker="test_future_announcements_excluded_from_counts_and_titles",
+        rationale="After-target announcement dates cannot enter as-of titles or counts.",
+    ),
+    MutationCase(
+        mutation_id="BATTERY_NEWS_FUTURE_ONLY_NOT_ZERO",
+        component="U3 announcement evidence coverage",
+        source_path="experiments/execution_tracker/full_battery.py",
+        test_script="tests/test_full_battery_evidence.py",
+        before="    blocked = bool(not page_complete or unknown_count or (titles and not eligible))",
+        after="    blocked = bool(not page_complete or unknown_count)",
+        expected_failure_marker="test_only_future_announcements_are_unknown_not_zero",
+        rationale="A feed with only excluded future rows cannot establish historical zero.",
+    ),
+    MutationCase(
+        mutation_id="BATTERY_NEWS_UNDATED_NOT_ZERO",
+        component="U3 announcement evidence coverage",
+        source_path="experiments/execution_tracker/full_battery.py",
+        test_script="tests/test_full_battery_evidence.py",
+        before="    blocked = bool(not page_complete or unknown_count or (titles and not eligible))",
+        after="    blocked = bool(not page_complete or (titles and not eligible))",
+        expected_failure_marker="test_mixed_unknown_dates_keep_known_titles_but_block_counts",
+        rationale="One known row cannot turn undated evidence into a complete count.",
+    ),
+    MutationCase(
+        mutation_id="BATTERY_ANNOUNCEMENT_PAGE_COVERAGE",
+        component="U3 announcement evidence coverage",
+        source_path="experiments/execution_tracker/full_battery.py",
+        test_script="tests/test_full_battery_evidence.py",
+        before=(
+            "                titles, today, page_complete=(not eastmoney_source or\n"
+            "                    (titles.complete if isinstance(titles, AnnouncementPage) else len(titles) < 30)),"
+        ),
+        after="                titles, today, page_complete=True,",
+        expected_failure_marker="test_full_eastmoney_page_cannot_claim_historical_counts_complete",
+        rationale="A full single page does not prove the as-of announcement window is complete.",
+    ),
+    MutationCase(
+        mutation_id="BATTERY_ANNOUNCEMENT_EXACT_FULL_PAGE",
+        component="U3 announcement evidence coverage",
+        source_path="experiments/execution_tracker/full_battery.py",
+        test_script="tests/test_full_battery_evidence.py",
+        before='        self.complete = total_hits == len(self)',
+        after='        self.complete = False',
+        expected_failure_marker="test_eastmoney_proven_full_page_is_not_marked_incomplete",
+        rationale="A server-confirmed exact full page must not be rejected as truncated.",
+    ),
+    MutationCase(
+        mutation_id="BATTERY_ANNOUNCEMENT_FALLBACK_COMPLETE",
+        component="U3 announcement evidence coverage",
+        source_path="experiments/execution_tracker/full_battery.py",
+        test_script="tests/test_full_battery_evidence.py",
+        before='for r in an.iterrows()',
+        after='for r in an.head(8).iterrows()',
+        expected_failure_marker="test_fallback_news_does_not_truncate_after_eight_rows",
+        rationale="The Tushare fallback cannot silently truncate a bounded query to eight announcements.",
+    ),
+    MutationCase(
+        mutation_id="BATTERY_ANNOUNCEMENT_RESPONSE_STATUS",
+        component="U3 announcement source response",
+        source_path="experiments/execution_tracker/full_battery.py",
+        test_script="tests/test_full_battery_evidence.py",
+        before='        if "code" in d and d["code"] not in (1, "1"):\n            return None',
+        after='        if "code" in d and d["code"] not in (1, "1"):\n            pass',
+        expected_failure_marker="test_eastmoney_ambiguous_empty_response_blocks_u4",
+        rationale="A failed business response cannot be reported as confirmed zero announcements.",
+    ),
+    MutationCase(
+        mutation_id="BATTERY_ANNOUNCEMENT_RESPONSE_SUCCESS",
+        component="U3 announcement source response",
+        source_path="experiments/execution_tracker/full_battery.py",
+        test_script="tests/test_full_battery_evidence.py",
+        before='        if not isinstance(d, dict) or d.get("success") is not True:',
+        after='        if not isinstance(d, dict) or False:',
+        expected_failure_marker="test_eastmoney_ambiguous_empty_response_blocks_u4",
+        rationale="An explicitly unsuccessful response cannot satisfy the U3 news dimension.",
+    ),
+    MutationCase(
+        mutation_id="BATTERY_ANNOUNCEMENT_TOTAL_HITS_PROOF",
+        component="U3 announcement source response",
+        source_path="experiments/execution_tracker/full_battery.py",
+        test_script="tests/test_full_battery_evidence.py",
+        before='        total_hits = data.get("total_hits")',
+        after='        total_hits = len(lst)',
+        expected_failure_marker="test_eastmoney_short_page_requires_matching_total_hits",
+        rationale="A short page requires source-provided total hits, not inferred coverage.",
+    ),
+    MutationCase(
+        mutation_id="BATTERY_ANNOUNCEMENT_RESPONSE_SHAPE",
+        component="U3 announcement source response",
+        source_path="experiments/execution_tracker/full_battery.py",
+        test_script="tests/test_full_battery_evidence.py",
+        before='        if not isinstance(data, dict) or not isinstance(data.get("list"), list):\n            return None',
+        after='        if not isinstance(data, dict) or not isinstance(data.get("list"), list):\n            return []',
+        expected_failure_marker="test_eastmoney_malformed_success_page_blocks_u4",
+        rationale="A missing announcement list is source failure, not a verified empty page.",
+    ),
+    MutationCase(
+        mutation_id="BATTERY_ANNOUNCEMENT_LATEST_ORDER",
+        component="U3 announcement evidence chronology",
+        source_path="experiments/execution_tracker/full_battery.py",
+        test_script="tests/test_full_battery_evidence.py",
+        before='    eligible.sort(key=lambda item: item[0], reverse=True)',
+        after='    eligible.sort(key=lambda item: item[0])',
+        expected_failure_marker="test_latest_announcements_are_ordered_by_date",
+        rationale="The three latest titles must not depend on provider row order.",
+    ),
+    MutationCase(
+        mutation_id="MACRO_MONTHLY_LOOKBACK_CONTIGUITY",
+        component="Macro transformation semantics",
+        source_path="experiments/macro_os/m1a.py",
+        test_script="tests/test_macro_m1a_offline.py",
+        before="    if metric in _MONTHLY_METRICS:",
+        after="    if False:",
+        expected_failure_marker="test_monthly_lookback_rejects_missing_months",
+        rationale="A missing month must block rather than lengthen a monthly transformation window.",
+    ),
+    MutationCase(
+        mutation_id="MACRO_TRANSFORMED_OUTPUT_UNIT",
+        component="Macro transformation semantics",
+        source_path="experiments/macro_os/m1a.py",
+        test_script="tests/test_macro_m1a_offline.py",
+        before="        \"unit\": _transformed_unit(rule),",
+        after="        \"unit\": rule[\"unit\"],",
+        expected_failure_marker="test_transformed_factor_units_describe_values",
+        rationale="Transformed percentages and percentage-point deltas must not retain raw input units.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_REGISTRATION_RETRY_CASE_BINDING",
+        component="Research funnel paper registration",
+        source_path="experiments/research_funnel/paper_registration_bridge.py",
+        test_script="tests/test_paper_registration_bridge.py",
+        before="        _validate_frozen_case_binding(plan, closure_bundle, case)\n        source_context = {",
+        after="        source_context = {",
+        expected_failure_marker="test_pending_and_committed_retry_revalidate_frozen_case",
+        rationale="Pending and committed retries must revalidate the current frozen case before convergence.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_DAILY_INTENT_AFTER_VALIDATION",
+        component="Research funnel paper daily projection recovery",
+        source_path="experiments/execution_tracker/model_paper_fund.py",
+        test_script="tests/test_paper_settlement_publication.py",
+        before="    _validate_daily_intent_after(journal)\n    before_content = journal.get(\"before_content\")",
+        after="    before_content = journal.get(\"before_content\")",
+        expected_failure_marker="test_nightly_refuses_self_hashed_invalid_daily_projection_before_any_write",
+        rationale="A self-hashed intent cannot replay malformed projections into the live paper fund.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_DAILY_INTENT_TRANSITION_REPLAY",
+        component="Research funnel paper daily projection recovery",
+        source_path="experiments/execution_tracker/model_paper_fund.py",
+        test_script="tests/test_paper_settlement_publication.py",
+        before=(
+            '        problems = nightly_publish.validate_daily_projection_transition(\n'
+            '            before_content, journal["after"], journal["target_trade_date"], journal["run_id"],\n'
+            '        )'
+        ),
+        after='        problems = []',
+        expected_failure_marker="test_daily_intent_rejects_unexplained_numeric_cash_loss_before_writes",
+        rationale="A self-hashed numeric cash delta needs order and event evidence before replay writes.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_DAILY_CANCELLED_STATUS",
+        component="Research funnel paper daily projection recovery",
+        source_path="experiments/execution_tracker/model_paper_fund.py",
+        test_script="tests/test_paper_settlement_publication.py",
+        before='{"pending", "filled", "closed", "expired", "cancelled"} for order in orders):',
+        after='{"pending", "filled", "closed", "expired"} for order in orders):',
+        expected_failure_marker="test_daily_intent_recovery_accepts_unchanged_cancelled_order",
+        rationale="Existing cancelled orders are legitimate immutable history, not a recovery blocker.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_DAILY_LEGACY_BEFORE_HASH",
+        component="Research funnel paper daily projection recovery",
+        source_path="experiments/execution_tracker/model_paper_fund.py",
+        test_script="tests/test_paper_settlement_publication.py",
+        before=('                or any(_projection_digest(before_content[name]) != journal["before"][name]\n'
+                '                       for name in _DAILY_PROJECTIONS)):\n'
+                '            raise ValueError("legacy before snapshot does not match the intent")'),
+        after=('                or False):\n'
+               '            raise ValueError("legacy before snapshot does not match the intent")'),
+        expected_failure_marker="test_valid_legacy_mixed_intent_needs_verified_snapshot_to_recover",
+        rationale="A mismatched before snapshot must be refused before replacing a v1 journal.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_DAILY_LEGACY_SNAPSHOT_TRANSITION",
+        component="Research funnel paper daily projection recovery",
+        source_path="experiments/execution_tracker/model_paper_fund.py",
+        test_script="tests/test_paper_settlement_publication.py",
+        before=(
+            '        problems = nightly_publish.validate_daily_projection_transition(\n'
+            '            before_content, journal["after"], expected_target, expected_run,\n'
+            '        )'
+        ),
+        after='        problems = []',
+        expected_failure_marker="test_legacy_migration_rejects_rehashed_unexplained_cash_loss",
+        rationale="The legacy transition must be checked before upgrading the durable journal.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_CYCLE_LEGACY_NO_NEW_BUNDLE",
+        component="Research funnel full paper cycle",
+        source_path="experiments/research_funnel/research_cycle.py",
+        test_script="tests/test_research_cycle.py",
+        before='    if isinstance(registration, dict) and registration.get("schema_version") == method_contract.SCHEMA_VERSION:\n        raise CycleError("legacy read-only cycle cannot be newly written")',
+        after='    if False:\n        raise CycleError("legacy read-only cycle cannot be newly written")',
+        expected_failure_marker="test_newly_assembled_legacy_cycle_cannot_gain_review_authority",
+        rationale="Legacy cases remain verifiable but cannot create a new persisted cycle bundle.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_CYCLE_LEGACY_FINAL_READONLY_VERIFY",
+        component="Research funnel full paper cycle",
+        source_path="experiments/research_funnel/research_cycle.py",
+        test_script="tests/test_research_cycle.py",
+        before="    expected = _review_projection(cycle_bundle, receipt)",
+        after="    expected = finalize_review(cycle_bundle, closure_bundle, receipt)",
+        expected_failure_marker="test_historical_resolved_v1_bundle_verifies_without_new_scoring_authority",
+        rationale="Existing reviewed legacy bundles must verify without granting new review authority.",
+    ),
+    MutationCase(
+        mutation_id="BATTERY_EASTMONEY_PAGE_BOUNDS",
+        component="U3 announcement source response",
+        source_path="experiments/execution_tracker/full_battery.py",
+        test_script="tests/test_full_battery_evidence.py",
+        before='type(total_hits) is not int or len(lst) > page_size or total_hits < len(lst)',
+        after='type(total_hits) is not int or total_hits < len(lst)',
+        expected_failure_marker="test_eastmoney_overlength_page_is_not_trusted",
+        rationale="A response longer than the requested page cannot prove announcement coverage.",
+    ),
+)
+
 @dataclass(frozen=True)
 class CommandResult:
     returncode: int
@@ -9658,6 +12194,7 @@ def validate_manifest(root: Path, cases: Sequence[MutationCase]) -> None:
     validate_k1_marker_coverage(root, cases)
     validate_a035_marker_coverage(root, cases)
     validate_r043_marker_coverage(root, cases)
+    validate_execution_clock_marker_coverage(root, cases)
     validate_funnel_marker_coverage(root, cases)
     validate_funnel_nightly_marker_coverage(root, cases)
     validate_nightly_acceptance_marker_coverage(root, cases)
@@ -9783,6 +12320,54 @@ def validate_r043_marker_coverage(
     if missing_mutations or missing_markers:
         raise MutationGateError(
             "R-043 governance marker drift: "
+            f"markers_without_mutations={missing_mutations}; "
+            f"mutations_without_markers={missing_markers}"
+        )
+
+
+def validate_execution_clock_marker_coverage(
+    root: Path,
+    cases: Sequence[MutationCase],
+    marker_paths: Sequence[str] = EXECUTION_CLOCK_GOVERNANCE_PATHS,
+    prefix: str = EXECUTION_CLOCK_MUTATION_PREFIX,
+) -> None:
+    """Every Asia/Shanghai clock guard carries a marker and a pinned mutation."""
+    declared = {
+        case.mutation_id for case in cases if case.mutation_id.startswith(prefix)
+    }
+    existing_paths = [
+        relative for relative in marker_paths if _resolved_under(root, relative).is_file()
+    ]
+    if not declared and not existing_paths:
+        return
+
+    marked: dict[str, str] = {}
+    for relative in marker_paths:
+        source = _resolved_under(root, relative)
+        if not source.is_file():
+            raise MutationGateError(
+                f"execution clock governance marker source is missing: {relative}"
+            )
+        for line_number, line in enumerate(
+            source.read_text(encoding="utf-8").splitlines(), start=1
+        ):
+            match = GOVERNANCE_MARKER_RE.fullmatch(line)
+            if not match:
+                continue
+            mutation_id = match.group("mutation_id")
+            if not mutation_id.startswith(prefix):
+                continue
+            if mutation_id in marked:
+                raise MutationGateError(
+                    f"duplicate execution clock governance marker: {mutation_id} at "
+                    f"{marked[mutation_id]} and {relative}:{line_number}"
+                )
+            marked[mutation_id] = f"{relative}:{line_number}"
+    missing_mutations = sorted(set(marked) - declared)
+    missing_markers = sorted(declared - set(marked))
+    if missing_mutations or missing_markers:
+        raise MutationGateError(
+            "execution clock governance marker drift: "
             f"markers_without_mutations={missing_mutations}; "
             f"mutations_without_markers={missing_markers}"
         )
@@ -10059,8 +12644,173 @@ def _target_test(case: MutationCase) -> str:
     return case.test_function or case.expected_failure_marker
 
 
-def run_gate(root: Path = REPO_ROOT, cases: Sequence[MutationCase] = MUTATIONS) -> None:
+SHARD_SPEC_RE = re.compile(r"^(?P<index>[1-9][0-9]*)/(?P<count>[1-9][0-9]*)$")
+SHARD_RECEIPT_SCHEMA = "ar-governance-mutation-shard-receipt.v1"
+
+
+@dataclass(frozen=True)
+class Shard:
+    index: int
+    count: int
+
+
+@dataclass(frozen=True)
+class ShardReceipt:
+    schema: str
+    shard_index: int
+    shard_count: int
+    manifest_sha256: str
+    manifest_size: int
+    killed: tuple[str, ...]
+
+
+def parse_shard(value: str) -> Shard:
+    match = SHARD_SPEC_RE.fullmatch(value)
+    if not match:
+        raise argparse.ArgumentTypeError(f"shard must look like I/N with 1 <= I <= N: {value!r}")
+    shard = Shard(index=int(match.group("index")), count=int(match.group("count")))
+    if shard.index > shard.count:
+        raise argparse.ArgumentTypeError(f"shard index exceeds shard count: {value!r}")
+    return shard
+
+
+def select_shard(cases: Sequence[MutationCase], shard: Shard | None) -> tuple[MutationCase, ...]:
+    """Deal the ordered manifest round-robin: position p belongs to shard p % N + 1.
+
+    Interleaving keeps each shard a cross-section of every component, so a slow
+    test family is spread over all shards instead of landing in one of them.
+    """
+    if shard is None:
+        return tuple(cases)
+    return tuple(
+        case
+        for position, case in enumerate(cases)
+        if position % shard.count == shard.index - 1
+    )
+
+
+def manifest_digest(cases: Sequence[MutationCase]) -> str:
+    # Every field of every case, in order: a receipt from any other manifest
+    # revision (a changed anchor, target, or ordering) cannot be merged.
+    payload = json.dumps(
+        [asdict(case) for case in cases],
+        ensure_ascii=False,
+        separators=(",", ":"),
+        sort_keys=True,
+    )
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def write_shard_receipt(
+    path: Path,
+    cases: Sequence[MutationCase],
+    shard: Shard,
+    killed: Sequence[str],
+) -> None:
+    payload = {
+        "schema": SHARD_RECEIPT_SCHEMA,
+        "shard_index": shard.index,
+        "shard_count": shard.count,
+        "manifest_sha256": manifest_digest(cases),
+        "manifest_size": len(cases),
+        "killed": list(killed),
+    }
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+
+
+def _parse_shard_receipt(path: Path) -> ShardReceipt:
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise MutationGateError(f"shard receipt is unreadable: {path.name}") from exc
+    required = {
+        "schema",
+        "shard_index",
+        "shard_count",
+        "manifest_sha256",
+        "manifest_size",
+        "killed",
+    }
+    if not isinstance(payload, dict) or set(payload) != required:
+        raise MutationGateError(f"shard receipt shape is invalid: {path.name}")
+    if payload["schema"] != SHARD_RECEIPT_SCHEMA:
+        raise MutationGateError(f"shard receipt schema is invalid: {path.name}")
+    for field in ("shard_index", "shard_count", "manifest_size"):
+        value = payload[field]
+        if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+            raise MutationGateError(f"shard receipt count is invalid: {path.name}: {field}")
+    if not 1 <= payload["shard_index"] <= payload["shard_count"]:
+        raise MutationGateError(f"shard receipt index is out of range: {path.name}")
+    if not isinstance(payload["manifest_sha256"], str):
+        raise MutationGateError(f"shard receipt manifest digest is invalid: {path.name}")
+    killed = payload["killed"]
+    if not isinstance(killed, list) or not all(isinstance(item, str) for item in killed):
+        raise MutationGateError(f"shard receipt kill list is invalid: {path.name}")
+    return ShardReceipt(**{**payload, "killed": tuple(killed)})
+
+
+def merge_shard_receipts(
+    receipt_dir: Path,
+    cases: Sequence[MutationCase] = MUTATIONS,
+) -> int:
+    """Recompute every shard's assignment from this checkout and demand exact kills."""
+    paths = sorted(receipt_dir.rglob("*.json")) if receipt_dir.is_dir() else []
+    if not paths:
+        raise MutationGateError(f"no shard receipts found under {receipt_dir}")
+    receipts = [_parse_shard_receipt(path) for path in paths]
+    counts = sorted({receipt.shard_count for receipt in receipts})
+    if len(counts) != 1:
+        raise MutationGateError(f"shard receipts disagree on the shard count: {counts}")
+    count = counts[0]
+    indices = [receipt.shard_index for receipt in receipts]
+    missing = sorted(set(range(1, count + 1)) - set(indices))
+    duplicated = sorted({index for index in indices if indices.count(index) > 1})
+    if missing or duplicated:
+        raise MutationGateError(
+            f"shard receipts are incomplete for {count} shards: "
+            f"missing={missing}; duplicated={duplicated}"
+        )
+
+    digest = manifest_digest(cases)
+    killed: list[str] = []
+    for receipt in sorted(receipts, key=lambda item: item.shard_index):
+        label = f"shard {receipt.shard_index}/{count}"
+        if receipt.manifest_sha256 != digest or receipt.manifest_size != len(cases):
+            raise MutationGateError(f"{label} ran a different mutation manifest")
+        expected = tuple(
+            case.mutation_id
+            for case in select_shard(cases, Shard(receipt.shard_index, count))
+        )
+        if receipt.killed != expected:
+            raise MutationGateError(
+                f"{label} kill list does not match its assigned mutations: "
+                f"not_killed={sorted(set(expected) - set(receipt.killed))}; "
+                f"unassigned={sorted(set(receipt.killed) - set(expected))}"
+            )
+        killed.extend(receipt.killed)
+        print(f"SHARD OK       {label}: {len(receipt.killed)} killed")
+
+    declared = [case.mutation_id for case in cases]
+    if sorted(killed) != sorted(declared):
+        raise MutationGateError("merged kill list does not equal the declared manifest")
+    print(
+        f"governance mutation gate: {len(killed)}/{len(declared)} mutations killed "
+        f"across {count} shards"
+    )
+    return len(killed)
+
+
+def run_gate(
+    root: Path = REPO_ROOT,
+    cases: Sequence[MutationCase] = MUTATIONS,
+    shard: Shard | None = None,
+) -> tuple[str, ...]:
+    # The anchor, target and marker-coverage checks always see the full
+    # manifest, so every shard fails on drift anywhere in it.
     validate_manifest(root, cases)
+    selected = select_shard(cases, shard)
+    killed: list[str] = []
     with tempfile.TemporaryDirectory(prefix="ar-governance-mutations-") as tmp:
         tmp_root = Path(tmp)
         sandbox = tmp_root / "repo"
@@ -10068,7 +12818,7 @@ def run_gate(root: Path = REPO_ROOT, cases: Sequence[MutationCase] = MUTATIONS) 
         shutil.copytree(root, sandbox, ignore=_copy_ignore)
         _write_network_guard(guard)
 
-        targets = tuple(dict.fromkeys((case.test_script, _target_test(case)) for case in cases))
+        targets = tuple(dict.fromkeys((case.test_script, _target_test(case)) for case in selected))
         for script, test_function in targets:
             result = run_test_script(sandbox, guard, script, test_function)
             try:
@@ -10080,7 +12830,7 @@ def run_gate(root: Path = REPO_ROOT, cases: Sequence[MutationCase] = MUTATIONS) 
                 ) from exc
             print(f"BASELINE PASS  {script}::{test_function}")
 
-        for case in cases:
+        for case in selected:
             target = _resolved_under(sandbox, case.source_path)
             original = target.read_text(encoding="utf-8")
             mutated = replace_exact(original, case.before, case.after, case.mutation_id)
@@ -10100,15 +12850,45 @@ def run_gate(root: Path = REPO_ROOT, cases: Sequence[MutationCase] = MUTATIONS) 
                 raise
             finally:
                 target.write_text(original, encoding="utf-8")
+            killed.append(case.mutation_id)
             print(f"KILLED         {case.mutation_id} [{case.component}]")
 
-    print(f"governance mutation gate: {len(cases)}/{len(cases)} mutations killed")
+    if shard is None:
+        print(f"governance mutation gate: {len(cases)}/{len(cases)} mutations killed")
+    else:
+        print(
+            f"governance mutation gate: shard {shard.index}/{shard.count}: "
+            f"{len(killed)}/{len(selected)} assigned mutations killed "
+            f"({len(cases)} declared; merge every shard receipt for the total)"
+        )
+    return tuple(killed)
 
 
 def parse_args(argv: Iterable[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--list", action="store_true", help="list declared mutations")
-    return parser.parse_args(argv)
+    parser.add_argument(
+        "--shard",
+        type=parse_shard,
+        metavar="I/N",
+        help="run only the mutations dealt round-robin to shard I of N",
+    )
+    parser.add_argument(
+        "--receipt",
+        type=Path,
+        metavar="PATH",
+        help="after every assigned mutation is killed, write the shard receipt here",
+    )
+    parser.add_argument(
+        "--merge-receipts",
+        type=Path,
+        metavar="DIR",
+        help="verify shard receipts against this checkout's manifest; runs no mutations",
+    )
+    args = parser.parse_args(argv)
+    if args.merge_receipts is not None and (args.shard or args.receipt or args.list):
+        parser.error("--merge-receipts cannot be combined with --list, --shard or --receipt")
+    return args
 
 
 def main(argv: Iterable[str] | None = None) -> int:
@@ -10118,7 +12898,12 @@ def main(argv: Iterable[str] | None = None) -> int:
             print(f"{case.mutation_id}\t{case.component}\t{case.source_path}")
         return 0
     try:
-        run_gate()
+        if args.merge_receipts is not None:
+            merge_shard_receipts(args.merge_receipts, MUTATIONS)
+            return 0
+        killed = run_gate(REPO_ROOT, MUTATIONS, shard=args.shard)
+        if args.receipt is not None:
+            write_shard_receipt(args.receipt, MUTATIONS, args.shard or Shard(1, 1), killed)
     except MutationGateError as exc:
         print(f"governance mutation gate: FAIL: {exc}", file=sys.stderr)
         return 1

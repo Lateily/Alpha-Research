@@ -146,6 +146,28 @@ def build_model_portfolio_state():
     orders, e3, m3 = _load("model_fund/orders.json")
     smeta = {"fund.json": m1, "nav_history.json": m2, "orders.json": m3}
     blocked = e1 or e2 or e3
+    nav_unavailable = bool(
+        not blocked and isinstance(nav, list) and nav
+        and isinstance(nav[-1], dict) and nav[-1].get("nav") is None
+    )
+    historical_nav_gap = bool(
+        not blocked and isinstance(nav, list)
+        and any(isinstance(row, dict) and row.get("nav") is None for row in nav[:-1])
+    )
+    if nav_unavailable:
+        row = nav[-1]
+        open_orders = [o for o in orders if o.get("status") == "filled"]
+        filled = {o.get("ticker") for o in open_orders}
+        missing = row.get("missing_tickers")
+        if (row.get("status") != "DATA_BLOCKED"
+                or row.get("reason") != "MISSING_TARGET_CLOSE"
+                or not isinstance(missing, list) or not missing
+                or missing != sorted(set(missing)) or not set(missing) <= filled
+                or row.get("cash") != fund.get("cash")
+                or row.get("n_positions") != len(open_orders)
+                or row.get("daily_return") is not None
+                or row.get("cum_return") is not None):
+            blocked = "invalid blocked NAV observation"
     data = None
     if not blocked:
         rows = orders if isinstance(orders, list) else orders.get("orders", [])
@@ -162,9 +184,24 @@ def build_model_portfolio_state():
                 "win_rate_note": (f"closed n={len(closed)} < 30,胜率语言免谈"
                                   if len(closed) < 30 else
                                   f"closed n={len(closed)} ≥ 30,可按判分协议讨论胜率(仍需独立性审查)")}
-    return _contract("model_portfolio_state", data,
-                     ["model_fund/fund.json", "model_fund/nav_history.json",
-                      "model_fund/orders.json"], blocked, smeta)
+    result = _contract("model_portfolio_state", data,
+                       ["model_fund/fund.json", "model_fund/nav_history.json",
+                        "model_fund/orders.json"], blocked, smeta)
+    if nav_unavailable and not blocked:
+        # Execution was committed; only the market value is unavailable.
+        result["data_quality"] = "BLOCKED"
+        result["blocked_why"] = "MISSING_TARGET_CLOSE"
+        result["degraded_sources"].append({
+            "source": "model_fund/nav_history.json", "internal_status": "DATA_BLOCKED",
+            "missing_tickers": nav[-1]["missing_tickers"],
+        })
+    elif historical_nav_gap and not blocked:
+        result["data_quality"] = "PARTIAL"
+        result["degraded_sources"].append({
+            "source": "model_fund/nav_history.json", "internal_status": "PARTIAL_OK",
+            "why": "HISTORICAL_NAV_GAP",
+        })
+    return result
 
 
 def _make_card(o, drows):

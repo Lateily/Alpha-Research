@@ -192,6 +192,107 @@ class MacroM1ATests(unittest.TestCase):
         self.assertEqual(4.1, rows[0]["value_real"])
         self.assertEqual("2026-08-07T10:00:00Z", rows[0]["vintage_at"])
 
+    def _factor_fixture(
+        self, factor_id: str, periods: list[str], values: list[float],
+        *, as_of: datetime = NOW,
+    ) -> dict:
+        rule = next(
+            row for rows in self.rules["regions"].values() for row in rows
+            if row["factor_id"] == factor_id
+        )
+        store = MacroHistoryStore(
+            Path(tempfile.mkdtemp(dir=self.tmp.name)) / "factor.sqlite3"
+        )
+        store.initialize()
+        fetched_at = m1a._utc(as_of - timedelta(hours=1))
+        observations = [
+            self._obs(
+                rule["series_id"], rule["metric_key"], value, rule["unit"],
+                datetime.fromisoformat(period).replace(tzinfo=timezone.utc),
+                fetched_at,
+            )
+            for period, value in zip(periods, values)
+        ]
+        self._seed(
+            rule["source_id"], factor_id, observations,
+            fetched_at=fetched_at, store=store,
+        )
+        return m1a.build_factor(
+            store, rule, as_of=as_of, identities=m1a._current_source_identities()
+        )
+
+    def test_monthly_lookback_rejects_missing_months(self) -> None:
+        cases = [
+            ("US_CPI_3M", ["2026-07-01", "2026-06-01", "2026-04-01", "2026-03-01"]),
+            ("US_UNEMPLOYMENT", ["2026-07-01", "2026-06-01", "2026-04-01", "2026-03-01"]),
+            ("US_NFP", ["2026-07-01", "2026-05-01"]),
+            ("US_RETAIL", ["2026-07-01", "2026-05-01"]),
+            ("CN_LPR_1Y_CHANGE", ["2026-07-01", "2026-05-01"]),
+            ("CN_LPR_5Y_CHANGE", ["2026-07-01", "2026-05-01"]),
+        ]
+        for factor_id, periods in cases:
+            with self.subTest(factor_id=factor_id):
+                factor = self._factor_fixture(
+                    factor_id, periods, [103.0, 102.0, 101.0, 100.0][:len(periods)]
+                )
+                self.assertEqual("DATA_BLOCKED", factor["data_status"])
+                self.assertIsNone(factor["value"])
+                self.assertIsNone(factor["signal"])
+                self.assertIn("TRANSFORM_BLOCKED:", factor["reason"])
+
+    def test_monthly_lookback_preserves_contiguous_results_across_year_end(self) -> None:
+        as_of = datetime(2026, 2, 8, 12, tzinfo=timezone.utc)
+        periods = ["2026-01-01", "2025-12-01", "2025-11-01", "2025-10-01"]
+        cases = [
+            ("US_CPI_3M", periods, [103.0, 102.0, 101.0, 100.0], 12.550881),
+            ("US_UNEMPLOYMENT", periods, [4.4, 4.3, 4.2, 4.1], 0.3),
+            ("US_NFP", periods[:2], [160_150.0, 160_000.0], 150.0),
+            ("US_RETAIL", periods[:2], [103.0, 100.0], 3.0),
+            ("CN_LPR_1Y_CHANGE", periods[:2], [3.5, 3.6], -0.1),
+        ]
+        for factor_id, dates, values, expected in cases:
+            with self.subTest(factor_id=factor_id):
+                factor = self._factor_fixture(factor_id, dates, values, as_of=as_of)
+                self.assertEqual("CURRENT", factor["data_status"])
+                self.assertAlmostEqual(expected, factor["value"], places=6)
+
+    def test_daily_lookback_keeps_observation_count_across_calendar_gaps(self) -> None:
+        # Deliberate non-daily spacing: the rule counts 20 observations, not days.
+        periods = [(NOW - timedelta(days=2 * index)).date().isoformat() for index in range(21)]
+        factor = self._factor_fixture(
+            "US_2Y_CHANGE", periods, [1.2] + [1.1] * 19 + [1.0]
+        )
+        self.assertEqual("CURRENT", factor["data_status"])
+        self.assertAlmostEqual(0.2, factor["value"])
+
+    def test_transformed_factor_units_describe_values(self) -> None:
+        monthly = ["2026-07-01", "2026-06-01", "2026-05-01", "2026-04-01"]
+        daily = [(NOW - timedelta(days=index)).date().isoformat() for index in range(21)]
+        cases = [
+            ("US_CPI_3M", monthly, [103.0, 102.0, 101.0, 100.0], "pct_annualized", 12.550881),
+            ("US_PPI_3M", monthly, [103.0, 102.0, 101.0, 100.0], "pct_annualized", 12.550881),
+            ("US_CORE_PCE_3M", monthly, [103.0, 102.0, 101.0, 100.0], "pct_annualized", 12.550881),
+            ("US_WAGES_3M", monthly, [103.0, 102.0, 101.0, 100.0], "pct_annualized", 12.550881),
+            ("US_RETAIL", monthly[:2], [103.0, 100.0], "pct", 3.0),
+            ("US_UNEMPLOYMENT", monthly, [4.4, 4.3, 4.2, 4.1], "pct_points", 0.3),
+            ("CN_LPR_1Y_CHANGE", monthly[:2], [3.5, 3.6], "pct_points", -0.1),
+            ("CN_LPR_5Y_CHANGE", monthly[:2], [3.5, 3.6], "pct_points", -0.1),
+            ("US_2Y_CHANGE", daily, [1.2] + [1.1] * 19 + [1.0], "pct_points", 0.2),
+            ("US_10Y_CHANGE", daily, [1.2] + [1.1] * 19 + [1.0], "pct_points", 0.2),
+            ("US_REAL_10Y_CHANGE", daily, [1.2] + [1.1] * 19 + [1.0], "pct_points", 0.2),
+            ("IG_OAS_CHANGE", daily, [1.2] + [1.1] * 19 + [1.0], "pct_points", 0.2),
+            ("US_NFP", monthly[:2], [160_150.0, 160_000.0], "thousands", 150.0),
+            ("VIX_LEVEL", daily[:1], [17.0], "index_points", 17.0),
+            ("US_GDP", ["2026-07-01"], [3.0], "pct_qoq_saar", 3.0),
+            ("CN_CPI", monthly[:1], [1.2], "pct_yoy", 1.2),
+        ]
+        for factor_id, periods, values, unit, expected in cases:
+            with self.subTest(factor_id=factor_id):
+                factor = self._factor_fixture(factor_id, periods, values)
+                self.assertEqual("CURRENT", factor["data_status"])
+                self.assertAlmostEqual(expected, factor["value"], places=6)
+                self.assertEqual(unit, factor["unit"])
+
     def test_regions_are_not_averaged_or_silently_filled(self) -> None:
         def factor(fid: str, axis: str, signal: str) -> dict:
             return {

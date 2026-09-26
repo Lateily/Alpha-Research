@@ -39,10 +39,15 @@ on:
   # 而本工作流此前只有 pull_request 触发器,直推完全不受任何检查。
   push:
     branches: [main]
+# A newer push to the same PR supersedes its older run. Pushes to main are never
+# grouped: each one carries its own append-only ledger base (github.event.before).
+concurrency:
+  group: python-ci-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || format('run-{0}', github.run_id) }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
   offline-tests:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     env:
       AR_OFFLINE: "1"
     steps:
@@ -53,6 +58,16 @@ jobs:
         with:
           python-version: "3.11"
       - run: pip install pandas jsonschema==4.25.1
+      - name: Independent research workflow trials (offline)
+        run: |
+          python3 tests/test_research_workflow_trial.py
+          python3 scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/independent_workflow_trial.task.json
+      - name: Independent workflow follow-up snapshots (offline)
+        run: |
+          python3 tests/test_research_workflow_followup.py
+          python3 scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/workflow_followup.task.json
+      - name: Three-subject source capture (synthetic transport, offline)
+        run: python3 tests/test_research_workflow_sources.py
       - name: Full feature health JSON Schema (producer receipts, offline)
         run: |
           python3 tests/test_feature_health_schema.py
@@ -96,6 +111,8 @@ jobs:
       # Retry only transport failures; HTTP/API/schema failures remain fail-closed.
       - name: Official sample transport retry regression (offline)
         run: python3 tests/test_fund_source_transport.py
+      - name: U0 security registry transport retry
+        run: python3 tests/test_security_registry_transport.py
       - name: Nightly staged dependencies and HTTPS entry points (offline)
         run: python3 tests/test_nightly_runtime_dependencies.py
       - name: Paper settlement publication replay
@@ -203,6 +220,8 @@ jobs:
       # launchctl 计数/退出码、精确 run 日志段、持久 bundle 与报警旗,全程只读。
       - name: Scheduled nightly production acceptance regression (offline)
         run: python3 tests/test_nightly_acceptance_offline.py
+      - name: Scheduled nightly dual acceptance regression (offline)
+        run: python3 tests/test_nightly_dual_acceptance.py
       # U1-U5 离线闭环:冻结随机对照、同日 U3、packet-bound U4 人工复审,
       # 且 U5 在 factpack/wrong-if/因果簇完成前必须保持 DATA_BLOCKED。
       - name: Offline research closure experiment
@@ -217,6 +236,8 @@ jobs:
       # U4 之后的完整离线链:研究核心、红队、双票、唯一 paper 成交引擎、
       # 产业估值、人工 SMC 注册、多账本事实评分、唯一 paper 成交引擎、
       # 结算复盘与带证据的人类确认/争议;不触碰生产账本。
+      - name: Candidate battery evidence completeness and cutoff
+        run: python3 tests/test_full_battery_evidence.py
       - name: Offline U4-to-paper research cycle
         run: |
           python3 tests/test_paper_execution_realism.py
@@ -231,6 +252,10 @@ jobs:
         run: |
           python3 tests/test_paper_registration_bridge.py
           python3 scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/paper_registration_bridge_v1.task.json
+      - name: Opt-in exchange-calendar T+10 deadline (offline)
+        run: |
+          python3 tests/test_paper_t10_execution.py
+          python3 tests/test_paper_t10_integration.py
       # Model Paper Fund go-live runbook: tomorrow's paper-only operating guide
       # must keep the Junyan-only authority boundary, registration bridge, and
       # T+ observation schedule visible.
@@ -345,14 +370,18 @@ jobs:
       # ── Macro OS M0-B3:官方 URL 发现 + 自适应调度 + 预期登记 WAL ──
       - name: Macro OS M0-B3 discovery and scheduler regression (offline)
         run: python3 tests/test_macro_m0b3_offline.py
+      # 2026-09 伦敦时钟事故:盘中执行层一律 Asia/Shanghai,时段外 fail-closed,
+      # 判分只收可证明盘中读取的 nowcast(注入伦敦/北京两种时钟)。
+      - name: Execution tracker Asia/Shanghai clock (offline)
+        run: python3 tests/test_execution_clock.py
       # Governance gates are not delivered until a precise no-op mutation makes
       # the corresponding behavioral suite fail. The runner works in a temp
       # copy, strips secrets, blocks sockets, and rejects infrastructure-red as
       # a fake mutation kill.
-      - name: Macro and AIOS governance mutation gate (offline)
-        run: |
-          python3 tests/test_governance_mutation_gate.py
-          python3 scripts/governance_mutation_gate.py
+      # The runner's own selftests stay here; the mutation cases run sharded in
+      # the governance-mutation-gate job, and ci-required merges the receipts.
+      - name: Governance mutation gate runner selftests (offline)
+        run: python3 tests/test_governance_mutation_gate.py
       - name: Isolated nightly origin compatibility (offline)
         run: python3 tests/test_isolated_nightly_origin.py
       # 既有缺口(#215 复核发现):本文件逐个点名执行测试,无发现机制,
@@ -390,3 +419,61 @@ jobs:
           fi
       - name: Event ledger append-only verification
         run: python3 experiments/execution_tracker/event_ledger.py --ref "${{ steps.base.outputs.ref }}"
+
+  # Budget (2026-09-25): serial gate = 546 s for ~917 cases on ubuntu-latest,
+  # i.e. ~0.6 s/case -> ~2.5 min per shard at 4 shards. Add a shard when any
+  # shard's gate step passes 5 min; the 10-min cap is the hard stop.
+  governance-mutation-gate:
+    name: governance-mutation-gate (${{ matrix.shard }}/${{ strategy.job-total }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      AR_OFFLINE: "1"
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install pandas jsonschema==4.25.1
+      - name: Macro and AIOS governance mutation gate shard (offline)
+        run: >-
+          python3 scripts/governance_mutation_gate.py
+          --shard "${{ matrix.shard }}/${{ strategy.job-total }}"
+          --receipt "governance-mutation-receipts/shard-${{ matrix.shard }}.json"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: governance-mutation-shard-${{ matrix.shard }}
+          path: governance-mutation-receipts/shard-${{ matrix.shard }}.json
+          if-no-files-found: error
+          retention-days: 7
+          overwrite: true
+
+  # Single branch-protection target. always() (not !cancelled()) so a cancelled
+  # run reports red instead of a skipped check, which GitHub treats as passing.
+  ci-required:
+    if: ${{ always() }}
+    needs: [offline-tests, governance-mutation-gate]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Require every upstream job to succeed
+        env:
+          NEEDS_JSON: ${{ toJSON(needs) }}
+        run: |
+          echo "$NEEDS_JSON" | jq -r 'to_entries[] | "\(.key): \(.value.result)"'
+          echo "$NEEDS_JSON" | jq -e 'to_entries | all(.value.result == "success")' > /dev/null
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: governance-mutation-shard-*
+          path: governance-mutation-receipts
+          merge-multiple: true
+      - name: Merge governance mutation shard receipts (exact N/N)
+        run: python3 scripts/governance_mutation_gate.py --merge-receipts governance-mutation-receipts

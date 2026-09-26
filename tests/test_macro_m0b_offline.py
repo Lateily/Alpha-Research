@@ -464,6 +464,64 @@ class MacroM0BTests(unittest.TestCase):
             {(row.series_id, row.metric_key) for row in rows},
         )
 
+    def test_bls_historical_dash_preserves_other_observations(self) -> None:
+        spec = next(row for row in collectors.collection_plan() if row.request_id == "bls_labor_prices")
+        payload = json.loads(bls_fixture())
+        series = payload["Results"]["series"][0]
+        series["data"].append({"year": "2025", "period": "M10", "value": "-"})
+        raw = json.dumps(payload).encode("utf-8")
+        rows = spec.parser(raw, NOW_ISO, spec)
+        self.assertEqual(6, len(rows))
+        self.assertFalse(any(row.value_text == "-" for row in rows))
+        self.assertEqual(
+            {(metric.series_id, metric.metric_key) for metric in spec.metrics},
+            {(row.series_id, row.metric_key) for row in rows},
+        )
+        request = spec.build_request(NOW, {})
+        transport = MappingTransport({
+            request.public_locator: collectors.HttpResponse(
+                200, request.public_locator, {"content-type": "application/json"}, raw,
+            )
+        })
+        result = collectors.collect(
+            store=self.store, transport=transport, specs=(spec,), run_id="bls_partial",
+            now=NOW, env={},
+        )
+        self.assertEqual("OK", result[0]["status"])
+        with self.store.connect() as conn:
+            snapshot = conn.execute("SELECT raw_payload FROM raw_snapshots").fetchone()
+            stored_count = conn.execute("SELECT count(*) FROM observations").fetchone()[0]
+        self.assertEqual(raw, snapshot["raw_payload"])
+        self.assertEqual(6, stored_count)
+        self.assertEqual([], self.store.verify_integrity())
+
+    def test_bls_unknown_non_numeric_remains_invalid(self) -> None:
+        spec = next(row for row in collectors.collection_plan() if row.request_id == "bls_labor_prices")
+        payload = json.loads(bls_fixture())
+        payload["Results"]["series"][0]["data"].append(
+            {"year": "2025", "period": "M10", "value": "not a number"}
+        )
+        with self.assertRaisesRegex(collectors.CollectionError, "official value is not numeric"):
+            spec.parser(json.dumps(payload).encode("utf-8"), NOW_ISO, spec)
+
+    def test_bls_series_with_no_numeric_observation_is_not_complete(self) -> None:
+        spec = next(row for row in collectors.collection_plan() if row.request_id == "bls_labor_prices")
+        payload = json.loads(bls_fixture())
+        payload["Results"]["series"][0]["data"][0]["value"] = "-"
+        request = spec.build_request(NOW, {})
+        transport = MappingTransport({
+            request.public_locator: collectors.HttpResponse(
+                200, request.public_locator, {"content-type": "application/json"},
+                json.dumps(payload).encode("utf-8"),
+            )
+        })
+        result = collectors.collect(
+            store=self.store, transport=transport, specs=(spec,), run_id="bls_missing",
+            now=NOW, env={},
+        )
+        self.assertEqual("DATA_INVALID", result[0]["status"])
+        self.assertEqual("MISSING_METRICS", result[0]["error_code"])
+
     def test_positive_collection_binds_bls_and_cboe_to_registry(self) -> None:
         plan = {row.request_id: row for row in collectors.collection_plan()}
         specs = (plan["bls_labor_prices"], plan["cboe_vix_history"])

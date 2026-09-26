@@ -33,11 +33,13 @@ import decision_pack as decision_pack_contract  # noqa: E402
 import decision_sheet as decision_sheet_contract  # noqa: E402
 import funnel_pipeline as funnel  # noqa: E402
 import model_paper_fund as paper_fund  # noqa: E402
+import paper_deadline  # noqa: E402
 import research_method as method_contract  # noqa: E402
 from security_registry import _atomic_write_json  # noqa: E402
 
 
 SCHEMA_VERSION = "1.0"
+DEADLINE_VERSION = "1.1"
 CASE_SCHEMA = "ar.research_cycle_case"
 BARS_SCHEMA = "ar.settled_bar_fixture"
 TRACE_SCHEMA = "ar.research_cycle_trace"
@@ -230,7 +232,7 @@ def _validate_cluster(cluster: Mapping[str, Any], registered_at: str) -> None:
 def validate_case(case: Mapping[str, Any], bundle_dir: Path) -> dict[str, Any]:
     if set(case) != CASE_KEYS:
         raise CycleError("research case fields are not exact")
-    if case.get("schema") != CASE_SCHEMA or case.get("schema_version") != SCHEMA_VERSION:
+    if case.get("schema") != CASE_SCHEMA or case.get("schema_version") not in {SCHEMA_VERSION, DEADLINE_VERSION}:
         raise CycleError("research case schema/version mismatch")
     # governance-mutation: RESEARCH_CYCLE_CASE_HASH
     if case.get("case_hash") != _hash(_without_hash(case, "case_hash")):
@@ -355,20 +357,46 @@ def validate_case(case: Mapping[str, Any], bundle_dir: Path) -> dict[str, Any]:
     registration = case.get("method_registration")
     if not isinstance(registration, dict):
         raise CycleError("method_registration must be a sealed object")
+    if case["schema_version"] == DEADLINE_VERSION and registration.get("schema_version") != method_contract.REGISTRATION_VERSION:
+        raise CycleError("new research case cannot carry a legacy method registration")
     try:
         method_contract.validate_registration(
             registration, thesis_core=core, timing_ticket=timing_ticket,
             decision_pack=decision_pack,
+            allow_legacy_readonly=True,
         )
     except method_contract.MethodError as exc:
         raise CycleError(f"registered research method is invalid: {exc}") from exc
+    smc_as_of = str(registration["smc"]["evidence_as_of"]).strip()
+    # Legacy date-only evidence does not establish intraday availability.
+    # When an instant is supplied, do not discard its time before comparing.
+    date_only = (
+        (len(smc_as_of) == 8 and smc_as_of.isdigit())
+        or (len(smc_as_of) == 10 and smc_as_of[4] == "-" and smc_as_of[7] == "-")
+    )
+    # governance-mutation: RESEARCH_CYCLE_SMC_SEAL_REQUIRES_INSTANT
+    # governance-mutation: RESEARCH_CYCLE_SMC_REGISTRATION_ENTRY
+    if registration["schema_version"] == method_contract.REGISTRATION_VERSION and date_only:
+        raise CycleError("SMC evidence instant required for a new case seal")
+    smc_after_seal = not date_only and _iso(smc_as_of, "smc.evidence_as_of") > generated_at
+    # governance-mutation: RESEARCH_CYCLE_SMC_SEAL_CHRONOLOGY
+    if smc_after_seal:
+        raise CycleError("SMC evidence timestamp is later than the case seal")
     # governance-mutation: RESEARCH_CYCLE_INDUSTRY_BINDING
     if registration["valuation"]["industry"] != case.get("industry_code"):
         raise CycleError("registered valuation industry differs from the research case")
 
     order = case.get("paper_order") or {}
-    if set(order) != {"registered_at", "risk_pct", "setup", "reason", "invalid_if", "gate_state"}:
+    order_fields = {"registered_at", "risk_pct", "setup", "reason", "invalid_if", "gate_state"}
+    if case["schema_version"] == DEADLINE_VERSION:
+        order_fields.add("deadline_policy")
+    if set(order) != order_fields:
         raise CycleError("paper_order fields are not exact")
+    if case["schema_version"] == DEADLINE_VERSION:
+        try:
+            paper_deadline.validate_policy(order["deadline_policy"], registered_at)
+        except (ValueError, TypeError) as exc:
+            raise CycleError(f"paper deadline policy is invalid: {exc}") from exc
     risk_pct = order.get("risk_pct")
     if (
         order.get("gate_state") != timing_ticket.get("posture")
@@ -389,6 +417,9 @@ def validate_case(case: Mapping[str, Any], bundle_dir: Path) -> dict[str, Any]:
 def seal_case(draft: Mapping[str, Any], bundle_dir: Path) -> dict[str, Any]:
     if set(draft) != CASE_DRAFT_KEYS:
         raise CycleError("research case draft fields are not exact")
+    registration = draft.get("method_registration")
+    if not isinstance(registration, dict) or registration.get("schema_version") != method_contract.REGISTRATION_VERSION:
+        raise CycleError("new research case requires current method registration version")
     case = dict(draft)
     case["case_hash"] = _hash(case)
     validate_case(case, bundle_dir)
@@ -397,12 +428,15 @@ def seal_case(draft: Mapping[str, Any], bundle_dir: Path) -> dict[str, Any]:
 
 def validate_bars(payload: Mapping[str, Any], case: Mapping[str, Any]) -> None:
     expected = {"schema", "schema_version", "ticker", "source", "generated_at", "rows", "rows_hash", "production_authority"}
-    if set(payload) != expected or payload.get("schema") != BARS_SCHEMA or payload.get("schema_version") != SCHEMA_VERSION:
+    if case["schema_version"] == DEADLINE_VERSION:
+        expected.add("scoring_as_of")
+    if set(payload) != expected or payload.get("schema") != BARS_SCHEMA or payload.get("schema_version") != case["schema_version"]:
         raise CycleError("settled-bar fixture schema/fields are invalid")
     if payload.get("ticker") != case.get("ticker") or payload.get("source") != "OFFLINE_FIXTURE_SETTLED" or payload.get("production_authority") is not False:
         raise CycleError("settled bars are not an offline fixture for this ticker")
     rows = payload.get("rows")
-    if not isinstance(rows, list) or not rows or payload.get("rows_hash") != _hash(rows):
+    empty_rows_allowed = case["schema_version"] == DEADLINE_VERSION
+    if not isinstance(rows, list) or (not rows and not empty_rows_allowed) or payload.get("rows_hash") != _hash(rows):
         raise CycleError("settled bars rows/hash mismatch")
     bars_generated_at = _iso(payload.get("generated_at"), "bars.generated_at")
     if bars_generated_at < _iso(case.get("generated_at"), "case.generated_at"):
@@ -418,11 +452,21 @@ def validate_bars(payload: Mapping[str, Any], case: Mapping[str, Any]) -> None:
             raise CycleError(f"settled execution bar {index} is invalid: {exc}") from exc
         dates.append(date)
     registered_at = case["paper_order"]["registered_at"]
-    bars_invalid = dates != sorted(set(dates)) or dates[0] < registered_at
+    bars_invalid = dates != sorted(set(dates)) or bool(dates and dates[0] < registered_at)
     # governance-mutation: RESEARCH_CYCLE_NO_LOOKAHEAD_BARS
     if bars_invalid:
         raise CycleError("settled bars are unordered, duplicated, or pre-registration")
-    last_session_cutoff = datetime.strptime(dates[-1], "%Y%m%d").replace(
+    scoring_as_of = dates[-1] if dates else None
+    if case["schema_version"] == DEADLINE_VERSION:
+        scoring_as_of = _date8(payload["scoring_as_of"], "bars.scoring_as_of")
+        if dates and scoring_as_of < dates[-1]:
+            raise CycleError("settled bars extend beyond scoring_as_of")
+        try:
+            paper_deadline.open_sessions(case["paper_order"]["deadline_policy"],
+                                         after=registered_at, through=scoring_as_of)
+        except ValueError as exc:
+            raise CycleError(f"scoring calendar is invalid: {exc}") from exc
+    last_session_cutoff = datetime.strptime(scoring_as_of, "%Y%m%d").replace(
         hour=SETTLED_BAR_CUTOFF_HOUR,
         tzinfo=OPERATIONAL_TIMEZONE,
     )
@@ -434,6 +478,8 @@ def validate_bars(payload: Mapping[str, Any], case: Mapping[str, Any]) -> None:
 
 def seal_bars(draft: Mapping[str, Any], case: Mapping[str, Any]) -> dict[str, Any]:
     expected = {"schema", "schema_version", "ticker", "source", "generated_at", "rows", "production_authority"}
+    if case["schema_version"] == DEADLINE_VERSION:
+        expected.add("scoring_as_of")
     if set(draft) != expected:
         raise CycleError("settled-bar draft fields are not exact")
     payload = dict(draft)
@@ -446,10 +492,28 @@ def _transition(sequence: int, state: str, at: str, evidence: Any) -> dict[str, 
     return {"sequence": sequence, "state": state, "at": at, "evidence_hash": _hash(evidence)}
 
 
-def _mechanical_horizons(order: Mapping[str, Any], rows: list[dict[str, Any]]) -> dict[str, Any]:
+def _mechanical_horizons(order: Mapping[str, Any], rows: list[dict[str, Any]], *, as_of: str | None = None) -> dict[str, Any]:
     if order.get("fill_date") is None or order.get("fill_price") is None:
         return {f"T+{h}": {"status": "WINDOW_OPEN", "return": None} for h in HORIZONS}
     future = [row for row in rows if row["date"] > order["fill_date"]]
+    if "deadline_policy" in order:
+        sessions = paper_deadline.open_sessions(order["deadline_policy"], after=order["fill_date"])
+        by_date = {row["date"]: row for row in rows}
+        output = {}
+        for horizon in HORIZONS:
+            if len(sessions) < horizon:
+                output[f"T+{horizon}"] = {"status": "DATA_BLOCKED", "return": None, "reason": "CALENDAR_RANGE_EXHAUSTED"}
+                continue
+            target = sessions[horizon - 1]
+            if as_of is None or target > as_of:
+                output[f"T+{horizon}"] = {"status": "WINDOW_OPEN", "return": None}
+            elif target not in by_date or by_date[target]["suspended"] or order.get("execution_frozen"):
+                output[f"T+{horizon}"] = {"status": "DATA_BLOCKED", "return": None, "date": target,
+                                          "reason": "SETTLED_PRICE_UNAVAILABLE_OR_CHAIN_BROKEN"}
+            else:
+                output[f"T+{horizon}"] = {"status": "SCORED", "date": target,
+                    "return": round(float(by_date[target]["close"]) / float(order["fill_price"]) - 1, 6)}
+        return output
     output: dict[str, Any] = {}
     for horizon in HORIZONS:
         if len(future) < horizon:
@@ -463,9 +527,27 @@ def _mechanical_horizons(order: Mapping[str, Any], rows: list[dict[str, Any]]) -
     return output
 
 
+def registration_refusal(case: Mapping[str, Any]) -> str | None:
+    """Why a validated case may not become a paper order; None if it may.
+
+    Every writer asks this one predicate. The replay and the registration
+    bridge used to decide separately, so the same sealed WAIT / HOLD_OBSERVE
+    case ended as NO_TRADE in the replay and as a pending order through the
+    bridge (audit F1, 2026-09-15). validate_case accepts WAIT because a WAIT
+    case is a legitimate research record; being a valid record is not the same
+    as being registrable. research_method already binds the SMC status to the
+    timing status, so the timing ticket is the single field to read.
+    """
+    # governance-mutation: RESEARCH_CYCLE_REGISTRATION_REFUSAL
+    if case["timing_ticket"]["status"] != "PASS":
+        return "NO_TRADE: timing ticket remains WAIT"
+    return None
+
+
 def run_cycle(
     *, bundle_dir: Path, case: Mapping[str, Any], bars: Mapping[str, Any],
     outcomes: Mapping[str, Any], generated_at: str,
+    _legacy_readonly: bool = False,
 ) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any], dict[str, Any]]:
     source = validate_case(case, bundle_dir)
     validate_bars(bars, case)
@@ -478,8 +560,9 @@ def run_cycle(
         raise CycleError("cycle output predates its settled-bar evidence")
     if _iso(outcomes["generated_at"], "method_outcomes.generated_at") < _iso(bars["generated_at"], "bars.generated_at"):
         raise CycleError("method outcomes predate the settled-bar evidence")
+    scoring_as_of = bars["scoring_as_of"] if case["schema_version"] == DEADLINE_VERSION else bars["rows"][-1]["date"]
     # governance-mutation: RESEARCH_CYCLE_SCORING_ASOF
-    if outcomes["scoring_as_of"] != bars["rows"][-1]["date"]:
+    if outcomes["scoring_as_of"] != scoring_as_of:
         raise CycleError("method outcomes and settled bars do not share one scoring as_of")
     cycle_id = _hash({"source_refs": case["source_refs"], "ticker": case["ticker"], "case_hash": case["case_hash"]})[:24]
     transitions = [
@@ -493,12 +576,12 @@ def run_cycle(
     orders: list[dict[str, Any]] = []
     decisions: list[dict[str, Any]] = []
     nav_history: list[dict[str, Any]] = []
+    unavailable_nav: list[dict[str, str]] = []
     events: list[str] = []
     timing = case["timing_ticket"]
     order: dict[str, Any] | None = None
-    refusal: str | None = None
-    if timing["status"] == "WAIT":
-        refusal = "NO_TRADE: timing ticket remains WAIT"
+    refusal: str | None = registration_refusal(case)
+    if refusal is not None:
         decisions.append({"date": case["paper_order"]["registered_at"], "action": "NO_TRADE", "ticker": case["ticker"], "reason": refusal, "no_trade_flag": True})
         transitions.append(_transition(5, "NO_TRADE", case["generated_at"], decisions[-1]))
     else:
@@ -515,6 +598,7 @@ def run_cycle(
             cost_model=paper_fund.WORKFLOW_DEBUG_COST_MODEL,
             max_volume_participation=paper_fund.MAX_VOLUME_PARTICIPATION,
             execution_mode=paper_fund.pp.EXECUTION_MODEL_VERSION,
+            deadline_policy=case["paper_order"].get("deadline_policy"),
         )
         if order is None:
             refusal = message
@@ -529,26 +613,57 @@ def run_cycle(
             transitions.append(_transition(5, "PAPER_REGISTERED", case["generated_at"], order))
             seen_status = "pending"
             rows = list(bars["rows"])
-            for index, row in enumerate(rows):
-                prefix = rows[: index + 1]
+            sessions = ([row["date"] for row in rows] if "deadline_policy" not in order else
+                        paper_deadline.open_sessions(order["deadline_policy"],
+                            after=order["registered_at"], through=bars["scoring_as_of"]))
+            by_date = {row["date"]: row for row in rows}
+            for session in sessions:
+                prefix = [row for row in rows if row["date"] <= session]
                 events.extend(paper_fund.process_day(
                     fund, orders, decisions, token=None,
                     series_fn=lambda *_args, p=prefix: p,
                     require_realistic=True,
+                    settlement_as_of=session,
                 ))
-                paper_fund.update_nav(
-                    fund, orders, nav_history, row["date"],
-                    marks={case["ticker"]: row["close"]}, require_complete_marks=True,
-                )
+                if session not in by_date:
+                    unavailable_nav.append({"date": session, "reason": "MISSING_BAR"})
+                elif "deadline_policy" in order and by_date[session]["suspended"]:
+                    unavailable_nav.append({"date": session, "reason": "SUSPENDED"})
+                else:
+                    try:
+                        paper_fund.update_nav(
+                            fund, orders, nav_history, session,
+                            marks={case["ticker"]: by_date[session]["close"]}, require_complete_marks=True,
+                        )
+                    except paper_fund.CorporateActionUnresolved:
+                        if case["schema_version"] != DEADLINE_VERSION:
+                            raise
+                        unavailable_nav.append({"date": session, "reason": "CORPORATE_ACTION_BREAK"})
                 if order["status"] != seen_status:
                     seen_status = order["status"]
                     transitions.append(_transition(
                         len(transitions) + 1,
-                        "FILLED" if seen_status == "filled" else "CLOSED",
-                        order.get("fill_date") if seen_status == "filled" else order.get("exit_date"),
+                        seen_status.upper(),
+                        (session if "deadline_policy" in order else
+                         order.get("fill_date") if seen_status == "filled" else order.get("exit_date")),
                         order,
                     ))
     performance = paper_fund.compute_performance(fund, orders, nav_history)
+    if case["schema_version"] == DEADLINE_VERSION:
+        last_nav = nav_history[-1] if nav_history else None
+        current_nav_available = last_nav is not None and last_nav["date"] == scoring_as_of
+        performance.update({
+            "as_of": scoring_as_of,
+            "nav_as_of": last_nav["date"] if last_nav else None,
+            "last_known_nav": dict(last_nav) if last_nav else None,
+            "nav_quality": ("DATA_BLOCKED" if not current_nav_available else
+                            "PARTIAL" if unavailable_nav else "COMPLETE"),
+            "unavailable_sessions": unavailable_nav,
+        })
+        if not current_nav_available:
+            performance["nav"] = performance["cum_return"] = None
+        if unavailable_nav or not current_nav_available:
+            performance["max_drawdown"] = None
     realism = (
         paper_fund.execution_realism_receipt(order)
         if order is not None else {
@@ -563,10 +678,34 @@ def run_cycle(
             "no_trade_flag": True,
         }
     )
+    deadline_realism_valid = True
+    # A named price-chain freeze may degrade data, never the other execution gates.
+    # governance-mutation: RESEARCH_CYCLE_T10_NAMED_DEGRADATION
+    if case["schema_version"] == DEADLINE_VERSION and order is not None:
+        frozen = order.get("execution_frozen") is True
+        expected_checks = {
+            "raw_settled_execution_bars": True,
+            "t_plus_one_sell": True,
+            "registered_no_chase_limit": True,
+            "price_limit_facts_required": True,
+            "liquidity_participation_capped": True,
+            "costs_recorded": True,
+            "workflow_debug_sample_excluded": True,
+            "corporate_action_price_chain_intact": not frozen,
+        }
+        checks = realism.get("checks")
+        deadline_realism_valid = (
+            isinstance(checks, dict) and set(checks) == set(expected_checks)
+            and all(checks.get(key) is value for key, value in expected_checks.items())
+            and realism.get("status") == ("DATA_BLOCKED" if frozen else "PASS_WORKFLOW_DEBUG")
+            and (not frozen or order.get("execution_freeze_reason") == "CORPORATE_ACTION_BREAK")
+        )
     paper_boundary_broken = (
         fund.get("paper_only") is not True
+        or not deadline_realism_valid
         or performance.get("claim_allowed") is not False
-        or realism.get("status") not in {"PASS_WORKFLOW_DEBUG", "NO_TRADE"}
+        or realism.get("status") not in ({"PASS_WORKFLOW_DEBUG", "NO_TRADE", "DATA_BLOCKED"}
+                                        if case["schema_version"] == DEADLINE_VERSION else {"PASS_WORKFLOW_DEBUG", "NO_TRADE"})
         or realism.get("method_claim_sample_eligible") is not False
         or realism.get("portfolio_promotion_eligible") is not False
         or any(order_row.get("no_trade_flag") is not True for order_row in orders)
@@ -602,7 +741,7 @@ def run_cycle(
         scorecard = method_contract.build_scorecard(
             case["method_registration"], outcomes, order=order,
             bars=list(bars["rows"]), fund_snapshot=fund_snapshot,
-            generated_at=generated_at,
+            generated_at=generated_at, legacy_readonly=_legacy_readonly,
         )
     except method_contract.MethodError as exc:
         raise CycleError(f"method scorecard cannot be built: {exc}") from exc
@@ -614,7 +753,7 @@ def run_cycle(
         "exit_date": order_for_review.get("exit_date"), "exit_reason": order_for_review.get("exit_reason"),
         "paper_return": order_for_review.get("paper_return"), "realized_R": order_for_review.get("realized_R"),
         "pnl_cny": order_for_review.get("pnl_cny"),
-        "horizons": _mechanical_horizons(order_for_review, list(bars["rows"])),
+        "horizons": _mechanical_horizons(order_for_review, list(bars["rows"]), as_of=outcomes["scoring_as_of"]),
         "method_scorecard_hash": scorecard["scorecard_hash"],
         "machine_attribution": scorecard["machine_attribution"],
         "human_attribution_status": "AWAITING_HUMAN_REVIEW",
@@ -622,6 +761,9 @@ def run_cycle(
         "claim_allowed": False, "no_trade_flag": True, "production_authority": False,
         "disclaimer": DISCLAIMER,
     }
+    if order is not None and "deadline_policy" in order:
+        review["execution_progress"] = paper_deadline.progress(order, outcomes["scoring_as_of"])
+        review["nav_missing_sessions"] = [session for session in sessions if session not in by_date]
     review["review_hash"] = _hash(review)
     return trace, fund_snapshot, scorecard, review
 
@@ -631,6 +773,10 @@ def _write_cycle_outputs(
     bars: Mapping[str, Any], outcomes: Mapping[str, Any], trace: Mapping[str, Any],
     fund: Mapping[str, Any], scorecard: Mapping[str, Any], review: Mapping[str, Any],
 ) -> None:
+    registration = case.get("method_registration")
+    # governance-mutation: RESEARCH_CYCLE_LEGACY_NO_NEW_BUNDLE
+    if isinstance(registration, dict) and registration.get("schema_version") == method_contract.SCHEMA_VERSION:
+        raise CycleError("legacy read-only cycle cannot be newly written")
     if os.path.lexists(output_dir):
         raise CycleError(f"output directory already exists: {output_dir}")
     output_dir.parent.mkdir(parents=True, exist_ok=True)
@@ -695,9 +841,22 @@ def verify_cycle_bundle(bundle_dir: Path, closure_bundle: Path) -> dict[str, Any
         _load_object(bundle_dir / "method_scorecard.json"),
         _load_object(bundle_dir / "mechanical_review.json"),
     )
+    registration = case.get("method_registration")
+    # governance-mutation: RESEARCH_CYCLE_LEGACY_IDENTITY_READONLY
+    legacy_readonly = (
+        isinstance(registration, dict)
+        and registration.get("schema_version") == method_contract.SCHEMA_VERSION
+    )
+    replay_resolved_legacy = (
+        legacy_readonly and stored[2].get("thesis") != {
+            "status": "UNRESOLVED", "claims": [],
+            "reason": "LEGACY_WRONG_IF_SEMANTICS_UNVALIDATED",
+        }
+    )
+    # governance-mutation: RESEARCH_CYCLE_LEGACY_READONLY_REPLAY
     rebuilt = run_cycle(
         bundle_dir=closure_bundle, case=case, bars=bars, outcomes=outcomes,
-        generated_at=stored[0]["generated_at"],
+        generated_at=stored[0]["generated_at"], _legacy_readonly=replay_resolved_legacy,
     )
     projection_changed = rebuilt != stored
     # governance-mutation: RESEARCH_CYCLE_DETERMINISTIC_VERIFY
@@ -706,7 +865,8 @@ def verify_cycle_bundle(bundle_dir: Path, closure_bundle: Path) -> dict[str, Any
     if manifest.get("research_cycle_id") != stored[0]["research_cycle_id"]:
         raise CycleError("cycle manifest id differs from trace")
     return {
-        "status": "VERIFIED", "research_cycle_id": stored[0]["research_cycle_id"],
+        "status": "VERIFIED_LEGACY_READONLY" if legacy_readonly else "VERIFIED",
+        "research_cycle_id": stored[0]["research_cycle_id"],
         "final_state": stored[0]["final_state"], "claim_allowed": False,
         "production_authority": False,
     }
@@ -782,7 +942,14 @@ def seal_review_receipt(draft: Mapping[str, Any], review: Mapping[str, Any]) -> 
 
 
 def finalize_review(cycle_bundle: Path, closure_bundle: Path, receipt: Mapping[str, Any]) -> dict[str, Any]:
-    verify_cycle_bundle(cycle_bundle, closure_bundle)
+    verified = verify_cycle_bundle(cycle_bundle, closure_bundle)
+    # governance-mutation: RESEARCH_CYCLE_LEGACY_NO_NEW_REVIEW
+    if verified["status"] == "VERIFIED_LEGACY_READONLY":
+        raise CycleError("legacy read-only cycle cannot be newly finalized")
+    return _review_projection(cycle_bundle, receipt)
+
+
+def _review_projection(cycle_bundle: Path, receipt: Mapping[str, Any]) -> dict[str, Any]:
     review = _load_object(cycle_bundle / "mechanical_review.json")
     trace = _load_object(cycle_bundle / "cycle_trace.json")
     validate_review_receipt(receipt, review)
@@ -854,7 +1021,8 @@ def verify_final_bundle(output_dir: Path, cycle_bundle: Path, closure_bundle: Pa
             raise CycleError(f"reviewed-cycle artifact hash mismatch: {name}")
     receipt = _load_object(output_dir / "review_receipt.json")
     final = _load_object(output_dir / "reviewed_cycle.json")
-    expected = finalize_review(cycle_bundle, closure_bundle, receipt)
+    # governance-mutation: RESEARCH_CYCLE_LEGACY_FINAL_READONLY_VERIFY
+    expected = _review_projection(cycle_bundle, receipt)
     if final != expected or final.get("final_hash") != _hash(_without_hash(final, "final_hash")):
         raise CycleError("reviewed cycle is not the deterministic projection of its receipt")
     return {"status": "VERIFIED_REVIEWED", "research_cycle_id": final["research_cycle_id"], "claim_allowed": False, "production_authority": False}

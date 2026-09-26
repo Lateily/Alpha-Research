@@ -31,7 +31,8 @@ def main():
         source, original_battery, codes = closure_fixtures.build_bundle(root)
         registry, features, _, _ = funnel_fixtures.build_candidates(n=90)
         battery = normalized(original_battery)
-        packet = fixtures.closure.build_review_packet(bundle_dir=source, battery=battery, generated_at=closure_fixtures.GENERATED_AT)
+        packet = fixtures.closure.build_review_packet(bundle_dir=source, battery=battery,
+            generated_at=closure_fixtures.GENERATED_AT, packet_version="1.1")
         receipt = normalized(closure_fixtures.receipt_for(packet, codes[:3]))
         rejected_receipt = copy.deepcopy(receipt)
         rejected_receipt["selections"] = rejected_receipt["selections"][:1]
@@ -78,7 +79,7 @@ def main():
                 "expected_packet_hash": packet["packet_hash"],
             },
         }
-    target = Path(__file__).parent / "fixtures/research.json"
+    target = Path(__file__).parent / "fixtures/research_method_v1_1.json"
     target.parent.mkdir(exist_ok=True)
     raw = (json.dumps(payload, ensure_ascii=True, sort_keys=True, separators=(",", ":"), allow_nan=False) + "\n").encode()
     target.write_bytes(raw)

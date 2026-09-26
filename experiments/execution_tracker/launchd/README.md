@@ -38,5 +38,12 @@ launchd 每 5 分钟唤醒一次,但程序会读取 `scheduler_status.next_check
 - 路径以 `__HOME__` 占位,安装时替换 —— 模板可安全入库。
 - 机器必须唤醒且联网(本地设计 v0);夜链失败会落 `/tmp/ar-nightly-incomplete` 报警旗。
 - Macro OS 当前只写面板契约和风险预算上下文,不发微信提醒,不拥有直接阻断权。
+- **launchd 按本机时区触发,程序按 Asia/Shanghai 判时段**(2026-09 伦敦时钟事故,
+  `market_clock.py`)。本机不在 UTC+8 时,watchtower(09:14 本地)与 eod(14:26 本地)
+  落在上海盘后,会打印 `OUTSIDE_MARKET_HOURS` 并以退出码 3 结束,不读行情、不写
+  nowcast / eod_candidates;非交易日打印 `NON_TRADING_DAY`,退出码 0。
+  `launchctl list | grep com.ar` 的末次退出码 3 = 调度与上海时段错位,需改调度或时区。
+  夜链(20:30 本地)在两种时区下都在收盘后,伦敦时钟下落在北京次日 03:30
+  (BST;10-25 转 GMT 后为 04:30)。
 
 不是买卖指令;研究信号,human executes.

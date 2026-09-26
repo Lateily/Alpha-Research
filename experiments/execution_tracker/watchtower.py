@@ -27,6 +27,11 @@ TELEGRAM_BOT_TOKEN/TELEGRAM_CHAT_ID are set in the environment).
   python3 watchtower.py --once            # single poll (smoke)
   python3 watchtower.py --daemon          # poll until 15:05 (launchd entry point)
 Install as launchd job: see launchd/com.ar.watchtower.plist
+
+Clock: every session decision uses Asia/Shanghai (market_clock), never the
+machine's local time. Started outside 09:00-15:00 Shanghai, --daemon/--once print
+OUTSIDE_MARKET_HOURS and exit 3 without reading a quote; on a non-trading day they
+print NON_TRADING_DAY and exit 0. Nothing reaches the nowcast pool either way.
 """
 import json
 import os
@@ -39,8 +44,9 @@ import urllib.request
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import fund_source as fs                          # noqa: E402
+import market_clock as mc                         # noqa: E402
 from run_premarket_monitor import (               # noqa: E402
-    read_quote, nowcast_from_read, is_market_open_now)
+    read_quote, nowcast_from_read, is_trading_day, log_nowcasts)
 
 POLL_SECONDS = 120
 STOP_PROX = 0.01
@@ -48,10 +54,19 @@ TARGET_PROX = 0.01
 INDEX_MOVE = 0.015
 NOWCAST_MIN_CONF = 0.6
 SESSION_END = "150500"
+POLL_FROM = "091000"          # auction 09:15, small slack (same as run_premarket_monitor)
+START_FROM = "0900"           # launchd fires 09:14 Shanghai; pre-open slack only
+START_UNTIL = "1500"
+
+ADMITTED = "ADMITTED"
+OUTSIDE_MARKET_HOURS = "OUTSIDE_MARKET_HOURS"
+NON_TRADING_DAY = "NON_TRADING_DAY"
+EXIT_OUTSIDE_MARKET_HOURS = 3
 
 STATE_PATH = os.path.join(HERE, "watchtower_state.json")
 ALERT_LOG = os.path.join(HERE, "watchtower_log.json")
 FUND_ORDERS = os.path.join(HERE, "model_fund", "orders.json")
+WATCH_DYNAMIC = os.path.join(HERE, "watch_dynamic.json")
 
 WATCH = [("300502.SZ", "新易盛"), ("300475.SZ", "香农芯创"), ("603629.SH", "利通电子"),
          ("300308.SZ", "中际旭创"), ("002130.SZ", "沃尔核材")]
@@ -164,19 +179,38 @@ def evaluate_events(quotes, orders, state, today, nowcast_sink=None):
     return alerts
 
 
-def poll_once(token, dry=False):
-    """One live poll: fetch quotes, evaluate rules, notify + log."""
-    import datetime
-    today = datetime.datetime.now().strftime("%Y%m%d")
+def start_admission(token, now=None, trading_day_fn=None):
+    """Fail-closed gate before --daemon/--once reads a single quote.
+    now: aware datetime (default: now). Returns (status, reason)."""
+    now = mc.shanghai_now() if now is None else mc.to_shanghai(now)
+    hm = now.strftime("%H%M")
+    # governance-mutation: EXECUTION_CLOCK_WATCHTOWER_START_WINDOW
+    if not (START_FROM <= hm < START_UNTIL):
+        return OUTSIDE_MARKET_HOURS, (f"{mc.stamp(now)} 不在 Asia/Shanghai 启动窗 "
+                                      f"{START_FROM}-{START_UNTIL};不读行情、不写 nowcast")
+    trading_day_fn = trading_day_fn or (lambda d: is_trading_day(d, token))
+    is_open, why = trading_day_fn(mc.trade_date(now))
+    # governance-mutation: EXECUTION_CLOCK_WATCHTOWER_TRADING_DAY
+    if not is_open:
+        return NON_TRADING_DAY, why
+    return ADMITTED, f"{mc.stamp(now)} {why}"
+
+
+def poll_once(token, dry=False, clock=None, quote_fn=None):
+    """One live poll: fetch quotes, evaluate rules, notify + log.
+    clock: optional zero-arg callable -> aware datetime (tests); quote_fn: tickers -> rows."""
     orders = load_json(FUND_ORDERS, [])
-    dyn = load_json(os.path.join(HERE, "watch_dynamic.json"), None)
+    dyn = load_json(WATCH_DYNAMIC, None)
     if isinstance(dyn, dict) and dyn.get("watch"):
         watch_pairs = [(w["ticker"], w.get("name") or w["ticker"]) for w in dyn["watch"]]
     else:
         watch_pairs = list(WATCH)          # P4 回退:无动态名单时用硬编码
     tickers = sorted({o["ticker"] for o in orders if o["status"] in ("pending", "filled")}
                      | {t for t, _ in watch_pairs} | {c for c, _ in INDICES})
-    rows = fs.tushare_realtime_quotes(tickers, src="sina")
+    quote_fn = quote_fn or (lambda ts: fs.tushare_realtime_quotes(ts, src="sina"))
+    rows = quote_fn(tickers)
+    captured = mc.shanghai_now(clock)          # the instant these quotes were read
+    today = mc.trade_date(captured)
     quotes = {}
     name_map = dict(watch_pairs); name_map.update({c: n for c, n in INDICES})
     name_map.update({o["ticker"]: o["name"] for o in orders})
@@ -190,13 +224,13 @@ def poll_once(token, dry=False):
     def nowcast_sink(read):
         """Flip → nowcast_log scoring pool via the ONE existing writer
         (run_premarket_monitor.log_nowcasts: dedup + no retro-edit).
-        Non-fatal by design — the daemon never dies from logging."""
+        Non-fatal by design — the daemon never dies from logging. The writer
+        refuses reads outside [09:15, 15:00) Shanghai (post-close = lookahead)."""
         try:
-            from run_premarket_monitor import log_nowcasts
-            hhmm = datetime.datetime.now().strftime("%H%M")
-            added = log_nowcasts([read], today, f"wt{hhmm}")
+            label = f"wt{mc.hhmm(captured)}"
+            added = log_nowcasts([read], today, label, captured_at=captured)
             if added:
-                print(f"  [nowcast→pool] {read.get('name')} logged (wt{hhmm})")
+                print(f"  [nowcast→pool] {read.get('name')} logged ({label} {mc.stamp(captured)})")
         except Exception as e:                     # noqa: BLE001
             print("nowcast sink error:", str(e)[:80])
 
@@ -211,21 +245,38 @@ def poll_once(token, dry=False):
     return alerts
 
 
-def daemon(token):
-    import datetime
-    print(f"watchtower daemon up @{datetime.datetime.now().strftime('%H:%M:%S')} "
-          f"(poll {POLL_SECONDS}s until {SESSION_END})")
+def report_status(status, why):
+    print(json.dumps({"status": status, "reason": why, "clock": "Asia/Shanghai",
+                      "nowcast_logged": 0}, ensure_ascii=False))
+
+
+def daemon(token, clock=None, sleep=time.sleep, poll=None, trading_day_fn=None):
+    """Poll 09:10-15:05 Shanghai on the admitted trade date. Returns the exit status."""
+    start = mc.shanghai_now(clock)
+    status, why = start_admission(token, start, trading_day_fn)
+    # governance-mutation: EXECUTION_CLOCK_WATCHTOWER_DAEMON_REFUSES
+    if status != ADMITTED:
+        report_status(status, why)
+        return status
+    poll = poll or (lambda: poll_once(token, clock=clock))
+    day = mc.trade_date(start)
+    print(f"watchtower daemon up @{mc.stamp(start)} "
+          f"(poll {POLL_SECONDS}s until {SESSION_END} Asia/Shanghai)")
     notify("AR Watchtower", "盯盘守护进程已启动")
-    while datetime.datetime.now().strftime("%H%M%S") < SESSION_END:
-        open_now, why = is_market_open_now(token)
-        if open_now:
+    while True:
+        now = mc.shanghai_now(clock)
+        hms = now.strftime("%H%M%S")
+        if mc.trade_date(now) != day or hms >= SESSION_END:
+            break
+        if hms >= POLL_FROM:
             try:
-                poll_once(token)
+                poll()
             except Exception as e:                 # noqa: BLE001
                 print("poll error:", str(e)[:100])
-        time.sleep(POLL_SECONDS)
+        sleep(POLL_SECONDS)
     notify("AR Watchtower", "收盘,守护进程退出(定盘结算走盘后流程)")
     print("session end.")
+    return "SESSION_END"
 
 
 # ---------------------------------------------------------------- selftest ----
@@ -316,12 +367,16 @@ def main():
     if not token:
         print("NO TUSHARE_TOKEN — run `source ~/.zprofile` first"); sys.exit(1)
     if args.once:
+        status, why = start_admission(token)
+        if status != ADMITTED:
+            report_status(status, why)
+            sys.exit(EXIT_OUTSIDE_MARKET_HOURS if status == OUTSIDE_MARKET_HOURS else 0)
         alerts = poll_once(token, dry=args.dry)
         print(f"poll done: {len(alerts)} new alerts")
         return
     if args.daemon:
-        daemon(token)
-        return
+        status = daemon(token)
+        sys.exit(EXIT_OUTSIDE_MARKET_HOURS if status == OUTSIDE_MARKET_HOURS else 0)
     ap.print_help()
 
 

@@ -20,12 +20,16 @@ Gate 0 data-source rule:
 import os
 import sys
 import json
+import contextlib
+import signal
+import threading
 import time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import fund_source as fs            # noqa: E402
 import execution_tracker as et     # noqa: E402
+from nightly_limits import NIGHTLY_STEP_TIMEOUT_SECONDS  # noqa: E402
 
 # ⚠ 语义区分(2026-08-01 审计 BLOCKER 修复):
 #   OBSERVE_LIST = 每日扫描的观察universe(产生 ticker_gates 与 paper 观察信号);
@@ -76,8 +80,59 @@ def canonical_sectors(codes, token, fallback=None):
         pass   # 取不到就保持 UNKNOWN,由上层标 DATA_BLOCKED
     return out
 INDICES = [("000001.SH", "sh"), ("399001.SZ", "sz"), ("399006.SZ", "cyb")]
-SETTLEMENT_ATTEMPTS = 3
-SETTLEMENT_RETRY_SECONDS = 30
+# 结算等待预算(2026-09-14)。旧值 3 次 x 30 秒 ≈ 90 秒,覆盖不了东财资金流对个别个股
+# 的结算延迟:2026-09-09/10/11 三次 16:35 夜链都因此 DATA_BLOCKED。窗口按墙钟预算收口,
+# 上限必须留在夜链每步 600 秒子进程超时之内,否则超时会把 fail-closed 变成 TIMEOUT。
+SETTLEMENT_ATTEMPTS = 6
+SETTLEMENT_RETRY_SECONDS = 60
+SETTLEMENT_WAIT_BUDGET_SECONDS = 420
+SETTLEMENT_BUDGET_MARGIN_SECONDS = 120  # 留给最后一次 build 与写盘
+
+if (SETTLEMENT_WAIT_BUDGET_SECONDS + SETTLEMENT_BUDGET_MARGIN_SECONDS
+        > NIGHTLY_STEP_TIMEOUT_SECONDS):
+    raise SystemExit(
+        "DATA_BLOCKED: settlement wait budget "
+        f"{SETTLEMENT_WAIT_BUDGET_SECONDS}s + margin {SETTLEMENT_BUDGET_MARGIN_SECONDS}s "
+        f"exceeds the nightly step timeout {NIGHTLY_STEP_TIMEOUT_SECONDS}s")
+
+
+# 硬截止(审计 F5,2026-09-15):上面的预算只决定"是否再开下一次重试",管不住一次慢 build。
+# 硬截止 = 步骤超时 - 留给写盘的余量。过了这一刻,正在进行的 build 被打断,已完成的 build
+# 也不得进入写盘阶段;两种情况都以 DATA_BLOCKED 收口,不留给父进程的 TIMEOUT 去杀。
+# governance-mutation: OFFICIAL_SETTLEMENT_HARD_DEADLINE_VALUE
+SETTLEMENT_HARD_DEADLINE_SECONDS = NIGHTLY_STEP_TIMEOUT_SECONDS - SETTLEMENT_BUDGET_MARGIN_SECONDS
+
+
+class SettlementHardDeadline(SystemExit):
+    """The settlement phase ran past its hard deadline; fail closed before any write."""
+
+
+@contextlib.contextmanager
+def _interrupt_at(seconds):
+    """Interrupt a blocking build when the hard deadline passes.
+
+    SIGALRM exists only on POSIX and only fires on the main thread; elsewhere the
+    post-build deadline check in build_settled remains the enforced bound.
+    """
+    usable = (hasattr(signal, "SIGALRM") and seconds > 0
+              and threading.current_thread() is threading.main_thread())
+    if not usable:
+        yield
+        return
+
+    def _expired(_signum, _frame):
+        raise SettlementHardDeadline(
+            "DATA_BLOCKED: settlement hard deadline "
+            f"{SETTLEMENT_HARD_DEADLINE_SECONDS}s reached during build")
+
+    previous = signal.signal(signal.SIGALRM, _expired)
+    # governance-mutation: OFFICIAL_SETTLEMENT_HARD_DEADLINE_INTERRUPT
+    signal.setitimer(signal.ITIMER_REAL, seconds)
+    try:
+        yield
+    finally:
+        signal.setitimer(signal.ITIMER_REAL, 0)
+        signal.signal(signal.SIGALRM, previous)
 
 
 class SettlementDateMismatch(SystemExit):
@@ -172,17 +227,38 @@ def build(token):
     return trade_date, snap, sigs
 
 
-def build_settled(token):
+def build_settled(token, clock=None):
     """Refresh the entire pre-write snapshot, never blend attempts or use T-1.
 
-    The nightly subprocess still enforces its existing 600-second timeout.
+    Three bounds. SETTLEMENT_ATTEMPTS whole rebuilds and
+    SETTLEMENT_WAIT_BUDGET_SECONDS decide whether another retry may START.
+    SETTLEMENT_HARD_DEADLINE_SECONDS bounds the phase itself: a build still
+    running at the deadline is interrupted, and a build that finishes after it
+    is refused, so writes never begin with less than the reserved margin left
+    and the parent's subprocess timeout is never what ends the step.
     Exhaustion, transport/API/schema failures and all post-build writes remain
     fail-closed; no scheduler, target-date or publication authority is changed.
     """
+    clock = clock or time.monotonic
+    started = clock()
     newest_seen = ""
     for attempt in range(SETTLEMENT_ATTEMPTS):
         try:
-            result = build(token)
+            remaining = SETTLEMENT_HARD_DEADLINE_SECONDS - (clock() - started)
+            # governance-mutation: OFFICIAL_SETTLEMENT_HARD_DEADLINE_PRE_BUILD
+            if remaining <= 0:
+                raise SettlementHardDeadline(
+                    "DATA_BLOCKED: settlement hard deadline "
+                    f"{SETTLEMENT_HARD_DEADLINE_SECONDS}s reached before attempt {attempt + 1}")
+            with _interrupt_at(remaining):
+                result = build(token)
+            finished = clock() - started
+            # governance-mutation: OFFICIAL_SETTLEMENT_HARD_DEADLINE_POST_BUILD
+            if finished > SETTLEMENT_HARD_DEADLINE_SECONDS:
+                raise SettlementHardDeadline(
+                    "DATA_BLOCKED: settlement build finished at "
+                    f"{finished:.0f}s, after the hard deadline "
+                    f"{SETTLEMENT_HARD_DEADLINE_SECONDS}s; refusing to start writes")
             if result[0] < newest_seen:
                 raise SettlementDateMismatch(
                     "DATA_BLOCKED: settlement retry regressed behind observed date "
@@ -190,9 +266,16 @@ def build_settled(token):
             return result
         except SettlementDateMismatch as exc:
             newest_seen = max((newest_seen,) + exc.dates)
+            elapsed = clock() - started
             if attempt + 1 == SETTLEMENT_ATTEMPTS:
                 raise
+            if elapsed + SETTLEMENT_RETRY_SECONDS > SETTLEMENT_WAIT_BUDGET_SECONDS:
+                print(f"SETTLEMENT_WAIT budget_exhausted elapsed={elapsed:.0f}s "
+                      f"budget={SETTLEMENT_WAIT_BUDGET_SECONDS}s attempts_used="
+                      f"{attempt + 1}/{SETTLEMENT_ATTEMPTS}", flush=True)
+                raise
             print(f"SETTLEMENT_WAIT attempt={attempt + 1}/{SETTLEMENT_ATTEMPTS} "
+                  f"elapsed={elapsed:.0f}s budget={SETTLEMENT_WAIT_BUDGET_SECONDS}s "
                   f"retry_in={SETTLEMENT_RETRY_SECONDS}s {exc}", flush=True)
             time.sleep(SETTLEMENT_RETRY_SECONDS)
 
