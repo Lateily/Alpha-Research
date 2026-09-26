@@ -19,7 +19,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Iterable, Sequence
 
@@ -128,6 +128,16 @@ A035_MUTATION_PREFIX = "AIOS_A035_"
 R043_GOVERNANCE_PATHS = (
     "experiments/execution_tracker/publication_migration.py",
 )
+# 盘中执行层的 Asia/Shanghai 时钟(2026-09 伦敦时钟事故):交易日、时段窗、
+# checkpoint 标签、capture 时间戳与判分准入,每条守卫都带 marker、按前缀双向配对。
+EXECUTION_CLOCK_GOVERNANCE_PATHS = (
+    "experiments/execution_tracker/market_clock.py",
+    "experiments/execution_tracker/run_premarket_monitor.py",
+    "experiments/execution_tracker/watchtower.py",
+    "experiments/execution_tracker/run_eod_decision.py",
+    "experiments/execution_tracker/nowcast_evaluator.py",
+)
+EXECUTION_CLOCK_MUTATION_PREFIX = "EXECUTION_CLOCK_"
 FUNNEL_GOVERNANCE_PATHS = (
     "experiments/research_funnel/funnel_pipeline.py",
     "experiments/research_funnel/r035_evaluation.py",
@@ -7196,6 +7206,39 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="A recorded dispatch order (or a null record) must replay from the manifest, or a battery could claim an order it never used.",
     ),
     MutationCase(
+        mutation_id="BATTERY_FUNDAMENTAL_NULL_ELEMENT",
+        component="U3 fundamental evidence",
+        source_path="experiments/execution_tracker/full_battery.py",
+        test_script="tests/test_funnel_dag_offline.py",
+        before="    if value is None:\n        return None",
+        after="    if False:\n        return None",
+        expected_failure_marker="test_bank_without_gross_margin_keeps_red_flag_verdict_and_explicit_nulls",
+        rationale="Banks and insurers report no gross margin; float(None) blocked the whole 基本面 dimension and discarded its red-flag verdict every night.",
+    ),
+    MutationCase(
+        mutation_id="BATTERY_FUNDAMENTAL_NULL_REASON",
+        component="U3 fundamental evidence",
+        source_path="experiments/execution_tracker/full_battery.py",
+        test_script="tests/test_funnel_dag_offline.py",
+        before="        if any(m is None for m in margins):",
+        after="        if False:",
+        expected_failure_marker="test_bank_without_gross_margin_keeps_red_flag_verdict_and_explicit_nulls",
+        rationale="A null descriptive field must say why it is null; an unexplained null is a silent gap.",
+    ),
+    MutationCase(
+        mutation_id="BATTERY_FUNDAMENTAL_NON_FINITE_REFUSED",
+        component="U3 fundamental evidence",
+        source_path="experiments/execution_tracker/full_battery.py",
+        test_script="tests/test_funnel_dag_offline.py",
+        before="    return round(float(value) / scale, digits)",
+        after=(
+            "    number = float(value)\n"
+            "    return round(number / scale, digits) if math.isfinite(number) else None"
+        ),
+        expected_failure_marker="test_non_finite_gross_margin_is_still_refused_by_the_funnel",
+        rationale="Only a provider null becomes None; NaN/Inf must keep reaching the funnel's non-finite refusal instead of turning into a quiet null.",
+    ),
+    MutationCase(
         mutation_id="FUNNEL_BATTERY_BUDGET_DERIVED",
         component="Nightly funnel wiring DAG",
         source_path="experiments/research_funnel/funnel_dag.py",
@@ -11005,6 +11048,159 @@ MUTATIONS = MUTATIONS + (
 
 MUTATIONS = MUTATIONS + (
     MutationCase(
+        mutation_id='EXECUTION_CLOCK_ABSOLUTE_NOW',
+        component="Execution tracker Asia/Shanghai clock",
+        source_path="experiments/execution_tracker/market_clock.py",
+        test_script="tests/test_execution_clock.py",
+        before='        return datetime.datetime.now(SHANGHAI)\n',
+        after='        return datetime.datetime.now().replace(tzinfo=SHANGHAI)\n',
+        expected_failure_marker='test_absolute_instant_ignores_machine_local_zone',
+        rationale='The London wall clock relabelled +08:00 is exactly the 2026-09 incident.',
+    ),
+    MutationCase(
+        mutation_id='EXECUTION_CLOCK_CONVERT_INSTANT',
+        component="Execution tracker Asia/Shanghai clock",
+        source_path="experiments/execution_tracker/market_clock.py",
+        test_script="tests/test_execution_clock.py",
+        before='    return dt.astimezone(SHANGHAI)\n',
+        after='    return dt.replace(tzinfo=SHANGHAI)\n',
+        expected_failure_marker='test_london_instant_converts_to_beijing_wall_clock',
+        rationale='A 09:14 London fire is 16:14 in Shanghai, not 09:14.',
+    ),
+    MutationCase(
+        mutation_id='EXECUTION_CLOCK_NAIVE_REFUSED',
+        component="Execution tracker Asia/Shanghai clock",
+        source_path="experiments/execution_tracker/market_clock.py",
+        test_script="tests/test_execution_clock.py",
+        before='    if dt.tzinfo is None or dt.utcoffset() is None:\n        raise ValueError(',
+        after='    if False:\n        raise ValueError(',
+        expected_failure_marker='test_naive_datetime_is_refused',
+        rationale='A naive datetime has no instant; converting it silently reads machine local time.',
+    ),
+    MutationCase(
+        mutation_id='EXECUTION_CLOCK_NAIVE_STAMP_UNPROVEN',
+        component="Execution tracker Asia/Shanghai clock",
+        source_path="experiments/execution_tracker/market_clock.py",
+        test_script="tests/test_execution_clock.py",
+        before='    if parsed.tzinfo is None or parsed.utcoffset() is None:\n        return None\n',
+        after='    if parsed.tzinfo is None:\n        parsed = parsed.replace(tzinfo=SHANGHAI)\n',
+        expected_failure_marker='test_naive_captured_at_is_unproven',
+        rationale='A capture stamp without an offset cannot prove which clock it was read on.',
+    ),
+    MutationCase(
+        mutation_id='EXECUTION_CLOCK_POST_CLOSE_VERDICT',
+        component="Execution tracker Asia/Shanghai clock",
+        source_path="experiments/execution_tracker/market_clock.py",
+        test_script="tests/test_execution_clock.py",
+        before='    if day > date or (day == date and clock_time >= SESSION_CLOSE):\n',
+        after='    if False:\n',
+        expected_failure_marker='test_post_close_capture_is_counted_separately',
+        rationale='A read at or after 15:00 Shanghai saw the settled session it predicts.',
+    ),
+    MutationCase(
+        mutation_id='EXECUTION_CLOCK_LEGACY_CUTOVER',
+        component="Execution tracker Asia/Shanghai clock",
+        source_path="experiments/execution_tracker/market_clock.py",
+        test_script="tests/test_execution_clock.py",
+        before='    if date >= LEGACY_CLOCK_CUTOVER:\n',
+        after='    if False:\n',
+        expected_failure_marker='test_post_cutover_legacy_label_is_unproven',
+        rationale='Labels written on the London machine clock cannot prove an in-session read.',
+    ),
+    MutationCase(
+        mutation_id='EXECUTION_CLOCK_NOWCAST_WRITE_SESSION',
+        component="Execution tracker Asia/Shanghai clock",
+        source_path="experiments/execution_tracker/run_premarket_monitor.py",
+        test_script="tests/test_execution_clock.py",
+        before='    if mc.capture_verdict(date, captured) != mc.IN_SESSION:\n        return []\n',
+        after='    if False:\n        return []\n',
+        expected_failure_marker='test_london_misfire_read_logs_nothing',
+        rationale='The one nowcast writer must refuse reads taken outside the Shanghai session.',
+    ),
+    MutationCase(
+        mutation_id='EXECUTION_CLOCK_CAPTURED_AT',
+        component="Execution tracker Asia/Shanghai clock",
+        source_path="experiments/execution_tracker/run_premarket_monitor.py",
+        test_script="tests/test_execution_clock.py",
+        before='            "captured_at": mc.stamp(captured),\n',
+        after='',
+        expected_failure_marker='test_beijing_session_read_records_captured_at',
+        rationale='New nowcasts carry the capture instant with its +08:00 offset.',
+    ),
+    MutationCase(
+        mutation_id='EXECUTION_CLOCK_WATCHTOWER_START_WINDOW',
+        component="Execution tracker Asia/Shanghai clock",
+        source_path="experiments/execution_tracker/watchtower.py",
+        test_script="tests/test_execution_clock.py",
+        before='    if not (START_FROM <= hm < START_UNTIL):\n',
+        after='    if False:\n',
+        expected_failure_marker='test_london_clock_start_is_outside_market_hours',
+        rationale='A launchd fire outside the Shanghai session fails closed before any quote.',
+    ),
+    MutationCase(
+        mutation_id='EXECUTION_CLOCK_WATCHTOWER_TRADING_DAY',
+        component="Execution tracker Asia/Shanghai clock",
+        source_path="experiments/execution_tracker/watchtower.py",
+        test_script="tests/test_execution_clock.py",
+        before='    if not is_open:\n        return NON_TRADING_DAY, why\n',
+        after='    if False:\n        return NON_TRADING_DAY, why\n',
+        expected_failure_marker='test_non_trading_day_start_is_refused',
+        rationale='A non-trading day never admits the daemon.',
+    ),
+    MutationCase(
+        mutation_id='EXECUTION_CLOCK_WATCHTOWER_DAEMON_REFUSES',
+        component="Execution tracker Asia/Shanghai clock",
+        source_path="experiments/execution_tracker/watchtower.py",
+        test_script="tests/test_execution_clock.py",
+        before='    if status != ADMITTED:\n        report_status(status, why)\n        return status\n',
+        after='    if False:\n        report_status(status, why)\n        return status\n',
+        expected_failure_marker='test_london_daemon_exits_without_polling_or_logging',
+        rationale='The daemon exits with an explicit status instead of starting its loop.',
+    ),
+    MutationCase(
+        mutation_id='EXECUTION_CLOCK_EOD_SESSION',
+        component="Execution tracker Asia/Shanghai clock",
+        source_path="experiments/execution_tracker/run_eod_decision.py",
+        test_script="tests/test_execution_clock.py",
+        before='    if not mc.in_trading_session(now):\n',
+        after='    if False:\n',
+        expected_failure_marker='test_london_clock_eod_fire_is_outside_market_hours',
+        rationale='The 14:26 London fire (21:26 Shanghai) is outside market hours, not merely off-window.',
+    ),
+    MutationCase(
+        mutation_id='EXECUTION_CLOCK_EOD_TRADING_DAY',
+        component="Execution tracker Asia/Shanghai clock",
+        source_path="experiments/execution_tracker/run_eod_decision.py",
+        test_script="tests/test_execution_clock.py",
+        before='    if not is_open:\n        print(f"{NON_TRADING_DAY}',
+        after='    if False:\n        print(f"{NON_TRADING_DAY}',
+        expected_failure_marker='test_non_trading_day_eod_is_refused',
+        rationale='A holiday EOD run would read the previous session as today.',
+    ),
+    MutationCase(
+        mutation_id='EXECUTION_CLOCK_SCORE_ADMISSION',
+        component="Execution tracker Asia/Shanghai clock",
+        source_path="experiments/execution_tracker/nowcast_evaluator.py",
+        test_script="tests/test_execution_clock.py",
+        before='        if mc.nowcast_admission(rec) != mc.IN_SESSION:     # post-close / unprovable\n            continue\n',
+        after='        if False:\n            continue\n',
+        expected_failure_marker='test_post_close_capture_is_never_scored',
+        rationale='The scorer never grades a read it cannot prove was in-session.',
+    ),
+    MutationCase(
+        mutation_id='EXECUTION_CLOCK_AGGREGATE_ADMISSION',
+        component="Execution tracker Asia/Shanghai clock",
+        source_path="experiments/execution_tracker/nowcast_evaluator.py",
+        test_script="tests/test_execution_clock.py",
+        before='        if not rec.get("scored") or mc.nowcast_admission(rec) != mc.IN_SESSION:\n',
+        after='        if not rec.get("scored"):\n',
+        expected_failure_marker='test_already_scored_excluded_record_never_reaches_hit_rate',
+        rationale='A record scored elsewhere still cannot enter the hit rate without admission.',
+    ),
+)
+
+MUTATIONS = MUTATIONS + (
+    MutationCase(
         mutation_id="PAPER_T10_CLOCK",
         component="Paper execution opt-in T10 calendar",
         source_path="experiments/execution_tracker/paper_deadline.py",
@@ -11895,6 +12091,7 @@ def validate_manifest(root: Path, cases: Sequence[MutationCase]) -> None:
     validate_k1_marker_coverage(root, cases)
     validate_a035_marker_coverage(root, cases)
     validate_r043_marker_coverage(root, cases)
+    validate_execution_clock_marker_coverage(root, cases)
     validate_funnel_marker_coverage(root, cases)
     validate_funnel_nightly_marker_coverage(root, cases)
     validate_nightly_acceptance_marker_coverage(root, cases)
@@ -12020,6 +12217,54 @@ def validate_r043_marker_coverage(
     if missing_mutations or missing_markers:
         raise MutationGateError(
             "R-043 governance marker drift: "
+            f"markers_without_mutations={missing_mutations}; "
+            f"mutations_without_markers={missing_markers}"
+        )
+
+
+def validate_execution_clock_marker_coverage(
+    root: Path,
+    cases: Sequence[MutationCase],
+    marker_paths: Sequence[str] = EXECUTION_CLOCK_GOVERNANCE_PATHS,
+    prefix: str = EXECUTION_CLOCK_MUTATION_PREFIX,
+) -> None:
+    """Every Asia/Shanghai clock guard carries a marker and a pinned mutation."""
+    declared = {
+        case.mutation_id for case in cases if case.mutation_id.startswith(prefix)
+    }
+    existing_paths = [
+        relative for relative in marker_paths if _resolved_under(root, relative).is_file()
+    ]
+    if not declared and not existing_paths:
+        return
+
+    marked: dict[str, str] = {}
+    for relative in marker_paths:
+        source = _resolved_under(root, relative)
+        if not source.is_file():
+            raise MutationGateError(
+                f"execution clock governance marker source is missing: {relative}"
+            )
+        for line_number, line in enumerate(
+            source.read_text(encoding="utf-8").splitlines(), start=1
+        ):
+            match = GOVERNANCE_MARKER_RE.fullmatch(line)
+            if not match:
+                continue
+            mutation_id = match.group("mutation_id")
+            if not mutation_id.startswith(prefix):
+                continue
+            if mutation_id in marked:
+                raise MutationGateError(
+                    f"duplicate execution clock governance marker: {mutation_id} at "
+                    f"{marked[mutation_id]} and {relative}:{line_number}"
+                )
+            marked[mutation_id] = f"{relative}:{line_number}"
+    missing_mutations = sorted(set(marked) - declared)
+    missing_markers = sorted(declared - set(marked))
+    if missing_mutations or missing_markers:
+        raise MutationGateError(
+            "execution clock governance marker drift: "
             f"markers_without_mutations={missing_mutations}; "
             f"mutations_without_markers={missing_markers}"
         )
@@ -12296,8 +12541,173 @@ def _target_test(case: MutationCase) -> str:
     return case.test_function or case.expected_failure_marker
 
 
-def run_gate(root: Path = REPO_ROOT, cases: Sequence[MutationCase] = MUTATIONS) -> None:
+SHARD_SPEC_RE = re.compile(r"^(?P<index>[1-9][0-9]*)/(?P<count>[1-9][0-9]*)$")
+SHARD_RECEIPT_SCHEMA = "ar-governance-mutation-shard-receipt.v1"
+
+
+@dataclass(frozen=True)
+class Shard:
+    index: int
+    count: int
+
+
+@dataclass(frozen=True)
+class ShardReceipt:
+    schema: str
+    shard_index: int
+    shard_count: int
+    manifest_sha256: str
+    manifest_size: int
+    killed: tuple[str, ...]
+
+
+def parse_shard(value: str) -> Shard:
+    match = SHARD_SPEC_RE.fullmatch(value)
+    if not match:
+        raise argparse.ArgumentTypeError(f"shard must look like I/N with 1 <= I <= N: {value!r}")
+    shard = Shard(index=int(match.group("index")), count=int(match.group("count")))
+    if shard.index > shard.count:
+        raise argparse.ArgumentTypeError(f"shard index exceeds shard count: {value!r}")
+    return shard
+
+
+def select_shard(cases: Sequence[MutationCase], shard: Shard | None) -> tuple[MutationCase, ...]:
+    """Deal the ordered manifest round-robin: position p belongs to shard p % N + 1.
+
+    Interleaving keeps each shard a cross-section of every component, so a slow
+    test family is spread over all shards instead of landing in one of them.
+    """
+    if shard is None:
+        return tuple(cases)
+    return tuple(
+        case
+        for position, case in enumerate(cases)
+        if position % shard.count == shard.index - 1
+    )
+
+
+def manifest_digest(cases: Sequence[MutationCase]) -> str:
+    # Every field of every case, in order: a receipt from any other manifest
+    # revision (a changed anchor, target, or ordering) cannot be merged.
+    payload = json.dumps(
+        [asdict(case) for case in cases],
+        ensure_ascii=False,
+        separators=(",", ":"),
+        sort_keys=True,
+    )
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def write_shard_receipt(
+    path: Path,
+    cases: Sequence[MutationCase],
+    shard: Shard,
+    killed: Sequence[str],
+) -> None:
+    payload = {
+        "schema": SHARD_RECEIPT_SCHEMA,
+        "shard_index": shard.index,
+        "shard_count": shard.count,
+        "manifest_sha256": manifest_digest(cases),
+        "manifest_size": len(cases),
+        "killed": list(killed),
+    }
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+
+
+def _parse_shard_receipt(path: Path) -> ShardReceipt:
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise MutationGateError(f"shard receipt is unreadable: {path.name}") from exc
+    required = {
+        "schema",
+        "shard_index",
+        "shard_count",
+        "manifest_sha256",
+        "manifest_size",
+        "killed",
+    }
+    if not isinstance(payload, dict) or set(payload) != required:
+        raise MutationGateError(f"shard receipt shape is invalid: {path.name}")
+    if payload["schema"] != SHARD_RECEIPT_SCHEMA:
+        raise MutationGateError(f"shard receipt schema is invalid: {path.name}")
+    for field in ("shard_index", "shard_count", "manifest_size"):
+        value = payload[field]
+        if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+            raise MutationGateError(f"shard receipt count is invalid: {path.name}: {field}")
+    if not 1 <= payload["shard_index"] <= payload["shard_count"]:
+        raise MutationGateError(f"shard receipt index is out of range: {path.name}")
+    if not isinstance(payload["manifest_sha256"], str):
+        raise MutationGateError(f"shard receipt manifest digest is invalid: {path.name}")
+    killed = payload["killed"]
+    if not isinstance(killed, list) or not all(isinstance(item, str) for item in killed):
+        raise MutationGateError(f"shard receipt kill list is invalid: {path.name}")
+    return ShardReceipt(**{**payload, "killed": tuple(killed)})
+
+
+def merge_shard_receipts(
+    receipt_dir: Path,
+    cases: Sequence[MutationCase] = MUTATIONS,
+) -> int:
+    """Recompute every shard's assignment from this checkout and demand exact kills."""
+    paths = sorted(receipt_dir.rglob("*.json")) if receipt_dir.is_dir() else []
+    if not paths:
+        raise MutationGateError(f"no shard receipts found under {receipt_dir}")
+    receipts = [_parse_shard_receipt(path) for path in paths]
+    counts = sorted({receipt.shard_count for receipt in receipts})
+    if len(counts) != 1:
+        raise MutationGateError(f"shard receipts disagree on the shard count: {counts}")
+    count = counts[0]
+    indices = [receipt.shard_index for receipt in receipts]
+    missing = sorted(set(range(1, count + 1)) - set(indices))
+    duplicated = sorted({index for index in indices if indices.count(index) > 1})
+    if missing or duplicated:
+        raise MutationGateError(
+            f"shard receipts are incomplete for {count} shards: "
+            f"missing={missing}; duplicated={duplicated}"
+        )
+
+    digest = manifest_digest(cases)
+    killed: list[str] = []
+    for receipt in sorted(receipts, key=lambda item: item.shard_index):
+        label = f"shard {receipt.shard_index}/{count}"
+        if receipt.manifest_sha256 != digest or receipt.manifest_size != len(cases):
+            raise MutationGateError(f"{label} ran a different mutation manifest")
+        expected = tuple(
+            case.mutation_id
+            for case in select_shard(cases, Shard(receipt.shard_index, count))
+        )
+        if receipt.killed != expected:
+            raise MutationGateError(
+                f"{label} kill list does not match its assigned mutations: "
+                f"not_killed={sorted(set(expected) - set(receipt.killed))}; "
+                f"unassigned={sorted(set(receipt.killed) - set(expected))}"
+            )
+        killed.extend(receipt.killed)
+        print(f"SHARD OK       {label}: {len(receipt.killed)} killed")
+
+    declared = [case.mutation_id for case in cases]
+    if sorted(killed) != sorted(declared):
+        raise MutationGateError("merged kill list does not equal the declared manifest")
+    print(
+        f"governance mutation gate: {len(killed)}/{len(declared)} mutations killed "
+        f"across {count} shards"
+    )
+    return len(killed)
+
+
+def run_gate(
+    root: Path = REPO_ROOT,
+    cases: Sequence[MutationCase] = MUTATIONS,
+    shard: Shard | None = None,
+) -> tuple[str, ...]:
+    # The anchor, target and marker-coverage checks always see the full
+    # manifest, so every shard fails on drift anywhere in it.
     validate_manifest(root, cases)
+    selected = select_shard(cases, shard)
+    killed: list[str] = []
     with tempfile.TemporaryDirectory(prefix="ar-governance-mutations-") as tmp:
         tmp_root = Path(tmp)
         sandbox = tmp_root / "repo"
@@ -12305,7 +12715,7 @@ def run_gate(root: Path = REPO_ROOT, cases: Sequence[MutationCase] = MUTATIONS) 
         shutil.copytree(root, sandbox, ignore=_copy_ignore)
         _write_network_guard(guard)
 
-        targets = tuple(dict.fromkeys((case.test_script, _target_test(case)) for case in cases))
+        targets = tuple(dict.fromkeys((case.test_script, _target_test(case)) for case in selected))
         for script, test_function in targets:
             result = run_test_script(sandbox, guard, script, test_function)
             try:
@@ -12317,7 +12727,7 @@ def run_gate(root: Path = REPO_ROOT, cases: Sequence[MutationCase] = MUTATIONS) 
                 ) from exc
             print(f"BASELINE PASS  {script}::{test_function}")
 
-        for case in cases:
+        for case in selected:
             target = _resolved_under(sandbox, case.source_path)
             original = target.read_text(encoding="utf-8")
             mutated = replace_exact(original, case.before, case.after, case.mutation_id)
@@ -12337,15 +12747,45 @@ def run_gate(root: Path = REPO_ROOT, cases: Sequence[MutationCase] = MUTATIONS) 
                 raise
             finally:
                 target.write_text(original, encoding="utf-8")
+            killed.append(case.mutation_id)
             print(f"KILLED         {case.mutation_id} [{case.component}]")
 
-    print(f"governance mutation gate: {len(cases)}/{len(cases)} mutations killed")
+    if shard is None:
+        print(f"governance mutation gate: {len(cases)}/{len(cases)} mutations killed")
+    else:
+        print(
+            f"governance mutation gate: shard {shard.index}/{shard.count}: "
+            f"{len(killed)}/{len(selected)} assigned mutations killed "
+            f"({len(cases)} declared; merge every shard receipt for the total)"
+        )
+    return tuple(killed)
 
 
 def parse_args(argv: Iterable[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--list", action="store_true", help="list declared mutations")
-    return parser.parse_args(argv)
+    parser.add_argument(
+        "--shard",
+        type=parse_shard,
+        metavar="I/N",
+        help="run only the mutations dealt round-robin to shard I of N",
+    )
+    parser.add_argument(
+        "--receipt",
+        type=Path,
+        metavar="PATH",
+        help="after every assigned mutation is killed, write the shard receipt here",
+    )
+    parser.add_argument(
+        "--merge-receipts",
+        type=Path,
+        metavar="DIR",
+        help="verify shard receipts against this checkout's manifest; runs no mutations",
+    )
+    args = parser.parse_args(argv)
+    if args.merge_receipts is not None and (args.shard or args.receipt or args.list):
+        parser.error("--merge-receipts cannot be combined with --list, --shard or --receipt")
+    return args
 
 
 def main(argv: Iterable[str] | None = None) -> int:
@@ -12355,7 +12795,12 @@ def main(argv: Iterable[str] | None = None) -> int:
             print(f"{case.mutation_id}\t{case.component}\t{case.source_path}")
         return 0
     try:
-        run_gate()
+        if args.merge_receipts is not None:
+            merge_shard_receipts(args.merge_receipts, MUTATIONS)
+            return 0
+        killed = run_gate(REPO_ROOT, MUTATIONS, shard=args.shard)
+        if args.receipt is not None:
+            write_shard_receipt(args.receipt, MUTATIONS, args.shard or Shard(1, 1), killed)
     except MutationGateError as exc:
         print(f"governance mutation gate: FAIL: {exc}", file=sys.stderr)
         return 1

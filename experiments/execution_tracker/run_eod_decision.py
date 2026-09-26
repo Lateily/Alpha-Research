@@ -10,6 +10,9 @@ run_eod_decision.py — P5 尾盘决策窗引擎 v0(影子模式)
 永不成交、永不注册;资金腿在定盘由 setup_promoter 复核(尾盘资金不可得,
 显式声明 flow_leg: DEFERRED_TO_SETTLE)。全部输入 sample_eligible: false。
 窗外调用 => OFF_WINDOW 声明退出(--force + 注入行情仅供测试)。
+时钟一律 Asia/Shanghai(market_clock),不读本机时区:交易时段 09:15-15:00 之外
+=> OUTSIDE_MARKET_HOURS 退出码 3,--force 也不放行(盘后行情=前视);
+非交易日 => NON_TRADING_DAY。两者都不写 eod_candidates.json。
 
 不是买卖指令；研究信号，human executes。
 """
@@ -19,8 +22,16 @@ import os
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, HERE)
+import market_clock as mc  # noqa: E402
+
 OUT = os.path.join(HERE, "eod_candidates.json")
+SIGNALS = os.path.join(HERE, "paper_signal_log.json")
 WIN_LO, WIN_HI = "1425", "1455"
+OFF_WINDOW = "OFF_WINDOW"
+OUTSIDE_MARKET_HOURS = "OUTSIDE_MARKET_HOURS"
+NON_TRADING_DAY = "NON_TRADING_DAY"
+EXIT_OUTSIDE_MARKET_HOURS = 3
 
 
 def _load(path, default):
@@ -54,8 +65,9 @@ def _stop(text):
     return float(m.group(1)) if m else None
 
 
-def decide(signals, quotes, today, hhmm):
-    """纯函数。quotes: {ticker: {'price','low','high'}}(推断,sample_eligible=false)"""
+def decide(signals, quotes, today, hhmm, captured_at=None):
+    """纯函数。quotes: {ticker: {'price','low','high'}}(推断,sample_eligible=false)
+    captured_at: 行情读取时刻(ISO +08:00),给定时写入每条候选。"""
     out, blocked = [], []
     for s in signals:
         t = s.get("ticker") or ""
@@ -89,7 +101,10 @@ def decide(signals, quotes, today, hhmm):
                     "date": today, "window": hhmm, "verdict": verdict, "why": why,
                     "eod_price": q["price"], "sample_eligible": False,
                     "no_trade_flag": True})
-    return {"date": today, "window": hhmm, "candidates": out,
+    if captured_at is not None:
+        for c in out:
+            c["captured_at"] = captured_at
+    return {"date": today, "window": hhmm, "captured_at": captured_at, "candidates": out,
             "data_blocked": blocked,
             "note": "影子判定;永不成交/注册;与次日触发机制A/B对照。不是买卖指令。"}
 
@@ -145,22 +160,40 @@ def selftest():
     return passed == len(ok)
 
 
-def main():
-    if "--selftest" in sys.argv:
+def admission(now, force=False):
+    """纯时钟闸(零网络)。now: aware datetime。返回 (status|None, reason)。"""
+    hhmm = mc.hhmm(now)
+    # governance-mutation: EXECUTION_CLOCK_EOD_SESSION
+    if not mc.in_trading_session(now):
+        return OUTSIDE_MARKET_HOURS, (f"{mc.stamp(now)} 不在 Asia/Shanghai 交易时段 09:15-15:00;"
+                                      f"--force 也不放行(盘后行情=前视);不产出。")
+    if not in_window(hhmm) and not force:
+        return OFF_WINDOW, f"现在 {hhmm} Asia/Shanghai,决策窗 {WIN_LO}-{WIN_HI};不产出。"
+    return None, ""
+
+
+def main(argv=None, clock=None, quote_fn=None, trading_day_fn=None):
+    """返回退出码。clock/quote_fn/trading_day_fn 仅供测试注入。"""
+    argv = sys.argv[1:] if argv is None else argv
+    if "--selftest" in argv:
         sys.exit(0 if selftest() else 1)
-    import datetime
-    now = datetime.datetime.now()
-    hhmm = now.strftime("%H%M")
-    if not in_window(hhmm) and "--force" not in sys.argv:
-        print(f"OFF_WINDOW: 现在 {hhmm},决策窗 {WIN_LO}-{WIN_HI};不产出。")
-        return
-    sys.path.insert(0, HERE)
+    status, why = admission(mc.shanghai_now(clock), force="--force" in argv)
+    if status:
+        print(f"{status}: {why}")
+        return EXIT_OUTSIDE_MARKET_HOURS if status == OUTSIDE_MARKET_HOURS else 0
     import fund_source as fs
+    from run_premarket_monitor import is_trading_day
     token = os.environ.get("TUSHARE_TOKEN", "").strip()
     if not token:
         print("DATA_BLOCKED: NO TUSHARE_TOKEN")
-        sys.exit(1)
-    signals = _load(os.path.join(HERE, "paper_signal_log.json"), [])
+        return 1
+    trading_day_fn = trading_day_fn or (lambda d: is_trading_day(d, token))
+    is_open, why = trading_day_fn(mc.trade_date(mc.shanghai_now(clock)))
+    # governance-mutation: EXECUTION_CLOCK_EOD_TRADING_DAY
+    if not is_open:
+        print(f"{NON_TRADING_DAY}: {why};不产出。")
+        return 0
+    signals = _load(SIGNALS, [])
     tickers = sorted({s["ticker"] for s in signals
                       if s.get("setup_type") == "execution_gate"
                       and not s.get("official_sample")
@@ -168,14 +201,21 @@ def main():
                       and "." in (s.get("ticker") or "")})
     if not tickers:
         print("今日无活跃 execution_gate 信号;窗内无事。")
-        return
-    rows = fs.tushare_realtime_quotes(tickers, src="sina")
+        return 0
+    quote_fn = quote_fn or (lambda ts: fs.tushare_realtime_quotes(ts, src="sina"))
+    rows = quote_fn(tickers)
+    captured = mc.shanghai_now(clock)        # 行情读取时刻
+    if not mc.in_trading_session(captured):
+        print(f"{OUTSIDE_MARKET_HOURS}: 行情读取于 {mc.stamp(captured)},已过收盘;不产出。")
+        return EXIT_OUTSIDE_MARKET_HOURS
+    hhmm = mc.hhmm(captured)
     quotes = {}
     for r in rows:
         t = r.get("ticker") or ""
         full = t if "." in t else next((x for x in tickers if x.startswith(t)), t)
         quotes[full] = {"price": r.get("price"), "low": r.get("low"), "high": r.get("high")}
-    result = decide(signals, quotes, now.strftime("%Y%m%d"), hhmm)
+    result = decide(signals, quotes, mc.trade_date(captured), hhmm,
+                    captured_at=mc.stamp(captured))
     n = append_log(result)
     print(f"## 尾盘决策窗 {hhmm}(新增 {n} 条)")
     for c in result["candidates"]:
@@ -183,7 +223,8 @@ def main():
     for b in result["data_blocked"]:
         print(f"  ⛔ {b['ticker']} {b['why']}")
     print("不是买卖指令；研究信号，human executes.")
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
