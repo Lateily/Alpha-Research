@@ -359,6 +359,10 @@ jobs:
       # ── Macro OS M0-B3:官方 URL 发现 + 自适应调度 + 预期登记 WAL ──
       - name: Macro OS M0-B3 discovery and scheduler regression (offline)
         run: python3 tests/test_macro_m0b3_offline.py
+      # 2026-09 伦敦时钟事故:盘中执行层一律 Asia/Shanghai,时段外 fail-closed,
+      # 判分只收可证明盘中读取的 nowcast(注入伦敦/北京两种时钟)。
+      - name: Execution tracker Asia/Shanghai clock (offline)
+        run: python3 tests/test_execution_clock.py
       # Governance gates are not delivered until a precise no-op mutation makes
       # the corresponding behavioral suite fail. The runner works in a temp
       # copy, strips secrets, blocks sockets, and rejects infrastructure-red as
