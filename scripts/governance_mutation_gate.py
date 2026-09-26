@@ -19,7 +19,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Iterable, Sequence
 
@@ -11736,8 +11736,173 @@ def _target_test(case: MutationCase) -> str:
     return case.test_function or case.expected_failure_marker
 
 
-def run_gate(root: Path = REPO_ROOT, cases: Sequence[MutationCase] = MUTATIONS) -> None:
+SHARD_SPEC_RE = re.compile(r"^(?P<index>[1-9][0-9]*)/(?P<count>[1-9][0-9]*)$")
+SHARD_RECEIPT_SCHEMA = "ar-governance-mutation-shard-receipt.v1"
+
+
+@dataclass(frozen=True)
+class Shard:
+    index: int
+    count: int
+
+
+@dataclass(frozen=True)
+class ShardReceipt:
+    schema: str
+    shard_index: int
+    shard_count: int
+    manifest_sha256: str
+    manifest_size: int
+    killed: tuple[str, ...]
+
+
+def parse_shard(value: str) -> Shard:
+    match = SHARD_SPEC_RE.fullmatch(value)
+    if not match:
+        raise argparse.ArgumentTypeError(f"shard must look like I/N with 1 <= I <= N: {value!r}")
+    shard = Shard(index=int(match.group("index")), count=int(match.group("count")))
+    if shard.index > shard.count:
+        raise argparse.ArgumentTypeError(f"shard index exceeds shard count: {value!r}")
+    return shard
+
+
+def select_shard(cases: Sequence[MutationCase], shard: Shard | None) -> tuple[MutationCase, ...]:
+    """Deal the ordered manifest round-robin: position p belongs to shard p % N + 1.
+
+    Interleaving keeps each shard a cross-section of every component, so a slow
+    test family is spread over all shards instead of landing in one of them.
+    """
+    if shard is None:
+        return tuple(cases)
+    return tuple(
+        case
+        for position, case in enumerate(cases)
+        if position % shard.count == shard.index - 1
+    )
+
+
+def manifest_digest(cases: Sequence[MutationCase]) -> str:
+    # Every field of every case, in order: a receipt from any other manifest
+    # revision (a changed anchor, target, or ordering) cannot be merged.
+    payload = json.dumps(
+        [asdict(case) for case in cases],
+        ensure_ascii=False,
+        separators=(",", ":"),
+        sort_keys=True,
+    )
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def write_shard_receipt(
+    path: Path,
+    cases: Sequence[MutationCase],
+    shard: Shard,
+    killed: Sequence[str],
+) -> None:
+    payload = {
+        "schema": SHARD_RECEIPT_SCHEMA,
+        "shard_index": shard.index,
+        "shard_count": shard.count,
+        "manifest_sha256": manifest_digest(cases),
+        "manifest_size": len(cases),
+        "killed": list(killed),
+    }
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+
+
+def _parse_shard_receipt(path: Path) -> ShardReceipt:
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise MutationGateError(f"shard receipt is unreadable: {path.name}") from exc
+    required = {
+        "schema",
+        "shard_index",
+        "shard_count",
+        "manifest_sha256",
+        "manifest_size",
+        "killed",
+    }
+    if not isinstance(payload, dict) or set(payload) != required:
+        raise MutationGateError(f"shard receipt shape is invalid: {path.name}")
+    if payload["schema"] != SHARD_RECEIPT_SCHEMA:
+        raise MutationGateError(f"shard receipt schema is invalid: {path.name}")
+    for field in ("shard_index", "shard_count", "manifest_size"):
+        value = payload[field]
+        if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+            raise MutationGateError(f"shard receipt count is invalid: {path.name}: {field}")
+    if not 1 <= payload["shard_index"] <= payload["shard_count"]:
+        raise MutationGateError(f"shard receipt index is out of range: {path.name}")
+    if not isinstance(payload["manifest_sha256"], str):
+        raise MutationGateError(f"shard receipt manifest digest is invalid: {path.name}")
+    killed = payload["killed"]
+    if not isinstance(killed, list) or not all(isinstance(item, str) for item in killed):
+        raise MutationGateError(f"shard receipt kill list is invalid: {path.name}")
+    return ShardReceipt(**{**payload, "killed": tuple(killed)})
+
+
+def merge_shard_receipts(
+    receipt_dir: Path,
+    cases: Sequence[MutationCase] = MUTATIONS,
+) -> int:
+    """Recompute every shard's assignment from this checkout and demand exact kills."""
+    paths = sorted(receipt_dir.rglob("*.json")) if receipt_dir.is_dir() else []
+    if not paths:
+        raise MutationGateError(f"no shard receipts found under {receipt_dir}")
+    receipts = [_parse_shard_receipt(path) for path in paths]
+    counts = sorted({receipt.shard_count for receipt in receipts})
+    if len(counts) != 1:
+        raise MutationGateError(f"shard receipts disagree on the shard count: {counts}")
+    count = counts[0]
+    indices = [receipt.shard_index for receipt in receipts]
+    missing = sorted(set(range(1, count + 1)) - set(indices))
+    duplicated = sorted({index for index in indices if indices.count(index) > 1})
+    if missing or duplicated:
+        raise MutationGateError(
+            f"shard receipts are incomplete for {count} shards: "
+            f"missing={missing}; duplicated={duplicated}"
+        )
+
+    digest = manifest_digest(cases)
+    killed: list[str] = []
+    for receipt in sorted(receipts, key=lambda item: item.shard_index):
+        label = f"shard {receipt.shard_index}/{count}"
+        if receipt.manifest_sha256 != digest or receipt.manifest_size != len(cases):
+            raise MutationGateError(f"{label} ran a different mutation manifest")
+        expected = tuple(
+            case.mutation_id
+            for case in select_shard(cases, Shard(receipt.shard_index, count))
+        )
+        if receipt.killed != expected:
+            raise MutationGateError(
+                f"{label} kill list does not match its assigned mutations: "
+                f"not_killed={sorted(set(expected) - set(receipt.killed))}; "
+                f"unassigned={sorted(set(receipt.killed) - set(expected))}"
+            )
+        killed.extend(receipt.killed)
+        print(f"SHARD OK       {label}: {len(receipt.killed)} killed")
+
+    declared = [case.mutation_id for case in cases]
+    if sorted(killed) != sorted(declared):
+        raise MutationGateError("merged kill list does not equal the declared manifest")
+    print(
+        f"governance mutation gate: {len(killed)}/{len(declared)} mutations killed "
+        f"across {count} shards"
+    )
+    return len(killed)
+
+
+def run_gate(
+    root: Path = REPO_ROOT,
+    cases: Sequence[MutationCase] = MUTATIONS,
+    shard: Shard | None = None,
+) -> tuple[str, ...]:
+    # The anchor, target and marker-coverage checks always see the full
+    # manifest, so every shard fails on drift anywhere in it.
     validate_manifest(root, cases)
+    selected = select_shard(cases, shard)
+    killed: list[str] = []
     with tempfile.TemporaryDirectory(prefix="ar-governance-mutations-") as tmp:
         tmp_root = Path(tmp)
         sandbox = tmp_root / "repo"
@@ -11745,7 +11910,7 @@ def run_gate(root: Path = REPO_ROOT, cases: Sequence[MutationCase] = MUTATIONS) 
         shutil.copytree(root, sandbox, ignore=_copy_ignore)
         _write_network_guard(guard)
 
-        targets = tuple(dict.fromkeys((case.test_script, _target_test(case)) for case in cases))
+        targets = tuple(dict.fromkeys((case.test_script, _target_test(case)) for case in selected))
         for script, test_function in targets:
             result = run_test_script(sandbox, guard, script, test_function)
             try:
@@ -11757,7 +11922,7 @@ def run_gate(root: Path = REPO_ROOT, cases: Sequence[MutationCase] = MUTATIONS) 
                 ) from exc
             print(f"BASELINE PASS  {script}::{test_function}")
 
-        for case in cases:
+        for case in selected:
             target = _resolved_under(sandbox, case.source_path)
             original = target.read_text(encoding="utf-8")
             mutated = replace_exact(original, case.before, case.after, case.mutation_id)
@@ -11777,15 +11942,45 @@ def run_gate(root: Path = REPO_ROOT, cases: Sequence[MutationCase] = MUTATIONS) 
                 raise
             finally:
                 target.write_text(original, encoding="utf-8")
+            killed.append(case.mutation_id)
             print(f"KILLED         {case.mutation_id} [{case.component}]")
 
-    print(f"governance mutation gate: {len(cases)}/{len(cases)} mutations killed")
+    if shard is None:
+        print(f"governance mutation gate: {len(cases)}/{len(cases)} mutations killed")
+    else:
+        print(
+            f"governance mutation gate: shard {shard.index}/{shard.count}: "
+            f"{len(killed)}/{len(selected)} assigned mutations killed "
+            f"({len(cases)} declared; merge every shard receipt for the total)"
+        )
+    return tuple(killed)
 
 
 def parse_args(argv: Iterable[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--list", action="store_true", help="list declared mutations")
-    return parser.parse_args(argv)
+    parser.add_argument(
+        "--shard",
+        type=parse_shard,
+        metavar="I/N",
+        help="run only the mutations dealt round-robin to shard I of N",
+    )
+    parser.add_argument(
+        "--receipt",
+        type=Path,
+        metavar="PATH",
+        help="after every assigned mutation is killed, write the shard receipt here",
+    )
+    parser.add_argument(
+        "--merge-receipts",
+        type=Path,
+        metavar="DIR",
+        help="verify shard receipts against this checkout's manifest; runs no mutations",
+    )
+    args = parser.parse_args(argv)
+    if args.merge_receipts is not None and (args.shard or args.receipt or args.list):
+        parser.error("--merge-receipts cannot be combined with --list, --shard or --receipt")
+    return args
 
 
 def main(argv: Iterable[str] | None = None) -> int:
@@ -11795,7 +11990,12 @@ def main(argv: Iterable[str] | None = None) -> int:
             print(f"{case.mutation_id}\t{case.component}\t{case.source_path}")
         return 0
     try:
-        run_gate()
+        if args.merge_receipts is not None:
+            merge_shard_receipts(args.merge_receipts, MUTATIONS)
+            return 0
+        killed = run_gate(REPO_ROOT, MUTATIONS, shard=args.shard)
+        if args.receipt is not None:
+            write_shard_receipt(args.receipt, MUTATIONS, args.shard or Shard(1, 1), killed)
     except MutationGateError as exc:
         print(f"governance mutation gate: FAIL: {exc}", file=sys.stderr)
         return 1
