@@ -176,6 +176,10 @@ NIGHTLY_ACCEPTANCE_GOVERNANCE_PATHS = (
     "experiments/execution_tracker/run_nightly.py",
 )
 NIGHTLY_ACCEPTANCE_MUTATION_PREFIX = "NIGHTLY_ACCEPTANCE_"
+WB01_GOVERNANCE_PATHS = (
+    "scripts/llm/workbench_daily_brief.py",
+)
+WB01_MUTATION_PREFIX = "WB01_"
 
 
 class MutationGateError(RuntimeError):
@@ -11496,6 +11500,108 @@ def _parse_receipt(path: Path) -> TestReceipt:
     return TestReceipt(**payload)
 
 
+MUTATIONS = MUTATIONS + (
+    MutationCase(
+        mutation_id="WB01_SOURCE_HASH_BINDING",
+        component="WB-01 daily brief contract",
+        source_path="scripts/llm/workbench_daily_brief.py",
+        test_script="tests/test_workbench_daily_brief.py",
+        before=(
+            '            # governance-mutation: WB01_SOURCE_HASH_BINDING\n'
+            '            if sha256(raw) != descriptor["sha256"]:\n'
+            '                raise BriefBlocked("SOURCE_HASH_MISMATCH", role)'
+        ),
+        after=(
+            '            # governance-mutation: WB01_SOURCE_HASH_BINDING\n'
+            '            if False:\n'
+            '                raise BriefBlocked("SOURCE_HASH_MISMATCH", role)'
+        ),
+        expected_failure_marker="test_changed_bytes_without_rebind_are_rejected",
+        rationale="Changed source bytes must not enter a daily brief under an old hash.",
+    ),
+    MutationCase(
+        mutation_id="WB01_SOURCE_RUN_BINDING",
+        component="WB-01 daily brief contract",
+        source_path="scripts/llm/workbench_daily_brief.py",
+        test_script="tests/test_workbench_daily_brief.py",
+        before=(
+            '    # governance-mutation: WB01_SOURCE_RUN_BINDING\n'
+            '    if payload.get("run_id") != envelope["run_id"]:\n'
+            '        raise BriefBlocked("SOURCE_RUN_ID_MISMATCH", role)'
+        ),
+        after=(
+            '    # governance-mutation: WB01_SOURCE_RUN_BINDING\n'
+            '    if False:\n'
+            '        raise BriefBlocked("SOURCE_RUN_ID_MISMATCH", role)'
+        ),
+        expected_failure_marker="test_resealed_cross_date_and_cross_run_are_rejected",
+        rationale="A correctly resealed source from another run must remain blocked.",
+    ),
+    MutationCase(
+        mutation_id="WB01_SOURCE_DATE_BINDING",
+        component="WB-01 daily brief contract",
+        source_path="scripts/llm/workbench_daily_brief.py",
+        test_script="tests/test_workbench_daily_brief.py",
+        before=(
+            '    # governance-mutation: WB01_SOURCE_DATE_BINDING\n'
+            '    if payload.get("as_of") != envelope["target_trade_date"]:\n'
+            '        raise BriefBlocked("SOURCE_DATE_MISMATCH", role)'
+        ),
+        after=(
+            '    # governance-mutation: WB01_SOURCE_DATE_BINDING\n'
+            '    if False:\n'
+            '        raise BriefBlocked("SOURCE_DATE_MISMATCH", role)'
+        ),
+        expected_failure_marker="test_resealed_cross_date_and_cross_run_are_rejected",
+        rationale="A correctly resealed source from another date must remain blocked.",
+    ),
+    MutationCase(
+        mutation_id="WB01_PORTFOLIO_ARITHMETIC",
+        component="WB-01 daily brief contract",
+        source_path="scripts/llm/workbench_daily_brief.py",
+        test_script="tests/test_workbench_daily_brief.py",
+        before=(
+            '    # governance-mutation: WB01_PORTFOLIO_ARITHMETIC\n'
+            '    if current_nav != current_cash + current_position_value:\n'
+            '        raise BriefBlocked("PORTFOLIO_ARITHMETIC_MISMATCH", "current_nav")'
+        ),
+        after=(
+            '    # governance-mutation: WB01_PORTFOLIO_ARITHMETIC\n'
+            '    if False:\n'
+            '        raise BriefBlocked("PORTFOLIO_ARITHMETIC_MISMATCH", "current_nav")'
+        ),
+        expected_failure_marker="test_portfolio_self_reported_nav_is_recomputed",
+        rationale="Self-reported NAV cannot replace deterministic cash plus position arithmetic.",
+    ),
+    MutationCase(
+        mutation_id="WB01_RUN_STATE_SEPARATION",
+        component="WB-01 daily brief contract",
+        source_path="scripts/llm/workbench_daily_brief.py",
+        test_script="tests/test_workbench_daily_brief.py",
+        before=(
+            '                # governance-mutation: WB01_RUN_STATE_SEPARATION\n'
+            '                "displayed_is_latest_attempt": envelope["displayed_run_id"] == envelope["latest_attempt"]["run_id"],'
+        ),
+        after=(
+            '                # governance-mutation: WB01_RUN_STATE_SEPARATION\n'
+            '                "displayed_is_latest_attempt": True,'
+        ),
+        expected_failure_marker="test_newer_failed_attempt_cannot_masquerade_as_old_publication",
+        rationale="An older successful publication must not be labeled as the newer failed attempt.",
+    ),
+    MutationCase(
+        mutation_id="GOV_WB01_MARKER_COVERAGE",
+        component="Governance mutation gate self-protection",
+        source_path="scripts/governance_mutation_gate.py",
+        test_script="tests/test_governance_mutation_gate.py",
+        before=("    validate_wb01_" "marker_coverage(root, cases)"),
+        after="    pass  # WB-01 marker coverage disabled by mutation",
+        expected_failure_marker="test_validate_manifest_enforces_wb01_marker_coverage",
+        rationale="The WB-01 marker-to-mutation coverage check must itself be load-bearing.",
+    ),
+)
+
+
 def replace_exact(text: str, before: str, after: str, mutation_id: str) -> str:
     count = text.count(before)
     if count != 1:
@@ -11535,6 +11641,7 @@ def validate_manifest(root: Path, cases: Sequence[MutationCase]) -> None:
     validate_funnel_marker_coverage(root, cases)
     validate_funnel_nightly_marker_coverage(root, cases)
     validate_nightly_acceptance_marker_coverage(root, cases)
+    validate_wb01_marker_coverage(root, cases)
 
 
 def validate_k1_marker_coverage(
@@ -11836,6 +11943,43 @@ def validate_nightly_acceptance_marker_coverage(
     if missing_mutations or missing_markers:
         raise MutationGateError(
             "nightly acceptance governance marker drift: "
+            f"markers_without_mutations={missing_mutations}; "
+            f"mutations_without_markers={missing_markers}"
+        )
+
+
+def validate_wb01_marker_coverage(
+    root: Path,
+    cases: Sequence[MutationCase],
+    marker_paths: Sequence[str] = WB01_GOVERNANCE_PATHS,
+    prefix: str = WB01_MUTATION_PREFIX,
+) -> None:
+    """Every WB-01 fail-closed marker must have one executable mutation."""
+
+    declared = {case.mutation_id for case in cases if case.mutation_id.startswith(prefix)}
+    marked: dict[str, str] = {}
+    for relative in marker_paths:
+        source = _resolved_under(root, relative)
+        if not source.is_file():
+            if declared:
+                raise MutationGateError(f"WB-01 governance marker source is missing: {relative}")
+            continue
+        for line_number, line in enumerate(source.read_text(encoding="utf-8").splitlines(), start=1):
+            match = GOVERNANCE_MARKER_RE.fullmatch(line)
+            if not match or not match.group("mutation_id").startswith(prefix):
+                continue
+            mutation_id = match.group("mutation_id")
+            if mutation_id in marked:
+                raise MutationGateError(
+                    f"duplicate WB-01 governance marker: {mutation_id} at "
+                    f"{marked[mutation_id]} and {relative}:{line_number}"
+                )
+            marked[mutation_id] = f"{relative}:{line_number}"
+    missing_mutations = sorted(set(marked) - declared)
+    missing_markers = sorted(declared - set(marked))
+    if missing_mutations or missing_markers:
+        raise MutationGateError(
+            "WB-01 governance marker drift: "
             f"markers_without_mutations={missing_mutations}; "
             f"mutations_without_markers={missing_markers}"
         )

@@ -1,0 +1,28 @@
+{
+  "schema": "ar.synthetic_portfolio.v1",
+  "sample_purpose": "WORKFLOW_DEBUG",
+  "run_id": "SYNTHETIC_20260922_BRIEF_001",
+  "as_of": "20260922",
+  "currency": "CNY",
+  "paper_only": true,
+  "previous_snapshot": {
+    "as_of": "20260921",
+    "cash": 963500,
+    "nav": 1000000,
+    "positions": [
+      {"instrument_id": "DEMO001.TEST", "shares": 1100, "close": 19, "market_value": 20900},
+      {"instrument_id": "DEMO002.TEST", "shares": 400, "close": 39, "market_value": 15600}
+    ]
+  },
+  "current_snapshot": {
+    "cash": 961590,
+    "nav": 1001590,
+    "nav_change": 1590,
+    "nav_change_pct": 0.159,
+    "positions": [
+      {"instrument_id": "DEMO001.TEST", "shares": 1000, "close": 20, "market_value": 20000},
+      {"instrument_id": "DEMO002.TEST", "shares": 500, "close": 40, "market_value": 20000}
+    ]
+  },
+  "strategy_state": {"status": "UNCHANGED", "reason": "No registered strategy change in this synthetic run"}
+}

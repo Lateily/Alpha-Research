@@ -1,0 +1,137 @@
+{
+  "schema": "ar.workbench_daily_brief_acceptance.v1",
+  "status": "ACCEPTED",
+  "sample_purpose": "WORKFLOW_DEBUG",
+  "formal_authority": false,
+  "issues": [],
+  "result": {
+    "identity": {
+      "run_id": "SYNTHETIC_20260922_BRIEF_001",
+      "target_trade_date": "20260922",
+      "generated_at": "2026-09-22T20:45:00+08:00",
+      "data_cutoff": "2026-09-22T20:30:00+08:00",
+      "code_version": "WB01_SYNTHETIC_FIXTURE_V1"
+    },
+    "run_state": {
+      "latest_attempt": {
+        "run_id": "SYNTHETIC_20260922_BRIEF_001",
+        "target_trade_date": "20260922",
+        "attempted_at": "2026-09-22T20:40:00+08:00",
+        "pipeline_status": "COMPLETE",
+        "research_data_quality": "PARTIAL"
+      },
+      "last_successful_publication": {
+        "run_id": "SYNTHETIC_20260922_BRIEF_001",
+        "target_trade_date": "20260922",
+        "published_at": "2026-09-22T20:44:00+08:00",
+        "status": "SYNTHETIC_FIXTURE_ONLY"
+      },
+      "displayed_run_id": "SYNTHETIC_20260922_BRIEF_001",
+      "displayed_is_latest_attempt": true
+    },
+    "sources": [
+      {
+        "role": "FUNNEL",
+        "path": "sources/funnel.json",
+        "source_date": "20260922",
+        "data_cutoff": "2026-09-22T19:30:00+08:00",
+        "source_sha256": "ef8bf270fee4bad053b262389a759b0b120f8a32497123b6e0015dab5880b9fa",
+        "quality_status": "PARTIAL"
+      },
+      {
+        "role": "MACRO",
+        "path": "sources/macro.json",
+        "source_date": "20260922",
+        "data_cutoff": "2026-09-22T18:00:00+08:00",
+        "source_sha256": "1879e1ffde6c0dea5164d7df32bb9175aa8b6248550492841a0057af3865f47a",
+        "quality_status": "DATA_BLOCKED"
+      },
+      {
+        "role": "MARKET",
+        "path": "sources/market.json",
+        "source_date": "20260922",
+        "data_cutoff": "2026-09-22T15:00:00+08:00",
+        "source_sha256": "5d1a81e5e18822d79b45a89cdffc68694d7d5fa8eace80db6fb67561a255dbc2",
+        "quality_status": "AVAILABLE"
+      },
+      {
+        "role": "ORDERS",
+        "path": "sources/orders.json",
+        "source_date": "20260922",
+        "data_cutoff": "2026-09-22T16:00:00+08:00",
+        "source_sha256": "b80311d2d9967180dcdfe971f831b069d6331bd934b72006aea4c44d7eb6bacf",
+        "quality_status": "AVAILABLE"
+      },
+      {
+        "role": "PORTFOLIO",
+        "path": "sources/portfolio.json",
+        "source_date": "20260922",
+        "data_cutoff": "2026-09-22T16:00:00+08:00",
+        "source_sha256": "08c38fd6d531896fb772befefc51d6c5e72e169db74de5e2de8edbeb0af8395e",
+        "quality_status": "AVAILABLE"
+      }
+    ],
+    "portfolio": {
+      "currency": "CNY",
+      "paper_only": true,
+      "previous_cash": "963500",
+      "current_cash": "961590",
+      "previous_nav": "1000000",
+      "current_nav": "1001590",
+      "nav_change": "1590",
+      "nav_change_pct": "0.159",
+      "current_position_value": "40000",
+      "position_count": 2
+    },
+    "orders": {
+      "activity_status": "ACTIVITY_PRESENT",
+      "order_count": 3,
+      "filled_count": 2,
+      "not_filled_count": 1,
+      "total_cash_effect": "-1910",
+      "total_fees": "10"
+    },
+    "quality": {
+      "status": "PARTIAL",
+      "blocked_reasons": [
+        "FUNNEL_PARTIAL",
+        "MACRO_DATA_BLOCKED"
+      ],
+      "missing_values_zero_filled": false,
+      "market_to_portfolio_attribution": "NOT_ESTABLISHED"
+    },
+    "evidence_refs": [
+      {
+        "claim": "Broad market change",
+        "source_role": "MARKET",
+        "json_pointer": "/benchmarks/0/close_change_pct",
+        "evidence_strength": "SYNTHETIC_FACT"
+      },
+      {
+        "claim": "Portfolio NAV change",
+        "source_role": "PORTFOLIO",
+        "json_pointer": "/current_snapshot/nav_change",
+        "evidence_strength": "SYNTHETIC_FACT"
+      },
+      {
+        "claim": "Paper fill and fee",
+        "source_role": "ORDERS",
+        "json_pointer": "/orders/0",
+        "evidence_strength": "SYNTHETIC_FACT"
+      },
+      {
+        "claim": "Macro source unavailable",
+        "source_role": "MACRO",
+        "json_pointer": "/source_rows/1",
+        "evidence_strength": "SYNTHETIC_FACT"
+      },
+      {
+        "claim": "Red-flag candidate not ready",
+        "source_role": "FUNNEL",
+        "json_pointer": "/candidates/2",
+        "evidence_strength": "SYNTHETIC_FACT"
+      }
+    ]
+  },
+  "receipt_hash": "98329665e2cb1b6efa3a61eef6f60a7f1ec8a522602f3ac8106b82ef6811e0f4"
+}

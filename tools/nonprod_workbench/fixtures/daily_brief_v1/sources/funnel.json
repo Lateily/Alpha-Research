@@ -1,0 +1,16 @@
+{
+  "schema": "ar.synthetic_funnel.v1",
+  "sample_purpose": "WORKFLOW_DEBUG",
+  "run_id": "SYNTHETIC_20260922_BRIEF_001",
+  "as_of": "20260922",
+  "data_quality": "PARTIAL",
+  "formal_trade_authority": false,
+  "candidate_count": 3,
+  "candidates": [
+    {"instrument_id": "DEMO001.TEST", "battery": "COMPLETE", "red_flag": false, "ready_for_human_review": true},
+    {"instrument_id": "DEMO002.TEST", "battery": "DATA_BLOCKED", "missing_dimensions": ["valuation"], "red_flag": false, "ready_for_human_review": false},
+    {"instrument_id": "DEMO003.TEST", "battery": "COMPLETE", "red_flag": true, "ready_for_human_review": false}
+  ],
+  "u4_selected": [],
+  "note": "Candidate visibility is not U4 selection, a paper approval, or a trade recommendation."
+}
