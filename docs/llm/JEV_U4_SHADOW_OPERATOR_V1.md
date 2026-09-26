@@ -107,6 +107,13 @@ stderr. There is no current shadow-versus-human comparison artifact, agreement
 metric, or completed Task 6 flow. Do not treat the accepted `--ledger` argument
 as evidence that a ledger was read or verified.
 
+Task 6 cannot simply compare `packet_hash` values. This engine reopens an
+`u4_pre_decision` packet with `candidate_rows`; the formal U4 decision ledger
+binds a closure review packet with `ready_pool`. These are different schemas
+and different hashes. A future evaluator needs an independently reviewed bridge
+that proves common run/bundle and exact U2/U3 candidate evidence while retaining
+both packet hashes. Until then, `evaluate` must remain disabled.
+
 ## Failure meanings
 
 CLI failures are canonical JSON on stderr and exit 2. `run`/`verify` success

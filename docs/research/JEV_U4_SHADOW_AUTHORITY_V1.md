@@ -61,6 +61,12 @@ returns `SPEC_BLOCKED / EVALUATION_NOT_INSTALLED` before reading the supplied
 ledger. There is no verified shadow-to-human comparison, evaluation artifact,
 agreement result, or completed Task 6 claim to report.
 
+The shadow receipt and formal decision ledger currently bind different packet
+types: `u4_pre_decision` and closure review, respectively. Their packet hashes
+must not be equated or normalized away. Comparison requires a separately
+reviewed cross-packet provenance proof (same run/bundle and exact candidate
+evidence hashes) that retains each original hash. No such bridge is installed.
+
 The approved *future* comparison design requires a verified formal ledger,
 matching packet and candidate evidence hashes, and a separate immutable
 evaluation artifact. A discrepancy is evidence for review, not an error to
