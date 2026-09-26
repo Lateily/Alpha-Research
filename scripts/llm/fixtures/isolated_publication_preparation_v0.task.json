@@ -1,0 +1,76 @@
+{
+  "schema": "ai-task.v1",
+  "task_id": "ISOLATED-PUBLICATION-PREPARATION-001",
+  "source_issue": null,
+  "architecture_block": ["Macro OS", "isolated publication preparation", "network diagnostics"],
+  "objective": "Distinguish connection failures by execution layer and provide a freeze-before-run_id Macro preparation entry that replays verified inputs offline without publishing or touching production.",
+  "non_goals": [
+    "Do not claim a host-wide DNS failure from one process observation",
+    "Do not declare the historical nightly entry unsafe or claim historical data mixing",
+    "Do not modify the production nightly entry, production data, current_run, or publication manifests",
+    "Do not run U1-U4, paper registration, model inference, or trading actions",
+    "Do not treat an isolated preparation receipt as publication approval"
+  ],
+  "human_owner": "Junyan",
+  "reviewer": "Junyan",
+  "executor_candidates": ["Codex"],
+  "dependencies": ["Macro M0-B through M1-C merged", "Separate approval before any live capture or production action"],
+  "authority_docs": [
+    "AGENTS.md",
+    "experiments/AGENTS.md",
+    "docs/contracts/macro/M0B_DATA_PIPELINE.md",
+    "docs/research/macro/MACRO_OS.md"
+  ],
+  "file_scope": [
+    ".gitattributes",
+    ".github/workflows/python-ci.yml",
+    "scripts/network_layer_diagnostic.py",
+    "scripts/isolated_publication_prepare.py",
+    "tests/test_network_layer_diagnostic.py",
+    "tests/test_isolated_publication_prepare.py",
+    "scripts/governance_mutation_gate.py",
+    "scripts/llm/fixtures/isolated_publication_preparation_v0.task.json"
+  ],
+  "forbidden_scope": [
+    "/Users/years/ar-live",
+    "experiments/execution_tracker/run_nightly.py",
+    "experiments/macro_os/m1c.py",
+    "public/data/v2",
+    "data_history",
+    "production current_run",
+    "publication upload",
+    "team permission changes",
+    "trade authority"
+  ],
+  "input_contracts": [
+    "ar.macro.source_registry v1",
+    "experiments.macro_os.collectors RequestSpec and HttpResponse",
+    "ar.macro.m1c_run_manifest",
+    "frozen local portfolio template"
+  ],
+  "output_artifacts": [
+    "ar.network_layer_diagnostic.v1 receipt",
+    "ar.macro.frozen_source_bundle v1",
+    "ar.isolated_publication_preparation v1",
+    "isolated Macro artifacts with no current_run pointer"
+  ],
+  "acceptance_tests": [
+    "python3 tests/test_network_layer_diagnostic.py",
+    "python3 tests/test_isolated_publication_prepare.py",
+    "python3 tests/test_macro_m1c_offline.py",
+    "python3 tests/test_governance_mutation_gate.py",
+    "python3 scripts/governance_mutation_gate.py",
+    "python3 scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/isolated_publication_preparation_v0.task.json",
+    "git diff --check"
+  ],
+  "risk_level": "HIGH",
+  "network_policy": "ALLOWLIST",
+  "budget": {"max_cny": "0", "max_minutes": 180},
+  "approval_gates": [
+    "INDEPENDENT_PR_REVIEW",
+    "JUNYAN_MERGE",
+    "SEPARATE_LIVE_CAPTURE_APPROVAL",
+    "SEPARATE_PRODUCTION_PUBLICATION_APPROVAL"
+  ],
+  "created_at": "2026-09-08T00:00:00+00:00"
+}
