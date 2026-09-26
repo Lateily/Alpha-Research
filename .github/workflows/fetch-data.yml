@@ -686,22 +686,31 @@ jobs:
           python - <<'PY'
           import json
           import os
-          from datetime import datetime, timezone
+          from datetime import datetime, timedelta, timezone
 
           import tushare as ts
 
-          target = os.environ["AR_TARGET_TRADE_DATE"]
+          requested = os.environ["AR_TARGET_TRADE_DATE"]
+          start = (datetime.strptime(requested, "%Y%m%d") - timedelta(days=14)).strftime("%Y%m%d")
           rows = ts.pro_api(os.environ["TUSHARE_TOKEN"]).trade_cal(
-              exchange="SSE", start_date=target, end_date=target,
+              exchange="SSE", start_date=start, end_date=requested,
           ).to_dict("records")
-          if len(rows) != 1 or str(rows[0].get("cal_date")) != target:
-              raise SystemExit(f"trade calendar did not return exactly {target}")
-          if int(rows[0].get("is_open") or 0) != 1:
-              raise SystemExit(f"target_trade_date is not an open A-share day: {target}")
+          open_dates = [
+              str(row.get("cal_date"))
+              for row in rows
+              if int(row.get("is_open") or 0) == 1
+              and str(row.get("cal_date") or "") <= requested
+          ]
+          if not open_dates:
+              raise SystemExit(f"no open A-share day found on or before cutoff: {requested}")
+          resolved = max(open_dates)
+          with open(os.environ["GITHUB_ENV"], "a", encoding="utf-8") as handle:
+              handle.write(f"AR_TARGET_TRADE_DATE={resolved}\n")
           payload = {
               "schema": "ar.isolated_u3_run_context",
               "schema_version": "1.0",
-              "target_trade_date": target,
+              "requested_cutoff_date": requested,
+              "target_trade_date": resolved,
               "run_id": os.environ["AR_RUN_ID"],
               "source_commit": os.environ["GITHUB_SHA"],
               "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),

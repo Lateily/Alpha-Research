@@ -43,6 +43,14 @@ class IsolatedU3WorkflowContractTest(unittest.TestCase):
             with self.subTest(token=token):
                 self.assertIn(token, self.text)
 
+    def test_closed_cutoff_resolves_to_latest_open_trade_date(self) -> None:
+        start = self.text.index("  isolated-u3:")
+        isolated = self.text[start:]
+        self.assertIn('"requested_cutoff_date": requested', isolated)
+        self.assertIn('AR_TARGET_TRADE_DATE={resolved}', isolated)
+        self.assertIn('start_date=start, end_date=requested', isolated)
+        self.assertNotIn("target_trade_date is not an open A-share day", isolated)
+
     def test_isolated_job_never_advances_human_or_execution_stages(self) -> None:
         start = self.text.index("  isolated-u3:")
         isolated = self.text[start:]
