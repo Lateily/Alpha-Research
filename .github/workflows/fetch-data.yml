@@ -7,6 +7,20 @@ on:
     - cron: '30 8 * * 1-5'   # Primary: after-close digest
     - cron: '0 1  * * 1-5'   # Secondary: pre-market snapshot
   workflow_dispatch:          # Manual trigger from Actions tab
+    inputs:
+      mode:
+        description: 'Execution mode'
+        required: true
+        type: choice
+        options:
+          - daily_refresh
+          - isolated_u3
+        default: daily_refresh
+      target_trade_date:
+        description: 'Settled A-share trade date for isolated_u3 (YYYYMMDD)'
+        required: false
+        type: string
+        default: ''
 
 permissions:
   contents: write
@@ -23,6 +37,7 @@ env:
 
 jobs:
   fetch-and-alert:
+    if: github.event_name != 'workflow_dispatch' || inputs.mode != 'isolated_u3'
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -628,3 +643,225 @@ jobs:
 
       # GitHub Pages deploys from the normal push-to-main trigger only after
       # Junyan merges the data PR. Unreviewed branch data is never published.
+
+  isolated-u3:
+    if: github.event_name == 'workflow_dispatch' && inputs.mode == 'isolated_u3'
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    permissions:
+      contents: read
+    env:
+      AR_TARGET_TRADE_DATE: ${{ inputs.target_trade_date }}
+      AR_RUN_ID: isolated-u3-${{ github.run_id }}-${{ github.run_attempt }}
+      AR_FEATURE_STORE_DB: ${{ github.workspace }}/data_history/feature_store.sqlite3
+      AR_FUNNEL_OUTPUT_ROOT: ${{ github.workspace }}/data_history/research_funnel
+      ARTIFACT_ROOT: ${{ github.workspace }}/isolated-u3-artifact
+
+    steps:
+      - name: Checkout requested branch
+        uses: actions/checkout@v6
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      - name: Install isolated U0-U3 dependencies
+        run: pip install pandas requests tushare --quiet
+
+      - name: Validate frozen run context
+        env:
+          TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$ARTIFACT_ROOT"
+          [[ "$AR_TARGET_TRADE_DATE" =~ ^[0-9]{8}$ ]] || {
+            echo "::error::target_trade_date must be YYYYMMDD"
+            exit 2
+          }
+          test -n "$TUSHARE_TOKEN" || {
+            echo "::error::TUSHARE_TOKEN secret is unavailable"
+            exit 2
+          }
+          python - <<'PY'
+          import json
+          import os
+          from datetime import datetime, timezone
+
+          import tushare as ts
+
+          target = os.environ["AR_TARGET_TRADE_DATE"]
+          rows = ts.pro_api(os.environ["TUSHARE_TOKEN"]).trade_cal(
+              exchange="SSE", start_date=target, end_date=target,
+          ).to_dict("records")
+          if len(rows) != 1 or str(rows[0].get("cal_date")) != target:
+              raise SystemExit(f"trade calendar did not return exactly {target}")
+          if int(rows[0].get("is_open") or 0) != 1:
+              raise SystemExit(f"target_trade_date is not an open A-share day: {target}")
+          payload = {
+              "schema": "ar.isolated_u3_run_context",
+              "schema_version": "1.0",
+              "target_trade_date": target,
+              "run_id": os.environ["AR_RUN_ID"],
+              "source_commit": os.environ["GITHUB_SHA"],
+              "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+              "authority": {
+                  "u4_selection": False,
+                  "paper_registration": False,
+                  "paper_order": False,
+                  "real_trade": False,
+                  "production_publication": False,
+              },
+          }
+          path = os.path.join(os.environ["ARTIFACT_ROOT"], "run-context.json")
+          with open(path, "w", encoding="utf-8", newline="\n") as handle:
+              json.dump(payload, handle, ensure_ascii=False, indent=2)
+              handle.write("\n")
+          PY
+
+      - name: Build U0 security registry
+        env:
+          TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
+        run: |
+          python experiments/research_funnel/security_registry.py \
+            --as-of "$AR_TARGET_TRADE_DATE" \
+            --output public/data/v2/security_registry.json \
+            --allow-partial-exit-zero
+
+      - name: Build frozen feature store
+        env:
+          TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
+        run: |
+          python experiments/research_funnel/feature_store.py \
+            --registry public/data/v2/security_registry.json \
+            --db "$AR_FEATURE_STORE_DB" \
+            --out public/data/v2/feature_store_health.json \
+            --as-of "$AR_TARGET_TRADE_DATE" \
+            --lookback 25
+
+      - name: Build E1 event gate
+        env:
+          TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
+        run: |
+          python experiments/research_funnel/e1_event_layer.py \
+            --as-of "$AR_TARGET_TRADE_DATE" \
+            --registry public/data/v2/security_registry.json \
+            --output public/data/v2/e1_event_layer.json \
+            --allow-partial-exit-zero
+
+      - name: Build same-day rotation evidence
+        env:
+          TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
+        run: |
+          (cd experiments/execution_tracker && python rotation_panel.py)
+          (cd experiments/execution_tracker && python export_contracts.py)
+
+      - name: Run frozen U0-U2 candidate funnel
+        env:
+          TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
+        run: python experiments/research_funnel/funnel_dag.py candidates
+
+      - name: Run U3 six-dimension battery
+        env:
+          TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
+        run: python experiments/research_funnel/funnel_dag.py battery
+
+      - name: Finalize human-review handoff
+        env:
+          TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
+        run: python experiments/research_funnel/funnel_dag.py finalize
+
+      - name: Freeze results and hashes
+        if: always()
+        run: |
+          set -euo pipefail
+          mkdir -p "$ARTIFACT_ROOT/public-data-v2" "$ARTIFACT_ROOT/funnel"
+          for file in \
+            security_registry.json \
+            feature_store_health.json \
+            e1_event_layer.json \
+            rotation_panel.json \
+            funnel_stage_candidates.json \
+            funnel_stage_battery.json \
+            funnel_health.json; do
+            if [ -f "public/data/v2/$file" ]; then
+              cp "public/data/v2/$file" "$ARTIFACT_ROOT/public-data-v2/$file"
+            fi
+          done
+          if [ -d "$AR_FUNNEL_OUTPUT_ROOT/$AR_TARGET_TRADE_DATE/$AR_RUN_ID" ]; then
+            cp -a "$AR_FUNNEL_OUTPUT_ROOT/$AR_TARGET_TRADE_DATE/$AR_RUN_ID/." \
+              "$ARTIFACT_ROOT/funnel/"
+          fi
+          if [ -f "$AR_FEATURE_STORE_DB" ]; then
+            cp "$AR_FEATURE_STORE_DB" "$ARTIFACT_ROOT/feature_store.sqlite3"
+          fi
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          root = Path(os.environ["ARTIFACT_ROOT"])
+          bundle = root / "funnel"
+          summary = {
+              "schema": "ar.isolated_u3_summary",
+              "schema_version": "1.0",
+              "target_trade_date": os.environ["AR_TARGET_TRADE_DATE"],
+              "run_id": os.environ["AR_RUN_ID"],
+              "source_commit": os.environ["GITHUB_SHA"],
+              "status": "INCOMPLETE",
+          }
+          needed = {
+              "scan": bundle / "all_market_scan.json",
+              "review": bundle / "candidate_review.json",
+              "manifest": bundle / "candidate_manifest.json",
+              "battery": bundle / "candidate_battery.json",
+              "queue": bundle / "deep_research_queue.json",
+              "bundle_manifest": bundle / "manifest.json",
+          }
+          if all(path.is_file() for path in needed.values()):
+              data = {
+                  key: json.loads(path.read_text(encoding="utf-8"))
+                  for key, path in needed.items()
+              }
+              review_rows = data["review"].get("rows") or data["review"].get("results") or []
+              battery_rows = data["battery"].get("results") or data["battery"].get("rows") or []
+              queue_rows = data["queue"].get("rows") or data["queue"].get("results") or []
+              summary.update({
+                  "status": "READY_FOR_HUMAN_REVIEW",
+                  "counts": {
+                      "all_market_scan": len(data["scan"].get("rows") or []),
+                      "u2_candidates": len(review_rows),
+                      "u3_battery_rows": len(battery_rows),
+                      "human_review_queue": len(queue_rows),
+                  },
+                  "candidate_manifest_hash": data["manifest"].get("manifest_hash"),
+                  "battery_rows_hash": data["battery"].get("rows_hash"),
+                  "bundle_hash": data["bundle_manifest"].get("bundle_hash"),
+                  "authority": {
+                      "human_selection_required": True,
+                      "paper_registration": False,
+                      "paper_order": False,
+                      "real_trade": False,
+                  },
+              })
+          (root / "isolated-u3-summary.json").write_text(
+              json.dumps(summary, ensure_ascii=False, indent=2) + "\n",
+              encoding="utf-8",
+          )
+          print(json.dumps(summary, ensure_ascii=False, indent=2))
+          PY
+          (
+            cd "$ARTIFACT_ROOT"
+            find . -type f ! -name SHA256SUMS -print0 \
+              | sort -z \
+              | xargs -0 sha256sum > SHA256SUMS
+          )
+
+      - name: Upload isolated U3 evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: isolated-u3-${{ inputs.target_trade_date }}-${{ github.run_id }}
+          path: ${{ env.ARTIFACT_ROOT }}
+          retention-days: 14
+          if-no-files-found: error
