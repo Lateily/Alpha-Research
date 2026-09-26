@@ -4,9 +4,13 @@
 from __future__ import annotations
 
 import copy
+import contextlib
+import fcntl
 import hashlib
+import io
 import json
 import os
+import select
 import shutil
 import socket
 import sqlite3
@@ -784,6 +788,56 @@ class JevU4ShadowEngineTests(unittest.TestCase):
             race_injector=race_injector,
         )
 
+    def test_unsupported_runtime_stops_before_shadow_state_or_provider(self) -> None:
+        fresh_state = Path(self.temporary.name) / "unsupported-run-state"
+        with mock.patch.object(engine.sys, "version_info", (3, 9, 0)), mock.patch.object(
+            engine, "_execute_candidates_once", side_effect=AssertionError("provider ran")
+        ) as execute:
+            with self.assertRaises(engine.ShadowRunError) as caught:
+                engine.run_shadow(
+                    self.request,
+                    artifact_root=self.artifact_root,
+                    state_root=fresh_state,
+                    adapter=self._adapter(),
+                )
+        self.assertEqual("SPEC_BLOCKED", caught.exception.status)
+        self.assertEqual("RUNTIME_UNSUPPORTED", caught.exception.code)
+        self.assertFalse(fresh_state.exists())
+        execute.assert_not_called()
+
+    def test_state_root_rejects_symlinked_ancestor_without_external_write(self) -> None:
+        outside = Path(self.temporary.name) / "outside"
+        outside.mkdir()
+        linked = Path(self.temporary.name) / "linked"
+        linked.symlink_to(outside, target_is_directory=True)
+        with self.assertRaises(engine.ShadowRunError) as caught:
+            engine.run_shadow(
+                self.request,
+                artifact_root=self.artifact_root,
+                state_root=linked / "state",
+                adapter=self._adapter(),
+            )
+        self.assertEqual("SPEC_BLOCKED", caught.exception.status)
+        self.assertFalse((outside / "state").exists())
+
+    def test_state_root_rejects_dotdot_before_path_normalization(self) -> None:
+        outside = Path(self.temporary.name) / "outside-dotdot"
+        outside.mkdir()
+        linked = Path(self.temporary.name) / "linked-dotdot"
+        linked.symlink_to(outside, target_is_directory=True)
+        target = Path(self.temporary.name) / "dotdot-state"
+
+        with self.assertRaises(engine.ShadowRunError) as caught:
+            engine.run_shadow(
+                self.request,
+                artifact_root=self.artifact_root,
+                state_root=str(linked) + "/../dotdot-state",
+                adapter=self._adapter(),
+            )
+
+        self.assertEqual("SPEC_BLOCKED", caught.exception.status)
+        self.assertFalse(target.exists())
+
     def test_request_schema_and_root_relative_references_are_exact(self) -> None:
         self.assertEqual(self.request, engine.validate_request(self.request))
 
@@ -844,45 +898,35 @@ class JevU4ShadowEngineTests(unittest.TestCase):
             capability.close()
 
     def test_run_reopens_the_exact_packet_with_exact_validator_arguments(self) -> None:
-        calls: list[tuple[dict, dict]] = []
+        calls: list[dict] = []
 
-        def record(packet: dict, **kwargs: object) -> None:
-            anchored_roots = []
-            for argument, reference in (
-                ("bundle_dir", "bundle_ref"),
-                ("feature_health_path", "feature_health_ref"),
-                ("funnel_health_path", "funnel_health_ref"),
+        def record(packet: dict | None = None, **kwargs: object) -> None:
+            self.assertIsNone(packet)
+            self.assertIsNone(kwargs.get("bundle_dir"))
+            self.assertIsNone(kwargs.get("feature_health_path"))
+            self.assertIsNone(kwargs.get("funnel_health_path"))
+            evidence = kwargs["evidence"]
+            for field in (
+                "packet_ref", "bundle_ref", "feature_health_ref",
+                "funnel_health_ref", "cyclical_flags_ref",
             ):
-                path = Path(kwargs[argument])
-                self.assertTrue(path.is_absolute())
-                root = path
-                for _part in Path(self.request[reference]).parts:
-                    root = root.parent
-                self.assertEqual(
-                    self.request[reference], path.relative_to(root).as_posix()
-                )
-                anchored_roots.append(root)
-            self.assertTrue(all(root == anchored_roots[0] for root in anchored_roots))
-            self.assertTrue(anchored_roots[0].name.startswith(".jev-u4-shadow-reopen-"))
+                self.assertEqual(self.request[field], kwargs[field])
             self.assertEqual(
                 (self.artifact_root / self.request["feature_health_ref"]).read_bytes(),
-                Path(kwargs["feature_health_path"]).read_bytes(),
+                evidence.bytes(self.request["feature_health_ref"]),
             )
-            calls.append((packet, kwargs))
+            calls.append(kwargs)
 
         with mock.patch.object(engine.u4_pre_decision, "validate_packet", record):
             receipt = self._run()
 
         self.assertEqual(1, len(calls))
-        packet, kwargs = calls[0]
-        self.assertEqual(
-            json.loads((self.artifact_root / self.request["packet_ref"]).read_text()),
-            packet,
-        )
+        kwargs = calls[0]
+        self.assertEqual(self.request["packet_ref"], kwargs["packet_ref"])
         self.assertEqual(self.request["diagnostic_ref"], kwargs["diagnostic_ref"])
         self.assertEqual(self.request["industry"], kwargs["industry"])
         self.assertEqual(self.request["method_version"], kwargs["method_version"])
-        self.assertIsNone(kwargs["cyclical_flags_path"])
+        self.assertIsNone(kwargs["cyclical_flags_ref"])
         self.assertEqual("ar.jev_u4_shadow_receipt.v1", receipt["schema"])
 
     def test_mixed_method_version_and_modified_packet_fail_closed(self) -> None:
@@ -971,18 +1015,17 @@ class JevU4ShadowEngineTests(unittest.TestCase):
 
         def swap(point: str) -> None:
             nonlocal fired
-            if point == "artifact_packet_parent_opened" and not fired:
+            if point == "artifact_root_opened" and not fired:
                 fired = True
                 parent.rename(moved)
                 parent.symlink_to(external, target_is_directory=True)
 
-        receipt = self._run(request, race_injector=swap)
+        with self.assertRaisesRegex(engine.ShadowRunError, "SPEC_BLOCKED"):
+            self._run(request, race_injector=swap)
 
         self.assertTrue(fired)
-        self.assertEqual(
-            "sha256:" + hashlib.sha256(original_bytes).hexdigest(),
-            receipt["source_binding"]["packet_file_hash"],
-        )
+        self.assertEqual(original_bytes, (moved / packet_name).read_bytes())
+        self.assertEqual(original_bytes + b"\n", (external / packet_name).read_bytes())
 
     def test_bundle_entry_post_stat_type_swaps_fail_without_blocking(self) -> None:
         bundle = self.artifact_root / self.request["bundle_ref"]
@@ -999,7 +1042,7 @@ class JevU4ShadowEngineTests(unittest.TestCase):
 
                 def swap(point: str) -> None:
                     nonlocal fired, socket_handle
-                    if point != "artifact_bundle_file_statted" or fired:
+                    if point != "artifact_root_opened" or fired:
                         return
                     fired = True
                     target.rename(moved)
@@ -1114,8 +1157,8 @@ except engine.ShadowRunError as exc:
                 with (
                     mock.patch.object(
                         engine,
-                        "resolve_request_paths",
-                        side_effect=AssertionError("path resolution reached"),
+                        "_open_root",
+                        side_effect=AssertionError("root acquisition reached"),
                     ),
                     mock.patch.object(
                         engine,
@@ -1131,8 +1174,8 @@ except engine.ShadowRunError as exc:
         outside = {**self.request, "packet_ref": "../outside.json"}
         with mock.patch.object(
             engine,
-            "resolve_request_paths",
-            side_effect=AssertionError("path resolution reached"),
+            "_open_root",
+            side_effect=AssertionError("root acquisition reached"),
         ):
             with self.assertRaisesRegex(engine.ShadowRunError, "SPEC_BLOCKED"):
                 self._run(outside, adapter=adapter)
@@ -1171,6 +1214,26 @@ class JevU4ShadowStoreTests(JevU4ShadowEngineTests):
         super().setUp()
         self.receipt = self._run()
 
+    def test_unsupported_python_refuses_before_creating_state(self) -> None:
+        fresh = Path(self.temporary.name) / "unsupported-python-state"
+        with mock.patch.object(engine.sys, "version_info", (3, 9, 0)):
+            with self.assertRaises(engine.ShadowRunError) as caught:
+                engine.ShadowStore(fresh)
+        self.assertEqual("SPEC_BLOCKED", caught.exception.status)
+        self.assertEqual("RUNTIME_UNSUPPORTED", caught.exception.code)
+        self.assertFalse(fresh.exists())
+
+    def test_missing_stdlib_sqlite_runtime_refuses_before_creating_state(self) -> None:
+        fresh = Path(self.temporary.name) / "unsupported-sqlite-state"
+        with mock.patch.object(
+            sqlite3, "connect", side_effect=sqlite3.NotSupportedError("no serialize")
+        ):
+            with self.assertRaises(engine.ShadowRunError) as caught:
+                engine.ShadowStore(fresh)
+        self.assertEqual("SPEC_BLOCKED", caught.exception.status)
+        self.assertEqual("RUNTIME_UNSUPPORTED", caught.exception.code)
+        self.assertFalse(fresh.exists())
+
     def test_concurrent_identical_writes_create_one_row_and_one_receipt(self) -> None:
         store = engine.ShadowStore(self.state_root)
 
@@ -1195,6 +1258,353 @@ class JevU4ShadowStoreTests(JevU4ShadowEngineTests):
             self.assertEqual(1, db.execute("SELECT COUNT(*) FROM receipts").fetchone()[0])
         self.assertEqual(canonical, store.receipt_path(self.request["command_id"]).read_bytes())
 
+    def test_twelve_processes_share_one_durable_receipt(self) -> None:
+        request_path = Path(self.temporary.name) / "process-request.json"
+        receipt_path = Path(self.temporary.name) / "process-receipt.json"
+        request_path.write_text(json.dumps(self.request), encoding="utf-8")
+        receipt_path.write_text(json.dumps(self.receipt), encoding="utf-8")
+        child = """
+import json
+import sys
+from pathlib import Path
+
+repo, state, request_file, receipt_file = sys.argv[1:]
+sys.path.insert(0, str(Path(repo) / 'scripts' / 'llm'))
+import jev_u4_shadow as engine
+
+request = json.loads(Path(request_file).read_text(encoding='utf-8'))
+receipt = json.loads(Path(receipt_file).read_text(encoding='utf-8'))
+print('READY', flush=True)
+sys.stdin.buffer.read(1)
+store = engine.ShadowStore(state)
+try:
+    result = store.write(request, receipt)
+finally:
+    store.close()
+print(json.dumps({'disposition': result['disposition']}))
+"""
+        command = [
+            sys.executable,
+            "-c",
+            child,
+            str(REPO_ROOT),
+            str(self.state_root),
+            str(request_path),
+            str(receipt_path),
+        ]
+        processes = [
+            subprocess.Popen(
+                command, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+            for _ in range(12)
+        ]
+        try:
+            for process in processes:
+                assert process.stdout is not None
+                self.assertTrue(select.select([process.stdout], [], [], 10)[0])
+                self.assertEqual(b"READY\n", process.stdout.readline())
+            for process in processes:
+                assert process.stdin is not None
+                process.stdin.write(b"x")
+                process.stdin.close()
+                process.stdin = None
+            results = [process.communicate(timeout=30) for process in processes]
+        finally:
+            for process in processes:
+                if process.poll() is None:
+                    process.kill()
+                    process.wait()
+
+        dispositions = []
+        for process, (stdout, stderr) in zip(processes, results):
+            self.assertEqual(0, process.returncode, stderr.decode())
+            dispositions.append(json.loads(stdout)["disposition"])
+        self.assertEqual(1, dispositions.count("CREATED"))
+        self.assertEqual(11, dispositions.count("IDEMPOTENT"))
+        store = engine.ShadowStore(self.state_root)
+        try:
+            with sqlite3.connect(store.database_path) as db:
+                self.assertEqual(1, db.execute("SELECT COUNT(*) FROM receipts").fetchone()[0])
+            self.assertEqual(
+                shadow.canonical_receipt_bytes(self.receipt),
+                store.receipt_path(self.request["command_id"]).read_bytes(),
+            )
+        finally:
+            store.close()
+
+    def test_twelve_processes_with_distinct_ids_lose_no_rows(self) -> None:
+        root = Path(self.temporary.name)
+        child = """
+import json
+import sys
+from pathlib import Path
+
+repo, state, request_file, receipt_file = sys.argv[1:]
+sys.path.insert(0, str(Path(repo) / 'scripts' / 'llm'))
+import jev_u4_shadow as engine
+
+request = json.loads(Path(request_file).read_text(encoding='utf-8'))
+receipt = json.loads(Path(receipt_file).read_text(encoding='utf-8'))
+print('READY', flush=True)
+sys.stdin.buffer.read(1)
+store = engine.ShadowStore(state)
+try:
+    result = store.write(request, receipt)
+finally:
+    store.close()
+print(result['disposition'])
+"""
+        processes = []
+        expected = {}
+        for index in range(12):
+            request = {**self.request, "command_id": f"distinct-command-{index}"}
+            receipt = self._run(request)
+            expected[request["command_id"]] = receipt
+            request_file = root / f"request-{index}.json"
+            receipt_file = root / f"receipt-{index}.json"
+            request_file.write_text(json.dumps(request), encoding="utf-8")
+            receipt_file.write_text(json.dumps(receipt), encoding="utf-8")
+            processes.append(subprocess.Popen(
+                [sys.executable, "-c", child, str(REPO_ROOT), str(self.state_root),
+                 str(request_file), str(receipt_file)],
+                stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            ))
+        try:
+            for process in processes:
+                assert process.stdout is not None
+                self.assertTrue(select.select([process.stdout], [], [], 10)[0])
+                self.assertEqual(b"READY\n", process.stdout.readline())
+            for process in processes:
+                assert process.stdin is not None
+                process.stdin.write(b"x")
+                process.stdin.close()
+                process.stdin = None
+            outputs = [process.communicate(timeout=30) for process in processes]
+        finally:
+            for process in processes:
+                if process.poll() is None:
+                    process.kill()
+                    process.wait()
+        for process, (stdout, stderr) in zip(processes, outputs):
+            self.assertEqual(0, process.returncode, stderr.decode())
+            self.assertEqual(b"CREATED\n", stdout)
+        store = engine.ShadowStore(self.state_root)
+        try:
+            with sqlite3.connect(store.database_path) as database:
+                self.assertEqual(12, database.execute("SELECT COUNT(*) FROM receipts").fetchone()[0])
+            for command_id, receipt in expected.items():
+                self.assertEqual(receipt, store.read(command_id))
+        finally:
+            store.close()
+
+    def test_existing_database_with_trigger_is_rejected_before_write(self) -> None:
+        store = engine.ShadowStore(self.state_root)
+        database_path = store.database_path
+        store.close()
+        with sqlite3.connect(database_path) as database:
+            database.execute(
+                "CREATE TRIGGER erase_receipt AFTER INSERT ON receipts "
+                "BEGIN DELETE FROM receipts WHERE command_id = NEW.command_id; END"
+            )
+        with self.assertRaises(engine.ShadowRunError) as caught:
+            engine.ShadowStore(self.state_root)
+        self.assertEqual("INTEGRITY_ERROR", caught.exception.code)
+        with sqlite3.connect(database_path) as database:
+            self.assertEqual(0, database.execute("SELECT COUNT(*) FROM receipts").fetchone()[0])
+
+    def test_database_with_altered_primary_key_collation_is_rejected(self) -> None:
+        store = engine.ShadowStore(self.state_root)
+        database_path = store.database_path
+        store.close()
+        database_path.unlink()
+        with sqlite3.connect(database_path) as database:
+            database.execute(
+                "CREATE TABLE receipts ("
+                "command_id TEXT PRIMARY KEY COLLATE NOCASE, "
+                "request_hash TEXT NOT NULL, request_bytes BLOB NOT NULL, "
+                "receipt_hash TEXT NOT NULL, receipt_bytes BLOB NOT NULL)"
+            )
+        with self.assertRaises(engine.ShadowRunError) as caught:
+            engine.ShadowStore(self.state_root)
+        self.assertEqual("INTEGRITY_ERROR", caught.exception.code)
+
+    def test_prior_task5_schema_is_read_without_rewriting_image(self) -> None:
+        store = engine.ShadowStore(self.state_root)
+        database_path = store.database_path
+        store.close()
+        database_path.unlink()
+        legacy_sql = """
+                    CREATE TABLE IF NOT EXISTS receipts (
+                        command_id TEXT PRIMARY KEY,
+                        request_hash TEXT NOT NULL,
+                        request_bytes BLOB NOT NULL,
+                        receipt_hash TEXT NOT NULL,
+                        receipt_bytes BLOB NOT NULL
+                    )
+                    """
+        with sqlite3.connect(":memory:") as legacy:
+            legacy.execute(legacy_sql)
+            database_path.write_bytes(legacy.serialize())
+        before = database_path.stat()
+        raw = database_path.read_bytes()
+
+        try:
+            reopened = engine.ShadowStore(self.state_root)
+        except engine.ShadowRunError as exc:
+            self.fail(f"prior current-schema image was rejected: {exc.code}")
+        reopened.close()
+
+        after = database_path.stat()
+        self.assertEqual(raw, database_path.read_bytes())
+        self.assertEqual((before.st_dev, before.st_ino), (after.st_dev, after.st_ino))
+        self.assertEqual(before.st_mtime_ns, after.st_mtime_ns)
+
+    def test_existing_hardlinked_lock_is_rejected_without_chmod(self) -> None:
+        base = self.state_root / "jev-u4-shadow"
+        base.mkdir(parents=True)
+        outside = Path(self.temporary.name) / "outside-lock-target"
+        outside.write_bytes(b"owner-data")
+        outside.chmod(0o644)
+        os.link(outside, base / ".shadow.lock")
+        before = outside.stat().st_mode
+
+        with self.assertRaises(engine.ShadowRunError) as caught:
+            engine.ShadowStore(self.state_root)
+
+        self.assertEqual("INTEGRITY_ERROR", caught.exception.code)
+        self.assertEqual(before, outside.stat().st_mode)
+        self.assertEqual(b"owner-data", outside.read_bytes())
+
+    def test_existing_hardlinked_lock_is_rejected_even_at_mode_0600(self) -> None:
+        base = self.state_root / "jev-u4-shadow"
+        base.mkdir(parents=True)
+        outside = Path(self.temporary.name) / "outside-lock-0600"
+        outside.write_bytes(b"owner-data")
+        outside.chmod(0o600)
+        os.link(outside, base / ".shadow.lock")
+
+        with self.assertRaises(engine.ShadowRunError) as caught:
+            engine.ShadowStore(self.state_root)
+
+        self.assertEqual("INTEGRITY_ERROR", caught.exception.code)
+        self.assertEqual(b"owner-data", outside.read_bytes())
+
+    def test_database_temp_cleanup_does_not_unlink_replaced_name(self) -> None:
+        store = engine.ShadowStore(self.state_root)
+        replaced: list[Path] = []
+
+        def replace_temp(point: str) -> None:
+            if point != "after_database_temp_fsync":
+                return
+            temporary = next(store.base_directory.glob(".shadow.sqlite3-*"))
+            temporary.rename(temporary.with_name(temporary.name + ".owned"))
+            temporary.write_bytes(b"foreign")
+            replaced.append(temporary)
+            raise RuntimeError("injected crash")
+
+        store._fault_injector = replace_temp
+        try:
+            with self.assertRaisesRegex(RuntimeError, "injected crash"):
+                store.write(self.request, self.receipt)
+            self.assertEqual(1, len(replaced))
+            self.assertTrue(replaced[0].is_file())
+            self.assertEqual(b"foreign", replaced[0].read_bytes())
+        finally:
+            store.close()
+
+    def test_receipt_temp_cleanup_does_not_unlink_replaced_name(self) -> None:
+        store = engine.ShadowStore(self.state_root)
+        replaced: list[Path] = []
+
+        def replace_temp(point: str) -> None:
+            if point != "after_receipt_temp_fsync":
+                return
+            command_dir = store.base_directory / self.request["command_id"]
+            temporary = next(command_dir.glob(".receipt-*"))
+            temporary.rename(temporary.with_name(temporary.name + ".owned"))
+            temporary.write_bytes(b"foreign")
+            replaced.append(temporary)
+            raise RuntimeError("injected crash")
+
+        store._fault_injector = replace_temp
+        try:
+            with self.assertRaisesRegex(RuntimeError, "injected crash"):
+                store.write(self.request, self.receipt)
+            self.assertEqual(1, len(replaced))
+            self.assertTrue(replaced[0].is_file())
+            self.assertEqual(b"foreign", replaced[0].read_bytes())
+        finally:
+            store.close()
+
+    def test_schema_tampered_after_open_is_rejected_before_receipt_write(self) -> None:
+        store = engine.ShadowStore(self.state_root)
+        try:
+            with sqlite3.connect(store.database_path) as database:
+                database.execute(
+                    "CREATE TRIGGER erase_receipt AFTER INSERT ON receipts "
+                    "BEGIN DELETE FROM receipts WHERE command_id = NEW.command_id; END"
+                )
+            with self.assertRaises(engine.ShadowRunError) as caught:
+                store.write(self.request, self.receipt)
+            self.assertEqual("INTEGRITY_ERROR", caught.exception.code)
+            self.assertFalse(store.receipt_path(self.request["command_id"]).exists())
+        finally:
+            store.close()
+
+    def test_opening_existing_store_does_not_republish_database_image(self) -> None:
+        store = engine.ShadowStore(self.state_root)
+        store.write(self.request, self.receipt)
+        database_path = store.database_path
+        before = database_path.stat()
+        original = database_path.read_bytes()
+        store.close()
+
+        reopened = engine.ShadowStore(self.state_root)
+        try:
+            self.assertEqual(self.receipt, reopened.read(self.request["command_id"]))
+        finally:
+            reopened.close()
+        after = database_path.stat()
+        self.assertEqual(original, database_path.read_bytes())
+        self.assertEqual((before.st_dev, before.st_ino), (after.st_dev, after.st_ino))
+        self.assertEqual(before.st_mtime_ns, after.st_mtime_ns)
+
+    def test_lock_name_swap_cannot_create_a_second_writer_domain(self) -> None:
+        store = engine.ShadowStore(self.state_root)
+        fired = False
+
+        def swap_lock(point: str) -> None:
+            nonlocal fired
+            if point != "after_database_temp_fsync" or fired:
+                return
+            fired = True
+            lock_path = store.base_directory / ".shadow.lock"
+            lock_path.rename(lock_path.with_name(".shadow.lock.old"))
+            lock_path.write_bytes(b"")
+            other = os.open(store.base_directory, os.O_RDONLY | os.O_DIRECTORY)
+            try:
+                with self.assertRaises(BlockingIOError):
+                    fcntl.flock(other, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            finally:
+                os.close(other)
+
+        store._fault_injector = swap_lock
+        try:
+            result = store.write(self.request, self.receipt)
+        finally:
+            store.close()
+        self.assertTrue(fired)
+        self.assertEqual("CREATED", result["disposition"])
+        lock_path = self.state_root / "jev-u4-shadow" / ".shadow.lock"
+        lock_path.unlink()
+        lock_path.with_name(".shadow.lock.old").rename(lock_path)
+        reopened = engine.ShadowStore(self.state_root)
+        try:
+            self.assertEqual(self.receipt, reopened.read(self.request["command_id"]))
+        finally:
+            reopened.close()
+
     def test_command_id_reuse_with_changed_observed_at_is_a_conflict(self) -> None:
         store = engine.ShadowStore(self.state_root)
         store.write(self.request, self.receipt)
@@ -1215,6 +1625,17 @@ class JevU4ShadowStoreTests(JevU4ShadowEngineTests):
 
         with self.assertRaisesRegex(engine.ShadowRunError, "INTEGRITY_ERROR"):
             store.read(self.request["command_id"])
+
+    def test_deleted_committed_receipt_is_not_a_missing_row(self) -> None:
+        store = engine.ShadowStore(self.state_root)
+        try:
+            store.write(self.request, self.receipt)
+            store.receipt_path(self.request["command_id"]).unlink()
+            with self.assertRaises(engine.ShadowRunError) as caught:
+                store.read(self.request["command_id"])
+            self.assertEqual("INTEGRITY_ERROR", caught.exception.code)
+        finally:
+            store.close()
 
     def test_read_rebinds_every_stored_request_field_to_receipt_hash(self) -> None:
         store = engine.ShadowStore(self.state_root)
@@ -1597,6 +2018,62 @@ print(json.dumps({"alive": thread.is_alive(), "errors": errors}))
                 self.assertEqual(retry_disposition, result["disposition"])
                 self.assertEqual(self.receipt, recovered.read(self.request["command_id"]))
 
+    def test_hard_process_death_at_each_persistence_boundary_converges(self) -> None:
+        points = (
+            "after_command_directory_fsync",
+            "after_receipt_temp_fsync",
+            "after_receipt_publish",
+            "after_publish",
+            "after_insert",
+            "after_memory_commit",
+            "after_database_temp_fsync",
+            "after_database_publish",
+            "after_database_directory_fsync",
+        )
+        request_path = Path(self.temporary.name) / "crash-request.json"
+        receipt_path = Path(self.temporary.name) / "crash-receipt.json"
+        request_path.write_text(json.dumps(self.request), encoding="utf-8")
+        receipt_path.write_text(json.dumps(self.receipt), encoding="utf-8")
+        child = """
+import json
+import os
+import sys
+from pathlib import Path
+
+repo, state, request_file, receipt_file, point = sys.argv[1:]
+sys.path.insert(0, str(Path(repo) / 'scripts' / 'llm'))
+import jev_u4_shadow as engine
+
+store = engine.ShadowStore(state)
+store._fault_injector = lambda event: os._exit(77) if event == point else None
+request = json.loads(Path(request_file).read_text(encoding='utf-8'))
+receipt = json.loads(Path(receipt_file).read_text(encoding='utf-8'))
+store.write(request, receipt)
+"""
+        for point in points:
+            with self.subTest(point=point):
+                state_root = Path(self.temporary.name) / f"hard-crash-{point}"
+                completed = subprocess.run(
+                    [sys.executable, "-c", child, str(REPO_ROOT), str(state_root),
+                     str(request_path), str(receipt_path), point],
+                    cwd=REPO_ROOT, capture_output=True, timeout=15, check=False,
+                )
+                self.assertEqual(77, completed.returncode, completed.stderr.decode())
+                recovered = engine.ShadowStore(state_root)
+                try:
+                    result = recovered.write(self.request, self.receipt)
+                    expected = (
+                        "IDEMPOTENT" if point in {
+                            "after_database_publish", "after_database_directory_fsync"
+                        } else "CREATED"
+                    )
+                    self.assertEqual(expected, result["disposition"])
+                    self.assertEqual(self.receipt, recovered.read(self.request["command_id"]))
+                    with sqlite3.connect(recovered.database_path) as database:
+                        self.assertEqual(1, database.execute("SELECT COUNT(*) FROM receipts").fetchone()[0])
+                finally:
+                    recovered.close()
+
     def test_conflicting_orphan_is_never_overwritten_or_deleted(self) -> None:
         state_root = Path(self.temporary.name) / "conflicting-orphan"
 
@@ -1723,6 +2200,56 @@ print(json.dumps({"alive": thread.is_alive(), "errors": errors}))
             "EVALUATION_NOT_INSTALLED",
             json.loads(evaluate_result.stderr)["code"],
         )
+
+    def test_cli_keeps_original_state_root_through_receipt_commit(self) -> None:
+        moved = Path(self.temporary.name) / "original-state"
+        original_store = engine.ShadowStore
+
+        class SwappingStore(original_store):
+            def __init__(self, state_root, **kwargs):
+                self_root = Path(state_root)
+                self_root.rename(moved)
+                self_root.mkdir()
+                super().__init__(state_root, **kwargs)
+
+        stdout = io.StringIO()
+        stderr = io.StringIO()
+        with mock.patch.object(engine, "ShadowStore", SwappingStore):
+            with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
+                status = engine.main([
+                    "run", "--request", str(self.artifact_root / "request.json"),
+                    "--artifact-root", str(self.artifact_root),
+                    "--state-root", str(self.state_root),
+                ])
+
+        self.assertEqual(0, status, stderr.getvalue())
+        self.assertEqual("CREATED", json.loads(stdout.getvalue())["disposition"])
+        self.assertTrue((moved / "jev-u4-shadow" / self.request["command_id"] / "receipt.json").is_file())
+        self.assertFalse((self.state_root / "jev-u4-shadow").exists())
+
+    def test_cli_keeps_original_artifact_root_after_cassette_load(self) -> None:
+        moved = Path(self.temporary.name) / "original-artifacts"
+        load_adapter = engine._load_fixture_adapter
+
+        def swap_after_cassette(*args):
+            adapter = load_adapter(*args)
+            self.artifact_root.rename(moved)
+            self.artifact_root.mkdir()
+            return adapter
+
+        stdout = io.StringIO()
+        stderr = io.StringIO()
+        with mock.patch.object(engine, "_load_fixture_adapter", swap_after_cassette):
+            with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
+                status = engine.main([
+                    "run", "--request", str(self.artifact_root / "request.json"),
+                    "--artifact-root", str(self.artifact_root),
+                    "--state-root", str(self.state_root),
+                ])
+
+        self.assertEqual(0, status, stderr.getvalue())
+        self.assertEqual("CREATED", json.loads(stdout.getvalue())["disposition"])
+        self.assertTrue((self.state_root / "jev-u4-shadow" / self.request["command_id"] / "receipt.json").is_file())
 
     def test_cli_argument_errors_are_canonical_json(self) -> None:
         script = REPO_ROOT / "scripts/llm/jev_u4_shadow.py"

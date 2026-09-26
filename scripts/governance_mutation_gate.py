@@ -186,6 +186,109 @@ class MutationCase:
 
 MUTATIONS: tuple[MutationCase, ...] = (
     MutationCase(
+        mutation_id="JEV_U4_RUNTIME_BEFORE_STATE", component="Jev U4 shadow backend",
+        source_path="scripts/llm/jev_u4_shadow.py", test_script="tests/test_jev_u4_shadow.py",
+        before="    _require_runtime()\n\n    artifact: _DirectoryHandle",
+        after="    pass\n\n    artifact: _DirectoryHandle",
+        expected_failure_marker="test_unsupported_runtime_stops_before_shadow_state_or_provider",
+        rationale="An unsupported runtime must stop before snapshot state or provider execution.",
+    ),
+    MutationCase(
+        mutation_id="JEV_U4_ANCESTOR_NOFOLLOW", component="Jev U4 shadow backend",
+        source_path="scripts/llm/jev_u4_shadow.py", test_script="tests/test_jev_u4_shadow.py",
+        before="        descriptor = _open_absolute_directory(cursor)",
+        after="        descriptor = _open_absolute_directory(cursor.resolve(strict=True))",
+        expected_failure_marker="test_state_root_rejects_symlinked_ancestor_without_external_write",
+        rationale="A missing state descendant cannot normalize away a symlinked ancestor.",
+    ),
+    MutationCase(
+        mutation_id="JEV_U4_EVIDENCE_VALIDATOR", component="Jev U4 shadow backend",
+        source_path="scripts/llm/jev_u4_shadow.py", test_script="tests/test_jev_u4_shadow.py",
+        before="        u4_pre_decision.validate_packet(",
+        after="        (lambda **_kwargs: None)(",
+        expected_failure_marker="test_run_reopens_the_exact_packet_with_exact_validator_arguments",
+        rationale="The shadow engine must pass captured evidence into authoritative U4 validation.",
+    ),
+    MutationCase(
+        mutation_id="JEV_U4_SCHEMA_FAIL_CLOSED", component="Jev U4 shadow backend",
+        source_path="scripts/llm/jev_u4_shadow.py", test_script="tests/test_jev_u4_shadow.py",
+        before="                if raw is not None:\n                    self._validate_database_schema(database)",
+        after="                pass",
+        expected_failure_marker="test_schema_tampered_after_open_is_rejected_before_receipt_write",
+        rationale="A tampered SQLite image with a trigger cannot be treated as a valid store.",
+    ),
+    MutationCase(
+        mutation_id="JEV_U4_EXISTING_IMAGE_READ_ONLY", component="Jev U4 shadow backend",
+        source_path="scripts/llm/jev_u4_shadow.py", test_script="tests/test_jev_u4_shadow.py",
+        before="                if write and (", after="                if write or (",
+        expected_failure_marker="test_opening_existing_store_does_not_republish_database_image",
+        rationale="Opening and verifying an existing store must not rewrite its database image.",
+    ),
+    MutationCase(
+        mutation_id="JEV_U4_DIRECTORY_LOCK", component="Jev U4 shadow backend",
+        source_path="scripts/llm/jev_u4_shadow.py", test_script="tests/test_jev_u4_shadow.py",
+        before="                fcntl.flock(self._base_handle.fd, fcntl.LOCK_EX)\n                directory_locked = True",
+        after="                pass",
+        expected_failure_marker="test_lock_name_swap_cannot_create_a_second_writer_domain",
+        rationale="A replaced lock filename must not split cross-process serialization.",
+    ),
+    MutationCase(
+        mutation_id="JEV_U4_CLI_STATE_HANDLE", component="Jev U4 shadow backend",
+        source_path="scripts/llm/jev_u4_shadow.py", test_script="tests/test_jev_u4_shadow.py",
+        before="                store = ShadowStore(args.state_root, _state_handle=state)",
+        after="                store = ShadowStore(args.state_root)",
+        expected_failure_marker="test_cli_keeps_original_state_root_through_receipt_commit",
+        rationale="The CLI must commit to the same retained state root used for shadow validation.",
+    ),
+    MutationCase(
+        mutation_id="JEV_U4_CLI_ARTIFACT_HANDLE", component="Jev U4 shadow backend",
+        source_path="scripts/llm/jev_u4_shadow.py", test_script="tests/test_jev_u4_shadow.py",
+        before="                    request, artifact, state, adapter,\n",
+        after="                    request, _open_root(args.artifact_root, create=False), state, adapter,\n",
+        expected_failure_marker="test_cli_keeps_original_artifact_root_after_cassette_load",
+        rationale="The cassette and packet must use the same retained artifact root.",
+    ),
+    MutationCase(
+        mutation_id="JEV_U4_SCHEMA_COLLATION", component="Jev U4 shadow backend",
+        source_path="scripts/llm/jev_u4_shadow.py", test_script="tests/test_jev_u4_shadow.py",
+        before='            or objects[0][3] not in {_CREATE_RECEIPTS_SQL, _PRIOR_CREATE_RECEIPTS_SQL}',
+        after='            or False',
+        expected_failure_marker="test_database_with_altered_primary_key_collation_is_rejected",
+        rationale="A lookalike SQLite table cannot change command-ID equality semantics.",
+    ),
+    MutationCase(
+        mutation_id="JEV_U4_PRIOR_SCHEMA_COMPAT", component="Jev U4 shadow backend",
+        source_path="scripts/llm/jev_u4_shadow.py", test_script="tests/test_jev_u4_shadow.py",
+        before='            or objects[0][3] not in {_CREATE_RECEIPTS_SQL, _PRIOR_CREATE_RECEIPTS_SQL}',
+        after='            or objects[0][3] != _CREATE_RECEIPTS_SQL',
+        expected_failure_marker="test_prior_task5_schema_is_read_without_rewriting_image",
+        rationale="A prior current-schema SQLite image must remain readable without rewrite.",
+    ),
+    MutationCase(
+        mutation_id="JEV_U4_LOCK_HARDLINK", component="Jev U4 shadow backend",
+        source_path="scripts/llm/jev_u4_shadow.py", test_script="tests/test_jev_u4_shadow.py",
+        before="if not stat.S_ISREG(lock_info.st_mode) or lock_info.st_nlink != 1:",
+        after="if not stat.S_ISREG(lock_info.st_mode):",
+        expected_failure_marker="test_existing_hardlinked_lock_is_rejected_even_at_mode_0600",
+        rationale="An existing hardlinked lock cannot borrow an outside inode.",
+    ),
+    MutationCase(
+        mutation_id="JEV_U4_ROOT_DOT_COMPONENT", component="Jev U4 shadow backend",
+        source_path="scripts/llm/jev_u4_shadow.py", test_script="tests/test_jev_u4_shadow.py",
+        before='    if any(part in {".", ".."} for part in raw.split("/")):',
+        after='    if False:',
+        expected_failure_marker="test_state_root_rejects_dotdot_before_path_normalization",
+        rationale="Root path normalization cannot erase a symlink-dotdot traversal attempt.",
+    ),
+    MutationCase(
+        mutation_id="JEV_U4_OWNED_TEMP_CLEANUP", component="Jev U4 shadow backend",
+        source_path="scripts/llm/jev_u4_shadow.py", test_script="tests/test_jev_u4_shadow.py",
+        before="    if (current.st_dev, current.st_ino) == identity:",
+        after="    if True:",
+        expected_failure_marker="test_database_temp_cleanup_does_not_unlink_replaced_name",
+        rationale="A replaced temporary filename is not owned cleanup work.",
+    ),
+    MutationCase(
         mutation_id="PAPER_SETTLEMENT_FAILURE_STOPS_DAILY", component="Nightly settlement publication",
         source_path="experiments/execution_tracker/model_paper_fund.py", test_script="tests/test_paper_settlement_publication.py",
         before='                print(f"DATA_BLOCKED: settlement failed; no projections written: {e}")\n                return 1',
@@ -5221,8 +5324,8 @@ MUTATIONS: tuple[MutationCase, ...] = (
         component="Nightly funnel wiring artifact contract",
         source_path="experiments/research_funnel/nightly_funnel.py",
         test_script="tests/test_funnel_nightly_offline.py",
-        before='    validate_bundle_contracts(payloads, registry, "all_market_scan.json")',
-        after="    pass",
+        before='    manifest, measured, payloads = read_bundle(bundle_dir, target)\n    if manifest.get("dag") is not None and manifest.get("run_id") != run_id:\n        raise FunnelError("DAG bundle manifest belongs to another nightly run")\n    validate_bundle_contracts(payloads, registry, "all_market_scan.json")',
+        after='    manifest, measured, payloads = read_bundle(bundle_dir, target)\n    if manifest.get("dag") is not None and manifest.get("run_id") != run_id:\n        raise FunnelError("DAG bundle manifest belongs to another nightly run")\n    pass',
         expected_failure_marker="test_build_health_runs_the_bundle_contracts",
         rationale="Hashes prove the files did not change, not that their content is still compliant.",
     ),
@@ -8319,7 +8422,7 @@ MUTATIONS = MUTATIONS + (
         component="Research Closed Loop V1 assembly identity",
         source_path="docs/research/contracts/research_closed_loop.v1.json",
         test_script="tests/test_u4_pre_decision_runtime.py",
-        before="sha256:2088d2e2751ff9458e97feba6397a764f3154972bf645e55a855018d0f9a0243",
+        before="sha256:ee6191cf8cdeeb50f5f27f878e720faaa258e68bf2d8d35a3742e33d8d17b7e3",
         after="sha256:e84b0e026832420ee1e88e1fcbac2b69a836e97cf29f5d1d7daf15eb3fbe09fa",
         expected_failure_marker="test_fix_forward_task_compiles_and_preserves_the_frozen_assembly",
         rationale="The previously reviewed V1.3 identity must not silently bind changed DAG bytes.",
@@ -8397,12 +8500,12 @@ MUTATIONS = MUTATIONS + (
         source_path="experiments/research_funnel/u4_pre_decision.py",
         test_script="tests/test_u4_pre_decision_runtime.py",
         before=(
-            "        # governance-mutation: U4_PREDECISION_STAGE_RECEIPT_FILE\n"
-            "        if not receipt_path.is_file() or receipt_path.is_symlink():"
+            "                # governance-mutation: U4_PREDECISION_STAGE_RECEIPT_FILE\n"
+            "                if not receipt_path.is_file() or receipt_path.is_symlink():"
         ),
         after=(
-            "        # governance-mutation: U4_PREDECISION_STAGE_RECEIPT_FILE\n"
-            "        if not receipt_path.is_file():"
+            "                # governance-mutation: U4_PREDECISION_STAGE_RECEIPT_FILE\n"
+            "                if not receipt_path.is_file():"
         ),
         expected_failure_marker="test_stage_receipt_symlink_is_rejected_before_reading",
         rationale="A receipt must be an in-bundle regular file, never an external symlink.",

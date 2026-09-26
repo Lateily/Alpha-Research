@@ -5,8 +5,6 @@ from __future__ import annotations
 
 import argparse
 import contextlib
-import ctypes
-import ctypes.util
 import fcntl
 import hashlib
 import importlib.util
@@ -14,6 +12,7 @@ import json
 import os
 import re
 import secrets
+import sqlite3
 import stat
 import sys
 import threading
@@ -31,7 +30,7 @@ RESEARCH_FUNNEL_ROOT = REPO_ROOT / "experiments/research_funnel"
 if str(RESEARCH_FUNNEL_ROOT) not in sys.path:
     sys.path.insert(0, str(RESEARCH_FUNNEL_ROOT))
 
-from experiments.research_funnel import u4_pre_decision, u4_shadow  # noqa: E402
+from experiments.research_funnel import evidence_view, u4_pre_decision, u4_shadow  # noqa: E402
 
 from capability import (  # noqa: E402
     CapabilityRecord,
@@ -138,17 +137,6 @@ class ShadowRunError(RuntimeError):
             "code": self.code,
             "message": self.safe_message,
         }
-
-
-@dataclass(frozen=True)
-class ResolvedRequestPaths:
-    packet: Path
-    bundle: Path
-    feature_health: Path
-    funnel_health: Path
-    diagnostic: Path
-    cyclical_flags: Path | None
-    packet_bytes: bytes
 
 
 def _blocked(message: str = "request is outside the approved shadow specification") -> ShadowRunError:
@@ -302,17 +290,6 @@ class RetainedFile:
         self.close()
 
 
-def _fd_path(descriptor: int) -> Path:
-    proc_path = Path(f"/proc/self/fd/{descriptor}")
-    if proc_path.exists():
-        return Path(os.readlink(proc_path))
-    get_path = getattr(fcntl, "F_GETPATH", None)
-    if get_path is not None:
-        raw = fcntl.fcntl(descriptor, get_path, b"\0" * 1024)
-        return Path(raw.split(b"\0", 1)[0].decode())
-    raise OSError("descriptor paths are unavailable on this platform")
-
-
 def _open_absolute_directory(path: Path) -> int:
     descriptor = os.open(path.anchor, _DIRECTORY_FLAGS)
     try:
@@ -327,7 +304,10 @@ def _open_absolute_directory(path: Path) -> int:
 
 
 def _open_root(root: Path | str, *, create: bool) -> _DirectoryHandle:
-    supplied = Path(root)
+    raw = os.fspath(root)
+    if any(part in {".", ".."} for part in raw.split("/")):
+        raise _blocked("root must not contain dot path components")
+    supplied = Path(raw)
     if not supplied.is_absolute():
         raise _blocked("root must be one absolute non-symlink directory")
     path = Path(os.path.abspath(supplied))
@@ -347,16 +327,14 @@ def _open_root(root: Path | str, *, create: bool) -> _DirectoryHandle:
             if path == Path(path.anchor):
                 descriptor = _open_absolute_directory(path)
                 return _DirectoryHandle(descriptor)
-            parent = path.parent.resolve(strict=True)
-            parent_fd = _open_absolute_directory(parent)
+            parent_fd = _open_absolute_directory(path.parent)
             try:
                 descriptor = os.open(path.name, _DIRECTORY_FLAGS, dir_fd=parent_fd)
             finally:
                 os.close(parent_fd)
             return _DirectoryHandle(descriptor)
 
-        canonical_parent = cursor.resolve(strict=True)
-        descriptor = _open_absolute_directory(canonical_parent)
+        descriptor = _open_absolute_directory(cursor)
         for part in reversed(missing):
             os.mkdir(part, mode=0o700, dir_fd=descriptor)
             os.fsync(descriptor)
@@ -416,18 +394,13 @@ def _read_fd(descriptor: int) -> bytes:
         chunks.append(chunk)
 
 
-def _remove_directory_contents(directory_fd: int) -> None:
-    for name in os.listdir(directory_fd):
-        info = os.stat(name, dir_fd=directory_fd, follow_symlinks=False)
-        if stat.S_ISDIR(info.st_mode) and not stat.S_ISLNK(info.st_mode):
-            child_fd = os.open(name, _DIRECTORY_FLAGS, dir_fd=directory_fd)
-            try:
-                _remove_directory_contents(child_fd)
-            finally:
-                os.close(child_fd)
-            os.rmdir(name, dir_fd=directory_fd)
-        else:
-            os.unlink(name, dir_fd=directory_fd)
+def _unlink_owned(directory_fd: int, name: str, identity: tuple[int, int]) -> None:
+    try:
+        current = os.stat(name, dir_fd=directory_fd, follow_symlinks=False)
+    except FileNotFoundError:
+        return
+    if (current.st_dev, current.st_ino) == identity:
+        os.unlink(name, dir_fd=directory_fd)
 
 
 def safe_ref(root: Path | str, ref: str) -> RetainedFile:
@@ -445,236 +418,6 @@ def safe_ref(root: Path | str, ref: str) -> RetainedFile:
         if descriptor >= 0:
             os.close(descriptor)
         handle.close()
-
-
-def _destination_parent(root_fd: int, ref: str) -> tuple[int, str]:
-    parts = PurePosixPath(_validate_relative_ref(ref, "reference")).parts
-    descriptor = os.dup(root_fd)
-    try:
-        for part in parts[:-1]:
-            try:
-                os.mkdir(part, mode=0o700, dir_fd=descriptor)
-            except FileExistsError:
-                pass
-            next_descriptor = os.open(part, _DIRECTORY_FLAGS, dir_fd=descriptor)
-            os.close(descriptor)
-            descriptor = next_descriptor
-        return descriptor, parts[-1]
-    except Exception:
-        os.close(descriptor)
-        raise
-
-
-def _write_snapshot_file(root_fd: int, ref: str, raw: bytes) -> None:
-    parent_fd, name = _destination_parent(root_fd, ref)
-    try:
-        descriptor = os.open(
-            name,
-            os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0),
-            0o600,
-            dir_fd=parent_fd,
-        )
-        try:
-            view = memoryview(raw)
-            while view:
-                written = os.write(descriptor, view)
-                view = view[written:]
-        finally:
-            os.close(descriptor)
-    finally:
-        os.close(parent_fd)
-
-
-def _copy_snapshot_file(
-    source_root_fd: int,
-    destination_root_fd: int,
-    ref: str,
-    *,
-    race_injector: Callable[[str], None] | None = None,
-    event: str | None = None,
-) -> bytes:
-    source_fd = _open_relative(
-        source_root_fd,
-        ref,
-        directory=False,
-        race_injector=race_injector,
-        event=event,
-    )
-    try:
-        raw = _read_fd(source_fd)
-    finally:
-        os.close(source_fd)
-    _write_snapshot_file(destination_root_fd, ref, raw)
-    return raw
-
-
-def _copy_directory_contents(
-    source_fd: int,
-    destination_fd: int,
-    *,
-    race_injector: Callable[[str], None] | None = None,
-) -> None:
-    for name in sorted(os.listdir(source_fd)):
-        info = os.stat(name, dir_fd=source_fd, follow_symlinks=False)
-        if stat.S_ISLNK(info.st_mode):
-            raise OSError("symlink in artifact bundle")
-        if stat.S_ISDIR(info.st_mode):
-            os.mkdir(name, mode=0o700, dir_fd=destination_fd)
-            source_child = os.open(name, _DIRECTORY_FLAGS, dir_fd=source_fd)
-            destination_child = os.open(name, _DIRECTORY_FLAGS, dir_fd=destination_fd)
-            try:
-                opened = os.fstat(source_child)
-                if (
-                    not stat.S_ISDIR(opened.st_mode)
-                    or (opened.st_dev, opened.st_ino) != (info.st_dev, info.st_ino)
-                ):
-                    raise OSError("artifact bundle directory changed while opening")
-                _copy_directory_contents(
-                    source_child,
-                    destination_child,
-                    race_injector=race_injector,
-                )
-            finally:
-                os.close(source_child)
-                os.close(destination_child)
-        elif stat.S_ISREG(info.st_mode):
-            if race_injector is not None:
-                race_injector("artifact_bundle_file_statted")
-            source_file = os.open(
-                name,
-                _FILE_READ_FLAGS | getattr(os, "O_NONBLOCK", 0),
-                dir_fd=source_fd,
-            )
-            try:
-                opened = os.fstat(source_file)
-                if (
-                    not stat.S_ISREG(opened.st_mode)
-                    or (opened.st_dev, opened.st_ino) != (info.st_dev, info.st_ino)
-                ):
-                    raise OSError("artifact bundle file changed while opening")
-                raw = _read_fd(source_file)
-            finally:
-                os.close(source_file)
-            destination_file = os.open(
-                name,
-                os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0),
-                0o600,
-                dir_fd=destination_fd,
-            )
-            try:
-                view = memoryview(raw)
-                while view:
-                    written = os.write(destination_file, view)
-                    view = view[written:]
-            finally:
-                os.close(destination_file)
-        else:
-            raise OSError("unsupported artifact bundle entry")
-
-
-def _copy_snapshot_directory(
-    source_root_fd: int,
-    destination_root_fd: int,
-    ref: str,
-    *,
-    race_injector: Callable[[str], None] | None = None,
-) -> None:
-    source_fd = _open_relative(source_root_fd, ref, directory=True)
-    destination_fd = -1
-    try:
-        parent_fd, name = _destination_parent(destination_root_fd, ref)
-        try:
-            os.mkdir(name, mode=0o700, dir_fd=parent_fd)
-            destination_fd = os.open(name, _DIRECTORY_FLAGS, dir_fd=parent_fd)
-        finally:
-            os.close(parent_fd)
-        _copy_directory_contents(
-            source_fd,
-            destination_fd,
-            race_injector=race_injector,
-        )
-    finally:
-        os.close(source_fd)
-        if destination_fd >= 0:
-            os.close(destination_fd)
-
-
-@contextlib.contextmanager
-def resolve_request_paths(
-    artifact_root: Path | str,
-    payload: Mapping[str, Any],
-    *,
-    state_root: Path | str,
-    race_injector: Callable[[str], None] | None = None,
-    artifact_handle: _DirectoryHandle | None = None,
-    state_handle: _DirectoryHandle | None = None,
-):
-    """Yield a private descriptor-anchored snapshot for authoritative reopen."""
-    own_artifact = artifact_handle is None
-    own_state = state_handle is None
-    artifact = artifact_handle or _open_root(artifact_root, create=False)
-    state = state_handle or _open_root(state_root, create=True)
-    snapshot_name = f".jev-u4-shadow-reopen-{secrets.token_hex(12)}"
-    snapshot_fd = -1
-    snapshot_path: Path | None = None
-    try:
-        os.mkdir(snapshot_name, mode=0o700, dir_fd=state.fd)
-        os.fsync(state.fd)
-        snapshot_fd = os.open(snapshot_name, _DIRECTORY_FLAGS, dir_fd=state.fd)
-        packet_raw = _copy_snapshot_file(
-            artifact.fd,
-            snapshot_fd,
-            payload["packet_ref"],
-            race_injector=race_injector,
-            event="artifact_packet_parent_opened",
-        )
-        _copy_snapshot_directory(
-            artifact.fd,
-            snapshot_fd,
-            payload["bundle_ref"],
-            race_injector=race_injector,
-        )
-        for field in ("feature_health_ref", "funnel_health_ref", "diagnostic_ref"):
-            _copy_snapshot_file(artifact.fd, snapshot_fd, payload[field])
-        if payload["cyclical_flags_ref"] is not None:
-            _copy_snapshot_file(
-                artifact.fd, snapshot_fd, payload["cyclical_flags_ref"]
-            )
-        snapshot_path = _fd_path(snapshot_fd)
-        yield ResolvedRequestPaths(
-            packet=snapshot_path / payload["packet_ref"],
-            bundle=snapshot_path / payload["bundle_ref"],
-            feature_health=snapshot_path / payload["feature_health_ref"],
-            funnel_health=snapshot_path / payload["funnel_health_ref"],
-            diagnostic=snapshot_path / payload["diagnostic_ref"],
-            cyclical_flags=(
-                snapshot_path / payload["cyclical_flags_ref"]
-                if payload["cyclical_flags_ref"] is not None
-                else None
-            ),
-            packet_bytes=packet_raw,
-        )
-    except ShadowRunError:
-        raise
-    except Exception as exc:
-        raise _blocked("artifact snapshot could not be opened safely") from exc
-    finally:
-        if snapshot_fd >= 0:
-            try:
-                _remove_directory_contents(snapshot_fd)
-                current = os.stat(
-                    snapshot_name, dir_fd=state.fd, follow_symlinks=False
-                )
-                opened = os.fstat(snapshot_fd)
-                if (current.st_dev, current.st_ino) == (opened.st_dev, opened.st_ino):
-                    os.rmdir(snapshot_name, dir_fd=state.fd)
-            except OSError:
-                pass
-            os.close(snapshot_fd)
-        if own_artifact:
-            artifact.close()
-        if own_state:
-            state.close()
 
 
 def _reject_constant(value: str) -> None:
@@ -696,14 +439,6 @@ def _decode_json(raw: bytes) -> Any:
         parse_constant=_reject_constant,
         object_pairs_hook=_object_without_duplicates,
     )
-
-
-def load_exact_json(path: Path) -> Any:
-    """Load strict UTF-8 JSON from an already resolved regular file."""
-    try:
-        return _decode_json(_read_regular_file(path))
-    except (OSError, UnicodeError, ValueError, TypeError) as exc:
-        raise _blocked("JSON evidence is invalid") from exc
 
 
 def _root_scope(prefix: str, handle: _DirectoryHandle) -> str:
@@ -908,66 +643,82 @@ def run_shadow(
         if getattr(adapter, "provider", None) == "typesafe_jev":
             raise _live_provider_blocked()
         raise _blocked("only the offline fixture adapter is approved")
+    _require_runtime()
 
     artifact: _DirectoryHandle | None = None
     state: _DirectoryHandle | None = None
     try:
         artifact = _open_root(artifact_root, create=False)
         state = _open_root(state_root, create=True)
-        with resolve_request_paths(
-            artifact_root,
-            payload,
-            state_root=state_root,
+        return _run_shadow_with_handles(
+            payload, artifact, state, adapter, artifact_root=artifact_root,
             race_injector=race_injector,
-            artifact_handle=artifact,
-            state_handle=state,
-        ) as paths:
-            packet_raw = paths.packet_bytes
-            packet = _decode_json(packet_raw)
-            if not isinstance(packet, Mapping):
-                raise ValueError("packet must be an object")
-            diagnostic = load_exact_json(paths.diagnostic)
-            if (
-                diagnostic != packet.get("diagnostic")
-                or canonical_hash(diagnostic)
-                != packet.get("source_refs", {}).get("diagnostic_report_hash")
-            ):
-                raise ValueError("diagnostic differs from packet binding")
-            u4_pre_decision.validate_packet(
-                packet,
-                bundle_dir=paths.bundle,
-                feature_health_path=paths.feature_health,
-                funnel_health_path=paths.funnel_health,
-                diagnostic_ref=payload["diagnostic_ref"],
-                industry=payload["industry"],
-                method_version=payload["method_version"],
-                cyclical_flags_path=paths.cyclical_flags,
-            )
-            decision = route(
-                _offline_capability_registry(artifact, state),
-                _route_request(payload, artifact, state),
-            )
-            if decision.status is not RouteStatus.SELECTED:
-                raise _blocked("offline shadow capability was not selected")
-            candidate_results = _execute_candidates_once(packet, payload, adapter)
-            receipt = u4_shadow.build_receipt(
-                payload,
-                packet,
-                candidate_results,
-                packet_file_hash=_sha256_bytes(packet_raw),
-                provider=_provider_payload(adapter),
-            )
-            u4_shadow.verify_receipt(receipt)
-            return receipt
-    except ShadowRunError:
-        raise
-    except Exception as exc:
-        raise _blocked("shadow evidence or receipt validation failed") from exc
+        )
     finally:
         if artifact is not None:
             artifact.close()
         if state is not None:
             state.close()
+
+
+def _run_shadow_with_handles(
+    payload: Mapping[str, Any],
+    artifact: _DirectoryHandle,
+    state: _DirectoryHandle,
+    adapter: object,
+    *,
+    artifact_root: Path | str,
+    race_injector: Callable[[str], None] | None = None,
+) -> dict[str, Any]:
+    try:
+        if race_injector is not None:
+            race_injector("artifact_root_opened")
+        with evidence_view.DirectoryCapability(
+            os.dup(artifact.fd), str(artifact_root)
+        ) as source:
+            evidence = evidence_view.EvidenceView.capture_u4(
+                source,
+                packet_ref=payload["packet_ref"],
+                diagnostic_ref=payload["diagnostic_ref"],
+                bundle_ref=payload["bundle_ref"],
+                feature_health_ref=payload["feature_health_ref"],
+                funnel_health_ref=payload["funnel_health_ref"],
+                cyclical_flags_ref=payload["cyclical_flags_ref"],
+            )
+        packet_raw = evidence.bytes(payload["packet_ref"])
+        packet = evidence.json_object(payload["packet_ref"])
+        u4_pre_decision.validate_packet(
+            evidence=evidence,
+            packet_ref=payload["packet_ref"],
+            diagnostic_ref=payload["diagnostic_ref"],
+            diagnostic_evidence_ref=payload["diagnostic_ref"],
+            bundle_ref=payload["bundle_ref"],
+            feature_health_ref=payload["feature_health_ref"],
+            funnel_health_ref=payload["funnel_health_ref"],
+            industry=payload["industry"],
+            method_version=payload["method_version"],
+            cyclical_flags_ref=payload["cyclical_flags_ref"],
+        )
+        decision = route(
+            _offline_capability_registry(artifact, state),
+            _route_request(payload, artifact, state),
+        )
+        if decision.status is not RouteStatus.SELECTED:
+            raise _blocked("offline shadow capability was not selected")
+        candidate_results = _execute_candidates_once(packet, payload, adapter)
+        receipt = u4_shadow.build_receipt(
+            payload,
+            packet,
+            candidate_results,
+            packet_file_hash=_sha256_bytes(packet_raw),
+            provider=_provider_payload(adapter),
+        )
+        u4_shadow.verify_receipt(receipt)
+        return receipt
+    except ShadowRunError:
+        raise
+    except Exception as exc:
+        raise _blocked("shadow evidence or receipt validation failed") from exc
 
 
 def _canonical_bytes(value: object) -> bytes:
@@ -1002,275 +753,100 @@ def _read_regular_file(path: Path) -> bytes:
         raise
 
 
+def _require_runtime() -> None:
+    """Refuse unsupported interpreters before creating any persistent state."""
+    if sys.implementation.name != "cpython" or sys.version_info < (3, 11):
+        raise ShadowRunError("RUNTIME_UNSUPPORTED", status="SPEC_BLOCKED")
+    try:
+        with contextlib.closing(sqlite3.connect(":memory:")) as original:
+            original.execute("CREATE TABLE runtime_probe (value TEXT NOT NULL)")
+            original.execute("INSERT INTO runtime_probe VALUES ('ready')")
+            raw = original.serialize()
+        with contextlib.closing(sqlite3.connect(":memory:")) as restored:
+            restored.deserialize(raw)
+            if restored.execute("SELECT value FROM runtime_probe").fetchone() != ("ready",):
+                raise ValueError("SQLite image round trip changed its data")
+    except (AttributeError, sqlite3.Error, TypeError, ValueError) as exc:
+        raise ShadowRunError("RUNTIME_UNSUPPORTED", status="SPEC_BLOCKED") from exc
+
+
 class _SQLiteImageError(RuntimeError):
     pass
 
 
-def _load_sqlite_library() -> ctypes.CDLL:
-    library_name = ctypes.util.find_library("sqlite3")
-    if library_name is None:
-        raise RuntimeError("system SQLite library is unavailable")
-    library = ctypes.CDLL(library_name)
-    pointer = ctypes.c_void_p
-    integer = ctypes.c_int
-    int64 = ctypes.c_longlong
-
-    library.sqlite3_open_v2.argtypes = [
-        ctypes.c_char_p,
-        ctypes.POINTER(pointer),
-        integer,
-        ctypes.c_char_p,
-    ]
-    library.sqlite3_open_v2.restype = integer
-    library.sqlite3_close.argtypes = [pointer]
-    library.sqlite3_close.restype = integer
-    library.sqlite3_errmsg.argtypes = [pointer]
-    library.sqlite3_errmsg.restype = ctypes.c_char_p
-    library.sqlite3_exec.argtypes = [
-        pointer,
-        ctypes.c_char_p,
-        pointer,
-        pointer,
-        ctypes.POINTER(ctypes.c_char_p),
-    ]
-    library.sqlite3_exec.restype = integer
-    library.sqlite3_prepare_v2.argtypes = [
-        pointer,
-        ctypes.c_char_p,
-        integer,
-        ctypes.POINTER(pointer),
-        ctypes.POINTER(ctypes.c_char_p),
-    ]
-    library.sqlite3_prepare_v2.restype = integer
-    library.sqlite3_bind_text.argtypes = [
-        pointer,
-        integer,
-        ctypes.c_char_p,
-        integer,
-        pointer,
-    ]
-    library.sqlite3_bind_text.restype = integer
-    library.sqlite3_bind_blob.argtypes = [
-        pointer,
-        integer,
-        pointer,
-        integer,
-        pointer,
-    ]
-    library.sqlite3_bind_blob.restype = integer
-    library.sqlite3_step.argtypes = [pointer]
-    library.sqlite3_step.restype = integer
-    library.sqlite3_finalize.argtypes = [pointer]
-    library.sqlite3_finalize.restype = integer
-    library.sqlite3_column_count.argtypes = [pointer]
-    library.sqlite3_column_count.restype = integer
-    library.sqlite3_column_type.argtypes = [pointer, integer]
-    library.sqlite3_column_type.restype = integer
-    library.sqlite3_column_text.argtypes = [pointer, integer]
-    library.sqlite3_column_text.restype = pointer
-    library.sqlite3_column_blob.argtypes = [pointer, integer]
-    library.sqlite3_column_blob.restype = pointer
-    library.sqlite3_column_bytes.argtypes = [pointer, integer]
-    library.sqlite3_column_bytes.restype = integer
-    library.sqlite3_serialize.argtypes = [
-        pointer,
-        ctypes.c_char_p,
-        ctypes.POINTER(int64),
-        ctypes.c_uint,
-    ]
-    library.sqlite3_serialize.restype = pointer
-    library.sqlite3_deserialize.argtypes = [
-        pointer,
-        ctypes.c_char_p,
-        pointer,
-        int64,
-        int64,
-        ctypes.c_uint,
-    ]
-    library.sqlite3_deserialize.restype = integer
-    library.sqlite3_malloc64.argtypes = [ctypes.c_ulonglong]
-    library.sqlite3_malloc64.restype = pointer
-    library.sqlite3_free.argtypes = [pointer]
-    library.sqlite3_free.restype = None
-    return library
-
-
-_SQLITE = _load_sqlite_library()
-_SQLITE_OK = 0
-_SQLITE_ROW = 100
-_SQLITE_DONE = 101
-_SQLITE_OPEN_READWRITE = 0x00000002
-_SQLITE_OPEN_CREATE = 0x00000004
-_SQLITE_OPEN_MEMORY = 0x00000080
-_SQLITE_INTEGER = 1
-_SQLITE_FLOAT = 2
-_SQLITE_TEXT = 3
-_SQLITE_BLOB = 4
-_SQLITE_NULL = 5
-_SQLITE_DESERIALIZE_FREEONCLOSE = 1
-_SQLITE_DESERIALIZE_RESIZEABLE = 2
-_SQLITE_TRANSIENT = ctypes.c_void_p(-1)
-
-
-class _SQLiteResult:
-    def __init__(self, row: tuple[Any, ...] | None) -> None:
-        self._row = row
-
-    def fetchone(self) -> tuple[Any, ...] | None:
-        return self._row
+_CREATE_RECEIPTS_SQL = (
+    "CREATE TABLE receipts (\n"
+    "                            command_id TEXT PRIMARY KEY,\n"
+    "                            request_hash TEXT NOT NULL,\n"
+    "                            request_bytes BLOB NOT NULL,\n"
+    "                            receipt_hash TEXT NOT NULL,\n"
+    "                            receipt_bytes BLOB NOT NULL\n"
+    "                        )"
+)
+_PRIOR_CREATE_RECEIPTS_SQL = (
+    "CREATE TABLE receipts (\n"
+    "                        command_id TEXT PRIMARY KEY,\n"
+    "                        request_hash TEXT NOT NULL,\n"
+    "                        request_bytes BLOB NOT NULL,\n"
+    "                        receipt_hash TEXT NOT NULL,\n"
+    "                        receipt_bytes BLOB NOT NULL\n"
+    "                    )"
+)
 
 
 class _SQLiteImageDatabase:
-    """A SQLite connection whose complete state lives in memory."""
+    """A stdlib SQLite connection whose complete state lives in memory."""
 
     def __init__(self, raw: bytes | None) -> None:
-        self._database = ctypes.c_void_p()
-        result = _SQLITE.sqlite3_open_v2(
-            b":memory:",
-            ctypes.byref(self._database),
-            _SQLITE_OPEN_READWRITE | _SQLITE_OPEN_CREATE | _SQLITE_OPEN_MEMORY,
-            None,
-        )
-        if result != _SQLITE_OK:
-            self._raise(result)
-        if raw is not None:
-            capacity = max(len(raw) + 65536, len(raw) * 2)
-            memory = _SQLITE.sqlite3_malloc64(capacity)
-            if not memory:
-                self.close()
-                raise _SQLiteImageError("SQLite image allocation failed")
-            ctypes.memmove(memory, raw, len(raw))
-            result = _SQLITE.sqlite3_deserialize(
-                self._database,
-                b"main",
-                memory,
-                len(raw),
-                capacity,
-                _SQLITE_DESERIALIZE_FREEONCLOSE
-                | _SQLITE_DESERIALIZE_RESIZEABLE,
-            )
-            if result != _SQLITE_OK:
-                self.close()
-                raise _SQLiteImageError(f"SQLite image deserialize failed: {result}")
-
-    def _message(self) -> str:
-        if not self._database:
-            return "SQLite connection is closed"
-        raw = _SQLITE.sqlite3_errmsg(self._database)
-        return raw.decode("utf-8", "replace") if raw else "SQLite error"
-
-    def _raise(self, result: int) -> None:
-        raise _SQLiteImageError(f"SQLite error {result}: {self._message()}")
-
-    def _exec(self, statement: str) -> None:
-        result = _SQLITE.sqlite3_exec(
-            self._database,
-            statement.encode("utf-8"),
-            None,
-            None,
-            None,
-        )
-        if result != _SQLITE_OK:
-            self._raise(result)
+        try:
+            self._database = sqlite3.connect(":memory:", isolation_level=None)
+            if raw is not None:
+                self._database.deserialize(raw)
+        except sqlite3.Error as exc:
+            self.close()
+            raise _SQLiteImageError("SQLite image deserialize failed") from exc
 
     def execute(
         self, statement: str, parameters: tuple[Any, ...] = ()
-    ) -> _SQLiteResult:
-        prepared = ctypes.c_void_p()
-        result = _SQLITE.sqlite3_prepare_v2(
-            self._database,
-            statement.encode("utf-8"),
-            -1,
-            ctypes.byref(prepared),
-            None,
-        )
-        if result != _SQLITE_OK:
-            self._raise(result)
-        buffers: list[object] = []
+    ) -> sqlite3.Cursor:
         try:
-            for index, value in enumerate(parameters, start=1):
-                if isinstance(value, str):
-                    encoded = value.encode("utf-8")
-                    result = _SQLITE.sqlite3_bind_text(
-                        prepared,
-                        index,
-                        encoded,
-                        len(encoded),
-                        _SQLITE_TRANSIENT,
-                    )
-                elif isinstance(value, (bytes, bytearray, memoryview)):
-                    encoded = bytes(value)
-                    buffer = ctypes.create_string_buffer(encoded, max(1, len(encoded)))
-                    buffers.append(buffer)
-                    result = _SQLITE.sqlite3_bind_blob(
-                        prepared,
-                        index,
-                        ctypes.cast(buffer, ctypes.c_void_p),
-                        len(encoded),
-                        _SQLITE_TRANSIENT,
-                    )
-                else:
-                    raise TypeError("unsupported SQLite parameter")
-                if result != _SQLITE_OK:
-                    self._raise(result)
-
-            result = _SQLITE.sqlite3_step(prepared)
-            if result == _SQLITE_DONE:
-                return _SQLiteResult(None)
-            if result != _SQLITE_ROW:
-                self._raise(result)
-            row = tuple(
-                self._column(prepared, index)
-                for index in range(_SQLITE.sqlite3_column_count(prepared))
-            )
-            result = _SQLITE.sqlite3_step(prepared)
-            if result == _SQLITE_ROW:
-                raise _SQLiteImageError("SQLite query returned multiple rows")
-            if result != _SQLITE_DONE:
-                self._raise(result)
-            return _SQLiteResult(row)
-        finally:
-            _SQLITE.sqlite3_finalize(prepared)
-
-    def _column(self, statement: ctypes.c_void_p, index: int) -> Any:
-        kind = _SQLITE.sqlite3_column_type(statement, index)
-        if kind == _SQLITE_NULL:
-            return None
-        if kind in {_SQLITE_INTEGER, _SQLITE_FLOAT}:
-            raise _SQLiteImageError("unexpected numeric SQLite value")
-        size = _SQLITE.sqlite3_column_bytes(statement, index)
-        if kind == _SQLITE_TEXT:
-            pointer = _SQLITE.sqlite3_column_text(statement, index)
-            return ctypes.string_at(pointer, size).decode("utf-8")
-        if kind == _SQLITE_BLOB:
-            pointer = _SQLITE.sqlite3_column_blob(statement, index)
-            return ctypes.string_at(pointer, size)
-        raise _SQLiteImageError("unexpected SQLite value type")
+            return self._database.execute(statement, parameters)
+        except sqlite3.Error as exc:
+            raise _SQLiteImageError("SQLite operation failed") from exc
 
     def commit(self) -> None:
-        self._exec("COMMIT")
+        try:
+            self._database.commit()
+        except sqlite3.Error as exc:
+            raise _SQLiteImageError("SQLite commit failed") from exc
 
     def rollback(self) -> None:
-        self._exec("ROLLBACK")
+        try:
+            self._database.rollback()
+        except sqlite3.Error as exc:
+            raise _SQLiteImageError("SQLite rollback failed") from exc
 
     def serialize(self) -> bytes:
-        size = ctypes.c_longlong()
-        pointer = _SQLITE.sqlite3_serialize(
-            self._database, b"main", ctypes.byref(size), 0
-        )
-        if not pointer:
-            raise _SQLiteImageError("SQLite image serialization failed")
         try:
-            return ctypes.string_at(pointer, size.value)
-        finally:
-            _SQLITE.sqlite3_free(pointer)
+            return self._database.serialize()
+        except sqlite3.Error as exc:
+            raise _SQLiteImageError("SQLite image serialization failed") from exc
+
+    @property
+    def total_changes(self) -> int:
+        return self._database.total_changes
+
+    @property
+    def schema_version(self) -> int:
+        return self.execute("PRAGMA schema_version").fetchone()[0]
 
     def close(self) -> None:
-        if self._database:
-            result = _SQLITE.sqlite3_close(self._database)
-            self._database = ctypes.c_void_p()
-            if result != _SQLITE_OK:
-                raise _SQLiteImageError(f"SQLite close failed: {result}")
+        if getattr(self, "_database", None) is not None:
+            database, self._database = self._database, None
+            try:
+                database.close()
+            except sqlite3.Error as exc:
+                raise _SQLiteImageError("SQLite close failed") from exc
 
 
 def _database_process_lock(identity: tuple[int, int]) -> threading.RLock:
@@ -1289,6 +865,7 @@ class ShadowStore:
         self,
         state_root: Path | str,
         *,
+        _state_handle: _DirectoryHandle | None = None,
         fault_injector: Callable[[str], None] | None = None,
         race_injector: Callable[[str], None] | None = None,
     ) -> None:
@@ -1299,6 +876,8 @@ class ShadowStore:
         self._base_handle: _DirectoryHandle | None = None
         self._database_lock: threading.RLock | None = None
         self._lock_fd = -1
+        self._initial_state_handle = _state_handle
+        _require_runtime()
         try:
             self._initialize()
         except Exception:
@@ -1309,10 +888,7 @@ class ShadowStore:
     def base_directory(self) -> Path:
         if self._base_handle is None:
             raise self._integrity()
-        try:
-            return _fd_path(self._base_handle.fd)
-        except OSError as exc:
-            raise self._integrity(exc) from exc
+        return Path(os.path.abspath(self.state_root)) / "jev-u4-shadow"
 
     @property
     def database_path(self) -> Path:
@@ -1340,7 +916,11 @@ class ShadowStore:
 
     def _initialize(self) -> None:
         try:
-            self._state_handle = _open_root(self.state_root, create=True)
+            self._state_handle = (
+                _DirectoryHandle(os.dup(self._initial_state_handle.fd))
+                if self._initial_state_handle is not None
+                else _open_root(self.state_root, create=True)
+            )
             try:
                 os.mkdir("jev-u4-shadow", mode=0o700, dir_fd=self._state_handle.fd)
                 os.fsync(self._state_handle.fd)
@@ -1368,32 +948,50 @@ class ShadowStore:
                     dir_fd=self._base_handle.fd,
                 )
             lock_info = os.fstat(self._lock_fd)
-            if not stat.S_ISREG(lock_info.st_mode):
+            if not stat.S_ISREG(lock_info.st_mode) or lock_info.st_nlink != 1:
                 raise OSError("database lock is not a regular file")
-            os.fchmod(self._lock_fd, 0o600)
+            if lock_created:
+                os.fchmod(self._lock_fd, 0o600)
+            elif stat.S_IMODE(lock_info.st_mode) != 0o600:
+                raise OSError("existing database lock has unsafe permissions")
             if lock_created:
                 os.fsync(self._base_handle.fd)
             self._database_lock = _database_process_lock(
                 (lock_info.st_dev, lock_info.st_ino)
             )
             with self._connect(write=True, allow_missing=True) as database:
-                database.execute("BEGIN IMMEDIATE")
-                database.execute(
-                    """
-                    CREATE TABLE IF NOT EXISTS receipts (
-                        command_id TEXT PRIMARY KEY,
-                        request_hash TEXT NOT NULL,
-                        request_bytes BLOB NOT NULL,
-                        receipt_hash TEXT NOT NULL,
-                        receipt_bytes BLOB NOT NULL
-                    )
-                    """
-                )
-                database.commit()
+                if database.schema_version == 0:
+                    database.execute("BEGIN IMMEDIATE")
+                    database.execute(_CREATE_RECEIPTS_SQL)
+                    database.commit()
+                    self._validate_database_schema(database)
         except ShadowRunError as exc:
             raise self._integrity(exc) from exc
         except Exception as exc:
             raise self._integrity(exc) from exc
+
+    def _validate_database_schema(self, database: _SQLiteImageDatabase) -> None:
+        objects = database.execute(
+            "SELECT type, name, tbl_name, sql FROM sqlite_master ORDER BY name"
+        ).fetchall()
+        if (
+            len(objects) != 2
+            or objects[0][:3] != ("table", "receipts", "receipts")
+            or objects[0][3] not in {_CREATE_RECEIPTS_SQL, _PRIOR_CREATE_RECEIPTS_SQL}
+            or objects[1] != ("index", "sqlite_autoindex_receipts_1", "receipts", None)
+        ):
+            raise self._integrity()
+        columns = database.execute("PRAGMA table_info(receipts)").fetchall()
+        if [(row[1], row[2], row[3], row[5]) for row in columns] != [
+            ("command_id", "TEXT", 0, 1),
+            ("request_hash", "TEXT", 1, 0),
+            ("request_bytes", "BLOB", 1, 0),
+            ("receipt_hash", "TEXT", 1, 0),
+            ("receipt_bytes", "BLOB", 1, 0),
+        ]:
+            raise self._integrity()
+        if database.execute("PRAGMA integrity_check").fetchall() != [("ok",)]:
+            raise self._integrity()
 
     def _lock_name_still_bound(self) -> None:
         if self._base_handle is None or self._lock_fd < 0:
@@ -1473,6 +1071,7 @@ class ShadowStore:
             raise self._integrity()
         temporary_name = f".shadow.sqlite3-{secrets.token_hex(16)}"
         descriptor = -1
+        temporary_identity: tuple[int, int] | None = None
         published = False
         try:
             descriptor = os.open(
@@ -1484,6 +1083,8 @@ class ShadowStore:
                 0o600,
                 dir_fd=self._base_handle.fd,
             )
+            info = os.fstat(descriptor)
+            temporary_identity = (info.st_dev, info.st_ino)
             view = memoryview(raw)
             while view:
                 written = os.write(descriptor, view)
@@ -1513,6 +1114,7 @@ class ShadowStore:
                 published = True
             self._fault("after_database_publish")
             os.fsync(self._base_handle.fd)
+            self._fault("after_database_directory_fsync")
         except ShadowRunError:
             raise
         except OSError as exc:
@@ -1520,20 +1122,20 @@ class ShadowStore:
         finally:
             if descriptor >= 0:
                 os.close(descriptor)
-            if not published or expected is None:
-                try:
-                    os.unlink(temporary_name, dir_fd=self._base_handle.fd)
-                except FileNotFoundError:
-                    pass
+            if (not published or expected is None) and temporary_identity is not None:
+                _unlink_owned(self._base_handle.fd, temporary_name, temporary_identity)
 
     @contextlib.contextmanager
     def _connect(self, *, write: bool, allow_missing: bool = False):
-        if self._database_lock is None or self._lock_fd < 0:
+        if self._database_lock is None or self._lock_fd < 0 or self._base_handle is None:
             raise self._integrity()
         database: _SQLiteImageDatabase | None = None
         locked = False
+        directory_locked = False
         with self._database_lock:
             try:
+                fcntl.flock(self._base_handle.fd, fcntl.LOCK_EX)
+                directory_locked = True
                 fcntl.flock(self._lock_fd, fcntl.LOCK_EX)
                 locked = True
                 self._lock_name_still_bound()
@@ -1543,8 +1145,16 @@ class ShadowStore:
                     allow_missing=allow_missing
                 )
                 database = _SQLiteImageDatabase(raw)
+                if raw is not None:
+                    self._validate_database_schema(database)
+                baseline_changes = database.total_changes
+                baseline_schema_version = database.schema_version
                 yield database
-                if write:
+                if write and (
+                    raw is None
+                    or database.total_changes != baseline_changes
+                    or database.schema_version != baseline_schema_version
+                ):
                     self._lock_name_still_bound()
                     self._persist_database(database.serialize(), identity)
             except ShadowRunError:
@@ -1559,6 +1169,8 @@ class ShadowStore:
                         pass
                 if locked:
                     fcntl.flock(self._lock_fd, fcntl.LOCK_UN)
+                if directory_locked:
+                    fcntl.flock(self._base_handle.fd, fcntl.LOCK_UN)
 
     def receipt_path(self, command_id: str) -> Path:
         self._validate_command_id(command_id)
@@ -1644,6 +1256,7 @@ class ShadowStore:
     ) -> None:
         directory_fd, identity = self._command_directory(command_id, create=True)
         temporary_name: str | None = None
+        temporary_identity: tuple[int, int] | None = None
         try:
             self._race("receipt_parent_opened")
             try:
@@ -1669,12 +1282,15 @@ class ShadowStore:
                 0o600,
                 dir_fd=directory_fd,
             )
+            info = os.fstat(descriptor)
+            temporary_identity = (info.st_dev, info.st_ino)
             try:
                 view = memoryview(receipt_bytes)
                 while view:
                     written = os.write(descriptor, view)
                     view = view[written:]
                 os.fsync(descriptor)
+                self._fault("after_receipt_temp_fsync")
             finally:
                 os.close(descriptor)
             try:
@@ -1690,6 +1306,7 @@ class ShadowStore:
                 parsed = self._parse_receipt_bytes(existing)
                 if existing != receipt_bytes or parsed.get("receipt_hash") != receipt_hash:
                     raise self._integrity()
+            self._fault("after_receipt_publish")
             os.fsync(directory_fd)
             self._command_name_still_bound(command_id, identity)
         except ShadowRunError:
@@ -1697,11 +1314,8 @@ class ShadowStore:
         except OSError as exc:
             raise self._integrity(exc) from exc
         finally:
-            if temporary_name is not None:
-                try:
-                    os.unlink(temporary_name, dir_fd=directory_fd)
-                except FileNotFoundError:
-                    pass
+            if temporary_name is not None and temporary_identity is not None:
+                _unlink_owned(directory_fd, temporary_name, temporary_identity)
             os.close(directory_fd)
 
     def _validate_pair(
@@ -1768,6 +1382,7 @@ class ShadowStore:
                     )
                     self._fault("after_insert")
                     database.commit()
+                    self._fault("after_memory_commit")
                     return {"disposition": "CREATED", "receipt": dict(receipt)}
                 except Exception:
                     database.rollback()
@@ -1843,11 +1458,10 @@ def _load_cli_request(path: Path) -> dict[str, Any]:
 
 
 def _load_fixture_adapter(
-    request: Mapping[str, Any], artifact_root: Path
+    request: Mapping[str, Any], artifact: _DirectoryHandle
 ) -> OfflineFixtureDecisionAdapter:
     if request["mode"] == "POLICY_PREVIEW":
         return OfflineFixtureDecisionAdapter({})
-    artifact = _open_root(artifact_root, create=False)
     descriptor = -1
     try:
         descriptor = _open_relative(artifact.fd, "cassettes.json", directory=False)
@@ -1857,7 +1471,6 @@ def _load_fixture_adapter(
     finally:
         if descriptor >= 0:
             os.close(descriptor)
-        artifact.close()
     if not isinstance(payload, dict) or payload.get("_meta", {}).get("fixture_id") != request["fixture_id"]:
         raise _blocked("fixture cassette identity is invalid")
     cassettes = {key: value for key, value in payload.items() if key != "_meta"}
@@ -1878,13 +1491,13 @@ def _parser() -> argparse.ArgumentParser:
     commands = parser.add_subparsers(dest="command", required=True)
     run_command = commands.add_parser("run")
     run_command.add_argument("--request", type=Path, required=True)
-    run_command.add_argument("--artifact-root", type=Path, required=True)
-    run_command.add_argument("--state-root", type=Path, required=True)
+    run_command.add_argument("--artifact-root", required=True)
+    run_command.add_argument("--state-root", required=True)
     verify_command = commands.add_parser("verify")
-    verify_command.add_argument("--state-root", type=Path, required=True)
+    verify_command.add_argument("--state-root", required=True)
     verify_command.add_argument("--command-id", required=True)
     evaluate_command = commands.add_parser("evaluate")
-    evaluate_command.add_argument("--state-root", type=Path, required=True)
+    evaluate_command.add_argument("--state-root", required=True)
     evaluate_command.add_argument("--command-id", required=True)
     evaluate_command.add_argument("--ledger", type=Path, required=True)
     return parser
@@ -1905,19 +1518,34 @@ def main(argv: list[str] | None = None) -> int:
                 message="evaluation is deferred to Task 6",
             )
         if args.command == "verify":
-            receipt = ShadowStore(args.state_root).read(args.command_id)
+            store = ShadowStore(args.state_root)
+            try:
+                receipt = store.read(args.command_id)
+            finally:
+                store.close()
             _print_json(receipt, stream=sys.stdout)
             return 0
 
         request = _load_cli_request(args.request)
-        adapter = _load_fixture_adapter(request, args.artifact_root)
-        receipt = run_shadow(
-            request,
-            artifact_root=args.artifact_root,
-            state_root=args.state_root,
-            adapter=adapter,
-        )
-        result = ShadowStore(args.state_root).write(request, receipt)
+        _require_runtime()
+        artifact = _open_root(args.artifact_root, create=False)
+        try:
+            state = _open_root(args.state_root, create=True)
+            try:
+                adapter = _load_fixture_adapter(request, artifact)
+                receipt = _run_shadow_with_handles(
+                    request, artifact, state, adapter,
+                    artifact_root=args.artifact_root,
+                )
+                store = ShadowStore(args.state_root, _state_handle=state)
+                try:
+                    result = store.write(request, receipt)
+                finally:
+                    store.close()
+            finally:
+                state.close()
+        finally:
+            artifact.close()
         _print_json(result, stream=sys.stdout)
         return 0
     except ShadowRunError as exc:
