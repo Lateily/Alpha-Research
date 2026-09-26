@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 import fcntl
 import hashlib
+import hmac
 import json
 import re
 import secrets
@@ -296,6 +297,54 @@ def authorize(headers, origin, session, write=False):
         raise WorkbenchError("LOCAL_SESSION_REQUIRED", 403)
 
 
+class PrivateAccess:
+    """Trust Serve identity only on loopback; never treat it as research approval.
+
+    Serve strips remote identity headers before inserting its authenticated user.
+    Same-host OS users remain inside this trust boundary, not isolated tenants.
+    """
+
+    def __init__(self, origin, owner_login, developer_logins=()):
+        if not isinstance(origin, str) or not re.fullmatch(r"https://[a-z0-9]+(?:-[a-z0-9]+)*\.[a-z0-9]+(?:-[a-z0-9]+)*\.ts\.net", origin):
+            raise WorkbenchError("PRIVATE_HTTPS_ORIGIN_REQUIRED")
+        if not isinstance(owner_login, str) or not re.fullmatch(r"[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9.-]+", owner_login):
+            raise WorkbenchError("EXACT_OWNER_LOGIN_REQUIRED")
+        if (not isinstance(developer_logins, (tuple, list)) or len(developer_logins) > 4
+                or any(not isinstance(login, str) for login in developer_logins)
+                or len(set(developer_logins)) != len(developer_logins)):
+            raise WorkbenchError("PRIVATE_DEVELOPER_LOGINS_INVALID")
+        for login in developer_logins:
+            if (not isinstance(login, str) or login == owner_login
+                    or not re.fullmatch(r"[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9.-]+", login)):
+                raise WorkbenchError("PRIVATE_DEVELOPER_LOGINS_INVALID")
+        self.origin, self.owner_login = origin, owner_login
+        self.developer_logins = frozenset(developer_logins)
+
+    def session_for(self, session, login):
+        if login == self.owner_login:
+            return session
+        return hmac.new(session.encode(), login.encode(), hashlib.sha256).hexdigest()
+
+    def check(self, headers, peer):
+        if peer != "127.0.0.1":
+            raise WorkbenchError("LOOPBACK_PROXY_REQUIRED", 403)
+        for name in ("Host", "Origin", "Cookie", "Sec-Fetch-Site", "Tailscale-User-Login"):
+            if len(headers.get_all(name, [])) > 1:
+                raise WorkbenchError("AMBIGUOUS_SECURITY_HEADER", 403)
+        login = headers.get("Tailscale-User-Login", "")
+        if secrets.compare_digest(login, self.owner_login):
+            return login, "OWNER"
+        if login in self.developer_logins:
+            return login, "DEVELOPER"
+        raise WorkbenchError("PRIVATE_OWNER_REQUIRED" if not self.developer_logins else "PRIVATE_MEMBER_REQUIRED", 403)
+
+
+def private_access(origin, owner_login, developer_logins=()):
+    if origin is None and owner_login is None and not developer_logins:
+        return None
+    return PrivateAccess(origin, owner_login, developer_logins)
+
+
 def serve_host(host):
     if host != "127.0.0.1":
         raise WorkbenchError("TEAM_ACCESS_DISABLED_LOOPBACK_ONLY", 403)
@@ -344,7 +393,13 @@ def load_assets(directory):
     return assets
 
 
-def make_handler(store, assets, origin, session, system=None):
+def make_handler(store, assets, origin, session, system=None, private=None):
+    if private is None:
+        if not re.fullmatch(r"http://127\.0\.0\.1:[0-9]{1,5}", origin):
+            raise WorkbenchError("PRIVATE_ACCESS_POLICY_REQUIRED")
+    elif private.origin != origin:
+        raise WorkbenchError("PRIVATE_ORIGIN_MISMATCH")
+
     class Handler(BaseHTTPRequestHandler):
         def setup(self):
             super().setup()
@@ -353,7 +408,7 @@ def make_handler(store, assets, origin, session, system=None):
         def log_message(self, *_args):
             pass
 
-        def reply(self, status, payload, mime="application/json", cookie=False):
+        def reply(self, status, payload, mime="application/json", cookie_value=None):
             raw = payload if isinstance(payload, bytes) else canonical(payload).encode()
             self.send_response(status)
             self.send_header("Content-Type", mime + "; charset=utf-8")
@@ -362,26 +417,40 @@ def make_handler(store, assets, origin, session, system=None):
             self.send_header("X-Content-Type-Options", "nosniff")
             self.send_header("Referrer-Policy", "no-referrer")
             self.send_header("Content-Security-Policy", "default-src 'self'; connect-src 'self'; img-src 'self' data:; style-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'")
-            if cookie:
-                self.send_header("Set-Cookie", f"ar_workbench={session}; HttpOnly; SameSite=Strict; Path=/")
+            if cookie_value is not None:
+                secure = "; Secure" if private is not None else ""
+                self.send_header("Set-Cookie", f"ar_workbench={cookie_value}; HttpOnly; SameSite=Strict; Path=/" + secure)
             self.end_headers()
             self.wfile.write(raw)
 
         def do_GET(self):
             try:
+                login, role = None, "LOCAL"
+                if private is not None:
+                    login, role = private.check(self.headers, self.client_address[0])
+                identity_session = private.session_for(session, login) if private is not None else session
                 # Only the exact local entry point may mint a development session.
                 if self.path in {"/", "/index.html"}:
                     headers = dict(self.headers)
-                    headers["Cookie"] = f"ar_workbench={session}"
-                    authorize(headers, origin, session)
+                    headers["Cookie"] = f"ar_workbench={identity_session}"
+                    authorize(headers, origin, identity_session)
                     content, mime = assets[self.path]
-                    self.reply(200, content, mime, cookie=True)
+                    self.reply(200, content, mime, cookie_value=identity_session)
                     return
-                authorize(self.headers, origin, session)
+                authorize(self.headers, origin, identity_session)
                 if self.path == "/api/state":
-                    self.reply(200, store.snapshot())
+                    state = store.snapshot()
+                    if private is not None:
+                        state["policy"].update(team_access_enabled=bool(private.developer_logins),
+                                               identity="TAILSCALE_SERVE_TRANSPORT_NOT_FORMAL_APPROVAL")
+                        state["access_role"] = role
+                    self.reply(200, state)
                 elif self.path == "/api/workspace" and system is not None:
-                    self.reply(200, system.snapshot())
+                    state = system.snapshot()
+                    if private is not None:
+                        state["authority"]["team_access"] = bool(private.developer_logins)
+                        state["access_role"] = role
+                    self.reply(200, state)
                 elif self.path in assets:
                     content, mime = assets[self.path]
                     self.reply(200, content, mime)
@@ -396,7 +465,16 @@ def make_handler(store, assets, origin, session, system=None):
 
         def do_POST(self):
             try:
-                authorize(self.headers, origin, session, write=True)
+                login, role = None, "LOCAL"
+                if private is not None:
+                    login, role = private.check(self.headers, self.client_address[0])
+                identity_session = private.session_for(session, login) if private is not None else session
+                authorize(self.headers, origin, identity_session, write=True)
+                if role == "DEVELOPER" and self.path not in {
+                    "/api/workspace/draft", "/api/workspace/submit", "/api/workspace/job",
+                    "/api/gateway/probe", "/api/research/replay",
+                }:
+                    raise WorkbenchError("PRIVATE_ROLE_REQUIRED", 403)
                 lengths = self.headers.get_all("Content-Length", [])
                 if self.headers.get("Transfer-Encoding") or len(lengths) != 1 or not re.fullmatch(r"[0-9]{1,6}", lengths[0]):
                     raise WorkbenchError("BODY_LENGTH_REQUIRED", 411)
@@ -433,8 +511,12 @@ def main(argv=None):
     parser.add_argument("--port", type=int, default=8766)
     parser.add_argument("--read-only-source-root", type=Path, help="Local AR root; only a fixed public artifact allowlist is read")
     parser.add_argument("--state-root", type=Path, help="Dedicated nonproduction state directory, separate from code releases")
+    parser.add_argument("--private-origin", help="Exact HTTPS Tailscale Serve origin; requires owner login")
+    parser.add_argument("--private-owner-login", help="Exact Serve user login; not a formal approval identity")
+    parser.add_argument("--private-developer-login", action="append", default=[], help="Exact Serve login of a nonproduction developer; repeat per approved member")
     args = parser.parse_args(argv)
     host = serve_host(args.host)
+    private = private_access(args.private_origin, args.private_owner_login, args.private_developer_login)
     assets = load_assets(ROOT / "tools/nonprod_workbench/dist")
     state_root = args.state_root or ROOT / ".ai-workspace/nonprod-workbench"
     if args.read_only_source_root and (state_root.resolve() == args.read_only_source_root.resolve() or args.read_only_source_root.resolve() in state_root.resolve().parents):
@@ -444,12 +526,13 @@ def main(argv=None):
     store = Store(state_root)
     lifetime_lock = service_lock(state_root)
     system = workspace.Workspace(store, args.read_only_source_root)
-    origin = f"http://{host}:{args.port}"
-    server = ThreadingHTTPServer((host, args.port), make_handler(store, assets, origin, secrets.token_hex(32), system))
+    origin = private.origin if private is not None else f"http://{host}:{args.port}"
+    server = ThreadingHTTPServer((host, args.port), make_handler(store, assets, origin, secrets.token_hex(32), system, private))
     server.daemon_threads = True
     worker = threading.Thread(target=system.scheduler, daemon=True)
     worker.start()
-    print(f"NONPRODUCTION_LOCAL {origin} | team=DENY paid=DENY production=DENY", flush=True)
+    mode = ("NONPRODUCTION_PRIVATE_TEAM" if private.developer_logins else "NONPRODUCTION_PRIVATE_OWNER_ONLY") if private is not None else "NONPRODUCTION_LOCAL"
+    print(f"{mode} {origin} | team={'ALLOWLIST' if private and private.developer_logins else 'DENY'} paid=DENY production=DENY", flush=True)
     try:
         server.serve_forever()
     except KeyboardInterrupt:

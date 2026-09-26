@@ -171,18 +171,18 @@ function App() {
   return <div className="app">
     <aside className="sidebar">
       <div className="brand"><div className="brand-icon"><Layers3 size={22} /></div><div><strong>AR 工作台</strong><span>CONTROL PLANE</span></div></div>
-      <div className="environment"><span className="dot" />非生产 · 本机</div>
+      <div className="environment"><span className="dot" />非生产 · {state?.policy?.team_access_enabled ? '私网' : '本机'}</div>
       <nav aria-label="工作台导航">{tabs.map(([key, label, Icon]) => <button key={key} aria-current={tab === key ? 'page' : undefined} className={tab === key ? 'active' : ''} onClick={() => {
           setTab(key);
           setNotice('');
         }}><Icon size={18} />{label}<ChevronRight size={14} /></button>)}</nav>
-      <div className="sidebar-footer"><ShieldCheck size={18} /><div>最终裁决：Junyan<span>未签发任何团队权限</span></div></div>
+      <div className="sidebar-footer"><ShieldCheck size={18} /><div>最终裁决：Junyan<span>{state?.policy?.team_access_enabled ? '团队仅限隔离工作' : '未签发团队权限'}</span></div></div>
     </aside>
     <main>
       <header><div className="breadcrumb">AR / LOCAL WORKSPACE / <span>{tabs.find(t => t[0] === tab)[1]}</span></div><button className="icon-button" title="重新读取本地状态（会重载未保存草稿）" aria-label="刷新状态" disabled={busy} onClick={reload}><RefreshCw size={17} className={busy ? 'spinning' : ''} /></button></header>
       <div className="page">
         <div className="page-heading"><div><div className="eyebrow">WORKSPACE / 01</div><h1>{tabs.find(t => t[0] === tab)[1]}</h1></div><Badge tone="amber"><LockKeyhole size={13} />CUTOVER HOLD</Badge></div>
-        <div className="authority-strip"><span><LockKeyhole size={14} />团队访问：关闭</span><span>模型付费调用：关闭</span><span>生产写入：关闭</span><span>会话：本机开发态，未认证人类身份</span></div>
+        <div className="authority-strip"><span><LockKeyhole size={14} />团队访问：{state?.policy?.team_access_enabled ? '私网名单' : '关闭'}</span><span>模型付费调用：关闭</span><span>生产写入：关闭</span><span>身份：{state?.access_role || '本机开发会话'}，非正式审批</span></div>
         {error && <div role="alert" className="alert error"><X size={17} /><strong>请求未完成</strong><code>{error}</code><button onClick={reload} disabled={busy}>重载状态</button></div>}
         {notice && <div role="status" className="alert success"><Check size={16} />{notice}</div>}
         {!state ? <div className="empty" role="status"><Database size={30} /><h2>{error ? '本地服务不可用' : '正在读取工作台'}</h2><p>未显示任何缓存状态</p></div> : <>
@@ -200,7 +200,7 @@ function App() {
             <section><div className="section-title"><h2>离线契约演练</h2><span>固定合成输入 · 0 网络 · 非研究证据</span></div><div className="probe-toolbar"><select aria-label="离线用例" value={fixture} disabled={busy || !!pending} onChange={e => setFixture(e.target.value)}><option value="contract-smoke">契约连通性</option><option value="evidence-missing">缺失证据 DATA_BLOCKED</option></select><button className="primary" disabled={busy} onClick={probe}><Play size={16} />{pending ? '重试同一请求' : '运行离线演练'}</button></div></section>
             <section><div className="section-title"><h2>请求回执</h2><span>{state.receipts.length} 条 · WORKFLOW_DEBUG</span></div>{state.receipts.length ? <div className="table-scroll"><table><thead><tr><th>请求 ID</th><th>用例</th><th>结果</th><th>费用</th><th>工件</th></tr></thead><tbody>{state.receipts.map(row => <tr key={row.command_id}><td><code>{row.command_id.slice(0, 18)}…</code></td><td>{row.fixture}</td><td><Badge tone={row.result === 'DATA_BLOCKED' ? 'amber' : 'green'}>{row.result}</Badge></td><td>0 CNY</td><td><button className="icon-button" aria-label={`查看回执 ${row.command_id}`} title="查看回执" onClick={() => setReceipt(row)}><FileCheck2 size={17} /></button></td></tr>)}</tbody></table></div> : <div className="empty"><FileCheck2 size={28} /><h3>尚无离线回执</h3><span>真实模型调用记录：0</span></div>}</section>
           </>}
-          {tab === 'configuration' && <section><div className="section-title"><h2>云端部署草稿</h2><Badge>版本 {state.revision} · 未批准</Badge></div><form onSubmit={saveDraft} className="config-form">{Object.entries(fieldLabels).map(([key, label]) => <label key={key}><span>{label}</span>{key === 'currency' ? <select value={draft[key] || ''} onChange={e => setDraft({
+          {tab === 'configuration' && <section><div className="section-title"><h2>云端部署草稿</h2><Badge>版本 {state.revision} · 未批准</Badge></div>{state.access_role === 'DEVELOPER' ? <p>部署草稿由 owner 管理；团队仍可使用隔离研究与测试工作台。</p> : <><form onSubmit={saveDraft} className="config-form">{Object.entries(fieldLabels).map(([key, label]) => <label key={key}><span>{label}</span>{key === 'currency' ? <select value={draft[key] || ''} onChange={e => setDraft({
                   ...draft,
                   [key]: e.target.value || null
                 })}><option value="">待确认</option><option>CNY</option><option>USD</option></select> : <input maxLength={240} autoComplete="off" type="text" inputMode={key === 'monthly_budget' ? 'decimal' : 'text'} value={draft[key] || ''} placeholder={key === 'private_destination' ? 's3://bucket/private-prefix' : '待 Junyan 确认'} onChange={e => setDraft({
@@ -210,9 +210,9 @@ function App() {
                 revision: state.revision,
                 config: state.config,
                 readiness: state.readiness
-              })}><Download size={17} /></button></div></section>}
+              })}><Download size={17} /></button></div></>}</section>}
           {tab === 'cutover' && <section><div className="section-title"><h2>生产切换验收序列</h2><span>当前无执行权限</span></div><ol className="gate-list">{state.readiness.required_gates.map((gate, i) => <li key={gate}><span className="step-number">{String(i + 1).padStart(2, '0')}</span><div><h3>{gateLabels[i]}</h3><code>{gate}</code></div><Badge>待验收</Badge></li>)}</ol><div className="cutover-foot"><LockKeyhole size={18} /><span>备份前先停写。canary 前不开放正式账本写入方。失败不自动退回双写。</span></div></section>}
-          {tab === 'team' && <section><div className="section-title"><h2>访问与操作权限</h2><Badge>0 个团队授权</Badge></div><div className="table-scroll"><table><thead><tr><th>主体</th><th>权限</th><th>身份状态</th></tr></thead><tbody><tr><td>本机浏览器会话</td><td>盘点查看、配置草稿、合成离线演练</td><td><Badge>开发会话，非人类身份认证</Badge></td></tr><tr><td>团队成员 / 第二台电脑</td><td>无远程访问、无角色授予</td><td><Badge tone="amber">DENY</Badge></td></tr><tr><td>模型 / Agent</td><td>无生产、费用、授权或交易权限</td><td><Badge tone="amber">DENY</Badge></td></tr><tr><td>Junyan</td><td>最终云账号、费用、成员与生产裁决</td><td><Badge>正式身份系统未接入</Badge></td></tr></tbody></table></div></section>}
+          {tab === 'team' && <section><div className="section-title"><h2>访问与操作权限</h2><Badge>{state.policy.team_access_enabled ? '精确私网名单' : '0 个团队授权'}</Badge></div><div className="table-scroll"><table><thead><tr><th>主体</th><th>权限</th><th>身份状态</th></tr></thead><tbody><tr><td>当前访问者</td><td>{state.access_role === 'DEVELOPER' ? '查看、研究草稿、隔离任务' : '本地管理与隔离任务'}</td><td><Badge>{state.access_role || '本机开发会话'}</Badge></td></tr><tr><td>团队成员 / 第二台电脑</td><td>{state.policy.team_access_enabled ? '仅私网名单内的非生产操作' : '无远程访问、无角色授予'}</td><td><Badge tone="amber">{state.policy.team_access_enabled ? 'ALLOWLIST' : 'DENY'}</Badge></td></tr><tr><td>模型 / Agent</td><td>无生产、费用、授权或交易权限</td><td><Badge tone="amber">DENY</Badge></td></tr><tr><td>Junyan</td><td>最终云账号、费用、成员与生产裁决</td><td><Badge>正式审批另行进行</Badge></td></tr></tbody></table></div></section>}
         </>}
         <footer><span>AR / NONPRODUCTION WORKSPACE</span><span>不是买卖指令；研究信号，human executes.</span></footer>
       </div>
