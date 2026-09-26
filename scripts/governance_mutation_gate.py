@@ -11685,6 +11685,33 @@ MUTATIONS = MUTATIONS + (
         rationale="Existing cancelled orders are legitimate immutable history, not a recovery blocker.",
     ),
     MutationCase(
+        mutation_id="PAPER_DAILY_LEGACY_BEFORE_HASH",
+        component="Research funnel paper daily projection recovery",
+        source_path="experiments/execution_tracker/model_paper_fund.py",
+        test_script="tests/test_paper_settlement_publication.py",
+        before=('                or any(_projection_digest(before_content[name]) != journal["before"][name]\n'
+                '                       for name in _DAILY_PROJECTIONS)):\n'
+                '            raise ValueError("legacy before snapshot does not match the intent")'),
+        after=('                or False):\n'
+               '            raise ValueError("legacy before snapshot does not match the intent")'),
+        expected_failure_marker="test_valid_legacy_mixed_intent_needs_verified_snapshot_to_recover",
+        rationale="A mismatched before snapshot must be refused before replacing a v1 journal.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_DAILY_LEGACY_SNAPSHOT_TRANSITION",
+        component="Research funnel paper daily projection recovery",
+        source_path="experiments/execution_tracker/model_paper_fund.py",
+        test_script="tests/test_paper_settlement_publication.py",
+        before=(
+            '        problems = nightly_publish.validate_daily_projection_transition(\n'
+            '            before_content, journal["after"], expected_target, expected_run,\n'
+            '        )'
+        ),
+        after='        problems = []',
+        expected_failure_marker="test_legacy_migration_rejects_rehashed_unexplained_cash_loss",
+        rationale="The legacy transition must be checked before upgrading the durable journal.",
+    ),
+    MutationCase(
         mutation_id="RESEARCH_CYCLE_LEGACY_NO_NEW_BUNDLE",
         component="Research funnel full paper cycle",
         source_path="experiments/research_funnel/research_cycle.py",

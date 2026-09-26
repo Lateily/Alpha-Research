@@ -676,6 +676,116 @@ class PaperSettlementPublicationTests(unittest.TestCase):
             self.assertFalse(Path(directory, engine._DAILY_INTENT).exists())
             self.assertEqual("cancelled", engine.load("orders.json", [], directory)[1]["status"])
 
+    def test_valid_legacy_mixed_intent_needs_verified_snapshot_to_recover(self):
+        fund, orders, log, bars = fixture()
+        before = {"fund.json": copy.deepcopy(fund), "orders.json": copy.deepcopy(orders),
+                  "decision_log.json": copy.deepcopy(log), "nav_history.json": []}
+        engine.process_day(
+            fund, orders, log, None, series_fn=lambda *_: copy.deepcopy(bars),
+            recording={"target_trade_date": TARGET, "run_id": RID},
+        )
+        nav = []
+        engine.update_nav(fund, orders, nav, TARGET, require_complete_marks=True)
+        after = dict(zip(engine._DAILY_PROJECTIONS, (fund, orders, log, nav)))
+        self.assertEqual([], publish.validate_daily_projection_transition(before, after, TARGET, RID))
+
+        for written in (1, 2, 3):
+            with self.subTest(written=written), tempfile.TemporaryDirectory() as scratch:
+                root = Path(scratch) / "model_fund"
+                root.mkdir()
+                directory = str(root)
+                for name, value in before.items():
+                    engine.save(name, value, directory)
+                journal = {
+                    "schema": "paper-daily-intent/v1", "target_trade_date": TARGET,
+                    "run_id": RID,
+                    "before": {name: engine._projection_digest(value)
+                               for name, value in before.items()},
+                    "after": copy.deepcopy(after),
+                }
+                journal["intent_hash"] = engine._projection_digest(journal)
+                engine.save(engine._DAILY_INTENT, journal, directory)
+                for name in engine._DAILY_PROJECTIONS[:written]:
+                    engine.save(name, after[name], directory)
+                original = {path.name: path.read_bytes() for path in root.iterdir() if path.is_file()}
+                with self.assertRaisesRegex(ValueError, "cannot prove legacy"):
+                    engine._finish_daily_intent(directory)
+                self.assertEqual(original, {path.name: path.read_bytes()
+                                            for path in root.iterdir() if path.is_file()})
+
+                with self.assertRaisesRegex(ValueError, "bound to another run"):
+                    engine.migrate_legacy_daily_intent(
+                        directory, before, expected_target=TARGET, expected_run="WRONG_RUN",
+                    )
+                self.assertEqual(original, {path.name: path.read_bytes()
+                                            for path in root.iterdir() if path.is_file()})
+
+                wrong = copy.deepcopy(before)
+                wrong["fund.json"]["cash"] += 0.001
+                with self.assertRaises(ValueError):
+                    engine.migrate_legacy_daily_intent(
+                        directory, wrong, expected_target=TARGET, expected_run=RID,
+                    )
+                self.assertEqual(original, {path.name: path.read_bytes()
+                                            for path in root.iterdir() if path.is_file()})
+                if written == 1:
+                    receipt = engine.migrate_legacy_daily_intent(
+                        directory, before, expected_target=TARGET, expected_run=RID,
+                    )
+                    self.assertEqual(journal["intent_hash"], receipt["legacy_intent_hash"])
+                    self.assertNotEqual(receipt["legacy_intent_hash"],
+                                        receipt["upgraded_intent_hash"])
+                else:
+                    with mock.patch.object(engine, "_finish_daily_intent",
+                                           side_effect=OSError("injected after upgrade")):
+                        with self.assertRaisesRegex(OSError, "injected after upgrade"):
+                            engine.migrate_legacy_daily_intent(
+                                directory, before, expected_target=TARGET, expected_run=RID,
+                            )
+                    self.assertEqual("paper-daily-intent/v2",
+                                     engine.load(engine._DAILY_INTENT, None, directory)["schema"])
+                    self.assertTrue(engine._finish_daily_intent(
+                        directory, expected_target=TARGET, expected_run=RID,
+                    ))
+                self.assertEqual(after, {name: engine.load(name, None, directory)
+                                         for name in engine._DAILY_PROJECTIONS})
+                self.assertFalse((root / engine._DAILY_INTENT).exists())
+
+    def test_legacy_migration_rejects_rehashed_unexplained_cash_loss(self):
+        with tempfile.TemporaryDirectory() as scratch:
+            directory = str(Path(scratch) / "model_fund")
+            Path(directory).mkdir()
+            before = {"fund.json": copy.deepcopy(self.fund),
+                      "orders.json": copy.deepcopy(self.orders),
+                      "decision_log.json": copy.deepcopy(self.log),
+                      "nav_history.json": []}
+            after = copy.deepcopy(before)
+            after["fund.json"]["cash"] -= 0.01
+            after["nav_history.json"] = [{
+                "date": TARGET, "status": "DATA_BLOCKED", "nav": None,
+                "cash": after["fund.json"]["cash"], "n_positions": 1,
+                "daily_return": None, "cum_return": None,
+                "reason": "MISSING_TARGET_CLOSE", "missing_tickers": ["600001.SH"],
+            }]
+            for name, value in before.items():
+                engine.save(name, value, directory)
+            journal = {"schema": "paper-daily-intent/v1", "target_trade_date": TARGET,
+                       "run_id": RID,
+                       "before": {name: engine._projection_digest(value)
+                                  for name, value in before.items()},
+                       "after": after}
+            journal["intent_hash"] = engine._projection_digest(journal)
+            engine.save(engine._DAILY_INTENT, journal, directory)
+            engine.save("fund.json", after["fund.json"], directory)
+            original = {path.name: path.read_bytes() for path in Path(directory).iterdir()
+                        if path.is_file()}
+            with self.assertRaises(ValueError):
+                engine.migrate_legacy_daily_intent(
+                    directory, before, expected_target=TARGET, expected_run=RID,
+                )
+            self.assertEqual(original, {path.name: path.read_bytes()
+                                        for path in Path(directory).iterdir() if path.is_file()})
+
     def test_daily_intent_refuses_subunit_unexplained_cash_change(self):
         before = {
             "fund.json": copy.deepcopy(self.fund),

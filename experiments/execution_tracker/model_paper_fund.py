@@ -702,6 +702,74 @@ def _finish_daily_intent(fund_dir, *, expected_target=None, expected_run=None):
     return True
 
 
+def migrate_legacy_daily_intent(fund_dir, before_content, *, expected_target, expected_run):
+    """One-time, operator-invoked v1 recovery with an independently saved before snapshot.
+
+    Nightly never calls this path. An unproven v1 mixed state remains fail-closed.
+    Once the v2 intent is durable, an interruption can use normal v2 recovery.
+    """
+    import nightly_publish
+
+    before_content = copy.deepcopy(before_content)
+    fund_dir = os.path.abspath(fund_dir)
+    if (os.path.basename(fund_dir) != "model_fund" or os.path.islink(fund_dir)
+            or not os.path.isdir(fund_dir)):
+        raise ValueError("legacy migration requires a real model_fund directory")
+    live_et = os.path.dirname(fund_dir)
+    with nightly_publish._nightly_exclusive(live_et):
+        path = _path(_DAILY_INTENT, fund_dir)
+        if os.path.islink(path):
+            raise ValueError("legacy daily intent path is a symlink")
+        journal = load(_DAILY_INTENT, None, fund_dir)
+        if (not isinstance(journal, dict)
+                or journal.get("schema") != "paper-daily-intent/v1"
+                or set(journal.get("before", {})) != set(_DAILY_PROJECTIONS)
+                or set(journal.get("after", {})) != set(_DAILY_PROJECTIONS)
+                or journal.get("intent_hash") != _projection_digest(
+                    {key: value for key, value in journal.items() if key != "intent_hash"}
+                )):
+            raise ValueError("legacy daily intent is malformed or changed")
+        if (journal.get("target_trade_date") != expected_target
+                or journal.get("run_id") != expected_run):
+            raise ValueError("legacy daily intent is bound to another run")
+        # governance-mutation: PAPER_DAILY_LEGACY_BEFORE_HASH
+        if (not isinstance(before_content, dict)
+                or set(before_content) != set(_DAILY_PROJECTIONS)
+                or any(_projection_digest(before_content[name]) != journal["before"][name]
+                       for name in _DAILY_PROJECTIONS)):
+            raise ValueError("legacy before snapshot does not match the intent")
+        current = {name: load(name, None, fund_dir) for name in _DAILY_PROJECTIONS}
+        before_matches = [
+            _projection_digest(current[name]) == journal["before"][name]
+            for name in _DAILY_PROJECTIONS
+        ]
+        after_matches = [
+            _projection_digest(current[name]) == _projection_digest(journal["after"][name])
+            for name in _DAILY_PROJECTIONS
+        ]
+        if any(not (old or new) for old, new in zip(before_matches, after_matches)):
+            raise ValueError("legacy projection differs from both intent states")
+        if all(before_matches) or all(after_matches):
+            raise ValueError("legacy intent has no mixed state requiring migration")
+        _validate_daily_intent_after(journal)
+        # governance-mutation: PAPER_DAILY_LEGACY_SNAPSHOT_TRANSITION
+        problems = nightly_publish.validate_daily_projection_transition(
+            before_content, journal["after"], expected_target, expected_run,
+        )
+        if problems:
+            raise ValueError("legacy daily transition is invalid: " + "; ".join(problems))
+        upgraded = {**journal, "schema": "paper-daily-intent/v2",
+                    "before_content": before_content}
+        upgraded["intent_hash"] = _projection_digest(
+            {key: value for key, value in upgraded.items() if key != "intent_hash"}
+        )
+        save(_DAILY_INTENT, upgraded, fund_dir)
+        _finish_daily_intent(fund_dir, expected_target=expected_target, expected_run=expected_run)
+        return {"target_trade_date": expected_target, "run_id": expected_run,
+                "legacy_intent_hash": journal["intent_hash"],
+                "upgraded_intent_hash": upgraded["intent_hash"]}
+
+
 def recover_prior_daily_intent(fund_dir, *, latest_target):
     """Finish a committed daily projection in the live tree before staging is copied."""
     path = _path(_DAILY_INTENT, fund_dir)
