@@ -12,11 +12,13 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+import re
 from datetime import datetime
 from typing import Any, Mapping, Sequence
 
 
 SCHEMA_VERSION = "1.0"
+REGISTRATION_VERSION = "1.1"
 REGISTRATION_SCHEMA = "ar.research_method_registration"
 OUTCOME_SCHEMA = "ar.research_method_outcomes"
 SCORECARD_SCHEMA = "ar.research_method_scorecard"
@@ -214,8 +216,31 @@ def _validate_threshold(operator: str, threshold: Any, label: str) -> None:
         raise MethodError(f"{label} must be true for event operators")
 
 
+_WRONG_IF_NUMERIC = re.compile(
+    r"^(<=|>=|=|≤|≥)\s*(-?(?:\d+(?:\.\d*)?|\.\d+))\s*(%)?$"
+)
+_WRONG_IF_OPERATORS = {"<=": "LTE", "≤": "LTE", ">=": "GTE", "≥": "GTE", "=": "EQ"}
+_WRONG_IF_KEYS = {"metric", "threshold", "source", "check_date", "measurement_period"}
+
+
+def _wrong_if_semantics(trigger: Mapping[str, Any]) -> tuple[str, float]:
+    if set(trigger) != _WRONG_IF_KEYS:
+        raise MethodError("wrong-if semantics require exact typed trigger fields")
+    metric = _nonempty(trigger.get("metric"), "wrong-if metric")
+    if re.fullmatch(r"[A-Z][A-Z0-9_]*", metric) is None:
+        raise MethodError("wrong-if semantics require a canonical metric identifier")
+    match = _WRONG_IF_NUMERIC.fullmatch(str(trigger.get("threshold") or "").strip())
+    if match is None or bool(match.group(3)) != metric.endswith("_PCT"):
+        raise MethodError("wrong-if semantics require an explicit numeric predicate and unit")
+    _nonempty(trigger.get("source"), "wrong-if source")
+    _nonempty(trigger.get("measurement_period"), "wrong-if measurement_period")
+    _date8(trigger.get("check_date"), "wrong-if check_date")
+    return _WRONG_IF_OPERATORS[match.group(1)], float(match.group(2))
+
+
 def _validate_claims(
     claims: Any, registered_at: str, wrong_if_triggers: Sequence[Mapping[str, Any]],
+    *, enforce_semantics: bool = True,
 ) -> None:
     if not isinstance(claims, list) or len(claims) < 2:
         raise MethodError("thesis_expectations needs at least two claims")
@@ -260,6 +285,27 @@ def _validate_claims(
     # governance-mutation: RESEARCH_METHOD_WRONG_IF_ONE_TO_ONE
     if duplicate_trigger_mapping:
         raise MethodError("each thesis wrong-if trigger must map to exactly one invalidation claim")
+    if not enforce_semantics:
+        return
+    trigger_by_hash = {_hash(trigger): trigger for trigger in wrong_if_triggers}
+    for claim in claims:
+        if claim["kind"] != "INVALIDATION":
+            continue
+        trigger = trigger_by_hash[str(claim["wrong_if_trigger_hash"])]
+        operator, threshold = _wrong_if_semantics(trigger)
+        # governance-mutation: RESEARCH_METHOD_WRONG_IF_SEMANTICS
+        if (
+            claim["metric"] != trigger["metric"]
+            or claim["source_ref"] != trigger["source"]
+            or claim["measurement_period"] != trigger["measurement_period"]
+            or _date8(claim["due_date"], "claim due_date")
+            != _date8(trigger["check_date"], "wrong-if check_date")
+            or claim["operator"] != operator
+            or not isinstance(claim["threshold"], (int, float))
+            or isinstance(claim["threshold"], bool)
+            or not math.isclose(float(claim["threshold"]), threshold, rel_tol=0, abs_tol=1e-12)
+        ):
+            raise MethodError("wrong-if semantics differ from the scoreable invalidation claim")
 
 
 def _validate_valuation(value: Any, core: Mapping[str, Any], registered_at: str) -> None:
@@ -489,11 +535,15 @@ def _validate_smc(
 def validate_registration(
     registration: Mapping[str, Any], *, thesis_core: Mapping[str, Any],
     timing_ticket: Mapping[str, Any], decision_pack: Mapping[str, Any],
+    allow_legacy_readonly: bool = False,
 ) -> None:
     _exact(registration, REGISTRATION_KEYS, "method registration")
     if FORBIDDEN_KEYS.intersection(_walk_keys(registration)):
         raise MethodError("method registration acquired trading or blocking authority")
-    if registration.get("schema") != REGISTRATION_SCHEMA or registration.get("schema_version") != SCHEMA_VERSION:
+    version = registration.get("schema_version")
+    if registration.get("schema") != REGISTRATION_SCHEMA or not (
+        version == REGISTRATION_VERSION or (allow_legacy_readonly and version == SCHEMA_VERSION)
+    ):
         raise MethodError("method registration schema/version mismatch")
     # governance-mutation: RESEARCH_METHOD_REGISTRATION_HASH
     if registration.get("registration_hash") != _hash(_without(registration, "registration_hash")):
@@ -519,7 +569,12 @@ def validate_registration(
     if registration.get("method_status") != "MANUAL_UNVALIDATED" or registration.get("no_trade_flag") is not True or registration.get("production_authority") is not False or registration.get("disclaimer") != DISCLAIMER:
         raise MethodError("method registration calibration or authority boundary changed")
     wrong_if_triggers = (thesis_core.get("wrong_if") or {}).get("triggers") or []
-    _validate_claims(registration.get("thesis_expectations"), registered_at, wrong_if_triggers)
+    # governance-mutation: RESEARCH_METHOD_LEGACY_READONLY
+    # governance-mutation: RESEARCH_METHOD_LEGACY_SEMANTICS
+    _validate_claims(
+        registration.get("thesis_expectations"), registered_at, wrong_if_triggers,
+        enforce_semantics=version == REGISTRATION_VERSION,
+    )
     _validate_valuation(registration.get("valuation"), thesis_core, registered_at)
     _validate_smc(
         registration.get("smc"), registered_at=registered_at,
@@ -724,7 +779,11 @@ def _score_timing(
     smc = registration["smc"]
     stop = float(smc["structure_stop"] if registration["strategy_mode"] == "SWING" else smc["disaster_line"])
     risk = float(fill_price) - stop
+    exit_date = order.get("exit_date") if order.get("status") == "closed" else None
     eligible = [row for row in bars if str(row.get("date")) >= str(fill_date)]
+    # governance-mutation: RESEARCH_METHOD_TIMING_EXIT_BOUND
+    if exit_date is not None:
+        eligible = [row for row in eligible if str(row.get("date")) <= str(exit_date)]
     if risk <= 0 or not eligible:
         raise MethodError("timing score lacks a positive registered risk or post-fill bars")
     mfe = max(float(row["high"]) for row in eligible) - float(fill_price)
@@ -817,6 +876,7 @@ def _attribution(thesis: str, timing: str) -> str:
 
 def validate_scorecard(
     scorecard: Mapping[str, Any], registration: Mapping[str, Any], outcomes: Mapping[str, Any],
+    *, legacy_readonly: bool = False,
 ) -> None:
     _exact(scorecard, SCORECARD_KEYS, "method scorecard")
     if FORBIDDEN_KEYS.intersection(_walk_keys(scorecard)):
@@ -850,18 +910,43 @@ def validate_scorecard(
     )
     if scorecard.get("machine_attribution") != expected:
         raise MethodError("machine attribution is not derived from thesis and timing ledgers")
+    if legacy_readonly:
+        if registration.get("schema_version") != SCHEMA_VERSION:
+            raise MethodError("legacy read-only scoring requires a v1 registration")
+        facts = {str(item["claim_id"]): item for item in outcomes["facts"]}
+        historical_thesis = _score_thesis(
+            registration, facts, _date8(outcomes["scoring_as_of"], "outcomes.scoring_as_of")
+        )
+        # governance-mutation: RESEARCH_METHOD_LEGACY_READONLY_DERIVATION
+        if scorecard.get("thesis") != historical_thesis:
+            raise MethodError("legacy read-only thesis differs from historical evidence")
+    # governance-mutation: RESEARCH_METHOD_LEGACY_UNSCORED
+    if registration.get("schema_version") == SCHEMA_VERSION and not legacy_readonly and (
+        scorecard.get("thesis") != {
+            "status": "UNRESOLVED", "claims": [],
+            "reason": "LEGACY_WRONG_IF_SEMANTICS_UNVALIDATED",
+        }
+        or scorecard.get("machine_attribution") != "UNRESOLVED"
+    ):
+        raise MethodError("legacy registration cannot gain a new machine thesis score")
 
 
 def build_scorecard(
     registration: Mapping[str, Any], outcomes: Mapping[str, Any], *,
     order: Mapping[str, Any] | None, bars: Sequence[Mapping[str, Any]],
     fund_snapshot: Mapping[str, Any], generated_at: str,
+    legacy_readonly: bool = False,
 ) -> dict[str, Any]:
     validate_outcomes(outcomes, registration)
     facts = {str(item["claim_id"]): item for item in outcomes["facts"]}
     # governance-mutation: RESEARCH_METHOD_SCORING_DATE_NORMALIZATION
     scoring_as_of = _date8(outcomes["scoring_as_of"], "outcomes.scoring_as_of")
-    thesis = _score_thesis(registration, facts, scoring_as_of)
+    # governance-mutation: RESEARCH_METHOD_LEGACY_SCORE_BUILD
+    thesis = (
+        {"status": "UNRESOLVED", "claims": [], "reason": "LEGACY_WRONG_IF_SEMANTICS_UNVALIDATED"}
+        if registration.get("schema_version") == SCHEMA_VERSION and not legacy_readonly
+        else _score_thesis(registration, facts, scoring_as_of)
+    )
     valuation = _score_valuation(registration, facts, scoring_as_of)
     timing = _score_timing(registration, order, bars)
     execution = _score_execution(registration, order)
@@ -879,5 +964,5 @@ def build_scorecard(
         "production_authority": False, "disclaimer": DISCLAIMER,
     }
     scorecard["scorecard_hash"] = _hash(scorecard)
-    validate_scorecard(scorecard, registration, outcomes)
+    validate_scorecard(scorecard, registration, outcomes, legacy_readonly=legacy_readonly)
     return scorecard

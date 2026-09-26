@@ -405,6 +405,43 @@ def _check_paper_settlement(before, after, target, run_id):
     return errors, allowed, deltas
 
 
+def validate_daily_projection_transition(before, after, target, run_id):
+    """Apply the publication ledger rules before replaying a daily WAL after-state."""
+    before = dict(before)
+    for name in ("decision_log.json", "nav_history.json"):
+        if before.get(name) is None:
+            before[name] = []
+    errors, settlement_rows, settlement_deltas = _check_paper_settlement(
+        before, after, target, run_id,
+    )
+    errors.extend(_check_orders(before.get("orders.json"), after.get("orders.json")))
+    errors.extend(_check_fund(
+        before.get("fund.json"), after.get("fund.json"),
+        before.get("orders.json"), after.get("orders.json"), settlement_deltas,
+    ))
+    before_fund, after_fund = before.get("fund.json"), after.get("fund.json")
+    if isinstance(before_fund, dict) and isinstance(after_fund, dict):
+        try:
+            actual = round(float(after_fund["cash"]) - float(before_fund["cash"]), 2)
+            expected, why = _cash_delta_from_orders(
+                before.get("orders.json"), after.get("orders.json"), settlement_deltas,
+            )
+            errors.extend(why)
+            if round(actual - expected, 2) != 0:
+                errors.append("model_fund/fund.json: daily cash delta has no order explanation")
+        except (KeyError, TypeError, ValueError):
+            errors.append("model_fund/fund.json: daily cash delta cannot be verified")
+    for name in ("decision_log.json", "nav_history.json"):
+        errors.extend(_check_append_only(
+            name, before.get(name), after.get(name), target, settlement_rows,
+        ))
+    errors.extend(_check_blocked_nav_rows(
+        before.get("nav_history.json"), after.get("nav_history.json"),
+        after.get("orders.json"), after.get("fund.json"),
+    ))
+    return errors
+
+
 def _check_append_only(name, before, after, target, settlement_rows=()):
     """既有元素逐字节不变 + 新增元素合法。返回错误列表。"""
     rule = APPEND_ONLY_PROTECTED[name]
@@ -434,6 +471,37 @@ def _check_append_only(name, before, after, target, settlement_rows=()):
                 errs.append(f"model_fund/{name}: 本轮日期 {target} 共 {target_rows} 行,"
                             "该文件每个交易日只许一行")
     return errs
+
+
+def _check_blocked_nav_rows(before_nav, after_nav, after_orders, after_fund):
+    if not isinstance(before_nav, list) or not isinstance(after_nav, list):
+        return []  # _check_append_only reports malformed series.
+    if not isinstance(after_orders, list) or not isinstance(after_fund, dict):
+        return ["model_fund/nav_history.json: cannot bind blocked NAV to orders/fund"]
+    open_orders = [order for order in after_orders
+                   if isinstance(order, dict) and order.get("status") == "filled"]
+    filled = {order.get("ticker") for order in open_orders}
+    errors = []
+    for row in after_nav[len(before_nav):]:
+        if not isinstance(row, dict):
+            errors.append("model_fund/nav_history.json: new row is not an object")
+            continue
+        if row.get("nav") is not None:
+            if row.get("status") == "DATA_BLOCKED":
+                errors.append("model_fund/nav_history.json: blocked status has numeric NAV")
+            continue
+        missing = row.get("missing_tickers")
+        if (row.get("status") != "DATA_BLOCKED"
+                or row.get("reason") != "MISSING_TARGET_CLOSE"
+                or not isinstance(missing, list) or not missing
+                or not all(isinstance(ticker, str) and ticker for ticker in missing)
+                or missing != sorted(set(missing)) or not set(missing) <= filled
+                or row.get("cash") != after_fund.get("cash")
+                or row.get("n_positions") != len(open_orders)
+                or row.get("daily_return") is not None
+                or row.get("cum_return") is not None):
+            errors.append("model_fund/nav_history.json: blocked NAV is not bound to open positions and cash")
+    return errors
 
 
 def _cash_delta_from_orders(before_orders, after_orders, settlement_deltas=None):
@@ -533,6 +601,10 @@ def verify_protected_inputs(stage_et, run_dir, target=None):
             elif fname in APPEND_ONLY_PROTECTED:
                 errors.extend(_check_append_only(fname, bmap.get(fname), amap.get(fname), target,
                                                   settlement_rows))
+                if fname == "nav_history.json":
+                    errors.extend(_check_blocked_nav_rows(
+                        bmap.get(fname), amap.get(fname), amap.get("orders.json"),
+                        amap.get("fund.json")))
             elif fname == "fund.json":
                 if not settlement_deltas:
                     errors.extend(_check_fund(bmap.get(fname), amap.get(fname),

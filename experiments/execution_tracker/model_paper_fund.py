@@ -583,14 +583,261 @@ def execution_realism_receipt(order):
 def update_nav(fund, orders, nav_history, date, marks=None, *,
                require_complete_marks=False):
     nav = current_nav(fund, orders, marks, require_complete_marks=require_complete_marks)
-    prev = nav_history[-1]["nav"] if nav_history else fund["initial_capital"]
+    prev = next((row["nav"] for row in reversed(nav_history)
+                 if _usable_mark(row.get("nav")) is not None), fund["initial_capital"])
     rec = {"date": date, "nav": nav, "cash": fund["cash"],
            "n_positions": sum(1 for o in orders if o["status"] == "filled"),
-           "daily_return": round(nav / prev - 1, 5),
+           "daily_return": (None if nav_history and nav_history[-1].get("nav") is None
+                            else round(nav / prev - 1, 5)),
            "cum_return": round(nav / fund["initial_capital"] - 1, 5)}
     if not any(x["date"] == date for x in nav_history):     # append-only, one per day
         nav_history.append(rec)
     return rec
+
+
+_DAILY_PROJECTIONS = ("fund.json", "orders.json", "decision_log.json", "nav_history.json")
+_DAILY_INTENT = ".daily_projection_intent.json"
+
+
+def _projection_digest(value):
+    raw = json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"),
+                     allow_nan=False).encode("utf-8")
+    return hashlib.sha256(raw).hexdigest()
+
+
+def _validate_daily_intent_after(journal):
+    after = journal["after"]
+    fund, orders = after["fund.json"], after["orders.json"]
+    decision_log, nav_history = after["decision_log.json"], after["nav_history.json"]
+    if (not isinstance(fund, dict) or fund.get("paper_only") is not True
+            or not isinstance(orders, list) or not isinstance(decision_log, list)
+            or not isinstance(nav_history, list) or not nav_history):
+        raise ValueError("daily projection after-state structure is invalid")
+    for key in ("cash", "initial_capital"):
+        value = fund.get(key)
+        if (isinstance(value, bool) or not isinstance(value, (int, float))
+                or not math.isfinite(value) or value < 0):
+            raise ValueError(f"daily projection fund.{key} is invalid")
+    if fund["initial_capital"] <= 0:
+        raise ValueError("daily projection initial capital is invalid")
+    # governance-mutation: PAPER_DAILY_CANCELLED_STATUS
+    if any(not isinstance(order, dict) or order.get("status") not in
+           {"pending", "filled", "closed", "expired", "cancelled"} for order in orders):
+        raise ValueError("daily projection orders are invalid")
+    if any(not isinstance(row, dict) for row in decision_log):
+        raise ValueError("daily projection decision log is invalid")
+    dates = []
+    for row in nav_history:
+        if not isinstance(row, dict):
+            raise ValueError("daily projection NAV row is invalid")
+        date = row.get("date")
+        if not isinstance(date, str) or len(date) != 8 or not date.isdigit():
+            raise ValueError("daily projection NAV date is invalid")
+        try:
+            datetime.datetime.strptime(date, "%Y%m%d")
+        except ValueError as exc:
+            raise ValueError("daily projection NAV date is invalid") from exc
+        dates.append(date)
+    if (dates != sorted(set(dates)) or dates[-1] != journal["target_trade_date"]
+            or not _committed_daily_row_is_consistent(nav_history[-1], fund, orders)):
+        raise ValueError("daily projection NAV is not bound to fund, orders, and target")
+
+
+def _finish_daily_intent(fund_dir, *, expected_target=None, expected_run=None):
+    path = _path(_DAILY_INTENT, fund_dir)
+    if not os.path.exists(path):
+        return False
+    journal = load(_DAILY_INTENT, None, fund_dir)
+    if (not isinstance(journal, dict) or journal.get("schema") not in
+            {"paper-daily-intent/v1", "paper-daily-intent/v2"}
+            or set(journal.get("before", {})) != set(_DAILY_PROJECTIONS)
+            or set(journal.get("after", {})) != set(_DAILY_PROJECTIONS)
+            or journal.get("intent_hash") != _projection_digest(
+                {key: value for key, value in journal.items() if key != "intent_hash"}
+            )):
+        raise ValueError("daily projection intent is malformed or changed")
+    if ((expected_target is not None and journal.get("target_trade_date") != expected_target)
+            or (expected_run is not None and journal.get("run_id") != expected_run)):
+        raise ValueError("daily projection intent is bound to another run")
+    current_content = {name: load(name, None, fund_dir) for name in _DAILY_PROJECTIONS}
+    for name in _DAILY_PROJECTIONS:
+        if _projection_digest(current_content[name]) not in {
+            journal["before"][name], _projection_digest(journal["after"][name])
+        }:
+            raise ValueError(f"daily projection {name} differs from both intent states")
+    # governance-mutation: PAPER_DAILY_INTENT_AFTER_VALIDATION
+    _validate_daily_intent_after(journal)
+    before_content = journal.get("before_content")
+    if journal["schema"] == "paper-daily-intent/v2":
+        if (not isinstance(before_content, dict)
+                or set(before_content) != set(_DAILY_PROJECTIONS)
+                or any(_projection_digest(before_content[name]) != journal["before"][name]
+                       for name in _DAILY_PROJECTIONS)):
+            raise ValueError("daily projection before-state snapshot is invalid")
+    elif all(_projection_digest(current_content[name]) == journal["before"][name]
+             for name in _DAILY_PROJECTIONS):
+        before_content = current_content
+    elif all(_projection_digest(current_content[name]) ==
+             _projection_digest(journal["after"][name]) for name in _DAILY_PROJECTIONS):
+        before_content = None
+    else:
+        raise ValueError("cannot prove legacy daily intent transition after partial write")
+    if before_content is not None:
+        import nightly_publish
+        # governance-mutation: PAPER_DAILY_INTENT_TRANSITION_REPLAY
+        problems = nightly_publish.validate_daily_projection_transition(
+            before_content, journal["after"], journal["target_trade_date"], journal["run_id"],
+        )
+        if problems:
+            raise ValueError("daily projection transition is invalid: " + "; ".join(problems))
+        for name in _DAILY_PROJECTIONS:
+            save(name, journal["after"][name], fund_dir)
+    os.unlink(path)
+    if os.name != "nt":
+        directory = os.open(os.path.abspath(fund_dir), os.O_RDONLY)
+        try:
+            os.fsync(directory)
+        finally:
+            os.close(directory)
+    return True
+
+
+def migrate_legacy_daily_intent(fund_dir, before_content, *, expected_target, expected_run):
+    """One-time, operator-invoked v1 recovery with an independently saved before snapshot.
+
+    Nightly never calls this path. An unproven v1 mixed state remains fail-closed.
+    Once the v2 intent is durable, an interruption can use normal v2 recovery.
+    """
+    import nightly_publish
+
+    before_content = copy.deepcopy(before_content)
+    fund_dir = os.path.abspath(fund_dir)
+    if (os.path.basename(fund_dir) != "model_fund" or os.path.islink(fund_dir)
+            or not os.path.isdir(fund_dir)):
+        raise ValueError("legacy migration requires a real model_fund directory")
+    live_et = os.path.dirname(fund_dir)
+    with nightly_publish._nightly_exclusive(live_et):
+        path = _path(_DAILY_INTENT, fund_dir)
+        if os.path.islink(path):
+            raise ValueError("legacy daily intent path is a symlink")
+        journal = load(_DAILY_INTENT, None, fund_dir)
+        if (not isinstance(journal, dict)
+                or journal.get("schema") != "paper-daily-intent/v1"
+                or set(journal.get("before", {})) != set(_DAILY_PROJECTIONS)
+                or set(journal.get("after", {})) != set(_DAILY_PROJECTIONS)
+                or journal.get("intent_hash") != _projection_digest(
+                    {key: value for key, value in journal.items() if key != "intent_hash"}
+                )):
+            raise ValueError("legacy daily intent is malformed or changed")
+        if (journal.get("target_trade_date") != expected_target
+                or journal.get("run_id") != expected_run):
+            raise ValueError("legacy daily intent is bound to another run")
+        # governance-mutation: PAPER_DAILY_LEGACY_BEFORE_HASH
+        if (not isinstance(before_content, dict)
+                or set(before_content) != set(_DAILY_PROJECTIONS)
+                or any(_projection_digest(before_content[name]) != journal["before"][name]
+                       for name in _DAILY_PROJECTIONS)):
+            raise ValueError("legacy before snapshot does not match the intent")
+        current = {name: load(name, None, fund_dir) for name in _DAILY_PROJECTIONS}
+        before_matches = [
+            _projection_digest(current[name]) == journal["before"][name]
+            for name in _DAILY_PROJECTIONS
+        ]
+        after_matches = [
+            _projection_digest(current[name]) == _projection_digest(journal["after"][name])
+            for name in _DAILY_PROJECTIONS
+        ]
+        if any(not (old or new) for old, new in zip(before_matches, after_matches)):
+            raise ValueError("legacy projection differs from both intent states")
+        if all(before_matches) or all(after_matches):
+            raise ValueError("legacy intent has no mixed state requiring migration")
+        _validate_daily_intent_after(journal)
+        # governance-mutation: PAPER_DAILY_LEGACY_SNAPSHOT_TRANSITION
+        problems = nightly_publish.validate_daily_projection_transition(
+            before_content, journal["after"], expected_target, expected_run,
+        )
+        if problems:
+            raise ValueError("legacy daily transition is invalid: " + "; ".join(problems))
+        upgraded = {**journal, "schema": "paper-daily-intent/v2",
+                    "before_content": before_content}
+        upgraded["intent_hash"] = _projection_digest(
+            {key: value for key, value in upgraded.items() if key != "intent_hash"}
+        )
+        save(_DAILY_INTENT, upgraded, fund_dir)
+        _finish_daily_intent(fund_dir, expected_target=expected_target, expected_run=expected_run)
+        return {"target_trade_date": expected_target, "run_id": expected_run,
+                "legacy_intent_hash": journal["intent_hash"],
+                "upgraded_intent_hash": upgraded["intent_hash"]}
+
+
+def recover_prior_daily_intent(fund_dir, *, latest_target):
+    """Finish a committed daily projection in the live tree before staging is copied."""
+    path = _path(_DAILY_INTENT, fund_dir)
+    if not os.path.exists(path):
+        return None
+    journal = load(_DAILY_INTENT, None, fund_dir)
+    prior_date = journal.get("target_trade_date") if isinstance(journal, dict) else None
+    prior_run = journal.get("run_id") if isinstance(journal, dict) else None
+    try:
+        datetime.datetime.strptime(prior_date, "%Y%m%d")
+        datetime.datetime.strptime(latest_target, "%Y%m%d")
+    except (TypeError, ValueError) as exc:
+        raise ValueError("daily projection intent has no valid prior date") from exc
+    if (len(prior_date) != 8 or not prior_date.isdigit() or prior_date > latest_target
+            or not isinstance(prior_run, str) or not prior_run):
+        raise ValueError("daily projection intent has no valid prior run binding")
+    _finish_daily_intent(fund_dir, expected_target=prior_date, expected_run=prior_run)
+    return {"target_trade_date": prior_date, "run_id": prior_run}
+
+
+def _commit_daily_projections(fund_dir, target, run, fund, orders, decision_log, nav_history):
+    if os.path.exists(_path(_DAILY_INTENT, fund_dir)):
+        raise ValueError("unrecovered daily projection intent")
+    after = dict(zip(_DAILY_PROJECTIONS, (fund, orders, decision_log, nav_history)))
+    before_content = {name: load(name, None, fund_dir) for name in _DAILY_PROJECTIONS}
+    before = {name: _projection_digest(value) for name, value in before_content.items()}
+    journal = {"schema": "paper-daily-intent/v2", "target_trade_date": target,
+               "run_id": run, "before": before,
+               "before_content": before_content, "after": copy.deepcopy(after)}
+    _validate_daily_intent_after(journal)
+    import nightly_publish
+    problems = nightly_publish.validate_daily_projection_transition(
+        before_content, journal["after"], target, run,
+    )
+    if problems:
+        raise ValueError("daily projection transition is invalid: " + "; ".join(problems))
+    journal["intent_hash"] = _projection_digest(journal)
+    save(_DAILY_INTENT, journal, fund_dir)
+    _finish_daily_intent(fund_dir)
+
+
+def record_unavailable_nav(fund, orders, nav_history, date, missing):
+    if any(row.get("date") == date for row in nav_history):
+        raise ValueError("cannot replace an existing NAV observation")
+    rec = {"date": date, "nav": None, "cash": fund["cash"],
+           "n_positions": sum(1 for order in orders if order["status"] == "filled"),
+           "daily_return": None, "cum_return": None, "status": "DATA_BLOCKED",
+           "reason": "MISSING_TARGET_CLOSE", "missing_tickers": sorted(set(missing))}
+    nav_history.append(rec)
+    return rec
+
+
+def _committed_daily_row_is_consistent(row, fund, orders):
+    if not isinstance(row, dict) or not isinstance(orders, list):
+        return False
+    open_orders = [order for order in orders if order.get("status") == "filled"]
+    if row.get("cash") != fund.get("cash") or row.get("n_positions") != len(open_orders):
+        return False
+    if row.get("nav") is not None:
+        return _usable_mark(row["nav"]) is not None and row.get("status") != "DATA_BLOCKED"
+    missing = row.get("missing_tickers")
+    filled = {order.get("ticker") for order in open_orders}
+    return (row.get("status") == "DATA_BLOCKED"
+            and row.get("reason") == "MISSING_TARGET_CLOSE"
+            and isinstance(missing, list) and bool(missing)
+            and all(isinstance(ticker, str) and ticker for ticker in missing)
+            and missing == sorted(set(missing)) and set(missing) <= filled
+            and row.get("daily_return") is None and row.get("cum_return") is None)
 
 
 # -------------------------------------------------------------- performance ----
@@ -600,14 +847,18 @@ def compute_performance(fund, orders, nav_history):
     closed = [o for o in closed_all if o.get("sample_eligible") is True]
     wins = [o for o in closed if (o["paper_return"] or 0) > 0]
     rs = [o["realized_R"] for o in closed if o.get("realized_R") is not None]
-    navs = [x["nav"] for x in nav_history] or [fund["initial_capital"]]
+    navs = [x["nav"] for x in nav_history if _usable_mark(x.get("nav")) is not None]
+    navs = navs or [fund["initial_capital"]]
+    nav_blocked = bool(nav_history and nav_history[-1].get("nav") is None)
     peak, max_dd = navs[0], 0.0
     for v in navs:
         peak = max(peak, v)
         max_dd = min(max_dd, v / peak - 1)
     n = len(closed)
     result = {
-        "nav": navs[-1], "cum_return": round(navs[-1] / fund["initial_capital"] - 1, 5),
+        "nav": None if nav_blocked else navs[-1],
+        "cum_return": (None if nav_blocked else
+                       round(navs[-1] / fund["initial_capital"] - 1, 5)),
         "max_drawdown": round(max_dd, 5),
         "n_closed": len(closed_all), "n_claim_eligible": n,
         "n_workflow_debug_closed": len(closed_all) - n,
@@ -634,7 +885,7 @@ def compare_human_shadow(nav_history, human_history):
     h = {x["date"]: x["nav"] for x in human_history}
     out = []
     for rec in nav_history:
-        if rec["date"] in h and human_history:
+        if rec["date"] in h and human_history and rec.get("cum_return") is not None:
             h0 = human_history[0]["nav"]
             out.append({"date": rec["date"], "model_cum": rec["cum_return"],
                         "human_cum": round(h[rec["date"]] / h0 - 1, 5),
@@ -825,6 +1076,25 @@ def main():
         if not date:
             print("DATA_BLOCKED: 无 target_trade_date"); return 1
         try:
+            pending = _path(_DAILY_INTENT, args.fund_dir or FUND_DIR)
+            if os.path.exists(pending):
+                journal = load(_DAILY_INTENT, None, args.fund_dir or FUND_DIR)
+                prior_date = journal.get("target_trade_date") if isinstance(journal, dict) else None
+                prior_run = journal.get("run_id") if isinstance(journal, dict) else None
+                if (not isinstance(prior_date, str) or len(prior_date) != 8
+                        or not prior_date.isdigit() or prior_date > date
+                        or not isinstance(prior_run, str) or not prior_run):
+                    raise ValueError("daily projection intent has no valid prior run binding")
+                if (prior_date, prior_run) != (date, run_id()):
+                    _finish_daily_intent(args.fund_dir or FUND_DIR)
+                    print("DATA_BLOCKED: previous daily intent recovered; rerun current run")
+                    return 1
+            _finish_daily_intent(args.fund_dir or FUND_DIR,
+                                 expected_target=date, expected_run=run_id())
+        except Exception as exc:
+            print(f"DATA_BLOCKED: daily projection recovery refused: {exc}")
+            return 1
+        try:
             # governance-mutation: PAPER_REGISTRATION_DAILY_CALLSITE
             assert_paper_registration_ready(args.fund_dir, args.event_ledger)
         except Exception as exc:
@@ -838,6 +1108,14 @@ def main():
         decision_log = load("decision_log.json", [], args.fund_dir)
         navh = load("nav_history.json", [], args.fund_dir)
         token = os.environ.get("TUSHARE_TOKEN", "").strip()
+        if token and not os.environ.get("AR_OFFLINE") and navh and navh[-1].get("date") == date:
+            last = navh[-1]
+            if not _committed_daily_row_is_consistent(last, fund, orders):
+                print("DATA_BLOCKED: daily retry projection is inconsistent")
+                return 1
+            print(f"[daily] {date} already committed; NAV status={last.get('status', 'COMPLETE')}")
+            print("不是买卖指令；研究信号，human executes。")
+            return 0
         events = []
         if token and not os.environ.get("AR_OFFLINE"):
             try:
@@ -875,19 +1153,19 @@ def main():
             if marks:
                 print(f"  marks: {marks}")
             else:
-                print("  WARN 无可用收盘价 ⇒ NAV 按成本标记(不是市值)")
+                print("  WARN 无可用收盘价 ⇒ NAV 标为不可用")
         try:
             rec = update_nav(fund, orders, navh, date, marks=marks,
                              require_complete_marks=True)
         except NavMarksIncomplete as e:
-            # 官方 NAV 宁可不出,也不出混合口径。不写任何账本、非零退出、显式 DATA_BLOCKED。
-            print(f"DATA_BLOCKED: {date} 有 filled 持仓未取到目标日定盘价 {e.missing} —— "
-                  f"拒绝写入 NAV(不接受部分市值+部分成本的混合口径)")
-            print("不是买卖指令；研究信号，human executes。")
-            return 1
-        save("fund.json", fund, args.fund_dir); save("orders.json", orders, args.fund_dir)
-        save("decision_log.json", decision_log, args.fund_dir); save("nav_history.json", navh, args.fund_dir)
-        print(f"[daily] {date} nav={rec['nav']:,.0f} cash={rec['cash']:,.0f} "
+            if not token or os.environ.get("AR_OFFLINE"):
+                print(f"DATA_BLOCKED: {date} 无实时数据,未生成结算证据")
+                return 1
+            rec = record_unavailable_nav(fund, orders, navh, date, e.missing)
+        _commit_daily_projections(args.fund_dir or FUND_DIR, date, run_id(),
+                                  fund, orders, decision_log, navh)
+        nav_label = f"{rec['nav']:,.0f}" if rec["nav"] is not None else "DATA_BLOCKED"
+        print(f"[daily] {date} nav={nav_label} cash={rec['cash']:,.0f} "
               f"n_pos={rec['n_positions']} events={len(events)} run_id={run_id()}")
         for e in events:
             print("  ", e)

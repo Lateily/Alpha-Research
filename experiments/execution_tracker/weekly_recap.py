@@ -230,16 +230,18 @@ def build_recap(start, end, fund_dir=FUND_DIR, tracker_dir=HERE):
 
     lines = [f"## Portfolio Snapshot(自动生成 · {start}–{end} · 非实盘指令)", ""]
     lines += ["| 项 | 值 | 证据 |", "|---|---:|---|"]
-    if last:
+    if last and last.get("nav") is not None:
         cum = last["nav"] / initial - 1
-        week_ret = (week_nav[-1]["nav"] / week_nav[0]["nav"] - 1) if len(week_nav) > 1 else None
+        week_ret = (week_nav[-1]["nav"] / week_nav[0]["nav"] - 1
+                    if len(week_nav) > 1 and all(n.get("nav") is not None for n in week_nav)
+                    else None)
         lines.append(f"| NAV | ¥{last['nav']:,.0f}({last['date']}) | nav_history.json [validated against ledger] |")
         lines.append(f"| 周内变动 | {week_ret*100:+.2f}% | 同上 |" if week_ret is not None
-                     else "| 周内变动 | 单日样本,不计 | 同上 |")
+                     else "| 周内变动 | 单日或缺值,不计 | 同上 |")
         lines.append(f"| 累计 | {cum*100:+.2f}% | 同上 |")
         lines.append(f"| 现金 | ¥{last.get('cash', 0):,.0f} | fund.json |")
     else:
-        lines.append("| NAV | 无本周结算记录 | DATA_BLOCKED |")
+        lines.append("| NAV | 当日不可用或无本周结算记录 | DATA_BLOCKED |")
 
     open_pos = [o for o in orders if o.get("status") == "filled"]
     pending = [o for o in orders if o.get("status") == "pending"]

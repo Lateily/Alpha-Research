@@ -84,8 +84,21 @@ A thesis is scoreable only when it contains:
 - one structured invalidation claim for every mechanized `wrong_if` trigger;
 - a red-team PASS bound to the exact thesis hash.
 
-Invalidations are bound by each trigger's hash. Having the right number of
-generic invalidation statements is not coverage.
+New method registrations use schema `1.1`. Every scoreable `wrong_if` trigger
+must have exactly `metric`, `threshold`, `source`, `check_date`, and
+`measurement_period`. The threshold is an explicit numeric predicate
+(`<=`, `>=`, `=`, `≤`, or `≥`; a `%` suffix is required exactly when the metric
+ends in `_PCT`). The linked `INVALIDATION` claim must match the trigger's
+metric, source, period, date, operator, and numeric threshold. Hash equality
+alone is not semantic equality. Free text, event predicates, and ranges cannot
+become machine-scored invalidations under this version; they remain human
+research notes until a separately reviewed typed contract exists. The outcome
+and scorecard shapes remain schema `1.0`, bound to the registration hash.
+Frozen registration `1.0` remains readable only for historical case validation
+and offline replay. New case seals require registration `1.1`; a legacy replay
+reports thesis and machine attribution as `UNRESOLVED` with reason
+`LEGACY_WRONG_IF_SEMANTICS_UNVALIDATED`. It cannot retrospectively gain the
+new typed wrong-if scoring eligibility.
 
 ## Block 3: Industry Valuation
 

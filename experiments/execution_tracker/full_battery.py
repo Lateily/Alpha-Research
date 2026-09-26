@@ -17,6 +17,12 @@ VERDICT_FIELD = "verdict_v0_unvalidated"
 DISPLAY_VERDICT_DIMENSIONS = ("行情", "资金", "技术面", "消息面", "估值")
 
 
+class AnnouncementPage(list):
+    def __init__(self, rows, total_hits):
+        super().__init__(rows)
+        self.complete = total_hits == len(self)
+
+
 def _finite_number(value):
     if isinstance(value, bool) or not isinstance(value, (int, float)):
         return None
@@ -101,6 +107,50 @@ def _recent_announcement_count(titles, today):
     return count
 
 
+def _announcement_evidence(titles, today, *, page_complete=True):
+    cutoff = datetime.datetime.strptime(today, "%Y%m%d").date()
+    eligible = []
+    future_count = 0
+    unknown_count = 0
+    for raw_date, title in titles:
+        date_text = str(raw_date or "")[:10]
+        try:
+            observed = datetime.datetime.strptime(date_text.replace("-", ""), "%Y%m%d").date()
+        except ValueError:
+            unknown_count += 1
+            continue
+        if observed > cutoff:
+            future_count += 1
+            continue
+        eligible.append((observed, date_text, title))
+    eligible.sort(key=lambda item: item[0], reverse=True)
+    dated_titles = [(date_text, title) for _, date_text, title in eligible]
+    reasons = []
+    if future_count:
+        reasons.append("ANNOUNCEMENT_AFTER_AS_OF_EXCLUDED")
+    if unknown_count:
+        reasons.append("ANNOUNCEMENT_DATE_UNVERIFIABLE")
+    if titles and not eligible:
+        reasons.append("NO_ANNOUNCEMENT_AT_OR_BEFORE_AS_OF")
+    # governance-mutation: BATTERY_ANNOUNCEMENT_PAGE_COVERAGE
+    if not page_complete:
+        reasons.append("ANNOUNCEMENT_PAGE_COVERAGE_UNVERIFIED")
+    # A truncated current feed with no usable dated rows does not prove zero at T.
+    blocked = bool(not page_complete or unknown_count or (titles and not eligible))
+    evidence = {
+        "最近公告条数": None if blocked else len(eligible),
+        "近7日公告条数": None if blocked else _recent_announcement_count(dated_titles, today),
+        "最新3条": [f"{date_text} {title[:36]}" for date_text, title in dated_titles[:3]],
+        "excluded_after_as_of_count": future_count,
+        "unverifiable_date_count": unknown_count,
+        "reason_codes": reasons,
+        "note": "东财公告源;实时快讯层待 M3 宏观面板上线",
+    }
+    if blocked:
+        evidence.update(status="DATA_BLOCKED", err=";".join(reasons))
+    return evidence
+
+
 def _fetch_anns_eastmoney(ts_code, page_size=30, timeout=10):
     """东财公告接口(免费无token)。返回 [(date, title), ...] 或 None(源不可用)。
     外部内容按不可信数据处理:只取日期与标题文本,不执行不解析任何指令。"""
@@ -114,8 +164,23 @@ def _fetch_anns_eastmoney(ts_code, page_size=30, timeout=10):
         req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0",
                                                    "Referer": "https://data.eastmoney.com/"})
         d = json.load(urllib.request.urlopen(req, timeout=timeout))
-        lst = (d.get("data") or {}).get("list") or []
-        return [(str(a.get("notice_date", ""))[:10], str(a.get("title", ""))) for a in lst]
+        if not isinstance(d, dict) or d.get("success") is not True:
+            return None
+        if "code" in d and d["code"] not in (1, "1"):
+            return None
+        data = d.get("data")
+        if not isinstance(data, dict) or not isinstance(data.get("list"), list):
+            return None
+        lst = data["list"]
+        total_hits = data.get("total_hits")
+        # governance-mutation: BATTERY_EASTMONEY_PAGE_BOUNDS
+        if (type(total_hits) is not int or len(lst) > page_size or total_hits < len(lst)
+                or total_hits < 0 or (len(lst) < page_size and total_hits != len(lst))):
+            return None
+        return AnnouncementPage(
+            [(str(a.get("notice_date", ""))[:10], str(a.get("title", ""))) for a in lst],
+            total_hits,
+        )
     except Exception:
         return None
 
@@ -143,7 +208,7 @@ def _reported(value, scale=1.0, digits=1):
 
 
 def _fundamental_descriptors(inc, fi):
-    """描述字段只描述,不决定维度去留:红旗闸门结论在,基本面维就算覆盖。"""
+    """保留逐字段缺失;整份报表为空时由 battery() 决定维度去留。"""
     missing = {}
     net_income = None
     if len(inc):
@@ -204,6 +269,14 @@ def battery(pro, tk, today):
                        if g["verdict"] == "DATA_BLOCKED" else
                        {"红旗闸门": g["verdict"], "红旗理由": g["reasons"],
                        "最新E1日期": g["latest_e1_date"], **_fundamental_descriptors(inc, fi)})
+        missing_sources = []
+        if inc.empty:
+            missing_sources.append("INCOME_EMPTY")
+        if fi.empty:
+            missing_sources.append("FINA_INDICATOR_EMPTY")
+        if missing_sources:
+            D["基本面"].update(status="DATA_BLOCKED", reason_codes=missing_sources,
+                             err=";".join(missing_sources))
     except Exception as e:
         D["基本面"] = {"status": "DATA_BLOCKED", "err": str(e)[:80]}
     # ── 4 技术面(结构位,v0 用均线+量;SMC 层待 Line D)──
@@ -223,21 +296,23 @@ def battery(pro, tk, today):
     # ── 5 消息面(公告扫描:东财免费源为主,Tushare anns_d 为备;快讯层待 M3)──
     try:
         titles = _fetch_anns_eastmoney(tk)
+        eastmoney_source = titles is not None
         if titles is None:  # 东财失败再试 tushare(部分 token 无 anns_d 权限)
             try:
                 an = pro.anns_d(ts_code=tk, start_date=(datetime.datetime.strptime(today, "%Y%m%d")
                      - datetime.timedelta(days=30)).strftime("%Y%m%d"), end_date=today)
                 col = "title" if "title" in an.columns else an.columns[-1]
-                titles = [(str(r[1].get("ann_date", "")), str(r[1][col])) for r in an.head(8).iterrows()]
+                # governance-mutation: BATTERY_ANNOUNCEMENT_FALLBACK_COMPLETE
+                titles = [(str(r[1].get("ann_date", "")), str(r[1][col])) for r in an.iterrows()]
             except Exception:
                 titles = None
         if titles is None:
             D["消息面"] = {"status": "DATA_BLOCKED", "err": "东财+Tushare 公告源均不可用——不伪装为0条"}
         else:
-            D["消息面"] = {"最近公告条数": len(titles),
-                           "近7日公告条数": _recent_announcement_count(titles, today),
-                           "最新3条": [f"{d0[:10]} {t[:36]}" for d0, t in titles[:3]],
-                           "note": "东财公告源;实时快讯层待 M3 宏观面板上线"}
+            D["消息面"] = _announcement_evidence(
+                titles, today, page_complete=(not eastmoney_source or
+                    (titles.complete if isinstance(titles, AnnouncementPage) else len(titles) < 30)),
+            )
     except Exception as e:
         D["消息面"] = {"status": "NOT_RUN", "err": str(e)[:80]}
     # ── 6 估值 ──
@@ -245,6 +320,8 @@ def battery(pro, tk, today):
         db = pro.daily_basic(ts_code=tk, start_date=(datetime.datetime.strptime(today, "%Y%m%d")
              - datetime.timedelta(days=400)).strftime("%Y%m%d"), end_date=today,
              fields="trade_date,pe_ttm,pb,total_mv").sort_values("trade_date")
+        if db.empty:
+            raise ValueError("DAILY_BASIC_EMPTY")
         pe = db.pe_ttm  # 亏损票最新行为 NaN:如实报 None,不许回捞历史正值伪装现值
         last = pe.iloc[-1] if len(pe) else None
         cur = float(last) if last is not None and last == last else None

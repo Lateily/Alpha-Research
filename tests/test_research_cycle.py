@@ -58,6 +58,7 @@ def make_wait_draft(draft: dict) -> dict:
     draft["decision_pack"]["execution_gate"]["posture"] = "HOLD_OBSERVE"
     draft["paper_order"]["gate_state"] = "HOLD_OBSERVE"
     registration_draft, _, _, _ = method_fixtures.registration_draft()
+    registration_draft["smc"]["evidence_as_of"] = "2026-08-13T10:09:00+00:00"
     registration_draft["ticker"] = draft["ticker"]
     registration_draft["thesis_core_hash"] = funnel._hash(draft["thesis_core"])
     registration_draft["timing_ticket_hash"] = funnel._hash(draft["timing_ticket"])
@@ -78,6 +79,9 @@ def build_case_draft(closure_bundle: Path, ticker: str) -> dict:
     receipt = json.loads((closure_bundle / "review_receipt.json").read_text())
     queue = json.loads((closure_bundle / "deep_research_queue.json").read_text())
     core = decision_sheet_contract._valid_core()
+    core["wrong_if"]["triggers"] = copy.deepcopy(
+        method_fixtures.method_inputs()[0]["wrong_if"]["triggers"]
+    )
     core["identity"]["ticker"] = ticker
     core["identity"]["name"] = {"zh": "闭环样本", "en": "Closure Fixture"}
     core["identity"]["as_of"] = "2026-08-11"
@@ -189,6 +193,7 @@ def build_case_draft(closure_bundle: Path, ticker: str) -> dict:
         "disclaimer": cycle.DISCLAIMER,
     }
     registration_draft, _, _, _ = method_fixtures.registration_draft()
+    registration_draft["smc"]["evidence_as_of"] = "2026-08-13T10:09:00+00:00"
     registration_draft["ticker"] = ticker
     registration_draft["as_of"] = "20260811"
     registration_draft["thesis_core_hash"] = funnel._hash(core)
@@ -291,6 +296,213 @@ def build_review_draft(trace: dict, review: dict, *, bound: bool = True) -> dict
 
 
 class ResearchCycleTests(unittest.TestCase):
+    def test_new_case_seal_refuses_date_only_smc_evidence(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            bundle, codes, _, _, _ = build_closure_bundle(Path(directory))
+            draft = build_case_draft(bundle, codes[0])
+            self.assertEqual("1.1", draft["method_registration"]["schema_version"])
+            draft["method_registration"]["smc"]["evidence_as_of"] = "20260813"
+            draft["method_registration"]["registration_hash"] = method._hash(
+                method._without(draft["method_registration"], "registration_hash")
+            )
+            with self.assertRaisesRegex(cycle.CycleError, "SMC evidence instant required"):
+                cycle.seal_case(draft, bundle)
+
+    def test_new_case_seal_rejects_malformed_smc_as_a_contract_error(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            bundle, codes, _, _, _ = build_closure_bundle(Path(directory))
+            draft = build_case_draft(bundle, codes[0])
+            draft["method_registration"]["smc"] = "not-an-object"
+            with self.assertRaises(cycle.CycleError):
+                cycle.seal_case(draft, bundle)
+
+    def test_historical_resolved_v1_bundle_verifies_without_new_scoring_authority(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            closure_bundle, codes, _, _, _ = build_closure_bundle(root)
+            draft = build_case_draft(closure_bundle, codes[0])
+            registration = draft["method_registration"]
+            registration["schema_version"] = "1.0"
+            registration["registration_hash"] = funnel._hash({
+                key: value for key, value in registration.items() if key != "registration_hash"
+            })
+            case = dict(draft, case_hash=funnel._hash(draft))
+            cycle.validate_case(case, closure_bundle)
+            bars = cycle.seal_bars(build_bar_draft(codes[0]), case)
+            outcomes = method.seal_outcomes(
+                method_fixtures.outcome_draft(registration), registration,
+            )
+            trace, fund, current_score, current_review = cycle.run_cycle(
+                bundle_dir=closure_bundle, case=case, bars=bars, outcomes=outcomes,
+                generated_at="2026-08-17T16:10:00+00:00",
+            )
+            self.assertEqual("UNRESOLVED", current_score["machine_attribution"])
+            old_score = copy.deepcopy(current_score)
+            facts = {fact["claim_id"]: fact for fact in outcomes["facts"]}
+            old_score["thesis"] = method._score_thesis(
+                registration, facts, method._date8(outcomes["scoring_as_of"], "scoring_as_of")
+            )
+            old_score["machine_attribution"] = method._attribution(
+                old_score["thesis"]["status"], old_score["timing"]["status"]
+            )
+            self.assertNotEqual("UNRESOLVED", old_score["machine_attribution"])
+            old_score["scorecard_hash"] = funnel._hash({
+                key: value for key, value in old_score.items() if key != "scorecard_hash"
+            })
+            with self.assertRaisesRegex(method.MethodError, "legacy registration cannot gain"):
+                method.validate_scorecard(old_score, registration, outcomes)
+            method.validate_scorecard(old_score, registration, outcomes, legacy_readonly=True)
+            forged_score = copy.deepcopy(old_score)
+            forged_score["thesis"]["claims"][0]["claim_id"] = "forged"
+            forged_score["scorecard_hash"] = funnel._hash({
+                key: value for key, value in forged_score.items() if key != "scorecard_hash"
+            })
+            with self.assertRaisesRegex(method.MethodError, "legacy read-only thesis differs"):
+                method.validate_scorecard(forged_score, registration, outcomes, legacy_readonly=True)
+            old_review = copy.deepcopy(current_review)
+            old_review["method_scorecard_hash"] = old_score["scorecard_hash"]
+            old_review["machine_attribution"] = old_score["machine_attribution"]
+            old_review["review_hash"] = funnel._hash({
+                key: value for key, value in old_review.items() if key != "review_hash"
+            })
+            payloads = {
+                "prospective_case.json": case, "settled_bars.json": bars,
+                "method_outcomes.json": outcomes, "cycle_trace.json": trace,
+                "paper_fund_snapshot.json": fund, "method_scorecard.json": old_score,
+                "mechanical_review.json": old_review,
+            }
+            historical = root / "historical-cycle"
+            historical.mkdir()
+            for name, payload in payloads.items():
+                cycle._atomic_write_json(historical / name, payload)
+            artifacts = {name: cycle._sha256_path(historical / name) for name in sorted(payloads)}
+            manifest = {
+                "schema": "ar.research_cycle_bundle", "schema_version": "1.0",
+                "research_cycle_id": trace["research_cycle_id"], "as_of": trace["as_of"],
+                "mode": "OFFLINE_PAPER_REPLAY", "artifacts": artifacts,
+                "bundle_hash": funnel._hash(artifacts), "no_trade_flag": True,
+                "production_authority": False, "claim_allowed": False,
+                "disclaimer": cycle.DISCLAIMER,
+            }
+            cycle._atomic_write_json(historical / "manifest.json", manifest)
+            before = {path.name: path.read_bytes() for path in historical.iterdir()}
+            try:
+                verified = cycle.verify_cycle_bundle(historical, closure_bundle)
+            except cycle.CycleError as exc:
+                self.fail(f"historical resolved bundle must verify read-only: {exc}")
+            self.assertEqual("VERIFIED_LEGACY_READONLY", verified["status"])
+            self.assertFalse(verified["claim_allowed"])
+            self.assertEqual(before, {path.name: path.read_bytes() for path in historical.iterdir()})
+            receipt = cycle.seal_review_receipt(build_review_draft(trace, old_review), old_review)
+            with self.assertRaisesRegex(cycle.CycleError, "legacy read-only cycle cannot be newly finalized"):
+                cycle.finalize_review(historical, closure_bundle, receipt)
+            old_final = {
+                "schema": cycle.FINAL_SCHEMA, "schema_version": cycle.SCHEMA_VERSION,
+                "research_cycle_id": trace["research_cycle_id"], "status": "REVIEWED",
+                "cycle_bundle_hash": manifest["bundle_hash"],
+                "mechanical_review_hash": old_review["review_hash"],
+                "review_receipt_hash": receipt["receipt_hash"],
+                "reviewed_at": receipt["reviewed_at"],
+                "machine_attribution": receipt["machine_attribution"],
+                "review_disposition": receipt["review_disposition"],
+                "human_attribution": receipt["human_attribution"],
+                "disagreement_reason": receipt["disagreement_reason"],
+                "evidence_refs": receipt["evidence_refs"],
+                "lessons": receipt["lessons"],
+                "rule_change_proposals": receipt["rule_change_proposals"],
+                "rule_changes_effective_prospectively_only": True,
+                "claim_allowed": False, "no_trade_flag": True,
+                "production_authority": False, "disclaimer": cycle.DISCLAIMER,
+            }
+            old_final["final_hash"] = funnel._hash(old_final)
+            reviewed = root / "historical-reviewed"
+            reviewed.mkdir()
+            cycle._atomic_write_json(reviewed / "review_receipt.json", receipt)
+            cycle._atomic_write_json(reviewed / "reviewed_cycle.json", old_final)
+            final_artifacts = {
+                name: cycle._sha256_path(reviewed / name)
+                for name in sorted(cycle.FINAL_ARTIFACTS)
+            }
+            cycle._atomic_write_json(reviewed / "manifest.json", {
+                "schema": "ar.research_cycle_reviewed_bundle",
+                "schema_version": cycle.SCHEMA_VERSION,
+                "research_cycle_id": trace["research_cycle_id"],
+                "artifacts": final_artifacts,
+                "bundle_hash": funnel._hash(final_artifacts),
+                "claim_allowed": False, "no_trade_flag": True,
+                "production_authority": False, "disclaimer": cycle.DISCLAIMER,
+            })
+            reviewed_before = {path.name: path.read_bytes() for path in reviewed.iterdir()}
+            try:
+                final_status = cycle.verify_final_bundle(
+                    reviewed, historical, closure_bundle,
+                )["status"]
+            except cycle.CycleError as exc:
+                self.fail(f"historical reviewed bundle must verify read-only: {exc}")
+            self.assertEqual("VERIFIED_REVIEWED", final_status)
+            self.assertEqual(reviewed_before, {
+                path.name: path.read_bytes() for path in reviewed.iterdir()
+            })
+
+    def test_newly_assembled_legacy_cycle_cannot_gain_review_authority(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            closure_bundle, codes, _, _, _ = build_closure_bundle(root)
+            draft = build_case_draft(closure_bundle, codes[0])
+            registration = draft["method_registration"]
+            registration["schema_version"] = "1.0"
+            registration["registration_hash"] = funnel._hash({
+                key: value for key, value in registration.items() if key != "registration_hash"
+            })
+            case = dict(draft, case_hash=funnel._hash(draft))
+            bars = cycle.seal_bars(build_bar_draft(codes[0]), case)
+            outcomes = method.seal_outcomes(
+                method_fixtures.outcome_draft(registration), registration,
+            )
+            trace, fund, scorecard, review = cycle.run_cycle(
+                bundle_dir=closure_bundle, case=case, bars=bars, outcomes=outcomes,
+                generated_at="2026-08-17T16:10:00+00:00",
+            )
+            cycle_bundle = root / "new-legacy-cycle"
+            with self.assertRaisesRegex(cycle.CycleError, "legacy read-only cycle cannot be newly written"):
+                cycle._write_cycle_outputs(
+                    cycle_bundle, closure_bundle, case, bars, outcomes,
+                    trace, fund, scorecard, review,
+                )
+            self.assertFalse(cycle_bundle.exists())
+
+    def test_legacy_case_replays_but_cannot_be_newly_sealed(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            bundle, codes, _, _, _ = build_closure_bundle(Path(directory))
+            draft = build_case_draft(bundle, codes[0])
+            legacy = copy.deepcopy(draft)
+            registration = legacy["method_registration"]
+            registration["schema_version"] = "1.0"
+            registration["thesis_expectations"][2]["operator"] = "GTE"
+            registration["registration_hash"] = funnel._hash(
+                {k: v for k, v in registration.items() if k != "registration_hash"}
+            )
+            legacy["case_hash"] = funnel._hash(legacy)
+            cycle.validate_case(legacy, bundle)
+            with self.assertRaisesRegex(cycle.CycleError, "current method registration"):
+                cycle.seal_case({k: v for k, v in legacy.items() if k != "case_hash"}, bundle)
+            bars = cycle.seal_bars(build_bar_draft(codes[0]), legacy)
+            outcomes = method.seal_outcomes(
+                method_fixtures.outcome_draft(registration), registration,
+            )
+            _trace, _fund, review, _scorecard = cycle.run_cycle(
+                bundle_dir=bundle, case=legacy, bars=bars, outcomes=outcomes,
+                generated_at="2026-08-17T16:10:00+00:00",
+            )
+            self.assertEqual("UNRESOLVED", review["machine_attribution"])
+            new_case = copy.deepcopy(legacy)
+            new_case["schema_version"] = cycle.DEADLINE_VERSION
+            new_case["case_hash"] = funnel._hash(
+                {k: v for k, v in new_case.items() if k != "case_hash"}
+            )
+            with self.assertRaisesRegex(cycle.CycleError, "cannot carry a legacy"):
+                cycle.validate_case(new_case, bundle)
+
     def test_cli_runs_the_entire_u4_to_reviewed_chain(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -411,6 +623,35 @@ class ResearchCycleTests(unittest.TestCase):
             draft["factpack"]["items"][0]["evidence_tier"] = "E2"
             with self.assertRaisesRegex(cycle.CycleError, "lacks load-bearing E1"):
                 cycle.seal_case(draft, closure_bundle)
+
+    def test_smc_timestamp_cannot_follow_case_seal(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            closure_bundle, codes, _, _, _ = build_closure_bundle(Path(tmp))
+            draft = build_case_draft(closure_bundle, codes[0])
+            registration = draft["method_registration"]
+            for separator in ("T", " ", "t"):
+                with self.subTest(separator=separator):
+                    registration["smc"]["evidence_as_of"] = f"2026-08-13{separator}10:10:01+00:00"
+                    registration["registration_hash"] = method._hash(
+                        method._without(registration, "registration_hash")
+                    )
+                    with self.assertRaisesRegex(cycle.CycleError, "SMC evidence.*case seal"):
+                        cycle.seal_case(draft, closure_bundle)
+
+    def test_smc_timestamp_compares_instants_not_local_clock_strings(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            closure_bundle, codes, _, _, _ = build_closure_bundle(Path(tmp))
+            draft = build_case_draft(closure_bundle, codes[0])
+            registration = draft["method_registration"]
+            for evidence_at in ("2026-08-13T18:10:00+08:00", "2026-08-13 10:09:59+00:00",
+                                "2026-08-13t10:10:00+00:00"):
+                with self.subTest(evidence_at=evidence_at):
+                    registration["smc"]["evidence_as_of"] = evidence_at
+                    registration["registration_hash"] = method._hash(
+                        method._without(registration, "registration_hash")
+                    )
+                    case = cycle.seal_case(draft, closure_bundle)
+                    self.assertEqual(case["method_registration"]["smc"]["evidence_as_of"], evidence_at)
 
     def test_unqualified_thesis_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
