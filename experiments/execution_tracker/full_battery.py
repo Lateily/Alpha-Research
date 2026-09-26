@@ -120,6 +120,52 @@ def _fetch_anns_eastmoney(ts_code, page_size=30, timeout=10):
         return None
 
 
+# 基本面描述字段(最新期归母亿 / 毛利率轨迹)缺失的原因,封闭词表。
+# 只记录供应商给了什么,不推断行业:电池里没有行业信息。
+FUNDAMENTAL_MISSING_FIELD = "缺失原因"
+FIELD_NOT_REPORTED = "NOT_REPORTED_BY_PROVIDER"   # 报告期在,该字段为 null
+NO_REPORTED_PERIOD = "NO_REPORTED_PERIOD"         # 查询窗口内一个报告期都没有
+
+
+def _reported(value, scale=1.0, digits=1):
+    """供应商 null 逐元素写成 None,不补 0。
+
+    Tushare fina_indicator 对银行、保险不报 grossprofit_margin:整列 null 时
+    pandas 保留 None,float(None) 曾把整个基本面维连同已算出的红旗结论一起作废
+    (2026-09-22..24 每晚 5–7 只金融股)。NaN/Inf 故意不在这里吞掉,照旧交给
+    漏斗的非有限值拒收(funnel_dag._sanitize_row)。
+    """
+    # governance-mutation: BATTERY_FUNDAMENTAL_NULL_ELEMENT
+    if value is None:
+        return None
+    # governance-mutation: BATTERY_FUNDAMENTAL_NON_FINITE_REFUSED
+    return round(float(value) / scale, digits)
+
+
+def _fundamental_descriptors(inc, fi):
+    """描述字段只描述,不决定维度去留:红旗闸门结论在,基本面维就算覆盖。"""
+    missing = {}
+    net_income = None
+    if len(inc):
+        net_income = _reported(inc.n_income_attr_p.iloc[-1], 1e8, 2)
+        if net_income is None:
+            missing["最新期归母亿"] = FIELD_NOT_REPORTED
+    else:
+        missing["最新期归母亿"] = NO_REPORTED_PERIOD
+    margins = None
+    if len(fi):
+        margins = [_reported(x) for x in fi.grossprofit_margin.tail(3)]
+        # governance-mutation: BATTERY_FUNDAMENTAL_NULL_REASON
+        if any(m is None for m in margins):
+            missing["毛利率轨迹"] = FIELD_NOT_REPORTED
+    else:
+        missing["毛利率轨迹"] = NO_REPORTED_PERIOD
+    out = {"最新期归母亿": net_income, "毛利率轨迹": margins}
+    if missing:
+        out[FUNDAMENTAL_MISSING_FIELD] = missing
+    return out
+
+
 def battery(pro, tk, today):
     out = {"ts_code": tk, "checked_at": today, "dims": {}}
     D = out["dims"]
@@ -157,9 +203,7 @@ def battery(pro, tk, today):
         D["基本面"] = ({"status": "DATA_BLOCKED", "err": "红旗闸门DATA_BLOCKED:" + ";".join(g["reasons"])[:60]}
                        if g["verdict"] == "DATA_BLOCKED" else
                        {"红旗闸门": g["verdict"], "红旗理由": g["reasons"],
-                       "最新E1日期": g["latest_e1_date"],
-                       "最新期归母亿": round(float(inc.n_income_attr_p.iloc[-1])/1e8, 2) if len(inc) else None,
-                       "毛利率轨迹": [round(float(x), 1) for x in fi.grossprofit_margin.tail(3)] if len(fi) else None})
+                       "最新E1日期": g["latest_e1_date"], **_fundamental_descriptors(inc, fi)})
     except Exception as e:
         D["基本面"] = {"status": "DATA_BLOCKED", "err": str(e)[:80]}
     # ── 4 技术面(结构位,v0 用均线+量;SMC 层待 Line D)──

@@ -7020,6 +7020,39 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="A recorded dispatch order (or a null record) must replay from the manifest, or a battery could claim an order it never used.",
     ),
     MutationCase(
+        mutation_id="BATTERY_FUNDAMENTAL_NULL_ELEMENT",
+        component="U3 fundamental evidence",
+        source_path="experiments/execution_tracker/full_battery.py",
+        test_script="tests/test_funnel_dag_offline.py",
+        before="    if value is None:\n        return None",
+        after="    if False:\n        return None",
+        expected_failure_marker="test_bank_without_gross_margin_keeps_red_flag_verdict_and_explicit_nulls",
+        rationale="Banks and insurers report no gross margin; float(None) blocked the whole 基本面 dimension and discarded its red-flag verdict every night.",
+    ),
+    MutationCase(
+        mutation_id="BATTERY_FUNDAMENTAL_NULL_REASON",
+        component="U3 fundamental evidence",
+        source_path="experiments/execution_tracker/full_battery.py",
+        test_script="tests/test_funnel_dag_offline.py",
+        before="        if any(m is None for m in margins):",
+        after="        if False:",
+        expected_failure_marker="test_bank_without_gross_margin_keeps_red_flag_verdict_and_explicit_nulls",
+        rationale="A null descriptive field must say why it is null; an unexplained null is a silent gap.",
+    ),
+    MutationCase(
+        mutation_id="BATTERY_FUNDAMENTAL_NON_FINITE_REFUSED",
+        component="U3 fundamental evidence",
+        source_path="experiments/execution_tracker/full_battery.py",
+        test_script="tests/test_funnel_dag_offline.py",
+        before="    return round(float(value) / scale, digits)",
+        after=(
+            "    number = float(value)\n"
+            "    return round(number / scale, digits) if math.isfinite(number) else None"
+        ),
+        expected_failure_marker="test_non_finite_gross_margin_is_still_refused_by_the_funnel",
+        rationale="Only a provider null becomes None; NaN/Inf must keep reaching the funnel's non-finite refusal instead of turning into a quiet null.",
+    ),
+    MutationCase(
         mutation_id="FUNNEL_BATTERY_BUDGET_DERIVED",
         component="Nightly funnel wiring DAG",
         source_path="experiments/research_funnel/funnel_dag.py",
