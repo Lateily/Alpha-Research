@@ -33,6 +33,8 @@ except ImportError:  # Package import from the repository root.
 
 
 RECEIPT_SCHEMA = "ar.jev_u4_shadow_receipt.v1"
+COMPARISON_BRIDGE_SCHEMA = "ar.jev_u4_cross_packet_bridge.v1"
+EVALUATION_SCHEMA = "ar.jev_u4_shadow_evaluation.v1"
 ENGINE_VERSION = "JEV_U4_SHADOW_ENGINE_V1"
 POLICY_VERSION = "JEV_U4_SHADOW_POLICY_V1"
 SAMPLE_PURPOSE = "WORKFLOW_DEBUG"
@@ -1254,3 +1256,172 @@ def verify_receipt(receipt: Mapping[str, Any]) -> None:
         raise ShadowPolicyError("candidate results must have unique tickers")
 
     _validate_summary(value["batch_summary"], validated)
+
+
+def build_comparison_bridge(
+    shadow_receipt: Mapping[str, Any], review_packet: Mapping[str, Any]
+) -> dict[str, Any]:
+    """Bind an industry shadow subset to the formal all-market review packet."""
+    verify_receipt(shadow_receipt)
+    try:
+        from . import closure_experiment as closure
+    except ImportError:  # Direct module import used by the offline test runner.
+        import closure_experiment as closure  # type: ignore[no-redef]
+    try:
+        closure.validate_review_packet(review_packet)
+    except closure.ClosureError as exc:
+        raise ShadowPolicyError("formal review packet is invalid") from exc
+
+    source = shadow_receipt["source_binding"]
+    refs = source["evidence_refs"]
+    formal_refs = review_packet["source_refs"]
+    as_of = source["run_identity"]["as_of"]
+    path_parts = refs["same_day_bundle_ref"].split("/")
+    if (
+        len(path_parts) != 4
+        or path_parts[:2] != ["data_history", "funnel"]
+        or path_parts[2] != as_of
+        or review_packet["as_of"] != as_of
+        or formal_refs["run_id"] != path_parts[3]
+    ):
+        raise ShadowPolicyError("cross-packet run identity differs")
+    common_hashes = (
+        ("same_day_bundle_hash", "bundle_hash"),
+        ("u2_candidate_pool_hash", "candidate_rows_hash"),
+        ("u3_battery_hash", "battery_hash"),
+    )
+    for shadow_key, formal_key in common_hashes:
+        # governance-mutation: JEV_U4_COMPARISON_SOURCE_BINDING
+        if refs[shadow_key] != "sha256:" + formal_refs[formal_key]:
+            raise ShadowPolicyError(f"cross-packet {formal_key} differs")
+
+    formal_rows = {row["ts_code"]: row for row in review_packet["ready_pool"]}
+    compared_tickers: list[str] = []
+    for result in shadow_receipt["candidate_results"]:
+        binding = result["row_binding"]
+        ticker = binding["ticker"]
+        formal = formal_rows.get(ticker)
+        if formal is None:
+            raise ShadowPolicyError("shadow candidate is absent from formal review packet")
+        # governance-mutation: JEV_U4_COMPARISON_ROW_BINDING
+        if (
+            binding["u2_candidate_row_hash"] != "sha256:" + formal["u2_candidate_row_hash"]
+            or binding["u3_battery_row_hash"] != "sha256:" + formal["u3_battery_row_hash"]
+            or binding["display_name"] != formal["display_name"]
+            or binding["candidate_status"] != formal["candidate_status"]
+            or binding["causal_cluster_id"] != formal["causal_cluster_id"]
+        ):
+            raise ShadowPolicyError("cross-packet candidate identity or evidence differs")
+        compared_tickers.append(ticker)
+
+    bridge = {
+        "schema": COMPARISON_BRIDGE_SCHEMA,
+        "shadow_packet_hash": source["packet_hash"],
+        "human_packet_hash": "sha256:" + review_packet["packet_hash"],
+        "as_of": as_of,
+        "run_id": formal_refs["run_id"],
+        "bundle_hash": refs["same_day_bundle_hash"],
+        "u2_candidate_pool_hash": refs["u2_candidate_pool_hash"],
+        "u3_battery_hash": refs["u3_battery_hash"],
+        "compared_tickers": sorted(compared_tickers),
+    }
+    bridge["bridge_hash"] = _canonical_hash(bridge, "cross-packet bridge")
+    return bridge
+
+
+def build_evaluation(
+    shadow_receipt: Mapping[str, Any],
+    review_packet: Mapping[str, Any],
+    human_decisions: Sequence[Mapping[str, Any]],
+    ledger_receipt_hash: str,
+) -> dict[str, Any]:
+    """Describe shadow/human differences, never authorize or grade a method."""
+    bridge = build_comparison_bridge(shadow_receipt, review_packet)
+    _digest(ledger_receipt_hash, "verified ledger hash")
+    if not isinstance(human_decisions, (list, tuple)):
+        raise ShadowPolicyError("human decisions must be a sequence")
+    formal_rows = {row["ts_code"]: row for row in review_packet["ready_pool"]}
+    human_by_ticker: dict[str, Mapping[str, Any]] = {}
+    allowed_decisions = {"SELECT", "REJECT", "DEFER", "NO_TRADE", "DATA_BLOCKED"}
+    for raw in human_decisions:
+        event = _mapping(raw, "human decision")
+        candidate = _mapping(event.get("candidate"), "human candidate")
+        source = _mapping(event.get("source"), "human source")
+        ticker = _string(candidate.get("ts_code"), "human candidate ticker")
+        formal = formal_rows.get(ticker)
+        if formal is None or ticker in human_by_ticker:
+            raise ShadowPolicyError("human decision set differs from formal review packet")
+        if (
+            source.get("u4_packet_hash") != bridge["human_packet_hash"]
+            or source.get("as_of") != bridge["as_of"]
+            or source.get("run_id") != bridge["run_id"]
+            or source.get("u2_bundle_hash") != bridge["bundle_hash"]
+            or source.get("u3_battery_hash") != bridge["u3_battery_hash"]
+            or source.get("u2_candidate_row_hash") != "sha256:" + formal["u2_candidate_row_hash"]
+            or source.get("u3_battery_row_hash") != "sha256:" + formal["u3_battery_row_hash"]
+        ):
+            raise ShadowPolicyError("human decision differs from formal packet evidence")
+        decision = event.get("decision")
+        if not isinstance(decision, str) or decision not in allowed_decisions:
+            raise ShadowPolicyError("human decision is outside the closed vocabulary")
+        human_by_ticker[ticker] = event
+    if set(human_by_ticker) != set(formal_rows):
+        raise ShadowPolicyError("human decision set differs from formal review packet")
+
+    comparisons = []
+    confusion: Counter[str] = Counter()
+    clusters: set[str] = set()
+    for result in shadow_receipt["candidate_results"]:
+        binding = result["row_binding"]
+        ticker = binding["ticker"]
+        human = human_by_ticker[ticker]["decision"]
+        observed = result["shadow_outcome"]
+        cluster = binding["causal_cluster_id"]
+        if cluster != "UNAVAILABLE":
+            clusters.add(cluster)
+        human_label = "SELECT_FOR_DEEP_RESEARCH" if human == "SELECT" else human
+        status = (
+            "ABSTAINED" if observed is None else
+            "AGREED" if observed == human_label else "DISAGREED"
+        )
+        confusion[f"{observed or 'ABSTAINED'}|{human}"] += 1
+        comparisons.append({
+            "ticker": ticker,
+            "u2_candidate_row_hash": binding["u2_candidate_row_hash"],
+            "u3_battery_row_hash": binding["u3_battery_row_hash"],
+            "causal_cluster_id": cluster,
+            "shadow_outcome": observed,
+            "human_decision": human,
+            "comparison_status": status,
+        })
+    comparisons.sort(key=lambda item: item["ticker"])
+    evaluation = {
+        "schema": EVALUATION_SCHEMA,
+        "sample_purpose": SAMPLE_PURPOSE,
+        "shadow_receipt_hash": shadow_receipt["receipt_hash"],
+        "verified_ledger_hash": ledger_receipt_hash,
+        "bridge": bridge,
+        "question_set_version": QUESTION_SET_VERSION,
+        "policy_version": POLICY_VERSION,
+        "authority": _authority_payload(),
+        "counts": {
+            "compared_candidates": len(comparisons),
+            "human_candidates": len(formal_rows),
+            "agreements": sum(row["comparison_status"] == "AGREED" for row in comparisons),
+            "disagreements": sum(row["comparison_status"] == "DISAGREED" for row in comparisons),
+            "abstentions": sum(row["comparison_status"] == "ABSTAINED" for row in comparisons),
+            "independent_clusters": len(clusters),
+        },
+        "confusion_cells": dict(sorted(confusion.items())),
+        "candidate_comparisons": comparisons,
+        "claim_status": (
+            # governance-mutation: JEV_U4_INDEPENDENT_SAMPLE_CLAIM
+            "INSUFFICIENT_INDEPENDENT_SAMPLE" if len(clusters) < 30
+            else "DESCRIPTIVE_ONLY_NOT_METHOD_VALIDATION"
+        ),
+        "method_effectiveness_claim": None,
+        "win_rate_claim": None,
+        "alpha_claim": None,
+    }
+    evaluation["evaluation_hash"] = _canonical_hash(evaluation, "evaluation")
+    return evaluation

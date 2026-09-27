@@ -604,17 +604,23 @@ Expected: failure for missing `build_evaluation`.
 
 - [ ] **Step 3: Implement immutable evaluation**
 
-Verify the shadow receipt first. Require ledger packet hash to equal the shadow
-source binding. Require exact candidate set and row hashes for rows eligible for
-comparison. Compute counts, candidate agreement, confusion cells, abstentions,
+Verify the shadow receipt first. The shadow pre-decision packet is an industry
+subset and the formal closure review packet is all-market, so their packet
+hashes must remain distinct. Bind them by the same run, bundle, U2/U3 batch
+hashes, and exact per-candidate U2/U3 row hashes. Require the full formal human
+decision set and compare only the shadow subset. Compute counts, candidate
+agreement, confusion cells, abstentions,
 and independent cluster count. Never mutate or rewrite either input.
 
 - [ ] **Step 4: Wire the CLI to verified ledger readers**
 
-Call `verify_decision_ledger` before `current_packet_decisions`. Hash the verified
-closure/projection bytes that supplied the human result, then write evaluation
-beside the shadow receipt as a separate immutable file. A second different
-evaluation for the same shadow receipt is a conflict.
+For a sandbox-copied ledger, retain file descriptors for the ledger and anchor,
+verify the R-015 chain/anchor and U4 replay against that one byte snapshot,
+and derive the current committed decisions from the verified snapshot. Do not
+pass a pathname to the formal reader: a rebound state-root name could make its
+lock creation escape the sandbox. Hash the exact ledger and anchor bytes, then
+write the evaluation beside the shadow receipt as a separate immutable file.
+A second different evaluation for the same shadow receipt is a conflict.
 
 - [ ] **Step 5: Run tests**
 

@@ -89,30 +89,37 @@ with that request and artifact root, still using an isolated sandbox state
 root. Do not pair real or historical candidates with synthetic cassettes or
 interpret `MODEL_UNAVAILABLE` as a probability.
 
-## Evaluation: NOT YET IMPLEMENTED
+## Offline human-decision comparison
 
-The CLI parses this shape, but it currently refuses it before opening the
-ledger or producing an evaluation:
+Supply a **sandbox copy** of the formal U4 decision ledger and its matching
+`.anchor.json` as direct files under `STATE_ROOT`. Never point this command at
+the production ledger or set `STATE_ROOT` to a production directory. The reader
+uses retained file descriptors and does not create a formal ledger lock. The requested
+formal packet hash is the bare 64-character hash from the committed closure,
+not the shadow pre-decision packet hash.
 
 ```bash
 python3 scripts/llm/jev_u4_shadow.py evaluate \
   --state-root "$STATE_ROOT" \
   --command-id jev-u4-shadow-synthetic-mixed-001 \
-  --ledger "$STATE_ROOT/not-used.jsonl"
+  --ledger "$STATE_ROOT/sandbox-u4.jsonl" \
+  --review-packet-hash '<committed-formal-review-packet-hash>'
 ```
 
-The expected result is exit code 2 with
-`{"status":"SPEC_BLOCKED","code":"EVALUATION_NOT_INSTALLED",...}` on
-stderr. There is no current shadow-versus-human comparison artifact, agreement
-metric, or completed Task 6 flow. Do not treat the accepted `--ledger` argument
-as evidence that a ledger was read or verified.
+The command verifies the R-015 chain and anchor, requires a committed closure,
+reads its frozen review packet and current human decisions, then writes a
+separate immutable `jev-u4-shadow/<command_id>/evaluation.json`. Exact replay
+is idempotent; changed evaluation bytes for the same command ID conflict. A
+missing or invalid sandbox ledger, or one changed during reading, fails closed.
 
-Task 6 cannot simply compare `packet_hash` values. This engine reopens an
-`u4_pre_decision` packet with `candidate_rows`; the formal U4 decision ledger
-binds a closure review packet with `ready_pool`. These are different schemas
-and different hashes. A future evaluator needs an independently reviewed bridge
-that proves common run/bundle and exact U2/U3 candidate evidence while retaining
-both packet hashes. Until then, `evaluate` must remain disabled.
+The shadow `u4_pre_decision` packet and formal closure review packet have
+different schemas and hashes. The bridge keeps both hashes and requires the
+same run, bundle, U2 pool, U3 battery, and exact U2/U3 row hashes for each
+shadow candidate. It compares the industry shadow subset against the complete
+formal human decision set. Agreement is descriptive only; under 30 distinct
+causal clusters the claim status is `INSUFFICIENT_INDEPENDENT_SAMPLE`, and no
+sample count here grants a method-effectiveness, win-rate, alpha, paper, or
+trading claim. This command does not start an automatic experiment.
 
 ## Failure meanings
 
@@ -127,6 +134,6 @@ is JSON on stdout and exit 0.
 | Candidate `MODEL_UNAVAILABLE` | No cassette for that exact state and question-set version. This is a row-level unavailable result inside a valid receipt, not a CLI error or a synthetic probability. |
 | `COMMAND_ID_CONFLICT` | A stored command ID was reused with different request or receipt content. |
 | `INTEGRITY_ERROR` | Store, database, receipt, or request binding failed verification; do not consume the result. |
-| `SPEC_BLOCKED / EVALUATION_NOT_INSTALLED` | The comparison command is a placeholder. |
+| `SPEC_BLOCKED / SPEC_BLOCKED` during evaluate | Ledger is outside the sandbox root, missing, uncommitted, corrupt, or its formal packet/evidence does not bind to the shadow receipt. |
 
 All outputs retain `WORKFLOW_DEBUG` purpose. 不是买卖指令；研究信号，human executes.

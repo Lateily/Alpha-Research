@@ -54,25 +54,25 @@ executor, or automatic experiment. Automatic experiments remain deferred until
 production or automatic experiments follow from this document; each requires
 separate explicit human approval.
 
-## Comparison and claims: NOT YET IMPLEMENTED
+## Offline comparison and claims
 
-Task 6 comparison/evaluation is not present in the current CLI. `evaluate`
-returns `SPEC_BLOCKED / EVALUATION_NOT_INSTALLED` before reading the supplied
-ledger. There is no verified shadow-to-human comparison, evaluation artifact,
-agreement result, or completed Task 6 claim to report.
+`evaluate` can compare a verified shadow receipt with a committed formal U4
+decision transaction **copied into the same nonproduction sandbox**. It verifies
+the copied ledger chain and anchor from retained bytes, requires the frozen
+intent and closure, and writes a separate immutable evaluation beside the
+shadow receipt. Never supply a production ledger or production state root.
 
 The shadow receipt and formal decision ledger currently bind different packet
 types: `u4_pre_decision` and closure review, respectively. Their packet hashes
-must not be equated or normalized away. Comparison requires a separately
-reviewed cross-packet provenance proof (same run/bundle and exact candidate
-evidence hashes) that retains each original hash. No such bridge is installed.
+must not be equated or normalized away. The bridge retains both original hashes
+and checks the shared run, bundle, U2/U3 batch, and exact candidate evidence
+hashes. It compares only the shadow subset while demanding a complete human
+decision set for the formal review packet.
 
-The approved *future* comparison design requires a verified formal ledger,
-matching packet and candidate evidence hashes, and a separate immutable
-evaluation artifact. A discrepancy is evidence for review, not an error to
-erase or authority to change a human decision. Fewer than 30 independent
-causal clusters cannot support a method-effectiveness, win-rate, alpha, or
-profitability claim. No such claim is made by the present receipts, regardless
-of sample size.
+A discrepancy is evidence for review, not an error to erase or authority to
+change a human decision. Fewer than 30 independent causal clusters are labeled
+`INSUFFICIENT_INDEPENDENT_SAMPLE`; even at 30+, this descriptive comparison
+does not establish method effectiveness, win rate, alpha, or profitability.
+No such claim is made by the receipt or evaluation.
 
 不是买卖指令；研究信号，human executes.

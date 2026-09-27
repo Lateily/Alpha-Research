@@ -31,6 +31,7 @@ if str(RESEARCH_FUNNEL_ROOT) not in sys.path:
     sys.path.insert(0, str(RESEARCH_FUNNEL_ROOT))
 
 from experiments.research_funnel import evidence_view, u4_pre_decision, u4_shadow  # noqa: E402
+from experiments.research_funnel import u4_decision_ledger  # noqa: E402
 
 from capability import (  # noqa: E402
     CapabilityRecord,
@@ -1448,6 +1449,200 @@ class ShadowStore:
         except _SQLiteImageError as exc:
             raise self._integrity(exc) from exc
 
+    def write_evaluation(
+        self, command_id: str, evaluation: Mapping[str, Any], *,
+        review_packet: Mapping[str, Any],
+        human_decisions: list[dict[str, Any]],
+        verified_ledger_hash: str,
+    ) -> dict[str, Any]:
+        """Publish one separate, immutable evaluation for a verified receipt."""
+        self._validate_command_id(command_id)
+        if (
+            evaluation.get("schema") != u4_shadow.EVALUATION_SCHEMA
+            or evaluation.get("evaluation_hash") != canonical_hash({
+                key: value for key, value in evaluation.items() if key != "evaluation_hash"
+            })
+        ):
+            raise self._integrity()
+        raw = _canonical_bytes(evaluation)
+        try:
+            with self._connect(write=False) as database:
+                row = database.execute(
+                    "SELECT request_hash, request_bytes, receipt_hash, receipt_bytes "
+                    "FROM receipts WHERE command_id = ?", (command_id,)
+                ).fetchone()
+                if row is None:
+                    raise self._integrity()
+                receipt = self._verified_row(command_id, row)
+                try:
+                    expected = u4_shadow.build_evaluation(
+                        receipt, review_packet, human_decisions, verified_ledger_hash
+                    )
+                except Exception as exc:
+                    raise self._integrity(exc) from exc
+                # governance-mutation: JEV_U4_EVALUATION_RECOMPUTED
+                if raw != _canonical_bytes(expected):
+                    raise self._integrity()
+                directory_fd, identity = self._command_directory(command_id, create=False)
+                temporary_name = f".evaluation-{secrets.token_hex(16)}"
+                temporary_identity: tuple[int, int] | None = None
+                try:
+                    try:
+                        existing = self._read_named_file(directory_fd, "evaluation.json")
+                    except FileNotFoundError:
+                        existing = None
+                    if existing is not None:
+                        # governance-mutation: JEV_U4_EVALUATION_IMMUTABLE
+                        if existing != raw:
+                            raise ShadowRunError("COMMAND_ID_CONFLICT")
+                        self._command_name_still_bound(command_id, identity)
+                        return {"disposition": "IDEMPOTENT", "evaluation": dict(evaluation)}
+                    descriptor = os.open(
+                        temporary_name,
+                        os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0),
+                        0o600, dir_fd=directory_fd,
+                    )
+                    info = os.fstat(descriptor)
+                    temporary_identity = (info.st_dev, info.st_ino)
+                    try:
+                        view = memoryview(raw)
+                        while view:
+                            view = view[os.write(descriptor, view):]
+                        os.fsync(descriptor)
+                    finally:
+                        os.close(descriptor)
+                    try:
+                        os.link(
+                            temporary_name, "evaluation.json",
+                            src_dir_fd=directory_fd, dst_dir_fd=directory_fd,
+                            follow_symlinks=False,
+                        )
+                        disposition = "CREATED"
+                    except FileExistsError:
+                        if self._read_named_file(directory_fd, "evaluation.json") != raw:
+                            raise ShadowRunError("COMMAND_ID_CONFLICT")
+                        disposition = "IDEMPOTENT"
+                    os.fsync(directory_fd)
+                    self._command_name_still_bound(command_id, identity)
+                    return {"disposition": disposition, "evaluation": dict(evaluation)}
+                finally:
+                    if temporary_identity is not None:
+                        _unlink_owned(directory_fd, temporary_name, temporary_identity)
+                    os.close(directory_fd)
+        except ShadowRunError:
+            raise
+        except (OSError, _SQLiteImageError) as exc:
+            raise self._integrity(exc) from exc
+
+
+def _verify_retained_ledger_snapshot(raw: bytes, anchor_raw: bytes) -> dict[str, Any]:
+    """Apply R-015 chain/anchor rules and U4 replay to one retained byte pair."""
+    r015 = u4_decision_ledger.event_ledger
+    lines = [line for line in raw.decode("utf-8").splitlines() if line.strip()]
+    if not lines:
+        raise _blocked("formal U4 ledger is empty")
+    previous, previous_ts, seen = r015.GENESIS_PREV, "", set()
+    records: list[dict[str, Any]] = []
+    for sequence, line in enumerate(lines):
+        record = _decode_json(line.encode("utf-8"))
+        if not isinstance(record, dict) or set(record) != r015.ALLOWED_FIELDS:
+            raise _blocked("formal U4 ledger record fields are invalid")
+        if (
+            line != r015.canonical(record)
+            or type(record["seq"]) is not int or record["seq"] != sequence
+            or record["prev"] != previous
+            or record["hash"] != r015.record_hash(record)
+            or not isinstance(record["ts"], str) or record["ts"] < previous_ts
+        ):
+            raise _blocked("formal U4 ledger chain is invalid")
+        if record["kind"] in r015.UNIQUE_KINDS:
+            identity = (record["kind"], record["id"])
+            if identity in seen:
+                raise _blocked("formal U4 ledger unique event repeated")
+            seen.add(identity)
+        previous, previous_ts = record["hash"], record["ts"]
+        records.append(record)
+    anchor = _decode_json(anchor_raw)
+    if (
+        not isinstance(anchor, dict)
+        or type(anchor.get("n")) is not int
+        or not 1 <= anchor["n"] <= len(records)
+        or not isinstance(anchor.get("head"), str)
+        or records[anchor["n"] - 1]["hash"] != anchor["head"]
+    ):
+        raise _blocked("formal U4 ledger anchor is invalid")
+    return u4_decision_ledger._replay_records(records)
+
+
+def _read_sandbox_ledger(
+    state: _DirectoryHandle, state_root: Path | str, ledger_path: Path,
+    review_packet_hash: str,
+) -> tuple[dict[str, Any], list[dict[str, Any]], str]:
+    """Read a committed formal packet and decisions from a sandbox-local ledger."""
+    root = Path(os.path.abspath(state_root))
+    if (
+        ledger_path.parent != root
+        or ledger_path.name in {"", ".", ".."}
+        or _COMMAND_PATTERN.fullmatch(ledger_path.name) is None
+    ):
+        raise _blocked("evaluation ledger must be a direct sandbox state-root file")
+    if not isinstance(review_packet_hash, str) or re.fullmatch(r"[0-9a-f]{64}", review_packet_hash) is None:
+        raise _blocked("formal review packet hash is invalid")
+    name = ledger_path.name
+    anchor_name = name + ".anchor.json"
+
+    def bound_bytes(filename: str) -> tuple[bytes, tuple[int, int]]:
+        descriptor = _open_relative(state.fd, filename, directory=False)
+        try:
+            info = os.fstat(descriptor)
+            return _read_fd(descriptor), (info.st_dev, info.st_ino)
+        finally:
+            os.close(descriptor)
+
+    try:
+        before, ledger_identity = bound_bytes(name)
+        anchor_before, anchor_identity = bound_bytes(anchor_name)
+        for filename, identity in ((name, ledger_identity), (anchor_name, anchor_identity)):
+            info = os.stat(filename, dir_fd=state.fd, follow_symlinks=False)
+            if (info.st_dev, info.st_ino) != identity:
+                raise _blocked("sandbox ledger name changed")
+        # No pathname-based ledger helper is allowed here: it could follow a
+        # rebound state-root name and create a lock outside the retained root.
+        # governance-mutation: JEV_U4_RETAINED_LEDGER_SNAPSHOT
+        snapshot = _verify_retained_ledger_snapshot(before, anchor_before)
+        packet_ref = "sha256:" + review_packet_hash
+        closures = snapshot["closures"].get(packet_ref, [])
+        if not closures:
+            raise _blocked("formal U4 packet has no committed closure")
+        closure = closures[-1]
+        intent = snapshot["intents"].get((packet_ref, closure["closure_revision"]))
+        if intent is None or intent.get("review_packet", {}).get("packet_hash") != review_packet_hash:
+            raise _blocked("formal U4 closure has no matching frozen intent")
+        decisions = sorted(
+            (
+                dict(event) for (subject_packet, _), event in snapshot["current"].items()
+                if subject_packet == packet_ref
+            ),
+            key=lambda event: event["candidate"]["ts_code"],
+        )
+        after, after_identity = bound_bytes(name)
+        anchor_after, after_anchor_identity = bound_bytes(anchor_name)
+        if (
+            before != after or anchor_before != anchor_after
+            or ledger_identity != after_identity or anchor_identity != after_anchor_identity
+        ):
+            raise _blocked("formal U4 ledger changed during evaluation")
+        # governance-mutation: JEV_U4_LEDGER_ANCHOR_DIGEST
+        source_hash = _sha256_bytes(_canonical_bytes({
+            "ledger_bytes_sha256": _sha256_bytes(before),
+            "anchor_bytes_sha256": _sha256_bytes(anchor_before),
+        }))
+        return intent["review_packet"], decisions, source_hash
+    except ShadowRunError:
+        raise
+    except Exception as exc:
+        raise _blocked("formal U4 comparison source is invalid") from exc
+
 
 def _load_cli_request(path: Path) -> dict[str, Any]:
     try:
@@ -1500,6 +1695,7 @@ def _parser() -> argparse.ArgumentParser:
     evaluate_command.add_argument("--state-root", required=True)
     evaluate_command.add_argument("--command-id", required=True)
     evaluate_command.add_argument("--ledger", type=Path, required=True)
+    evaluate_command.add_argument("--review-packet-hash", required=True)
     return parser
 
 
@@ -1512,11 +1708,27 @@ def main(argv: list[str] | None = None) -> int:
     try:
         args = _parser().parse_args(argv)
         if args.command == "evaluate":
-            raise ShadowRunError(
-                "EVALUATION_NOT_INSTALLED",
-                status="SPEC_BLOCKED",
-                message="evaluation is deferred to Task 6",
-            )
+            state = _open_root(args.state_root, create=False)
+            try:
+                store = ShadowStore(args.state_root, _state_handle=state)
+                try:
+                    receipt = store.read(args.command_id)
+                    review_packet, human_decisions, source_hash = _read_sandbox_ledger(
+                        state, args.state_root, args.ledger, args.review_packet_hash
+                    )
+                    evaluation = u4_shadow.build_evaluation(
+                        receipt, review_packet, human_decisions, source_hash
+                    )
+                    result = store.write_evaluation(
+                        args.command_id, evaluation, review_packet=review_packet,
+                        human_decisions=human_decisions, verified_ledger_hash=source_hash,
+                    )
+                finally:
+                    store.close()
+            finally:
+                state.close()
+            _print_json(result, stream=sys.stdout)
+            return 0
         if args.command == "verify":
             store = ShadowStore(args.state_root)
             try:

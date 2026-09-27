@@ -31,6 +31,10 @@ sys.path.insert(0, str(REPO_ROOT / "experiments" / "research_funnel"))
 import typed_decision as typed  # noqa: E402
 import jev_u4_shadow as engine  # noqa: E402
 import u4_shadow as shadow  # noqa: E402
+from experiments.research_funnel import closure_experiment as closure  # noqa: E402
+from experiments.research_funnel import funnel_pipeline as funnel  # noqa: E402
+from experiments.research_funnel import u4_decision_ledger as formal_ledger  # noqa: E402
+from experiments.execution_tracker import event_ledger  # noqa: E402
 from adapters.jev_shadow import OfflineFixtureDecisionAdapter  # noqa: E402
 from capability import RouteStatus, route  # noqa: E402
 from adapters import (  # noqa: E402
@@ -389,6 +393,107 @@ class JevU4ShadowReceiptTests(unittest.TestCase):
             packet_file_hash=PACKET_FILE_HASH,
             provider=copy.deepcopy(PROVIDER),
         )
+
+    def _formal_review_packet(self) -> dict:
+        return closure.build_review_packet(
+            bundle_dir=FIXTURE_ROOT / self.packet["source_refs"]["same_day_bundle_ref"],
+            battery=None,
+            generated_at=self.packet["generated_at"],
+        )
+
+    def _human_decisions(self, review: dict) -> list[dict]:
+        return [
+            {
+                "candidate": {"ts_code": row["ts_code"]},
+                "source": {
+                    "as_of": review["as_of"],
+                    "run_id": review["source_refs"]["run_id"],
+                    "u2_bundle_hash": "sha256:" + review["source_refs"]["bundle_hash"],
+                    "u3_battery_hash": "sha256:" + review["source_refs"]["battery_hash"],
+                    "u4_packet_hash": "sha256:" + review["packet_hash"],
+                    "u2_candidate_row_hash": "sha256:" + row["u2_candidate_row_hash"],
+                    "u3_battery_row_hash": "sha256:" + row["u3_battery_row_hash"],
+                },
+                "decision": "REJECT",
+            }
+            for row in review["ready_pool"]
+        ]
+
+    def test_cross_packet_bridge_binds_subset_without_equating_packet_hashes(self) -> None:
+        receipt = self._receipt()
+        review = self._formal_review_packet()
+        self.assertNotEqual(receipt["source_binding"]["packet_hash"], review["packet_hash"])
+        self.assertGreater(len(review["ready_pool"]), len(receipt["candidate_results"]))
+
+        bridge = shadow.build_comparison_bridge(receipt, review)
+
+        self.assertEqual(receipt["source_binding"]["packet_hash"], bridge["shadow_packet_hash"])
+        self.assertEqual("sha256:" + review["packet_hash"], bridge["human_packet_hash"])
+        self.assertEqual(
+            sorted(row["row_binding"]["ticker"] for row in receipt["candidate_results"]),
+            bridge["compared_tickers"],
+        )
+
+    def test_cross_packet_bridge_rejects_self_consistent_wrong_source_or_row(self) -> None:
+        receipt = self._receipt()
+        review = self._formal_review_packet()
+        for case in ("run_id", "bundle_hash", "candidate_rows_hash", "battery_hash", "u2_row"):
+            changed = copy.deepcopy(review)
+            if case == "u2_row":
+                ticker = receipt["candidate_results"][0]["row_binding"]["ticker"]
+                row = next(item for item in changed["ready_pool"] if item["ts_code"] == ticker)
+                row["u2_candidate_row_hash"] = "0" * 64
+                changed["source_refs"]["ready_pool_hash"] = funnel._hash(changed["ready_pool"])
+            elif case == "run_id":
+                changed["source_refs"][case] = "OTHER_RUN"
+            else:
+                changed["source_refs"][case] = "0" * 64
+            changed["packet_hash"] = funnel._hash({
+                key: value for key, value in changed.items() if key != "packet_hash"
+            })
+            closure.validate_review_packet(changed)
+            with self.subTest(case=case), self.assertRaises(shadow.ShadowPolicyError):
+                shadow.build_comparison_bridge(receipt, changed)
+
+    def test_evaluation_compares_shadow_subset_and_withholds_method_claims(self) -> None:
+        receipt = self._receipt()
+        review = self._formal_review_packet()
+        human = self._human_decisions(review)
+        original_receipt = shadow.canonical_receipt_bytes(receipt)
+        original_review = json.dumps(review, sort_keys=True)
+
+        result = shadow.build_evaluation(
+            receipt, review, human, "sha256:" + "a" * 64
+        )
+
+        self.assertEqual("ar.jev_u4_shadow_evaluation.v1", result["schema"])
+        self.assertEqual(receipt["receipt_hash"], result["shadow_receipt_hash"])
+        self.assertEqual("sha256:" + review["packet_hash"], result["bridge"]["human_packet_hash"])
+        self.assertEqual(6, result["counts"]["compared_candidates"])
+        self.assertEqual(len(review["ready_pool"]), result["counts"]["human_candidates"])
+        self.assertGreater(result["counts"]["abstentions"], 0)
+        self.assertGreater(result["counts"]["disagreements"], 0)
+        self.assertEqual("INSUFFICIENT_INDEPENDENT_SAMPLE", result["claim_status"])
+        for claim in ("method_effectiveness_claim", "win_rate_claim", "alpha_claim"):
+            self.assertIsNone(result[claim])
+        self.assertEqual(original_receipt, shadow.canonical_receipt_bytes(receipt))
+        self.assertEqual(original_review, json.dumps(review, sort_keys=True))
+
+    def test_evaluation_rejects_missing_duplicate_or_misbound_human_decision(self) -> None:
+        receipt = self._receipt()
+        review = self._formal_review_packet()
+        human = self._human_decisions(review)
+        changes = {
+            "missing": human[:-1],
+            "duplicate": human + [copy.deepcopy(human[0])],
+            "wrong_packet": copy.deepcopy(human),
+            "wrong_row": copy.deepcopy(human),
+        }
+        changes["wrong_packet"][0]["source"]["u4_packet_hash"] = "sha256:" + "b" * 64
+        changes["wrong_row"][0]["source"]["u2_candidate_row_hash"] = "sha256:" + "c" * 64
+        for case, changed in changes.items():
+            with self.subTest(case=case), self.assertRaises(shadow.ShadowPolicyError):
+                shadow.build_evaluation(receipt, review, changed, "sha256:" + "a" * 64)
 
     def test_receipt_has_fixed_authority_and_recomputed_summary(self) -> None:
         receipt = self._receipt()
@@ -1213,6 +1318,211 @@ class JevU4ShadowStoreTests(JevU4ShadowEngineTests):
     def setUp(self) -> None:
         super().setUp()
         self.receipt = self._run()
+
+    def _committed_sandbox_ledger(self) -> tuple[Path, dict]:
+        packet = _load("u4-pre-decision.json")
+        bundle = FIXTURE_ROOT / packet["source_refs"]["same_day_bundle_ref"]
+        review = closure.build_review_packet(
+            bundle_dir=bundle, battery=None, generated_at=packet["generated_at"]
+        )
+        decisions = []
+        for row in review["ready_pool"]:
+            red_flag = "E1_RED_FLAG_REQUIRES_SEPARATE_REVIEW" in row["blocked_reasons"]
+            decisions.append({
+                "ts_code": row["ts_code"],
+                "decision": "REJECT",
+                "reason_codes": ["RED_FLAG_ACTIVE" if red_flag else "HUMAN_JUDGMENT"],
+                "reason_note": "Frozen synthetic decision for offline comparison.",
+                "missing_evidence": [],
+                "research_question": None,
+                "decision_revision": 1,
+                "supersedes_decision_id": None,
+            })
+        draft = {
+            "method_version": "SEMICONDUCTOR_WORKFLOW_DEBUG_V1",
+            "decided_at": "2026-08-12T09:01:00+00:00",
+            "claimed_decision_owner": "Junyan",
+            "identity_verification": "UNAVAILABLE",
+            "authorization_text": (
+                "批准离线 U4 决策记录，绑定 packet_hash " + review["packet_hash"][:12]
+                + "，仅用于合成走查，不产生交易权限。"
+            ),
+            "authorization_evidence_ref": "conversation:synthetic-shadow-comparison",
+            "decisions": decisions,
+        }
+        path = self.state_root / "sandbox-u4.jsonl"
+        with mock.patch.object(
+            event_ledger, "_runtime_timestamp", return_value="2026-08-12T09:02:00+00:00"
+        ):
+            formal_ledger.append_decision_batch(
+                packet=review, draft=draft, ledger_path=path, bundle_dir=bundle
+            )
+        self.assertTrue(formal_ledger.verify_decision_ledger(path)["ok"])
+        return path, review
+
+    def test_evaluate_cli_uses_committed_sandbox_ledger_and_is_immutable(self) -> None:
+        ledger_path, review = self._committed_sandbox_ledger()
+        store = engine.ShadowStore(self.state_root)
+        try:
+            store.write(self.request, self.receipt)
+            receipt_path = store.receipt_path(self.request["command_id"])
+            receipt_bytes = receipt_path.read_bytes()
+        finally:
+            store.close()
+        ledger_bytes = ledger_path.read_bytes()
+        argv = [
+            "evaluate", "--state-root", str(self.state_root),
+            "--command-id", self.request["command_id"],
+            "--ledger", str(ledger_path),
+            "--review-packet-hash", review["packet_hash"],
+        ]
+        stdout, stderr = io.StringIO(), io.StringIO()
+        with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
+            self.assertEqual(0, engine.main(argv), stderr.getvalue())
+        first = json.loads(stdout.getvalue())
+        self.assertEqual("CREATED", first["disposition"])
+        self.assertEqual("INSUFFICIENT_INDEPENDENT_SAMPLE", first["evaluation"]["claim_status"])
+        self.assertEqual(receipt_bytes, receipt_path.read_bytes())
+        self.assertEqual(ledger_bytes, ledger_path.read_bytes())
+        stdout, stderr = io.StringIO(), io.StringIO()
+        with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
+            self.assertEqual(0, engine.main(argv), stderr.getvalue())
+        self.assertEqual("IDEMPOTENT", json.loads(stdout.getvalue())["disposition"])
+
+    def test_evaluate_cli_rejects_outside_ledger_or_wrong_packet(self) -> None:
+        ledger_path, review = self._committed_sandbox_ledger()
+        store = engine.ShadowStore(self.state_root)
+        try:
+            store.write(self.request, self.receipt)
+            evaluation_path = store.receipt_path(self.request["command_id"]).parent / "evaluation.json"
+        finally:
+            store.close()
+        for case, path, packet_hash in (
+            ("outside", FIXTURE_ROOT / "not-a-ledger.jsonl", review["packet_hash"]),
+            ("wrong_packet", ledger_path, "0" * 64),
+        ):
+            stderr = io.StringIO()
+            with self.subTest(case=case), contextlib.redirect_stderr(stderr):
+                self.assertEqual(2, engine.main([
+                    "evaluate", "--state-root", str(self.state_root),
+                    "--command-id", self.request["command_id"],
+                    "--ledger", str(path),
+                    "--review-packet-hash", packet_hash,
+                ]))
+            self.assertFalse(evaluation_path.exists())
+
+    def test_evaluate_cli_rejects_broken_ledger_anchor_without_writing(self) -> None:
+        ledger_path, review = self._committed_sandbox_ledger()
+        store = engine.ShadowStore(self.state_root)
+        try:
+            store.write(self.request, self.receipt)
+            evaluation_path = store.receipt_path(self.request["command_id"]).parent / "evaluation.json"
+        finally:
+            store.close()
+        anchor_path = Path(str(ledger_path) + ".anchor.json")
+        anchor_path.write_text("{}", encoding="utf-8")
+        stderr = io.StringIO()
+        with contextlib.redirect_stderr(stderr):
+            self.assertEqual(2, engine.main([
+                "evaluate", "--state-root", str(self.state_root),
+                "--command-id", self.request["command_id"],
+                "--ledger", str(ledger_path),
+                "--review-packet-hash", review["packet_hash"],
+            ]))
+        self.assertEqual("SPEC_BLOCKED", json.loads(stderr.getvalue())["code"])
+        self.assertFalse(evaluation_path.exists())
+
+    def test_retained_ledger_reader_ignores_rebound_state_path(self) -> None:
+        ledger_path, review = self._committed_sandbox_ledger()
+        original = ledger_path.read_bytes()
+        state = engine._open_root(self.state_root, create=False)
+        moved = Path(self.temporary.name) / "retained-state"
+        try:
+            self.state_root.rename(moved)
+            self.state_root.mkdir()
+            try:
+                packet, decisions, digest = engine._read_sandbox_ledger(
+                    state, self.state_root, ledger_path, review["packet_hash"]
+                )
+            except Exception as exc:
+                self.fail(f"retained ledger reader followed a rebound path: {exc}")
+            self.assertEqual(review, packet)
+            self.assertEqual(len(review["ready_pool"]), len(decisions))
+            self.assertTrue(digest.startswith("sha256:"))
+            self.assertEqual(original, (moved / ledger_path.name).read_bytes())
+            self.assertEqual([], list(self.state_root.iterdir()))
+        finally:
+            state.close()
+
+    def test_verified_ledger_digest_binds_anchor_bytes(self) -> None:
+        ledger_path, review = self._committed_sandbox_ledger()
+        state = engine._open_root(self.state_root, create=False)
+        try:
+            _, _, first = engine._read_sandbox_ledger(
+                state, self.state_root, ledger_path, review["packet_hash"]
+            )
+            anchor_path = Path(str(ledger_path) + ".anchor.json")
+            anchor = json.loads(anchor_path.read_text(encoding="utf-8"))
+            anchor["note"] = "Same valid anchor head; changed snapshot bytes."
+            anchor_path.write_text(json.dumps(anchor, ensure_ascii=False), encoding="utf-8")
+            _, _, second = engine._read_sandbox_ledger(
+                state, self.state_root, ledger_path, review["packet_hash"]
+            )
+            self.assertNotEqual(first, second)
+        finally:
+            state.close()
+
+    def test_different_or_invalid_evaluation_cannot_replace_immutable_result(self) -> None:
+        review = closure.build_review_packet(
+            bundle_dir=FIXTURE_ROOT / _load("u4-pre-decision.json")["source_refs"]["same_day_bundle_ref"],
+            battery=None, generated_at=_load("u4-pre-decision.json")["generated_at"],
+        )
+        human = JevU4ShadowReceiptTests()._human_decisions(review)
+        first = shadow.build_evaluation(self.receipt, review, human, "sha256:" + "a" * 64)
+        changed = shadow.build_evaluation(self.receipt, review, human, "sha256:" + "b" * 64)
+        store = engine.ShadowStore(self.state_root)
+        try:
+            store.write(self.request, self.receipt)
+            args = {"review_packet": review, "human_decisions": human,
+                    "verified_ledger_hash": "sha256:" + "a" * 64}
+            self.assertEqual("CREATED", store.write_evaluation(self.request["command_id"], first, **args)["disposition"])
+            path = store.receipt_path(self.request["command_id"]).parent / "evaluation.json"
+            original = path.read_bytes()
+            with self.assertRaisesRegex(engine.ShadowRunError, "COMMAND_ID_CONFLICT"):
+                store.write_evaluation(
+                    self.request["command_id"], changed, review_packet=review,
+                    human_decisions=human, verified_ledger_hash="sha256:" + "b" * 64,
+                )
+            invalid = dict(first, evaluation_hash="sha256:" + "0" * 64)
+            with self.assertRaisesRegex(engine.ShadowRunError, "INTEGRITY_ERROR"):
+                store.write_evaluation(self.request["command_id"], invalid, **args)
+            forged = copy.deepcopy(first)
+            forged["alpha_claim"] = "profitable"
+            forged["evaluation_hash"] = typed.canonical_hash({
+                key: value for key, value in forged.items() if key != "evaluation_hash"
+            })
+            with self.assertRaisesRegex(engine.ShadowRunError, "INTEGRITY_ERROR"):
+                store.write_evaluation(self.request["command_id"], forged, **args)
+            aliased = copy.deepcopy(first)
+            aliased["authority"]["production_authority"] = 0
+            aliased["evaluation_hash"] = typed.canonical_hash({
+                key: value for key, value in aliased.items() if key != "evaluation_hash"
+            })
+            with self.assertRaisesRegex(engine.ShadowRunError, "INTEGRITY_ERROR"):
+                store.write_evaluation(self.request["command_id"], aliased, **args)
+            self.assertEqual(original, path.read_bytes())
+        finally:
+            store.close()
+        fresh = engine.ShadowStore(Path(self.temporary.name) / "fresh-evaluation-state")
+        try:
+            fresh.write(self.request, self.receipt)
+            with self.assertRaisesRegex(engine.ShadowRunError, "INTEGRITY_ERROR"):
+                fresh.write_evaluation(self.request["command_id"], aliased, **args)
+            self.assertFalse(
+                (fresh.receipt_path(self.request["command_id"]).parent / "evaluation.json").exists()
+            )
+        finally:
+            fresh.close()
 
     def test_unsupported_python_refuses_before_creating_state(self) -> None:
         fresh = Path(self.temporary.name) / "unsupported-python-state"
@@ -2136,7 +2446,7 @@ store.write(request, receipt)
         with self.assertRaisesRegex(engine.ShadowRunError, "INTEGRITY_ERROR"):
             read_store.read(self.request["command_id"])
 
-    def test_cli_run_verify_and_evaluate_placeholder(self) -> None:
+    def test_cli_run_verify_and_reject_external_evaluation_ledger(self) -> None:
         request_path = self.artifact_root / "request.json"
         script = REPO_ROOT / "scripts/llm/jev_u4_shadow.py"
         run_result = subprocess.run(
@@ -2189,6 +2499,8 @@ store.write(request, receipt)
                 self.request["command_id"],
                 "--ledger",
                 str(self.artifact_root / "not-used.jsonl"),
+                "--review-packet-hash",
+                "0" * 64,
             ],
             cwd=REPO_ROOT,
             check=False,
@@ -2197,7 +2509,7 @@ store.write(request, receipt)
         )
         self.assertNotEqual(0, evaluate_result.returncode)
         self.assertEqual(
-            "EVALUATION_NOT_INSTALLED",
+            "SPEC_BLOCKED",
             json.loads(evaluate_result.stderr)["code"],
         )
 
