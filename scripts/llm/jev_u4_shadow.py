@@ -42,7 +42,7 @@ from capability import (  # noqa: E402
     RouteStatus,
     route,
 )
-from typed_decision import canonical_hash, question_set_payload  # noqa: E402
+from typed_decision import canonical_hash, normalize_typed_response, question_set_payload  # noqa: E402
 
 
 def _load_side_effect_free_adapters() -> tuple[types.ModuleType, types.ModuleType]:
@@ -82,6 +82,13 @@ REQUEST_SCHEMA = "ar.jev_u4_shadow_request.v1"
 TASK_ID = "JEV-U4-SHADOW-ENGINE-001"
 TASK_TYPE = "u4_shadow_decision"
 KNOWN_FIXTURE_IDS = frozenset({"synthetic-mixed"})
+# Artifact metadata is not authority; these hashes pin the approved fixture bytes.
+_APPROVED_FIXTURE_HASHES = {
+    "synthetic-mixed": {
+        "cassettes.json": "sha256:d7c77e4d6a6b2eace91985847cdedf471c3ccb19d02cb2172683b2316e53df18",
+        "u4-pre-decision.json": "sha256:b9d178988cbcfdbe634f2874b4fb72b450e064e996cff087c688fc209a9cfb9e",
+    },
+}
 _ARTIFACT_SCOPE = "sandbox/artifacts"
 _STATE_SCOPE = "sandbox/state"
 _REQUEST_FIELDS = {
@@ -688,6 +695,19 @@ def _run_shadow_with_handles(
             )
         packet_raw = evidence.bytes(payload["packet_ref"])
         packet = evidence.json_object(payload["packet_ref"])
+        approved_cassettes: dict[str, Any] = {}
+        if payload["mode"] == "OFFLINE_FIXTURE":
+            fixture_hashes = _APPROVED_FIXTURE_HASHES[payload["fixture_id"]]
+            if _sha256_bytes(packet_raw) != fixture_hashes["u4-pre-decision.json"]:
+                raise _blocked("fixture packet differs from the approved synthetic fixture")
+            descriptor = _open_relative(artifact.fd, "cassettes.json", directory=False)
+            try:
+                cassette_raw = _read_fd(descriptor)
+            finally:
+                os.close(descriptor)
+            if _sha256_bytes(cassette_raw) != fixture_hashes["cassettes.json"]:
+                raise _blocked("fixture cassette differs from the approved synthetic fixture")
+            approved_cassettes = _approved_fixture_cassettes(payload["fixture_id"])
         u4_pre_decision.validate_packet(
             evidence=evidence,
             packet_ref=payload["packet_ref"],
@@ -707,6 +727,23 @@ def _run_shadow_with_handles(
         if decision.status is not RouteStatus.SELECTED:
             raise _blocked("offline shadow capability was not selected")
         candidate_results = _execute_candidates_once(packet, payload, adapter)
+        for candidate in candidate_results:
+            answers = candidate["typed_answers"]
+            key = f'{candidate["state_hash"]}:{question_set_payload()["version"]}'
+            if (
+                payload["mode"] == "OFFLINE_FIXTURE"
+                and key in approved_cassettes
+                and answers is None
+            ):
+                raise _blocked("approved synthetic answer was not returned")
+            if answers is None:
+                continue
+            if (
+                payload["mode"] != "OFFLINE_FIXTURE"
+                or key not in approved_cassettes
+                or answers != normalize_typed_response(approved_cassettes[key])
+            ):
+                raise _blocked("shadow answer is not from an approved synthetic cassette")
         receipt = u4_shadow.build_receipt(
             payload,
             packet,
@@ -1632,11 +1669,8 @@ def _read_sandbox_ledger(
             or ledger_identity != after_identity or anchor_identity != after_anchor_identity
         ):
             raise _blocked("formal U4 ledger changed during evaluation")
-        # governance-mutation: JEV_U4_LEDGER_ANCHOR_DIGEST
-        source_hash = _sha256_bytes(_canonical_bytes({
-            "ledger_bytes_sha256": _sha256_bytes(before),
-            "anchor_bytes_sha256": _sha256_bytes(anchor_before),
-        }))
+        # governance-mutation: JEV_U4_LEDGER_CLOSURE_IDENTITY
+        source_hash = closure["closure_hash"]
         return intent["review_packet"], decisions, source_hash
     except ShadowRunError:
         raise
@@ -1660,7 +1694,10 @@ def _load_fixture_adapter(
     descriptor = -1
     try:
         descriptor = _open_relative(artifact.fd, "cassettes.json", directory=False)
-        payload = _decode_json(_read_fd(descriptor))
+        raw = _read_fd(descriptor)
+        if _sha256_bytes(raw) != _APPROVED_FIXTURE_HASHES[request["fixture_id"]]["cassettes.json"]:
+            raise _blocked("fixture cassette differs from the approved synthetic fixture")
+        payload = _decode_json(raw)
     except Exception as exc:
         raise _blocked("fixture cassette is invalid") from exc
     finally:
@@ -1670,6 +1707,17 @@ def _load_fixture_adapter(
         raise _blocked("fixture cassette identity is invalid")
     cassettes = {key: value for key, value in payload.items() if key != "_meta"}
     return OfflineFixtureDecisionAdapter(cassettes)
+
+
+def _approved_fixture_cassettes(fixture_id: str) -> dict[str, Any]:
+    path = REPO_ROOT / "scripts/llm/fixtures/jev_u4_shadow" / fixture_id / "cassettes.json"
+    raw = _read_regular_file(path)
+    if _sha256_bytes(raw) != _APPROVED_FIXTURE_HASHES[fixture_id]["cassettes.json"]:
+        raise _blocked("committed synthetic cassette differs from its approved digest")
+    payload = _decode_json(raw)
+    if not isinstance(payload, dict) or payload.get("_meta", {}).get("fixture_id") != fixture_id:
+        raise _blocked("committed synthetic cassette identity is invalid")
+    return {key: value for key, value in payload.items() if key != "_meta"}
 
 
 class _StableArgumentParser(argparse.ArgumentParser):

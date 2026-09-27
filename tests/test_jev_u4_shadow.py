@@ -893,6 +893,54 @@ class JevU4ShadowEngineTests(unittest.TestCase):
             race_injector=race_injector,
         )
 
+    def test_adapter_cannot_invent_offline_fixture_answer(self) -> None:
+        altered = copy.deepcopy(self.cassettes)
+        answer = next(iter(altered.values()))["answers"][2]["probabilities"]
+        answer["SELECT_FOR_DEEP_RESEARCH"] = "0.400000"
+        answer["DEFER"] = "0.300000"
+
+        with self.assertRaisesRegex(engine.ShadowRunError, "SPEC_BLOCKED"):
+            self._run(adapter=self._adapter(altered))
+
+    def test_modified_disk_cassette_is_rejected_before_receipt(self) -> None:
+        altered = copy.deepcopy(self.cassettes)
+        answer = next(iter(altered.values()))["answers"][2]["probabilities"]
+        answer["SELECT_FOR_DEEP_RESEARCH"] = "0.400000"
+        answer["DEFER"] = "0.300000"
+        cassette = _load("cassettes.json")
+        for key in altered:
+            cassette[key] = altered[key]
+        (self.artifact_root / "cassettes.json").write_text(
+            json.dumps(cassette, ensure_ascii=False), encoding="utf-8"
+        )
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output), contextlib.redirect_stderr(io.StringIO()):
+            status = engine.main([
+                "run", "--request", str(self.artifact_root / "request.json"),
+                "--artifact-root", str(self.artifact_root),
+                "--state-root", str(self.state_root),
+            ])
+        self.assertEqual(2, status)
+        self.assertFalse(output.getvalue())
+
+    def test_engine_rejects_modified_disk_cassette_with_clean_adapter(self) -> None:
+        cassette = _load("cassettes.json")
+        cassette["_meta"]["sample_purpose"] = "WORKFLOW_DEBUG_CHANGED"
+        (self.artifact_root / "cassettes.json").write_text(
+            json.dumps(cassette, ensure_ascii=False), encoding="utf-8"
+        )
+        with self.assertRaisesRegex(engine.ShadowRunError, "SPEC_BLOCKED"):
+            self._run(adapter=self._adapter())
+
+    def test_policy_preview_cannot_return_fixture_answers(self) -> None:
+        request = {**self.request, "mode": "POLICY_PREVIEW", "fixture_id": None}
+        with self.assertRaisesRegex(engine.ShadowRunError, "SPEC_BLOCKED"):
+            self._run(request, adapter=self._adapter())
+
+    def test_approved_fixture_answer_cannot_be_silently_suppressed(self) -> None:
+        with self.assertRaisesRegex(engine.ShadowRunError, "SPEC_BLOCKED"):
+            self._run(adapter=self._adapter({}))
+
     def test_unsupported_runtime_stops_before_shadow_state_or_provider(self) -> None:
         fresh_state = Path(self.temporary.name) / "unsupported-run-state"
         with mock.patch.object(engine.sys, "version_info", (3, 9, 0)), mock.patch.object(
@@ -1454,7 +1502,7 @@ class JevU4ShadowStoreTests(JevU4ShadowEngineTests):
         finally:
             state.close()
 
-    def test_verified_ledger_digest_binds_anchor_bytes(self) -> None:
+    def test_verified_closure_identity_ignores_unrelated_anchor_note(self) -> None:
         ledger_path, review = self._committed_sandbox_ledger()
         state = engine._open_root(self.state_root, create=False)
         try:
@@ -1468,9 +1516,70 @@ class JevU4ShadowStoreTests(JevU4ShadowEngineTests):
             _, _, second = engine._read_sandbox_ledger(
                 state, self.state_root, ledger_path, review["packet_hash"]
             )
-            self.assertNotEqual(first, second)
+            self.assertEqual(first, second)
         finally:
             state.close()
+
+    def test_unrelated_committed_packet_does_not_change_evaluation_identity(self) -> None:
+        ledger_path, review = self._committed_sandbox_ledger()
+        store = engine.ShadowStore(self.state_root)
+        try:
+            store.write(self.request, self.receipt)
+        finally:
+            store.close()
+        argv = [
+            "evaluate", "--state-root", str(self.state_root),
+            "--command-id", self.request["command_id"],
+            "--ledger", str(ledger_path),
+            "--review-packet-hash", review["packet_hash"],
+        ]
+        first_output, first_error = io.StringIO(), io.StringIO()
+        with contextlib.redirect_stdout(first_output), contextlib.redirect_stderr(first_error):
+            self.assertEqual(0, engine.main(argv), first_error.getvalue())
+        first = json.loads(first_output.getvalue())
+
+        packet = _load("u4-pre-decision.json")
+        bundle = FIXTURE_ROOT / packet["source_refs"]["same_day_bundle_ref"]
+        other = closure.build_review_packet(
+            bundle_dir=bundle, battery=None,
+            generated_at="2026-08-12T09:03:00+00:00",
+        )
+        self.assertNotEqual(review["packet_hash"], other["packet_hash"])
+        draft = {
+            "method_version": "SEMICONDUCTOR_WORKFLOW_DEBUG_V1",
+            "decided_at": "2026-08-12T09:04:00+00:00",
+            "claimed_decision_owner": "Junyan",
+            "identity_verification": "UNAVAILABLE",
+            "authorization_text": (
+                "批准离线 U4 决策记录，绑定 packet_hash " + other["packet_hash"][:12]
+                + "，仅用于合成走查，不产生交易权限。"
+            ),
+            "authorization_evidence_ref": "conversation:unrelated-synthetic-packet",
+            "decisions": [
+                {
+                    "ts_code": row["ts_code"], "decision": "REJECT",
+                    "reason_codes": ["RED_FLAG_ACTIVE" if "E1_RED_FLAG_REQUIRES_SEPARATE_REVIEW" in row["blocked_reasons"] else "HUMAN_JUDGMENT"],
+                    "reason_note": "Separate synthetic decision for replay isolation.",
+                    "missing_evidence": [], "research_question": None,
+                    "decision_revision": 1, "supersedes_decision_id": None,
+                }
+                for row in other["ready_pool"]
+            ],
+        }
+        with mock.patch.object(
+            event_ledger, "_runtime_timestamp", return_value="2026-08-12T09:05:00+00:00"
+        ):
+            formal_ledger.append_decision_batch(
+                packet=other, draft=draft, ledger_path=ledger_path, bundle_dir=bundle
+            )
+        self.assertTrue(formal_ledger.verify_decision_ledger(ledger_path)["ok"])
+
+        second_output, second_error = io.StringIO(), io.StringIO()
+        with contextlib.redirect_stdout(second_output), contextlib.redirect_stderr(second_error):
+            self.assertEqual(0, engine.main(argv), second_error.getvalue())
+        second = json.loads(second_output.getvalue())
+        self.assertEqual("IDEMPOTENT", second["disposition"])
+        self.assertEqual(first["evaluation"], second["evaluation"])
 
     def test_different_or_invalid_evaluation_cannot_replace_immutable_result(self) -> None:
         review = closure.build_review_packet(
