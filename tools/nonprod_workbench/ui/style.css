@@ -76,7 +76,7 @@ svg {
   min-height: 100vh;
 }
 .sidebar {
-  width: 232px;
+  width: 238px;
   flex-shrink: 0;
   background: #fff;
   border-right: 1px solid #e0e4e6;
@@ -85,7 +85,8 @@ svg {
   position: sticky;
   top: 0;
   height: 100vh;
-  padding: 30px 17px 20px;
+  padding: 24px 14px 18px;
+  overflow-y: auto;
 }
 .brand {
   display: flex;
@@ -127,17 +128,31 @@ svg {
   border-radius: 50%;
 }
 nav {
-  display: grid;
-  gap: 7px;
+  display: block;
+}
+.nav-group {
+  padding: 8px 0 12px;
+  border-top: 1px solid #edf0ef;
+}
+.nav-group-title {
+  padding: 5px 12px 7px;
+  color: #8a938e;
+  font-size: 10px;
+  font-weight: 700;
+}
+.mobile-navigation {
+  display: none;
 }
 nav button {
+  display: flex;
+  width: 100%;
   justify-content: flex-start;
   gap: 12px;
-  min-height: 43px;
+  min-height: 37px;
   border: 0;
   background: transparent;
   color: #68706f;
-  padding: 11px 12px;
+  padding: 8px 11px;
   font-size: 13px;
 }
 nav button svg:last-child {
@@ -148,6 +163,8 @@ nav button.active {
   background: #e9f2ee;
   color: #205c4e;
   font-weight: 600;
+  border-left: 3px solid #206354;
+  padding-left: 8px;
 }
 nav button.active svg:last-child {
   visibility: visible;
@@ -613,7 +630,7 @@ footer {
     position: static;
     width: 100%;
     height: auto;
-    padding: 15px 16px 0;
+    padding: 15px 16px;
     border-right: 0;
     border-bottom: 1px solid #e0e5e3;
   }
@@ -637,24 +654,17 @@ footer {
     display: none;
   }
   nav {
-    display: flex;
-    overflow: auto;
-    gap: 3px;
-    margin: 14px -5px 0;
-    padding-bottom: 9px;
+    display: none;
   }
-  nav button {
-    white-space: nowrap;
-    min-height: 36px;
-    padding: 8px;
-    gap: 6px;
+  .mobile-navigation {
+    display: grid;
+    gap: 5px;
+    margin: 15px 0 0;
+    color: #68716f;
     font-size: 11px;
   }
-  nav button svg {
-    width: 14px;
-  }
-  nav button svg:last-child {
-    display: none;
+  .mobile-navigation select {
+    width: 100%;
   }
   header {
     height: 47px;
@@ -780,15 +790,17 @@ footer {
 .replay-stages summary { cursor: pointer; color: #206b4a; }
 
 .jev-shadow { min-width: 0; }
-.jev-boundary { display: flex; align-items: center; gap: 12px; margin: 0 0 22px; color: #6d7473; font-size: 11px; }
+.jev-boundary { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: 0 0 15px; color: #6d7473; font-size: 11px; }
 .jev-boundary .badge { font-size: 11px; font-weight: 700; }
-.jev-controls { padding-bottom: 22px; border-bottom: 1px solid #dfe5e2; }
-.jev-control-row { display: flex; align-items: end; flex-wrap: wrap; gap: 9px; }
-.jev-control-row label { display: grid; gap: 6px; color: #68716f; font-size: 11px; }
-.jev-control-row select { min-width: 180px; }
-.jev-control-row .primary { min-height: 38px; }
+.jev-launch { padding: 23px 26px 13px; border: 1px solid #d6e0db; border-left: 4px solid #206354; background: #fff; }
+.jev-launch-main { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+.jev-launch-main h2 { font-size: 20px; }
+.jev-launch-main p { margin-top: 9px; color: #718079; font-size: 11px; }
+.jev-run-action { min-height: 46px; padding: 10px 20px; font-weight: 700; white-space: nowrap; }
+.jev-launch-footer { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 16px; padding-top: 11px; border-top: 1px solid #edf1ee; color: #6a7670; font-size: 11px; }
+.jev-launch-tools,.jev-result-actions { display: flex; align-items: center; gap: 8px; }
 .jev-pending { display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px; margin-top: 11px; color: #8b621e; font-size: 11px; }
-.jev-run-picker { display: grid; grid-template-columns: auto minmax(0, 470px); align-items: center; gap: 10px; margin-top: 17px; color: #68716f; font-size: 11px; }
+.jev-run-picker { display: grid; grid-template-columns: auto minmax(0, 570px); align-items: center; gap: 10px; color: #68716f; font-size: 11px; }
 .jev-run-picker select { width: 100%; }
 .jev-state { min-height: 210px; text-align: center; }
 .jev-integrity { color: #a44644; }
@@ -814,15 +826,11 @@ footer {
 .jev-filters button.active { border-bottom: 2px solid #21634f; color: #205c4e; font-weight: 700; }
 .jev-filter-note { color: #929a96; font-size: 10px; margin: 0 0 12px; }
 .jev-shadow .table-scroll { max-height: 68vh; overflow: auto; }
-.jev-table { table-layout: fixed; min-width: 1280px; }
-.jev-table .jev-col-candidate { width: 165px; }
-.jev-table .jev-col-gate { width: 155px; }
-.jev-table .jev-col-evidence { width: 145px; }
-.jev-table .jev-col-choice { width: 185px; }
-.jev-table .jev-col-number { width: 92px; }
-.jev-table .jev-col-review { width: 125px; }
-.jev-table .jev-col-human { width: 150px; }
-.jev-table .jev-col-integrity { width: 100px; }
+.jev-table { table-layout: fixed; min-width: 650px; }
+.jev-table th:first-child { width: 22%; }
+.jev-table th:nth-child(2) { width: 28%; }
+.jev-table th:nth-child(3) { width: 24%; }
+.jev-table th:nth-child(4) { width: 26%; }
 .jev-table th { position: sticky; top: 0; z-index: 1; white-space: normal; line-height: 1.35; }
 .jev-table th,.jev-table td { padding: 10px 11px; overflow-wrap: anywhere; }
 .jev-table th:first-child,.jev-table td:first-child { position: sticky; left: 0; background: #fff; box-shadow: 1px 0 0 #dfe5e2; }
@@ -848,6 +856,8 @@ footer {
 .jev-detail-list > span { display: block; margin-bottom: 5px; color: #87908c; font-size: 10px; }
 .jev-detail-list p { color: #46564d; font-size: 11px; line-height: 1.6; overflow-wrap: anywhere; }
 .jev-detail-list .badge { vertical-align: middle; }
+.jev-evidence { margin-top: 18px; padding-top: 15px; border-top: 1px solid #e5eae7; }
+.jev-evidence summary { color: #206354; cursor: pointer; font-size: 12px; font-weight: 600; }
 .jev-muted { color: #87908c; font-size: 12px; margin-bottom: 16px; }
 .jev-probabilities { display: grid; gap: 10px; margin: 0 0 19px; }
 .jev-probabilities > div { display: grid; grid-template-columns: minmax(0,1fr) 95px 68px; align-items: center; gap: 10px; min-width: 0; font-size: 10px; color: #56635b; }
@@ -862,9 +872,9 @@ footer {
   .jev-metrics > div:nth-child(n+4) { border-top: 1px solid #e3e8e5; }
 }
 @media(max-width:760px) {
-  .jev-control-row { align-items: stretch; }
-  .jev-control-row label,.jev-control-row .primary { width: 100%; }
-  .jev-control-row select { width: 100%; }
+  .jev-launch { padding: 17px; }
+  .jev-launch-main { align-items: stretch; flex-direction: column; }
+  .jev-run-action { width: 100%; }
   .jev-run-picker { grid-template-columns: 1fr; }
   .jev-head-hashes,.jev-detail-grid { grid-template-columns: 1fr; }
   .jev-metrics { grid-template-columns: repeat(2,minmax(0,1fr)); }

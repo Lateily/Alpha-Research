@@ -7,7 +7,14 @@ import Workspace, {workspaceTabs} from './workspace';
 import './workspace.css';
 import JevShadow from './jev-shadow';
 const EMPTY_SHADOW_RUNS = [];
-const tabs = [...workspaceTabs, ['research', '研究演练', Play], ['jev-shadow', 'Jev U4 Shadow', GitCompareArrows], ['overview', '部署总览', Layers3], ['gateway', 'DeepSeek 入口', Activity], ['configuration', '部署草稿', Cloud], ['cutover', '迁移验收', FileCheck2], ['team', '团队权限', Users]];
+const workspaceByKey = Object.fromEntries(workspaceTabs.map(item => [item[0], item]));
+const navigation = [
+  {title: '试运行', items: [['jev-shadow', 'U4 影子模拟', GitCompareArrows], ['research', '研究全链回放', Play], ['gateway', '模型接口演练', Activity]]},
+  {title: '研究工作', items: ['candidates', 'models', 'drafts', 'reviews'].map(key => workspaceByKey[key])},
+  {title: '运行监测', items: ['desk', 'nightly', 'macro', 'paper', 'records'].map(key => workspaceByKey[key])},
+  {title: '系统管理', items: [['overview', '部署总览', Layers3], ['configuration', '部署草稿', Cloud], ['cutover', '迁移验收', FileCheck2], ['team', '访问权限', Users]]}
+];
+const tabs = navigation.flatMap(group => group.items);
 const stageLabels = {INPUT: '冻结输入', SCREEN: '筛选与 U3', PACKET: 'U4 packet', U4_RECEIPT: '预写裁决校验', SEAL_CASE: '深研封存', PAPER_REPLAY: 'Paper 回放', FIVE_AXIS: '五轴归因', REVIEW: '预写复盘校验'};
 
 function Research({runs, busy, run, pending, endPending, viewReceipt}) {
@@ -80,7 +87,7 @@ function ReceiptDialog({
   }}><div className="section-title"><h2>离线回执</h2><div className="actions"><button className="icon-button" title="下载回执" aria-label="下载回执" onClick={() => download(`${receipt.command_id}.json`, receipt)}><Download size={18} /></button><button className="icon-button" autoFocus title="关闭" aria-label="关闭回执" onClick={close}><X size={18} /></button></div></div><Badge tone="amber">SYNTHETIC · 非研究证据</Badge><pre>{JSON.stringify(receipt, null, 2)}</pre></dialog>;
 }
 function App() {
-  const [tab, setTab] = useState('desk');
+  const [tab, setTab] = useState('jev-shadow');
   const [state, setState] = useState(null);
   const [workspaceRefresh, setWorkspaceRefresh] = useState(0);
   const [draft, setDraft] = useState(null);
@@ -173,18 +180,19 @@ function App() {
   return <div className="app">
     <aside className="sidebar">
       <div className="brand"><div className="brand-icon"><Layers3 size={22} /></div><div><strong>AR 工作台</strong><span>CONTROL PLANE</span></div></div>
-      <div className="environment"><span className="dot" />非生产 · 本机</div>
-      <nav aria-label="工作台导航">{tabs.map(([key, label, Icon]) => <button key={key} aria-current={tab === key ? 'page' : undefined} className={tab === key ? 'active' : ''} onClick={() => {
-          setTab(key);
-          setNotice('');
-        }}><Icon size={18} />{label}<ChevronRight size={14} /></button>)}</nav>
-      <div className="sidebar-footer"><ShieldCheck size={18} /><div>最终裁决：Junyan<span>未签发任何团队权限</span></div></div>
+      <div className="environment"><span className="dot" />{state?.policy.environment === 'NONPRODUCTION_PRIVATE' ? '非生产 · 私网所有者' : '非生产 · 本机'}</div>
+      <label className="mobile-navigation"><span>工作区</span><select aria-label="选择工作区" value={tab} onChange={event => {setTab(event.target.value); setNotice('');}}>{navigation.map(group => <optgroup key={group.title} label={group.title}>{group.items.map(([key, label]) => <option key={key} value={key}>{label}</option>)}</optgroup>)}</select></label>
+      <nav aria-label="工作台导航">{navigation.map(group => <div className="nav-group" key={group.title}><div className="nav-group-title">{group.title}</div>{group.items.map(([key, label, Icon]) => <button key={key} aria-current={tab === key ? 'page' : undefined} className={tab === key ? 'active' : ''} onClick={() => {
+            setTab(key);
+            setNotice('');
+          }}><Icon size={17} />{label}<ChevronRight size={14} /></button>)}</div>)}</nav>
+      <div className="sidebar-footer"><ShieldCheck size={18} /><div>最终裁决：Junyan<span>模拟输出没有 U4 或交易权限</span></div></div>
     </aside>
     <main>
-      <header><div className="breadcrumb">AR / LOCAL WORKSPACE / <span>{tabs.find(t => t[0] === tab)[1]}</span></div><button className="icon-button" title="重新读取本地状态（会重载未保存草稿）" aria-label="刷新状态" disabled={busy} onClick={reload}><RefreshCw size={17} className={busy ? 'spinning' : ''} /></button></header>
+      <header><div className="breadcrumb">AR / {navigation.find(group => group.items.some(item => item[0] === tab))?.title} / <span>{tabs.find(t => t[0] === tab)[1]}</span></div><button className="icon-button" title="重新读取工作台状态（会重载未保存草稿）" aria-label="刷新状态" disabled={busy} onClick={reload}><RefreshCw size={17} className={busy ? 'spinning' : ''} /></button></header>
       <div className="page">
-        <div className="page-heading"><div><div className="eyebrow">WORKSPACE / 01</div><h1>{tabs.find(t => t[0] === tab)[1]}</h1></div><Badge tone="amber"><LockKeyhole size={13} />CUTOVER HOLD</Badge></div>
-        <div className="authority-strip"><span><LockKeyhole size={14} />团队访问：关闭</span><span>模型付费调用：关闭</span><span>生产写入：关闭</span><span>会话：本机开发态，未认证人类身份</span></div>
+        <div className="page-heading"><div><div className="eyebrow">{navigation.find(group => group.items.some(item => item[0] === tab))?.title}</div><h1>{tabs.find(t => t[0] === tab)[1]}</h1></div><Badge tone="amber"><LockKeyhole size={13} />非生产</Badge></div>
+        <div className="authority-strip"><span><LockKeyhole size={14} />{state?.policy.environment === 'NONPRODUCTION_PRIVATE' ? '私网：仅所有者设备' : '访问：仅本机'}</span><span>团队权限：关闭</span><span>付费模型：关闭</span><span>生产与交易写入：关闭</span></div>
         {error && <div role="alert" className="alert error"><X size={17} /><strong>请求未完成</strong><code>{error}</code><button onClick={reload} disabled={busy}>重载状态</button></div>}
         {notice && <div role="status" className="alert success"><Check size={16} />{notice}</div>}
         {!state ? <div className="empty" role="status"><Database size={30} /><h2>{error ? '本地服务不可用' : '正在读取工作台'}</h2><p>未显示任何缓存状态</p></div> : <>
@@ -215,7 +223,7 @@ function App() {
                 readiness: state.readiness
               })}><Download size={17} /></button></div></section>}
           {tab === 'cutover' && <section><div className="section-title"><h2>生产切换验收序列</h2><span>当前无执行权限</span></div><ol className="gate-list">{state.readiness.required_gates.map((gate, i) => <li key={gate}><span className="step-number">{String(i + 1).padStart(2, '0')}</span><div><h3>{gateLabels[i]}</h3><code>{gate}</code></div><Badge>待验收</Badge></li>)}</ol><div className="cutover-foot"><LockKeyhole size={18} /><span>备份前先停写。canary 前不开放正式账本写入方。失败不自动退回双写。</span></div></section>}
-          {tab === 'team' && <section><div className="section-title"><h2>访问与操作权限</h2><Badge>0 个团队授权</Badge></div><div className="table-scroll"><table><thead><tr><th>主体</th><th>权限</th><th>身份状态</th></tr></thead><tbody><tr><td>本机浏览器会话</td><td>盘点查看、配置草稿、合成离线演练</td><td><Badge>开发会话，非人类身份认证</Badge></td></tr><tr><td>团队成员 / 第二台电脑</td><td>无远程访问、无角色授予</td><td><Badge tone="amber">DENY</Badge></td></tr><tr><td>模型 / Agent</td><td>无生产、费用、授权或交易权限</td><td><Badge tone="amber">DENY</Badge></td></tr><tr><td>Junyan</td><td>最终云账号、费用、成员与生产裁决</td><td><Badge>正式身份系统未接入</Badge></td></tr></tbody></table></div></section>}
+          {tab === 'team' && <section><div className="section-title"><h2>访问与操作权限</h2><Badge>0 个团队授权</Badge></div><div className="table-scroll"><table><thead><tr><th>主体</th><th>可用范围</th><th>状态</th></tr></thead><tbody><tr><td>{state.policy.environment === 'NONPRODUCTION_PRIVATE' ? 'Tailscale 所有者设备' : '本机浏览器会话'}</td><td>非生产观察、草稿、合成离线演练</td><td><Badge>{state.policy.environment === 'NONPRODUCTION_PRIVATE' ? '私网身份门；不是研究审批' : '本机开发会话'}</Badge></td></tr><tr><td>其他团队成员</td><td>尚未授予访问</td><td><Badge tone="amber">DENY</Badge></td></tr><tr><td>模型 / Agent</td><td>无生产、费用、授权或交易权限</td><td><Badge tone="amber">DENY</Badge></td></tr><tr><td>Junyan</td><td>最终云账号、费用、成员与生产裁决</td><td><Badge>正式研究批准仍走独立闸门</Badge></td></tr></tbody></table></div></section>}
         </>}
         <footer><span>AR / NONPRODUCTION WORKSPACE</span><span>不是买卖指令；研究信号，human executes.</span></footer>
       </div>
