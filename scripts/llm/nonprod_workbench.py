@@ -24,6 +24,7 @@ from adapters.base import AgentRequest
 from adapters.deepseek import DEFAULT_MODEL, DeepSeekAdapter
 import workbench_research as research
 import workbench_workspace as workspace
+import workbench_jev_shadow as shadow
 
 ROOT = Path(__file__).resolve().parents[2]
 PROMPT_VERSION = "workbench_contract_smoke_v1"
@@ -83,7 +84,7 @@ def policy():
 
 
 def require_capability(capability):
-    if capability not in {"offline_probe", "save_deployment_draft", "research_replay"}:
+    if capability not in {"offline_probe", "save_deployment_draft", "research_replay", "jev_u4_shadow_fixture"}:
         raise WorkbenchError("CAPABILITY_DISABLED", 403)
 
 
@@ -238,6 +239,7 @@ class Store:
             "revision": revision, "config": config, "readiness": readiness(config),
             "receipts": [json.loads(row[0]) for row in rows],
             "research_runs": runs,
+            "jev_u4_shadow_runs": shadow.list_runs(self),
         }
 
     def research_directory(self, command_id):
@@ -316,7 +318,7 @@ def service_lock(directory):
 
 
 def dispatch(store, path, payload):
-    operations = {"/api/gateway/probe": "offline_probe", "/api/deployment-draft": "save_deployment_draft", "/api/research/replay": "research_replay"}
+    operations = {"/api/gateway/probe": "offline_probe", "/api/deployment-draft": "save_deployment_draft", "/api/research/replay": "research_replay", "/api/jev-u4-shadow/run": "jev_u4_shadow_fixture"}
     capability = operations.get(path, "disabled")
     require_capability(capability)
     if capability == "offline_probe":
@@ -325,6 +327,8 @@ def dispatch(store, path, payload):
         return store.save_config(payload)
     if capability == "research_replay":
         return store.replay(payload)
+    if capability == "jev_u4_shadow_fixture":
+        return shadow.run_synthetic(store, payload)
     raise WorkbenchError("UNKNOWN_OPERATION", 404)
 
 
@@ -380,6 +384,10 @@ def make_handler(store, assets, origin, session, system=None):
                 authorize(self.headers, origin, session)
                 if self.path == "/api/state":
                     self.reply(200, store.snapshot())
+                elif self.path == "/api/jev-u4-shadow/runs":
+                    self.reply(200, {"runs": shadow.list_runs(store)})
+                elif re.fullmatch(r"/api/jev-u4-shadow/runs/[A-Za-z0-9_-]{8,80}", self.path):
+                    self.reply(200, shadow.get_run(store, self.path.rsplit("/", 1)[1]))
                 elif self.path == "/api/workspace" and system is not None:
                     self.reply(200, system.snapshot())
                 elif self.path in assets:
@@ -390,6 +398,8 @@ def make_handler(store, assets, origin, session, system=None):
             except WorkbenchError as exc:
                 self.reply(exc.status, {"error": exc.code})
             except workspace.WorkspaceError as exc:
+                self.reply(exc.status, {"error": exc.code})
+            except shadow.ShadowWorkbenchError as exc:
                 self.reply(exc.status, {"error": exc.code})
             except Exception:
                 self.reply(500, {"error": "LOCAL_STATE_UNAVAILABLE"})
@@ -420,6 +430,8 @@ def make_handler(store, assets, origin, session, system=None):
             except WorkbenchError as exc:
                 self.reply(exc.status, {"error": exc.code})
             except workspace.WorkspaceError as exc:
+                self.reply(exc.status, {"error": exc.code})
+            except shadow.ShadowWorkbenchError as exc:
                 self.reply(exc.status, {"error": exc.code})
             except Exception:
                 self.reply(500, {"error": "LOCAL_OPERATION_FAILED"})

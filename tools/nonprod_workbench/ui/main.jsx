@@ -1,11 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { Activity, Check, ChevronRight, Cloud, Database, Download, FileCheck2, KeyRound, Layers3, LockKeyhole, Play, RefreshCw, Save, Search, ShieldCheck, Users, X } from 'lucide-react';
+import { Activity, Check, ChevronRight, Cloud, Database, Download, FileCheck2, GitCompareArrows, KeyRound, Layers3, LockKeyhole, Play, RefreshCw, Save, Search, ShieldCheck, Users, X } from 'lucide-react';
 import audit from './audit.json';
 import './style.css';
 import Workspace, {workspaceTabs} from './workspace';
 import './workspace.css';
-const tabs = [...workspaceTabs, ['research', '研究演练', Play], ['overview', '部署总览', Layers3], ['gateway', 'DeepSeek 入口', Activity], ['configuration', '部署草稿', Cloud], ['cutover', '迁移验收', FileCheck2], ['team', '团队权限', Users]];
+import JevShadow from './jev-shadow';
+const EMPTY_SHADOW_RUNS = [];
+const tabs = [...workspaceTabs, ['research', '研究演练', Play], ['jev-shadow', 'Jev U4 Shadow', GitCompareArrows], ['overview', '部署总览', Layers3], ['gateway', 'DeepSeek 入口', Activity], ['configuration', '部署草稿', Cloud], ['cutover', '迁移验收', FileCheck2], ['team', '团队权限', Users]];
 const stageLabels = {INPUT: '冻结输入', SCREEN: '筛选与 U3', PACKET: 'U4 packet', U4_RECEIPT: '预写裁决校验', SEAL_CASE: '深研封存', PAPER_REPLAY: 'Paper 回放', FIVE_AXIS: '五轴归因', REVIEW: '预写复盘校验'};
 
 function Research({runs, busy, run, pending, endPending, viewReceipt}) {
@@ -188,6 +190,7 @@ function App() {
         {!state ? <div className="empty" role="status"><Database size={30} /><h2>{error ? '本地服务不可用' : '正在读取工作台'}</h2><p>未显示任何缓存状态</p></div> : <>
           {workspaceTabs.some(t => t[0] === tab) && <Workspace tab={tab} api={api} reloadBase={reload} refreshRevision={workspaceRefresh}/>}
           {tab === 'research' && <Research runs={state.research_runs || []} busy={busy} run={runResearch} pending={researchPending} endPending={() => {setResearchPending(null); sessionStorage.removeItem('ar-research-pending'); setNotice('已结束等待；原运行目录未修改');}} viewReceipt={setReceipt}/>}
+          {tab === 'jev-shadow' && <JevShadow runs={state.jev_u4_shadow_runs || EMPTY_SHADOW_RUNS} api={api} busy={busy} setBusy={setBusy} setError={setError} setNotice={setNotice} onRunsChange={runs => setState(current => ({...current, jev_u4_shadow_runs: runs}))} Badge={Badge} download={download}/>}
           {tab === 'overview' && <>
             <div className="metrics"><article><span>本地离线回执</span><strong>{state.receipts.length}<small>条</small></strong><span>不是模型真实推理</span></article><article><span>本入口模型支出</span><strong>0<small>CNY</small></strong><span>未联系模型提供方</span></article><article><span>部署草稿待填</span><strong>{state.readiness.missing.length}<small>/ 6 项</small></strong><span>填写不等于批准</span></article><article><span>旧链切换状态</span><strong className="text-amber">HOLD</strong><span>旧写入尚未统一停止</span></article></div>
             <section><div className="section-title"><h2>部署面核对</h2><span>观察日期 {audit.observed_date} · 非实时健康状态</span></div>

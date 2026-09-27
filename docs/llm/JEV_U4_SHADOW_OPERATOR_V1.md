@@ -24,6 +24,52 @@ one. No production or automatic experiment is currently approved.
 
 ## Offline synthetic fixture
 
+### Loopback workbench view
+
+Build the existing nonproduction UI and start the workbench with a dedicated
+local state directory. The workbench remains bound to `127.0.0.1`; its browser
+session is not human identity or an approval signature.
+
+```bash
+npm ci --ignore-scripts --no-audit --no-fund
+node node_modules/vite/bin/vite.js build --config tools/nonprod_workbench/vite.config.js
+python3 -B scripts/llm/nonprod_workbench.py --port 8771 --state-root /private/tmp/ar-jev-workbench
+```
+
+Open `http://127.0.0.1:8771/` and select **Jev U4 Shadow**. The only browser
+scenario is `synthetic-mixed`. The browser sends a command ID and scenario ID,
+not paths, provider settings, answers, keys, or approval fields. An uncertain
+response retries the same command ID. The run list and detail reread and
+verify the immutable shadow receipt; a changed receipt displays
+`INTEGRITY_ERROR` without its prior conclusion. The UI can filter shadow
+observations and download a verified receipt, but cannot evaluate a real
+packet or record a formal U4 decision. `MODEL_UNAVAILABLE` is displayed as
+missing model evidence, never as a synthetic probability.
+
+The workbench does not authenticate team members and is not a remote service.
+Do not expose it through a tunnel, grant team access, or use its synthetic
+output as a production or research record. The fixed fixture contacts no
+provider and incurs no model cost.
+
+The UI deliberately does not show human U4 comparisons yet. The engine can
+write a separate evaluation, but the workbench has no verified read contract
+for that artifact. "未接入" means unavailable, not zero disagreement.
+
+A `POLICY_PREVIEW` produced by the CLI under the **same nonproduction state
+root** is not automatically displayed. An operator may register its command
+ID server-side after the CLI `run` and `verify` steps succeed:
+
+```bash
+python3 scripts/llm/workbench_jev_shadow.py register-preview \
+  --state-root /private/tmp/ar-jev-workbench \
+  --command-id '<verified-preview-command-id>'
+```
+
+Registration rereads the immutable receipt through `ShadowStore` and requires
+`POLICY_PREVIEW` mode. It does not run a provider or accept an evidence path.
+The browser has no registration route. A real frozen packet preview is shown
+as `POLICY_PREVIEW / SHADOW_ONLY`, not `SIMULATED` and not an investment signal.
+
 From the repository root, these commands use only the committed synthetic
 fixture and a new temporary sandbox:
 

@@ -32,6 +32,15 @@ approval and task.
 
 ## What it cannot authorize
 
+The nonproduction workbench exposes only the committed `synthetic-mixed`
+fixture. Its `SIMULATED / SHADOW_ONLY` labels describe a verified offline
+receipt, not an authenticated human action. The browser cannot supply a
+filesystem path, provider, answer, key, or approval, and cannot run real-packet
+policy preview. The local session cookie is a same-origin development boundary,
+not Junyan identity. A human U4 outcome, if shown in a separate comparison
+artifact later, must remain distinct from the shadow label and must never be
+inferred from a probability.
+
 The receipt fixes `production_authority`, `trade_authority`,
 `paper_order_authority`, and `formal_selection_authority` to `false`. Typed
 `shadow_disposition` labels and top probabilities are **counterfactual shadow
