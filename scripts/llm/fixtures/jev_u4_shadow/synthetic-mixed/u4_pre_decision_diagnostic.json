@@ -1,0 +1,16 @@
+{
+  "blocker_codes": [
+    "E1_RED_FLAG_ACTIVE",
+    "NO_POSITIVE_CHANNEL",
+    "RANDOM_CONTROL_NOT_SELECTABLE"
+  ],
+  "evidence_rows_checked": 6,
+  "evidence_rows_hash_verified": true,
+  "positive_channel_rows": 3,
+  "receipt_self_report_checked": true,
+  "red_flag_only_rows": 1,
+  "tool": "u4_pre_decision.py",
+  "tool_version": "0.1",
+  "u3_complete_rows": 6,
+  "u4_ready_rows": 2
+}

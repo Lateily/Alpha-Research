@@ -1,0 +1,1210 @@
+{
+  "as_of": "20260811",
+  "control_sampling_frame": {
+    "algo": "sha256+mt19937+sorted_sample/v1",
+    "as_of": "20260811",
+    "control_batch_id": "CTRL_20260811_v1",
+    "drawn": [
+      {
+        "drawn_rank": 1,
+        "stratum": "MV_Q1|PHARMA",
+        "ts_code": "T000016.SZ"
+      },
+      {
+        "drawn_rank": 2,
+        "stratum": "MV_Q1|TECH",
+        "ts_code": "T000011.SZ"
+      },
+      {
+        "drawn_rank": 3,
+        "stratum": "MV_Q2|BANK",
+        "ts_code": "T000036.SZ"
+      }
+    ],
+    "eligible_universe_hash": "aed0791f65eaa908fc97f71e7c10c91983813fbc146888d2c457f5117a560150",
+    "eligible_universe_n": 90,
+    "excluded_with_reason": [
+      {
+        "reason": "E1_RED_FLAG_OVERRIDES_ALL_POSITIVE_CHANNELS",
+        "ts_code": "T000001.SZ"
+      },
+      {
+        "reason": "MAIN_OR_RESERVED_CANDIDATE",
+        "stratum": "MV_Q1|TECH",
+        "ts_code": "T000002.SZ"
+      },
+      {
+        "reason": "MAIN_OR_RESERVED_CANDIDATE",
+        "stratum": "MV_Q1|BANK",
+        "ts_code": "T000003.SZ"
+      },
+      {
+        "reason": "MAIN_OR_RESERVED_CANDIDATE",
+        "stratum": "MV_Q1|PHARMA",
+        "ts_code": "T000004.SZ"
+      },
+      {
+        "reason": "MAIN_OR_RESERVED_CANDIDATE",
+        "stratum": "MV_Q1|TECH",
+        "ts_code": "T000005.SZ"
+      },
+      {
+        "reason": "MAIN_OR_RESERVED_CANDIDATE",
+        "stratum": "MV_Q1|BANK",
+        "ts_code": "T000006.SZ"
+      },
+      {
+        "reason": "MAIN_OR_RESERVED_CANDIDATE",
+        "stratum": "MV_Q1|PHARMA",
+        "ts_code": "T000007.SZ"
+      },
+      {
+        "reason": "MAIN_OR_RESERVED_CANDIDATE",
+        "stratum": "MV_Q1|TECH",
+        "ts_code": "T000008.SZ"
+      },
+      {
+        "reason": "MAIN_OR_RESERVED_CANDIDATE",
+        "stratum": "MV_Q1|BANK",
+        "ts_code": "T000009.SZ"
+      },
+      {
+        "reason": "NOT_DRAWN_BY_FIXED_SAMPLE",
+        "stratum": "MV_Q1|PHARMA",
+        "ts_code": "T000010.SZ"
+      },
+      {
+        "reason": "MAIN_OR_RESERVED_CANDIDATE",
+        "stratum": "MV_Q1|BANK",
+        "ts_code": "T000012.SZ"
+      },
+      {
+        "reason": "MAIN_OR_RESERVED_CANDIDATE",
+        "stratum": "MV_Q1|PHARMA",
+        "ts_code": "T000013.SZ"
+      },
+      {
+        "reason": "NOT_DRAWN_BY_FIXED_SAMPLE",
+        "stratum": "MV_Q1|TECH",
+        "ts_code": "T000014.SZ"
+      },
+      {
+        "reason": "MAIN_OR_RESERVED_CANDIDATE",
+        "stratum": "MV_Q1|BANK",
+        "ts_code": "T000015.SZ"
+      },
+      {
+        "reason": "NOT_DRAWN_BY_FIXED_SAMPLE",
+        "stratum": "MV_Q1|TECH",
+        "ts_code": "T000017.SZ"
+      },
+      {
+        "reason": "MAIN_OR_RESERVED_CANDIDATE",
+        "stratum": "MV_Q1|BANK",
+        "ts_code": "T000018.SZ"
+      },
+      {
+        "reason": "NOT_DRAWN_BY_FIXED_SAMPLE",
+        "stratum": "MV_Q2|PHARMA",
+        "ts_code": "T000019.SZ"
+      },
+      {
+        "reason": "NOT_DRAWN_BY_FIXED_SAMPLE",
+        "stratum": "MV_Q2|TECH",
+        "ts_code": "T000020.SZ"
+      },
+      {
+        "reason": "MAIN_OR_RESERVED_CANDIDATE",
+        "stratum": "MV_Q2|BANK",
+        "ts_code": "T000021.SZ"
+      },
+      {
+        "reason": "NOT_DRAWN_BY_FIXED_SAMPLE",
+        "stratum": "MV_Q2|PHARMA",
+        "ts_code": "T000022.SZ"
+      },
+      {
+        "reason": "MAIN_OR_RESERVED_CANDIDATE",
+        "stratum": "MV_Q2|TECH",
+        "ts_code": "T000023.SZ"
+      },
+      {
+        "reason": "MAIN_OR_RESERVED_CANDIDATE",
+        "stratum": "MV_Q2|BANK",
+        "ts_code": "T000024.SZ"
+      },
+      {
+        "reason": "NOT_DRAWN_BY_FIXED_SAMPLE",
+        "stratum": "MV_Q2|PHARMA",
+        "ts_code": "T000025.SZ"
+      },
+      {
+        "reason": "NOT_DRAWN_BY_FIXED_SAMPLE",
+        "stratum": "MV_Q2|TECH",
+        "ts_code": "T000026.SZ"
+      },
+      {
+        "reason": "NOT_DRAWN_BY_FIXED_SAMPLE",
+        "stratum": "MV_Q2|BANK",
+        "ts_code": "T000027.SZ"
+      },
+      {
+        "reason": "MAIN_OR_RESERVED_CANDIDATE",
+        "stratum": "MV_Q2|PHARMA",
+        "ts_code": "T000028.SZ"
+      },
+      {
+        "reason": "NOT_DRAWN_BY_FIXED_SAMPLE",
+        "stratum": "MV_Q2|TECH",
+        "ts_code": "T000029.SZ"
+      },
+      {
+        "reason": "NOT_DRAWN_BY_FIXED_SAMPLE",
+        "stratum": "MV_Q2|BANK",
+        "ts_code": "T000030.SZ"
+      },
+      {
+        "reason": "NOT_DRAWN_BY_FIXED_SAMPLE",
+        "stratum": "MV_Q2|PHARMA",
+        "ts_code": "T000031.SZ"
+      },
+      {
+        "reason": "MAIN_OR_RESERVED_CANDIDATE",
+        "stratum": "MV_Q2|TECH",
+        "ts_code": "T000032.SZ"
+      },
+      {
+        "reason": "MAIN_OR_RESERVED_CANDIDATE",
+        "stratum": "MV_Q2|BANK",
+        "ts_code": "T000033.SZ"
+      },
+      {
+        "reason": "MAIN_OR_RESERVED_CANDIDATE",
+        "stratum": "MV_Q2|PHARMA",
+        "ts_code": "T000034.SZ"
+      },
+      {
+        "reason": "NOT_DRAWN_BY_FIXED_SAMPLE",
+        "stratum": "MV_Q2|TECH",
+        "ts_code": "T000035.SZ"
+      },
+      {
+        "reason": "NOT_DRAWN_BY_FIXED_SAMPLE",
+        "stratum": "MV_Q3|PHARMA",
+        "ts_code": "T000037.SZ"
+      },
+      {
+        "reason": "NOT_DRAWN_BY_FIXED_SAMPLE",
+        "stratum": "MV_Q3|TECH",
+        "ts_code": "T000038.SZ"
+      },
+      {
+        "reason": "NOT_DRAWN_BY_FIXED_SAMPLE",
+        "stratum": "MV_Q3|BANK",
+        "ts_code": "T000039.SZ"
+      },
+      {
+        "reason": "NOT_DRAWN_BY_FIXED_SAMPLE",
+        "stratum": "MV_Q3|PHARMA",
+        "ts_code": "T000040.SZ"
+      },
+      {
+        "reason": "NOT_DRAWN_BY_FIXED_SAMPLE",
+        "stratum": "MV_Q3|TECH",
+        "ts_code": "T000041.SZ"
+      },
+      {
+        "reason": "NOT_DRAWN_BY_FIXED_SAMPLE",
+        "stratum": "MV_Q3|BANK",
+        "ts_code": "T000042.SZ"
+      },
+      {
+        "reason": "NOT_DRAWN_BY_FIXED_SAMPLE",
+        "stratum": "MV_Q3|PHARMA",
+        "ts_code": "T000043.SZ"
+      },
+      {
+        "reason": "NOT_DRAWN_BY_FIXED_SAMPLE",
+        "stratum": "MV_Q3|TECH",
+        "ts_code": "T000044.SZ"
+      },
+      {
+        "reason": "NOT_DRAWN_BY_FIXED_SAMPLE",
+        "stratum": "MV_Q3|BANK",
+        "ts_code": "T000045.SZ"
+      },
+      {
+        "reason": "NOT_DRAWN_BY_FIXED_SAMPLE",
+        "stratum": "MV_Q3|PHARMA",
+        "ts_code": "T000046.SZ"
+      },
+      {
+        "reason": "NOT_DRAWN_BY_FIXED_SAMPLE",
+        "stratum": "MV_Q3|TECH",
+        "ts_code": "T000047.SZ"
+      },
+      {
+        "reason": "NOT_DRAWN_BY_FIXED_SAMPLE",
+        "stratum": "MV_Q3|BANK",
+        "ts_code": "T000048.SZ"
+      },
+      {
+        "reason": "NOT_DRAWN_BY_FIXED_SAMPLE",
+        "stratum": "MV_Q3|PHARMA",
+        "ts_code": "T000049.SZ"
+      },
+      {
+        "reason": "NOT_DRAWN_BY_FIXED_SAMPLE",
+        "stratum": "MV_Q3|TECH",
+        "ts_code": "T000050.SZ"
+      },
+      {
+        "reason": "NOT_DRAWN_BY_FIXED_SAMPLE",
+        "stratum": "MV_Q3|BANK",
+        "ts_code": "T000051.SZ"
+      },
+      {
+        "reason": "NOT_DRAWN_BY_FIXED_SAMPLE",
+        "stratum": "MV_Q3|PHARMA",
+        "ts_code": "T000052.SZ"
+      },
+      {
+        "reason": "NOT_DRAWN_BY_FIXED_SAMPLE",
+        "stratum": "MV_Q3|TECH",
+        "ts_code": "T000053.SZ"
+      },
+      {
+        "reason": "NOT_DRAWN_BY_FIXED_SAMPLE",
+        "stratum": "MV_Q3|BANK",
+        "ts_code": "T000054.SZ"
+      },
+      {
+        "reason": "NOT_DRAWN_BY_FIXED_SAMPLE",
+        "stratum": "MV_Q4|PHARMA",
+        "ts_code": "T000055.SZ"
+      },
+      {
+        "reason": "NOT_DRAWN_BY_FIXED_SAMPLE",
+        "stratum": "MV_Q4|TECH",
+        "ts_code": "T000056.SZ"
+      },
+      {
+        "reason": "NOT_DRAWN_BY_FIXED_SAMPLE",
+        "stratum": "MV_Q4|BANK",
+        "ts_code": "T000057.SZ"
+      },
+      {
+        "reason": "NOT_DRAWN_BY_FIXED_SAMPLE",
+        "stratum": "MV_Q4|PHARMA",
+        "ts_code": "T000058.SZ"
+      },
+      {
+        "reason": "NOT_DRAWN_BY_FIXED_SAMPLE",
+        "stratum": "MV_Q4|TECH",
+        "ts_code": "T000059.SZ"
+      },
+      {
+        "reason": "NOT_DRAWN_BY_FIXED_SAMPLE",
+        "stratum": "MV_Q4|BANK",
+        "ts_code": "T000060.SZ"
+      },
+      {
+        "reason": "NOT_DRAWN_BY_FIXED_SAMPLE",
+        "stratum": "MV_Q4|PHARMA",
+        "ts_code": "T000061.SZ"
+      },
+      {
+        "reason": "NOT_DRAWN_BY_FIXED_SAMPLE",
+        "stratum": "MV_Q4|TECH",
+        "ts_code": "T000062.SZ"
+      },
+      {
+        "reason": "NOT_DRAWN_BY_FIXED_SAMPLE",
+        "stratum": "MV_Q4|BANK",
+        "ts_code": "T000063.SZ"
+      },
+      {
+        "reason": "NOT_DRAWN_BY_FIXED_SAMPLE",
+        "stratum": "MV_Q4|PHARMA",
+        "ts_code": "T000064.SZ"
+      },
+      {
+        "reason": "NOT_DRAWN_BY_FIXED_SAMPLE",
+        "stratum": "MV_Q4|TECH",
+        "ts_code": "T000065.SZ"
+      },
+      {
+        "reason": "NOT_DRAWN_BY_FIXED_SAMPLE",
+        "stratum": "MV_Q4|BANK",
+        "ts_code": "T000066.SZ"
+      },
+      {
+        "reason": "NOT_DRAWN_BY_FIXED_SAMPLE",
+        "stratum": "MV_Q4|PHARMA",
+        "ts_code": "T000067.SZ"
+      },
+      {
+        "reason": "NOT_DRAWN_BY_FIXED_SAMPLE",
+        "stratum": "MV_Q4|TECH",
+        "ts_code": "T000068.SZ"
+      },
+      {
+        "reason": "NOT_DRAWN_BY_FIXED_SAMPLE",
+        "stratum": "MV_Q4|BANK",
+        "ts_code": "T000069.SZ"
+      },
+      {
+        "reason": "NOT_DRAWN_BY_FIXED_SAMPLE",
+        "stratum": "MV_Q4|PHARMA",
+        "ts_code": "T000070.SZ"
+      },
+      {
+        "reason": "NOT_DRAWN_BY_FIXED_SAMPLE",
+        "stratum": "MV_Q4|TECH",
+        "ts_code": "T000071.SZ"
+      },
+      {
+        "reason": "NOT_DRAWN_BY_FIXED_SAMPLE",
+        "stratum": "MV_Q4|BANK",
+        "ts_code": "T000072.SZ"
+      },
+      {
+        "reason": "NOT_DRAWN_BY_FIXED_SAMPLE",
+        "stratum": "MV_Q5|PHARMA",
+        "ts_code": "T000073.SZ"
+      },
+      {
+        "reason": "NOT_DRAWN_BY_FIXED_SAMPLE",
+        "stratum": "MV_Q5|TECH",
+        "ts_code": "T000074.SZ"
+      },
+      {
+        "reason": "NOT_DRAWN_BY_FIXED_SAMPLE",
+        "stratum": "MV_Q5|BANK",
+        "ts_code": "T000075.SZ"
+      },
+      {
+        "reason": "NOT_DRAWN_BY_FIXED_SAMPLE",
+        "stratum": "MV_Q5|PHARMA",
+        "ts_code": "T000076.SZ"
+      },
+      {
+        "reason": "NOT_DRAWN_BY_FIXED_SAMPLE",
+        "stratum": "MV_Q5|TECH",
+        "ts_code": "T000077.SZ"
+      },
+      {
+        "reason": "NOT_DRAWN_BY_FIXED_SAMPLE",
+        "stratum": "MV_Q5|BANK",
+        "ts_code": "T000078.SZ"
+      },
+      {
+        "reason": "NOT_DRAWN_BY_FIXED_SAMPLE",
+        "stratum": "MV_Q5|PHARMA",
+        "ts_code": "T000079.SZ"
+      },
+      {
+        "reason": "NOT_DRAWN_BY_FIXED_SAMPLE",
+        "stratum": "MV_Q5|TECH",
+        "ts_code": "T000080.SZ"
+      },
+      {
+        "reason": "NOT_DRAWN_BY_FIXED_SAMPLE",
+        "stratum": "MV_Q5|BANK",
+        "ts_code": "T000081.SZ"
+      },
+      {
+        "reason": "NOT_DRAWN_BY_FIXED_SAMPLE",
+        "stratum": "MV_Q5|PHARMA",
+        "ts_code": "T000082.SZ"
+      },
+      {
+        "reason": "NOT_DRAWN_BY_FIXED_SAMPLE",
+        "stratum": "MV_Q5|TECH",
+        "ts_code": "T000083.SZ"
+      },
+      {
+        "reason": "NOT_DRAWN_BY_FIXED_SAMPLE",
+        "stratum": "MV_Q5|BANK",
+        "ts_code": "T000084.SZ"
+      },
+      {
+        "reason": "NOT_DRAWN_BY_FIXED_SAMPLE",
+        "stratum": "MV_Q5|PHARMA",
+        "ts_code": "T000085.SZ"
+      },
+      {
+        "reason": "NOT_DRAWN_BY_FIXED_SAMPLE",
+        "stratum": "MV_Q5|TECH",
+        "ts_code": "T000086.SZ"
+      },
+      {
+        "reason": "NOT_DRAWN_BY_FIXED_SAMPLE",
+        "stratum": "MV_Q5|BANK",
+        "ts_code": "T000087.SZ"
+      },
+      {
+        "reason": "NOT_DRAWN_BY_FIXED_SAMPLE",
+        "stratum": "MV_Q5|PHARMA",
+        "ts_code": "T000088.SZ"
+      },
+      {
+        "reason": "NOT_DRAWN_BY_FIXED_SAMPLE",
+        "stratum": "MV_Q5|TECH",
+        "ts_code": "T000089.SZ"
+      },
+      {
+        "reason": "E1_RED_FLAG_OVERRIDES_ALL_POSITIVE_CHANNELS",
+        "ts_code": "T000090.SZ"
+      }
+    ],
+    "quota_per_stratum": {
+      "MV_Q1|PHARMA": 1,
+      "MV_Q1|TECH": 1,
+      "MV_Q2|BANK": 1
+    },
+    "seed_hex": "867f33a66455ec979a512baf2db949d14dcf0b0b32a82b2ebabbdd8e2ddd2494",
+    "strata": [
+      {
+        "available_count": 0,
+        "drawn": 0,
+        "eligible_count": 6,
+        "main_count": 6,
+        "quota": 0,
+        "stratum": "MV_Q1|BANK"
+      },
+      {
+        "available_count": 2,
+        "drawn": 1,
+        "eligible_count": 6,
+        "main_count": 2,
+        "quota": 1,
+        "stratum": "MV_Q1|PHARMA"
+      },
+      {
+        "available_count": 3,
+        "drawn": 1,
+        "eligible_count": 6,
+        "main_count": 3,
+        "quota": 1,
+        "stratum": "MV_Q1|TECH"
+      },
+      {
+        "available_count": 3,
+        "drawn": 1,
+        "eligible_count": 6,
+        "main_count": 2,
+        "quota": 1,
+        "stratum": "MV_Q2|BANK"
+      },
+      {
+        "available_count": 4,
+        "drawn": 0,
+        "eligible_count": 6,
+        "main_count": 0,
+        "quota": 0,
+        "stratum": "MV_Q2|PHARMA"
+      },
+      {
+        "available_count": 4,
+        "drawn": 0,
+        "eligible_count": 6,
+        "main_count": 0,
+        "quota": 0,
+        "stratum": "MV_Q2|TECH"
+      },
+      {
+        "available_count": 6,
+        "drawn": 0,
+        "eligible_count": 6,
+        "main_count": 0,
+        "quota": 0,
+        "stratum": "MV_Q3|BANK"
+      },
+      {
+        "available_count": 6,
+        "drawn": 0,
+        "eligible_count": 6,
+        "main_count": 0,
+        "quota": 0,
+        "stratum": "MV_Q3|PHARMA"
+      },
+      {
+        "available_count": 6,
+        "drawn": 0,
+        "eligible_count": 6,
+        "main_count": 0,
+        "quota": 0,
+        "stratum": "MV_Q3|TECH"
+      },
+      {
+        "available_count": 6,
+        "drawn": 0,
+        "eligible_count": 6,
+        "main_count": 0,
+        "quota": 0,
+        "stratum": "MV_Q4|BANK"
+      },
+      {
+        "available_count": 6,
+        "drawn": 0,
+        "eligible_count": 6,
+        "main_count": 0,
+        "quota": 0,
+        "stratum": "MV_Q4|PHARMA"
+      },
+      {
+        "available_count": 6,
+        "drawn": 0,
+        "eligible_count": 6,
+        "main_count": 0,
+        "quota": 0,
+        "stratum": "MV_Q4|TECH"
+      },
+      {
+        "available_count": 5,
+        "drawn": 0,
+        "eligible_count": 6,
+        "main_count": 0,
+        "quota": 0,
+        "stratum": "MV_Q5|BANK"
+      },
+      {
+        "available_count": 6,
+        "drawn": 0,
+        "eligible_count": 6,
+        "main_count": 0,
+        "quota": 0,
+        "stratum": "MV_Q5|PHARMA"
+      },
+      {
+        "available_count": 6,
+        "drawn": 0,
+        "eligible_count": 6,
+        "main_count": 0,
+        "quota": 0,
+        "stratum": "MV_Q5|TECH"
+      }
+    ]
+  },
+  "coverage": {
+    "candidate_rows": 22,
+    "excluded_rows": 2,
+    "target_overflow": 0,
+    "target_shortfall": 78
+  },
+  "disclaimer": "不是买卖指令；研究信号，human executes.",
+  "generated_at": "2026-08-12T09:00:00+00:00",
+  "policy": {
+    "proxy_rules": "UNVALIDATED_INITIAL_RELATIVE_RULES",
+    "reserved_quotas_are_floors": true,
+    "selection": "CHANNEL_UNION_EQUAL_ROUND_ROBIN_NO_COMPOSITE_SCORE",
+    "target_size": 100
+  },
+  "quota": {
+    "actual": {
+      "contrarian_repair": 3,
+      "random_control": 3,
+      "slow_bull": 3
+    },
+    "required": {
+      "contrarian_repair": 3,
+      "random_control": 3,
+      "slow_bull": 3
+    },
+    "shortfalls": {}
+  },
+  "rows": [
+    {
+      "aligned_return": null,
+      "as_of": "20260811",
+      "cluster_id": null,
+      "control_batch_id": null,
+      "entry_reasons": [
+        {
+          "channel": "E1_EVENT",
+          "metric": "red_flag_verdict",
+          "threshold": "RED_FLAG",
+          "value": "RED_FLAG"
+        },
+        {
+          "channel": "PRICE_VOLUME",
+          "metric": "return_20d_rank",
+          "threshold": "TOP_8",
+          "value": 1
+        }
+      ],
+      "exclusion_reason": "E1_RED_FLAG_OVERRIDES_ALL_POSITIVE_CHANNELS",
+      "flags": [
+        "RED_FLAG"
+      ],
+      "industry_key": "PHARMA",
+      "liquidity_eligibility": true,
+      "next_action": "E1_REVIEW_ONLY",
+      "priority": "RED_FLAG_ARCHIVE",
+      "review_status": "EXCLUDED_RED_FLAG",
+      "source_channels": [
+        "E1_EVENT",
+        "PRICE_VOLUME"
+      ],
+      "stratum": "MV_Q1|PHARMA",
+      "ts_code": "T000001.SZ"
+    },
+    {
+      "aligned_return": null,
+      "as_of": "20260811",
+      "cluster_id": null,
+      "control_batch_id": null,
+      "entry_reasons": [
+        {
+          "channel": "PRICE_VOLUME",
+          "metric": "return_20d_rank",
+          "threshold": "TOP_8",
+          "value": 2
+        }
+      ],
+      "exclusion_reason": null,
+      "flags": [],
+      "industry_key": "TECH",
+      "liquidity_eligibility": true,
+      "next_action": "U3_BATTERY_REVIEW",
+      "priority": "CHANNEL_INDEPENDENT",
+      "review_status": "MAIN_CHANNEL",
+      "source_channels": [
+        "PRICE_VOLUME"
+      ],
+      "stratum": "MV_Q1|TECH",
+      "ts_code": "T000002.SZ"
+    },
+    {
+      "aligned_return": null,
+      "as_of": "20260811",
+      "cluster_id": null,
+      "control_batch_id": null,
+      "entry_reasons": [
+        {
+          "channel": "PRICE_VOLUME",
+          "metric": "return_20d_rank",
+          "threshold": "TOP_8",
+          "value": 3
+        },
+        {
+          "channel": "INDUSTRY_VALUE_CHAIN",
+          "metric": "rotation_status_rank",
+          "threshold": "TOP_8",
+          "value": 1
+        }
+      ],
+      "exclusion_reason": null,
+      "flags": [],
+      "industry_key": "BANK",
+      "liquidity_eligibility": true,
+      "next_action": "U3_BATTERY_REVIEW",
+      "priority": "CHANNEL_INDEPENDENT",
+      "review_status": "MAIN_CHANNEL",
+      "source_channels": [
+        "PRICE_VOLUME",
+        "INDUSTRY_VALUE_CHAIN"
+      ],
+      "stratum": "MV_Q1|BANK",
+      "ts_code": "T000003.SZ"
+    },
+    {
+      "aligned_return": null,
+      "as_of": "20260811",
+      "cluster_id": null,
+      "control_batch_id": null,
+      "entry_reasons": [
+        {
+          "channel": "PRICE_VOLUME",
+          "metric": "return_20d_rank",
+          "threshold": "TOP_8",
+          "value": 4
+        }
+      ],
+      "exclusion_reason": null,
+      "flags": [],
+      "industry_key": "PHARMA",
+      "liquidity_eligibility": true,
+      "next_action": "U3_BATTERY_REVIEW",
+      "priority": "CHANNEL_INDEPENDENT",
+      "review_status": "MAIN_CHANNEL",
+      "source_channels": [
+        "PRICE_VOLUME"
+      ],
+      "stratum": "MV_Q1|PHARMA",
+      "ts_code": "T000004.SZ"
+    },
+    {
+      "aligned_return": null,
+      "as_of": "20260811",
+      "cluster_id": null,
+      "control_batch_id": null,
+      "entry_reasons": [
+        {
+          "channel": "PRICE_VOLUME",
+          "metric": "return_20d_rank",
+          "threshold": "TOP_8",
+          "value": 5
+        }
+      ],
+      "exclusion_reason": null,
+      "flags": [],
+      "industry_key": "TECH",
+      "liquidity_eligibility": true,
+      "next_action": "U3_BATTERY_REVIEW",
+      "priority": "CHANNEL_INDEPENDENT",
+      "review_status": "MAIN_CHANNEL",
+      "source_channels": [
+        "PRICE_VOLUME"
+      ],
+      "stratum": "MV_Q1|TECH",
+      "ts_code": "T000005.SZ"
+    },
+    {
+      "aligned_return": null,
+      "as_of": "20260811",
+      "cluster_id": null,
+      "control_batch_id": null,
+      "entry_reasons": [
+        {
+          "channel": "PRICE_VOLUME",
+          "metric": "return_20d_rank",
+          "threshold": "TOP_8",
+          "value": 6
+        },
+        {
+          "channel": "INDUSTRY_VALUE_CHAIN",
+          "metric": "rotation_status_rank",
+          "threshold": "TOP_8",
+          "value": 2
+        }
+      ],
+      "exclusion_reason": null,
+      "flags": [],
+      "industry_key": "BANK",
+      "liquidity_eligibility": true,
+      "next_action": "U3_BATTERY_REVIEW",
+      "priority": "CHANNEL_INDEPENDENT",
+      "review_status": "MAIN_CHANNEL",
+      "source_channels": [
+        "PRICE_VOLUME",
+        "INDUSTRY_VALUE_CHAIN"
+      ],
+      "stratum": "MV_Q1|BANK",
+      "ts_code": "T000006.SZ"
+    },
+    {
+      "aligned_return": null,
+      "as_of": "20260811",
+      "cluster_id": null,
+      "control_batch_id": null,
+      "entry_reasons": [
+        {
+          "channel": "PRICE_VOLUME",
+          "metric": "return_20d_rank",
+          "threshold": "TOP_8",
+          "value": 7
+        }
+      ],
+      "exclusion_reason": null,
+      "flags": [],
+      "industry_key": "PHARMA",
+      "liquidity_eligibility": true,
+      "next_action": "U3_BATTERY_REVIEW",
+      "priority": "CHANNEL_INDEPENDENT",
+      "review_status": "MAIN_CHANNEL",
+      "source_channels": [
+        "PRICE_VOLUME"
+      ],
+      "stratum": "MV_Q1|PHARMA",
+      "ts_code": "T000007.SZ"
+    },
+    {
+      "aligned_return": null,
+      "as_of": "20260811",
+      "cluster_id": null,
+      "control_batch_id": null,
+      "entry_reasons": [
+        {
+          "channel": "PRICE_VOLUME",
+          "metric": "return_20d_rank",
+          "threshold": "TOP_8",
+          "value": 8
+        }
+      ],
+      "exclusion_reason": null,
+      "flags": [],
+      "industry_key": "TECH",
+      "liquidity_eligibility": true,
+      "next_action": "U3_BATTERY_REVIEW",
+      "priority": "CHANNEL_INDEPENDENT",
+      "review_status": "MAIN_CHANNEL",
+      "source_channels": [
+        "PRICE_VOLUME"
+      ],
+      "stratum": "MV_Q1|TECH",
+      "ts_code": "T000008.SZ"
+    },
+    {
+      "aligned_return": null,
+      "as_of": "20260811",
+      "cluster_id": null,
+      "control_batch_id": null,
+      "entry_reasons": [
+        {
+          "channel": "INDUSTRY_VALUE_CHAIN",
+          "metric": "rotation_status_rank",
+          "threshold": "TOP_8",
+          "value": 3
+        }
+      ],
+      "exclusion_reason": null,
+      "flags": [],
+      "industry_key": "BANK",
+      "liquidity_eligibility": true,
+      "next_action": "U3_BATTERY_REVIEW",
+      "priority": "CHANNEL_INDEPENDENT",
+      "review_status": "MAIN_CHANNEL",
+      "source_channels": [
+        "INDUSTRY_VALUE_CHAIN"
+      ],
+      "stratum": "MV_Q1|BANK",
+      "ts_code": "T000009.SZ"
+    },
+    {
+      "aligned_return": null,
+      "as_of": "20260811",
+      "cluster_id": null,
+      "control_batch_id": "CTRL_20260811_v1",
+      "entry_reasons": [],
+      "exclusion_reason": null,
+      "flags": [
+        "NEGATIVE_CONTROL"
+      ],
+      "industry_key": "TECH",
+      "liquidity_eligibility": true,
+      "next_action": "U3_BATTERY_REVIEW",
+      "priority": "CHANNEL_INDEPENDENT",
+      "review_status": "RANDOM_CONTROL",
+      "source_channels": [],
+      "stratum": "MV_Q1|TECH",
+      "ts_code": "T000011.SZ"
+    },
+    {
+      "aligned_return": null,
+      "as_of": "20260811",
+      "cluster_id": null,
+      "control_batch_id": null,
+      "entry_reasons": [
+        {
+          "channel": "INDUSTRY_VALUE_CHAIN",
+          "metric": "rotation_status_rank",
+          "threshold": "TOP_8",
+          "value": 4
+        }
+      ],
+      "exclusion_reason": null,
+      "flags": [],
+      "industry_key": "BANK",
+      "liquidity_eligibility": true,
+      "next_action": "U3_BATTERY_REVIEW",
+      "priority": "CHANNEL_INDEPENDENT",
+      "review_status": "MAIN_CHANNEL",
+      "source_channels": [
+        "INDUSTRY_VALUE_CHAIN"
+      ],
+      "stratum": "MV_Q1|BANK",
+      "ts_code": "T000012.SZ"
+    },
+    {
+      "aligned_return": null,
+      "as_of": "20260811",
+      "cluster_id": null,
+      "control_batch_id": null,
+      "entry_reasons": [],
+      "exclusion_reason": null,
+      "flags": [
+        "UNVALIDATED_RELATIVE_PROXY"
+      ],
+      "industry_key": "PHARMA",
+      "liquidity_eligibility": true,
+      "next_action": "U3_BATTERY_REVIEW",
+      "priority": "CHANNEL_INDEPENDENT",
+      "review_status": "RESERVED_SLOW_BULL",
+      "source_channels": [],
+      "stratum": "MV_Q1|PHARMA",
+      "ts_code": "T000013.SZ"
+    },
+    {
+      "aligned_return": null,
+      "as_of": "20260811",
+      "cluster_id": null,
+      "control_batch_id": null,
+      "entry_reasons": [
+        {
+          "channel": "INDUSTRY_VALUE_CHAIN",
+          "metric": "rotation_status_rank",
+          "threshold": "TOP_8",
+          "value": 5
+        }
+      ],
+      "exclusion_reason": null,
+      "flags": [],
+      "industry_key": "BANK",
+      "liquidity_eligibility": true,
+      "next_action": "U3_BATTERY_REVIEW",
+      "priority": "CHANNEL_INDEPENDENT",
+      "review_status": "MAIN_CHANNEL",
+      "source_channels": [
+        "INDUSTRY_VALUE_CHAIN"
+      ],
+      "stratum": "MV_Q1|BANK",
+      "ts_code": "T000015.SZ"
+    },
+    {
+      "aligned_return": null,
+      "as_of": "20260811",
+      "cluster_id": null,
+      "control_batch_id": "CTRL_20260811_v1",
+      "entry_reasons": [],
+      "exclusion_reason": null,
+      "flags": [
+        "NEGATIVE_CONTROL"
+      ],
+      "industry_key": "PHARMA",
+      "liquidity_eligibility": true,
+      "next_action": "U3_BATTERY_REVIEW",
+      "priority": "CHANNEL_INDEPENDENT",
+      "review_status": "RANDOM_CONTROL",
+      "source_channels": [],
+      "stratum": "MV_Q1|PHARMA",
+      "ts_code": "T000016.SZ"
+    },
+    {
+      "aligned_return": null,
+      "as_of": "20260811",
+      "cluster_id": null,
+      "control_batch_id": null,
+      "entry_reasons": [
+        {
+          "channel": "INDUSTRY_VALUE_CHAIN",
+          "metric": "rotation_status_rank",
+          "threshold": "TOP_8",
+          "value": 6
+        }
+      ],
+      "exclusion_reason": null,
+      "flags": [],
+      "industry_key": "BANK",
+      "liquidity_eligibility": true,
+      "next_action": "U3_BATTERY_REVIEW",
+      "priority": "CHANNEL_INDEPENDENT",
+      "review_status": "MAIN_CHANNEL",
+      "source_channels": [
+        "INDUSTRY_VALUE_CHAIN"
+      ],
+      "stratum": "MV_Q1|BANK",
+      "ts_code": "T000018.SZ"
+    },
+    {
+      "aligned_return": null,
+      "as_of": "20260811",
+      "cluster_id": null,
+      "control_batch_id": null,
+      "entry_reasons": [
+        {
+          "channel": "INDUSTRY_VALUE_CHAIN",
+          "metric": "rotation_status_rank",
+          "threshold": "TOP_8",
+          "value": 7
+        }
+      ],
+      "exclusion_reason": null,
+      "flags": [],
+      "industry_key": "BANK",
+      "liquidity_eligibility": true,
+      "next_action": "U3_BATTERY_REVIEW",
+      "priority": "CHANNEL_INDEPENDENT",
+      "review_status": "MAIN_CHANNEL",
+      "source_channels": [
+        "INDUSTRY_VALUE_CHAIN"
+      ],
+      "stratum": "MV_Q2|BANK",
+      "ts_code": "T000021.SZ"
+    },
+    {
+      "aligned_return": null,
+      "as_of": "20260811",
+      "cluster_id": null,
+      "control_batch_id": null,
+      "entry_reasons": [],
+      "exclusion_reason": null,
+      "flags": [
+        "UNVALIDATED_RELATIVE_PROXY"
+      ],
+      "industry_key": "TECH",
+      "liquidity_eligibility": true,
+      "next_action": "U3_BATTERY_REVIEW",
+      "priority": "CHANNEL_INDEPENDENT",
+      "review_status": "RESERVED_SLOW_BULL",
+      "source_channels": [],
+      "stratum": "MV_Q2|TECH",
+      "ts_code": "T000023.SZ"
+    },
+    {
+      "aligned_return": null,
+      "as_of": "20260811",
+      "cluster_id": null,
+      "control_batch_id": null,
+      "entry_reasons": [
+        {
+          "channel": "INDUSTRY_VALUE_CHAIN",
+          "metric": "rotation_status_rank",
+          "threshold": "TOP_8",
+          "value": 8
+        }
+      ],
+      "exclusion_reason": null,
+      "flags": [],
+      "industry_key": "BANK",
+      "liquidity_eligibility": true,
+      "next_action": "U3_BATTERY_REVIEW",
+      "priority": "CHANNEL_INDEPENDENT",
+      "review_status": "MAIN_CHANNEL",
+      "source_channels": [
+        "INDUSTRY_VALUE_CHAIN"
+      ],
+      "stratum": "MV_Q2|BANK",
+      "ts_code": "T000024.SZ"
+    },
+    {
+      "aligned_return": null,
+      "as_of": "20260811",
+      "cluster_id": null,
+      "control_batch_id": null,
+      "entry_reasons": [],
+      "exclusion_reason": null,
+      "flags": [
+        "UNVALIDATED_RELATIVE_PROXY"
+      ],
+      "industry_key": "PHARMA",
+      "liquidity_eligibility": true,
+      "next_action": "U3_BATTERY_REVIEW",
+      "priority": "CHANNEL_INDEPENDENT",
+      "review_status": "RESERVED_SLOW_BULL",
+      "source_channels": [],
+      "stratum": "MV_Q2|PHARMA",
+      "ts_code": "T000028.SZ"
+    },
+    {
+      "aligned_return": null,
+      "as_of": "20260811",
+      "cluster_id": null,
+      "control_batch_id": null,
+      "entry_reasons": [],
+      "exclusion_reason": null,
+      "flags": [
+        "UNVALIDATED_RELATIVE_PROXY"
+      ],
+      "industry_key": "TECH",
+      "liquidity_eligibility": true,
+      "next_action": "U3_BATTERY_REVIEW",
+      "priority": "CHANNEL_INDEPENDENT",
+      "review_status": "RESERVED_CONTRARIAN",
+      "source_channels": [],
+      "stratum": "MV_Q2|TECH",
+      "ts_code": "T000032.SZ"
+    },
+    {
+      "aligned_return": null,
+      "as_of": "20260811",
+      "cluster_id": null,
+      "control_batch_id": null,
+      "entry_reasons": [],
+      "exclusion_reason": null,
+      "flags": [
+        "UNVALIDATED_RELATIVE_PROXY"
+      ],
+      "industry_key": "BANK",
+      "liquidity_eligibility": true,
+      "next_action": "U3_BATTERY_REVIEW",
+      "priority": "CHANNEL_INDEPENDENT",
+      "review_status": "RESERVED_CONTRARIAN",
+      "source_channels": [],
+      "stratum": "MV_Q2|BANK",
+      "ts_code": "T000033.SZ"
+    },
+    {
+      "aligned_return": null,
+      "as_of": "20260811",
+      "cluster_id": null,
+      "control_batch_id": null,
+      "entry_reasons": [],
+      "exclusion_reason": null,
+      "flags": [
+        "UNVALIDATED_RELATIVE_PROXY"
+      ],
+      "industry_key": "PHARMA",
+      "liquidity_eligibility": true,
+      "next_action": "U3_BATTERY_REVIEW",
+      "priority": "CHANNEL_INDEPENDENT",
+      "review_status": "RESERVED_CONTRARIAN",
+      "source_channels": [],
+      "stratum": "MV_Q2|PHARMA",
+      "ts_code": "T000034.SZ"
+    },
+    {
+      "aligned_return": null,
+      "as_of": "20260811",
+      "cluster_id": null,
+      "control_batch_id": "CTRL_20260811_v1",
+      "entry_reasons": [],
+      "exclusion_reason": null,
+      "flags": [
+        "NEGATIVE_CONTROL"
+      ],
+      "industry_key": "BANK",
+      "liquidity_eligibility": true,
+      "next_action": "U3_BATTERY_REVIEW",
+      "priority": "CHANNEL_INDEPENDENT",
+      "review_status": "RANDOM_CONTROL",
+      "source_channels": [],
+      "stratum": "MV_Q2|BANK",
+      "ts_code": "T000036.SZ"
+    },
+    {
+      "aligned_return": null,
+      "as_of": "20260811",
+      "cluster_id": null,
+      "control_batch_id": null,
+      "entry_reasons": [
+        {
+          "channel": "E1_EVENT",
+          "metric": "red_flag_verdict",
+          "threshold": "RED_FLAG",
+          "value": "RED_FLAG"
+        }
+      ],
+      "exclusion_reason": "E1_RED_FLAG_OVERRIDES_ALL_POSITIVE_CHANNELS",
+      "flags": [
+        "RED_FLAG"
+      ],
+      "industry_key": "BANK",
+      "liquidity_eligibility": true,
+      "next_action": "E1_REVIEW_ONLY",
+      "priority": "RED_FLAG_ARCHIVE",
+      "review_status": "EXCLUDED_RED_FLAG",
+      "source_channels": [
+        "E1_EVENT"
+      ],
+      "stratum": "MV_Q5|BANK",
+      "ts_code": "T000090.SZ"
+    }
+  ],
+  "rows_hash": "0b972f25056a908b7155fe7c16e5661c85d45dc1ceb3a47f6bbef1a2ddd371d0",
+  "rule_version": "research_funnel_v1",
+  "schema": "ar.candidate_review",
+  "schema_version": "1.0",
+  "status": "PARTIAL"
+}

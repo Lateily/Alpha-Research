@@ -1,0 +1,311 @@
+{
+  "as_of": "20260811",
+  "authority": {
+    "claim_allowed": false,
+    "no_trade_flag": true,
+    "paper_order_authority": false,
+    "production_authority": false,
+    "trade_authority": false
+  },
+  "candidate_rows": [
+    {
+      "allowed_for_u4_packet": false,
+      "battery_dimension_verdicts": {
+        "估值": "MID",
+        "技术面": "BEAR",
+        "消息面": "NORMAL",
+        "行情": "MID",
+        "资金": "OUTFLOW"
+      },
+      "blocked_reasons": [
+        "E1_RED_FLAG_ACTIVE"
+      ],
+      "candidate_status": "MAIN_CHANNEL",
+      "causal_cluster_id": "UNAVAILABLE",
+      "causal_cluster_identity_state": "UNAVAILABLE_PENDING",
+      "cohort_id": "UNAVAILABLE",
+      "cohort_identity_state": "UNAVAILABLE_UNBOUND",
+      "display_name": "Name 2",
+      "method_version": "RESEARCH_CLOSED_LOOP_V1",
+      "missing_evidence": [
+        "causal_cluster_id",
+        "cohort_id"
+      ],
+      "peak_earnings": {
+        "flag": null,
+        "gm_vs_5y_median": null,
+        "needs_normalized_bridge": null,
+        "reason": "CYCLICAL_FLAG_NOT_COMPUTED",
+        "roe_vs_5y_median": null,
+        "source_hash": null
+      },
+      "positive_channels": [
+        "PRICE_VOLUME"
+      ],
+      "quality_status": "REVISE_REQUIRED",
+      "question_for_junyan": null,
+      "red_flag_channels": [
+        "FINANCIAL_RED_FLAG"
+      ],
+      "ts_code": "T000002.SZ",
+      "u2_candidate_row_hash": "sha256:494622f6e454f6a463a07d9d24932ea1c79bd8e4427a5aa1a8155bf7d42c649a",
+      "u3_battery_row_hash": "sha256:8e1ea12313f110343cafc25a5d05add91c9f4e2b362381b3ee44c280b8b1fff3"
+    },
+    {
+      "allowed_for_u4_packet": true,
+      "battery_dimension_verdicts": {
+        "估值": "MID",
+        "技术面": "BEAR",
+        "消息面": "NORMAL",
+        "行情": "MID",
+        "资金": "OUTFLOW"
+      },
+      "blocked_reasons": [],
+      "candidate_status": "MAIN_CHANNEL",
+      "causal_cluster_id": "UNAVAILABLE",
+      "causal_cluster_identity_state": "UNAVAILABLE_PENDING",
+      "cohort_id": "UNAVAILABLE",
+      "cohort_identity_state": "UNAVAILABLE_UNBOUND",
+      "display_name": "Name 5",
+      "method_version": "RESEARCH_CLOSED_LOOP_V1",
+      "missing_evidence": [
+        "causal_cluster_id",
+        "cohort_id"
+      ],
+      "peak_earnings": {
+        "flag": null,
+        "gm_vs_5y_median": null,
+        "needs_normalized_bridge": null,
+        "reason": "CYCLICAL_FLAG_NOT_COMPUTED",
+        "roe_vs_5y_median": null,
+        "source_hash": null
+      },
+      "positive_channels": [
+        "PRICE_VOLUME"
+      ],
+      "quality_status": "WARN",
+      "question_for_junyan": "是否将 Name 5 (T000005.SZ) 纳入离线 workflow-debug 深研？",
+      "red_flag_channels": [],
+      "ts_code": "T000005.SZ",
+      "u2_candidate_row_hash": "sha256:a049ec3127000fa58f0aaadcbdcc485a6a6f81f5d1068265c0a94244df877507",
+      "u3_battery_row_hash": "sha256:8772e6b229072cf80fddbf9438458bedf2a4e81aafe63c1baa227d3386976e3a"
+    },
+    {
+      "allowed_for_u4_packet": true,
+      "battery_dimension_verdicts": {
+        "估值": "MID",
+        "技术面": "BEAR",
+        "消息面": "NORMAL",
+        "行情": "MID",
+        "资金": "OUTFLOW"
+      },
+      "blocked_reasons": [],
+      "candidate_status": "MAIN_CHANNEL",
+      "causal_cluster_id": "UNAVAILABLE",
+      "causal_cluster_identity_state": "UNAVAILABLE_PENDING",
+      "cohort_id": "UNAVAILABLE",
+      "cohort_identity_state": "UNAVAILABLE_UNBOUND",
+      "display_name": "Name 8",
+      "method_version": "RESEARCH_CLOSED_LOOP_V1",
+      "missing_evidence": [
+        "causal_cluster_id",
+        "cohort_id"
+      ],
+      "peak_earnings": {
+        "flag": null,
+        "gm_vs_5y_median": null,
+        "needs_normalized_bridge": null,
+        "reason": "CYCLICAL_FLAG_NOT_COMPUTED",
+        "roe_vs_5y_median": null,
+        "source_hash": null
+      },
+      "positive_channels": [
+        "PRICE_VOLUME"
+      ],
+      "quality_status": "WARN",
+      "question_for_junyan": "是否将 Name 8 (T000008.SZ) 纳入离线 workflow-debug 深研？",
+      "red_flag_channels": [],
+      "ts_code": "T000008.SZ",
+      "u2_candidate_row_hash": "sha256:696da0f771e88096c4dd71c53f30fd75f9d4115e3b78eb693146f8fc3da5d86a",
+      "u3_battery_row_hash": "sha256:dae5ccf9285e92000168a5c948e3a1f990866ff6da317edc675b741de047f4c2"
+    },
+    {
+      "allowed_for_u4_packet": false,
+      "battery_dimension_verdicts": {
+        "估值": "MID",
+        "技术面": "BEAR",
+        "消息面": "NORMAL",
+        "行情": "MID",
+        "资金": "OUTFLOW"
+      },
+      "blocked_reasons": [
+        "NO_POSITIVE_CHANNEL",
+        "RANDOM_CONTROL_NOT_SELECTABLE"
+      ],
+      "candidate_status": "RANDOM_CONTROL",
+      "causal_cluster_id": "UNAVAILABLE",
+      "causal_cluster_identity_state": "UNAVAILABLE_PENDING",
+      "cohort_id": "UNAVAILABLE",
+      "cohort_identity_state": "UNAVAILABLE_UNBOUND",
+      "display_name": "Name 11",
+      "method_version": "RESEARCH_CLOSED_LOOP_V1",
+      "missing_evidence": [
+        "causal_cluster_id",
+        "cohort_id"
+      ],
+      "peak_earnings": {
+        "flag": null,
+        "gm_vs_5y_median": null,
+        "needs_normalized_bridge": null,
+        "reason": "CYCLICAL_FLAG_NOT_COMPUTED",
+        "roe_vs_5y_median": null,
+        "source_hash": null
+      },
+      "positive_channels": [],
+      "quality_status": "DATA_BLOCKED",
+      "question_for_junyan": null,
+      "red_flag_channels": [],
+      "ts_code": "T000011.SZ",
+      "u2_candidate_row_hash": "sha256:f4226d31492060660fb4dbdfbe52672e90d68f34f00ec76d273fe7865a944d99",
+      "u3_battery_row_hash": "sha256:bb1df5c7f9e8902993fd4c4499467f0dc34035e3402d1144d333c9ea8f080865"
+    },
+    {
+      "allowed_for_u4_packet": false,
+      "battery_dimension_verdicts": {
+        "估值": "MID",
+        "技术面": "BEAR",
+        "消息面": "NORMAL",
+        "行情": "MID",
+        "资金": "OUTFLOW"
+      },
+      "blocked_reasons": [
+        "NO_POSITIVE_CHANNEL"
+      ],
+      "candidate_status": "RESERVED_SLOW_BULL",
+      "causal_cluster_id": "UNAVAILABLE",
+      "causal_cluster_identity_state": "UNAVAILABLE_PENDING",
+      "cohort_id": "UNAVAILABLE",
+      "cohort_identity_state": "UNAVAILABLE_UNBOUND",
+      "display_name": "Name 23",
+      "method_version": "RESEARCH_CLOSED_LOOP_V1",
+      "missing_evidence": [
+        "causal_cluster_id",
+        "cohort_id"
+      ],
+      "peak_earnings": {
+        "flag": null,
+        "gm_vs_5y_median": null,
+        "needs_normalized_bridge": null,
+        "reason": "CYCLICAL_FLAG_NOT_COMPUTED",
+        "roe_vs_5y_median": null,
+        "source_hash": null
+      },
+      "positive_channels": [],
+      "quality_status": "DATA_BLOCKED",
+      "question_for_junyan": null,
+      "red_flag_channels": [],
+      "ts_code": "T000023.SZ",
+      "u2_candidate_row_hash": "sha256:3ffe5eb521b209d74e52440f78365fb967ee30d261a95874107c5d2a983e7be0",
+      "u3_battery_row_hash": "sha256:c1fa3f0a4d700b5d5f8dd28b9663e0cfbdd6197d2deb07c163ab2d1173abf489"
+    },
+    {
+      "allowed_for_u4_packet": false,
+      "battery_dimension_verdicts": {
+        "估值": "MID",
+        "技术面": "BEAR",
+        "消息面": "NORMAL",
+        "行情": "MID",
+        "资金": "OUTFLOW"
+      },
+      "blocked_reasons": [
+        "NO_POSITIVE_CHANNEL"
+      ],
+      "candidate_status": "RESERVED_CONTRARIAN",
+      "causal_cluster_id": "UNAVAILABLE",
+      "causal_cluster_identity_state": "UNAVAILABLE_PENDING",
+      "cohort_id": "UNAVAILABLE",
+      "cohort_identity_state": "UNAVAILABLE_UNBOUND",
+      "display_name": "Name 32",
+      "method_version": "RESEARCH_CLOSED_LOOP_V1",
+      "missing_evidence": [
+        "causal_cluster_id",
+        "cohort_id"
+      ],
+      "peak_earnings": {
+        "flag": null,
+        "gm_vs_5y_median": null,
+        "needs_normalized_bridge": null,
+        "reason": "CYCLICAL_FLAG_NOT_COMPUTED",
+        "roe_vs_5y_median": null,
+        "source_hash": null
+      },
+      "positive_channels": [],
+      "quality_status": "DATA_BLOCKED",
+      "question_for_junyan": null,
+      "red_flag_channels": [],
+      "ts_code": "T000032.SZ",
+      "u2_candidate_row_hash": "sha256:d45276bf7215e5a900107e9fb451cb72e7ae1a3fba350b7fe423222c7ff70e68",
+      "u3_battery_row_hash": "sha256:422106dcf09fd3e7c52b4e94d8ed493716ac70e0eb039ad35c5cec71d7fa8b1f"
+    }
+  ],
+  "diagnostic": {
+    "blocker_codes": [
+      "E1_RED_FLAG_ACTIVE",
+      "NO_POSITIVE_CHANNEL",
+      "RANDOM_CONTROL_NOT_SELECTABLE"
+    ],
+    "evidence_rows_checked": 6,
+    "evidence_rows_hash_verified": true,
+    "positive_channel_rows": 3,
+    "receipt_self_report_checked": true,
+    "red_flag_only_rows": 1,
+    "tool": "u4_pre_decision.py",
+    "tool_version": "0.1",
+    "u3_complete_rows": 6,
+    "u4_ready_rows": 2
+  },
+  "generated_at": "2026-08-12T09:00:00+00:00",
+  "method_version": "RESEARCH_CLOSED_LOOP_V1",
+  "packet_hash": "sha256:c9f9cb0813417add351752f7c1e6933cf30ea1f47058f256abb1ef1cc3fc74a3",
+  "packet_summary": {
+    "allowed_for_review_count": 2,
+    "blocked_count": 4,
+    "candidate_count": 6,
+    "data_blocked_count": 3,
+    "red_flag_count": 1,
+    "same_day_hash": "sha256:ee031747405398449899a569e0d7addecc319f1b1c888dfe6bc831e718ddc482"
+  },
+  "packet_version": "0.1",
+  "schema": "ar.u4_pre_decision_packet.v0",
+  "selection_boundary": {
+    "allowed_selected_counts": [
+      0,
+      3,
+      4,
+      5
+    ],
+    "human_selection_authority": "HUMAN_JUNYAN_ONLY",
+    "machine_selection_authority": "NONE",
+    "zero_selection_meaning": "NO_TRADE_NO_QUEUE"
+  },
+  "source_publication": {
+    "daily_source_status": "PUBLISHED",
+    "pending_sources": [],
+    "quarterly_source_status": "PUBLISHED",
+    "retry_after_utc": null
+  },
+  "source_refs": {
+    "diagnostic_report_hash": "sha256:a0d71afb54814ceba27c6e93709268c00153b963fe7eab02a937c82227b20b55",
+    "diagnostic_report_ref": "u4_pre_decision_diagnostic.json",
+    "feature_store_health_hash": "sha256:2dbd8331d2784614cad074f0a42b98a45c7b114d924b1d4261eda63f121824df",
+    "feature_store_health_ref": "public/data/v2/feature_store_health.json",
+    "funnel_health_hash": "sha256:b83ecfb24edea91c604e8dc13c1265d7d4f7de77e735c7693a1ac8ed6940542c",
+    "funnel_health_ref": "public/data/v2/funnel_health.json",
+    "same_day_bundle_hash": "sha256:a58513c5b7d976a118b30573c97f074ff087f5f79860ecd46ffde283b4f3eac5",
+    "same_day_bundle_ref": "data_history/funnel/20260811/20260811_163500_1786000000000000000_predec01",
+    "stage_receipts_hash": "sha256:b7709a42390d0d3a07ff6a06ef992c1ff0b700959ef493bd1325752f27d1033c",
+    "u2_candidate_pool_hash": "sha256:0b972f25056a908b7155fe7c16e5661c85d45dc1ceb3a47f6bbef1a2ddd371d0",
+    "u3_battery_hash": "sha256:71916a8586401255156a8f25607461ca8ee8d320eda6805cfbf82fe6969735b7"
+  },
+  "status": "READY_FOR_JUNYAN_REVIEW"
+}

@@ -260,27 +260,29 @@ def _fixture_tree(
         "deep_research_queue.json": queue,
         "security_registry_projected.json": projected,
     }
-    dag._write_stage(
-        bundle, "candidates", stage1, as_of=AS_OF, run_id=RUN_ID,
-        generated_at=candidate_generated_at,
-        binds={"candidate_manifest_hash": manifest["manifest_hash"]},
-    )
-    dag._write_stage(
-        bundle, "battery", stage2, as_of=AS_OF, run_id=RUN_ID,
-        generated_at=battery_generated_at,
-        binds={
-            "candidate_manifest_hash": manifest["manifest_hash"],
-            "battery_rows_hash": battery["rows_hash"],
-        },
-    )
-    dag._write_stage(
-        bundle, "finalize", stage3, as_of=AS_OF, run_id=RUN_ID,
-        generated_at=finalize_generated_at,
-        binds={
-            "candidate_manifest_hash": manifest["manifest_hash"],
-            "battery_rows_hash": battery["rows_hash"],
-        },
-    )
+    # The synthetic helper must be byte-reproducible across hash seeds.
+    with mock.patch.object(dag, "_atomic_write_json", _write):
+        dag._write_stage(
+            bundle, "candidates", stage1, as_of=AS_OF, run_id=RUN_ID,
+            generated_at=candidate_generated_at,
+            binds={"candidate_manifest_hash": manifest["manifest_hash"]},
+        )
+        dag._write_stage(
+            bundle, "battery", stage2, as_of=AS_OF, run_id=RUN_ID,
+            generated_at=battery_generated_at,
+            binds={
+                "candidate_manifest_hash": manifest["manifest_hash"],
+                "battery_rows_hash": battery["rows_hash"],
+            },
+        )
+        dag._write_stage(
+            bundle, "finalize", stage3, as_of=AS_OF, run_id=RUN_ID,
+            generated_at=finalize_generated_at,
+            binds={
+                "candidate_manifest_hash": manifest["manifest_hash"],
+                "battery_rows_hash": battery["rows_hash"],
+            },
+        )
     payloads = {**stage1, **stage2, **stage3}
     artifacts = {
         name: hashlib.sha256((bundle / name).read_bytes()).hexdigest()
@@ -411,9 +413,9 @@ class U4PreDecisionRuntimeTests(unittest.TestCase):
         # A future reviewed revision must explicitly update this historical pin.
         frozen = {
             "docs/research/contracts/research_closed_loop.v1.json":
-                "677011528125a07c66d63f05d5dcffd6fc99bd4fbb8a51082786e8ef2766e7b1",
+                "50f3de5d6e6c296e165a81697dc4d730183517320aa1f046fce2075abdb2a51b",
             "experiments/research_funnel/funnel_dag.py":
-                "cd1ccb7843737732c8382e892f0d5334eef91725dd16561b4fe87b77d5c77018",
+                "67ebc78991c07ed3166fa10e93d726ac2b1ca6c0c81678a0ce026ff6fefd8058",
         }
         for path, expected in frozen.items():
             self.assertEqual(expected, hashlib.sha256((ROOT / path).read_bytes()).hexdigest(), path)

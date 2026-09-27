@@ -28,7 +28,7 @@ GENERATED_AT = "2026-08-12T06:00:00+00:00"
 def registry_fixture(n: int = 30) -> dict:
     rows = []
     for index in range(1, n + 1):
-        code = f"{index:06d}.SZ"
+        code = f"T{index:06d}.SZ"
         rows.append({
             "ts_code": code,
             "name": f"Name {index}",
@@ -530,7 +530,7 @@ class ResearchFunnelClosureTests(unittest.TestCase):
             _, _, _, candidates = build_candidates()
         except fp.FunnelError as exc:
             self.fail(f"E1-only red flags must be represented as exclusions: {exc}")
-        last = f"{30:06d}.SZ"
+        last = f"T{30:06d}.SZ"
         row = next(row for row in candidates["rows"] if row["ts_code"] == last)
         self.assertEqual(row["review_status"], "EXCLUDED_RED_FLAG")
         self.assertEqual(row["next_action"], "E1_REVIEW_ONLY")
