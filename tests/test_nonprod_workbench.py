@@ -153,6 +153,24 @@ class WorkbenchTests(unittest.TestCase):
         for host in ("0.0.0.0", "::", "192.168.1.5", "public.example"):
             self.rejected(lambda: wb.serve_host(host), "TEAM_ACCESS_DISABLED_LOOPBACK_ONLY")
 
+    def test_private_origin_and_owner_must_be_exact(self):
+        self.assertIsNone(wb.private_access(None, None))
+        for origin in ("http://years.tail78c561.ts.net:8443", "https://example.com", "https://years.tail78c561.ts.net:8443/path", "https://years.tail78c561.ts.net:8443@evil.example"):
+            self.rejected(lambda: wb.private_access(origin, "owner@example.com"), "PRIVATE_HTTPS_ORIGIN_REQUIRED")
+        self.rejected(lambda: wb.private_access("https://years.tail78c561.ts.net:8443", None), "EXACT_OWNER_LOGIN_REQUIRED")
+        self.rejected(lambda: wb.private_access(None, "owner@example.com"), "PRIVATE_HTTPS_ORIGIN_REQUIRED")
+
+    def test_private_owner_guard_rejects_foreign_and_ambiguous_identity(self):
+        private = wb.private_access("https://years.tail78c561.ts.net:8443", "owner@example.com")
+        headers = Message()
+        headers["Tailscale-User-Login"] = "owner@example.com"
+        private.check(headers, "127.0.0.1")
+        self.rejected(lambda: private.check(headers, "100.109.27.54"), "LOOPBACK_PROXY_REQUIRED")
+        headers.replace_header("Tailscale-User-Login", "attacker@example.com")
+        self.rejected(lambda: private.check(headers, "127.0.0.1"), "PRIVATE_OWNER_REQUIRED")
+        headers["Tailscale-User-Login"] = "owner@example.com"
+        self.rejected(lambda: private.check(headers, "127.0.0.1"), "AMBIGUOUS_SECURITY_HEADER")
+
     def test_cross_origin_write_refused(self):
         headers = {"Host": "127.0.0.1:8766", "Origin": "https://untrusted.example", "Cookie": "ar_workbench=local-test"}
         self.rejected(lambda: wb.authorize(headers, "http://127.0.0.1:8766", "local-test", True), "SAME_ORIGIN_REQUIRED")
@@ -169,21 +187,36 @@ class WorkbenchTests(unittest.TestCase):
         headers["Cookie"] = "ar_workbench=other-session"
         self.rejected(lambda: wb.authorize(headers, "http://127.0.0.1:8766", "local-test", True), "LOCAL_SESSION_REQUIRED")
 
-    def http(self, path, body=None, extra_headers=None):
+    def http(self, path, body=None, extra_headers=None, private=None):
         assets = {"/": (b"test index", "text/html"), "/index.html": (b"test index", "text/html")}
-        Handler = wb.make_handler(self.store, assets, "http://127.0.0.1:8766", "local-test")
+        origin = private.origin if private else "http://127.0.0.1:8766"
+        Handler = wb.make_handler(self.store, assets, origin, "local-test", private=private)
         handler = object.__new__(Handler)
         handler.path = path
         handler.headers = Message()
         raw = wb.canonical(body).encode() if body is not None else b""
-        headers = {"Host": "127.0.0.1:8766", "Origin": "http://127.0.0.1:8766", "Cookie": "ar_workbench=local-test", "Content-Type": "application/json", "Content-Length": str(len(raw))}
+        headers = {"Host": wb.urlsplit(origin).netloc, "Origin": origin, "Cookie": "ar_workbench=local-test", "Content-Type": "application/json", "Content-Length": str(len(raw))}
         headers.update(extra_headers or {})
         for key, value in headers.items():
             handler.headers[key] = value
+        handler.client_address = ("127.0.0.1", 12345)
         handler.rfile, handler.wfile = io.BytesIO(raw), io.BytesIO()
         handler.request_version, handler.requestline, handler.command = "HTTP/1.1", "test", "POST" if body is not None else "GET"
         (handler.do_POST if body is not None else handler.do_GET)()
         return handler.wfile.getvalue()
+
+    def test_private_http_requires_owner_before_session_or_dispatch(self):
+        private = wb.private_access("https://years.tail78c561.ts.net:8443", "owner@example.com")
+        owner = {"Tailscale-User-Login": "owner@example.com"}
+        self.assertIn(b"403 Forbidden", self.http("/", private=private))
+        self.assertIn(b"403 Forbidden", self.http("/api/state", private=private))
+        self.assertIn(b"403 Forbidden", self.http("/api/gateway/probe", request(), private=private))
+        self.assertIn(b"200 OK", self.http("/", extra_headers=owner, private=private))
+        self.assertIn(b"HttpOnly; SameSite=Strict; Path=/; Secure", self.http("/", extra_headers=owner, private=private))
+        self.assertIn(b"NONPRODUCTION_PRIVATE", self.http("/api/state", extra_headers=owner, private=private))
+        self.assertIn(b"403 Forbidden", self.http("/api/state", extra_headers={"Tailscale-User-Login": "other@example.com"}, private=private))
+        self.assertIn(b"403 Forbidden", self.http("/api/gateway/probe", request(), extra_headers={**owner, "Origin": "https://evil.example"}, private=private))
+        self.assertEqual(self.store.snapshot()["receipts"], [])
 
     def test_http_real_dispatch_security_and_roundtrip(self):
         raw = self.http("/api/gateway/probe", request())

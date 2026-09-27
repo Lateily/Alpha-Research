@@ -1,4 +1,4 @@
-"""Loopback-only deployment workbench. No live inference or production executor.
+"""Loopback workbench with optional owner-only Tailscale Serve access.
 
 The local browser session is NOT Junyan authentication. Drafts and receipts are
 nonproduction records, not approvals, research evidence, or formal ledgers.
@@ -24,6 +24,7 @@ from adapters.base import AgentRequest
 from adapters.deepseek import DEFAULT_MODEL, DeepSeekAdapter
 import workbench_research as research
 import workbench_workspace as workspace
+import workbench_jev_shadow as shadow
 
 ROOT = Path(__file__).resolve().parents[2]
 PROMPT_VERSION = "workbench_contract_smoke_v1"
@@ -68,10 +69,10 @@ def decode_json(raw: bytes):
         raise WorkbenchError("INVALID_JSON") from None
 
 
-def policy():
+def policy(private=False):
     return {
-        "environment": "NONPRODUCTION_LOCAL",
-        "identity": "LOCAL_BROWSER_SESSION_NOT_HUMAN_AUTHENTICATION",
+        "environment": "NONPRODUCTION_PRIVATE" if private else "NONPRODUCTION_LOCAL",
+        "identity": "TAILSCALE_OWNER_SESSION_NOT_RESEARCH_APPROVAL" if private else "LOCAL_BROWSER_SESSION_NOT_HUMAN_AUTHENTICATION",
         "final_authority_owner": "Junyan",
         "provider": "deepseek", "configured_model": DEFAULT_MODEL,
         "network_policy": "OFFLINE", "paid_calls_enabled": False,
@@ -83,7 +84,7 @@ def policy():
 
 
 def require_capability(capability):
-    if capability not in {"offline_probe", "save_deployment_draft", "research_replay"}:
+    if capability not in {"offline_probe", "save_deployment_draft", "research_replay", "jev_u4_shadow_fixture"}:
         raise WorkbenchError("CAPABILITY_DISABLED", 403)
 
 
@@ -220,7 +221,7 @@ class Store:
             db.execute("INSERT INTO receipts VALUES (?, ?, ?)", (payload["command_id"], request_hash, canonical(receipt)))
         return {"disposition": "CREATED", "receipt": receipt}
 
-    def snapshot(self):
+    def snapshot(self, private=False):
         with self.connect() as db:
             revision, config = self.current(db)
             rows = db.execute("SELECT receipt FROM receipts ORDER BY rowid DESC").fetchall()
@@ -234,10 +235,11 @@ class Store:
             except (research.ReplayError, WorkbenchError, OSError, ValueError):
                 runs.append({"command_id": command_id, "status": "INTEGRITY_ERROR", **research.boundary(), "stages": [], "artifacts": {}})
         return {
-            "schema": "ar-workbench-state.v1", "policy": policy(),
+            "schema": "ar-workbench-state.v1", "policy": policy(private),
             "revision": revision, "config": config, "readiness": readiness(config),
             "receipts": [json.loads(row[0]) for row in rows],
             "research_runs": runs,
+            "jev_u4_shadow_runs": shadow.list_runs(self),
         }
 
     def research_directory(self, command_id):
@@ -296,6 +298,39 @@ def authorize(headers, origin, session, write=False):
         raise WorkbenchError("LOCAL_SESSION_REQUIRED", 403)
 
 
+class PrivateAccess:
+    """Serve identity is access control, never a research approval signature."""
+
+    def __init__(self, origin, owner_login):
+        if not isinstance(origin, str) or not re.fullmatch(
+            r"https://[a-z0-9]+(?:-[a-z0-9]+)*\.[a-z0-9]+(?:-[a-z0-9]+)*\.ts\.net(?::[1-9][0-9]{0,4})?", origin
+        ):
+            raise WorkbenchError("PRIVATE_HTTPS_ORIGIN_REQUIRED")
+        try:
+            urlsplit(origin).port
+        except ValueError:
+            raise WorkbenchError("PRIVATE_HTTPS_ORIGIN_REQUIRED") from None
+        if not isinstance(owner_login, str) or not re.fullmatch(r"[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9.-]+", owner_login):
+            raise WorkbenchError("EXACT_OWNER_LOGIN_REQUIRED")
+        self.origin, self.owner_login = origin, owner_login
+
+    def check(self, headers, peer):
+        if peer != "127.0.0.1":
+            raise WorkbenchError("LOOPBACK_PROXY_REQUIRED", 403)
+        for name in ("Host", "Origin", "Cookie", "Sec-Fetch-Site", "Tailscale-User-Login"):
+            if len(headers.get_all(name, [])) > 1:
+                raise WorkbenchError("AMBIGUOUS_SECURITY_HEADER", 403)
+        login = headers.get("Tailscale-User-Login", "")
+        if not secrets.compare_digest(login.encode("utf-8"), self.owner_login.encode("utf-8")):
+            raise WorkbenchError("PRIVATE_OWNER_REQUIRED", 403)
+
+
+def private_access(origin, owner_login):
+    if origin is None and owner_login is None:
+        return None
+    return PrivateAccess(origin, owner_login)
+
+
 def serve_host(host):
     if host != "127.0.0.1":
         raise WorkbenchError("TEAM_ACCESS_DISABLED_LOOPBACK_ONLY", 403)
@@ -316,7 +351,7 @@ def service_lock(directory):
 
 
 def dispatch(store, path, payload):
-    operations = {"/api/gateway/probe": "offline_probe", "/api/deployment-draft": "save_deployment_draft", "/api/research/replay": "research_replay"}
+    operations = {"/api/gateway/probe": "offline_probe", "/api/deployment-draft": "save_deployment_draft", "/api/research/replay": "research_replay", "/api/jev-u4-shadow/run": "jev_u4_shadow_fixture"}
     capability = operations.get(path, "disabled")
     require_capability(capability)
     if capability == "offline_probe":
@@ -325,6 +360,8 @@ def dispatch(store, path, payload):
         return store.save_config(payload)
     if capability == "research_replay":
         return store.replay(payload)
+    if capability == "jev_u4_shadow_fixture":
+        return shadow.run_synthetic(store, payload)
     raise WorkbenchError("UNKNOWN_OPERATION", 404)
 
 
@@ -344,7 +381,7 @@ def load_assets(directory):
     return assets
 
 
-def make_handler(store, assets, origin, session, system=None):
+def make_handler(store, assets, origin, session, system=None, private=None):
     class Handler(BaseHTTPRequestHandler):
         def setup(self):
             super().setup()
@@ -363,12 +400,15 @@ def make_handler(store, assets, origin, session, system=None):
             self.send_header("Referrer-Policy", "no-referrer")
             self.send_header("Content-Security-Policy", "default-src 'self'; connect-src 'self'; img-src 'self' data:; style-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'")
             if cookie:
-                self.send_header("Set-Cookie", f"ar_workbench={session}; HttpOnly; SameSite=Strict; Path=/")
+                secure = "; Secure" if private is not None else ""
+                self.send_header("Set-Cookie", f"ar_workbench={session}; HttpOnly; SameSite=Strict; Path=/" + secure)
             self.end_headers()
             self.wfile.write(raw)
 
         def do_GET(self):
             try:
+                if private is not None:
+                    private.check(self.headers, self.client_address[0])
                 # Only the exact local entry point may mint a development session.
                 if self.path in {"/", "/index.html"}:
                     headers = dict(self.headers)
@@ -379,7 +419,11 @@ def make_handler(store, assets, origin, session, system=None):
                     return
                 authorize(self.headers, origin, session)
                 if self.path == "/api/state":
-                    self.reply(200, store.snapshot())
+                    self.reply(200, store.snapshot(private=private is not None))
+                elif self.path == "/api/jev-u4-shadow/runs":
+                    self.reply(200, {"runs": shadow.list_runs(store)})
+                elif re.fullmatch(r"/api/jev-u4-shadow/runs/[A-Za-z0-9_-]{8,80}", self.path):
+                    self.reply(200, shadow.get_run(store, self.path.rsplit("/", 1)[1]))
                 elif self.path == "/api/workspace" and system is not None:
                     self.reply(200, system.snapshot())
                 elif self.path in assets:
@@ -391,11 +435,15 @@ def make_handler(store, assets, origin, session, system=None):
                 self.reply(exc.status, {"error": exc.code})
             except workspace.WorkspaceError as exc:
                 self.reply(exc.status, {"error": exc.code})
+            except shadow.ShadowWorkbenchError as exc:
+                self.reply(exc.status, {"error": exc.code})
             except Exception:
                 self.reply(500, {"error": "LOCAL_STATE_UNAVAILABLE"})
 
         def do_POST(self):
             try:
+                if private is not None:
+                    private.check(self.headers, self.client_address[0])
                 authorize(self.headers, origin, session, write=True)
                 lengths = self.headers.get_all("Content-Length", [])
                 if self.headers.get("Transfer-Encoding") or len(lengths) != 1 or not re.fullmatch(r"[0-9]{1,6}", lengths[0]):
@@ -421,6 +469,8 @@ def make_handler(store, assets, origin, session, system=None):
                 self.reply(exc.status, {"error": exc.code})
             except workspace.WorkspaceError as exc:
                 self.reply(exc.status, {"error": exc.code})
+            except shadow.ShadowWorkbenchError as exc:
+                self.reply(exc.status, {"error": exc.code})
             except Exception:
                 self.reply(500, {"error": "LOCAL_OPERATION_FAILED"})
 
@@ -433,8 +483,11 @@ def main(argv=None):
     parser.add_argument("--port", type=int, default=8766)
     parser.add_argument("--read-only-source-root", type=Path, help="Local AR root; only a fixed public artifact allowlist is read")
     parser.add_argument("--state-root", type=Path, help="Dedicated nonproduction state directory, separate from code releases")
+    parser.add_argument("--private-origin", help="Exact HTTPS Tailscale Serve origin; requires owner login")
+    parser.add_argument("--private-owner-login", help="Exact Serve user login; not a formal approval identity")
     args = parser.parse_args(argv)
     host = serve_host(args.host)
+    private = private_access(args.private_origin, args.private_owner_login)
     assets = load_assets(ROOT / "tools/nonprod_workbench/dist")
     state_root = args.state_root or ROOT / ".ai-workspace/nonprod-workbench"
     if args.read_only_source_root and (state_root.resolve() == args.read_only_source_root.resolve() or args.read_only_source_root.resolve() in state_root.resolve().parents):
@@ -444,12 +497,13 @@ def main(argv=None):
     store = Store(state_root)
     lifetime_lock = service_lock(state_root)
     system = workspace.Workspace(store, args.read_only_source_root)
-    origin = f"http://{host}:{args.port}"
-    server = ThreadingHTTPServer((host, args.port), make_handler(store, assets, origin, secrets.token_hex(32), system))
+    origin = private.origin if private is not None else f"http://{host}:{args.port}"
+    server = ThreadingHTTPServer((host, args.port), make_handler(store, assets, origin, secrets.token_hex(32), system, private))
     server.daemon_threads = True
     worker = threading.Thread(target=system.scheduler, daemon=True)
     worker.start()
-    print(f"NONPRODUCTION_LOCAL {origin} | team=DENY paid=DENY production=DENY", flush=True)
+    mode = "NONPRODUCTION_PRIVATE_OWNER_ONLY" if private is not None else "NONPRODUCTION_LOCAL"
+    print(f"{mode} {origin} | team=DENY paid=DENY production=DENY", flush=True)
     try:
         server.serve_forever()
     except KeyboardInterrupt:

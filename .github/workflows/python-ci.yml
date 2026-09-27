@@ -136,6 +136,10 @@ jobs:
         run: |
           python3 tests/test_nonprod_workbench.py
           python3 scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/cloud_nonprod_workbench_v1.task.json
+      - name: Jev U4 shadow workbench facade and HTTP (offline)
+        run: |
+          python3 tests/test_nonprod_workbench_jev_shadow.py
+          python3 scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/jev_u4_shadow_workbench.task.json
       - name: Local research replay boundaries (offline, subprocess guard)
         run: |
           python3 tests/test_workbench_research.py

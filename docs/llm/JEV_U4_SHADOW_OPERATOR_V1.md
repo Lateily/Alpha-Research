@@ -24,6 +24,81 @@ one. No production or automatic experiment is currently approved.
 
 ## Offline synthetic fixture
 
+### Workbench test view
+
+Build the existing nonproduction UI and start the workbench with a dedicated
+local state directory. The workbench remains bound to `127.0.0.1`; its browser
+session is not an approval signature.
+
+```bash
+npm ci --ignore-scripts --no-audit --no-fund
+node node_modules/vite/bin/vite.js build --config tools/nonprod_workbench/vite.config.js
+python3 -B scripts/llm/nonprod_workbench.py --port 8771 --state-root /private/tmp/ar-jev-workbench
+```
+
+Open `http://127.0.0.1:8771/`: **U4 影子模拟** is the first page and
+**运行模拟测试** is its primary action. The only browser
+scenario is `synthetic-mixed`. The browser sends a command ID and scenario ID,
+not paths, provider settings, answers, keys, or approval fields. An uncertain
+response retries the same command ID. The run list and detail reread and
+verify the immutable shadow receipt; a changed receipt displays
+`INTEGRITY_ERROR` without its prior conclusion. The UI can filter shadow
+observations and download a verified receipt, but cannot evaluate a real
+packet or record a formal U4 decision. `MODEL_UNAVAILABLE` is displayed as
+missing model evidence, never as a synthetic probability.
+
+The fixed fixture contacts no provider and incurs no model cost. No browser
+action grants team access, performs a real model call, or records a formal U4
+decision.
+
+### Owner-only private preview
+
+An optional Tailscale Serve preview allows **the same authenticated owner** to
+open the same nonproduction state from more than one device. This is not a
+team login or a production endpoint. It requires an exact HTTPS tailnet origin
+and the exact owner login, both configured at server startup; the listener
+still binds only to `127.0.0.1`. Keep the old Serve port untouched and use a
+separate private HTTPS port. Do not use Tailscale Funnel or bind to a LAN IP.
+
+```bash
+AR_OFFLINE=1 python3 -B scripts/llm/nonprod_workbench.py \
+  --port 8773 --state-root /private/tmp/ar-jev-workbench-private \
+  --private-origin 'https://<device>.<tailnet>.ts.net:8443' \
+  --private-owner-login '<owner@example.com>'
+tailscale serve --bg --https=8443 http://127.0.0.1:8773
+tailscale serve status --json
+```
+
+Open the configured private URL on each owner device after signing into the
+same tailnet account. The server checks Serve's `Tailscale-User-Login` on
+every request, refuses a non-loopback proxy peer, enforces exact Host/Origin
+for writes, and issues a `Secure` session cookie. A different tailnet user is
+rejected before a session is minted. Local processes running as the same OS
+user remain within the loopback trust boundary, so this is not multi-tenant
+isolation. Verify a second device separately; a same-machine browser test
+does not prove cross-device reachability. The Mac and the preview service must
+remain online. The source of truth for access is the tailnet policy plus the
+server's exact owner login, not a browser label.
+
+The UI deliberately does not show human U4 comparisons yet. The engine can
+write a separate evaluation, but the workbench has no verified read contract
+for that artifact. "未接入" means unavailable, not zero disagreement.
+
+A `POLICY_PREVIEW` produced by the CLI under the **same nonproduction state
+root** is not automatically displayed. An operator may register its command
+ID server-side after the CLI `run` and `verify` steps succeed:
+
+```bash
+python3 scripts/llm/workbench_jev_shadow.py register-preview \
+  --state-root /private/tmp/ar-jev-workbench \
+  --command-id '<verified-preview-command-id>'
+```
+
+Registration rereads the immutable receipt through `ShadowStore` and requires
+`POLICY_PREVIEW` mode. It does not run a provider or accept an evidence path.
+The browser has no registration route. A real frozen packet preview is shown
+as `POLICY_PREVIEW / SHADOW_ONLY`, not `SIMULATED` and not an investment signal.
+
 From the repository root, these commands use only the committed synthetic
 fixture and a new temporary sandbox:
 
