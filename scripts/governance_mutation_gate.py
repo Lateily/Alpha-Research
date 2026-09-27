@@ -229,6 +229,14 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="A self-labelled artifact cassette cannot replace the committed synthetic fixture.",
     ),
     MutationCase(
+        mutation_id="JEV_U4_APPROVED_PACKET_BYTES", component="Jev U4 shadow backend",
+        source_path="scripts/llm/jev_u4_shadow.py", test_script="tests/test_jev_u4_shadow.py",
+        before='            if _sha256_bytes(packet_raw) != fixture_hashes["u4-pre-decision.json"]:',
+        after='            if False:',
+        expected_failure_marker="test_offline_fixture_packet_requires_approved_bytes",
+        rationale="A semantically valid but non-approved packet file is not the committed fixture.",
+    ),
+    MutationCase(
         mutation_id="JEV_U4_APPROVED_ADAPTER_ANSWER", component="Jev U4 shadow backend",
         source_path="scripts/llm/jev_u4_shadow.py", test_script="tests/test_jev_u4_shadow.py",
         before='                or answers != normalize_typed_response(approved_cassettes[key])',

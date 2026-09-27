@@ -932,6 +932,12 @@ class JevU4ShadowEngineTests(unittest.TestCase):
         with self.assertRaisesRegex(engine.ShadowRunError, "SPEC_BLOCKED"):
             self._run(adapter=self._adapter())
 
+    def test_offline_fixture_packet_requires_approved_bytes(self) -> None:
+        packet_path = self.artifact_root / self.request["packet_ref"]
+        packet_path.write_bytes(packet_path.read_bytes() + b" ")
+        with self.assertRaisesRegex(engine.ShadowRunError, "SPEC_BLOCKED"):
+            self._run()
+
     def test_policy_preview_cannot_return_fixture_answers(self) -> None:
         request = {**self.request, "mode": "POLICY_PREVIEW", "fixture_id": None}
         with self.assertRaisesRegex(engine.ShadowRunError, "SPEC_BLOCKED"):
