@@ -197,6 +197,14 @@ class MutationCase:
 
 MUTATIONS: tuple[MutationCase, ...] = (
     MutationCase(
+        mutation_id="JEV_U4_PUBLIC_ADAPTER_BOUNDARY", component="Jev U4 shadow backend",
+        source_path="scripts/llm/jev_u4_shadow.py", test_script="tests/test_jev_u4_shadow.py",
+        before="    state_root: Path | str,\n    race_injector: Callable[[str], None] | None = None,",
+        after="    state_root: Path | str,\n    adapter: object | None = None,\n    race_injector: Callable[[str], None] | None = None,",
+        expected_failure_marker="test_public_run_rejects_caller_supplied_adapter_before_execution",
+        rationale="The public offline API must not accept an arbitrary caller-supplied adapter.",
+    ),
+    MutationCase(
         mutation_id="JEV_U4_RETAINED_LEDGER_SNAPSHOT", component="Jev U4 shadow backend",
         source_path="scripts/llm/jev_u4_shadow.py", test_script="tests/test_jev_u4_shadow.py",
         before="        snapshot = _verify_retained_ledger_snapshot(before, anchor_before)",

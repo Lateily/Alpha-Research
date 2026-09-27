@@ -885,13 +885,26 @@ class JevU4ShadowEngineTests(unittest.TestCase):
         adapter=None,
         race_injector=None,
     ) -> dict:
-        return engine.run_shadow(
-            copy.deepcopy(request if request is not None else self.request),
-            artifact_root=self.artifact_root,
-            state_root=self.state_root,
-            adapter=adapter or self._adapter(),
-            race_injector=race_injector,
-        )
+        raw_request = copy.deepcopy(request if request is not None else self.request)
+        if adapter is None:
+            return engine.run_shadow(
+                raw_request, artifact_root=self.artifact_root,
+                state_root=self.state_root, race_injector=race_injector,
+            )
+        payload = engine.validate_request(raw_request)
+        engine._require_runtime()
+        artifact = engine._open_root(self.artifact_root, create=False)
+        try:
+            state = engine._open_root(self.state_root, create=True)
+            try:
+                return engine._run_shadow_with_handles(
+                    payload, artifact, state, adapter,
+                    artifact_root=self.artifact_root, race_injector=race_injector,
+                )
+            finally:
+                state.close()
+        finally:
+            artifact.close()
 
     def test_adapter_cannot_invent_offline_fixture_answer(self) -> None:
         altered = copy.deepcopy(self.cassettes)
@@ -947,6 +960,17 @@ class JevU4ShadowEngineTests(unittest.TestCase):
         with self.assertRaisesRegex(engine.ShadowRunError, "SPEC_BLOCKED"):
             self._run(adapter=self._adapter({}))
 
+    def test_public_run_rejects_caller_supplied_adapter_before_execution(self) -> None:
+        adapter = _CountingAdapter(self.cassettes)
+        fresh_state = Path(self.temporary.name) / "untrusted-adapter-state"
+        with self.assertRaises(TypeError):
+            engine.run_shadow(
+                self.request, artifact_root=self.artifact_root,
+                state_root=fresh_state, adapter=adapter,
+            )
+        self.assertEqual(0, adapter.calls)
+        self.assertFalse(fresh_state.exists())
+
     def test_unsupported_runtime_stops_before_shadow_state_or_provider(self) -> None:
         fresh_state = Path(self.temporary.name) / "unsupported-run-state"
         with mock.patch.object(engine.sys, "version_info", (3, 9, 0)), mock.patch.object(
@@ -957,7 +981,6 @@ class JevU4ShadowEngineTests(unittest.TestCase):
                     self.request,
                     artifact_root=self.artifact_root,
                     state_root=fresh_state,
-                    adapter=self._adapter(),
                 )
         self.assertEqual("SPEC_BLOCKED", caught.exception.status)
         self.assertEqual("RUNTIME_UNSUPPORTED", caught.exception.code)
@@ -974,7 +997,6 @@ class JevU4ShadowEngineTests(unittest.TestCase):
                 self.request,
                 artifact_root=self.artifact_root,
                 state_root=linked / "state",
-                adapter=self._adapter(),
             )
         self.assertEqual("SPEC_BLOCKED", caught.exception.status)
         self.assertFalse((outside / "state").exists())
@@ -991,7 +1013,6 @@ class JevU4ShadowEngineTests(unittest.TestCase):
                 self.request,
                 artifact_root=self.artifact_root,
                 state_root=str(linked) + "/../dotdot-state",
-                adapter=self._adapter(),
             )
 
         self.assertEqual("SPEC_BLOCKED", caught.exception.status)
@@ -2215,13 +2236,14 @@ class BlockingAdapter:
             raise RuntimeError("probe release timed out")
         return delegate.execute(request)
 
+engine._load_fixture_adapter = lambda _request, _artifact: BlockingAdapter()
+
 def worker():
     try:
         engine.run_shadow(
             request,
             artifact_root=artifact,
             state_root=state,
-            adapter=BlockingAdapter(),
         )
     except BaseException as exc:
         errors.append(repr(exc))

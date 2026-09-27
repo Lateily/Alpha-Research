@@ -642,15 +642,10 @@ def run_shadow(
     *,
     artifact_root: Path | str,
     state_root: Path | str,
-    adapter: object,
     race_injector: Callable[[str], None] | None = None,
 ) -> dict[str, Any]:
-    """Reopen evidence, route once, execute each eligible row once, and verify."""
+    """Use only the built-in offline adapter for the public shadow entry point."""
     payload = validate_request(raw_request)
-    if getattr(adapter, "provider", None) != "offline_fixture":
-        if getattr(adapter, "provider", None) == "typesafe_jev":
-            raise _live_provider_blocked()
-        raise _blocked("only the offline fixture adapter is approved")
     _require_runtime()
 
     artifact: _DirectoryHandle | None = None
@@ -658,6 +653,7 @@ def run_shadow(
     try:
         artifact = _open_root(artifact_root, create=False)
         state = _open_root(state_root, create=True)
+        adapter = _load_fixture_adapter(payload, artifact)
         return _run_shadow_with_handles(
             payload, artifact, state, adapter, artifact_root=artifact_root,
             race_injector=race_injector,
