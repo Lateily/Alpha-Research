@@ -142,12 +142,14 @@ class Workspace:
             events.append(event)
         return events
 
-    def append(self, db, events, command_id, request_hash, kind, data):
+    def append(self, db, events, command_id, request_hash, kind, data, actor=None):
         if len(events) >= MAX_EVENTS:
             raise WorkspaceError("WORKSPACE_EVENT_LIMIT", 429)
         event = {"seq": len(events) + 1, "prev_hash": events[-1]["event_hash"] if events else "0" * 64,
                  "command_id": command_id, "request_hash": request_hash, "kind": kind, "data": data,
                  "at": self.clock(), "sample_purpose": "WORKFLOW_DEBUG", "production_authority": False}
+        if actor is not None:
+            event["actor"] = actor
         event["event_hash"] = evidence.sealed(event)
         db.execute("INSERT INTO workspace_events VALUES (?, ?, ?, ?)", (event["seq"], command_id, request_hash, evidence.canonical(event)))
         return event
@@ -166,7 +168,7 @@ class Workspace:
             self.owner_failures.append(now)
             raise WorkspaceError("LOCAL_OWNER_AUTH_REQUIRED", 403)
 
-    def configure_owner(self, payload):
+    def configure_owner(self, payload, actor=None):
         exact(payload, {"password", "confirmation"})
         password = payload["password"]
         if not isinstance(password, str) or not 14 <= len(password) <= 256 or password != payload["confirmation"]:
@@ -178,10 +180,10 @@ class Workspace:
             salt = secrets.token_hex(32)
             db.execute("INSERT INTO workspace_owner VALUES (1, ?, ?)", (salt, derive(password, salt)))
             events = self.events(db)
-            self.append(db, events, "owner-bootstrap", evidence.sealed({"scope": "LOCAL_REVIEW_ONLY"}), "OWNER_CONFIGURED", {"scope": "LOCAL_REVIEW_ONLY_NOT_JUNYAN_IDENTITY"})
+            self.append(db, events, "owner-bootstrap", evidence.sealed({"scope": "LOCAL_REVIEW_ONLY"}), "OWNER_CONFIGURED", {"scope": "LOCAL_REVIEW_ONLY_NOT_JUNYAN_IDENTITY"}, actor=actor)
         return {"status": "LOCAL_OWNER_CONFIGURED", "team_grants": [], "production_authority": False}
 
-    def command(self, kind, payload):
+    def command(self, kind, payload, actor=None):
         fields = {
             "draft": {"command_id", "document_id", "expected_revision", "content"},
             "submit": {"command_id", "document_id", "revision", "content_hash"},
@@ -193,7 +195,7 @@ class Workspace:
         exact(payload, fields[kind])
         identifier(payload["command_id"])
         safe_request = {k: v for k, v in payload.items() if k != "password"}
-        request_hash = evidence.sealed({"kind": kind, "payload": safe_request})
+        request_hash = evidence.sealed({"kind": kind, "payload": safe_request, **({"actor": actor} if actor else {})})
         with self.store.connect() as db:
             db.execute("BEGIN IMMEDIATE")
             if kind in {"review", "schedule"}:
@@ -248,7 +250,7 @@ class Workspace:
                         text_field(payload["reason"], 2000)
                         data.update(outcome=payload["outcome"], reason=payload["reason"], authority="LOCAL_DOCUMENT_REVIEW_ONLY", formal_u4_approval=False, registration_allowed=False)
                         event_kind = "REVIEWED"
-            event = self.append(db, events, payload["command_id"], request_hash, event_kind, data)
+            event = self.append(db, events, payload["command_id"], request_hash, event_kind, data, actor=actor)
         return {"disposition": "CREATED", "event": event}
 
     def observe(self):
@@ -263,12 +265,12 @@ class Workspace:
             db.execute("INSERT OR IGNORE INTO workspace_observations VALUES (?, ?)", (snapshot["snapshot_hash"], evidence.canonical(snapshot)))
         return {"snapshot_hash": snapshot["snapshot_hash"], "issues": len(snapshot["issues"]), "status": "OBSERVED_WITH_GAPS" if snapshot["issues"] else "OBSERVED_NOT_PUBLICATION_ACCEPTED"}
 
-    def start_job(self, payload, scheduled=False, schedule_guard=None):
+    def start_job(self, payload, scheduled=False, schedule_guard=None, actor=None):
         exact(payload, {"command_id", "kind"})
         identifier(payload["command_id"])
         if payload["kind"] not in KINDS:
             raise WorkspaceError("JOB_KIND_NOT_OFFLINE_ALLOWLIST", 403)
-        job_id, request_hash = payload["command_id"], evidence.sealed(payload)
+        job_id, request_hash = payload["command_id"], evidence.sealed({**payload, **({"actor": actor} if actor else {})})
         with self.store.connect() as db:
             db.execute("BEGIN IMMEDIATE")
             events = self.events(db)
@@ -281,7 +283,7 @@ class Workspace:
                 if prior["request_hash"] != request_hash:
                     raise WorkspaceError("WORKSPACE_COMMAND_ID_CONFLICT", 409)
                 return {"disposition": "IDEMPOTENT", "job_id": job_id}
-            self.append(db, events, job_id, request_hash, "JOB_STARTED", {"job_id": job_id, "kind": payload["kind"], "scheduled": scheduled, "recovery": "NO_AUTOMATIC_RETRY_IF_INTERRUPTED"})
+            self.append(db, events, job_id, request_hash, "JOB_STARTED", {"job_id": job_id, "kind": payload["kind"], "scheduled": scheduled, "recovery": "NO_AUTOMATIC_RETRY_IF_INTERRUPTED"}, actor=actor)
         try:
             if payload["kind"] == "observe":
                 result = self.observe()
@@ -301,7 +303,7 @@ class Workspace:
             result = {"error": code}
         with self.store.connect() as db:
             db.execute("BEGIN IMMEDIATE")
-            self.append(db, self.events(db), "finish_" + job_id, request_hash, "JOB_FINISHED", {"job_id": job_id, "status": status, "result": result})
+            self.append(db, self.events(db), "finish_" + job_id, request_hash, "JOB_FINISHED", {"job_id": job_id, "status": status, "result": result}, actor=actor)
         return {"disposition": "CREATED", "job_id": job_id, "status": status, "result": result}
 
     def verify_all(self):
@@ -370,12 +372,12 @@ class Workspace:
                 "catalog": self.catalog,
                 "sample_purpose": "WORKFLOW_DEBUG"}
 
-    def dispatch(self, path, payload):
+    def dispatch(self, path, payload, actor=None):
         if path == "/api/workspace/owner":
-            return self.configure_owner(payload)
+            return self.configure_owner(payload, actor=actor)
         if path == "/api/workspace/job":
-            return self.start_job(payload)
+            return self.start_job(payload, actor=actor)
         routes = {"/api/workspace/draft": "draft", "/api/workspace/submit": "submit", "/api/workspace/review": "review", "/api/workspace/schedule": "schedule"}
         if path not in routes:
             raise WorkspaceError("WORKSPACE_OPERATION_DISABLED", 403)
-        return self.command(routes[path], payload)
+        return self.command(routes[path], payload, actor=actor)

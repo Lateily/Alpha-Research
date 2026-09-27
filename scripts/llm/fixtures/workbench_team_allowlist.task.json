@@ -1,0 +1,22 @@
+{
+  "schema": "ai-task.v1",
+  "task_id": "WORKBENCH-TEAM-ALLOWLIST-001",
+  "source_issue": null,
+  "architecture_block": ["aios-harness", "nonprod-workbench", "private-access"],
+  "objective": "Allow individually named Tailscale users to reach the private nonproduction workbench, bind browser sessions and draft events to each identity, and keep owner-only operations separate from formal research approval.",
+  "non_goals": ["No public access", "No paid provider calls", "No production or trading writes", "No formal U4 or paper approval", "No team identities embedded in the repository"],
+  "human_owner": "Junyan",
+  "reviewer": "Junyan",
+  "executor_candidates": ["Codex"],
+  "dependencies": ["Tailscale Serve private identity header", "nonproduction workbench", "workspace event chain"],
+  "authority_docs": ["AGENTS.md", "scripts/llm/AGENTS.md", "docs/team/LOCAL_WORKSPACE_CONTRACT_V1.md"],
+  "file_scope": ["scripts/llm/fixtures/workbench_team_allowlist.task.json", "scripts/llm/nonprod_workbench.py", "scripts/llm/workbench_workspace.py", "tools/nonprod_workbench/ui/main.jsx", "tests/test_nonprod_workbench.py", "tests/test_workbench_workspace.py", "scripts/governance_mutation_gate.py", "docs/llm/WORKBENCH_TEAM_ACCESS_V1.md"],
+  "forbidden_scope": ["/Users/years/ar-live", "experiments/execution_tracker", "public/data/v2", "formal research and paper ledgers", "Tailscale account secrets"],
+  "input_contracts": ["Exact Tailscale-User-Login header from loopback Serve", "Private team allowlist outside repository"],
+  "output_artifacts": ["Fail-closed member allowlist", "Identity-bound sessions", "Member-attributed draft and submit events", "Owner-only privileged route guard", "Operator documentation", "Negative behavior tests and mutation pins"],
+  "acceptance_tests": ["python3 tests/test_nonprod_workbench.py", "python3 tests/test_workbench_workspace.py", "python3 scripts/governance_mutation_gate.py", "python3 /Users/years/Desktop/Stock/e2e-twin/twin-20260902/tools/ci_local.py", "git diff --check"],
+  "risk_level": "HIGH",
+  "network_policy": "OFFLINE",
+  "budget": {"max_cny": "0", "max_minutes": 180},
+  "approval_gates": ["INDEPENDENT_REVIEW", "JUNYAN_MERGE", "SEPARATE_TEAM_INVITE", "SEPARATE_PRODUCTION_APPROVAL"]
+}
