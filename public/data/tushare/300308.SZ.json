@@ -1,6 +1,6 @@
 {
   "ticker": "300308.SZ",
-  "fetched_at": "2026-09-25T14:00:31Z",
+  "fetched_at": "2026-09-28T06:33:18Z",
   "permission_model": "runtime_probe",
   "_status": "partial",
   "data": {
@@ -824,22 +824,9 @@
           "pct_chg": 4.0984,
           "vol": 276782.91,
           "amount": 34960563.6032
-        },
-        {
-          "ts_code": "300308.SZ",
-          "trade_date": "20260629",
-          "open": 1239.0,
-          "high": 1264.21,
-          "low": 1169.49,
-          "close": 1220.0,
-          "pre_close": 1253.89,
-          "change": -33.89,
-          "pct_chg": -2.7028,
-          "vol": 352899.11,
-          "amount": 42631770.3471
         }
       ],
-      "row_count": 64,
+      "row_count": 63,
       "_status": "ok",
       "as_of": "20260924"
     },
@@ -2104,34 +2091,19 @@
           "free_share": 84012.6316,
           "total_mv": 141634806.9,
           "circ_mv": 140962354.6
-        },
-        {
-          "ts_code": "300308.SZ",
-          "trade_date": "20260629",
-          "close": 1220.0,
-          "turnover_rate": 3.1794,
-          "turnover_rate_f": 4.2005,
-          "volume_ratio": 1.13,
-          "pe": 126.0123,
-          "pe_ttm": 91.0159,
-          "pb": 38.2326,
-          "ps": 35.5802,
-          "ps_ttm": 26.6457,
-          "dv_ratio": 0.0735,
-          "dv_ttm": 0.1145,
-          "total_share": 111523.4641,
-          "float_share": 110993.9778,
-          "free_share": 84012.6316,
-          "total_mv": 136058633.4,
-          "circ_mv": 135412655.6
         }
       ],
-      "row_count": 64,
+      "row_count": 63,
       "_status": "ok",
       "as_of": "20260924"
     },
     "adj_factor": {
       "rows": [
+        {
+          "ts_code": "300308.SZ",
+          "trade_date": "20260928",
+          "adj_factor": 6.6039
+        },
         {
           "ts_code": "300308.SZ",
           "trade_date": "20260924",
@@ -2446,16 +2418,11 @@
           "ts_code": "300308.SZ",
           "trade_date": "20260630",
           "adj_factor": 6.6039
-        },
-        {
-          "ts_code": "300308.SZ",
-          "trade_date": "20260629",
-          "adj_factor": 6.6039
         }
       ],
       "row_count": 64,
       "_status": "ok",
-      "as_of": "20260924"
+      "as_of": "20260928"
     },
     "income": {
       "rows": [
@@ -5853,26 +5820,6 @@
         },
         {
           "ts_code": "300308.SZ",
-          "end_date": "20260630",
-          "bz_item": "国外",
-          "bz_code": "D",
-          "bz_sales": 39614660881.74,
-          "bz_profit": 18987152973.57,
-          "bz_cost": 20627507908.17,
-          "curr_type": "CNY"
-        },
-        {
-          "ts_code": "300308.SZ",
-          "end_date": "20260630",
-          "bz_item": "中国大陆",
-          "bz_code": "D",
-          "bz_sales": 2163200913.29,
-          "bz_profit": 336020681.02,
-          "bz_cost": 1827180232.27,
-          "curr_type": "CNY"
-        },
-        {
-          "ts_code": "300308.SZ",
           "end_date": "20251231",
           "bz_item": "境外",
           "bz_code": "D",
@@ -6142,7 +6089,7 @@
           "curr_type": "CNY"
         }
       ],
-      "row_count": 31,
+      "row_count": 29,
       "_status": "ok",
       "as_of": "20260630"
     },
@@ -6151,31 +6098,11 @@
         {
           "ts_code": "300308.SZ",
           "end_date": "20260630",
-          "bz_item": "高端光通讯收发模块",
-          "bz_code": "P",
-          "bz_sales": 41355212182.06,
-          "bz_profit": 19266456800.03,
-          "bz_cost": 22088755382.03,
-          "curr_type": "CNY"
-        },
-        {
-          "ts_code": "300308.SZ",
-          "end_date": "20260630",
           "bz_item": "合计特别调整",
           "bz_code": "P",
           "bz_sales": -1.0,
           "bz_profit": null,
           "bz_cost": null,
-          "curr_type": "CNY"
-        },
-        {
-          "ts_code": "300308.SZ",
-          "end_date": "20260630",
-          "bz_item": "其他主营业务",
-          "bz_code": "P",
-          "bz_sales": 422649612.97,
-          "bz_profit": 56716854.56,
-          "bz_cost": 365932758.41,
           "curr_type": "CNY"
         },
         {
@@ -6589,7 +6516,7 @@
           "curr_type": "CNY"
         }
       ],
-      "row_count": 44,
+      "row_count": 42,
       "_status": "ok",
       "as_of": "20260630"
     },

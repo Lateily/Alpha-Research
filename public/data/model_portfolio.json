@@ -6,9 +6,9 @@
     "no_size": true,
     "no_buy_sell": true,
     "no_position_mutation": true,
-    "run_date": "2026-09-25",
+    "run_date": "2026-09-28",
     "pilot_start_date": "2026-06-08",
-    "generated_at": "2026-09-25T14:05:30.159763+00:00",
+    "generated_at": "2026-09-28T06:39:34.279585+00:00",
     "fresh_pilot": true,
     "legacy_paper_positions_inherited": false,
     "sources": [
@@ -105,8 +105,8 @@
         },
         "quant_confluence": {
           "action": "NEUTRAL",
-          "score": -11,
-          "rationale": "Bullish: Bb Lower Break | Bearish: Death Cross | RSI 43 | Price vs MA20 -3.5% | VP 50"
+          "score": -13,
+          "rationale": "Bearish: Death Cross | RSI 43 | Price vs MA20 -3.5% | VP 50"
         }
       },
       "validation_status": "PENDING",
@@ -274,7 +274,7 @@
           },
           "signals": []
         },
-        "as_of": "2026-09-25",
+        "as_of": "2026-09-28",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -316,7 +316,7 @@
             }
           ]
         },
-        "as_of": "2026-09-25",
+        "as_of": "2026-09-28",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -358,7 +358,7 @@
             }
           ]
         },
-        "as_of": "2026-09-25",
+        "as_of": "2026-09-28",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -393,7 +393,7 @@
           },
           "signals": []
         },
-        "as_of": "2026-09-25",
+        "as_of": "2026-09-28",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -441,7 +441,7 @@
             }
           ]
         },
-        "as_of": "2026-09-25",
+        "as_of": "2026-09-28",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -495,7 +495,7 @@
             }
           ]
         },
-        "as_of": "2026-09-25",
+        "as_of": "2026-09-28",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -530,7 +530,7 @@
           },
           "signals": []
         },
-        "as_of": "2026-09-25",
+        "as_of": "2026-09-28",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -565,7 +565,7 @@
           },
           "signals": []
         },
-        "as_of": "2026-09-25",
+        "as_of": "2026-09-28",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -600,7 +600,7 @@
           },
           "signals": []
         },
-        "as_of": "2026-09-25",
+        "as_of": "2026-09-28",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       }

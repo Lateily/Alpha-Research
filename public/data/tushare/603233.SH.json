@@ -1,6 +1,6 @@
 {
   "ticker": "603233.SH",
-  "fetched_at": "2026-09-25T14:01:01Z",
+  "fetched_at": "2026-09-28T06:33:50Z",
   "permission_model": "runtime_probe",
   "_status": "partial",
   "data": {
@@ -824,22 +824,9 @@
           "pct_chg": -2.907,
           "vol": 62340.96,
           "amount": 93491.901
-        },
-        {
-          "ts_code": "603233.SH",
-          "trade_date": "20260629",
-          "open": 14.8,
-          "high": 15.66,
-          "low": 14.39,
-          "close": 15.48,
-          "pre_close": 14.8,
-          "change": 0.68,
-          "pct_chg": 4.5946,
-          "vol": 78458.58,
-          "amount": 119698.323
         }
       ],
-      "row_count": 64,
+      "row_count": 63,
       "_status": "ok",
       "as_of": "20260924"
     },
@@ -2104,34 +2091,19 @@
           "free_share": 44992.2594,
           "total_mv": 1711698.3135,
           "circ_mv": 1711698.3135
-        },
-        {
-          "ts_code": "603233.SH",
-          "trade_date": "20260629",
-          "close": 15.48,
-          "turnover_rate": 0.6889,
-          "turnover_rate_f": 1.7438,
-          "volume_ratio": 1.5,
-          "pe": 14.272,
-          "pe_ttm": 13.7046,
-          "pb": 2.2951,
-          "ps": 0.641,
-          "ps_ttm": 0.6406,
-          "dv_ratio": 4.1742,
-          "dv_ttm": 5.3301,
-          "total_share": 113885.452,
-          "float_share": 113885.452,
-          "free_share": 44992.2594,
-          "total_mv": 1762946.766,
-          "circ_mv": 1762946.766
         }
       ],
-      "row_count": 64,
+      "row_count": 63,
       "_status": "ok",
       "as_of": "20260924"
     },
     "adj_factor": {
       "rows": [
+        {
+          "ts_code": "603233.SH",
+          "trade_date": "20260928",
+          "adj_factor": 3.2361
+        },
         {
           "ts_code": "603233.SH",
           "trade_date": "20260924",
@@ -2446,16 +2418,11 @@
           "ts_code": "603233.SH",
           "trade_date": "20260630",
           "adj_factor": 3.2361
-        },
-        {
-          "ts_code": "603233.SH",
-          "trade_date": "20260629",
-          "adj_factor": 3.2361
         }
       ],
       "row_count": 64,
       "_status": "ok",
-      "as_of": "20260924"
+      "as_of": "20260928"
     },
     "income": {
       "rows": [
@@ -6315,27 +6282,7 @@
         {
           "ts_code": "603233.SH",
           "end_date": "20260630",
-          "bz_item": "华南",
-          "bz_code": "D",
-          "bz_sales": 8578023218.97,
-          "bz_profit": 3140056604.98,
-          "bz_cost": 5437966613.99,
-          "curr_type": "CNY"
-        },
-        {
-          "ts_code": "603233.SH",
-          "end_date": "20260630",
           "bz_item": "华中地区",
-          "bz_code": "D",
-          "bz_sales": 1339648135.18,
-          "bz_profit": 366704141.46,
-          "bz_cost": 972943993.72,
-          "curr_type": "CNY"
-        },
-        {
-          "ts_code": "603233.SH",
-          "end_date": "20260630",
-          "bz_item": "华中",
           "bz_code": "D",
           "bz_sales": 1339648135.18,
           "bz_profit": 366704141.46,
@@ -6355,41 +6302,11 @@
         {
           "ts_code": "603233.SH",
           "end_date": "20260630",
-          "bz_item": "华东",
-          "bz_code": "D",
-          "bz_sales": 1108994029.95,
-          "bz_profit": 344321719.01,
-          "bz_cost": 764672310.94,
-          "curr_type": "CNY"
-        },
-        {
-          "ts_code": "603233.SH",
-          "end_date": "20260630",
-          "bz_item": "其他业务(地区)",
-          "bz_code": "D",
-          "bz_sales": 452444884.49,
-          "bz_profit": 450417291.21,
-          "bz_cost": 2027593.28,
-          "curr_type": "CNY"
-        },
-        {
-          "ts_code": "603233.SH",
-          "end_date": "20260630",
           "bz_item": "其他业务",
           "bz_code": "D",
           "bz_sales": 459658404.5,
           "bz_profit": 457630811.22,
           "bz_cost": 2027593.28,
-          "curr_type": "CNY"
-        },
-        {
-          "ts_code": "603233.SH",
-          "end_date": "20260630",
-          "bz_item": "东北华北及西北地区",
-          "bz_code": "D",
-          "bz_sales": 2511985130.67,
-          "bz_profit": 679026758.53,
-          "bz_cost": 1832958372.14,
           "curr_type": "CNY"
         },
         {
@@ -7183,7 +7100,7 @@
           "curr_type": "CNY"
         }
       ],
-      "row_count": 90,
+      "row_count": 85,
       "_status": "ok",
       "as_of": "20260630"
     },

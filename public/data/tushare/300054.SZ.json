@@ -1,6 +1,6 @@
 {
   "ticker": "300054.SZ",
-  "fetched_at": "2026-09-25T14:01:31Z",
+  "fetched_at": "2026-09-28T06:34:23Z",
   "permission_model": "runtime_probe",
   "_status": "partial",
   "data": {
@@ -824,22 +824,9 @@
           "pct_chg": 1.8942,
           "vol": 677791.44,
           "amount": 6932132.64561
-        },
-        {
-          "ts_code": "300054.SZ",
-          "trade_date": "20260629",
-          "open": 97.91,
-          "high": 104.6,
-          "low": 93.25,
-          "close": 104.0,
-          "pre_close": 95.07,
-          "change": 8.93,
-          "pct_chg": 9.3931,
-          "vol": 750900.45,
-          "amount": 7475339.26685
         }
       ],
-      "row_count": 64,
+      "row_count": 63,
       "_status": "ok",
       "as_of": "20260924"
     },
@@ -2104,34 +2091,19 @@
           "free_share": 67361.9419,
           "total_mv": 10097429.8678,
           "circ_mv": 7872932.0009
-        },
-        {
-          "ts_code": "300054.SZ",
-          "trade_date": "20260629",
-          "close": 104.0,
-          "turnover_rate": 10.1072,
-          "turnover_rate_f": 11.1473,
-          "volume_ratio": 1.32,
-          "pe": 137.5959,
-          "pe_ttm": 119.3702,
-          "pb": 18.144,
-          "ps": 27.0764,
-          "ps_ttm": 25.6986,
-          "dv_ratio": 0.0953,
-          "dv_ttm": 0.0962,
-          "total_share": 95285.7355,
-          "float_share": 74293.9652,
-          "free_share": 67361.9419,
-          "total_mv": 9909716.96,
-          "circ_mv": 7726572.88
         }
       ],
-      "row_count": 64,
+      "row_count": 63,
       "_status": "ok",
       "as_of": "20260924"
     },
     "adj_factor": {
       "rows": [
+        {
+          "ts_code": "300054.SZ",
+          "trade_date": "20260928",
+          "adj_factor": 12.967
+        },
         {
           "ts_code": "300054.SZ",
           "trade_date": "20260924",
@@ -2446,16 +2418,11 @@
           "ts_code": "300054.SZ",
           "trade_date": "20260630",
           "adj_factor": 12.967
-        },
-        {
-          "ts_code": "300054.SZ",
-          "trade_date": "20260629",
-          "adj_factor": 12.967
         }
       ],
       "row_count": 64,
       "_status": "ok",
-      "as_of": "20260924"
+      "as_of": "20260928"
     },
     "income": {
       "rows": [
@@ -6648,27 +6615,7 @@
         {
           "ts_code": "300054.SZ",
           "end_date": "20260630",
-          "bz_item": "打印复印耗材",
-          "bz_code": "P",
-          "bz_sales": 410247216.64,
-          "bz_profit": 120850662.33,
-          "bz_cost": 289396554.31,
-          "curr_type": "CNY"
-        },
-        {
-          "ts_code": "300054.SZ",
-          "end_date": "20260630",
           "bz_item": "半导体材料(含CMP抛光垫、CMP抛光液、CMP清洗液、YPI、PSPI、TFE-INK、临时键合胶、半导体封装PI、晶圆光?",
-          "bz_code": "P",
-          "bz_sales": 1262469442.78,
-          "bz_profit": 908081955.14,
-          "bz_cost": 354387487.64,
-          "curr_type": "CNY"
-        },
-        {
-          "ts_code": "300054.SZ",
-          "end_date": "20260630",
-          "bz_item": "半导体业务",
           "bz_code": "P",
           "bz_sales": 1262469442.78,
           "bz_profit": 908081955.14,
@@ -7026,7 +6973,7 @@
           "curr_type": "CNY"
         }
       ],
-      "row_count": 40,
+      "row_count": 38,
       "_status": "ok",
       "as_of": "20260630"
     },
