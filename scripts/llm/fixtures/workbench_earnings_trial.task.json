@@ -1,0 +1,22 @@
+{
+  "schema": "ai-task.v1",
+  "task_id": "WORKBENCH-FROZEN-EARNINGS-20260928",
+  "architecture_block": ["Nonproduction workbench", "Independent research workflows"],
+  "objective": "Expose the existing thesis-by-thesis earnings renderer as one explicit offline workbench job over an operator-frozen historical input pack.",
+  "non_goals": ["No live collection, scheduling, model-provider calls, automated thesis verdict, U4 approval, paper registration, trading, or production installation."],
+  "human_owner": "Junyan",
+  "reviewer": "Independent reviewer",
+  "executor_candidates": ["Codex"],
+  "dependencies": ["origin/main d48dc1c", "ar.workflow-trial.v1 frozen request and source-hash contract"],
+  "authority_docs": ["AGENTS.md", "scripts/llm/AGENTS.md", "docs/research/INDEPENDENT_WORKFLOW_TRIAL_V1.md"],
+  "file_scope": ["scripts/llm/workbench_earnings_trial.py", "scripts/llm/workbench_workspace.py", "scripts/llm/nonprod_workbench.py", "tools/nonprod_workbench/ui/workspace.jsx", "tools/nonprod_workbench/ui/workspace.css", "tests/test_workbench_workspace.py", "scripts/governance_mutation_gate.py", "scripts/llm/fixtures/workbench_earnings_trial.task.json", "docs/llm/WORKBENCH_EARNINGS_TRIAL_V1.md", ".github/workflows/python-ci.yml"],
+  "forbidden_scope": ["/Users/years/ar-live", "public/data", "data_history", "experiments/execution_tracker", "experiments/research_funnel", "experiments/research_workflows"],
+  "input_contracts": ["Operator fixes a read-only pack root at startup containing requests/earnings-<ts_code>.json and inputs/.", "Every request must be HISTORICAL_REPLAY/earnings and filename identity must equal the payload company; original source bytes must match declared SHA256."],
+  "output_artifacts": ["Workbench job event with per-company readable reports and pending-review receipts", "Dedicated nonproduction earnings-trials directory containing original trial files and SHA256SUMS per company"],
+  "acceptance_tests": ["python3 -m unittest tests.test_workbench_workspace -q", "python3 scripts/governance_mutation_gate.py", "python3 /Users/years/Desktop/Stock/e2e-twin/twin-20260902/tools/ci_local.py", "Changed source bytes, synthetic mode, wrong identity, missing evidence and scheduling must not succeed; unchanged historical inputs reproduce renderer report bytes."],
+  "risk_level": "MEDIUM",
+  "network_policy": "OFFLINE",
+  "budget": {"max_cny": "0", "max_minutes": 180},
+  "approval_gates": ["Draft PR and independent review before merge.", "Keep #383 Draft; this PR does not authorize its merge.", "No production installation, data transfer, team grant or paid API activation is implied."],
+  "created_at": "2026-09-28T17:00:00+00:00"
+}

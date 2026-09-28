@@ -20,8 +20,10 @@ import time
 from pathlib import Path
 
 import workbench_evidence as evidence
+import workbench_earnings_trial as earnings_trial
 
-KINDS = {"observe", "integrity", "research-replay", "backup"}
+SCHEDULE_KINDS = {"observe", "integrity", "research-replay", "backup"}
+KINDS = SCHEDULE_KINDS | {"earnings-trial"}
 DOCUMENT_FIELDS = {"title", "ticker", "thesis", "valuation", "timing", "invalidation", "evidence_ref"}
 REVIEW_OUTCOMES = {"ACCEPTED_LOCAL", "CHANGES_REQUESTED", "REJECTED_LOCAL"}
 MAX_EVENTS = 10000
@@ -36,6 +38,7 @@ MODULES = (
     ("Five-axis attribution", "experiments/research_funnel/five_axis_attribution.py", "FIXED_OFFLINE_REPLAY"),
     ("Knowledge cards", "experiments/research_funnel/knowledge_cards.py", "READ_ONLY_CATALOG"),
     ("DeepSeek", "scripts/llm/adapters/deepseek.py", "OFFLINE_STUB_ONLY"),
+    ("Independent earnings", "experiments/research_workflows/trial.py", "FROZEN_OFFLINE_TRIAL"),
 )
 
 
@@ -110,13 +113,18 @@ def projection(events):
 
 
 class Workspace:
-    def __init__(self, store, source_root=None, clock=time.time):
+    def __init__(self, store, source_root=None, clock=time.time, earnings_pack_root=None):
         self.store, self.clock = store, clock
         self.source_root = Path(source_root) if source_root else None
+        self.earnings_pack_root = Path(earnings_pack_root) if earnings_pack_root else None
         if self.source_root and (self.source_root.is_symlink() or not self.source_root.is_dir()):
             raise WorkspaceError("READ_ONLY_SOURCE_ROOT_INVALID")
         if self.source_root and self.source_root.resolve() in store.path.resolve().parents:
             raise WorkspaceError("STATE_MUST_BE_OUTSIDE_READ_ONLY_SOURCE")
+        if self.earnings_pack_root and (self.earnings_pack_root.is_symlink() or not self.earnings_pack_root.is_dir()):
+            raise WorkspaceError("FROZEN_EARNINGS_PACK_UNAVAILABLE")
+        if self.earnings_pack_root and self.earnings_pack_root.resolve() in store.path.resolve().parents:
+            raise WorkspaceError("STATE_MUST_BE_OUTSIDE_FROZEN_EARNINGS_PACK")
         self.lock = threading.Lock()
         self.stopping = threading.Event()
         self.owner_failures = []
@@ -208,7 +216,7 @@ class Workspace:
             if kind == "schedule":
                 identifier(payload["schedule_id"])
                 minutes = payload["interval_minutes"]
-                if payload["kind"] not in KINDS or type(minutes) is not int or not 10 <= minutes <= 10080 or type(payload["enabled"]) is not bool:
+                if payload["kind"] not in SCHEDULE_KINDS or type(minutes) is not int or not 10 <= minutes <= 10080 or type(payload["enabled"]) is not bool:
                     raise WorkspaceError("OFFLINE_SCHEDULE_ALLOWLIST_REQUIRED")
                 prior = next((x for x in state["schedules"] if x["schedule_id"] == payload["schedule_id"]), {})
                 revision = prior.get("revision", 0)
@@ -290,6 +298,10 @@ class Workspace:
             elif payload["kind"] == "backup":
                 import workbench_backup
                 result = workbench_backup.create(self, job_id)
+            elif payload["kind"] == "earnings-trial":
+                if self.earnings_pack_root is None:
+                    raise WorkspaceError("FROZEN_EARNINGS_PACK_NOT_CONFIGURED", 409)
+                result = earnings_trial.run(self.earnings_pack_root, self.store.path.parent / "earnings-trials" / job_id)
             else:
                 receipt = self.store.replay({"command_id": "job_" + evidence.sealed(job_id)[:40], "scenario": "complete-replay"})["receipt"]
                 result = {"receipt_hash": receipt["receipt_hash"], "replay_id": receipt["command_id"], "status": receipt["status"], "synthetic": True}
@@ -297,7 +309,7 @@ class Workspace:
         except Exception as exc:
             status = "STOP"
             # Never persist raw exception text from engines or provider transports.
-            code = str(exc) if isinstance(exc, (WorkspaceError, evidence.EvidenceError)) else "LOCAL_JOB_FAILED"
+            code = str(exc) if isinstance(exc, (WorkspaceError, evidence.EvidenceError, earnings_trial.EarningsTrialError)) else "LOCAL_JOB_FAILED"
             result = {"error": code}
         with self.store.connect() as db:
             db.execute("BEGIN IMMEDIATE")
@@ -365,6 +377,7 @@ class Workspace:
         return {"schema": "ar-local-workspace.v1", **state, "observation": observation,
                 "observation_error": issue, "events": events, "owner_configured": owner,
                 "read_only_source_configured": self.source_root is not None,
+                "earnings_pack_configured": self.earnings_pack_root is not None,
                 "scheduler": {"runtime": "IN_PROCESS_LOCAL_SERVER", "status": getattr(self, "scheduler_error", None) or "AVAILABLE", "missed_policy": "NO_BACKFILL", "requires_awake_host": True},
                 "authority": {"team_access": False, "paid_calls": False, "production_write": False, "formal_u4_approval": False, "local_review_only": True},
                 "catalog": self.catalog,

@@ -18,6 +18,7 @@ import workbench_workspace as ws
 import workbench_evidence as ev
 import workbench_backup as backup
 from experiments.macro_os import collectors, contracts, m1a
+from experiments.research_workflows import trial
 
 PASSWORD = "test-only-local-password"
 
@@ -653,6 +654,144 @@ class WorkspaceTests(unittest.TestCase):
         existing=self.root/"existing-empty";existing.mkdir()
         with self.assertRaisesRegex(ev.EvidenceError,"NEW_SCRATCH"):
             backup.restore_check(location,existing)
+
+
+class FrozenEarningsJobTests(unittest.TestCase):
+    CODES = ("002119.SZ", "600667.SH", "688035.SH")
+
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.root = Path(self.temp.name)
+        self.pack = self.root / "frozen"
+        (self.pack / "requests").mkdir(parents=True)
+        (self.pack / "inputs").mkdir()
+        self.requests = {}
+        for code in self.CODES:
+            self.requests[code] = self.make_request(code)
+        self.store = wb.Store(self.root / "state")
+
+    def make_request(self, code):
+        claims = [{"id": "C1", "question": "Did cash conversion improve?", "metric": "cash_flow",
+                   "operator": "GTE", "threshold": 0, "unit": "CNY", "measurement": "half-year",
+                   "due_at": "20260930", "wrong_if": "cash flow is negative"}]
+        filing = "Issuer disclosure.\nCash flow remains negative.\n"
+        claim_path, filing_path = f"{code}-claims.json", f"{code}-filing.txt"
+        (self.pack / "inputs" / claim_path).write_text(json.dumps({"claims": claims}))
+        (self.pack / "inputs" / filing_path).write_text(filing)
+        def source(path, kind, tier):
+            return {"path": path, "sha256": ev.sha((self.pack / "inputs" / path).read_bytes()),
+                    "company": code, "tier": tier, "published_on": "20260918", "format": kind,
+                    "origin": "synthetic test fixture, not a filing", "observed_at": None}
+        request = {"schema": "ar.workflow-trial.v1", "workflow": "earnings", "as_of": "20260919",
+                   "generated_at": "2026-09-19T18:26:00+00:00", "mode": "HISTORICAL_REPLAY",
+                   "sources": {"claims": source(claim_path, "json", "E2"),
+                               "filing": source(filing_path, "text", "E1")},
+                   "authoring": {"kind": "AI_DRAFT", "model": "test-only", "prompt_version": "fixture-v1"},
+                   "payload": {"company": code,
+                               "claims": {"source": "claims", "pointer": "/claims", "expected": claims},
+                               "registered_at": None,
+                               "responses": [{"claim_id": "C1", "evidence": [{"source": "filing", "start": 2,
+                                              "end": 2, "expected": "Cash flow remains negative."}],
+                                              "draft_assessment": "UNRESOLVED", "draft_comment": "Check units and period.",
+                                              "missing_evidence": ["Comparable period"]}]}}
+        path = self.pack / "requests" / f"earnings-{code}.json"
+        path.write_text(json.dumps(request, ensure_ascii=False), encoding="utf-8")
+        return path
+
+    def system(self):
+        try:
+            return ws.Workspace(self.store, earnings_pack_root=self.pack)
+        except TypeError as exc:
+            self.fail(f"earnings pack is not wired: {exc}")
+
+    def run_job(self):
+        try:
+            return self.system().start_job({"command_id": "earnings_test_01", "kind": "earnings-trial"})
+        except ws.WorkspaceError as exc:
+            self.fail(f"earnings job is not wired: {exc}")
+
+    def test_reopens_all_three_claim_responses_without_approval(self):
+        before = {str(p.relative_to(self.pack)): ev.sha(p.read_bytes()) for p in self.pack.rglob("*") if p.is_file()}
+        result = self.run_job()
+        self.assertEqual(result["status"], "SUCCEEDED")
+        rows = result["result"]["reports"]
+        self.assertEqual([r["company"] for r in rows], list(self.CODES))
+        self.assertEqual(result["result"]["sample_purpose"], "WORKFLOW_DEBUG")
+        self.assertFalse(result["result"]["production_authority"])
+        self.assertFalse(result["result"]["paper_authority"])
+        self.assertTrue(self.system().snapshot()["earnings_pack_configured"])
+        for row in rows:
+            self.assertEqual(row["human_review"], "PENDING")
+            self.assertEqual(row["registration_status"], "NOT_PREREGISTERED")
+            self.assertEqual(row["data_status"], "CITED_NOT_HUMAN_VERIFIED")
+            self.assertIn("UNRESOLVED", row["report"])
+            self.assertIn("Cash flow remains negative.", row["report"])
+            request = json.loads(self.requests[row["company"]].read_text())
+            output = self.store.path.parent / "earnings-trials" / "earnings_test_01" / row["company"]
+            self.assertTrue(trial.verify_trial(request, self.pack / "inputs", output))
+            self.assertEqual(ev.sha(output.joinpath("report.md").read_bytes()), row["report_sha256"])
+        self.assertEqual(before, {str(p.relative_to(self.pack)): ev.sha(p.read_bytes()) for p in self.pack.rglob("*") if p.is_file()})
+
+    def test_late_tampered_source_stops_before_any_case_output(self):
+        (self.pack / "inputs" / f"{self.CODES[-1]}-filing.txt").write_text("Changed source.\n")
+        result = self.run_job()
+        self.assertEqual(result["status"], "STOP")
+        self.assertNotIn("reports", result["result"])
+        self.assertFalse((self.store.path.parent / "earnings-trials" / "earnings_test_01" / self.CODES[0]).exists())
+
+    def test_filename_company_mismatch_stops(self):
+        path = self.requests[self.CODES[0]]
+        request = json.loads(path.read_text())
+        request["payload"]["company"] = self.CODES[1]
+        for source in request["sources"].values():
+            source["company"] = self.CODES[1]
+        path.write_text(json.dumps(request))
+        self.assertEqual(self.run_job()["status"], "STOP")
+
+    def test_synthetic_mode_stops(self):
+        path = self.requests[self.CODES[0]]
+        request = json.loads(path.read_text())
+        request["mode"] = "SYNTHETIC"
+        path.write_text(json.dumps(request))
+        self.assertEqual(self.run_job()["status"], "STOP")
+
+    def test_missing_pack_and_scheduling_stop(self):
+        for path in self.requests.values():
+            path.unlink()
+        self.assertEqual(self.run_job()["status"], "STOP")
+        system = self.system()
+        system.configure_owner({"password": PASSWORD, "confirmation": PASSWORD})
+        with self.assertRaisesRegex(ws.WorkspaceError, "OFFLINE_SCHEDULE_ALLOWLIST_REQUIRED"):
+            system.command("schedule", {"command_id": "schedule_earnings", "schedule_id": "earnings_schedule",
+                                        "expected_revision": 0, "kind": "earnings-trial", "interval_minutes": 60,
+                                        "enabled": True, "password": PASSWORD})
+
+    def test_persisted_report_is_reverified_not_taken_on_trust(self):
+        original = trial.write_trial
+        def tamper(request, inputs, output):
+            receipt = original(request, inputs, output)
+            (output / "report.md").write_text("FORGED COMPLETE")
+            return receipt
+        with mock.patch.object(trial, "write_trial", side_effect=tamper):
+            self.assertEqual(self.run_job()["status"], "STOP")
+
+    def test_request_changed_during_run_stops(self):
+        original = trial.write_trial
+        path = self.requests[self.CODES[0]]
+        def switch(request, inputs, output):
+            receipt = original(request, inputs, output)
+            path.write_text(path.read_text() + " ")
+            return receipt
+        with mock.patch.object(trial, "write_trial", side_effect=switch):
+            self.assertEqual(self.run_job()["status"], "STOP")
+
+    def test_overlimit_request_count_stops_without_output(self):
+        for suffix in ("001111.SZ", "001112.SZ", "001113.SZ"):
+            self.make_request(suffix)
+        result = self.run_job()
+        self.assertEqual(result["status"], "STOP")
+        self.assertFalse((self.store.path.parent / "earnings-trials" / "earnings_test_01").exists())
 
 
 if __name__ == "__main__":
