@@ -45,6 +45,18 @@ class StatusToneTests(unittest.TestCase):
         self.assertEqual(self.tones(["DATA_BLOCKED", "PARTIAL", "UNBOUND", "IN_REVIEW"]),
                          ["amber"] * 4)
 
+    def test_latest_job_does_not_hide_new_stop(self):
+        module = (ROOT / "tools/nonprod_workbench/ui/job-view.mjs").as_uri()
+        script = (f"import {{ latestJobByKind }} from {json.dumps(module)};"
+                  "const jobs = [{kind:'brief-trial',status:'SUCCEEDED',job_id:'old'},"
+                  "{kind:'observe',status:'SUCCEEDED',job_id:'other'},"
+                  "{kind:'brief-trial',status:'STOP',job_id:'new'}];"
+                  "console.log(JSON.stringify(latestJobByKind(jobs,'brief-trial')));")
+        result = subprocess.run(["node", "--input-type=module", "-e", script],
+                                capture_output=True, text=True, check=True)
+        self.assertEqual(json.loads(result.stdout),
+                         {"kind": "brief-trial", "status": "STOP", "job_id": "new"})
+
 
 def write(root, name, value):
     path = root / name
@@ -653,6 +665,121 @@ class WorkspaceTests(unittest.TestCase):
         existing=self.root/"existing-empty";existing.mkdir()
         with self.assertRaisesRegex(ev.EvidenceError,"NEW_SCRATCH"):
             backup.restore_check(location,existing)
+
+
+class FrozenBriefJobTests(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.root = Path(self.temp.name)
+        self.pack = self.root / "pack"
+        (self.pack / "requests").mkdir(parents=True)
+        (self.pack / "inputs").mkdir()
+        raw = b"Revenue is 100.\n"
+        (self.pack / "inputs" / "filing.txt").write_bytes(raw)
+        self.request = {
+            "schema": "ar.workflow-trial.v1", "workflow": "brief", "as_of": "20260911",
+            "generated_at": "2026-09-18T22:00:00+01:00", "mode": "HISTORICAL_REPLAY",
+            "sources": {"filing": {"path": "filing.txt", "sha256": ev.sha(raw),
+                                   "company": "688035.SH", "tier": "E1", "published_on": "20260811",
+                                   "format": "text", "origin": "synthetic unit fixture", "observed_at": None}},
+            "authoring": {"kind": "AI_DRAFT", "model": "test-only", "prompt_version": "fixture-v1"},
+            "payload": {"focus_version": "test-v1", "coverage_note": "Only synthetic input.",
+                        "comparison": {"before_date": None, "after_date": "20260811"},
+                        "items": [{"id": "B1", "company": "688035.SH", "title": "Reported revenue",
+                                   "before": None,
+                                   "after": {"source": "filing", "start": 1, "end": 1,
+                                             "expected": "Revenue is 100."},
+                                   "thesis_link": "Test question", "draft_comment": "Check source."}]},
+        }
+        self.save_request()
+        self.system = ws.Workspace(wb.Store(self.root / "state"), brief_pack_root=self.pack)
+
+    def save_request(self):
+        (self.pack / "requests" / "brief.json").write_text(json.dumps(self.request), encoding="utf-8")
+
+    def run_job(self, command_id="brief_job_0001"):
+        return self.system.start_job({"command_id": command_id, "kind": "brief-trial"})
+
+    def test_real_renderer_is_exposed_as_pending_historical_brief(self):
+        result = self.run_job()
+        self.assertEqual(result["status"], "SUCCEEDED")
+        self.assertEqual(result["result"]["status"], "COMPLETED_HISTORICAL_BRIEF")
+        self.assertIn("Revenue is 100.", result["result"]["report"])
+        self.assertEqual(result["result"]["human_review"], "PENDING")
+        self.assertFalse(result["result"]["production_authority"])
+        self.assertFalse(result["result"]["trade_authority"])
+        self.assertTrue((self.root / "state" / "brief-trials" / "brief_job_0001" / "SHA256SUMS").is_file())
+        self.assertEqual(self.run_job()["disposition"], "IDEMPOTENT")
+
+    def test_changed_source_stops_before_success(self):
+        (self.pack / "inputs" / "filing.txt").write_text("Invented revenue.\n")
+        result = self.run_job()
+        self.assertEqual(result["status"], "STOP")
+        self.assertEqual(result["result"]["error"], "FROZEN_BRIEF_EVIDENCE_INVALID")
+
+    def test_changed_output_is_rejected_before_job_success(self):
+        from experiments.research_workflows import trial
+        original = trial.write_trial
+
+        def tamper(request, input_root, output):
+            receipt = original(request, input_root, output)
+            (output / "report.md").write_text("forged report", encoding="utf-8")
+            return receipt
+
+        with mock.patch.object(trial, "write_trial", side_effect=tamper):
+            result = self.run_job()
+        self.assertEqual(result["status"], "STOP")
+        self.assertEqual(result["result"]["error"], "FROZEN_BRIEF_EVIDENCE_INVALID")
+
+    def test_foreign_workflow_and_missing_pack_stop(self):
+        self.request["workflow"] = "smc"
+        self.save_request()
+        self.assertEqual(self.run_job()["result"]["error"], "ONLY_HISTORICAL_BRIEF_ALLOWED")
+        other = ws.Workspace(wb.Store(self.root / "other-state"))
+        result = other.start_job({"command_id": "brief_job_0002", "kind": "brief-trial"})
+        self.assertEqual(result["status"], "STOP")
+        self.assertEqual(result["result"]["error"], "FROZEN_BRIEF_PACK_NOT_CONFIGURED")
+
+    def test_synthetic_mode_is_not_misrepresented_as_historical(self):
+        self.request["mode"] = "SYNTHETIC"
+        self.save_request()
+        result = self.run_job()
+        self.assertEqual(result["status"], "STOP")
+        self.assertEqual(result["result"]["error"], "ONLY_HISTORICAL_BRIEF_ALLOWED")
+
+    def test_oversized_request_does_not_enter_renderer(self):
+        (self.pack / "requests" / "brief.json").write_bytes(b" " * 1_000_001)
+        result = self.run_job()
+        self.assertEqual(result["status"], "STOP")
+        self.assertEqual(result["result"]["error"], "FROZEN_BRIEF_REQUEST_TOO_LARGE")
+        self.assertFalse((self.root / "state" / "brief-trials" / "brief_job_0001").exists())
+
+    def test_brief_cannot_be_scheduled(self):
+        self.system.configure_owner({"password": PASSWORD, "confirmation": PASSWORD})
+        with self.assertRaisesRegex(ws.WorkspaceError, "OFFLINE_SCHEDULE_ALLOWLIST_REQUIRED"):
+            self.system.command("schedule", {"command_id": "schedule_0001", "schedule_id": "schedule_0001",
+                                             "expected_revision": 0, "kind": "brief-trial", "interval_minutes": 10,
+                                             "enabled": True, "password": PASSWORD})
+
+    def test_frozen_pack_must_be_disjoint_from_writable_state(self):
+        store = wb.Store(self.root / "state")
+        nested_pack = self.root / "state" / "pack"
+        nested_pack.mkdir()
+        for pack in (self.root, self.root / "state", nested_pack):
+            with self.subTest(pack=pack), self.assertRaisesRegex(
+                    ws.WorkspaceError, "STATE_MUST_BE_OUTSIDE_FROZEN_BRIEF_PACK"):
+                ws.Workspace(store, brief_pack_root=pack)
+
+    def test_brief_pack_overlap_stops_before_state_store_creation(self):
+        for state_root in (self.pack / "new-state", self.root):
+            with self.subTest(state_root=state_root), mock.patch.object(
+                    wb, "load_assets", return_value={}):
+                with self.assertRaises(Exception) as caught:
+                    wb.main(["--state-root", str(state_root), "--brief-pack-root", str(self.pack)])
+                self.assertIs(type(caught.exception), wb.WorkbenchError)
+                self.assertEqual(str(caught.exception), "STATE_MUST_BE_OUTSIDE_FROZEN_BRIEF_PACK")
+            self.assertFalse((state_root / "workbench.sqlite3").exists())
 
 
 if __name__ == "__main__":
