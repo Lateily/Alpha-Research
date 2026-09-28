@@ -123,8 +123,11 @@ class Workspace:
             raise WorkspaceError("STATE_MUST_BE_OUTSIDE_READ_ONLY_SOURCE")
         if self.earnings_pack_root and (self.earnings_pack_root.is_symlink() or not self.earnings_pack_root.is_dir()):
             raise WorkspaceError("FROZEN_EARNINGS_PACK_UNAVAILABLE")
-        if self.earnings_pack_root and self.earnings_pack_root.resolve() in store.path.resolve().parents:
-            raise WorkspaceError("STATE_MUST_BE_OUTSIDE_FROZEN_EARNINGS_PACK")
+        if self.earnings_pack_root:
+            pack_dir = self.earnings_pack_root.resolve()
+            state_dir = store.path.parent.resolve()
+            if pack_dir == state_dir or pack_dir in state_dir.parents or state_dir in pack_dir.parents:
+                raise WorkspaceError("STATE_MUST_BE_OUTSIDE_FROZEN_EARNINGS_PACK")
         self.lock = threading.Lock()
         self.stopping = threading.Event()
         self.owner_failures = []
@@ -301,7 +304,11 @@ class Workspace:
             elif payload["kind"] == "earnings-trial":
                 if self.earnings_pack_root is None:
                     raise WorkspaceError("FROZEN_EARNINGS_PACK_NOT_CONFIGURED", 409)
-                result = earnings_trial.run(self.earnings_pack_root, self.store.path.parent / "earnings-trials" / job_id)
+                target_root = self.store.path.parent / "earnings-trials"
+                if target_root.is_symlink():
+                    raise WorkspaceError("EARNINGS_OUTPUT_SYMLINK_REFUSED", 409)
+                target_root.mkdir(mode=0o700, exist_ok=True)
+                result = earnings_trial.run(self.earnings_pack_root, target_root / job_id)
             else:
                 receipt = self.store.replay({"command_id": "job_" + evidence.sealed(job_id)[:40], "scenario": "complete-replay"})["receipt"]
                 result = {"receipt_hash": receipt["receipt_hash"], "replay_id": receipt["command_id"], "status": receipt["status"], "synthetic": True}

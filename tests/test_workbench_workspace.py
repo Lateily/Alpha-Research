@@ -793,6 +793,32 @@ class FrozenEarningsJobTests(unittest.TestCase):
         self.assertEqual(result["status"], "STOP")
         self.assertFalse((self.store.path.parent / "earnings-trials" / "earnings_test_01").exists())
 
+    def test_earnings_output_parent_symlink_refused(self):
+        outside = self.root / "outside"
+        outside.mkdir()
+        (self.store.path.parent / "earnings-trials").symlink_to(outside, target_is_directory=True)
+        result = self.run_job()
+        self.assertEqual(result["status"], "STOP")
+        self.assertEqual(list(outside.iterdir()), [])
+
+    def test_earnings_pack_must_be_disjoint_from_state(self):
+        nested_pack = self.store.path.parent / "pack"
+        nested_pack.mkdir()
+        for pack in (self.store.path.parent, nested_pack):
+            with self.subTest(pack=pack), self.assertRaisesRegex(
+                    ws.WorkspaceError, "STATE_MUST_BE_OUTSIDE_FROZEN_EARNINGS_PACK"):
+                ws.Workspace(self.store, earnings_pack_root=pack)
+
+    def test_earnings_pack_overlap_stops_before_state_store_creation(self):
+        for state_root in (self.pack / "new-state", self.root):
+            with self.subTest(state_root=state_root), mock.patch.object(
+                    wb, "load_assets", return_value={}):
+                with self.assertRaises(Exception) as caught:
+                    wb.main(["--state-root", str(state_root), "--earnings-pack-root", str(self.pack)])
+                self.assertIs(type(caught.exception), wb.WorkbenchError)
+                self.assertEqual(str(caught.exception), "STATE_MUST_BE_OUTSIDE_FROZEN_EARNINGS_PACK")
+            self.assertFalse((state_root / "workbench.sqlite3").exists())
+
 
 if __name__ == "__main__":
     with mock.patch("socket.socket", side_effect=AssertionError("workspace tests must be offline")), mock.patch("socket.create_connection", side_effect=AssertionError("workspace tests must be offline")):
