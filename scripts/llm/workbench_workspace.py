@@ -21,7 +21,8 @@ from pathlib import Path
 
 import workbench_evidence as evidence
 
-KINDS = {"observe", "integrity", "research-replay", "backup"}
+KINDS = {"observe", "integrity", "research-replay", "backup", "brief-trial"}
+SCHEDULE_KINDS = KINDS - {"brief-trial"}
 DOCUMENT_FIELDS = {"title", "ticker", "thesis", "valuation", "timing", "invalidation", "evidence_ref"}
 REVIEW_OUTCOMES = {"ACCEPTED_LOCAL", "CHANGES_REQUESTED", "REJECTED_LOCAL"}
 MAX_EVENTS = 10000
@@ -36,6 +37,7 @@ MODULES = (
     ("Five-axis attribution", "experiments/research_funnel/five_axis_attribution.py", "FIXED_OFFLINE_REPLAY"),
     ("Knowledge cards", "experiments/research_funnel/knowledge_cards.py", "READ_ONLY_CATALOG"),
     ("DeepSeek", "scripts/llm/adapters/deepseek.py", "OFFLINE_STUB_ONLY"),
+    ("Daily brief", "experiments/research_workflows/trial.py", "FROZEN_HISTORICAL_INPUT_ONLY"),
 )
 
 
@@ -110,9 +112,10 @@ def projection(events):
 
 
 class Workspace:
-    def __init__(self, store, source_root=None, clock=time.time):
+    def __init__(self, store, source_root=None, clock=time.time, brief_pack_root=None):
         self.store, self.clock = store, clock
         self.source_root = Path(source_root) if source_root else None
+        self.brief_pack_root = Path(brief_pack_root) if brief_pack_root else None
         if self.source_root and (self.source_root.is_symlink() or not self.source_root.is_dir()):
             raise WorkspaceError("READ_ONLY_SOURCE_ROOT_INVALID")
         if self.source_root and self.source_root.resolve() in store.path.resolve().parents:
@@ -208,7 +211,7 @@ class Workspace:
             if kind == "schedule":
                 identifier(payload["schedule_id"])
                 minutes = payload["interval_minutes"]
-                if payload["kind"] not in KINDS or type(minutes) is not int or not 10 <= minutes <= 10080 or type(payload["enabled"]) is not bool:
+                if payload["kind"] not in SCHEDULE_KINDS or type(minutes) is not int or not 10 <= minutes <= 10080 or type(payload["enabled"]) is not bool:
                     raise WorkspaceError("OFFLINE_SCHEDULE_ALLOWLIST_REQUIRED")
                 prior = next((x for x in state["schedules"] if x["schedule_id"] == payload["schedule_id"]), {})
                 revision = prior.get("revision", 0)
@@ -290,6 +293,15 @@ class Workspace:
             elif payload["kind"] == "backup":
                 import workbench_backup
                 result = workbench_backup.create(self, job_id)
+            elif payload["kind"] == "brief-trial":
+                if self.brief_pack_root is None:
+                    raise WorkspaceError("FROZEN_BRIEF_PACK_NOT_CONFIGURED", 409)
+                import workbench_brief_trial
+                target_root = self.store.path.parent / "brief-trials"
+                if target_root.is_symlink():
+                    raise WorkspaceError("BRIEF_OUTPUT_SYMLINK_REFUSED", 409)
+                target_root.mkdir(mode=0o700, exist_ok=True)
+                result = workbench_brief_trial.run(self.brief_pack_root, target_root / job_id)
             else:
                 receipt = self.store.replay({"command_id": "job_" + evidence.sealed(job_id)[:40], "scenario": "complete-replay"})["receipt"]
                 result = {"receipt_hash": receipt["receipt_hash"], "replay_id": receipt["command_id"], "status": receipt["status"], "synthetic": True}
@@ -297,7 +309,8 @@ class Workspace:
         except Exception as exc:
             status = "STOP"
             # Never persist raw exception text from engines or provider transports.
-            code = str(exc) if isinstance(exc, (WorkspaceError, evidence.EvidenceError)) else "LOCAL_JOB_FAILED"
+            import workbench_brief_trial
+            code = str(exc) if isinstance(exc, (WorkspaceError, evidence.EvidenceError, workbench_brief_trial.BriefTrialError)) else "LOCAL_JOB_FAILED"
             result = {"error": code}
         with self.store.connect() as db:
             db.execute("BEGIN IMMEDIATE")
@@ -365,6 +378,7 @@ class Workspace:
         return {"schema": "ar-local-workspace.v1", **state, "observation": observation,
                 "observation_error": issue, "events": events, "owner_configured": owner,
                 "read_only_source_configured": self.source_root is not None,
+                "brief_pack_configured": self.brief_pack_root is not None,
                 "scheduler": {"runtime": "IN_PROCESS_LOCAL_SERVER", "status": getattr(self, "scheduler_error", None) or "AVAILABLE", "missed_policy": "NO_BACKFILL", "requires_awake_host": True},
                 "authority": {"team_access": False, "paid_calls": False, "production_write": False, "formal_u4_approval": False, "local_review_only": True},
                 "catalog": self.catalog,

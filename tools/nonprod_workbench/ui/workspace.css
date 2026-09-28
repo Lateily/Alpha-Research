@@ -37,6 +37,7 @@
 .json-evidence { font-size: 11px; margin: 9px 0; max-width: 100%; }
 .json-evidence summary { color: #366c5e; cursor: pointer; overflow-wrap: anywhere; }
 .json-evidence pre { max-height: 450px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; background: #eff3f2; padding: 14px; border-left: 2px solid #779e91; line-height: 1.8; }
+.brief-report { max-height: 640px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; background: #eff3f2; padding: 16px; border-left: 2px solid #779e91; line-height: 1.7; font: inherit; }
 .muted { color: #7b857f; font-size: 11px; line-height: 1.8; }
 .pagination, .pending-actions, .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
 .pagination { justify-content: flex-end; padding: 15px 0; font-size: 12px; }

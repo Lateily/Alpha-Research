@@ -432,6 +432,7 @@ def main(argv=None):
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8766)
     parser.add_argument("--read-only-source-root", type=Path, help="Local AR root; only a fixed public artifact allowlist is read")
+    parser.add_argument("--brief-pack-root", type=Path, help="Operator-frozen historical brief pack; requests/brief.json and inputs/ are read only")
     parser.add_argument("--state-root", type=Path, help="Dedicated nonproduction state directory, separate from code releases")
     args = parser.parse_args(argv)
     host = serve_host(args.host)
@@ -443,7 +444,7 @@ def main(argv=None):
         raise WorkbenchError("STATE_PARENT_SYMLINK_REFUSED")
     store = Store(state_root)
     lifetime_lock = service_lock(state_root)
-    system = workspace.Workspace(store, args.read_only_source_root)
+    system = workspace.Workspace(store, args.read_only_source_root, brief_pack_root=args.brief_pack_root)
     origin = f"http://{host}:{args.port}"
     server = ThreadingHTTPServer((host, args.port), make_handler(store, assets, origin, secrets.token_hex(32), system))
     server.daemon_threads = True
