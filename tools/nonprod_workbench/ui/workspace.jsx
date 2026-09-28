@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { statusTone } from './status-tone.mjs';
+import { latestJobByKind } from './job-view.mjs';
 import { Activity, ArrowRight, CalendarClock, Check, ClipboardCheck, Database, Download, FileText, Layers3, ListFilter, LockKeyhole, Play, Plus, RefreshCw, Save, Search, Send, ShieldCheck, Wallet, X } from 'lucide-react';
 export const workspaceTabs = [['desk', '研究总览', Layers3], ['nightly', '夜链与计划', CalendarClock], ['macro', '宏观与数据', Activity], ['models', '模型与方法', ShieldCheck], ['candidates', '候选证据', ListFilter], ['drafts', '研究稿', FileText], ['reviews', '提交与审核', ClipboardCheck], ['paper', '模拟盘与归因', Wallet], ['records', '数据与审计', Database]];
 const scheduledJobLabels = {
@@ -8,7 +9,8 @@ const scheduledJobLabels = {
   'research-replay': '固定研究用例回放',
   backup: '备份与恢复自检'
 };
-const jobLabels = { ...scheduledJobLabels, 'earnings-trial': '冻结财报逐条回应' };
+const jobLabels = { ...scheduledJobLabels, 'brief-trial': '冻结简报试跑', 'earnings-trial': '冻结财报逐条回应' };
+const scheduleLabels = scheduledJobLabels;
 const labels = {
   title: '研究标题',
   ticker: '标的 / 行业',
@@ -201,7 +203,8 @@ export default function Workspace({
   const savedContentMatches = selectedDoc && Object.keys(labels).every(key => selectedDoc.content[key] === content[key]);
   const frozen = selectedDoc && ['IN_REVIEW', 'ACCEPTED_LOCAL'].includes(selectedDoc.status);
   const inReview = state?.documents.filter(d => d.status === 'IN_REVIEW') || [];
-  const latestEarnings = [...(state?.jobs || [])].reverse().find(j => j.kind === 'earnings-trial');
+  const latestBrief = latestJobByKind(state?.jobs || [], 'brief-trial');
+  const latestEarnings = latestJobByKind(state?.jobs || [], 'earnings-trial');
   const macroRegions = obs?.macro?.macro_state?.payload?.data?.regions || {};
   return <div className="workspace-surface">
     {error && <div className="alert error" role="alert"><X size={16} /><code>{error}</code></div>}
@@ -222,7 +225,7 @@ export default function Workspace({
       </>}
       {tab === 'nightly' && <>
         <section><div className="section-title"><h2>旧生产最近尝试</h2><Status value={attempt.report} /></div><div className="step-grid">{(attempt.steps || []).map((s, i) => <article key={s.step} className={s.status === 'OK' ? 'step-ok' : 'step-gap'}><span>{String(i + 1).padStart(2, '0')}</span><h3>{s.step}</h3><Status value={s.status} /><small>{s.elapsed_sec == null ? '—' : `${s.elapsed_sec}s`}</small></article>)}</div>{!attempt.steps?.length && <Empty title="尚无夜链状态快照" />}</section>
-        <section><div className="section-title"><h2>本地计划任务</h2><Status value={state.scheduler.status} /></div><div className="source-strip"><span>服务器运行且电脑唤醒时执行</span><span>错过时段不补跑</span><span>新任务默认不启用 · 无实时采集权</span></div><div className="toolbar">{Object.entries(scheduledJobLabels).map(([kind, label]) => <button key={kind} disabled={busy || !!pending} onClick={() => run(kind)}><Play size={14} />{label}</button>)}</div><Table heads={['任务', '频率', '状态', '变更']}>{state.schedules.map(s => <tr key={s.schedule_id}><td>{jobLabels[s.kind]}</td><td>{s.interval_minutes} 分钟</td><td><Status value={s.enabled ? 'ENABLED_LOCAL' : 'PAUSED'} /></td><td><button disabled={busy || !password || !!pending} onClick={() => act('/api/workspace/schedule', {
+        <section><div className="section-title"><h2>本地计划任务</h2><Status value={state.scheduler.status} /></div><div className="source-strip"><span>服务器运行且电脑唤醒时执行</span><span>错过时段不补跑</span><span>新任务默认不启用 · 无实时采集权</span></div><div className="toolbar">{Object.entries(jobLabels).map(([kind, label]) => <button key={kind} disabled={busy || !!pending || (kind === 'brief-trial' && !state.brief_pack_configured) || (kind === 'earnings-trial' && !state.earnings_pack_configured)} onClick={() => run(kind)}><Play size={14} />{label}</button>)}</div><Table heads={['任务', '频率', '状态', '变更']}>{state.schedules.map(s => <tr key={s.schedule_id}><td>{jobLabels[s.kind]}</td><td>{s.interval_minutes} 分钟</td><td><Status value={s.enabled ? 'ENABLED_LOCAL' : 'PAUSED'} /></td><td><button disabled={busy || !password || !!pending} onClick={() => act('/api/workspace/schedule', {
                   command_id: id('schedule'),
                   schedule_id: s.schedule_id,
                   expected_revision: s.revision,
@@ -242,8 +245,9 @@ export default function Workspace({
               enabled: false,
               password
             }, '计划已保存为暂停状态');
-          }}><label>任务类型<select value={scheduleKind} onChange={e => setScheduleKind(e.target.value)}>{Object.entries(scheduledJobLabels).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></label><label>间隔（分钟）<input type="number" min="10" max="10080" value={intervalMinutes} onChange={e => setIntervalMinutes(e.target.value)} /></label><label>本地管理员口令<input type="password" autoComplete="current-password" value={password} onChange={e => setPassword(e.target.value)} /></label><button type="submit" disabled={busy || !state.owner_configured || !!pending}><Plus size={16} />新增暂停计划</button></form></section>
+          }}><label>任务类型<select value={scheduleKind} onChange={e => setScheduleKind(e.target.value)}>{Object.entries(scheduleLabels).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></label><label>间隔（分钟）<input type="number" min="10" max="10080" value={intervalMinutes} onChange={e => setIntervalMinutes(e.target.value)} /></label><label>本地管理员口令<input type="password" autoComplete="current-password" value={password} onChange={e => setPassword(e.target.value)} /></label><button type="submit" disabled={busy || !state.owner_configured || !!pending}><Plus size={16} />新增暂停计划</button></form></section>
         <section><div className="section-title"><h2>新载体执行记录</h2><Status value="OFFLINE ONLY" /></div><Table heads={['任务 ID', '类型', '状态', '实物结果']}>{[...state.jobs].reverse().map(j => <tr key={j.job_id}><td><code>{j.job_id}</code></td><td>{jobLabels[j.kind]}</td><td><Status value={j.status} />{j.status === 'STARTED' && <p>运行中或中断未收尾；不自动重复</p>}</td><td><JsonEvidence title="结果回执" value={j.result} /></td></tr>)}</Table></section>
+        {latestBrief && <section><div className="section-title"><h2>冻结历史简报最近试跑</h2><Status value={latestBrief.status} /></div>{latestBrief.status === 'SUCCEEDED' ? <><div className="source-strip"><span>证据截止 <code>{latestBrief.result.as_of}</code></span><span>WORKFLOW_DEBUG / 非今日简报</span><span>人工核验 {latestBrief.result.human_review}</span><span>无 U4、paper 或交易权限</span></div><Status value={latestBrief.result.data_status} /><pre className="brief-report">{latestBrief.result.report}</pre></> : <JsonEvidence title="最新试跑阻断回执" value={latestBrief.result} />}</section>}
       </>}
       {tab === 'macro' && <>
         <section><div className="section-title"><h2>四轴宏观面板</h2><Status value="CALIBRATING" /></div>{['CN','US'].map(region => <div key={region}><h3 className="region-heading">{region === 'CN' ? '中国' : '美国'}</h3><div className="macro-axes">{[['GROWTH','增长'],['INFLATION','通胀'],['LIQUIDITY','流动性'],['RISK','风险偏好']].map(([key,axis]) => {const row=macroRegions[region]?.axes?.[key]; return <article key={key}><Activity size={18}/><h3>{axis}</h3><strong>{row?.label || 'UNAVAILABLE'}</strong><Status value={row?.data_status || 'DATA_BLOCKED'}/></article>;})}</div></div>)}{obs?.macro?.macro_panel?.payload && <JsonEvidence title="四轴源契约（未经本工作台重新推断）" value={obs.macro.macro_panel.payload} />}</section>

@@ -432,6 +432,7 @@ def main(argv=None):
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8766)
     parser.add_argument("--read-only-source-root", type=Path, help="Local AR root; only a fixed public artifact allowlist is read")
+    parser.add_argument("--brief-pack-root", type=Path, help="Operator-frozen historical brief pack; requests/brief.json and inputs/ are read only")
     parser.add_argument("--earnings-pack-root", type=Path, help="Operator-frozen historical earnings pack; requests and inputs are read only")
     parser.add_argument("--state-root", type=Path, help="Dedicated nonproduction state directory, separate from code releases")
     args = parser.parse_args(argv)
@@ -440,6 +441,11 @@ def main(argv=None):
     state_root = args.state_root or ROOT / ".ai-workspace/nonprod-workbench"
     if args.read_only_source_root and (state_root.resolve() == args.read_only_source_root.resolve() or args.read_only_source_root.resolve() in state_root.resolve().parents):
         raise WorkbenchError("STATE_MUST_BE_OUTSIDE_READ_ONLY_SOURCE")
+    if args.brief_pack_root:
+        pack_dir = args.brief_pack_root.resolve()
+        state_dir = state_root.resolve()
+        if pack_dir == state_dir or pack_dir in state_dir.parents or state_dir in pack_dir.parents:
+            raise WorkbenchError("STATE_MUST_BE_OUTSIDE_FROZEN_BRIEF_PACK")
     if args.earnings_pack_root:
         pack_dir = args.earnings_pack_root.resolve()
         state_dir = state_root.resolve()
@@ -449,7 +455,9 @@ def main(argv=None):
         raise WorkbenchError("STATE_PARENT_SYMLINK_REFUSED")
     store = Store(state_root)
     lifetime_lock = service_lock(state_root)
-    system = workspace.Workspace(store, args.read_only_source_root, earnings_pack_root=args.earnings_pack_root)
+    system = workspace.Workspace(store, args.read_only_source_root,
+                                 brief_pack_root=args.brief_pack_root,
+                                 earnings_pack_root=args.earnings_pack_root)
     origin = f"http://{host}:{args.port}"
     server = ThreadingHTTPServer((host, args.port), make_handler(store, assets, origin, secrets.token_hex(32), system))
     server.daemon_threads = True
