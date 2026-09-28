@@ -45,6 +45,18 @@ class StatusToneTests(unittest.TestCase):
         self.assertEqual(self.tones(["DATA_BLOCKED", "PARTIAL", "UNBOUND", "IN_REVIEW"]),
                          ["amber"] * 4)
 
+    def test_latest_job_does_not_hide_new_stop(self):
+        module = (ROOT / "tools/nonprod_workbench/ui/job-view.mjs").as_uri()
+        script = (f"import {{ latestJobByKind }} from {json.dumps(module)};"
+                  "const jobs = [{kind:'brief-trial',status:'SUCCEEDED',job_id:'old'},"
+                  "{kind:'observe',status:'SUCCEEDED',job_id:'other'},"
+                  "{kind:'brief-trial',status:'STOP',job_id:'new'}];"
+                  "console.log(JSON.stringify(latestJobByKind(jobs,'brief-trial')));")
+        result = subprocess.run(["node", "--input-type=module", "-e", script],
+                                capture_output=True, text=True, check=True)
+        self.assertEqual(json.loads(result.stdout),
+                         {"kind": "brief-trial", "status": "STOP", "job_id": "new"})
+
 
 def write(root, name, value):
     path = root / name
@@ -749,6 +761,25 @@ class FrozenBriefJobTests(unittest.TestCase):
             self.system.command("schedule", {"command_id": "schedule_0001", "schedule_id": "schedule_0001",
                                              "expected_revision": 0, "kind": "brief-trial", "interval_minutes": 10,
                                              "enabled": True, "password": PASSWORD})
+
+    def test_frozen_pack_must_be_disjoint_from_writable_state(self):
+        store = wb.Store(self.root / "state")
+        nested_pack = self.root / "state" / "pack"
+        nested_pack.mkdir()
+        for pack in (self.root, self.root / "state", nested_pack):
+            with self.subTest(pack=pack), self.assertRaisesRegex(
+                    ws.WorkspaceError, "STATE_MUST_BE_OUTSIDE_FROZEN_BRIEF_PACK"):
+                ws.Workspace(store, brief_pack_root=pack)
+
+    def test_brief_pack_overlap_stops_before_state_store_creation(self):
+        for state_root in (self.pack / "new-state", self.root):
+            with self.subTest(state_root=state_root), mock.patch.object(
+                    wb, "load_assets", return_value={}):
+                with self.assertRaises(Exception) as caught:
+                    wb.main(["--state-root", str(state_root), "--brief-pack-root", str(self.pack)])
+                self.assertIs(type(caught.exception), wb.WorkbenchError)
+                self.assertEqual(str(caught.exception), "STATE_MUST_BE_OUTSIDE_FROZEN_BRIEF_PACK")
+            self.assertFalse((state_root / "workbench.sqlite3").exists())
 
 
 if __name__ == "__main__":

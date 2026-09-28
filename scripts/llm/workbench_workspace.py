@@ -120,6 +120,11 @@ class Workspace:
             raise WorkspaceError("READ_ONLY_SOURCE_ROOT_INVALID")
         if self.source_root and self.source_root.resolve() in store.path.resolve().parents:
             raise WorkspaceError("STATE_MUST_BE_OUTSIDE_READ_ONLY_SOURCE")
+        if self.brief_pack_root:
+            pack_dir = self.brief_pack_root.resolve()
+            state_dir = store.path.parent.resolve()
+            if pack_dir == state_dir or pack_dir in state_dir.parents or state_dir in pack_dir.parents:
+                raise WorkspaceError("STATE_MUST_BE_OUTSIDE_FROZEN_BRIEF_PACK")
         self.lock = threading.Lock()
         self.stopping = threading.Event()
         self.owner_failures = []

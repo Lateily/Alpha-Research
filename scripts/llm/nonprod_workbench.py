@@ -440,6 +440,11 @@ def main(argv=None):
     state_root = args.state_root or ROOT / ".ai-workspace/nonprod-workbench"
     if args.read_only_source_root and (state_root.resolve() == args.read_only_source_root.resolve() or args.read_only_source_root.resolve() in state_root.resolve().parents):
         raise WorkbenchError("STATE_MUST_BE_OUTSIDE_READ_ONLY_SOURCE")
+    if args.brief_pack_root:
+        pack_dir = args.brief_pack_root.resolve()
+        state_dir = state_root.resolve()
+        if pack_dir == state_dir or pack_dir in state_dir.parents or state_dir in pack_dir.parents:
+            raise WorkbenchError("STATE_MUST_BE_OUTSIDE_FROZEN_BRIEF_PACK")
     if (ROOT / ".ai-workspace").is_symlink():
         raise WorkbenchError("STATE_PARENT_SYMLINK_REFUSED")
     store = Store(state_root)
