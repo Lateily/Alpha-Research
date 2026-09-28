@@ -67,6 +67,11 @@ textarea:focus-visible { outline: 3px solid #8bb6e5; outline-offset: 2px; }
 .owner-input { display: grid; gap: 10px; max-width: 450px; font-size: 12px; }
 .review-reason { display: grid; gap: 12px; font-size: 12px; margin-bottom: 18px; }
 .review-item { padding: 22px 0; border-top: 1px solid #dce2e0; }
+.earnings-results { margin-top: 24px; }
+.earnings-report { padding: 22px 0; border-top: 1px solid #dce2e0; }
+.earnings-report .source-strip { flex-wrap: wrap; }
+.earnings-report .source-strip code { overflow-wrap: anywhere; }
+.earnings-report pre { max-height: 38rem; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; background: #eff3f2; border-left: 2px solid #779e91; padding: 14px; line-height: 1.8; }
 .nav-chart { width: 100%; height: 190px; display: block; margin: 22px 0; }
 @media(max-width:1100px) { .workspace-metrics { grid-template-columns: repeat(2,minmax(0,1fr)); } .workflow-rail { grid-template-columns: repeat(3,minmax(0,1fr)); row-gap: 22px; } .step-grid { grid-template-columns: repeat(3,minmax(0,1fr)); } .schedule-form { grid-template-columns: repeat(2,minmax(0,1fr)); } }
 @media(max-width:700px) { .sidebar nav { overflow-y: hidden; } .workspace-metrics article { padding: 16px 12px; } .workspace-metrics strong { font-size: 19px; } .workflow-rail { grid-template-columns: repeat(2,minmax(0,1fr)); } .status-lines > div { grid-template-columns: 1fr; gap: 8px; } .step-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } .macro-axes { grid-template-columns: repeat(2,minmax(0,1fr)); } .research-form { grid-template-columns: 1fr; } .schedule-form { grid-template-columns: 1fr; } .workspace-surface .toolbar { flex-wrap: wrap; } .workspace-surface .toolbar .search { min-width: 100%; } .workspace-surface .toolbar select { max-width: 100%; } .workspace-table table { min-width: 620px; } .form-footer .actions { width: 100%; } }

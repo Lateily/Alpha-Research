@@ -20,9 +20,10 @@ import time
 from pathlib import Path
 
 import workbench_evidence as evidence
+import workbench_earnings_trial as earnings_trial
 
-KINDS = {"observe", "integrity", "research-replay", "backup", "brief-trial"}
-SCHEDULE_KINDS = KINDS - {"brief-trial"}
+SCHEDULE_KINDS = {"observe", "integrity", "research-replay", "backup"}
+KINDS = SCHEDULE_KINDS | {"brief-trial", "earnings-trial"}
 DOCUMENT_FIELDS = {"title", "ticker", "thesis", "valuation", "timing", "invalidation", "evidence_ref"}
 REVIEW_OUTCOMES = {"ACCEPTED_LOCAL", "CHANGES_REQUESTED", "REJECTED_LOCAL"}
 MAX_EVENTS = 10000
@@ -38,6 +39,7 @@ MODULES = (
     ("Knowledge cards", "experiments/research_funnel/knowledge_cards.py", "READ_ONLY_CATALOG"),
     ("DeepSeek", "scripts/llm/adapters/deepseek.py", "OFFLINE_STUB_ONLY"),
     ("Daily brief", "experiments/research_workflows/trial.py", "FROZEN_HISTORICAL_INPUT_ONLY"),
+    ("Independent earnings", "experiments/research_workflows/trial.py", "FROZEN_OFFLINE_TRIAL"),
 )
 
 
@@ -112,10 +114,12 @@ def projection(events):
 
 
 class Workspace:
-    def __init__(self, store, source_root=None, clock=time.time, brief_pack_root=None):
+    def __init__(self, store, source_root=None, clock=time.time,
+                 brief_pack_root=None, earnings_pack_root=None):
         self.store, self.clock = store, clock
         self.source_root = Path(source_root) if source_root else None
         self.brief_pack_root = Path(brief_pack_root) if brief_pack_root else None
+        self.earnings_pack_root = Path(earnings_pack_root) if earnings_pack_root else None
         if self.source_root and (self.source_root.is_symlink() or not self.source_root.is_dir()):
             raise WorkspaceError("READ_ONLY_SOURCE_ROOT_INVALID")
         if self.source_root and self.source_root.resolve() in store.path.resolve().parents:
@@ -125,6 +129,13 @@ class Workspace:
             state_dir = store.path.parent.resolve()
             if pack_dir == state_dir or pack_dir in state_dir.parents or state_dir in pack_dir.parents:
                 raise WorkspaceError("STATE_MUST_BE_OUTSIDE_FROZEN_BRIEF_PACK")
+        if self.earnings_pack_root and (self.earnings_pack_root.is_symlink() or not self.earnings_pack_root.is_dir()):
+            raise WorkspaceError("FROZEN_EARNINGS_PACK_UNAVAILABLE")
+        if self.earnings_pack_root:
+            pack_dir = self.earnings_pack_root.resolve()
+            state_dir = store.path.parent.resolve()
+            if pack_dir == state_dir or pack_dir in state_dir.parents or state_dir in pack_dir.parents:
+                raise WorkspaceError("STATE_MUST_BE_OUTSIDE_FROZEN_EARNINGS_PACK")
         self.lock = threading.Lock()
         self.stopping = threading.Event()
         self.owner_failures = []
@@ -307,6 +318,14 @@ class Workspace:
                     raise WorkspaceError("BRIEF_OUTPUT_SYMLINK_REFUSED", 409)
                 target_root.mkdir(mode=0o700, exist_ok=True)
                 result = workbench_brief_trial.run(self.brief_pack_root, target_root / job_id)
+            elif payload["kind"] == "earnings-trial":
+                if self.earnings_pack_root is None:
+                    raise WorkspaceError("FROZEN_EARNINGS_PACK_NOT_CONFIGURED", 409)
+                target_root = self.store.path.parent / "earnings-trials"
+                if target_root.is_symlink():
+                    raise WorkspaceError("EARNINGS_OUTPUT_SYMLINK_REFUSED", 409)
+                target_root.mkdir(mode=0o700, exist_ok=True)
+                result = earnings_trial.run(self.earnings_pack_root, target_root / job_id)
             else:
                 receipt = self.store.replay({"command_id": "job_" + evidence.sealed(job_id)[:40], "scenario": "complete-replay"})["receipt"]
                 result = {"receipt_hash": receipt["receipt_hash"], "replay_id": receipt["command_id"], "status": receipt["status"], "synthetic": True}
@@ -315,7 +334,9 @@ class Workspace:
             status = "STOP"
             # Never persist raw exception text from engines or provider transports.
             import workbench_brief_trial
-            code = str(exc) if isinstance(exc, (WorkspaceError, evidence.EvidenceError, workbench_brief_trial.BriefTrialError)) else "LOCAL_JOB_FAILED"
+            code = str(exc) if isinstance(exc, (WorkspaceError, evidence.EvidenceError,
+                                                workbench_brief_trial.BriefTrialError,
+                                                earnings_trial.EarningsTrialError)) else "LOCAL_JOB_FAILED"
             result = {"error": code}
         with self.store.connect() as db:
             db.execute("BEGIN IMMEDIATE")
@@ -384,6 +405,7 @@ class Workspace:
                 "observation_error": issue, "events": events, "owner_configured": owner,
                 "read_only_source_configured": self.source_root is not None,
                 "brief_pack_configured": self.brief_pack_root is not None,
+                "earnings_pack_configured": self.earnings_pack_root is not None,
                 "scheduler": {"runtime": "IN_PROCESS_LOCAL_SERVER", "status": getattr(self, "scheduler_error", None) or "AVAILABLE", "missed_policy": "NO_BACKFILL", "requires_awake_host": True},
                 "authority": {"team_access": False, "paid_calls": False, "production_write": False, "formal_u4_approval": False, "local_review_only": True},
                 "catalog": self.catalog,

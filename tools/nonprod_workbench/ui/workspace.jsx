@@ -3,14 +3,14 @@ import { statusTone } from './status-tone.mjs';
 import { latestJobByKind } from './job-view.mjs';
 import { Activity, ArrowRight, CalendarClock, Check, ClipboardCheck, Database, Download, FileText, Layers3, ListFilter, LockKeyhole, Play, Plus, RefreshCw, Save, Search, Send, ShieldCheck, Wallet, X } from 'lucide-react';
 export const workspaceTabs = [['desk', '研究总览', Layers3], ['nightly', '夜链与计划', CalendarClock], ['macro', '宏观与数据', Activity], ['models', '模型与方法', ShieldCheck], ['candidates', '候选证据', ListFilter], ['drafts', '研究稿', FileText], ['reviews', '提交与审核', ClipboardCheck], ['paper', '模拟盘与归因', Wallet], ['records', '数据与审计', Database]];
-const jobLabels = {
+const scheduledJobLabels = {
   observe: '只读数据快照',
   integrity: '本地完整性检查',
   'research-replay': '固定研究用例回放',
-  backup: '备份与恢复自检',
-  'brief-trial': '冻结简报试跑'
+  backup: '备份与恢复自检'
 };
-const scheduleLabels = Object.fromEntries(Object.entries(jobLabels).filter(([kind]) => kind !== 'brief-trial'));
+const jobLabels = { ...scheduledJobLabels, 'brief-trial': '冻结简报试跑', 'earnings-trial': '冻结财报逐条回应' };
+const scheduleLabels = scheduledJobLabels;
 const labels = {
   title: '研究标题',
   ticker: '标的 / 行业',
@@ -204,6 +204,7 @@ export default function Workspace({
   const frozen = selectedDoc && ['IN_REVIEW', 'ACCEPTED_LOCAL'].includes(selectedDoc.status);
   const inReview = state?.documents.filter(d => d.status === 'IN_REVIEW') || [];
   const latestBrief = latestJobByKind(state?.jobs || [], 'brief-trial');
+  const latestEarnings = latestJobByKind(state?.jobs || [], 'earnings-trial');
   const macroRegions = obs?.macro?.macro_state?.payload?.data?.regions || {};
   return <div className="workspace-surface">
     {error && <div className="alert error" role="alert"><X size={16} /><code>{error}</code></div>}
@@ -224,7 +225,7 @@ export default function Workspace({
       </>}
       {tab === 'nightly' && <>
         <section><div className="section-title"><h2>旧生产最近尝试</h2><Status value={attempt.report} /></div><div className="step-grid">{(attempt.steps || []).map((s, i) => <article key={s.step} className={s.status === 'OK' ? 'step-ok' : 'step-gap'}><span>{String(i + 1).padStart(2, '0')}</span><h3>{s.step}</h3><Status value={s.status} /><small>{s.elapsed_sec == null ? '—' : `${s.elapsed_sec}s`}</small></article>)}</div>{!attempt.steps?.length && <Empty title="尚无夜链状态快照" />}</section>
-        <section><div className="section-title"><h2>本地计划任务</h2><Status value={state.scheduler.status} /></div><div className="source-strip"><span>服务器运行且电脑唤醒时执行</span><span>错过时段不补跑</span><span>新任务默认不启用 · 无实时采集权</span></div><div className="toolbar">{Object.entries(jobLabels).map(([kind, label]) => <button key={kind} disabled={busy || !!pending || (kind === 'brief-trial' && !state.brief_pack_configured)} onClick={() => run(kind)}><Play size={14} />{label}</button>)}</div><Table heads={['任务', '频率', '状态', '变更']}>{state.schedules.map(s => <tr key={s.schedule_id}><td>{jobLabels[s.kind]}</td><td>{s.interval_minutes} 分钟</td><td><Status value={s.enabled ? 'ENABLED_LOCAL' : 'PAUSED'} /></td><td><button disabled={busy || !password || !!pending} onClick={() => act('/api/workspace/schedule', {
+        <section><div className="section-title"><h2>本地计划任务</h2><Status value={state.scheduler.status} /></div><div className="source-strip"><span>服务器运行且电脑唤醒时执行</span><span>错过时段不补跑</span><span>新任务默认不启用 · 无实时采集权</span></div><div className="toolbar">{Object.entries(jobLabels).map(([kind, label]) => <button key={kind} disabled={busy || !!pending || (kind === 'brief-trial' && !state.brief_pack_configured) || (kind === 'earnings-trial' && !state.earnings_pack_configured)} onClick={() => run(kind)}><Play size={14} />{label}</button>)}</div><Table heads={['任务', '频率', '状态', '变更']}>{state.schedules.map(s => <tr key={s.schedule_id}><td>{jobLabels[s.kind]}</td><td>{s.interval_minutes} 分钟</td><td><Status value={s.enabled ? 'ENABLED_LOCAL' : 'PAUSED'} /></td><td><button disabled={busy || !password || !!pending} onClick={() => act('/api/workspace/schedule', {
                   command_id: id('schedule'),
                   schedule_id: s.schedule_id,
                   expected_revision: s.revision,
@@ -277,6 +278,7 @@ export default function Workspace({
         <div className="source-strip"><span>方法迭代：提出修改 → 离线检查 → 独立复审 → Junyan 批准</span><span>模型不能自改准入规则、自动晋级方法或绕过人类</span></div>
       </>}
       {tab === 'drafts' && <>
+        <section><div className="section-title"><h2>财报逐条回应 thesis</h2><Status value="HISTORICAL_REPLAY / WORKFLOW_DEBUG" /></div><div className="source-strip"><span>仅运行启动时固定的冻结包；非今日财报</span><span>命题回应与来源仍待具名人工核验</span><span>无 U4、paper 或交易权限</span></div><button disabled={busy || !!pending || !state.earnings_pack_configured} onClick={() => run('earnings-trial')}><Play size={16} />运行冻结财报回应</button>{!state.earnings_pack_configured && <p className="muted">尚未配置冻结财报输入包</p>}{latestEarnings && <div className="earnings-results"><div className="section-title"><h3>最新试跑</h3><Status value={latestEarnings.status} /></div>{latestEarnings.status === 'SUCCEEDED' ? latestEarnings.result.reports.map(row => <article className="earnings-report" key={row.company}><div className="section-title"><h3>{row.company}</h3><Status value={row.data_status} /></div><div className="source-strip"><span>截止 {row.as_of}</span><span>预登记 {row.registration_status}</span><span>人工核验 {row.human_review}</span><span>报告 SHA256 <code>{row.report_sha256}</code></span></div><pre>{row.report}</pre></article>) : <JsonEvidence title="阻断回执" value={latestEarnings.result} />}</div>}</section>
         <section><div className="section-title"><h2>人类研究稿</h2><button disabled={busy} onClick={() => {
               setContent(newContent());
               setDocumentId(null);
