@@ -1,7 +1,7 @@
 {
   "_status": "ok",
   "ticker": "002594.SZ",
-  "fetched_at": "2026-09-25T14:02:27Z",
+  "fetched_at": "2026-09-28T06:35:34Z",
   "api_used": "stk_surv",
   "_attempted_endpoints": [
     "stk_surv"
@@ -623,25 +623,11 @@
       "inst_count": 2,
       "surv_type": "特定对象调研",
       "description": null
-    },
-    {
-      "ts_code": "002594.SZ",
-      "name": "比亚迪",
-      "surv_date": "20260629",
-      "fund_visitors": "分析师 贾玉潇",
-      "rece_place": "比亚迪六角大楼",
-      "rece_mode": "特定对象调研",
-      "rece_org": "中信证券",
-      "org_type": "证券公司",
-      "comp_rece": "吴越,吕莹",
-      "inst_count": 2,
-      "surv_type": "特定对象调研",
-      "description": null
     }
   ],
   "summary": {
     "total_30d": 40,
-    "total_90d": 45,
+    "total_90d": 44,
     "unique_inst_30d": 105,
     "latest_date": "2026-09-18"
   }
