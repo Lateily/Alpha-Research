@@ -84,9 +84,13 @@ from nightly_funnel import (  # noqa: E402
     published_bundle_date,
 )
 import semiconductor_inputs as semiconductor_evidence  # noqa: E402
+import announcement_feed  # noqa: E402
 
 STAGE1_FILES = ("all_market_scan.json", "candidate_review.json", "candidate_manifest.json")
 STAGE2_FILES = ("candidate_battery.json",)
+# Optional battery-stage sidecar (contract L v0.1). Hashed by stage_battery.json,
+# never part of _final_bundle_files()/bundle_hash; bundles before it stay valid.
+STAGE2_OPTIONAL_FILES = (announcement_feed.FEED_FILE,)
 STAGE3_FILES = ("deep_research_queue.json", "security_registry_projected.json")
 INDUSTRY_TAXONOMY_PATH = Path(__file__).resolve().with_name("industry_taxonomy.v1.json")
 
@@ -315,11 +319,19 @@ BATCH_SECONDS = float(CANDIDATE_BATTERY_STEP_TIMEOUT_SECONDS) - BATTERY_RESERVE_
 ROW_SECONDS = 45.0
 
 
+class CapturedRow(tuple):
+    """(battery row, announcement capture) returned by the funnel worker only."""
+
+
 def _execute(worker, code, target, output):
     try:
         row = worker(code, target)
+        payload = {"row": row, "reason": None}
+        # By name: a spawned child may import this module under another alias.
+        if type(row).__name__ == CapturedRow.__name__ and isinstance(row, tuple) and len(row) == 2:
+            payload = {"row": row[0], "reason": None, "announcement_capture": row[1]}
         # Serialize in the worker: a non-JSON response is not usable evidence.
-        encoded = json.dumps({"row": row, "reason": None}, allow_nan=False)
+        encoded = json.dumps(payload, allow_nan=False)
     except Exception as exc:
         encoded = json.dumps({"row": None, "reason": "PROVIDER_ERROR:" + type(exc).__name__})
     Path(output).write_text(encoded, encoding="utf-8")
@@ -377,11 +389,14 @@ def collect_rows(codes, target, worker, *, max_workers=MAX_WORKERS,
     cursor = 0
     context = multiprocessing.get_context("spawn")
 
-    def finish(index, row, reason, began):
+    def finish(index, row, reason, began, capture=None):
         outcomes[index] = {"ts_code": codes[index], "row": row, "reason": reason,
                            "elapsed_seconds": round(time.monotonic() - began, 3)}
+        if capture is not None:
+            outcomes[index]["announcement_capture"] = capture
         if progress is not None:
-            progress({k: v for k, v in outcomes[index].items() if k != "row"})
+            progress({k: v for k, v in outcomes[index].items()
+                      if k not in ("row", "announcement_capture")})
 
     with _deferred_sigterm() as stopping, \
             tempfile.TemporaryDirectory(prefix="ar-candidate-battery-") as temporary:
@@ -436,7 +451,8 @@ def collect_rows(codes, target, worker, *, max_workers=MAX_WORKERS,
                             finish(index, None, "WORKER_EXIT", began)
                         else:
                             payload = json.loads(Path(output).read_text(encoding="utf-8"))
-                            finish(index, payload["row"], payload["reason"], began)
+                            finish(index, payload["row"], payload["reason"], began,
+                                   payload.get("announcement_capture"))
                     else:
                         continue
                     _reap(process)
@@ -520,14 +536,22 @@ def _battery_provider() -> tuple[Callable[[str, str], dict] | None, str]:
     except Exception as exc:  # 缺依赖 = 整体不可用
         return None, f"battery provider unavailable: {type(exc).__name__}"
     # Send only the callable and token to spawn, never a mutable SDK client.
-    return partial(_read_battery_row, token), ""
+    return partial(_read_battery_capture, token), ""
 
 
-def _read_battery_row(token: str, tk: str, today: str) -> dict:
+def _read_battery_capture(token: str, tk: str, today: str) -> CapturedRow:
+    """Funnel worker: one sanitized row plus the announcement rows it already read."""
     from tushare_https import TushareHTTPS
     import full_battery
     pro = TushareHTTPS(token)
-    return _sanitize_row(full_battery.battery(pro, tk, today))
+    captures: list[dict] = []
+    # Only the funnel worker passes a sink; the watchlist battery never does.
+    row = _sanitize_row(full_battery.battery(pro, tk, today, announcement_sink=captures))
+    return CapturedRow((row, captures[-1] if captures else None))
+
+
+def _read_battery_row(token: str, tk: str, today: str) -> dict:
+    return _read_battery_capture(token, tk, today)[0]
 
 
 def _collection_progress(outcome: dict) -> None:
@@ -579,10 +603,13 @@ def run_battery() -> int:
     # Start order is board-stratified and date-keyed; results stay in manifest order.
     order = battery_dispatch_order(codes, target)
     results: list[dict] = []
+    captures: dict[str, dict | None] = {}
+    not_collected: dict[str, str] = {}
     provider_state = "AVAILABLE"
     if provider is None:
         provider_state = f"UNAVAILABLE: {why}"
         results = [_blocked_row(tk, target, why) for tk in codes]
+        not_collected = {tk: why for tk in codes}
     else:
         started = time.monotonic()
         outcomes = collect_rows(order, target, provider, progress=_collection_progress)
@@ -616,6 +643,10 @@ def run_battery() -> int:
             if not isinstance(row, dict) or row.get("ts_code") != tk:
                 raise FunnelError(f"battery returned an invalid identity when asked for {tk}")
             results.append(row)
+            if outcome["reason"] is not None:
+                not_collected[tk] = outcome["reason"]
+            else:
+                captures[tk] = outcome.get("announcement_capture")
 
     battery = {
         "schema": BATTERY_U2_SCHEMA,
@@ -639,8 +670,17 @@ def run_battery() -> int:
         battery["collection_retry"] = collection_retry
     battery["rows_hash"] = _hash(results)
     coverage = validate_candidate_battery(battery, manifest)  # 自校验:集合相等 + 六维
+    try:
+        feed = announcement_feed.build_feed(
+            as_of=target, run_id=run_id, generated_at=generated_at, manifest=manifest,
+            battery=battery, captures=captures, not_collected=not_collected,
+        )
+    except announcement_feed.AnnouncementFeedError as exc:
+        raise FunnelError(f"announcement feed sidecar is invalid: {exc}") from exc
+    # governance-mutation: FUNNEL_DAG_ANNOUNCEMENT_FEED_STAGE_HASHED
     _write_stage(
-        bundle_dir, "battery", {"candidate_battery.json": battery},
+        bundle_dir, "battery",
+        {"candidate_battery.json": battery, announcement_feed.FEED_FILE: feed},
         as_of=target, run_id=run_id, generated_at=generated_at,
         binds={"candidate_manifest_hash": manifest["manifest_hash"],
                "battery_rows_hash": battery["rows_hash"]},

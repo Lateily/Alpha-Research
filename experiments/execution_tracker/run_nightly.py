@@ -437,6 +437,13 @@ def _verify_funnel_bundle(data, repo_root, artifact_path=None):
         if "battery_collection" in data or "dispatch" in candidate_battery:
             if data.get("battery_collection") != nightly_funnel.battery_collection_summary(candidate_battery):
                 raise ValueError("health 的 battery_collection 缺失或与实物不符")
+    # 公告旁路文件(contract L):存在就必须被 stage_battery 登记且绑定本轮;旧 bundle 没有则跳过。
+    import announcement_feed
+    try:
+        # governance-mutation: FUNNEL_NIGHTLY_ANNOUNCEMENT_FEED_VERIFIED
+        announcement_feed.verify_bundle_sidecar(_Path(bundle_dir), payloads)
+    except (announcement_feed.AnnouncementFeedError, ValueError, OSError) as exc:
+        raise ValueError(f"announcement_feed.json 与本轮 bundle 不符: {exc}") from exc
 
     # status 与 counts 由实物重算,health 只是转述,不是权威
     scan = payloads["all_market_scan.json"]

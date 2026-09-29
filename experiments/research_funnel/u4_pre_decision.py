@@ -470,6 +470,13 @@ def _validate_funnel_health(
     return health_generated_at
 
 
+def _required_stage_files(stage: str, names: set[str]) -> set[str]:
+    """Battery may also hash the announcement feed sidecar; nothing else is optional."""
+    if stage == "battery":
+        return names - set(dag.STAGE2_OPTIONAL_FILES)
+    return names
+
+
 def _validate_stage_receipts(
     bundle: Mapping[str, Any], *, bundle_path: Path | None = None,
     evidence: Any = None, bundle_ref: str | None = None,
@@ -535,10 +542,18 @@ def _validate_stage_receipts(
             or receipt.get("schema_version") != funnel.SCHEMA_VERSION
             or receipt.get("rule_version") != funnel.RULE_VERSION
             or receipt.get("stage") != stage
-            or set(payloads) != expected_files
+            or _required_stage_files(stage, set(payloads)) != expected_files
             or receipt.get("binds") != expected_binds
         ):
             raise PreDecisionError(f"stage receipt contract is invalid: {stage}")
+        # The optional feed is accepted only when it binds this manifest and battery.
+        feed_name = dag.announcement_feed.FEED_FILE
+        if stage == "battery" and feed_name in payloads:
+            try:
+                # governance-mutation: U4_PREDECISION_ANNOUNCEMENT_FEED_BINDING
+                dag.announcement_feed.validate_feed(payloads[feed_name], candidate_manifest, battery)
+            except dag.announcement_feed.AnnouncementFeedError as exc:
+                raise PreDecisionError(f"stage sidecar is invalid: {stage}: {exc}") from exc
         try:
             receipt_generated_at = closure._iso(
                 receipt.get("generated_at"), f"{stage} receipt generated_at"
