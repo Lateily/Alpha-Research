@@ -173,4 +173,59 @@ no public U4 clock override. The builder payload is canonicalized once into an
 isolated snapshot; validation, outer hashing, and persistence all consume that
 same snapshot, so caller mutation cannot swap content after validation.
 
+## v1.1 Additive Revision (2026-09-29)
+
+Status: `DELIVERED_UNWIRED / OFFLINE_ONLY`. Normative shape:
+`docs/research/contracts/u4_decision_ledger.v1_1.schema.json`. The frozen v1
+schema file is unchanged byte for byte; v1.0 events keep validating against it
+and keep replaying through the same verifier. This revision needs Junyan's
+approval because it re-pins `u4_decision_ledger.py` in
+`research_closed_loop.v1.json`.
+
+What changed:
+
+- A decision draft may now carry two extra keys on **every** row:
+  `human_warning` and `machine_flag_disputed_ref` (both nullable). A draft
+  either has them on all rows or on none: one packet revision uses one event
+  version. Rows with the keys become `event_version: "1.1"` events and the
+  packet intent becomes `intent_version: "1.1"`. Drafts without the keys still
+  write exact v1.0 events, so existing tooling is unaffected.
+- `human_warning` is `null` or exactly
+  `{retained: bool, warning_text: non-empty string, target_surface ∈
+  {U4_SELECTION, PAPER, EXECUTION}}`. It gives warnings such as the 600667
+  "警示保留" a machine-readable home instead of living only in `reason_note`
+  and authorization prose. It is human-authored; AI never fills it, and it
+  never changes the decision.
+- `machine_flag_disputed_ref` is `null` or `sha256:<record_hash>` of a
+  committed `ar.disagreement_adjudication` record
+  (`docs/research/DISAGREEMENT_ADJUDICATION_V0.md`). It is allowed **only** on
+  a `REJECT` row whose `reason_codes` contain `RED_FLAG_ACTIVE`. The forced
+  `REJECT` on red-flag candidates is unchanged: the reference records that a
+  human disputed the machine flag; it does not unblock the candidate. Removing
+  a false kill still requires fixing the gate and re-running.
+- A write whose draft carries any non-null `machine_flag_disputed_ref` must
+  pass `--adjudication-ledger`; the writer refuses otherwise. The reference
+  must resolve to a committed adjudication of the same `ts_code` whose
+  `human_verdict` is one of `MACHINE_VERDICT_REJECTED_*`, whose `as_of` is not
+  after the U4 packet `as_of`, and (on verify) whose `registered_at` is not
+  after the U4 event `registered_at`.
+- `--verify` reports `disputed_refs: {count, resolution}`. Without
+  `--adjudication-ledger` a ledger with references reports
+  `NOT_CHECKED`; with it, every reference must resolve (`RESOLVED`) or
+  verification fails.
+
+`decision_id` is unchanged (the new fields are covered by `record_hash`).
+The closure and projection formats are unchanged.
+
+```bash
+python3 experiments/research_funnel/u4_decision_ledger.py \
+  --packet /path/to/review_packet.json --draft /path/to/u4_decisions_v11.json \
+  --bundle-dir /path/to/data_history/funnel/YYYYMMDD/run_id \
+  --ledger /path/to/offline_r015_events.jsonl \
+  --adjudication-ledger /path/to/adjudication_events.jsonl
+python3 experiments/research_funnel/u4_decision_ledger.py --verify \
+  --ledger /path/to/offline_r015_events.jsonl \
+  --adjudication-ledger /path/to/adjudication_events.jsonl
+```
+
 不是买卖指令；研究信号，human executes.
