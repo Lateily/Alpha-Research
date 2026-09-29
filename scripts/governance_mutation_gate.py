@@ -12271,6 +12271,142 @@ MUTATIONS = MUTATIONS + (
     ),
 )
 
+# Research trust line consumer (contract T): the dual-acceptance research sheet
+# and the nonproduction workbench only project the published line; these pins
+# keep absent lines explicit, withheld rates null and cross-run lines refused.
+MUTATIONS = MUTATIONS + (
+    MutationCase(
+        mutation_id="RESEARCH_TRUST_VIEW_ABSENT_NOT_ZERO",
+        component="Research trust line consumer",
+        source_path="experiments/research_funnel/research_trust_view.py",
+        test_script="tests/test_research_trust_view.py",
+        before=(
+            "    # governance-mutation: RESEARCH_TRUST_VIEW_ABSENT_NOT_ZERO\n"
+            "    if line is None:"
+        ),
+        after=(
+            "    # governance-mutation: RESEARCH_TRUST_VIEW_ABSENT_NOT_ZERO\n"
+            "    if False:"
+        ),
+        expected_failure_marker="test_absent_line_is_not_produced_not_zero",
+        rationale="A run without a trust line must read NOT_PRODUCED, never a zero or a refusal.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_TRUST_VIEW_WITHHELD_BELOW_MIN",
+        component="Research trust line consumer",
+        source_path="experiments/research_funnel/research_trust_view.py",
+        test_script="tests/test_research_trust_view.py",
+        before=(
+            "    # governance-mutation: RESEARCH_TRUST_VIEW_WITHHELD_BELOW_MIN\n"
+            "    if gate_n is None or gate_n < MIN_N or numerator is None or denominator is None:"
+        ),
+        after=(
+            "    # governance-mutation: RESEARCH_TRUST_VIEW_WITHHELD_BELOW_MIN\n"
+            "    if False:"
+        ),
+        expected_failure_marker="test_withheld_rate_stays_null_below_min_sample",
+        rationale="A rate or level below the minimum sample must stay withheld, never shown.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_TRUST_VIEW_LEVEL_RECOMPUTED",
+        component="Research trust line consumer",
+        source_path="experiments/research_funnel/research_trust_view.py",
+        test_script="tests/test_research_trust_view.py",
+        before=(
+            "    # governance-mutation: RESEARCH_TRUST_VIEW_LEVEL_RECOMPUTED\n"
+            "    if level not in _expected_level(numerator, denominator, direction, threshold):"
+        ),
+        after=(
+            "    # governance-mutation: RESEARCH_TRUST_VIEW_LEVEL_RECOMPUTED\n"
+            "    if False:"
+        ),
+        expected_failure_marker="test_level_is_recomputed_from_counts",
+        rationale="A published level must agree with its own counts and frozen threshold.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_TRUST_VIEW_FORBIDDEN_KEYS",
+        component="Research trust line consumer",
+        source_path="experiments/research_funnel/research_trust_view.py",
+        test_script="tests/test_research_trust_view.py",
+        before=(
+            "        # governance-mutation: RESEARCH_TRUST_VIEW_FORBIDDEN_KEYS\n"
+            "        _forbidden_keys(line)"
+        ),
+        after=(
+            "        # governance-mutation: RESEARCH_TRUST_VIEW_FORBIDDEN_KEYS\n"
+            "        pass"
+        ),
+        expected_failure_marker="test_performance_shaped_keys_refuse_the_line",
+        rationale="A trust line carrying return/hit/alpha/pnl/score/composite keys is refused whole.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_TRUST_VIEW_RUN_BINDING",
+        component="Research trust line consumer",
+        source_path="experiments/research_funnel/research_trust_view.py",
+        test_script="tests/test_research_trust_view.py",
+        before=(
+            "        # governance-mutation: RESEARCH_TRUST_VIEW_RUN_BINDING\n"
+            "        if (not isinstance(run_id, str) or not RUN_ID.fullmatch(run_id)\n"
+            "                or not isinstance(as_of, str) or not DATE8.fullmatch(as_of)\n"
+            "                or line.get(\"run_id\") != run_id or line.get(\"as_of\") != as_of):"
+        ),
+        after=(
+            "        # governance-mutation: RESEARCH_TRUST_VIEW_RUN_BINDING\n"
+            "        if False:"
+        ),
+        expected_failure_marker="test_line_from_another_run_is_refused",
+        rationale="A trust line bound to another run or date must not be shown for this run.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_TRUST_VIEW_AUTHORITY",
+        component="Research trust line consumer",
+        source_path="experiments/research_funnel/research_trust_view.py",
+        test_script="tests/test_research_trust_view.py",
+        before=(
+            "        # governance-mutation: RESEARCH_TRUST_VIEW_AUTHORITY\n"
+            "        if (line.get(\"authority\") != FIXED_AUTHORITY\n"
+            "                or line.get(\"claim_status\") != \"DESCRIPTIVE_ONLY\"):"
+        ),
+        after=(
+            "        # governance-mutation: RESEARCH_TRUST_VIEW_AUTHORITY\n"
+            "        if False:"
+        ),
+        expected_failure_marker="test_authority_or_claim_flags_refuse_the_line",
+        rationale="A line claiming performance or U4 selection authority is refused whole.",
+    ),
+    MutationCase(
+        mutation_id="NIGHTLY_ACCEPTANCE_TRUST_LINE_BINDING",
+        component="Nightly production acceptance",
+        source_path="experiments/execution_tracker/nightly_dual_acceptance.py",
+        test_script="tests/test_nightly_dual_acceptance.py",
+        before="    trust_line = research_trust_view.project(health, run_id, target)",
+        after=(
+            "    trust_line = research_trust_view.project(\n"
+            "        health, (health.get(\"research_trust\") or {}).get(\"run_id\"), target)"
+        ),
+        expected_failure_marker="test_research_sheet_refuses_cross_run_trust_line",
+        rationale="The receipt must bind the trust line to the accepted run, not to the line's own run_id.",
+    ),
+    MutationCase(
+        mutation_id="WORKBENCH_TRUST_LINE_HEALTH_BINDING",
+        component="AIOS nonproduction workbench",
+        source_path="scripts/llm/workbench_evidence.py",
+        test_script="tests/test_workbench_workspace.py",
+        before=(
+            "    # governance-mutation: WORKBENCH_TRUST_LINE_HEALTH_BINDING\n"
+            "    if (record.get(\"status\") != \"OBSERVED\" or record.get(\"binding\") != \"MATCH\"\n"
+            "            or not isinstance(health, dict) or health.get(\"run_id\") != run_id\n"
+            "            or health.get(\"as_of\") != target):"
+        ),
+        after=(
+            "    # governance-mutation: WORKBENCH_TRUST_LINE_HEALTH_BINDING\n"
+            "    if False:"
+        ),
+        expected_failure_marker="test_trust_line_refuses_unbound_health",
+        rationale="The workbench shows a trust line only from funnel_health hash-bound to the published run.",
+    ),
+)
+
 @dataclass(frozen=True)
 class CommandResult:
     returncode: int

@@ -276,6 +276,69 @@ class DualAcceptanceTest(unittest.TestCase):
         self.assertEqual(1, sheet["funnel"]["red_flag_rows"])
         self.assertEqual("DATA_BLOCKED", sheet["funnel"]["quality"])
 
+    def _trust_line(self, run_id: str) -> dict:
+        return {
+            "schema": "ar.research_trust_line", "schema_version": "1.0",
+            "as_of": self.target, "run_id": run_id, "generated_at": "2026-09-22T12:40:00Z",
+            "e1_basis": "SAME_RUN_MANIFEST", "source_binding": {},
+            "metrics": [
+                {"metric_id": "red_flag_stale_evidence_share", "kind": "MACHINE_VS_MACHINE",
+                 "numerator": 43, "denominator": 46, "unparsed_count": 0, "rate": 0.9348,
+                 "min_n": 20, "threshold": 0.20, "direction": "LOWER_IS_BETTER",
+                 "level": "MISSES_BAR", "not_computable_reason": None,
+                 "reliance": "ADVISORY_SHOW_STALE_SHARE", "note": ""},
+                {"metric_id": "complete_label_defect_share", "kind": "HUMAN_VS_MACHINE",
+                 "numerator": 0, "denominator": 3, "unparsed_count": 0, "rate": None,
+                 "min_n": 20, "threshold": 0.10, "direction": "LOWER_IS_BETTER",
+                 "level": "RATE_WITHHELD_N_BELOW_MIN", "not_computable_reason": None,
+                 "reliance": "UNRATED", "note": ""},
+            ],
+            "rolling": {"window_runs": 20, "per_metric": {}},
+            "claim_status": "DESCRIPTIVE_ONLY", "retention_status": "LOCAL_ONLY_UNBACKED",
+            "authority": {"claim_allowed": False, "performance_claim": None,
+                          "u4_selection_authority": False},
+        }
+
+    def _with_trust_line(self, line: dict) -> None:
+        path = self.root / "public" / "data" / "v2" / "funnel_health.json"
+        health = json.loads(path.read_text())
+        health["research_trust"] = line
+        write_json(path, health)
+
+    def test_research_sheet_marks_absent_trust_line_not_produced(self) -> None:
+        self.test_research_sheet_keeps_missing_macro_and_zero_dim_rows_visible()
+        sheet = dual.summarize_research(self.root, self.run_id, self.target)
+        self.assertEqual("NOT_PRODUCED", sheet["trust_line"]["status"])
+        self.assertIsNone(sheet["trust_line"]["metrics"])
+
+    def test_research_sheet_projects_trust_line_without_changing_status(self) -> None:
+        self.test_research_sheet_keeps_missing_macro_and_zero_dim_rows_visible()
+        before = dual.summarize_research(self.root, self.run_id, self.target)
+        self._with_trust_line(self._trust_line(self.run_id))
+        sheet = dual.summarize_research(self.root, self.run_id, self.target)
+        self.assertEqual(before["status"], sheet["status"])
+        self.assertEqual(before["macro"], sheet["macro"])
+        self.assertEqual(before["funnel"], sheet["funnel"])
+        self.assertEqual("NO_U4_OR_PAPER_APPROVAL", sheet["authority"])
+        trust = sheet["trust_line"]
+        self.assertEqual("PRESENT", trust["status"])
+        rows = {row["metric_id"]: row for row in trust["metrics"]}
+        stale = rows["red_flag_stale_evidence_share"]
+        self.assertEqual((43, 46, "MISSES_BAR", "ADVISORY_SHOW_STALE_SHARE"),
+                         (stale["numerator"], stale["denominator"], stale["level"],
+                          stale["reliance"]))
+        self.assertIsNone(rows["complete_label_defect_share"]["rate"])
+        self.assertFalse(trust["authority"]["claim_allowed"])
+
+    def test_research_sheet_refuses_cross_run_trust_line(self) -> None:
+        self.test_research_sheet_keeps_missing_macro_and_zero_dim_rows_visible()
+        self._with_trust_line(self._trust_line("20260921_203000_other"))
+        sheet = dual.summarize_research(self.root, self.run_id, self.target)
+        self.assertEqual("REFUSED", sheet["trust_line"]["status"])
+        self.assertEqual("RUN_BINDING_MISMATCH", sheet["trust_line"]["reason"])
+        self.assertIsNone(sheet["trust_line"]["metrics"])
+        self.assertEqual("OBSERVED_WITH_GAPS", sheet["status"])
+
     def test_research_sheet_refuses_cross_run_macro(self) -> None:
         public = self.root / "public" / "data" / "v2"
         write_json(public / "macro" / "source_health.json", {"data": []})

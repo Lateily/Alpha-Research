@@ -224,6 +224,10 @@ jobs:
         run: python3 tests/test_nightly_acceptance_offline.py
       - name: Scheduled nightly dual acceptance regression (offline)
         run: python3 tests/test_nightly_dual_acceptance.py
+      # Research trust line (contract T) consumer: absent line = NOT_PRODUCED,
+      # withheld rates stay null, cross-run/authority/performance keys refused.
+      - name: Research trust line consumer projection (offline)
+        run: python3 tests/test_research_trust_view.py
       # U1-U5 离线闭环:冻结随机对照、同日 U3、packet-bound U4 人工复审,
       # 且 U5 在 factpack/wrong-if/因果簇完成前必须保持 DATA_BLOCKED。
       - name: Offline research closure experiment

@@ -168,6 +168,86 @@ class EvidenceTests(unittest.TestCase):
         self.assertNotIn("tail", view["attempt"]["steps"][0])
         self.assertEqual(before, {str(p): p.read_bytes() for p in self.root.rglob("*") if p.is_file()})
 
+    def _publish_trust_line(self, run_id=None, reseal=True):
+        health_path = self.root / "public/data/v2/funnel_health.json"
+        health = json.loads(health_path.read_text())
+        health["research_trust"] = {
+            "schema": "ar.research_trust_line", "schema_version": "1.0",
+            "as_of": "20260828", "run_id": run_id or self.pointer["run_id"],
+            "generated_at": "2026-08-28T12:00:00Z", "e1_basis": "SAME_AS_OF",
+            "source_binding": {"battery_rows_hash": "sha256:" + "2" * 64},
+            "metrics": [
+                {"metric_id": "news_channel_available_share", "kind": "COVERAGE",
+                 "numerator": 0, "denominator": 3, "unparsed_count": 0, "rate": None,
+                 "min_n": 20, "threshold": 0.80, "direction": "HIGHER_IS_BETTER",
+                 "level": "RATE_WITHHELD_N_BELOW_MIN", "not_computable_reason": None,
+                 "reliance": "COVERAGE_GAP_DISCLOSE", "note": ""},
+                {"metric_id": "red_flag_human_confirmed_share", "kind": "HUMAN_VS_MACHINE",
+                 "numerator": None, "denominator": None, "unparsed_count": 0, "rate": None,
+                 "min_n": 20, "threshold": 0.80, "direction": "HIGHER_IS_BETTER",
+                 "level": "NOT_COMPUTABLE", "not_computable_reason": "LEDGER_FORCES_AGREEMENT",
+                 "reliance": "UNRATED", "note": ""},
+            ],
+            "rolling": {"window_runs": 20, "per_metric": {}},
+            "claim_status": "DESCRIPTIVE_ONLY", "retention_status": "LOCAL_ONLY_UNBACKED",
+            "authority": {"claim_allowed": False, "performance_claim": None,
+                          "u4_selection_authority": False},
+        }
+        digest = write(self.root, "public/data/v2/funnel_health.json", health)
+        if reseal:
+            pointer = json.loads((self.root / "public/data/v2/current_run.json").read_text())
+            pointer["artifacts"]["public:funnel_health.json"] = digest
+            write(self.root, "public/data/v2/current_run.json", pointer)
+
+    def test_trust_line_absent_is_not_produced_not_zero(self):
+        source_with_quality(self.root)
+        trust = ev.view(self.capture())["research_quality"]["trust_line"]
+        self.assertEqual("NOT_PRODUCED", trust["status"])
+        self.assertIsNone(trust["metrics"])
+        self.assertFalse(trust["formal_authority"])
+
+    def test_trust_line_projects_bound_published_line(self):
+        source_with_quality(self.root)
+        self._publish_trust_line()
+        quality = ev.view(self.capture())["research_quality"]
+        self.assertEqual("BOUND_OBSERVATION_ONLY", quality["status"])
+        trust = quality["trust_line"]
+        self.assertEqual("PRESENT", trust["status"])
+        rows = {row["metric_id"]: row for row in trust["metrics"]}
+        self.assertIsNone(rows["news_channel_available_share"]["rate"])
+        self.assertEqual((0, 3), (rows["news_channel_available_share"]["numerator"],
+                                  rows["news_channel_available_share"]["denominator"]))
+        self.assertEqual("LEDGER_FORCES_AGREEMENT",
+                         rows["red_flag_human_confirmed_share"]["not_computable_reason"])
+        self.assertIn("只读计数", trust["note"])
+        self.assertFalse(trust["formal_authority"])
+
+    def test_trust_line_refuses_unbound_health(self):
+        source_with_quality(self.root)
+        self._publish_trust_line(reseal=False)
+        trust = ev.view(self.capture())["research_quality"]["trust_line"]
+        self.assertEqual("NOT_EVALUATED", trust["status"])
+        self.assertEqual("HEALTH_NOT_BOUND_TO_PUBLISHED_RUN", trust["reason"])
+        self.assertIsNone(trust["metrics"])
+
+    def test_trust_line_refuses_line_from_another_run(self):
+        source_with_quality(self.root)
+        self._publish_trust_line(run_id="20260827_163504_other")
+        trust = ev.view(self.capture())["research_quality"]["trust_line"]
+        self.assertEqual("REFUSED", trust["status"])
+        self.assertEqual("RUN_BINDING_MISMATCH", trust["reason"])
+
+    def test_attempt_keeps_data_quality_beside_run_report(self):
+        write(self.root, "experiments/execution_tracker/nightly_run.json", {
+            "run_id": "20260829_203000_test", "target_trade_date": "20260829",
+            "report": "COMPLETE", "data_quality": "DATA_BLOCKED",
+            "research_data_quality": "DATA_BLOCKED",
+            "steps": [{"step": "official_sample", "status": "OK"}]})
+        attempt = ev.view(self.capture())["attempt"]
+        self.assertEqual(("COMPLETE", "DATA_BLOCKED", "DATA_BLOCKED"),
+                         (attempt["report"], attempt["data_quality"],
+                          attempt["research_data_quality"]))
+
     def test_quality_counts_are_bound_to_published_run_and_derived_from_dims(self):
         source_with_quality(self.root)
         view = ev.view(self.capture())
