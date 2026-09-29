@@ -40,7 +40,7 @@ import run_nightly  # noqa: E402
 import session_calendar  # noqa: E402
 import tushare_rows  # noqa: E402
 
-TOKEN = "fixture-token-abcdef"
+TOKEN = "test-fixture-token-abcdef"
 
 
 class _Resp(io.BytesIO):
