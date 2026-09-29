@@ -100,9 +100,13 @@ STALENESS_COUNT_KEYS = {
     COVERAGE_EMPTY: "e1_coverage_empty_rows",
     UNDETERMINED: "undetermined_rows",
 }
-# The battery only runs on candidates E1 did not exclude, so a U3 PASS against
-# an E1 RED_FLAG can never be observed here.  Said out loud, not implied by 0.
-UNOBSERVABLE_CELLS = ["U3_PASS_VS_E1_RED_FLAG"]
+# The battery only runs on candidates E1 did not exclude (funnel_pipeline marks
+# every E1 red flag EXCLUDED_RED_FLAG and leaves it out of the candidate
+# manifest), so NO battery row can carry an E1 RED_FLAG: neither a U3 PASS nor a
+# U3 RED_FLAG against an E1 RED_FLAG is observable here.  Said out loud, not
+# implied by 0.  The second cell is a proposed contract Q v0.1 amendment
+# (review finding QT-C2), pending Junyan's sign-off.
+UNOBSERVABLE_CELLS = ["U3_PASS_VS_E1_RED_FLAG", "U3_RED_FLAG_VS_E1_RED_FLAG"]
 
 _PERIOD_RE = re.compile(r"(?:期末|end_date=|period=)(\d{8})")
 _CODE_RE = re.compile(r"^[A-Z][A-Z0-9_]*(?::.*)?$", re.S)
@@ -166,10 +170,19 @@ def _e1_rows(e1: Mapping[str, Any] | None) -> dict[str, dict[str, Any]]:
     return {str(row.get("ts_code")): row for row in e1.get("rows") or [] if isinstance(row, Mapping)}
 
 
+def _e1_periods(e1: Mapping[str, Any] | None) -> list[str]:
+    return [str(p) for p in ((e1 or {}).get("source") or {}).get("periods") or []
+            if re.fullmatch(r"\d{8}", str(p))]
+
+
 def e1_min_period(e1: Mapping[str, Any] | None) -> str | None:
-    periods = [str(p) for p in ((e1 or {}).get("source") or {}).get("periods") or []
-               if re.fullmatch(r"\d{8}", str(p))]
+    periods = _e1_periods(e1)
     return min(periods) if periods else None
+
+
+def e1_max_period(e1: Mapping[str, Any] | None) -> str | None:
+    periods = _e1_periods(e1)
+    return max(periods) if periods else None
 
 
 def control_codes(candidate_review: Mapping[str, Any], as_of: str,
@@ -202,6 +215,13 @@ def resolve_e1_basis(
     as_of, an E1 layer generated no later than the scan that consumed it, and a
     verdict for every compared ticker equal to the scan's own E1 projection.
     E1 status PARTIAL is a valid same-night basis.
+
+    Known limit (review finding QT-C4): the candidates stage records no digest
+    of the E1 layer it consumed, so ``SAME_AS_OF`` means "same as_of, generated
+    before the scan, verdicts equal to the scan projection" and cannot tell two
+    same-as_of layers from different runs apart when their verdicts agree
+    (``evidence_coverage`` is not in the scan).  ``SAME_RUN_MANIFEST`` is the
+    only digest-exact binding.
     """
     if e1_raw is None:
         return E1_UNAVAILABLE, None, "E1_LAYER_MISSING"
@@ -299,13 +319,23 @@ def parse_reason(reason: Any) -> tuple[str, str | None]:
 
 
 def reason_staleness(kind: str, period: str | None, coverage: Mapping[str, Any] | None,
-                     min_period: str | None) -> tuple[Any, str]:
+                     min_period: str | None, max_period: str | None = None) -> tuple[Any, str]:
+    """Map one parsed reason onto E1's *kind-level* coverage.
+
+    E1 ``evidence_coverage`` is per kind, not per period, so it only describes a
+    cited filing whose period lies inside E1's own period window.  A cited
+    forecast period before that window is OUT_OF_E1_WINDOW; one after it is a
+    filing E1 never looked at, so E1's value is not about it: UNDETERMINED.
+    """
     if kind == "unparsed" or not isinstance(coverage, Mapping):
         return None, UNDETERMINED
     value = coverage.get(kind)
     # governance-mutation: FUNNEL_DISAGREEMENT_OUT_OF_WINDOW
     if kind == "forecast" and period and min_period and period < min_period:
         return value, OUT_OF_WINDOW
+    # governance-mutation: FUNNEL_DISAGREEMENT_AFTER_E1_WINDOW
+    if kind == "forecast" and period and max_period and period > max_period:
+        return value, UNDETERMINED
     if value == "SUPERSEDED":
         return value, SUPERSEDED
     if value == "PRESENT" or (kind == "income" and value == "COMPLETE"):
@@ -345,7 +375,8 @@ def u3_fundamental(row: Mapping[str, Any]) -> tuple[str, Mapping[str, Any]]:
 
 
 def classify_u3_row(row: Mapping[str, Any], e1_row: Mapping[str, Any] | None,
-                    min_period: str | None) -> tuple[list[dict[str, Any]], str]:
+                    min_period: str | None,
+                    max_period: str | None = None) -> tuple[list[dict[str, Any]], str]:
     _state, fundamental = u3_fundamental(row)
     reasons = fundamental.get("红旗理由")
     reasons = list(reasons) if isinstance(reasons, list) else ([] if reasons is None else [reasons])
@@ -353,7 +384,7 @@ def classify_u3_row(row: Mapping[str, Any], e1_row: Mapping[str, Any] | None,
     items = []
     for reason in reasons:
         kind, period = parse_reason(reason)
-        value, staleness = reason_staleness(kind, period, coverage, min_period)
+        value, staleness = reason_staleness(kind, period, coverage, min_period, max_period)
         items.append({
             "reason_verbatim": reason,
             "kind": kind,
@@ -388,6 +419,7 @@ def build_queue(
     projection = scan_e1_projection(scan)
     e1_by_code = _e1_rows(e1)
     min_period = e1_min_period(e1)
+    max_period = e1_max_period(e1)
     names = _names(registry_projected)
     results = [row for row in battery.get("results") or [] if isinstance(row, Mapping)]
 
@@ -406,7 +438,7 @@ def build_queue(
         if e1_view["verdict"] != "NO_RED_FLAG_FOUND":
             continue
         e1_row = e1_by_code.get(code) if e1 is not None else None
-        items, staleness = classify_u3_row(battery_row, e1_row, min_period)
+        items, staleness = classify_u3_row(battery_row, e1_row, min_period, max_period)
         if e1 is None:
             staleness = UNDETERMINED
         reasons = fundamental.get("红旗理由")

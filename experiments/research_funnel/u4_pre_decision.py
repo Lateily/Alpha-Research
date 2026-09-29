@@ -471,7 +471,11 @@ def _validate_funnel_health(
 
 
 def _required_stage_files(stage: str, names: set[str]) -> set[str]:
-    """Finalize may also hash the advisory queue/trust files; nothing else is optional."""
+    """Finalize may also hash the advisory queue/trust files, all or none; nothing else."""
+    optional = set(dag.STAGE3_OPTIONAL_FILES)
+    # governance-mutation: U4_PREDECISION_FINALIZE_OPTIONAL_ALL_OR_NONE
+    if stage == "finalize" and names & optional and not optional <= names:
+        return names  # a half pair never matches the expected file set
     # governance-mutation: U4_PREDECISION_FINALIZE_OPTIONAL_ONLY
     if stage == "finalize":
         return names - set(dag.STAGE3_OPTIONAL_FILES)

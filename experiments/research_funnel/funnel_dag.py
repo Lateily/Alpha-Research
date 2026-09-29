@@ -704,12 +704,21 @@ def run_finalize() -> int:
     # Machine-vs-machine disagreement queue + research trust line. A missing or
     # other-run E1/macro/ledger input degrades to UNAVAILABLE / NOT_COMPUTABLE;
     # it never refuses this step. The ledgers live beside the observation area.
+    # Advisory only: an unexpected build failure must not cost the night its
+    # U3/U4 health, so it degrades to a declared BUILD_FAILED_NOT_STAGED status
+    # (no files, no health keys) that the nightly verifier accepts only as such.
     advisory_root = output_root.parent / "research_advisory"
-    extras, trust_context = research_trust.build_finalize_extras(
-        as_of=target, run_id=run_id, generated_at=generated_at, public_v2=public_v2,
-        advisory_root=advisory_root, candidate_manifest=manifest, battery=battery,
-        candidate_review=candidates, scan=scan, deep_queue=queue, registry_projected=projected,
-    )
+    try:
+        extras, trust_context = research_trust.build_finalize_extras(
+            as_of=target, run_id=run_id, generated_at=generated_at, public_v2=public_v2,
+            advisory_root=advisory_root, candidate_manifest=manifest, battery=battery,
+            candidate_review=candidates, scan=scan, registry_projected=projected,
+        )
+        trust_status = None
+    # governance-mutation: FUNNEL_TRUST_BUILD_FAILURE_DECLARED
+    except Exception as exc:  # noqa: BLE001 — advisory side-channel, declared below
+        extras, trust_context = {}, {}
+        trust_status = research_trust.build_failed_status(exc)
     _write_stage(
         bundle_dir, "finalize",
         # governance-mutation: FUNNEL_DAG_FINALIZE_EXTRAS_STAGED
@@ -743,12 +752,17 @@ def run_finalize() -> int:
     # New key rather than new fields in battery_coverage: that dict is compared for
     # exact equality against health files already published before 2026-09-21.
     health["battery_collection"] = battery_collection_summary(battery)
-    # Same rule: new top-level keys only. The ledger append records its outcome
-    # (never raises), so a ledger fault is visible in health, not a silent pass.
-    health.update(research_trust.health_updates(extras))
-    health["research_trust_ledger"] = research_trust.append_trust_line(
-        advisory_root, extras[research_trust.TRUST_FILE], trust_context["members"],
-    )
+    # Same rule: new top-level keys only. Finalize never appends the durable trust
+    # ledger: it stages the line and records that outcome; run_nightly appends
+    # only after the verifier accepted this step and the run published COMPLETE.
+    if extras:
+        health.update(research_trust.health_updates(extras))
+        health["research_trust_ledger"] = research_trust.stage_pending_line(
+            advisory_root, extras[research_trust.TRUST_FILE], trust_context["members"],
+            prior_error=trust_context.get("prior_error"),
+        )
+    else:
+        health["research_trust_ledger"] = trust_status
     previously = published_bundle_date(public_v2)
     protected = {target} | ({previously} if previously else set())
     pruned = prune_observation_area(output_root, keep, protect=protected)
@@ -758,7 +772,7 @@ def run_finalize() -> int:
         "step": "funnel_finalize", "target_trade_date": target, "run_id": run_id,
         "status": health["status"], "counts": health["counts"],
         "battery_coverage": health["battery_coverage"],
-        "disagreement_counts": health["disagreement_summary"]["counts"],
+        "disagreement_counts": (health.get("disagreement_summary") or {}).get("counts"),
         "research_trust_ledger": health["research_trust_ledger"]["status"],
     }, ensure_ascii=False))
     print(DISCLAIMER)

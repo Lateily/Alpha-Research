@@ -4,13 +4,19 @@
 Pins, one by one:
   · offline replay of the retained 9/29 production bundle + same-run E1 layer:
     46 U3 red flags, all E1-clear, 43 E1-confirmed SUPERSEDED + 3 OUT_OF_E1_WINDOW,
-    T1 43/46, T2 0/46, T6 0/181, 46 U3 rows + 2 controls, 10 routed; 9/24: 39 U3 red flags
+    T1 43/46, T2 0/46 (declared a structural zero), T6 0/181, 46 U3 rows + 2 controls,
+    10 routed; 9/24: 39 U3 red flags
   · an E1 layer from another night/run is never used; its absence is UNAVAILABLE/null, never 0
   · rates below MIN_N are withheld (null), never 0; no performance/claim keys, no authority
-  · the trust ledger is hash-chained, idempotent per run_id and never fails finalize
+  · T3 counts only U3-row adjudications that re-pass the contract-A human boundary; T4/T5
+    read the ready claim of the reviewed U4 packet and never turn bulk DEFER or a forced
+    REJECT into a confirmation
+  · finalize only stages the trust line; the hash-chained, idempotent ledger is appended by
+    run_nightly after a verified, COMPLETE, published night; rolling pools one line per as_of
   · finalize writes both files through the finalize stage only (manifest artifact set
-    unchanged), health gets new top-level keys, and the nightly verifier recomputes them
-  · U4 pre-decision accepts exactly these optional finalize files and nothing else
+    unchanged), health gets new top-level keys, and the nightly verifier recomputes them,
+    including every source_binding hash; an advisory build failure is declared, not fatal
+  · U4 pre-decision accepts exactly these optional finalize files, all or none
 
 不是买卖指令；研究信号，human executes。
 """
@@ -51,8 +57,31 @@ def load_fixture(name: str) -> dict:
     return json.loads((FIXTURES / f"{name}.json").read_text(encoding="utf-8"))
 
 
+def _expand_fixture(fx: dict) -> dict:
+    """Undo the QT-C9 compaction: every battery/scan/E1 row back, sorted by ts_code."""
+    fx = copy.deepcopy(fx)
+    rows = list(fx["battery_rows"])
+    for code, gate, news, completeness in fx.get("battery_rows_compact") or []:
+        fundamental = ({"status": gate.split(":", 1)[1]} if gate.startswith("status:")
+                       else {"红旗闸门": gate})
+        rows.append({"ts_code": code, "fundamental": fundamental, "news_status": news,
+                     "completeness_verdict": completeness})
+    fx["battery_rows"] = sorted(rows, key=lambda row: row["ts_code"])
+    scan = dict(fx["scan_e1"])
+    scan.update({code: {"verdict": verdict, "latest_e1_date": None, "reason_codes": []}
+                 for code, verdict in (fx.get("scan_e1_verdict_only") or {}).items()})
+    fx["scan_e1"] = scan
+    if "e1" in fx:
+        e1_rows = list(fx["e1"]["rows"])
+        e1_rows += [{"ts_code": code, "verdict": verdict}
+                    for code, verdict in (fx["e1"].get("verdict_only") or {}).items()]
+        fx["e1"]["rows"] = sorted(e1_rows, key=lambda row: row["ts_code"])
+    return fx
+
+
 def inputs_from_fixture(fx: dict) -> dict:
     """Rebuild the minimal bundle payload shapes the queue/trust code reads."""
+    fx = _expand_fixture(fx)
     results = []
     for row in fx["battery_rows"]:
         news = {"status": row["news_status"]} if row["news_status"] else {"fixture": "payload elided"}
@@ -66,8 +95,8 @@ def inputs_from_fixture(fx: dict) -> dict:
         "generated_at": fx["scan_generated_at"],
         "rows": [
             {"channel": "E1_EVENT", "ts_code": code,
-             "feature_values": {"verdict": view["verdict"], "latest_e1_date": view["latest_e1_date"]},
-             "reason_codes": view["reason_codes"]}
+             "feature_values": {"verdict": view["verdict"], "latest_e1_date": view.get("latest_e1_date")},
+             "reason_codes": view.get("reason_codes") or []}
             for code, view in sorted(fx["scan_e1"].items())
         ],
     }
@@ -86,7 +115,6 @@ def inputs_from_fixture(fx: dict) -> dict:
         "candidate_review": {"rows": review_rows},
         "candidate_manifest": {"manifest_hash": "fixture:" + fx["source"]["bundle_hash"]},
         "registry": {"rows": [{"ts_code": c, "name": n} for c, n in fx["names"].items()]},
-        "deep_queue": {"ready_pool": [{"ts_code": r["ts_code"], "ready": False} for r in results]},
         "e1_raw": e1_raw,
     }
 
@@ -105,7 +133,7 @@ def replay(inputs: dict, *, e1_raw: bytes | None = None, run_manifest=None,
     )
     line, members = rt.build_trust_line(
         as_of=inputs["as_of"], run_id=inputs["run_id"], generated_at=GENERATED_AT, queue=queue,
-        battery=inputs["battery"], scan=inputs["scan"], deep_queue=inputs["deep_queue"],
+        battery=inputs["battery"], scan=inputs["scan"],
         candidate_manifest=inputs["candidate_manifest"], e1=e1, e1_basis=basis,
         macro=macro or {"status": "ABSENT", "events": None, "manifest_sha256": None, "reason": "TEST"},
         u4=u4 or {"status": "ABSENT", "events": [], "head": None, "error": None},
@@ -135,7 +163,7 @@ class ProductionReplayTests(unittest.TestCase):
             "u3_red_flag_vs_e1_clear_rows": 46, "superseded_rows": 43,
             "out_of_e1_window_rows": 3, "active_rows": 0, "e1_coverage_empty_rows": 0,
             "undetermined_rows": 0, "control_rows": 2, "human_routed_rows": 10,
-            "unobservable_cells": ["U3_PASS_VS_E1_RED_FLAG"],
+            "unobservable_cells": ["U3_PASS_VS_E1_RED_FLAG", "U3_RED_FLAG_VS_E1_RED_FLAG"],
         }, queue["counts"])
         self.assertEqual(48, len(queue["rows"]))
         self.assertEqual([dq.CLASS_CONTROL] * 2,
@@ -155,6 +183,8 @@ class ProductionReplayTests(unittest.TestCase):
                          (t1["numerator"], t1["denominator"], t1["rate"], t1["level"], t1["reliance"]))
         t2 = metrics["red_flag_cross_model_confirmed_share"]
         self.assertEqual((0, 46, 0.0, rt.MISSES), (t2["numerator"], t2["denominator"], t2["rate"], t2["level"]))
+        # QT-C2: the zero is structural (E1 red flags never reach U3) and says so.
+        self.assertTrue(t2["note"].startswith("STRUCTURAL ZERO"), t2["note"])
         t6 = metrics["news_channel_available_share"]
         self.assertEqual((0, 181, rt.MISSES, "COVERAGE_GAP_DISCLOSE"),
                          (t6["numerator"], t6["denominator"], t6["level"], t6["reliance"]))
@@ -282,6 +312,14 @@ class ReasonParsingTests(unittest.TestCase):
                          dq.reason_staleness("income", None, {"income": "DATA_BLOCKED"}, None)[1])
         self.assertEqual((None, dq.UNDETERMINED), dq.reason_staleness("forecast", "20260630", None, None))
 
+    def test_a_cited_period_after_the_e1_window_is_undetermined(self) -> None:
+        # QT-C5: E1 coverage is per kind; it says nothing about a filing after its window.
+        cov = {"forecast": "SUPERSEDED"}
+        self.assertEqual(dq.UNDETERMINED,
+                         dq.reason_staleness("forecast", "20260930", cov, "20250930", "20260630")[1])
+        self.assertEqual(dq.SUPERSEDED,
+                         dq.reason_staleness("forecast", "20260630", cov, "20250930", "20260630")[1])
+
     def test_row_precedence_is_conservative(self) -> None:
         item = lambda s: {"staleness": s}
         self.assertEqual(dq.ACTIVE, dq.row_staleness([item(dq.SUPERSEDED), item(dq.ACTIVE)]))
@@ -320,7 +358,6 @@ def tiny_inputs(fundamentals: dict, *, news=None, e1_rows=None, excluded=("90000
         "battery": {"results": results, "rows_hash": fp._hash(results)}, "scan": scan,
         "candidate_review": {"rows": [{"ts_code": c, "review_status": "EXCLUDED_RED_FLAG"} for c in excluded]},
         "candidate_manifest": {"manifest_hash": "m" * 64}, "registry": {"rows": []},
-        "deep_queue": {"ready_pool": [{"ts_code": c, "ready": True} for c in fundamentals]},
         "e1_raw": json.dumps(e1, ensure_ascii=False).encode("utf-8"),
     }
 
@@ -466,26 +503,135 @@ class TrustMetricRuleTests(unittest.TestCase):
         with self.assertRaisesRegex(rt.TrustLineError, "not derived from its counts"):
             rt.validate_trust_line(forged)
 
+    def _u4_state(self, inputs, events, *, ready=None, blocked=None):
+        """packet_rows as read_u4_decisions builds them from the decided intent."""
+        ready = ready or {}
+        blocked = blocked or {}
+        packet_rows = {
+            f"{e['source']['u4_packet_hash']}|{e['candidate']['ts_code']}": {
+                "ready": ready.get(e["candidate"]["ts_code"], True),
+                "blocked_reasons": list(blocked.get(e["candidate"]["ts_code"], [])),
+            } for e in events
+        }
+        return {"status": "OK", "events": events, "packet_rows": packet_rows, "head": "h", "error": None}
+
+    @staticmethod
+    def _event(inputs, row, decision, reasons, *, missing=(), row_hash=None, run_id=None):
+        return {"candidate": {"ts_code": row["ts_code"]}, "decision": decision,
+                "reason_codes": list(reasons), "missing_evidence": list(missing),
+                "source": {"run_id": run_id or inputs["run_id"], "u4_packet_hash": "sha256:" + "p" * 64,
+                           "u3_battery_row_hash": row_hash or "sha256:" + fp._hash(row)}}
+
     def test_u4_labels_join_only_on_the_recomputed_battery_row_hash(self) -> None:
         inputs = tiny_inputs({f"0000{i:02d}.SZ": {"红旗闸门": "PASS", "红旗理由": []} for i in range(3)})
         rows = inputs["battery"]["results"]
         events = [
-            {"candidate": {"ts_code": rows[0]["ts_code"]}, "decision": "DATA_BLOCKED",
-             "reason_codes": ["U3_INCOMPLETE"], "missing_evidence": [],
-             "source": {"run_id": inputs["run_id"], "u3_battery_row_hash": "sha256:" + fp._hash(rows[0])}},
-            {"candidate": {"ts_code": rows[1]["ts_code"]}, "decision": "REJECT",
-             "reason_codes": ["HUMAN_JUDGMENT"], "missing_evidence": [],
-             "source": {"run_id": inputs["run_id"], "u3_battery_row_hash": "sha256:" + fp._hash(rows[1])}},
-            {"candidate": {"ts_code": rows[2]["ts_code"]}, "decision": "DATA_BLOCKED",
-             "reason_codes": ["U3_INCOMPLETE"], "missing_evidence": [],
-             "source": {"run_id": inputs["run_id"], "u3_battery_row_hash": "sha256:" + "0" * 64}},
+            self._event(inputs, rows[0], "DATA_BLOCKED", ["U3_INCOMPLETE"], missing=["U3_SIX_DIMENSION_BATTERY"]),
+            self._event(inputs, rows[1], "REJECT", ["RESEARCH_PRIORITY_LOWER"]),
+            self._event(inputs, rows[2], "DATA_BLOCKED", ["U3_INCOMPLETE"], row_hash="sha256:" + "0" * 64),
         ]
-        _b, _r, _q, line, members = replay(inputs, u4={"status": "OK", "events": events, "head": "h", "error": None})
+        _b, _r, _q, line, members = replay(inputs, u4=self._u4_state(inputs, events))
         t4 = by_id(line)["u4_ready_false_ready_share"]
         self.assertEqual((1, 2, 1), (t4["numerator"], t4["denominator"], t4["unparsed_count"]))
         self.assertEqual({rows[0]["ts_code"]: True, rows[1]["ts_code"]: False},
                          members["u4_ready_false_ready_share"])
         self.assertEqual(rt.WITHHELD, t4["level"])
+
+    def test_u4_ready_claim_comes_from_the_reviewed_packet_not_the_deep_queue(self) -> None:
+        # QT-C1: a row the human saw as ready=False is not a "ready" machine claim.
+        inputs = tiny_inputs({f"0000{i:02d}.SZ": {"红旗闸门": "PASS", "红旗理由": []} for i in range(2)})
+        rows = inputs["battery"]["results"]
+        events = [self._event(inputs, rows[0], "NO_TRADE", ["U2_NOT_ELIGIBLE"]),
+                  self._event(inputs, rows[1], "NO_TRADE", ["U2_NOT_ELIGIBLE"])]
+        state = self._u4_state(inputs, events, ready={rows[1]["ts_code"]: False},
+                               blocked={rows[1]["ts_code"]: ["NO_POSITIVE_CHANNEL"]})
+        _b, _r, _q, line, members = replay(inputs, u4=state)
+        # U2_NOT_ELIGIBLE on a packet-ready row is a false-ready label; the packet
+        # ready=False row is not in T4 at all.
+        self.assertEqual({rows[0]["ts_code"]: True}, members["u4_ready_false_ready_share"])
+        # and a missing packet row is unparsed, never read as ready
+        del state["packet_rows"][f"sha256:{'p' * 64}|{rows[0]['ts_code']}"]
+        _b, _r, _q, line, members = replay(inputs, u4=state)
+        self.assertEqual({}, members["u4_ready_false_ready_share"])
+        self.assertEqual(1, by_id(line)["u4_ready_false_ready_share"]["unparsed_count"])
+
+    def test_bulk_defer_and_forced_red_flag_reject_are_not_labels(self) -> None:
+        # QT-C1: DEFER/HUMAN_JUDGMENT ("其余按审批稿逐票留档") and the ledger-forced
+        # REJECT+RED_FLAG_ACTIVE say nothing about ready/COMPLETE: unparsed, never 0 defects.
+        inputs = tiny_inputs({f"0000{i:02d}.SZ": {"红旗闸门": "PASS", "红旗理由": []} for i in range(4)})
+        rows = inputs["battery"]["results"]
+        events = [
+            self._event(inputs, rows[0], "DEFER", ["HUMAN_JUDGMENT"]),
+            self._event(inputs, rows[1], "REJECT", ["RED_FLAG_ACTIVE"]),
+            self._event(inputs, rows[2], "SELECT", ["EVIDENCE_CHAIN_COMPLETE"]),
+            self._event(inputs, rows[3], "DEFER", ["QUEUE_CAPACITY"]),
+        ]
+        state = self._u4_state(inputs, events, ready={rows[1]["ts_code"]: False},
+                               blocked={rows[1]["ts_code"]: ["E1_RED_FLAG_REQUIRES_SEPARATE_REVIEW"]})
+        _b, _r, _q, line, members = replay(inputs, u4=state)
+        self.assertEqual({rows[2]["ts_code"]: False}, members["u4_ready_false_ready_share"])
+        self.assertEqual({rows[2]["ts_code"]: False}, members["complete_label_defect_share"])
+        t4, t5 = by_id(line)["u4_ready_false_ready_share"], by_id(line)["complete_label_defect_share"]
+        self.assertEqual((0, 1, 2), (t4["numerator"], t4["denominator"], t4["unparsed_count"]))
+        self.assertEqual((0, 1, 3), (t5["numerator"], t5["denominator"], t5["unparsed_count"]))
+        self.assertIsNone(t4["rate"])
+
+    def test_read_u4_decisions_keeps_this_run_and_the_decided_packet_rows(self) -> None:
+        # F4 (M8): events from another run never count, even if their row hash matched.
+        import u4_decision_ledger as u4
+
+        def event(code, run_id):
+            return {"candidate": {"ts_code": code}, "decision_revision": 1, "decision": "SELECT",
+                    "source": {"run_id": run_id, "u4_packet_hash": "sha256:" + "a" * 64}}
+
+        state = {
+            "current": {("p", "1"): event("000001.SZ", "run-a"), ("p", "2"): event("000002.SZ", "run-b")},
+            "intents": {("sha256:" + "a" * 64, 1): {"review_packet": {"ready_pool": [
+                {"ts_code": "000001.SZ", "ready": False, "blocked_reasons": ["NO_POSITIVE_CHANNEL"]},
+                {"ts_code": "000002.SZ", "ready": True, "blocked_reasons": []}]}}},
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            path = root.joinpath(*rt.U4_LEDGER_REL)
+            path.parent.mkdir(parents=True)
+            path.write_text("{}\n", encoding="utf-8")
+            with mock.patch.object(rt, "_verify_r015", return_value=(True, "head", None)), \
+                    mock.patch.object(u4, "_replay_records", return_value=state):
+                result = rt.read_u4_decisions(root, "run-a")
+        self.assertEqual("OK", result["status"])
+        self.assertEqual(["000001.SZ"], [e["candidate"]["ts_code"] for e in result["events"]])
+        self.assertEqual({f"sha256:{'a' * 64}|000001.SZ": {"ready": False,
+                                                          "blocked_reasons": ["NO_POSITIVE_CHANNEL"]}},
+                         result["packet_rows"])
+
+    def _adjudication_ledger(self, root, inputs, queue, rows):
+        """rows: [(queue_row, verdict, batch, run_id, closed)] in contract-A shape."""
+        path = root.joinpath(*rt.ADJUDICATION_LEDGER_REL)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        authority = {"u4_admission_authority": False, "changes_machine_verdict": False,
+                     "claim_allowed": False, "no_trade_flag": True}
+        batches: dict = {}
+        for row, verdict, batch, run_id, closed in rows:
+            batches.setdefault(batch, {"rows": [], "closed": closed, "run_id": run_id})
+            batches[batch]["rows"].append((row, verdict))
+        for batch, spec in batches.items():
+            batch_hash = hashlib.sha256(batch.encode()).hexdigest()
+            human = {"claimed_reviewer": "Junyan", "identity_verification": "UNAVAILABLE",
+                     "decided_at": "2026-09-30T01:00:00+00:00",
+                     "authorization_text": f"离线裁决批次 {batch_hash[:12]} 由 Junyan 在对话中批准",
+                     "authorization_evidence_ref": "conversation:test"}
+            for index, (row, verdict) in enumerate(spec["rows"]):
+                payload = {"schema": rt.ADJUDICATION_SCHEMA, "batch_id": batch, "run_id": spec["run_id"],
+                           "as_of": inputs["as_of"], "information_cutoff": inputs["as_of"],
+                           "queue_rows_hash": queue["rows_hash"], "row_id": row["row_id"],
+                           "ts_code": row["ts_code"], "disagreement_class": row["disagreement_class"],
+                           "human_verdict": verdict, "human_decision": human, "authority": authority}
+                event_ledger.append(rt.ADJUDICATION_KIND, f"{batch}-{index}", payload, str(path))
+            if spec["closed"]:
+                event_ledger.append(rt.ADJUDICATION_CLOSURE_KIND, f"{batch}-c",
+                                    {"batch_id": batch, "batch_hash": batch_hash,
+                                     "row_ids": [row["row_id"] for row, _v in spec["rows"]]}, str(path))
+        return path
 
     def test_human_confirmed_share_uses_only_closed_batches_bound_to_this_queue(self) -> None:
         inputs = tiny_inputs({"000001.SZ": dict(RED), "000002.SZ": dict(RED)})
@@ -493,22 +639,12 @@ class TrustMetricRuleTests(unittest.TestCase):
         u3 = [row for row in queue["rows"] if row["disagreement_class"] == dq.CLASS_U3_VS_E1]
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            path = root.joinpath(*rt.ADJUDICATION_LEDGER_REL)
-            path.parent.mkdir(parents=True)
-            authority = {"u4_admission_authority": False, "changes_machine_verdict": False,
-                         "claim_allowed": False, "no_trade_flag": True}
-
-            def label(batch, row, verdict, *, run_id=inputs["run_id"]):
-                return {"schema": rt.ADJUDICATION_SCHEMA, "batch_id": batch, "run_id": run_id,
-                        "queue_rows_hash": queue["rows_hash"], "row_id": row["row_id"],
-                        "human_verdict": verdict, "authority": authority}
-
-            event_ledger.append(rt.ADJUDICATION_KIND, "a1", label("b1", u3[0], "MACHINE_VERDICT_REJECTED_STALE_EVIDENCE"), str(path))
-            event_ledger.append(rt.ADJUDICATION_CLOSURE_KIND, "c1", {"batch_id": "b1"}, str(path))
-            # an open batch and a batch bound to another run never count
-            event_ledger.append(rt.ADJUDICATION_KIND, "a2", label("b2", u3[1], "MACHINE_VERDICT_CONFIRMED"), str(path))
-            event_ledger.append(rt.ADJUDICATION_KIND, "a3", label("b3", u3[1], "MACHINE_VERDICT_CONFIRMED", run_id="other"), str(path))
-            event_ledger.append(rt.ADJUDICATION_CLOSURE_KIND, "c3", {"batch_id": "b3"}, str(path))
+            path = self._adjudication_ledger(root, inputs, queue, [
+                (u3[0], "MACHINE_VERDICT_REJECTED_STALE_EVIDENCE", "b1", inputs["run_id"], True),
+                # an open batch and a batch bound to another run never count
+                (u3[1], "MACHINE_VERDICT_CONFIRMED", "b2", inputs["run_id"], False),
+                (u3[1], "MACHINE_VERDICT_CONFIRMED", "b3", "other", True),
+            ])
             state = rt.read_adjudications(root, inputs["run_id"], queue)
             self.assertEqual("OK", state["status"])
             self.assertEqual({u3[0]["row_id"]: "MACHINE_VERDICT_REJECTED_STALE_EVIDENCE"}, state["labels"])
@@ -523,6 +659,107 @@ class TrustMetricRuleTests(unittest.TestCase):
             _b, _r, _q, line, _m = replay(inputs, adjudication=broken)
             self.assertEqual(rt.NC_NO_HUMAN_LABELS,
                              by_id(line)["red_flag_human_confirmed_share"]["not_computable_reason"])
+
+    def test_control_row_verdicts_never_enter_t3(self) -> None:
+        # F1 / QT-C6: control rows' machine side is E1, not the U3 gate.
+        inputs = tiny_inputs({"000001.SZ": dict(RED)})
+        _b, _r, queue, _l, _m = replay(inputs)
+        u3 = [row for row in queue["rows"] if row["disagreement_class"] == dq.CLASS_U3_VS_E1]
+        controls = [row for row in queue["rows"] if row["disagreement_class"] == dq.CLASS_CONTROL]
+        self.assertEqual(2, len(controls))
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self._adjudication_ledger(root, inputs, queue, [
+                (controls[0], "MACHINE_VERDICT_CONFIRMED", "b1", inputs["run_id"], True),
+                (controls[1], "COUNTER_SIDE_REJECTED", "b1", inputs["run_id"], True),
+                (u3[0], "MACHINE_VERDICT_REJECTED_STALE_EVIDENCE", "b1", inputs["run_id"], True),
+            ])
+            state = rt.read_adjudications(root, inputs["run_id"], queue)
+            self.assertEqual(3, len(state["labels"]))
+            _b, _r, _q, line, members = replay(inputs, adjudication=state)
+        t3 = by_id(line)["red_flag_human_confirmed_share"]
+        self.assertEqual((0, 1), (t3["numerator"], t3["denominator"]))
+        self.assertEqual({"000001.SZ": False}, members["red_flag_human_confirmed_share"])
+        self.assertIn("control_rows_adjudicated=2", t3["note"])
+
+    def test_adjudications_failing_the_contract_a_human_boundary_are_not_labels(self) -> None:
+        # QT-C6: claimed reviewer, batch-bound offline authorization, evidence ref and
+        # information_cutoff are re-checked before a record counts.
+        inputs = tiny_inputs({"000001.SZ": dict(RED)})
+        _b, _r, queue, _l, _m = replay(inputs)
+        u3 = [row for row in queue["rows"] if row["disagreement_class"] == dq.CLASS_U3_VS_E1]
+        forgeries = (
+            lambda p: p["human_decision"].__setitem__("claimed_reviewer", "someone"),
+            lambda p: p["human_decision"].__setitem__("authorization_text", "approved offline, no batch hash"),
+            lambda p: p["human_decision"].__setitem__("authorization_evidence_ref", "email:x"),
+            lambda p: p.__setitem__("information_cutoff", "20261001"),
+        )
+        for forge in forgeries:
+            with tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp)
+                original = event_ledger.append
+
+                def forged_append(kind, rid, payload, path, _forge=forge):
+                    if kind == rt.ADJUDICATION_KIND:
+                        payload = copy.deepcopy(payload)
+                        _forge(payload)
+                    return original(kind, rid, payload, path)
+
+                with mock.patch.object(event_ledger, "append", forged_append):
+                    self._adjudication_ledger(root, inputs, queue, [
+                        (u3[0], "MACHINE_VERDICT_CONFIRMED", "b1", inputs["run_id"], True)])
+                state = rt.read_adjudications(root, inputs["run_id"], queue)
+                self.assertEqual(({}, 1), (state["labels"], state["rejected_records"]))
+
+    def test_e1_data_blocked_rows_are_t2_unparsed_not_denominator(self) -> None:
+        # F3 (M11): a bound E1 row that is DATA_BLOCKED is not "E1 disagrees".
+        inputs = tiny_inputs({"000001.SZ": dict(RED), "000002.SZ": dict(RED)})
+        e1 = json.loads(inputs["e1_raw"].decode("utf-8"))
+        for row in e1["rows"]:
+            if row["ts_code"] == "000002.SZ":
+                row["verdict"] = "DATA_BLOCKED"
+        e1["rows_hash"] = fp._hash(e1["rows"])
+        for row in inputs["scan"]["rows"]:
+            if row["ts_code"] == "000002.SZ":
+                row["feature_values"]["verdict"] = "DATA_BLOCKED"
+        basis, _r, _q, line, members = replay(inputs, e1_raw=json.dumps(e1).encode("utf-8"))
+        self.assertEqual(dq.E1_SAME_AS_OF, basis)
+        t2 = by_id(line)["red_flag_cross_model_confirmed_share"]
+        self.assertEqual((0, 1, 1), (t2["numerator"], t2["denominator"], t2["unparsed_count"]))
+        self.assertEqual({"000001.SZ": False}, members["red_flag_cross_model_confirmed_share"])
+
+    def _macro_dir(self, root: Path, *, run_id: str, as_of: str, bind: bool = True,
+                   events_present: bool = True) -> Path:
+        macro = root / "macro"
+        macro.mkdir()
+        events = json.dumps({"run_id": run_id, "data": [
+            {"context_id": "a", "consensus": 1.0, "consensus_status": "OK"}]}).encode("utf-8")
+        if events_present:
+            (macro / "macro_events.json").write_bytes(events)
+        digest = hashlib.sha256(events).hexdigest() if bind else "0" * 64
+        (macro / "m1c_run_manifest.json").write_text(json.dumps({
+            "schema": "ar.macro.m1c_run_manifest", "run_id": run_id, "target_trade_date": as_of,
+            "artifacts": {"macro_events.json": digest}}), encoding="utf-8")
+        return macro
+
+    def test_macro_manifest_must_be_this_runs_and_hash_its_events(self) -> None:
+        # F3 (M7): T7 reads only the same-run M1-C manifest and the bytes it hashes.
+        cases = (
+            ({}, "OK", None),
+            ({"run_id": "another-run"}, "ABSENT", "M1C_MANIFEST_NOT_THIS_RUN"),
+            ({"bind": False}, "ABSENT", "MACRO_EVENTS_NOT_BOUND_TO_MANIFEST"),
+            ({"events_present": False}, "ABSENT", "MACRO_EVENTS_MISSING"),
+        )
+        for overrides, status, reason in cases:
+            with tempfile.TemporaryDirectory() as tmp:
+                kwargs = dict({"run_id": "run-x", "as_of": "20260929"}, **overrides)
+                macro = self._macro_dir(Path(tmp), **kwargs)
+                result = rt.read_macro(macro, run_id="run-x", as_of="20260929")
+                self.assertEqual((status, reason), (result["status"], result["reason"]), overrides)
+                if status != "OK":
+                    _b, _r, _q, line, _m = replay(tiny_inputs({"000001.SZ": dict(RED)}), macro=result)
+                    self.assertEqual(rt.NC_NO_MACRO,
+                                     by_id(line)["macro_event_consensus_coverage"]["not_computable_reason"])
 
     def test_missing_or_invalid_u4_ledger_is_not_computable(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -561,6 +798,28 @@ class RollingTests(unittest.TestCase):
                                               pooled["news_channel_available_share"]["pooled_numerator"],
                                               pooled["news_channel_available_share"]["level"]))
         self.assertEqual(rt.NOT_COMPUTABLE, pooled["red_flag_stale_evidence_share"]["level"])
+
+
+    def test_rolling_pools_one_line_per_as_of_and_never_this_nights_own_line(self) -> None:
+        # QT-C3 / F4 (M9): a re-run with the same run_id, or a sibling run of the same
+        # as_of, is replaced by the current line; two runs of one earlier as_of count once.
+        current = [rt.metric("news_channel_available_share", numerator=0, denominator=0)]
+        current += [rt.metric(mid, not_computable_reason=rt.NC_E1_UNAVAILABLE)
+                    for mid in rt.METRIC_IDS if mid != "news_channel_available_share"]
+        a = {f"A{i:05d}.SZ": True for i in range(12)}
+        b = {f"B{i:05d}.SZ": True for i in range(12)}
+        prior = [
+            self._record("20260928", "early", {"news_channel_available_share": dict(a)}),
+            self._record("20260928", "late", {"news_channel_available_share": dict(b)}),
+            self._record("20260929", "sibling", {"news_channel_available_share": dict(a)}),
+            self._record("20260929", "me", {"news_channel_available_share": dict(a)}),
+        ]
+        pooled = rt.rolling({}, current, prior, as_of="20260929", run_id="me")["per_metric"]
+        # only 20260928's latest line (b) is pooled: 12 distinct rows, withheld
+        self.assertEqual((12, rt.WITHHELD), (pooled["news_channel_available_share"]["distinct_rows"],
+                                             pooled["news_channel_available_share"]["level"]))
+        self.assertEqual(["late"], [r["run_id"] for r in rt._one_line_per_as_of(prior, as_of="20260929",
+                                                                              run_id="me")])
 
 
 class TrustLedgerTests(unittest.TestCase):
@@ -623,7 +882,52 @@ class TrustLedgerTests(unittest.TestCase):
             line, members = self._line()
             result = rt.append_trust_line(blocker, line, members)
             self.assertEqual("WRITE_FAILED", result["status"])
+            # QT-C8/F7: the class only — never an absolute local path.
             self.assertTrue(result["error"])
+            self.assertNotIn("/", result["error"])
+            self.assertNotIn(str(tmp), json.dumps(result))
+
+    def _health(self, line):
+        return {"run_id": line["run_id"], "as_of": line["as_of"], "research_trust": copy.deepcopy(line)}
+
+    def test_finalize_stages_and_only_acceptance_appends(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            line, members = self._line()
+            staged = rt.stage_pending_line(root, line, members)
+            self.assertEqual("STAGED_PENDING_ACCEPTANCE", staged["status"])
+            self.assertEqual(rt.APPEND_POLICY, staged["append_policy"])
+            self.assertFalse(rt.ledger_path(root).exists(), "staging never writes the ledger")
+            result = rt.accept_pending_line(root, self._health(line))
+            self.assertEqual(("APPENDED", 0), (result["status"], result["seq"]))
+            self.assertFalse(rt.pending_path(root, line["run_id"]).exists())
+            self.assertEqual("PENDING_MISSING", rt.accept_pending_line(root, self._health(line))["status"])
+
+    def test_acceptance_refuses_a_pending_line_that_is_not_the_verified_one(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            line, members = self._line()
+            rt.stage_pending_line(root, line, members)
+            # same counts (members stay consistent), different verified bytes
+            published = copy.deepcopy(line)
+            published["metrics"][5]["note"] = "a different, verified note"
+            rt.validate_trust_line(published)
+            result = rt.accept_pending_line(root, self._health(published))
+            self.assertEqual("PENDING_MISMATCH_NOT_APPENDED", result["status"])
+            self.assertFalse(rt.ledger_path(root).exists())
+            # members that do not reproduce the counts are refused at staging too
+            bad = copy.deepcopy(members)
+            bad["news_channel_available_share"] = {}
+            self.assertEqual("STAGE_FAILED", rt.stage_pending_line(root, line, bad)["status"])
+
+    def test_staging_refuses_a_line_against_another_nights_e1(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            line, members = self._line()
+            forged = copy.deepcopy(line)
+            forged["source_binding"]["e1_layer_as_of"] = "20260930"
+            result = rt.stage_pending_line(Path(tmp), forged, members)
+            self.assertEqual("REFUSED_NOT_SAME_RUN", result["status"])
+            self.assertFalse(rt.pending_path(Path(tmp), line["run_id"]).exists())
 
 
 # ── finalize wiring, nightly verifier, U4 compatibility ───────────────────
@@ -711,12 +1015,14 @@ class FinalizeWiringTests(unittest.TestCase):
             self.assertEqual(self.RED_CODES, queue["counts"]["superseded_rows"])
             self.assertEqual(line, health["research_trust"])
             self.assertEqual(dq.summarize(queue), health["disagreement_summary"])
-            self.assertEqual("APPENDED", health["research_trust_ledger"]["status"])
+            self.assertEqual("STAGED_PENDING_ACCEPTANCE", health["research_trust_ledger"]["status"])
             self.assertNotIn("research_trust", health["battery_coverage"])
-            records, error = rt.read_prior_lines(root / "research_advisory")
-            self.assertIsNone(error)
-            self.assertEqual([dagtests.RUN_ID], [r["run_id"] for r in records])
-            self.assertEqual(set(red), set(records[0]["members"]["red_flag_stale_evidence_share"]))
+            # QT-C3: finalize never appends the durable ledger; it only stages.
+            advisory = root / "research_advisory"
+            self.assertFalse(rt.ledger_path(advisory).exists())
+            pending = json.loads(rt.pending_path(advisory, dagtests.RUN_ID).read_text("utf-8"))
+            self.assertEqual(line, pending["trust_line"])
+            self.assertEqual(set(red), set(pending["members"]["red_flag_stale_evidence_share"]))
 
     def test_missing_e1_degrades_to_unavailable_without_failing_finalize(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -731,8 +1037,59 @@ class FinalizeWiringTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             _pv, _obs, _bundle, health, _red = self._finalize(root, advisory_blocked=True)
-            self.assertEqual("WRITE_FAILED", health["research_trust_ledger"]["status"])
+            self.assertEqual("STAGE_FAILED", health["research_trust_ledger"]["status"])
+            self.assertNotIn("/", health["research_trust_ledger"]["error"])
             self.assertIn("research_trust", health)
+
+    def test_an_advisory_build_failure_is_declared_and_does_not_fail_finalize(self) -> None:
+        # F9: the night keeps its U3/U4 health; the failure is a declared status.
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            boom = mock.patch.object(rt, "build_finalize_extras", side_effect=KeyError("shape"))
+            with boom:
+                try:
+                    pv, _obs, bundle, health, _red = self._finalize(root)
+                except Exception as exc:  # noqa: BLE001 — the advisory side must never fail finalize
+                    self.fail(f"finalize failed on an advisory build error: {exc!r}")
+            self.assertEqual({"status": "BUILD_FAILED_NOT_STAGED", "error": "KeyError"},
+                             {k: health["research_trust_ledger"][k] for k in ("status", "error")})
+            self.assertNotIn("research_trust", health)
+            stage = json.loads((bundle / "stage_finalize.json").read_text("utf-8"))
+            self.assertEqual(set(dag.STAGE3_FILES), set(stage["artifacts"]))
+            repo, _durable = self._durable(root, bundle)
+            self.verify(health, repo, pv)
+
+    def _res(self, *, finalize="OK", report="COMPLETE", published=True, pv=None):
+        manifest = {"artifacts": {}}
+        if pv is not None:
+            manifest["artifacts"]["public:funnel_health.json"] = hashlib.sha256(
+                (pv / "funnel_health.json").read_bytes()).hexdigest()
+        return {"run_id": dagtests.RUN_ID, "report": report, "published": published,
+                "publication_manifest": manifest,
+                "steps": [{"step": "funnel_finalize", "status": finalize}]}
+
+    def test_the_nightly_appends_only_after_an_accepted_published_finalize(self) -> None:
+        # QT-C3 / F6: a failed verification, an INCOMPLETE night or an unpublished run
+        # leaves no ledger line; an accepted one appends exactly the verified line.
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            pv, obs, _bundle, health, _red = self._finalize(root)
+            advisory = root / "research_advisory"
+            for res in (self._res(finalize="DATA_BLOCKED", pv=pv), self._res(report="INCOMPLETE", pv=pv),
+                        self._res(published=False, pv=pv)):
+                self.assertEqual("NOT_APPENDED_RUN_NOT_ACCEPTED",
+                                 nightly._accept_research_trust_line(res, str(obs), str(pv))["status"])
+            self.assertFalse(rt.ledger_path(advisory).exists())
+            # a published health that is not the manifest-registered bytes is refused
+            self.assertEqual("PENDING_MISMATCH_NOT_APPENDED",
+                             nightly._accept_research_trust_line(self._res(), str(obs), str(pv))["status"])
+            self.assertFalse(rt.ledger_path(advisory).exists())
+            result = nightly._accept_research_trust_line(self._res(pv=pv), str(obs), str(pv))
+            self.assertEqual("APPENDED", result["status"])
+            records, error = rt.read_prior_lines(advisory)
+            self.assertIsNone(error)
+            self.assertEqual([dagtests.RUN_ID], [r["run_id"] for r in records])
+            self.assertEqual(health["research_trust"], records[0]["trust_line"])
 
     def test_verifier_recomputes_queue_summary_and_machine_metrics(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -753,8 +1110,37 @@ class FinalizeWiringTests(unittest.TestCase):
 
             forged = copy.deepcopy(health)
             del forged["research_trust_ledger"]
-            with self.assertRaisesRegex(ValueError, "账本写入状态"):
+            with self.assertRaisesRegex(ValueError, "without a declared trust-line staging status"):
                 self.verify(forged, repo, pv)
+
+            forged = copy.deepcopy(health)
+            forged["research_trust_ledger"]["status"] = "APPENDED"
+            with self.assertRaisesRegex(ValueError, "outside the finalize vocabulary"):
+                self.verify(forged, repo, pv)
+
+    def test_verifier_refuses_a_trust_line_resealed_with_another_runs_binding(self) -> None:
+        # F3 (M4): identity fields right, source_binding pointing at other evidence.
+        for key in ("battery_rows_hash", "queue_rows_hash", "e1_layer_rows_hash", "candidate_manifest_hash"):
+            with tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp)
+                pv, _obs, bundle, health, _red = self._finalize(root)
+                repo, durable = self._durable(root, bundle)
+                line = json.loads((durable / rt.TRUST_FILE).read_text("utf-8"))
+                line["source_binding"][key] = "0" * 64
+                rt.validate_trust_line(line)
+                restamp_stage(durable, "finalize", rt.TRUST_FILE, line)
+                with self.assertRaisesRegex(ValueError, "source_binding", msg=key):
+                    self.verify(dict(health, research_trust=line), repo, pv)
+
+    def test_verifier_refuses_a_recorded_e1_basis_that_does_not_replay(self) -> None:
+        # F4 (M5): recorded SAME_AS_OF, measured UNAVAILABLE (the layer is gone).
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            pv, _obs, bundle, health, _red = self._finalize(root)
+            repo, _durable = self._durable(root, bundle)
+            (pv / "e1_event_layer.json").unlink()
+            with self.assertRaisesRegex(ValueError, "E1 basis does not replay"):
+                self.verify(health, repo, pv)
 
     def test_verifier_refuses_a_resealed_queue(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -795,6 +1181,42 @@ class FinalizeWiringTests(unittest.TestCase):
             stripped = {k: v for k, v in health.items() if k not in {"disagreement_summary", "research_trust"}}
             with self.assertRaisesRegex(ValueError, "not bound together"):
                 self.verify(stripped, repo, pv)
+
+    def test_a_half_pair_of_files_and_keys_is_refused(self) -> None:
+        # F5 (M17): one finalize extra + one health key is not a valid (1,1) night.
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            pv, _obs, bundle, health, _red = self._finalize(root)
+            repo, durable = self._durable(root, bundle)
+            stage_path = durable / "stage_finalize.json"
+            stage = json.loads(stage_path.read_text("utf-8"))
+            del stage["artifacts"][rt.TRUST_FILE]
+            stage.pop("stage_hash")
+            stage["stage_hash"] = fp._hash(stage)
+            stage_path.write_text(json.dumps(stage, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+            (durable / rt.TRUST_FILE).unlink()
+            half = {k: v for k, v in health.items() if k != "research_trust"}
+            with self.assertRaisesRegex(ValueError, "not bound together"):
+                self.verify(half, repo, pv)
+
+    def test_dropping_both_files_and_keys_cannot_bypass_the_recompute(self) -> None:
+        # QT-C7: a receipt from this code declares research_trust_ledger; (0,0) with a
+        # staging status other than BUILD_FAILED_NOT_STAGED is refused.
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            pv, _obs, bundle, health, _red = self._finalize(root)
+            repo, durable = self._durable(root, bundle)
+            stage_path = durable / "stage_finalize.json"
+            stage = json.loads(stage_path.read_text("utf-8"))
+            for name in dag.STAGE3_OPTIONAL_FILES:
+                del stage["artifacts"][name]
+                (durable / name).unlink()
+            stage.pop("stage_hash")
+            stage["stage_hash"] = fp._hash(stage)
+            stage_path.write_text(json.dumps(stage, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+            dropped = {k: v for k, v in health.items() if k not in {"disagreement_summary", "research_trust"}}
+            with self.assertRaisesRegex(ValueError, "extras are missing"):
+                self.verify(dropped, repo, pv)
 
     def test_optional_finalize_files_are_exactly_the_queue_and_trust_line(self) -> None:
         self.assertEqual(tuple(rt.FINALIZE_EXTRA_FILES), tuple(dag.STAGE3_OPTIONAL_FILES))
@@ -842,6 +1264,17 @@ class U4CompatibilityTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             with self.assertRaisesRegex(pre.PreDecisionError, "stage receipt contract is invalid: finalize"):
                 self._build(Path(os.path.realpath(tmp)), extra)
+
+    def test_u4_packet_refuses_half_of_the_optional_pair(self) -> None:
+        # F5: the queue without the trust line (or vice versa) is not a valid finalize stage.
+        import test_u4_pre_decision_runtime as runtime
+        import u4_pre_decision as pre
+
+        for name in dag.STAGE3_OPTIONAL_FILES:
+            extra = {name: {"generated_at": runtime.GENERATED_AT, "fixture": name}}
+            with tempfile.TemporaryDirectory() as tmp:
+                with self.assertRaisesRegex(pre.PreDecisionError, "stage receipt contract is invalid: finalize"):
+                    self._build(Path(os.path.realpath(tmp)), extra)
 
     def test_evidence_view_captures_finalize_stage_artifacts(self) -> None:
         import test_u4_pre_decision_runtime as runtime
