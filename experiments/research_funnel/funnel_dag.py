@@ -83,11 +83,16 @@ from nightly_funnel import (  # noqa: E402
     prune_observation_area,
     published_bundle_date,
 )
+import research_trust  # noqa: E402
 import semiconductor_inputs as semiconductor_evidence  # noqa: E402
 
 STAGE1_FILES = ("all_market_scan.json", "candidate_review.json", "candidate_manifest.json")
 STAGE2_FILES = ("candidate_battery.json",)
 STAGE3_FILES = ("deep_research_queue.json", "security_registry_projected.json")
+# Finalize-stage evidence hashed by stage_finalize.json only.  It never enters the
+# top-level bundle manifest, whose artifact set is compared by exact equality
+# against every retained bundle; legacy finalize stages simply lack these files.
+STAGE3_OPTIONAL_FILES = ("disagreement_queue.json", "research_trust_line.json")
 INDUSTRY_TAXONOMY_PATH = Path(__file__).resolve().with_name("industry_taxonomy.v1.json")
 
 
@@ -696,9 +701,20 @@ def run_finalize() -> int:
         registry=registry, scan=scan, candidate_review=candidates, battery=battery,
         deep_queue=queue, generated_at=generated_at,
     )
+    # Machine-vs-machine disagreement queue + research trust line. A missing or
+    # other-run E1/macro/ledger input degrades to UNAVAILABLE / NOT_COMPUTABLE;
+    # it never refuses this step. The ledgers live beside the observation area.
+    advisory_root = output_root.parent / "research_advisory"
+    extras, trust_context = research_trust.build_finalize_extras(
+        as_of=target, run_id=run_id, generated_at=generated_at, public_v2=public_v2,
+        advisory_root=advisory_root, candidate_manifest=manifest, battery=battery,
+        candidate_review=candidates, scan=scan, deep_queue=queue, registry_projected=projected,
+    )
     _write_stage(
         bundle_dir, "finalize",
-        {"deep_research_queue.json": queue, "security_registry_projected.json": projected},
+        # governance-mutation: FUNNEL_DAG_FINALIZE_EXTRAS_STAGED
+        {"deep_research_queue.json": queue, "security_registry_projected.json": projected,
+         **extras},
         as_of=target, run_id=run_id, generated_at=generated_at,
         binds={"candidate_manifest_hash": manifest["manifest_hash"],
                "battery_rows_hash": battery["rows_hash"]},
@@ -727,6 +743,12 @@ def run_finalize() -> int:
     # New key rather than new fields in battery_coverage: that dict is compared for
     # exact equality against health files already published before 2026-09-21.
     health["battery_collection"] = battery_collection_summary(battery)
+    # Same rule: new top-level keys only. The ledger append records its outcome
+    # (never raises), so a ledger fault is visible in health, not a silent pass.
+    health.update(research_trust.health_updates(extras))
+    health["research_trust_ledger"] = research_trust.append_trust_line(
+        advisory_root, extras[research_trust.TRUST_FILE], trust_context["members"],
+    )
     previously = published_bundle_date(public_v2)
     protected = {target} | ({previously} if previously else set())
     pruned = prune_observation_area(output_root, keep, protect=protected)
@@ -736,6 +758,8 @@ def run_finalize() -> int:
         "step": "funnel_finalize", "target_trade_date": target, "run_id": run_id,
         "status": health["status"], "counts": health["counts"],
         "battery_coverage": health["battery_coverage"],
+        "disagreement_counts": health["disagreement_summary"]["counts"],
+        "research_trust_ledger": health["research_trust_ledger"]["status"],
     }, ensure_ascii=False))
     print(DISCLAIMER)
     return 0

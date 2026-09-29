@@ -470,6 +470,14 @@ def _validate_funnel_health(
     return health_generated_at
 
 
+def _required_stage_files(stage: str, names: set[str]) -> set[str]:
+    """Finalize may also hash the advisory queue/trust files; nothing else is optional."""
+    # governance-mutation: U4_PREDECISION_FINALIZE_OPTIONAL_ONLY
+    if stage == "finalize":
+        return names - set(dag.STAGE3_OPTIONAL_FILES)
+    return names
+
+
 def _validate_stage_receipts(
     bundle: Mapping[str, Any], *, bundle_path: Path | None = None,
     evidence: Any = None, bundle_ref: str | None = None,
@@ -535,7 +543,7 @@ def _validate_stage_receipts(
             or receipt.get("schema_version") != funnel.SCHEMA_VERSION
             or receipt.get("rule_version") != funnel.RULE_VERSION
             or receipt.get("stage") != stage
-            or set(payloads) != expected_files
+            or _required_stage_files(stage, set(payloads)) != expected_files
             or receipt.get("binds") != expected_binds
         ):
             raise PreDecisionError(f"stage receipt contract is invalid: {stage}")
