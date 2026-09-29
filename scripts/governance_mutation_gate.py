@@ -12407,6 +12407,95 @@ MUTATIONS = MUTATIONS + (
     ),
 )
 
+# Research trust line consumer, review fixes (PR #388): reliance is derived
+# from level + family, NOT_COMPUTABLE carries no counts, rolling pools distinct
+# rows, the E1 layer must be this run's, and the line never enters the status.
+MUTATIONS = MUTATIONS + (
+    MutationCase(
+        mutation_id="RESEARCH_TRUST_VIEW_RELIANCE_FROM_LEVEL",
+        component="Research trust line consumer",
+        source_path="experiments/research_funnel/research_trust_view.py",
+        test_script="tests/test_research_trust_view.py",
+        before=(
+            "    # governance-mutation: RESEARCH_TRUST_VIEW_RELIANCE_FROM_LEVEL\n"
+            "    if reliance != _expected_reliance(metric_id, level):"
+        ),
+        after=(
+            "    # governance-mutation: RESEARCH_TRUST_VIEW_RELIANCE_FROM_LEVEL\n"
+            "    if False:"
+        ),
+        expected_failure_marker="test_reliance_is_derived_from_level_and_family",
+        rationale="A withheld, not-computable or missed rate must never carry a trusted reliance label.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_TRUST_VIEW_NOT_COMPUTABLE_NO_COUNTS",
+        component="Research trust line consumer",
+        source_path="experiments/research_funnel/research_trust_view.py",
+        test_script="tests/test_research_trust_view.py",
+        before=(
+            "    # governance-mutation: RESEARCH_TRUST_VIEW_NOT_COMPUTABLE_NO_COUNTS\n"
+            "    if level == \"NOT_COMPUTABLE\" and (numerator is not None or denominator is not None):"
+        ),
+        after=(
+            "    # governance-mutation: RESEARCH_TRUST_VIEW_NOT_COMPUTABLE_NO_COUNTS\n"
+            "    if False:"
+        ),
+        expected_failure_marker="test_not_computable_metric_carries_no_counts",
+        rationale="A metric the producer declared uncomputable must not be shown with counts such as 0 / 0.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_TRUST_VIEW_ROLLING_DISTINCT_ROWS",
+        component="Research trust line consumer",
+        source_path="experiments/research_funnel/research_trust_view.py",
+        test_script="tests/test_research_trust_view.py",
+        before=(
+            "        # governance-mutation: RESEARCH_TRUST_VIEW_ROLLING_DISTINCT_ROWS\n"
+            "        if (denominator != distinct or (numerator is None) != (denominator is None)"
+        ),
+        after=(
+            "        # governance-mutation: RESEARCH_TRUST_VIEW_ROLLING_DISTINCT_ROWS\n"
+            "        if False and (denominator != distinct or (numerator is None) != (denominator is None)"
+        ),
+        expected_failure_marker="test_rolling_pools_distinct_rows_not_row_nights",
+        rationale="Sticky rows recurring nightly must not manufacture a rolling sample from row-nights.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_TRUST_VIEW_E1_SAME_RUN",
+        component="Research trust line consumer",
+        source_path="experiments/research_funnel/research_trust_view.py",
+        test_script="tests/test_research_trust_view.py",
+        before=(
+            "        # governance-mutation: RESEARCH_TRUST_VIEW_E1_SAME_RUN\n"
+            "        if e1_basis in E1_SAME_RUN_BASES:\n"
+            "            if binding.get(\"e1_layer_as_of\") != as_of:"
+        ),
+        after=(
+            "        # governance-mutation: RESEARCH_TRUST_VIEW_E1_SAME_RUN\n"
+            "        if e1_basis in E1_SAME_RUN_BASES:\n"
+            "            if False:"
+        ),
+        expected_failure_marker="test_e1_layer_must_be_from_this_run",
+        rationale="A trust line computed against an E1 layer from another night is refused.",
+    ),
+    MutationCase(
+        mutation_id="NIGHTLY_ACCEPTANCE_TRUST_LINE_DISPLAY_ONLY",
+        component="Nightly production acceptance",
+        source_path="experiments/execution_tracker/nightly_dual_acceptance.py",
+        test_script="tests/test_nightly_dual_acceptance.py",
+        before=(
+            "    return {\"status\": \"OBSERVED_WITH_GAPS\" if macro[\"quality\"] == \"DATA_BLOCKED\"\n"
+            "            or funnel[\"quality\"] != \"REVIEW_REQUIRED\"\n"
+        ),
+        after=(
+            "    return {\"status\": \"OBSERVED_WITH_GAPS\" if macro[\"quality\"] == \"DATA_BLOCKED\"\n"
+            "            or funnel[\"quality\"] != \"REVIEW_REQUIRED\"\n"
+            "            or trust_line[\"status\"] != \"PRESENT\"\n"
+        ),
+        expected_failure_marker="test_trust_line_never_changes_research_status_or_exit_code",
+        rationale="The trust line is display-only: it never changes the research status or the exit code.",
+    ),
+)
+
 @dataclass(frozen=True)
 class CommandResult:
     returncode: int

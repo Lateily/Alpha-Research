@@ -168,20 +168,23 @@ class EvidenceTests(unittest.TestCase):
         self.assertNotIn("tail", view["attempt"]["steps"][0])
         self.assertEqual(before, {str(p): p.read_bytes() for p in self.root.rglob("*") if p.is_file()})
 
-    def _publish_trust_line(self, run_id=None, reseal=True):
+    def _publish_trust_line(self, run_id=None, reseal=True, health_as_of=None):
         health_path = self.root / "public/data/v2/funnel_health.json"
         health = json.loads(health_path.read_text())
+        if health_as_of is not None:
+            health["as_of"] = health_as_of
         health["research_trust"] = {
             "schema": "ar.research_trust_line", "schema_version": "1.0",
             "as_of": "20260828", "run_id": run_id or self.pointer["run_id"],
             "generated_at": "2026-08-28T12:00:00Z", "e1_basis": "SAME_AS_OF",
-            "source_binding": {"battery_rows_hash": "sha256:" + "2" * 64},
+            "source_binding": {"battery_rows_hash": "sha256:" + "2" * 64,
+                               "e1_layer_as_of": "20260828"},
             "metrics": [
                 {"metric_id": "news_channel_available_share", "kind": "COVERAGE",
                  "numerator": 0, "denominator": 3, "unparsed_count": 0, "rate": None,
                  "min_n": 20, "threshold": 0.80, "direction": "HIGHER_IS_BETTER",
                  "level": "RATE_WITHHELD_N_BELOW_MIN", "not_computable_reason": None,
-                 "reliance": "COVERAGE_GAP_DISCLOSE", "note": ""},
+                 "reliance": "UNRATED", "note": ""},
                 {"metric_id": "red_flag_human_confirmed_share", "kind": "HUMAN_VS_MACHINE",
                  "numerator": None, "denominator": None, "unparsed_count": 0, "rate": None,
                  "min_n": 20, "threshold": 0.80, "direction": "HIGHER_IS_BETTER",
@@ -228,6 +231,14 @@ class EvidenceTests(unittest.TestCase):
         trust = ev.view(self.capture())["research_quality"]["trust_line"]
         self.assertEqual("NOT_EVALUATED", trust["status"])
         self.assertEqual("HEALTH_NOT_BOUND_TO_PUBLISHED_RUN", trust["reason"])
+        self.assertIsNone(trust["metrics"])
+
+    def test_trust_line_refuses_health_for_another_date(self):
+        source_with_quality(self.root)
+        self._publish_trust_line(health_as_of="20260827")
+        trust = ev.view(self.capture())["research_quality"]["trust_line"]
+        self.assertEqual(("NOT_EVALUATED", "HEALTH_NOT_BOUND_TO_PUBLISHED_RUN"),
+                         (trust["status"], trust["reason"]))
         self.assertIsNone(trust["metrics"])
 
     def test_trust_line_refuses_line_from_another_run(self):

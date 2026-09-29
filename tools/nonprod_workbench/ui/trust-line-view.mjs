@@ -29,6 +29,8 @@ const count = value => Number.isInteger(value) ? String(value) : '—';
 
 export function countText(metric) {
   if (!metric) return '—';
+  // A not-computable metric has no sample: never show 0 / 0 beside 不可算.
+  if (metric.level === 'NOT_COMPUTABLE') return '— / —';
   return `${count(metric.numerator)} / ${count(metric.denominator)}`;
 }
 

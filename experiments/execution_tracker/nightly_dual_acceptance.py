@@ -346,6 +346,7 @@ def summarize_research(root: Path, run_id: str, target: str) -> dict:
     # the exit code, and an absent/refused line stays explicit (never zero).
     # governance-mutation: NIGHTLY_ACCEPTANCE_TRUST_LINE_BINDING
     trust_line = research_trust_view.project(health, run_id, target)
+    # governance-mutation: NIGHTLY_ACCEPTANCE_TRUST_LINE_DISPLAY_ONLY
     return {"status": "OBSERVED_WITH_GAPS" if macro["quality"] == "DATA_BLOCKED"
             or funnel["quality"] != "REVIEW_REQUIRED"
             else "OBSERVED_REVIEW_REQUIRED", "run_id": run_id, "target_trade_date": target,

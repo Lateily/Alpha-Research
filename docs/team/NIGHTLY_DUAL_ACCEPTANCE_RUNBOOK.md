@@ -52,13 +52,15 @@ exit code or `REQUIRED_EXPORTED`.
 |---|---|
 | `PRESENT` | The line is bound to this run and date and passed the consumer checks. `metrics[]` lists, per metric: `metric_id`, `tier` (T1–T7), `kind`, `numerator`, `denominator`, `unparsed_count`, `rate` (or `null`), `min_n`, `threshold`, `direction`, `level`, `not_computable_reason` and `reliance`. |
 | `NOT_PRODUCED` | `funnel_health` has no `research_trust` key, for example before the producer is wired in. `metrics` is `null`. This is not a zero. |
-| `REFUSED` | The line is present but not shown. `reason` names the check that failed, e.g. `RUN_BINDING_MISMATCH`, `FORBIDDEN_KEY_PRESENT:…`, `RATE_SHOWN_BELOW_MIN_SAMPLE:…` or `LEVEL_DIFFERS_FROM_COUNTS:…`. |
+| `REFUSED` | The line is present but not shown. `reason` names the check that failed, e.g. `RUN_BINDING_MISMATCH`, `E1_BINDING_MISMATCH`, `FORBIDDEN_KEY_PRESENT:…`, `RATE_SHOWN_BELOW_MIN_SAMPLE:…`, `RELIANCE_DIFFERS_FROM_LEVEL:…`, `NOT_COMPUTABLE_WITH_COUNTS:…`, `ROLLING_NOT_DISTINCT_ROWS:…` or `LEVEL_DIFFERS_FROM_COUNTS:…`. The workbench renders it red; `NOT_PRODUCED` renders amber. |
 
 Consumer checks, all fail-closed for the whole line (`experiments/research_funnel/research_trust_view.py`):
 
 - `run_id` and `as_of` equal the accepted run and target, and `e1_basis` is in
-  {`SAME_RUN_MANIFEST`, `SAME_AS_OF`, `UNAVAILABLE`}. When `e1_basis` is `UNAVAILABLE`,
-  T1 and T2 must be `NOT_COMPUTABLE`.
+  {`SAME_RUN_MANIFEST`, `SAME_AS_OF`, `UNAVAILABLE`}. A same-run basis must carry
+  `source_binding.e1_layer_as_of` equal to `as_of` (an E1 layer from another night
+  is refused with `E1_BINDING_MISMATCH`). When `e1_basis` is `UNAVAILABLE`, every
+  `e1_*` binding is `null` and T1 and T2 must be `NOT_COMPUTABLE`.
 - `authority` is exactly `{claim_allowed:false, performance_claim:null, u4_selection_authority:false}`,
   `claim_status` is `DESCRIPTIVE_ONLY` and `retention_status` is `LOCAL_ONLY_UNBACKED`.
 - No key anywhere in the line matches return/hit/alpha/pnl/score/composite.
@@ -66,9 +68,16 @@ Consumer checks, all fail-closed for the whole line (`experiments/research_funne
   vocabularies are closed.
 - When the denominator is below 20, the rate stays `null` and the level must be
   `RATE_WITHHELD_N_BELOW_MIN`. A rated level must agree with its own counts.
-  `NOT_COMPUTABLE` must carry a closed-vocabulary reason.
-- A rolling level needs `distinct_rows >= 20`. Pooled row-nights do not count
-  toward the minimum.
+  `NOT_COMPUTABLE` must carry a closed-vocabulary reason and `null` counts.
+- `kind` is fixed per metric, and `reliance` is derived from the level and the
+  metric family, never self-reported: red-flag/human metrics use
+  `MEETS_BAR → TRUSTED_FOR_TRIAGE`, `MISSES_BAR → ADVISORY_SHOW_STALE_SHARE`;
+  coverage metrics (T6/T7) use `MEETS_BAR → COVERAGE_HONEST`,
+  `MISSES_BAR → COVERAGE_GAP_DISCLOSE`; a withheld or not-computable rate is
+  always `UNRATED`.
+- A rolling level needs `distinct_rows >= 20`, and the pooled denominator must
+  equal `distinct_rows` (pooled numerator ≤ denominator). Row-nights never form
+  the sample or the ratio.
 
 The workbench (`scripts/llm/workbench_evidence.research_quality.trust_line`) uses the
 same projection. It shows the line only when `funnel_health.json` is hash-bound

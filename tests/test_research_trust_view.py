@@ -46,7 +46,8 @@ def line(**overrides):
         "e1_basis": "SAME_RUN_MANIFEST",
         "source_binding": {"candidate_manifest_hash": "sha256:" + "1" * 64,
                            "battery_rows_hash": "sha256:" + "2" * 64,
-                           "e1_layer_rows_hash": "sha256:" + "3" * 64},
+                           "e1_layer_rows_hash": "sha256:" + "3" * 64,
+                           "e1_layer_as_of": AS_OF},
         "metrics": [
             metric("red_flag_stale_evidence_share", "MACHINE_VS_MACHINE", 43, 46,
                    "MISSES_BAR", "ADVISORY_SHOW_STALE_SHARE"),
@@ -67,7 +68,7 @@ def line(**overrides):
             "red_flag_stale_evidence_share": {"distinct_rows": 46, "pooled_numerator": 43,
                                               "pooled_denominator": 46, "level": "MISSES_BAR"},
             "news_channel_available_share": {"distinct_rows": 5, "pooled_numerator": 0,
-                                             "pooled_denominator": 905,
+                                             "pooled_denominator": 5,
                                              "level": "RATE_WITHHELD_N_BELOW_MIN"},
         }},
         "claim_status": "DESCRIPTIVE_ONLY", "retention_status": "LOCAL_ONLY_UNBACKED",
@@ -222,9 +223,142 @@ class ResearchTrustViewTest(unittest.TestCase):
             self.assertEqual("REFUSED", view.project(health(bad), RUN_ID, AS_OF)["status"])
 
     def test_unavailable_e1_cannot_carry_e1_counts(self):
-        result = view.project(health(line(e1_basis="UNAVAILABLE")), RUN_ID, AS_OF)
+        bad = line(e1_basis="UNAVAILABLE")
+        bad["source_binding"].update(e1_layer_rows_hash=None, e1_layer_as_of=None)
+        result = view.project(health(bad), RUN_ID, AS_OF)
         self.assertEqual("REFUSED", result["status"])
         self.assertIn("E1_UNAVAILABLE_BUT_COUNTED", result["reason"])
+
+    def unavailable_line(self):
+        value = line(e1_basis="UNAVAILABLE")
+        value["source_binding"].update(e1_layer_rows_hash=None, e1_layer_as_of=None)
+        for index, metric_id in ((0, "red_flag_stale_evidence_share"),
+                                 (1, "red_flag_cross_model_confirmed_share")):
+            value["metrics"][index] = metric(metric_id, "MACHINE_VS_MACHINE", None, None,
+                                             "NOT_COMPUTABLE", "UNRATED",
+                                             reason="E1_UNAVAILABLE")
+        return value
+
+    def test_e1_layer_must_be_from_this_run(self):
+        # m2: a same-run basis must name this as_of; a stale E1 layer is refused.
+        for as_of in ("20260901", None):
+            bad = line(e1_basis="SAME_AS_OF")
+            bad["source_binding"]["e1_layer_as_of"] = as_of
+            result = view.project(health(bad), RUN_ID, AS_OF)
+            self.assertEqual(("REFUSED", "E1_BINDING_MISMATCH"),
+                             (result["status"], result["reason"]))
+        missing = line()
+        missing["source_binding"].pop("e1_layer_as_of")
+        self.assertEqual("E1_BINDING_MISMATCH", view.project(health(missing), RUN_ID, AS_OF)["reason"])
+        # UNAVAILABLE binds no E1 layer at all.
+        self.assertEqual("PRESENT", view.project(health(self.unavailable_line()), RUN_ID, AS_OF)["status"])
+        bad = self.unavailable_line()
+        bad["source_binding"]["e1_layer_rows_hash"] = "sha256:" + "3" * 64
+        result = view.project(health(bad), RUN_ID, AS_OF)
+        self.assertEqual(("REFUSED", "E1_BINDING_MISMATCH"), (result["status"], result["reason"]))
+
+    def test_reliance_is_derived_from_level_and_family(self):
+        # M1: a withheld / not-computable / missed rate can never read as trusted,
+        # and a coverage label cannot sit on a red-flag metric (or vice versa).
+        ok = line()
+        ok["metrics"][0] = metric("red_flag_stale_evidence_share", "MACHINE_VS_MACHINE", 2, 46,
+                                  "MEETS_BAR", "TRUSTED_FOR_TRIAGE")
+        result = view.project(health(ok), RUN_ID, AS_OF)
+        self.assertEqual("PRESENT", result["status"])
+        self.assertEqual("TRUSTED_FOR_TRIAGE",
+                         by_id(result)["red_flag_stale_evidence_share"]["reliance"])
+        cases = [
+            (4, metric("complete_label_defect_share", "HUMAN_VS_MACHINE", 5, 10,
+                       "RATE_WITHHELD_N_BELOW_MIN", "TRUSTED_FOR_TRIAGE")),
+            (2, metric("red_flag_human_confirmed_share", "HUMAN_VS_MACHINE", None, None,
+                       "NOT_COMPUTABLE", "TRUSTED_FOR_TRIAGE", reason="LEDGER_FORCES_AGREEMENT")),
+            (0, metric("red_flag_stale_evidence_share", "MACHINE_VS_MACHINE", 43, 46,
+                       "MISSES_BAR", "TRUSTED_FOR_TRIAGE")),
+            (0, metric("red_flag_stale_evidence_share", "MACHINE_VS_MACHINE", 2, 46,
+                       "MEETS_BAR", "COVERAGE_HONEST")),
+            (5, metric("news_channel_available_share", "COVERAGE", 180, 181,
+                       "MEETS_BAR", "TRUSTED_FOR_TRIAGE")),
+            (5, metric("news_channel_available_share", "COVERAGE", 0, 181,
+                       "MISSES_BAR", "UNRATED")),
+            (6, metric("macro_event_consensus_coverage", "COVERAGE", 1, 5,
+                       "RATE_WITHHELD_N_BELOW_MIN", "COVERAGE_GAP_DISCLOSE")),
+        ]
+        for index, row in cases:
+            bad = line()
+            bad["metrics"][index] = row
+            result = view.project(health(bad), RUN_ID, AS_OF)
+            self.assertEqual("REFUSED", result["status"], row)
+            self.assertIn("RELIANCE_DIFFERS_FROM_LEVEL", result["reason"])
+            self.assertIsNone(result["metrics"])
+        drift = line()
+        drift["metrics"][5]["kind"] = "MACHINE_VS_MACHINE"
+        self.assertIn("KIND_DRIFT", view.project(health(drift), RUN_ID, AS_OF)["reason"])
+
+    def test_not_computable_metric_carries_no_counts(self):
+        # TI-5 / m3: 0/0 or 43/46 beside 不可算 reads like a measured value.
+        for counts in ((0, 0), (43, 46), (None, 46)):
+            bad = line()
+            bad["metrics"][2]["numerator"], bad["metrics"][2]["denominator"] = counts
+            result = view.project(health(bad), RUN_ID, AS_OF)
+            self.assertEqual("REFUSED", result["status"], counts)
+            self.assertIn("NOT_COMPUTABLE_WITH_COUNTS", result["reason"])
+
+    def test_rolling_pools_distinct_rows_not_row_nights(self):
+        # m1: sticky rows recurring nightly must not manufacture a sample.
+        for pooled in ({"distinct_rows": 20, "pooled_numerator": 10, "pooled_denominator": 400,
+                        "level": "MEETS_BAR"},
+                       {"distinct_rows": 46, "pooled_numerator": 47, "pooled_denominator": 46,
+                        "level": "MISSES_BAR"},
+                       {"distinct_rows": 46, "pooled_numerator": None, "pooled_denominator": 46,
+                        "level": "NOT_COMPUTABLE"}):
+            bad = line()
+            bad["rolling"]["per_metric"]["red_flag_stale_evidence_share"] = pooled
+            result = view.project(health(bad), RUN_ID, AS_OF)
+            self.assertEqual("REFUSED", result["status"], pooled)
+            self.assertIn("ROLLING_NOT_DISTINCT_ROWS", result["reason"])
+        ok = line()
+        ok["rolling"]["per_metric"]["macro_event_consensus_coverage"] = {
+            "distinct_rows": 0, "pooled_numerator": 0, "pooled_denominator": 0,
+            "level": "NOT_COMPUTABLE"}
+        self.assertEqual("PRESENT", view.project(health(ok), RUN_ID, AS_OF)["status"])
+
+    def test_each_rate_check_refuses_on_its_own(self):
+        # TI-3: one case per consumer check, asserted by reason.
+        def refusal(value):
+            result = view.project(health(value), RUN_ID, AS_OF)
+            return result["status"], (result["reason"] or "").split(":", 1)[0]
+
+        rated_null = line()
+        rated_null["metrics"][0]["rate"] = None
+        self.assertEqual(("REFUSED", "RATED_WITHOUT_RATE"), refusal(rated_null))
+        withheld_big = line()
+        withheld_big["metrics"][0].update(level="RATE_WITHHELD_N_BELOW_MIN", rate=None,
+                                          reliance="UNRATED")
+        self.assertEqual(("REFUSED", "RATE_WITHHELD_AT_OR_ABOVE_MIN_SAMPLE"),
+                         refusal(withheld_big))
+        for value in (1.5, -0.1, float("nan"), float("inf")):
+            bad = line()
+            bad["metrics"][0]["rate"] = value
+            self.assertEqual(("REFUSED", "RATE_INVALID"), refusal(bad), value)
+        for value in (1, ["x"], {"a": "b"}):
+            bad = line()
+            bad["source_binding"]["battery_rows_hash"] = value
+            result = view.project(health(bad), RUN_ID, AS_OF)
+            self.assertEqual(("REFUSED", "SOURCE_BINDING_INVALID"),
+                             (result["status"], result["reason"]), value)
+
+    def test_deeply_nested_line_is_refused_not_raised(self):
+        # m5: project() never raises, even on a pathological nesting depth.
+        deep = {}
+        cursor = deep
+        for _ in range(3000):
+            cursor["x"] = {}
+            cursor = cursor["x"]
+        bad = line()
+        bad["source_binding"] = deep
+        result = view.project(health(bad), RUN_ID, AS_OF)
+        self.assertEqual("REFUSED", result["status"])
+        self.assertTrue(result["reason"].startswith("LINE_SHAPE_INVALID"))
 
     def test_missing_metrics_are_listed_not_zeroed(self):
         partial = line()
@@ -262,6 +396,8 @@ class TrustLineUiHelperTest(unittest.TestCase):
         self.assertEqual("93.5%", self.call(
             "v.rateText({rate:0.9348,level:'MISSES_BAR',min_n:20})"))
         self.assertEqual("— / —", self.call("v.countText({numerator:null,denominator:null})"))
+        self.assertEqual("— / —", self.call(
+            "v.countText({numerator:0,denominator:0,level:'NOT_COMPUTABLE'})"))
         self.assertEqual("0 / 181", self.call("v.countText({numerator:0,denominator:181})"))
 
     def test_levels_are_text_chips_never_green(self):
@@ -294,6 +430,24 @@ class TrustLineUiHelperTest(unittest.TestCase):
         self.assertIn("attempt.data_quality", source)
         self.assertIn("<TrustLine trust={quality.trust_line} />", source)
         self.assertIn("只读计数，不等于自动轮验收或研究批准", source)
+        # TI-2: the table cells go through the withheld-aware helpers, and the
+        # metrics table renders only for a PRESENT line (REFUSED has no metrics).
+        for wiring in ("<td>{rateText(m)}</td>", "<td>{countText(m)}</td>",
+                       "<Chip chip={levelChip(m.level)} />",
+                       "<td>{relianceText(m.reliance)}</td>",
+                       "trust?.status === 'PRESENT' ?",
+                       "level: r.level })"):
+            self.assertIn(wiring, source)
+        self.assertNotIn("toFixed", source.split("function TrustLine", 1)[1].split("function Table", 1)[0])
+
+    def test_refused_and_not_produced_lines_are_not_neutral(self):
+        module = (ROOT / "tools/nonprod_workbench/ui/status-tone.mjs").as_uri()
+        script = (f"import {{ statusTone }} from {json.dumps(module)};"
+                  "console.log(JSON.stringify(['REFUSED','NOT_PRODUCED','NOT_EVALUATED',"
+                  "'PRESENT / DESCRIPTIVE_ONLY'].map(statusTone)));")
+        result = subprocess.run(["node", "--input-type=module", "-e", script],
+                                capture_output=True, text=True, check=True)
+        self.assertEqual(["red", "amber", "amber", "neutral"], json.loads(result.stdout))
 
 
 if __name__ == "__main__":

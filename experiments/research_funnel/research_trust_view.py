@@ -8,6 +8,9 @@ contract and projects the fields a human needs to read the line.
 Doctrine carried here:
 - an absent line is ``NOT_PRODUCED``; it is never rendered as zero;
 - a withheld rate (denominator below ``min_n``) stays ``None``;
+- reliance is derived from level and metric family: a withheld or
+  not-computable rate is ``UNRATED`` and never reads as trusted;
+- a not-computable metric carries no counts; rolling pools distinct rows;
 - a line bound to another run, carrying an authority/claim flag, or naming a
   performance-shaped key is refused as a whole, not partially shown;
 - the projection has no approval meaning: counts are descriptive only.
@@ -36,6 +39,17 @@ METRICS = {
     "news_channel_available_share": ("T6", "HIGHER_IS_BETTER", 0.80),
     "macro_event_consensus_coverage": ("T7", "HIGHER_IS_BETTER", 0.80),
 }
+# metric_id -> kind; the producer's frozen METRIC_SPECS (the kind is part of
+# the metric's meaning, not a free field).
+KIND_BY_METRIC = {
+    "red_flag_stale_evidence_share": "MACHINE_VS_MACHINE",
+    "red_flag_cross_model_confirmed_share": "MACHINE_VS_MACHINE",
+    "red_flag_human_confirmed_share": "HUMAN_VS_MACHINE",
+    "u4_ready_false_ready_share": "HUMAN_VS_MACHINE",
+    "complete_label_defect_share": "HUMAN_VS_MACHINE",
+    "news_channel_available_share": "COVERAGE",
+    "macro_event_consensus_coverage": "COVERAGE",
+}
 E1_DEPENDENT = ("red_flag_stale_evidence_share", "red_flag_cross_model_confirmed_share")
 KINDS = frozenset({"MACHINE_VS_MACHINE", "HUMAN_VS_MACHINE", "COVERAGE"})
 LEVELS = frozenset({"MEETS_BAR", "MISSES_BAR", "RATE_WITHHELD_N_BELOW_MIN", "NOT_COMPUTABLE"})
@@ -47,7 +61,18 @@ RELIANCE = frozenset({
     "TRUSTED_FOR_TRIAGE", "ADVISORY_SHOW_STALE_SHARE", "COVERAGE_HONEST",
     "COVERAGE_GAP_DISCLOSE", "UNRATED",
 })
+# Frozen rule table (design_full.json doctrine): reliance is derived from the
+# level and the metric family, never self-reported.  A withheld or
+# not-computable rate is UNRATED; only MEETS_BAR may carry a "trusted" label.
+RELIANCE_BY_FAMILY_LEVEL = {
+    ("COVERAGE", "MEETS_BAR"): "COVERAGE_HONEST",
+    ("COVERAGE", "MISSES_BAR"): "COVERAGE_GAP_DISCLOSE",
+    ("PAIRWISE", "MEETS_BAR"): "TRUSTED_FOR_TRIAGE",
+    ("PAIRWISE", "MISSES_BAR"): "ADVISORY_SHOW_STALE_SHARE",
+}
 E1_BASES = frozenset({"SAME_RUN_MANIFEST", "SAME_AS_OF", "UNAVAILABLE"})
+E1_SAME_RUN_BASES = frozenset({"SAME_RUN_MANIFEST", "SAME_AS_OF"})
+MAX_LINE_DEPTH = 32
 FORBIDDEN_KEY = re.compile(r"(?i)(return|hit|alpha|pnl|score|composite)")
 RATE_TOLERANCE = 1e-3
 RUN_ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9_-]{0,100}")
@@ -79,14 +104,25 @@ def _rate(value, field):
 
 
 def _forbidden_keys(value, path="research_trust"):
-    if isinstance(value, dict):
-        for key, item in value.items():
-            if not isinstance(key, str) or FORBIDDEN_KEY.search(key):
-                raise TrustLineRefused(f"FORBIDDEN_KEY_PRESENT:{path}.{key}")
-            _forbidden_keys(item, f"{path}.{key}")
-    elif isinstance(value, list):
-        for index, item in enumerate(value):
-            _forbidden_keys(item, f"{path}[{index}]")
+    """Walk the line iteratively (bounded depth) and refuse performance keys."""
+    stack = [(value, path, 0)]
+    while stack:
+        item, where, depth = stack.pop()
+        if isinstance(item, (dict, list)) and depth >= MAX_LINE_DEPTH:
+            raise TrustLineRefused("LINE_SHAPE_INVALID:TOO_DEEP")
+        if isinstance(item, dict):
+            for key, child in item.items():
+                if not isinstance(key, str) or FORBIDDEN_KEY.search(key):
+                    raise TrustLineRefused(f"FORBIDDEN_KEY_PRESENT:{where}.{key}")
+                stack.append((child, f"{where}.{key}", depth + 1))
+        elif isinstance(item, list):
+            for index, child in enumerate(item):
+                stack.append((child, f"{where}[{index}]", depth + 1))
+
+
+def _expected_reliance(metric_id, level):
+    family = "COVERAGE" if KIND_BY_METRIC[metric_id] == "COVERAGE" else "PAIRWISE"
+    return RELIANCE_BY_FAMILY_LEVEL.get((family, level), "UNRATED")
 
 
 def _expected_level(numerator, denominator, direction, threshold):
@@ -135,6 +171,11 @@ def _metric(row, e1_basis):
     reason, reliance = row.get("not_computable_reason"), row.get("reliance")
     if kind not in KINDS or level not in LEVELS or reliance not in RELIANCE:
         raise TrustLineRefused(f"VOCABULARY_INVALID:{metric_id}")
+    if kind != KIND_BY_METRIC[metric_id]:
+        raise TrustLineRefused(f"KIND_DRIFT:{metric_id}")
+    # governance-mutation: RESEARCH_TRUST_VIEW_RELIANCE_FROM_LEVEL
+    if reliance != _expected_reliance(metric_id, level):
+        raise TrustLineRefused(f"RELIANCE_DIFFERS_FROM_LEVEL:{metric_id}")
     if (level == "NOT_COMPUTABLE") != (reason is not None) or (
             reason is not None and reason not in NOT_COMPUTABLE_REASONS):
         raise TrustLineRefused(f"NOT_COMPUTABLE_REASON_INVALID:{metric_id}")
@@ -146,6 +187,9 @@ def _metric(row, e1_basis):
     if unparsed is None:
         raise TrustLineRefused(f"COUNT_INVALID:{metric_id}.unparsed_count")
     rate = _rate(row.get("rate"), metric_id)
+    # governance-mutation: RESEARCH_TRUST_VIEW_NOT_COMPUTABLE_NO_COUNTS
+    if level == "NOT_COMPUTABLE" and (numerator is not None or denominator is not None):
+        raise TrustLineRefused(f"NOT_COMPUTABLE_WITH_COUNTS:{metric_id}")
     if level not in RATED_LEVELS and rate is not None:
         raise TrustLineRefused(f"RATE_SHOWN_WITHOUT_RATING:{metric_id}")
     if level in RATED_LEVELS and rate is None:
@@ -176,7 +220,12 @@ def _rolling(value, metric_ids):
         numerator = _count(row.get("pooled_numerator"), metric_id + ".pooled_numerator")
         denominator = _count(row.get("pooled_denominator"), metric_id + ".pooled_denominator")
         level = row["level"]
-        # Pooled row-nights never stand in for distinct rows.
+        # Pooled row-nights never stand in for distinct rows: the pooled
+        # denominator is the distinct-row count itself (contract T).
+        # governance-mutation: RESEARCH_TRUST_VIEW_ROLLING_DISTINCT_ROWS
+        if (denominator != distinct or (numerator is None) != (denominator is None)
+                or (numerator is not None and numerator > denominator)):
+            raise TrustLineRefused(f"ROLLING_NOT_DISTINCT_ROWS:{metric_id}")
         _check_rated(metric_id, level, numerator, denominator, None, distinct,
                      "rolling." + metric_id)
         rows[metric_id] = {"distinct_rows": distinct, "pooled_numerator": numerator,
@@ -224,6 +273,19 @@ def project(health, run_id, as_of):
             raise TrustLineRefused("AUTHORITY_OR_CLAIM_INVALID")
         if line.get("retention_status") != "LOCAL_ONLY_UNBACKED":
             raise TrustLineRefused("RETENTION_STATUS_INVALID")
+        binding = line.get("source_binding")
+        if not isinstance(binding, dict) or any(
+                not isinstance(key, str) or not (item is None or isinstance(item, str))
+                for key, item in binding.items()):
+            raise TrustLineRefused("SOURCE_BINDING_INVALID")
+        # A line computed against an E1 layer from another night is refused:
+        # a same-run basis must name this as_of; UNAVAILABLE binds no E1 layer.
+        # governance-mutation: RESEARCH_TRUST_VIEW_E1_SAME_RUN
+        if e1_basis in E1_SAME_RUN_BASES:
+            if binding.get("e1_layer_as_of") != as_of:
+                raise TrustLineRefused("E1_BINDING_MISMATCH")
+        elif any(key.startswith("e1_") and item is not None for key, item in binding.items()):
+            raise TrustLineRefused("E1_BINDING_MISMATCH")
         rows = line.get("metrics")
         if not isinstance(rows, list) or not rows:
             raise TrustLineRefused("METRICS_SHAPE_INVALID")
@@ -233,14 +295,9 @@ def project(health, run_id, as_of):
             raise TrustLineRefused("METRIC_ID_DUPLICATE")
         metrics.sort(key=lambda row: row["tier"])
         rolling = _rolling(line.get("rolling"), ids)
-        binding = line.get("source_binding")
-        if not isinstance(binding, dict) or any(
-                not isinstance(key, str) or not (item is None or isinstance(item, str))
-                for key, item in binding.items()):
-            raise TrustLineRefused("SOURCE_BINDING_INVALID")
     except TrustLineRefused as exc:
         return _base("REFUSED", str(exc))
-    except (TypeError, ValueError, KeyError, ZeroDivisionError):
+    except (TypeError, ValueError, KeyError, ZeroDivisionError, RecursionError):
         return _base("REFUSED", "LINE_SHAPE_INVALID")
     generated_at = line.get("generated_at")
     result = _base("PRESENT", None)
