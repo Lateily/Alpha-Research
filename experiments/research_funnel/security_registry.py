@@ -222,24 +222,32 @@ def _retry_fits(attempt: int) -> bool:
 # Whole-market paging (2026-09-25). income_vip period 20260630 returned exactly 9000
 # rows on every nightly from 09-08 while the other periods grew: a provider row cap,
 # recorded as status OK, so ~90 issuers were judged on Q1 data yet labelled income
-# COMPLETE. Whole-market endpoints are now paged with limit/offset until a short page.
-# A page that repeats an earlier page (offset ignored), has_more=true on an empty
-# page, a single response whose length equals a known provider cap, or the page
-# budget running out is TRUNCATED and never a complete batch.
+# COMPLETE.
 #
-# A page limit must never exceed the provider's real per-call cap, or a capped page
-# would look "short" and end the loop as if complete. Only endpoints that have been
-# observed returning more than 2000 rows in ONE call are paged here (whole-market
-# daily/daily_basic/adj_factor by trade_date, and forecast/express/income_vip by
-# period); every other endpoint stays single-shot and is still checked for has_more.
+# Two modes, so a path that is complete today never starts to depend on unverified
+# provider paging semantics:
+#
+# * PAGED: the E1 whole-market period endpoints (forecast/express/income_vip) are
+#   always read with limit/offset, and a batch is complete only after an EMPTY
+#   confirmation page. A short page does not end the loop: a provider that silently
+#   clamps a page below ``limit`` (express_vip has never been seen above 1149 rows in
+#   one call, so its real per-call cap is unverified) then shows up as more data at
+#   the next offset instead of a batch that merely looks complete.
+# * SINGLE_SHOT (every other endpoint, including whole-market daily/daily_basic/
+#   adj_factor at ~5.4k rows): one request, exactly as before. Only when that
+#   response says has_more=true or its length equals a known provider cap is the
+#   query re-read page by page (ESCALATED); a response with neither signal is used
+#   as-is, so feature-store and U0 liquidity never depend on ``offset`` on a normal
+#   night.
+#
+# A page that repeats an earlier page (offset ignored), has_more=true on the empty
+# page, or the page budget running out is TRUNCATED and never a complete batch.
 TUSHARE_PAGE_LIMITS = {
     "forecast_vip": 2000,
     "express_vip": 2000,
     "income_vip": 2000,
-    "daily": 2000,
-    "daily_basic": 2000,
-    "adj_factor": 2000,
 }
+TUSHARE_ESCALATION_PAGE_LIMIT = 2000
 # income_vip: observed cap (9000 rows exactly, 09-08..09-29). daily / daily_basic:
 # provider-documented single-call maximum.
 TUSHARE_KNOWN_ROW_CAPS = {"income_vip": 9000, "daily": 6000, "daily_basic": 6000}
@@ -266,10 +274,55 @@ def _tushare_call(token: str, api_name: str, params: dict[str, Any], fields: str
     if facts["capped"] is not False:
         raise TushareTruncatedError(
             f"Tushare {api_name} result truncated: {facts['truncation_reason']} "
-            f"after {facts['rows']} rows in {facts['pages']} page(s)",
+            f"after {facts['rows']} rows in {facts['pages']} request(s)",
             facts,
         )
     return rows
+
+
+def _single_shot_truncation(
+    page: list[dict[str, Any]], has_more: bool | None, known_cap: int | None
+) -> str | None:
+    # governance-mutation: SECURITY_REGISTRY_TUSHARE_SINGLE_SHOT_HAS_MORE
+    if has_more is True:
+        return "HAS_MORE"
+    # governance-mutation: SECURITY_REGISTRY_TUSHARE_KNOWN_CAP
+    if known_cap is not None and len(page) == known_cap:
+        return "ROW_CAP_REACHED"
+    return None
+
+
+def _page_through(
+    request: Any,
+    token: str,
+    api_name: str,
+    params: dict[str, Any],
+    fields: str,
+    page_limit: int,
+    pages_before: int,
+) -> tuple[list[dict[str, Any]], int, str | None]:
+    rows: list[dict[str, Any]] = []
+    seen_pages: set[str] = set()
+    pages = pages_before
+    offset = 0
+    while True:
+        page_params = dict(params)
+        # governance-mutation: SECURITY_REGISTRY_TUSHARE_PAGE_PARAMS
+        page_params.update({"limit": page_limit, "offset": offset})
+        page, has_more = request(token, api_name, page_params, fields)
+        pages += 1
+        # governance-mutation: SECURITY_REGISTRY_TUSHARE_EMPTY_CONFIRMATION_ENDS
+        if not page:
+            return rows, pages, ("EMPTY_PAGE_WITH_HAS_MORE" if has_more is True else None)
+        digest = _sha256(page)
+        # governance-mutation: SECURITY_REGISTRY_TUSHARE_REPEATED_PAGE
+        if digest in seen_pages:
+            return rows, pages, "PAGING_NOT_HONORED"
+        seen_pages.add(digest)
+        rows.extend(page)
+        if pages - pages_before >= TUSHARE_MAX_PAGES:
+            return rows, pages, "MAX_PAGES_REACHED"
+        offset += len(page)
 
 
 def _tushare_call_paged(
@@ -280,61 +333,45 @@ def _tushare_call_paged(
     *,
     request: Any = None,
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
-    """Fetch every page; return rows plus pagination facts (never raises on a cap).
+    """Every row of one logical query plus pagination facts (never raises on a cap).
 
     Transport/provider failures still raise RegistryError. A truncated batch is
     returned with ``capped=True`` and a ``truncation_reason`` so the caller can keep
     the real-but-incomplete rows while refusing to call the batch complete.
+    ``escalated_from`` names the single-shot signal that forced a paged re-read.
     """
     request = request or _tushare_request
+    known_cap = TUSHARE_KNOWN_ROW_CAPS.get(api_name)
     caller_paged = "limit" in params or "offset" in params
     page_limit = None if caller_paged else TUSHARE_PAGE_LIMITS.get(api_name)
-    known_cap = TUSHARE_KNOWN_ROW_CAPS.get(api_name)
-    rows: list[dict[str, Any]] = []
-    seen_pages: set[str] = set()
+    escalated_from: str | None = None
     pages = 0
-    reason: str | None = None
-    offset = 0
-    while True:
-        page_params = dict(params)
-        if page_limit is not None:
-            # governance-mutation: SECURITY_REGISTRY_TUSHARE_PAGE_PARAMS
-            page_params.update({"limit": page_limit, "offset": offset})
-        page, has_more = request(token, api_name, page_params, fields)
-        pages += 1
-        digest = _sha256(page)
-        # governance-mutation: SECURITY_REGISTRY_TUSHARE_REPEATED_PAGE
-        if page and digest in seen_pages:
-            reason = "PAGING_NOT_HONORED"
-            break
-        seen_pages.add(digest)
-        rows.extend(page)
-        # governance-mutation: SECURITY_REGISTRY_TUSHARE_KNOWN_CAP
-        at_cap = known_cap is not None and len(page) == known_cap
-        full = page_limit is not None and len(page) >= page_limit
-        if page_limit is None:
-            # governance-mutation: SECURITY_REGISTRY_TUSHARE_SINGLE_SHOT_HAS_MORE
-            if has_more is True or at_cap:
-                reason = "HAS_MORE" if has_more is True else "ROW_CAP_REACHED"
-            break
-        # governance-mutation: SECURITY_REGISTRY_TUSHARE_SHORT_PAGE_ENDS
-        if not (full or has_more is True or at_cap):
-            break
-        if not page:
-            reason = "EMPTY_PAGE_WITH_HAS_MORE"
-            break
-        if pages >= TUSHARE_MAX_PAGES:
-            reason = "MAX_PAGES_REACHED"
-            break
-        offset += len(page)
-    facts = {
+    if page_limit is None:
+        page, has_more = request(token, api_name, dict(params), fields)
+        pages = 1
+        reason = _single_shot_truncation(page, has_more, known_cap)
+        mode = "CALLER_PAGED" if caller_paged else "SINGLE_SHOT"
+        # governance-mutation: SECURITY_REGISTRY_TUSHARE_ESCALATES_TO_PAGING
+        if reason is None or caller_paged:
+            return page, {
+                "mode": mode, "pages": pages, "rows": len(page), "page_limit": None,
+                "capped": reason is not None, "truncation_reason": reason,
+                "escalated_from": None,
+            }
+        escalated_from = reason
+        page_limit = TUSHARE_ESCALATION_PAGE_LIMIT
+    rows, pages, reason = _page_through(
+        request, token, api_name, params, fields, page_limit, pages
+    )
+    return rows, {
+        "mode": "ESCALATED" if escalated_from else "PAGED",
         "pages": pages,
         "rows": len(rows),
         "page_limit": page_limit,
         "capped": reason is not None,
         "truncation_reason": reason,
+        "escalated_from": escalated_from,
     }
-    return rows, facts
 
 
 def _tushare_request(
@@ -381,9 +418,9 @@ def _tushare_request(
     if not isinstance(names, list) or not isinstance(items, list):
         raise RegistryError(f"Tushare {api_name} returned malformed fields/items")
     has_more = data.get("has_more")
-    return [dict(zip(names, values)) for values in items], (
-        has_more if isinstance(has_more, bool) else None
-    )
+    # governance-mutation: SECURITY_REGISTRY_TUSHARE_WIRE_HAS_MORE
+    wire_has_more = has_more if isinstance(has_more, bool) else None
+    return [dict(zip(names, values)) for values in items], wire_has_more
 
 
 def fetch_stock_basic(token: str) -> list[dict[str, Any]]:

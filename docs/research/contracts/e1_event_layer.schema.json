@@ -159,6 +159,10 @@
         "express_superseded_rows": { "type": "integer", "minimum": 0 },
         "income_tickers": { "type": "integer", "minimum": 0 },
         "income_deadline_gap_rows": { "type": "integer", "minimum": 0 },
+        "income_source_blocked_rows": { "type": "integer", "minimum": 0 },
+        "red_flag_supersession_unverified_rows": { "type": "integer", "minimum": 0 },
+        "red_flag_withheld_rows": { "type": "integer", "minimum": 0 },
+        "truncated_calls": { "type": "integer", "minimum": 0 },
         "formal_announcements": { "const": "DATA_BLOCKED" },
         "source_row_occurrences_outside_u0": { "type": "integer", "minimum": 0 },
         "source_tickers_outside_u0": { "type": "integer", "minimum": 0 }
@@ -202,6 +206,11 @@
               "filed_quarters": { "type": "integer", "minimum": 0 },
               "income": { "enum": ["COMPLETE", "DATA_BLOCKED"] },
               "income_missing_after_deadline": {
+                "type": "array",
+                "items": { "type": "string", "pattern": "^[0-9]{8}$" },
+                "uniqueItems": true
+              },
+              "income_period_source_blocked": {
                 "type": "array",
                 "items": { "type": "string", "pattern": "^[0-9]{8}$" },
                 "uniqueItems": true
