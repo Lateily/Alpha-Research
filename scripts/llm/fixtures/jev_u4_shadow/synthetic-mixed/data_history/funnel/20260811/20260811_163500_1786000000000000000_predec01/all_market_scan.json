@@ -20,7 +20,6 @@
     "rows": 540,
     "triggered_by_channel": {
       "E1_EVENT": 2,
-      "INDUSTRY_VALUE_CHAIN": 8,
       "PRICE_VOLUME": 8
     }
   },
@@ -35,6 +34,7 @@
     "channel_independence": true,
     "channel_top_n": 8,
     "cross_channel_scoring": false,
+    "industry_channel_mode": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
     "macro_selection_authority": false,
     "threshold_mode": "PER_CHANNEL_TOP_N_RELATIVE_UNVALIDATED"
   },
@@ -129,17 +129,24 @@
     },
     {
       "channel": "INDUSTRY_VALUE_CHAIN",
-      "channel_rank": 31,
+      "channel_rank": null,
       "data_status": "COMPLETE",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": true,
         "industry_key": "PHARMA",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": "WARMING",
         "sequence": "---++",
         "streak": 2
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
-      "reason_codes": [],
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
+      "reason_codes": [
+        "INDUSTRY_CONTEXT_NOT_AN_ISSUER_SELECTION_SIGNAL"
+      ],
       "source_as_of": "20260811",
       "trade_date": "20260811",
       "triggered": false,
@@ -250,12 +257,17 @@
       "data_status": "DATA_BLOCKED",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": false,
         "industry_key": "TECH",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": null,
         "sequence": null,
         "streak": null
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
       "reason_codes": [
         "EXACT_INDUSTRY_ROTATION_MATCH_MISSING"
       ],
@@ -365,27 +377,27 @@
     },
     {
       "channel": "INDUSTRY_VALUE_CHAIN",
-      "channel_rank": 1,
+      "channel_rank": null,
       "data_status": "COMPLETE",
-      "entry_reasons": [
-        {
-          "channel": "INDUSTRY_VALUE_CHAIN",
-          "metric": "rotation_status_rank",
-          "threshold": "TOP_8",
-          "value": 1
-        }
-      ],
+      "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": true,
         "industry_key": "BANK",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": "INFLOW_CONT",
         "sequence": "-++++",
         "streak": 4
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
-      "reason_codes": [],
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
+      "reason_codes": [
+        "INDUSTRY_CONTEXT_NOT_AN_ISSUER_SELECTION_SIGNAL"
+      ],
       "source_as_of": "20260811",
       "trade_date": "20260811",
-      "triggered": true,
+      "triggered": false,
       "ts_code": "T000003.SZ"
     },
     {
@@ -489,17 +501,24 @@
     },
     {
       "channel": "INDUSTRY_VALUE_CHAIN",
-      "channel_rank": 32,
+      "channel_rank": null,
       "data_status": "COMPLETE",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": true,
         "industry_key": "PHARMA",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": "WARMING",
         "sequence": "---++",
         "streak": 2
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
-      "reason_codes": [],
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
+      "reason_codes": [
+        "INDUSTRY_CONTEXT_NOT_AN_ISSUER_SELECTION_SIGNAL"
+      ],
       "source_as_of": "20260811",
       "trade_date": "20260811",
       "triggered": false,
@@ -610,12 +629,17 @@
       "data_status": "DATA_BLOCKED",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": false,
         "industry_key": "TECH",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": null,
         "sequence": null,
         "streak": null
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
       "reason_codes": [
         "EXACT_INDUSTRY_ROTATION_MATCH_MISSING"
       ],
@@ -725,27 +749,27 @@
     },
     {
       "channel": "INDUSTRY_VALUE_CHAIN",
-      "channel_rank": 2,
+      "channel_rank": null,
       "data_status": "COMPLETE",
-      "entry_reasons": [
-        {
-          "channel": "INDUSTRY_VALUE_CHAIN",
-          "metric": "rotation_status_rank",
-          "threshold": "TOP_8",
-          "value": 2
-        }
-      ],
+      "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": true,
         "industry_key": "BANK",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": "INFLOW_CONT",
         "sequence": "-++++",
         "streak": 4
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
-      "reason_codes": [],
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
+      "reason_codes": [
+        "INDUSTRY_CONTEXT_NOT_AN_ISSUER_SELECTION_SIGNAL"
+      ],
       "source_as_of": "20260811",
       "trade_date": "20260811",
-      "triggered": true,
+      "triggered": false,
       "ts_code": "T000006.SZ"
     },
     {
@@ -849,17 +873,24 @@
     },
     {
       "channel": "INDUSTRY_VALUE_CHAIN",
-      "channel_rank": 33,
+      "channel_rank": null,
       "data_status": "COMPLETE",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": true,
         "industry_key": "PHARMA",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": "WARMING",
         "sequence": "---++",
         "streak": 2
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
-      "reason_codes": [],
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
+      "reason_codes": [
+        "INDUSTRY_CONTEXT_NOT_AN_ISSUER_SELECTION_SIGNAL"
+      ],
       "source_as_of": "20260811",
       "trade_date": "20260811",
       "triggered": false,
@@ -970,12 +1001,17 @@
       "data_status": "DATA_BLOCKED",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": false,
         "industry_key": "TECH",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": null,
         "sequence": null,
         "streak": null
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
       "reason_codes": [
         "EXACT_INDUSTRY_ROTATION_MATCH_MISSING"
       ],
@@ -1078,27 +1114,27 @@
     },
     {
       "channel": "INDUSTRY_VALUE_CHAIN",
-      "channel_rank": 3,
+      "channel_rank": null,
       "data_status": "COMPLETE",
-      "entry_reasons": [
-        {
-          "channel": "INDUSTRY_VALUE_CHAIN",
-          "metric": "rotation_status_rank",
-          "threshold": "TOP_8",
-          "value": 3
-        }
-      ],
+      "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": true,
         "industry_key": "BANK",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": "INFLOW_CONT",
         "sequence": "-++++",
         "streak": 4
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
-      "reason_codes": [],
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
+      "reason_codes": [
+        "INDUSTRY_CONTEXT_NOT_AN_ISSUER_SELECTION_SIGNAL"
+      ],
       "source_as_of": "20260811",
       "trade_date": "20260811",
-      "triggered": true,
+      "triggered": false,
       "ts_code": "T000009.SZ"
     },
     {
@@ -1195,17 +1231,24 @@
     },
     {
       "channel": "INDUSTRY_VALUE_CHAIN",
-      "channel_rank": 34,
+      "channel_rank": null,
       "data_status": "COMPLETE",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": true,
         "industry_key": "PHARMA",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": "WARMING",
         "sequence": "---++",
         "streak": 2
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
-      "reason_codes": [],
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
+      "reason_codes": [
+        "INDUSTRY_CONTEXT_NOT_AN_ISSUER_SELECTION_SIGNAL"
+      ],
       "source_as_of": "20260811",
       "trade_date": "20260811",
       "triggered": false,
@@ -1309,12 +1352,17 @@
       "data_status": "DATA_BLOCKED",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": false,
         "industry_key": "TECH",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": null,
         "sequence": null,
         "streak": null
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
       "reason_codes": [
         "EXACT_INDUSTRY_ROTATION_MATCH_MISSING"
       ],
@@ -1417,27 +1465,27 @@
     },
     {
       "channel": "INDUSTRY_VALUE_CHAIN",
-      "channel_rank": 4,
+      "channel_rank": null,
       "data_status": "COMPLETE",
-      "entry_reasons": [
-        {
-          "channel": "INDUSTRY_VALUE_CHAIN",
-          "metric": "rotation_status_rank",
-          "threshold": "TOP_8",
-          "value": 4
-        }
-      ],
+      "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": true,
         "industry_key": "BANK",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": "INFLOW_CONT",
         "sequence": "-++++",
         "streak": 4
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
-      "reason_codes": [],
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
+      "reason_codes": [
+        "INDUSTRY_CONTEXT_NOT_AN_ISSUER_SELECTION_SIGNAL"
+      ],
       "source_as_of": "20260811",
       "trade_date": "20260811",
-      "triggered": true,
+      "triggered": false,
       "ts_code": "T000012.SZ"
     },
     {
@@ -1534,17 +1582,24 @@
     },
     {
       "channel": "INDUSTRY_VALUE_CHAIN",
-      "channel_rank": 35,
+      "channel_rank": null,
       "data_status": "COMPLETE",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": true,
         "industry_key": "PHARMA",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": "WARMING",
         "sequence": "---++",
         "streak": 2
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
-      "reason_codes": [],
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
+      "reason_codes": [
+        "INDUSTRY_CONTEXT_NOT_AN_ISSUER_SELECTION_SIGNAL"
+      ],
       "source_as_of": "20260811",
       "trade_date": "20260811",
       "triggered": false,
@@ -1648,12 +1703,17 @@
       "data_status": "DATA_BLOCKED",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": false,
         "industry_key": "TECH",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": null,
         "sequence": null,
         "streak": null
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
       "reason_codes": [
         "EXACT_INDUSTRY_ROTATION_MATCH_MISSING"
       ],
@@ -1756,27 +1816,27 @@
     },
     {
       "channel": "INDUSTRY_VALUE_CHAIN",
-      "channel_rank": 5,
+      "channel_rank": null,
       "data_status": "COMPLETE",
-      "entry_reasons": [
-        {
-          "channel": "INDUSTRY_VALUE_CHAIN",
-          "metric": "rotation_status_rank",
-          "threshold": "TOP_8",
-          "value": 5
-        }
-      ],
+      "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": true,
         "industry_key": "BANK",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": "INFLOW_CONT",
         "sequence": "-++++",
         "streak": 4
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
-      "reason_codes": [],
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
+      "reason_codes": [
+        "INDUSTRY_CONTEXT_NOT_AN_ISSUER_SELECTION_SIGNAL"
+      ],
       "source_as_of": "20260811",
       "trade_date": "20260811",
-      "triggered": true,
+      "triggered": false,
       "ts_code": "T000015.SZ"
     },
     {
@@ -1873,17 +1933,24 @@
     },
     {
       "channel": "INDUSTRY_VALUE_CHAIN",
-      "channel_rank": 36,
+      "channel_rank": null,
       "data_status": "COMPLETE",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": true,
         "industry_key": "PHARMA",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": "WARMING",
         "sequence": "---++",
         "streak": 2
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
-      "reason_codes": [],
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
+      "reason_codes": [
+        "INDUSTRY_CONTEXT_NOT_AN_ISSUER_SELECTION_SIGNAL"
+      ],
       "source_as_of": "20260811",
       "trade_date": "20260811",
       "triggered": false,
@@ -1987,12 +2054,17 @@
       "data_status": "DATA_BLOCKED",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": false,
         "industry_key": "TECH",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": null,
         "sequence": null,
         "streak": null
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
       "reason_codes": [
         "EXACT_INDUSTRY_ROTATION_MATCH_MISSING"
       ],
@@ -2095,27 +2167,27 @@
     },
     {
       "channel": "INDUSTRY_VALUE_CHAIN",
-      "channel_rank": 6,
+      "channel_rank": null,
       "data_status": "COMPLETE",
-      "entry_reasons": [
-        {
-          "channel": "INDUSTRY_VALUE_CHAIN",
-          "metric": "rotation_status_rank",
-          "threshold": "TOP_8",
-          "value": 6
-        }
-      ],
+      "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": true,
         "industry_key": "BANK",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": "INFLOW_CONT",
         "sequence": "-++++",
         "streak": 4
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
-      "reason_codes": [],
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
+      "reason_codes": [
+        "INDUSTRY_CONTEXT_NOT_AN_ISSUER_SELECTION_SIGNAL"
+      ],
       "source_as_of": "20260811",
       "trade_date": "20260811",
-      "triggered": true,
+      "triggered": false,
       "ts_code": "T000018.SZ"
     },
     {
@@ -2212,17 +2284,24 @@
     },
     {
       "channel": "INDUSTRY_VALUE_CHAIN",
-      "channel_rank": 37,
+      "channel_rank": null,
       "data_status": "COMPLETE",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": true,
         "industry_key": "PHARMA",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": "WARMING",
         "sequence": "---++",
         "streak": 2
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
-      "reason_codes": [],
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
+      "reason_codes": [
+        "INDUSTRY_CONTEXT_NOT_AN_ISSUER_SELECTION_SIGNAL"
+      ],
       "source_as_of": "20260811",
       "trade_date": "20260811",
       "triggered": false,
@@ -2326,12 +2405,17 @@
       "data_status": "DATA_BLOCKED",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": false,
         "industry_key": "TECH",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": null,
         "sequence": null,
         "streak": null
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
       "reason_codes": [
         "EXACT_INDUSTRY_ROTATION_MATCH_MISSING"
       ],
@@ -2434,27 +2518,27 @@
     },
     {
       "channel": "INDUSTRY_VALUE_CHAIN",
-      "channel_rank": 7,
+      "channel_rank": null,
       "data_status": "COMPLETE",
-      "entry_reasons": [
-        {
-          "channel": "INDUSTRY_VALUE_CHAIN",
-          "metric": "rotation_status_rank",
-          "threshold": "TOP_8",
-          "value": 7
-        }
-      ],
+      "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": true,
         "industry_key": "BANK",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": "INFLOW_CONT",
         "sequence": "-++++",
         "streak": 4
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
-      "reason_codes": [],
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
+      "reason_codes": [
+        "INDUSTRY_CONTEXT_NOT_AN_ISSUER_SELECTION_SIGNAL"
+      ],
       "source_as_of": "20260811",
       "trade_date": "20260811",
-      "triggered": true,
+      "triggered": false,
       "ts_code": "T000021.SZ"
     },
     {
@@ -2551,17 +2635,24 @@
     },
     {
       "channel": "INDUSTRY_VALUE_CHAIN",
-      "channel_rank": 38,
+      "channel_rank": null,
       "data_status": "COMPLETE",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": true,
         "industry_key": "PHARMA",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": "WARMING",
         "sequence": "---++",
         "streak": 2
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
-      "reason_codes": [],
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
+      "reason_codes": [
+        "INDUSTRY_CONTEXT_NOT_AN_ISSUER_SELECTION_SIGNAL"
+      ],
       "source_as_of": "20260811",
       "trade_date": "20260811",
       "triggered": false,
@@ -2665,12 +2756,17 @@
       "data_status": "DATA_BLOCKED",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": false,
         "industry_key": "TECH",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": null,
         "sequence": null,
         "streak": null
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
       "reason_codes": [
         "EXACT_INDUSTRY_ROTATION_MATCH_MISSING"
       ],
@@ -2773,27 +2869,27 @@
     },
     {
       "channel": "INDUSTRY_VALUE_CHAIN",
-      "channel_rank": 8,
+      "channel_rank": null,
       "data_status": "COMPLETE",
-      "entry_reasons": [
-        {
-          "channel": "INDUSTRY_VALUE_CHAIN",
-          "metric": "rotation_status_rank",
-          "threshold": "TOP_8",
-          "value": 8
-        }
-      ],
+      "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": true,
         "industry_key": "BANK",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": "INFLOW_CONT",
         "sequence": "-++++",
         "streak": 4
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
-      "reason_codes": [],
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
+      "reason_codes": [
+        "INDUSTRY_CONTEXT_NOT_AN_ISSUER_SELECTION_SIGNAL"
+      ],
       "source_as_of": "20260811",
       "trade_date": "20260811",
-      "triggered": true,
+      "triggered": false,
       "ts_code": "T000024.SZ"
     },
     {
@@ -2890,17 +2986,24 @@
     },
     {
       "channel": "INDUSTRY_VALUE_CHAIN",
-      "channel_rank": 39,
+      "channel_rank": null,
       "data_status": "COMPLETE",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": true,
         "industry_key": "PHARMA",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": "WARMING",
         "sequence": "---++",
         "streak": 2
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
-      "reason_codes": [],
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
+      "reason_codes": [
+        "INDUSTRY_CONTEXT_NOT_AN_ISSUER_SELECTION_SIGNAL"
+      ],
       "source_as_of": "20260811",
       "trade_date": "20260811",
       "triggered": false,
@@ -3004,12 +3107,17 @@
       "data_status": "DATA_BLOCKED",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": false,
         "industry_key": "TECH",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": null,
         "sequence": null,
         "streak": null
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
       "reason_codes": [
         "EXACT_INDUSTRY_ROTATION_MATCH_MISSING"
       ],
@@ -3112,17 +3220,24 @@
     },
     {
       "channel": "INDUSTRY_VALUE_CHAIN",
-      "channel_rank": 9,
+      "channel_rank": null,
       "data_status": "COMPLETE",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": true,
         "industry_key": "BANK",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": "INFLOW_CONT",
         "sequence": "-++++",
         "streak": 4
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
-      "reason_codes": [],
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
+      "reason_codes": [
+        "INDUSTRY_CONTEXT_NOT_AN_ISSUER_SELECTION_SIGNAL"
+      ],
       "source_as_of": "20260811",
       "trade_date": "20260811",
       "triggered": false,
@@ -3222,17 +3337,24 @@
     },
     {
       "channel": "INDUSTRY_VALUE_CHAIN",
-      "channel_rank": 40,
+      "channel_rank": null,
       "data_status": "COMPLETE",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": true,
         "industry_key": "PHARMA",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": "WARMING",
         "sequence": "---++",
         "streak": 2
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
-      "reason_codes": [],
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
+      "reason_codes": [
+        "INDUSTRY_CONTEXT_NOT_AN_ISSUER_SELECTION_SIGNAL"
+      ],
       "source_as_of": "20260811",
       "trade_date": "20260811",
       "triggered": false,
@@ -3336,12 +3458,17 @@
       "data_status": "DATA_BLOCKED",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": false,
         "industry_key": "TECH",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": null,
         "sequence": null,
         "streak": null
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
       "reason_codes": [
         "EXACT_INDUSTRY_ROTATION_MATCH_MISSING"
       ],
@@ -3444,17 +3571,24 @@
     },
     {
       "channel": "INDUSTRY_VALUE_CHAIN",
-      "channel_rank": 10,
+      "channel_rank": null,
       "data_status": "COMPLETE",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": true,
         "industry_key": "BANK",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": "INFLOW_CONT",
         "sequence": "-++++",
         "streak": 4
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
-      "reason_codes": [],
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
+      "reason_codes": [
+        "INDUSTRY_CONTEXT_NOT_AN_ISSUER_SELECTION_SIGNAL"
+      ],
       "source_as_of": "20260811",
       "trade_date": "20260811",
       "triggered": false,
@@ -3554,17 +3688,24 @@
     },
     {
       "channel": "INDUSTRY_VALUE_CHAIN",
-      "channel_rank": 41,
+      "channel_rank": null,
       "data_status": "COMPLETE",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": true,
         "industry_key": "PHARMA",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": "WARMING",
         "sequence": "---++",
         "streak": 2
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
-      "reason_codes": [],
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
+      "reason_codes": [
+        "INDUSTRY_CONTEXT_NOT_AN_ISSUER_SELECTION_SIGNAL"
+      ],
       "source_as_of": "20260811",
       "trade_date": "20260811",
       "triggered": false,
@@ -3668,12 +3809,17 @@
       "data_status": "DATA_BLOCKED",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": false,
         "industry_key": "TECH",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": null,
         "sequence": null,
         "streak": null
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
       "reason_codes": [
         "EXACT_INDUSTRY_ROTATION_MATCH_MISSING"
       ],
@@ -3776,17 +3922,24 @@
     },
     {
       "channel": "INDUSTRY_VALUE_CHAIN",
-      "channel_rank": 11,
+      "channel_rank": null,
       "data_status": "COMPLETE",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": true,
         "industry_key": "BANK",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": "INFLOW_CONT",
         "sequence": "-++++",
         "streak": 4
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
-      "reason_codes": [],
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
+      "reason_codes": [
+        "INDUSTRY_CONTEXT_NOT_AN_ISSUER_SELECTION_SIGNAL"
+      ],
       "source_as_of": "20260811",
       "trade_date": "20260811",
       "triggered": false,
@@ -3886,17 +4039,24 @@
     },
     {
       "channel": "INDUSTRY_VALUE_CHAIN",
-      "channel_rank": 42,
+      "channel_rank": null,
       "data_status": "COMPLETE",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": true,
         "industry_key": "PHARMA",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": "WARMING",
         "sequence": "---++",
         "streak": 2
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
-      "reason_codes": [],
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
+      "reason_codes": [
+        "INDUSTRY_CONTEXT_NOT_AN_ISSUER_SELECTION_SIGNAL"
+      ],
       "source_as_of": "20260811",
       "trade_date": "20260811",
       "triggered": false,
@@ -4000,12 +4160,17 @@
       "data_status": "DATA_BLOCKED",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": false,
         "industry_key": "TECH",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": null,
         "sequence": null,
         "streak": null
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
       "reason_codes": [
         "EXACT_INDUSTRY_ROTATION_MATCH_MISSING"
       ],
@@ -4108,17 +4273,24 @@
     },
     {
       "channel": "INDUSTRY_VALUE_CHAIN",
-      "channel_rank": 12,
+      "channel_rank": null,
       "data_status": "COMPLETE",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": true,
         "industry_key": "BANK",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": "INFLOW_CONT",
         "sequence": "-++++",
         "streak": 4
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
-      "reason_codes": [],
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
+      "reason_codes": [
+        "INDUSTRY_CONTEXT_NOT_AN_ISSUER_SELECTION_SIGNAL"
+      ],
       "source_as_of": "20260811",
       "trade_date": "20260811",
       "triggered": false,
@@ -4218,17 +4390,24 @@
     },
     {
       "channel": "INDUSTRY_VALUE_CHAIN",
-      "channel_rank": 43,
+      "channel_rank": null,
       "data_status": "COMPLETE",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": true,
         "industry_key": "PHARMA",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": "WARMING",
         "sequence": "---++",
         "streak": 2
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
-      "reason_codes": [],
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
+      "reason_codes": [
+        "INDUSTRY_CONTEXT_NOT_AN_ISSUER_SELECTION_SIGNAL"
+      ],
       "source_as_of": "20260811",
       "trade_date": "20260811",
       "triggered": false,
@@ -4332,12 +4511,17 @@
       "data_status": "DATA_BLOCKED",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": false,
         "industry_key": "TECH",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": null,
         "sequence": null,
         "streak": null
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
       "reason_codes": [
         "EXACT_INDUSTRY_ROTATION_MATCH_MISSING"
       ],
@@ -4440,17 +4624,24 @@
     },
     {
       "channel": "INDUSTRY_VALUE_CHAIN",
-      "channel_rank": 13,
+      "channel_rank": null,
       "data_status": "COMPLETE",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": true,
         "industry_key": "BANK",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": "INFLOW_CONT",
         "sequence": "-++++",
         "streak": 4
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
-      "reason_codes": [],
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
+      "reason_codes": [
+        "INDUSTRY_CONTEXT_NOT_AN_ISSUER_SELECTION_SIGNAL"
+      ],
       "source_as_of": "20260811",
       "trade_date": "20260811",
       "triggered": false,
@@ -4550,17 +4741,24 @@
     },
     {
       "channel": "INDUSTRY_VALUE_CHAIN",
-      "channel_rank": 44,
+      "channel_rank": null,
       "data_status": "COMPLETE",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": true,
         "industry_key": "PHARMA",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": "WARMING",
         "sequence": "---++",
         "streak": 2
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
-      "reason_codes": [],
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
+      "reason_codes": [
+        "INDUSTRY_CONTEXT_NOT_AN_ISSUER_SELECTION_SIGNAL"
+      ],
       "source_as_of": "20260811",
       "trade_date": "20260811",
       "triggered": false,
@@ -4664,12 +4862,17 @@
       "data_status": "DATA_BLOCKED",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": false,
         "industry_key": "TECH",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": null,
         "sequence": null,
         "streak": null
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
       "reason_codes": [
         "EXACT_INDUSTRY_ROTATION_MATCH_MISSING"
       ],
@@ -4772,17 +4975,24 @@
     },
     {
       "channel": "INDUSTRY_VALUE_CHAIN",
-      "channel_rank": 14,
+      "channel_rank": null,
       "data_status": "COMPLETE",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": true,
         "industry_key": "BANK",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": "INFLOW_CONT",
         "sequence": "-++++",
         "streak": 4
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
-      "reason_codes": [],
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
+      "reason_codes": [
+        "INDUSTRY_CONTEXT_NOT_AN_ISSUER_SELECTION_SIGNAL"
+      ],
       "source_as_of": "20260811",
       "trade_date": "20260811",
       "triggered": false,
@@ -4882,17 +5092,24 @@
     },
     {
       "channel": "INDUSTRY_VALUE_CHAIN",
-      "channel_rank": 45,
+      "channel_rank": null,
       "data_status": "COMPLETE",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": true,
         "industry_key": "PHARMA",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": "WARMING",
         "sequence": "---++",
         "streak": 2
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
-      "reason_codes": [],
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
+      "reason_codes": [
+        "INDUSTRY_CONTEXT_NOT_AN_ISSUER_SELECTION_SIGNAL"
+      ],
       "source_as_of": "20260811",
       "trade_date": "20260811",
       "triggered": false,
@@ -4996,12 +5213,17 @@
       "data_status": "DATA_BLOCKED",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": false,
         "industry_key": "TECH",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": null,
         "sequence": null,
         "streak": null
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
       "reason_codes": [
         "EXACT_INDUSTRY_ROTATION_MATCH_MISSING"
       ],
@@ -5104,17 +5326,24 @@
     },
     {
       "channel": "INDUSTRY_VALUE_CHAIN",
-      "channel_rank": 15,
+      "channel_rank": null,
       "data_status": "COMPLETE",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": true,
         "industry_key": "BANK",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": "INFLOW_CONT",
         "sequence": "-++++",
         "streak": 4
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
-      "reason_codes": [],
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
+      "reason_codes": [
+        "INDUSTRY_CONTEXT_NOT_AN_ISSUER_SELECTION_SIGNAL"
+      ],
       "source_as_of": "20260811",
       "trade_date": "20260811",
       "triggered": false,
@@ -5214,17 +5443,24 @@
     },
     {
       "channel": "INDUSTRY_VALUE_CHAIN",
-      "channel_rank": 46,
+      "channel_rank": null,
       "data_status": "COMPLETE",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": true,
         "industry_key": "PHARMA",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": "WARMING",
         "sequence": "---++",
         "streak": 2
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
-      "reason_codes": [],
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
+      "reason_codes": [
+        "INDUSTRY_CONTEXT_NOT_AN_ISSUER_SELECTION_SIGNAL"
+      ],
       "source_as_of": "20260811",
       "trade_date": "20260811",
       "triggered": false,
@@ -5328,12 +5564,17 @@
       "data_status": "DATA_BLOCKED",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": false,
         "industry_key": "TECH",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": null,
         "sequence": null,
         "streak": null
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
       "reason_codes": [
         "EXACT_INDUSTRY_ROTATION_MATCH_MISSING"
       ],
@@ -5436,17 +5677,24 @@
     },
     {
       "channel": "INDUSTRY_VALUE_CHAIN",
-      "channel_rank": 16,
+      "channel_rank": null,
       "data_status": "COMPLETE",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": true,
         "industry_key": "BANK",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": "INFLOW_CONT",
         "sequence": "-++++",
         "streak": 4
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
-      "reason_codes": [],
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
+      "reason_codes": [
+        "INDUSTRY_CONTEXT_NOT_AN_ISSUER_SELECTION_SIGNAL"
+      ],
       "source_as_of": "20260811",
       "trade_date": "20260811",
       "triggered": false,
@@ -5546,17 +5794,24 @@
     },
     {
       "channel": "INDUSTRY_VALUE_CHAIN",
-      "channel_rank": 47,
+      "channel_rank": null,
       "data_status": "COMPLETE",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": true,
         "industry_key": "PHARMA",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": "WARMING",
         "sequence": "---++",
         "streak": 2
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
-      "reason_codes": [],
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
+      "reason_codes": [
+        "INDUSTRY_CONTEXT_NOT_AN_ISSUER_SELECTION_SIGNAL"
+      ],
       "source_as_of": "20260811",
       "trade_date": "20260811",
       "triggered": false,
@@ -5660,12 +5915,17 @@
       "data_status": "DATA_BLOCKED",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": false,
         "industry_key": "TECH",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": null,
         "sequence": null,
         "streak": null
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
       "reason_codes": [
         "EXACT_INDUSTRY_ROTATION_MATCH_MISSING"
       ],
@@ -5768,17 +6028,24 @@
     },
     {
       "channel": "INDUSTRY_VALUE_CHAIN",
-      "channel_rank": 17,
+      "channel_rank": null,
       "data_status": "COMPLETE",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": true,
         "industry_key": "BANK",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": "INFLOW_CONT",
         "sequence": "-++++",
         "streak": 4
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
-      "reason_codes": [],
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
+      "reason_codes": [
+        "INDUSTRY_CONTEXT_NOT_AN_ISSUER_SELECTION_SIGNAL"
+      ],
       "source_as_of": "20260811",
       "trade_date": "20260811",
       "triggered": false,
@@ -5878,17 +6145,24 @@
     },
     {
       "channel": "INDUSTRY_VALUE_CHAIN",
-      "channel_rank": 48,
+      "channel_rank": null,
       "data_status": "COMPLETE",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": true,
         "industry_key": "PHARMA",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": "WARMING",
         "sequence": "---++",
         "streak": 2
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
-      "reason_codes": [],
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
+      "reason_codes": [
+        "INDUSTRY_CONTEXT_NOT_AN_ISSUER_SELECTION_SIGNAL"
+      ],
       "source_as_of": "20260811",
       "trade_date": "20260811",
       "triggered": false,
@@ -5992,12 +6266,17 @@
       "data_status": "DATA_BLOCKED",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": false,
         "industry_key": "TECH",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": null,
         "sequence": null,
         "streak": null
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
       "reason_codes": [
         "EXACT_INDUSTRY_ROTATION_MATCH_MISSING"
       ],
@@ -6100,17 +6379,24 @@
     },
     {
       "channel": "INDUSTRY_VALUE_CHAIN",
-      "channel_rank": 18,
+      "channel_rank": null,
       "data_status": "COMPLETE",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": true,
         "industry_key": "BANK",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": "INFLOW_CONT",
         "sequence": "-++++",
         "streak": 4
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
-      "reason_codes": [],
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
+      "reason_codes": [
+        "INDUSTRY_CONTEXT_NOT_AN_ISSUER_SELECTION_SIGNAL"
+      ],
       "source_as_of": "20260811",
       "trade_date": "20260811",
       "triggered": false,
@@ -6210,17 +6496,24 @@
     },
     {
       "channel": "INDUSTRY_VALUE_CHAIN",
-      "channel_rank": 49,
+      "channel_rank": null,
       "data_status": "COMPLETE",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": true,
         "industry_key": "PHARMA",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": "WARMING",
         "sequence": "---++",
         "streak": 2
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
-      "reason_codes": [],
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
+      "reason_codes": [
+        "INDUSTRY_CONTEXT_NOT_AN_ISSUER_SELECTION_SIGNAL"
+      ],
       "source_as_of": "20260811",
       "trade_date": "20260811",
       "triggered": false,
@@ -6324,12 +6617,17 @@
       "data_status": "DATA_BLOCKED",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": false,
         "industry_key": "TECH",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": null,
         "sequence": null,
         "streak": null
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
       "reason_codes": [
         "EXACT_INDUSTRY_ROTATION_MATCH_MISSING"
       ],
@@ -6432,17 +6730,24 @@
     },
     {
       "channel": "INDUSTRY_VALUE_CHAIN",
-      "channel_rank": 19,
+      "channel_rank": null,
       "data_status": "COMPLETE",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": true,
         "industry_key": "BANK",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": "INFLOW_CONT",
         "sequence": "-++++",
         "streak": 4
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
-      "reason_codes": [],
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
+      "reason_codes": [
+        "INDUSTRY_CONTEXT_NOT_AN_ISSUER_SELECTION_SIGNAL"
+      ],
       "source_as_of": "20260811",
       "trade_date": "20260811",
       "triggered": false,
@@ -6542,17 +6847,24 @@
     },
     {
       "channel": "INDUSTRY_VALUE_CHAIN",
-      "channel_rank": 50,
+      "channel_rank": null,
       "data_status": "COMPLETE",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": true,
         "industry_key": "PHARMA",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": "WARMING",
         "sequence": "---++",
         "streak": 2
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
-      "reason_codes": [],
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
+      "reason_codes": [
+        "INDUSTRY_CONTEXT_NOT_AN_ISSUER_SELECTION_SIGNAL"
+      ],
       "source_as_of": "20260811",
       "trade_date": "20260811",
       "triggered": false,
@@ -6656,12 +6968,17 @@
       "data_status": "DATA_BLOCKED",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": false,
         "industry_key": "TECH",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": null,
         "sequence": null,
         "streak": null
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
       "reason_codes": [
         "EXACT_INDUSTRY_ROTATION_MATCH_MISSING"
       ],
@@ -6764,17 +7081,24 @@
     },
     {
       "channel": "INDUSTRY_VALUE_CHAIN",
-      "channel_rank": 20,
+      "channel_rank": null,
       "data_status": "COMPLETE",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": true,
         "industry_key": "BANK",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": "INFLOW_CONT",
         "sequence": "-++++",
         "streak": 4
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
-      "reason_codes": [],
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
+      "reason_codes": [
+        "INDUSTRY_CONTEXT_NOT_AN_ISSUER_SELECTION_SIGNAL"
+      ],
       "source_as_of": "20260811",
       "trade_date": "20260811",
       "triggered": false,
@@ -6874,17 +7198,24 @@
     },
     {
       "channel": "INDUSTRY_VALUE_CHAIN",
-      "channel_rank": 51,
+      "channel_rank": null,
       "data_status": "COMPLETE",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": true,
         "industry_key": "PHARMA",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": "WARMING",
         "sequence": "---++",
         "streak": 2
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
-      "reason_codes": [],
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
+      "reason_codes": [
+        "INDUSTRY_CONTEXT_NOT_AN_ISSUER_SELECTION_SIGNAL"
+      ],
       "source_as_of": "20260811",
       "trade_date": "20260811",
       "triggered": false,
@@ -6988,12 +7319,17 @@
       "data_status": "DATA_BLOCKED",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": false,
         "industry_key": "TECH",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": null,
         "sequence": null,
         "streak": null
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
       "reason_codes": [
         "EXACT_INDUSTRY_ROTATION_MATCH_MISSING"
       ],
@@ -7096,17 +7432,24 @@
     },
     {
       "channel": "INDUSTRY_VALUE_CHAIN",
-      "channel_rank": 21,
+      "channel_rank": null,
       "data_status": "COMPLETE",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": true,
         "industry_key": "BANK",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": "INFLOW_CONT",
         "sequence": "-++++",
         "streak": 4
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
-      "reason_codes": [],
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
+      "reason_codes": [
+        "INDUSTRY_CONTEXT_NOT_AN_ISSUER_SELECTION_SIGNAL"
+      ],
       "source_as_of": "20260811",
       "trade_date": "20260811",
       "triggered": false,
@@ -7206,17 +7549,24 @@
     },
     {
       "channel": "INDUSTRY_VALUE_CHAIN",
-      "channel_rank": 52,
+      "channel_rank": null,
       "data_status": "COMPLETE",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": true,
         "industry_key": "PHARMA",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": "WARMING",
         "sequence": "---++",
         "streak": 2
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
-      "reason_codes": [],
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
+      "reason_codes": [
+        "INDUSTRY_CONTEXT_NOT_AN_ISSUER_SELECTION_SIGNAL"
+      ],
       "source_as_of": "20260811",
       "trade_date": "20260811",
       "triggered": false,
@@ -7320,12 +7670,17 @@
       "data_status": "DATA_BLOCKED",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": false,
         "industry_key": "TECH",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": null,
         "sequence": null,
         "streak": null
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
       "reason_codes": [
         "EXACT_INDUSTRY_ROTATION_MATCH_MISSING"
       ],
@@ -7428,17 +7783,24 @@
     },
     {
       "channel": "INDUSTRY_VALUE_CHAIN",
-      "channel_rank": 22,
+      "channel_rank": null,
       "data_status": "COMPLETE",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": true,
         "industry_key": "BANK",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": "INFLOW_CONT",
         "sequence": "-++++",
         "streak": 4
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
-      "reason_codes": [],
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
+      "reason_codes": [
+        "INDUSTRY_CONTEXT_NOT_AN_ISSUER_SELECTION_SIGNAL"
+      ],
       "source_as_of": "20260811",
       "trade_date": "20260811",
       "triggered": false,
@@ -7538,17 +7900,24 @@
     },
     {
       "channel": "INDUSTRY_VALUE_CHAIN",
-      "channel_rank": 53,
+      "channel_rank": null,
       "data_status": "COMPLETE",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": true,
         "industry_key": "PHARMA",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": "WARMING",
         "sequence": "---++",
         "streak": 2
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
-      "reason_codes": [],
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
+      "reason_codes": [
+        "INDUSTRY_CONTEXT_NOT_AN_ISSUER_SELECTION_SIGNAL"
+      ],
       "source_as_of": "20260811",
       "trade_date": "20260811",
       "triggered": false,
@@ -7652,12 +8021,17 @@
       "data_status": "DATA_BLOCKED",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": false,
         "industry_key": "TECH",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": null,
         "sequence": null,
         "streak": null
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
       "reason_codes": [
         "EXACT_INDUSTRY_ROTATION_MATCH_MISSING"
       ],
@@ -7760,17 +8134,24 @@
     },
     {
       "channel": "INDUSTRY_VALUE_CHAIN",
-      "channel_rank": 23,
+      "channel_rank": null,
       "data_status": "COMPLETE",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": true,
         "industry_key": "BANK",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": "INFLOW_CONT",
         "sequence": "-++++",
         "streak": 4
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
-      "reason_codes": [],
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
+      "reason_codes": [
+        "INDUSTRY_CONTEXT_NOT_AN_ISSUER_SELECTION_SIGNAL"
+      ],
       "source_as_of": "20260811",
       "trade_date": "20260811",
       "triggered": false,
@@ -7870,17 +8251,24 @@
     },
     {
       "channel": "INDUSTRY_VALUE_CHAIN",
-      "channel_rank": 54,
+      "channel_rank": null,
       "data_status": "COMPLETE",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": true,
         "industry_key": "PHARMA",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": "WARMING",
         "sequence": "---++",
         "streak": 2
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
-      "reason_codes": [],
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
+      "reason_codes": [
+        "INDUSTRY_CONTEXT_NOT_AN_ISSUER_SELECTION_SIGNAL"
+      ],
       "source_as_of": "20260811",
       "trade_date": "20260811",
       "triggered": false,
@@ -7984,12 +8372,17 @@
       "data_status": "DATA_BLOCKED",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": false,
         "industry_key": "TECH",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": null,
         "sequence": null,
         "streak": null
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
       "reason_codes": [
         "EXACT_INDUSTRY_ROTATION_MATCH_MISSING"
       ],
@@ -8092,17 +8485,24 @@
     },
     {
       "channel": "INDUSTRY_VALUE_CHAIN",
-      "channel_rank": 24,
+      "channel_rank": null,
       "data_status": "COMPLETE",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": true,
         "industry_key": "BANK",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": "INFLOW_CONT",
         "sequence": "-++++",
         "streak": 4
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
-      "reason_codes": [],
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
+      "reason_codes": [
+        "INDUSTRY_CONTEXT_NOT_AN_ISSUER_SELECTION_SIGNAL"
+      ],
       "source_as_of": "20260811",
       "trade_date": "20260811",
       "triggered": false,
@@ -8202,17 +8602,24 @@
     },
     {
       "channel": "INDUSTRY_VALUE_CHAIN",
-      "channel_rank": 55,
+      "channel_rank": null,
       "data_status": "COMPLETE",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": true,
         "industry_key": "PHARMA",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": "WARMING",
         "sequence": "---++",
         "streak": 2
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
-      "reason_codes": [],
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
+      "reason_codes": [
+        "INDUSTRY_CONTEXT_NOT_AN_ISSUER_SELECTION_SIGNAL"
+      ],
       "source_as_of": "20260811",
       "trade_date": "20260811",
       "triggered": false,
@@ -8316,12 +8723,17 @@
       "data_status": "DATA_BLOCKED",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": false,
         "industry_key": "TECH",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": null,
         "sequence": null,
         "streak": null
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
       "reason_codes": [
         "EXACT_INDUSTRY_ROTATION_MATCH_MISSING"
       ],
@@ -8424,17 +8836,24 @@
     },
     {
       "channel": "INDUSTRY_VALUE_CHAIN",
-      "channel_rank": 25,
+      "channel_rank": null,
       "data_status": "COMPLETE",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": true,
         "industry_key": "BANK",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": "INFLOW_CONT",
         "sequence": "-++++",
         "streak": 4
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
-      "reason_codes": [],
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
+      "reason_codes": [
+        "INDUSTRY_CONTEXT_NOT_AN_ISSUER_SELECTION_SIGNAL"
+      ],
       "source_as_of": "20260811",
       "trade_date": "20260811",
       "triggered": false,
@@ -8534,17 +8953,24 @@
     },
     {
       "channel": "INDUSTRY_VALUE_CHAIN",
-      "channel_rank": 56,
+      "channel_rank": null,
       "data_status": "COMPLETE",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": true,
         "industry_key": "PHARMA",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": "WARMING",
         "sequence": "---++",
         "streak": 2
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
-      "reason_codes": [],
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
+      "reason_codes": [
+        "INDUSTRY_CONTEXT_NOT_AN_ISSUER_SELECTION_SIGNAL"
+      ],
       "source_as_of": "20260811",
       "trade_date": "20260811",
       "triggered": false,
@@ -8648,12 +9074,17 @@
       "data_status": "DATA_BLOCKED",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": false,
         "industry_key": "TECH",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": null,
         "sequence": null,
         "streak": null
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
       "reason_codes": [
         "EXACT_INDUSTRY_ROTATION_MATCH_MISSING"
       ],
@@ -8756,17 +9187,24 @@
     },
     {
       "channel": "INDUSTRY_VALUE_CHAIN",
-      "channel_rank": 26,
+      "channel_rank": null,
       "data_status": "COMPLETE",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": true,
         "industry_key": "BANK",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": "INFLOW_CONT",
         "sequence": "-++++",
         "streak": 4
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
-      "reason_codes": [],
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
+      "reason_codes": [
+        "INDUSTRY_CONTEXT_NOT_AN_ISSUER_SELECTION_SIGNAL"
+      ],
       "source_as_of": "20260811",
       "trade_date": "20260811",
       "triggered": false,
@@ -8866,17 +9304,24 @@
     },
     {
       "channel": "INDUSTRY_VALUE_CHAIN",
-      "channel_rank": 57,
+      "channel_rank": null,
       "data_status": "COMPLETE",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": true,
         "industry_key": "PHARMA",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": "WARMING",
         "sequence": "---++",
         "streak": 2
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
-      "reason_codes": [],
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
+      "reason_codes": [
+        "INDUSTRY_CONTEXT_NOT_AN_ISSUER_SELECTION_SIGNAL"
+      ],
       "source_as_of": "20260811",
       "trade_date": "20260811",
       "triggered": false,
@@ -8980,12 +9425,17 @@
       "data_status": "DATA_BLOCKED",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": false,
         "industry_key": "TECH",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": null,
         "sequence": null,
         "streak": null
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
       "reason_codes": [
         "EXACT_INDUSTRY_ROTATION_MATCH_MISSING"
       ],
@@ -9088,17 +9538,24 @@
     },
     {
       "channel": "INDUSTRY_VALUE_CHAIN",
-      "channel_rank": 27,
+      "channel_rank": null,
       "data_status": "COMPLETE",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": true,
         "industry_key": "BANK",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": "INFLOW_CONT",
         "sequence": "-++++",
         "streak": 4
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
-      "reason_codes": [],
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
+      "reason_codes": [
+        "INDUSTRY_CONTEXT_NOT_AN_ISSUER_SELECTION_SIGNAL"
+      ],
       "source_as_of": "20260811",
       "trade_date": "20260811",
       "triggered": false,
@@ -9198,17 +9655,24 @@
     },
     {
       "channel": "INDUSTRY_VALUE_CHAIN",
-      "channel_rank": 58,
+      "channel_rank": null,
       "data_status": "COMPLETE",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": true,
         "industry_key": "PHARMA",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": "WARMING",
         "sequence": "---++",
         "streak": 2
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
-      "reason_codes": [],
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
+      "reason_codes": [
+        "INDUSTRY_CONTEXT_NOT_AN_ISSUER_SELECTION_SIGNAL"
+      ],
       "source_as_of": "20260811",
       "trade_date": "20260811",
       "triggered": false,
@@ -9312,12 +9776,17 @@
       "data_status": "DATA_BLOCKED",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": false,
         "industry_key": "TECH",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": null,
         "sequence": null,
         "streak": null
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
       "reason_codes": [
         "EXACT_INDUSTRY_ROTATION_MATCH_MISSING"
       ],
@@ -9420,17 +9889,24 @@
     },
     {
       "channel": "INDUSTRY_VALUE_CHAIN",
-      "channel_rank": 28,
+      "channel_rank": null,
       "data_status": "COMPLETE",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": true,
         "industry_key": "BANK",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": "INFLOW_CONT",
         "sequence": "-++++",
         "streak": 4
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
-      "reason_codes": [],
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
+      "reason_codes": [
+        "INDUSTRY_CONTEXT_NOT_AN_ISSUER_SELECTION_SIGNAL"
+      ],
       "source_as_of": "20260811",
       "trade_date": "20260811",
       "triggered": false,
@@ -9530,17 +10006,24 @@
     },
     {
       "channel": "INDUSTRY_VALUE_CHAIN",
-      "channel_rank": 59,
+      "channel_rank": null,
       "data_status": "COMPLETE",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": true,
         "industry_key": "PHARMA",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": "WARMING",
         "sequence": "---++",
         "streak": 2
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
-      "reason_codes": [],
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
+      "reason_codes": [
+        "INDUSTRY_CONTEXT_NOT_AN_ISSUER_SELECTION_SIGNAL"
+      ],
       "source_as_of": "20260811",
       "trade_date": "20260811",
       "triggered": false,
@@ -9644,12 +10127,17 @@
       "data_status": "DATA_BLOCKED",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": false,
         "industry_key": "TECH",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": null,
         "sequence": null,
         "streak": null
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
       "reason_codes": [
         "EXACT_INDUSTRY_ROTATION_MATCH_MISSING"
       ],
@@ -9752,17 +10240,24 @@
     },
     {
       "channel": "INDUSTRY_VALUE_CHAIN",
-      "channel_rank": 29,
+      "channel_rank": null,
       "data_status": "COMPLETE",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": true,
         "industry_key": "BANK",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": "INFLOW_CONT",
         "sequence": "-++++",
         "streak": 4
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
-      "reason_codes": [],
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
+      "reason_codes": [
+        "INDUSTRY_CONTEXT_NOT_AN_ISSUER_SELECTION_SIGNAL"
+      ],
       "source_as_of": "20260811",
       "trade_date": "20260811",
       "triggered": false,
@@ -9862,17 +10357,24 @@
     },
     {
       "channel": "INDUSTRY_VALUE_CHAIN",
-      "channel_rank": 60,
+      "channel_rank": null,
       "data_status": "COMPLETE",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": true,
         "industry_key": "PHARMA",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": "WARMING",
         "sequence": "---++",
         "streak": 2
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
-      "reason_codes": [],
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
+      "reason_codes": [
+        "INDUSTRY_CONTEXT_NOT_AN_ISSUER_SELECTION_SIGNAL"
+      ],
       "source_as_of": "20260811",
       "trade_date": "20260811",
       "triggered": false,
@@ -9976,12 +10478,17 @@
       "data_status": "DATA_BLOCKED",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": false,
         "industry_key": "TECH",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": null,
         "sequence": null,
         "streak": null
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
       "reason_codes": [
         "EXACT_INDUSTRY_ROTATION_MATCH_MISSING"
       ],
@@ -10093,17 +10600,24 @@
     },
     {
       "channel": "INDUSTRY_VALUE_CHAIN",
-      "channel_rank": 30,
+      "channel_rank": null,
       "data_status": "COMPLETE",
       "entry_reasons": [],
       "feature_values": {
+        "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
+        "hot_industry": true,
         "industry_key": "BANK",
+        "issuer_admission_blockers": [
+          "DAILY_BAR_STATUS_UNVERIFIED"
+        ],
         "rotation_status": "INFLOW_CONT",
         "sequence": "-++++",
         "streak": 4
       },
-      "feature_version": "industry_value_chain_relative_v1_unvalidated",
-      "reason_codes": [],
+      "feature_version": "industry_value_chain_context_v2_unvalidated",
+      "reason_codes": [
+        "INDUSTRY_CONTEXT_NOT_AN_ISSUER_SELECTION_SIGNAL"
+      ],
       "source_as_of": "20260811",
       "trade_date": "20260811",
       "triggered": false,
@@ -10130,7 +10644,7 @@
       "ts_code": "T000090.SZ"
     }
   ],
-  "rows_hash": "a235839e931d46f75499d062397990676075862e1c36d66dee36b7ca954fdf0e",
+  "rows_hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
   "rule_version": "research_funnel_v1",
   "schema": "ar.all_market_scan",
   "schema_version": "1.0",

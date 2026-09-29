@@ -1,28 +1,28 @@
 {
   "as_of": "20260811",
   "battery_coverage": {
-    "complete_rows": 22,
+    "complete_rows": 16,
     "data_blocked_rows": 0,
-    "expected": 22,
-    "observed": 22,
+    "expected": 16,
+    "observed": 16,
     "provider_state": "FIXTURE"
   },
   "bundle": {
     "artifacts": {
-      "all_market_scan.json": "a2be7449b7015fa5bf58f977133c56355fd3f9a0a9cfa34e0d91618a28f03eae",
-      "candidate_battery.json": "e955de0a0f531d1b01e6821c5f2c4f15f86d312a38ddf2711a7793096f456e1a",
-      "candidate_manifest.json": "90f4fbc73bf3ad7805e7a633556d4702f2d5b78f7cc3dc1fdd54639f7657e778",
-      "candidate_review.json": "62bc19a9f18e37777dd331aee65ef7ddfb70e355115eb14ab4969c76569817c1",
-      "deep_research_queue.json": "334b81e8ea261f7f984885619bc374bb3de93877b4f2d3618e03946ca4f41d9c",
-      "security_registry_projected.json": "84baa0569e3164a3d0a0a2a6739306be6f6c227616038bef3dd2bb38f391bd5e"
+      "all_market_scan.json": "f99f4020eca1d22ed69d9d6c14fbc0c9107767ae32d8a93d2d615e3c41ede65a",
+      "candidate_battery.json": "1291007b6d4a2c54e41a05731f52588e0733f6b006a14c55546c7206fa48e0a1",
+      "candidate_manifest.json": "0030cab31a743f483ea407aef69d9e07e778959c82d47f4a8e48baa0a5e1a838",
+      "candidate_review.json": "17aa6109822906c1b35783908962705c62d345ebd6e8c85c62ac7cdddf8abc9f",
+      "deep_research_queue.json": "76f09fe6eccedbdbcdc3d676ee0d6c60d45354c3511370985641f690c5720509",
+      "security_registry_projected.json": "198c02af834191de96eee82341924014ade4d749d2fde66f8526b385b74fc6b9"
     },
-    "bundle_hash": "a58513c5b7d976a118b30573c97f074ff087f5f79860ecd46ffde283b4f3eac5",
+    "bundle_hash": "8a6c1dccb3e390ddca65f3fde8b09c68e8a05e40cb899f9dd6f2d4cfe67b470c",
     "immutable": true,
     "location": "data_history/funnel/20260811/20260811_163500_1786000000000000000_predec01",
     "published": false
   },
   "counts": {
-    "candidate_rows": 24,
+    "candidate_rows": 18,
     "deep_queue_rows": 0,
     "scan_rows": 540
   },

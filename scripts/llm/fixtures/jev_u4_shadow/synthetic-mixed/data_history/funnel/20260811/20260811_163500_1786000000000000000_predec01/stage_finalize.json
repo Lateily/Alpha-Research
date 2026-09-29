@@ -1,12 +1,12 @@
 {
   "artifacts": {
-    "deep_research_queue.json": "334b81e8ea261f7f984885619bc374bb3de93877b4f2d3618e03946ca4f41d9c",
-    "security_registry_projected.json": "84baa0569e3164a3d0a0a2a6739306be6f6c227616038bef3dd2bb38f391bd5e"
+    "deep_research_queue.json": "76f09fe6eccedbdbcdc3d676ee0d6c60d45354c3511370985641f690c5720509",
+    "security_registry_projected.json": "198c02af834191de96eee82341924014ade4d749d2fde66f8526b385b74fc6b9"
   },
   "as_of": "20260811",
   "binds": {
-    "battery_rows_hash": "48cfc6ddb424fbd70ce8305d3dfd677007ef09c916a8f2a252e7481b19497695",
-    "candidate_manifest_hash": "2a64b6e46ae088d5644bbe5e9ae3606005730d867a4b4ab6d7bfed396c91d8eb"
+    "battery_rows_hash": "753270f447582cebd1882f856a3374d35be830c9d4d382ec11177d11245b5106",
+    "candidate_manifest_hash": "dc95c57063f0aae7d4215c5546a8c7bc6b85efe73288d1ffd179aadd13a35d25"
   },
   "generated_at": "2026-08-12T09:00:00+00:00",
   "rule_version": "research_funnel_v1",
@@ -14,5 +14,5 @@
   "schema": "ar.research_funnel_stage",
   "schema_version": "1.0",
   "stage": "finalize",
-  "stage_hash": "87b58c3720def135bd8e3667593df067724b830bacf8243d3e0c32417ad82e27"
+  "stage_hash": "50d6d1515921d5c58fb9dfd450e48fc481704a70ed9faeae9a44508e97ab848f"
 }
