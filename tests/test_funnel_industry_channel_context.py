@@ -19,6 +19,7 @@ import copy
 import sys
 import unittest
 from pathlib import Path
+from unittest import mock
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -51,7 +52,16 @@ def _registry(n: int = N, *, reverse_codes: bool = False) -> dict:
     return registry
 
 
-def _build(registry: dict, testcase: unittest.TestCase) -> dict:
+def _build(registry: dict, testcase: unittest.TestCase, *, validate: bool = True) -> dict:
+    """Build a scan; ``validate=False`` returns the builder's raw rows.
+
+    The raw mode bypasses the builder's own validate_all_market_scan so an
+    invariance assertion is exercised on what the builder computed, independent
+    of the validator clause that would otherwise refuse the scan first.
+    """
+    if not validate:
+        with mock.patch.object(fp, "validate_all_market_scan", lambda *_a, **_k: None):
+            return _build(registry, testcase)
     try:
         return fp.build_all_market_scan(
             registry=registry,
@@ -91,6 +101,16 @@ class IndustryContextOnlyTests(unittest.TestCase):
             self.assertEqual([], row["entry_reasons"], row["ts_code"])
             self.assertEqual(fp.INDUSTRY_CONTEXT_FEATURE_VERSION, row["feature_version"])
             self.assertEqual(fp.INDUSTRY_CHANNEL_MODE, row["feature_values"]["admission_role"])
+        # Missing rotation evidence is unknown, never a stored "not hot".
+        blocked = [row for row in rows if row["data_status"] == "DATA_BLOCKED"]
+        self.assertTrue(blocked)
+        for row in blocked:
+            self.assertIsNone(row["feature_values"]["rotation_status"], row["ts_code"])
+            self.assertIsNone(row["feature_values"]["hot_industry"], row["ts_code"])
+            self.assertEqual(["EXACT_INDUSTRY_ROTATION_MATCH_MISSING"], row["reason_codes"])
+        for row in rows:
+            if row["data_status"] == "COMPLETE":
+                self.assertIsInstance(row["feature_values"]["hot_industry"], bool, row["ts_code"])
         for row in hot:
             self.assertEqual("COMPLETE", row["data_status"])
             self.assertIn(row["feature_values"]["rotation_status"], {"INFLOW_CONT", "WARMING"})
@@ -102,18 +122,31 @@ class IndustryContextOnlyTests(unittest.TestCase):
         """Pin: an industry signal cannot be truncated by issuer code.
 
         With a code tie-break the triggered set moves when codes are relabeled
-        (Name 1..k win under one labeling, Name n..n-k under the other).
+        (Name 1..k win under one labeling, Name n..n-k under the other).  The
+        raw builder output is checked first, with the builder's validator
+        bypassed, so this invariance is pinned independently of the
+        FUNNEL_U1_INDUSTRY_NO_ISSUER_CODE_RANK validator clause.
         """
 
-        def triggered_names(scan: dict, registry: dict) -> set[str]:
+        def triggered_names(scan: dict, registry: dict, *, admitted_only: bool = False) -> set[str]:
             names = {row["ts_code"]: row["name"] for row in registry["rows"]}
             return {
                 names[row["ts_code"]] for row in _industry_rows(scan)
-                if row["triggered"] or row["channel_rank"] is not None
+                if row["triggered"] or (not admitted_only and row["channel_rank"] is not None)
             }
 
         forward = _registry()
         reverse = _registry(reverse_codes=True)
+        raw_forward_scan = _build(forward, self, validate=False)
+        raw_reverse_scan = _build(reverse, self, validate=False)
+        # Invariance first: the admitted (triggered) set must not move with codes.
+        self.assertEqual(
+            triggered_names(raw_forward_scan, forward, admitted_only=True),
+            triggered_names(raw_reverse_scan, reverse, admitted_only=True),
+        )
+        raw_forward = triggered_names(raw_forward_scan, forward)
+        self.assertEqual(raw_forward, triggered_names(raw_reverse_scan, reverse))
+        self.assertEqual(set(), raw_forward)
         forward_names = triggered_names(_build(forward, self), forward)
         reverse_names = triggered_names(_build(reverse, self), reverse)
         self.assertEqual(forward_names, reverse_names)
@@ -127,6 +160,9 @@ class IndustryContextOnlyTests(unittest.TestCase):
             registry=registry, scan=scan, features=features,
             trade_date=closure.TRADE_DATE, generated_at=closure.GENERATED_AT,
             target_size=100, slow_bull_quota=3, contrarian_quota=3, control_quota=3,
+        )
+        self.assertEqual(
+            fp.INDUSTRY_CHANNEL_MODE, candidates["policy"]["industry_channel_mode"]
         )
         for row in candidates["rows"]:
             self.assertNotIn("INDUSTRY_VALUE_CHAIN", row["source_channels"], row["ts_code"])
@@ -208,12 +244,109 @@ class IndustryContextValidatorTests(unittest.TestCase):
         with self.assertRaisesRegex(fp.FunnelError, "issuer-code tie-break"):
             fp.validate_all_market_scan(_rehash(admitted), registry)
 
+        # A rank shown as an entry reason without a trigger is refused too.
+        shown = copy.deepcopy(scan)
+        first = next(
+            row for row in shown["rows"]
+            if row["channel"] == "INDUSTRY_VALUE_CHAIN" and row["ts_code"] == hot[0]["ts_code"]
+        )
+        self.assertIs(False, first["triggered"])
+        self.assertIsNone(first["channel_rank"])
+        first["entry_reasons"] = [{
+            "channel": "INDUSTRY_VALUE_CHAIN", "metric": "rotation_status_rank",
+            "value": 1, "threshold": f"TOP_{TOP_N}",
+        }]
+        with self.assertRaisesRegex(fp.FunnelError, "issuer-code tie-break"):
+            fp.validate_all_market_scan(_rehash(shown), registry)
+
         relabeled = copy.deepcopy(scan)
         for row in relabeled["rows"]:
             if row["channel"] == "INDUSTRY_VALUE_CHAIN":
                 row["feature_version"] = "industry_value_chain_relative_v1_unvalidated"
         with self.assertRaisesRegex(fp.FunnelError, "issuer-code tie-break"):
             fp.validate_all_market_scan(_rehash(relabeled), registry)
+
+    def test_missing_rotation_cannot_be_stored_as_not_hot(self) -> None:
+        """Pin: a DATA_BLOCKED industry row cannot carry hot_industry False."""
+        registry = _registry()
+        scan = _build(registry, self)
+        blocked_code = next(
+            row["ts_code"] for row in _industry_rows(scan) if row["data_status"] == "DATA_BLOCKED"
+        )
+        hot_code = next(
+            row["ts_code"] for row in _industry_rows(scan) if row["feature_values"]["hot_industry"]
+        )
+        for code, value in ((blocked_code, False), (blocked_code, True), (hot_code, False),
+                            (hot_code, None), (hot_code, 1)):
+            tampered = copy.deepcopy(scan)
+            row = next(
+                row for row in _industry_rows(tampered) if row["ts_code"] == code
+            )
+            row["feature_values"]["hot_industry"] = value
+            with self.subTest(code=code, value=value), self.assertRaisesRegex(
+                fp.FunnelError, "hot_industry must be null"
+            ):
+                fp.validate_all_market_scan(_rehash(tampered), registry)
+        dropped = copy.deepcopy(scan)
+        next(
+            row for row in _industry_rows(dropped) if row["ts_code"] == blocked_code
+        )["feature_values"].pop("hot_industry")
+        with self.assertRaisesRegex(fp.FunnelError, "hot_industry must be null"):
+            fp.validate_all_market_scan(_rehash(dropped), registry)
+
+    def test_context_rows_without_declared_mode_are_refused(self) -> None:
+        """Pin: dropping the mode key cannot re-open the archived-replay path."""
+        registry = _registry()
+        scan = copy.deepcopy(_build(registry, self))
+        scan["policy"].pop("industry_channel_mode")
+        with self.assertRaisesRegex(fp.FunnelError, "require a declared industry channel mode"):
+            fp.validate_all_market_scan(scan, registry)
+        relabeled = copy.deepcopy(scan)
+        for row in _industry_rows(relabeled):
+            row["feature_version"] = "industry_value_chain_relative_v1_unvalidated"
+        with self.assertRaisesRegex(fp.FunnelError, "require a declared industry channel mode"):
+            fp.validate_all_market_scan(_rehash(relabeled), registry)
+
+    def test_new_u2_pool_refuses_a_scan_without_declared_mode(self) -> None:
+        """Pin: an archived-format scan cannot feed a new U2 pool by default."""
+        registry = _registry()
+        features = closure.features_fixture(registry)
+        legacy = _legacy_scan(_build(registry, self))
+        fp.validate_all_market_scan(legacy, registry)
+        kwargs = dict(
+            registry=registry, scan=legacy, features=features,
+            trade_date=closure.TRADE_DATE, generated_at=closure.GENERATED_AT,
+            target_size=100, slow_bull_quota=3, contrarian_quota=3, control_quota=3,
+        )
+        with self.assertRaisesRegex(fp.FunnelError, "declares no industry channel mode"):
+            fp.build_candidate_review(**kwargs)
+        replay = fp.build_candidate_review(**kwargs, legacy_industry_replay=True)
+        self.assertIsNone(replay["policy"]["industry_channel_mode"])
+        self.assertTrue(any(
+            "INDUSTRY_VALUE_CHAIN" in row["source_channels"] for row in replay["rows"]
+        ))
+
+    def test_candidate_review_mode_is_bound_to_its_scan(self) -> None:
+        """Pin: the U2 policy discloses the U1 industry mode it was admitted under."""
+        registry = _registry()
+        features = closure.features_fixture(registry)
+        scan = _build(registry, self)
+        candidates = fp.build_candidate_review(
+            registry=registry, scan=scan, features=features,
+            trade_date=closure.TRADE_DATE, generated_at=closure.GENERATED_AT,
+            target_size=100, slow_bull_quota=3, contrarian_quota=3, control_quota=3,
+        )
+        for value in (None, "ISSUER_CODE_TOP_N"):
+            tampered = copy.deepcopy(candidates)
+            tampered["policy"]["industry_channel_mode"] = value
+            with self.subTest(value=value), self.assertRaisesRegex(
+                fp.FunnelError, "industry channel mode differs"
+            ):
+                fp.validate_candidate_review(tampered, registry, scan)
+        dropped = copy.deepcopy(candidates)
+        dropped["policy"].pop("industry_channel_mode")
+        with self.assertRaisesRegex(fp.FunnelError, "industry channel mode differs"):
+            fp.validate_candidate_review(dropped, registry, scan)
 
     def test_unknown_industry_mode_is_refused(self) -> None:
         registry = _registry()
@@ -225,26 +358,32 @@ class IndustryContextValidatorTests(unittest.TestCase):
     def test_archived_scan_without_mode_still_replays(self) -> None:
         """Bundles written before this mode (e.g. 9/24, 9/29) keep validating."""
         registry = _registry()
-        legacy = copy.deepcopy(_build(registry, self))
-        legacy["policy"].pop("industry_channel_mode")
-        rank = 0
-        for row in legacy["rows"]:
-            if row["channel"] != "INDUSTRY_VALUE_CHAIN":
-                continue
-            row["feature_version"] = "industry_value_chain_relative_v1_unvalidated"
-            for key in ("hot_industry", "admission_role", "issuer_admission_blockers"):
-                row["feature_values"].pop(key)
-            if row["data_status"] == "COMPLETE":
-                row["reason_codes"] = []
-            if row["data_status"] == "COMPLETE" and rank < TOP_N:
-                rank += 1
-                row["channel_rank"] = rank
-                row["triggered"] = True
-                row["entry_reasons"] = [{
-                    "channel": "INDUSTRY_VALUE_CHAIN", "metric": "rotation_status_rank",
-                    "value": rank, "threshold": f"TOP_{TOP_N}",
-                }]
-        fp.validate_all_market_scan(_rehash(legacy), registry)
+        fp.validate_all_market_scan(_legacy_scan(_build(registry, self)), registry)
+
+
+def _legacy_scan(scan: dict) -> dict:
+    """Rewrite a scan into the archived (pre-mode) industry format."""
+    legacy = copy.deepcopy(scan)
+    legacy["policy"].pop("industry_channel_mode")
+    rank = 0
+    for row in legacy["rows"]:
+        if row["channel"] != "INDUSTRY_VALUE_CHAIN":
+            continue
+        row["feature_version"] = "industry_value_chain_relative_v1_unvalidated"
+        for key in ("hot_industry", "admission_role", "issuer_admission_blockers"):
+            row["feature_values"].pop(key)
+        if row["data_status"] == "COMPLETE":
+            row["reason_codes"] = []
+        if row["data_status"] == "COMPLETE" and rank < TOP_N:
+            rank += 1
+            row["channel_rank"] = rank
+            row["triggered"] = True
+            row["entry_reasons"] = [{
+                "channel": "INDUSTRY_VALUE_CHAIN", "metric": "rotation_status_rank",
+                "value": rank, "threshold": f"TOP_{TOP_N}",
+            }]
+    legacy["coverage"]["triggered_by_channel"]["INDUSTRY_VALUE_CHAIN"] = rank
+    return _rehash(legacy)
 
 
 if __name__ == "__main__":

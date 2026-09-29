@@ -13,7 +13,7 @@
   },
   "eligible_universe_hash": "1105057af720b9ffb259feccb75007083706143e7d2e95a58229e312cfaab5e4",
   "generated_at": "2026-08-12T09:00:00+00:00",
-  "registry_hash": "1b81cee8e6e0956e6cf98a1b64f59ab15ae06865ff18639aa983153daabed241",
+  "registry_hash": "391a7dcbc8c2412145f4121a0fe158797596292ab1604b37b4cc7df205afe813",
   "rows": [
     {
       "current_stage": "SCANNED",
@@ -39,7 +39,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             }
           ],
@@ -73,7 +73,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             },
             {
@@ -117,7 +117,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             },
             {
@@ -161,7 +161,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             },
             {
@@ -205,7 +205,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             },
             {
@@ -249,7 +249,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             },
             {
@@ -293,7 +293,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             },
             {
@@ -337,7 +337,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             },
             {
@@ -381,7 +381,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             }
           ],
@@ -415,7 +415,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             }
           ],
@@ -449,7 +449,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             },
             {
@@ -493,7 +493,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             }
           ],
@@ -527,7 +527,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             },
             {
@@ -571,7 +571,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             }
           ],
@@ -605,7 +605,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             },
             {
@@ -649,7 +649,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             },
             {
@@ -693,7 +693,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             }
           ],
@@ -727,7 +727,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             },
             {
@@ -771,7 +771,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             }
           ],
@@ -805,7 +805,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             }
           ],
@@ -839,7 +839,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             }
           ],
@@ -873,7 +873,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             }
           ],
@@ -907,7 +907,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             },
             {
@@ -951,7 +951,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             }
           ],
@@ -985,7 +985,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             }
           ],
@@ -1019,7 +1019,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             }
           ],
@@ -1053,7 +1053,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             }
           ],
@@ -1087,7 +1087,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             }
           ],
@@ -1121,7 +1121,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             }
           ],
@@ -1155,7 +1155,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             }
           ],
@@ -1189,7 +1189,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             }
           ],
@@ -1223,7 +1223,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             },
             {
@@ -1267,7 +1267,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             },
             {
@@ -1311,7 +1311,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             },
             {
@@ -1355,7 +1355,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             }
           ],
@@ -1389,7 +1389,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             }
           ],
@@ -1423,7 +1423,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             }
           ],
@@ -1457,7 +1457,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             }
           ],
@@ -1491,7 +1491,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             }
           ],
@@ -1525,7 +1525,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             }
           ],
@@ -1559,7 +1559,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             }
           ],
@@ -1593,7 +1593,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             }
           ],
@@ -1627,7 +1627,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             }
           ],
@@ -1661,7 +1661,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             }
           ],
@@ -1695,7 +1695,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             }
           ],
@@ -1729,7 +1729,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             }
           ],
@@ -1763,7 +1763,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             }
           ],
@@ -1797,7 +1797,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             }
           ],
@@ -1831,7 +1831,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             }
           ],
@@ -1865,7 +1865,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             }
           ],
@@ -1899,7 +1899,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             }
           ],
@@ -1933,7 +1933,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             }
           ],
@@ -1967,7 +1967,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             }
           ],
@@ -2001,7 +2001,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             }
           ],
@@ -2035,7 +2035,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             }
           ],
@@ -2069,7 +2069,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             }
           ],
@@ -2103,7 +2103,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             }
           ],
@@ -2137,7 +2137,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             }
           ],
@@ -2171,7 +2171,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             }
           ],
@@ -2205,7 +2205,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             }
           ],
@@ -2239,7 +2239,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             }
           ],
@@ -2273,7 +2273,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             }
           ],
@@ -2307,7 +2307,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             }
           ],
@@ -2341,7 +2341,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             }
           ],
@@ -2375,7 +2375,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             }
           ],
@@ -2409,7 +2409,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             }
           ],
@@ -2443,7 +2443,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             }
           ],
@@ -2477,7 +2477,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             }
           ],
@@ -2511,7 +2511,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             }
           ],
@@ -2545,7 +2545,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             }
           ],
@@ -2579,7 +2579,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             }
           ],
@@ -2613,7 +2613,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             }
           ],
@@ -2647,7 +2647,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             }
           ],
@@ -2681,7 +2681,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             }
           ],
@@ -2715,7 +2715,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             }
           ],
@@ -2749,7 +2749,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             }
           ],
@@ -2783,7 +2783,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             }
           ],
@@ -2817,7 +2817,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             }
           ],
@@ -2851,7 +2851,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             }
           ],
@@ -2885,7 +2885,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             }
           ],
@@ -2919,7 +2919,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             }
           ],
@@ -2953,7 +2953,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             }
           ],
@@ -2987,7 +2987,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             }
           ],
@@ -3021,7 +3021,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             }
           ],
@@ -3055,7 +3055,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             }
           ],
@@ -3089,7 +3089,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             }
           ],
@@ -3123,7 +3123,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             }
           ],
@@ -3157,7 +3157,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             }
           ],
@@ -3191,7 +3191,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             }
           ],
@@ -3225,7 +3225,7 @@
           "evidence": [
             {
               "artifact": "ar.all_market_scan",
-              "hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+              "hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
               "stage": "SCANNED"
             }
           ],
@@ -3245,7 +3245,7 @@
     "rule_version": "research_funnel_v1",
     "source_candidate_hash": "d292c150ea7c2073a34a9fdbce549ce99f7132bc1ccc3c1d692cf08cc42b0852",
     "source_queue_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
-    "source_scan_hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+    "source_scan_hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
     "transitions": {
       "UNSCANNED->BATTERY": 16,
       "UNSCANNED->SCANNED": 74

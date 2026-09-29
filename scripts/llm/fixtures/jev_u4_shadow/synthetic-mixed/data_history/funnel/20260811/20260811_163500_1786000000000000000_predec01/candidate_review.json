@@ -596,6 +596,7 @@
   "disclaimer": "不是买卖指令；研究信号，human executes.",
   "generated_at": "2026-08-12T09:00:00+00:00",
   "policy": {
+    "industry_channel_mode": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
     "proxy_rules": "UNVALIDATED_INITIAL_RELATIVE_RULES",
     "reserved_quotas_are_floors": true,
     "selection": "CHANNEL_UNION_EQUAL_ROUND_ROBIN_NO_COMPOSITE_SCORE",

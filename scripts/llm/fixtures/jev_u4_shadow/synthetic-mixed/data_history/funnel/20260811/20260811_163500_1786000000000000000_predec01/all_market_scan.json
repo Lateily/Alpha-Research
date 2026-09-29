@@ -258,7 +258,7 @@
       "entry_reasons": [],
       "feature_values": {
         "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
-        "hot_industry": false,
+        "hot_industry": null,
         "industry_key": "TECH",
         "issuer_admission_blockers": [
           "DAILY_BAR_STATUS_UNVERIFIED"
@@ -630,7 +630,7 @@
       "entry_reasons": [],
       "feature_values": {
         "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
-        "hot_industry": false,
+        "hot_industry": null,
         "industry_key": "TECH",
         "issuer_admission_blockers": [
           "DAILY_BAR_STATUS_UNVERIFIED"
@@ -1002,7 +1002,7 @@
       "entry_reasons": [],
       "feature_values": {
         "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
-        "hot_industry": false,
+        "hot_industry": null,
         "industry_key": "TECH",
         "issuer_admission_blockers": [
           "DAILY_BAR_STATUS_UNVERIFIED"
@@ -1353,7 +1353,7 @@
       "entry_reasons": [],
       "feature_values": {
         "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
-        "hot_industry": false,
+        "hot_industry": null,
         "industry_key": "TECH",
         "issuer_admission_blockers": [
           "DAILY_BAR_STATUS_UNVERIFIED"
@@ -1704,7 +1704,7 @@
       "entry_reasons": [],
       "feature_values": {
         "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
-        "hot_industry": false,
+        "hot_industry": null,
         "industry_key": "TECH",
         "issuer_admission_blockers": [
           "DAILY_BAR_STATUS_UNVERIFIED"
@@ -2055,7 +2055,7 @@
       "entry_reasons": [],
       "feature_values": {
         "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
-        "hot_industry": false,
+        "hot_industry": null,
         "industry_key": "TECH",
         "issuer_admission_blockers": [
           "DAILY_BAR_STATUS_UNVERIFIED"
@@ -2406,7 +2406,7 @@
       "entry_reasons": [],
       "feature_values": {
         "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
-        "hot_industry": false,
+        "hot_industry": null,
         "industry_key": "TECH",
         "issuer_admission_blockers": [
           "DAILY_BAR_STATUS_UNVERIFIED"
@@ -2757,7 +2757,7 @@
       "entry_reasons": [],
       "feature_values": {
         "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
-        "hot_industry": false,
+        "hot_industry": null,
         "industry_key": "TECH",
         "issuer_admission_blockers": [
           "DAILY_BAR_STATUS_UNVERIFIED"
@@ -3108,7 +3108,7 @@
       "entry_reasons": [],
       "feature_values": {
         "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
-        "hot_industry": false,
+        "hot_industry": null,
         "industry_key": "TECH",
         "issuer_admission_blockers": [
           "DAILY_BAR_STATUS_UNVERIFIED"
@@ -3459,7 +3459,7 @@
       "entry_reasons": [],
       "feature_values": {
         "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
-        "hot_industry": false,
+        "hot_industry": null,
         "industry_key": "TECH",
         "issuer_admission_blockers": [
           "DAILY_BAR_STATUS_UNVERIFIED"
@@ -3810,7 +3810,7 @@
       "entry_reasons": [],
       "feature_values": {
         "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
-        "hot_industry": false,
+        "hot_industry": null,
         "industry_key": "TECH",
         "issuer_admission_blockers": [
           "DAILY_BAR_STATUS_UNVERIFIED"
@@ -4161,7 +4161,7 @@
       "entry_reasons": [],
       "feature_values": {
         "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
-        "hot_industry": false,
+        "hot_industry": null,
         "industry_key": "TECH",
         "issuer_admission_blockers": [
           "DAILY_BAR_STATUS_UNVERIFIED"
@@ -4512,7 +4512,7 @@
       "entry_reasons": [],
       "feature_values": {
         "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
-        "hot_industry": false,
+        "hot_industry": null,
         "industry_key": "TECH",
         "issuer_admission_blockers": [
           "DAILY_BAR_STATUS_UNVERIFIED"
@@ -4863,7 +4863,7 @@
       "entry_reasons": [],
       "feature_values": {
         "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
-        "hot_industry": false,
+        "hot_industry": null,
         "industry_key": "TECH",
         "issuer_admission_blockers": [
           "DAILY_BAR_STATUS_UNVERIFIED"
@@ -5214,7 +5214,7 @@
       "entry_reasons": [],
       "feature_values": {
         "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
-        "hot_industry": false,
+        "hot_industry": null,
         "industry_key": "TECH",
         "issuer_admission_blockers": [
           "DAILY_BAR_STATUS_UNVERIFIED"
@@ -5565,7 +5565,7 @@
       "entry_reasons": [],
       "feature_values": {
         "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
-        "hot_industry": false,
+        "hot_industry": null,
         "industry_key": "TECH",
         "issuer_admission_blockers": [
           "DAILY_BAR_STATUS_UNVERIFIED"
@@ -5916,7 +5916,7 @@
       "entry_reasons": [],
       "feature_values": {
         "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
-        "hot_industry": false,
+        "hot_industry": null,
         "industry_key": "TECH",
         "issuer_admission_blockers": [
           "DAILY_BAR_STATUS_UNVERIFIED"
@@ -6267,7 +6267,7 @@
       "entry_reasons": [],
       "feature_values": {
         "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
-        "hot_industry": false,
+        "hot_industry": null,
         "industry_key": "TECH",
         "issuer_admission_blockers": [
           "DAILY_BAR_STATUS_UNVERIFIED"
@@ -6618,7 +6618,7 @@
       "entry_reasons": [],
       "feature_values": {
         "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
-        "hot_industry": false,
+        "hot_industry": null,
         "industry_key": "TECH",
         "issuer_admission_blockers": [
           "DAILY_BAR_STATUS_UNVERIFIED"
@@ -6969,7 +6969,7 @@
       "entry_reasons": [],
       "feature_values": {
         "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
-        "hot_industry": false,
+        "hot_industry": null,
         "industry_key": "TECH",
         "issuer_admission_blockers": [
           "DAILY_BAR_STATUS_UNVERIFIED"
@@ -7320,7 +7320,7 @@
       "entry_reasons": [],
       "feature_values": {
         "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
-        "hot_industry": false,
+        "hot_industry": null,
         "industry_key": "TECH",
         "issuer_admission_blockers": [
           "DAILY_BAR_STATUS_UNVERIFIED"
@@ -7671,7 +7671,7 @@
       "entry_reasons": [],
       "feature_values": {
         "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
-        "hot_industry": false,
+        "hot_industry": null,
         "industry_key": "TECH",
         "issuer_admission_blockers": [
           "DAILY_BAR_STATUS_UNVERIFIED"
@@ -8022,7 +8022,7 @@
       "entry_reasons": [],
       "feature_values": {
         "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
-        "hot_industry": false,
+        "hot_industry": null,
         "industry_key": "TECH",
         "issuer_admission_blockers": [
           "DAILY_BAR_STATUS_UNVERIFIED"
@@ -8373,7 +8373,7 @@
       "entry_reasons": [],
       "feature_values": {
         "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
-        "hot_industry": false,
+        "hot_industry": null,
         "industry_key": "TECH",
         "issuer_admission_blockers": [
           "DAILY_BAR_STATUS_UNVERIFIED"
@@ -8724,7 +8724,7 @@
       "entry_reasons": [],
       "feature_values": {
         "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
-        "hot_industry": false,
+        "hot_industry": null,
         "industry_key": "TECH",
         "issuer_admission_blockers": [
           "DAILY_BAR_STATUS_UNVERIFIED"
@@ -9075,7 +9075,7 @@
       "entry_reasons": [],
       "feature_values": {
         "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
-        "hot_industry": false,
+        "hot_industry": null,
         "industry_key": "TECH",
         "issuer_admission_blockers": [
           "DAILY_BAR_STATUS_UNVERIFIED"
@@ -9426,7 +9426,7 @@
       "entry_reasons": [],
       "feature_values": {
         "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
-        "hot_industry": false,
+        "hot_industry": null,
         "industry_key": "TECH",
         "issuer_admission_blockers": [
           "DAILY_BAR_STATUS_UNVERIFIED"
@@ -9777,7 +9777,7 @@
       "entry_reasons": [],
       "feature_values": {
         "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
-        "hot_industry": false,
+        "hot_industry": null,
         "industry_key": "TECH",
         "issuer_admission_blockers": [
           "DAILY_BAR_STATUS_UNVERIFIED"
@@ -10128,7 +10128,7 @@
       "entry_reasons": [],
       "feature_values": {
         "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
-        "hot_industry": false,
+        "hot_industry": null,
         "industry_key": "TECH",
         "issuer_admission_blockers": [
           "DAILY_BAR_STATUS_UNVERIFIED"
@@ -10479,7 +10479,7 @@
       "entry_reasons": [],
       "feature_values": {
         "admission_role": "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2",
-        "hot_industry": false,
+        "hot_industry": null,
         "industry_key": "TECH",
         "issuer_admission_blockers": [
           "DAILY_BAR_STATUS_UNVERIFIED"
@@ -10644,7 +10644,7 @@
       "ts_code": "T000090.SZ"
     }
   ],
-  "rows_hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+  "rows_hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
   "rule_version": "research_funnel_v1",
   "schema": "ar.all_market_scan",
   "schema_version": "1.0",

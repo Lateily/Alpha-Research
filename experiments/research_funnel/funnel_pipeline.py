@@ -459,6 +459,11 @@ def _issuer_admission_blockers(security: Mapping[str, Any]) -> list[str]:
     return blockers
 
 
+def _scan_industry_channel_mode(scan: Mapping[str, Any]) -> str | None:
+    policy = scan.get("policy")
+    return policy.get("industry_channel_mode") if isinstance(policy, Mapping) else None
+
+
 def build_all_market_scan(
     *, registry: Mapping[str, Any], e1_events: Mapping[str, Any] | None,
     features: Mapping[str, Mapping[str, Any]], rotation: Mapping[str, Any] | None = None,
@@ -767,8 +772,10 @@ def build_all_market_scan(
                 "rotation_status": sector.get("status") if sector else None,
                 "streak": sector.get("streak") if sector else None,
                 "sequence": sector.get("seq") if sector else None,
-                "hot_industry": bool(
-                    sector and sector.get("status") in HOT_ROTATION_STATUSES
+                # Missing rotation evidence is unknown, never "not hot".
+                # governance-mutation: FUNNEL_U1_INDUSTRY_HOT_MISSING_IS_NULL
+                "hot_industry": (
+                    sector.get("status") in HOT_ROTATION_STATUSES if sector else None
                 ),
                 "admission_role": INDUSTRY_CHANNEL_MODE,
                 "issuer_admission_blockers": _issuer_admission_blockers(security),
@@ -915,8 +922,7 @@ def validate_all_market_scan(payload: Mapping[str, Any], registry: Mapping[str, 
     semiconductor_context_bound = (
         input_refs["semiconductor_positive_inputs_rows_hash"] is not None
     )
-    policy = payload.get("policy")
-    industry_mode = policy.get("industry_channel_mode") if isinstance(policy, Mapping) else None
+    industry_mode = _scan_industry_channel_mode(payload)
     # A scan without the key predates INDUSTRY_CHANNEL_MODE and is accepted only so
     # archived bundles still replay; every scan built by this module carries it.
     # governance-mutation: FUNNEL_U1_INDUSTRY_MODE_CLOSED
@@ -980,6 +986,34 @@ def validate_all_market_scan(payload: Mapping[str, Any], registry: Mapping[str, 
                 "industry context cannot rank, trigger or admit an issuer "
                 "(an issuer-code tie-break is not evidence)"
             )
+        # A keyless scan is an archived-replay scan; rows in the context format
+        # prove it was written by the new builder, so the mode key cannot be dropped.
+        # governance-mutation: FUNNEL_U1_INDUSTRY_CONTEXT_ROWS_NEED_MODE
+        if row["channel"] == "INDUSTRY_VALUE_CHAIN" and not industry_context_only and (
+            row.get("feature_version") == INDUSTRY_CONTEXT_FEATURE_VERSION
+            or (isinstance(feature_values, Mapping) and (
+                "admission_role" in feature_values or "hot_industry" in feature_values
+            ))
+        ):
+            raise FunnelError(
+                "industry context rows require a declared industry channel mode"
+            )
+        if (
+            row["channel"] == "INDUSTRY_VALUE_CHAIN" and industry_context_only
+            and not claims_semiconductor_context
+        ):
+            values = feature_values if isinstance(feature_values, Mapping) else {}
+            status = values.get("rotation_status")
+            expected_hot = (
+                None if row["data_status"] != "COMPLETE" or status is None
+                else status in HOT_ROTATION_STATUSES
+            )
+            # governance-mutation: FUNNEL_U1_INDUSTRY_HOT_MISSING_VALIDATED
+            if "hot_industry" not in values or values["hot_industry"] is not expected_hot:
+                raise FunnelError(
+                    "industry hot_industry must be null when rotation evidence is "
+                    "missing and must match the published rotation status otherwise"
+                )
         if row["channel"] == "E1_EVENT":
             verdict = (row.get("feature_values") or {}).get("verdict")
             expected_trigger = verdict == "RED_FLAG"
@@ -1094,10 +1128,22 @@ def build_candidate_review(
     features: Mapping[str, Mapping[str, Any]], trade_date: str,
     generated_at: str | None = None, target_size: int = 200,
     slow_bull_quota: int = 15, contrarian_quota: int = 15, control_quota: int = 10,
+    legacy_industry_replay: bool = False,
 ) -> dict[str, Any]:
     trade_date = _date8(trade_date)
     generated_at = generated_at or _now_utc()
     validate_all_market_scan(scan, registry)
+    industry_mode = _scan_industry_channel_mode(scan)
+    # A scan without the mode key predates INDUSTRY_CHANNEL_MODE and may carry
+    # issuer-code-ranked industry triggers; it is admitted only for an explicit
+    # offline replay, never for a new U2 pool.
+    # governance-mutation: FUNNEL_U2_LEGACY_INDUSTRY_SCAN_REFUSED
+    if industry_mode is None and legacy_industry_replay is not True:
+        raise FunnelError(
+            "all_market_scan declares no industry channel mode; a new U2 pool "
+            "requires INDUSTRY_CHANNEL_MODE (pass legacy_industry_replay=True "
+            "only to replay an archived bundle)"
+        )
     if not 100 <= target_size <= 300:
         raise FunnelError("U2 target_size must remain within 100..300")
     if min(slow_bull_quota, contrarian_quota, control_quota) < 0:
@@ -1318,6 +1364,10 @@ def build_candidate_review(
             "selection": "CHANNEL_UNION_EQUAL_ROUND_ROBIN_NO_COMPOSITE_SCORE",
             "reserved_quotas_are_floors": True,
             "proxy_rules": "UNVALIDATED_INITIAL_RELATIVE_RULES",
+            # U2 admission semantics changed with the industry mode while
+            # rule_version stayed research_funnel_v1; pooled evaluations read this
+            # key to split pre- and post-change pools (null = archived replay).
+            "industry_channel_mode": industry_mode,
         },
         "quota": {"required": quota_required, "actual": quota_actual, "shortfalls": shortfalls},
         "coverage": {
@@ -1460,6 +1510,9 @@ def validate_candidate_review(
         raise FunnelError("random control draw is not reproducible from its frozen frame")
 
     policy = payload.get("policy") or {}
+    # governance-mutation: FUNNEL_U2_INDUSTRY_MODE_BOUND
+    if policy.get("industry_channel_mode") != _scan_industry_channel_mode(scan):
+        raise FunnelError("candidate_review industry channel mode differs from its U1 scan")
     required_quota = (payload.get("quota") or {}).get("required") or {}
     target_size = int(policy.get("target_size") or 0)
     reserved_total = sum(int(required_quota.get(key) or 0) for key in (

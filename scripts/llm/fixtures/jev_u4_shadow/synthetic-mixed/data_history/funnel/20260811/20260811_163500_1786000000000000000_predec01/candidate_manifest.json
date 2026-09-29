@@ -3,7 +3,7 @@
   "candidate_rows_hash": "d292c150ea7c2073a34a9fdbce549ce99f7132bc1ccc3c1d692cf08cc42b0852",
   "disclaimer": "不是买卖指令；研究信号，human executes.",
   "expected_count": 16,
-  "manifest_hash": "dc95c57063f0aae7d4215c5546a8c7bc6b85efe73288d1ffd179aadd13a35d25",
+  "manifest_hash": "06c3fdbf2bc2ac90355db95db55a5d28d91d009ed9aa1a5fe7b1927ced5f4c34",
   "policy": {
     "excludes": [
       "EXCLUDED_RED_FLAG"
@@ -14,7 +14,7 @@
   },
   "rule_version": "research_funnel_v1",
   "run_id": "20260811_163500_1786000000000000000_predec01",
-  "scan_rows_hash": "8b1dbf8de397183668d2772354c47d81a8c1d09cc827484490d1d55be174a7b6",
+  "scan_rows_hash": "33addb49ced9986a2bc44b454548a05a5ee21ea72503c55ccaef7bceb2559fe2",
   "schema": "ar.research_funnel_candidate_manifest",
   "schema_version": "1.0",
   "ts_codes": [
