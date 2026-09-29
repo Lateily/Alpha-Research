@@ -78,7 +78,20 @@
               "endpoint": { "enum": ["forecast_vip", "express_vip", "income_vip"] },
               "period": { "type": "string", "pattern": "^[0-9]{8}$" },
               "status": { "enum": ["OK", "DATA_BLOCKED"] },
-              "rows": { "type": "integer", "minimum": 0 }
+              "rows": { "type": "integer", "minimum": 0 },
+              "pages": { "type": "integer", "minimum": 0 },
+              "page_limit": { "type": ["integer", "null"], "minimum": 1 },
+              "capped": { "type": "boolean" },
+              "truncation_reason": {
+                "enum": [
+                  null,
+                  "PAGING_NOT_HONORED",
+                  "HAS_MORE",
+                  "ROW_CAP_REACHED",
+                  "EMPTY_PAGE_WITH_HAS_MORE",
+                  "MAX_PAGES_REACHED"
+                ]
+              }
             }
           }
         },
@@ -145,6 +158,7 @@
         "express_active_rows": { "type": "integer", "minimum": 0 },
         "express_superseded_rows": { "type": "integer", "minimum": 0 },
         "income_tickers": { "type": "integer", "minimum": 0 },
+        "income_deadline_gap_rows": { "type": "integer", "minimum": 0 },
         "formal_announcements": { "const": "DATA_BLOCKED" },
         "source_row_occurrences_outside_u0": { "type": "integer", "minimum": 0 },
         "source_tickers_outside_u0": { "type": "integer", "minimum": 0 }
@@ -187,6 +201,11 @@
               "express": { "enum": ["PRESENT", "EMPTY_VALID", "DATA_BLOCKED", "SUPERSEDED"] },
               "filed_quarters": { "type": "integer", "minimum": 0 },
               "income": { "enum": ["COMPLETE", "DATA_BLOCKED"] },
+              "income_missing_after_deadline": {
+                "type": "array",
+                "items": { "type": "string", "pattern": "^[0-9]{8}$" },
+                "uniqueItems": true
+              },
               "formal_announcements": { "const": "DATA_BLOCKED" }
             }
           },
