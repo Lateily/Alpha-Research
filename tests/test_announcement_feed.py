@@ -35,6 +35,7 @@ import full_battery  # noqa: E402
 import funnel_dag as dag  # noqa: E402
 import funnel_pipeline as fp  # noqa: E402
 import red_flag_gate  # noqa: E402
+import tushare_https  # noqa: E402
 import run_nightly as nightly  # noqa: E402
 import test_full_battery_evidence as battery_fixture  # noqa: E402
 import test_funnel_dag_offline as dag_fixture  # noqa: E402
@@ -60,6 +61,15 @@ def run_battery(titles, *, sink=None, provider=None):
 def capture(code, items, *, status="OK", err=None, channel="EASTMONEY_ANN_A"):
     return {"ts_code": code, "source_channel": channel if items is not None else None,
             "items": items, "status": status, "err": err, "captured_at": CAPTURED}
+
+
+def captured_worker(code, target):
+    """Module-level funnel worker for the real spawn collector (picklable by name)."""
+    import funnel_dag
+    import test_funnel_dag_offline as fixtures
+    date = target[:4] + "-" + target[4:6] + "-" + target[6:]
+    return funnel_dag.CapturedRow((fixtures.complete_row(code, target),
+                                   capture(code, [[date, f"spawned filing {code}"]])))
 
 
 def manifest_for(codes):
@@ -136,6 +146,37 @@ class BatterySideChannelTests(unittest.TestCase):
         self.assertEqual(row, payload["row"])
         self.assertEqual(record, payload["announcement_capture"])
 
+    def test_real_collector_carries_the_capture_through_spawned_workers(self):
+        import test_announcement_feed as fixtures
+        codes = ["000001.SZ", "000002.SZ"]
+        outcomes = dag.collect_rows(codes, AS_OF, fixtures.captured_worker, max_workers=2,
+                                    row_seconds=30, budget_seconds=60)
+        self.assertEqual(codes, [outcome["ts_code"] for outcome in outcomes])
+        for outcome in outcomes:
+            self.assertIsNone(outcome["reason"], outcome)
+            self.assertEqual(outcome["ts_code"], outcome["row"]["ts_code"])
+            self.assertEqual(f"spawned filing {outcome['ts_code']}",
+                             outcome["announcement_capture"]["items"][0][1])
+
+    def test_funnel_worker_passes_a_sink_and_returns_the_last_capture(self):
+        received = []
+
+        def fake_battery(pro, tk, today, *, announcement_sink=None):
+            received.append(announcement_sink)
+            if isinstance(announcement_sink, list):
+                announcement_sink.append(capture(tk, [["2026-09-22", "first"]]))
+                announcement_sink.append(capture(tk, [["2026-09-23", "last"]]))
+            return dag_fixture.complete_row(tk, today)
+
+        with mock.patch.object(full_battery, "battery", fake_battery), \
+                mock.patch.object(tushare_https, "TushareHTTPS", lambda token: object()):
+            result = dag._read_battery_capture("offline-token", "000001.SZ", AS_OF)
+        self.assertIsInstance(received[0], list, "the funnel worker must pass a list sink")
+        self.assertIsInstance(result, dag.CapturedRow)
+        self.assertEqual("000001.SZ", result[0]["ts_code"])
+        self.assertIsNotNone(result[1], "a missing sink would make every ticker DATA_BLOCKED")
+        self.assertEqual([["2026-09-23", "last"]], result[1]["items"])
+
 
 class FeedContractTests(unittest.TestCase):
     def test_item_id_changes_with_title(self):
@@ -150,6 +191,7 @@ class FeedContractTests(unittest.TestCase):
             ["2026-09-22", "yesterday"]])})
         by_title = {row["title"]: row for row in feed["rows"]}
         self.assertEqual(3, len(feed["rows"]), "an identical (date, title) is one item")
+        self.assertEqual({"000001.SZ": 1}, feed["duplicate_titles_collapsed"], "the collapse is disclosed")
         self.assertEqual("AFTER_AS_OF_EXCLUDED", by_title["tomorrow"]["eligibility"])
         self.assertFalse(by_title["tomorrow"]["same_day_as_as_of"])
         self.assertEqual("AT_OR_BEFORE_AS_OF", by_title["today"]["eligibility"])
@@ -184,11 +226,16 @@ class FeedContractTests(unittest.TestCase):
                          per["000004.SZ"], "a verified empty window is a real zero")
 
     def test_missing_or_malformed_capture_is_blocked(self):
-        feed, _m, _b = build(["000001.SZ", "000002.SZ"], {
-            "000002.SZ": dict(capture("000002.SZ", [["2026-09-23", 7]]))})
+        feed, _m, _b = build(["000001.SZ", "000002.SZ", "000003.SZ", "000004.SZ"], {
+            "000002.SZ": dict(capture("000002.SZ", [["2026-09-23", 7]])),
+            "000003.SZ": dict(capture("000003.SZ", [["2026-09-23", "t"]]), captured_at=12345),
+            "000004.SZ": dict(capture("000004.SZ", [["2026-09-23", "t"]]), status="MAYBE")})
         per = {entry["ts_code"]: entry for entry in feed["per_ticker"]}
         self.assertEqual("ANNOUNCEMENT_CAPTURE_MISSING", per["000001.SZ"]["err"])
-        self.assertEqual("ANNOUNCEMENT_CAPTURE_INVALID", per["000002.SZ"]["err"])
+        for code in ("000002.SZ", "000003.SZ", "000004.SZ"):
+            self.assertEqual("ANNOUNCEMENT_CAPTURE_INVALID", per[code]["err"], code)
+            self.assertIsNone(per[code]["item_count"], code)
+        self.assertEqual([], feed["rows"], "a malformed capture degrades, it never fails the stage")
 
     def test_tampered_content_or_bindings_are_refused(self):
         feed, manifest, battery = build(["000001.SZ"], {"000001.SZ": capture(
@@ -199,6 +246,13 @@ class FeedContractTests(unittest.TestCase):
         retitled["rows_hash"] = af._hash(retitled["rows"])
         with self.assertRaisesRegex(af.AnnouncementFeedError, "item_id"):
             af.validate_feed(retitled, manifest, battery)
+        future_feed, future_manifest, future_battery = build(["000001.SZ"], {"000001.SZ": capture(
+            "000001.SZ", [["2026-09-24", "tomorrow"]])})
+        relabeled = copy.deepcopy(future_feed)
+        relabeled["rows"][0]["eligibility"] = "AT_OR_BEFORE_AS_OF"
+        relabeled["rows_hash"] = af._hash(relabeled["rows"])
+        with self.assertRaisesRegex(af.AnnouncementFeedError, "not recomputable"):
+            af.validate_feed(relabeled, future_manifest, future_battery)
         unhashed = copy.deepcopy(feed)
         unhashed["rows"][0]["same_day_as_as_of"] = False
         with self.assertRaisesRegex(af.AnnouncementFeedError, "rows_hash"):
@@ -318,6 +372,40 @@ class FunnelStageTests(unittest.TestCase):
             with self.assertRaisesRegex(af.AnnouncementFeedError, "disagree"):
                 af.verify_bundle_sidecar(bundle, payloads)
 
+    def test_sidecar_generated_at_must_match_the_battery_stage(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            _pv, bundle = self._run(Path(tmp), self._outcomes)
+            payloads = {name: json.loads((bundle / name).read_text("utf-8"))
+                        for name in ("candidate_manifest.json", "candidate_battery.json")}
+            feed = json.loads((bundle / af.FEED_FILE).read_text("utf-8"))
+            feed["generated_at"] = "2026-01-01T00:00:00+00:00"
+            raw = json.dumps(feed, ensure_ascii=False).encode("utf-8")
+            (bundle / af.FEED_FILE).write_bytes(raw)
+            stage_path = bundle / "stage_battery.json"
+            stage = json.loads(stage_path.read_text("utf-8"))
+            stage["artifacts"][af.FEED_FILE] = hashlib.sha256(raw).hexdigest()
+            stage.pop("stage_hash")
+            stage["stage_hash"] = fp._hash(stage)
+            stage_path.write_text(json.dumps(stage), encoding="utf-8")
+            with self.assertRaisesRegex(af.AnnouncementFeedError, "not written by this battery stage"):
+                af.verify_bundle_sidecar(bundle, payloads)
+
+    def test_label_reader_rereads_both_stages(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            _pv, bundle = self._run(Path(tmp), self._outcomes)
+            feed, manifest, battery = af.load_bundle_feed(bundle)
+            self.assertEqual(manifest["manifest_hash"], feed["manifest_hash"])
+            self.assertEqual(battery["rows_hash"], feed["battery_rows_hash"])
+            path = bundle / "candidate_manifest.json"
+            edited = dict(json.loads(path.read_text("utf-8")), edited_locally=True)
+            path.write_text(json.dumps(edited), encoding="utf-8")  # manifest_hash kept
+            with self.assertRaisesRegex(af.AnnouncementFeedError, "stages are unreadable"):
+                af.load_bundle_feed(bundle)
+            elsewhere = Path(tmp) / "20990101" / bundle.name
+            shutil.copytree(bundle, elsewhere)
+            with self.assertRaisesRegex(af.AnnouncementFeedError, "stages are unreadable"):
+                af.load_bundle_feed(elsewhere)
+
     def test_ready_path_ignores_the_sidecar(self):
         with tempfile.TemporaryDirectory() as tmp:
             with_feed = self._run(Path(tmp) / "a", self._outcomes)[1]
@@ -331,10 +419,11 @@ class FunnelStageTests(unittest.TestCase):
                 self.assertEqual(first, second, name)
 
 
-def add_feed_to_fixture_bundle(bundle: Path, *, tamper: bool = False, extra: str | None = None) -> None:
+def add_feed_to_fixture_bundle(bundle: Path, *, tamper: bool = False, extra: str | None = None,
+                               stage_name: str = "battery") -> None:
     manifest = json.loads((bundle / "candidate_manifest.json").read_text("utf-8"))
     battery = json.loads((bundle / "candidate_battery.json").read_text("utf-8"))
-    stage_path = bundle / "stage_battery.json"
+    stage_path = bundle / f"stage_{stage_name}.json"
     stage = json.loads(stage_path.read_text("utf-8"))
     code = manifest["ts_codes"][0]
     feed = af.build_feed(as_of=battery["as_of"], run_id=battery["run_id"],
@@ -384,6 +473,14 @@ class U4ReaderTests(unittest.TestCase):
             with self.assertRaisesRegex(pre.PreDecisionError, "stage receipt contract"):
                 self._packet(bundle, feature_health, funnel_health)
 
+    def test_u4_accepts_the_feed_only_on_the_battery_stage(self):
+        for stage_name in ("candidates", "finalize"):
+            with tempfile.TemporaryDirectory() as tmp:
+                _root, bundle, feature_health, funnel_health = self._tree(tmp, stage_name=stage_name)
+                with self.assertRaisesRegex(pre.PreDecisionError, "stage receipt contract",
+                                            msg=stage_name):
+                    self._packet(bundle, feature_health, funnel_health)
+
     def test_evidence_view_captures_stage_only_sidecar(self):
         with tempfile.TemporaryDirectory() as tmp:
             root, bundle, _feature_health, _funnel_health = self._tree(tmp)
@@ -397,8 +494,11 @@ class U4ReaderTests(unittest.TestCase):
                     feature_health_ref="public/data/v2/feature_store_health.json",
                     funnel_health_ref="public/data/v2/funnel_health.json",
                     cyclical_flags_ref=None)
-            _manifest, payloads = dag._read_stage_from_evidence(
-                view, bundle_ref, "battery", as_of=u4_fixture.AS_OF, run_id=u4_fixture.RUN_ID)
+            try:
+                _manifest, payloads = dag._read_stage_from_evidence(
+                    view, bundle_ref, "battery", as_of=u4_fixture.AS_OF, run_id=u4_fixture.RUN_ID)
+            except dag.FunnelError as exc:
+                self.fail(f"the stage-only sidecar was not captured in the same pass: {exc}")
             self.assertIn(af.FEED_FILE, payloads)
 
 

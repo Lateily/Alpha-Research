@@ -472,6 +472,7 @@ def _validate_funnel_health(
 
 def _required_stage_files(stage: str, names: set[str]) -> set[str]:
     """Battery may also hash the announcement feed sidecar; nothing else is optional."""
+    # governance-mutation: U4_PREDECISION_BATTERY_OPTIONAL_ONLY
     if stage == "battery":
         return names - set(dag.STAGE2_OPTIONAL_FILES)
     return names

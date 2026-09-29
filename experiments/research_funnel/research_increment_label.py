@@ -102,6 +102,13 @@ ANNOUNCEMENT_SNAPSHOT_KEYS = {"source_channel", "notice_date", "title", "capture
                               "news_display_verdict"}
 E1_SNAPSHOT_KEYS = {"kind", "source", "evidence_grade", "ann_date", "period", "triggered", "rule"}
 NEWS_DISPLAY_VERDICTS = ("SPIKE", "NORMAL", None)
+# The labeler never sees the machine display signal the report cross-tabs against.
+PROPOSAL_HIDDEN_SNAPSHOT_KEYS = ("news_display_verdict", "news_status")
+LATE_CAPTURE_DAYS = 2
+VERIFIED = "VERIFIED_AGAINST_SOURCE"
+MISMATCH = "SOURCE_MISMATCH"
+SNAPSHOT_ONLY = "SOURCE_UNAVAILABLE_SNAPSHOT_ONLY"
+PARTIAL = "PARTIALLY_VERIFIED_REST_SNAPSHOT_ONLY"
 
 
 class LabelError(RuntimeError):
@@ -143,7 +150,7 @@ def _aware(value: Any, label: str) -> _dt.datetime:
 
 def _r015(ts: str) -> _dt.datetime:
     """The R-015 clock is naive Asia/Shanghai; make that explicit before comparing."""
-    parsed = _dt.datetime.fromisoformat(str(ts))
+    parsed = _dt.datetime.fromisoformat(str(ts).replace("Z", "+00:00"))
     if parsed.tzinfo is None:
         parsed = parsed.replace(tzinfo=event_ledger.OPERATIONAL_TIMEZONE)
     return parsed
@@ -166,32 +173,49 @@ def _shanghai_date(moment: _dt.datetime) -> _dt.date:
 
 # ── live-thesis scope (read-only) ─────────────────────────────────────────
 
-def _u4_select_refs(path: Path, as_of: _dt.date) -> tuple[str, dict[str, list[dict[str, Any]]]]:
+def _u4_select_refs(path: Path, as_of: _dt.date) -> tuple[str, dict[str, list[dict[str, Any]]], dict[str, str]]:
+    """Live U4 SELECTs as the ledger stood at the end of as_of (Asia/Shanghai).
+
+    The whole ledger is verified first (a broken ledger is never "no thesis"),
+    then only the record prefix registered on or before as_of is replayed, so a
+    later revision (REJECT/DEFER or a re-SELECT) cannot remove or add a thesis
+    retroactively and a closure committed after as_of does not count.
+    """
     if not os.path.lexists(path):
-        return "ABSENT", {}
+        return "ABSENT", {}, {}
     from experiments.research_funnel import u4_decision_ledger
+    path = Path(path)
     try:
-        state = u4_decision_ledger._snapshot_state(Path(path))
+        with u4_decision_ledger._ledger_read_snapshot(path):
+            u4_decision_ledger._snapshot_state(path)
+            records = u4_decision_ledger._read_outer_records(path)
+        prefix = []
+        for outer in records:
+            # governance-mutation: RESEARCH_INCREMENT_U4_SCOPE_AS_OF_REPLAY
+            if _shanghai_date(_r015(outer.get("ts"))) > as_of:
+                break  # R-015 is append-only in time order: the rest is later still
+            prefix.append(outer)
+        state = u4_decision_ledger._replay_records(prefix)
     except Exception as exc:  # a broken U4 ledger is never read as "no thesis"
         raise LabelError(f"U4 decision ledger is unreadable: {exc}") from exc
     refs: dict[str, list[dict[str, Any]]] = {}
+    dates: dict[str, str] = {}
     for event in state["current"].values():
         if event.get("decision") != "SELECT":
             continue
         registered = _aware(event.get("registered_at"), "U4 registered_at")
-        # A thesis registered after as_of did not exist when the item appeared.
-        if _shanghai_date(registered) > as_of:
-            continue
         code = event["candidate"]["ts_code"]
         refs.setdefault(code, []).append({"kind": "U4_RESEARCH_QUESTION",
                                           "ref": event["decision_id"]})
-    return "OK", refs
+        dates[event["decision_id"]] = _shanghai_date(registered).isoformat()
+    return "OK", refs, dates
 
 
-def _decision_sheet_refs(directory: Path, as_of: _dt.date) -> tuple[str, dict[str, list[dict[str, Any]]]]:
+def _decision_sheet_refs(directory: Path, as_of: _dt.date) -> tuple[str, dict[str, list[dict[str, Any]]], dict[str, str]]:
     if not Path(directory).is_dir():
-        return "ABSENT", {}
+        return "ABSENT", {}, {}
     refs: dict[str, list[dict[str, Any]]] = {}
+    dates: dict[str, str] = {}
     for path in sorted(Path(directory).iterdir()):
         match = SHEET_RE.fullmatch(path.name)
         if not match or not path.is_file():
@@ -204,7 +228,9 @@ def _decision_sheet_refs(directory: Path, as_of: _dt.date) -> tuple[str, dict[st
         except ValueError:
             ref = f"docs/research/decision_sheets/{path.name}"
         refs.setdefault(code, []).append({"kind": "DECISION_SHEET", "ref": ref})
-    return "OK", refs
+        # Sheets never expire in V1; their age is shown so a stale thesis is visible.
+        dates[ref] = match.group("date")
+    return "OK", refs, dates
 
 
 def _watchlist(path: Path) -> tuple[str, list[str]]:
@@ -212,18 +238,23 @@ def _watchlist(path: Path) -> tuple[str, list[str]]:
         data = json.loads(Path(path).read_text(encoding="utf-8"))
     except FileNotFoundError:
         return "ABSENT", []
-    except (OSError, json.JSONDecodeError):
+    except (OSError, ValueError):
         return "DATA_BLOCKED", []
-    tickers = [row.get("ticker") for row in (data.get("watch") or [])
+    watch = data.get("watch") if isinstance(data, Mapping) else None
+    # governance-mutation: RESEARCH_INCREMENT_WATCHLIST_CORRUPT_BLOCKED
+    if not isinstance(watch, list):
+        return "DATA_BLOCKED", []
+    tickers = [row.get("ticker") for row in watch
                if isinstance(row, Mapping) and isinstance(row.get("ticker"), str)]
-    return "OK", [code for code in tickers if TICKER_RE.fullmatch(code)][:25]
+    return "OK", sorted({code for code in tickers if TICKER_RE.fullmatch(code)})
 
 
 def live_scope(as_of: str, *, u4_ledger: Path, decision_sheets: Path,
                watchlist: Path) -> dict[str, Any]:
     cutoff = _date8(as_of)
-    u4_status, u4 = _u4_select_refs(u4_ledger, cutoff)
-    sheet_status, sheets = _decision_sheet_refs(decision_sheets, cutoff)
+    u4_status, u4, u4_dates = _u4_select_refs(u4_ledger, cutoff)
+    sheet_status, sheets, sheet_dates = _decision_sheet_refs(decision_sheets, cutoff)
+    ref_dates = dict(u4_dates, **sheet_dates)
     watch_status, watch = _watchlist(watchlist)
     tickers: dict[str, dict[str, Any]] = {}
     for source, mapping in (("U4_SELECT", u4), ("DECISION_SHEET", sheets)):
@@ -238,6 +269,7 @@ def live_scope(as_of: str, *, u4_ledger: Path, decision_sheets: Path,
         entry["sources"] = sorted(set(entry["sources"]))
         entry["thesis_refs"] = sorted({(r["kind"], r["ref"]) for r in entry["thesis_refs"]})
         entry["thesis_refs"] = [{"kind": k, "ref": r} for k, r in entry["thesis_refs"]]
+        entry["thesis_ref_dates"] = {r["ref"]: ref_dates[r["ref"]] for r in entry["thesis_refs"]}
     return {
         "tickers": {code: tickers[code] for code in sorted(tickers)},
         "source_status": {"U4_SELECT": u4_status, "DECISION_SHEET": sheet_status,
@@ -313,13 +345,16 @@ def load_e1_layer(path: Path | None, as_of: str) -> tuple[str, dict[str, Any] | 
     return "SAME_AS_OF", layer
 
 
-def e1_items(layer: Mapping[str, Any] | None, run_id: str) -> dict[str, dict[str, Any]]:
+def e1_items(layer: Mapping[str, Any] | None) -> dict[str, dict[str, Any]]:
+    """Triggered E1 evidence rows. The E1 layer has no run binding (basis SAME_AS_OF),
+    so an E1 label's source.run_id is null rather than the funnel run's id."""
     items: dict[str, dict[str, Any]] = {}
     if layer is None:
         return items
     for row in layer["rows"]:
         code = row.get("ts_code")
         for evidence in row.get("evidence") or []:
+            # governance-mutation: RESEARCH_INCREMENT_E1_TRIGGERED_ONLY
             if not isinstance(evidence, Mapping) or evidence.get("triggered") is not True:
                 continue
             snapshot = {key: evidence.get(key) for key in sorted(E1_SNAPSHOT_KEYS)}
@@ -328,7 +363,7 @@ def e1_items(layer: Mapping[str, Any] | None, run_id: str) -> dict[str, dict[str
             items[identity] = {
                 "item_id": identity, "target_kind": "E1_EVENT", "ts_code": code,
                 "snapshot": snapshot,
-                "source": {"as_of": layer["as_of"], "run_id": run_id,
+                "source": {"as_of": layer["as_of"], "run_id": None,
                            "feed_rows_hash": layer["rows_hash"]},
             }
     return items
@@ -346,6 +381,33 @@ def _item_date(item: Mapping[str, Any]) -> _dt.date | None:
 def _machine_view(item: Mapping[str, Any]) -> dict[str, Any]:
     content = has_content(item["target_kind"], item["snapshot"], item["source"]["as_of"])
     return dict(item, provenance_tier="E1" if content else "DATA_BLOCKED", has_content=content)
+
+
+def _capture_lag_days(item: Mapping[str, Any]) -> int | None:
+    """Calendar days from as_of to the capture (catch-up runs capture days later)."""
+    if item["target_kind"] != "ANNOUNCEMENT":
+        return None
+    try:
+        captured = _aware(item["snapshot"].get("captured_at"), "captured_at")
+        return (_shanghai_date(captured) - _date8(item["source"]["as_of"])).days
+    except LabelError:
+        return None
+
+
+def _proposal_view(item: Mapping[str, Any]) -> dict[str, Any]:
+    """What the labeler sees: machine view minus the display signal the report scores."""
+    view = _machine_view(item)
+    # governance-mutation: RESEARCH_INCREMENT_PROPOSE_BLIND_TO_DISPLAY_VERDICT
+    view["snapshot"] = {k: v for k, v in view["snapshot"].items() if k not in PROPOSAL_HIDDEN_SNAPSHOT_KEYS}
+    view["capture_lag_days"] = _capture_lag_days(item)
+    return view
+
+
+def _e1_after_as_of(snapshot: Mapping[str, Any], as_of: str) -> bool:
+    try:
+        return _date8(str(snapshot.get("ann_date"))) > _date8(as_of)
+    except LabelError:
+        return False
 
 
 # ── ledger replay ─────────────────────────────────────────────────────────
@@ -439,6 +501,11 @@ def _validate_label_payload(payload: Mapping[str, Any]) -> None:
         if payload["item_id"] != e1_item_id(payload["ts_code"], str(snap["kind"]), str(snap["source"]),
                                             str(snap["ann_date"]), str(snap["period"])):
             raise LabelError("label item_id does not bind its E1 snapshot")
+        if source["run_id"] is not None:
+            raise LabelError("an E1 label has no run binding (basis SAME_AS_OF): run_id must be null")
+        # governance-mutation: RESEARCH_INCREMENT_NO_AFTER_AS_OF_E1_LABEL
+        if _e1_after_as_of(snap, source["as_of"]):
+            raise LabelError("an E1 event announced after as_of cannot be labeled for as_of")
     validate_label_semantics(payload, source["as_of"])
     content = has_content(payload["target_kind"], payload["snapshot"], source["as_of"])
     # governance-mutation: RESEARCH_INCREMENT_PROVENANCE_MACHINE_FILLED
@@ -528,7 +595,8 @@ def replay(path: Path) -> dict[str, Any]:
             if (payload["batch_id"] != intent["batch_id"]
                     or payload["human_decision"] != intent["human_decision"]
                     or payload["source"]["as_of"] != intent["as_of"]
-                    or payload["source"]["run_id"] != intent["run_id"]
+                    or payload["source"]["run_id"] != (
+                        intent["run_id"] if payload["target_kind"] == "ANNOUNCEMENT" else None)
                     or payload["item_id"] not in intent["item_ids"]
                     or payload["item_id"] in {l["item_id"] for l in current["labels"]}
                     or payload["source"]["feed_rows_hash"] != (
@@ -566,14 +634,36 @@ def replay(path: Path) -> dict[str, Any]:
 
 
 def labeled_item_ids(state: Mapping[str, Any]) -> set[str]:
-    batches = list(state["closed"]) + list(state["abandoned"])
-    if state.get("open") is not None:
-        batches.append(state["open"])
-    return {label["item_id"] for batch in batches for label in batch["labels"]} | {
-        item for batch in batches for item in batch["intent"]["item_ids"]}
+    """Items with a closed label. Abandoned/open batches never labelled anything,
+    so their items come back to propose (and are counted separately)."""
+    # governance-mutation: RESEARCH_INCREMENT_NOVELTY_CLOSED_ONLY
+    batches = list(state["closed"])
+    return {label["item_id"] for batch in batches for label in batch["labels"]}
 
 
-def verify(path: Path, *, bundle_root: Path | None = None) -> dict[str, Any]:
+def unclosed_item_ids(state: Mapping[str, Any]) -> set[str]:
+    batches = list(state["abandoned"]) + ([state["open"]] if state.get("open") else [])
+    return {item for batch in batches for item in batch["intent"]["item_ids"]}
+
+
+def _overall_source_status(statuses: set[str]) -> str:
+    # governance-mutation: RESEARCH_INCREMENT_VERIFY_EVERY_LABEL_COMPARED
+    if MISMATCH in statuses:
+        return MISMATCH
+    if statuses == {VERIFIED}:
+        return VERIFIED
+    return PARTIAL if VERIFIED in statuses else SNAPSHOT_ONLY
+
+
+def verify(path: Path, *, bundle_root: Path | None = None,
+           e1_layer: Path | None = None) -> dict[str, Any]:
+    """Replay the ledger; compare each closed label with its source when still available.
+
+    VERIFIED_AGAINST_SOURCE is reported only when every label in the batch was
+    re-derived from its source: announcements from the bundle feed (same run,
+    same rows_hash), E1 events from an --e1-layer with the same as_of and the
+    batch's e1 rows_hash. Anything not compared stays SNAPSHOT_ONLY.
+    """
     try:
         state = replay(path)
     except (LabelError, ValueError, OSError, json.JSONDecodeError, KeyError, TypeError) as exc:
@@ -582,22 +672,39 @@ def verify(path: Path, *, bundle_root: Path | None = None) -> dict[str, Any]:
     ok = True
     for batch in state["closed"]:
         intent = batch["intent"]
-        status = "SOURCE_UNAVAILABLE_SNAPSHOT_ONLY"
-        bundle = (Path(bundle_root) / intent["as_of"] / intent["run_id"]) if bundle_root else None
-        if bundle is not None and bundle.is_dir():
-            try:
-                feed, _manifest, battery = feed_contract.load_bundle_feed(bundle)
-                items = announcement_items(feed, battery)
-                mismatched = [l["item_id"] for l in batch["labels"]
-                              if l["target_kind"] == "ANNOUNCEMENT"
-                              and items.get(l["item_id"], {}).get("snapshot") != l["snapshot"]]
-                status = "SOURCE_MISMATCH" if mismatched else "VERIFIED_AGAINST_SOURCE"
-            except feed_contract.AnnouncementFeedError:
-                status = "SOURCE_MISMATCH"
-        if status == "SOURCE_MISMATCH":
+        per_kind: dict[str, dict[str, Any]] = {}
+        announcements = [l for l in batch["labels"] if l["target_kind"] == "ANNOUNCEMENT"]
+        if announcements:
+            status = SNAPSHOT_ONLY
+            bundle = (Path(bundle_root) / intent["as_of"] / intent["run_id"]) if bundle_root else None
+            if bundle is not None and bundle.is_dir():
+                try:
+                    feed, _manifest, battery = feed_contract.load_bundle_feed(bundle)
+                    items = announcement_items(feed, battery)
+                    mismatched = feed["rows_hash"] != intent["feed_rows_hash"] or any(
+                        items.get(l["item_id"], {}).get("snapshot") != l["snapshot"]
+                        for l in announcements)
+                    status = MISMATCH if mismatched else VERIFIED
+                except feed_contract.AnnouncementFeedError:
+                    status = MISMATCH
+            per_kind["ANNOUNCEMENT"] = {"labels": len(announcements), "source_status": status}
+        events = [l for l in batch["labels"] if l["target_kind"] == "E1_EVENT"]
+        if events:
+            status = SNAPSHOT_ONLY
+            _basis, layer = load_e1_layer(e1_layer, intent["as_of"])
+            # A layer with another rows_hash is not this batch's source: not compared.
+            if layer is not None and layer["rows_hash"] == intent["e1_rows_hash"]:
+                items = e1_items(layer)
+                mismatched = any(items.get(l["item_id"], {}).get("snapshot") != l["snapshot"]
+                                 for l in events)
+                status = MISMATCH if mismatched else VERIFIED
+            per_kind["E1_EVENT"] = {"labels": len(events), "source_status": status}
+        overall = _overall_source_status({entry["source_status"] for entry in per_kind.values()})
+        if overall == MISMATCH:
             ok = False
         sources.append({"batch_id": intent["batch_id"], "as_of": intent["as_of"],
-                        "run_id": intent["run_id"], "source_status": status})
+                        "run_id": intent["run_id"], "source_status": overall,
+                        "per_kind": per_kind})
     return {
         "ok": ok,
         "batches_closed": len(state["closed"]),
@@ -621,7 +728,7 @@ def _context(bundle: Path, e1_layer: Path | None, *, u4_ledger: Path, decision_s
                        watchlist=watchlist)
     e1_status, layer = load_e1_layer(e1_layer, feed["as_of"])
     items = announcement_items(feed, battery)
-    items.update(e1_items(layer, feed["run_id"]))
+    items.update(e1_items(layer))
     return {"feed": feed, "scope": scope, "items": items, "e1_status": e1_status,
             "e1_rows_hash": layer["rows_hash"] if layer else None}
 
@@ -629,6 +736,20 @@ def _context(bundle: Path, e1_layer: Path | None, *, u4_ledger: Path, decision_s
 def _thesis_options(scope: Mapping[str, Any], code: str) -> list[dict[str, Any]]:
     refs = scope["tickers"].get(code, {}).get("thesis_refs") or []
     return list(refs) if refs else [{"kind": "NONE", "ref": None}]
+
+
+def _thesis_ref_age_days(scope: Mapping[str, Any], code: str, as_of: str) -> dict[str, int]:
+    dates = scope["tickers"].get(code, {}).get("thesis_ref_dates") or {}
+    cutoff = _date8(as_of)
+    return {ref: (cutoff - _dt.date.fromisoformat(day)).days for ref, day in dates.items()}
+
+
+def _announcement_coverage(feed: Mapping[str, Any], code: str) -> str:
+    status = {entry["ts_code"]: entry["status"] for entry in feed["per_ticker"]}.get(code)
+    if status is None:
+        # The feed only covers the night's candidates; silence here is not "no news".
+        return "NOT_CAPTURED_NOT_A_CANDIDATE"
+    return "CAPTURED_OK" if status == "OK" else "DATA_BLOCKED"
 
 
 def propose(bundle: Path, *, ledger: Path, e1_layer: Path | None = None,
@@ -644,7 +765,9 @@ def propose(bundle: Path, *, ledger: Path, e1_layer: Path | None = None,
     feed, scope = context["feed"], context["scope"]
     cutoff = _date8(feed["as_of"])
     start = cutoff - _dt.timedelta(days=window_days - 1)
-    already = labeled_item_ids(replay(ledger))
+    state = replay(ledger)
+    already = labeled_item_ids(state)
+    unclosed = unclosed_item_ids(state) - already
     excluded = {"already_labelled": 0, "outside_window": 0, "after_as_of": 0,
                 "date_unverifiable": 0, "out_of_scope": 0}
     eligible = []
@@ -677,10 +800,17 @@ def propose(bundle: Path, *, ledger: Path, e1_layer: Path | None = None,
     chosen, over_cap = eligible[:cap], eligible[cap:]
     blocked_in_scope = [entry["ts_code"] for entry in feed["per_ticker"]
                         if entry["ts_code"] in scope["tickers"] and entry["status"] != "OK"]
+    scope_entries = []
+    for code, entry in scope["tickers"].items():
+        # governance-mutation: RESEARCH_INCREMENT_SCOPE_COVERAGE_DISCLOSED
+        scope_entries.append(dict(entry, announcement_coverage=_announcement_coverage(feed, code)))
+    not_in_feed = [entry["ts_code"] for entry in scope_entries
+                   if entry["announcement_coverage"] == "NOT_CAPTURED_NOT_A_CANDIDATE"]
     items = []
     for item in chosen:
-        view = _machine_view(item)
+        view = _proposal_view(item)
         view["thesis_ref_options"] = _thesis_options(scope, item["ts_code"])
+        view["thesis_ref_age_days"] = _thesis_ref_age_days(scope, item["ts_code"], feed["as_of"])
         items.append(view)
     template = [{
         "item_id": item["item_id"], "target_kind": item["target_kind"],
@@ -694,11 +824,14 @@ def propose(bundle: Path, *, ledger: Path, e1_layer: Path | None = None,
         "e1_basis": context["e1_status"],
         "window": {"start": start.isoformat(), "end": cutoff.isoformat(), "calendar_days": window_days},
         "cap": cap, "blind": True,
-        "scope": {"tickers": list(scope["tickers"].values()), "source_status": scope["source_status"]},
+        "blind_to": ["existing_labels", *PROPOSAL_HIDDEN_SNAPSHOT_KEYS],
+        "scope": {"tickers": scope_entries, "source_status": scope["source_status"]},
         "scope_tickers_news_blocked": blocked_in_scope,
+        "scope_tickers_not_in_feed": not_in_feed,
         "items": items,
         "not_reviewed_over_cap": [item["item_id"] for item in over_cap],
         "excluded_counts": excluded,
+        "reproposed_from_unclosed_batch": sum(item["item_id"] in unclosed for item in chosen),
         "input_template": {"schema": INPUT_SCHEMA, "schema_version": SCHEMA_VERSION,
                            "as_of": feed["as_of"], "run_id": feed["run_id"],
                            "human_decision": {"claimed_reviewer": None,
@@ -706,8 +839,11 @@ def propose(bundle: Path, *, ledger: Path, e1_layer: Path | None = None,
                                               "decided_at": None, "authorization_text": None,
                                               "authorization_evidence_ref": None},
                            "labels": template},
-        "note": ("Blind proposal: existing labels are never shown. Human axes are null and "
-                 "record refuses nulls. same_day_as_as_of items may postdate the as_of close."),
+        "note": ("Blind proposal: existing labels and the machine news display verdict are never "
+                 "shown. Human axes are null and record refuses nulls. same_day_as_as_of items "
+                 "may postdate the as_of close. Scope tickers that were not candidates tonight "
+                 "have no announcement capture (NOT_CAPTURED_NOT_A_CANDIDATE), which is not "
+                 "the same as having no announcements."),
         "disclaimer": DISCLAIMER,
     }
 
@@ -782,6 +918,8 @@ def prepare_batch(bundle: Path, raw: Any, *, e1_layer: Path | None = None,
         if label["target_kind"] == "ANNOUNCEMENT" and \
                 label["snapshot"]["eligibility"] == "AFTER_AS_OF_EXCLUDED":
             raise LabelError("an item published after as_of cannot be labeled for as_of")
+        if label["target_kind"] == "E1_EVENT" and _e1_after_as_of(label["snapshot"], feed["as_of"]):
+            raise LabelError("an E1 event announced after as_of cannot be labeled for as_of")
         validate_label_semantics(label, feed["as_of"])
         labels.append(label)
         projections.append(dict(entry))
@@ -877,18 +1015,22 @@ def report(ledger: Path) -> dict[str, Any]:
     state = replay(ledger)
     labels = [dict(label, reviewer=batch["intent"]["human_decision"]["claimed_reviewer"])
               for batch in state["closed"] for label in batch["labels"]]
-    relevant = [l for l in labels if l["thesis_relevance"] in RELEVANT]
+    # Labels made after seeing the post-as_of path are counted, never evaluated.
+    # governance-mutation: RESEARCH_INCREMENT_REPORT_EXCLUDES_FUTURE_SEEN
+    evaluable = [l for l in labels if l["exposure"]["future_seen"] is False]
+    relevant = [l for l in evaluable if l["thesis_relevance"] in RELEVANT]
     relevant_readable = [l for l in relevant if l["research_increment"] != "DATA_BLOCKED"]
     no_increment = [l for l in relevant_readable if l["research_increment"] == "NONE"]
     crosstab = {row: {"ANY_INCREMENT": 0, "NO_INCREMENT": 0, "ONLY_DATA_BLOCKED": 0}
                 for row in ("SPIKE", "NORMAL", "BLOCKED")}
     nights: dict[tuple[str, str], list[dict[str, Any]]] = {}
-    for label in labels:
+    for label in evaluable:
         if label["target_kind"] == "ANNOUNCEMENT":
             nights.setdefault((label["source"]["as_of"], label["ts_code"]), []).append(label)
     for group in nights.values():
         verdicts = {l["snapshot"]["news_display_verdict"] for l in group}
         # A blocked or missing display verdict is its own row, never NORMAL.
+        # governance-mutation: RESEARCH_INCREMENT_CROSSTAB_BLOCKED_ROW
         row = verdicts.pop() if len(verdicts) == 1 and None not in verdicts else "BLOCKED"
         increments = {l["research_increment"] for l in group}
         if increments & set(CHANGE_INCREMENTS):
@@ -899,7 +1041,7 @@ def report(ledger: Path) -> dict[str, Any]:
             column = "NO_INCREMENT"
         crosstab[row][column] += 1
     by_item: dict[str, list[dict[str, Any]]] = {}
-    for label in labels:
+    for label in evaluable:
         by_item.setdefault(label["item_id"], []).append(label)
     pairs, excluded_pairs = [], 0
     for group in by_item.values():
@@ -924,12 +1066,16 @@ def report(ledger: Path) -> dict[str, Any]:
             "by_increment": {key: sum(l["research_increment"] == key for l in labels) for key in INCREMENTS},
             "future_seen": sum(l["exposure"]["future_seen"] for l in labels),
             "same_day_as_as_of": sum(bool(l["snapshot"].get("same_day_as_as_of")) for l in labels),
+            "late_capture": sum((_capture_lag_days(l) or 0) >= LATE_CAPTURE_DAYS for l in labels),
         },
+        "evaluation_basis": {"evaluable_labels": len(evaluable),
+                             "future_seen_excluded": len(labels) - len(evaluable),
+                             "note": "shares, crosstab and agreement use future_seen=false labels only"},
         "relevant_but_no_increment_share": dict(
             _rate(len(no_increment), len(relevant_readable)),
             data_blocked_excluded=len(relevant) - len(relevant_readable)),
-        "no_live_thesis_share": _rate(sum(l["thesis_relevance"] == "NO_LIVE_THESIS" for l in labels),
-                                      len(labels)),
+        "no_live_thesis_share": _rate(sum(l["thesis_relevance"] == "NO_LIVE_THESIS" for l in evaluable),
+                                      len(evaluable)),
         "news_display_vs_increment_crosstab": {
             "unit": "ticker_night", "rows": crosstab,
             "note": "SPIKE/NORMAL is an unvalidated display label; BLOCKED = no display verdict."},
@@ -976,6 +1122,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             cmd.add_argument("--dry-run", action="store_true")
         if name == "verify":
             cmd.add_argument("--bundle-root", type=Path)
+            cmd.add_argument("--e1-layer", type=Path)
     args = parser.parse_args(argv)
     try:
         if args.command == "propose":
@@ -988,7 +1135,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                          decision_sheets=args.decision_sheets, watchlist=args.watchlist,
                          dry_run=args.dry_run)
         elif args.command == "verify":
-            out = verify(args.ledger, bundle_root=args.bundle_root)
+            out = verify(args.ledger, bundle_root=args.bundle_root, e1_layer=args.e1_layer)
         else:
             out = report(args.ledger)
     except (LabelError, ValueError, OSError) as exc:

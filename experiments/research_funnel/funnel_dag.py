@@ -546,6 +546,7 @@ def _read_battery_capture(token: str, tk: str, today: str) -> CapturedRow:
     pro = TushareHTTPS(token)
     captures: list[dict] = []
     # Only the funnel worker passes a sink; the watchlist battery never does.
+    # governance-mutation: FUNNEL_DAG_WORKER_PASSES_ANNOUNCEMENT_SINK
     row = _sanitize_row(full_battery.battery(pro, tk, today, announcement_sink=captures))
     return CapturedRow((row, captures[-1] if captures else None))
 

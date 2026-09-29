@@ -25,6 +25,7 @@ from __future__ import annotations
 import datetime as _dt
 import hashlib
 import json
+import sys
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
@@ -43,11 +44,13 @@ ROW_KEYS = {
 PER_TICKER_KEYS = {"ts_code", "status", "err", "item_count"}
 FEED_KEYS = {
     "schema", "schema_version", "as_of", "run_id", "generated_at", "manifest_hash",
-    "battery_rows_hash", "rows", "per_ticker", "rows_hash", "authority", "disclaimer",
+    "battery_rows_hash", "rows", "per_ticker", "rows_hash", "duplicate_titles_collapsed",
+    "authority", "disclaimer",
 }
 AUTHORITY = {"claim_allowed": False, "gate_authority": False, "no_trade_flag": True}
 DISCLAIMER = "不是买卖指令；研究信号，human executes。"
 CAPTURE_KEYS = {"ts_code", "source_channel", "items", "status", "err", "captured_at"}
+CAPTURE_STATUS = ("OK", "DATA_BLOCKED")
 
 
 class AnnouncementFeedError(RuntimeError):
@@ -107,14 +110,27 @@ def _news_blocked(row: Mapping[str, Any] | None) -> bool:
     return not isinstance(news, Mapping) or news.get("status") in BLOCKED_DIMENSION_STATUS
 
 
-def _rows_from_capture(capture: Mapping[str, Any], as_of: str) -> list[dict[str, Any]]:
+def _capture_is_well_typed(capture: Any, code: str) -> bool:
+    """A malformed capture degrades that ticker to DATA_BLOCKED; it never fails the stage."""
+    if not isinstance(capture, Mapping) or set(capture) != CAPTURE_KEYS:
+        return False
+    return (capture.get("ts_code") == code
+            and isinstance(capture.get("captured_at"), str) and bool(capture["captured_at"].strip())
+            and capture.get("status") in CAPTURE_STATUS
+            and (capture.get("err") is None or isinstance(capture.get("err"), str))
+            and (capture.get("source_channel") is None or isinstance(capture.get("source_channel"), str)))
+
+
+def _rows_from_capture(capture: Mapping[str, Any], as_of: str) -> tuple[list[dict[str, Any]], int]:
+    """Return (rows, collapsed) where collapsed counts repeated (date, title) listings."""
     channel = capture.get("source_channel")
     items = capture.get("items")
     if channel is None or items is None:
-        return []
+        return [], 0
     if channel not in SOURCE_CHANNELS or not isinstance(items, list):
         raise AnnouncementFeedError("announcement capture has an unknown channel or item list")
     rows: dict[str, dict[str, Any]] = {}
+    collapsed = 0
     for item in items:
         if (not isinstance(item, (list, tuple)) or len(item) != 2
                 or not all(isinstance(part, str) for part in item)):
@@ -122,7 +138,11 @@ def _rows_from_capture(capture: Mapping[str, Any], as_of: str) -> list[dict[str,
         notice_date, parsed = normalize_notice_date(item[0])
         eligibility, same_day = classify(parsed, as_of)
         identity = item_id(capture["ts_code"], channel, notice_date, item[1])
-        # The same (date, title) listed twice is one announcement.
+        # The same (date, title) listed twice is one announcement (contract L v0.1
+        # identity has no source document id); the collapse is disclosed, not hidden.
+        if identity in rows:
+            collapsed += 1
+            continue
         rows.setdefault(identity, {
             "item_id": identity,
             "ts_code": capture["ts_code"],
@@ -133,7 +153,7 @@ def _rows_from_capture(capture: Mapping[str, Any], as_of: str) -> list[dict[str,
             "eligibility": eligibility,
             "same_day_as_as_of": same_day,
         })
-    return list(rows.values())
+    return list(rows.values()), collapsed
 
 
 def build_feed(
@@ -151,6 +171,7 @@ def build_feed(
     rows_by_code = {row.get("ts_code"): row for row in battery.get("results", [])}
     rows: list[dict[str, Any]] = []
     per_ticker: list[dict[str, Any]] = []
+    collapsed_by_code: dict[str, int] = {}
     for code in codes:
         capture = captures.get(code)
         if code in not_collected:
@@ -158,18 +179,21 @@ def build_feed(
                                "err": ("ROW_NOT_COLLECTED:" + str(not_collected[code]))[:120],
                                "item_count": None})
             continue
-        if not isinstance(capture, Mapping) or set(capture) != CAPTURE_KEYS \
-                or capture.get("ts_code") != code:
+        if capture is None:
             per_ticker.append({"ts_code": code, "status": "DATA_BLOCKED",
                                "err": "ANNOUNCEMENT_CAPTURE_MISSING", "item_count": None})
             continue
         try:
-            ticker_rows = _rows_from_capture(capture, as_of)
+            if not _capture_is_well_typed(capture, code):
+                raise AnnouncementFeedError("announcement capture keys or types are invalid")
+            ticker_rows, collapsed = _rows_from_capture(capture, as_of)
         except AnnouncementFeedError:
             per_ticker.append({"ts_code": code, "status": "DATA_BLOCKED",
                                "err": "ANNOUNCEMENT_CAPTURE_INVALID", "item_count": None})
             continue
         rows.extend(ticker_rows)
+        if collapsed:
+            collapsed_by_code[code] = collapsed
         # governance-mutation: ANNOUNCEMENT_FEED_BLOCKED_COUNT_NULL
         blocked = capture.get("status") != "OK" or _news_blocked(rows_by_code.get(code))
         per_ticker.append({
@@ -191,6 +215,7 @@ def build_feed(
         "rows": rows,
         "per_ticker": per_ticker,
         "rows_hash": _hash(rows),
+        "duplicate_titles_collapsed": collapsed_by_code,
         "authority": dict(AUTHORITY),
         "disclaimer": DISCLAIMER,
     }
@@ -246,9 +271,15 @@ def validate_feed(
         seen.add(row["item_id"])
         _date_text, parsed = normalize_notice_date(row["notice_date"])
         eligibility, same_day = classify(parsed, as_of)
+        # governance-mutation: ANNOUNCEMENT_FEED_ELIGIBILITY_RECOMPUTED
         if row["eligibility"] != eligibility or row["same_day_as_as_of"] is not same_day:
             raise AnnouncementFeedError("announcement feed eligibility is not recomputable")
         counts[row["ts_code"]] = counts.get(row["ts_code"], 0) + 1
+    collapsed = feed.get("duplicate_titles_collapsed")
+    if (not isinstance(collapsed, Mapping)
+            or any(code not in codes or type(count) is not int or count < 1
+                   for code, count in collapsed.items())):
+        raise AnnouncementFeedError("announcement feed duplicate-title disclosure is invalid")
     ok = blocked = 0
     for entry in per_ticker:
         if set(entry) != PER_TICKER_KEYS or entry.get("status") not in PER_TICKER_STATUS:
@@ -289,32 +320,46 @@ def verify_bundle_sidecar(bundle_dir: Path, payloads: Mapping[str, Any]) -> dict
     if "candidate_battery.json" not in payloads or "candidate_manifest.json" not in payloads:
         raise AnnouncementFeedError("announcement feed present without DAG battery evidence")
     feed = json.loads(raw.decode("utf-8"))
+    # governance-mutation: ANNOUNCEMENT_FEED_STAGE_GENERATED_AT
     if feed.get("generated_at") != stage.get("generated_at"):
         raise AnnouncementFeedError("announcement feed was not written by this battery stage")
     return validate_feed(feed, payloads["candidate_manifest.json"], payloads["candidate_battery.json"])
 
 
+def _funnel_dag():
+    here = str(Path(__file__).resolve().parent)
+    if here not in sys.path:
+        sys.path.insert(0, here)
+    import funnel_dag  # lazy: funnel_dag imports this module
+
+    return funnel_dag
+
+
 def load_bundle_feed(bundle_dir: Path) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
-    """Read (feed, candidate_manifest, candidate_battery) from one bundle, verified."""
+    """Read (feed, candidate_manifest, candidate_battery) from one bundle, verified.
+
+    Both stages are read through funnel_dag._read_stage: each stage manifest must
+    be self-consistent (stage_hash), bound to the bundle directory's as_of/run_id,
+    and every artifact must match its recorded digest.
+    """
     bundle_dir = Path(bundle_dir)
-    stage_path = bundle_dir / "stage_battery.json"
-    if not stage_path.is_file():
-        raise AnnouncementFeedError("bundle has no battery stage manifest")
-    stage = json.loads(stage_path.read_text(encoding="utf-8"))
-    payloads: dict[str, Any] = {}
-    for name in ("candidate_manifest.json", "candidate_battery.json"):
-        path = bundle_dir / name
-        if not path.is_file() or path.is_symlink():
-            raise AnnouncementFeedError(f"bundle is missing {name}")
-        payloads[name] = json.loads(path.read_text(encoding="utf-8"))
-    battery_digest = (stage.get("artifacts") or {}).get("candidate_battery.json")
-    if battery_digest != hashlib.sha256((bundle_dir / "candidate_battery.json").read_bytes()).hexdigest():
-        raise AnnouncementFeedError("candidate_battery.json differs from its stage digest")
-    if (stage.get("binds") or {}).get("candidate_manifest_hash") != \
-            payloads["candidate_manifest.json"].get("manifest_hash"):
-        raise AnnouncementFeedError("candidate manifest differs from the battery stage binding")
+    dag = _funnel_dag()
+    as_of, run_id = bundle_dir.parent.name, bundle_dir.name
+    try:
+        _candidates, stage1 = dag._read_stage(bundle_dir, "candidates", as_of=as_of, run_id=run_id)
+        battery_stage, stage2 = dag._read_stage(bundle_dir, "battery", as_of=as_of, run_id=run_id)
+    except (dag.FunnelError, ValueError, OSError) as exc:
+        raise AnnouncementFeedError(f"bundle stages are unreadable or inconsistent: {exc}") from exc
+    manifest = stage1.get("candidate_manifest.json")
+    battery = stage2.get("candidate_battery.json")
+    if not isinstance(manifest, dict) or not isinstance(battery, dict):
+        raise AnnouncementFeedError("bundle stages do not carry the candidate manifest and battery")
+    binds = battery_stage.get("binds") or {}
+    if (binds.get("candidate_manifest_hash") != manifest.get("manifest_hash")
+            or binds.get("battery_rows_hash") != battery.get("rows_hash")):
+        raise AnnouncementFeedError("candidate manifest or battery differs from the battery stage binding")
+    payloads = {"candidate_manifest.json": manifest, "candidate_battery.json": battery}
     summary = verify_bundle_sidecar(bundle_dir, payloads)
     if summary is None:
         raise AnnouncementFeedError("bundle predates the announcement feed (no sidecar)")
-    feed = json.loads((bundle_dir / FEED_FILE).read_text(encoding="utf-8"))
-    return feed, payloads["candidate_manifest.json"], payloads["candidate_battery.json"]
+    return stage2[FEED_FILE], manifest, battery

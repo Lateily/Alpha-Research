@@ -44,6 +44,8 @@ THESIS = "000001.SZ"      # decision sheet dated before as_of
 WATCH_ONLY = "000002.SZ"  # execution watchlist only → NO_LIVE_THESIS
 BLOCKED = "000004.SZ"     # thesis ticker whose news source was blocked
 OUTSIDE = "000009.SZ"     # no live thesis anywhere
+NOT_CANDIDATE = "000007.SZ"  # live thesis but not a candidate tonight → no capture at all
+E1_RULE = "loss guidance for the period"
 FORBIDDEN_KEY = re.compile(r"return|hit|alpha|pnl|score|composite", re.IGNORECASE)
 
 
@@ -66,6 +68,7 @@ class Sandbox:
         (self.sheets / "000001_SZ_2026-09-01.md").write_text("# sheet", encoding="utf-8")
         (self.sheets / "000004_SZ_DEEP_2026-09-02.md").write_text("# sheet", encoding="utf-8")
         (self.sheets / "000003_SZ_2026-09-30.md").write_text("# after as_of", encoding="utf-8")
+        (self.sheets / "000007_SZ_2026-06-14.md").write_text("# old sheet", encoding="utf-8")
         self.watchlist.write_text(json.dumps({"watch": [{"ticker": WATCH_ONLY}]}), encoding="utf-8")
         codes = [THESIS, WATCH_ONLY, "000003.SZ", BLOCKED, OUTSIDE]
         manifest = {"ts_codes": codes, "manifest_hash": "m" * 64}
@@ -75,6 +78,8 @@ class Sandbox:
             if code == BLOCKED:
                 row["dims"]["消息面"] = {"status": "DATA_BLOCKED", "err": "source down",
                                         "verdict_v0_unvalidated": None}
+            if code == WATCH_ONLY:
+                row["dims"]["消息面"]["verdict_v0_unvalidated"] = "SPIKE"
             rows.append(row)
         battery = {"as_of": AS_OF, "run_id": RUN_ID, "results": rows, "rows_hash": fp._hash(rows),
                    "generated_at": GENERATED}
@@ -83,23 +88,48 @@ class Sandbox:
                                       ["2026-09-22", "昨日股东减持计划公告"], ["2026-09-20", "三日前公告"]]),
             WATCH_ONLY: _capture(WATCH_ONLY, [["2026-09-23", "关注名单公司公告"]]),
             "000003.SZ": _capture("000003.SZ", [["2026-09-23", "未来决策书公司公告"]]),
-            BLOCKED: _capture(BLOCKED, None, status="DATA_BLOCKED", err="source down"),
+            # A blocked source that still returned one in-window row (e.g. an unverified page).
+            BLOCKED: _capture(BLOCKED, [["2026-09-23", "阻断票部分公告"]],
+                              status="DATA_BLOCKED", err="source down"),
             OUTSIDE: _capture(OUTSIDE, [["2026-09-23", "无命题公司公告"]]),
         }
         feed = ril.feed_contract.build_feed(
             as_of=AS_OF, run_id=RUN_ID, generated_at=GENERATED, manifest=manifest,
             battery=battery, captures=captures, not_collected={})
-        self.bundle.mkdir(parents=True)
-        (self.bundle / "candidate_manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+        dag._write_stage(self.bundle, "candidates", {"candidate_manifest.json": manifest},
+                         as_of=AS_OF, run_id=RUN_ID, generated_at=GENERATED,
+                         binds={"candidate_manifest_hash": manifest["manifest_hash"]})
         dag._write_stage(self.bundle, "battery",
                          {"candidate_battery.json": battery, ril.feed_contract.FEED_FILE: feed},
                          as_of=AS_OF, run_id=RUN_ID, generated_at=GENERATED,
                          binds={"candidate_manifest_hash": manifest["manifest_hash"],
                                 "battery_rows_hash": battery["rows_hash"]})
         self.feed = feed
+        self.e1_layer = None
+
+    def write_e1_layer(self, evidence, *, as_of=AS_OF):
+        rows = [{"ts_code": THESIS, "evidence": evidence}]
+        path = self.root / "e1_event_layer.json"
+        path.write_text(json.dumps({"as_of": as_of, "rows": rows, "rows_hash": fp._hash(rows)}),
+                        encoding="utf-8")
+        return path
 
     def kwargs(self):
-        return {"u4_ledger": self.u4, "decision_sheets": self.sheets, "watchlist": self.watchlist}
+        return {"u4_ledger": self.u4, "decision_sheets": self.sheets, "watchlist": self.watchlist,
+                "e1_layer": self.e1_layer}
+
+    @staticmethod
+    def sheet_ref(code):
+        name = {THESIS: "000001_SZ_2026-09-01.md", BLOCKED: "000004_SZ_DEEP_2026-09-02.md"}[code]
+        return {"kind": "DECISION_SHEET", "ref": f"docs/research/decision_sheets/{name}"}
+
+    def e1_label(self, item_id, **overrides):
+        entry = {"item_id": item_id, "target_kind": "E1_EVENT", "thesis_ref": self.sheet_ref(THESIS),
+                 "thesis_relevance": "THESIS_RELEVANT", "research_increment": "NONE",
+                 "increment_ref": None, "note": "业绩预告已在命题预期内", "labeled_at": LABELED,
+                 "future_seen": False, "saw_other_label": False}
+        entry.update(overrides)
+        return entry
 
     def item(self, title):
         return next(row for row in self.feed["rows"] if row["title"] == title)
@@ -109,11 +139,10 @@ class Sandbox:
 
     def label(self, title, **overrides):
         row = self.item(title)
-        thesis = ({"kind": "DECISION_SHEET",
-                   "ref": f"docs/research/decision_sheets/{row['ts_code'].replace('.', '_')}_2026-09-01.md"}
-                  if row["ts_code"] == THESIS else {"kind": "NONE", "ref": None})
+        live = row["ts_code"] in (THESIS, BLOCKED)
+        thesis = self.sheet_ref(row["ts_code"]) if live else {"kind": "NONE", "ref": None}
         entry = {"item_id": row["item_id"], "target_kind": "ANNOUNCEMENT", "thesis_ref": thesis,
-                 "thesis_relevance": "THESIS_RELEVANT" if row["ts_code"] == THESIS else "NO_LIVE_THESIS",
+                 "thesis_relevance": "THESIS_RELEVANT" if live else "NO_LIVE_THESIS",
                  "research_increment": "NONE", "increment_ref": None,
                  "note": "只是例行程序公告，未改变判断", "labeled_at": LABELED,
                  "future_seen": False, "saw_other_label": False}
@@ -168,11 +197,15 @@ class ProposeTests(LabelTestCase):
     def test_propose_is_blind_scoped_windowed_and_flags_same_day(self):
         proposal = self.sandbox.propose()
         titles = {item["snapshot"]["title"]: item for item in proposal["items"]}
-        self.assertEqual({"今日董事会决议公告", "昨日股东减持计划公告", "关注名单公司公告"}, set(titles))
+        self.assertEqual({"今日董事会决议公告", "昨日股东减持计划公告", "关注名单公司公告", "阻断票部分公告"},
+                         set(titles))
         self.assertTrue(titles["今日董事会决议公告"]["snapshot"]["same_day_as_as_of"])
         self.assertFalse(titles["昨日股东减持计划公告"]["snapshot"]["same_day_as_as_of"])
         self.assertEqual("E1", titles["今日董事会决议公告"]["provenance_tier"])
         self.assertEqual([{"kind": "NONE", "ref": None}], titles["关注名单公司公告"]["thesis_ref_options"])
+        self.assertEqual({self.sandbox.sheet_ref(THESIS)["ref"]: 22},
+                         titles["今日董事会决议公告"]["thesis_ref_age_days"], "a sheet's age is visible")
+        self.assertEqual(0, titles["今日董事会决议公告"]["capture_lag_days"])
         counts = proposal["excluded_counts"]
         self.assertEqual(1, counts["after_as_of"])
         self.assertEqual(1, counts["outside_window"])
@@ -195,7 +228,7 @@ class ProposeTests(LabelTestCase):
     def test_cap_moves_the_rest_to_not_reviewed(self):
         proposal = self.sandbox.propose(cap=1)
         self.assertEqual(1, len(proposal["items"]))
-        self.assertEqual(2, len(proposal["not_reviewed_over_cap"]))
+        self.assertEqual(3, len(proposal["not_reviewed_over_cap"]))
         with self.assertRaises(ril.LabelError):
             self.sandbox.propose(cap=21)
 
@@ -205,26 +238,47 @@ class ProposeTests(LabelTestCase):
         self.assertNotIn("今日董事会决议公告", {i["snapshot"]["title"] for i in proposal["items"]})
         self.assertEqual(1, proposal["excluded_counts"]["already_labelled"])
 
-    def test_u4_select_after_as_of_is_not_a_live_thesis(self):
-        current = {
-            ("p", THESIS): {"decision": "SELECT", "candidate": {"ts_code": THESIS},
-                            "decision_id": "u4d_" + "a" * 32,
-                            "registered_at": "2026-09-09T15:19:09.394439+08:00"},
-            ("p", OUTSIDE): {"decision": "SELECT", "candidate": {"ts_code": OUTSIDE},
-                             "decision_id": "u4d_" + "b" * 32,
-                             "registered_at": "2026-09-24T01:00:00+08:00"},
-            ("p", "000005.SZ"): {"decision": "REJECT", "candidate": {"ts_code": "000005.SZ"},
-                                 "decision_id": "u4d_" + "c" * 32,
-                                 "registered_at": "2026-09-09T15:19:09+08:00"},
-        }
+    def test_u4_scope_is_replayed_as_of_not_from_today(self):
+        """rev1 SELECT before as_of stays live even when rev2 REJECT lands later; a SELECT
+        whose closure was committed after as_of is not yet live."""
+        def decision(code, letter, verdict, ts):
+            return {"kind": "u4_decision", "ts": ts, "payload": {
+                "decision": verdict, "candidate": {"ts_code": code},
+                "decision_id": "u4d_" + letter * 32, "registered_at": ts + "+08:00"}}
+
+        def closure(ts):
+            return {"kind": "u4_decision_closure", "ts": ts, "payload": {}}
+
+        records = [
+            decision(THESIS, "a", "SELECT", "2026-09-09T15:19:09.394439"),
+            closure("2026-09-09T15:20:00"),
+            decision(OUTSIDE, "b", "SELECT", "2026-09-23T10:00:00"),   # decided before as_of …
+            closure("2026-09-24T01:00:00"),                              # … committed after it
+            decision(THESIS, "c", "REJECT", "2026-09-24T02:00:00"),     # later revision
+            closure("2026-09-24T02:05:00"),
+        ]
+
+        def committed_replay(prefix):
+            staged, current = {}, {}
+            for outer in prefix:
+                if outer["kind"] == "u4_decision":
+                    staged[outer["payload"]["candidate"]["ts_code"]] = outer["payload"]
+                elif outer["kind"] == "u4_decision_closure":
+                    current.update(staged)
+            return {"current": current}
+
         self.sandbox.u4.write_text("", encoding="utf-8")
         from experiments.research_funnel import u4_decision_ledger
-        with mock.patch.object(u4_decision_ledger, "_snapshot_state", return_value={"current": current}):
-            scope = ril.live_scope(AS_OF, **self.sandbox.kwargs())
+        with mock.patch.object(u4_decision_ledger, "_snapshot_state", return_value={}), \
+                mock.patch.object(u4_decision_ledger, "_read_outer_records", return_value=records), \
+                mock.patch.object(u4_decision_ledger, "_replay_records", side_effect=committed_replay):
+            scope = ril.live_scope(AS_OF, **{k: v for k, v in self.sandbox.kwargs().items()
+                                             if k != "e1_layer"})
         self.assertIn({"kind": "U4_RESEARCH_QUESTION", "ref": "u4d_" + "a" * 32},
-                      scope["tickers"][THESIS]["thesis_refs"])
-        self.assertNotIn(OUTSIDE, scope["tickers"])
-        self.assertNotIn("000005.SZ", scope["tickers"])
+                      scope["tickers"][THESIS]["thesis_refs"],
+                      "a revision registered after as_of cannot retire a thesis live at as_of")
+        self.assertEqual("2026-09-09", scope["tickers"][THESIS]["thesis_ref_dates"]["u4d_" + "a" * 32])
+        self.assertNotIn(OUTSIDE, scope["tickers"], "a closure after as_of is not yet a live thesis")
 
     def test_broken_u4_ledger_is_never_read_as_no_thesis(self):
         self.sandbox.u4.write_text("{not json\n", encoding="utf-8")
@@ -243,9 +297,87 @@ class ProposeTests(LabelTestCase):
         self.assertIsNone(layer)
         layer_path.write_text(json.dumps({"as_of": AS_OF, "rows": rows,
                                           "rows_hash": fp._hash(rows)}), encoding="utf-8")
-        proposal = self.sandbox.propose(e1_layer=layer_path)
+        self.sandbox.e1_layer = layer_path
+        proposal = self.sandbox.propose()
         self.assertEqual("SAME_AS_OF", proposal["e1_basis"])
         self.assertIn("E1_EVENT", {item["target_kind"] for item in proposal["items"]})
+        e1_view = next(item for item in proposal["items"] if item["target_kind"] == "E1_EVENT")
+        self.assertIsNone(e1_view["source"]["run_id"], "the E1 layer has no run binding")
+
+    def test_proposal_hides_the_machine_display_verdict(self):
+        proposal = self.sandbox.propose()
+        text = json.dumps(proposal, ensure_ascii=False)
+        for machine in ("SPIKE", "NORMAL"):
+            self.assertNotIn(machine, text, "the labeler is blind to the signal the report scores")
+        for item in proposal["items"]:
+            self.assertNotIn("news_display_verdict", item["snapshot"])
+            self.assertNotIn("news_status", item["snapshot"])
+        self.assertIn("news_display_verdict", proposal["blind_to"])
+        # The stored snapshot still carries it, machine-filled at record time.
+        self.sandbox.record(self.sandbox.batch([self.sandbox.label("关注名单公司公告")]))
+        events = [json.loads(line) for line in self.sandbox.ledger.read_text("utf-8").splitlines()]
+        self.assertEqual("SPIKE", events[1]["payload"]["snapshot"]["news_display_verdict"])
+
+    def test_scope_tickers_outside_the_feed_are_disclosed(self):
+        proposal = self.sandbox.propose()
+        coverage = {entry["ts_code"]: entry["announcement_coverage"]
+                    for entry in proposal["scope"]["tickers"]}
+        self.assertEqual("NOT_CAPTURED_NOT_A_CANDIDATE", coverage[NOT_CANDIDATE])
+        self.assertEqual("DATA_BLOCKED", coverage[BLOCKED])
+        self.assertEqual("CAPTURED_OK", coverage[THESIS])
+        self.assertEqual([NOT_CANDIDATE], proposal["scope_tickers_not_in_feed"])
+
+    def test_corrupt_watchlist_is_blocked_not_empty(self):
+        for raw in ("[1, 2]", '{"watch": "x"}', "{not json"):
+            self.sandbox.watchlist.write_text(raw, encoding="utf-8")
+            proposal = self.sandbox.propose()
+            self.assertEqual("DATA_BLOCKED", proposal["scope"]["source_status"]["EXECUTION_WATCHLIST"], raw)
+            self.assertNotIn(WATCH_ONLY, [e["ts_code"] for e in proposal["scope"]["tickers"]])
+        many = [{"ticker": f"{600000 + i:06d}.SH"} for i in range(40)]
+        self.sandbox.watchlist.write_text(json.dumps({"watch": many}), encoding="utf-8")
+        scope = self.sandbox.propose()["scope"]["tickers"]
+        self.assertEqual(40, sum("EXECUTION_WATCHLIST" in e["sources"] for e in scope), "no silent cap")
+
+    def test_e1_only_triggered_evidence_and_never_after_as_of(self):
+        self.sandbox.e1_layer = self.sandbox.write_e1_layer([
+            {"kind": "ISSUER_GUIDANCE", "source": "tushare.forecast_vip", "evidence_grade": "E1",
+             "ann_date": "20260922", "period": "20260930", "triggered": True, "rule": E1_RULE},
+            {"kind": "ISSUER_EXPRESS", "source": "tushare.express_vip", "evidence_grade": "E1",
+             "ann_date": "20260922", "period": "20260930", "triggered": False, "rule": "not triggered"},
+            {"kind": "ISSUER_INCOME", "source": "tushare.income_vip", "evidence_grade": "E1",
+             "ann_date": "20260924", "period": "20260930", "triggered": True, "rule": "after as_of"}])
+        proposal = self.sandbox.propose()
+        kinds = [item["snapshot"]["kind"] for item in proposal["items"] if item["target_kind"] == "E1_EVENT"]
+        self.assertEqual(["ISSUER_GUIDANCE"], kinds, "untriggered and after-as_of E1 are never proposed")
+        future = ril.e1_item_id(THESIS, "ISSUER_INCOME", "tushare.income_vip", "20260924", "20260930")
+        with self.assertRaisesRegex(ril.LabelError, "after as_of"):
+            self.sandbox.record(self.sandbox.batch(
+                [self.sandbox.e1_label(future, research_increment="DATA_BLOCKED")], authorization="x" * 30))
+
+    def test_after_as_of_e1_payload_is_refused_even_as_blocked(self):
+        self.sandbox.e1_layer = self.sandbox.write_e1_layer([
+            {"kind": "ISSUER_GUIDANCE", "source": "tushare.forecast_vip", "evidence_grade": "E1",
+             "ann_date": "20260922", "period": "20260930", "triggered": True, "rule": E1_RULE}])
+        present = ril.e1_item_id(THESIS, "ISSUER_GUIDANCE", "tushare.forecast_vip", "20260922", "20260930")
+        raw = self.sandbox.batch([self.sandbox.e1_label(present)])
+        prepared = ril.prepare_batch(self.sandbox.bundle, raw, **self.sandbox.kwargs())
+        payload = dict(prepared["labels"][0], batch_id="rilb_" + prepared["batch_hash"][:32],
+                       human_decision=dict(raw["human_decision"]))
+        payload["record_hash"] = ril._record_hash(payload)
+        ril._validate_label_payload(payload)
+        forged = copy.deepcopy(payload)
+        forged["snapshot"]["ann_date"] = "20260924"
+        forged.update(item_id=ril.e1_item_id(THESIS, "ISSUER_GUIDANCE", "tushare.forecast_vip",
+                                             "20260924", "20260930"),
+                      research_increment="DATA_BLOCKED", provenance_tier="DATA_BLOCKED")
+        forged["record_hash"] = ril._record_hash(forged)
+        with self.assertRaisesRegex(ril.LabelError, "after as_of"):
+            ril._validate_label_payload(forged)
+        bound = copy.deepcopy(payload)
+        bound["source"]["run_id"] = RUN_ID
+        bound["record_hash"] = ril._record_hash(bound)
+        with self.assertRaisesRegex(ril.LabelError, "run_id must be null"):
+            ril._validate_label_payload(bound)
 
 
 class RecordTests(LabelTestCase):
@@ -267,8 +399,9 @@ class RecordTests(LabelTestCase):
         self.assertIsNone(share["rate"], "n below 20 is withheld, never 0")
         self.assertEqual("RATE_WITHHELD_N_BELOW_MIN", share["level"])
         self.assertEqual(1, report["no_live_thesis_share"]["numerator"])
-        self.assertEqual({"ANY_INCREMENT": 1, "NO_INCREMENT": 1, "ONLY_DATA_BLOCKED": 0},
-                         report["news_display_vs_increment_crosstab"]["rows"]["NORMAL"])
+        rows = report["news_display_vs_increment_crosstab"]["rows"]
+        self.assertEqual({"ANY_INCREMENT": 1, "NO_INCREMENT": 0, "ONLY_DATA_BLOCKED": 0}, rows["NORMAL"])
+        self.assertEqual({"ANY_INCREMENT": 0, "NO_INCREMENT": 1, "ONLY_DATA_BLOCKED": 0}, rows["SPIKE"])
         self.assertFalse(report["authority"]["claim_allowed"])
         self.assertEqual("DESCRIPTIVE_ONLY", report["claim_status"])
         forbidden = [key for key in _walk_keys(report) if FORBIDDEN_KEY.search(key)]
@@ -512,6 +645,57 @@ class RecordTests(LabelTestCase):
         self.assertEqual(1, len(verified["batches_abandoned"]))
         self.assertEqual(1, ril.report(sandbox.ledger)["labels_closed"])
 
+    def test_abandoned_batch_items_are_proposed_again(self):
+        sandbox = self.sandbox
+        raw = sandbox.batch([sandbox.label("今日董事会决议公告"), sandbox.label("昨日股东减持计划公告")])
+        real_append = event_ledger.append_stamped
+        labels_written = []
+
+        def crash_on_second_label(kind, build, path):
+            if kind == ril.LABEL_KIND:
+                labels_written.append(kind)
+                if len(labels_written) == 2:
+                    raise RuntimeError("simulated crash")
+            return real_append(kind, build, path=path)
+
+        with mock.patch.object(ril.event_ledger, "append_stamped", side_effect=crash_on_second_label):
+            with self.assertRaises(RuntimeError):
+                sandbox.record(raw)
+        sandbox.record(sandbox.batch([sandbox.label("关注名单公司公告")]))  # abandons the crashed batch
+        self.assertEqual(1, len(ril.verify(sandbox.ledger)["batches_abandoned"]))
+        proposal = sandbox.propose()
+        titles = {item["snapshot"]["title"] for item in proposal["items"]}
+        self.assertIn("今日董事会决议公告", titles, "a label in an abandoned batch was never closed")
+        self.assertIn("昨日股东减持计划公告", titles)
+        self.assertNotIn("关注名单公司公告", titles)
+        self.assertEqual(1, proposal["excluded_counts"]["already_labelled"])
+        self.assertEqual(2, proposal["reproposed_from_unclosed_batch"])
+
+    def test_verify_reports_per_kind_and_never_overclaims(self):
+        sandbox = self.sandbox
+        layer = sandbox.write_e1_layer([
+            {"kind": "ISSUER_GUIDANCE", "source": "tushare.forecast_vip", "evidence_grade": "E1",
+             "ann_date": "20260922", "period": "20260930", "triggered": True, "rule": E1_RULE},
+            {"kind": "ISSUER_EXPRESS", "source": "tushare.express_vip", "evidence_grade": "E1",
+             "ann_date": "20260923", "period": "20260930", "triggered": True, "rule": "express"}])
+        sandbox.e1_layer = layer
+        guidance = ril.e1_item_id(THESIS, "ISSUER_GUIDANCE", "tushare.forecast_vip", "20260922", "20260930")
+        express = ril.e1_item_id(THESIS, "ISSUER_EXPRESS", "tushare.express_vip", "20260923", "20260930")
+        sandbox.record(sandbox.batch([sandbox.label("今日董事会决议公告"), sandbox.e1_label(guidance)]))
+        sandbox.record(sandbox.batch([sandbox.e1_label(express, note="快报数字与命题一致")]))
+        root = sandbox.root / "data_history" / "funnel"
+        mixed, e1_only = ril.verify(sandbox.ledger, bundle_root=root)["sources"]
+        self.assertEqual(ril.VERIFIED, mixed["per_kind"]["ANNOUNCEMENT"]["source_status"])
+        self.assertEqual(ril.SNAPSHOT_ONLY, mixed["per_kind"]["E1_EVENT"]["source_status"])
+        self.assertEqual(ril.PARTIAL, mixed["source_status"], "an unchecked E1 label is not verified")
+        self.assertEqual(ril.SNAPSHOT_ONLY, e1_only["source_status"])
+        verified = ril.verify(sandbox.ledger, bundle_root=root, e1_layer=layer)
+        self.assertTrue(verified["ok"], verified)
+        self.assertEqual([ril.VERIFIED, ril.VERIFIED], [s["source_status"] for s in verified["sources"]])
+        other = sandbox.write_e1_layer([])
+        self.assertEqual(ril.SNAPSHOT_ONLY, ril.verify(sandbox.ledger, e1_layer=other)["sources"][1]
+                         ["source_status"], "a layer with another rows_hash is not the source")
+
 
 class ReportTests(LabelTestCase):
     def test_rates_below_min_n_are_withheld(self):
@@ -534,13 +718,28 @@ class ReportTests(LabelTestCase):
 
     def test_blocked_display_verdict_is_its_own_row(self):
         sandbox = self.sandbox
-        payload = _payload_for(sandbox, "今日董事会决议公告")
-        self.assertEqual("NORMAL", payload["snapshot"]["news_display_verdict"])
-        sandbox.record(sandbox.batch([sandbox.label("关注名单公司公告",
-                                                    research_increment="DATA_BLOCKED")]))
+        sandbox.record(sandbox.batch([sandbox.label("阻断票部分公告")]))
+        events = [json.loads(line) for line in sandbox.ledger.read_text("utf-8").splitlines()]
+        self.assertIsNone(events[1]["payload"]["snapshot"]["news_display_verdict"])
         rows = ril.report(sandbox.ledger)["news_display_vs_increment_crosstab"]["rows"]
-        self.assertEqual(1, rows["NORMAL"]["ONLY_DATA_BLOCKED"])
-        self.assertEqual(0, sum(rows["BLOCKED"].values()))
+        self.assertEqual(1, rows["BLOCKED"]["NO_INCREMENT"], "a blocked verdict is its own row")
+        self.assertEqual(0, sum(rows["NORMAL"].values()), "never folded into NORMAL")
+
+    def test_report_evaluates_only_labels_made_without_the_future(self):
+        sandbox = self.sandbox
+        sandbox.record(sandbox.batch([
+            sandbox.label("今日董事会决议公告"),
+            sandbox.label("昨日股东减持计划公告", research_increment="CHANGES_POSTURE",
+                          increment_ref="decision_sheet_revision:000001_SZ_2026-09-24",
+                          future_seen=True, note="看过次日走势后判定为改变判断")]))
+        report = ril.report(sandbox.ledger)
+        self.assertEqual({"evaluable_labels": 1, "future_seen_excluded": 1},
+                         {k: report["evaluation_basis"][k] for k in ("evaluable_labels", "future_seen_excluded")})
+        share = report["relevant_but_no_increment_share"]
+        self.assertEqual((1, 1), (share["numerator"], share["denominator"]))
+        self.assertEqual({"ANY_INCREMENT": 0, "NO_INCREMENT": 1, "ONLY_DATA_BLOCKED": 0},
+                         report["news_display_vs_increment_crosstab"]["rows"]["NORMAL"])
+        self.assertEqual(1, report["counts"]["future_seen"], "hindsight labels are still counted")
 
     def test_cli_emits_disclaimer_and_refuses_cleanly(self):
         stdout = io.StringIO()
