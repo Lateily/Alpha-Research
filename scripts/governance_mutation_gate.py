@@ -12271,6 +12271,83 @@ MUTATIONS = MUTATIONS + (
     ),
 )
 
+# 2026-09-29: INDUSTRY_VALUE_CHAIN no longer ranks hot-industry members by issuer
+# code.  Each pin restores one piece of the old (status, -streak, ts_code) cut.
+MUTATIONS = MUTATIONS + (
+    MutationCase(
+        mutation_id="FUNNEL_U1_INDUSTRY_CONTEXT_ONLY",
+        component="Research funnel U1 industry context boundary",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_funnel_industry_channel_context.py",
+        before=(
+            "            sector_rank = None\n"
+            "            sector_hit = False\n"
+            "            sector_values = {\n"
+            "                \"industry_key\": industry,\n"
+            "                \"rotation_status\""
+        ),
+        after=(
+            "            sector_rank = (\n"
+            "                sum(\n"
+            "                    1 for other in eligible\n"
+            "                    if other[\"ts_code\"] <= code\n"
+            "                    and (rotation_by_industry.get(str(other.get(\"industry_key\") or \"\")) or {})"
+            ".get(\"status\") in HOT_ROTATION_STATUSES\n"
+            "                )\n"
+            "                if sector and sector.get(\"status\") in HOT_ROTATION_STATUSES else None\n"
+            "            )\n"
+            "            sector_hit = bool(sector_rank and sector_rank <= channel_top_n)\n"
+            "            sector_values = {\n"
+            "                \"industry_key\": industry,\n"
+            "                \"rotation_status\""
+        ),
+        expected_failure_marker="test_industry_admission_is_invariant_to_issuer_code_relabeling",
+        rationale=(
+            "Hot-industry members share status and streak; ranking them by ts_code "
+            "truncates an industry signal by issuer code (9/24: 40 lowest SZSE codes)."
+        ),
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_U1_INDUSTRY_MODE_DECLARED",
+        component="Research funnel U1 industry context boundary",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_funnel_industry_channel_context.py",
+        before="            \"industry_channel_mode\": INDUSTRY_CHANNEL_MODE,\n",
+        after="",
+        expected_failure_marker="test_hot_industry_members_are_context_without_rank_or_trigger",
+        rationale=(
+            "A new scan without the mode key would fall back to the lenient "
+            "archived-replay path and escape the no-rank validator."
+        ),
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_U1_INDUSTRY_MODE_CLOSED",
+        component="Research funnel U1 industry context boundary",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_funnel_industry_channel_context.py",
+        before="    if industry_mode not in (None, INDUSTRY_CHANNEL_MODE):",
+        after="    if False:",
+        expected_failure_marker="test_unknown_industry_mode_is_refused",
+        rationale="An unknown industry mode cannot silently skip the no-rank validator.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_U1_INDUSTRY_NO_ISSUER_CODE_RANK",
+        component="Research funnel U1 industry context boundary",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_funnel_industry_channel_context.py",
+        before=(
+            "        if row[\"channel\"] == \"INDUSTRY_VALUE_CHAIN\" "
+            "and industry_context_only and ("
+        ),
+        after="        if False and (",
+        expected_failure_marker="test_industry_rank_tie_broken_by_ts_code_is_refused",
+        rationale=(
+            "A scan whose industry rows carry a code-ordered channel_rank, a trigger "
+            "or an entry reason must be refused, not published as evidence."
+        ),
+    ),
+)
+
 @dataclass(frozen=True)
 class CommandResult:
     returncode: int

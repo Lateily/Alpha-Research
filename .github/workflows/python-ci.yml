@@ -204,6 +204,10 @@ jobs:
         run: |
           python3 experiments/research_funnel/funnel_pipeline.py --selftest
           python3 tests/test_research_funnel_closure.py
+      # 行业与产业链通道只作上下文:同一行业成员共享状态与连续天数,不得按
+      # ts_code 截断出 rank/触发/U2 入选;旧 bundle 仅为回放保留。
+      - name: Research funnel industry-context channel regression (offline)
+        run: python3 tests/test_funnel_industry_channel_context.py
       # R-035 只读不可变漏斗 bundle、同日电池与本地特征仓。U1/U2 随机对照
       # 和 U3 电池分离度必须分开检验,收益不得写回候选池,claim 永久关闭。
       - name: Research funnel R-035 aligned-return evaluation (offline)
