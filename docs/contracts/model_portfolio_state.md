@@ -14,6 +14,8 @@ data 字段:
   missing_sessions(没有 NAV 行的交易日)、multi_session_daily_return_dates(旧行的 daily_return
   实为跨多日收益)、calendar_sources / calendar_caveat。非 CONTIGUOUS ⇒ 顶层 data_quality=PARTIAL,
   degraded_sources 带 why=NAV_SESSION_GAP 或 NAV_SESSION_CALENDAR_UNAVAILABLE。账本不改写,只披露。
+  审计优先采用新行自带的 basis_date / sessions_covered / gap_sessions(不随 rotation_history
+  滚动窗过期);旧行或跨度记录不可用时才查离线日历。
 - open_positions / closed_trades 持仓与已平仓订单原样(entry/stop/target/qty…)
 - closed_trades_n 已平仓笔数 · win_rate_note 胜率免谈提示(n<30 时前端必须原样展示)
 

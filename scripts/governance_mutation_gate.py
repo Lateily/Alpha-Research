@@ -8216,14 +8216,34 @@ MUTATIONS = MUTATIONS + (
         rationale="An empty limit_list_d answer is not a zero-limit-up A-share day.",
     ),
     MutationCase(
-        mutation_id="ROTATION_APPEND_TARGET_LIMIT_SKIP",
+        mutation_id="ROTATION_APPEND_LIMIT_NONE_NOT_EMPTY",
         component="Rotation missing-data honesty",
         source_path="experiments/execution_tracker/rotation_validation.py",
         test_script="tests/test_rotation_nav_missing.py",
-        before="        if why and d >= target:",
-        after="        if False:",
-        expected_failure_marker="test_target_day_limit_failure_or_empty_skips_the_day",
-        rationale="A target day without a limit reading is retried next night, not advanced.",
+        before='        hist["limit_up_by_industry"][d] = cnt       # None = DATA_BLOCKED,绝不写 {}',
+        after='        hist["limit_up_by_industry"][d] = cnt or {}  # None = DATA_BLOCKED,绝不写 {}',
+        expected_failure_marker="test_target_day_limit_failure_or_empty_appends_the_day_as_blocked",
+        rationale="A nightly day without a limit reading is appended as None, never {} (zero limit-ups).",
+    ),
+    MutationCase(
+        mutation_id="ROTATION_BACKFILL_LIMIT_NONE_NOT_EMPTY",
+        component="Rotation missing-data honesty",
+        source_path="experiments/execution_tracker/rotation_validation.py",
+        test_script="tests/test_rotation_nav_missing.py",
+        before="        lim[d] = cnt                                # None = DATA_BLOCKED,绝不写 {}",
+        after="        lim[d] = cnt or {}                          # None = DATA_BLOCKED,绝不写 {}",
+        expected_failure_marker="test_backfill_stores_blocked_limit_as_none_and_drops_missing_flows",
+        rationale="The --backfill writer is the original {}-as-zero bug shape; it must store None.",
+    ),
+    MutationCase(
+        mutation_id="ROTATION_LIMIT_RETRY_CLEARS_MARKER",
+        component="Rotation missing-data honesty",
+        source_path="experiments/execution_tracker/rotation_validation.py",
+        test_script="tests/test_rotation_nav_missing.py",
+        before='        recovered[d] = {"first_block_reason": blocked.pop(d), "recovered_at_target": target}',
+        after='        recovered[d] = {"first_block_reason": blocked.get(d), "recovered_at_target": target}',
+        expected_failure_marker="test_recent_marked_blocked_days_are_retried_and_recovered",
+        rationale="A recovered limit reading must leave the blocked set, with its provenance recorded.",
     ),
     MutationCase(
         mutation_id="ROTATION_LEGACY_EMPTY_LIMIT_BLOCKED",
@@ -8266,6 +8286,27 @@ MUTATIONS = MUTATIONS + (
         rationale="daily_return is only written for a one-session step; gaps get period_return.",
     ),
     MutationCase(
+        mutation_id="PAPER_NAV_DEFAULT_CALENDAR_READS_NO_FILE",
+        component="Research funnel paper NAV session contiguity",
+        source_path="experiments/execution_tracker/model_paper_fund.py",
+        test_script="tests/test_rotation_nav_missing.py",
+        before="        calendar = session_calendar.static_calendar()",
+        after="        calendar = session_calendar.default_calendar()",
+        expected_failure_marker="test_update_nav_default_calendar_reads_no_file",
+        rationale="The library NAV basis must not read the rolling rotation_history implicitly, "
+                  "or sealed research_cycle replays stop being deterministic.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_CYCLE_NAV_FROZEN_CALENDAR",
+        component="Research funnel paper NAV session contiguity",
+        source_path="experiments/research_funnel/research_cycle.py",
+        test_script="tests/test_rotation_nav_missing.py",
+        before="                nav_calendar = session_calendar.frozen_calendar(sessions)",
+        after="                nav_calendar = session_calendar.static_calendar()",
+        expected_failure_marker="test_deadline_cycle_uses_the_orders_frozen_sessions",
+        rationale="A deadline cycle measures NAV contiguity against its own sealed exchange sessions.",
+    ),
+    MutationCase(
         mutation_id="PAPER_NAV_GAP_WITHHOLDS_DRAWDOWN",
         component="Research funnel paper NAV session contiguity",
         source_path="experiments/execution_tracker/model_paper_fund.py",
@@ -8295,6 +8336,16 @@ MUTATIONS = MUTATIONS + (
         after="                if False:",
         expected_failure_marker="test_disagreeing_sources_make_the_range_unavailable",
         rationale="Conflicting offline calendars make contiguity unprovable, not assumed.",
+    ),
+    MutationCase(
+        mutation_id="SESSION_CALENDAR_NIGHTLY_UNKNOWN_WEEKDAY",
+        component="Paper NAV contract export",
+        source_path="experiments/execution_tracker/session_calendar.py",
+        test_script="tests/test_rotation_nav_missing.py",
+        before="        if day.weekday() < 5 and not _known_closed(day):\n            return SessionCalendar(days)",
+        after="        if False:\n            return SessionCalendar(days)",
+        expected_failure_marker="test_year_rollover_nightly_rows",
+        rationale="An unknown weekday between the window end and the target is never assumed closed.",
     ),
     MutationCase(
         mutation_id="SESSION_CALENDAR_2026_HOLIDAY_TABLE",
@@ -9585,7 +9636,7 @@ MUTATIONS = MUTATIONS + (
         test_script="tests/test_research_closed_loop_v1.py",
         before=(
             '    {"path": "experiments/research_funnel/research_cycle.py", '
-            '"sha256": "sha256:c826bb98f749a2fb2337351b68bcbd340476fb44b09f00f69b5d3a7d5274f373"},\n'
+            '"sha256": "sha256:237e65c4163cf99337ab586bd6220ab08c25242f47b4fe205f1bc057f318c465"},\n'
         ),
         after="",
         expected_failure_marker="test_every_bound_artifact_matches_its_exact_bytes",

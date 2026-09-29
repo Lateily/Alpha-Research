@@ -220,6 +220,24 @@ def build_model_portfolio_state():
     return result
 
 
+def _row_session_evidence(prev, row):
+    """The span a row recorded when it was written, if it is relative to ``prev``.
+
+    Rows written since the 2026-09 gap fix carry ``basis_date`` / ``sessions_covered``
+    / ``gap_sessions`` / ``calendar_source``.  That evidence does not age out with
+    the rolling rotation window, so it is preferred; anything else (legacy rows,
+    a basis other than the previous row, an unprovable span) falls back to the
+    audit calendar.
+    """
+    covered, gap = row.get("sessions_covered"), row.get("gap_sessions")
+    if (row.get("basis_date") != prev.get("date") or isinstance(covered, bool)
+            or not isinstance(covered, int) or covered < 1 or not isinstance(gap, list)
+            or len(gap) != covered - 1 or not isinstance(row.get("calendar_source"), str)):
+        return None
+    return {"sessions": list(gap) + [row["date"]],
+            "calendar_source": row["calendar_source"], "reason": None}
+
+
 def nav_session_audit(nav, calendar=None):
     """Compare nav_series dates with the offline SSE session calendar.
 
@@ -232,7 +250,8 @@ def nav_session_audit(nav, calendar=None):
     rows = [r for r in nav if isinstance(r, dict) and isinstance(r.get("date"), str)]
     missing, unverifiable, mislabeled, sources = [], [], [], set()
     for prev, row in zip(rows, rows[1:]):
-        span = calendar.sessions_between(prev["date"], row["date"])
+        span = _row_session_evidence(prev, row) or calendar.sessions_between(prev["date"],
+                                                                             row["date"])
         if span["sessions"] is None:
             unverifiable.append({"from": prev["date"], "to": row["date"],
                                  "reason": span["reason"]})

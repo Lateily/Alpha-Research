@@ -17,8 +17,8 @@ claim_allowed=false,是描述/校准,不是可交易信号。regime 用"全板�
 均值涨跌日"做代理并明示 [proxy]。
 
 缺数 ≠ 0(2026-09 修订):limit_list_d 调用失败或空返回的日子,涨停读数记 None
-并写入 rotation_history["limit_up_data_blocked"][d];旧版追加写成 {} 的日子同样按
-缺数处理。Q2 与 lead_precursor 校准整日排除并计数(data_coverage / limit_reading),
+并写入 rotation_history["limit_up_data_blocked"][d](目标日也照常推进,资金有效);
+窗口最后 5 日内的标记日每晚重取一次;旧版追加写成 {} 的日子同样按缺数处理。Q2 与 lead_precursor 校准整日排除并计数(data_coverage / limit_reading),
 不用 status 键,避免把本步判 PARTIAL 而跳过 lead_precursor。缺 net_amount /
 pct_change 的板块-日直接丢弃并计数(flow_missing_values),不写 0。
 
@@ -75,6 +75,7 @@ def _api(name, token, **params):
 # 宁可把一个(理论上的)真零日判成缺数,也不把缺数写成零。
 LIMIT_BLOCKED_KEY = "limit_up_data_blocked"
 FLOW_MISSING_KEY = "flow_missing_values"
+LIMIT_RECOVERED_KEY = "limit_up_recovered_later"
 
 
 def limit_counts_from_rows(rows, err):
@@ -161,13 +162,19 @@ def backfill(token, n_days=60, end_exclusive=None):
     return payload
 
 
-def append_days(hist, token, target, api=None, window=90):
+def append_days(hist, token, target, api=None, window=90, retry_recent=5):
     """夜链追加:只追加已定盘日,滚动保留 window 日。返回 (hist, report) 或 (None, reason)。
 
-    - 目标日资金或涨停读数缺失/失败 ⇒ 整日 SKIP(不推进 days,次晚作为历史日重取);
+    - 目标日资金缺失/失败 ⇒ 整日 SKIP(不推进 days,次晚作为历史日重取);此时本步
+      as_of 落后一日 ⇒ run_nightly 判 DATE_MISMATCH、lead_precursor 当晚跳过(与旧行为一致);
     - 历史日资金缺失 ⇒ 中止(与旧行为一致,exit 1);
-    - 历史日涨停缺失 ⇒ 资金照常追加,涨停读数记 None + limit_up_data_blocked[d]=原因,
-      绝不写成 {}(=零涨停)。
+    - 目标日或历史日涨停读数缺失 ⇒ 资金照常追加,涨停读数记 None +
+      limit_up_data_blocked[d]=原因,绝不写成 {}(=零涨停)。目标日照常推进,
+      as_of 仍是 target,本步保持 OK、lead_precursor 照跑(该日防御拥挤灯不可判);
+    - 窗口最后 retry_recent 日里带 limit_up_data_blocked 标记的日子,每晚重取一次;
+      取到即回填并记入 limit_up_recovered_later[d](原因 + 回填所在 target)。
+      超出这 retry_recent 日仍失败的日子保持 None,只能由单独批准的回填工具处理;
+      旧版 {} 日(无标记)不自动重取。
     """
     api = api or _api
     cal, err = api("trade_cal", token, exchange="SSE", is_open="1",
@@ -179,7 +186,21 @@ def append_days(hist, token, target, api=None, window=90):
     hist.setdefault("limit_up_by_industry", {})
     blocked = dict(hist.get(LIMIT_BLOCKED_KEY) or {})
     missing = dict(hist.get(FLOW_MISSING_KEY) or {})
-    report = {"appended": [], "skipped": [], "limit_blocked_appended": []}
+    recovered = dict(hist.get(LIMIT_RECOVERED_KEY) or {})
+    report = {"appended": [], "skipped": [], "limit_blocked_appended": [],
+              "limit_recovered": [], "limit_retry_failed": []}
+    for d in hist["days"][-retry_recent:] if retry_recent > 0 else []:
+        if d not in blocked:
+            continue
+        lrows, lerr = api("limit_list_d", token, trade_date=d)
+        cnt, why = limit_counts_from_rows(lrows, lerr)
+        if why:
+            report["limit_retry_failed"].append({"date": d, "why": why})
+            continue
+        hist["limit_up_by_industry"][d] = cnt
+        # governance-mutation: ROTATION_LIMIT_RETRY_CLEARS_MARKER
+        recovered[d] = {"first_block_reason": blocked.pop(d), "recovered_at_target": target}
+        report["limit_recovered"].append(d)
     for d in new_days:
         rows, err = api("moneyflow_ind_dc", token, trade_date=d)
         if err or not rows:
@@ -191,13 +212,10 @@ def append_days(hist, token, target, api=None, window=90):
         flows, dropped = flows_from_rows(rows)
         lrows, lerr = api("limit_list_d", token, trade_date=d)
         cnt, why = limit_counts_from_rows(lrows, lerr)
-        if why and d >= target:
-            report["skipped"].append({"date": d, "why": f"limit_list_d {why}"})
-            continue
         hist["flows"][d] = flows
         if dropped:
             missing[d] = dropped
-        hist["limit_up_by_industry"][d] = cnt
+        hist["limit_up_by_industry"][d] = cnt       # None = DATA_BLOCKED,绝不写 {}
         if why:
             blocked[d] = why
             report["limit_blocked_appended"].append(d)
@@ -210,6 +228,7 @@ def append_days(hist, token, target, api=None, window=90):
                                     for d in hist["days"]}
     hist[LIMIT_BLOCKED_KEY] = {d: v for d, v in blocked.items() if d in keep}
     hist[FLOW_MISSING_KEY] = {d: v for d, v in missing.items() if d in keep}
+    hist[LIMIT_RECOVERED_KEY] = {d: v for d, v in recovered.items() if d in keep}
     return hist, report
 
 
@@ -427,6 +446,8 @@ def validate(hist):
                 "limit_up_blocked_days_n": len(blocked),
                 "limit_up_valid_days_n": len(hist["days"]) - len(blocked),
                 "limit_up_blocked_days": blocked,
+                "limit_up_recovered_later_days": sorted(
+                    d for d in (hist.get(LIMIT_RECOVERED_KEY) or {}) if d in set(hist["days"])),
                 "flow_missing_value_sector_days_n": sum(
                     int(v or 0) for d, v in (hist.get(FLOW_MISSING_KEY) or {}).items()
                     if d in set(hist["days"])),
@@ -505,7 +526,11 @@ def main():
             print(f"SKIP: {item['date']} {item['why']}(晚间/次晚补)")
         for d in report["limit_blocked_appended"]:
             print(f"  WARN {d} 涨停读数 DATA_BLOCKED({hist[LIMIT_BLOCKED_KEY][d]}),"
-                  "资金照常追加,Q2 排除该日")
+                  "资金照常追加,Q2 排除该日,次晚起重取")
+        for d in report["limit_recovered"]:
+            print(f"  RECOVERED {d} 涨停读数重取成功,已回填")
+        for item in report["limit_retry_failed"]:
+            print(f"  WARN {item['date']} 涨停读数重取仍失败({item['why']})")
         print(f"[append] +{len(report['appended'])} 日,滚动窗 {len(hist['days'])} 日")
     elif "--backfill" in sys.argv or not os.path.exists(HIST):
         if backfill(token) is None:

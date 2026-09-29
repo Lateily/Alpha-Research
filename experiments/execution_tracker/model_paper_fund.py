@@ -587,10 +587,15 @@ def nav_return_basis(nav_history, date, calendar=None):
     immediately preceding exchange session.  A missed nightly, a DATA_BLOCKED
     row in between, or an unprovable calendar all leave ``daily_return`` null;
     the multi-session move is kept as ``period_return`` with its span.
+
+    ``calendar=None`` means the pure static table: no file is read, so a sealed
+    research_cycle replay is identical on every machine and night.  The nightly
+    ``--daily`` path passes ``session_calendar.nightly_calendar(target)``.
     """
     if calendar is None:
         import session_calendar
-        calendar = session_calendar.default_calendar()
+        # governance-mutation: PAPER_NAV_DEFAULT_CALENDAR_READS_NO_FILE
+        calendar = session_calendar.static_calendar()
     basis = next((row for row in reversed(nav_history)
                   if _usable_mark(row.get("nav")) is not None), None)
     if basis is None:
@@ -1219,9 +1224,13 @@ def main():
                 print(f"  marks: {marks}")
             else:
                 print("  WARN 无可用收盘价 ⇒ NAV 标为不可用")
+        import session_calendar
         try:
             rec = update_nav(fund, orders, navh, date, marks=marks,
-                             require_complete_marks=True)
+                             require_complete_marks=True,
+                             calendar=session_calendar.nightly_calendar(
+                                 date, target_confirmed=bool(
+                                     os.environ.get("AR_TARGET_TRADE_DATE"))))
         except NavMarksIncomplete as e:
             if not token or os.environ.get("AR_OFFLINE"):
                 print(f"DATA_BLOCKED: {date} 无实时数据,未生成结算证据")

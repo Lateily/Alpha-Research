@@ -21,9 +21,29 @@ Sources, in order, never the network:
 3. Otherwise ``UNAVAILABLE`` — callers must then record the gap as unknown
    (``sessions_covered: null``), never assume contiguity.
 
-The table stops at 2026-12-31.  From 2027 onwards a range outside the rolling
-rotation window is UNAVAILABLE until a reviewed 2027 table (or a stored
-trade_cal file) is added — fail-closed, not guessed.
+Who reads which source (determinism, review B1/M2 2026-09-29):
+
+* ``static_calendar()`` — the library default of ``model_paper_fund``.  It
+  reads no file, so a sealed research_cycle bundle replays to the same NAV rows
+  on any machine and on any night.  ``research_cycle`` passes its own frozen
+  session list instead (``frozen_calendar``).
+* ``default_calendar()`` — reads the rolling ``rotation_history.json``; only for
+  audits over the live ledger (``export_contracts``, ``--status``).
+* ``nightly_calendar(target)`` — the ``--daily`` path.  ``fund_daily_mark`` runs
+  before ``rotation_validation --append``, so the window never contains the
+  target yet; the run target (a settled session per official_sample, bound
+  through AR_TARGET_TRADE_DATE) is appended when every weekday between the
+  window end and the target is a known closure, so a normal nightly row does
+  not depend on the static table.
+
+The static table stops at 2026-12-31.  From 2027 a nightly row is still provable
+through ``nightly_calendar`` when the previous NAV row is the last window day and
+no unknown weekday lies between it and the target.  Other 2027 spans (a missed
+nightly, a weekday holiday such as 2027-01-01 in between, a missed rotation
+append) get ``sessions_covered: null`` until a reviewed 2027 table or a stored
+trade_cal file is added — fail-closed, not guessed.  Follow-up due before
+2027-01-04.  The export audit prefers each row's own recorded span, so rows
+written since the fix stay auditable after they leave the rotation window.
 
 不是买卖指令；研究信号，human executes。
 """
@@ -35,6 +55,8 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROTATION_HISTORY = os.path.join(HERE, "rotation_history.json")
 
 SOURCE_ROTATION = "ROTATION_HISTORY_TRADE_CAL"
+SOURCE_ROTATION_PLUS_TARGET = "ROTATION_HISTORY_TRADE_CAL_PLUS_RUN_TARGET"
+SOURCE_FROZEN = "PAPER_ORDER_FROZEN_SESSIONS"
 SOURCE_STATIC = "STATIC_SSE_2026_WEEKDAYS_MINUS_HOLIDAYS"
 SOURCE_UNAVAILABLE = "UNAVAILABLE"
 STATIC_CAVEAT = ("static 2026 SSE holiday table typed offline from the exchange notice; "
@@ -97,12 +119,14 @@ def load_observed_days(path=None):
 class SessionCalendar:
     """Offline session calendar. ``observed_days`` is a trade_cal-derived list."""
 
-    def __init__(self, observed_days=None, *, use_static=True):
+    def __init__(self, observed_days=None, *, use_static=True,
+                 observed_source=SOURCE_ROTATION):
         observed = list(observed_days or [])
         if any(_parse(d) is None for d in observed) or observed != sorted(set(observed)):
             observed = []
         self.observed_days = observed
         self.use_static = bool(use_static)
+        self.observed_source = observed_source
 
     def sessions_between(self, start_exclusive, end_inclusive):
         """Sessions in (start_exclusive, end_inclusive].
@@ -133,7 +157,7 @@ class SessionCalendar:
                 if seen != expected:
                     return unavailable("CALENDAR_SOURCES_DISAGREE")
         if observed is not None:
-            sessions, source, caveat = observed, SOURCE_ROTATION, None
+            sessions, source, caveat = observed, self.observed_source, None
         elif static is not None:
             sessions, source, caveat = static, SOURCE_STATIC, STATIC_CAVEAT
         else:
@@ -144,5 +168,47 @@ class SessionCalendar:
                 "calendar_caveat": caveat, "reason": None}
 
 
+def static_calendar():
+    """Pure calendar: the static 2026 table only; reads no file."""
+    return SessionCalendar([])
+
+
+def frozen_calendar(sessions, source=SOURCE_FROZEN):
+    """A caller's own sealed session list (e.g. research_cycle); no static fallback."""
+    return SessionCalendar(sessions, use_static=False, observed_source=source)
+
+
 def default_calendar(path=None):
+    """Audit calendar over the live ledger: rolling rotation_history window + static table."""
     return SessionCalendar(load_observed_days(path))
+
+
+def _known_closed(day):
+    return day.year in STATIC_YEARS and day.strftime("%Y%m%d") in SSE_2026_CLOSED_WEEKDAYS
+
+
+def nightly_calendar(target, path=None, *, target_confirmed=True):
+    """Calendar for the ``--daily`` NAV row of ``target``.
+
+    ``target`` is the run's settled session (official_sample writes it and
+    run_nightly exports it as AR_TARGET_TRADE_DATE); pass
+    ``target_confirmed=False`` for a standalone run whose date is just "today".
+    A confirmed target is appended to the rotation window only when it is a
+    weekday and every weekday between the window end and the target is a known
+    closure of the static table.  Otherwise (an unknown weekday in between, e.g.
+    2027-01-01, or a missed rotation append) the span falls back to the static
+    table or UNAVAILABLE — never assumed contiguous.
+    """
+    days = load_observed_days(path)
+    end = _parse(target)
+    if not target_confirmed or not days or end is None or target <= days[-1]:
+        return SessionCalendar(days)
+    if end.weekday() >= 5 or _known_closed(end):
+        return SessionCalendar(days)
+    day = _parse(days[-1]) + datetime.timedelta(days=1)
+    while day < end:
+        # governance-mutation: SESSION_CALENDAR_NIGHTLY_UNKNOWN_WEEKDAY
+        if day.weekday() < 5 and not _known_closed(day):
+            return SessionCalendar(days)
+        day += datetime.timedelta(days=1)
+    return SessionCalendar(days + [target], observed_source=SOURCE_ROTATION_PLUS_TARGET)
