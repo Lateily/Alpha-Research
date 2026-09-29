@@ -16,6 +16,12 @@ rotation_validation.py — 轮动实验室推断层(方法论预注册的 Q1-Q3 
 claim_allowed=false,是描述/校准,不是可交易信号。regime 用"全板块
 均值涨跌日"做代理并明示 [proxy]。
 
+缺数 ≠ 0(2026-09 修订):limit_list_d 调用失败或空返回的日子,涨停读数记 None
+并写入 rotation_history["limit_up_data_blocked"][d];旧版追加写成 {} 的日子同样按
+缺数处理。Q2 与 lead_precursor 校准整日排除并计数(data_coverage / limit_reading),
+不用 status 键,避免把本步判 PARTIAL 而跳过 lead_precursor。缺 net_amount /
+pct_change 的板块-日直接丢弃并计数(flow_missing_values),不写 0。
+
 不是买卖指令；研究信号，human executes。
 """
 
@@ -25,7 +31,7 @@ import os
 import random
 import sys
 import time
-import urllib.request
+import tushare_rows
 from nightly_context import bind, target_trade_date
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -59,26 +65,67 @@ HOT_Q = 0.8                         # 双前1/5分位 [方法论预注册]
 
 
 def _api(name, token, **params):
-    body = json.dumps({"api_name": name, "token": token,
-                       "params": params, "fields": ""}).encode()
-    req = urllib.request.Request("https://api.tushare.pro", body,
-                                 {"Content-Type": "application/json"})
-    for _ in range(4):
-        try:
-            r = json.load(urllib.request.urlopen(req, timeout=40))
-            if r.get("code") == 0:
-                d = r["data"]
-                return [dict(zip(d["fields"], row)) for row in d["items"]]
-        except Exception:                              # noqa: BLE001
-            pass
-        time.sleep(1.5)
-    return []
+    """(rows, None) | (None, reason) — a failed call is never an empty answer."""
+    return tushare_rows.fetch_rows(name, token, timeout=40, **params)
+
+
+# --------------------------------------------------- missing-vs-zero helpers ----
+# 涨停读数的三种状态必须分开:真实读数(dict,至少一个行业)/ 调用失败 / 空返回。
+# A 股不存在「全市场零涨停」的定盘日,所以空返回同样按 DATA_BLOCKED 处理 ——
+# 宁可把一个(理论上的)真零日判成缺数,也不把缺数写成零。
+LIMIT_BLOCKED_KEY = "limit_up_data_blocked"
+FLOW_MISSING_KEY = "flow_missing_values"
+
+
+def limit_counts_from_rows(rows, err):
+    """limit_list_d 结果 -> (cnt_dict, None) 或 (None, reason)。"""
+    if err:
+        return None, err
+    cnt = {}
+    for r in rows or []:
+        if r.get("limit") == "U":
+            key = r.get("industry") or "?"
+            cnt[key] = cnt.get(key, 0) + 1
+    if not cnt:
+        return None, "EMPTY_LIMIT_LIST_IMPLAUSIBLE_FOR_SETTLED_DAY"
+    return cnt, None
+
+
+def flows_from_rows(rows):
+    """moneyflow_ind_dc 行 -> ({name: [net, pct]}, n_dropped)。缺值板块-日直接丢弃,不写 0。"""
+    out, dropped = {}, 0
+    for r in rows or []:
+        name = r.get("name")
+        net = tushare_rows.optional_float(r.get("net_amount"))
+        pct = tushare_rows.optional_float(r.get("pct_change"))
+        if not name or net is None or pct is None:
+            dropped += 1
+            continue
+        out[name] = [net, pct]
+    return out, dropped
+
+
+def limit_reading(hist, d):
+    """当日涨停读数:有效 dict 或 None(调用失败 / 空 / 旧版 {} / 缺键 / 显式标记)。"""
+    if d in (hist.get(LIMIT_BLOCKED_KEY) or {}):
+        return None
+    row = (hist.get("limit_up_by_industry") or {}).get(d)
+    if not isinstance(row, dict) or not row:
+        return None
+    return row
+
+
+def limit_blocked_days(hist):
+    return [d for d in hist.get("days", []) if limit_reading(hist, d) is None]
 
 
 # ------------------------------------------------------------- backfill ----
 def backfill(token, n_days=60, end_exclusive=None):
-    cal = _api("trade_cal", token, exchange="SSE", is_open="1",
-               start_date="20260301", end_date="20301231")
+    cal, err = _api("trade_cal", token, exchange="SSE", is_open="1",
+                    start_date="20260301", end_date="20301231")
+    if err:
+        print(f"DATA_BLOCKED: trade_cal 调用失败 {err},回填中止")
+        return None
     dates = sorted(r["cal_date"] for r in cal)
     if end_exclusive is None:                     # 默认:只用已定盘日(≤今天)
         import datetime
@@ -86,30 +133,84 @@ def backfill(token, n_days=60, end_exclusive=None):
                          + datetime.timedelta(days=1)).strftime("%Y%m%d")
     dates = [d for d in dates if d < end_exclusive]
     days = dates[-n_days:]
-    hist = {}
+    hist, missing = {}, {}
     for d in days:
-        rows = _api("moneyflow_ind_dc", token, trade_date=d)
-        if not rows:
-            print(f"DATA_BLOCKED: {d} 无板块资金,回填中止")
+        rows, err = _api("moneyflow_ind_dc", token, trade_date=d)
+        if err or not rows:
+            print(f"DATA_BLOCKED: {d} 无板块资金({err or '空返回'}),回填中止")
             return None
-        hist[d] = {r["name"]: [float(r.get("net_amount") or 0),
-                               float(r.get("pct_change") or 0)] for r in rows}
+        hist[d], dropped = flows_from_rows(rows)
+        if dropped:
+            missing[d] = dropped
         time.sleep(0.25)
-    lim = {}
+    lim, lim_blocked = {}, {}
     for d in days:
-        rows = _api("limit_list_d", token, trade_date=d)
-        cnt = {}
-        for r in rows:
-            if r.get("limit") == "U":
-                cnt[r.get("industry") or "?"] = cnt.get(r.get("industry") or "?", 0) + 1
-        lim[d] = cnt
+        rows, err = _api("limit_list_d", token, trade_date=d)
+        cnt, why = limit_counts_from_rows(rows, err)
+        lim[d] = cnt                                # None = DATA_BLOCKED,绝不写 {}
+        if why:
+            lim_blocked[d] = why
         time.sleep(0.2)
     payload = {"days": days, "flows": hist, "limit_up_by_industry": lim,
-               "built_at_note": "PIT: 全部为历史定盘事实"}
+               LIMIT_BLOCKED_KEY: lim_blocked, FLOW_MISSING_KEY: missing,
+               "built_at_note": "PIT: 全部为历史定盘事实;涨停读数 None=DATA_BLOCKED(非零)"}
     with open(HIST, "w", encoding="utf-8") as fh:
         json.dump(payload, fh, ensure_ascii=False)
-    print(f"[backfill] {len(days)} 日 × ~{len(hist[days[-1]])} 板块 → {HIST}")
+    print(f"[backfill] {len(days)} 日 × ~{len(hist[days[-1]])} 板块 → {HIST}"
+          f"(涨停缺数 {len(lim_blocked)} 日)")
     return payload
+
+
+def append_days(hist, token, target, api=None, window=90):
+    """夜链追加:只追加已定盘日,滚动保留 window 日。返回 (hist, report) 或 (None, reason)。
+
+    - 目标日资金或涨停读数缺失/失败 ⇒ 整日 SKIP(不推进 days,次晚作为历史日重取);
+    - 历史日资金缺失 ⇒ 中止(与旧行为一致,exit 1);
+    - 历史日涨停缺失 ⇒ 资金照常追加,涨停读数记 None + limit_up_data_blocked[d]=原因,
+      绝不写成 {}(=零涨停)。
+    """
+    api = api or _api
+    cal, err = api("trade_cal", token, exchange="SSE", is_open="1",
+                   start_date=hist["days"][-1], end_date=target)
+    if err:
+        return None, f"trade_cal 调用失败 {err}"
+    new_days = sorted(r["cal_date"] for r in cal
+                      if r["cal_date"] > hist["days"][-1] and r["cal_date"] <= target)
+    hist.setdefault("limit_up_by_industry", {})
+    blocked = dict(hist.get(LIMIT_BLOCKED_KEY) or {})
+    missing = dict(hist.get(FLOW_MISSING_KEY) or {})
+    report = {"appended": [], "skipped": [], "limit_blocked_appended": []}
+    for d in new_days:
+        rows, err = api("moneyflow_ind_dc", token, trade_date=d)
+        if err or not rows:
+            if d >= target:
+                # 当日尚未定盘(如早晨运行)或调用失败:优雅跳过,晚间/次晚补
+                report["skipped"].append({"date": d, "why": f"moneyflow {err or 'EMPTY'}"})
+                continue
+            return None, f"{d} 历史日无板块资金({err or '空返回'}),追加中止"
+        flows, dropped = flows_from_rows(rows)
+        lrows, lerr = api("limit_list_d", token, trade_date=d)
+        cnt, why = limit_counts_from_rows(lrows, lerr)
+        if why and d >= target:
+            report["skipped"].append({"date": d, "why": f"limit_list_d {why}"})
+            continue
+        hist["flows"][d] = flows
+        if dropped:
+            missing[d] = dropped
+        hist["limit_up_by_industry"][d] = cnt
+        if why:
+            blocked[d] = why
+            report["limit_blocked_appended"].append(d)
+        hist["days"].append(d)
+        report["appended"].append(d)
+    hist["days"] = hist["days"][-window:]
+    keep = set(hist["days"])
+    hist["flows"] = {d: hist["flows"][d] for d in hist["days"]}
+    hist["limit_up_by_industry"] = {d: hist["limit_up_by_industry"].get(d)
+                                    for d in hist["days"]}
+    hist[LIMIT_BLOCKED_KEY] = {d: v for d, v in blocked.items() if d in keep}
+    hist[FLOW_MISSING_KEY] = {d: v for d, v in missing.items() if d in keep}
+    return hist, report
 
 
 # ------------------------------------------------------------- stats core ----
@@ -248,15 +349,20 @@ def run_q1(hist, sectors, exc, hot, shuffle_labels=False, seed=7):
 
 def run_q2(hist, sectors, exc, hot):
     days = hist["days"]
-    lim = hist.get("limit_up_by_industry", {})
     broad, narrow = [], []
+    blocked_days = limit_blocked_days(hist)
+    excluded_obs = 0
     for d, hs in hot.items():
+        lim_d = limit_reading(hist, d)
         for s in hs:
             f3 = fwd_excess(exc, days, d, s, 3)
             if f3 is None:
                 continue
+            if lim_d is None:
+                excluded_obs += 1           # 涨停读数缺失:不判宽/窄,排除并计数
+                continue
             n_lim = 0
-            for ind, c in lim.get(d, {}).items():
+            for ind, c in lim_d.items():
                 if ind and (ind in s or s in ind):
                     n_lim = c
                     break
@@ -266,7 +372,13 @@ def run_q2(hist, sectors, exc, hot):
     return {"broad_n": len(broad), "narrow_n": len(narrow),
             "broad_med_fwd3": med(broad), "narrow_med_fwd3": med(narrow),
             "mw_z": z, "mw_p": pv,
-            "note": "广度=板块名匹配的当日涨停数>=2 [行业名跨表模糊匹配,匹配失败按narrow计]"}
+            "limit_reading": {"blocked_days_n": len(blocked_days),
+                              "valid_days_n": len(days) - len(blocked_days),
+                              "blocked_days": blocked_days,
+                              "excluded_hot_obs_n": excluded_obs,
+                              "basis": "涨停读数缺失(调用失败/空返回/旧版{})的日子不参与宽窄划分"},
+            "note": "广度=板块名匹配的当日涨停数>=2 [行业名跨表模糊匹配,匹配失败按narrow计;"
+                    "涨停读数缺失日整日排除,不按 0 计]"}
 
 
 def run_q3(hist, sectors, exc, lag_shuffle=False, seed=11):
@@ -306,8 +418,20 @@ def validate(hist):
     q2 = run_q2(hist, sectors, exc, hot)
     q3 = run_q3(hist, sectors, exc)
     c2 = run_q3(hist, sectors, exc, lag_shuffle=True)
+    blocked = limit_blocked_days(hist)
     return {"window": [hist["days"][0], hist["days"][-1]],
             "n_days": len(hist["days"]), "n_sectors": len(sectors),
+            # 计数不用 status 键:整窗旧数据里有缺数日是常态,不能让 run_nightly 把
+            # 本步判 PARTIAL 进而跳过 lead_precursor —— 缺数在这里如实计数、在 Q2 里排除。
+            "data_coverage": {
+                "limit_up_blocked_days_n": len(blocked),
+                "limit_up_valid_days_n": len(hist["days"]) - len(blocked),
+                "limit_up_blocked_days": blocked,
+                "flow_missing_value_sector_days_n": sum(
+                    int(v or 0) for d, v in (hist.get(FLOW_MISSING_KEY) or {}).items()
+                    if d in set(hist["days"])),
+                "legacy_note": "2026-09 之前追加的日子里,调用失败被写成 {};这里一律按缺数处理。",
+            },
             "effective_n_note": "横截面高相关,有效独立样本≈交易日数",
             "Q1_persistence": q1,
             "C1_label_shuffle_control": c1,
@@ -371,38 +495,18 @@ def main():
     if "--append" in sys.argv and os.path.exists(HIST):
         # 夜链模式:只追加最新定盘日,滚动保留 90 日
         hist = json.load(open(HIST))
-        import datetime
-        target = target_trade_date()
-        endx = target
-        cal = _api("trade_cal", token, exchange="SSE", is_open="1",
-                   start_date=hist["days"][-1], end_date=endx)
-        new_days = sorted(r["cal_date"] for r in cal
-                          if r["cal_date"] > hist["days"][-1] and r["cal_date"] <= target)
-        for d in new_days:
-            rows = _api("moneyflow_ind_dc", token, trade_date=d)
-            if not rows:
-                if d >= target:
-                    # 当日尚未定盘(如早晨运行):优雅跳过,非错误
-                    print(f"SKIP: {d} 尚未定盘,跳过(晚间定时跑会补)")
-                    continue
-                print(f"DATA_BLOCKED: {d} 历史日无板块资金,追加中止")
-                sys.exit(1)
-            hist["flows"][d] = {r["name"]: [float(r.get("net_amount") or 0),
-                                            float(r.get("pct_change") or 0)] for r in rows}
-            lrows = _api("limit_list_d", token, trade_date=d)
-            cnt = {}
-            for r in lrows:
-                if r.get("limit") == "U":
-                    cnt[r.get("industry") or "?"] = cnt.get(r.get("industry") or "?", 0) + 1
-            hist["limit_up_by_industry"][d] = cnt
-            hist["days"].append(d)
-        hist["days"] = hist["days"][-90:]
-        hist["flows"] = {d: hist["flows"][d] for d in hist["days"]}
-        hist["limit_up_by_industry"] = {d: hist["limit_up_by_industry"].get(d, {})
-                                        for d in hist["days"]}
+        hist, report = append_days(hist, token, target_trade_date())
+        if hist is None:
+            print(f"DATA_BLOCKED: {report}")
+            sys.exit(1)
         with open(HIST, "w", encoding="utf-8") as fh:
             json.dump(hist, fh, ensure_ascii=False)
-        print(f"[append] +{len(new_days)} 日,滚动窗 {len(hist['days'])} 日")
+        for item in report["skipped"]:
+            print(f"SKIP: {item['date']} {item['why']}(晚间/次晚补)")
+        for d in report["limit_blocked_appended"]:
+            print(f"  WARN {d} 涨停读数 DATA_BLOCKED({hist[LIMIT_BLOCKED_KEY][d]}),"
+                  "资金照常追加,Q2 排除该日")
+        print(f"[append] +{len(report['appended'])} 日,滚动窗 {len(hist['days'])} 日")
     elif "--backfill" in sys.argv or not os.path.exists(HIST):
         if backfill(token) is None:
             sys.exit(1)

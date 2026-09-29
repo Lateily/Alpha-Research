@@ -168,6 +168,9 @@ def build_model_portfolio_state():
                 or row.get("daily_return") is not None
                 or row.get("cum_return") is not None):
             blocked = "invalid blocked NAV observation"
+    session_audit = None
+    if not blocked and isinstance(nav, list):
+        session_audit = nav_session_audit(nav)
     data = None
     if not blocked:
         rows = orders if isinstance(orders, list) else orders.get("orders", [])
@@ -178,6 +181,7 @@ def build_model_portfolio_state():
                 "cash": fund.get("cash"),
                 "nav_series": nav,
                 "nav_latest": nav[-1] if nav else None,
+                "nav_session_audit": session_audit,
                 "open_positions": open_pos,
                 "closed_trades": closed,
                 "closed_trades_n": len(closed),
@@ -201,7 +205,56 @@ def build_model_portfolio_state():
             "source": "model_fund/nav_history.json", "internal_status": "PARTIAL_OK",
             "why": "HISTORICAL_NAV_GAP",
         })
+    if (session_audit and session_audit["contiguity"] != "CONTIGUOUS"
+            and not blocked and result["data_quality"] == "COMPLETE"):
+        # nav_series is documented as a day-by-day array; a sparse one is PARTIAL.
+        result["data_quality"] = "PARTIAL"
+    if session_audit and session_audit["contiguity"] != "CONTIGUOUS" and not blocked:
+        result["degraded_sources"].append({
+            "source": "model_fund/nav_history.json", "internal_status": "PARTIAL_OK",
+            "why": ("NAV_SESSION_GAP" if session_audit["contiguity"] == "GAPPED"
+                    else "NAV_SESSION_CALENDAR_UNAVAILABLE"),
+            "missing_sessions": session_audit["missing_sessions"],
+            "unverifiable_spans": session_audit["unverifiable_spans"],
+        })
     return result
+
+
+def nav_session_audit(nav, calendar=None):
+    """Compare nav_series dates with the offline SSE session calendar.
+
+    Lists sessions with no NAV row and legacy rows whose ``daily_return`` spans
+    more than one session.  The ledger is never rewritten here; the contract
+    only discloses what is missing.
+    """
+    import session_calendar
+    calendar = calendar or session_calendar.default_calendar()
+    rows = [r for r in nav if isinstance(r, dict) and isinstance(r.get("date"), str)]
+    missing, unverifiable, mislabeled, sources = [], [], [], set()
+    for prev, row in zip(rows, rows[1:]):
+        span = calendar.sessions_between(prev["date"], row["date"])
+        if span["sessions"] is None:
+            unverifiable.append({"from": prev["date"], "to": row["date"],
+                                 "reason": span["reason"]})
+            continue
+        sources.add(span["calendar_source"])
+        gap = span["sessions"][:-1]
+        missing.extend(gap)
+        if gap and row.get("daily_return") is not None:
+            mislabeled.append(row["date"])
+    contiguity = ("UNVERIFIABLE" if unverifiable else "GAPPED" if missing else "CONTIGUOUS")
+    return {"contiguity": contiguity,
+            "first_date": rows[0]["date"] if rows else None,
+            "last_date": rows[-1]["date"] if rows else None,
+            "missing_sessions": missing,
+            "missing_sessions_n": len(missing),
+            "unverifiable_spans": unverifiable,
+            "multi_session_daily_return_dates": mislabeled,
+            "calendar_sources": sorted(sources),
+            "calendar_caveat": (session_calendar.STATIC_CAVEAT
+                                if session_calendar.SOURCE_STATIC in sources else None),
+            "note": "缺失交易日没有 NAV 行;multi_session_daily_return_dates 中的旧行"
+                    " daily_return 实为跨多日收益,不可当单日读。账本不改写,只披露。"}
 
 
 def _make_card(o, drows):

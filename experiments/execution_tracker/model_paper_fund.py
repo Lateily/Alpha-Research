@@ -580,16 +580,50 @@ def execution_realism_receipt(order):
     }
 
 
+def nav_return_basis(nav_history, date, calendar=None):
+    """Which earlier mark a new NAV row is measured against, and across how many sessions.
+
+    ``daily_return`` is only a one-session return when the basis row is the
+    immediately preceding exchange session.  A missed nightly, a DATA_BLOCKED
+    row in between, or an unprovable calendar all leave ``daily_return`` null;
+    the multi-session move is kept as ``period_return`` with its span.
+    """
+    if calendar is None:
+        import session_calendar
+        calendar = session_calendar.default_calendar()
+    basis = next((row for row in reversed(nav_history)
+                  if _usable_mark(row.get("nav")) is not None), None)
+    if basis is None:
+        return {"basis_row": None, "basis_date": "INCEPTION", "sessions_covered": None,
+                "gap_sessions": None, "calendar_source": "NOT_APPLICABLE_INCEPTION",
+                "one_session": False}
+    span = calendar.sessions_between(basis.get("date"), date)
+    sessions = span["sessions"]
+    covered = len(sessions) if sessions is not None else None
+    # governance-mutation: PAPER_NAV_DAILY_RETURN_ONE_SESSION
+    one_session = bool(covered == 1 and nav_history and nav_history[-1] is basis)
+    return {"basis_row": basis, "basis_date": basis.get("date"),
+            "sessions_covered": covered,
+            "gap_sessions": sessions[:-1] if sessions is not None else None,
+            "calendar_source": span["calendar_source"], "one_session": one_session}
+
+
 def update_nav(fund, orders, nav_history, date, marks=None, *,
-               require_complete_marks=False):
+               require_complete_marks=False, calendar=None):
     nav = current_nav(fund, orders, marks, require_complete_marks=require_complete_marks)
-    prev = next((row["nav"] for row in reversed(nav_history)
-                 if _usable_mark(row.get("nav")) is not None), fund["initial_capital"])
+    basis = nav_return_basis(nav_history, date, calendar)
+    prev = (basis["basis_row"]["nav"] if basis["basis_row"] is not None
+            else fund["initial_capital"])
+    period_return = round(nav / prev - 1, 5)
     rec = {"date": date, "nav": nav, "cash": fund["cash"],
            "n_positions": sum(1 for o in orders if o["status"] == "filled"),
-           "daily_return": (None if nav_history and nav_history[-1].get("nav") is None
-                            else round(nav / prev - 1, 5)),
-           "cum_return": round(nav / fund["initial_capital"] - 1, 5)}
+           "daily_return": period_return if basis["one_session"] else None,
+           "cum_return": round(nav / fund["initial_capital"] - 1, 5),
+           "period_return": period_return,
+           "basis_date": basis["basis_date"],
+           "sessions_covered": basis["sessions_covered"],
+           "gap_sessions": basis["gap_sessions"],
+           "calendar_source": basis["calendar_source"]}
     if not any(x["date"] == date for x in nav_history):     # append-only, one per day
         nav_history.append(rec)
     return rec
@@ -841,7 +875,31 @@ def _committed_daily_row_is_consistent(row, fund, orders):
 
 
 # -------------------------------------------------------------- performance ----
-def compute_performance(fund, orders, nav_history):
+def nav_gap_dates(nav_history, calendar=None):
+    """Rows whose mark is not one session after the previous row.
+
+    Evidence comes from each row's own ``sessions_covered``/``gap_sessions``
+    (rows written since the gap fix) and, when a calendar is supplied, from the
+    calendar for legacy rows.  Without either the answer is "no evidence", so
+    older call sites keep their exact output.
+    """
+    gaps = []
+    for i, row in enumerate(nav_history):
+        if not isinstance(row, dict):
+            continue
+        covered = row.get("sessions_covered", "ABSENT")
+        if covered != "ABSENT" and row.get("basis_date") not in (None, "INCEPTION"):
+            if covered != 1:
+                gaps.append(row.get("date"))
+            continue
+        if calendar is not None and i > 0 and isinstance(nav_history[i - 1], dict):
+            span = calendar.sessions_between(nav_history[i - 1].get("date"), row.get("date"))
+            if span["sessions"] is None or len(span["sessions"]) != 1:
+                gaps.append(row.get("date"))
+    return gaps
+
+
+def compute_performance(fund, orders, nav_history, *, calendar=None):
     closed_all = [o for o in orders if o["status"] == "closed"]
     # governance-mutation: PAPER_EXECUTION_CLAIM_COUNT_EXCLUDES_DEBUG
     closed = [o for o in closed_all if o.get("sample_eligible") is True]
@@ -854,6 +912,7 @@ def compute_performance(fund, orders, nav_history):
     for v in navs:
         peak = max(peak, v)
         max_dd = min(max_dd, v / peak - 1)
+    gap_dates = nav_gap_dates(nav_history, calendar)
     n = len(closed)
     result = {
         "nav": None if nav_blocked else navs[-1],
@@ -873,6 +932,12 @@ def compute_performance(fund, orders, nav_history):
                                  if n < MIN_CLOSED_FOR_CLAIM else
                                  f"{n} closed — threshold met; still paper, not real-money validated"),
     }
+    if gap_dates:
+        # A drawdown over a sparse series cannot see the unmarked sessions.
+        # governance-mutation: PAPER_NAV_GAP_WITHHOLDS_DRAWDOWN
+        result["max_drawdown"] = None
+        result["max_drawdown_observed_marks_only"] = round(max_dd, 5)
+        result["nav_gap_row_dates"] = gap_dates
     # Preserve the price-only summary shape; deadline portfolios add an expiry bucket.
     if any("deadline_policy" in o for o in orders):
         # governance-mutation: PAPER_T10_FUND_EXPIRY_COUNT
@@ -1178,7 +1243,10 @@ def main():
             print("not initialized — run --init"); return
         orders = load("orders.json", [], args.fund_dir)
         navh = load("nav_history.json", [], args.fund_dir)
-        print(json.dumps(compute_performance(fund, orders, navh), ensure_ascii=False, indent=2))
+        import session_calendar
+        print(json.dumps(compute_performance(fund, orders, navh,
+                                             calendar=session_calendar.default_calendar()),
+                         ensure_ascii=False, indent=2))
         print("不是买卖指令；研究信号，human executes。")
         return
     ap.print_help()
