@@ -41,6 +41,12 @@ except ImportError:  # direct script execution
 SCHEMA = "ar.e1_event_layer"
 SCHEMA_VERSION = "1.0"
 RULE_VERSION = "R036_E1_RULES_V1"
+# Machine-readable marker for the 2026-09-29 rule revision shared with the U3
+# red-flag gate (per-period active guidance, filed-null retention, anchored
+# adjacent quarter pair, filed-period freshness, unscorable-guidance blocks).
+# The schema pins rule_version as a const, so the revision lives in
+# policy.rule_revision; a V1.1 rule_version bump is a human decision.
+RULE_REVISION = "R036_E1_RULES_V1+shared_u3.2026-09-29"
 NEGATIVE_GUIDANCE_TYPES = {"首亏", "预亏", "预减", "略减", "续亏"}
 EXPRESS_YOY_NET_PROFIT_THRESHOLD_PCT = -30.0
 VERDICTS = {"RED_FLAG", "NO_RED_FLAG_FOUND", "DATA_BLOCKED"}
@@ -54,7 +60,15 @@ EXPRESS_FIELDS = (
     "ts_code,ann_date,end_date,revenue,n_income,yoy_net_profit,"
     "yoy_dedu_np,diluted_eps,perf_summary"
 )
-INCOME_FIELDS = "ts_code,ann_date,end_date,report_type,n_income_attr_p"
+INCOME_FIELDS = "ts_code,ann_date,end_date,report_type,n_income_attr_p,update_flag"
+# Latest statutory filing day per report period (CSRC periodic-report rules):
+# Q1 by 04-30, H1 by 08-31, Q3 by 10-31, annual by 04-30 of the next year.
+_FILING_DEADLINES = {
+    "0331": (0, "0430"),
+    "0630": (0, "0831"),
+    "0930": (0, "1031"),
+    "1231": (1, "0430"),
+}
 UNAVAILABLE_DIMENSIONS = (
     {
         "dimension": "formal_announcements",
@@ -174,27 +188,46 @@ def _valid_event_row(row: dict[str, Any], eligible: set[str], as_of: str) -> boo
     return code in eligible and len(ann_date) == 8 and ann_date.isdigit() and ann_date <= as_of
 
 
+def _event_key(row: dict[str, Any]) -> tuple[str, str, str]:
+    return (
+        str(row.get("end_date") or ""),
+        str(row.get("ann_date") or ""),
+        _sha256(row),
+    )
+
+
 def _latest_events(
     rows: list[dict[str, Any]], eligible: set[str], as_of: str
 ) -> dict[str, dict[str, Any]]:
+    """The single latest (period, announcement, row-hash) event per ticker."""
     latest: dict[str, dict[str, Any]] = {}
+    for code, events in _events_by_ticker(rows, eligible, as_of).items():
+        latest[code] = max(events, key=_event_key)
+    return latest
+
+
+def _events_by_ticker(
+    rows: list[dict[str, Any]], eligible: set[str], as_of: str
+) -> dict[str, list[dict[str, Any]]]:
+    """Every valid guidance/express row visible at ``as_of``, grouped by ticker."""
+    grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for row in rows:
         if not isinstance(row, dict) or not _valid_event_row(row, eligible, as_of):
             continue
-        code = str(row["ts_code"])
-        key = (
-            str(row.get("end_date") or ""),
-            str(row.get("ann_date") or ""),
-            _sha256(row),
-        )
-        previous = latest.get(code)
-        previous_key = (
-            str(previous.get("end_date") or ""),
-            str(previous.get("ann_date") or ""),
-            _sha256(previous),
-        ) if previous else ("", "", "")
-        if key > previous_key:
-            latest[code] = row
+        grouped[str(row["ts_code"])].append(row)
+    return dict(grouped)
+
+
+def _latest_per_period(rows: Any) -> dict[str, dict[str, Any]]:
+    """Latest announcement per report period (ties broken by row hash, never arrival order)."""
+    if isinstance(rows, dict):
+        rows = [rows]
+    latest: dict[str, dict[str, Any]] = {}
+    for row in rows or []:
+        period = str(row.get("end_date") or "")
+        current = latest.get(period)
+        if current is None or _event_key(row) > _event_key(current):
+            latest[period] = row
     return latest
 
 
@@ -223,8 +256,28 @@ def _income_by_ticker(
     return dict(selected)
 
 
-def _filing_rank(row: dict[str, Any]) -> tuple[str, bool]:
-    return str(row.get("ann_date") or ""), _number(row.get("n_income_attr_p")) is not None
+def _filing_rank(row: dict[str, Any]) -> tuple[str, bool, bool, str]:
+    """Same-period filing order: latest announcement, then valued over null, then
+    Tushare update_flag=1 over 0, then the row hash (never provider arrival order)."""
+    return (
+        str(row.get("ann_date") or ""),
+        # governance-mutation: U3_RED_FLAG_FILING_RANK_VALUED_OVER_NULL
+        _number(row.get("n_income_attr_p")) is not None,
+        str(row.get("update_flag") or "") == "1",
+        _sha256(row),
+    )
+
+
+def _latest_due_period(as_of: str) -> str | None:
+    """Most recent report period whose statutory filing deadline is strictly before as_of."""
+    year = int(as_of[:4])
+    due = [
+        f"{period_year}{suffix}"
+        for period_year in range(year - 2, year + 1)
+        for suffix, (offset, month_day) in _FILING_DEADLINES.items()
+        if as_of > f"{period_year + offset}{month_day}"
+    ]
+    return max(due, default=None)
 
 
 def _previous_period(period: str) -> str | None:
@@ -296,18 +349,25 @@ def _standalone_value(
 
 def _income_assessment(
     period_rows: dict[str, dict[str, Any]],
+    as_of: str,
 ) -> tuple[dict[str, Any] | None, bool, str | None]:
     """Anchor the income rule on the latest FILED period and its calendar predecessor.
 
     Returns ``(evidence, triggered, block_code)``.  The latest filed period is
     never skipped because its value is missing, and the comparison quarter is
     always the adjacent calendar quarter, so a gap can never pair two
-    non-adjacent quarters.
+    non-adjacent quarters.  A latest filing older than the most recent period
+    whose statutory deadline has passed at ``as_of`` is FILED_PERIOD_STALE:
+    missing current filings are never scored on year-old quarters.
     """
     # governance-mutation: U3_RED_FLAG_INCOME_ANCHORED_ADJACENT_PAIR
     latest_period = max(period_rows, default="")
     if not latest_period:
         return None, False, "INSUFFICIENT_FILED_QUARTER_HISTORY"
+    due_period = _latest_due_period(as_of)
+    # governance-mutation: U3_RED_FLAG_FILED_PERIOD_FRESHNESS
+    if due_period and latest_period < due_period:
+        return None, False, "FILED_PERIOD_STALE"
     previous_period = _previous_period(latest_period)
     if previous_period is None:
         return None, False, "INSUFFICIENT_FILED_QUARTER_HISTORY"
@@ -386,6 +446,7 @@ def _express_evidence(
     yoy_pct = official_yoy_pct
     yoy_source = "tushare.express_vip.yoy_dedu_np"
     if yoy_pct is None and current_profit is not None and prior_profit not in (None, 0.0):
+        # governance-mutation: U3_RED_FLAG_EXPRESS_LOSS_SIGN_ABS
         yoy_pct = (current_profit - prior_profit) / abs(prior_profit) * 100.0
         yoy_source = "computed_from_n_income_and_yoy_net_profit/v1"
     scorable = yoy_pct is not None
@@ -414,50 +475,79 @@ def _express_evidence(
 
 def _classify_row(
     registry_row: dict[str, Any],
-    forecast: dict[str, Any] | None,
-    express: dict[str, Any] | None,
+    forecast: Any,
+    express: Any,
     income_periods: dict[str, dict[str, Any]],
     source_complete: bool,
+    *,
+    as_of: str,
 ) -> dict[str, Any]:
     row, _detail = _classify_evidence(
-        registry_row, forecast, express, income_periods, source_complete
+        registry_row, forecast, express, income_periods, source_complete, as_of=as_of
     )
     return row
 
 
+def _active_periods(by_period: dict[str, dict[str, Any]], latest_filed_period: str) -> list[str]:
+    """Guidance/express periods not yet retired by a filed statement.
+
+    A filed statement for the same or a later report period supersedes the row;
+    every other period stays live and is judged on its own latest announcement.
+    """
+    return sorted(
+        (
+            period
+            for period in by_period
+            # governance-mutation: U3_RED_FLAG_SAME_PERIOD_FILING_SUPERSEDES
+            if not latest_filed_period or period > latest_filed_period
+        ),
+        reverse=True,
+    )
+
+
 def _classify_evidence(
     registry_row: dict[str, Any],
-    forecast: dict[str, Any] | None,
-    express: dict[str, Any] | None,
+    forecast: Any,
+    express: Any,
     income_periods: dict[str, dict[str, Any]],
     source_complete: bool,
+    *,
+    as_of: str,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     """The single E1 red-flag rule set shared by the batch layer and U3.
 
-    Returns the schema row plus a detail record (latest filed period, income
-    block code, cited guidance/express periods) that only the single-ticker API
+    ``forecast``/``express`` are the ticker's valid rows (a list, or one row).
+    Every period later than the latest filed period is active and judged on its
+    latest announcement; the row is RED_FLAG if any active period is negative,
+    so a later-period positive guidance can never mask an earlier live 首亏.
+    Returns the schema row plus a detail record that only the single-ticker API
     exposes; the batch schema row is unchanged in shape.
     """
     quarters = _standalone_quarters(income_periods)
     latest_filed_period = max(income_periods, default="")
+    forecast_by_period = _latest_per_period(forecast)
+    express_by_period = _latest_per_period(express)
+    forecast_active = _active_periods(forecast_by_period, latest_filed_period)
+    express_active = _active_periods(express_by_period, latest_filed_period)
     # governance-mutation: U3_RED_FLAG_FILED_STATEMENT_SUPERSEDES_GUIDANCE
-    forecast_superseded = bool(
-        forecast
-        and latest_filed_period
-        and str(forecast.get("end_date") or "") <= latest_filed_period
-    )
-    express_superseded = bool(
-        express
-        and latest_filed_period
-        and str(express.get("end_date") or "") <= latest_filed_period
-    )
-    active_forecast = None if forecast_superseded else forecast
-    active_express = None if express_superseded else express
-    forecast_ev, forecast_flag, forecast_scorable = _forecast_evidence(active_forecast)
-    express_ev, express_flag, express_scorable = _express_evidence(active_express)
-    income_ev, income_flag, income_block = _income_assessment(income_periods)
+    forecast_superseded = bool(forecast_by_period) and not forecast_active
+    express_superseded = bool(express_by_period) and not express_active
+    forecast_results = [_forecast_evidence(forecast_by_period[p]) for p in forecast_active]
+    express_results = [_express_evidence(express_by_period[p]) for p in express_active]
+    # governance-mutation: U3_RED_FLAG_ANY_ACTIVE_PERIOD_FLAGS
+    forecast_flag = any(flag for _ev, flag, _ok in forecast_results)
+    express_flag = any(flag for _ev, flag, _ok in express_results)
+    forecast_scorable = all(ok for _ev, _flag, ok in forecast_results)
+    express_scorable = all(ok for _ev, _flag, ok in express_results)
+    income_ev, income_flag, income_block = _income_assessment(income_periods, as_of)
     evaluated_evidence = [
-        item for item in (forecast_ev, express_ev, income_ev) if item is not None
+        item
+        for item in (
+            [ev for ev, _flag, _ok in forecast_results]
+            + [ev for ev, _flag, _ok in express_results]
+            + [income_ev]
+        )
+        if item is not None
     ]
     evidence = [item for item in evaluated_evidence if item["triggered"]]
     reason_codes: list[str] = []
@@ -498,20 +588,23 @@ def _classify_evidence(
         "reason_codes": sorted(reason_codes),
         "latest_e1_date": latest_e1_date,
         "evidence_coverage": {
+            # PRESENT means at least one active (unsuperseded) guidance period was
+            # read; an unscorable active row is still PRESENT here (the enum has no
+            # DATA_BLOCKED) and surfaces as FORECAST_GUIDANCE_UNSCORABLE instead.
             "forecast": (
                 "SUPERSEDED"
                 if forecast_superseded
                 else "PRESENT"
-                if forecast_ev
+                if forecast_active
                 else "EMPTY_VALID"
             ),
             "express": (
                 "SUPERSEDED"
                 if express_superseded
                 else "PRESENT"
-                if express_ev and express_scorable
+                if express_active and express_scorable
                 else "DATA_BLOCKED"
-                if express_ev
+                if express_active
                 else "EMPTY_VALID"
             ),
             "filed_quarters": len(quarters),
@@ -522,9 +615,13 @@ def _classify_evidence(
     }
     detail = {
         "latest_filed_period": latest_filed_period or None,
+        "latest_due_period": _latest_due_period(as_of),
         "income_block": income_block,
-        "forecast_period": str((forecast or {}).get("end_date") or "") or None,
-        "express_period": str((express or {}).get("end_date") or "") or None,
+        "active_periods": {"forecast": forecast_active, "express": express_active},
+        "superseded_periods": {
+            "forecast": sorted(set(forecast_by_period) - set(forecast_active), reverse=True),
+            "express": sorted(set(express_by_period) - set(express_active), reverse=True),
+        },
     }
     return row, detail
 
@@ -538,18 +635,21 @@ def classify_ticker(
     as_of: str,
     source_complete: bool = True,
 ) -> dict[str, Any]:
-    """Single-ticker entry point over the exact batch rule set (no drift).
+    """Single-ticker entry point over the exact batch rule set.
 
-    Rows are provider records (per-ticker ``forecast``/``express``/``income``
-    carry the same fields as the ``*_vip`` batch endpoints).  Records dated after
-    ``as_of`` or lacking a valid announcement date are ignored, exactly as in the
-    batch layer, so no future filing can leak into the verdict.
+    Identical rows classify identically on both paths; the fetch windows differ
+    (U3 reads everything announced in its look-back window, the batch layer reads
+    only the four report periods up to ``as_of``), so the inputs themselves can
+    differ.  Rows are provider records (per-ticker ``forecast``/``express``/
+    ``income`` carry the same fields as the ``*_vip`` batch endpoints).  Records
+    dated after ``as_of`` or lacking a valid announcement date are ignored,
+    exactly as in the batch layer, so no future filing can leak into the verdict.
     """
     as_of = _date8(as_of)
     code = str(ts_code or "")
     eligible = {code}
-    forecast = _latest_events(_with_code(forecast_rows, code), eligible, as_of).get(code)
-    express = _latest_events(_with_code(express_rows, code), eligible, as_of).get(code)
+    forecast = _events_by_ticker(_with_code(forecast_rows, code), eligible, as_of).get(code, [])
+    express = _events_by_ticker(_with_code(express_rows, code), eligible, as_of).get(code, [])
     incomes = _income_by_ticker(_with_code(income_rows, code), eligible, as_of).get(code, {})
     row, detail = _classify_evidence(
         {"ts_code": code, "name": None, "industry_key": None},
@@ -557,15 +657,16 @@ def classify_ticker(
         express,
         incomes,
         source_complete=source_complete,
+        as_of=as_of,
     )
     row.pop("name", None)
     row.pop("industry_key", None)
     row["rule_version"] = RULE_VERSION
+    row["rule_revision"] = RULE_REVISION
     row["latest_filed_period"] = detail["latest_filed_period"]
-    row["cited_periods"] = {
-        "forecast": detail["forecast_period"],
-        "express": detail["express_period"],
-    }
+    row["latest_due_period"] = detail["latest_due_period"]
+    row["active_periods"] = detail["active_periods"]
+    row["superseded_periods"] = detail["superseded_periods"]
     return row
 
 
@@ -575,6 +676,7 @@ def _with_code(rows: list[dict[str, Any]] | None, code: str) -> list[dict[str, A
     for row in rows or []:
         if not isinstance(row, dict):
             continue
+        # governance-mutation: U3_RED_FLAG_FOREIGN_ROW_IGNORED
         if row.get("ts_code") not in (None, "", code):
             continue  # a foreign ticker's row is never evidence for this one
         result.append({**row, "ts_code": code})
@@ -599,8 +701,8 @@ def build_event_layer(
     registry_rows = _eligible_registry_rows(registry)
     eligible = {row["ts_code"] for row in registry_rows}
 
-    forecast = _latest_events(rows_by_endpoint.get("forecast_vip", []), eligible, as_of)
-    express = _latest_events(rows_by_endpoint.get("express_vip", []), eligible, as_of)
+    forecast = _events_by_ticker(rows_by_endpoint.get("forecast_vip", []), eligible, as_of)
+    express = _events_by_ticker(rows_by_endpoint.get("express_vip", []), eligible, as_of)
     incomes = _income_by_ticker(rows_by_endpoint.get("income_vip", []), eligible, as_of)
     source_complete = not source_errors
     output_rows = [
@@ -610,6 +712,7 @@ def build_event_layer(
             express.get(row["ts_code"]),
             incomes.get(row["ts_code"], {}),
             source_complete=source_complete,
+            as_of=as_of,
         )
         for row in registry_rows
     ]
@@ -659,9 +762,16 @@ def build_event_layer(
                 "prefer tushare.express_vip.yoy_dedu_np; otherwise compute "
                 "(n_income-yoy_net_profit)/abs(yoy_net_profit)*100 from official amounts"
             ),
+            "rule_revision": RULE_REVISION,
             "event_lifecycle": (
-                "prefer the latest report period, then announcement date; a filed income "
-                "statement supersedes guidance/express for the same or an earlier period"
+                "a filed income statement supersedes guidance/express for the same or an "
+                "earlier period; every later (active) period is judged on its latest "
+                "announcement (ties by row hash) and any negative active period flags"
+            ),
+            "income_freshness_rule": (
+                "a latest filed period older than the most recent period whose statutory "
+                "deadline (Q1 04-30, H1 08-31, Q3 10-31, annual 04-30 next year) is strictly "
+                "before as_of is FILED_PERIOD_STALE (DATA_BLOCKED), never a clean check"
             ),
             "income_rule": (
                 "latest standalone attributable profit < 0 and below previous quarter; "
@@ -966,6 +1076,7 @@ def _selftest() -> int:
             if row["ts_code"] == "600001.SH"
         },
         source_complete=True,
+        as_of=as_of,
     )
     checks = [
         (len(rows) == 5, "every U0-listed security retained"),

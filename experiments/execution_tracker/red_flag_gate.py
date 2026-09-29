@@ -1,16 +1,21 @@
 #!/usr/bin/env python3
-"""红旗闸门 v1 — 任何名单产出前的强制 E1 最低核查(与 E1 事件层同一套规则)。
+"""红旗闸门 v1 — 任何名单产出前的强制 E1 最低核查(与 E1 事件层同一套判定函数)。
 
 失败案例驱动:2026-07-27 赛力斯(601127.SH)带着 8 天前的中报首亏预告
 (-15~-18亿)被放进 ✅核心 名单。本闸门的回归测试就是这个案例。
 
 v1(2026-09-29 复审 P1 #2/#3 修正):判定不再在本文件里另写一套,而是调用
 experiments/research_funnel/e1_event_layer.classify_ticker —— 与全市场 E1 事件层
-(R036_E1_RULES_V1)同一实现,两道闸门不会再漂移:
+(R036_E1_RULES_V1,修订 RULE_REVISION)同一套判定函数:相同的行必得相同的判定。
+注意取数窗口不同(本闸门按公告日回看 800 天;批量层只取 as_of 前 4 个报告期),
+所以输入本身可能不同 —— 例如本闸门能看到 as_of 之后报告期的预告,批量层看不到。
   - 快报 yoy_net_profit 是「上年同期净利润金额」,不是百分比;同比取 yoy_dedu_np,
     否则用 (n_income - yoy_net_profit)/|yoy_net_profit| 计算(旧版把
     -74,400,964.91 元读成 -74400965% 的误杀就此消失)。
-  - 已披露的正式财报(同期或更晚报告期)取代预告/快报;最新报告期优先,再看公告日。
+  - 已披露的正式财报(同期或更晚报告期)取代预告/快报;其余每个未被取代的报告期
+    各取最新公告逐一判定,任一期为负面即红旗(晚一期的预增不能掩盖更早一期的首亏)。
+  - 最新已披露期早于「法定披露截止日已过的最近一期」→ DATA_BLOCKED
+    (FILED_PERIOD_STALE),不拿一年前的季度判 PASS。
   - 季度规则锚定「最新已披露期」与其日历相邻上一季;归母净利为空/NaN →
     DATA_BLOCKED(INCOME_VALUE_MISSING),缺期 → DATA_BLOCKED,绝不 PASS,
     也绝不退回更旧的一对季度。
@@ -35,7 +40,8 @@ if _FUNNEL_DIR not in sys.path:
 import e1_event_layer as e1  # noqa: E402  (shared rule set; no network at import)
 
 GATE_VERSION = "red_flag_gate_v1"
-RULE_VERSION = f"{GATE_VERSION}/shared:{e1.RULE_VERSION}"
+# 带修订号:修订前后的产物(分歧队列 staleness_rule_version、信任线滚动窗口)可区分。
+RULE_VERSION = f"{GATE_VERSION}/shared:{e1.RULE_REVISION}"
 NEG_TYPES = frozenset(e1.NEGATIVE_GUIDANCE_TYPES)
 # governance-mutation: U3_RED_FLAG_VERDICT_MAP
 VERDICT_MAP = {"RED_FLAG": "RED_FLAG", "NO_RED_FLAG_FOUND": "PASS", "DATA_BLOCKED": "DATA_BLOCKED"}
@@ -50,12 +56,14 @@ BLOCK_CODES = (
     "EXPRESS_YOY_METRIC_MISSING",
     "FORECAST_GUIDANCE_UNSCORABLE",
     "INCOME_VALUE_MISSING",
+    "FILED_PERIOD_STALE",
     "INSUFFICIENT_FILED_QUARTER_HISTORY",
 )
 LOOKBACK_DAYS = 800  # ≥ 两个完整财年:最新已披露期的相邻上一季及其累计基数都在窗内
-FORECAST_FIELDS = "ts_code,ann_date,end_date,type,net_profit_min,net_profit_max,p_change_min,p_change_max"
-EXPRESS_FIELDS = "ts_code,ann_date,end_date,revenue,n_income,yoy_net_profit,yoy_dedu_np"
-INCOME_FIELDS = "ts_code,ann_date,end_date,report_type,n_income_attr_p"
+# 与批量层同一组字段:同期同公告日的并列行按整行哈希定胜负,字段不同就会选出不同的行。
+FORECAST_FIELDS = e1.FORECAST_FIELDS
+EXPRESS_FIELDS = e1.EXPRESS_FIELDS
+INCOME_FIELDS = e1.INCOME_FIELDS
 
 
 def _records(frame):
@@ -116,6 +124,7 @@ _BLOCK_TEXT = {
     "EXPRESS_YOY_METRIC_MISSING": "快报净利同比不可计算(yoy_dedu_np/n_income/yoy_net_profit 为空)",
     "FORECAST_GUIDANCE_UNSCORABLE": "预告行既无类型也无净利上限,不可评分",
     "INCOME_VALUE_MISSING": "最新已披露期或其相邻上一季归母净利为空(NaN),缺数据不等于通过",
+    "FILED_PERIOD_STALE": "最新已披露期早于法定截止日已过的最近一期,旧季度不能代替当期",
     "INSUFFICIENT_FILED_QUARTER_HISTORY": "零证据或已披露季度断档(缺最新期的相邻上一季),缺数据不等于通过",
 }
 
@@ -127,6 +136,28 @@ def _blocked(out, code, text):
     return out
 
 
+def _unconfirmed_negative(ts_code, forecast_rows, express_rows, as_of):
+    """income 取不到时:把仍可见的负面预告/快报列出来(未经财报确认是否已被取代)。"""
+    probe = e1.classify_ticker(ts_code, forecast_rows=forecast_rows, express_rows=express_rows,
+                               income_rows=[], as_of=as_of)
+    items = [item for item in probe["evidence"]
+             if item.get("kind") in ("ISSUER_GUIDANCE", "EARNINGS_EXPRESS")]
+    items.sort(key=lambda item: (str(item.get("period") or ""), str(item.get("ann_date") or "")),
+               reverse=True)
+    return [{"kind": item["kind"], "period": item.get("period"), "ann_date": item.get("ann_date"),
+             "type": (item.get("observed") or {}).get("type")} for item in items]
+
+
+def _unconfirmed_hint(items):
+    # 不以 最新预告/最新快报 开头:下游前缀解析器不会把它当成红旗理由。
+    if not items:
+        return ""
+    top = items[0]
+    if top["kind"] == "ISSUER_GUIDANCE":
+        return f"未确认负面预告[{top.get('type') or '类型缺失'}]期末{top['period']}"
+    return f"未确认快报降幅期末{top['period']}"
+
+
 def check_ticker(pro, ts_code, today):
     out = {"ts_code": ts_code, "verdict": "DATA_BLOCKED", "reasons": [], "reason_codes": [],
            "latest_e1_date": None, "checked_at": today, "rule_version": RULE_VERSION,
@@ -135,17 +166,19 @@ def check_ticker(pro, ts_code, today):
     start = (datetime.datetime.strptime(as_of, "%Y%m%d")
              - datetime.timedelta(days=LOOKBACK_DAYS)).strftime("%Y%m%d")
     # 财报是取代预告/快报的唯一依据:取不到财报,任何预告红旗都无法确认仍然有效。
+    income_error = None
     try:
         income_rows = _records(pro.income(ts_code=ts_code, start_date=start, end_date=as_of,
                                           fields=INCOME_FIELDS))
     except Exception as e:
         # governance-mutation: U3_RED_FLAG_INCOME_SOURCE_REQUIRED
-        return _blocked(out, "INCOME_SOURCE_UNAVAILABLE", f"income:{e}")
+        income_rows = None; income_error = f"income:{e}"
     errors = []
     try:
         forecast_rows = _records(pro.forecast(ts_code=ts_code, start_date=start, end_date=as_of,
                                               fields=FORECAST_FIELDS))
-    except Exception as e:
+    except Exception as e:  # 预告接口失败 ≠ 没发预告:不得据此 PASS
+        # governance-mutation: U3_RED_FLAG_FORECAST_FAILURE_NOT_PASS
         forecast_rows = []; errors.append(f"forecast:{e}")
     try:
         express_rows = _records(pro.express(ts_code=ts_code, start_date=start, end_date=as_of,
@@ -153,6 +186,14 @@ def check_ticker(pro, ts_code, today):
     except Exception as e:  # 快报接口失败 ≠ 没发快报:不得据此 PASS
         # governance-mutation: U3_RED_FLAG_EXPRESS_FAILURE_NOT_PASS
         express_rows = []; errors.append(f"express:{e}")
+    if income_rows is None:
+        # 仍然 DATA_BLOCKED(无法判断是否已被财报取代),但负面预告/快报不能在下游消失:
+        # 提示放在最前,电池 err 只保留前 60 字。
+        unconfirmed = _unconfirmed_negative(ts_code, forecast_rows, express_rows, as_of)
+        out["unconfirmed_negative_evidence"] = unconfirmed
+        hint = _unconfirmed_hint(unconfirmed)
+        return _blocked(out, "INCOME_SOURCE_UNAVAILABLE",
+                        ";".join([part for part in (hint, income_error, *errors) if part]))
     row = e1.classify_ticker(ts_code, forecast_rows=forecast_rows, express_rows=express_rows,
                              income_rows=income_rows, as_of=as_of, source_complete=not errors)
     out["verdict"] = VERDICT_MAP[row["verdict"]]
@@ -160,8 +201,14 @@ def check_ticker(pro, ts_code, today):
     out["latest_e1_date"] = row["latest_e1_date"]
     out["evidence_coverage"] = row["evidence_coverage"]
     out["latest_filed_period"] = row["latest_filed_period"]
+    out["latest_due_period"] = row["latest_due_period"]
+    out["active_periods"] = row["active_periods"]
     if out["verdict"] == "RED_FLAG":
         out["reasons"] = [_red_flag_text(item) for item in row["evidence"]]
+        if errors:
+            # 核实的红旗在来源不完整时仍成立,但必须说明哪路来源失败;
+            # 不以 最新预告/最新快报净利同比/最近季度归母 开头,前缀解析器不受影响。
+            out["reasons"].append("E1_SOURCE_PARTIAL:" + ";".join(errors))
     elif out["verdict"] == "DATA_BLOCKED":
         code = out["reason_codes"][0] if out["reason_codes"] else "INSUFFICIENT_FILED_QUARTER_HISTORY"
         text = _BLOCK_TEXT.get(code, code)
@@ -195,6 +242,7 @@ def main():
     if not tickers:
         print("usage: red_flag_gate.py TS_CODE [...] | --from-watchlist"); return 1
     results = [check_ticker(pro, t, today) for t in tickers]
+    # "gate" 字段保持 v0 字面值:promoter QC 等消费者按它识别戳;版本看 gate_version/rule_version。
     stamp = bind({"gate": "red_flag_gate_v0", "gate_version": GATE_VERSION,
                   "rule_version": RULE_VERSION, "checked_at": today, "results": results,
                   "disclaimer": "红旗≠禁入,但必须亮旗;无戳名单=违宪。不是买卖指令。"},
