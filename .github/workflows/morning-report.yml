@@ -133,6 +133,7 @@ jobs:
           python3 - << 'PYEOF'
           import json, os, urllib.request, urllib.error, sys
 
+          # governance-mutation: LLM_CALLER_MORNING_REPORT_FAILS_FAST
           llm_route_key = os.environ.get('AR_LLM_ROUTE_KEY', '').strip()
           if not llm_route_key:
             print("AR_LLM_ROUTE_KEY secret is not configured; /api/morning-report would return 401/503.")

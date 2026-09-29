@@ -9,6 +9,7 @@ import { Search, TrendingUp, TrendingDown, Minus, ChevronDown, BarChart3,
 import {
   configureLlmRoutes, llmBrowserRoutesEnabled, llmRouteFetch,
   setOperatorLlmKey, clearOperatorLlmKey, hasOperatorLlmKey, describeLlmRouteError,
+  subscribeOperatorLlmKey,
 } from "./llmRouteClient.js";
 import { PieChart as RechartsPie, Pie, Cell, BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
 
@@ -6660,20 +6661,28 @@ const GlobalStyles = () => (
 
 /* ── Operator key control for paid-model routes ─────────────────────────────── */
 // Rendered only when the build flag is on. The typed key stays in module memory
-// (src/llmRouteClient.js) for this tab; nothing is persisted or bundled.
-function LlmKeyControl({ C }) {
+// (src/llmRouteClient.js) for this tab; nothing is persisted or bundled. The
+// control subscribes to the client so a 401 (which clears the key) re-locks it.
+// onUnlock lets the dashboard retry work that failed only because it was locked.
+function LlmKeyControl({ C, onUnlock }) {
   const [draft, setDraft] = useState('');
   const [unlocked, setUnlocked] = useState(hasOperatorLlmKey());
+  useEffect(() => subscribeOperatorLlmKey(setUnlocked), []);
   if (!llmBrowserRoutesEnabled()) return null;
   const box = { padding:'5px 8px', border:`1px solid ${C.border}`, borderRadius:7, background:C.soft, color:C.dark, fontSize:11 };
   if (unlocked && hasOperatorLlmKey()) {
     return (
       <button style={{...box, cursor:'pointer'}} title="Forget the operator key for this tab"
-        onClick={() => { clearOperatorLlmKey(); setUnlocked(false); }}>LLM unlocked · lock</button>
+        onClick={() => clearOperatorLlmKey()}>LLM unlocked · lock</button>
     );
   }
   return (
-    <form style={{display:'flex', gap:4}} onSubmit={e => { e.preventDefault(); setUnlocked(setOperatorLlmKey(draft)); setDraft(''); }}>
+    <form style={{display:'flex', gap:4}} onSubmit={e => {
+      e.preventDefault();
+      const ok = setOperatorLlmKey(draft);
+      setDraft('');
+      if (ok && onUnlock) onUnlock();
+    }}>
       <input type="password" autoComplete="off" value={draft} placeholder="LLM operator key"
         onChange={e => setDraft(e.target.value)} style={{...box, width:130}}/>
       <button type="submit" style={{...box, cursor:'pointer'}}>Unlock</button>
@@ -6702,6 +6711,9 @@ export default function Dashboard() {
   const [regimeData, setRegimeData] = useState(null);
   const [macroInsight, setMacroInsight] = useState(null);
   const [insightLoading, setInsightLoading] = useState(false);
+  // True when the page-load macro insight failed only because the paid-model
+  // routes were still locked (flag on, key not typed yet); unlocking retries once.
+  const [macroAwaitingUnlock, setMacroAwaitingUnlock] = useState(false);
   const [newsArticles, setNewsArticles] = useState([]);
   const [newsMacro, setNewsMacro] = useState([]);
   const [newsPortfolio, setNewsPortfolio] = useState([]);
@@ -6843,6 +6855,7 @@ export default function Dashboard() {
           .then(r => r.ok ? r.json() : Promise.reject(`API ${r.status}`))
           .then(data => { setMacroInsight(data); setInsightLoading(false); })
           .catch(err => {
+            if (err?.code === 'LLM_ROUTE_KEY_MISSING') setMacroAwaitingUnlock(true);
             setMacroInsight({
               insight: {
                 market_reads_en: `Auto-load error: ${describeLlmRouteError(err)}`,
@@ -7564,7 +7577,11 @@ export default function Dashboard() {
             )}
           </div>
           <div style={{display:'flex', gap:8, alignItems:'center'}}>
-            <LlmKeyControl C={C}/>
+            <LlmKeyControl C={C} onUnlock={() => {
+              if (!macroAwaitingUnlock) return;
+              setMacroAwaitingUnlock(false);
+              handleGenerateInsight();
+            }}/>
             <DataBadge liveData={liveData} C={C} L={L}/>
             {/* Jason: Live clock in topbar — visible in light mode (dark mode has status strip) */}
             {!dark && (

@@ -7,20 +7,29 @@
 //
 // Order: CORS allowlist headers -> OPTIONS preflight (204 / 403)
 //        -> forbidden Origin (403) -> non-POST (405)
-//        -> server key configured and long enough (503, fail closed)
+//        -> the caller class's key is configured, >= 32 chars, not
+//           whitespace-padded, and (browser) differs from the server key
+//           (503, fail closed)
 //        -> X-AR-LLM-Key constant-time match (401)
 //        -> per-IP rate limit (429).
 // Every rejection happens before any provider call.
 //
-// The key is server-side only: a Vercel env var (AR_LLM_ROUTE_KEY) plus the
-// matching GitHub Actions secret for the morning-report workflow. It must never
-// be bundled into the browser build. The Origin allowlist is defence in depth
-// against drive-by browser use only; a non-browser client can forge Origin, so
-// the key is the actual control.
+// Two keys, one per caller class, so each can be rotated on its own:
+//   - AR_LLM_ROUTE_KEY: server-to-server callers (no Origin header): the
+//     morning-report workflow (GitHub Actions secret) and scripts/run_research.py.
+//   - AR_LLM_BROWSER_ROUTE_KEY: requests that carry an allow-listed Origin, i.e.
+//     the dashboard with VITE_AR_LLM_BROWSER_ROUTES=1 and the operator typing the
+//     key into the tab. Unset = browser calls fail closed (503). It must differ
+//     from AR_LLM_ROUTE_KEY, so a key exposed in a browser tab never unlocks the
+//     automation path.
+// Neither key is ever bundled into the browser build. The Origin allowlist is
+// defence in depth against drive-by browser use only; a non-browser client can
+// forge Origin, so the keys are the actual control.
 import { createHash, timingSafeEqual } from 'node:crypto';
 
 export const LLM_KEY_HEADER = 'x-ar-llm-key';
 export const LLM_KEY_ENV = 'AR_LLM_ROUTE_KEY';
+export const LLM_BROWSER_KEY_ENV = 'AR_LLM_BROWSER_ROUTE_KEY';
 export const LLM_ORIGINS_ENV = 'AR_LLM_ALLOWED_ORIGINS';
 export const MIN_KEY_LENGTH = 32;
 
@@ -67,7 +76,21 @@ export function timingSafeEqualString(a, b) {
   if (typeof a !== 'string' || typeof b !== 'string') return false;
   const digestA = createHash('sha256').update(a, 'utf8').digest();
   const digestB = createHash('sha256').update(b, 'utf8').digest();
+  // governance-mutation: LLM_ROUTE_CONSTANT_TIME_COMPARE
   return timingSafeEqual(digestA, digestB) && a.length === b.length;
+}
+
+// A configured key is usable only if it is a string of at least MIN_KEY_LENGTH
+// with no surrounding whitespace. A value pasted with a trailing newline (common
+// with `vercel env add` from a pipe) can never equal an HTTP header value, since
+// every caller trims what it sends; treating it as unconfigured turns a silent,
+// permanent 401 into an explicit 503 LLM_ROUTE_KEY_NOT_CONFIGURED.
+export function usableConfiguredKey(value) {
+  // governance-mutation: LLM_ROUTE_FAILS_CLOSED_WITHOUT_SERVER_KEY
+  if (typeof value !== 'string' || value.length < MIN_KEY_LENGTH) return null;
+  // governance-mutation: LLM_ROUTE_KEY_WHITESPACE_FAILS_CLOSED
+  if (value !== value.trim()) return null;
+  return value;
 }
 
 // Vercel overwrites x-real-ip / x-forwarded-for at its edge, so a caller cannot
@@ -134,11 +157,22 @@ export function guardLlmRoute(req, res, route, { env = process.env, now = Date.n
     return reject(res, 405, 'LLM_METHOD_NOT_ALLOWED', 'Method not allowed');
   }
 
-  // Fail closed: a missing or short server key disables the route entirely.
-  const configuredKey = env[LLM_KEY_ENV];
-  // governance-mutation: LLM_ROUTE_FAILS_CLOSED_WITHOUT_SERVER_KEY
-  if (typeof configuredKey !== 'string' || configuredKey.length < MIN_KEY_LENGTH) {
-    return reject(res, 503, 'LLM_ROUTE_KEY_NOT_CONFIGURED', `${LLM_KEY_ENV} is not configured.`);
+  // Origin-bearing (browser) requests are checked against the browser key only;
+  // server-to-server requests against the server key only.
+  const browserCaller = origin !== undefined;
+  // governance-mutation: LLM_ROUTE_BROWSER_KEY_SEPARATE
+  const keyEnv = browserCaller ? LLM_BROWSER_KEY_ENV : LLM_KEY_ENV;
+
+  // Fail closed: a missing, short or whitespace-padded key disables that path.
+  const configuredKey = usableConfiguredKey(env[keyEnv]);
+  if (configuredKey === null) {
+    return reject(res, 503, 'LLM_ROUTE_KEY_NOT_CONFIGURED',
+      `${keyEnv} is not configured (missing, shorter than ${MIN_KEY_LENGTH} chars, or has surrounding whitespace).`);
+  }
+  // governance-mutation: LLM_ROUTE_BROWSER_KEY_MUST_DIFFER
+  if (browserCaller && configuredKey === usableConfiguredKey(env[LLM_KEY_ENV])) {
+    return reject(res, 503, 'LLM_BROWSER_KEY_NOT_SEPARATE',
+      `${LLM_BROWSER_KEY_ENV} must differ from ${LLM_KEY_ENV}.`);
   }
 
   const providedKey = headerValue(req, LLM_KEY_HEADER);

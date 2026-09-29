@@ -12284,11 +12284,11 @@ MUTATIONS = MUTATIONS + (
         test_script="tests/test_llm_route_guard.py",
         before=(
             "  // governance-mutation: LLM_ROUTE_FAILS_CLOSED_WITHOUT_SERVER_KEY\n"
-            "  if (typeof configuredKey !== 'string' || configuredKey.length < MIN_KEY_LENGTH) {"
+            "  if (typeof value !== 'string' || value.length < MIN_KEY_LENGTH) return null;"
         ),
         after=(
             "  // governance-mutation: LLM_ROUTE_FAILS_CLOSED_WITHOUT_SERVER_KEY\n"
-            "  if (false) {"
+            "  if (false) return null;"
         ),
         expected_failure_marker="test_guard_fails_closed_without_server_key",
         rationale="A missing or short AR_LLM_ROUTE_KEY must disable the route (503), never open it.",
@@ -12484,6 +12484,96 @@ MUTATIONS = MUTATIONS + (
         ),
         expected_failure_marker="test_run_research_refuses_to_call_without_key",
         rationale="The CLI must not send an unauthenticated request to a paid route.",
+    ),
+)
+
+# Paid-model route gate review fixes (PR #387 review, 2026-09-29): a
+# whitespace-padded configured key fails closed (503) instead of a silent 401;
+# browser (Origin-bearing) and server-to-server callers use separate keys that
+# must differ; the key compare stays constant-time; the morning-report workflow
+# fails fast when its secret is missing.
+MUTATIONS = MUTATIONS + (
+    MutationCase(
+        mutation_id="LLM_ROUTE_KEY_WHITESPACE_FAILS_CLOSED",
+        component="Paid-model route gate",
+        source_path="api/_lib/llm-route-guard.js",
+        test_script="tests/test_llm_route_guard.py",
+        before=(
+            "  // governance-mutation: LLM_ROUTE_KEY_WHITESPACE_FAILS_CLOSED\n"
+            "  if (value !== value.trim()) return null;"
+        ),
+        after=(
+            "  // governance-mutation: LLM_ROUTE_KEY_WHITESPACE_FAILS_CLOSED\n"
+            "  if (false) return null;"
+        ),
+        expected_failure_marker="test_guard_fails_closed_on_whitespace_padded_key",
+        rationale="A configured key with a trailing newline can never match; it must surface as 503, not a silent 401.",
+    ),
+    MutationCase(
+        mutation_id="LLM_ROUTE_BROWSER_KEY_SEPARATE",
+        component="Paid-model route gate",
+        source_path="api/_lib/llm-route-guard.js",
+        test_script="tests/test_llm_route_guard.py",
+        before=(
+            "  // governance-mutation: LLM_ROUTE_BROWSER_KEY_SEPARATE\n"
+            "  const keyEnv = browserCaller ? LLM_BROWSER_KEY_ENV : LLM_KEY_ENV;"
+        ),
+        after=(
+            "  // governance-mutation: LLM_ROUTE_BROWSER_KEY_SEPARATE\n"
+            "  const keyEnv = LLM_KEY_ENV;"
+        ),
+        expected_failure_marker="test_guard_keeps_browser_and_server_keys_separate",
+        rationale="The automation key must never unlock an Origin-bearing (browser) request.",
+    ),
+    MutationCase(
+        mutation_id="LLM_ROUTE_BROWSER_KEY_MUST_DIFFER",
+        component="Paid-model route gate",
+        source_path="api/_lib/llm-route-guard.js",
+        test_script="tests/test_llm_route_guard.py",
+        before=(
+            "  // governance-mutation: LLM_ROUTE_BROWSER_KEY_MUST_DIFFER\n"
+            "  if (browserCaller && configuredKey === usableConfiguredKey(env[LLM_KEY_ENV])) {"
+        ),
+        after=(
+            "  // governance-mutation: LLM_ROUTE_BROWSER_KEY_MUST_DIFFER\n"
+            "  if (false) {"
+        ),
+        expected_failure_marker="test_guard_refuses_browser_key_equal_to_server_key",
+        rationale="A browser key equal to the server key would undo the per-caller rotation boundary.",
+    ),
+    MutationCase(
+        mutation_id="LLM_ROUTE_CONSTANT_TIME_COMPARE",
+        component="Paid-model route gate",
+        source_path="api/_lib/llm-route-guard.js",
+        test_script="tests/test_llm_route_guard.py",
+        before=(
+            "  // governance-mutation: LLM_ROUTE_CONSTANT_TIME_COMPARE\n"
+            "  return timingSafeEqual(digestA, digestB) && a.length === b.length;"
+        ),
+        after=(
+            "  // governance-mutation: LLM_ROUTE_CONSTANT_TIME_COMPARE\n"
+            "  timingSafeEqual(digestA, digestB); return a === b;"
+        ),
+        expected_failure_marker="test_key_compare_is_constant_time",
+        rationale="The provided key is compared only through equal-length digests with timingSafeEqual.",
+    ),
+    MutationCase(
+        mutation_id="LLM_CALLER_MORNING_REPORT_FAILS_FAST",
+        component="Paid-model workflow caller",
+        source_path=".github/workflows/morning-report.yml",
+        test_script="tests/test_llm_route_guard.py",
+        before=(
+            "            print(\"AR_LLM_ROUTE_KEY secret is not configured; "
+            "/api/morning-report would return 401/503.\")\n"
+            "            sys.exit(1)"
+        ),
+        after=(
+            "            print(\"AR_LLM_ROUTE_KEY secret is not configured; "
+            "/api/morning-report would return 401/503.\")\n"
+            "            pass"
+        ),
+        expected_failure_marker="test_morning_report_workflow_fails_fast_without_secret",
+        rationale="A missing secret must stop the step with a named error, not POST an empty key.",
     ),
 )
 

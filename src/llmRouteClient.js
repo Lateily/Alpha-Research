@@ -2,8 +2,9 @@
 //
 // The dashboard used to POST anonymously to /api/research, /api/research-multi,
 // /api/chat (+ /api/translate), /api/debate, /api/macro, /api/morning-report and
-// /api/research-pulse. Those routes now require the server key header
-// X-AR-LLM-Key (see api/_lib/llm-route-guard.js).
+// /api/research-pulse. Those routes now require the header X-AR-LLM-Key (see
+// api/_lib/llm-route-guard.js). Browser requests carry an Origin, so the server
+// checks them against its separate browser route key, never the automation key.
 //
 // The key is NEVER part of the build: there is no VITE_* variable for it and
 // nothing here reads one. Browser LLM calls are OFF unless BOTH hold:
@@ -40,6 +41,21 @@ export class LlmRouteLockedError extends Error {
 
 let browserRoutesEnabled = false;
 let operatorKey = '';
+const keyListeners = new Set();
+
+// Lets the header control re-render when the key changes outside it (a 401
+// clears it inside llmRouteFetch). Returns an unsubscribe function.
+export function subscribeOperatorLlmKey(listener) {
+  keyListeners.add(listener);
+  return () => { keyListeners.delete(listener); };
+}
+
+function notifyKeyListeners() {
+  const state = hasOperatorLlmKey();
+  for (const listener of [...keyListeners]) {
+    try { listener(state); } catch { /* a broken listener must not break the fetch path */ }
+  }
+}
 
 export function isBrowserFlagOn(value) {
   return String(value ?? '').trim() === '1';
@@ -48,6 +64,7 @@ export function isBrowserFlagOn(value) {
 export function configureLlmRoutes({ browserEnabled } = {}) {
   browserRoutesEnabled = isBrowserFlagOn(browserEnabled);
   if (!browserRoutesEnabled) operatorKey = '';
+  notifyKeyListeners();
   return browserRoutesEnabled;
 }
 
@@ -61,11 +78,13 @@ export function normalizeLlmRouteKey(value) {
 
 export function setOperatorLlmKey(value) {
   operatorKey = browserRoutesEnabled ? normalizeLlmRouteKey(value) : '';
+  notifyKeyListeners();
   return operatorKey.length > 0;
 }
 
 export function clearOperatorLlmKey() {
   operatorKey = '';
+  notifyKeyListeners();
 }
 
 export function hasOperatorLlmKey() {
@@ -88,7 +107,10 @@ export async function llmRouteFetch(url, init = {}, { fetchImpl } = {}) {
   const response = await doFetch(url, { ...init, headers });
   // A rejected key is useless for the rest of the session: forget it so the
   // operator is asked again instead of retrying a bad key on every poll.
-  if (response && response.status === 401) operatorKey = '';
+  if (response && response.status === 401) {
+    operatorKey = '';
+    notifyKeyListeners();
+  }
   return response;
 }
 

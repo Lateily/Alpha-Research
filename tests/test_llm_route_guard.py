@@ -18,6 +18,7 @@ from __future__ import annotations
 import importlib.util
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -34,6 +35,7 @@ NODE_SUITE = ROOT / "tests" / "llm-route-guard.test.mjs"
 RUN_RESEARCH_PATH = ROOT / "scripts" / "run_research.py"
 MORNING_WORKFLOW = ROOT / ".github" / "workflows" / "morning-report.yml"
 GOOD_KEY = "offline-llm-route-key-0123456789abcdef"
+BROWSER_KEY = "offline-llm-browser-key-fedcba9876543210"
 PAID_ROUTES = (
     "research-multi",
     "research",
@@ -73,6 +75,8 @@ globalThis.fetch = async () => { globalThis.__fetchCalls += 1; throw new Error('
 const [root, argJson] = process.argv.slice(2);
 const args = JSON.parse(argJson || '{}');
 const GOOD_KEY = args.good_key;
+const BROWSER_KEY = args.browser_key;
+const BOTH_KEYS = { AR_LLM_ROUTE_KEY: GOOD_KEY, AR_LLM_BROWSER_ROUTE_KEY: BROWSER_KEY };
 const load = rel => import(pathToFileURL(`${root}/${rel}`).href);
 function makeResponse() {
   return {
@@ -124,9 +128,51 @@ for (const origin of ['https://evil.example', 'null', 'https://lateily.github.io
   assert.equal(res.code, 403);
   assert.equal(res.headers['access-control-allow-origin'], undefined);
 }
-const allowed = runGuard(guard, { key: GOOD_KEY, origin: 'https://equity-research-ten.vercel.app' });
+for (const origin of ['https://evil.example', 'null']) {
+  assert.equal(runGuard(guard, { key: BROWSER_KEY, origin, env: BOTH_KEYS }).res.code, 403,
+    `origin ${origin} must be refused even with the browser key`);
+}
+const allowed = runGuard(guard, { key: BROWSER_KEY, origin: 'https://equity-research-ten.vercel.app', env: BOTH_KEYS });
 assert.equal(allowed.ok, true);
 assert.equal(allowed.res.headers['access-control-allow-origin'], 'https://equity-research-ten.vercel.app');
+""",
+    "whitespace_key": r"""
+const guard = await load('api/_lib/llm-route-guard.js');
+for (const padded of [`${GOOD_KEY}\n`, `${GOOD_KEY} `, ` ${GOOD_KEY}`, `${GOOD_KEY}\r\n`]) {
+  const { ok, res } = runGuard(guard, { key: GOOD_KEY, env: { AR_LLM_ROUTE_KEY: padded } });
+  assert.equal(ok, false);
+  assert.equal(res.code, 503, `whitespace-padded server key must be 503 (not a silent 401), got ${res.code}`);
+  assert.equal(res.body.code, 'LLM_ROUTE_KEY_NOT_CONFIGURED');
+}
+const browser = runGuard(guard, { key: BROWSER_KEY, origin: 'https://lateily.github.io',
+  env: { AR_LLM_ROUTE_KEY: GOOD_KEY, AR_LLM_BROWSER_ROUTE_KEY: `${BROWSER_KEY}\n` } });
+assert.equal(browser.res.code, 503);
+""",
+    "browser_key_separate": r"""
+const guard = await load('api/_lib/llm-route-guard.js');
+const origin = 'https://lateily.github.io';
+// The automation key never unlocks an Origin-bearing request ...
+let r = runGuard(guard, { key: GOOD_KEY, origin, env: BOTH_KEYS });
+assert.equal(r.ok, false, 'server key must not unlock a browser request');
+assert.equal(r.res.code, 401);
+// ... and with no browser key configured the browser path is closed.
+r = runGuard(guard, { key: GOOD_KEY, origin, env: { AR_LLM_ROUTE_KEY: GOOD_KEY } });
+assert.equal(r.ok, false);
+assert.equal(r.res.code, 503);
+// The browser key never unlocks a server-to-server request.
+r = runGuard(guard, { key: BROWSER_KEY, env: BOTH_KEYS });
+assert.equal(r.ok, false, 'browser key must not unlock a server-to-server request');
+assert.equal(r.res.code, 401);
+assert.equal(runGuard(guard, { key: BROWSER_KEY, origin, env: BOTH_KEYS }).ok, true);
+assert.equal(runGuard(guard, { key: GOOD_KEY, env: BOTH_KEYS, ip: '198.51.100.1' }).ok, true);
+""",
+    "browser_key_must_differ": r"""
+const guard = await load('api/_lib/llm-route-guard.js');
+const r = runGuard(guard, { key: GOOD_KEY, origin: 'https://lateily.github.io',
+  env: { AR_LLM_ROUTE_KEY: GOOD_KEY, AR_LLM_BROWSER_ROUTE_KEY: GOOD_KEY } });
+assert.equal(r.ok, false, 'a browser key equal to the server key must be refused');
+assert.equal(r.res.code, 503);
+assert.equal(r.res.body.code, 'LLM_BROWSER_KEY_NOT_SEPARATE');
 """,
     "rate_limit": r"""
 const guard = await load('api/_lib/llm-route-guard.js');
@@ -232,7 +278,7 @@ class _FakeResponse:
 @unittest.skipUnless(shutil.which("node"), "node is required for the route-gate runners")
 class LlmRouteGuardTest(unittest.TestCase):
     def _run_node(self, runner: str, **arguments: object) -> None:
-        payload = {"good_key": GOOD_KEY, **arguments}
+        payload = {"good_key": GOOD_KEY, "browser_key": BROWSER_KEY, **arguments}
         with tempfile.TemporaryDirectory(prefix="ar-llm-route-guard-") as tmp:
             script = Path(tmp) / "runner.mjs"
             script.write_text(NODE_PRELUDE + RUNNERS[runner], encoding="utf-8")
@@ -266,6 +312,15 @@ class LlmRouteGuardTest(unittest.TestCase):
     def test_guard_rate_limits_authenticated_bursts(self) -> None:
         self._run_node("rate_limit")
 
+    def test_guard_fails_closed_on_whitespace_padded_key(self) -> None:
+        self._run_node("whitespace_key")
+
+    def test_guard_keeps_browser_and_server_keys_separate(self) -> None:
+        self._run_node("browser_key_separate")
+
+    def test_guard_refuses_browser_key_equal_to_server_key(self) -> None:
+        self._run_node("browser_key_must_differ")
+
     def test_every_paid_handler_rejects_before_provider(self) -> None:
         self._run_node("handlers", routes=list(PAID_ROUTES))
 
@@ -284,6 +339,24 @@ class LlmRouteGuardTest(unittest.TestCase):
         )
         self.assertEqual(completed.returncode, 0, completed.stdout + completed.stderr)
         self.assertIn("ALL LLM ROUTE GUARD TESTS PASS", completed.stdout)
+
+
+class LlmRouteStaticPinTest(unittest.TestCase):
+    def test_key_compare_is_constant_time(self) -> None:
+        # Timing cannot be measured offline; pin the exact compare instead.
+        source = GUARD_PATH.read_text(encoding="utf-8")
+        match = re.search(
+            r"export function timingSafeEqualString\(a, b\) \{\n(?P<body>.*?)\n\}\n", source, re.S
+        )
+        self.assertIsNotNone(match, "timingSafeEqualString must stay a top-level exported function")
+        body = match.group("body")
+        self.assertRegex(
+            body,
+            r"\n  return timingSafeEqual\(digestA, digestB\) && a\.length === b\.length;\Z",
+        )
+        self.assertEqual(len(re.findall(r"\breturn\b", body)), 2)
+        self.assertNotRegex(body, r"\b[ab]\s*[!=]==?\s*[ab]\b", "direct compare of the key strings")
+        self.assertNotRegex(source, r"(?<!typeof )providedKey\s*[!=]==?|[!=]==?\s*providedKey")
 
 
 class LlmRouteCallerTest(unittest.TestCase):
@@ -322,12 +395,27 @@ class LlmRouteCallerTest(unittest.TestCase):
         # The secret must not be template-interpolated into the script body or echoed.
         self.assertEqual(text.count("secrets.AR_LLM_ROUTE_KEY"), 1)
         self.assertNotRegex(text, r"print\([^)]*llm_route_key")
+        # The automation path uses the server key only, never the browser key.
+        self.assertNotIn("AR_LLM_BROWSER_ROUTE_KEY", text)
+
+    def test_morning_report_workflow_fails_fast_without_secret(self) -> None:
+        # Without the exit the step would POST an empty X-AR-LLM-Key and fail
+        # later as a generic 401/503 instead of naming the missing secret.
+        text = MORNING_WORKFLOW.read_text(encoding="utf-8")
+        match = re.search(
+            r"llm_route_key = os\.environ\.get\('AR_LLM_ROUTE_KEY', ''\)\.strip\(\)\n"
+            r"\s+if not llm_route_key:\n\s+print\([^\n]*\)\n\s+sys\.exit\(1\)\n",
+            text,
+        )
+        self.assertIsNotNone(match, "missing secret must sys.exit(1) right after the check")
+        sends_key = text.index("'X-AR-LLM-Key': llm_route_key")
+        self.assertLess(match.end(), sends_key, "fail-fast must run before the key is sent")
 
     def test_browser_sources_never_name_the_server_key(self) -> None:
         for path in (ROOT / "src").rglob("*"):
             if path.is_file() and path.suffix in {".js", ".jsx", ".mjs", ".ts", ".tsx"}:
                 text = path.read_text(encoding="utf-8")
-                self.assertNotIn("AR_LLM_ROUTE_KEY", text, str(path))
+                self.assertNotRegex(text, r"AR_LLM_(BROWSER_)?ROUTE_KEY", str(path))
                 self.assertNotRegex(text, r"VITE_[A-Z_]*LLM[A-Z_]*KEY", str(path))
 
 

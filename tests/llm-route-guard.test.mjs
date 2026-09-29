@@ -46,6 +46,8 @@ const guard = await import(pathToFileURL(path.join(ROOT, 'api/_lib/llm-route-gua
 const client = await import(pathToFileURL(path.join(ROOT, 'src/llmRouteClient.js')).href);
 
 const GOOD_KEY = 'offline-llm-route-key-0123456789abcdef';
+const BROWSER_KEY = 'offline-llm-browser-key-fedcba9876543210';
+const BOTH_KEYS = { AR_LLM_ROUTE_KEY: GOOD_KEY, AR_LLM_BROWSER_ROUTE_KEY: BROWSER_KEY };
 const ROUTES = ['research-multi', 'research', 'chat', 'debate', 'macro', 'morning-report', 'research-pulse'];
 
 function makeResponse() {
@@ -86,8 +88,18 @@ function testTimingSafeEqual() {
   assert.equal(guard.timingSafeEqualString('', GOOD_KEY), false);
   assert.equal(guard.timingSafeEqualString(undefined, GOOD_KEY), false);
   assert.equal(guard.timingSafeEqualString(GOOD_KEY, undefined), false);
+  // Timing cannot be measured offline, so pin the exact constant-time body: the
+  // only way the two strings are compared is via their SHA-256 digests.
   const source = readFileSync(path.join(ROOT, 'api/_lib/llm-route-guard.js'), 'utf8');
-  assert.match(source, /timingSafeEqual\(digestA, digestB\)/, 'key compare must stay constant-time');
+  const fn = source.match(/export function timingSafeEqualString\(a, b\) \{\n([\s\S]*?)\n\}\n/);
+  assert.ok(fn, 'timingSafeEqualString must stay a top-level exported function');
+  const body = fn[1];
+  assert.match(body, /\n  return timingSafeEqual\(digestA, digestB\) && a\.length === b\.length;$/,
+    'key compare must stay constant-time (digest timingSafeEqual, then length)');
+  assert.equal((body.match(/\breturn\b/g) || []).length, 2, 'only the type guard and the digest compare may return');
+  assert.doesNotMatch(body, /\b[ab]\s*[!=]==?\s*[ab]\b/, 'no direct ===/== between the two key strings');
+  // The provided header value is only ever compared through timingSafeEqualString.
+  assert.doesNotMatch(source, /(?<!typeof )providedKey\s*[!=]==?|[!=]==?\s*providedKey/, 'providedKey compared with ===');
 }
 
 function runGuard({ method = 'POST', origin, key, env = { AR_LLM_ROUTE_KEY: GOOD_KEY }, route = 'research', ip = '203.0.113.7', now } = {}) {
@@ -108,6 +120,13 @@ function testGuardOrderAndStatuses() {
   // Too-short server key is treated as unconfigured.
   r = runGuard({ key: 'short', env: { AR_LLM_ROUTE_KEY: 'short' } });
   assert.equal(r.res.code, 503);
+  // A configured key with surrounding whitespace (e.g. pasted with a trailing
+  // newline) can never match a trimmed header value: 503, not a silent 401.
+  for (const padded of [`${GOOD_KEY}\n`, ` ${GOOD_KEY}`, `${GOOD_KEY}\t`]) {
+    r = runGuard({ key: GOOD_KEY, env: { AR_LLM_ROUTE_KEY: padded } });
+    assert.equal(r.res.code, 503); assert.equal(r.res.body.code, 'LLM_ROUTE_KEY_NOT_CONFIGURED');
+    assert.match(r.res.body.error, /whitespace/);
+  }
   // Missing / wrong client key.
   r = runGuard({});
   assert.equal(r.res.code, 401); assert.equal(r.res.body.code, 'LLM_ROUTE_UNAUTHORIZED');
@@ -121,23 +140,35 @@ function testGuardOrderAndStatuses() {
   // Non-POST.
   r = runGuard({ key: GOOD_KEY, method: 'GET' });
   assert.equal(r.res.code, 405);
-  // Allowed Origin + key passes, and CORS echoes the exact origin (never '*').
-  r = runGuard({ key: GOOD_KEY, origin: 'https://lateily.github.io' });
+  // Allowed Origin + browser key passes, and CORS echoes the exact origin (never '*').
+  r = runGuard({ key: BROWSER_KEY, origin: 'https://lateily.github.io', env: BOTH_KEYS });
   assert.equal(r.ok, true);
   assert.equal(r.res.headers['access-control-allow-origin'], 'https://lateily.github.io');
   assert.match(r.res.headers['access-control-allow-headers'], /X-AR-LLM-Key/);
-  // Server-to-server (no Origin) + key passes.
+  // Server-to-server (no Origin) + server key passes.
   r = runGuard({ key: GOOD_KEY });
   assert.equal(r.ok, true);
+  // Keys are per caller class: the server key never unlocks an Origin-bearing
+  // request, the browser key never unlocks a server-to-server one.
+  r = runGuard({ key: GOOD_KEY, origin: 'https://lateily.github.io', env: BOTH_KEYS });
+  assert.equal(r.res.code, 401);
+  r = runGuard({ key: BROWSER_KEY, env: BOTH_KEYS });
+  assert.equal(r.res.code, 401);
+  // Browser path fails closed while AR_LLM_BROWSER_ROUTE_KEY is unset, even with
+  // the server key; and it refuses a browser key equal to the server key.
+  r = runGuard({ key: GOOD_KEY, origin: 'https://lateily.github.io' });
+  assert.equal(r.res.code, 503); assert.match(r.res.body.error, /AR_LLM_BROWSER_ROUTE_KEY/);
+  r = runGuard({ key: GOOD_KEY, origin: 'https://lateily.github.io', env: { AR_LLM_ROUTE_KEY: GOOD_KEY, AR_LLM_BROWSER_ROUTE_KEY: GOOD_KEY } });
+  assert.equal(r.res.code, 503); assert.equal(r.res.body.code, 'LLM_BROWSER_KEY_NOT_SEPARATE');
   // Preflight.
   r = runGuard({ method: 'OPTIONS', origin: 'https://equity-research-ten.vercel.app' });
   assert.equal(r.ok, false); assert.equal(r.res.code, 204);
   r = runGuard({ method: 'OPTIONS', origin: 'https://evil.example' });
   assert.equal(r.res.code, 403);
   // Configured extra origins; '*' can never be configured in.
-  const env = { AR_LLM_ROUTE_KEY: GOOD_KEY, AR_LLM_ALLOWED_ORIGINS: 'http://localhost:5173, *' };
-  assert.equal(runGuard({ key: GOOD_KEY, origin: 'http://localhost:5173', env }).ok, true);
-  assert.equal(runGuard({ key: GOOD_KEY, origin: 'https://evil.example', env }).res.code, 403);
+  const env = { ...BOTH_KEYS, AR_LLM_ALLOWED_ORIGINS: 'http://localhost:5173, *' };
+  assert.equal(runGuard({ key: BROWSER_KEY, origin: 'http://localhost:5173', env }).ok, true);
+  assert.equal(runGuard({ key: BROWSER_KEY, origin: 'https://evil.example', env }).res.code, 403);
   assert.ok(!guard.allowedOrigins(env).includes('*'));
 }
 
@@ -213,17 +244,27 @@ async function testBrowserClientLockedByDefault() {
   assert.equal(ok.init.headers['X-AR-LLM-Key'], GOOD_KEY);
   assert.equal(ok.init.headers['Content-Type'], 'application/json');
 
-  // A 401 forgets the key.
+  // A 401 forgets the key and tells subscribers (the header control re-renders).
+  const seen = [];
+  const unsubscribe = client.subscribeOperatorLlmKey(state => seen.push(state));
   await client.llmRouteFetch('/api/chat', {}, { fetchImpl: async () => ({ status: 401 }) });
   assert.equal(client.hasOperatorLlmKey(), false);
+  assert.deepEqual(seen, [false], '401 must notify key subscribers');
+  assert.equal(client.setOperatorLlmKey(GOOD_KEY), true);
+  client.clearOperatorLlmKey();
+  assert.deepEqual(seen, [false, true, false]);
+  unsubscribe();
+  client.setOperatorLlmKey(GOOD_KEY);
+  assert.deepEqual(seen, [false, true, false], 'unsubscribed listener must not be called');
   client.configureLlmRoutes({ browserEnabled: '0' });
+  assert.equal(client.hasOperatorLlmKey(), false);
 }
 
 function testBrowserBundleNeverCarriesTheKey() {
   const dashboard = readFileSync(path.join(ROOT, 'src/Dashboard.jsx'), 'utf8');
   const clientSource = readFileSync(path.join(ROOT, 'src/llmRouteClient.js'), 'utf8');
   for (const source of [dashboard, clientSource]) {
-    assert.doesNotMatch(source, /AR_LLM_ROUTE_KEY/, 'the server key env name must not appear in browser code');
+    assert.doesNotMatch(source, /AR_LLM_(BROWSER_)?ROUTE_KEY/, 'no route-key env name may appear in browser code');
     assert.doesNotMatch(source, /VITE_[A-Z_]*KEY/, 'no VITE_*KEY build variable may carry a secret');
     assert.doesNotMatch(source, /(localStorage|sessionStorage)\.setItem\([^)]*(llm|LLM)[^)]*[Kk]ey/, 'operator key must not be persisted');
   }
