@@ -8,7 +8,7 @@
     "no_position_mutation": true,
     "run_date": "2026-09-29",
     "pilot_start_date": "2026-06-08",
-    "generated_at": "2026-09-29T06:49:43.400928+00:00",
+    "generated_at": "2026-09-29T15:04:24.202657+00:00",
     "fresh_pilot": true,
     "legacy_paper_positions_inherited": false,
     "sources": [
@@ -63,8 +63,8 @@
         },
         "quant_confluence": {
           "action": "NEUTRAL",
-          "score": -9,
-          "rationale": "Bearish: Macd Death Cross | RSI 39 | Price vs MA20 -2.7% | Regime: PERMISSIVE | VP 48"
+          "score": 0,
+          "rationale": "RSI 39 | Price vs MA20 -2.7% | Regime: PERMISSIVE | VP 48"
         }
       },
       "validation_status": "PENDING",
@@ -106,7 +106,7 @@
         "quant_confluence": {
           "action": "NEUTRAL",
           "score": -17,
-          "rationale": "Bearish: Death Cross | RSI 47 | Price vs MA20 -2.2% | VP 50"
+          "rationale": "Bearish: Death Cross | RSI 46 | Price vs MA20 -2.2% | VP 50"
         }
       },
       "validation_status": "PENDING",
@@ -250,7 +250,7 @@
         "sleeve": "quant_swing",
         "state": "SETUP_WATCH",
         "signal_class": "no_trade_signal",
-        "setup_type": "macd_death_cross",
+        "setup_type": "no_signal",
         "bias": "bearish",
         "why_not_active": "confluence verdict is NEUTRAL — no active swing trade today",
         "trigger_to_activate": "confluence upgrade to non-neutral, or a volume-confirmed breakdown (current vol_ratio 0.7).",
@@ -258,28 +258,21 @@
         "technical": {
           "zone": "BEARISH",
           "entry_zone": false,
-          "exit_zone": true,
+          "exit_zone": false,
           "signal_count": {
             "bullish": 0,
-            "bearish": 1,
-            "total": 1
+            "bearish": 0,
+            "total": 0
           },
           "key_indicators": {
-            "rsi14": 38.8,
-            "macd_hist": -0.0013,
+            "rsi14": 38.9,
+            "macd_hist": 0.0203,
             "price_vs_ma20": -2.7,
             "price_vs_ma60": -6.67,
             "change_5d": -1.13,
             "vol_ratio": 0.7
           },
-          "signals": [
-            {
-              "type": "MACD_DEATH_CROSS",
-              "strength": "strong",
-              "bullish": false,
-              "desc": "MACD DIF(-1.243) crossed below DEA(-1.242) below zero — bearish momentum"
-            }
-          ]
+          "signals": []
         },
         "as_of": "2026-09-29",
         "validation_status": "unvalidated_pilot",
@@ -349,8 +342,8 @@
             "total": 0
           },
           "key_indicators": {
-            "rsi14": 39.6,
-            "macd_hist": 0.7861,
+            "rsi14": 39.8,
+            "macd_hist": 0.7415,
             "price_vs_ma20": -2.47,
             "price_vs_ma60": -8.53,
             "change_5d": -7.0,
@@ -384,8 +377,8 @@
             "total": 0
           },
           "key_indicators": {
-            "rsi14": 38.5,
-            "macd_hist": 2.688,
+            "rsi14": 38.6,
+            "macd_hist": 2.5268,
             "price_vs_ma20": -7.68,
             "price_vs_ma60": -14.48,
             "change_5d": -12.03,
@@ -419,8 +412,8 @@
             "total": 1
           },
           "key_indicators": {
-            "rsi14": 46.6,
-            "macd_hist": -0.1346,
+            "rsi14": 46.3,
+            "macd_hist": -0.1282,
             "price_vs_ma20": -2.19,
             "price_vs_ma60": -2.64,
             "change_5d": -3.32,
@@ -515,8 +508,8 @@
             "total": 1
           },
           "key_indicators": {
-            "rsi14": 37.5,
-            "macd_hist": -0.3818,
+            "rsi14": 37.4,
+            "macd_hist": -0.4104,
             "price_vs_ma20": -6.33,
             "price_vs_ma60": -11.03,
             "change_5d": -11.08,
@@ -527,7 +520,7 @@
               "type": "MACD_DEATH_CROSS",
               "strength": "strong",
               "bullish": false,
-              "desc": "MACD DIF(-3.799) crossed below DEA(-3.608) below zero — bearish momentum"
+              "desc": "MACD DIF(-3.769) crossed below DEA(-3.564) below zero — bearish momentum"
             }
           ]
         },

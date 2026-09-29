@@ -1,11 +1,24 @@
 {
   "ticker": "300308.SZ",
-  "fetched_at": "2026-09-29T06:43:30Z",
+  "fetched_at": "2026-09-29T14:56:54Z",
   "permission_model": "runtime_probe",
   "_status": "partial",
   "data": {
     "daily": {
       "rows": [
+        {
+          "ts_code": "300308.SZ",
+          "trade_date": "20260929",
+          "open": 814.0,
+          "high": 823.0,
+          "low": 808.8,
+          "close": 813.01,
+          "pre_close": 815.0,
+          "change": -1.99,
+          "pct_chg": -0.2442,
+          "vol": 160712.01,
+          "amount": 13099145.5411
+        },
         {
           "ts_code": "300308.SZ",
           "trade_date": "20260928",
@@ -826,12 +839,32 @@
           "amount": 34256250.2724
         }
       ],
-      "row_count": 63,
+      "row_count": 64,
       "_status": "ok",
-      "as_of": "20260928"
+      "as_of": "20260929"
     },
     "daily_basic": {
       "rows": [
+        {
+          "ts_code": "300308.SZ",
+          "trade_date": "20260929",
+          "close": 813.01,
+          "turnover_rate": 1.4479,
+          "turnover_rate_f": 1.7492,
+          "volume_ratio": 0.74,
+          "pe": 88.6941,
+          "pe_ttm": 46.8214,
+          "pb": 24.0259,
+          "ps": 25.0433,
+          "ps_ttm": 14.6815,
+          "dv_ratio": 0.1103,
+          "dv_ttm": 0.1718,
+          "total_share": 117790.9641,
+          "float_share": 110993.7003,
+          "free_share": 91876.5417,
+          "total_mv": 95765228.3896,
+          "circ_mv": 90238988.037
+        },
         {
           "ts_code": "300308.SZ",
           "trade_date": "20260928",
@@ -2093,9 +2126,9 @@
           "circ_mv": 135764506.5166
         }
       ],
-      "row_count": 63,
+      "row_count": 64,
       "_status": "ok",
-      "as_of": "20260928"
+      "as_of": "20260929"
     },
     "adj_factor": {
       "rows": [
