@@ -206,9 +206,26 @@ What changed:
 - A write whose draft carries any non-null `machine_flag_disputed_ref` must
   pass `--adjudication-ledger`; the writer refuses otherwise. The reference
   must resolve to a committed adjudication of the same `ts_code` whose
-  `human_verdict` is one of `MACHINE_VERDICT_REJECTED_*`, whose `as_of` is not
-  after the U4 packet `as_of`, and (on verify) whose `registered_at` is not
-  after the U4 event `registered_at`.
+  `human_verdict` is one of `MACHINE_VERDICT_REJECTED_*`, whose `as_of`
+  **equals** the U4 packet source `as_of` (an adjudication from an earlier
+  night may rest on a flag reason that no longer applies, so it is refused),
+  and (on verify) whose `registered_at` is not after the U4 event
+  `registered_at`.
+- The resolver does not match `disagreement_class` / `machine_side.surface`
+  against the source of the U4 red flag: the packet's single
+  `E1_RED_FLAG_REQUIRES_SEPARATE_REVIEW` block reason is raised by either the
+  E1 layer flag or the U3 fundamental red flag and does not say which. The
+  referenced adjudication record carries its `disagreement_class`, so a reader
+  can see which surface the human disputed. This affects evidence quality, not
+  admission: the forced `REJECT` is unchanged either way.
+- A persisted v1.1 packet intent validates every candidate's `human_warning`
+  and `machine_flag_disputed_ref` shape directly (not only through the draft
+  path).
+- Downstream surfaces do not yet read `human_warning`:
+  `paper_registration_bridge` verifies the U4 ledger without an adjudication
+  ledger (a disputed ref shows as `NOT_CHECKED` there), and the closure
+  receipt / projection carry no v1.1 fields. A `target_surface` of `PAPER` or
+  `EXECUTION` is recorded evidence only until a later change consumes it.
 - `--verify` reports `disputed_refs: {count, resolution}`. Without
   `--adjudication-ledger` a ledger with references reports
   `NOT_CHECKED`; with it, every reference must resolve (`RESOLVED`) or

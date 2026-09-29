@@ -301,7 +301,7 @@ class U4LedgerV11Tests(unittest.TestCase):
         adjudications, refs = build_adjudications(self.root)
         committed = dl.committed_adjudications(adjudications)
         record = committed[refs["disputes"]]
-        with self.assertRaisesRegex(ledger.DecisionLedgerError, "does not resolve"):
+        with self.assertRaisesRegex(ledger.DecisionLedgerError, "different as_of"):
             ledger.resolve_disputed_ref(ref=refs["disputes"], ts_code=record["ts_code"],
                                         as_of="20260810", registered_at=None, adjudications=committed)
         with self.assertRaisesRegex(ledger.DecisionLedgerError, "later adjudication"):
@@ -310,6 +310,50 @@ class U4LedgerV11Tests(unittest.TestCase):
                                         adjudications=committed)
         ledger.resolve_disputed_ref(ref=refs["disputes"], ts_code=record["ts_code"], as_of=record["as_of"],
                                     registered_at="2026-08-22T00:16:00+08:00", adjudications=committed)
+
+    def test_disputed_ref_must_come_from_the_same_source_as_of(self) -> None:
+        # An older night's adjudication may rest on a flag reason that no longer applies.
+        adjudications, refs = build_adjudications(self.root)
+        committed = dl.committed_adjudications(adjudications)
+        record = committed[refs["disputes"]]
+        self.assertLess(record["as_of"], "20271231")
+        with self.assertRaisesRegex(ledger.DecisionLedgerError, "different as_of"):
+            ledger.resolve_disputed_ref(ref=refs["disputes"], ts_code=record["ts_code"],
+                                        as_of="20271231", registered_at=None, adjudications=committed)
+        ledger.resolve_disputed_ref(ref=refs["disputes"], ts_code=record["ts_code"],
+                                    as_of=record["as_of"], registered_at=None, adjudications=committed)
+
+    def test_persisted_v11_intent_validates_its_structured_fields(self) -> None:
+        packet = base.packet_fixture()
+        draft = v11_draft(packet)
+        rows, decisions = ledger._validate_draft(packet, draft)
+        intent = ledger._build_packet_intent(packet, draft, decisions, rows)
+        intent["candidate_intents"][0]["human_warning"] = {**WARNING, "target_surface": "TRADE"}
+        intent["intent_hash"] = ledger._intent_hash(intent)
+        intent["intent_id"] = ledger._packet_intent_id(intent)
+        with self.assertRaisesRegex(ledger.DecisionLedgerError, "outside the v1.1 contract"):
+            ledger.validate_packet_intent(intent)
+
+    def test_forced_agreement_counts_only_committed_current_revisions(self) -> None:
+        adjudications, _refs = build_adjudications(self.root)
+        packet = red_flag_packet()
+        append_unsourced(packet=packet, draft=red_flag_draft(packet, None), ledger_path=self.path)
+        original = ledger.current_packet_decisions(self.path, packet["packet_hash"])
+        supersedes = {event["candidate"]["ts_code"]: event["decision_id"] for event in original}
+        revised = v11_draft(packet, refs={}, revision=2, supersedes=supersedes,
+                            decided_at="2026-08-22T00:20:00+08:00")
+        row = next(item for item in revised["decisions"] if item["ts_code"] == base.REJECT_CODE)
+        row["reason_codes"] = ["RED_FLAG_ACTIVE"]
+        append_unsourced(packet=packet, draft=revised, ledger_path=self.path, now="2026-08-22T00:21:00")
+        raw = [
+            event for event in self.events()
+            if event["decision"] == "REJECT" and "RED_FLAG_ACTIVE" in event["reason_codes"]
+        ]
+        self.assertEqual(len(raw), 2)
+        forced = dl.build_report(adjudications, u4_ledger_path=self.path)["forced_agreement"]
+        self.assertEqual(forced["status"], "COUNTED_FROM_VERIFIED_U4_CURRENT_REVISIONS")
+        self.assertEqual(forced["forced_reject_red_flag_rows"], 1)
+        self.assertTrue(forced["checked"])
 
     def test_intent_version_must_match_candidate_intents(self) -> None:
         packet = base.packet_fixture()

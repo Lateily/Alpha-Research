@@ -96,7 +96,11 @@ code edit; the constant is mutation-pinned.
 ## AI boundary
 
 `draft` emits every `HUMAN_ADJUDICATION` row with `human_verdict`,
-`reason_note`, `evidence_basis` and all `human_decision` fields set to `null`.
+`reason_note` and `evidence_basis` set to `null`, and every human-judgement
+field of `human_decision` (`claimed_reviewer`, `decided_at`,
+`authorization_text`, `authorization_evidence_ref`) set to `null`;
+`identity_verification` is the fixed constant `UNAVAILABLE`, not a human
+judgement.
 `record` refuses nulls, so an unedited draft cannot be recorded. AI must not
 fill these fields, and no UI button, workbench REVIEWED state or AI draft is
 an adjudication. `identity_verification=UNAVAILABLE` is an honest statement,
@@ -113,12 +117,32 @@ not a verification.
   `numerator` = `MACHINE_VERDICT_REJECTED_*` rows, `denominator` = in-window
   determined rows (excluding `UNDETERMINED_NEEDS_DATA` and late rows), `n`,
   `min_n = 20`. Below `min_n` the `rate` is `null` with level
-  `RATE_WITHHELD_N_BELOW_MIN`, never 0;
-- rows decided more than 7 calendar days after `as_of` are counted as
-  `late_adjudication_rows` and excluded from every share;
-- `forced_agreement`: with `--u4-ledger`, the count of U4 `REJECT` +
-  `RED_FLAG_ACTIVE` events (forced agreement, not endorsement); otherwise
-  `null` with `U4_LEDGER_NOT_PROVIDED`;
+  `RATE_WITHHELD_N_BELOW_MIN`, never 0. `COUNTER_SIDE_REJECTED` (the human
+  sides with the machine flag) and `MACHINE_VERDICT_CONFIRMED` are in the
+  denominator only (mutation-pinned);
+- `n` counts row-nights (`n_unit = "ROW_NIGHT"`): `row_id` is per `as_of`, so
+  the same ticker adjudicated on several nights adds to `n` several times.
+  `distinct_ts_code_n` is reported next to it; the `min_n` gate stays on
+  row-nights in v0.1 and `claim_status` stays
+  `INSUFFICIENT_INDEPENDENT_SAMPLE`, so `n` is an upper bound on independent
+  observations, not an independent sample size;
+- lateness is judged on the machine-stamped R-015 `registered_at`, not on the
+  human-typed `decided_at` (which can be backdated; the ledger only enforces
+  `decided_at <= registered_at`). Rows registered more than 7 calendar days
+  after `as_of` are counted as `late_adjudication_rows` and excluded from
+  every share. `adjudication_lag_days` reports `basis = "R015_REGISTERED_AT"`,
+  the registration lag `max`, the claimed `decided_at` lag
+  (`claimed_decided_at_max`) and the largest `decided_at → registered_at`
+  gap in days, so backdating is visible;
+- `forced_agreement`: with `--u4-ledger`, the count of **committed current
+  revision** U4 `REJECT` + `RED_FLAG_ACTIVE` decisions per (packet, ticker),
+  read from a chain- and anchor-verified U4 replay (superseded or uncommitted
+  revisions are not counted; status
+  `COUNTED_FROM_VERIFIED_U4_CURRENT_REVISIONS`). Forced agreement, not
+  endorsement. A missing path gives `null` with `U4_LEDGER_MISSING`; a path
+  that is not a regular file or fails verification/replay gives `null` with
+  `U4_LEDGER_INVALID` and the error. Without `--u4-ledger`: `null` with
+  `U4_LEDGER_NOT_PROVIDED`. Never 0 for missing data;
 - `unobservable_cells = ["U3_PASS_VS_E1_RED_FLAG"]` (E1-excluded names never
   reach the battery);
 - `independent_clusters = null` (`CAUSAL_CLUSTER_ID_UNAVAILABLE`) and
@@ -131,7 +155,8 @@ No key in the report or payloads may contain `return`, `hit`, `alpha`, `pnl`,
 
 A U4 v1.1 `REJECT` + `RED_FLAG_ACTIVE` event may carry
 `machine_flag_disputed_ref = <record_hash>` of a committed adjudication that
-disputes the same ticker's machine flag. The forced `REJECT` stays. See
+disputes the same ticker's machine flag on the **same source `as_of`** as the
+U4 packet. The forced `REJECT` stays. See
 `docs/research/U4_DECISION_LEDGER_V1.md` (v1.1 section).
 
 ## CLI

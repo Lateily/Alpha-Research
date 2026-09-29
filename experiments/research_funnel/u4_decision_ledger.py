@@ -826,6 +826,8 @@ def _validate_candidate_intent(
         registered_at=_registered_at_from_outer(human.get("decided_at")),
     )
     validate_decision_event(synthetic, expected_sequence=1, expected_previous_hash=None)
+    if _is_v11(item):
+        _validate_v11_fields(item, "U4 candidate intent")
     blocked = set(ready_row["blocked_reasons"])
     if "U3_BATTERY_INCOMPLETE" in blocked:
         if (
@@ -1544,11 +1546,18 @@ def resolve_disputed_ref(
             "MACHINE_VERDICT_REJECTED_MISREAD",
             "MACHINE_VERDICT_REJECTED_OTHER",
         }
-        or str(record.get("as_of") or "") > as_of
     ):
         raise DecisionLedgerError(
             "machine_flag_disputed_ref does not resolve to a committed adjudication "
-            "that disputes this ticker's machine flag at or before the U4 as_of"
+            "that disputes this ticker's machine flag"
+        )
+    # An adjudication from an earlier (or later) night may rest on a flag reason
+    # that no longer applies: the dispute must be about the same source night.
+    # governance-mutation: U4_LEDGER_V11_DISPUTED_REF_SAME_AS_OF
+    if str(record.get("as_of") or "") != as_of:
+        raise DecisionLedgerError(
+            "machine_flag_disputed_ref names an adjudication from a different as_of "
+            "than the U4 packet source"
         )
     if registered_at is not None and _parse_time(
         record.get("registered_at"), "adjudication registered_at"

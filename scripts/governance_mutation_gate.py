@@ -12627,6 +12627,92 @@ MUTATIONS = MUTATIONS + (
     ),
 )
 
+
+# 2026-09-29 PR #392 review fixes: lag basis, false-kill numerator, forced-agreement
+# verification, queue authority, authorization/reason floors, same-night disputed ref.
+MUTATIONS = MUTATIONS + (
+    MutationCase(
+        mutation_id='DISAGREEMENT_LEDGER_LAG_BASIS_REGISTERED_AT',
+        component='Research funnel disagreement adjudication ledger',
+        source_path='experiments/research_funnel/disagreement_ledger.py',
+        test_script='tests/test_disagreement_ledger.py',
+        before='        # governance-mutation: DISAGREEMENT_LEDGER_LAG_BASIS_REGISTERED_AT\n        lag_basis = _parse_time(event["registered_at"], "registered_at")',
+        after='        # governance-mutation: DISAGREEMENT_LEDGER_LAG_BASIS_REGISTERED_AT\n        lag_basis = _parse_time(event["human_decision"]["decided_at"], "decided_at")',
+        expected_failure_marker='test_backdated_decision_registered_late_is_late',
+        rationale='Lateness follows the machine R-015 stamp; a backdated human decided_at cannot pull a late label into a share.',
+    ),
+    MutationCase(
+        mutation_id='DISAGREEMENT_LEDGER_FALSE_KILL_NUMERATOR',
+        component='Research funnel disagreement adjudication ledger',
+        source_path='experiments/research_funnel/disagreement_ledger.py',
+        test_script='tests/test_disagreement_ledger.py',
+        before='# governance-mutation: DISAGREEMENT_LEDGER_FALSE_KILL_NUMERATOR\nMACHINE_REJECTED_VERDICTS = frozenset({',
+        after='# governance-mutation: DISAGREEMENT_LEDGER_FALSE_KILL_NUMERATOR\nMACHINE_REJECTED_VERDICTS = frozenset({\n    "COUNTER_SIDE_REJECTED",',
+        expected_failure_marker='test_false_kill_numerator_counts_only_machine_rejections',
+        rationale='Only human rejections of the machine side count as false kills; siding with the flag never does.',
+    ),
+    MutationCase(
+        mutation_id='DISAGREEMENT_LEDGER_FORCED_AGREEMENT_MISSING_IS_NULL',
+        component='Research funnel disagreement adjudication ledger',
+        source_path='experiments/research_funnel/disagreement_ledger.py',
+        test_script='tests/test_disagreement_ledger.py',
+        before='    # governance-mutation: DISAGREEMENT_LEDGER_FORCED_AGREEMENT_MISSING_IS_NULL\n    if not os.path.lexists(path):',
+        after='    # governance-mutation: DISAGREEMENT_LEDGER_FORCED_AGREEMENT_MISSING_IS_NULL\n    if False:',
+        expected_failure_marker='test_forced_agreement_is_null_for_missing_or_unverifiable_u4_ledger',
+        rationale='A missing U4 ledger is disclosed as U4_LEDGER_MISSING with a null count, never 0.',
+    ),
+    MutationCase(
+        mutation_id='DISAGREEMENT_LEDGER_FORCED_AGREEMENT_VERIFIED_CURRENT',
+        component='Research funnel disagreement adjudication ledger',
+        source_path='experiments/research_funnel/disagreement_ledger.py',
+        test_script='tests/test_disagreement_ledger.py',
+        before='        # governance-mutation: DISAGREEMENT_LEDGER_FORCED_AGREEMENT_VERIFIED_CURRENT\n        current = list(u4._snapshot_state(path)["current"].values())',
+        after='        # governance-mutation: DISAGREEMENT_LEDGER_FORCED_AGREEMENT_VERIFIED_CURRENT\n        current = [json.loads(line).get("payload") for line in event_ledger._read_lines(str(path)) if json.loads(line).get("kind") == u4.EVENT_KIND]',
+        expected_failure_marker='test_forced_agreement_is_null_for_missing_or_unverifiable_u4_ledger',
+        rationale='Forced agreement is counted only from a chain/anchor-verified U4 replay, never from raw lines.',
+    ),
+    MutationCase(
+        mutation_id='DISAGREEMENT_LEDGER_QUEUE_AUTHORITY',
+        component='Research funnel disagreement adjudication ledger',
+        source_path='experiments/research_funnel/disagreement_ledger.py',
+        test_script='tests/test_disagreement_ledger.py',
+        before='    # governance-mutation: DISAGREEMENT_LEDGER_QUEUE_AUTHORITY\n    if queue.get("authority") != QUEUE_AUTHORITY:',
+        after='    # governance-mutation: DISAGREEMENT_LEDGER_QUEUE_AUTHORITY\n    if False:',
+        expected_failure_marker='test_queue_claiming_authority_is_refused',
+        rationale='A queue that claims machine-verdict, U4, claim or trade authority is not an adjudication source.',
+    ),
+    MutationCase(
+        mutation_id='DISAGREEMENT_LEDGER_AUTHORIZATION_SUBSTANTIVE',
+        component='Research funnel disagreement adjudication ledger',
+        source_path='experiments/research_funnel/disagreement_ledger.py',
+        test_script='tests/test_disagreement_ledger.py',
+        before='    # governance-mutation: DISAGREEMENT_LEDGER_AUTHORIZATION_SUBSTANTIVE\n    if not isinstance(authorization, str) or len(authorization.strip()) < 20:',
+        after='    # governance-mutation: DISAGREEMENT_LEDGER_AUTHORIZATION_SUBSTANTIVE\n    if not isinstance(authorization, str) or len(authorization.strip()) < 1:',
+        expected_failure_marker='test_authorization_text_must_be_substantive',
+        rationale='A batch authorization must be substantive verbatim human text, not a bare hash token.',
+    ),
+    MutationCase(
+        mutation_id='DISAGREEMENT_LEDGER_REASON_NOTE_REQUIRED',
+        component='Research funnel disagreement adjudication ledger',
+        source_path='experiments/research_funnel/disagreement_ledger.py',
+        test_script='tests/test_disagreement_ledger.py',
+        before='    # governance-mutation: DISAGREEMENT_LEDGER_REASON_NOTE_REQUIRED\n    if not isinstance(note, str) or not note.strip():',
+        after='    # governance-mutation: DISAGREEMENT_LEDGER_REASON_NOTE_REQUIRED\n    if False:',
+        expected_failure_marker='test_reason_note_must_be_non_empty_verbatim_text',
+        rationale='Every human verdict carries a non-empty verbatim reason.',
+    ),
+    MutationCase(
+        mutation_id='U4_LEDGER_V11_DISPUTED_REF_SAME_AS_OF',
+        component='Research funnel U4 decision ledger v1.1',
+        source_path='experiments/research_funnel/u4_decision_ledger.py',
+        test_script='tests/test_u4_decision_ledger_v11.py',
+        before='    # governance-mutation: U4_LEDGER_V11_DISPUTED_REF_SAME_AS_OF\n    if str(record.get("as_of") or "") != as_of:',
+        after='    # governance-mutation: U4_LEDGER_V11_DISPUTED_REF_SAME_AS_OF\n    if str(record.get("as_of") or "") > as_of:',
+        expected_failure_marker='test_disputed_ref_must_come_from_the_same_source_as_of',
+        rationale='A disputed-flag reference must name an adjudication of the same source night, not a stale earlier one.',
+    ),
+)
+
 @dataclass(frozen=True)
 class CommandResult:
     returncode: int

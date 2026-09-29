@@ -16,9 +16,12 @@ evidence about the gate, not ground truth; a false kill can only be removed by
 fixing code and re-running.
 
 AI boundary: ``draft`` emits rows with ``human_verdict`` / ``reason_note`` /
-``evidence_basis`` and every ``human_decision`` field set to null.  ``record``
-refuses nulls, so an unedited draft can never be recorded.  AI must not fill
-these fields.
+``evidence_basis`` and every human-judgement field of ``human_decision``
+(``claimed_reviewer``, ``decided_at``, ``authorization_text``,
+``authorization_evidence_ref``) set to null; ``identity_verification`` is the
+fixed constant ``UNAVAILABLE`` (not a human judgement).  ``record`` refuses
+nulls, so an unedited draft can never be recorded.  AI must not fill these
+fields.
 
 There is no production default path: every command needs an explicit
 ``--ledger`` / ``--bundle-dir``.  The intended runtime location is
@@ -87,6 +90,10 @@ HUMAN_VERDICTS = (
     "COUNTER_SIDE_REJECTED",
     "UNDETERMINED_NEEDS_DATA",
 )
+# The false-kill numerator: only verdicts that reject the MACHINE side count.
+# COUNTER_SIDE_REJECTED (the human sides with the machine flag) and
+# MACHINE_VERDICT_CONFIRMED are in the denominator only.
+# governance-mutation: DISAGREEMENT_LEDGER_FALSE_KILL_NUMERATOR
 MACHINE_REJECTED_VERDICTS = frozenset({
     "MACHINE_VERDICT_REJECTED_STALE_EVIDENCE",
     "MACHINE_VERDICT_REJECTED_MISREAD",
@@ -343,6 +350,7 @@ def validate_queue(queue: Mapping[str, Any]) -> dict[str, dict[str, Any]]:
     if not isinstance(queue.get("run_id"), str) or not queue["run_id"].strip():
         raise AdjudicationLedgerError("disagreement queue run_id is missing")
     _parse_time(queue.get("generated_at"), "disagreement queue generated_at")
+    # governance-mutation: DISAGREEMENT_LEDGER_QUEUE_AUTHORITY
     if queue.get("authority") != QUEUE_AUTHORITY:
         raise AdjudicationLedgerError("disagreement queue acquired authority")
     bindings = queue.get("source_bindings")
@@ -429,6 +437,7 @@ def _validate_human(
     ):
         raise AdjudicationLedgerError("adjudication reviewer/identity boundary changed")
     authorization = human.get("authorization_text")
+    # governance-mutation: DISAGREEMENT_LEDGER_AUTHORIZATION_SUBSTANTIVE
     if not isinstance(authorization, str) or len(authorization.strip()) < 20:
         raise AdjudicationLedgerError("authorization_text must preserve substantive verbatim text")
     # governance-mutation: DISAGREEMENT_LEDGER_BATCH_AUTHORIZATION
@@ -469,6 +478,7 @@ def _validate_row_intent(item: Any, intent: Mapping[str, Any], snapshot: Mapping
     if item.get("human_verdict") not in HUMAN_VERDICTS:
         raise AdjudicationLedgerError("human_verdict is outside the closed set")
     note = item.get("reason_note")
+    # governance-mutation: DISAGREEMENT_LEDGER_REASON_NOTE_REQUIRED
     if not isinstance(note, str) or not note.strip():
         raise AdjudicationLedgerError("reason_note must be non-empty verbatim text")
     # governance-mutation: DISAGREEMENT_LEDGER_NO_AUTHORITY
@@ -481,7 +491,11 @@ def build_draft(
     queue: Mapping[str, Any], *, row_ids: Sequence[str] | None = None,
     exclude_row_ids: Sequence[str] = (),
 ) -> dict[str, Any]:
-    """Emit a human batch skeleton. Every human field is null: AI never pre-fills."""
+    """Emit a human batch skeleton.
+
+    Every human-judgement field is null (AI never pre-fills); only
+    ``identity_verification`` carries its fixed constant ``UNAVAILABLE``.
+    """
     rows_by_id = validate_queue(queue)
     routed = sorted(
         (row for row in rows_by_id.values() if row["routing"]["queue"] == "HUMAN_ADJUDICATION"),
@@ -1015,25 +1029,42 @@ def _share(numerator: int, denominator: int) -> dict[str, Any]:
 
 
 def _forced_agreement(u4_ledger_path: Path | None) -> dict[str, Any]:
+    """Count committed current-revision forced REJECT+RED_FLAG_ACTIVE U4 rows.
+
+    A missing or unverifiable U4 ledger is never rendered as 0: the count is
+    null with an explicit status.  Only the committed current revision per
+    (packet, ticker) is counted, from a chain+anchor-verified replay, so
+    superseded or uncommitted revisions are never double counted.
+    """
     note = (
         "U4 ledger v1 forces REJECT with RED_FLAG_ACTIVE on red-flag-blocked candidates; "
         "those REJECTs are forced agreement, not human endorsement of the machine flag."
     )
     if u4_ledger_path is None:
         return {"checked": False, "forced_reject_red_flag_rows": None,
-                "status": "U4_LEDGER_NOT_PROVIDED", "note": note}
+                "status": "U4_LEDGER_NOT_PROVIDED", "error": None, "note": note}
     from experiments.research_funnel import u4_decision_ledger as u4
 
-    records = [json.loads(line) for line in event_ledger._read_lines(str(u4_ledger_path))]
+    path = Path(u4_ledger_path)
+    # governance-mutation: DISAGREEMENT_LEDGER_FORCED_AGREEMENT_MISSING_IS_NULL
+    if not os.path.lexists(path):
+        return {"checked": False, "forced_reject_red_flag_rows": None,
+                "status": "U4_LEDGER_MISSING", "error": f"U4 ledger does not exist: {path}",
+                "note": note}
+    try:
+        # governance-mutation: DISAGREEMENT_LEDGER_FORCED_AGREEMENT_VERIFIED_CURRENT
+        current = list(u4._snapshot_state(path)["current"].values())
+    except (u4.DecisionLedgerError, ValueError, OSError, KeyError, TypeError) as exc:
+        return {"checked": False, "forced_reject_red_flag_rows": None,
+                "status": "U4_LEDGER_INVALID", "error": str(exc), "note": note}
     forced = sum(
-        1 for record in records
-        if record.get("kind") == u4.EVENT_KIND
-        and isinstance(record.get("payload"), Mapping)
-        and record["payload"].get("decision") == "REJECT"
-        and "RED_FLAG_ACTIVE" in (record["payload"].get("reason_codes") or [])
+        1 for event in current
+        if isinstance(event, Mapping)
+        and event.get("decision") == "REJECT"
+        and "RED_FLAG_ACTIVE" in (event.get("reason_codes") or [])
     )
     return {"checked": True, "forced_reject_red_flag_rows": forced,
-            "status": "COUNTED_FROM_U4_LEDGER", "note": note}
+            "status": "COUNTED_FROM_VERIFIED_U4_CURRENT_REVISIONS", "error": None, "note": note}
 
 
 def build_report(path: Path, *, u4_ledger_path: Path | None = None) -> dict[str, Any]:
@@ -1050,6 +1081,9 @@ def build_report(path: Path, *, u4_ledger_path: Path | None = None) -> dict[str,
         for klass in sorted(DISAGREEMENT_CLASSES)
     }
     lags: list[int] = []
+    decided_lags: list[int] = []
+    registration_gaps: list[int] = []
+    in_window_codes: dict[str, set[str]] = {klass: set() for klass in DISAGREEMENT_CLASSES}
     for event in state["committed"]:
         snapshot = snapshots[(event["batch_id"], event["row_id"])]
         machine = snapshot["machine_side"]
@@ -1058,10 +1092,19 @@ def build_report(path: Path, *, u4_ledger_path: Path | None = None) -> dict[str,
         cells[key] = cells.get(key, 0) + 1
         bucket = per_class[event["disagreement_class"]]
         bucket["adjudicated_rows"] += 1
-        decided = _parse_time(event["human_decision"]["decided_at"], "decided_at")
-        lag = (decided.astimezone(event_ledger.OPERATIONAL_TIMEZONE).date()
-               - _as_of_date(event["as_of"])).days
+        as_of_day = _as_of_date(event["as_of"])
+        decided_day = _parse_time(
+            event["human_decision"]["decided_at"], "decided_at"
+        ).astimezone(event_ledger.OPERATIONAL_TIMEZONE).date()
+        # decided_at is typed by the human and can be backdated; lateness is
+        # judged on the machine-stamped R-015 registration time (always >= decided_at).
+        # governance-mutation: DISAGREEMENT_LEDGER_LAG_BASIS_REGISTERED_AT
+        lag_basis = _parse_time(event["registered_at"], "registered_at")
+        lag_day = lag_basis.astimezone(event_ledger.OPERATIONAL_TIMEZONE).date()
+        lag = (lag_day - as_of_day).days
         lags.append(lag)
+        decided_lags.append((decided_day - as_of_day).days)
+        registration_gaps.append((lag_day - decided_day).days)
         # governance-mutation: DISAGREEMENT_LEDGER_LATE_ADJUDICATION_EXCLUDED
         if lag > LATE_ADJUDICATION_DAYS:
             bucket["late_adjudication_rows"] += 1
@@ -1070,6 +1113,7 @@ def build_report(path: Path, *, u4_ledger_path: Path | None = None) -> dict[str,
             bucket["undetermined_rows"] += 1
             continue
         bucket["in_window_determined_rows"] += 1
+        in_window_codes[event["disagreement_class"]].add(event["ts_code"])
         if event["human_verdict"] in MACHINE_REJECTED_VERDICTS:
             bucket["machine_rejected_rows"] += 1
         elif event["human_verdict"] == "COUNTER_SIDE_REJECTED":
@@ -1091,6 +1135,8 @@ def build_report(path: Path, *, u4_ledger_path: Path | None = None) -> dict[str,
         "per_class": per_class,
         "false_kill_share": {
             **_share(u3["machine_rejected_rows"], u3["in_window_determined_rows"]),
+            "distinct_ts_code_n": len(in_window_codes["U3_RED_FLAG_VS_E1_CLEAR"]),
+            "n_unit": "ROW_NIGHT",
             "disagreement_class": "U3_RED_FLAG_VS_E1_CLEAR",
             "meaning": (
                 "share of in-window, determined human adjudications that dispute the U3 "
@@ -1099,13 +1145,20 @@ def build_report(path: Path, *, u4_ledger_path: Path | None = None) -> dict[str,
         },
         "e1_control_disputed_share": {
             **_share(control["machine_rejected_rows"], control["in_window_determined_rows"]),
+            "distinct_ts_code_n": len(in_window_codes["E1_RED_FLAG_CONTROL_SAMPLE"]),
+            "n_unit": "ROW_NIGHT",
             "disagreement_class": "E1_RED_FLAG_CONTROL_SAMPLE",
             "meaning": "share of control-sample adjudications that dispute the E1 layer red flag",
         },
         "adjudication_lag_days": {
+            "basis": "R015_REGISTERED_AT",
             "n": len(lags),
             "max": max(lags) if lags else None,
             "late_threshold_days": LATE_ADJUDICATION_DAYS,
+            "claimed_decided_at_max": max(decided_lags) if decided_lags else None,
+            "decided_to_registered_gap_days_max": (
+                max(registration_gaps) if registration_gaps else None
+            ),
         },
         "forced_agreement": _forced_agreement(u4_ledger_path),
         "unobservable_cells": list(UNOBSERVABLE_CELLS),

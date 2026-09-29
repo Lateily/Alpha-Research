@@ -298,20 +298,84 @@ class DisagreementLedgerTests(unittest.TestCase):
         self.assertEqual(report["false_kill_share"]["numerator"], 0)
         self.assertEqual(report["adjudication_lag_days"]["max"], 10)
 
-    def test_forced_agreement_is_counted_from_a_provided_u4_ledger(self) -> None:
+    def test_backdated_decision_registered_late_is_late(self) -> None:
+        # decided_at is human-typed; lateness must follow the machine R-015 stamp.
+        batch = fill(self.draft(), decided_at=DECIDED_AT)
+        record(self.bundle, batch, self.ledger, now="2026-11-08T10:00:00")
+        report = dl.build_report(self.ledger)
+        bucket = report["per_class"]["U3_RED_FLAG_VS_E1_CLEAR"]
+        self.assertEqual(bucket["late_adjudication_rows"], 3)
+        self.assertEqual(bucket["in_window_determined_rows"], 0)
+        self.assertEqual(report["false_kill_share"]["numerator"], 0)
+        lag = report["adjudication_lag_days"]
+        self.assertEqual(lag["basis"], "R015_REGISTERED_AT")
+        self.assertEqual(lag["max"], 40)
+        self.assertEqual(lag["claimed_decided_at_max"], 1)
+        self.assertEqual(lag["decided_to_registered_gap_days_max"], 39)
+
+    def test_false_kill_numerator_counts_only_machine_rejections(self) -> None:
+        rows = [queue_row(f"{index:06d}.SZ", rank=index) for index in range(1, 25)]
+        bundle = write_bundle(self.root, make_queue(rows), name="mixed")
+        draft = dl.build_draft(dl.load_bundle_queue(bundle))
+        plan = (
+            ["MACHINE_VERDICT_REJECTED_STALE_EVIDENCE"] * 4
+            + ["MACHINE_VERDICT_REJECTED_MISREAD"] * 3
+            + ["MACHINE_VERDICT_REJECTED_OTHER"] * 3
+            + ["MACHINE_VERDICT_CONFIRMED"] * 6
+            + ["COUNTER_SIDE_REJECTED"] * 5
+            + ["UNDETERMINED_NEEDS_DATA"] * 3
+        )
+        self.assertEqual(len(plan), len(draft["rows"]))
+        verdicts = {row["ts_code"]: verdict for row, verdict in zip(draft["rows"], plan)}
+        record(bundle, fill(draft, verdicts=verdicts), self.ledger)
+        report = dl.build_report(self.ledger)
+        share = report["false_kill_share"]
+        self.assertEqual((share["numerator"], share["denominator"], share["n"]), (10, 21, 21))
+        self.assertEqual(share["distinct_ts_code_n"], 21)
+        self.assertEqual(share["n_unit"], "ROW_NIGHT")
+        self.assertEqual(share["level"], "DESCRIPTIVE_ONLY")
+        self.assertAlmostEqual(share["rate"], round(10 / 21, 6), places=6)
+        self.assertEqual(report["per_class"]["U3_RED_FLAG_VS_E1_CLEAR"], {
+            "adjudicated_rows": 24, "late_adjudication_rows": 0, "undetermined_rows": 3,
+            "machine_rejected_rows": 10, "counter_side_rejected_rows": 5,
+            "in_window_determined_rows": 21,
+        })
+        self.assertEqual(report["claim_status"], "INSUFFICIENT_INDEPENDENT_SAMPLE")
+
+    def test_forced_agreement_is_null_for_missing_or_unverifiable_u4_ledger(self) -> None:
+        record(self.bundle, fill(self.draft()), self.ledger)
+        forced = dl.build_report(
+            self.ledger, u4_ledger_path=self.root / "typo_u4.jsonl",
+        )["forced_agreement"]
+        self.assertEqual(forced["status"], "U4_LEDGER_MISSING")
+        self.assertIsNone(forced["forced_reject_red_flag_rows"])
+        self.assertFalse(forced["checked"])
+        directory = self.root / "u4_dir"
+        directory.mkdir()
+        forced = dl.build_report(self.ledger, u4_ledger_path=directory)["forced_agreement"]
+        self.assertEqual(forced["status"], "U4_LEDGER_INVALID")
+        self.assertIsNone(forced["forced_reject_red_flag_rows"])
+        # A chain-valid file of raw, unreplayable U4 records is not a U4 ledger.
         u4_path = self.root / "u4.jsonl"
         for index, (decision, codes) in enumerate((
-            ("REJECT", ["RED_FLAG_ACTIVE"]), ("REJECT", ["HUMAN_JUDGMENT"]), ("SELECT", ["HUMAN_JUDGMENT"]),
+            ("REJECT", ["RED_FLAG_ACTIVE"]), ("REJECT", ["RED_FLAG_ACTIVE"]),
+            ("SELECT", ["HUMAN_JUDGMENT"]),
         )):
             state, lines = event_ledger._append_preflight(str(u4_path))
             event_ledger._append_verified(
                 "u4_decision", f"u4d_{index}", {"decision": decision, "reason_codes": codes},
                 str(u4_path), REGISTERED_AT, state, lines,
             )
-        record(self.bundle, fill(self.draft()), self.ledger)
+        self.assertTrue(event_ledger.verify(str(u4_path))["ok"])
         forced = dl.build_report(self.ledger, u4_ledger_path=u4_path)["forced_agreement"]
-        self.assertEqual(forced["forced_reject_red_flag_rows"], 1)
-        self.assertEqual(forced["status"], "COUNTED_FROM_U4_LEDGER")
+        self.assertEqual(forced["status"], "U4_LEDGER_INVALID")
+        self.assertIsNone(forced["forced_reject_red_flag_rows"])
+        # A byte-tampered chain is refused too.
+        text = u4_path.read_text(encoding="utf-8").replace('"SELECT"', '"REJECT"')
+        u4_path.write_text(text, encoding="utf-8")
+        forced = dl.build_report(self.ledger, u4_ledger_path=u4_path)["forced_agreement"]
+        self.assertEqual(forced["status"], "U4_LEDGER_INVALID")
+        self.assertIsNone(forced["forced_reject_red_flag_rows"])
 
     # ─── transaction semantics ───
     def test_exact_retry_is_idempotent_and_conflicting_content_is_refused(self) -> None:
@@ -482,6 +546,29 @@ class DisagreementLedgerTests(unittest.TestCase):
         tampered["batch_hash"] = "0" * 64
         with self.assertRaisesRegex(dl.AdjudicationLedgerError, "batch_hash does not recompute"):
             dl.build_intent(self.queue, tampered)
+
+    def test_authorization_text_must_be_substantive(self) -> None:
+        draft = self.draft()
+        short = f"离线 {draft['batch_hash'][:12]}"
+        self.assertLess(len(short.strip()), 20)
+        with self.assertRaisesRegex(dl.AdjudicationLedgerError, "substantive verbatim text"):
+            dl.build_intent(self.queue, fill(draft, authorization=short))
+
+    def test_reason_note_must_be_non_empty_verbatim_text(self) -> None:
+        batch = fill(self.draft())
+        batch["rows"][0]["reason_note"] = "   "
+        with self.assertRaisesRegex(dl.AdjudicationLedgerError, "reason_note must be non-empty"):
+            dl.build_intent(self.queue, batch)
+
+    def test_queue_claiming_authority_is_refused(self) -> None:
+        for field, bad in (("changes_machine_verdict", True), ("u4_admission_authority", True),
+                           ("claim_allowed", True), ("no_trade_flag", False)):
+            queue = copy.deepcopy(self.queue)
+            queue["authority"][field] = bad
+            queue["rows_hash"] = funnel._hash(queue["rows"])
+            with self.subTest(field=field):
+                with self.assertRaisesRegex(dl.AdjudicationLedgerError, "queue acquired authority"):
+                    dl.validate_queue(queue)
 
     def test_decision_cannot_predate_queue_and_registration_cannot_predate_decision(self) -> None:
         with self.assertRaisesRegex(dl.AdjudicationLedgerError, "cannot predate its disagreement queue"):
