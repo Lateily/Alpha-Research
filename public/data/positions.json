@@ -1,5 +1,5 @@
 {
-  "as_of": "2026-09-29T06:43:10.240437",
+  "as_of": "2026-09-29T14:56:34.203511",
   "base_currency": "CNY",
   "fx_rates": {
     "HKDCNY": 0.9165
@@ -13,14 +13,14 @@
       "currency": "CNY",
       "quantity": 150,
       "avg_cost": 681.36,
-      "current_price": 813,
-      "market_value": 121950,
+      "current_price": 813.01,
+      "market_value": 121951.5,
       "cost_value": 102204.0,
-      "pnl_abs": 19746.0,
+      "pnl_abs": 19747.5,
       "pnl_pct": 19.32,
-      "market_value_cny": 121950,
+      "market_value_cny": 121951.5,
       "cost_value_cny": 102204.0,
-      "pnl_abs_cny": 19746.0,
+      "pnl_abs_cny": 19747.5,
       "fx_rate_used": 1.0,
       "holding_days": 203,
       "as_of": "2026-09-29",
@@ -262,12 +262,12 @@
     }
   ],
   "summary": {
-    "total_value_cny": 253015.07,
+    "total_value_cny": 253016.57,
     "total_cost_cny": 234969.71,
-    "total_pnl_cny": 18045.36,
+    "total_pnl_cny": 18046.86,
     "total_pnl_pct": 7.68,
-    "total_value": 253015.07,
+    "total_value": 253016.57,
     "total_cost": 234969.71,
-    "total_pnl": 18045.36
+    "total_pnl": 18046.86
   }
 }
