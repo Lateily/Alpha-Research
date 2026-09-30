@@ -75,7 +75,13 @@ def _sector_rows(flows, aliases, exact=False):
         else:
             matched = any(a and (a in name or name in a) for a in aliases)
         if matched:
-            rows.append((name, float(val[0] or 0), float(val[1] or 0)))
+            # 缺值 ≠ 0:None / 非数值的板块-日不参与汇总(新写入已在上游丢弃)。
+            # 注:2026-09 修复前旧版 float(x or 0) 写入的 0 值格仍按真实读数读取,直到滚出窗口。
+            try:
+                net, pct = float(val[0]), float(val[1])
+            except (TypeError, ValueError, IndexError):
+                continue
+            rows.append((name, net, pct))
     return rows
 
 
@@ -106,6 +112,17 @@ def _flow_series(hist, aliases, end_idx, lookback, exact=False):
         if row:
             vals.append(row["net"])
     return vals
+
+
+def _limit_row(hist, day):
+    """当日涨停读数,缺数时返回 None(与 rotation_validation.limit_reading 同口径):
+    调用失败 / 空返回 / 旧版 {} / 缺键 / limit_up_data_blocked 显式标记 —— 都不是 0。"""
+    if day in (hist.get("limit_up_data_blocked") or {}):
+        return None
+    row = (hist.get("limit_up_by_industry") or {}).get(day)
+    if not isinstance(row, dict) or not row:
+        return None
+    return row
 
 
 def _limit_count(limit_row, aliases):
@@ -181,8 +198,11 @@ def detect_day(hist, idx, nowcast_evidence=None):
     positive_neighbors = [r for r in neighbors if r[1] > 0 and r[2] > 0]
     neighbor_net = sum(r[1] for r in neighbors)
     neighbor_best = sorted(positive_neighbors, key=lambda r: (r[1], r[2]), reverse=True)[:8]
-    limit_n, limit_matched = _limit_count(hist.get("limit_up_by_industry", {}).get(day, {}),
-                                          DEFENSE_CROWDING)
+    limit_row = _limit_row(hist, day)
+    if limit_row is None:
+        limit_n, limit_matched = None, {}
+    else:
+        limit_n, limit_matched = _limit_count(limit_row, DEFENSE_CROWDING)
     nowcast_evidence = nowcast_evidence or {"positive": [], "negative": []}
     positive_nowcasts = nowcast_evidence.get("positive") or []
     nowcast_positive_count = len(positive_nowcasts)
@@ -224,7 +244,9 @@ def detect_day(hist, idx, nowcast_evidence=None):
             "why": why,
         })
 
-    defense_crowding = bool(limit_n >= 3)
+    defense_crowding = bool(limit_n is not None and limit_n >= 3)
+    if limit_n is None:
+        data_limits.append("DATA_BLOCKED: 当日涨停读数缺失(非零),防御拥挤灯不可判")
     if defense_crowding:
         lights.append({
             "key": "defense_crowding",
@@ -263,6 +285,11 @@ def detect_day(hist, idx, nowcast_evidence=None):
         "lights": lights,
         "light_count": count,
         "posture": posture,
+        # 防御拥挤灯不可判时,灯数只是下界:posture 不是完整读数。
+        "posture_basis": ("COMPLETE_LIGHTS" if limit_n is not None
+                          else "LOWER_BOUND_LIGHTS_UNEVALUABLE"),
+        "limit_reading_available": limit_n is not None,
+        "unevaluable_lights": [] if limit_n is not None else ["defense_crowding"],
         "features": {
             "parent": {"net": round(parent["net"], 1), "pct": round(parent["pct"], 2),
                        "matched": parent["matched"]},
@@ -298,11 +325,15 @@ def evaluate_history(hist, seed=17, include_latest_nowcast=True):
     days = hist.get("days", [])
     reads = [detect_day(hist, i) for i in range(len(days))]
     scored = []
+    limit_blocked_excluded = []
     all_fwd1 = []
     all_fwd2 = []
     for i, r in enumerate(reads):
         f1 = _future_parent_pct(hist, i, 1)
         f2 = _future_parent_pct(hist, i, 2)
+        if r.get("limit_reading_available") is False:
+            limit_blocked_excluded.append(r["date"])   # 灯数不完整:不进校准,只计数
+            continue                                   # 随机基线池同样排除,口径一致
         if f1 is not None:
             all_fwd1.append(f1)
         if f2 is not None:
@@ -351,6 +382,12 @@ def evaluate_history(hist, seed=17, include_latest_nowcast=True):
         "history_days": len(days),
         "latest": latest,
         "calibration": by_threshold,
+        "calibration_exclusions": {
+            "limit_reading_blocked_days_n": len(limit_blocked_excluded),
+            "limit_reading_blocked_days": limit_blocked_excluded,
+            "basis": "涨停读数缺失日的亮灯数不完整(防御拥挤灯不可判),整日排除出校准与随机基线池",
+            "random_baseline_pool_days_n": len(all_fwd1),
+        },
         "recent_reads": reads[-8:],
         "scored_examples": scored[-12:],
         "claim_allowed": False,

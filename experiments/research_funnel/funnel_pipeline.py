@@ -55,6 +55,18 @@ FORBIDDEN_AGGREGATE_KEYS = {
     "aggregate_score",
     "cross_channel_rank",
 }
+# 2026-09-29 re-review: the industry channel used to rank every member of a hot
+# industry by (status, -streak, ts_code) and trigger the first ``channel_top_n``.
+# All members of one industry share status and streak, so the cut was made by
+# issuer code alone (9/24: the 40 lowest SZSE codes, rank 1 a suspended *ST
+# delisting name).  An industry-level signal carries no issuer discriminator, so
+# it is now published as industry context only: no channel_rank, no trigger, no
+# U2 admission.  Bundles written before this mode carry no policy key and are
+# accepted for replay only.
+INDUSTRY_CHANNEL_MODE = "INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2"
+INDUSTRY_CONTEXT_FEATURE_VERSION = "industry_value_chain_context_v2_unvalidated"
+INDUSTRY_CONTEXT_REASON = "INDUSTRY_CONTEXT_NOT_AN_ISSUER_SELECTION_SIGNAL"
+HOT_ROTATION_STATUSES = frozenset({"INFLOW_CONT", "WARMING"})
 FORBIDDEN_ACTION_KEYS = {
     "trade_action",
     "buy",
@@ -401,13 +413,13 @@ def _scan_row(
     *, trade_date: str, code: str, channel: str, feature_values: dict[str, Any],
     triggered: bool, source_as_of: str | None, data_status: str,
     reason_codes: Sequence[str], entry_reasons: Sequence[dict[str, Any]] = (),
-    channel_rank: int | None = None,
+    channel_rank: int | None = None, feature_version: str | None = None,
 ) -> dict[str, Any]:
     return {
         "trade_date": trade_date,
         "ts_code": code,
         "channel": channel,
-        "feature_version": f"{channel.lower()}_relative_v1_unvalidated",
+        "feature_version": feature_version or f"{channel.lower()}_relative_v1_unvalidated",
         "feature_values": feature_values,
         "triggered": bool(triggered),
         "entry_reasons": [dict(row) for row in entry_reasons],
@@ -416,6 +428,40 @@ def _scan_row(
         "data_status": data_status,
         "reason_codes": list(reason_codes),
     }
+
+
+def _issuer_admission_blockers(security: Mapping[str, Any]) -> list[str]:
+    """Disclosed reasons an issuer could not be admitted on industry context.
+
+    Industry context admits nobody today; the blockers are published so a
+    suspended or delisting member (9/24: *ST康佳A) is visibly unfit for any
+    industry-driven admission a later reviewed rule might introduce.
+    """
+    qualification = security.get("qualification") or {}
+    blockers: list[str] = []
+    has_bar = qualification.get("has_daily_bar_on_as_of")
+    if has_bar is False:
+        blockers.append("NO_DAILY_BAR_ON_AS_OF")
+    elif has_bar is not True:
+        blockers.append("DAILY_BAR_STATUS_UNVERIFIED")
+    is_st = qualification.get("is_st")
+    if is_st is True:
+        blockers.append("ST_OR_DELISTING_RISK_LABEL")
+    elif is_st is not False:
+        blockers.append("ST_STATUS_UNVERIFIED")
+    list_status = security.get("list_status")
+    if list_status is None:
+        blockers.append("LIST_STATUS_UNVERIFIED")
+    elif list_status != "L":
+        blockers.append("LIST_STATUS_NOT_LISTED")
+    if security.get("delist_date"):
+        blockers.append("DELIST_DATE_PRESENT")
+    return blockers
+
+
+def _scan_industry_channel_mode(scan: Mapping[str, Any]) -> str | None:
+    policy = scan.get("policy")
+    return policy.get("industry_channel_mode") if isinstance(policy, Mapping) else None
 
 
 def build_all_market_scan(
@@ -454,14 +500,9 @@ def build_all_market_scan(
     usable_price.sort(key=lambda item: (-float(item[1]), item[0]))
     price_rank = {code: rank for rank, (code, _) in enumerate(usable_price, 1)}
 
-    industry_ranked: list[tuple[int, int, str]] = []
-    for row in eligible:
-        context = rotation_by_industry.get(str(row.get("industry_key") or ""))
-        if context and context.get("status") in {"INFLOW_CONT", "WARMING"}:
-            priority = 0 if context.get("status") == "INFLOW_CONT" else 1
-            industry_ranked.append((priority, -int(context.get("streak") or 0), row["ts_code"]))
-    industry_ranked.sort()
-    industry_rank = {code: rank for rank, (_, _, code) in enumerate(industry_ranked, 1)}
+    # No issuer ranking is built from industry rotation: every member of one
+    # industry shares its status and streak, so any per-issuer order would be an
+    # issuer-code tie-break (see INDUSTRY_CHANNEL_MODE).
 
     rows: list[dict[str, Any]] = []
     blocked = Counter()
@@ -721,16 +762,29 @@ def build_all_market_scan(
             sector_source_as_of = trade_date if alias_rows else None
         else:
             sector = rotation_by_industry.get(industry)
-            sector_rank = industry_rank.get(code)
-            sector_hit = bool(sector_rank and sector_rank <= channel_top_n)
+            # Industry context only: an industry-level status/streak is shared by
+            # every member, so it can neither rank nor admit one issuer.
+            # governance-mutation: FUNNEL_U1_INDUSTRY_CONTEXT_ONLY
+            sector_rank = None
+            sector_hit = False
             sector_values = {
                 "industry_key": industry,
                 "rotation_status": sector.get("status") if sector else None,
                 "streak": sector.get("streak") if sector else None,
                 "sequence": sector.get("seq") if sector else None,
+                # Missing rotation evidence is unknown, never "not hot".
+                # governance-mutation: FUNNEL_U1_INDUSTRY_HOT_MISSING_IS_NULL
+                "hot_industry": (
+                    sector.get("status") in HOT_ROTATION_STATUSES if sector else None
+                ),
+                "admission_role": INDUSTRY_CHANNEL_MODE,
+                "issuer_admission_blockers": _issuer_admission_blockers(security),
             }
             sector_status = "COMPLETE" if sector else "DATA_BLOCKED"
-            sector_reasons = [] if sector else ["EXACT_INDUSTRY_ROTATION_MATCH_MISSING"]
+            sector_reasons = (
+                [INDUSTRY_CONTEXT_REASON] if sector
+                else ["EXACT_INDUSTRY_ROTATION_MATCH_MISSING"]
+            )
             sector_source_as_of = trade_date if sector else None
         rows.append(_scan_row(
             trade_date=trade_date, code=code, channel="INDUSTRY_VALUE_CHAIN",
@@ -738,10 +792,8 @@ def build_all_market_scan(
             source_as_of=sector_source_as_of,
             data_status=sector_status,
             reason_codes=sector_reasons,
-            entry_reasons=[{
-                "channel": "INDUSTRY_VALUE_CHAIN", "metric": "rotation_status_rank",
-                "value": sector_rank, "threshold": f"TOP_{channel_top_n}",
-            }] if sector_hit else [], channel_rank=sector_rank,
+            entry_reasons=[], channel_rank=sector_rank,
+            feature_version=INDUSTRY_CONTEXT_FEATURE_VERSION,
         ))
 
         macro = macro_by_industry.get(industry)
@@ -778,6 +830,8 @@ def build_all_market_scan(
             "threshold_mode": "PER_CHANNEL_TOP_N_RELATIVE_UNVALIDATED",
             "channel_top_n": channel_top_n,
             "macro_selection_authority": False,
+            # governance-mutation: FUNNEL_U1_INDUSTRY_MODE_DECLARED
+            "industry_channel_mode": INDUSTRY_CHANNEL_MODE,
         },
         "coverage": {
             "eligible": len(eligible), "rows": len(rows),
@@ -868,6 +922,13 @@ def validate_all_market_scan(payload: Mapping[str, Any], registry: Mapping[str, 
     semiconductor_context_bound = (
         input_refs["semiconductor_positive_inputs_rows_hash"] is not None
     )
+    industry_mode = _scan_industry_channel_mode(payload)
+    # A scan without the key predates INDUSTRY_CHANNEL_MODE and is accepted only so
+    # archived bundles still replay; every scan built by this module carries it.
+    # governance-mutation: FUNNEL_U1_INDUSTRY_MODE_CLOSED
+    if industry_mode not in (None, INDUSTRY_CHANNEL_MODE):
+        raise FunnelError("all_market_scan industry channel mode is unknown")
+    industry_context_only = industry_mode == INDUSTRY_CHANNEL_MODE
     seen: dict[str, set[str]] = defaultdict(set)
     for row in rows:
         required = {
@@ -914,6 +975,45 @@ def validate_all_market_scan(payload: Mapping[str, Any], registry: Mapping[str, 
         ):
             # governance-mutation: FUNNEL_U1_SEMICONDUCTOR_INDUSTRY_CONTEXT
             _validate_semiconductor_industry_context(row, as_of=as_of)
+        # governance-mutation: FUNNEL_U1_INDUSTRY_NO_ISSUER_CODE_RANK
+        if row["channel"] == "INDUSTRY_VALUE_CHAIN" and industry_context_only and (
+            row["triggered"] is not False
+            or row.get("channel_rank") is not None
+            or row["entry_reasons"] != []
+            or row.get("feature_version") != INDUSTRY_CONTEXT_FEATURE_VERSION
+        ):
+            raise FunnelError(
+                "industry context cannot rank, trigger or admit an issuer "
+                "(an issuer-code tie-break is not evidence)"
+            )
+        # A keyless scan is an archived-replay scan; rows in the context format
+        # prove it was written by the new builder, so the mode key cannot be dropped.
+        # governance-mutation: FUNNEL_U1_INDUSTRY_CONTEXT_ROWS_NEED_MODE
+        if row["channel"] == "INDUSTRY_VALUE_CHAIN" and not industry_context_only and (
+            row.get("feature_version") == INDUSTRY_CONTEXT_FEATURE_VERSION
+            or (isinstance(feature_values, Mapping) and (
+                "admission_role" in feature_values or "hot_industry" in feature_values
+            ))
+        ):
+            raise FunnelError(
+                "industry context rows require a declared industry channel mode"
+            )
+        if (
+            row["channel"] == "INDUSTRY_VALUE_CHAIN" and industry_context_only
+            and not claims_semiconductor_context
+        ):
+            values = feature_values if isinstance(feature_values, Mapping) else {}
+            status = values.get("rotation_status")
+            expected_hot = (
+                None if row["data_status"] != "COMPLETE" or status is None
+                else status in HOT_ROTATION_STATUSES
+            )
+            # governance-mutation: FUNNEL_U1_INDUSTRY_HOT_MISSING_VALIDATED
+            if "hot_industry" not in values or values["hot_industry"] is not expected_hot:
+                raise FunnelError(
+                    "industry hot_industry must be null when rotation evidence is "
+                    "missing and must match the published rotation status otherwise"
+                )
         if row["channel"] == "E1_EVENT":
             verdict = (row.get("feature_values") or {}).get("verdict")
             expected_trigger = verdict == "RED_FLAG"
@@ -1028,10 +1128,22 @@ def build_candidate_review(
     features: Mapping[str, Mapping[str, Any]], trade_date: str,
     generated_at: str | None = None, target_size: int = 200,
     slow_bull_quota: int = 15, contrarian_quota: int = 15, control_quota: int = 10,
+    legacy_industry_replay: bool = False,
 ) -> dict[str, Any]:
     trade_date = _date8(trade_date)
     generated_at = generated_at or _now_utc()
     validate_all_market_scan(scan, registry)
+    industry_mode = _scan_industry_channel_mode(scan)
+    # A scan without the mode key predates INDUSTRY_CHANNEL_MODE and may carry
+    # issuer-code-ranked industry triggers; it is admitted only for an explicit
+    # offline replay, never for a new U2 pool.
+    # governance-mutation: FUNNEL_U2_LEGACY_INDUSTRY_SCAN_REFUSED
+    if industry_mode is None and legacy_industry_replay is not True:
+        raise FunnelError(
+            "all_market_scan declares no industry channel mode; a new U2 pool "
+            "requires INDUSTRY_CHANNEL_MODE (pass legacy_industry_replay=True "
+            "only to replay an archived bundle)"
+        )
     if not 100 <= target_size <= 300:
         raise FunnelError("U2 target_size must remain within 100..300")
     if min(slow_bull_quota, contrarian_quota, control_quota) < 0:
@@ -1252,6 +1364,10 @@ def build_candidate_review(
             "selection": "CHANNEL_UNION_EQUAL_ROUND_ROBIN_NO_COMPOSITE_SCORE",
             "reserved_quotas_are_floors": True,
             "proxy_rules": "UNVALIDATED_INITIAL_RELATIVE_RULES",
+            # U2 admission semantics changed with the industry mode while
+            # rule_version stayed research_funnel_v1; pooled evaluations read this
+            # key to split pre- and post-change pools (null = archived replay).
+            "industry_channel_mode": industry_mode,
         },
         "quota": {"required": quota_required, "actual": quota_actual, "shortfalls": shortfalls},
         "coverage": {
@@ -1394,6 +1510,9 @@ def validate_candidate_review(
         raise FunnelError("random control draw is not reproducible from its frozen frame")
 
     policy = payload.get("policy") or {}
+    # governance-mutation: FUNNEL_U2_INDUSTRY_MODE_BOUND
+    if policy.get("industry_channel_mode") != _scan_industry_channel_mode(scan):
+        raise FunnelError("candidate_review industry channel mode differs from its U1 scan")
     required_quota = (payload.get("quota") or {}).get("required") or {}
     target_size = int(policy.get("target_size") or 0)
     reserved_total = sum(int(required_quota.get(key) or 0) for key in (

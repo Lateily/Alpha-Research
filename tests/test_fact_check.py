@@ -29,6 +29,7 @@ RESEARCH_MULTI_API = ROOT / "api" / "research-multi.js"
 CORE_PATH = ROOT / "scripts" / "llm" / "fact_check_core.mjs"
 CUTOFF = "2026-06-11T23:59:59Z"
 SOURCE_DATE = "2026-06-10T00:00:00Z"
+OFFLINE_LLM_ROUTE_KEY = "offline-fact-check-llm-route-key-0123456789"
 
 SPEC = importlib.util.spec_from_file_location("fact_check", MODULE_PATH)
 assert SPEC and SPEC.loader
@@ -116,6 +117,7 @@ const response = {
 };
 await handler({
   method: 'POST',
+  headers: { 'x-ar-llm-key': process.env.AR_LLM_ROUTE_KEY },
   body: {
     ticker: '688120.SH',
     company: 'offline fixture',
@@ -269,7 +271,7 @@ const res = {
   code: 200, body: null, setHeader() {}, status(code) {this.code = code; return this;},
   json(body) {this.body = body; return this;}, end() {return this;}
 };
-await handler({method: 'POST', body: {
+await handler({method: 'POST', headers: {'x-ar-llm-key': process.env.AR_LLM_ROUTE_KEY}, body: {
   ticker: '688120.SH', company: 'Offline fixture', direction: 'NEUTRAL',
   enrichment_context: {context_built_at: extras.context_built_at, extras}
 }}, res);
@@ -301,6 +303,8 @@ class FactCheckTest(unittest.TestCase):
                     "ANTHROPIC_API_KEY": "offline-test",
                     "OPENAI_API_KEY": "offline-test",
                     "GOOGLE_AI_API_KEY": "offline-test",
+                    # The handlers now sit behind api/_lib/llm-route-guard.js.
+                    "AR_LLM_ROUTE_KEY": OFFLINE_LLM_ROUTE_KEY,
                     "AR_OFFLINE": "1",
                 }
             )

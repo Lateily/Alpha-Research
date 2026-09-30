@@ -249,7 +249,7 @@ HOT T+3 存续仅 27%;**广度切分显著(z=4.23:有广度 +0.68% vs 无广度
 `COMPLETE 6/6`;④一致性闸门自身用 `except: continue` 静默跳过损坏文件,
 把最新报告改成 `BROKEN_JSON` 后 preflight 仍 PASS。
 
-**强制方**:`red_flag_gate`(零证据 ⇒ DATA_BLOCKED)· `full_battery`(嵌套上浮)·
+**强制方**:`red_flag_gate`(零证据/空值/断档 ⇒ DATA_BLOCKED;v1 起与 E1 事件层共用判定函数(取数窗口不同),停报/过期财报 ⇒ DATA_BLOCKED,见 `U3_RED_FLAG_GATE_V1.md`)· `full_battery`(嵌套上浮)·
 `consistency.scan_dirs`(五种 fail-closed)· `run_nightly` preflight
 (**全部已在线**)。
 

@@ -18,7 +18,7 @@ import json
 import os
 import sys
 import time
-import urllib.request
+import tushare_rows
 from nightly_context import bind, target_trade_date
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -31,20 +31,8 @@ TOP_N = 30
 
 
 def _api(name, token, **params):
-    body = json.dumps({"api_name": name, "token": token,
-                       "params": params, "fields": ""}).encode()
-    req = urllib.request.Request("https://api.tushare.pro", body,
-                                 {"Content-Type": "application/json"})
-    for _ in range(4):
-        try:
-            r = json.load(urllib.request.urlopen(req, timeout=45))
-            if r.get("code") == 0:
-                d = r["data"]
-                return [dict(zip(d["fields"], row)) for row in d["items"]]
-        except Exception:                              # noqa: BLE001
-            pass
-        time.sleep(1.5)
-    return []
+    """(rows, None) | (None, reason) — a failed call is never an empty answer."""
+    return tushare_rows.fetch_rows(name, token, timeout=45, **params)
 
 
 def screen_panel(panel, names):
@@ -77,29 +65,35 @@ def screen_panel(panel, names):
 
 
 def run(token):
-    cal = _api("trade_cal", token, exchange="SSE", is_open="1",
-               start_date="20260501", end_date="20301231")
+    cal, err = _api("trade_cal", token, exchange="SSE", is_open="1",
+                    start_date="20260501", end_date="20301231")
+    if err:
+        print(f"DATA_BLOCKED: trade_cal 调用失败 {err}")
+        return None
     today = target_trade_date()
     days = [r["cal_date"] for r in sorted(cal, key=lambda x: x["cal_date"])
             if r["cal_date"] <= today][-21:]
     if len(days) < 21:
         print("DATA_BLOCKED: 交易日历不足 21 日")
         return None
-    basic = _api("stock_basic", token, list_status="L")
-    if not basic:
-        print("DATA_BLOCKED: stock_basic 无数据")
+    basic, err = _api("stock_basic", token, list_status="L")
+    if err or not basic:
+        print(f"DATA_BLOCKED: stock_basic {err or '无数据'}")
         return None
     names = {r["ts_code"]: (r.get("name") or "?", r.get("industry") or "?")
              for r in basic}
     panel = {}
     for d in days:
-        rows = _api("daily", token, trade_date=d)
-        if not rows:
-            print(f"DATA_BLOCKED: daily {d} 无数据")
+        rows, err = _api("daily", token, trade_date=d)
+        if err or not rows:
+            print(f"DATA_BLOCKED: daily {d} {err or '无数据'}")
             return None
         for r in rows:
-            panel.setdefault(r["ts_code"], []).append(
-                (d, float(r.get("close") or 0), float(r.get("high") or 0)))
+            close = tushare_rows.optional_float(r.get("close"))
+            high = tushare_rows.optional_float(r.get("high"))
+            if close is None or high is None:
+                continue                   # 缺价 ≠ 0 元:该票该日不入面板(<21 日即出局)
+            panel.setdefault(r["ts_code"], []).append((d, close, high))
         time.sleep(0.3)
     for code in panel:
         panel[code].sort()

@@ -10,6 +10,7 @@
  */
 
 import Anthropic from '@anthropic-ai/sdk';
+import { guardLlmRoute } from './_lib/llm-route-guard.js';
 
 // ── Shared output schema ─────────────────────────────────────────────────────
 const SCHEMA = `Return ONLY valid JSON:
@@ -133,10 +134,9 @@ async function callClaude(prompt) {
 
 // ── Handler ───────────────────────────────────────────────────────────────────
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  if (req.method === 'OPTIONS') return res.status(200).end();
+  // Key + Origin allowlist + per-IP rate limit, before any provider call.
+  // governance-mutation: LLM_ROUTE_GUARD_DEBATE
+  if (!guardLlmRoute(req, res, 'debate')) return;
   if (req.method !== 'POST')   return res.status(405).json({ error: 'Method not allowed' });
 
   const { ticker, company, context } = req.body;

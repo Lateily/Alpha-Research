@@ -17,7 +17,7 @@ import json
 import os
 import sys
 import time
-import urllib.request
+import tushare_rows
 from nightly_context import bind, target_trade_date
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -25,25 +25,16 @@ OUT = os.path.join(HERE, "rotation_panel.json")
 
 
 def _api(name, token, **params):
-    body = json.dumps({"api_name": name, "token": token,
-                       "params": params, "fields": ""}).encode()
-    req = urllib.request.Request("https://api.tushare.pro", body,
-                                 {"Content-Type": "application/json"})
-    for _ in range(4):
-        try:
-            r = json.load(urllib.request.urlopen(req, timeout=30))
-            if r.get("code") == 0:
-                d = r["data"]
-                return [dict(zip(d["fields"], row)) for row in d["items"]]
-        except Exception:                              # noqa: BLE001
-            pass
-        time.sleep(1.5)
-    return []
+    """(rows, None) | (None, reason) — a failed call is never an empty answer."""
+    return tushare_rows.fetch_rows(name, token, timeout=30, **params)
 
 
 def recent_trade_dates(token, n=5):
-    rows = _api("trade_cal", token, exchange="SSE", is_open="1",
-                start_date="20260601", end_date="20301231")
+    rows, err = _api("trade_cal", token, exchange="SSE", is_open="1",
+                     start_date="20260601", end_date="20301231")
+    if err:
+        print(f"DATA_BLOCKED: trade_cal 调用失败 {err}")
+        return None
     dates = sorted(r["cal_date"] for r in rows)
     today = target_trade_date()
     past = [d for d in dates if d <= today]            # official_sample 已确认 target 定盘
@@ -81,9 +72,10 @@ def build_panel(flows_by_sector, days):
     纯函数,离线可测。"""
     rows = []
     for nm, dd in flows_by_sector.items():
-        missing = [d for d in days if d not in dd]
+        missing = [d for d in days if d not in dd or dd[d] is None
+               or dd[d][0] is None or dd[d][1] is None]
         if missing:
-            continue                        # 板块缺日:不猜,不进面板
+            continue                        # 板块缺日/缺值:不猜,不进面板
         seq = "".join("+" if dd[d][0] > 0 else "-" for d in days)
         streak, status = classify(seq)
         rows.append({"sector": nm, "seq": seq, "streak": streak,
@@ -123,21 +115,29 @@ def render(panel):
 
 def run(token, n_days=5):
     days = recent_trade_dates(token, n_days)
+    if days is None:
+        return None
     if len(days) < n_days:
         print(f"DATA_BLOCKED: 交易日历不足({len(days)}/{n_days})")
         return None
-    flows = {}
+    flows, dropped = {}, 0
     for d in days:
-        rows = _api("moneyflow_ind_dc", token, trade_date=d)
-        if not rows:
-            print(f"DATA_BLOCKED: moneyflow_ind_dc {d} 无数据")
+        rows, err = _api("moneyflow_ind_dc", token, trade_date=d)
+        if err or not rows:
+            print(f"DATA_BLOCKED: moneyflow_ind_dc {d} {err or '无数据'}")
             return None
         for r in rows:
             nm = r.get("name")
-            flows.setdefault(nm, {})[d] = (float(r.get("net_amount") or 0),
-                                           float(r.get("pct_change") or 0))
+            net = tushare_rows.optional_float(r.get("net_amount"))
+            pct = tushare_rows.optional_float(r.get("pct_change"))
+            if not nm or net is None or pct is None:
+                dropped += 1               # 缺值 ≠ 0:该板块-日不入面板
+                continue
+            flows.setdefault(nm, {})[d] = (net, pct)
         time.sleep(0.25)
-    panel = bind(build_panel(flows, days), target=days[-1])
+    panel = build_panel(flows, days)
+    panel["dropped_missing_value_sector_days"] = dropped
+    panel = bind(panel, target=days[-1])
     panel["as_of"] = days[-1]
     with open(OUT, "w", encoding="utf-8") as fh:
         json.dump(panel, fh, ensure_ascii=False, indent=1)
@@ -172,6 +172,11 @@ def selftest():
     ck("streak=2 判 WARMING", any(r["sector"] == "温和二日" for r in p["warming"]))
     ck("连续流出判 OUTFLOW_CONT", any(r["sector"] == "连续流出" for r in p["outflow_cont"]))
     ck("缺日板块被剔除(不猜数据)", p["n_sectors"] == 4)
+    fx2 = dict(fx)
+    fx2["缺值板块"] = {d: (0.5, 1.0) for d in days}
+    fx2["缺值板块"]["d3"] = (None, 1.0)
+    ck("缺净额板块被剔除(缺值不当 0)",
+       all(r["sector"] != "缺值板块" for r in build_panel(fx2, days)["inflow_cont"]))
     md = render(p)
     ck("渲染含连续性单列表头与免责行", "无条件单列" in md and "不是买卖指令" in md)
     ck("classify 边界: '++-++' streak=2", classify("++-++") == (2, "WARMING"))

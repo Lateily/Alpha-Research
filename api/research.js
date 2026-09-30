@@ -29,6 +29,7 @@
 //   TAVILY_API_KEY    — optional (tavily.com, free 1000 searches/month)
 
 import Anthropic from '@anthropic-ai/sdk';
+import { guardLlmRoute } from './_lib/llm-route-guard.js';
 import { attachFactCheck, attachFactCheckToBlocks, factCheckThesis } from '../scripts/llm/fact_check_core.mjs';
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
@@ -1905,11 +1906,9 @@ export {
 // ════════════════════════════════════════════════════════════════════════════
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin',  '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
-  if (req.method === 'OPTIONS') return res.status(200).end();
+  // Key + Origin allowlist + per-IP rate limit, before any provider call.
+  // governance-mutation: LLM_ROUTE_GUARD_RESEARCH
+  if (!guardLlmRoute(req, res, 'research')) return;
   if (req.method !== 'POST')    return res.status(405).json({ error: 'Method not allowed' });
 
   const { ticker, direction, context, company, enrichment_context } = req.body;

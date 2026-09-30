@@ -6,7 +6,18 @@ import { Search, TrendingUp, TrendingDown, Minus, ChevronDown, BarChart3,
          Database, RefreshCw, Layers, BookOpen, Info, Calendar,
          Sun, Moon, ChevronLeft, ChevronRight, Circle,
          Wifi, WifiOff } from "lucide-react";
+import {
+  configureLlmRoutes, llmBrowserRoutesEnabled, llmRouteFetch,
+  setOperatorLlmKey, clearOperatorLlmKey, hasOperatorLlmKey, describeLlmRouteError,
+  subscribeOperatorLlmKey,
+} from "./llmRouteClient.js";
 import { PieChart as RechartsPie, Pie, Cell, BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
+
+/* ── PAID-MODEL ROUTES ─────────────────────────────────────────────────────── */
+// Off unless the build sets VITE_AR_LLM_BROWSER_ROUTES=1 AND the operator types
+// the server key into the header control for this tab. The key itself is never a
+// build variable. See src/llmRouteClient.js and api/_lib/llm-route-guard.js.
+configureLlmRoutes({ browserEnabled: import.meta.env.VITE_AR_LLM_BROWSER_ROUTES });
 
 /* ── DATA BASE URL ──────────────────────────────────────────────────────────── */
 // On GitHub Pages (or any non-localhost host), fetch data files directly from the
@@ -1086,7 +1097,7 @@ function NewsPanel({ macroArticles, portfolioArticles, loading, lastFetched, onO
       const context = article.ticker
         ? `${article.ticker}${article.tag ? ' · ' + article.tag : ''}`
         : article.tag || '';
-      const res = await fetch(`${API_BASE}/api/translate`, {
+      const res = await llmRouteFetch(`${API_BASE}/api/translate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: article.title, context }),
@@ -3828,7 +3839,7 @@ function DeepResearchPanel({ L, lk, onComplete, C, universeStocks, enrichmentDat
     const endpoint  = `${apiBase}/api/research`;
 
     try {
-      const res = await fetch(endpoint, {
+      const res = await llmRouteFetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -6162,7 +6173,7 @@ function DebatePanel({ ticker, company, C, L, lk }) {
     const isGHPages = typeof window !== 'undefined' && window.location.hostname.endsWith('github.io');
     const base = isGHPages ? 'https://equity-research-ten.vercel.app' : '';
     try {
-      const res = await fetch(`${base}/api/debate`, {
+      const res = await llmRouteFetch(`${base}/api/debate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ticker, company, context: context || undefined }),
@@ -6648,6 +6659,37 @@ const GlobalStyles = () => (
   `}</style>
 );
 
+/* ── Operator key control for paid-model routes ─────────────────────────────── */
+// Rendered only when the build flag is on. The typed key stays in module memory
+// (src/llmRouteClient.js) for this tab; nothing is persisted or bundled. The
+// control subscribes to the client so a 401 (which clears the key) re-locks it.
+// onUnlock lets the dashboard retry work that failed only because it was locked.
+function LlmKeyControl({ C, onUnlock }) {
+  const [draft, setDraft] = useState('');
+  const [unlocked, setUnlocked] = useState(hasOperatorLlmKey());
+  useEffect(() => subscribeOperatorLlmKey(setUnlocked), []);
+  if (!llmBrowserRoutesEnabled()) return null;
+  const box = { padding:'5px 8px', border:`1px solid ${C.border}`, borderRadius:7, background:C.soft, color:C.dark, fontSize:11 };
+  if (unlocked && hasOperatorLlmKey()) {
+    return (
+      <button style={{...box, cursor:'pointer'}} title="Forget the operator key for this tab"
+        onClick={() => clearOperatorLlmKey()}>LLM unlocked · lock</button>
+    );
+  }
+  return (
+    <form style={{display:'flex', gap:4}} onSubmit={e => {
+      e.preventDefault();
+      const ok = setOperatorLlmKey(draft);
+      setDraft('');
+      if (ok && onUnlock) onUnlock();
+    }}>
+      <input type="password" autoComplete="off" value={draft} placeholder="LLM operator key"
+        onChange={e => setDraft(e.target.value)} style={{...box, width:130}}/>
+      <button type="submit" style={{...box, cursor:'pointer'}}>Unlock</button>
+    </form>
+  );
+}
+
 export default function Dashboard() {
   const [lang, setLang] = useState('en');
   const [dark, setDark] = useState(true); // Jason: Bloomberg default — dark mode
@@ -6669,6 +6711,9 @@ export default function Dashboard() {
   const [regimeData, setRegimeData] = useState(null);
   const [macroInsight, setMacroInsight] = useState(null);
   const [insightLoading, setInsightLoading] = useState(false);
+  // True when the page-load macro insight failed only because the paid-model
+  // routes were still locked (flag on, key not typed yet); unlocking retries once.
+  const [macroAwaitingUnlock, setMacroAwaitingUnlock] = useState(false);
   const [newsArticles, setNewsArticles] = useState([]);
   const [newsMacro, setNewsMacro] = useState([]);
   const [newsPortfolio, setNewsPortfolio] = useState([]);
@@ -6802,7 +6847,7 @@ export default function Dashboard() {
         // Auto-generate insight immediately after regime data loads
         setInsightLoading(true);
         const apiBase = 'https://equity-research-ten.vercel.app';
-        fetch(`${apiBase}/api/macro`, {
+        llmRouteFetch(`${apiBase}/api/macro`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ regime_data: d }),
@@ -6810,10 +6855,11 @@ export default function Dashboard() {
           .then(r => r.ok ? r.json() : Promise.reject(`API ${r.status}`))
           .then(data => { setMacroInsight(data); setInsightLoading(false); })
           .catch(err => {
+            if (err?.code === 'LLM_ROUTE_KEY_MISSING') setMacroAwaitingUnlock(true);
             setMacroInsight({
               insight: {
-                market_reads_en: `Auto-load error: ${err}`,
-                market_reads_zh: `自动加载错误：${err}`,
+                market_reads_en: `Auto-load error: ${describeLlmRouteError(err)}`,
+                market_reads_zh: `自动加载错误：${describeLlmRouteError(err)}`,
                 we_think_en:'', we_think_zh:'',
                 mechanism_en:'', mechanism_zh:'',
                 implication_en:'', implication_zh:'',
@@ -6836,7 +6882,7 @@ export default function Dashboard() {
         if (!prev) return prev;
         setInsightLoading(true);
         const apiBase = 'https://equity-research-ten.vercel.app';
-        fetch(`${apiBase}/api/macro`, {
+        llmRouteFetch(`${apiBase}/api/macro`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ regime_data: prev }),
@@ -6879,7 +6925,7 @@ export default function Dashboard() {
               `[${a.ticker}] ${a.title} (${new Date(a.published_at).toLocaleTimeString()})`
             ).join('\n');
             setInsightLoading(true);
-            fetch(`${apiBase}/api/macro`, {
+            llmRouteFetch(`${apiBase}/api/macro`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
@@ -6957,7 +7003,7 @@ export default function Dashboard() {
     setChatMessages([{ role: 'assistant', content: null, loading: true }]);
     setChatLoading(true);
     const apiBase = 'https://equity-research-ten.vercel.app';
-    fetch(`${apiBase}/api/chat`, {
+    llmRouteFetch(`${apiBase}/api/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -6986,7 +7032,7 @@ export default function Dashboard() {
     setChatInput('');
     setChatLoading(true);
     const apiBase = 'https://equity-research-ten.vercel.app';
-    fetch(`${apiBase}/api/chat`, {
+    llmRouteFetch(`${apiBase}/api/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -7055,7 +7101,7 @@ export default function Dashboard() {
     const isGHPages = typeof window !== 'undefined' && window.location.hostname.endsWith('github.io');
     const apiBase   = isGHPages ? 'https://equity-research-ten.vercel.app' : '';
     try {
-      const res  = await fetch(`${apiBase}/api/morning-report`, {
+      const res  = await llmRouteFetch(`${apiBase}/api/morning-report`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
@@ -7136,7 +7182,7 @@ export default function Dashboard() {
       const isGHPages = typeof window !== 'undefined' && window.location.hostname.endsWith('github.io');
       const apiBase   = isGHPages ? 'https://equity-research-ten.vercel.app' : '';
 
-      const res = await fetch(`${apiBase}/api/research-pulse`, {
+      const res = await llmRouteFetch(`${apiBase}/api/research-pulse`, {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -7173,7 +7219,7 @@ export default function Dashboard() {
     setMacroInsight(null);
     try {
       const apiBase = 'https://equity-research-ten.vercel.app';
-      const resp = await fetch(`${apiBase}/api/macro`, {
+      const resp = await llmRouteFetch(`${apiBase}/api/macro`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ regime_data: regimeData }),
@@ -7184,7 +7230,7 @@ export default function Dashboard() {
     } catch (err) {
       setMacroInsight({
         insight: {
-          market_reads: `Error: ${err.message}`,
+          market_reads: `Error: ${describeLlmRouteError(err)}`,
           we_think: 'Failed to reach macro API.',
           mechanism: '', implication: '', watch_for: '',
           confidence: 'LOW', horizon: 'N/A',
@@ -7531,6 +7577,11 @@ export default function Dashboard() {
             )}
           </div>
           <div style={{display:'flex', gap:8, alignItems:'center'}}>
+            <LlmKeyControl C={C} onUnlock={() => {
+              if (!macroAwaitingUnlock) return;
+              setMacroAwaitingUnlock(false);
+              handleGenerateInsight();
+            }}/>
             <DataBadge liveData={liveData} C={C} L={L}/>
             {/* Jason: Live clock in topbar — visible in light mode (dark mode has status strip) */}
             {!dark && (
