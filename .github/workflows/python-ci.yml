@@ -280,6 +280,10 @@ jobs:
       # 结算复盘与带证据的人类确认/争议;不触碰生产账本。
       - name: Candidate battery evidence completeness and cutoff
         run: python3 tests/test_full_battery_evidence.py
+      - name: Announcement feed sidecar (battery side channel, stage-hashed)
+        run: python3 tests/test_announcement_feed.py
+      - name: Research-increment label ledger (two human axes, offline CLI)
+        run: python3 tests/test_research_increment_label.py
       - name: Offline U4-to-paper research cycle
         run: |
           python3 tests/test_paper_execution_realism.py

@@ -283,7 +283,32 @@ def _fundamental_descriptors(inc, fi):
     return out
 
 
-def battery(pro, tk, today):
+def _announcement_capture(tk, news, titles, eastmoney_source):
+    """Copy the announcement rows the 消息面 dimension already read, unchanged.
+
+    Side channel only (funnel worker): the row is never touched, so the
+    watchlist battery.json stays byte-identical. Titles are kept in full;
+    status mirrors the dimension so a blocked source is never a zero count.
+    """
+    blocked = not isinstance(news, dict) or news.get("status") in ("DATA_BLOCKED", "NOT_RUN")
+    items = None
+    if titles is not None:
+        items = [[str(raw_date if raw_date is not None else ""), str(title if title is not None else "")]
+                 for raw_date, title in titles]
+    return {
+        "ts_code": tk,
+        # governance-mutation: BATTERY_ANNOUNCEMENT_CAPTURE_CHANNEL
+        "source_channel": (None if titles is None else
+                           "EASTMONEY_ANN_A" if eastmoney_source else "TUSHARE_ANNS_D"),
+        "items": items,
+        "status": "DATA_BLOCKED" if blocked else "OK",
+        "err": (str(news.get("err") or news.get("status"))[:120]
+                if blocked and isinstance(news, dict) else None),
+        "captured_at": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),
+    }
+
+
+def battery(pro, tk, today, *, announcement_sink=None):
     out = {"ts_code": tk, "checked_at": today, "dims": {}}
     D = out["dims"]
     # ── 1 行情(位置)──
@@ -346,6 +371,7 @@ def battery(pro, tk, today):
     except Exception as e:
         D["技术面"] = {"status": "DATA_BLOCKED", "err": str(e)[:80]}
     # ── 5 消息面(公告扫描:东财免费源为主,Tushare anns_d 为备;快讯层待 M3)──
+    titles, eastmoney_source = None, False
     try:
         titles = _fetch_anns_eastmoney(tk, today)
         eastmoney_source = titles is not None
@@ -367,6 +393,9 @@ def battery(pro, tk, today):
             )
     except Exception as e:
         D["消息面"] = {"status": "NOT_RUN", "err": str(e)[:80]}
+    # governance-mutation: BATTERY_ANNOUNCEMENT_SINK_SIDE_CHANNEL
+    if announcement_sink is not None:
+        announcement_sink.append(_announcement_capture(tk, D["消息面"], titles, eastmoney_source))
     # ── 6 估值 ──
     try:
         db = pro.daily_basic(ts_code=tk, start_date=(datetime.datetime.strptime(today, "%Y%m%d")
