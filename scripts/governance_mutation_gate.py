@@ -12764,6 +12764,166 @@ MUTATIONS = MUTATIONS + (
     ),
 )
 
+# 2026-09-29: INDUSTRY_VALUE_CHAIN no longer ranks hot-industry members by issuer
+# code.  Each pin restores one piece of the old (status, -streak, ts_code) cut.
+MUTATIONS = MUTATIONS + (
+    MutationCase(
+        mutation_id="FUNNEL_U1_INDUSTRY_CONTEXT_ONLY",
+        component="Research funnel U1 industry context boundary",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_funnel_industry_channel_context.py",
+        before=(
+            "            sector_rank = None\n"
+            "            sector_hit = False\n"
+            "            sector_values = {\n"
+            "                \"industry_key\": industry,\n"
+            "                \"rotation_status\""
+        ),
+        after=(
+            "            sector_rank = (\n"
+            "                sum(\n"
+            "                    1 for other in eligible\n"
+            "                    if other[\"ts_code\"] <= code\n"
+            "                    and (rotation_by_industry.get(str(other.get(\"industry_key\") or \"\")) or {})"
+            ".get(\"status\") in HOT_ROTATION_STATUSES\n"
+            "                )\n"
+            "                if sector and sector.get(\"status\") in HOT_ROTATION_STATUSES else None\n"
+            "            )\n"
+            "            sector_hit = bool(sector_rank and sector_rank <= channel_top_n)\n"
+            "            sector_values = {\n"
+            "                \"industry_key\": industry,\n"
+            "                \"rotation_status\""
+        ),
+        expected_failure_marker="test_industry_admission_is_invariant_to_issuer_code_relabeling",
+        rationale=(
+            "Hot-industry members share status and streak; ranking them by ts_code "
+            "truncates an industry signal by issuer code (9/24: 40 lowest SZSE codes). "
+            "Killed by the relabel-invariance assertion on the raw builder rows, "
+            "with the builder's validator bypassed, so the kill does not depend on "
+            "FUNNEL_U1_INDUSTRY_NO_ISSUER_CODE_RANK."
+        ),
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_U1_INDUSTRY_MODE_DECLARED",
+        component="Research funnel U1 industry context boundary",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_funnel_industry_channel_context.py",
+        before="            \"industry_channel_mode\": INDUSTRY_CHANNEL_MODE,\n",
+        after="",
+        expected_failure_marker="test_hot_industry_members_are_context_without_rank_or_trigger",
+        rationale=(
+            "A new scan without the mode key would fall back to the lenient "
+            "archived-replay path and escape the no-rank validator."
+        ),
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_U1_INDUSTRY_MODE_CLOSED",
+        component="Research funnel U1 industry context boundary",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_funnel_industry_channel_context.py",
+        before="    if industry_mode not in (None, INDUSTRY_CHANNEL_MODE):",
+        after="    if False:",
+        expected_failure_marker="test_unknown_industry_mode_is_refused",
+        rationale="An unknown industry mode cannot silently skip the no-rank validator.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_U1_INDUSTRY_NO_ISSUER_CODE_RANK",
+        component="Research funnel U1 industry context boundary",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_funnel_industry_channel_context.py",
+        before=(
+            "        if row[\"channel\"] == \"INDUSTRY_VALUE_CHAIN\" "
+            "and industry_context_only and ("
+        ),
+        after="        if False and (",
+        expected_failure_marker="test_industry_rank_tie_broken_by_ts_code_is_refused",
+        rationale=(
+            "A scan whose industry rows carry a code-ordered channel_rank, a trigger "
+            "or an entry reason must be refused, not published as evidence."
+        ),
+    ),
+)
+
+# 2026-09-29 review fixes for the industry context channel: missing rotation is
+# null (never "not hot"), context rows cannot drop the mode key, and a new U2 pool
+# discloses and is bound to the U1 industry mode it was admitted under.
+MUTATIONS = MUTATIONS + (
+    MutationCase(
+        mutation_id="FUNNEL_U1_INDUSTRY_HOT_MISSING_IS_NULL",
+        component="Research funnel U1 industry context boundary",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_funnel_industry_channel_context.py",
+        before="                    sector.get(\"status\") in HOT_ROTATION_STATUSES if sector else None\n",
+        after="                    bool(sector and sector.get(\"status\") in HOT_ROTATION_STATUSES)\n",
+        expected_failure_marker="test_hot_industry_members_are_context_without_rank_or_trigger",
+        rationale=(
+            "An industry with no rotation match is unknown; storing hot_industry "
+            "False writes missing data as a definite 'not hot' value."
+        ),
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_U1_INDUSTRY_HOT_MISSING_VALIDATED",
+        component="Research funnel U1 industry context boundary",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_funnel_industry_channel_context.py",
+        before=(
+            "            if \"hot_industry\" not in values "
+            "or values[\"hot_industry\"] is not expected_hot:"
+        ),
+        after="            if False:",
+        expected_failure_marker="test_missing_rotation_cannot_be_stored_as_not_hot",
+        rationale=(
+            "A DATA_BLOCKED industry row carrying hot_industry False must be refused, "
+            "not published as a 'not hot' fact."
+        ),
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_U1_INDUSTRY_CONTEXT_ROWS_NEED_MODE",
+        component="Research funnel U1 industry context boundary",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_funnel_industry_channel_context.py",
+        before=(
+            "        if row[\"channel\"] == \"INDUSTRY_VALUE_CHAIN\" "
+            "and not industry_context_only and ("
+        ),
+        after="        if False and (",
+        expected_failure_marker="test_context_rows_without_declared_mode_are_refused",
+        rationale=(
+            "A new-format scan that drops the mode key would otherwise enter the "
+            "lenient archived-replay path."
+        ),
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_U2_LEGACY_INDUSTRY_SCAN_REFUSED",
+        component="Research funnel U2 industry mode binding",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_funnel_industry_channel_context.py",
+        before="    if industry_mode is None and legacy_industry_replay is not True:",
+        after="    if False:",
+        expected_failure_marker="test_new_u2_pool_refuses_a_scan_without_declared_mode",
+        rationale=(
+            "A keyless (archived-format) scan may carry issuer-code-ranked industry "
+            "triggers; it cannot feed a new U2 pool without an explicit replay flag."
+        ),
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_U2_INDUSTRY_MODE_BOUND",
+        component="Research funnel U2 industry mode binding",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_funnel_industry_channel_context.py",
+        before=(
+            "    if policy.get(\"industry_channel_mode\") "
+            "!= _scan_industry_channel_mode(scan):"
+        ),
+        after="    if False:",
+        expected_failure_marker="test_candidate_review_mode_is_bound_to_its_scan",
+        rationale=(
+            "rule_version did not change with the industry mode, so pooled "
+            "evaluations need candidate_review.policy to disclose it exactly."
+        ),
+    ),
+)
+
 @dataclass(frozen=True)
 class CommandResult:
     returncode: int
