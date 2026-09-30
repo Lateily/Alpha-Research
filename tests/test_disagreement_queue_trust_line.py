@@ -611,6 +611,16 @@ class TrustMetricRuleTests(unittest.TestCase):
         authority = {"u4_admission_authority": False, "changes_machine_verdict": False,
                      "claim_allowed": False, "no_trade_flag": True}
         batches: dict = {}
+        # Composition with #392: disagreement_adjudication kinds are typed-only at the
+        # writer.  This helper seeds contract-A-shaped records (including forgeries)
+        # to prove the reader re-validates them, so it lifts only that writer guard.
+        typed_only = getattr(event_ledger, "ADJUDICATION_TYPED_KINDS", frozenset())
+        seeding = mock.patch.object(
+            event_ledger, "RESERVED_TYPED_KINDS",
+            frozenset(getattr(event_ledger, "RESERVED_TYPED_KINDS", frozenset())) - typed_only,
+        )
+        seeding.start()
+        self.addCleanup(seeding.stop)
         for row, verdict, batch, run_id, closed in rows:
             batches.setdefault(batch, {"rows": [], "closed": closed, "run_id": run_id})
             batches[batch]["rows"].append((row, verdict))
@@ -631,6 +641,7 @@ class TrustMetricRuleTests(unittest.TestCase):
                 event_ledger.append(rt.ADJUDICATION_CLOSURE_KIND, f"{batch}-c",
                                     {"batch_id": batch, "batch_hash": batch_hash,
                                      "row_ids": [row["row_id"] for row, _v in spec["rows"]]}, str(path))
+        seeding.stop()
         return path
 
     def test_human_confirmed_share_uses_only_closed_batches_bound_to_this_queue(self) -> None:
