@@ -1,0 +1,22 @@
+{
+  "schema": "ai-task.v1",
+  "task_id": "ANNOUNCEMENT-SOURCE-WINDOW-20260929",
+  "architecture_block": ["A research funnel candidate battery"],
+  "objective": "Restore point-in-time announcement evidence from the existing Eastmoney source using bounded, verifiable date-window pagination, while retaining explicit DATA_BLOCKED behavior for unverified coverage.",
+  "non_goals": ["No new data provider or paid entitlement.", "No change to U4 selection, paper registration, trading or Macro authority.", "No rewrite of existing immutable runs or production records."],
+  "human_owner": "Junyan",
+  "reviewer": "Junyan",
+  "executor_candidates": ["Codex"],
+  "dependencies": ["origin/main eae0b805", "Live read-only source probes on 2026-09-29"],
+  "authority_docs": ["AGENTS.md", "experiments/AGENTS.md"],
+  "file_scope": ["experiments/execution_tracker/full_battery.py", "tests/test_full_battery_evidence.py", "scripts/governance_mutation_gate.py", "scripts/llm/fixtures/announcement_source_window.task.json"],
+  "forbidden_scope": ["/Users/years/ar-live", "public/data", "data_history", "experiments/research_funnel", "experiments/execution_tracker/model_fund", "web"],
+  "input_contracts": ["Human-approved target trade date", "Eastmoney announcement response with success, page identity, total_hits, dates and titles", "Existing Tushare anns_d fallback, which may return permission denied"],
+  "output_artifacts": ["Bounded announcement evidence and explicit coverage status", "Negative behavior tests and mutation evidence", "Draft PR with isolated live-source acceptance results"],
+  "acceptance_tests": ["python3 tests/test_full_battery_evidence.py", "python3 scripts/governance_mutation_gate.py", "python3 /Users/years/Desktop/Stock/e2e-twin/twin-20260902/tools/ci_local.py", "Reject inconsistent page totals, duplicate or missing pages, invalid dates, future rows and coverage beyond the bounded limit.", "A real read-only source probe for at least one stock succeeds without printing or persisting credentials."],
+  "risk_level": "HIGH",
+  "network_policy": "LIVE_DATA",
+  "budget": {"max_cny": "0", "max_minutes": 180},
+  "approval_gates": ["No production synchronization or merge without Junyan approval.", "No U4 selection or paper action is implied by battery completeness."],
+  "created_at": "2026-09-29T15:30:00+01:00"
+}

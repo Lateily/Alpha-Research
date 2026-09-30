@@ -45,6 +45,7 @@ EXPECTED_ARTIFACT_PATHS = (
     "experiments/execution_tracker/model_paper_fund.py",
     "experiments/execution_tracker/paper_deadline.py",
     "experiments/execution_tracker/paper_portfolio.py",
+    "experiments/execution_tracker/session_calendar.py",
     "experiments/execution_tracker/nightly_publish.py",
     "experiments/execution_tracker/paper_execution_audit.py",
     "experiments/execution_tracker/model_fund/orders.json",
@@ -218,6 +219,7 @@ class ResearchClosedLoopV1Tests(unittest.TestCase):
         bindings = {row["path"]: row["sha256"] for row in self.manifest["artifact_bindings"]}
         for path in ("experiments/execution_tracker/paper_deadline.py",
                      "experiments/execution_tracker/paper_portfolio.py",
+                     "experiments/execution_tracker/session_calendar.py",
                      "experiments/execution_tracker/nightly_publish.py",
                      "docs/research/PAPER_T10_CALENDAR_V1.md"):
             with self.subTest(path=path):

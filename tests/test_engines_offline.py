@@ -22,9 +22,10 @@ class FakePro:
         return pd.DataFrame([])
     def income(self, **kw):
         return pd.DataFrame([
-            {"end_date": "20250930", "report_type": "1", "n_income_attr_p": 5.31e9},
-            {"end_date": "20251231", "report_type": "1", "n_income_attr_p": 5.96e9},
-            {"end_date": "20260331", "report_type": "1", "n_income_attr_p": 7.5e8},
+            # red_flag_gate v1: 财报行必须带 ann_date —— 无公告日的行无法证明已在 as_of 前披露
+            {"ann_date": "20251030", "end_date": "20250930", "report_type": "1", "n_income_attr_p": 5.31e9},
+            {"ann_date": "20260330", "end_date": "20251231", "report_type": "1", "n_income_attr_p": 5.96e9},
+            {"ann_date": "20260429", "end_date": "20260331", "report_type": "1", "n_income_attr_p": 7.5e8},
         ])
 
 

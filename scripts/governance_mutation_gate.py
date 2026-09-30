@@ -8193,6 +8193,172 @@ MUTATIONS: tuple[MutationCase, ...] = (
     ),
 )
 
+# Rotation breadth / NAV gaps: missing is recorded as missing (2026-09 re-review P1).
+MUTATIONS = MUTATIONS + (
+    MutationCase(
+        mutation_id="ROTATION_FETCH_FAILURE_NOT_EMPTY",
+        component="Rotation missing-data honesty",
+        source_path="experiments/execution_tracker/tushare_rows.py",
+        test_script="tests/test_rotation_nav_missing.py",
+        before="    return None, reason\n\n\ndef optional_float(value):",
+        after="    return [], None\n\n\ndef optional_float(value):",
+        expected_failure_marker="test_failure_is_none_with_reason_not_empty_list",
+        rationale="A failed provider call must never look like a real empty answer.",
+    ),
+    MutationCase(
+        mutation_id="ROTATION_EMPTY_LIMIT_LIST_BLOCKED",
+        component="Rotation missing-data honesty",
+        source_path="experiments/execution_tracker/rotation_validation.py",
+        test_script="tests/test_rotation_nav_missing.py",
+        before='    if not cnt:\n        return None, "EMPTY_LIMIT_LIST_IMPLAUSIBLE_FOR_SETTLED_DAY"',
+        after='    if False:\n        return None, "EMPTY_LIMIT_LIST_IMPLAUSIBLE_FOR_SETTLED_DAY"',
+        expected_failure_marker="test_limit_counts_never_store_zero",
+        rationale="An empty limit_list_d answer is not a zero-limit-up A-share day.",
+    ),
+    MutationCase(
+        mutation_id="ROTATION_APPEND_LIMIT_NONE_NOT_EMPTY",
+        component="Rotation missing-data honesty",
+        source_path="experiments/execution_tracker/rotation_validation.py",
+        test_script="tests/test_rotation_nav_missing.py",
+        before='        hist["limit_up_by_industry"][d] = cnt       # None = DATA_BLOCKED,绝不写 {}',
+        after='        hist["limit_up_by_industry"][d] = cnt or {}  # None = DATA_BLOCKED,绝不写 {}',
+        expected_failure_marker="test_target_day_limit_failure_or_empty_appends_the_day_as_blocked",
+        rationale="A nightly day without a limit reading is appended as None, never {} (zero limit-ups).",
+    ),
+    MutationCase(
+        mutation_id="ROTATION_BACKFILL_LIMIT_NONE_NOT_EMPTY",
+        component="Rotation missing-data honesty",
+        source_path="experiments/execution_tracker/rotation_validation.py",
+        test_script="tests/test_rotation_nav_missing.py",
+        before="        lim[d] = cnt                                # None = DATA_BLOCKED,绝不写 {}",
+        after="        lim[d] = cnt or {}                          # None = DATA_BLOCKED,绝不写 {}",
+        expected_failure_marker="test_backfill_stores_blocked_limit_as_none_and_drops_missing_flows",
+        rationale="The --backfill writer is the original {}-as-zero bug shape; it must store None.",
+    ),
+    MutationCase(
+        mutation_id="ROTATION_LIMIT_RETRY_CLEARS_MARKER",
+        component="Rotation missing-data honesty",
+        source_path="experiments/execution_tracker/rotation_validation.py",
+        test_script="tests/test_rotation_nav_missing.py",
+        before='        recovered[d] = {"first_block_reason": blocked.pop(d), "recovered_at_target": target}',
+        after='        recovered[d] = {"first_block_reason": blocked.get(d), "recovered_at_target": target}',
+        expected_failure_marker="test_recent_marked_blocked_days_are_retried_and_recovered",
+        rationale="A recovered limit reading must leave the blocked set, with its provenance recorded.",
+    ),
+    MutationCase(
+        mutation_id="ROTATION_LEGACY_EMPTY_LIMIT_BLOCKED",
+        component="Rotation missing-data honesty",
+        source_path="experiments/execution_tracker/rotation_validation.py",
+        test_script="tests/test_rotation_nav_missing.py",
+        before="    if not isinstance(row, dict) or not row:\n        return None\n    return row",
+        after="    if not isinstance(row, dict):\n        return None\n    return row",
+        expected_failure_marker="test_marked_and_legacy_empty_and_missing_readings_are_all_blocked",
+        rationale="Legacy {} limit readings were failed calls and must stay excluded from Q2.",
+    ),
+    MutationCase(
+        mutation_id="ROTATION_FLOW_MISSING_DROPPED",
+        component="Rotation missing-data honesty",
+        source_path="experiments/execution_tracker/rotation_validation.py",
+        test_script="tests/test_rotation_nav_missing.py",
+        before="        if not name or net is None or pct is None:\n            dropped += 1",
+        after="        if not name:\n            dropped += 1",
+        expected_failure_marker="test_missing_net_amount_drops_the_sector_day",
+        rationale="A missing sector net_amount is dropped, never stored as a reading.",
+    ),
+    MutationCase(
+        mutation_id="LEAD_PRECURSOR_BLOCKED_LIMIT_EXCLUDED",
+        component="Rotation missing-data honesty",
+        source_path="experiments/execution_tracker/lead_precursor.py",
+        test_script="tests/test_rotation_nav_missing.py",
+        before='        if r.get("limit_reading_available") is False:',
+        after="        if False:",
+        expected_failure_marker="test_blocked_limit_days_are_excluded_from_calibration_and_counted",
+        rationale="Days whose defense-crowding light cannot be judged stay out of calibration.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_NAV_DAILY_RETURN_ONE_SESSION",
+        component="Research funnel paper NAV session contiguity",
+        source_path="experiments/execution_tracker/model_paper_fund.py",
+        test_script="tests/test_rotation_nav_missing.py",
+        before="    one_session = bool(covered == 1 and nav_history and nav_history[-1] is basis)",
+        after="    one_session = bool(nav_history)",
+        expected_failure_marker="test_multi_session_gap_is_period_return_not_daily",
+        rationale="daily_return is only written for a one-session step; gaps get period_return.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_NAV_DEFAULT_CALENDAR_READS_NO_FILE",
+        component="Research funnel paper NAV session contiguity",
+        source_path="experiments/execution_tracker/model_paper_fund.py",
+        test_script="tests/test_rotation_nav_missing.py",
+        before="        calendar = session_calendar.static_calendar()",
+        after="        calendar = session_calendar.default_calendar()",
+        expected_failure_marker="test_update_nav_default_calendar_reads_no_file",
+        rationale="The library NAV basis must not read the rolling rotation_history implicitly, "
+                  "or sealed research_cycle replays stop being deterministic.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_CYCLE_NAV_FROZEN_CALENDAR",
+        component="Research funnel paper NAV session contiguity",
+        source_path="experiments/research_funnel/research_cycle.py",
+        test_script="tests/test_rotation_nav_missing.py",
+        before="                nav_calendar = session_calendar.frozen_calendar(sessions)",
+        after="                nav_calendar = session_calendar.static_calendar()",
+        expected_failure_marker="test_deadline_cycle_uses_the_orders_frozen_sessions",
+        rationale="A deadline cycle measures NAV contiguity against its own sealed exchange sessions.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_NAV_GAP_WITHHOLDS_DRAWDOWN",
+        component="Research funnel paper NAV session contiguity",
+        source_path="experiments/execution_tracker/model_paper_fund.py",
+        test_script="tests/test_rotation_nav_missing.py",
+        before='        result["max_drawdown"] = None\n        result["max_drawdown_observed_marks_only"]',
+        after='        pass\n        result["max_drawdown_observed_marks_only"]',
+        expected_failure_marker="test_performance_withholds_drawdown_over_gaps",
+        rationale="A drawdown over a sparse NAV series is withheld, not shown as complete.",
+    ),
+    MutationCase(
+        mutation_id="EXPORT_NAV_SESSION_GAP_PARTIAL",
+        component="Paper NAV contract export",
+        source_path="experiments/execution_tracker/export_contracts.py",
+        test_script="tests/test_rotation_nav_missing.py",
+        before=('    if (session_audit and session_audit["contiguity"] != "CONTIGUOUS"\n'
+                '            and not blocked and result["data_quality"] == "COMPLETE"):'),
+        after="    if False:",
+        expected_failure_marker="test_gapped_series_is_partial_and_lists_missing_sessions",
+        rationale="A nav_series with missing sessions cannot be published as COMPLETE.",
+    ),
+    MutationCase(
+        mutation_id="SESSION_CALENDAR_SOURCES_DISAGREE",
+        component="Paper NAV contract export",
+        source_path="experiments/execution_tracker/session_calendar.py",
+        test_script="tests/test_rotation_nav_missing.py",
+        before="                if seen != expected:",
+        after="                if False:",
+        expected_failure_marker="test_disagreeing_sources_make_the_range_unavailable",
+        rationale="Conflicting offline calendars make contiguity unprovable, not assumed.",
+    ),
+    MutationCase(
+        mutation_id="SESSION_CALENDAR_NIGHTLY_UNKNOWN_WEEKDAY",
+        component="Paper NAV contract export",
+        source_path="experiments/execution_tracker/session_calendar.py",
+        test_script="tests/test_rotation_nav_missing.py",
+        before="        if day.weekday() < 5 and not _known_closed(day):\n            return SessionCalendar(days)",
+        after="        if False:\n            return SessionCalendar(days)",
+        expected_failure_marker="test_year_rollover_nightly_rows",
+        rationale="An unknown weekday between the window end and the target is never assumed closed.",
+    ),
+    MutationCase(
+        mutation_id="SESSION_CALENDAR_2026_HOLIDAY_TABLE",
+        component="Paper NAV contract export",
+        source_path="experiments/execution_tracker/session_calendar.py",
+        test_script="tests/test_rotation_nav_missing.py",
+        before='    "20260925",                                               # 中秋\n',
+        after="",
+        expected_failure_marker="test_static_2026_calendar_skips_holidays_not_sessions",
+        rationale="An exchange holiday is not a missed session.",
+    ),
+)
+
 # #295 replaces the original packet-as-one-event model with candidate events
 # and a separate packet-closure commit.
 MUTATIONS = MUTATIONS + (
@@ -9470,7 +9636,7 @@ MUTATIONS = MUTATIONS + (
         test_script="tests/test_research_closed_loop_v1.py",
         before=(
             '    {"path": "experiments/research_funnel/research_cycle.py", '
-            '"sha256": "sha256:c826bb98f749a2fb2337351b68bcbd340476fb44b09f00f69b5d3a7d5274f373"},\n'
+            '"sha256": "sha256:237e65c4163cf99337ab586bd6220ab08c25242f47b4fe205f1bc057f318c465"},\n'
         ),
         after="",
         expected_failure_marker="test_every_bound_artifact_matches_its_exact_bytes",
@@ -12103,8 +12269,8 @@ MUTATIONS = MUTATIONS + (
         component="U3 announcement source response",
         source_path="experiments/execution_tracker/full_battery.py",
         test_script="tests/test_full_battery_evidence.py",
-        before='        if "code" in d and d["code"] not in (1, "1"):\n            return None',
-        after='        if "code" in d and d["code"] not in (1, "1"):\n            pass',
+        before='            if "code" in d and d["code"] not in (1, "1"):\n                return None',
+        after='            if "code" in d and d["code"] not in (1, "1"):\n                pass',
         expected_failure_marker="test_eastmoney_ambiguous_empty_response_blocks_u4",
         rationale="A failed business response cannot be reported as confirmed zero announcements.",
     ),
@@ -12113,8 +12279,8 @@ MUTATIONS = MUTATIONS + (
         component="U3 announcement source response",
         source_path="experiments/execution_tracker/full_battery.py",
         test_script="tests/test_full_battery_evidence.py",
-        before='        if not isinstance(d, dict) or d.get("success") is not True:',
-        after='        if not isinstance(d, dict) or False:',
+        before='            if success is not True and not (type(success) is int and success == 1):',
+        after='            if False:',
         expected_failure_marker="test_eastmoney_ambiguous_empty_response_blocks_u4",
         rationale="An explicitly unsuccessful response cannot satisfy the U3 news dimension.",
     ),
@@ -12123,8 +12289,8 @@ MUTATIONS = MUTATIONS + (
         component="U3 announcement source response",
         source_path="experiments/execution_tracker/full_battery.py",
         test_script="tests/test_full_battery_evidence.py",
-        before='        total_hits = data.get("total_hits")',
-        after='        total_hits = len(lst)',
+        before='            total_hits = data.get("total_hits")',
+        after='            total_hits = len(lst)',
         expected_failure_marker="test_eastmoney_short_page_requires_matching_total_hits",
         rationale="A short page requires source-provided total hits, not inferred coverage.",
     ),
@@ -12133,8 +12299,8 @@ MUTATIONS = MUTATIONS + (
         component="U3 announcement source response",
         source_path="experiments/execution_tracker/full_battery.py",
         test_script="tests/test_full_battery_evidence.py",
-        before='        if not isinstance(data, dict) or not isinstance(data.get("list"), list):\n            return None',
-        after='        if not isinstance(data, dict) or not isinstance(data.get("list"), list):\n            return []',
+        before='            if not isinstance(data, dict) or not isinstance(data.get("list"), list):\n                return None',
+        after='            if not isinstance(data, dict) or not isinstance(data.get("list"), list):\n                return []',
         expected_failure_marker="test_eastmoney_malformed_success_page_blocks_u4",
         rationale="A missing announcement list is source failure, not a verified empty page.",
     ),
@@ -12264,10 +12430,663 @@ MUTATIONS = MUTATIONS + (
         component="U3 announcement source response",
         source_path="experiments/execution_tracker/full_battery.py",
         test_script="tests/test_full_battery_evidence.py",
-        before='type(total_hits) is not int or len(lst) > page_size or total_hits < len(lst)',
-        after='type(total_hits) is not int or total_hits < len(lst)',
+        before='type(total_hits) is not int or total_hits < 0 or len(lst) > page_size',
+        after='type(total_hits) is not int or total_hits < 0',
         expected_failure_marker="test_eastmoney_overlength_page_is_not_trusted",
         rationale="A response longer than the requested page cannot prove announcement coverage.",
+    ),
+    MutationCase(
+        mutation_id="BATTERY_EASTMONEY_NUMERIC_SUCCESS",
+        component="U3 announcement source response",
+        source_path="experiments/execution_tracker/full_battery.py",
+        test_script="tests/test_full_battery_evidence.py",
+        before='success is not True and not (type(success) is int and success == 1)',
+        after='success is not True',
+        expected_failure_marker="test_live_numeric_success_and_target_date_window_are_accepted",
+        rationale="The real Eastmoney success envelope uses integer 1, not boolean true.",
+    ),
+    MutationCase(
+        mutation_id="BATTERY_EASTMONEY_WINDOW_BOUND",
+        component="U3 announcement point-in-time source",
+        source_path="experiments/execution_tracker/full_battery.py",
+        test_script="tests/test_full_battery_evidence.py",
+        before='"begin_time": beginning.isoformat(), "end_time": cutoff.isoformat()',
+        after='"begin_time": (beginning - datetime.timedelta(days=1)).isoformat(), "end_time": cutoff.isoformat()',
+        expected_failure_marker="test_live_numeric_success_and_target_date_window_are_accepted",
+        rationale="The query must ask for exactly the declared target-date window.",
+    ),
+    MutationCase(
+        mutation_id="BATTERY_EASTMONEY_TOTAL_BOUND",
+        component="U3 announcement source pagination",
+        source_path="experiments/execution_tracker/full_battery.py",
+        test_script="tests/test_full_battery_evidence.py",
+        before='(expected_total is not None and total_hits != expected_total)',
+        after='False',
+        expected_failure_marker="test_eastmoney_date_window_paginates_and_rejects_changed_total",
+        rationale="Changing hit totals between pages must not become complete evidence.",
+    ),
+    MutationCase(
+        mutation_id="BATTERY_EASTMONEY_PAGE_IDENTITY",
+        component="U3 announcement source pagination",
+        source_path="experiments/execution_tracker/full_battery.py",
+        test_script="tests/test_full_battery_evidence.py",
+        before='(echo is not None and (type(echo) is not int or echo != expected))',
+        after='False',
+        expected_failure_marker="test_eastmoney_page_identity_duplicate_and_date_escape_fail_closed",
+        rationale="A repeated or wrong page must not be mistaken for the next page.",
+    ),
+    MutationCase(
+        mutation_id="BATTERY_EASTMONEY_ROW_DATE",
+        component="U3 announcement point-in-time source",
+        source_path="experiments/execution_tracker/full_battery.py",
+        test_script="tests/test_full_battery_evidence.py",
+        before='if not beginning <= observed <= cutoff:',
+        after='if False:',
+        expected_failure_marker="test_eastmoney_page_identity_duplicate_and_date_escape_fail_closed",
+        rationale="Rows outside the requested date window must fail closed.",
+    ),
+    MutationCase(
+        mutation_id="BATTERY_EASTMONEY_STOCK_IDENTITY",
+        component="U3 announcement source company binding",
+        source_path="experiments/execution_tracker/full_battery.py",
+        test_script="tests/test_full_battery_evidence.py",
+        before='and identity.get("stock_code") == code',
+        after='and True',
+        expected_failure_marker="test_eastmoney_page_identity_duplicate_and_date_escape_fail_closed",
+        rationale="An announcement for another company cannot enter this stock's evidence.",
+    ),
+    MutationCase(
+        mutation_id="BATTERY_EASTMONEY_DUPLICATE_ARTICLE",
+        component="U3 announcement source pagination",
+        source_path="experiments/execution_tracker/full_battery.py",
+        test_script="tests/test_full_battery_evidence.py",
+        before='or identifier in seen_ids:',
+        after='or False:',
+        expected_failure_marker="test_eastmoney_page_identity_duplicate_and_date_escape_fail_closed",
+        rationale="A repeated article across pages cannot establish total coverage.",
+    ),
+    MutationCase(
+        mutation_id="BATTERY_EASTMONEY_BOUNDED_INCOMPLETE",
+        component="U3 announcement source pagination",
+        source_path="experiments/execution_tracker/full_battery.py",
+        test_script="tests/test_full_battery_evidence.py",
+        before='        return AnnouncementPage(rows, expected_total)',
+        after='        return AnnouncementPage(rows, len(rows))',
+        expected_failure_marker="test_eastmoney_bounded_incomplete_page_never_unblocks_u4",
+        rationale="Exhausting the page budget cannot manufacture complete coverage.",
+    ),
+)
+
+# 2026-09 whole-market Tushare paging: income_vip 20260630 was capped at exactly
+# 9000 rows every night and recorded OK; the E1 layer then labelled ~90 issuers
+# income COMPLETE on Q1 data. Paging, truncation, the statutory-deadline guard and
+# the red-flag side of the same defect (supersession unverified on an income gap).
+MUTATIONS = MUTATIONS + (
+    MutationCase(
+        mutation_id="SECURITY_REGISTRY_TUSHARE_TRUNCATION_RAISES",
+        component="U0 security registry transport",
+        source_path="experiments/research_funnel/security_registry.py",
+        test_script="tests/test_e1_tushare_paging.py",
+        before='    if facts["capped"] is not False:\n        raise TushareTruncatedError(',
+        after='    if False:\n        raise TushareTruncatedError(',
+        expected_failure_marker="test_single_shot_has_more_is_truncated_and_raises_through_the_shared_helper",
+        rationale='Every shared-helper caller (U0 registry, feature store, extended sources) must fail closed on a truncated batch instead of receiving it as complete.',
+    ),
+    MutationCase(
+        mutation_id="SECURITY_REGISTRY_TUSHARE_PAGE_PARAMS",
+        component="U0 security registry transport",
+        source_path="experiments/research_funnel/security_registry.py",
+        test_script="tests/test_e1_tushare_paging.py",
+        before='        page_params.update({"limit": page_limit, "offset": offset})',
+        after='        pass',
+        expected_failure_marker="test_honest_provider_is_paged_to_the_empty_confirmation_page",
+        rationale='Paged endpoints must send limit/offset, or the provider cap (income_vip 9000 rows, 2026-09) silently truncates the batch.',
+    ),
+    MutationCase(
+        mutation_id="SECURITY_REGISTRY_TUSHARE_EMPTY_CONFIRMATION_ENDS",
+        component="U0 security registry transport",
+        source_path="experiments/research_funnel/security_registry.py",
+        test_script="tests/test_e1_tushare_paging.py",
+        before='        if not page:\n            return rows, pages, (',
+        after='        if len(page) < page_limit:\n            return rows, pages, (',
+        expected_failure_marker="test_silent_per_page_clamp_below_the_limit_is_read_through",
+        rationale='Only an empty confirmation page ends a paged batch; a short page may be a silent per-call clamp (express_vip cap unverified).',
+    ),
+    MutationCase(
+        mutation_id="SECURITY_REGISTRY_TUSHARE_REPEATED_PAGE",
+        component="U0 security registry transport",
+        source_path="experiments/research_funnel/security_registry.py",
+        test_script="tests/test_e1_tushare_paging.py",
+        before='        if digest in seen_pages:',
+        after='        if False:',
+        expected_failure_marker="test_provider_returning_exactly_the_cap_and_ignoring_paging_is_truncated",
+        rationale='A provider that ignores offset repeats the capped page; that is truncation, not more data.',
+    ),
+    MutationCase(
+        mutation_id="SECURITY_REGISTRY_TUSHARE_KNOWN_CAP",
+        component="U0 security registry transport",
+        source_path="experiments/research_funnel/security_registry.py",
+        test_script="tests/test_e1_tushare_paging.py",
+        before='    if known_cap is not None and len(page) == known_cap:',
+        after='    if False:',
+        expected_failure_marker="test_single_shot_response_equal_to_the_known_cap_escalates_and_is_truncated",
+        rationale='A single response whose length equals a known provider cap cannot be recorded as a complete batch.',
+    ),
+    MutationCase(
+        mutation_id="SECURITY_REGISTRY_TUSHARE_SINGLE_SHOT_HAS_MORE",
+        component="U0 security registry transport",
+        source_path="experiments/research_funnel/security_registry.py",
+        test_script="tests/test_e1_tushare_paging.py",
+        before='    if has_more is True:\n        return "HAS_MORE"',
+        after='    if False:\n        return "HAS_MORE"',
+        expected_failure_marker="test_single_shot_has_more_is_truncated_and_raises_through_the_shared_helper",
+        rationale='has_more=true on a single-shot endpoint means the batch is incomplete.',
+    ),
+    MutationCase(
+        mutation_id="SECURITY_REGISTRY_TUSHARE_ESCALATES_TO_PAGING",
+        component="U0 security registry transport",
+        source_path="experiments/research_funnel/security_registry.py",
+        test_script="tests/test_e1_tushare_paging.py",
+        before='        if reason is None or caller_paged:',
+        after='        if True:',
+        expected_failure_marker="test_single_shot_has_more_escalates_to_a_complete_paged_read",
+        rationale='A single-shot response that signals more rows is re-read page by page instead of failing or passing as complete.',
+    ),
+    MutationCase(
+        mutation_id="SECURITY_REGISTRY_TUSHARE_WIRE_HAS_MORE",
+        component="U0 security registry transport",
+        source_path="experiments/research_funnel/security_registry.py",
+        test_script="tests/test_e1_tushare_paging.py",
+        before='    wire_has_more = has_more if isinstance(has_more, bool) else None',
+        after='    wire_has_more = None',
+        expected_failure_marker="test_wire_has_more_on_a_short_single_shot_response_is_truncation",
+        rationale='The wire has_more flag is the only truncation signal for single-shot endpoints; dropping it must be caught.',
+    ),
+    MutationCase(
+        mutation_id="E1_MISSING_CAPPED_FACT_FAILS_CLOSED",
+        component="E1 event layer Tushare paging",
+        source_path="experiments/research_funnel/e1_event_layer.py",
+        test_script="tests/test_e1_tushare_paging.py",
+        before='            capped = facts.get("capped") is not False',
+        after='            capped = bool(facts.get("capped"))',
+        expected_failure_marker="test_missing_capped_fact_fails_closed",
+        rationale='An injected fetch that omits the capped fact must fail closed, not read as a complete batch.',
+    ),
+    MutationCase(
+        mutation_id="E1_TRUNCATED_CALL_BLOCKED",
+        component="E1 event layer Tushare paging",
+        source_path="experiments/research_funnel/e1_event_layer.py",
+        test_script="tests/test_e1_tushare_paging.py",
+        before='            status = "DATA_BLOCKED" if capped else "OK"',
+        after='            status = "OK"',
+        expected_failure_marker="test_capped_income_call_is_data_blocked_with_pagination_facts",
+        rationale='A truncated endpoint/period (income_vip 20260630 at 9000 rows) must be recorded DATA_BLOCKED, not OK.',
+    ),
+    MutationCase(
+        mutation_id="E1_TRUNCATED_CALL_SOURCE_ERROR",
+        component="E1 event layer Tushare paging",
+        source_path="experiments/research_funnel/e1_event_layer.py",
+        test_script="tests/test_e1_tushare_paging.py",
+        before='            if capped:\n                errors.append({',
+        after='            if False:\n                errors.append({',
+        expected_failure_marker="test_capped_income_call_becomes_a_source_error",
+        rationale='A truncated batch must become a source error so no clean verdict can rest on it.',
+    ),
+    MutationCase(
+        mutation_id="E1_INCOME_DEADLINE_STRICTLY_AFTER",
+        component="E1 event layer Tushare paging",
+        source_path="experiments/research_funnel/e1_event_layer.py",
+        test_script="tests/test_e1_tushare_paging.py",
+        before='        if deadline is None or not as_of > deadline:',
+        after='        if deadline is None or not as_of >= deadline:',
+        expected_failure_marker="test_deadline_day_and_before_do_not_infer_a_gap",
+        rationale='Filings are still legal on the deadline day itself; only a later as_of may infer a gap.',
+    ),
+    MutationCase(
+        mutation_id="E1_H1_STATUTORY_DEADLINE",
+        component="E1 event layer Tushare paging",
+        source_path="experiments/research_funnel/e1_event_layer.py",
+        test_script="tests/test_e1_tushare_paging.py",
+        before='    "0630": (0, "0831"),',
+        after='    "0630": (0, "0930"),',
+        expected_failure_marker="test_issuer_missing_period_after_deadline_is_not_income_complete",
+        rationale='The H1 report is due by 08-31; a later deadline would let the 2026-09 truncation victims stay income COMPLETE.',
+    ),
+    MutationCase(
+        mutation_id="E1_INCOME_DEADLINE_GAP_BLOCKS_CLEAR",
+        component="E1 event layer Tushare paging",
+        source_path="experiments/research_funnel/e1_event_layer.py",
+        test_script="tests/test_e1_tushare_paging.py",
+        before='    elif income_gaps:\n        verdict = "DATA_BLOCKED"',
+        after='    elif False:\n        verdict = "DATA_BLOCKED"',
+        expected_failure_marker="test_issuer_missing_period_after_deadline_is_not_income_complete",
+        rationale='An issuer judged on Q1 after the H1 deadline cannot receive NO_RED_FLAG_FOUND.',
+    ),
+    MutationCase(
+        mutation_id="E1_INCOME_DEADLINE_GAP_NOT_COMPLETE",
+        component="E1 event layer Tushare paging",
+        source_path="experiments/research_funnel/e1_event_layer.py",
+        test_script="tests/test_e1_tushare_paging.py",
+        before='                if len(quarters) >= 2 and not income_gaps and not income_source_blocked',
+        after='                if len(quarters) >= 2 and not income_source_blocked',
+        expected_failure_marker="test_red_flag_from_filed_history_is_kept_but_income_is_not_complete",
+        rationale='Income coverage must not read COMPLETE when a period is missing after its statutory deadline, even on a RED_FLAG row.',
+    ),
+    MutationCase(
+        mutation_id="E1_RED_FLAG_ON_BLOCKED_SUPERSESSION_WITHHELD",
+        component="E1 event layer Tushare paging",
+        source_path="experiments/research_funnel/e1_event_layer.py",
+        test_script="tests/test_e1_tushare_paging.py",
+        before='        if source_blocked:\n            withheld = True',
+        after='        if False:\n            withheld = True',
+        expected_failure_marker="test_flag_resting_on_a_truncated_income_period_is_withheld",
+        rationale='A red flag that is "active" only because its superseding income period sits in a truncated/failed call must not be emitted as a clean RED_FLAG (bidirectional gate honesty).',
+    ),
+    MutationCase(
+        mutation_id="E1_RED_FLAG_ON_DEADLINE_GAP_MARKED",
+        component="E1 event layer Tushare paging",
+        source_path="experiments/research_funnel/e1_event_layer.py",
+        test_script="tests/test_e1_tushare_paging.py",
+        before='        if _supersession_dependencies(item, income_gaps):\n            supersession_unverified = True',
+        after='        if False:\n            supersession_unverified = True',
+        expected_failure_marker="test_late_filer_red_flag_keeps_the_flag_with_a_supersession_marker",
+        rationale='A late filer keeps its filed-fact flag but must carry the supersession-unverified marker so downstream can route it to review.',
+    ),
+    MutationCase(
+        mutation_id="E1_VALIDATE_GAP_ROW_NOT_COMPLETE",
+        component="E1 event layer Tushare paging",
+        source_path="experiments/research_funnel/e1_event_layer.py",
+        test_script="tests/test_e1_tushare_paging.py",
+        before='        if gaps and row_coverage.get("income") == "COMPLETE":',
+        after='        if False:',
+        expected_failure_marker="test_validator_refuses_income_complete_with_a_deadline_gap",
+        rationale='The contract validator must refuse a rehashed artifact that relabels a deadline gap income COMPLETE.',
+    ),
+    MutationCase(
+        mutation_id="E1_VALIDATE_GAP_ROW_NOT_CLEAR",
+        component="E1 event layer Tushare paging",
+        source_path="experiments/research_funnel/e1_event_layer.py",
+        test_script="tests/test_e1_tushare_paging.py",
+        before='        if gaps and row.get("verdict") == "NO_RED_FLAG_FOUND":',
+        after='        if False:',
+        expected_failure_marker="test_validator_refuses_no_red_flag_found_on_a_deadline_gap",
+        rationale='The contract validator must refuse NO_RED_FLAG_FOUND on a row with income missing after its deadline.',
+    ),
+    MutationCase(
+        mutation_id="E1_VALIDATE_RED_FLAG_NOT_ON_BLOCKED_SUPERSESSION",
+        component="E1 event layer Tushare paging",
+        source_path="experiments/research_funnel/e1_event_layer.py",
+        test_script="tests/test_e1_tushare_paging.py",
+        before='            if blocked:\n                raise E1LayerError(',
+        after='            if False:\n                raise E1LayerError(',
+        expected_failure_marker="test_validator_refuses_a_red_flag_resting_on_a_truncated_period",
+        rationale='The contract validator must refuse a RED_FLAG whose lifecycle reading depends on a period hidden by a blocked source call.',
+    ),
+    MutationCase(
+        mutation_id="E1_VALIDATE_RED_FLAG_GAP_MARKED",
+        component="E1 event layer Tushare paging",
+        source_path="experiments/research_funnel/e1_event_layer.py",
+        test_script="tests/test_e1_tushare_paging.py",
+        before='            if _supersession_dependencies(item, gaps) and (',
+        after='            if False and (',
+        expected_failure_marker="test_validator_refuses_an_unmarked_red_flag_on_a_deadline_gap",
+        rationale='The contract validator must refuse a RED_FLAG resting on a deadline gap that lacks the supersession marker.',
+    ),
+    MutationCase(
+        mutation_id="E1_VALIDATE_CAPPED_CALL_BLOCKED",
+        component="E1 event layer Tushare paging",
+        source_path="experiments/research_funnel/e1_event_layer.py",
+        test_script="tests/test_e1_tushare_paging.py",
+        before='        if call.get("capped") is True and call.get("status") != "DATA_BLOCKED":',
+        after='        if False:',
+        expected_failure_marker="test_validator_refuses_a_capped_call_marked_ok",
+        rationale='The contract validator must refuse a truncated source call recorded as OK.',
+    ),
+    MutationCase(
+        mutation_id="E1_VALIDATE_BLOCKED_CALL_HAS_ERROR",
+        component="E1 event layer Tushare paging",
+        source_path="experiments/research_funnel/e1_event_layer.py",
+        test_script="tests/test_e1_tushare_paging.py",
+        before='        if call.get("status") == "DATA_BLOCKED" and (',
+        after='        if False and (',
+        expected_failure_marker="test_validator_refuses_a_blocked_call_without_a_source_error",
+        rationale='A DATA_BLOCKED call without its source error would let the layer clear rows on missing data.',
+    ),
+)
+
+# U3 red-flag gate v1 (2026-09-29 re-review P1 #2/#3): check_ticker delegates to the
+# shared E1 rule set; these pins keep the express-amount, supersession, no-lookahead,
+# null-evidence and reason-prefix semantics from regressing in either gate.
+MUTATIONS = MUTATIONS + (
+    MutationCase(
+        mutation_id='U3_RED_FLAG_EXPRESS_PRIOR_AMOUNT_NOT_PERCENT',
+        component="U3 red-flag gate",
+        source_path='experiments/research_funnel/e1_event_layer.py',
+        test_script='tests/test_red_flag_gate_semantics.py',
+        before='    official_yoy_pct = _number(row.get("yoy_dedu_np"))',
+        after='    official_yoy_pct = _number(row.get("yoy_net_profit"))',
+        expected_failure_marker='test_express_prior_year_amount_is_not_a_percent',
+        rationale='Express yoy_net_profit is the prior-year profit amount; reading it as a percent re-creates the 9/24-9/29 false flags.',
+    ),
+    MutationCase(
+        mutation_id='U3_RED_FLAG_FILED_STATEMENT_SUPERSEDES_GUIDANCE',
+        component="U3 red-flag gate",
+        source_path='experiments/research_funnel/e1_event_layer.py',
+        test_script='tests/test_red_flag_gate_semantics.py',
+        before='    forecast_superseded = bool(forecast_by_period) and not forecast_active',
+        after='    forecast_superseded = False',
+        expected_failure_marker='test_fy2025_guidance_superseded_by_filed_h1_2026',
+        rationale='A filed statement for the same or a later period retires older issuer guidance.',
+    ),
+    MutationCase(
+        mutation_id='U3_RED_FLAG_NO_FUTURE_FILING',
+        component="U3 red-flag gate",
+        source_path='experiments/research_funnel/e1_event_layer.py',
+        test_script='tests/test_red_flag_gate_semantics.py',
+        before='    return code in eligible and len(ann_date) == 8 and ann_date.isdigit() and ann_date <= as_of',
+        after='    return code in eligible and len(ann_date) == 8 and ann_date.isdigit()',
+        expected_failure_marker='test_filing_after_as_of_cannot_supersede',
+        rationale='A filing announced after as_of cannot supersede guidance or feed a verdict (no lookahead).',
+    ),
+    MutationCase(
+        mutation_id='U3_RED_FLAG_FILED_NULL_INCOME_KEPT',
+        component="U3 red-flag gate",
+        source_path='experiments/research_funnel/e1_event_layer.py',
+        test_script='tests/test_red_flag_gate_semantics.py',
+        before='        if len(period) != 8 or not period.isdigit():\n            continue\n        # A filed statement',
+        after='        if len(period) != 8 or not period.isdigit() or _number(row.get("n_income_attr_p")) is None:\n            continue\n        # A filed statement',
+        expected_failure_marker='test_nan_latest_net_income_never_passes',
+        rationale='Dropping a filed NaN period silently falls back to an older quarter pair and PASSes.',
+    ),
+    MutationCase(
+        mutation_id='U3_RED_FLAG_INCOME_ANCHORED_ADJACENT_PAIR',
+        component="U3 red-flag gate",
+        source_path='experiments/research_funnel/e1_event_layer.py',
+        test_script='tests/test_red_flag_gate_semantics.py',
+        before='    latest_period = max(period_rows, default="")\n    if not latest_period:',
+        after='    latest_period = max((p for p in period_rows if _standalone_value(p, period_rows)[1] is None), default="")\n    if not latest_period:',
+        expected_failure_marker='test_non_adjacent_quarters_are_not_paired',
+        rationale='The income rule is anchored on the latest filed period; skipping to an older computable pair evaluates stale quarters.',
+    ),
+    MutationCase(
+        mutation_id='U3_RED_FLAG_FORECAST_NULL_ROW_UNSCORABLE',
+        component="U3 red-flag gate",
+        source_path='experiments/research_funnel/e1_event_layer.py',
+        test_script='tests/test_red_flag_gate_semantics.py',
+        before='    scorable = bool(guidance_type) or high is not None',
+        after='    scorable = True',
+        expected_failure_marker='test_null_forecast_row_is_not_evidence',
+        rationale='A guidance row with no type and no bound is not evidence and cannot yield a clean check.',
+    ),
+    MutationCase(
+        mutation_id='U3_RED_FLAG_VERDICT_MAP',
+        component="U3 red-flag gate",
+        source_path='experiments/execution_tracker/red_flag_gate.py',
+        test_script='tests/test_red_flag_gate_semantics.py',
+        before='VERDICT_MAP = {"RED_FLAG": "RED_FLAG", "NO_RED_FLAG_FOUND": "PASS", "DATA_BLOCKED": "DATA_BLOCKED"}',
+        after='VERDICT_MAP = {"RED_FLAG": "RED_FLAG", "NO_RED_FLAG_FOUND": "PASS", "DATA_BLOCKED": "PASS"}',
+        expected_failure_marker='test_nan_latest_net_income_never_passes',
+        rationale='Missing evidence maps to DATA_BLOCKED, never PASS.',
+    ),
+    MutationCase(
+        mutation_id='U3_RED_FLAG_INCOME_SOURCE_REQUIRED',
+        component="U3 red-flag gate",
+        source_path='experiments/execution_tracker/red_flag_gate.py',
+        test_script='tests/test_red_flag_gate_semantics.py',
+        before='        income_rows = None; income_error = f"income:{e}"',
+        after='        income_rows = []; income_error = None',
+        expected_failure_marker='test_income_failure_blocks_even_negative_guidance',
+        rationale='Without filed statements supersession is unknowable, so guidance flags cannot be confirmed.',
+    ),
+    MutationCase(
+        mutation_id='U3_RED_FLAG_EXPRESS_FAILURE_NOT_PASS',
+        component="U3 red-flag gate",
+        source_path='experiments/execution_tracker/red_flag_gate.py',
+        test_script='tests/test_red_flag_gate_semantics.py',
+        before='        express_rows = []; errors.append(f"express:{e}")',
+        after='        express_rows = []',
+        expected_failure_marker='test_express_failure_never_passes',
+        rationale='An express endpoint failure is not an empty express history; it cannot PASS.',
+    ),
+    MutationCase(
+        mutation_id='U3_RED_FLAG_REASON_PREFIX_CONTRACT',
+        component="U3 red-flag gate",
+        source_path='experiments/execution_tracker/red_flag_gate.py',
+        test_script='tests/test_red_flag_gate_semantics.py',
+        before='        text = f"最新预告[',
+        after='        text = f"预告[',
+        expected_failure_marker='test_reason_text_prefixes_are_stable_for_downstream_parsers',
+        rationale='Downstream queue/trust parsers classify red-flag reasons by the 最新预告/最新快报净利同比/最近季度归母 prefixes.',
+    ),
+    MutationCase(
+        mutation_id='U3_RED_FLAG_SAME_PERIOD_FILING_SUPERSEDES',
+        component="U3 red-flag gate",
+        source_path='experiments/research_funnel/e1_event_layer.py',
+        test_script='tests/test_red_flag_gate_semantics.py',
+        before='            if not latest_filed_period or period > latest_filed_period',
+        after='            if not latest_filed_period or period >= latest_filed_period',
+        expected_failure_marker='test_same_period_filing_supersedes_guidance_and_express',
+        rationale='A filed statement for the SAME period (the common H1/FY case) retires that period\'s guidance and express.',
+    ),
+    MutationCase(
+        mutation_id='U3_RED_FLAG_ANY_ACTIVE_PERIOD_FLAGS',
+        component="U3 red-flag gate",
+        source_path='experiments/research_funnel/e1_event_layer.py',
+        test_script='tests/test_red_flag_gate_semantics.py',
+        before='    forecast_flag = any(flag for _ev, flag, _ok in forecast_results)',
+        after='    forecast_flag = bool(forecast_results) and forecast_results[0][1]',
+        expected_failure_marker='test_fy_first_loss_not_masked_by_later_q1_preincrease',
+        rationale='Judging only the latest-period guidance lets a later 预增 mask a live unfiled-period 首亏.',
+    ),
+    MutationCase(
+        mutation_id='U3_RED_FLAG_FILED_PERIOD_FRESHNESS',
+        component="U3 red-flag gate",
+        source_path='experiments/research_funnel/e1_event_layer.py',
+        test_script='tests/test_red_flag_gate_semantics.py',
+        before='    if due_period and latest_period < due_period:',
+        after='    if False:',
+        expected_failure_marker='test_stale_filings_with_positive_guidance_are_blocked',
+        rationale='A filer past its statutory deadline cannot PASS on year-old quarters; stale evidence is DATA_BLOCKED.',
+    ),
+    MutationCase(
+        mutation_id='U3_RED_FLAG_FORECAST_FAILURE_NOT_PASS',
+        component="U3 red-flag gate",
+        source_path='experiments/execution_tracker/red_flag_gate.py',
+        test_script='tests/test_red_flag_gate_semantics.py',
+        before='        forecast_rows = []; errors.append(f"forecast:{e}")',
+        after='        forecast_rows = []',
+        expected_failure_marker='test_forecast_failure_never_passes',
+        rationale='A forecast endpoint failure is not an empty guidance history; it cannot PASS.',
+    ),
+    MutationCase(
+        mutation_id='U3_RED_FLAG_EXPRESS_LOSS_SIGN_ABS',
+        component="U3 red-flag gate",
+        source_path='experiments/research_funnel/e1_event_layer.py',
+        test_script='tests/test_red_flag_gate_semantics.py',
+        before='        yoy_pct = (current_profit - prior_profit) / abs(prior_profit) * 100.0',
+        after='        yoy_pct = (current_profit - prior_profit) / prior_profit * 100.0',
+        expected_failure_marker='test_narrowing_loss_is_not_a_drop',
+        rationale='Against a prior-year loss the denominator must be |prior|; otherwise a narrowing loss reads as a drop.',
+    ),
+    MutationCase(
+        mutation_id='U3_RED_FLAG_FILING_RANK_VALUED_OVER_NULL',
+        component="U3 red-flag gate",
+        source_path='experiments/research_funnel/e1_event_layer.py',
+        test_script='tests/test_red_flag_gate_semantics.py',
+        before='        _number(row.get("n_income_attr_p")) is not None,\n        str(row.get("update_flag")',
+        after='        _number(row.get("n_income_attr_p")) is None,\n        str(row.get("update_flag")',
+        expected_failure_marker='test_valued_row_beats_null_on_same_announcement_date',
+        rationale='On a same-day duplicate filing the valued row is the filing; a null duplicate must not block or win.',
+    ),
+    MutationCase(
+        mutation_id='U3_RED_FLAG_FOREIGN_ROW_IGNORED',
+        component="U3 red-flag gate",
+        source_path='experiments/research_funnel/e1_event_layer.py',
+        test_script='tests/test_red_flag_gate_semantics.py',
+        before="            continue  # a foreign ticker's row is never evidence for this one",
+        after="            pass  # a foreign ticker's row is never evidence for this one",
+        expected_failure_marker='test_foreign_ticker_rows_are_ignored',
+        rationale='Another ticker\'s rows must never become this ticker\'s E1 evidence.',
+    ),
+)
+
+# 2026-09-29: INDUSTRY_VALUE_CHAIN no longer ranks hot-industry members by issuer
+# code.  Each pin restores one piece of the old (status, -streak, ts_code) cut.
+MUTATIONS = MUTATIONS + (
+    MutationCase(
+        mutation_id="FUNNEL_U1_INDUSTRY_CONTEXT_ONLY",
+        component="Research funnel U1 industry context boundary",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_funnel_industry_channel_context.py",
+        before=(
+            "            sector_rank = None\n"
+            "            sector_hit = False\n"
+            "            sector_values = {\n"
+            "                \"industry_key\": industry,\n"
+            "                \"rotation_status\""
+        ),
+        after=(
+            "            sector_rank = (\n"
+            "                sum(\n"
+            "                    1 for other in eligible\n"
+            "                    if other[\"ts_code\"] <= code\n"
+            "                    and (rotation_by_industry.get(str(other.get(\"industry_key\") or \"\")) or {})"
+            ".get(\"status\") in HOT_ROTATION_STATUSES\n"
+            "                )\n"
+            "                if sector and sector.get(\"status\") in HOT_ROTATION_STATUSES else None\n"
+            "            )\n"
+            "            sector_hit = bool(sector_rank and sector_rank <= channel_top_n)\n"
+            "            sector_values = {\n"
+            "                \"industry_key\": industry,\n"
+            "                \"rotation_status\""
+        ),
+        expected_failure_marker="test_industry_admission_is_invariant_to_issuer_code_relabeling",
+        rationale=(
+            "Hot-industry members share status and streak; ranking them by ts_code "
+            "truncates an industry signal by issuer code (9/24: 40 lowest SZSE codes). "
+            "Killed by the relabel-invariance assertion on the raw builder rows, "
+            "with the builder's validator bypassed, so the kill does not depend on "
+            "FUNNEL_U1_INDUSTRY_NO_ISSUER_CODE_RANK."
+        ),
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_U1_INDUSTRY_MODE_DECLARED",
+        component="Research funnel U1 industry context boundary",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_funnel_industry_channel_context.py",
+        before="            \"industry_channel_mode\": INDUSTRY_CHANNEL_MODE,\n",
+        after="",
+        expected_failure_marker="test_hot_industry_members_are_context_without_rank_or_trigger",
+        rationale=(
+            "A new scan without the mode key would fall back to the lenient "
+            "archived-replay path and escape the no-rank validator."
+        ),
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_U1_INDUSTRY_MODE_CLOSED",
+        component="Research funnel U1 industry context boundary",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_funnel_industry_channel_context.py",
+        before="    if industry_mode not in (None, INDUSTRY_CHANNEL_MODE):",
+        after="    if False:",
+        expected_failure_marker="test_unknown_industry_mode_is_refused",
+        rationale="An unknown industry mode cannot silently skip the no-rank validator.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_U1_INDUSTRY_NO_ISSUER_CODE_RANK",
+        component="Research funnel U1 industry context boundary",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_funnel_industry_channel_context.py",
+        before=(
+            "        if row[\"channel\"] == \"INDUSTRY_VALUE_CHAIN\" "
+            "and industry_context_only and ("
+        ),
+        after="        if False and (",
+        expected_failure_marker="test_industry_rank_tie_broken_by_ts_code_is_refused",
+        rationale=(
+            "A scan whose industry rows carry a code-ordered channel_rank, a trigger "
+            "or an entry reason must be refused, not published as evidence."
+        ),
+    ),
+)
+
+# 2026-09-29 review fixes for the industry context channel: missing rotation is
+# null (never "not hot"), context rows cannot drop the mode key, and a new U2 pool
+# discloses and is bound to the U1 industry mode it was admitted under.
+MUTATIONS = MUTATIONS + (
+    MutationCase(
+        mutation_id="FUNNEL_U1_INDUSTRY_HOT_MISSING_IS_NULL",
+        component="Research funnel U1 industry context boundary",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_funnel_industry_channel_context.py",
+        before="                    sector.get(\"status\") in HOT_ROTATION_STATUSES if sector else None\n",
+        after="                    bool(sector and sector.get(\"status\") in HOT_ROTATION_STATUSES)\n",
+        expected_failure_marker="test_hot_industry_members_are_context_without_rank_or_trigger",
+        rationale=(
+            "An industry with no rotation match is unknown; storing hot_industry "
+            "False writes missing data as a definite 'not hot' value."
+        ),
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_U1_INDUSTRY_HOT_MISSING_VALIDATED",
+        component="Research funnel U1 industry context boundary",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_funnel_industry_channel_context.py",
+        before=(
+            "            if \"hot_industry\" not in values "
+            "or values[\"hot_industry\"] is not expected_hot:"
+        ),
+        after="            if False:",
+        expected_failure_marker="test_missing_rotation_cannot_be_stored_as_not_hot",
+        rationale=(
+            "A DATA_BLOCKED industry row carrying hot_industry False must be refused, "
+            "not published as a 'not hot' fact."
+        ),
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_U1_INDUSTRY_CONTEXT_ROWS_NEED_MODE",
+        component="Research funnel U1 industry context boundary",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_funnel_industry_channel_context.py",
+        before=(
+            "        if row[\"channel\"] == \"INDUSTRY_VALUE_CHAIN\" "
+            "and not industry_context_only and ("
+        ),
+        after="        if False and (",
+        expected_failure_marker="test_context_rows_without_declared_mode_are_refused",
+        rationale=(
+            "A new-format scan that drops the mode key would otherwise enter the "
+            "lenient archived-replay path."
+        ),
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_U2_LEGACY_INDUSTRY_SCAN_REFUSED",
+        component="Research funnel U2 industry mode binding",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_funnel_industry_channel_context.py",
+        before="    if industry_mode is None and legacy_industry_replay is not True:",
+        after="    if False:",
+        expected_failure_marker="test_new_u2_pool_refuses_a_scan_without_declared_mode",
+        rationale=(
+            "A keyless (archived-format) scan may carry issuer-code-ranked industry "
+            "triggers; it cannot feed a new U2 pool without an explicit replay flag."
+        ),
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_U2_INDUSTRY_MODE_BOUND",
+        component="Research funnel U2 industry mode binding",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_funnel_industry_channel_context.py",
+        before=(
+            "    if policy.get(\"industry_channel_mode\") "
+            "!= _scan_industry_channel_mode(scan):"
+        ),
+        after="    if False:",
+        expected_failure_marker="test_candidate_review_mode_is_bound_to_its_scan",
+        rationale=(
+            "rule_version did not change with the industry mode, so pooled "
+            "evaluations need candidate_review.policy to disclose it exactly."
+        ),
     ),
 )
 
