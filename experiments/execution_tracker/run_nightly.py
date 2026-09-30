@@ -490,6 +490,79 @@ def _verify_funnel_bundle(data, repo_root, artifact_path=None):
     nightly_funnel.validate_bundle_contracts(
         payloads, registry, "all_market_scan.json"
     )
+    _verify_finalize_extras(data, _Path(bundle_dir), payloads, artifact_path)
+
+
+def _verify_finalize_extras(data, bundle_dir, payloads, artifact_path):
+    """分歧队列与研究信任线:由持久 bundle + 同轮暂存输入重算,health 只是转述。
+
+    两份文件只登记在 stage_finalize.json(不进顶层 manifest 的精确产物集),对应
+    health 的新顶层键。旧 bundle 两者皆无,照常可读;只有一边存在即拒绝。
+    """
+    from pathlib import Path as _Path
+
+    import research_trust
+
+    extras = research_trust.verify_finalize_extras(
+        data, bundle_dir=bundle_dir, payloads=payloads,
+        public_v2=_Path(os.path.dirname(os.path.abspath(artifact_path))),
+    )
+    if extras is None:
+        return
+    # governance-mutation: FUNNEL_DISAGREEMENT_QUEUE_RECOMPUTED
+    if extras["queue_file"] != extras["queue_recomputed"]:
+        raise ValueError("disagreement_queue.json 与 bundle 重算不符")
+    # governance-mutation: FUNNEL_DISAGREEMENT_SUMMARY_RECOMPUTED
+    if data.get("disagreement_summary") != extras["summary_recomputed"]:
+        raise ValueError("health 的 disagreement_summary 与重算不符")
+    # governance-mutation: FUNNEL_TRUST_LINE_BOUND_TO_HEALTH
+    if data.get("research_trust") != extras["trust_file"] or not extras["trust_identity_ok"]:
+        raise ValueError("health 的 research_trust 与 bundle 内信任线或本轮绑定不符")
+    # governance-mutation: FUNNEL_TRUST_LINE_SOURCE_BINDING_ENFORCED
+    if not extras["trust_binding_ok"]:
+        raise ValueError("研究信任线的 source_binding 不是本轮 bundle/队列/E1 的哈希")
+    # governance-mutation: FUNNEL_TRUST_MACHINE_METRICS_RECOMPUTED
+    if extras["machine_recorded"] != extras["machine_recomputed"]:
+        raise ValueError("研究信任线的机器指标(T1/T2/T6/T7)与重算不符")
+
+
+def _accept_research_trust_line(res, funnel_root, public_v2):
+    """信任线的持久账本只在本轮被接受之后追加(复审 QT-C3/F6)。
+
+    finalize 只把线和行成员暂存到 research_trust/pending/<run_id>.json;这里要求
+    funnel_finalize 经 verify_step_artifacts 判 OK、整轮 report=COMPLETE 且已发布,
+    再核对暂存线与已发布 health.research_trust 逐字相等,然后才追加。验证失败或
+    未发布的夜里什么都不写,滚动窗口因此只汇总被接受的夜。从不抛错,结果进夜链结果。
+    """
+    from pathlib import Path as _Path
+
+    location = "data_history/research_advisory/research_trust/trust_lines.jsonl"
+    finalize = next((s for s in res.get("steps") or [] if s.get("step") == "funnel_finalize"), None)
+    # governance-mutation: FUNNEL_TRUST_LEDGER_ACCEPT_AFTER_VERIFY
+    if (res.get("report") != "COMPLETE" or res.get("published") is not True
+            or not isinstance(finalize, dict) or finalize.get("status") != "OK"):
+        return {"status": "NOT_APPENDED_RUN_NOT_ACCEPTED", "location": location}
+    try:
+        research_dir = os.path.abspath(os.path.join(HERE, "..", "research_funnel"))
+        if research_dir not in sys.path:
+            sys.path.insert(0, research_dir)
+        import research_trust
+
+        import hashlib
+
+        with open(os.path.join(public_v2, "funnel_health.json"), "rb") as fh:
+            raw = fh.read()
+        published = ((res.get("publication_manifest") or {}).get("artifacts") or {})
+        health = json.loads(raw.decode("utf-8"))
+        # 只认本轮发布清单登记的那份 health 字节
+        if (published.get("public:funnel_health.json") != hashlib.sha256(raw).hexdigest()
+                or not isinstance(health, dict) or health.get("run_id") != res.get("run_id")):
+            return {"status": "PENDING_MISMATCH_NOT_APPENDED", "error": "PUBLISHED_HEALTH_NOT_THIS_RUN",
+                    "location": location}
+        advisory_root = _Path(funnel_root).parent / "research_advisory"
+        return research_trust.accept_pending_line(advisory_root, health)
+    except Exception as exc:  # 账本是旁路:失败只记录,不改变本轮终态
+        return {"status": "WRITE_FAILED", "error": type(exc).__name__, "location": location}
 
 
 def _discard_failed_funnel_outputs(base):
@@ -1615,6 +1688,10 @@ def _execute_nightly():
                 res["publication_error"] = f"{type(exc).__name__}: {exc}"
         else:
             res["published"] = False
+        # 研究信任线账本:只在本轮被接受(finalize 已验、COMPLETE、已发布)后追加。
+        res["research_trust_ledger"] = _accept_research_trust_line(
+            res, os.path.join(REPO_ROOT, "data_history", "funnel"),
+            os.path.join(REPO_ROOT, "public", "data", "v2"))
 
         _atomic_write(OUT, res)
         _atomic_write(os.path.join(run_dir, "result.json"), res)

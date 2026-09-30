@@ -266,14 +266,14 @@
   },
   "generated_at": "2026-08-12T09:00:00+00:00",
   "method_version": "RESEARCH_CLOSED_LOOP_V1",
-  "packet_hash": "sha256:c9f9cb0813417add351752f7c1e6933cf30ea1f47058f256abb1ef1cc3fc74a3",
+  "packet_hash": "sha256:6ce68a9448f9dc744461576f9031b83cfe66f40d10b3e4e670c663675280c1c9",
   "packet_summary": {
     "allowed_for_review_count": 2,
     "blocked_count": 4,
     "candidate_count": 6,
     "data_blocked_count": 3,
     "red_flag_count": 1,
-    "same_day_hash": "sha256:ee031747405398449899a569e0d7addecc319f1b1c888dfe6bc831e718ddc482"
+    "same_day_hash": "sha256:52f3afe3b0d0341a18fb058fed2ca8efe14a4c817c4d81e2a886a45a5e26675a"
   },
   "packet_version": "0.1",
   "schema": "ar.u4_pre_decision_packet.v0",
@@ -299,13 +299,13 @@
     "diagnostic_report_ref": "u4_pre_decision_diagnostic.json",
     "feature_store_health_hash": "sha256:2dbd8331d2784614cad074f0a42b98a45c7b114d924b1d4261eda63f121824df",
     "feature_store_health_ref": "public/data/v2/feature_store_health.json",
-    "funnel_health_hash": "sha256:b83ecfb24edea91c604e8dc13c1265d7d4f7de77e735c7693a1ac8ed6940542c",
+    "funnel_health_hash": "sha256:6d5210bbf75b36fb975fd100f44a9f494cba243efeea41472cd4fb332cbe541e",
     "funnel_health_ref": "public/data/v2/funnel_health.json",
-    "same_day_bundle_hash": "sha256:a58513c5b7d976a118b30573c97f074ff087f5f79860ecd46ffde283b4f3eac5",
+    "same_day_bundle_hash": "sha256:4eb75efa893753ffa508639dcdc90fa75ce8fdedaa14425128e662b32dbfe8ea",
     "same_day_bundle_ref": "data_history/funnel/20260811/20260811_163500_1786000000000000000_predec01",
-    "stage_receipts_hash": "sha256:b7709a42390d0d3a07ff6a06ef992c1ff0b700959ef493bd1325752f27d1033c",
-    "u2_candidate_pool_hash": "sha256:0b972f25056a908b7155fe7c16e5661c85d45dc1ceb3a47f6bbef1a2ddd371d0",
-    "u3_battery_hash": "sha256:71916a8586401255156a8f25607461ca8ee8d320eda6805cfbf82fe6969735b7"
+    "stage_receipts_hash": "sha256:6070c810574eaa6ea2b04d07d8ce9f79455cbfe742b44682a59c5e7efa3b06e7",
+    "u2_candidate_pool_hash": "sha256:d292c150ea7c2073a34a9fdbce549ce99f7132bc1ccc3c1d692cf08cc42b0852",
+    "u3_battery_hash": "sha256:a891cc8d9dd0717f603e3179f7ed95f43d1ddbe7d8086171dcf2a6799dc5487a"
   },
   "status": "READY_FOR_JUNYAN_REVIEW"
 }

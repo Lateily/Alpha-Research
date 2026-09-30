@@ -34,6 +34,10 @@ on:
       - "docs/team/TEAM_AI_WORKSPACE_V1.md"
       - ".gitignore"
       - "api/**"
+      # Paid-model route gate: the dashboard client and the morning-report
+      # caller are pinned by tests/test_llm_route_guard.py.
+      - "src/**"
+      - ".github/workflows/morning-report.yml"
       - ".github/workflows/python-ci.yml"
   # 直推 main 也必须过闸 —— 0712 的 git-reset-hard 正是这个形态,
   # 而本工作流此前只有 pull_request 触发器,直推完全不受任何检查。
@@ -57,6 +61,12 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+      # Node >= 20.6 is required by tests/llm-route-guard.test.mjs and the
+      # route-gate pins (node:module register() with data: URL hooks); pin it
+      # instead of relying on the runner image default.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
       - run: pip install pandas jsonschema==4.25.1
       - name: Independent research workflow trials (offline)
         run: |
@@ -74,6 +84,8 @@ jobs:
           python3 scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/feature_health_contract.task.json
       - name: Offline deterministic tests (zero network)
         run: python3 tests/test_engines_offline.py
+      - name: U3 red-flag gate shares E1 layer semantics (offline)
+        run: python3 tests/test_red_flag_gate_semantics.py
       - name: LLM adapter offline tests (zero network)
         run: python3 tests/test_llm_adapter_offline.py
       - name: Promoter QC gate offline tests (zero network)
@@ -117,6 +129,8 @@ jobs:
         run: python3 tests/test_nightly_runtime_dependencies.py
       - name: Paper settlement publication replay
         run: python3 tests/test_paper_settlement_publication.py
+      - name: Rotation breadth and NAV gaps recorded as missing (offline)
+        run: python3 tests/test_rotation_nav_missing.py
       - name: Official settlement readiness and publication recovery (offline)
         run: python3 tests/test_official_settlement_offline.py
       # R-043:已发布 manifest 合法迁移。覆盖审批绑定、同锁、WAL 崩溃恢复、
@@ -198,12 +212,22 @@ jobs:
           python3 experiments/research_funnel/semiconductor_extended_sources.py --selftest
       - name: Full-market E1 event layer contract selftest
         run: python3 experiments/research_funnel/e1_event_layer.py --selftest
+      # 2026-09: income_vip 20260630 was capped at exactly 9000 rows every night and
+      # still recorded OK. Whole-market calls page until a short page; a truncated
+      # batch is DATA_BLOCKED, and income missing after its statutory deadline is
+      # never COMPLETE.
+      - name: E1 Tushare paging and income completeness regression (offline)
+        run: python3 tests/test_e1_tushare_paging.py
       # R-033/R-034/R-035:六通道独立并集、U0 状态投影、同池随机控制、
       # 以及仅由 Junyan 显式选择生成的 U4 深研队列。
       - name: Full-market research funnel closure regression (offline)
         run: |
           python3 experiments/research_funnel/funnel_pipeline.py --selftest
           python3 tests/test_research_funnel_closure.py
+      # 行业与产业链通道只作上下文:同一行业成员共享状态与连续天数,不得按
+      # ts_code 截断出 rank/触发/U2 入选;旧 bundle 仅为回放保留。
+      - name: Research funnel industry-context channel regression (offline)
+        run: python3 tests/test_funnel_industry_channel_context.py
       # R-035 只读不可变漏斗 bundle、同日电池与本地特征仓。U1/U2 随机对照
       # 和 U3 电池分离度必须分开检验,收益不得写回候选池,claim 永久关闭。
       - name: Research funnel R-035 aligned-return evaluation (offline)
@@ -214,6 +238,10 @@ jobs:
       # ── 三段子 DAG:候选清单 → 逐票电池/DATA_BLOCKED → 集合相等后 U3/U4 ──
       - name: Research funnel candidate-battery DAG regression (offline)
         run: python3 tests/test_funnel_dag_offline.py
+      # 机对机分歧队列 + 研究信任线:finalize 分段产物、health 新顶层键、夜链验证器重算;
+      # 9/29 生产 bundle 离线重放(紧凑夹具)T1=43/46、T2=0/46、48 行队列、10 行送人。
+      - name: Disagreement queue and research trust line (offline)
+        run: python3 tests/test_disagreement_queue_trust_line.py
       # 全市场行业 Cohort OS:所有 U0 行业保留、跨源别名显式、行业排序无 U4
       # 权限、代表由当期 U1 动态重算、相对锚与不可变历史均 fail-closed。
       - name: Industry cohort foundation regression (offline)
@@ -224,6 +252,10 @@ jobs:
         run: python3 tests/test_nightly_acceptance_offline.py
       - name: Scheduled nightly dual acceptance regression (offline)
         run: python3 tests/test_nightly_dual_acceptance.py
+      # Research trust line (contract T) consumer: absent line = NOT_PRODUCED,
+      # withheld rates stay null, cross-run/authority/performance keys refused.
+      - name: Research trust line consumer projection (offline)
+        run: python3 tests/test_research_trust_view.py
       # U1-U5 离线闭环:冻结随机对照、同日 U3、packet-bound U4 人工复审,
       # 且 U5 在 factpack/wrong-if/因果簇完成前必须保持 DATA_BLOCKED。
       - name: Offline research closure experiment
@@ -357,6 +389,13 @@ jobs:
       # handlers are exercised with local provider stubs and socket-free input.
       - name: Research fact-check postprocessor regression (offline)
         run: python3 tests/test_fact_check.py
+      # Paid-model routes (research/research-multi/chat/debate/macro/
+      # morning-report/research-pulse) need the server key + origin allowlist +
+      # per-IP limit before any provider call; browser client locked by default.
+      - name: Paid-model route gate regression (node, offline)
+        run: node tests/llm-route-guard.test.mjs
+      - name: Paid-model route gate pins (offline)
+        run: python3 tests/test_llm_route_guard.py
       # ── Macro OS M0-A:源身份/事件分级/双时间点预判/共识冲突语义 ──
       - name: Macro OS M0-A contract selftest
         run: python3 experiments/macro_os/contracts.py --selftest
@@ -448,6 +487,11 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+      # Same Node pin as offline-tests: the LLM_ROUTE_* pins run node runners
+      # that need node:module register() (Node >= 20.6).
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
       - run: pip install pandas jsonschema==4.25.1
       - name: Macro and AIOS governance mutation gate shard (offline)
         run: >-

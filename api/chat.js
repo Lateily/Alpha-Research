@@ -25,6 +25,7 @@
 //   multi-agent durable execution per RESEARCH_AGENT_TEAM_v1.md v2).
 
 import Anthropic from '@anthropic-ai/sdk';
+import { guardLlmRoute } from './_lib/llm-route-guard.js';
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -142,10 +143,9 @@ YOUR ROLE:
 
 // ─── Main handler — action discriminator ───────────────────────────────
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin',  '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  if (req.method === 'OPTIONS') return res.status(200).end();
+  // Key + Origin allowlist + per-IP rate limit, before any provider call.
+  // governance-mutation: LLM_ROUTE_GUARD_CHAT
+  if (!guardLlmRoute(req, res, 'chat')) return;
   if (req.method !== 'POST')    return res.status(405).json({ error: 'Method not allowed' });
 
   // Action discriminator. Default = chat (backward compat with existing

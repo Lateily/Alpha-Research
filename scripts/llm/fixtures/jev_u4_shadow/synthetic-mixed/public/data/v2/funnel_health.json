@@ -1,28 +1,28 @@
 {
   "as_of": "20260811",
   "battery_coverage": {
-    "complete_rows": 22,
+    "complete_rows": 16,
     "data_blocked_rows": 0,
-    "expected": 22,
-    "observed": 22,
+    "expected": 16,
+    "observed": 16,
     "provider_state": "FIXTURE"
   },
   "bundle": {
     "artifacts": {
-      "all_market_scan.json": "a2be7449b7015fa5bf58f977133c56355fd3f9a0a9cfa34e0d91618a28f03eae",
-      "candidate_battery.json": "e955de0a0f531d1b01e6821c5f2c4f15f86d312a38ddf2711a7793096f456e1a",
-      "candidate_manifest.json": "90f4fbc73bf3ad7805e7a633556d4702f2d5b78f7cc3dc1fdd54639f7657e778",
-      "candidate_review.json": "62bc19a9f18e37777dd331aee65ef7ddfb70e355115eb14ab4969c76569817c1",
-      "deep_research_queue.json": "334b81e8ea261f7f984885619bc374bb3de93877b4f2d3618e03946ca4f41d9c",
-      "security_registry_projected.json": "84baa0569e3164a3d0a0a2a6739306be6f6c227616038bef3dd2bb38f391bd5e"
+      "all_market_scan.json": "cafadcc581b0592cf64158502902d41f6d54c303d1990fc9dde0b06c6a1c0738",
+      "candidate_battery.json": "ca1e8a9a0591ee177c495721f40211fbc194671effb21f11e45c418ae61a373a",
+      "candidate_manifest.json": "47eefa7e50bd77d3226478bc5ab04f7d019f2547d8b2972e918ee5e23c870dfe",
+      "candidate_review.json": "30134a03ce1ec592c3203bf78c79d227fa2e47d7bd75416c73e66c8e37a7032f",
+      "deep_research_queue.json": "76f09fe6eccedbdbcdc3d676ee0d6c60d45354c3511370985641f690c5720509",
+      "security_registry_projected.json": "469e2c7562b670437d5b5dcbbfc57d59aeb6debf9687550b237593ec7670d56c"
     },
-    "bundle_hash": "a58513c5b7d976a118b30573c97f074ff087f5f79860ecd46ffde283b4f3eac5",
+    "bundle_hash": "4eb75efa893753ffa508639dcdc90fa75ce8fdedaa14425128e662b32dbfe8ea",
     "immutable": true,
     "location": "data_history/funnel/20260811/20260811_163500_1786000000000000000_predec01",
     "published": false
   },
   "counts": {
-    "candidate_rows": 24,
+    "candidate_rows": 18,
     "deep_queue_rows": 0,
     "scan_rows": 540
   },

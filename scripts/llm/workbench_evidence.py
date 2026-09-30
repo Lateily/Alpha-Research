@@ -192,7 +192,40 @@ def verify(snapshot):
     return snapshot
 
 
+def trust_line(snapshot):
+    """Project the published research trust line (contract T) for this run.
+
+    Reads JSON only; the producer's code is never imported.  The line is shown
+    only when funnel_health is hash-bound to the published run.
+    """
+    records = snapshot["records"]
+    run_id = snapshot.get("published_run_id")
+    target = snapshot.get("target_trade_date")
+    blocked = {"status": "NOT_EVALUATED", "metrics": None, "formal_authority": False}
+    record = records.get("public/data/v2/funnel_health.json") or {}
+    health = record.get("payload")
+    # governance-mutation: WORKBENCH_TRUST_LINE_HEALTH_BINDING
+    if (record.get("status") != "OBSERVED" or record.get("binding") != "MATCH"
+            or not isinstance(health, dict) or health.get("run_id") != run_id
+            or health.get("as_of") != target):
+        return {**blocked, "reason": "HEALTH_NOT_BOUND_TO_PUBLISHED_RUN"}
+    code_root = Path(__file__).resolve().parents[2]
+    if str(code_root) not in sys.path:
+        sys.path.insert(0, str(code_root))
+    try:
+        from experiments.research_funnel import research_trust_view
+    except ImportError:
+        return {**blocked, "reason": "TRUST_VIEW_UNAVAILABLE"}
+    return {**research_trust_view.project(health, run_id, target), "formal_authority": False}
+
+
 def research_quality(snapshot):
+    result = _research_quality_counts(snapshot)
+    result["trust_line"] = trust_line(snapshot)
+    return result
+
+
+def _research_quality_counts(snapshot):
     records = snapshot["records"]
     run_id = snapshot.get("published_run_id")
     target = snapshot.get("target_trade_date")

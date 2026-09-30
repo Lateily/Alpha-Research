@@ -151,36 +151,88 @@ def _announcement_evidence(titles, today, *, page_complete=True):
     return evidence
 
 
-def _fetch_anns_eastmoney(ts_code, page_size=30, timeout=10):
-    """东财公告接口(免费无token)。返回 [(date, title), ...] 或 None(源不可用)。
-    外部内容按不可信数据处理:只取日期与标题文本,不执行不解析任何指令。"""
+def _fetch_anns_eastmoney(ts_code, today, page_size=100, timeout=10, max_pages=4):
+    """Read the complete bounded 30-day announcement window or mark it incomplete.
+
+    Eastmoney's total_hits counts the requested date window, not all history.
+    A partial window is never evidence of zero recent announcements.
+    """
     if os.environ.get("AR_OFFLINE"):
         return None  # 离线测试模式:不发任何网络请求
     import urllib.request
+    import urllib.parse
     code = ts_code.split(".")[0]
-    url = ("https://np-anotice-stock.eastmoney.com/api/security/ann"
-           f"?sr=-1&page_size={page_size}&page_index=1&ann_type=A&client_source=web&stock_list={code}")
+    cutoff = datetime.datetime.strptime(today, "%Y%m%d").date()
+    beginning = cutoff - datetime.timedelta(days=30)
+    if (type(page_size) is not int or not 1 <= page_size <= 100
+            or type(max_pages) is not int or not 1 <= max_pages <= 4):
+        raise ValueError("ANNOUNCEMENT_PAGE_LIMIT")
+    params = {"sr": -1, "page_size": page_size, "ann_type": "A",
+              "client_source": "web", "stock_list": code,
+              "begin_time": beginning.isoformat(), "end_time": cutoff.isoformat()}
+    rows = []
+    seen_ids = set()
+    expected_total = None
     try:
-        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0",
-                                                   "Referer": "https://data.eastmoney.com/"})
-        d = json.load(urllib.request.urlopen(req, timeout=timeout))
-        if not isinstance(d, dict) or d.get("success") is not True:
-            return None
-        if "code" in d and d["code"] not in (1, "1"):
-            return None
-        data = d.get("data")
-        if not isinstance(data, dict) or not isinstance(data.get("list"), list):
-            return None
-        lst = data["list"]
-        total_hits = data.get("total_hits")
-        # governance-mutation: BATTERY_EASTMONEY_PAGE_BOUNDS
-        if (type(total_hits) is not int or len(lst) > page_size or total_hits < len(lst)
-                or total_hits < 0 or (len(lst) < page_size and total_hits != len(lst))):
-            return None
-        return AnnouncementPage(
-            [(str(a.get("notice_date", ""))[:10], str(a.get("title", ""))) for a in lst],
-            total_hits,
-        )
+        for page_index in range(1, max_pages + 1):
+            url = ("https://np-anotice-stock.eastmoney.com/api/security/ann?"
+                   + urllib.parse.urlencode({**params, "page_index": page_index}))
+            req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0",
+                                                       "Referer": "https://data.eastmoney.com/"})
+            d = json.load(urllib.request.urlopen(req, timeout=timeout))
+            success = d.get("success") if isinstance(d, dict) else None
+            # The live endpoint returns integer 1, while older fixtures used true.
+            if success is not True and not (type(success) is int and success == 1):
+                return None
+            if "code" in d and d["code"] not in (1, "1"):
+                return None
+            data = d.get("data")
+            if not isinstance(data, dict) or not isinstance(data.get("list"), list):
+                return None
+            for field, expected in (("page_index", page_index), ("page_size", page_size)):
+                echo = data.get(field)
+                if ((page_index > 1 and echo is None)
+                        or (echo is not None and (type(echo) is not int or echo != expected))):
+                    return None
+            lst = data["list"]
+            total_hits = data.get("total_hits")
+            # governance-mutation: BATTERY_EASTMONEY_PAGE_BOUNDS
+            if (type(total_hits) is not int or total_hits < 0 or len(lst) > page_size
+                    or total_hits < len(rows) + len(lst)
+                    or (expected_total is not None and total_hits != expected_total)):
+                return None
+            expected_total = total_hits
+            for item in lst:
+                if not isinstance(item, dict) or not isinstance(item.get("title"), str):
+                    return None
+                raw_date = item.get("notice_date")
+                if not isinstance(raw_date, str):
+                    return None
+                date_text = raw_date[:10]
+                try:
+                    observed = datetime.datetime.strptime(date_text, "%Y-%m-%d").date()
+                except ValueError:
+                    return None
+                # Verify the server actually applied the requested PIT window.
+                if not beginning <= observed <= cutoff:
+                    return None
+                identities = item.get("codes")
+                if identities is not None and (not isinstance(identities, list)
+                        or not any(isinstance(identity, dict)
+                                   and identity.get("stock_code") == code
+                                   for identity in identities)):
+                    return None
+                identifier = item.get("art_code")
+                if total_hits > page_size:
+                    if not isinstance(identifier, str) or not identifier or identifier in seen_ids:
+                        return None
+                    seen_ids.add(identifier)
+                rows.append((date_text, item["title"]))
+            if len(rows) == total_hits:
+                return AnnouncementPage(rows, total_hits)
+            if len(lst) < page_size:
+                return None
+        return AnnouncementPage(rows, expected_total)
     except Exception:
         return None
 
@@ -295,7 +347,7 @@ def battery(pro, tk, today):
         D["技术面"] = {"status": "DATA_BLOCKED", "err": str(e)[:80]}
     # ── 5 消息面(公告扫描:东财免费源为主,Tushare anns_d 为备;快讯层待 M3)──
     try:
-        titles = _fetch_anns_eastmoney(tk)
+        titles = _fetch_anns_eastmoney(tk, today)
         eastmoney_source = titles is not None
         if titles is None:  # 东财失败再试 tushare(部分 token 无 anns_d 权限)
             try:

@@ -1,12 +1,12 @@
 {
   "artifacts": {
-    "all_market_scan.json": "a2be7449b7015fa5bf58f977133c56355fd3f9a0a9cfa34e0d91618a28f03eae",
-    "candidate_manifest.json": "90f4fbc73bf3ad7805e7a633556d4702f2d5b78f7cc3dc1fdd54639f7657e778",
-    "candidate_review.json": "62bc19a9f18e37777dd331aee65ef7ddfb70e355115eb14ab4969c76569817c1"
+    "all_market_scan.json": "cafadcc581b0592cf64158502902d41f6d54c303d1990fc9dde0b06c6a1c0738",
+    "candidate_manifest.json": "47eefa7e50bd77d3226478bc5ab04f7d019f2547d8b2972e918ee5e23c870dfe",
+    "candidate_review.json": "30134a03ce1ec592c3203bf78c79d227fa2e47d7bd75416c73e66c8e37a7032f"
   },
   "as_of": "20260811",
   "binds": {
-    "candidate_manifest_hash": "2a64b6e46ae088d5644bbe5e9ae3606005730d867a4b4ab6d7bfed396c91d8eb"
+    "candidate_manifest_hash": "06c3fdbf2bc2ac90355db95db55a5d28d91d009ed9aa1a5fe7b1927ced5f4c34"
   },
   "generated_at": "2026-08-12T09:00:00+00:00",
   "rule_version": "research_funnel_v1",
@@ -14,5 +14,5 @@
   "schema": "ar.research_funnel_stage",
   "schema_version": "1.0",
   "stage": "candidates",
-  "stage_hash": "c5c88c87e628b5eed23c7f927a1883b7e86743fd1e0b42cd1328341ee3c11e1f"
+  "stage_hash": "86c42a498fce731f64c3124e3800091f25d4fb5652d1fe71025335a960a850b3"
 }
