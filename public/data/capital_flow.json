@@ -1,12 +1,194 @@
 {
-  "fetched_at": "2026-09-30T06:31:28Z",
+  "fetched_at": "2026-09-30T15:04:51Z",
   "trade_date": "20260930",
   "tier": 15000,
   "_status": "partial",
   "hot_concepts": [],
   "cold_concepts": [],
-  "hot_industries": [],
-  "cold_industries": [],
+  "hot_industries": [
+    {
+      "name": "医药生物",
+      "ts_code": "BK1216.DC",
+      "net_inflow_yuan": 61905397760000.0,
+      "pct_chg": 2.03
+    },
+    {
+      "name": "创新药",
+      "ts_code": "BK1106.DC",
+      "net_inflow_yuan": 41507092480000.0,
+      "pct_chg": 2.74
+    },
+    {
+      "name": "医药医疗风格",
+      "ts_code": "BK1712.DC",
+      "net_inflow_yuan": 37898749440000.0,
+      "pct_chg": 2.92
+    },
+    {
+      "name": "CRO",
+      "ts_code": "BK0899.DC",
+      "net_inflow_yuan": 27266053760000.0,
+      "pct_chg": 3.8
+    },
+    {
+      "name": "医疗服务",
+      "ts_code": "BK0727.DC",
+      "net_inflow_yuan": 26030716480000.0,
+      "pct_chg": 3.09
+    },
+    {
+      "name": "创新医疗服务",
+      "ts_code": "BK1658.DC",
+      "net_inflow_yuan": 23655159360000.0,
+      "pct_chg": 1.5
+    },
+    {
+      "name": "病原体防治",
+      "ts_code": "BK1657.DC",
+      "net_inflow_yuan": 23499047680000.0,
+      "pct_chg": 2.63
+    },
+    {
+      "name": "医疗研发外包",
+      "ts_code": "BK1600.DC",
+      "net_inflow_yuan": 22281007200000.0,
+      "pct_chg": 4.22
+    },
+    {
+      "name": "AH股",
+      "ts_code": "BK0499.DC",
+      "net_inflow_yuan": 21427066880000.0,
+      "pct_chg": 0.8
+    },
+    {
+      "name": "化学制药",
+      "ts_code": "BK0465.DC",
+      "net_inflow_yuan": 19450346240000.0,
+      "pct_chg": 2.1
+    },
+    {
+      "name": "电商概念",
+      "ts_code": "BK0665.DC",
+      "net_inflow_yuan": 18409569280000.0,
+      "pct_chg": 0.3
+    },
+    {
+      "name": "茅指数",
+      "ts_code": "BK0999.DC",
+      "net_inflow_yuan": 16387207680000.0,
+      "pct_chg": 1.32
+    },
+    {
+      "name": "能源金属",
+      "ts_code": "BK1015.DC",
+      "net_inflow_yuan": 15709775200000.0,
+      "pct_chg": 0.19
+    },
+    {
+      "name": "镍",
+      "ts_code": "BK1622.DC",
+      "net_inflow_yuan": 15653375570000.0,
+      "pct_chg": 2.85
+    },
+    {
+      "name": "宁组合",
+      "ts_code": "BK1000.DC",
+      "net_inflow_yuan": 15494054400000.0,
+      "pct_chg": 1.81
+    },
+    {
+      "name": "减肥药",
+      "ts_code": "BK1146.DC",
+      "net_inflow_yuan": 15400158880000.0,
+      "pct_chg": 2.87
+    },
+    {
+      "name": "食品饮料",
+      "ts_code": "BK0438.DC",
+      "net_inflow_yuan": 14207448800000.0,
+      "pct_chg": 1.51
+    },
+    {
+      "name": "化学制剂",
+      "ts_code": "BK1594.DC",
+      "net_inflow_yuan": 13567239360000.0,
+      "pct_chg": 2.25
+    },
+    {
+      "name": "CAR-T细胞疗法",
+      "ts_code": "BK0986.DC",
+      "net_inflow_yuan": 13558260480000.0,
+      "pct_chg": 3.27
+    },
+    {
+      "name": "生物制品",
+      "ts_code": "BK1044.DC",
+      "net_inflow_yuan": 13519559840000.0,
+      "pct_chg": 4.53
+    }
+  ],
+  "cold_industries": [
+    {
+      "name": "电子",
+      "ts_code": "BK1201.DC",
+      "net_inflow_yuan": -150223301120000.0,
+      "pct_chg": -2.29
+    },
+    {
+      "name": "融资融券",
+      "ts_code": "BK0596.DC",
+      "net_inflow_yuan": -134328320000000.0,
+      "pct_chg": -0.07
+    },
+    {
+      "name": "半导体概念",
+      "ts_code": "BK0917.DC",
+      "net_inflow_yuan": -123375421440000.0,
+      "pct_chg": -1.86
+    },
+    {
+      "name": "国产芯片",
+      "ts_code": "BK0891.DC",
+      "net_inflow_yuan": -122463183360000.0,
+      "pct_chg": -1.76
+    },
+    {
+      "name": "半导体",
+      "ts_code": "BK1036.DC",
+      "net_inflow_yuan": -101917194240000.0,
+      "pct_chg": -2.97
+    },
+    {
+      "name": "科技风格",
+      "ts_code": "BK1713.DC",
+      "net_inflow_yuan": -96227911680000.0,
+      "pct_chg": -1.85
+    },
+    {
+      "name": "存储芯片",
+      "ts_code": "BK1137.DC",
+      "net_inflow_yuan": -95088384000000.0,
+      "pct_chg": -2.93
+    },
+    {
+      "name": "MSCI中国",
+      "ts_code": "BK0821.DC",
+      "net_inflow_yuan": -94733885440000.0,
+      "pct_chg": 0.33
+    },
+    {
+      "name": "深股通",
+      "ts_code": "BK0804.DC",
+      "net_inflow_yuan": -86052060160000.0,
+      "pct_chg": -0.19
+    },
+    {
+      "name": "5G概念",
+      "ts_code": "BK0714.DC",
+      "net_inflow_yuan": -83168089600000.0,
+      "pct_chg": -1.65
+    }
+  ],
   "concept_meta": {
     "api_used": null,
     "_attempted_endpoints": [
@@ -23,7 +205,7 @@
     "_attempted_endpoints": [
       "moneyflow_ind_dc"
     ],
-    "row_count": 0,
+    "row_count": 1031,
     "_status": "ok"
   }
 }

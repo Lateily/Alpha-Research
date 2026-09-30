@@ -12,8 +12,8 @@
       "date": "20260929",
       "bullish": false,
       "description": {
-        "e": "MACD DIF(-14.926) crossed below DEA(-11.491) below zero — bearish momentum",
-        "z": "MACD DIF(-14.926)下穿DEA(-11.491)零轴下方死叉看跌"
+        "e": "MACD DIF(-14.779) crossed below DEA(-11.276) below zero — bearish momentum",
+        "z": "MACD DIF(-14.779)下穿DEA(-11.276)零轴下方死叉看跌"
       }
     },
     {
@@ -36,7 +36,7 @@
     "ma5": 874.82,
     "ma20": 880.84,
     "ma60": 948.19,
-    "rsi14": 38.4,
+    "rsi14": 38.6,
     "vol_ma20": 242794,
     "vol_ratio": 0.66,
     "price_vs_ma20": -7.7,
@@ -44,9 +44,9 @@
     "change_1d": -0.24,
     "change_5d": -13.6,
     "change_20d": -4.57,
-    "macd_dif": -14.9258,
-    "macd_dea": -11.491,
-    "macd_hist": -6.8697,
+    "macd_dif": -14.7793,
+    "macd_dea": -11.276,
+    "macd_hist": -7.0065,
     "bb_upper": 966.55,
     "bb_mid": 880.84,
     "bb_lower": 795.13,
