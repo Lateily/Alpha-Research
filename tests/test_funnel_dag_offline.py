@@ -506,6 +506,7 @@ class ProviderFailureTests(unittest.TestCase):
 # 下面的数字全是合成夹具,不是它的财报。
 BANK = "601166.SH"
 REPORT_PERIODS = ("20250930", "20251231", "20260331", "20260630")
+REPORT_ANN_DATES = ("20251030", "20260328", "20260429", "20260829")
 
 
 def financial_wire_tables(*, margins=(None, None, None, None),
@@ -523,10 +524,15 @@ def financial_wire_tables(*, margins=(None, None, None, None),
                   for i, d in enumerate(dates)],
         "moneyflow_dc": [{"trade_date": d, "net_amount": 1000.0} for d in dates[-10:]],
         "forecast": forecast,
-        "express": [{"ann_date": "20260820", "end_date": "20260630",
-                     "yoy_net_profit": express_yoy}],
-        "income": [{"end_date": e, "report_type": "1", "revenue": 1.1e11, "n_income_attr_p": v}
-                   for e, v in zip(REPORT_PERIODS, net_income)],
+        # Banks publish an H1 express before the H1 report.  The YoY percent lives in
+        # yoy_dedu_np; yoy_net_profit is the prior-year AMOUNT (red_flag_gate v1 / E1).
+        "express": [{"ann_date": "20260805", "end_date": "20260630",
+                     "yoy_dedu_np": express_yoy}],
+        # Dated filings: the H1 report (20260829) is not yet public at TARGET (20260811),
+        # so the pre-report express is the live E1 evidence for 20260630.
+        "income": [{"ann_date": a, "end_date": e, "report_type": "1", "revenue": 1.1e11,
+                    "n_income_attr_p": v}
+                   for a, e, v in zip(REPORT_ANN_DATES, REPORT_PERIODS, net_income)],
         "fina_indicator": [{"end_date": e, "grossprofit_margin": m, "roe": 2.5}
                            for e, m in zip(REPORT_PERIODS, margins)],
         "daily_basic": [{"trade_date": d, "pe_ttm": 5.0 + i * 0.001, "pb": 0.55, "total_mv": 3.9e7}

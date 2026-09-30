@@ -9,6 +9,7 @@ import os
 from pathlib import Path
 import sys
 import unittest
+from urllib.parse import parse_qs, urlsplit
 from unittest import mock
 
 import pandas as pd
@@ -216,7 +217,7 @@ class BatteryEvidenceTests(unittest.TestCase):
                 body = json.dumps(response).encode("utf-8")
                 with mock.patch.dict(os.environ, {"AR_OFFLINE": ""}), \
                         mock.patch("urllib.request.urlopen", side_effect=lambda *_args, **_kwargs: io.BytesIO(body)):
-                    self.assertIsNone(full_battery._fetch_anns_eastmoney(CODE))
+                    self.assertIsNone(full_battery._fetch_anns_eastmoney(CODE, TARGET))
                     with mock.patch.object(red_flag_gate, "check_ticker", return_value={
                         "verdict": "PASS", "reasons": [], "latest_e1_date": "20260820",
                     }):
@@ -229,14 +230,99 @@ class BatteryEvidenceTests(unittest.TestCase):
         body = b'{"code":1,"success":true,"data":{"list":[],"total_hits":0}}'
         with mock.patch.dict(os.environ, {"AR_OFFLINE": ""}), \
                 mock.patch("urllib.request.urlopen", return_value=io.BytesIO(body)):
-            self.assertEqual([], full_battery._fetch_anns_eastmoney(CODE))
+            self.assertEqual([], full_battery._fetch_anns_eastmoney(CODE, TARGET))
 
     def test_eastmoney_proven_short_page_remains_usable(self):
         body = b'{"code":1,"success":true,"data":{"list":[{"notice_date":"2026-09-22","title":"Fixture disclosure"}],"total_hits":1}}'
         with mock.patch.dict(os.environ, {"AR_OFFLINE": ""}), \
                 mock.patch("urllib.request.urlopen", return_value=io.BytesIO(body)):
             self.assertEqual([("2026-09-22", "Fixture disclosure")],
-                             full_battery._fetch_anns_eastmoney(CODE))
+                             full_battery._fetch_anns_eastmoney(CODE, TARGET))
+
+    def test_live_numeric_success_and_target_date_window_are_accepted(self):
+        body = b'{"success":1,"data":{"list":[{"notice_date":"2026-09-22 00:00:00","title":"Disclosure","art_code":"A1","codes":[{"stock_code":"002119"}]}],"total_hits":1,"page_size":100,"page_index":1}}'
+        seen = []
+
+        def open_page(request, timeout):
+            self.assertEqual(10, timeout)
+            seen.append(parse_qs(urlsplit(request.full_url).query))
+            return io.BytesIO(body)
+
+        with mock.patch.dict(os.environ, {"AR_OFFLINE": ""}), \
+                mock.patch("urllib.request.urlopen", side_effect=open_page):
+            page = full_battery._fetch_anns_eastmoney(CODE, TARGET)
+        self.assertIsNotNone(page)
+        self.assertTrue(page.complete)
+        self.assertEqual([("2026-09-22", "Disclosure")], page)
+        self.assertEqual(["2026-08-24"], seen[0]["begin_time"])
+        self.assertEqual(["2026-09-23"], seen[0]["end_time"])
+        self.assertEqual(["002119"], seen[0]["stock_list"])
+
+    def test_eastmoney_date_window_paginates_and_rejects_changed_total(self):
+        pages = {
+            1: {"success": 1, "data": {"page_index": 1, "page_size": 2,
+                "total_hits": 3, "list": [
+                    {"notice_date": "2026-09-23", "title": "one", "art_code": "A1"},
+                    {"notice_date": "2026-09-22", "title": "two", "art_code": "A2"}]}},
+            2: {"success": 1, "data": {"page_index": 2, "page_size": 2,
+                "total_hits": 3, "list": [
+                    {"notice_date": "2026-09-20", "title": "three", "art_code": "A3"}]}},
+        }
+
+        def open_page(request, **_kwargs):
+            index = int(parse_qs(urlsplit(request.full_url).query)["page_index"][0])
+            return io.BytesIO(json.dumps(pages[index]).encode())
+
+        with mock.patch.dict(os.environ, {"AR_OFFLINE": ""}), \
+                mock.patch("urllib.request.urlopen", side_effect=open_page) as opener:
+            page = full_battery._fetch_anns_eastmoney(CODE, TARGET, page_size=2)
+            self.assertTrue(page.complete)
+            self.assertEqual(3, len(page))
+            self.assertEqual(2, opener.call_count)
+            pages[1]["data"]["total_hits"] = 4
+            self.assertIsNone(full_battery._fetch_anns_eastmoney(CODE, TARGET, page_size=2))
+
+    def test_eastmoney_page_identity_duplicate_and_date_escape_fail_closed(self):
+        second = {"success": 1, "data": {"page_index": 2, "page_size": 1,
+            "total_hits": 2, "list": [
+                {"notice_date": "2026-09-20", "title": "two", "art_code": "A2"}]}}
+        first = {"success": 1, "data": {"page_index": 1, "page_size": 1,
+            "total_hits": 2, "list": [
+                {"notice_date": "2026-09-23", "title": "one", "art_code": "A1"}]}}
+
+        def open_page(request, **_kwargs):
+            index = int(parse_qs(urlsplit(request.full_url).query)["page_index"][0])
+            return io.BytesIO(json.dumps(first if index == 1 else second).encode())
+
+        with mock.patch.dict(os.environ, {"AR_OFFLINE": ""}), \
+                mock.patch("urllib.request.urlopen", side_effect=open_page):
+            for field, value in (("page_index", 1), ("total_hits", 3)):
+                with self.subTest(field=field):
+                    original = second["data"][field]
+                    second["data"][field] = value
+                    self.assertIsNone(full_battery._fetch_anns_eastmoney(CODE, TARGET, page_size=1))
+                    second["data"][field] = original
+            for field, value in (("art_code", "A1"), ("notice_date", "2026-08-23"),
+                                 ("notice_date", "2026-09-24")):
+                with self.subTest(field=field, value=value):
+                    original = second["data"]["list"][0][field]
+                    second["data"]["list"][0][field] = value
+                    self.assertIsNone(full_battery._fetch_anns_eastmoney(CODE, TARGET, page_size=1))
+                    second["data"]["list"][0][field] = original
+            second["data"]["list"][0]["codes"] = [{"stock_code": "999999"}]
+            self.assertIsNone(full_battery._fetch_anns_eastmoney(CODE, TARGET, page_size=1))
+
+    def test_eastmoney_bounded_incomplete_page_never_unblocks_u4(self):
+        body = b'{"success":1,"data":{"page_index":1,"page_size":1,"total_hits":2,"list":[{"notice_date":"2026-09-23","title":"one","art_code":"A1"}]}}'
+        with mock.patch.dict(os.environ, {"AR_OFFLINE": ""}), \
+                mock.patch("urllib.request.urlopen", return_value=io.BytesIO(body)):
+            page = full_battery._fetch_anns_eastmoney(CODE, TARGET, page_size=1,
+                                                       max_pages=1)
+        self.assertFalse(page.complete)
+        row = self.run_battery(titles=page)
+        self.assert_blocked(row, NEWS)
+        self.assertIn("ANNOUNCEMENT_PAGE_COVERAGE_UNVERIFIED",
+                      row["dims"][NEWS]["reason_codes"])
 
     def test_eastmoney_proven_full_page_is_not_marked_incomplete(self):
         page = [{"notice_date": "2026-09-23", "title": f"Fixture {i}"}
@@ -255,14 +341,15 @@ class BatteryEvidenceTests(unittest.TestCase):
                          row["dims"][NEWS]["reason_codes"])
 
     def test_eastmoney_overlength_page_is_not_trusted(self):
-        page = [{"notice_date": "2026-09-23", "title": f"Fixture {i}"}
+        page = [{"notice_date": "2026-09-23", "title": f"Fixture {i}",
+                 "art_code": f"fixture-{i}"}
                 for i in range(31)]
         body = json.dumps({"code": 1, "success": True, "data": {
             "list": page, "total_hits": len(page),
         }}).encode("utf-8")
         with mock.patch.dict(os.environ, {"AR_OFFLINE": ""}), \
                 mock.patch("urllib.request.urlopen", return_value=io.BytesIO(body)):
-            self.assertIsNone(full_battery._fetch_anns_eastmoney(CODE, page_size=30))
+            self.assertIsNone(full_battery._fetch_anns_eastmoney(CODE, TARGET, page_size=30))
 
     def test_eastmoney_ambiguous_empty_response_blocks_u4(self):
         responses = (

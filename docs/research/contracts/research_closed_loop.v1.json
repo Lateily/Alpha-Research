@@ -112,7 +112,7 @@
   },
   "artifact_bindings": [
     {"path": "docs/research/RESEARCH_CLOSED_LOOP_V1.md", "sha256": "sha256:779865956009d07bc809fa3892b1302cce2dea64ce4dc5936017244705e755fe"},
-    {"path": "docs/research/ALL_MARKET_RESEARCH_FUNNEL.md", "sha256": "sha256:2455af97474039e9023503521e89472a5a2e9df35c9e3a281df06d2fdff05196"},
+    {"path": "docs/research/ALL_MARKET_RESEARCH_FUNNEL.md", "sha256": "sha256:4524159a2838829c761dca2a4ea6ba9fbcaa4f46379b1d5e0957f5bea0204c2f"},
     {"path": "docs/research/U4_DECISION_LEDGER_SPEC_V1.md", "sha256": "sha256:1b15e7e5ad89d768d9f95d53a48c95c50ebe3de21e197148ff01440030cfb644"},
     {"path": "docs/research/contracts/u4_decision_ledger.v1.schema.json", "sha256": "sha256:5377a87b043c423d554c774cc440d941da6a9201e2d0f7047865f6cbeff45f58"},
     {"path": "docs/research/RESEARCH_CLOSURE_EXPERIMENT.md", "sha256": "sha256:fb9caeee6b6eb0e55936b3e68b54dbc2c14c13b3ed39498efe2a0593b3e77137"},
@@ -122,7 +122,7 @@
     {"path": "docs/research/PAPER_REGISTRATION_BRIDGE_V1.md", "sha256": "sha256:33b395839de2576aeb7fef991354aa2d9871f2c6231bb1ff22c721ce3ec4523c"},
     {"path": "docs/research/PAPER_T10_CALENDAR_V1.md", "sha256": "sha256:941336e99250b35b81fc4ecc792fa83dcff50b5ba6302608ae98fa0d6125f559"},
     {"path": "docs/research/prospective/SEMICONDUCTOR_DAILY_SOURCE_REPAIR_PLAN_V0_1.md", "sha256": "sha256:105ca70b8a152d90905e27871b5dc6a4aae2d56b6d3d170c482c1d152706a934"},
-    {"path": "experiments/research_funnel/funnel_pipeline.py", "sha256": "sha256:becaedf69c3b7d1da84a74f2dfc39133a9c28db6c805b7510749aa1ece855f13"},
+    {"path": "experiments/research_funnel/funnel_pipeline.py", "sha256": "sha256:e9cf52a808f2ce8db009440f3d09998f361da4a8d9f866230213f656673d569b"},
     {"path": "experiments/research_funnel/feature_store.py", "sha256": "sha256:6be02ed4034b4a05b4a3656830c046e1013697acaa8ab9655c097461f7a43356"},
     {"path": "experiments/research_funnel/funnel_dag.py", "sha256": "sha256:67ebc78991c07ed3166fa10e93d726ac2b1ca6c0c81678a0ce026ff6fefd8058"},
     {"path": "experiments/research_funnel/semiconductor_inputs.py", "sha256": "sha256:6701258484cc92bc3280a9086a33bd8ee216161bc0bde9bfed67b7bd94a9aaec"},
