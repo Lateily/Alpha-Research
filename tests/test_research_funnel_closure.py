@@ -486,7 +486,9 @@ class ResearchFunnelClosureTests(unittest.TestCase):
         self.assertEqual(candidates["quota"]["shortfalls"]["contrarian_repair"], 3)
 
     def test_u2_reserved_quota_floor_preserves_main_channel_capacity(self) -> None:
-        registry, features, scan = build_scan(top_n=80, n=180)
+        # INDUSTRY_VALUE_CHAIN is context-only (no trigger), so PRICE_VOLUME alone
+        # must oversubscribe the 85-slot main capacity: top 95 minus 2 E1 red flags.
+        registry, features, scan = build_scan(top_n=95, n=180)
         try:
             candidates = fp.build_candidate_review(
                 registry=registry,

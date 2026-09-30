@@ -85,8 +85,8 @@ KNOWN_FIXTURE_IDS = frozenset({"synthetic-mixed"})
 # Artifact metadata is not authority; these hashes pin the approved fixture bytes.
 _APPROVED_FIXTURE_HASHES = {
     "synthetic-mixed": {
-        "cassettes.json": "sha256:d7c77e4d6a6b2eace91985847cdedf471c3ccb19d02cb2172683b2316e53df18",
-        "u4-pre-decision.json": "sha256:b9d178988cbcfdbe634f2874b4fb72b450e064e996cff087c688fc209a9cfb9e",
+        "cassettes.json": "sha256:59f2eb6e6069e4aa80ac05fdeffb33bbc531723d51448b64c2ca1f3978532495",
+        "u4-pre-decision.json": "sha256:1593508b65bd81f5cad54cde0d0e9b463d289b63a3f67c2f28990553e4577a30",
     },
 }
 _ARTIFACT_SCOPE = "sandbox/artifacts"

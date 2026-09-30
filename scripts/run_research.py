@@ -36,12 +36,19 @@ Usage:
 
   # Inject coverage gating: don't call API if data context is too thin
   python3 scripts/run_research.py 002594.SZ --require-yahoo --require-fin
+
+Auth (2026-09 route gate, api/_lib/llm-route-guard.js):
+  /api/research and /api/research-multi reject calls without the server key.
+  Export it in the shell before a live call; it is sent as X-AR-LLM-Key and
+  never written to disk or printed:
+    export AR_LLM_ROUTE_KEY=...   # same value as the Vercel env var
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 import urllib.request
 import urllib.error
@@ -55,6 +62,24 @@ from research_data_loader import load_context  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_ENDPOINT = 'https://equity-research-ten.vercel.app/api/research'
+LLM_KEY_ENV = 'AR_LLM_ROUTE_KEY'
+LLM_KEY_HEADER = 'X-AR-LLM-Key'
+
+
+class MissingLlmRouteKey(RuntimeError):
+    """Raised before any HTTP call when the server key is not in the environment."""
+
+
+def llm_route_headers(env=None) -> dict:
+    """Headers for a paid-model route. Fails closed (no request) without the key."""
+    source = os.environ if env is None else env
+    key = str(source.get(LLM_KEY_ENV) or '').strip()
+    # governance-mutation: LLM_CALLER_RUN_RESEARCH_REQUIRES_KEY
+    if not key:
+        raise MissingLlmRouteKey(
+            f'{LLM_KEY_ENV} is not set; /api/research* would reject the call (401/503).'
+        )
+    return {'Content-Type': 'application/json', LLM_KEY_HEADER: key}
 
 
 def fetch_recent_news(ticker: str, endpoint_base: str, days: int = 7, timeout_sec: int = 20) -> list:
@@ -213,7 +238,7 @@ def call_research_api(endpoint: str, ticker: str, company: Optional[str],
     req = urllib.request.Request(
         endpoint,
         data=json.dumps(body).encode('utf-8'),
-        headers={'Content-Type': 'application/json'},
+        headers=llm_route_headers(),
         method='POST',
     )
     started = datetime.now(timezone.utc)
@@ -324,15 +349,19 @@ def main():
               f'fundamentals fields={sum(1 for v in (enrichment.get("fundamentals") or {}).values() if v is not None)}, '
               f'extras: {list((enrichment.get("extras") or {}).keys())})', file=sys.stderr)
 
-    response = call_research_api(
-        endpoint=args.endpoint,
-        ticker=args.ticker,
-        company=args.company,
-        direction=args.direction,
-        context=args.context,
-        enrichment_context=enrichment,
-        timeout_sec=args.timeout,
-    )
+    try:
+        response = call_research_api(
+            endpoint=args.endpoint,
+            ticker=args.ticker,
+            company=args.company,
+            direction=args.direction,
+            context=args.context,
+            enrichment_context=enrichment,
+            timeout_sec=args.timeout,
+        )
+    except MissingLlmRouteKey as exc:
+        print(f'ERROR: {exc}', file=sys.stderr)
+        sys.exit(2)
 
     # 6. Quick quality summary
     quality = response.get('data', {}).get('_quality', {})

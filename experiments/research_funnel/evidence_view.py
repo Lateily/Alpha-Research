@@ -253,16 +253,28 @@ class EvidenceView:
         ):
             raise EvidenceError("bundle manifest artifacts must be a string mapping")
         refs.update(join_ref(bundle_ref, name) for name in artifacts)
-        refs.update(
+        stage_refs = [
             join_ref(bundle_ref, f"stage_{stage}.json")
             for stage in ("candidates", "battery", "finalize")
-        )
+        ]
+        refs.update(stage_refs)
+        # A stage manifest may hash evidence outside the top-level artifact set
+        # (the finalize-stage disagreement queue and trust line).  Capture those
+        # bytes in the same pass so stage validation never reopens the tree.
+        stage_captured = {ref: capability.read_file(ref) for ref in stage_refs}
+        for ref, raw in stage_captured.items():
+            stage_artifacts = _decode_object(raw, ref).get("artifacts")
+            if isinstance(stage_artifacts, dict):
+                # governance-mutation: EVIDENCE_VIEW_STAGE_ARTIFACT_CAPTURE
+                refs.update(join_ref(bundle_ref, name) for name in stage_artifacts)
         if cyclical_flags_ref is not None:
             refs.add(normalize_ref(cyclical_flags_ref))
 
         refs.discard(manifest_ref)
-        captured = {manifest_ref: manifest_raw}
-        captured.update({ref: capability.read_file(ref) for ref in sorted(refs)})
+        captured = {manifest_ref: manifest_raw, **stage_captured}
+        captured.update({
+            ref: capability.read_file(ref) for ref in sorted(refs) if ref not in stage_captured
+        })
         for name, expected in artifacts.items():
             artifact_ref = join_ref(bundle_ref, name)
             actual = hashlib.sha256(captured[artifact_ref]).hexdigest()

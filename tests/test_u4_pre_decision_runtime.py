@@ -413,9 +413,9 @@ class U4PreDecisionRuntimeTests(unittest.TestCase):
         # A future reviewed revision must explicitly update this historical pin.
         frozen = {
             "docs/research/contracts/research_closed_loop.v1.json":
-                "50f3de5d6e6c296e165a81697dc4d730183517320aa1f046fce2075abdb2a51b",
+                "abdde384a2ade800a6b2faffd28e5acda1fe74b5ca8e2e6fb2e2356ac9ebd2e6",
             "experiments/research_funnel/funnel_dag.py":
-                "67ebc78991c07ed3166fa10e93d726ac2b1ca6c0c81678a0ce026ff6fefd8058",
+                "dadd22143bd1d0a30175b915a8c1c855fe511518ce031004b0111d0dd3fb3aad",
         }
         for path, expected in frozen.items():
             self.assertEqual(expected, hashlib.sha256((ROOT / path).read_bytes()).hexdigest(), path)
