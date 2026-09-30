@@ -74,6 +74,8 @@ jobs:
           python3 scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/feature_health_contract.task.json
       - name: Offline deterministic tests (zero network)
         run: python3 tests/test_engines_offline.py
+      - name: U3 red-flag gate shares E1 layer semantics (offline)
+        run: python3 tests/test_red_flag_gate_semantics.py
       - name: LLM adapter offline tests (zero network)
         run: python3 tests/test_llm_adapter_offline.py
       - name: Promoter QC gate offline tests (zero network)
@@ -198,6 +200,12 @@ jobs:
           python3 experiments/research_funnel/semiconductor_extended_sources.py --selftest
       - name: Full-market E1 event layer contract selftest
         run: python3 experiments/research_funnel/e1_event_layer.py --selftest
+      # 2026-09: income_vip 20260630 was capped at exactly 9000 rows every night and
+      # still recorded OK. Whole-market calls page until a short page; a truncated
+      # batch is DATA_BLOCKED, and income missing after its statutory deadline is
+      # never COMPLETE.
+      - name: E1 Tushare paging and income completeness regression (offline)
+        run: python3 tests/test_e1_tushare_paging.py
       # R-033/R-034/R-035:六通道独立并集、U0 状态投影、同池随机控制、
       # 以及仅由 Junyan 显式选择生成的 U4 深研队列。
       - name: Full-market research funnel closure regression (offline)

@@ -24,7 +24,7 @@ try:
         _atomic_write_json,
         _load_json,
         _sha256,
-        _tushare_call,
+        _tushare_call_paged,
         validate_registry,
     )
 except ImportError:  # direct script execution
@@ -33,7 +33,7 @@ except ImportError:  # direct script execution
         _atomic_write_json,
         _load_json,
         _sha256,
-        _tushare_call,
+        _tushare_call_paged,
         validate_registry,
     )
 
@@ -41,6 +41,12 @@ except ImportError:  # direct script execution
 SCHEMA = "ar.e1_event_layer"
 SCHEMA_VERSION = "1.0"
 RULE_VERSION = "R036_E1_RULES_V1"
+# Machine-readable marker for the 2026-09-29 rule revision shared with the U3
+# red-flag gate (per-period active guidance, filed-null retention, anchored
+# adjacent quarter pair, filed-period freshness, unscorable-guidance blocks).
+# The schema pins rule_version as a const, so the revision lives in
+# policy.rule_revision; a V1.1 rule_version bump is a human decision.
+RULE_REVISION = "R036_E1_RULES_V1+shared_u3.2026-09-29"
 NEGATIVE_GUIDANCE_TYPES = {"首亏", "预亏", "预减", "略减", "续亏"}
 EXPRESS_YOY_NET_PROFIT_THRESHOLD_PCT = -30.0
 VERDICTS = {"RED_FLAG", "NO_RED_FLAG_FOUND", "DATA_BLOCKED"}
@@ -54,7 +60,20 @@ EXPRESS_FIELDS = (
     "ts_code,ann_date,end_date,revenue,n_income,yoy_net_profit,"
     "yoy_dedu_np,diluted_eps,perf_summary"
 )
-INCOME_FIELDS = "ts_code,ann_date,end_date,report_type,n_income_attr_p"
+INCOME_FIELDS = "ts_code,ann_date,end_date,report_type,n_income_attr_p,update_flag"
+# Statutory latest filing day for each report period (CSRC periodic-report rules):
+# Q1 by 04-30, H1 by 08-31, Q3 by 10-31, annual by 04-30 of the next year.  After
+# that day has passed (as_of strictly later), an eligible issuer that has filed an
+# earlier period but not this one cannot carry income COMPLETE: either the source
+# batch lost it (the 2026-09 income_vip 9000-row cap) or the issuer has not filed.
+# The same table drives the U3 filed-period freshness rule (_latest_due_period).
+STATUTORY_FILING_DEADLINES = {
+    "0331": (0, "0430"),
+    # governance-mutation: E1_H1_STATUTORY_DEADLINE
+    "0630": (0, "0831"),
+    "0930": (0, "1031"),
+    "1231": (1, "0430"),
+}
 UNAVAILABLE_DIMENSIONS = (
     {
         "dimension": "formal_announcements",
@@ -139,9 +158,42 @@ def _eligible_registry_rows(registry: dict[str, Any]) -> list[dict[str, Any]]:
     return rows
 
 
+def _statutory_deadline(period: str) -> str | None:
+    rule = STATUTORY_FILING_DEADLINES.get(period[4:])
+    if rule is None or len(period) != 8 or not period.isdigit():
+        return None
+    year_offset, month_day = rule
+    return f"{int(period[:4]) + year_offset}{month_day}"
+
+
+def _income_deadline_gaps(
+    filed_periods: set[str] | dict[str, Any], periods: list[str], as_of: str
+) -> list[str]:
+    """Report periods past their statutory deadline that are missing after an earlier filing.
+
+    A period is a gap when its deadline has passed, it is not filed, and the issuer
+    has filed an earlier period inside the fetched window (so the issuer was already
+    reporting; a new listing with no earlier filing is not inferred).  This covers
+    "P-1 filed, P missing" and every later missing link.  Only filings already
+    visible at ``as_of`` count (``_income_by_ticker`` drops ann_date > as_of), so
+    the guard reads no information from after the contract date.
+    """
+    filed = {period for period in filed_periods if period in periods}
+    gaps: list[str] = []
+    for period in periods:
+        deadline = _statutory_deadline(period)
+        # governance-mutation: E1_INCOME_DEADLINE_STRICTLY_AFTER
+        if deadline is None or not as_of > deadline:
+            continue
+        if period not in filed and any(earlier < period for earlier in filed):
+            gaps.append(period)
+    return sorted(gaps, reverse=True)
+
+
 def fetch_e1_batches(
-    token: str, periods: list[str]
+    token: str, periods: list[str], *, fetch: Any = None
 ) -> tuple[dict[str, list[dict[str, Any]]], list[dict[str, str]], list[dict[str, Any]]]:
+    fetch = fetch or _tushare_call_paged
     rows_by_endpoint: dict[str, list[dict[str, Any]]] = {name: [] for name in ENDPOINTS}
     errors: list[dict[str, str]] = []
     calls: list[dict[str, Any]] = []
@@ -153,47 +205,88 @@ def fetch_e1_batches(
     for endpoint in ENDPOINTS:
         for period in periods:
             try:
-                rows = _tushare_call(token, endpoint, {"period": period}, fields[endpoint])
-                rows_by_endpoint[endpoint].extend(rows)
-                calls.append(
-                    {"endpoint": endpoint, "period": period, "status": "OK", "rows": len(rows)}
-                )
+                rows, facts = fetch(token, endpoint, {"period": period}, fields[endpoint])
             except RegistryError as exc:
-                message = str(exc)
-                errors.append({"endpoint": endpoint, "period": period, "error": message})
+                errors.append({"endpoint": endpoint, "period": period, "error": str(exc)})
                 calls.append(
-                    {"endpoint": endpoint, "period": period, "status": "DATA_BLOCKED", "rows": 0}
+                    {"endpoint": endpoint, "period": period, "status": "DATA_BLOCKED", "rows": 0,
+                     "pages": 0, "page_limit": None, "capped": False, "truncation_reason": None}
                 )
+                continue
+            # governance-mutation: E1_MISSING_CAPPED_FACT_FAILS_CLOSED
+            capped = facts.get("capped") is not False
+            # Truncated rows are real but incomplete: keep them (a red flag they carry is
+            # still a filed fact), but block the call so no clean verdict rests on them;
+            # build_event_layer then withholds any flag whose "still active" / "latest
+            # quarter" reading depends on a period this call may have lost.
+            rows_by_endpoint[endpoint].extend(rows)
+            # governance-mutation: E1_TRUNCATED_CALL_BLOCKED
+            status = "DATA_BLOCKED" if capped else "OK"
+            # governance-mutation: E1_TRUNCATED_CALL_SOURCE_ERROR
+            if capped:
+                errors.append({
+                    "endpoint": endpoint, "period": period,
+                    "error": (
+                        f"TRUNCATED: {facts.get('truncation_reason') or 'UNKNOWN'} after "
+                        f"{len(rows)} rows in {facts.get('pages')} page(s)"
+                    ),
+                })
+            calls.append({
+                "endpoint": endpoint, "period": period, "status": status, "rows": len(rows),
+                "pages": facts.get("pages"), "page_limit": facts.get("page_limit"),
+                "capped": capped,
+                "truncation_reason": facts.get("truncation_reason") if capped else None,
+            })
     return rows_by_endpoint, errors, calls
 
 
 def _valid_event_row(row: dict[str, Any], eligible: set[str], as_of: str) -> bool:
     code = str(row.get("ts_code") or "")
     ann_date = str(row.get("ann_date") or "")
+    # governance-mutation: U3_RED_FLAG_NO_FUTURE_FILING
     return code in eligible and len(ann_date) == 8 and ann_date.isdigit() and ann_date <= as_of
+
+
+def _event_key(row: dict[str, Any]) -> tuple[str, str, str]:
+    return (
+        str(row.get("end_date") or ""),
+        str(row.get("ann_date") or ""),
+        _sha256(row),
+    )
 
 
 def _latest_events(
     rows: list[dict[str, Any]], eligible: set[str], as_of: str
 ) -> dict[str, dict[str, Any]]:
+    """The single latest (period, announcement, row-hash) event per ticker."""
     latest: dict[str, dict[str, Any]] = {}
+    for code, events in _events_by_ticker(rows, eligible, as_of).items():
+        latest[code] = max(events, key=_event_key)
+    return latest
+
+
+def _events_by_ticker(
+    rows: list[dict[str, Any]], eligible: set[str], as_of: str
+) -> dict[str, list[dict[str, Any]]]:
+    """Every valid guidance/express row visible at ``as_of``, grouped by ticker."""
+    grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for row in rows:
         if not isinstance(row, dict) or not _valid_event_row(row, eligible, as_of):
             continue
-        code = str(row["ts_code"])
-        key = (
-            str(row.get("end_date") or ""),
-            str(row.get("ann_date") or ""),
-            _sha256(row),
-        )
-        previous = latest.get(code)
-        previous_key = (
-            str(previous.get("end_date") or ""),
-            str(previous.get("ann_date") or ""),
-            _sha256(previous),
-        ) if previous else ("", "", "")
-        if key > previous_key:
-            latest[code] = row
+        grouped[str(row["ts_code"])].append(row)
+    return dict(grouped)
+
+
+def _latest_per_period(rows: Any) -> dict[str, dict[str, Any]]:
+    """Latest announcement per report period (ties broken by row hash, never arrival order)."""
+    if isinstance(rows, dict):
+        rows = [rows]
+    latest: dict[str, dict[str, Any]] = {}
+    for row in rows or []:
+        period = str(row.get("end_date") or "")
+        current = latest.get(period)
+        if current is None or _event_key(row) > _event_key(current):
+            latest[period] = row
     return latest
 
 
@@ -208,12 +301,88 @@ def _income_by_ticker(
             continue
         code = str(row["ts_code"])
         period = str(row.get("end_date") or "")
-        if len(period) != 8 or not period.isdigit() or _number(row.get("n_income_attr_p")) is None:
+        # governance-mutation: U3_RED_FLAG_FILED_NULL_INCOME_KEPT
+        if len(period) != 8 or not period.isdigit():
             continue
+        # A filed statement whose attributable profit is null/NaN is still a
+        # filing: it retires older guidance, and the income rule must see the
+        # hole (INCOME_VALUE_MISSING) instead of silently falling back to an
+        # older quarter.  Among same-period filings the latest announcement
+        # wins; on an announcement-date tie a valued row beats a null one.
         current = selected[code].get(period)
-        if current is None or str(row.get("ann_date")) > str(current.get("ann_date")):
+        if current is None or _filing_rank(row) > _filing_rank(current):
             selected[code][period] = row
     return dict(selected)
+
+
+def _income_unscorable_periods(
+    rows: list[dict[str, Any]], eligible: set[str], as_of: str
+) -> dict[str, set[str]]:
+    """Periods with a consolidated income row visible at as_of but no attributable profit."""
+    seen: dict[str, set[str]] = defaultdict(set)
+    for row in rows:
+        if not isinstance(row, dict) or not _valid_event_row(row, eligible, as_of):
+            continue
+        if str(row.get("report_type") or "") != "1":
+            continue
+        period = str(row.get("end_date") or "")
+        if len(period) == 8 and period.isdigit() and _number(row.get("n_income_attr_p")) is None:
+            seen[str(row["ts_code"])].add(period)
+    return dict(seen)
+
+
+def _blocked_call_periods(
+    source_calls: list[dict[str, Any]], source_errors: list[dict[str, Any]]
+) -> dict[str, set[str]]:
+    """Endpoint -> periods whose whole-market call was DATA_BLOCKED (failed or truncated)."""
+    blocked: dict[str, set[str]] = {endpoint: set() for endpoint in ENDPOINTS}
+    for item in list(source_calls) + list(source_errors):
+        if not isinstance(item, dict) or item.get("endpoint") not in blocked:
+            continue
+        if "status" in item and item.get("status") != "DATA_BLOCKED":
+            continue
+        blocked[str(item["endpoint"])].add(str(item.get("period") or ""))
+    return blocked
+
+
+def _supersession_dependencies(
+    item: dict[str, Any], periods: set[str] | list[str]
+) -> list[str]:
+    """Periods whose missing income statement could supersede this triggered evidence.
+
+    Guidance/express for period E is superseded by a filed statement for any period
+    >= E; the filed-income trend whose latest quarter is L is stale if a later
+    period > L exists.  A missing period in that range means the flag's lifecycle
+    reading ("still active", "latest quarter") is unverified.
+    """
+    period = str(item.get("period") or "")
+    if item.get("kind") == "FILED_INCOME_TREND":
+        return sorted((value for value in set(periods) if value > period), reverse=True)
+    return sorted((value for value in set(periods) if value >= period), reverse=True)
+
+
+def _filing_rank(row: dict[str, Any]) -> tuple[str, bool, bool, str]:
+    """Same-period filing order: latest announcement, then valued over null, then
+    Tushare update_flag=1 over 0, then the row hash (never provider arrival order)."""
+    return (
+        str(row.get("ann_date") or ""),
+        # governance-mutation: U3_RED_FLAG_FILING_RANK_VALUED_OVER_NULL
+        _number(row.get("n_income_attr_p")) is not None,
+        str(row.get("update_flag") or "") == "1",
+        _sha256(row),
+    )
+
+
+def _latest_due_period(as_of: str) -> str | None:
+    """Most recent report period whose statutory filing deadline is strictly before as_of."""
+    year = int(as_of[:4])
+    due = [
+        f"{period_year}{suffix}"
+        for period_year in range(year - 2, year + 1)
+        for suffix, (offset, month_day) in STATUTORY_FILING_DEADLINES.items()
+        if as_of > f"{period_year + offset}{month_day}"
+    ]
+    return max(due, default=None)
 
 
 def _previous_period(period: str) -> str | None:
@@ -255,12 +424,100 @@ def _standalone_quarters(period_rows: dict[str, dict[str, Any]]) -> list[dict[st
     return quarters
 
 
-def _forecast_evidence(row: dict[str, Any] | None) -> tuple[dict[str, Any] | None, bool]:
+def _standalone_value(
+    period: str, period_rows: dict[str, dict[str, Any]]
+) -> tuple[float | None, str | None]:
+    """Standalone quarter profit for ``period`` from cumulative filings.
+
+    Returns ``(value, None)`` or ``(None, block_code)``.  A required period that
+    was never filed is INSUFFICIENT_FILED_QUARTER_HISTORY; one that was filed
+    with a null/NaN attributable profit is INCOME_VALUE_MISSING.  Nothing is
+    derived from row positions: the predecessor is always the calendar quarter.
+    """
+    row = period_rows.get(period)
+    if row is None:
+        return None, "INSUFFICIENT_FILED_QUARTER_HISTORY"
+    cumulative = _number(row.get("n_income_attr_p"))
+    if cumulative is None:
+        return None, "INCOME_VALUE_MISSING"
+    if period[4:] == "0331":
+        return cumulative, None
+    previous = _previous_period(period)
+    previous_row = period_rows.get(previous) if previous else None
+    if previous_row is None:
+        return None, "INSUFFICIENT_FILED_QUARTER_HISTORY"
+    previous_cumulative = _number(previous_row.get("n_income_attr_p"))
+    if previous_cumulative is None:
+        return None, "INCOME_VALUE_MISSING"
+    return cumulative - previous_cumulative, None
+
+
+def _income_assessment(
+    period_rows: dict[str, dict[str, Any]],
+    as_of: str,
+) -> tuple[dict[str, Any] | None, bool, str | None]:
+    """Anchor the income rule on the latest FILED period and its calendar predecessor.
+
+    Returns ``(evidence, triggered, block_code)``.  The latest filed period is
+    never skipped because its value is missing, and the comparison quarter is
+    always the adjacent calendar quarter, so a gap can never pair two
+    non-adjacent quarters.  A latest filing older than the most recent period
+    whose statutory deadline has passed at ``as_of`` is FILED_PERIOD_STALE:
+    missing current filings are never scored on year-old quarters.
+    """
+    # governance-mutation: U3_RED_FLAG_INCOME_ANCHORED_ADJACENT_PAIR
+    latest_period = max(period_rows, default="")
+    if not latest_period:
+        return None, False, "INSUFFICIENT_FILED_QUARTER_HISTORY"
+    due_period = _latest_due_period(as_of)
+    # governance-mutation: U3_RED_FLAG_FILED_PERIOD_FRESHNESS
+    if due_period and latest_period < due_period:
+        return None, False, "FILED_PERIOD_STALE"
+    previous_period = _previous_period(latest_period)
+    if previous_period is None:
+        return None, False, "INSUFFICIENT_FILED_QUARTER_HISTORY"
+    latest_value, latest_block = _standalone_value(latest_period, period_rows)
+    previous_value, previous_block = _standalone_value(previous_period, period_rows)
+    block = latest_block or previous_block
+    if block:
+        # INCOME_VALUE_MISSING outranks history gaps: a filed hole is the more
+        # specific defect and must stay visible.
+        codes = {code for code in (latest_block, previous_block) if code}
+        return None, False, (
+            "INCOME_VALUE_MISSING" if "INCOME_VALUE_MISSING" in codes else block
+        )
+    if latest_value is None or previous_value is None:  # unreachable: blocked above
+        return None, False, "INSUFFICIENT_FILED_QUARTER_HISTORY"
+    negative = latest_value < 0 and latest_value < previous_value
+    evidence = {
+        "kind": "FILED_INCOME_TREND",
+        "source": "tushare.income_vip",
+        "evidence_grade": "E1",
+        "ann_date": str(period_rows[latest_period].get("ann_date") or ""),
+        "period": latest_period,
+        "observed": {
+            "latest_standalone_net_profit_cny": round(latest_value, 2),
+            "previous_period": previous_period,
+            "previous_standalone_net_profit_cny": round(previous_value, 2),
+        },
+        "triggered": negative,
+        "rule": "latest standalone attributable profit < 0 and below previous quarter",
+    }
+    return evidence, negative, None
+
+
+def _forecast_evidence(
+    row: dict[str, Any] | None,
+) -> tuple[dict[str, Any] | None, bool, bool]:
     if not row:
-        return None, False
+        return None, False, True
     guidance_type = str(row.get("type") or "")
     low = _number(row.get("net_profit_min"))
     high = _number(row.get("net_profit_max"))
+    # A guidance row with neither a type nor an upper bound carries no signal;
+    # it is DATA_BLOCKED evidence, never a clean check.
+    # governance-mutation: U3_RED_FLAG_FORECAST_NULL_ROW_UNSCORABLE
+    scorable = bool(guidance_type) or high is not None
     negative = guidance_type in NEGATIVE_GUIDANCE_TYPES or (high is not None and high < 0)
     evidence = {
         "kind": "ISSUER_GUIDANCE",
@@ -278,7 +535,7 @@ def _forecast_evidence(row: dict[str, Any] | None) -> tuple[dict[str, Any] | Non
         "triggered": negative,
         "rule": "latest guidance type in locked negative set or net-profit upper bound below zero",
     }
-    return evidence, negative
+    return evidence, negative, scorable
 
 
 def _express_evidence(
@@ -288,10 +545,13 @@ def _express_evidence(
         return None, False, True
     current_profit = _number(row.get("n_income"))
     prior_profit = _number(row.get("yoy_net_profit"))
+    # yoy_net_profit is the prior-year profit AMOUNT (CNY), never a percentage.
+    # governance-mutation: U3_RED_FLAG_EXPRESS_PRIOR_AMOUNT_NOT_PERCENT
     official_yoy_pct = _number(row.get("yoy_dedu_np"))
     yoy_pct = official_yoy_pct
     yoy_source = "tushare.express_vip.yoy_dedu_np"
     if yoy_pct is None and current_profit is not None and prior_profit not in (None, 0.0):
+        # governance-mutation: U3_RED_FLAG_EXPRESS_LOSS_SIGN_ABS
         yoy_pct = (current_profit - prior_profit) / abs(prior_profit) * 100.0
         yoy_source = "computed_from_n_income_and_yoy_net_profit/v1"
     scorable = yoy_pct is not None
@@ -318,83 +578,195 @@ def _express_evidence(
     return evidence, negative, scorable
 
 
-def _income_evidence(quarters: list[dict[str, Any]]) -> tuple[dict[str, Any] | None, bool]:
-    if len(quarters) < 2:
-        return None, False
-    latest, previous = quarters[0], quarters[1]
-    latest_value = float(latest["standalone_net_profit_cny"])
-    previous_value = float(previous["standalone_net_profit_cny"])
-    negative = latest_value < 0 and latest_value < previous_value
-    evidence = {
-        "kind": "FILED_INCOME_TREND",
-        "source": "tushare.income_vip",
-        "evidence_grade": "E1",
-        "ann_date": latest["ann_date"],
-        "period": latest["period"],
-        "observed": {
-            "latest_standalone_net_profit_cny": latest_value,
-            "previous_period": previous["period"],
-            "previous_standalone_net_profit_cny": previous_value,
-        },
-        "triggered": negative,
-        "rule": "latest standalone attributable profit < 0 and below previous quarter",
-    }
-    return evidence, negative
-
-
 def _classify_row(
     registry_row: dict[str, Any],
-    forecast: dict[str, Any] | None,
-    express: dict[str, Any] | None,
+    forecast: Any,
+    express: Any,
     income_periods: dict[str, dict[str, Any]],
     source_complete: bool,
+    income_gaps: list[str] | None = None,
+    income_source_blocked: list[str] | None = None,
+    blocked_calls: dict[str, set[str]] | None = None,
+    income_unscorable: set[str] | None = None,
+    *,
+    as_of: str,
 ) -> dict[str, Any]:
+    row, _detail = _classify_evidence(
+        registry_row,
+        forecast,
+        express,
+        income_periods,
+        source_complete,
+        income_gaps=income_gaps,
+        income_source_blocked=income_source_blocked,
+        blocked_calls=blocked_calls,
+        income_unscorable=income_unscorable,
+        as_of=as_of,
+    )
+    return row
+
+
+def _active_periods(by_period: dict[str, dict[str, Any]], latest_filed_period: str) -> list[str]:
+    """Guidance/express periods not yet retired by a filed statement.
+
+    A filed statement for the same or a later report period supersedes the row;
+    every other period stays live and is judged on its own latest announcement.
+    """
+    return sorted(
+        (
+            period
+            for period in by_period
+            # governance-mutation: U3_RED_FLAG_SAME_PERIOD_FILING_SUPERSEDES
+            if not latest_filed_period or period > latest_filed_period
+        ),
+        reverse=True,
+    )
+
+
+def _classify_evidence(
+    registry_row: dict[str, Any],
+    forecast: Any,
+    express: Any,
+    income_periods: dict[str, dict[str, Any]],
+    source_complete: bool,
+    income_gaps: list[str] | None = None,
+    income_source_blocked: list[str] | None = None,
+    blocked_calls: dict[str, set[str]] | None = None,
+    income_unscorable: set[str] | None = None,
+    *,
+    as_of: str,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """The single E1 red-flag rule set shared by the batch layer and U3.
+
+    ``forecast``/``express`` are the ticker's valid rows (a list, or one row).
+    Every period later than the latest filed period is active and judged on its
+    latest announcement; the row is RED_FLAG if any active period is negative,
+    so a later-period positive guidance can never mask an earlier live 首亏.
+    The batch layer also passes its source-completeness facts (statutory-deadline
+    income gaps, periods inside blocked/truncated calls); the single-ticker API
+    passes none.  Returns the schema row plus a detail record that only the
+    single-ticker API exposes.
+    """
+    income_gaps = sorted(income_gaps or [], reverse=True)
+    income_source_blocked = sorted(income_source_blocked or [], reverse=True)
+    blocked_calls = blocked_calls or {}
+    income_unscorable = set(income_unscorable or ())
     quarters = _standalone_quarters(income_periods)
     latest_filed_period = max(income_periods, default="")
-    forecast_superseded = bool(
-        forecast
-        and latest_filed_period
-        and str(forecast.get("end_date") or "") <= latest_filed_period
-    )
-    express_superseded = bool(
-        express
-        and latest_filed_period
-        and str(express.get("end_date") or "") <= latest_filed_period
-    )
-    active_forecast = None if forecast_superseded else forecast
-    active_express = None if express_superseded else express
-    forecast_ev, forecast_flag = _forecast_evidence(active_forecast)
-    express_ev, express_flag, express_scorable = _express_evidence(active_express)
-    income_ev, income_flag = _income_evidence(quarters)
+    forecast_by_period = _latest_per_period(forecast)
+    express_by_period = _latest_per_period(express)
+    forecast_active = _active_periods(forecast_by_period, latest_filed_period)
+    express_active = _active_periods(express_by_period, latest_filed_period)
+    # governance-mutation: U3_RED_FLAG_FILED_STATEMENT_SUPERSEDES_GUIDANCE
+    forecast_superseded = bool(forecast_by_period) and not forecast_active
+    express_superseded = bool(express_by_period) and not express_active
+    forecast_results = [_forecast_evidence(forecast_by_period[p]) for p in forecast_active]
+    express_results = [_express_evidence(express_by_period[p]) for p in express_active]
+    # governance-mutation: U3_RED_FLAG_ANY_ACTIVE_PERIOD_FLAGS
+    forecast_flag = any(flag for _ev, flag, _ok in forecast_results)
+    express_flag = any(flag for _ev, flag, _ok in express_results)
+    forecast_scorable = all(ok for _ev, _flag, ok in forecast_results)
+    express_scorable = all(ok for _ev, _flag, ok in express_results)
+    income_ev, income_flag, income_block = _income_assessment(income_periods, as_of)
     evaluated_evidence = [
-        item for item in (forecast_ev, express_ev, income_ev) if item is not None
+        item
+        for item in (
+            [ev for ev, _flag, _ok in forecast_results]
+            + [ev for ev, _flag, _ok in express_results]
+            + [income_ev]
+        )
+        if item is not None
     ]
-    evidence = [item for item in evaluated_evidence if item["triggered"]]
-    reason_codes: list[str] = []
-    if forecast_flag:
-        reason_codes.append("NEGATIVE_ISSUER_GUIDANCE")
-    if express_flag:
-        reason_codes.append("EXPRESS_NET_PROFIT_DROP_GT_30PCT")
-    if income_flag:
-        reason_codes.append("NEGATIVE_AND_WORSENING_QUARTER_PROFIT")
+    # Bidirectional completeness (2026-09-29): the clean side is guarded below; here a
+    # triggered flag whose "still active" / "latest quarter" reading depends on an
+    # income period the source did not deliver is withheld (DATA_BLOCKED), and one
+    # that depends on a period the issuer has not filed after its statutory deadline
+    # keeps the flag but carries an explicit marker.
+    # The per-kind flags (any active period negative) gate which triggered items
+    # count, so the U3 any-active-period rule and the supersession rule compose.
+    kind_flagged = {
+        "ISSUER_GUIDANCE": forecast_flag,
+        "EARNINGS_EXPRESS": express_flag,
+        "FILED_INCOME_TREND": income_flag,
+    }
+    evidence: list[dict[str, Any]] = []
+    withheld = False
+    supersession_unverified = False
+    for item in evaluated_evidence:
+        if not item["triggered"] or not kind_flagged.get(str(item.get("kind"))):
+            continue
+        source_blocked = _supersession_dependencies(item, income_source_blocked)
+        own_endpoint = {
+            "ISSUER_GUIDANCE": "forecast_vip", "EARNINGS_EXPRESS": "express_vip",
+        }.get(str(item.get("kind")))
+        if own_endpoint:
+            source_blocked += _supersession_dependencies(
+                item, blocked_calls.get(own_endpoint, set())
+            )
+        # governance-mutation: E1_RED_FLAG_ON_BLOCKED_SUPERSESSION_WITHHELD
+        if source_blocked:
+            withheld = True
+            continue
+        # governance-mutation: E1_RED_FLAG_ON_DEADLINE_GAP_MARKED
+        if _supersession_dependencies(item, income_gaps):
+            supersession_unverified = True
+        evidence.append(item)
+    flag_codes = {
+        "ISSUER_GUIDANCE": "NEGATIVE_ISSUER_GUIDANCE",
+        "EARNINGS_EXPRESS": "EXPRESS_NET_PROFIT_DROP_GT_30PCT",
+        "FILED_INCOME_TREND": "NEGATIVE_AND_WORSENING_QUARTER_PROFIT",
+    }
+    # Several active periods of one kind can trigger; each code is named once.
+    reason_codes: list[str] = list(
+        dict.fromkeys(flag_codes[str(item["kind"])] for item in evidence)
+    )
+    if supersession_unverified:
+        reason_codes.append("E1_SUPERSESSION_UNVERIFIED_INCOME_GAP")
+    if withheld:
+        reason_codes.append("E1_RED_FLAG_WITHHELD_SUPERSESSION_UNVERIFIED")
 
-    if reason_codes:
+    if evidence:
         verdict = "RED_FLAG"
+    elif withheld:
+        verdict = "DATA_BLOCKED"
+        reason_codes.append("E1_SOURCE_PARTIAL")
     elif not source_complete:
         verdict = "DATA_BLOCKED"
         reason_codes.append("E1_SOURCE_PARTIAL")
     elif not express_scorable:
         verdict = "DATA_BLOCKED"
         reason_codes.append("EXPRESS_YOY_METRIC_MISSING")
-    elif len(quarters) < 2:
+    elif not forecast_scorable:
         verdict = "DATA_BLOCKED"
-        reason_codes.append("INSUFFICIENT_FILED_QUARTER_HISTORY")
+        reason_codes.append("FORECAST_GUIDANCE_UNSCORABLE")
+    elif income_block == "FILED_PERIOD_STALE":
+        # The shared U3/batch freshness rule names a stale latest filing first, so
+        # both paths agree; the batch-only deadline gap below still names holes
+        # inside the window behind a fresh latest filing, and the gap list itself
+        # stays in evidence_coverage either way.
+        verdict = "DATA_BLOCKED"
+        reason_codes.append(income_block)
+    # governance-mutation: E1_INCOME_DEADLINE_GAP_BLOCKS_CLEAR
+    elif income_gaps:
+        verdict = "DATA_BLOCKED"
+        # A row visible at as_of without attributable profit is filed but unscorable;
+        # name that cause instead of calling the period missing.
+        if any(period not in income_unscorable for period in income_gaps):
+            reason_codes.append("INCOME_PERIOD_MISSING_AFTER_DEADLINE")
+        if any(period in income_unscorable for period in income_gaps):
+            reason_codes.append("INCOME_PERIOD_UNSCORABLE")
+    elif income_block:
+        verdict = "DATA_BLOCKED"
+        reason_codes.append(income_block)
     else:
         verdict = "NO_RED_FLAG_FOUND"
 
     dates = [str(item.get("ann_date") or "") for item in evaluated_evidence]
+    if latest_filed_period:
+        # The latest filing was read even when its value is missing.
+        dates.append(str(income_periods[latest_filed_period].get("ann_date") or ""))
     latest_e1_date = max([value for value in dates if value], default=None)
-    return {
+    row = {
         "ts_code": registry_row["ts_code"],
         "name": registry_row["name"],
         "industry_key": registry_row["industry_key"],
@@ -402,28 +774,107 @@ def _classify_row(
         "reason_codes": sorted(reason_codes),
         "latest_e1_date": latest_e1_date,
         "evidence_coverage": {
+            # PRESENT means at least one active (unsuperseded) guidance period was
+            # read; an unscorable active row is still PRESENT here (the enum has no
+            # DATA_BLOCKED) and surfaces as FORECAST_GUIDANCE_UNSCORABLE instead.
             "forecast": (
                 "SUPERSEDED"
                 if forecast_superseded
                 else "PRESENT"
-                if forecast_ev
+                if forecast_active
                 else "EMPTY_VALID"
             ),
             "express": (
                 "SUPERSEDED"
                 if express_superseded
                 else "PRESENT"
-                if express_ev and express_scorable
+                if express_active and express_scorable
                 else "DATA_BLOCKED"
-                if express_ev
+                if express_active
                 else "EMPTY_VALID"
             ),
             "filed_quarters": len(quarters),
-            "income": "COMPLETE" if len(quarters) >= 2 else "DATA_BLOCKED",
+            # governance-mutation: E1_INCOME_DEADLINE_GAP_NOT_COMPLETE
+            "income": (
+                "COMPLETE"
+                if len(quarters) >= 2 and not income_gaps and not income_source_blocked
+                and income_ev is not None
+                else "DATA_BLOCKED"
+            ),
+            "income_missing_after_deadline": income_gaps,
+            "income_period_source_blocked": income_source_blocked,
             "formal_announcements": "DATA_BLOCKED",
         },
         "evidence": evidence,
     }
+    detail = {
+        "latest_filed_period": latest_filed_period or None,
+        "latest_due_period": _latest_due_period(as_of),
+        "income_block": income_block,
+        "active_periods": {"forecast": forecast_active, "express": express_active},
+        "superseded_periods": {
+            "forecast": sorted(set(forecast_by_period) - set(forecast_active), reverse=True),
+            "express": sorted(set(express_by_period) - set(express_active), reverse=True),
+        },
+    }
+    return row, detail
+
+
+def classify_ticker(
+    ts_code: str,
+    *,
+    forecast_rows: list[dict[str, Any]],
+    express_rows: list[dict[str, Any]],
+    income_rows: list[dict[str, Any]],
+    as_of: str,
+    source_complete: bool = True,
+) -> dict[str, Any]:
+    """Single-ticker entry point over the exact batch rule set.
+
+    Identical rows classify identically on both paths; the fetch windows differ
+    (U3 reads everything announced in its look-back window, the batch layer reads
+    only the four report periods up to ``as_of``), so the inputs themselves can
+    differ.  Rows are provider records (per-ticker ``forecast``/``express``/
+    ``income`` carry the same fields as the ``*_vip`` batch endpoints).  Records
+    dated after ``as_of`` or lacking a valid announcement date are ignored,
+    exactly as in the batch layer, so no future filing can leak into the verdict.
+    """
+    as_of = _date8(as_of)
+    code = str(ts_code or "")
+    eligible = {code}
+    forecast = _events_by_ticker(_with_code(forecast_rows, code), eligible, as_of).get(code, [])
+    express = _events_by_ticker(_with_code(express_rows, code), eligible, as_of).get(code, [])
+    incomes = _income_by_ticker(_with_code(income_rows, code), eligible, as_of).get(code, {})
+    row, detail = _classify_evidence(
+        {"ts_code": code, "name": None, "industry_key": None},
+        forecast,
+        express,
+        incomes,
+        source_complete=source_complete,
+        as_of=as_of,
+    )
+    row.pop("name", None)
+    row.pop("industry_key", None)
+    row["rule_version"] = RULE_VERSION
+    row["rule_revision"] = RULE_REVISION
+    row["latest_filed_period"] = detail["latest_filed_period"]
+    row["latest_due_period"] = detail["latest_due_period"]
+    row["active_periods"] = detail["active_periods"]
+    row["superseded_periods"] = detail["superseded_periods"]
+    return row
+
+
+def _with_code(rows: list[dict[str, Any]] | None, code: str) -> list[dict[str, Any]]:
+    """Per-ticker provider rows may omit ts_code; they all belong to ``code``."""
+    result: list[dict[str, Any]] = []
+    for row in rows or []:
+        if not isinstance(row, dict):
+            continue
+        # governance-mutation: U3_RED_FLAG_FOREIGN_ROW_IGNORED
+        if row.get("ts_code") not in (None, "", code):
+            continue  # a foreign ticker's row is never evidence for this one
+        result.append({**row, "ts_code": code})
+    return result
 
 
 def build_event_layer(
@@ -444,10 +895,19 @@ def build_event_layer(
     registry_rows = _eligible_registry_rows(registry)
     eligible = {row["ts_code"] for row in registry_rows}
 
-    forecast = _latest_events(rows_by_endpoint.get("forecast_vip", []), eligible, as_of)
-    express = _latest_events(rows_by_endpoint.get("express_vip", []), eligible, as_of)
+    forecast = _events_by_ticker(rows_by_endpoint.get("forecast_vip", []), eligible, as_of)
+    express = _events_by_ticker(rows_by_endpoint.get("express_vip", []), eligible, as_of)
     incomes = _income_by_ticker(rows_by_endpoint.get("income_vip", []), eligible, as_of)
+    unscorable = _income_unscorable_periods(
+        rows_by_endpoint.get("income_vip", []), eligible, as_of
+    )
     source_complete = not source_errors
+    blocked_calls = _blocked_call_periods(source_calls, source_errors)
+    # An income statement is announced after its period ends, so only periods that
+    # ended before as_of can hide a filing inside a blocked (failed/truncated) call.
+    blocked_income = sorted(
+        period for period in blocked_calls["income_vip"] if period in periods and period < as_of
+    )
     output_rows = [
         _classify_row(
             row,
@@ -455,6 +915,18 @@ def build_event_layer(
             express.get(row["ts_code"]),
             incomes.get(row["ts_code"], {}),
             source_complete=source_complete,
+            income_gaps=_income_deadline_gaps(
+                set(incomes.get(row["ts_code"], {})), periods, as_of
+            ),
+            income_source_blocked=[
+                period for period in blocked_income
+                if period not in incomes.get(row["ts_code"], {})
+            ],
+            blocked_calls=blocked_calls,
+            income_unscorable=unscorable.get(row["ts_code"], set()) - set(
+                incomes.get(row["ts_code"], {})
+            ),
+            as_of=as_of,
         )
         for row in registry_rows
     ]
@@ -504,11 +976,46 @@ def build_event_layer(
                 "prefer tushare.express_vip.yoy_dedu_np; otherwise compute "
                 "(n_income-yoy_net_profit)/abs(yoy_net_profit)*100 from official amounts"
             ),
+            "rule_revision": RULE_REVISION,
             "event_lifecycle": (
-                "prefer the latest report period, then announcement date; a filed income "
-                "statement supersedes guidance/express for the same or an earlier period"
+                "a filed income statement supersedes guidance/express for the same or an "
+                "earlier period; every later (active) period is judged on its latest "
+                "announcement (ties by row hash) and any negative active period flags"
             ),
-            "income_rule": "latest standalone attributable profit < 0 and below previous quarter",
+            "income_freshness_rule": (
+                "a latest filed period older than the most recent period whose statutory "
+                "deadline (Q1 04-30, H1 08-31, Q3 10-31, annual 04-30 next year) is strictly "
+                "before as_of is FILED_PERIOD_STALE (DATA_BLOCKED), never a clean check"
+            ),
+            "income_rule": (
+                "latest standalone attributable profit < 0 and below previous quarter; "
+                "anchored on the latest filed period and its calendar-adjacent predecessor "
+                "(a filed null value is INCOME_VALUE_MISSING, a missing period is "
+                "INSUFFICIENT_FILED_QUARTER_HISTORY; never an older fallback pair)"
+            ),
+            "income_completeness_rule": (
+                "after a report period's statutory deadline (Q1 04-30, H1 08-31, Q3 10-31, "
+                "annual 04-30 next year; as_of strictly later), an issuer that filed an earlier "
+                "period in the window but not this one is income DATA_BLOCKED, never COMPLETE"
+            ),
+            "source_paging": (
+                "forecast/express/income_vip are paged with limit/offset until an empty "
+                "confirmation page (a short page does not end the batch); a repeated page, "
+                "has_more on the empty page, or the page budget running out marks the "
+                "endpoint/period TRUNCATED, DATA_BLOCKED and a source error, which blocks "
+                "every clean verdict (the layer is PARTIAL on every night anyway because "
+                "formal announcements are unavailable; coverage.truncated_calls counts it)"
+            ),
+            "red_flag_supersession_rule": (
+                "a triggered guidance/express flag for period E needs every income period "
+                ">= E, and a filed-income trend whose latest quarter is L needs every period "
+                "> L; if such a period sits in a DATA_BLOCKED income call (or, for guidance/"
+                "express, a DATA_BLOCKED call of the same endpoint for a period >= E) the flag "
+                "is withheld (E1_RED_FLAG_WITHHELD_SUPERSESSION_UNVERIFIED, DATA_BLOCKED when "
+                "no other flag stands); if the issuer has not filed it after the statutory "
+                "deadline on a complete source the flag stays and carries "
+                "E1_SUPERSESSION_UNVERIFIED_INCOME_GAP"
+            ),
             "no_red_flag_semantics": "absence of a locked red flag, not research approval or a selection signal",
             "row_evidence_semantics": (
                 "rows retain detailed evidence only for triggered red flags; coverage states "
@@ -542,6 +1049,25 @@ def build_event_layer(
                 row["evidence_coverage"]["express"] == "SUPERSEDED" for row in output_rows
             ),
             "income_tickers": len(incomes),
+            "income_deadline_gap_rows": sum(
+                bool(row["evidence_coverage"]["income_missing_after_deadline"])
+                for row in output_rows
+            ),
+            "income_source_blocked_rows": sum(
+                bool(row["evidence_coverage"]["income_period_source_blocked"])
+                for row in output_rows
+            ),
+            "red_flag_supersession_unverified_rows": sum(
+                "E1_SUPERSESSION_UNVERIFIED_INCOME_GAP" in row["reason_codes"]
+                for row in output_rows
+            ),
+            "red_flag_withheld_rows": sum(
+                "E1_RED_FLAG_WITHHELD_SUPERSESSION_UNVERIFIED" in row["reason_codes"]
+                for row in output_rows
+            ),
+            "truncated_calls": sum(
+                isinstance(call, dict) and call.get("capped") is True for call in source_calls
+            ),
             "formal_announcements": "DATA_BLOCKED",
             "source_row_occurrences_outside_u0": len(outside_occurrences),
             "source_tickers_outside_u0": len(set(outside_occurrences)),
@@ -638,6 +1164,41 @@ def validate_event_layer(payload: dict[str, Any]) -> None:
         raise E1LayerError("express lifecycle coverage does not reconcile")
     if coverage.get("formal_announcements") != "DATA_BLOCKED":
         raise E1LayerError("formal-announcement coverage must remain explicit")
+    # Additive (2026-09-29) income-completeness facts; older artifacts lack them.
+    gap_rows = 0
+    for row in rows:
+        row_coverage = row.get("evidence_coverage") or {}
+        gaps = row_coverage.get("income_missing_after_deadline")
+        if gaps is None:
+            continue
+        if not isinstance(gaps, list):
+            raise E1LayerError("income_missing_after_deadline must be a list")
+        gap_rows += bool(gaps)
+        # governance-mutation: E1_VALIDATE_GAP_ROW_NOT_COMPLETE
+        if gaps and row_coverage.get("income") == "COMPLETE":
+            raise E1LayerError("income COMPLETE with a report period missing after its deadline")
+        # governance-mutation: E1_VALIDATE_GAP_ROW_NOT_CLEAR
+        if gaps and row.get("verdict") == "NO_RED_FLAG_FOUND":
+            raise E1LayerError("NO_RED_FLAG_FOUND rests on income missing after its deadline")
+    if "income_deadline_gap_rows" in coverage and coverage["income_deadline_gap_rows"] != gap_rows:
+        raise E1LayerError("income deadline-gap coverage does not reconcile")
+    _validate_red_flag_supersession(rows, coverage, source, as_of)
+    error_keys = {
+        (str(item.get("endpoint")), str(item.get("period")))
+        for item in (source.get("errors") or [])
+        if isinstance(item, dict)
+    }
+    for call in calls:
+        if not isinstance(call, dict):
+            raise E1LayerError("event-layer source call must be an object")
+        # governance-mutation: E1_VALIDATE_CAPPED_CALL_BLOCKED
+        if call.get("capped") is True and call.get("status") != "DATA_BLOCKED":
+            raise E1LayerError("a truncated source call cannot be status OK")
+        # governance-mutation: E1_VALIDATE_BLOCKED_CALL_HAS_ERROR
+        if call.get("status") == "DATA_BLOCKED" and (
+            str(call.get("endpoint")), str(call.get("period"))
+        ) not in error_keys:
+            raise E1LayerError("a DATA_BLOCKED source call has no matching source error")
     source_errors = source.get("errors") or []
     unavailable_dimensions = source.get("unavailable_dimensions") or []
     expected_status = (
@@ -649,6 +1210,77 @@ def validate_event_layer(payload: dict[str, Any]) -> None:
         raise E1LayerError(
             f"event-layer status mismatch: declared={payload.get('status')} computed={expected_status}"
         )
+
+
+def _validate_red_flag_supersession(
+    rows: list[dict[str, Any]], coverage: dict[str, Any], source: dict[str, Any], as_of: str
+) -> None:
+    """Refuse RED_FLAG rows that rest on an unverified supersession reading.
+
+    Additive (2026-09-29): only artifacts whose rows carry
+    ``income_period_source_blocked`` are held to it; older artifacts lack it.
+    """
+    calls = [call for call in (source.get("calls") or []) if isinstance(call, dict)]
+    errors = [item for item in (source.get("errors") or []) if isinstance(item, dict)]
+    blocked_calls = _blocked_call_periods(calls, errors)
+    new_style = 0
+    blocked_rows = unverified_rows = withheld_rows = 0
+    for row in rows:
+        row_coverage = row.get("evidence_coverage") or {}
+        source_blocked = row_coverage.get("income_period_source_blocked")
+        if source_blocked is None:
+            continue
+        new_style += 1
+        if not isinstance(source_blocked, list) or any(
+            not isinstance(period, str)
+            or period not in blocked_calls["income_vip"]
+            or not period < as_of
+            for period in source_blocked
+        ):
+            raise E1LayerError("income_period_source_blocked must name blocked income calls")
+        blocked_rows += bool(source_blocked)
+        if source_blocked and (
+            row_coverage.get("income") == "COMPLETE" or row.get("verdict") == "NO_RED_FLAG_FOUND"
+        ):
+            raise E1LayerError("clean income coverage rests on a blocked income call")
+        codes = set(row.get("reason_codes") or [])
+        unverified_rows += "E1_SUPERSESSION_UNVERIFIED_INCOME_GAP" in codes
+        withheld_rows += "E1_RED_FLAG_WITHHELD_SUPERSESSION_UNVERIFIED" in codes
+        if row.get("verdict") != "RED_FLAG":
+            continue
+        gaps = row_coverage.get("income_missing_after_deadline") or []
+        for item in row.get("evidence") or []:
+            kind = str(item.get("kind"))
+            own_endpoint = {
+                "ISSUER_GUIDANCE": "forecast_vip", "EARNINGS_EXPRESS": "express_vip",
+            }.get(kind)
+            blocked = _supersession_dependencies(item, source_blocked) + (
+                _supersession_dependencies(item, blocked_calls[own_endpoint])
+                if own_endpoint else []
+            )
+            # governance-mutation: E1_VALIDATE_RED_FLAG_NOT_ON_BLOCKED_SUPERSESSION
+            if blocked:
+                raise E1LayerError(
+                    "RED_FLAG evidence rests on a period hidden by a blocked source call"
+                )
+            # governance-mutation: E1_VALIDATE_RED_FLAG_GAP_MARKED
+            if _supersession_dependencies(item, gaps) and (
+                "E1_SUPERSESSION_UNVERIFIED_INCOME_GAP" not in codes
+            ):
+                raise E1LayerError(
+                    "RED_FLAG resting on income missing after its deadline lacks its marker"
+                )
+    if not new_style:
+        return
+    expected = {
+        "income_source_blocked_rows": blocked_rows,
+        "red_flag_supersession_unverified_rows": unverified_rows,
+        "red_flag_withheld_rows": withheld_rows,
+        "truncated_calls": sum(call.get("capped") is True for call in calls),
+    }
+    for key, value in expected.items():
+        if coverage.get(key) != value:
+            raise E1LayerError(f"{key} coverage does not reconcile")
 
 
 def _fixture_registry(as_of: str) -> dict[str, Any]:
@@ -806,6 +1438,7 @@ def _selftest() -> int:
             if row["ts_code"] == "600001.SH"
         },
         source_complete=True,
+        as_of=as_of,
     )
     checks = [
         (len(rows) == 5, "every U0-listed security retained"),
@@ -850,6 +1483,44 @@ def _selftest() -> int:
             "prior-year profit amount is never interpreted as a percentage",
         )
     )
+    null_latest = classify_ticker(
+        "600001.SH",
+        forecast_rows=[],
+        express_rows=[],
+        income_rows=[
+            {"ann_date": "20260331", "end_date": "20251231", "report_type": "1", "n_income_attr_p": 100.0},
+            {"ann_date": "20260331", "end_date": "20250930", "report_type": "1", "n_income_attr_p": 80.0},
+            {"ann_date": "20260430", "end_date": "20260331", "report_type": "1", "n_income_attr_p": float("nan")},
+        ],
+        as_of=as_of,
+    )
+    checks.append(
+        (
+            null_latest["verdict"] == "DATA_BLOCKED"
+            and null_latest["reason_codes"] == ["INCOME_VALUE_MISSING"]
+            and null_latest["latest_e1_date"] == "20260430",
+            "filed NaN latest period blocks instead of falling back to an older pair",
+        )
+    )
+    gap = classify_ticker(
+        "600001.SH",
+        forecast_rows=[],
+        express_rows=[],
+        income_rows=[
+            {"ann_date": "20250830", "end_date": "20250630", "report_type": "1", "n_income_attr_p": 50.0},
+            {"ann_date": "20251030", "end_date": "20250930", "report_type": "1", "n_income_attr_p": 80.0},
+            {"ann_date": "20260331", "end_date": "20251231", "report_type": "1", "n_income_attr_p": 100.0},
+            {"ann_date": "20260801", "end_date": "20260630", "report_type": "1", "n_income_attr_p": -40.0},
+        ],
+        as_of=as_of,
+    )
+    checks.append(
+        (
+            gap["verdict"] == "DATA_BLOCKED"
+            and gap["reason_codes"] == ["INSUFFICIENT_FILED_QUARTER_HISTORY"],
+            "non-adjacent filed quarters are never paired",
+        )
+    )
     missing_express_metric = build_event_layer(
         registry,
         {
@@ -885,6 +1556,52 @@ def _selftest() -> int:
             source_failed["status"] == "PARTIAL"
             and all(row["verdict"] in {"RED_FLAG", "DATA_BLOCKED"} for row in source_failed["rows"]),
             "source failure cannot yield clean verdict",
+        )
+    )
+    gap_layer = build_event_layer(
+        registry,
+        {
+            "forecast_vip": [],
+            "express_vip": [],
+            "income_vip": [row for row in income_rows if row["ts_code"] != "600001.SH"]
+            + [row for row in income_rows if row["ts_code"] == "600001.SH" and row["end_date"] != "20260331"],
+        },
+        as_of=as_of,
+        periods=fixture_periods,
+        source_calls=fixture_calls,
+    )
+    validate_event_layer(gap_layer)
+    gap_row = next(row for row in gap_layer["rows"] if row["ts_code"] == "600001.SH")
+    checks.append(
+        (
+            gap_row["verdict"] == "DATA_BLOCKED"
+            and gap_row["evidence_coverage"]["income"] == "DATA_BLOCKED"
+            and gap_row["evidence_coverage"]["income_missing_after_deadline"] == ["20260331"]
+            # Composed with the U3 freshness rule: a stale latest filing is named
+            # FILED_PERIOD_STALE; the gap itself stays in evidence_coverage.
+            and "FILED_PERIOD_STALE" in gap_row["reason_codes"],
+            "income missing after its statutory deadline is never COMPLETE",
+        )
+    )
+    capped_rows, capped_errors, capped_calls = fetch_e1_batches(
+        "fixture-token",
+        ["20260630"],
+        fetch=lambda _t, endpoint, _p, _f: (
+            [],
+            {
+                "pages": 2,
+                "rows": 9000 if endpoint == "income_vip" else 0,
+                "page_limit": 2000,
+                "capped": endpoint == "income_vip",
+                "truncation_reason": "PAGING_NOT_HONORED" if endpoint == "income_vip" else None,
+            },
+        ),
+    )
+    checks.append(
+        (
+            [call["status"] for call in capped_calls] == ["OK", "OK", "DATA_BLOCKED"]
+            and [item["endpoint"] for item in capped_errors] == ["income_vip"],
+            "a truncated whole-market batch is DATA_BLOCKED and a source error",
         )
     )
     unsafe_registry = json.loads(json.dumps(registry))
