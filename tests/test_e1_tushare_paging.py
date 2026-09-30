@@ -423,7 +423,8 @@ class E1IncomeCompletenessTests(unittest.TestCase):
         self.assertEqual("DATA_BLOCKED", stale["evidence_coverage"]["income"])
         self.assertEqual(["20260630"], stale["evidence_coverage"]["income_missing_after_deadline"])
         self.assertEqual("DATA_BLOCKED", stale["verdict"])
-        self.assertEqual(["INCOME_PERIOD_MISSING_AFTER_DEADLINE"], stale["reason_codes"])
+        # Composed with #390: a stale latest filing is named by the shared U3 rule.
+        self.assertEqual(["FILED_PERIOD_STALE"], stale["reason_codes"])
 
         self.assertEqual([], rows["600003.SH"]["evidence_coverage"]["income_missing_after_deadline"])
         self.assertEqual(
@@ -434,26 +435,46 @@ class E1IncomeCompletenessTests(unittest.TestCase):
         self.assertEqual(3, payload["coverage"]["income_deadline_gap_rows"])
         e1.validate_event_layer(payload)
 
+        # A hole behind a fresh latest filing is named by the deadline-gap rule.
+        hole = self._build(_full_history("600001.SH", skip=("20260331",)))
+        hole_row = next(item for item in hole["rows"] if item["ts_code"] == "600001.SH")
+        self.assertEqual("DATA_BLOCKED", hole_row["verdict"])
+        self.assertEqual(["INCOME_PERIOD_MISSING_AFTER_DEADLINE"], hole_row["reason_codes"])
+        e1.validate_event_layer(hole)
+
     def test_a_hole_inside_the_window_is_a_gap(self) -> None:
         income = _full_history("600001.SH", skip=("20260331",))
         gaps = e1._income_deadline_gaps({row["end_date"] for row in income}, PERIODS, AS_OF)
         self.assertEqual(["20260331"], gaps)
 
     def test_red_flag_from_filed_history_is_kept_but_income_is_not_complete(self) -> None:
+        # Composed with #390: a stale latest filing is never scored (FILED_PERIOD_STALE),
+        # so the late filer's older negative trend is DATA_BLOCKED, not a RED_FLAG.
         payload = self._build(self._rows())
         row = next(item for item in payload["rows"] if item["ts_code"] == "600005.SH")
         self.assertEqual("DATA_BLOCKED", row["evidence_coverage"]["income"])
-        self.assertEqual("RED_FLAG", row["verdict"])
+        self.assertEqual("DATA_BLOCKED", row["verdict"])
+        self.assertEqual(["FILED_PERIOD_STALE"], row["reason_codes"])
         self.assertEqual(["20260630"], row["evidence_coverage"]["income_missing_after_deadline"])
+        # A scorable fresh pair with a hole behind it is still not income COMPLETE.
+        hole = self._build(_full_history("600001.SH", skip=("20251231",)))
+        hole_row = next(item for item in hole["rows"] if item["ts_code"] == "600001.SH")
+        self.assertEqual(["20251231"], hole_row["evidence_coverage"]["income_missing_after_deadline"])
+        self.assertEqual("DATA_BLOCKED", hole_row["evidence_coverage"]["income"])
+        e1.validate_event_layer(hole)
 
     def test_late_filer_red_flag_keeps_the_flag_with_a_supersession_marker(self) -> None:
-        # E1P-1 (complete source, genuine late filer): the Q1-based trend is stale
-        # relative to the unfiled H1 statement; keep the filed fact, mark the gap.
-        payload = self._build(self._rows())
-        row = next(item for item in payload["rows"] if item["ts_code"] == "600005.SH")
+        # E1P-1 (complete source, genuine late filer): negative H1 guidance stays live
+        # only because the H1 statement is unfiled after its deadline; keep the filed
+        # fact, mark the gap.  (Composed with #390: the stale income trend itself is
+        # never scored, so the carrier here is the guidance flag.)
+        income = _full_history("600002.SH", skip=("20260630",))
+        forecast = [_forecast("600002.SH", "20260630", "预减", "20260715")]
+        payload = self._build(income, forecast=forecast)
+        row = next(item for item in payload["rows"] if item["ts_code"] == "600002.SH")
         self.assertEqual("RED_FLAG", row["verdict"])
         self.assertEqual(
-            ["E1_SUPERSESSION_UNVERIFIED_INCOME_GAP", "NEGATIVE_AND_WORSENING_QUARTER_PROFIT"],
+            ["E1_SUPERSESSION_UNVERIFIED_INCOME_GAP", "NEGATIVE_ISSUER_GUIDANCE"],
             row["reason_codes"],
         )
         self.assertEqual(1, payload["coverage"]["red_flag_supersession_unverified_rows"])
@@ -477,10 +498,13 @@ class E1IncomeCompletenessTests(unittest.TestCase):
         e1.validate_event_layer(payload)
 
     def test_validator_refuses_an_unmarked_red_flag_on_a_deadline_gap(self) -> None:
-        payload = self._build(self._rows())
+        income = _full_history("600002.SH", skip=("20260630",))
+        forecast = [_forecast("600002.SH", "20260630", "预减", "20260715")]
+        payload = self._build(income, forecast=forecast)
         corrupt = json.loads(json.dumps(payload))
-        row = next(item for item in corrupt["rows"] if item["ts_code"] == "600005.SH")
-        row["reason_codes"] = ["NEGATIVE_AND_WORSENING_QUARTER_PROFIT"]
+        row = next(item for item in corrupt["rows"] if item["ts_code"] == "600002.SH")
+        self.assertEqual("RED_FLAG", row["verdict"])
+        row["reason_codes"] = ["NEGATIVE_ISSUER_GUIDANCE"]
         corrupt["coverage"]["red_flag_supersession_unverified_rows"] = 0
         corrupt["rows_hash"] = e1._sha256(corrupt["rows"])
         with self.assertRaises(e1.E1LayerError) as caught:
@@ -507,10 +531,11 @@ class E1IncomeCompletenessTests(unittest.TestCase):
         income += _full_history("600004.SH", skip=("20260630",))
         payload = self._build(income)
         rows = {row["ts_code"]: row for row in payload["rows"]}
-        self.assertEqual(["INCOME_PERIOD_UNSCORABLE"], rows["600002.SH"]["reason_codes"])
-        self.assertEqual(
-            ["INCOME_PERIOD_MISSING_AFTER_DEADLINE"], rows["600004.SH"]["reason_codes"]
-        )
+        # Composed with #390: a filed null is a filing (it retires older guidance) and
+        # is named INCOME_VALUE_MISSING by the shared rule; the stale filer is
+        # FILED_PERIOD_STALE.  INCOME_PERIOD_UNSCORABLE is no longer reachable.
+        self.assertEqual(["INCOME_VALUE_MISSING"], rows["600002.SH"]["reason_codes"])
+        self.assertEqual(["FILED_PERIOD_STALE"], rows["600004.SH"]["reason_codes"])
         e1.validate_event_layer(payload)
 
     def test_deadline_day_and_before_do_not_infer_a_gap(self) -> None:
@@ -756,7 +781,7 @@ class E1TruncatedBatchTests(unittest.TestCase):
         payload = self._truncated_h1_layer()
         corrupt = json.loads(json.dumps(payload))
         row = next(item for item in corrupt["rows"] if item["ts_code"] == "600001.SH")
-        evidence, triggered = e1._forecast_evidence(
+        evidence, triggered, _scorable = e1._forecast_evidence(
             _forecast("600001.SH", "20260630", "预减", "20260715")
         )
         self.assertTrue(triggered)

@@ -74,6 +74,8 @@ jobs:
           python3 scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/feature_health_contract.task.json
       - name: Offline deterministic tests (zero network)
         run: python3 tests/test_engines_offline.py
+      - name: U3 red-flag gate shares E1 layer semantics (offline)
+        run: python3 tests/test_red_flag_gate_semantics.py
       - name: LLM adapter offline tests (zero network)
         run: python3 tests/test_llm_adapter_offline.py
       - name: Promoter QC gate offline tests (zero network)
