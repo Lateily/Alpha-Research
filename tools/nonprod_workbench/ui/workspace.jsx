@@ -1,8 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { statusTone } from './status-tone.mjs';
 import { latestJobByKind } from './job-view.mjs';
-import { Activity, ArrowRight, CalendarClock, Check, ClipboardCheck, Database, Download, FileText, Layers3, ListFilter, LockKeyhole, Play, Plus, RefreshCw, Save, Search, Send, ShieldCheck, Wallet, X } from 'lucide-react';
-export const workspaceTabs = [['desk', '研究总览', Layers3], ['nightly', '夜链与计划', CalendarClock], ['macro', '宏观与数据', Activity], ['models', '模型与方法', ShieldCheck], ['candidates', '候选证据', ListFilter], ['drafts', '研究稿', FileText], ['reviews', '提交与审核', ClipboardCheck], ['paper', '模拟盘与归因', Wallet], ['records', '数据与审计', Database]];
+import { Activity, ArrowRight, CalendarClock, Check, ClipboardCheck, Database, Download, FileText, Layers3, ListFilter, LockKeyhole, Newspaper, Play, Plus, RefreshCw, Save, Search, Send, ShieldCheck, Wallet, X } from 'lucide-react';
+export const workspaceTabs = [['desk', '研究总览', Layers3], ['nightly', '夜链与计划', CalendarClock], ['macro', '宏观与数据', Activity], ['news', '资讯索引', Newspaper], ['models', '模型与方法', ShieldCheck], ['candidates', '候选证据', ListFilter], ['drafts', '研究稿', FileText], ['reviews', '提交与审核', ClipboardCheck], ['paper', '模拟盘与归因', Wallet], ['records', '数据与审计', Database]];
 const scheduledJobLabels = {
   observe: '只读数据快照',
   integrity: '本地完整性检查',
@@ -206,6 +206,7 @@ export default function Workspace({
   const latestBrief = latestJobByKind(state?.jobs || [], 'brief-trial');
   const latestEarnings = latestJobByKind(state?.jobs || [], 'earnings-trial');
   const macroRegions = obs?.macro?.macro_state?.payload?.data?.regions || {};
+  const news = state?.news_index;
   return <div className="workspace-surface">
     {error && <div className="alert error" role="alert"><X size={16} /><code>{error}</code></div>}
     {notice && <div className="alert success" role="status"><Check size={16} />{notice}</div>}
@@ -249,6 +250,19 @@ export default function Workspace({
         <section><div className="section-title"><h2>新载体执行记录</h2><Status value="OFFLINE ONLY" /></div><Table heads={['任务 ID', '类型', '状态', '实物结果']}>{[...state.jobs].reverse().map(j => <tr key={j.job_id}><td><code>{j.job_id}</code></td><td>{jobLabels[j.kind]}</td><td><Status value={j.status} />{j.status === 'STARTED' && <p>运行中或中断未收尾；不自动重复</p>}</td><td><JsonEvidence title="结果回执" value={j.result} /></td></tr>)}</Table></section>
         {latestBrief && <section><div className="section-title"><h2>冻结历史简报最近试跑</h2><Status value={latestBrief.status} /></div>{latestBrief.status === 'SUCCEEDED' ? <><div className="source-strip"><span>证据截止 <code>{latestBrief.result.as_of}</code></span><span>WORKFLOW_DEBUG / 非今日简报</span><span>人工核验 {latestBrief.result.human_review}</span><span>无 U4、paper 或交易权限</span></div><Status value={latestBrief.result.data_status} /><pre className="brief-report">{latestBrief.result.report}</pre></> : <JsonEvidence title="最新试跑阻断回执" value={latestBrief.result} />}</section>}
       </>}
+      {tab === 'news' && <section>
+        <div className="section-title"><h2>全球资讯索引</h2><Status value={news?.status || (state.news_index_error ? 'INTEGRITY_ERROR' : 'NOT_CONFIGURED')} /></div>
+        {state.news_index_error && <div className="alert error" role="alert">{state.news_index_error}</div>}
+        {!news && !state.news_index_error && <Empty title="尚未接入资讯索引快照" />}
+        {news && <>
+          <div className="source-strip"><span>来源 <a href={news.attribution_url} target="_blank" rel="noopener noreferrer">GDELT Project</a></span><span>查询 <strong>{news.query_id}</strong></span><span>近实时索引 · 非逐秒快讯 · 未核实原文</span></div>
+          <div className="status-lines"><div><span>最近尝试</span><strong>{news.last_attempt?.at || '未运行'}</strong></div><div><span>查询窗口</span><strong>{news.last_attempt ? `${news.last_attempt.window_start} 至 ${news.last_attempt.window_end}` : '未运行'}</strong></div><div><span>最后成功窗口</span><strong>{news.last_good_end || '无'}</strong></div><div><span>已提交游标</span><code>{news.cursor_end || '无'}</code></div><div><span>本窗新增</span><strong>{news.new_count}</strong></div><div><span>索引条目</span><strong>{news.events.length}</strong></div></div>
+          {news.reason && <div className="alert error" role="status">{news.reason} · 失败窗口未推进游标</div>}
+          <Table heads={['索引时间（UTC）', '标题 / 原文', '来源', '证据等级']}>{news.events.map(item => <tr key={item.event_id}><td><time dateTime={item.indexed_at}>{item.indexed_at}</time></td><td><a href={item.url} target="_blank" rel="noopener noreferrer">{item.title}</a></td><td>{item.domain || 'UNAVAILABLE'}<br /><small>{item.language || 'UNAVAILABLE'}</small></td><td><Status value={item.evidence_tier} /></td></tr>)}</Table>
+          {!news.events.length && <Empty title="当前没有可展示的索引条目" />}
+          <div className="source-strip"><span>仅标题与元数据 · 不保存媒体正文</span><span>不构成公司事实核验、U4 授权或交易信号</span></div>
+        </>}
+      </section>}
       {tab === 'macro' && <>
         <section><div className="section-title"><h2>四轴宏观面板</h2><Status value="CALIBRATING" /></div>{['CN','US'].map(region => <div key={region}><h3 className="region-heading">{region === 'CN' ? '中国' : '美国'}</h3><div className="macro-axes">{[['GROWTH','增长'],['INFLATION','通胀'],['LIQUIDITY','流动性'],['RISK','风险偏好']].map(([key,axis]) => {const row=macroRegions[region]?.axes?.[key]; return <article key={key}><Activity size={18}/><h3>{axis}</h3><strong>{row?.label || 'UNAVAILABLE'}</strong><Status value={row?.data_status || 'DATA_BLOCKED'}/></article>;})}</div></div>)}{obs?.macro?.macro_panel?.payload && <JsonEvidence title="四轴源契约（未经本工作台重新推断）" value={obs.macro.macro_panel.payload} />}</section>
         <section><div className="section-title"><h2>宏观来源缺口</h2><Status value={quality.status === 'BOUND_OBSERVATION_ONLY' ? 'OBSERVED_ONLY' : 'NOT_EVALUATED'} /></div><div className="status-lines"><div><span>来源覆盖</span><Status value={quality.macro?.source_coverage_complete == null ? 'UNVERIFIED' : quality.macro.source_coverage_complete ? 'MATCH' : 'MISMATCH'} /></div><div><span>事件覆盖</span><Status value={quality.macro ? (quality.macro.event_coverage_complete ? 'MATCH' : 'MISMATCH') : 'UNVERIFIED'} /></div><div><span>当前计划差异（未验）</span><strong>{quality.macro ? `${quality.macro.missing_source_rows} / ${quality.macro.expected_sources}` : '未验'}</strong></div><div><span>事件缺行</span><strong>{quality.macro ? `${quality.macro.missing_event_rows} / ${quality.macro.expected_events}` : '未验'}</strong></div><div><span>不可用来源</span><strong>{quality.macro ? `${quality.macro.unavailable_sources} / ${quality.macro.sources_total}` : '未验'}</strong></div><div><span>实际值缺失</span><strong>{quality.macro ? `${quality.macro.actual_blocked_events} / ${quality.macro.events_total}` : '未验'}</strong></div><div><span>实际值陈旧</span><strong>{quality.macro ? `${quality.macro.stale_actual_events} / ${quality.macro.events_total}` : '未验'}</strong></div><div><span>未得预期差</span><strong>{quality.macro ? `${quality.macro.missing_consensus} / ${quality.macro.events_total}` : '未验'}</strong></div></div><Table heads={['来源', '指标', '状态', '原因']}>{(quality.macro?.unavailable_detail || []).map((row, index) => <tr key={`${row.source_id}-${row.metric_key}-${index}`}><td>{row.source_id}</td><td>{row.metric_key}</td><td><Status value={row.status} /></td><td><code>{row.reason || '未记录'}</code></td></tr>)}</Table></section>

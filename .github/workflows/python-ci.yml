@@ -146,6 +146,10 @@ jobs:
           python3 scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/local_workspace_system.task.json
           python3 scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/workbench_real_brief.task.json
           python3 scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/workbench_earnings_trial.task.json
+      - name: GDELT nonproduction news index and read-only projection (offline)
+        run: |
+          python3 tests/test_gdelt_news_index.py
+          python3 scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/gdelt_news_index.task.json
       # AIOS-K1:A-006/A-007/A-008 任务合同、状态重放、只读对账
       - name: AIOS K1 task registry regression (offline)
         run: python3 tests/test_ai_os_k1_offline.py
