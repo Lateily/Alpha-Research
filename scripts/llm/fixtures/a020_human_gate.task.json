@@ -1,0 +1,70 @@
+{
+  "schema": "ai-task.v1",
+  "task_id": "AIOS-A020-HUMAN-GATE-PHASE1",
+  "source_issue": 191,
+  "architecture_block": ["aios-k4", "human-decision-gate"],
+  "objective": "Deliver A-020 Human Gate Phase 1 as an offline fail-closed validator that binds a structured decision and attestation claim to an exact task, gate, reviewed HEAD, artifact hash, evidence reference, independent principal, and required role while keeping every approval non-authorizing until a trusted authority resolver exists.",
+  "non_goals": [
+    "Do not resolve or authenticate GitHub identity",
+    "Do not set can_authorize=true or grant merge, deployment, research, trade, or production authority",
+    "Do not treat model output, chat text, usernames, caller-supplied mappings, hashes, or credentials as human approval",
+    "Do not call providers, GitHub, or any network service",
+    "Do not wire H7, Policy, Context, Router, Executor, Memory, production state, or GitHub writes"
+  ],
+  "human_owner": "Junyan",
+  "reviewer": "Reed or Simon, with Junyan final review",
+  "executor_candidates": ["Jason", "Codex"],
+  "dependencies": ["AIOS K1 task registry", "AIOS A-035 harness evaluation", "Issue #191"],
+  "authority_docs": [
+    "AGENTS.md",
+    "scripts/llm/AGENTS.md",
+    "docs/llm/AI_OS_ENGINEERING_BACKLOG.md",
+    "docs/llm/AIOS_A020_HUMAN_DECISION_GATE.md",
+    "scripts/llm/schemas/decision.schema.json"
+  ],
+  "file_scope": [
+    ".github/workflows/python-ci.yml",
+    "docs/llm/AIOS_A020_HUMAN_DECISION_GATE.md",
+    "scripts/governance_mutation_gate.py",
+    "scripts/llm/ai_os/human_gate.py",
+    "scripts/llm/schemas/decision.schema.json",
+    "scripts/llm/fixtures/a020_human_gate.task.json",
+    "tests/test_ai_os_a020_human_gate_offline.py",
+    "tests/test_governance_mutation_gate.py"
+  ],
+  "forbidden_scope": [
+    "web",
+    "experiments",
+    "data_history",
+    "public/data/v2",
+    "scripts/llm/ai_os/adapters",
+    "production state and credentials"
+  ],
+  "input_contracts": [
+    "ai-decision.v1",
+    "ai-human-attestation.v1 caller claim",
+    "HumanGateContext with exact current HEAD, reviewed artifact hash, executor identity, and required authority role"
+  ],
+  "output_artifacts": [
+    "Deterministic HUMAN_GATE_BLOCKED result for every APPROVE while AUTHORITY_RESOLVER_UNWIRED",
+    "Non-authorizing UNVERIFIED_DECISION_RECORDED result for valid REVISE, REJECT, DEFER, and RETIRE",
+    "Closed schemas, offline adversarial regressions, mutation cases, and CI registration"
+  ],
+  "acceptance_tests": [
+    "python3 scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/a020_human_gate.task.json",
+    "AR_OFFLINE=1 python3 tests/test_ai_os_a020_human_gate_offline.py",
+    "AR_OFFLINE=1 python3 tests/test_ai_os_k1_offline.py",
+    "AR_OFFLINE=1 python3 tests/test_ai_os_a035_harness_eval_offline.py",
+    "AR_OFFLINE=1 python3 tests/test_agent_adapter_offline.py",
+    "AR_OFFLINE=1 python3 tests/test_team_ai_workspace.py",
+    "AR_OFFLINE=1 python3 tests/test_governance_mutation_gate.py",
+    "AR_OFFLINE=1 python3 scripts/governance_mutation_gate.py",
+    "AR_OFFLINE=1 python3 tests/test_no_network_guard.py",
+    "git diff --check"
+  ],
+  "risk_level": "HIGH",
+  "network_policy": "OFFLINE",
+  "budget": {"max_cny": "0", "max_minutes": 240},
+  "approval_gates": ["INDEPENDENT_EXACT_HEAD_REVIEW", "JUNYAN_READY", "JUNYAN_FINAL_MERGE"],
+  "created_at": "2026-09-03T12:00:00+08:00"
+}
