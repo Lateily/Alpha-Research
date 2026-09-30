@@ -1,5 +1,5 @@
 {
-  "as_of": "2026-09-30T06:29:43.566742",
+  "as_of": "2026-09-30T15:03:17.099614",
   "base_currency": "CNY",
   "fx_rates": {
     "HKDCNY": 0.9165
@@ -13,14 +13,14 @@
       "currency": "CNY",
       "quantity": 150,
       "avg_cost": 681.36,
-      "current_price": 811.48,
-      "market_value": 121722.0,
+      "current_price": 808.44,
+      "market_value": 121266.0,
       "cost_value": 102204.0,
-      "pnl_abs": 19518.0,
-      "pnl_pct": 19.1,
-      "market_value_cny": 121722.0,
+      "pnl_abs": 19062.0,
+      "pnl_pct": 18.65,
+      "market_value_cny": 121266.0,
       "cost_value_cny": 102204.0,
-      "pnl_abs_cny": 19518.0,
+      "pnl_abs_cny": 19062.0,
       "fx_rate_used": 1.0,
       "holding_days": 204,
       "as_of": "2026-09-30",
@@ -58,7 +58,7 @@
       },
       "vp_at_entry": 79,
       "wrongIf_at_entry": "1.6T mass production delayed beyond Q3 2026 OR NVDA+MSFT+GOOGL stock prices collectively drop >25% from ATH within 1 quarter",
-      "weight_pct": 48.12
+      "weight_pct": 48.03
     },
     {
       "ticker": "6160.HK",
@@ -108,7 +108,7 @@
       },
       "vp_at_entry": 65,
       "wrongIf_at_entry": "CELESTIAL Phase 3 uMRD data disappoints (<50% rate) OR Brukinsa US BTK inhibitor market share drops below 15% OR revenue_growth < 20% for 2 consecutive quarters",
-      "weight_pct": 4.6
+      "weight_pct": 4.61
     },
     {
       "ticker": "700.HK",
@@ -163,7 +163,7 @@
       },
       "vp_at_entry": 64,
       "wrongIf_at_entry": "New gaming approval freeze lasting >3 months OR revenue_growth < -5% for 2 consecutive quarters",
-      "weight_pct": 27.5
+      "weight_pct": 27.55
     },
     {
       "ticker": "9999.HK",
@@ -213,7 +213,7 @@
       },
       "vp_at_entry": 58,
       "wrongIf_at_entry": "earnings_growth < -30% for 2 consecutive quarters OR Japan revenue contribution fails to reach 15% of total by Q4 2026",
-      "weight_pct": 15.82
+      "weight_pct": 15.85
     },
     {
       "ticker": "002594.SZ",
@@ -223,14 +223,14 @@
       "currency": "CNY",
       "quantity": 120,
       "avg_cost": 96.192,
-      "current_price": 83.34,
-      "market_value": 10000.8,
+      "current_price": 83.31,
+      "market_value": 9997.2,
       "cost_value": 11543.04,
-      "pnl_abs": -1542.24,
-      "pnl_pct": -13.36,
-      "market_value_cny": 10000.8,
+      "pnl_abs": -1545.84,
+      "pnl_pct": -13.39,
+      "market_value_cny": 9997.2,
       "cost_value_cny": 11543.04,
-      "pnl_abs_cny": -1542.24,
+      "pnl_abs_cny": -1545.84,
       "fx_rate_used": 1.0,
       "holding_days": 182,
       "as_of": "2026-09-30",
@@ -258,16 +258,16 @@
       },
       "vp_at_entry": 52,
       "wrongIf_at_entry": "revenue_growth < -10% for 2 consecutive quarters (tariff impact proxy) OR gross_margin drops below 15% OR earnings_growth < -40%",
-      "weight_pct": 3.95
+      "weight_pct": 3.96
     }
   ],
   "summary": {
-    "total_value_cny": 252945.47,
+    "total_value_cny": 252485.87,
     "total_cost_cny": 234969.71,
-    "total_pnl_cny": 17975.76,
-    "total_pnl_pct": 7.65,
-    "total_value": 252945.47,
+    "total_pnl_cny": 17516.16,
+    "total_pnl_pct": 7.45,
+    "total_value": 252485.87,
     "total_cost": 234969.71,
-    "total_pnl": 17975.76
+    "total_pnl": 17516.16
   }
 }
