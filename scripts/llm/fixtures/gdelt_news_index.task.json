@@ -1,0 +1,54 @@
+{
+  "schema": "ai-task.v1",
+  "task_id": "GDELT-NEWS-INDEX-20260930",
+  "architecture_block": ["independent-research-workflow", "news-evidence", "nonproduction-workbench"],
+  "objective": "Add an opt-in GDELT GAL RSS metadata index with feed-update cursor, duplicate suppression, explicit source delay and gaps, and read-only workbench projection.",
+  "non_goals": [
+    "Do not collect or republish original publisher article bodies",
+    "Do not treat a rolling RSS index as a seconds-level flash feed or verified company event",
+    "Do not activate nightly, scheduled, production, U4, paper, or trade authority",
+    "Do not use or distribute the personal Tushare token or content"
+  ],
+  "human_owner": "Junyan",
+  "reviewer": "Junyan",
+  "executor_candidates": ["Codex"],
+  "dependencies": ["GDELT open-dataset attribution terms; Tushare news entitlement and team display remain unavailable"],
+  "authority_docs": ["AGENTS.md", "experiments/AGENTS.md", "scripts/llm/AGENTS.md"],
+  "file_scope": [
+    "experiments/research_workflows/gdelt_news_index.py",
+    "tests/test_gdelt_news_index.py",
+    "scripts/llm/workbench_workspace.py",
+    "scripts/llm/nonprod_workbench.py",
+    "tools/nonprod_workbench/ui/workspace.jsx",
+    "tools/nonprod_workbench/ui/workspace.css",
+    "tools/nonprod_workbench/ui/status-tone.mjs",
+    "scripts/governance_mutation_gate.py",
+    "scripts/llm/fixtures/gdelt_news_index.task.json",
+    ".github/workflows/python-ci.yml",
+    "docs/research/GDELT_NEWS_INDEX_V1.md"
+  ],
+  "forbidden_scope": [
+    "/Users/years/ar-live",
+    "experiments/execution_tracker/run_nightly.py",
+    "experiments/execution_tracker/model_paper_fund.py",
+    "public/data/v2",
+    "api/news.js"
+  ],
+  "input_contracts": ["GDELT GAL RSS metadata with HTTP Last-Modified, or an offline frozen RSS plus source header time"],
+  "output_artifacts": ["ar.gdelt-news-index.v2 nonproduction snapshot with feed cursor, source-delay status, and hash", "read-only workbench projection", "negative regression receipts"],
+  "acceptance_tests": [
+    "AR_OFFLINE=1 PYTHONDONTWRITEBYTECODE=1 python3 tests/test_gdelt_news_index.py",
+    "AR_OFFLINE=1 PYTHONDONTWRITEBYTECODE=1 python3 scripts/governance_mutation_gate.py",
+    "AR_OFFLINE=1 PYTHONDONTWRITEBYTECODE=1 python3 /Users/years/Desktop/Stock/e2e-twin/twin-20260902/tools/ci_local.py",
+    "git diff --check"
+  ],
+  "risk_level": "MEDIUM",
+  "network_policy": "ALLOWLIST",
+  "budget": {"max_cny": "0", "max_minutes": 240},
+  "approval_gates": [
+    "User requested source-rights verification and separate collector/cursor/workbench connection on 20260930",
+    "User confirmed GDELT metadata as the first source; bounded live canary is permitted",
+    "PR review and Junyan merge approval; production remains separately gated"
+  ],
+  "created_at": "2026-09-30T00:00:00+01:00"
+}

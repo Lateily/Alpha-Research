@@ -115,11 +115,13 @@ def projection(events):
 
 class Workspace:
     def __init__(self, store, source_root=None, clock=time.time,
-                 brief_pack_root=None, earnings_pack_root=None):
+                 brief_pack_root=None, earnings_pack_root=None,
+                 news_index_snapshot=None):
         self.store, self.clock = store, clock
         self.source_root = Path(source_root) if source_root else None
         self.brief_pack_root = Path(brief_pack_root) if brief_pack_root else None
         self.earnings_pack_root = Path(earnings_pack_root) if earnings_pack_root else None
+        self.news_index_snapshot = Path(news_index_snapshot) if news_index_snapshot else None
         if self.source_root and (self.source_root.is_symlink() or not self.source_root.is_dir()):
             raise WorkspaceError("READ_ONLY_SOURCE_ROOT_INVALID")
         if self.source_root and self.source_root.resolve() in store.path.resolve().parents:
@@ -136,6 +138,14 @@ class Workspace:
             state_dir = store.path.parent.resolve()
             if pack_dir == state_dir or pack_dir in state_dir.parents or state_dir in pack_dir.parents:
                 raise WorkspaceError("STATE_MUST_BE_OUTSIDE_FROZEN_EARNINGS_PACK")
+        if self.news_index_snapshot:
+            path = self.news_index_snapshot
+            state_dir = store.path.parent.resolve()
+            source_dir = path.parent.resolve()
+            if (path.name != "current.json" or path.parent.name != "gdelt-news"
+                    or source_dir == state_dir or source_dir in state_dir.parents
+                    or state_dir in source_dir.parents):
+                raise WorkspaceError("NEWS_INDEX_SOURCE_MUST_BE_DISJOINT")
         self.lock = threading.Lock()
         self.stopping = threading.Event()
         self.owner_failures = []
@@ -401,8 +411,19 @@ class Workspace:
                 observation = evidence.view(raw)
             except (ValueError, KeyError):
                 issue = "OBSERVATION_INTEGRITY_ERROR"
+        news_index, news_index_error = None, None
+        if self.news_index_snapshot:
+            try:
+                module_path = CODE_ROOT / "experiments/research_workflows/gdelt_news_index.py"
+                spec = importlib.util.spec_from_file_location("workbench_gdelt_news_index", module_path)
+                module = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(module)
+                news_index = module.read_snapshot(self.news_index_snapshot.parent.parent)
+            except (OSError, ValueError, ImportError, AttributeError):
+                news_index_error = "NEWS_INDEX_INTEGRITY_ERROR"
         return {"schema": "ar-local-workspace.v1", **state, "observation": observation,
                 "observation_error": issue, "events": events, "owner_configured": owner,
+                "news_index": news_index, "news_index_error": news_index_error,
                 "read_only_source_configured": self.source_root is not None,
                 "brief_pack_configured": self.brief_pack_root is not None,
                 "earnings_pack_configured": self.earnings_pack_root is not None,
