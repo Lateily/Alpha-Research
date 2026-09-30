@@ -1,194 +1,12 @@
 {
-  "fetched_at": "2026-09-29T14:58:25Z",
-  "trade_date": "20260929",
+  "fetched_at": "2026-09-30T06:31:28Z",
+  "trade_date": "20260930",
   "tier": 15000,
   "_status": "partial",
   "hot_concepts": [],
   "cold_concepts": [],
-  "hot_industries": [
-    {
-      "name": "融资融券",
-      "ts_code": "BK0596.DC",
-      "net_inflow_yuan": 58273095680000.0,
-      "pct_chg": 0.63
-    },
-    {
-      "name": "广东板块",
-      "ts_code": "BK0153.DC",
-      "net_inflow_yuan": 55949370880000.0,
-      "pct_chg": 1.32
-    },
-    {
-      "name": "深股通",
-      "ts_code": "BK0804.DC",
-      "net_inflow_yuan": 50484761600000.0,
-      "pct_chg": 0.71
-    },
-    {
-      "name": "深成500",
-      "ts_code": "BK0568.DC",
-      "net_inflow_yuan": 38852500480000.0,
-      "pct_chg": 0.54
-    },
-    {
-      "name": "MSCI中国",
-      "ts_code": "BK0821.DC",
-      "net_inflow_yuan": 36529438720000.0,
-      "pct_chg": 0.43
-    },
-    {
-      "name": "中盘股",
-      "ts_code": "BK1664.DC",
-      "net_inflow_yuan": 34642887680000.0,
-      "pct_chg": 0.56
-    },
-    {
-      "name": "富时罗素",
-      "ts_code": "BK0867.DC",
-      "net_inflow_yuan": 31538339840000.0,
-      "pct_chg": 0.58
-    },
-    {
-      "name": "标准普尔",
-      "ts_code": "BK0879.DC",
-      "net_inflow_yuan": 31052536320000.0,
-      "pct_chg": 0.51
-    },
-    {
-      "name": "印制电路板",
-      "ts_code": "BK1340.DC",
-      "net_inflow_yuan": 29510561280000.0,
-      "pct_chg": 5.43
-    },
-    {
-      "name": "元件",
-      "ts_code": "BK0459.DC",
-      "net_inflow_yuan": 29213770240000.0,
-      "pct_chg": 4.17
-    },
-    {
-      "name": "基金重仓",
-      "ts_code": "BK0536.DC",
-      "net_inflow_yuan": 28878927360000.0,
-      "pct_chg": 0.45
-    },
-    {
-      "name": "深圳特区",
-      "ts_code": "BK0549.DC",
-      "net_inflow_yuan": 27821527040000.0,
-      "pct_chg": 1.48
-    },
-    {
-      "name": "百元股",
-      "ts_code": "BK1059.DC",
-      "net_inflow_yuan": 27086320640000.0,
-      "pct_chg": 0.73
-    },
-    {
-      "name": "华为概念",
-      "ts_code": "BK0854.DC",
-      "net_inflow_yuan": 25933388800000.0,
-      "pct_chg": 1.1
-    },
-    {
-      "name": "人工智能",
-      "ts_code": "BK0800.DC",
-      "net_inflow_yuan": 25926676480000.0,
-      "pct_chg": 1.2
-    },
-    {
-      "name": "PCB",
-      "ts_code": "BK0877.DC",
-      "net_inflow_yuan": 25769963520000.0,
-      "pct_chg": 1.85
-    },
-    {
-      "name": "AH股",
-      "ts_code": "BK0499.DC",
-      "net_inflow_yuan": 25348738560000.0,
-      "pct_chg": 0.61
-    },
-    {
-      "name": "创业板综",
-      "ts_code": "BK0742.DC",
-      "net_inflow_yuan": 25007457280000.0,
-      "pct_chg": 1.03
-    },
-    {
-      "name": "固态电池",
-      "ts_code": "BK0968.DC",
-      "net_inflow_yuan": 24362657280000.0,
-      "pct_chg": 2.04
-    },
-    {
-      "name": "HS300_",
-      "ts_code": "BK0500.DC",
-      "net_inflow_yuan": 23720960000000.0,
-      "pct_chg": 0.34
-    }
-  ],
-  "cold_industries": [
-    {
-      "name": "商业航天",
-      "ts_code": "BK0963.DC",
-      "net_inflow_yuan": -19215956480000.0,
-      "pct_chg": 0.42
-    },
-    {
-      "name": "机械设备",
-      "ts_code": "BK1205.DC",
-      "net_inflow_yuan": -14592844800000.0,
-      "pct_chg": 0.26
-    },
-    {
-      "name": "权重股",
-      "ts_code": "BK1662.DC",
-      "net_inflow_yuan": -12927710720000.0,
-      "pct_chg": -0.01
-    },
-    {
-      "name": "量子科技",
-      "ts_code": "BK0710.DC",
-      "net_inflow_yuan": -11532994560000.0,
-      "pct_chg": 0.48
-    },
-    {
-      "name": "高市净率",
-      "ts_code": "BK1722.DC",
-      "net_inflow_yuan": -11394403840000.0,
-      "pct_chg": 0.5
-    },
-    {
-      "name": "中芯概念",
-      "ts_code": "BK0935.DC",
-      "net_inflow_yuan": -11251371520000.0,
-      "pct_chg": -0.15
-    },
-    {
-      "name": "光学光电子",
-      "ts_code": "BK1038.DC",
-      "net_inflow_yuan": -11175927520000.0,
-      "pct_chg": 0.16
-    },
-    {
-      "name": "四川板块",
-      "ts_code": "BK0169.DC",
-      "net_inflow_yuan": -11145373760000.0,
-      "pct_chg": 0.44
-    },
-    {
-      "name": "新材料",
-      "ts_code": "BK0523.DC",
-      "net_inflow_yuan": -11142551040000.0,
-      "pct_chg": 0.29
-    },
-    {
-      "name": "一带一路",
-      "ts_code": "BK0712.DC",
-      "net_inflow_yuan": -10717189120000.0,
-      "pct_chg": 0.51
-    }
-  ],
+  "hot_industries": [],
+  "cold_industries": [],
   "concept_meta": {
     "api_used": null,
     "_attempted_endpoints": [
@@ -205,7 +23,7 @@
     "_attempted_endpoints": [
       "moneyflow_ind_dc"
     ],
-    "row_count": 1031,
+    "row_count": 0,
     "_status": "ok"
   }
 }

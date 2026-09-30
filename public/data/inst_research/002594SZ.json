@@ -1,13 +1,27 @@
 {
   "_status": "ok",
   "ticker": "002594.SZ",
-  "fetched_at": "2026-09-29T14:59:40Z",
+  "fetched_at": "2026-09-30T06:32:29Z",
   "api_used": "stk_surv",
   "_attempted_endpoints": [
     "stk_surv"
   ],
   "window_days": 90,
   "surveys": [
+    {
+      "ts_code": "002594.SZ",
+      "name": "比亚迪",
+      "surv_date": "20260929",
+      "fund_visitors": "--",
+      "rece_place": "比亚迪六角大楼",
+      "rece_mode": "2026年第一次临时股东会",
+      "rece_org": "受邀投资者64人",
+      "org_type": "--",
+      "comp_rece": "集团董事长、总裁 王传福,董事副董事长 吕向阳,董事 夏佐全,独立董事 蔡洪平,独立董事 喻玲,执行副总裁 李柯,董事会秘书、公司秘书 李黔,董事候选人 李永钊,独立董事候选人 李钢,独立董事候选人 徐图,职工董事候选人 唐梅",
+      "inst_count": 1,
+      "surv_type": "2026年第一次临时股东会",
+      "description": null
+    },
     {
       "ts_code": "002594.SZ",
       "name": "比亚迪",
@@ -609,26 +623,12 @@
       "inst_count": 2,
       "surv_type": "电话会议",
       "description": null
-    },
-    {
-      "ts_code": "002594.SZ",
-      "name": "比亚迪",
-      "surv_date": "20260701",
-      "fund_visitors": "分析师 武平乐",
-      "rece_place": "比亚迪六角大楼",
-      "rece_mode": "特定对象调研",
-      "rece_org": "中信证券",
-      "org_type": "证券公司",
-      "comp_rece": "吴越,常恩铭",
-      "inst_count": 2,
-      "surv_type": "特定对象调研",
-      "description": null
     }
   ],
   "summary": {
-    "total_30d": 40,
+    "total_30d": 41,
     "total_90d": 44,
-    "unique_inst_30d": 105,
-    "latest_date": "2026-09-18"
+    "unique_inst_30d": 106,
+    "latest_date": "2026-09-29"
   }
 }
