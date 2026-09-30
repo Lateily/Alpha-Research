@@ -22,11 +22,22 @@ anonymous, wildcard-CORS handlers. `vercel.json` has not changed since
 2026-07-11 (`api/research-multi.js` maxDuration 800; research, debate and
 morning-report 300), so the plan limit most likely changed, not the file.
 
-Merging this gate deploys nothing until that is fixed. The immediate stop-gap
-needs no deploy: rotate or remove the provider keys (`ANTHROPIC_API_KEY`,
-`OPENAI_API_KEY`, `GOOGLE_AI_API_KEY`) in the Vercel project env, or enable Vercel
-deployment protection / a firewall rule on `/api/*`, and check each provider's
-usage log for unexplained traffic.
+Merging this gate deploys nothing until that is fixed. Editing the Vercel
+project env does not help either: env changes apply only to new deployments, and
+every new deployment currently fails (a redeploy of `e64e3cdd6` most likely fails
+too, because it carries the same `vercel.json`). The stop-gaps that work without a
+deploy are:
+
+1. Revoke or rotate `ANTHROPIC_API_KEY`, `OPENAI_API_KEY` and `GOOGLE_AI_API_KEY`
+   at each provider's own console (Anthropic, OpenAI, Google AI). This kills the
+   keys baked into the running 9/09 build. Then put the new values in the Vercel
+   env so later deployments use them.
+2. A Vercel Firewall custom rule that blocks or challenges `/api/*`; firewall
+   rules apply without a deploy.
+
+Deployment protection may cover only preview URLs, not the production alias, on
+the current plan, so do not rely on it. Check each provider's usage log for
+unexplained traffic.
 
 The free data proxies (`news`, `live-quotes`, `a-quote`, `capital-flow`,
 `price-chart`) are not paid-model routes and are unchanged.
