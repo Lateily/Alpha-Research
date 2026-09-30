@@ -1,0 +1,49 @@
+{
+  "schema": "ai-task.v1",
+  "task_id": "NEWS-FLASH-SHADOW-20260930",
+  "architecture_block": ["independent-research-workflow", "news-evidence"],
+  "objective": "Build an offline, immutable, provider-neutral news flash replay with explicit source health, time bounds, deduplication, and no research or trading authority.",
+  "non_goals": [
+    "Do not call Tushare news or any other live provider from this module",
+    "Do not activate scheduling, workbench publication, nightly ingestion, U4, paper, or trading",
+    "Do not expose licensed news content to the team or claim source access is granted"
+  ],
+  "human_owner": "Junyan",
+  "reviewer": "Junyan",
+  "executor_candidates": ["Codex"],
+  "dependencies": ["Tushare news and major_news are distinct independent-permission interfaces"],
+  "authority_docs": ["AGENTS.md", "experiments/AGENTS.md", "scripts/llm/AGENTS.md"],
+  "file_scope": [
+    "experiments/research_workflows/news_flash_shadow.py",
+    "tests/test_news_flash_shadow.py",
+    "scripts/governance_mutation_gate.py",
+    "scripts/llm/fixtures/news_flash_shadow.task.json",
+    ".github/workflows/python-ci.yml",
+    "docs/research/NEWS_FLASH_SHADOW_V1.md"
+  ],
+  "forbidden_scope": [
+    "/Users/years/ar-live",
+    "experiments/execution_tracker/run_nightly.py",
+    "experiments/execution_tracker/event_ledger.jsonl",
+    "public/data/v2",
+    "web",
+    "api/news.js"
+  ],
+  "input_contracts": ["ar.news-flash-cassette.v1 synthetic frozen input"],
+  "output_artifacts": ["ar.news-flash-shadow.v1 immutable local batch", "ar.news-flash-shadow-manifest.v1", "verification receipt"],
+  "acceptance_tests": [
+    "AR_OFFLINE=1 PYTHONDONTWRITEBYTECODE=1 python3 tests/test_news_flash_shadow.py",
+    "AR_OFFLINE=1 PYTHONDONTWRITEBYTECODE=1 python3 scripts/governance_mutation_gate.py",
+    "AR_OFFLINE=1 PYTHONDONTWRITEBYTECODE=1 python3 /Users/years/Desktop/Stock/e2e-twin/twin-20260902/tools/ci_local.py",
+    "git diff --check"
+  ],
+  "risk_level": "MEDIUM",
+  "network_policy": "OFFLINE",
+  "budget": {"max_cny": "0", "max_minutes": 240},
+  "approval_gates": [
+    "User requested entitlement verification and establishment of an isolated news-flash entry on 20260930",
+    "Real provider, licensed team display, scheduling, nightly wiring and production require separate approval",
+    "PR review and Junyan merge approval"
+  ],
+  "created_at": "2026-09-30T00:00:00+01:00"
+}
