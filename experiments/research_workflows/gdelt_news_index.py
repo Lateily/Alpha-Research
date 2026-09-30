@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 from datetime import datetime, timedelta, timezone
+from email.utils import parsedate_to_datetime
 import fcntl
 import hashlib
 import json
@@ -15,13 +16,16 @@ import sys
 import urllib.error
 import urllib.parse
 import urllib.request
+import xml.etree.ElementTree as ET
 
 
-SCHEMA = "ar.gdelt-news-index.v1"
-PROVIDER = "gdelt.doc.v2"
+SCHEMA = "ar.gdelt-news-index.v2"
+PROVIDER = "gdelt.gal.rss.v1"
 ATTRIBUTION = "https://www.gdeltproject.org/"
-ENDPOINT = "https://api.gdeltproject.org/api/v2/doc/doc"
+ENDPOINT = "https://data.gdeltproject.org/gdeltv3/gal/feed.rss"
 MAX_RESPONSE = 2 * 1024 * 1024
+MAX_FEED_RESPONSE = 8 * 1024 * 1024
+MAX_FEED_ITEMS = 50000
 MAX_RECORDS = 250
 MAX_EVENTS = 1000
 UTC = timezone.utc
@@ -35,11 +39,12 @@ class IndexError(ValueError):
 
 
 class SourceFailure(Exception):
-    def __init__(self, code):
-        if code not in {"ACCESS_DENIED", "SOURCE_DOWN", "BAD_PROVIDER_PAYLOAD"}:
+    def __init__(self, code, reason=None):
+        if code not in {"ACCESS_DENIED", "SOURCE_DOWN", "BAD_PROVIDER_PAYLOAD", "STALE_SOURCE"}:
             code = "SOURCE_DOWN"
         super().__init__(code)
         self.code = code
+        self.reason = reason or code
 
 
 def canonical(value):
@@ -90,10 +95,14 @@ def _query(query_id, query):
     if (not isinstance(query, str) or not 2 <= len(query) <= 160
             or any(ord(char) < 32 for char in query)):
         raise IndexError("QUERY_INVALID")
+    terms = [term.strip().casefold() for term in query.split(",")]
+    if not terms or any(not 2 <= len(term) <= 40 for term in terms) or len(set(terms)) != len(terms):
+        raise IndexError("QUERY_TERMS_INVALID")
+    return terms
 
 
 def _article(row):
-    if not isinstance(row, dict) or not {"url", "title", "seendate"} <= set(row):
+    if not isinstance(row, dict) or not {"url", "title", "seendate", "article_date_or_seen"} <= set(row):
         raise IndexError("ARTICLE_FIELDS_INVALID")
     url, title = row["url"], row["title"]
     if not isinstance(url, str) or len(url) > 2048:
@@ -118,10 +127,48 @@ def _article(row):
         if not isinstance(value, str) or len(value) > 120:
             raise IndexError("ARTICLE_METADATA_INVALID")
         fields[key] = value
+    article_date = _time(row["article_date_or_seen"]).isoformat()
     return {"event_id": "sha256:" + hashlib.sha256(url.encode("utf-8")).hexdigest(),
             "url": url, "title": title.strip(), "indexed_at": indexed.isoformat(),
+            "article_date_or_seen": article_date,
             **fields, "evidence_tier": "E3_UNVERIFIED_NEWS_INDEX",
             "original_article_verified": False}
+
+
+def _feed(raw, modified_at, terms):
+    if not isinstance(raw, bytes) or len(raw) > MAX_FEED_RESPONSE:
+        raise SourceFailure("BAD_PROVIDER_PAYLOAD", "FEED_SIZE_INVALID")
+    if b"<!DOCTYPE" in raw.upper() or b"<!ENTITY" in raw.upper():
+        raise SourceFailure("BAD_PROVIDER_PAYLOAD", "XML_ENTITY_FORBIDDEN")
+    try:
+        root = ET.fromstring(raw)
+    except ET.ParseError as exc:
+        raise SourceFailure("BAD_PROVIDER_PAYLOAD", "XML_PARSE_INVALID") from exc
+    if root.tag != "rss" or root.find("channel") is None:
+        raise SourceFailure("BAD_PROVIDER_PAYLOAD", "RSS_SHAPE_INVALID")
+    items = root.findall("./channel/item")
+    if len(items) > MAX_FEED_ITEMS:
+        raise SourceFailure("BAD_PROVIDER_PAYLOAD", "FEED_ITEM_LIMIT")
+    indexed = _time(modified_at).strftime("%Y%m%dT%H%M%SZ")
+    matched, missing = [], 0
+    for item in items:
+        title, url, pub_date = (item.findtext(key) for key in ("title", "link", "pubDate"))
+        if not title or not url or not pub_date:
+            missing += 1
+            continue
+        if not any(term in title.casefold() for term in terms):
+            continue
+        try:
+            article_date = parsedate_to_datetime(pub_date)
+            if article_date.tzinfo is None:
+                raise ValueError("naive RSS date")
+            event = _article({"url": url, "title": title, "seendate": indexed,
+                              "article_date_or_seen": article_date.isoformat(),
+                              "domain": urllib.parse.urlsplit(url).hostname or ""})
+        except (ValueError, TypeError, IndexError) as exc:
+            raise SourceFailure("BAD_PROVIDER_PAYLOAD", "MATCHED_ITEM_INVALID") from exc
+        matched.append(event)
+    return matched, len(items), missing
 
 
 def _seal(value):
@@ -131,7 +178,8 @@ def _seal(value):
 def validate_snapshot(value):
     fields = {"schema", "sample_purpose", "provider", "attribution_url", "content_scope",
               "latency_class", "query_id", "query", "status", "reason", "last_attempt",
-              "last_good_end", "cursor_end", "events", "new_count", "authority", "snapshot_hash"}
+              "last_good_end", "cursor_end", "events", "new_count", "authority", "snapshot_hash",
+              "feed_item_count", "matched_count", "missing_metadata_count", "gap_status"}
     if not isinstance(value, dict) or set(value) != fields:
         raise IndexError("SNAPSHOT_FIELDS_INVALID")
     if value["snapshot_hash"] != digest({key: item for key, item in value.items() if key != "snapshot_hash"}):
@@ -139,22 +187,23 @@ def validate_snapshot(value):
     if (value["schema"] != SCHEMA or value["sample_purpose"] != "WORKFLOW_DEBUG"
             or value["provider"] != PROVIDER or value["attribution_url"] != ATTRIBUTION
             or value["content_scope"] != "METADATA_ONLY"
-            or value["latency_class"] != "NEAR_REALTIME_15M_NOT_FLASH"
+            or value["latency_class"] != "RSS_INDEX_NOT_FLASH"
             or value["authority"] != AUTHORITY):
         raise IndexError("SNAPSHOT_AUTHORITY_OR_LICENSE_INVALID")
     _query(value["query_id"], value["query"])
-    if value["status"] not in {"OK", "EMPTY_VALID", "SOURCE_DOWN", "ACCESS_DENIED",
-                                "BAD_PROVIDER_PAYLOAD", "PARTIAL_TRUNCATED"}:
+    if value["status"] not in {"OK", "OK_NO_CHANGE", "EMPTY_VALID", "PARTIAL_METADATA",
+                                "SOURCE_DELAYED",
+                                "SOURCE_DOWN", "ACCESS_DENIED", "BAD_PROVIDER_PAYLOAD",
+                                "STALE_SOURCE", "PARTIAL_TRUNCATED"}:
         raise IndexError("SNAPSHOT_STATUS_INVALID")
     attempt = value["last_attempt"]
     if (not isinstance(attempt, dict) or
-            set(attempt) != {"at", "window_start", "window_end", "query_id", "status"}
+            set(attempt) != {"at", "feed_modified_at", "query_id", "status"}
             or attempt["query_id"] != value["query_id"] or attempt["status"] != value["status"]):
         raise IndexError("SNAPSHOT_ATTEMPT_INVALID")
-    for key in ("at", "window_start", "window_end"):
-        _time(attempt[key])
-    if _time(attempt["window_start"]) >= _time(attempt["window_end"]):
-        raise IndexError("SNAPSHOT_ATTEMPT_INVALID")
+    _time(attempt["at"])
+    if attempt["feed_modified_at"] is not None:
+        _time(attempt["feed_modified_at"])
     if value["reason"] is not None and not isinstance(value["reason"], str):
         raise IndexError("SNAPSHOT_REASON_INVALID")
     if (value["cursor_end"] is None) != (value["last_good_end"] is None):
@@ -166,14 +215,21 @@ def validate_snapshot(value):
     if (not isinstance(value["events"], list) or len(value["events"]) > MAX_EVENTS
             or type(value["new_count"]) is not int or value["new_count"] < 0):
         raise IndexError("SNAPSHOT_EVENTS_INVALID")
+    for key in ("feed_item_count", "matched_count", "missing_metadata_count"):
+        if type(value[key]) is not int or value[key] < 0:
+            raise IndexError("SNAPSHOT_COUNTS_INVALID")
+    if value["gap_status"] not in {"UNOBSERVED_BEFORE_START", "NO_GAP_OBSERVED",
+                                   "POSSIBLE_15M_FEED_GAP"}:
+        raise IndexError("SNAPSHOT_GAP_INVALID")
     seen = set()
     for event in value["events"]:
-        if not isinstance(event, dict) or set(event) != {"event_id", "url", "title", "indexed_at",
+        if not isinstance(event, dict) or set(event) != {"event_id", "url", "title", "indexed_at", "article_date_or_seen",
                                                    "domain", "language", "sourcecountry",
                                                    "evidence_tier", "original_article_verified"}:
             raise IndexError("SNAPSHOT_EVENTS_INVALID")
         expected = _article({"url": event["url"], "title": event["title"],
                              "seendate": _time(event["indexed_at"]).strftime("%Y%m%dT%H%M%SZ"),
+                             "article_date_or_seen": event["article_date_or_seen"],
                              "domain": event["domain"], "language": event["language"],
                              "sourcecountry": event["sourcecountry"]})
         if event != expected or event["event_id"] in seen:
@@ -242,14 +298,16 @@ def _write_atomic(directory_fd, name, value):
 def _base(query_id, query):
     return {"schema": SCHEMA, "sample_purpose": "WORKFLOW_DEBUG", "provider": PROVIDER,
             "attribution_url": ATTRIBUTION, "content_scope": "METADATA_ONLY",
-            "latency_class": "NEAR_REALTIME_15M_NOT_FLASH", "query_id": query_id,
+            "latency_class": "RSS_INDEX_NOT_FLASH", "query_id": query_id,
             "query": query, "status": "EMPTY_VALID", "reason": None, "last_attempt": None,
             "last_good_end": None, "cursor_end": None, "events": [], "new_count": 0,
+            "feed_item_count": 0, "matched_count": 0, "missing_metadata_count": 0,
+            "gap_status": "UNOBSERVED_BEFORE_START",
             "authority": dict(AUTHORITY)}
 
 
 def poll_once(root, *, query_id, query, now, fetch):
-    _query(query_id, query)
+    terms = _query(query_id, query)
     now_dt = _time(now)
     fd = _state_fd(root, create=True)
     try:
@@ -267,49 +325,55 @@ def poll_once(root, *, query_id, query, now, fetch):
                     raise IndexError("QUERY_IDENTITY_CHANGED")
             except FileNotFoundError:
                 state = _seal(_base(query_id, query))
-            latest = datetime.fromtimestamp((int(now_dt.timestamp()) - 300) // 900 * 900,
-                                            tz=UTC)
             cursor = _time(state["cursor_end"]) if state["cursor_end"] else None
-            if cursor and cursor >= latest:
-                return state
-            if cursor and now_dt - cursor > timedelta(days=89):
-                raise IndexError("CURSOR_OUTSIDE_PROVIDER_HISTORY")
-            end = min(cursor + timedelta(minutes=15), latest) if cursor else latest
-            start = cursor - timedelta(minutes=5) if cursor else end - timedelta(minutes=15)
-            start_text, end_text = start.isoformat(), end.isoformat()
-            attempt = {"at": now_dt.isoformat(), "window_start": start_text,
-                       "window_end": end_text, "query_id": query_id}
+            attempt = {"at": now_dt.isoformat(), "feed_modified_at": None, "query_id": query_id}
             result = {key: item for key, item in state.items() if key != "snapshot_hash"}
             result["new_count"] = 0
             try:
-                response = fetch(query, start_text, end_text)
-                if not isinstance(response, dict) or not isinstance(response.get("articles"), list):
-                    raise SourceFailure("BAD_PROVIDER_PAYLOAD")
-                rows = response["articles"]
-                if len(rows) > MAX_RECORDS:
-                    raise SourceFailure("BAD_PROVIDER_PAYLOAD")
-                if len(rows) == MAX_RECORDS:
-                    result.update(status="PARTIAL_TRUNCATED", reason="POSSIBLE_RESULT_LIMIT")
+                response = fetch()
+                if not isinstance(response, dict) or not isinstance(response.get("raw"), bytes):
+                    raise SourceFailure("BAD_PROVIDER_PAYLOAD", "FEED_RESPONSE_INVALID")
+                modified = _time(response.get("feed_modified_at"))
+                attempt["feed_modified_at"] = modified.isoformat()
+                if modified > now_dt + timedelta(minutes=1) or now_dt - modified > timedelta(minutes=30):
+                    raise SourceFailure("STALE_SOURCE", "FEED_MODIFIED_OUTSIDE_FRESHNESS")
+                delayed = now_dt - modified > timedelta(minutes=10)
+                if cursor and modified < cursor:
+                    raise SourceFailure("STALE_SOURCE", "FEED_MOVED_BACKWARDS")
+                if cursor and modified == cursor:
+                    result.update(status="SOURCE_DELAYED" if delayed else "OK_NO_CHANGE",
+                                  reason="FEED_AGE_GT_10M" if delayed else None)
                 else:
-                    recent = [event for event in result["events"]
-                              if _time(event["indexed_at"]) >= now_dt - timedelta(days=2)]
-                    by_id = {event["event_id"]: event for event in recent}
-                    for row in rows:
-                        event = _article(row)
-                        previous = by_id.get(event["event_id"])
-                        if previous is not None and previous != event:
-                            raise IndexError("EVENT_ID_CONFLICT")
-                        by_id[event["event_id"]] = event
-                    if len(by_id) > MAX_EVENTS:
-                        result.update(status="PARTIAL_TRUNCATED", reason="LOCAL_EVENT_LIMIT")
+                    rows, total, missing = _feed(response["raw"], modified.isoformat(), terms)
+                    result.update(feed_item_count=total, matched_count=len(rows),
+                                  missing_metadata_count=missing)
+                    if len(rows) >= MAX_RECORDS:
+                        result.update(status="PARTIAL_TRUNCATED", reason="MATCHED_RESULT_LIMIT")
                     else:
-                        result["new_count"] = len(by_id) - len(recent)
-                        result["events"] = sorted(by_id.values(), key=lambda event:
-                                                  (event["indexed_at"], event["event_id"]), reverse=True)
-                        result.update(status="OK" if rows else "EMPTY_VALID", reason=None,
-                                      cursor_end=end_text, last_good_end=end_text)
+                        recent = [event for event in result["events"]
+                                  if _time(event["indexed_at"]) >= now_dt - timedelta(days=2)]
+                        by_id = {event["event_id"]: event for event in recent}
+                        for event in rows:
+                            previous = by_id.get(event["event_id"])
+                            if previous is not None and any(previous[key] != event[key]
+                                                            for key in ("url", "title", "article_date_or_seen")):
+                                raise IndexError("EVENT_ID_CONFLICT")
+                            by_id[event["event_id"]] = event
+                        if len(by_id) > MAX_EVENTS:
+                            result.update(status="PARTIAL_TRUNCATED", reason="LOCAL_EVENT_LIMIT")
+                        else:
+                            result["new_count"] = len(by_id) - len(recent)
+                            result["events"] = sorted(by_id.values(), key=lambda event:
+                                                      (event["indexed_at"], event["event_id"]), reverse=True)
+                            result.update(status="SOURCE_DELAYED" if delayed else "PARTIAL_METADATA" if missing
+                                          else "OK" if rows else "EMPTY_VALID",
+                                          reason="FEED_AGE_GT_10M" if delayed else
+                                          "RSS_ITEMS_MISSING_FIELDS" if missing else None,
+                                          cursor_end=modified.isoformat(), last_good_end=modified.isoformat(),
+                                          gap_status="POSSIBLE_15M_FEED_GAP" if cursor and modified - cursor > timedelta(minutes=15)
+                                          else "NO_GAP_OBSERVED" if cursor else "UNOBSERVED_BEFORE_START")
             except SourceFailure as exc:
-                result.update(status=exc.code, reason=exc.code)
+                result.update(status=exc.code, reason=exc.reason)
             except IndexError as exc:
                 result.update(status="BAD_PROVIDER_PAYLOAD", reason=str(exc))
             result["last_attempt"] = {**attempt, "status": result["status"]}
@@ -332,29 +396,34 @@ def _network_enabled():
     return os.environ.get("AR_GDELT_NETWORK") == "1" and os.environ.get("AR_OFFLINE") != "1"
 
 
-def fetch_live(query, start, end):
+def fetch_live():
     if not _network_enabled():
         raise IndexError("NETWORK_OPT_IN_REQUIRED")
-    params = {"query": query, "mode": "artlist", "maxrecords": str(MAX_RECORDS),
-              "startdatetime": _time(start).strftime("%Y%m%d%H%M%S"),
-              "enddatetime": _time(end).strftime("%Y%m%d%H%M%S"),
-              "sort": "datedesc", "format": "json"}
-    request = urllib.request.Request(ENDPOINT + "?" + urllib.parse.urlencode(params),
+    request = urllib.request.Request(ENDPOINT,
                                      headers={"User-Agent": "AlphaResearch-Nonprod-NewsIndex/1"})
     try:
         with urllib.request.build_opener(_NoRedirect).open(request, timeout=10) as response:
             if response.status != 200:
                 raise SourceFailure("SOURCE_DOWN")
-            raw = response.read(MAX_RESPONSE + 1)
-            if len(raw) > MAX_RESPONSE:
-                raise SourceFailure("BAD_PROVIDER_PAYLOAD")
-            return _parse(raw)
+            if "xml" not in response.headers.get("Content-Type", "").lower():
+                raise SourceFailure("BAD_PROVIDER_PAYLOAD", "NON_XML_CONTENT_TYPE")
+            last_modified = response.headers.get("Last-Modified")
+            if not last_modified:
+                raise SourceFailure("BAD_PROVIDER_PAYLOAD", "LAST_MODIFIED_MISSING")
+            try:
+                modified = parsedate_to_datetime(last_modified)
+                if modified.tzinfo is None:
+                    raise ValueError("naive Last-Modified")
+            except (TypeError, ValueError) as exc:
+                raise SourceFailure("BAD_PROVIDER_PAYLOAD", "LAST_MODIFIED_INVALID") from exc
+            raw = response.read(MAX_FEED_RESPONSE + 1)
+            if len(raw) > MAX_FEED_RESPONSE:
+                raise SourceFailure("BAD_PROVIDER_PAYLOAD", "FEED_SIZE_INVALID")
+            return {"raw": raw, "feed_modified_at": modified.astimezone(UTC).isoformat()}
     except urllib.error.HTTPError as exc:
         raise SourceFailure("ACCESS_DENIED" if exc.code in {401, 403} else "SOURCE_DOWN") from exc
     except (urllib.error.URLError, TimeoutError, OSError) as exc:
-        raise SourceFailure("SOURCE_DOWN") from exc
-    except IndexError as exc:
-        raise SourceFailure("BAD_PROVIDER_PAYLOAD") from exc
+        raise SourceFailure("SOURCE_DOWN", "TLS_OR_NETWORK_FAILURE") from exc
 
 
 def main(argv=None):
@@ -365,17 +434,22 @@ def main(argv=None):
     source = parser.add_mutually_exclusive_group(required=True)
     source.add_argument("--offline-response", type=Path)
     source.add_argument("--network", action="store_true")
+    parser.add_argument("--offline-last-modified")
     args = parser.parse_args(argv)
     if args.network:
+        if args.offline_last_modified is not None:
+            raise IndexError("OFFLINE_HEADER_WITH_NETWORK")
         if not _network_enabled():
             raise IndexError("NETWORK_OPT_IN_REQUIRED")
         fetch = fetch_live
     else:
+        if args.offline_last_modified is None:
+            raise IndexError("OFFLINE_LAST_MODIFIED_REQUIRED")
+        modified = _time(args.offline_last_modified).isoformat()
         raw = args.offline_response.read_bytes()
-        if len(raw) > MAX_RESPONSE:
+        if len(raw) > MAX_FEED_RESPONSE:
             raise IndexError("OFFLINE_RESPONSE_TOO_LARGE")
-        frozen = _parse(raw)
-        fetch = lambda _query, _start, _end: frozen
+        fetch = lambda: {"raw": raw, "feed_modified_at": modified}
     result = poll_once(args.sandbox_root, query_id=args.query_id, query=args.query,
                        now=datetime.now(UTC).isoformat(), fetch=fetch)
     print(json.dumps({key: result[key] for key in ("status", "reason", "cursor_end",

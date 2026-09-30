@@ -2,10 +2,10 @@
   "schema": "ai-task.v1",
   "task_id": "GDELT-NEWS-INDEX-20260930",
   "architecture_block": ["independent-research-workflow", "news-evidence", "nonproduction-workbench"],
-  "objective": "Add an opt-in, near-real-time GDELT metadata index with durable cursor, duplicate suppression, explicit source health, and read-only workbench projection.",
+  "objective": "Add an opt-in GDELT GAL RSS metadata index with feed-update cursor, duplicate suppression, explicit source delay and gaps, and read-only workbench projection.",
   "non_goals": [
     "Do not collect or republish original publisher article bodies",
-    "Do not treat a 15-minute news index as a seconds-level flash feed or verified company event",
+    "Do not treat a rolling RSS index as a seconds-level flash feed or verified company event",
     "Do not activate nightly, scheduled, production, U4, paper, or trade authority",
     "Do not use or distribute the personal Tushare token or content"
   ],
@@ -34,8 +34,8 @@
     "public/data/v2",
     "api/news.js"
   ],
-  "input_contracts": ["GDELT DOC 2.0 ArticleList JSON metadata, or an offline frozen equivalent"],
-  "output_artifacts": ["ar.gdelt-news-index.v1 nonproduction snapshot with cursor and hash", "read-only workbench projection", "negative regression receipts"],
+  "input_contracts": ["GDELT GAL RSS metadata with HTTP Last-Modified, or an offline frozen RSS plus source header time"],
+  "output_artifacts": ["ar.gdelt-news-index.v2 nonproduction snapshot with feed cursor, source-delay status, and hash", "read-only workbench projection", "negative regression receipts"],
   "acceptance_tests": [
     "AR_OFFLINE=1 PYTHONDONTWRITEBYTECODE=1 python3 tests/test_gdelt_news_index.py",
     "AR_OFFLINE=1 PYTHONDONTWRITEBYTECODE=1 python3 scripts/governance_mutation_gate.py",
@@ -47,7 +47,7 @@
   "budget": {"max_cny": "0", "max_minutes": 240},
   "approval_gates": [
     "User requested source-rights verification and separate collector/cursor/workbench connection on 20260930",
-    "User must confirm GDELT metadata as the first source before live activation",
+    "User confirmed GDELT metadata as the first source; bounded live canary is permitted",
     "PR review and Junyan merge approval; production remains separately gated"
   ],
   "created_at": "2026-09-30T00:00:00+01:00"
