@@ -22,6 +22,7 @@ if str(CODE_ROOT) not in sys.path:
 
 import nightly_acceptance
 import run_nightly
+from experiments.research_funnel import research_trust_view
 
 
 SCHEMA = "ar.nightly_dual_acceptance.v1"
@@ -341,10 +342,15 @@ def summarize_research(root: Path, run_id: str, target: str) -> dict:
         "zero_row_reasons": (collection or {}).get("zero_row_reasons"),
         "degraded_channels": health.get("degraded_channels"),
     }
+    # The trust line is display-only: it never enters the research status or
+    # the exit code, and an absent/refused line stays explicit (never zero).
+    # governance-mutation: NIGHTLY_ACCEPTANCE_TRUST_LINE_BINDING
+    trust_line = research_trust_view.project(health, run_id, target)
+    # governance-mutation: NIGHTLY_ACCEPTANCE_TRUST_LINE_DISPLAY_ONLY
     return {"status": "OBSERVED_WITH_GAPS" if macro["quality"] == "DATA_BLOCKED"
             or funnel["quality"] != "REVIEW_REQUIRED"
             else "OBSERVED_REVIEW_REQUIRED", "run_id": run_id, "target_trade_date": target,
-            "macro": macro, "funnel": funnel,
+            "macro": macro, "funnel": funnel, "trust_line": trust_line,
             "authority": "NO_U4_OR_PAPER_APPROVAL"}
 
 
