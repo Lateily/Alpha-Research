@@ -3,6 +3,7 @@ on:
   pull_request:
     paths:
       - "tools/nonprod_workbench/**"
+      - "tests/nonprod-workbench-trust-line.test.mjs"
       - "package.json"
       - "package-lock.json"
       - ".github/workflows/nonprod-workbench-ci.yml"
@@ -10,6 +11,7 @@ on:
     branches: [main]
     paths:
       - "tools/nonprod_workbench/**"
+      - "tests/nonprod-workbench-trust-line.test.mjs"
       - "package.json"
       - "package-lock.json"
       - ".github/workflows/nonprod-workbench-ci.yml"
@@ -27,3 +29,5 @@ jobs:
           cache: npm
       - run: npm ci --ignore-scripts --no-audit --no-fund
       - run: node node_modules/vite/bin/vite.js build --config tools/nonprod_workbench/vite.config.js
+      - name: Trust line and run-quality display helpers (node)
+        run: node tests/nonprod-workbench-trust-line.test.mjs

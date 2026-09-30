@@ -39,6 +39,9 @@ UNIQUE_KINDS = {"register", "genesis",
                 "u4_decision_intent",
                 # governance-mutation: U4_LEDGER_EVENT_KIND_UNIQUE
                 "u4_decision", "u4_decision_closure",
+                # governance-mutation: DISAGREEMENT_LEDGER_KIND_UNIQUE
+                "disagreement_adjudication_intent", "disagreement_adjudication",
+                "disagreement_adjudication_closure",
                 "paper_registration_intent", "paper_registration_commit",
                 "publication_migration_intent", "publication_migration_commit",
                 "publication_migration_abort",
@@ -51,7 +54,13 @@ U4_TYPED_KINDS = frozenset({
 PAPER_REGISTRATION_TYPED_KINDS = frozenset({
     "paper_registration_intent", "paper_registration_commit",
 })
-RESERVED_TYPED_KINDS = U4_TYPED_KINDS | PAPER_REGISTRATION_TYPED_KINDS
+ADJUDICATION_TYPED_KINDS = frozenset({
+    "disagreement_adjudication_intent", "disagreement_adjudication",
+    "disagreement_adjudication_closure",
+})
+RESERVED_TYPED_KINDS = (
+    U4_TYPED_KINDS | PAPER_REGISTRATION_TYPED_KINDS | ADJUDICATION_TYPED_KINDS
+)
 
 
 def _runtime_timestamp():
@@ -379,6 +388,49 @@ def append_u4_stamped(kind, build, *, bundle_dir, path=DEFAULT_PATH):
                 path, preview, bundle_dir=bundle_dir
             )
             return _append_verified(kind, rec_id, payload_snapshot, path, ts, st, lines)
+        finally:
+            fcntl.flock(lf, fcntl.LOCK_UN)
+
+
+def append_adjudication_stamped(kind, build, *, bundle_dir, path):
+    """Append one disagreement-adjudication record through its typed replay boundary.
+
+    Generic append APIs reject these kinds and there is no default ledger path.
+    The builder receives the sole R-015 runtime timestamp; the adjudication
+    replay validator sees the exact next outer record and re-binds its batch
+    intent to the bundle's hashed ``disagreement_queue.json`` before any byte
+    reaches disk.
+    """
+    if kind not in ADJUDICATION_TYPED_KINDS:
+        raise ValueError(f"{kind} is not a disagreement-adjudication typed kind")
+    import fcntl
+    os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
+    with open(path + ".lock", "w") as lf:
+        fcntl.flock(lf, fcntl.LOCK_EX)
+        try:
+            st, lines = _append_preflight(path)
+            ts = _runtime_timestamp()
+            built = build(ts)
+            if not isinstance(built, tuple) or len(built) != 2:
+                raise ValueError("adjudication stamped event builder must return (id, payload)")
+            rec_id, payload = built
+            if not isinstance(rec_id, str) or not rec_id:
+                raise ValueError("adjudication stamped event id must be non-empty")
+            payload_snapshot = json.loads(canonical(payload))
+            preview = {
+                "seq": st["n"], "kind": kind, "id": rec_id,
+                "payload": payload_snapshot, "ts": ts,
+                "prev": st["head"] or GENESIS_PREV,
+            }
+            preview["hash"] = record_hash(preview)
+            from experiments.research_funnel import disagreement_ledger
+            # governance-mutation: DISAGREEMENT_LEDGER_TYPED_APPEND_VALIDATION
+            disagreement_ledger.validate_typed_outer_append(
+                path, preview, bundle_dir=bundle_dir,
+            )
+            return _append_verified(
+                kind, rec_id, payload_snapshot, path, ts, st, lines
+            )
         finally:
             fcntl.flock(lf, fcntl.LOCK_UN)
 

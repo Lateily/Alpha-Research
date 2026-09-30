@@ -40,7 +40,9 @@ class ResearchReplayTests(unittest.TestCase):
         self.assertEqual(result["status"], "COMPLETED_SYNTHETIC_REPLAY", result["stages"])
         self.assertEqual([x["stage"] for x in result["stages"]], list(replay.STAGES))
         self.assertTrue(all(x["status"] == "PASS" for x in result["stages"]))
-        self.assertEqual(result["stages"][1]["evidence"]["candidates"], 24)
+        # 18 = 24 minus the six industry-only MAIN_CHANNEL rows that the old
+        # issuer-code ranking of INDUSTRY_VALUE_CHAIN admitted (context-only now).
+        self.assertEqual(result["stages"][1]["evidence"]["candidates"], 18)
         self.assertEqual(result["stages"][4]["evidence"]["unreplayed_selected_fixture_rows"], 2)
         axes = json.loads((self.store.research_directory(result["command_id"]) / "five-axis.json").read_text())
         self.assertEqual(set(axes["axes"]), {"thesis", "valuation", "timing", "execution", "market_beta"})

@@ -33,6 +33,7 @@ import decision_pack as decision_pack_contract  # noqa: E402
 import decision_sheet as decision_sheet_contract  # noqa: E402
 import funnel_pipeline as funnel  # noqa: E402
 import model_paper_fund as paper_fund  # noqa: E402
+import session_calendar  # noqa: E402
 import paper_deadline  # noqa: E402
 import research_method as method_contract  # noqa: E402
 from security_registry import _atomic_write_json  # noqa: E402
@@ -579,6 +580,11 @@ def run_cycle(
     unavailable_nav: list[dict[str, str]] = []
     events: list[str] = []
     timing = case["timing_ticket"]
+    # NAV contiguity must come from sealed inputs only, never from the rolling
+    # rotation_history on disk, or verify_cycle_bundle stops being deterministic.
+    # Legacy cases use the pure static table; deadline cases swap in the order's
+    # frozen exchange sessions below.
+    nav_calendar = session_calendar.static_calendar()
     order: dict[str, Any] | None = None
     refusal: str | None = registration_refusal(case)
     if refusal is not None:
@@ -617,6 +623,9 @@ def run_cycle(
                         paper_deadline.open_sessions(order["deadline_policy"],
                             after=order["registered_at"], through=bars["scoring_as_of"]))
             by_date = {row["date"]: row for row in rows}
+            if "deadline_policy" in order:
+                # governance-mutation: RESEARCH_CYCLE_NAV_FROZEN_CALENDAR
+                nav_calendar = session_calendar.frozen_calendar(sessions)
             for session in sessions:
                 prefix = [row for row in rows if row["date"] <= session]
                 events.extend(paper_fund.process_day(
@@ -634,6 +643,7 @@ def run_cycle(
                         paper_fund.update_nav(
                             fund, orders, nav_history, session,
                             marks={case["ticker"]: by_date[session]["close"]}, require_complete_marks=True,
+                            calendar=nav_calendar,
                         )
                     except paper_fund.CorporateActionUnresolved:
                         if case["schema_version"] != DEADLINE_VERSION:
@@ -648,6 +658,7 @@ def run_cycle(
                          order.get("fill_date") if seen_status == "filled" else order.get("exit_date")),
                         order,
                     ))
+    # Every row above carries its own sessions_covered, so no calendar is needed here.
     performance = paper_fund.compute_performance(fund, orders, nav_history)
     if case["schema_version"] == DEADLINE_VERSION:
         last_nav = nav_history[-1] if nav_history else None

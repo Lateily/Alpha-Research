@@ -17,7 +17,7 @@ import json
 import os
 import sys
 import time
-import urllib.request
+import tushare_rows
 from nightly_context import bind, target_trade_date
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -29,20 +29,8 @@ MOVE_BAR = 0.15
 
 
 def _api(name, token, **params):
-    body = json.dumps({"api_name": name, "token": token,
-                       "params": params, "fields": ""}).encode()
-    req = urllib.request.Request("https://api.tushare.pro", body,
-                                 {"Content-Type": "application/json"})
-    for _ in range(4):
-        try:
-            r = json.load(urllib.request.urlopen(req, timeout=30))
-            if r.get("code") == 0:
-                d = r["data"]
-                return [dict(zip(d["fields"], row)) for row in d["items"]]
-        except Exception:                              # noqa: BLE001
-            pass
-        time.sleep(1.5)
-    return []
+    """(rows, None) | (None, reason) — a failed call is never an empty answer."""
+    return tushare_rows.fetch_rows(name, token, timeout=30, **params)
 
 
 def _load(path, default):
@@ -96,10 +84,15 @@ def run(token, today):
         return any(key in s or s in key for s in inflow) if key else False
     moves = {}
     for e in court:
-        rows = _api("daily", token, ts_code=e["ticker"],
-                    start_date="20260601", end_date=today)
+        rows, err = _api("daily", token, ts_code=e["ticker"],
+                         start_date="20260601", end_date=today)
+        if err:
+            moves[e["ticker"]] = None      # 调用失败 → evaluate 记 DATA_BLOCKED
+            time.sleep(0.2)
+            continue
         rows = sorted(rows, key=lambda r: r["trade_date"])
-        closes = [float(r["close"]) for r in rows if r.get("close")]
+        closes = [c for c in (tushare_rows.optional_float(r.get("close")) for r in rows)
+                  if c is not None and c > 0]
         moves[e["ticker"]] = (closes[-1] / closes[-21] - 1) if len(closes) >= 21 else None
         time.sleep(0.2)
     hit_sectors = {e.get("sector_key") for e in court if sector_hit(e.get("sector_key"))}

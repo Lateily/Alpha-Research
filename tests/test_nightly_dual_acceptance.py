@@ -18,6 +18,7 @@ from unittest.mock import patch
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "experiments" / "execution_tracker"))
 import nightly_dual_acceptance as dual
+from experiments.macro_os import collectors as dual_collectors
 import run_nightly
 from experiments.macro_os import contracts, m1a
 
@@ -275,6 +276,141 @@ class DualAcceptanceTest(unittest.TestCase):
         self.assertEqual(1, sheet["funnel"]["batch_not_started"])
         self.assertEqual(1, sheet["funnel"]["red_flag_rows"])
         self.assertEqual("DATA_BLOCKED", sheet["funnel"]["quality"])
+
+    def _trust_line(self, run_id: str) -> dict:
+        return {
+            "schema": "ar.research_trust_line", "schema_version": "1.0",
+            "as_of": self.target, "run_id": run_id, "generated_at": "2026-09-22T12:40:00Z",
+            "e1_basis": "SAME_RUN_MANIFEST", "source_binding": {"e1_layer_as_of": self.target},
+            "metrics": [
+                {"metric_id": "red_flag_stale_evidence_share", "kind": "MACHINE_VS_MACHINE",
+                 "numerator": 43, "denominator": 46, "unparsed_count": 0, "rate": 0.9348,
+                 "min_n": 20, "threshold": 0.20, "direction": "LOWER_IS_BETTER",
+                 "level": "MISSES_BAR", "not_computable_reason": None,
+                 "reliance": "ADVISORY_SHOW_STALE_SHARE", "note": ""},
+                {"metric_id": "complete_label_defect_share", "kind": "HUMAN_VS_MACHINE",
+                 "numerator": 0, "denominator": 3, "unparsed_count": 0, "rate": None,
+                 "min_n": 20, "threshold": 0.10, "direction": "LOWER_IS_BETTER",
+                 "level": "RATE_WITHHELD_N_BELOW_MIN", "not_computable_reason": None,
+                 "reliance": "UNRATED", "note": ""},
+            ],
+            "rolling": {"window_runs": 20, "per_metric": {}},
+            "claim_status": "DESCRIPTIVE_ONLY", "retention_status": "LOCAL_ONLY_UNBACKED",
+            "authority": {"claim_allowed": False, "performance_claim": None,
+                          "u4_selection_authority": False},
+        }
+
+    def _with_trust_line(self, line: dict) -> None:
+        path = self.root / "public" / "data" / "v2" / "funnel_health.json"
+        health = json.loads(path.read_text())
+        health["research_trust"] = line
+        write_json(path, health)
+
+    def test_research_sheet_marks_absent_trust_line_not_produced(self) -> None:
+        self.test_research_sheet_keeps_missing_macro_and_zero_dim_rows_visible()
+        sheet = dual.summarize_research(self.root, self.run_id, self.target)
+        self.assertEqual("NOT_PRODUCED", sheet["trust_line"]["status"])
+        self.assertIsNone(sheet["trust_line"]["metrics"])
+
+    def test_research_sheet_projects_trust_line_without_changing_status(self) -> None:
+        self.test_research_sheet_keeps_missing_macro_and_zero_dim_rows_visible()
+        before = dual.summarize_research(self.root, self.run_id, self.target)
+        self._with_trust_line(self._trust_line(self.run_id))
+        sheet = dual.summarize_research(self.root, self.run_id, self.target)
+        self.assertEqual(before["status"], sheet["status"])
+        self.assertEqual(before["macro"], sheet["macro"])
+        self.assertEqual(before["funnel"], sheet["funnel"])
+        self.assertEqual("NO_U4_OR_PAPER_APPROVAL", sheet["authority"])
+        trust = sheet["trust_line"]
+        self.assertEqual("PRESENT", trust["status"])
+        rows = {row["metric_id"]: row for row in trust["metrics"]}
+        stale = rows["red_flag_stale_evidence_share"]
+        self.assertEqual((43, 46, "MISSES_BAR", "ADVISORY_SHOW_STALE_SHARE"),
+                         (stale["numerator"], stale["denominator"], stale["level"],
+                          stale["reliance"]))
+        self.assertIsNone(rows["complete_label_defect_share"]["rate"])
+        self.assertFalse(trust["authority"]["claim_allowed"])
+
+    def test_research_sheet_refuses_cross_run_trust_line(self) -> None:
+        self.test_research_sheet_keeps_missing_macro_and_zero_dim_rows_visible()
+        self._with_trust_line(self._trust_line("20260921_203000_other"))
+        sheet = dual.summarize_research(self.root, self.run_id, self.target)
+        self.assertEqual("REFUSED", sheet["trust_line"]["status"])
+        self.assertEqual("RUN_BINDING_MISMATCH", sheet["trust_line"]["reason"])
+        self.assertIsNone(sheet["trust_line"]["metrics"])
+        self.assertEqual("OBSERVED_WITH_GAPS", sheet["status"])
+
+    def _review_required_research(self) -> None:
+        """A sheet whose research status is OBSERVED_REVIEW_REQUIRED (macro and
+        funnel both complete), so a trust line that leaked into the status
+        expression would visibly change it."""
+        public = self.root / "public" / "data" / "v2"
+        bundle = self.root / "data_history" / "funnel" / self.target / self.run_id
+        sources = [{"source_id": spec.source_id, "series_id": metric.series_id,
+                    "metric_key": metric.metric_key, "status": "OK"}
+                   for spec in dual_collectors.collection_plan() for metric in spec.metrics]
+        write_json(public / "macro" / "source_health.json", {
+            "source_registry_hash": SOURCE_REGISTRY_HASH, "data": sources})
+        rules = m1a.load_rules()
+        context_ids = sorted({f"{rule['source_id']}:{rule['series_id']}:{rule['metric_key']}"
+                              for region_rules in rules["regions"].values()
+                              for rule in region_rules})
+        events = [{"context_id": context_id, "consensus": 1.0, "consensus_status": "OK",
+                   "surprise": 0.0} for context_id in context_ids]
+        write_json(public / "macro" / "macro_events.json", {
+            "run_id": self.run_id, "rules_hash": RULES_HASH, "data": events})
+        write_json(public / "funnel_health.json", {
+            "run_id": self.run_id, "target_trade_date": self.target, "as_of": self.target,
+            "status": "COMPLETE",
+            "bundle": {"location": f"data_history/funnel/{self.target}/{self.run_id}"},
+        })
+        write_json(bundle / "candidate_battery.json", {
+            "run_id": self.run_id, "target_trade_date": self.target,
+            "results": [{"ts_code": "688035.SH", "completeness": {"covered": 6, "of": 6,
+                         "verdict": "COMPLETE"}, "dims": {name: {"value": 1} for name in
+                         ("行情", "资金", "基本面", "技术面", "消息面", "估值")}}],
+        })
+        write_json(bundle / "deep_research_queue.json", {
+            "ready_pool": [{"ts_code": "688035.SH", "ready": True, "blocked_reasons": []}],
+        })
+
+    def _exit_code(self) -> tuple[int, dict]:
+        write_json(self.root / "experiments" / "execution_tracker" / "nightly_run.json",
+                   {"run_id": self.run_id, "target_trade_date": self.target, "steps": []})
+        args = SimpleNamespace(
+            repo_root=self.root, expected_start=dt.datetime.now(dt.timezone.utc),
+            expected_target=self.target, launchctl_runs_before=0, log=self.root / "log",
+            alarm=self.root / "alarm", plist=self.root / "plist",
+            launchd_label="com.ar.nightly", launchctl_state_file=None)
+        printed = []
+        with patch.object(dual.nightly_acceptance, "parse_args", return_value=args), \
+             patch.object(dual, "_installed_head", return_value="a" * 40), \
+             patch.object(dual.nightly_acceptance, "audit",
+                          return_value={"status": "PASS", "checks": []}), \
+             patch.object(dual, "summarize_steps", return_value={"count": 24}), \
+             patch.object(dual, "validate_publication", return_value={"run_id": self.run_id}), \
+             patch("builtins.print", side_effect=printed.append):
+            code = dual.main()
+        return code, json.loads(printed[-1])
+
+    def test_trust_line_never_changes_research_status_or_exit_code(self) -> None:
+        self._review_required_research()
+        present = self._trust_line(self.run_id)
+        refused = self._trust_line(self.run_id)
+        refused["authority"]["claim_allowed"] = True
+        outcomes = {}
+        for label, line in (("absent", None), ("present", present), ("refused", refused)):
+            if line is not None:
+                self._with_trust_line(line)
+            sheet = dual.summarize_research(self.root, self.run_id, self.target)
+            code, receipt = self._exit_code()
+            outcomes[label] = (sheet["status"], code, receipt["research"]["status"],
+                               sheet["trust_line"]["status"])
+        self.assertEqual({
+            "absent": ("OBSERVED_REVIEW_REQUIRED", 0, "OBSERVED_REVIEW_REQUIRED", "NOT_PRODUCED"),
+            "present": ("OBSERVED_REVIEW_REQUIRED", 0, "OBSERVED_REVIEW_REQUIRED", "PRESENT"),
+            "refused": ("OBSERVED_REVIEW_REQUIRED", 0, "OBSERVED_REVIEW_REQUIRED", "REFUSED"),
+        }, outcomes)
 
     def test_research_sheet_refuses_cross_run_macro(self) -> None:
         public = self.root / "public" / "data" / "v2"

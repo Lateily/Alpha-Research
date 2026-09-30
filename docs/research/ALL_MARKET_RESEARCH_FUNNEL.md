@@ -64,6 +64,38 @@
 
 初始配额只用于防止单一路径独占候选池,不是统计结论。每路至少保留若干名额,另保留随机控制样本用于估计漏斗的漏报。具体数量由运行成本和回溯结果校准,变更须留版本。
 
+### 行业与产业链通道只作上下文(`INDUSTRY_CONTEXT_ONLY_NO_ISSUER_RANK_V2`,2026-09-29)
+
+旧规则把热门行业(`INFLOW_CONT`/`WARMING`)的全部成员按 `(状态, -连续天数, ts_code)`
+排序,取前 `channel_top_n`(40)触发。同一行业的成员共享状态和连续天数,
+截断实际由股票代码决定:9/24 的 40 个触发恰好是 296 个热门成员里代码最小的
+40 只深市主板股,第 1 名是停牌、申请退市的 *ST康佳A;9/29 的 40 个触发全部来自
+仓储物流 47 只成员里代码靠前的 40 只,煤炭开采和白酒一只都进不来。
+
+现行规则:
+
+- 行业层信号对行业内每个成员都一样,不能用来区分发行人。`INDUSTRY_VALUE_CHAIN`
+  行只发布上下文:`rotation_status`、`streak`、`sequence`、`hot_industry`、
+  `issuer_admission_blockers`,`channel_rank` 恒为 null,`triggered` 恒为 false,
+  `entry_reasons` 为空,`reason_codes` 为 `INDUSTRY_CONTEXT_NOT_AN_ISSUER_SELECTION_SIGNAL`。
+- 这一路不再单独把任何证券送进 U2;行业热度只能作为已由其他通道入选对象的背景。
+- `issuer_admission_blockers` 披露停牌(`NO_DAILY_BAR_ON_AS_OF`)、ST/退市风险标签、
+  非上市状态和退市日期;字段缺失记为 `*_UNVERIFIED`,不当作"无障碍"。
+- 没有匹配到轮动数据的行业(`DATA_BLOCKED`)其 `hot_industry` 为 null,表示未知,
+  不写成 false;validator 拒绝缺失数据被写成"非热门"。
+- 扫描 `policy.industry_channel_mode` 声明该模式;validator 拒绝带 rank、触发或
+  entry reason 的行业行,也拒绝未知模式。没有该键的旧 bundle 只为历史回放保留:
+  带新格式行业行却缺该键的扫描会被拒绝;`build_candidate_review` 默认拒绝无该键的
+  扫描,只有显式 `legacy_industry_replay=True` 的离线回放可以使用。
+- U2 `candidate_review.policy.industry_channel_mode` 记录本批候选入选时的 U1 模式
+  (旧回放为 null)。`rule_version` 仍为 `research_funnel_v1`,跨切换日汇总的评估
+  (R-035、closure experiment、trust-line 滚动窗口)须按该键拆分或披露切换日。
+- 半导体别名行业行(`mapping_scope = INDUSTRY_CONTEXT_ONLY_NO_ISSUER_NODE_CLAIM`)
+  沿用其既有 6 键上下文合约,同样不排名、不触发,但不含 `hot_industry` /
+  `admission_role` / `issuer_admission_blockers`;为其披露障碍是后续项。
+- 以后若要恢复行业驱动的入选,必须使用真实的时点发行人指标排序,并公开声明
+  确定性的哈希 tie-break;不允许用 ts_code 打破并列。这是研究方法变更,需要 Junyan 批准。
+
 ## 5. 候选晋级规则
 
 U1 到 U2:

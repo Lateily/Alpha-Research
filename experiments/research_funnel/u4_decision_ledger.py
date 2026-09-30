@@ -45,6 +45,14 @@ INTENT_SCHEMA = "ar.u4_packet_intent.v1"
 INTENT_VERSION = "1.0"
 EVENT_SCHEMA = "ar.u4_decision_event.v1"
 EVENT_VERSION = "1.0"
+# U4 ledger v1.1 (2026-09-29): NEW events may carry a structured human warning
+# and, on forced REJECT+RED_FLAG_ACTIVE rows, a reference to a human
+# disagreement adjudication. v1.0 events still validate and replay unchanged.
+EVENT_VERSION_V11 = "1.1"
+INTENT_VERSION_V11 = "1.1"
+V11_FIELDS = {"human_warning", "machine_flag_disputed_ref"}
+HUMAN_WARNING_FIELDS = {"retained", "warning_text", "target_surface"}
+WARNING_TARGET_SURFACES = {"U4_SELECTION", "PAPER", "EXECUTION"}
 PAYLOAD_EVENT_KIND = "U4_DECISION"
 CLOSURE_SCHEMA = "ar.u4_packet_closure.v1"
 CLOSURE_VERSION = "1.0"
@@ -241,6 +249,9 @@ CLOSURE_FIELDS = {
     "no_trade_flag",
     "closure_hash",
 }
+DRAFT_ROW_FIELDS_V11 = DRAFT_ROW_FIELDS | V11_FIELDS
+EVENT_FIELDS_V11 = EVENT_FIELDS | V11_FIELDS
+EVENT_INTENT_FIELDS_V11 = EVENT_INTENT_FIELDS | V11_FIELDS
 PROJECTION_SCHEMA = "ar.u4_decision_projection.v1"
 PROJECTION_VERSION = "1.0"
 PROJECTION_FIELDS = {
@@ -511,6 +522,37 @@ def _validate_reason_list(value: Any, allowed: set[str], label: str, *, nonempty
     return list(value)
 
 
+def _validate_v11_fields(value: Mapping[str, Any], label: str) -> None:
+    """Validate the optional v1.1 human fields; they never change the decision."""
+    warning = value.get("human_warning")
+    if warning is not None:
+        if not isinstance(warning, Mapping):
+            raise DecisionLedgerError(f"{label} human_warning must be null or an object")
+        _require_exact_keys(warning, HUMAN_WARNING_FIELDS, f"{label} human_warning")
+        # governance-mutation: U4_LEDGER_V11_HUMAN_WARNING_SHAPE
+        if (
+            type(warning.get("retained")) is not bool
+            or not isinstance(warning.get("warning_text"), str)
+            or not warning["warning_text"].strip()
+            or warning.get("target_surface") not in WARNING_TARGET_SURFACES
+        ):
+            raise DecisionLedgerError(f"{label} human_warning is outside the v1.1 contract")
+    ref = value.get("machine_flag_disputed_ref")
+    if ref is None:
+        return
+    if not isinstance(ref, str) or SHA_RE.fullmatch(ref) is None:
+        raise DecisionLedgerError(f"{label} machine_flag_disputed_ref must be a sha256 record hash")
+    # governance-mutation: U4_LEDGER_V11_DISPUTED_REF_SCOPE
+    if value.get("decision") != "REJECT" or "RED_FLAG_ACTIVE" not in (value.get("reason_codes") or []):
+        raise DecisionLedgerError(
+            f"{label} machine_flag_disputed_ref is only allowed on a forced REJECT+RED_FLAG_ACTIVE row"
+        )
+
+
+def _is_v11(value: Mapping[str, Any]) -> bool:
+    return any(key in value for key in V11_FIELDS)
+
+
 def _validate_human_packet_boundary(
     packet: Mapping[str, Any], human: Mapping[str, Any],
 ) -> None:
@@ -557,10 +599,15 @@ def _validate_draft(packet: Mapping[str, Any], draft: Mapping[str, Any]) -> tupl
     packet_by_code = {row["ts_code"]: row for row in rows}
     decisions: dict[str, dict[str, Any]] = {}
     revisions: set[int] = set()
+    row_versions: set[bool] = set()
     for raw in raw_decisions:
         if not isinstance(raw, Mapping):
             raise DecisionLedgerError("decision row must be an object")
-        _require_exact_keys(raw, DRAFT_ROW_FIELDS, "decision row")
+        row_is_v11 = _is_v11(raw)
+        _require_exact_keys(
+            raw, DRAFT_ROW_FIELDS_V11 if row_is_v11 else DRAFT_ROW_FIELDS, "decision row",
+        )
+        row_versions.add(row_is_v11)
         code = str(raw.get("ts_code") or "")
         if code not in packet_by_code or code in decisions:
             raise DecisionLedgerError("decision subjects must equal the packet candidate set")
@@ -594,6 +641,8 @@ def _validate_draft(packet: Mapping[str, Any], draft: Mapping[str, Any]) -> tupl
         elif "E1_RED_FLAG_REQUIRES_SEPARATE_REVIEW" in blocked:
             if decision != "REJECT" or "RED_FLAG_ACTIVE" not in reason_codes:
                 raise DecisionLedgerError("E1 red-flag candidate must remain an explicit REJECT")
+        if row_is_v11:
+            _validate_v11_fields(raw, "decision row")
         # governance-mutation: U4_ADMISSION_DRAFT_READY
         if packet["schema_version"] == closure.PACKET_SCHEMA_VERSION and decision == "SELECT" and not packet_by_code[code]["ready"]:
             raise DecisionLedgerError("non-ready candidate cannot be SELECT")
@@ -612,6 +661,9 @@ def _validate_draft(packet: Mapping[str, Any], draft: Mapping[str, Any]) -> tupl
         raise DecisionLedgerError("decision subjects must equal the packet candidate set")
     if len(revisions) != 1:
         raise DecisionLedgerError("one packet closure must use one coherent decision revision")
+    # governance-mutation: U4_LEDGER_V11_COHERENT_EVENT_VERSION
+    if len(row_versions) != 1:
+        raise DecisionLedgerError("one packet revision must use one coherent event version")
     selected_count = sum(row["decision"] == "SELECT" for row in decisions.values())
     # governance-mutation: U4_LEDGER_SELECTION_CARDINALITY
     if selected_count not in SELECTED_COUNTS:
@@ -640,6 +692,14 @@ def _authority() -> dict[str, Any]:
 
 
 def _event_intent(event: Mapping[str, Any]) -> dict[str, Any]:
+    intent = _event_intent_v10(event)
+    if event.get("event_version") == EVENT_VERSION_V11:
+        intent["human_warning"] = copy.deepcopy(event["human_warning"])
+        intent["machine_flag_disputed_ref"] = event["machine_flag_disputed_ref"]
+    return intent
+
+
+def _event_intent_v10(event: Mapping[str, Any]) -> dict[str, Any]:
     return {
         "ledger_id": event["ledger_id"],
         "decision_revision": event["decision_revision"],
@@ -658,6 +718,16 @@ def _event_intent(event: Mapping[str, Any]) -> dict[str, Any]:
 
 
 def _intent_from_draft(
+    packet: Mapping[str, Any], draft: Mapping[str, Any], raw: Mapping[str, Any], ready_row: Mapping[str, Any]
+) -> dict[str, Any]:
+    item = _intent_from_draft_v10(packet, draft, raw, ready_row)
+    if _is_v11(raw):
+        item["human_warning"] = copy.deepcopy(raw["human_warning"])
+        item["machine_flag_disputed_ref"] = raw["machine_flag_disputed_ref"]
+    return item
+
+
+def _intent_from_draft_v10(
     packet: Mapping[str, Any], draft: Mapping[str, Any], raw: Mapping[str, Any], ready_row: Mapping[str, Any]
 ) -> dict[str, Any]:
     return {
@@ -698,7 +768,9 @@ def _build_packet_intent(
     ]
     intent: dict[str, Any] = {
         "schema": INTENT_SCHEMA,
-        "intent_version": INTENT_VERSION,
+        "intent_version": (
+            INTENT_VERSION_V11 if _is_v11(candidate_intents[0]) else INTENT_VERSION
+        ),
         "intent_id": "",
         "ledger_id": _ledger_id(packet),
         "u4_packet_hash": _packet_hash_ref(packet),
@@ -722,7 +794,11 @@ def _validate_candidate_intent(
     item: Mapping[str, Any], packet: Mapping[str, Any], ready_row: Mapping[str, Any],
     *, revision: int, method_version: str, ledger_id: str,
 ) -> None:
-    _require_exact_keys(item, EVENT_INTENT_FIELDS, "U4 candidate intent")
+    _require_exact_keys(
+        item,
+        EVENT_INTENT_FIELDS_V11 if _is_v11(item) else EVENT_INTENT_FIELDS,
+        "U4 candidate intent",
+    )
     if (
         item.get("ledger_id") != ledger_id
         or item.get("decision_revision") != revision
@@ -750,6 +826,8 @@ def _validate_candidate_intent(
         registered_at=_registered_at_from_outer(human.get("decided_at")),
     )
     validate_decision_event(synthetic, expected_sequence=1, expected_previous_hash=None)
+    if _is_v11(item):
+        _validate_v11_fields(item, "U4 candidate intent")
     blocked = set(ready_row["blocked_reasons"])
     if "U3_BATTERY_INCOMPLETE" in blocked:
         if (
@@ -776,7 +854,9 @@ def _validate_candidate_intent(
 
 def validate_packet_intent(intent: Mapping[str, Any]) -> None:
     _require_exact_keys(intent, INTENT_FIELDS, "U4 packet intent")
-    if intent.get("schema") != INTENT_SCHEMA or intent.get("intent_version") != INTENT_VERSION:
+    if intent.get("schema") != INTENT_SCHEMA or intent.get("intent_version") not in {
+        INTENT_VERSION, INTENT_VERSION_V11,
+    }:
         raise DecisionLedgerError("U4 packet intent schema/version mismatch")
     if not isinstance(intent.get("intent_id"), str) or INTENT_ID_RE.fullmatch(intent["intent_id"]) is None:
         raise DecisionLedgerError("U4 packet intent_id is invalid")
@@ -826,6 +906,10 @@ def validate_packet_intent(intent: Mapping[str, Any]) -> None:
         item_codes.append(code)
     if item_codes != codes or len(item_codes) != len(set(item_codes)):
         raise DecisionLedgerError("U4 candidate intents are not the exact canonical packet set")
+    expected_v11 = intent.get("intent_version") == INTENT_VERSION_V11
+    # governance-mutation: U4_LEDGER_V11_INTENT_VERSION_COHERENCE
+    if any(_is_v11(item) != expected_v11 for item in items):
+        raise DecisionLedgerError("U4 packet intent version does not match its candidate intents")
     # governance-mutation: U4_LEDGER_INTENT_HUMAN_COHERENCE
     if len({_canonical(item["human_decision"]) for item in items}) != 1:
         raise DecisionLedgerError("one U4 packet intent must preserve one coherent human decision")
@@ -862,7 +946,7 @@ def _validate_intent_revision(
 def _build_event(intent: Mapping[str, Any], *, sequence: int, previous_hash: str | None, registered_at: str) -> dict[str, Any]:
     event = {
         "schema": EVENT_SCHEMA,
-        "event_version": EVENT_VERSION,
+        "event_version": EVENT_VERSION_V11 if _is_v11(intent) else EVENT_VERSION,
         "event_kind": PAYLOAD_EVENT_KIND,
         "ledger_id": intent["ledger_id"],
         "sequence": sequence,
@@ -884,6 +968,9 @@ def _build_event(intent: Mapping[str, Any], *, sequence: int, previous_hash: str
         "authority": copy.deepcopy(intent["authority"]),
         "record_hash": "",
     }
+    if _is_v11(intent):
+        event["human_warning"] = copy.deepcopy(intent["human_warning"])
+        event["machine_flag_disputed_ref"] = intent["machine_flag_disputed_ref"]
     event["decision_id"] = _decision_id(event)
     event["record_hash"] = _record_hash(event)
     return event
@@ -893,10 +980,16 @@ def validate_decision_event(
     event: Mapping[str, Any], *, expected_sequence: int | None = None,
     expected_previous_hash: str | None | object = ...,
 ) -> None:
-    _require_exact_keys(event, EVENT_FIELDS, "U4 decision event")
+    version = event.get("event_version")
+    # governance-mutation: U4_LEDGER_V11_EVENT_VERSION_FIELDS
+    _require_exact_keys(
+        event,
+        EVENT_FIELDS_V11 if version == EVENT_VERSION_V11 else EVENT_FIELDS,
+        "U4 decision event",
+    )
     if (
         event.get("schema") != EVENT_SCHEMA
-        or event.get("event_version") != EVENT_VERSION
+        or version not in {EVENT_VERSION, EVENT_VERSION_V11}
         or event.get("event_kind") != PAYLOAD_EVENT_KIND
     ):
         raise DecisionLedgerError("U4 decision schema/version/kind mismatch")
@@ -969,6 +1062,8 @@ def validate_decision_event(
         raise DecisionLedgerError("persisted SELECT semantics are invalid")
     if event["decision"] == "DATA_BLOCKED" and not missing:
         raise DecisionLedgerError("persisted DATA_BLOCKED lacks missing evidence")
+    if version == EVENT_VERSION_V11:
+        _validate_v11_fields(event, "U4 decision event")
     revision = event.get("decision_revision")
     predecessor = event.get("supersedes_decision_id")
     if not isinstance(revision, int) or isinstance(revision, bool) or revision < 1:
@@ -1432,9 +1527,75 @@ def _snapshot_state(path: Path, *, allow_missing: bool = False) -> dict[str, Any
         return _replay_records(_read_outer_records(path))
 
 
-def verify_decision_ledger(path: Path) -> dict[str, Any]:
+def resolve_disputed_ref(
+    *, ref: str, ts_code: str, as_of: str, registered_at: str | None,
+    adjudications: Mapping[str, Mapping[str, Any]],
+) -> None:
+    """Prove a v1.1 machine_flag_disputed_ref names a committed human adjudication.
+
+    The reference is evidence that a human disputed the machine red flag; it
+    never relaxes the forced REJECT and never grants admission.
+    """
+    record = adjudications.get(ref)
+    # governance-mutation: U4_LEDGER_V11_DISPUTED_REF_RESOLVES
+    if (
+        record is None
+        or record.get("ts_code") != ts_code
+        or record.get("human_verdict") not in {
+            "MACHINE_VERDICT_REJECTED_STALE_EVIDENCE",
+            "MACHINE_VERDICT_REJECTED_MISREAD",
+            "MACHINE_VERDICT_REJECTED_OTHER",
+        }
+    ):
+        raise DecisionLedgerError(
+            "machine_flag_disputed_ref does not resolve to a committed adjudication "
+            "that disputes this ticker's machine flag"
+        )
+    # An adjudication from an earlier (or later) night may rest on a flag reason
+    # that no longer applies: the dispute must be about the same source night.
+    # governance-mutation: U4_LEDGER_V11_DISPUTED_REF_SAME_AS_OF
+    if str(record.get("as_of") or "") != as_of:
+        raise DecisionLedgerError(
+            "machine_flag_disputed_ref names an adjudication from a different as_of "
+            "than the U4 packet source"
+        )
+    if registered_at is not None and _parse_time(
+        record.get("registered_at"), "adjudication registered_at"
+    ) > _parse_time(registered_at, "U4 registered_at"):
+        raise DecisionLedgerError("machine_flag_disputed_ref names a later adjudication")
+
+
+def _load_adjudications(adjudication_ledger_path: Path) -> dict[str, dict[str, Any]]:
+    from experiments.research_funnel import disagreement_ledger
+
+    try:
+        return disagreement_ledger.committed_adjudications(Path(adjudication_ledger_path))
+    except disagreement_ledger.AdjudicationLedgerError as exc:
+        raise DecisionLedgerError(f"adjudication ledger is invalid: {exc}") from exc
+
+
+def _disputed_events(events: Sequence[Mapping[str, Any]]) -> list[Mapping[str, Any]]:
+    return [event for event in events if event.get("machine_flag_disputed_ref") is not None]
+
+
+def verify_decision_ledger(
+    path: Path, *, adjudication_ledger_path: Path | None = None,
+) -> dict[str, Any]:
     try:
         state = _snapshot_state(path)
+        disputed = _disputed_events(state["decisions"])
+        resolution = "NONE" if not disputed else "NOT_CHECKED"
+        if adjudication_ledger_path is not None:
+            adjudications = _load_adjudications(adjudication_ledger_path)
+            for event in disputed:
+                resolve_disputed_ref(
+                    ref=event["machine_flag_disputed_ref"],
+                    ts_code=event["candidate"]["ts_code"],
+                    as_of=event["source"]["as_of"],
+                    registered_at=event["registered_at"],
+                    adjudications=adjudications,
+                )
+            resolution = "RESOLVED" if disputed else "NONE"
         committed = {
             (packet_hash, receipt["closure_revision"])
             for packet_hash, receipts in state["closures"].items()
@@ -1450,6 +1611,7 @@ def verify_decision_ledger(path: Path) -> dict[str, Any]:
             "n": len(state["decisions"]),
             "closures": sum(len(items) for items in state["closures"].values()),
             "pending_packets": pending,
+            "disputed_refs": {"count": len(disputed), "resolution": resolution},
             "errors": [],
         }
     except (DecisionLedgerError, ValueError, OSError, json.JSONDecodeError) as exc:
@@ -1459,6 +1621,7 @@ def verify_decision_ledger(path: Path) -> dict[str, Any]:
             "n": 0,
             "closures": 0,
             "pending_packets": [],
+            "disputed_refs": {"count": 0, "resolution": "NOT_CHECKED"},
             "errors": [str(exc)],
         }
 
@@ -1556,6 +1719,7 @@ def _validate_packet_source(
 def append_decision_batch(
     *, packet: Mapping[str, Any], draft: Mapping[str, Any], ledger_path: Path,
     bundle_dir: Path,
+    adjudication_ledger_path: Path | None = None,
     _fail_after_decisions: int | None = None,
 ) -> dict[str, Any]:
     """Append/resume one frozen packet transaction and reconcile its derived receipt."""
@@ -1566,6 +1730,23 @@ def append_decision_batch(
     packet_ref = _packet_hash_ref(packet)
     expected_intent = _build_packet_intent(packet, draft, draft_rows, ready_rows)
     validate_packet_intent(expected_intent)
+    disputed = _disputed_events(expected_intent["candidate_intents"])
+    if disputed:
+        # governance-mutation: U4_LEDGER_V11_DISPUTED_REF_REQUIRES_LEDGER
+        if adjudication_ledger_path is None:
+            raise DecisionLedgerError(
+                "machine_flag_disputed_ref requires the adjudication ledger to resolve it"
+            )
+    if disputed and adjudication_ledger_path is not None:
+        adjudications = _load_adjudications(adjudication_ledger_path)
+        for item in disputed:
+            resolve_disputed_ref(
+                ref=item["machine_flag_disputed_ref"],
+                ts_code=item["candidate"]["ts_code"],
+                as_of=item["source"]["as_of"],
+                registered_at=None,
+                adjudications=adjudications,
+            )
     revision = int(expected_intent["decision_revision"])
     intent_key = (packet_ref, revision)
     projection_path = projection_path_for(ledger_path, packet_ref)
@@ -1798,10 +1979,16 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--ledger", required=True, type=Path)
     parser.add_argument("--bundle-dir", type=Path)
     parser.add_argument("--verify", action="store_true")
+    parser.add_argument(
+        "--adjudication-ledger", type=Path,
+        help="resolve v1.1 machine_flag_disputed_ref against this adjudication ledger",
+    )
     args = parser.parse_args(argv)
     try:
         if args.verify:
-            result = verify_decision_ledger(args.ledger)
+            result = verify_decision_ledger(
+                args.ledger, adjudication_ledger_path=args.adjudication_ledger,
+            )
             print(json.dumps(result, ensure_ascii=False, sort_keys=True))
             return 0 if result["ok"] else 1
         if args.packet is None or args.draft is None:
@@ -1813,6 +2000,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             draft=_load_json(args.draft),
             ledger_path=args.ledger,
             bundle_dir=args.bundle_dir,
+            adjudication_ledger_path=args.adjudication_ledger,
         )
         print(json.dumps(result, ensure_ascii=False, sort_keys=True))
         return 0

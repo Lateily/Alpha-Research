@@ -1,0 +1,170 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Lateily/Alpha-Research/docs/research/contracts/disagreement_adjudication.v0_1.schema.json",
+  "title": "AR Disagreement Adjudication v0.1",
+  "description": "One human adjudication of one HUMAN_ADJUDICATION row of a funnel disagreement_queue.json, persisted as the payload of an R-015 'disagreement_adjudication' outer record between a batch intent and a batch closure. Evidence only: it never changes a machine verdict, never grants U4 admission, never allows a claim, never trades.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "as_of",
+    "authority",
+    "batch_id",
+    "disagreement_class",
+    "evidence_basis",
+    "human_decision",
+    "human_verdict",
+    "information_cutoff",
+    "queue_row_hash",
+    "queue_rows_hash",
+    "reason_note",
+    "record_hash",
+    "registered_at",
+    "registration_source",
+    "row_id",
+    "run_id",
+    "schema",
+    "schema_version",
+    "ts_code"
+  ],
+  "properties": {
+    "schema": {
+      "const": "ar.disagreement_adjudication"
+    },
+    "schema_version": {
+      "const": "0.1"
+    },
+    "batch_id": {
+      "type": "string",
+      "pattern": "^dab_[0-9a-f]{32}$"
+    },
+    "as_of": {
+      "type": "string",
+      "pattern": "^[0-9]{8}$"
+    },
+    "run_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "queue_rows_hash": {
+      "$ref": "#/$defs/sha256"
+    },
+    "queue_row_hash": {
+      "$ref": "#/$defs/sha256"
+    },
+    "row_id": {
+      "$ref": "#/$defs/sha256"
+    },
+    "ts_code": {
+      "type": "string",
+      "pattern": "^[0-9A-Z]+\\.[A-Z]+$"
+    },
+    "disagreement_class": {
+      "enum": [
+        "U3_RED_FLAG_VS_E1_CLEAR",
+        "E1_RED_FLAG_CONTROL_SAMPLE"
+      ]
+    },
+    "human_verdict": {
+      "enum": [
+        "MACHINE_VERDICT_CONFIRMED",
+        "MACHINE_VERDICT_REJECTED_STALE_EVIDENCE",
+        "MACHINE_VERDICT_REJECTED_MISREAD",
+        "MACHINE_VERDICT_REJECTED_OTHER",
+        "COUNTER_SIDE_REJECTED",
+        "UNDETERMINED_NEEDS_DATA"
+      ]
+    },
+    "reason_note": {
+      "type": "string",
+      "minLength": 1
+    },
+    "information_cutoff": {
+      "type": "string",
+      "pattern": "^[0-9]{8}$",
+      "description": "Must equal as_of: the human may only use information available at the queue date."
+    },
+    "evidence_basis": {
+      "enum": [
+        "QUEUE_ROW_SNAPSHOT_ONLY",
+        "BUNDLE_ARTIFACTS_ONLY"
+      ]
+    },
+    "human_decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "authorization_evidence_ref",
+        "authorization_text",
+        "claimed_reviewer",
+        "decided_at",
+        "identity_verification"
+      ],
+      "properties": {
+        "claimed_reviewer": {
+          "enum": [
+            "Junyan"
+          ],
+          "description": "CLAIMED_REVIEWERS; adding a reviewer is a charter change."
+        },
+        "identity_verification": {
+          "const": "UNAVAILABLE"
+        },
+        "decided_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Must not precede the queue generated_at."
+        },
+        "authorization_text": {
+          "type": "string",
+          "minLength": 20,
+          "description": "One text per batch; contains batch_hash[:12] and 离线 or offline."
+        },
+        "authorization_evidence_ref": {
+          "type": "string",
+          "pattern": "^(conversation|pr|commit):.+$"
+        }
+      }
+    },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "changes_machine_verdict",
+        "claim_allowed",
+        "no_trade_flag",
+        "u4_admission_authority"
+      ],
+      "properties": {
+        "u4_admission_authority": {
+          "const": false
+        },
+        "changes_machine_verdict": {
+          "const": false
+        },
+        "claim_allowed": {
+          "const": false
+        },
+        "no_trade_flag": {
+          "const": true
+        }
+      }
+    },
+    "registered_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "R-015 outer timestamp stamped under the ledger lock."
+    },
+    "registration_source": {
+      "const": "R015_EVENT_LEDGER_TS"
+    },
+    "record_hash": {
+      "$ref": "#/$defs/sha256"
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    }
+  }
+}

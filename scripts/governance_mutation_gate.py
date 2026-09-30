@@ -160,6 +160,7 @@ FUNNEL_GOVERNANCE_PATHS = (
     "experiments/research_funnel/feature_store.py",
     "experiments/execution_tracker/event_ledger.py",
     "experiments/execution_tracker/paper_execution_audit.py",
+    "experiments/research_funnel/disagreement_ledger.py",
     "experiments/research_funnel/announcement_feed.py",
     "experiments/research_funnel/research_increment_label.py",
 )
@@ -8195,6 +8196,172 @@ MUTATIONS: tuple[MutationCase, ...] = (
     ),
 )
 
+# Rotation breadth / NAV gaps: missing is recorded as missing (2026-09 re-review P1).
+MUTATIONS = MUTATIONS + (
+    MutationCase(
+        mutation_id="ROTATION_FETCH_FAILURE_NOT_EMPTY",
+        component="Rotation missing-data honesty",
+        source_path="experiments/execution_tracker/tushare_rows.py",
+        test_script="tests/test_rotation_nav_missing.py",
+        before="    return None, reason\n\n\ndef optional_float(value):",
+        after="    return [], None\n\n\ndef optional_float(value):",
+        expected_failure_marker="test_failure_is_none_with_reason_not_empty_list",
+        rationale="A failed provider call must never look like a real empty answer.",
+    ),
+    MutationCase(
+        mutation_id="ROTATION_EMPTY_LIMIT_LIST_BLOCKED",
+        component="Rotation missing-data honesty",
+        source_path="experiments/execution_tracker/rotation_validation.py",
+        test_script="tests/test_rotation_nav_missing.py",
+        before='    if not cnt:\n        return None, "EMPTY_LIMIT_LIST_IMPLAUSIBLE_FOR_SETTLED_DAY"',
+        after='    if False:\n        return None, "EMPTY_LIMIT_LIST_IMPLAUSIBLE_FOR_SETTLED_DAY"',
+        expected_failure_marker="test_limit_counts_never_store_zero",
+        rationale="An empty limit_list_d answer is not a zero-limit-up A-share day.",
+    ),
+    MutationCase(
+        mutation_id="ROTATION_APPEND_LIMIT_NONE_NOT_EMPTY",
+        component="Rotation missing-data honesty",
+        source_path="experiments/execution_tracker/rotation_validation.py",
+        test_script="tests/test_rotation_nav_missing.py",
+        before='        hist["limit_up_by_industry"][d] = cnt       # None = DATA_BLOCKED,绝不写 {}',
+        after='        hist["limit_up_by_industry"][d] = cnt or {}  # None = DATA_BLOCKED,绝不写 {}',
+        expected_failure_marker="test_target_day_limit_failure_or_empty_appends_the_day_as_blocked",
+        rationale="A nightly day without a limit reading is appended as None, never {} (zero limit-ups).",
+    ),
+    MutationCase(
+        mutation_id="ROTATION_BACKFILL_LIMIT_NONE_NOT_EMPTY",
+        component="Rotation missing-data honesty",
+        source_path="experiments/execution_tracker/rotation_validation.py",
+        test_script="tests/test_rotation_nav_missing.py",
+        before="        lim[d] = cnt                                # None = DATA_BLOCKED,绝不写 {}",
+        after="        lim[d] = cnt or {}                          # None = DATA_BLOCKED,绝不写 {}",
+        expected_failure_marker="test_backfill_stores_blocked_limit_as_none_and_drops_missing_flows",
+        rationale="The --backfill writer is the original {}-as-zero bug shape; it must store None.",
+    ),
+    MutationCase(
+        mutation_id="ROTATION_LIMIT_RETRY_CLEARS_MARKER",
+        component="Rotation missing-data honesty",
+        source_path="experiments/execution_tracker/rotation_validation.py",
+        test_script="tests/test_rotation_nav_missing.py",
+        before='        recovered[d] = {"first_block_reason": blocked.pop(d), "recovered_at_target": target}',
+        after='        recovered[d] = {"first_block_reason": blocked.get(d), "recovered_at_target": target}',
+        expected_failure_marker="test_recent_marked_blocked_days_are_retried_and_recovered",
+        rationale="A recovered limit reading must leave the blocked set, with its provenance recorded.",
+    ),
+    MutationCase(
+        mutation_id="ROTATION_LEGACY_EMPTY_LIMIT_BLOCKED",
+        component="Rotation missing-data honesty",
+        source_path="experiments/execution_tracker/rotation_validation.py",
+        test_script="tests/test_rotation_nav_missing.py",
+        before="    if not isinstance(row, dict) or not row:\n        return None\n    return row",
+        after="    if not isinstance(row, dict):\n        return None\n    return row",
+        expected_failure_marker="test_marked_and_legacy_empty_and_missing_readings_are_all_blocked",
+        rationale="Legacy {} limit readings were failed calls and must stay excluded from Q2.",
+    ),
+    MutationCase(
+        mutation_id="ROTATION_FLOW_MISSING_DROPPED",
+        component="Rotation missing-data honesty",
+        source_path="experiments/execution_tracker/rotation_validation.py",
+        test_script="tests/test_rotation_nav_missing.py",
+        before="        if not name or net is None or pct is None:\n            dropped += 1",
+        after="        if not name:\n            dropped += 1",
+        expected_failure_marker="test_missing_net_amount_drops_the_sector_day",
+        rationale="A missing sector net_amount is dropped, never stored as a reading.",
+    ),
+    MutationCase(
+        mutation_id="LEAD_PRECURSOR_BLOCKED_LIMIT_EXCLUDED",
+        component="Rotation missing-data honesty",
+        source_path="experiments/execution_tracker/lead_precursor.py",
+        test_script="tests/test_rotation_nav_missing.py",
+        before='        if r.get("limit_reading_available") is False:',
+        after="        if False:",
+        expected_failure_marker="test_blocked_limit_days_are_excluded_from_calibration_and_counted",
+        rationale="Days whose defense-crowding light cannot be judged stay out of calibration.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_NAV_DAILY_RETURN_ONE_SESSION",
+        component="Research funnel paper NAV session contiguity",
+        source_path="experiments/execution_tracker/model_paper_fund.py",
+        test_script="tests/test_rotation_nav_missing.py",
+        before="    one_session = bool(covered == 1 and nav_history and nav_history[-1] is basis)",
+        after="    one_session = bool(nav_history)",
+        expected_failure_marker="test_multi_session_gap_is_period_return_not_daily",
+        rationale="daily_return is only written for a one-session step; gaps get period_return.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_NAV_DEFAULT_CALENDAR_READS_NO_FILE",
+        component="Research funnel paper NAV session contiguity",
+        source_path="experiments/execution_tracker/model_paper_fund.py",
+        test_script="tests/test_rotation_nav_missing.py",
+        before="        calendar = session_calendar.static_calendar()",
+        after="        calendar = session_calendar.default_calendar()",
+        expected_failure_marker="test_update_nav_default_calendar_reads_no_file",
+        rationale="The library NAV basis must not read the rolling rotation_history implicitly, "
+                  "or sealed research_cycle replays stop being deterministic.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_CYCLE_NAV_FROZEN_CALENDAR",
+        component="Research funnel paper NAV session contiguity",
+        source_path="experiments/research_funnel/research_cycle.py",
+        test_script="tests/test_rotation_nav_missing.py",
+        before="                nav_calendar = session_calendar.frozen_calendar(sessions)",
+        after="                nav_calendar = session_calendar.static_calendar()",
+        expected_failure_marker="test_deadline_cycle_uses_the_orders_frozen_sessions",
+        rationale="A deadline cycle measures NAV contiguity against its own sealed exchange sessions.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_NAV_GAP_WITHHOLDS_DRAWDOWN",
+        component="Research funnel paper NAV session contiguity",
+        source_path="experiments/execution_tracker/model_paper_fund.py",
+        test_script="tests/test_rotation_nav_missing.py",
+        before='        result["max_drawdown"] = None\n        result["max_drawdown_observed_marks_only"]',
+        after='        pass\n        result["max_drawdown_observed_marks_only"]',
+        expected_failure_marker="test_performance_withholds_drawdown_over_gaps",
+        rationale="A drawdown over a sparse NAV series is withheld, not shown as complete.",
+    ),
+    MutationCase(
+        mutation_id="EXPORT_NAV_SESSION_GAP_PARTIAL",
+        component="Paper NAV contract export",
+        source_path="experiments/execution_tracker/export_contracts.py",
+        test_script="tests/test_rotation_nav_missing.py",
+        before=('    if (session_audit and session_audit["contiguity"] != "CONTIGUOUS"\n'
+                '            and not blocked and result["data_quality"] == "COMPLETE"):'),
+        after="    if False:",
+        expected_failure_marker="test_gapped_series_is_partial_and_lists_missing_sessions",
+        rationale="A nav_series with missing sessions cannot be published as COMPLETE.",
+    ),
+    MutationCase(
+        mutation_id="SESSION_CALENDAR_SOURCES_DISAGREE",
+        component="Paper NAV contract export",
+        source_path="experiments/execution_tracker/session_calendar.py",
+        test_script="tests/test_rotation_nav_missing.py",
+        before="                if seen != expected:",
+        after="                if False:",
+        expected_failure_marker="test_disagreeing_sources_make_the_range_unavailable",
+        rationale="Conflicting offline calendars make contiguity unprovable, not assumed.",
+    ),
+    MutationCase(
+        mutation_id="SESSION_CALENDAR_NIGHTLY_UNKNOWN_WEEKDAY",
+        component="Paper NAV contract export",
+        source_path="experiments/execution_tracker/session_calendar.py",
+        test_script="tests/test_rotation_nav_missing.py",
+        before="        if day.weekday() < 5 and not _known_closed(day):\n            return SessionCalendar(days)",
+        after="        if False:\n            return SessionCalendar(days)",
+        expected_failure_marker="test_year_rollover_nightly_rows",
+        rationale="An unknown weekday between the window end and the target is never assumed closed.",
+    ),
+    MutationCase(
+        mutation_id="SESSION_CALENDAR_2026_HOLIDAY_TABLE",
+        component="Paper NAV contract export",
+        source_path="experiments/execution_tracker/session_calendar.py",
+        test_script="tests/test_rotation_nav_missing.py",
+        before='    "20260925",                                               # 中秋\n',
+        after="",
+        expected_failure_marker="test_static_2026_calendar_skips_holidays_not_sessions",
+        rationale="An exchange holiday is not a missed session.",
+    ),
+)
+
 # #295 replaces the original packet-as-one-event model with candidate events
 # and a separate packet-closure commit.
 MUTATIONS = MUTATIONS + (
@@ -9472,7 +9639,7 @@ MUTATIONS = MUTATIONS + (
         test_script="tests/test_research_closed_loop_v1.py",
         before=(
             '    {"path": "experiments/research_funnel/research_cycle.py", '
-            '"sha256": "sha256:c826bb98f749a2fb2337351b68bcbd340476fb44b09f00f69b5d3a7d5274f373"},\n'
+            '"sha256": "sha256:237e65c4163cf99337ab586bd6220ab08c25242f47b4fe205f1bc057f318c465"},\n'
         ),
         after="",
         expected_failure_marker="test_every_bound_artifact_matches_its_exact_bytes",
@@ -10295,7 +10462,7 @@ MUTATIONS = MUTATIONS + (
         component="Research Closed Loop V1 assembly identity",
         source_path="docs/research/contracts/research_closed_loop.v1.json",
         test_script="tests/test_u4_pre_decision_runtime.py",
-        before="sha256:f8998ee0fdecff6bf871f19280ac1bfec9dfaa2a2c19e22c8682380d63574d54",
+        before="sha256:e1e15b8f45b84eeca5786f4bed704ceec1e9bc15ec9f9a3adc642bec16b4c81f",
         after="sha256:e84b0e026832420ee1e88e1fcbac2b69a836e97cf29f5d1d7daf15eb3fbe09fa",
         expected_failure_marker="test_fix_forward_task_compiles_and_preserves_the_frozen_assembly",
         rationale="The previously reviewed V1.3 identity must not silently bind changed DAG bytes.",
@@ -12353,6 +12520,1982 @@ MUTATIONS = MUTATIONS + (
     ),
 )
 
+# 2026-09 whole-market Tushare paging: income_vip 20260630 was capped at exactly
+# 9000 rows every night and recorded OK; the E1 layer then labelled ~90 issuers
+# income COMPLETE on Q1 data. Paging, truncation, the statutory-deadline guard and
+# the red-flag side of the same defect (supersession unverified on an income gap).
+MUTATIONS = MUTATIONS + (
+    MutationCase(
+        mutation_id="SECURITY_REGISTRY_TUSHARE_TRUNCATION_RAISES",
+        component="U0 security registry transport",
+        source_path="experiments/research_funnel/security_registry.py",
+        test_script="tests/test_e1_tushare_paging.py",
+        before='    if facts["capped"] is not False:\n        raise TushareTruncatedError(',
+        after='    if False:\n        raise TushareTruncatedError(',
+        expected_failure_marker="test_single_shot_has_more_is_truncated_and_raises_through_the_shared_helper",
+        rationale='Every shared-helper caller (U0 registry, feature store, extended sources) must fail closed on a truncated batch instead of receiving it as complete.',
+    ),
+    MutationCase(
+        mutation_id="SECURITY_REGISTRY_TUSHARE_PAGE_PARAMS",
+        component="U0 security registry transport",
+        source_path="experiments/research_funnel/security_registry.py",
+        test_script="tests/test_e1_tushare_paging.py",
+        before='        page_params.update({"limit": page_limit, "offset": offset})',
+        after='        pass',
+        expected_failure_marker="test_honest_provider_is_paged_to_the_empty_confirmation_page",
+        rationale='Paged endpoints must send limit/offset, or the provider cap (income_vip 9000 rows, 2026-09) silently truncates the batch.',
+    ),
+    MutationCase(
+        mutation_id="SECURITY_REGISTRY_TUSHARE_EMPTY_CONFIRMATION_ENDS",
+        component="U0 security registry transport",
+        source_path="experiments/research_funnel/security_registry.py",
+        test_script="tests/test_e1_tushare_paging.py",
+        before='        if not page:\n            return rows, pages, (',
+        after='        if len(page) < page_limit:\n            return rows, pages, (',
+        expected_failure_marker="test_silent_per_page_clamp_below_the_limit_is_read_through",
+        rationale='Only an empty confirmation page ends a paged batch; a short page may be a silent per-call clamp (express_vip cap unverified).',
+    ),
+    MutationCase(
+        mutation_id="SECURITY_REGISTRY_TUSHARE_REPEATED_PAGE",
+        component="U0 security registry transport",
+        source_path="experiments/research_funnel/security_registry.py",
+        test_script="tests/test_e1_tushare_paging.py",
+        before='        if digest in seen_pages:',
+        after='        if False:',
+        expected_failure_marker="test_provider_returning_exactly_the_cap_and_ignoring_paging_is_truncated",
+        rationale='A provider that ignores offset repeats the capped page; that is truncation, not more data.',
+    ),
+    MutationCase(
+        mutation_id="SECURITY_REGISTRY_TUSHARE_KNOWN_CAP",
+        component="U0 security registry transport",
+        source_path="experiments/research_funnel/security_registry.py",
+        test_script="tests/test_e1_tushare_paging.py",
+        before='    if known_cap is not None and len(page) == known_cap:',
+        after='    if False:',
+        expected_failure_marker="test_single_shot_response_equal_to_the_known_cap_escalates_and_is_truncated",
+        rationale='A single response whose length equals a known provider cap cannot be recorded as a complete batch.',
+    ),
+    MutationCase(
+        mutation_id="SECURITY_REGISTRY_TUSHARE_SINGLE_SHOT_HAS_MORE",
+        component="U0 security registry transport",
+        source_path="experiments/research_funnel/security_registry.py",
+        test_script="tests/test_e1_tushare_paging.py",
+        before='    if has_more is True:\n        return "HAS_MORE"',
+        after='    if False:\n        return "HAS_MORE"',
+        expected_failure_marker="test_single_shot_has_more_is_truncated_and_raises_through_the_shared_helper",
+        rationale='has_more=true on a single-shot endpoint means the batch is incomplete.',
+    ),
+    MutationCase(
+        mutation_id="SECURITY_REGISTRY_TUSHARE_ESCALATES_TO_PAGING",
+        component="U0 security registry transport",
+        source_path="experiments/research_funnel/security_registry.py",
+        test_script="tests/test_e1_tushare_paging.py",
+        before='        if reason is None or caller_paged:',
+        after='        if True:',
+        expected_failure_marker="test_single_shot_has_more_escalates_to_a_complete_paged_read",
+        rationale='A single-shot response that signals more rows is re-read page by page instead of failing or passing as complete.',
+    ),
+    MutationCase(
+        mutation_id="SECURITY_REGISTRY_TUSHARE_WIRE_HAS_MORE",
+        component="U0 security registry transport",
+        source_path="experiments/research_funnel/security_registry.py",
+        test_script="tests/test_e1_tushare_paging.py",
+        before='    wire_has_more = has_more if isinstance(has_more, bool) else None',
+        after='    wire_has_more = None',
+        expected_failure_marker="test_wire_has_more_on_a_short_single_shot_response_is_truncation",
+        rationale='The wire has_more flag is the only truncation signal for single-shot endpoints; dropping it must be caught.',
+    ),
+    MutationCase(
+        mutation_id="E1_MISSING_CAPPED_FACT_FAILS_CLOSED",
+        component="E1 event layer Tushare paging",
+        source_path="experiments/research_funnel/e1_event_layer.py",
+        test_script="tests/test_e1_tushare_paging.py",
+        before='            capped = facts.get("capped") is not False',
+        after='            capped = bool(facts.get("capped"))',
+        expected_failure_marker="test_missing_capped_fact_fails_closed",
+        rationale='An injected fetch that omits the capped fact must fail closed, not read as a complete batch.',
+    ),
+    MutationCase(
+        mutation_id="E1_TRUNCATED_CALL_BLOCKED",
+        component="E1 event layer Tushare paging",
+        source_path="experiments/research_funnel/e1_event_layer.py",
+        test_script="tests/test_e1_tushare_paging.py",
+        before='            status = "DATA_BLOCKED" if capped else "OK"',
+        after='            status = "OK"',
+        expected_failure_marker="test_capped_income_call_is_data_blocked_with_pagination_facts",
+        rationale='A truncated endpoint/period (income_vip 20260630 at 9000 rows) must be recorded DATA_BLOCKED, not OK.',
+    ),
+    MutationCase(
+        mutation_id="E1_TRUNCATED_CALL_SOURCE_ERROR",
+        component="E1 event layer Tushare paging",
+        source_path="experiments/research_funnel/e1_event_layer.py",
+        test_script="tests/test_e1_tushare_paging.py",
+        before='            if capped:\n                errors.append({',
+        after='            if False:\n                errors.append({',
+        expected_failure_marker="test_capped_income_call_becomes_a_source_error",
+        rationale='A truncated batch must become a source error so no clean verdict can rest on it.',
+    ),
+    MutationCase(
+        mutation_id="E1_INCOME_DEADLINE_STRICTLY_AFTER",
+        component="E1 event layer Tushare paging",
+        source_path="experiments/research_funnel/e1_event_layer.py",
+        test_script="tests/test_e1_tushare_paging.py",
+        before='        if deadline is None or not as_of > deadline:',
+        after='        if deadline is None or not as_of >= deadline:',
+        expected_failure_marker="test_deadline_day_and_before_do_not_infer_a_gap",
+        rationale='Filings are still legal on the deadline day itself; only a later as_of may infer a gap.',
+    ),
+    MutationCase(
+        mutation_id="E1_H1_STATUTORY_DEADLINE",
+        component="E1 event layer Tushare paging",
+        source_path="experiments/research_funnel/e1_event_layer.py",
+        test_script="tests/test_e1_tushare_paging.py",
+        before='    "0630": (0, "0831"),',
+        after='    "0630": (0, "0930"),',
+        expected_failure_marker="test_issuer_missing_period_after_deadline_is_not_income_complete",
+        rationale='The H1 report is due by 08-31; a later deadline would let the 2026-09 truncation victims stay income COMPLETE.',
+    ),
+    MutationCase(
+        mutation_id="E1_INCOME_DEADLINE_GAP_BLOCKS_CLEAR",
+        component="E1 event layer Tushare paging",
+        source_path="experiments/research_funnel/e1_event_layer.py",
+        test_script="tests/test_e1_tushare_paging.py",
+        before='    elif income_gaps:\n        verdict = "DATA_BLOCKED"',
+        after='    elif False:\n        verdict = "DATA_BLOCKED"',
+        expected_failure_marker="test_issuer_missing_period_after_deadline_is_not_income_complete",
+        rationale='An issuer judged on Q1 after the H1 deadline cannot receive NO_RED_FLAG_FOUND.',
+    ),
+    MutationCase(
+        mutation_id="E1_INCOME_DEADLINE_GAP_NOT_COMPLETE",
+        component="E1 event layer Tushare paging",
+        source_path="experiments/research_funnel/e1_event_layer.py",
+        test_script="tests/test_e1_tushare_paging.py",
+        before='                if len(quarters) >= 2 and not income_gaps and not income_source_blocked',
+        after='                if len(quarters) >= 2 and not income_source_blocked',
+        expected_failure_marker="test_red_flag_from_filed_history_is_kept_but_income_is_not_complete",
+        rationale='Income coverage must not read COMPLETE when a period is missing after its statutory deadline, even on a RED_FLAG row.',
+    ),
+    MutationCase(
+        mutation_id="E1_RED_FLAG_ON_BLOCKED_SUPERSESSION_WITHHELD",
+        component="E1 event layer Tushare paging",
+        source_path="experiments/research_funnel/e1_event_layer.py",
+        test_script="tests/test_e1_tushare_paging.py",
+        before='        if source_blocked:\n            withheld = True',
+        after='        if False:\n            withheld = True',
+        expected_failure_marker="test_flag_resting_on_a_truncated_income_period_is_withheld",
+        rationale='A red flag that is "active" only because its superseding income period sits in a truncated/failed call must not be emitted as a clean RED_FLAG (bidirectional gate honesty).',
+    ),
+    MutationCase(
+        mutation_id="E1_RED_FLAG_ON_DEADLINE_GAP_MARKED",
+        component="E1 event layer Tushare paging",
+        source_path="experiments/research_funnel/e1_event_layer.py",
+        test_script="tests/test_e1_tushare_paging.py",
+        before='        if _supersession_dependencies(item, income_gaps):\n            supersession_unverified = True',
+        after='        if False:\n            supersession_unverified = True',
+        expected_failure_marker="test_late_filer_red_flag_keeps_the_flag_with_a_supersession_marker",
+        rationale='A late filer keeps its filed-fact flag but must carry the supersession-unverified marker so downstream can route it to review.',
+    ),
+    MutationCase(
+        mutation_id="E1_VALIDATE_GAP_ROW_NOT_COMPLETE",
+        component="E1 event layer Tushare paging",
+        source_path="experiments/research_funnel/e1_event_layer.py",
+        test_script="tests/test_e1_tushare_paging.py",
+        before='        if gaps and row_coverage.get("income") == "COMPLETE":',
+        after='        if False:',
+        expected_failure_marker="test_validator_refuses_income_complete_with_a_deadline_gap",
+        rationale='The contract validator must refuse a rehashed artifact that relabels a deadline gap income COMPLETE.',
+    ),
+    MutationCase(
+        mutation_id="E1_VALIDATE_GAP_ROW_NOT_CLEAR",
+        component="E1 event layer Tushare paging",
+        source_path="experiments/research_funnel/e1_event_layer.py",
+        test_script="tests/test_e1_tushare_paging.py",
+        before='        if gaps and row.get("verdict") == "NO_RED_FLAG_FOUND":',
+        after='        if False:',
+        expected_failure_marker="test_validator_refuses_no_red_flag_found_on_a_deadline_gap",
+        rationale='The contract validator must refuse NO_RED_FLAG_FOUND on a row with income missing after its deadline.',
+    ),
+    MutationCase(
+        mutation_id="E1_VALIDATE_RED_FLAG_NOT_ON_BLOCKED_SUPERSESSION",
+        component="E1 event layer Tushare paging",
+        source_path="experiments/research_funnel/e1_event_layer.py",
+        test_script="tests/test_e1_tushare_paging.py",
+        before='            if blocked:\n                raise E1LayerError(',
+        after='            if False:\n                raise E1LayerError(',
+        expected_failure_marker="test_validator_refuses_a_red_flag_resting_on_a_truncated_period",
+        rationale='The contract validator must refuse a RED_FLAG whose lifecycle reading depends on a period hidden by a blocked source call.',
+    ),
+    MutationCase(
+        mutation_id="E1_VALIDATE_RED_FLAG_GAP_MARKED",
+        component="E1 event layer Tushare paging",
+        source_path="experiments/research_funnel/e1_event_layer.py",
+        test_script="tests/test_e1_tushare_paging.py",
+        before='            if _supersession_dependencies(item, gaps) and (',
+        after='            if False and (',
+        expected_failure_marker="test_validator_refuses_an_unmarked_red_flag_on_a_deadline_gap",
+        rationale='The contract validator must refuse a RED_FLAG resting on a deadline gap that lacks the supersession marker.',
+    ),
+    MutationCase(
+        mutation_id="E1_VALIDATE_CAPPED_CALL_BLOCKED",
+        component="E1 event layer Tushare paging",
+        source_path="experiments/research_funnel/e1_event_layer.py",
+        test_script="tests/test_e1_tushare_paging.py",
+        before='        if call.get("capped") is True and call.get("status") != "DATA_BLOCKED":',
+        after='        if False:',
+        expected_failure_marker="test_validator_refuses_a_capped_call_marked_ok",
+        rationale='The contract validator must refuse a truncated source call recorded as OK.',
+    ),
+    MutationCase(
+        mutation_id="E1_VALIDATE_BLOCKED_CALL_HAS_ERROR",
+        component="E1 event layer Tushare paging",
+        source_path="experiments/research_funnel/e1_event_layer.py",
+        test_script="tests/test_e1_tushare_paging.py",
+        before='        if call.get("status") == "DATA_BLOCKED" and (',
+        after='        if False and (',
+        expected_failure_marker="test_validator_refuses_a_blocked_call_without_a_source_error",
+        rationale='A DATA_BLOCKED call without its source error would let the layer clear rows on missing data.',
+    ),
+)
+
+# U3 red-flag gate v1 (2026-09-29 re-review P1 #2/#3): check_ticker delegates to the
+# shared E1 rule set; these pins keep the express-amount, supersession, no-lookahead,
+# null-evidence and reason-prefix semantics from regressing in either gate.
+MUTATIONS = MUTATIONS + (
+    MutationCase(
+        mutation_id='U3_RED_FLAG_EXPRESS_PRIOR_AMOUNT_NOT_PERCENT',
+        component="U3 red-flag gate",
+        source_path='experiments/research_funnel/e1_event_layer.py',
+        test_script='tests/test_red_flag_gate_semantics.py',
+        before='    official_yoy_pct = _number(row.get("yoy_dedu_np"))',
+        after='    official_yoy_pct = _number(row.get("yoy_net_profit"))',
+        expected_failure_marker='test_express_prior_year_amount_is_not_a_percent',
+        rationale='Express yoy_net_profit is the prior-year profit amount; reading it as a percent re-creates the 9/24-9/29 false flags.',
+    ),
+    MutationCase(
+        mutation_id='U3_RED_FLAG_FILED_STATEMENT_SUPERSEDES_GUIDANCE',
+        component="U3 red-flag gate",
+        source_path='experiments/research_funnel/e1_event_layer.py',
+        test_script='tests/test_red_flag_gate_semantics.py',
+        before='    forecast_superseded = bool(forecast_by_period) and not forecast_active',
+        after='    forecast_superseded = False',
+        expected_failure_marker='test_fy2025_guidance_superseded_by_filed_h1_2026',
+        rationale='A filed statement for the same or a later period retires older issuer guidance.',
+    ),
+    MutationCase(
+        mutation_id='U3_RED_FLAG_NO_FUTURE_FILING',
+        component="U3 red-flag gate",
+        source_path='experiments/research_funnel/e1_event_layer.py',
+        test_script='tests/test_red_flag_gate_semantics.py',
+        before='    return code in eligible and len(ann_date) == 8 and ann_date.isdigit() and ann_date <= as_of',
+        after='    return code in eligible and len(ann_date) == 8 and ann_date.isdigit()',
+        expected_failure_marker='test_filing_after_as_of_cannot_supersede',
+        rationale='A filing announced after as_of cannot supersede guidance or feed a verdict (no lookahead).',
+    ),
+    MutationCase(
+        mutation_id='U3_RED_FLAG_FILED_NULL_INCOME_KEPT',
+        component="U3 red-flag gate",
+        source_path='experiments/research_funnel/e1_event_layer.py',
+        test_script='tests/test_red_flag_gate_semantics.py',
+        before='        if len(period) != 8 or not period.isdigit():\n            continue\n        # A filed statement',
+        after='        if len(period) != 8 or not period.isdigit() or _number(row.get("n_income_attr_p")) is None:\n            continue\n        # A filed statement',
+        expected_failure_marker='test_nan_latest_net_income_never_passes',
+        rationale='Dropping a filed NaN period silently falls back to an older quarter pair and PASSes.',
+    ),
+    MutationCase(
+        mutation_id='U3_RED_FLAG_INCOME_ANCHORED_ADJACENT_PAIR',
+        component="U3 red-flag gate",
+        source_path='experiments/research_funnel/e1_event_layer.py',
+        test_script='tests/test_red_flag_gate_semantics.py',
+        before='    latest_period = max(period_rows, default="")\n    if not latest_period:',
+        after='    latest_period = max((p for p in period_rows if _standalone_value(p, period_rows)[1] is None), default="")\n    if not latest_period:',
+        expected_failure_marker='test_non_adjacent_quarters_are_not_paired',
+        rationale='The income rule is anchored on the latest filed period; skipping to an older computable pair evaluates stale quarters.',
+    ),
+    MutationCase(
+        mutation_id='U3_RED_FLAG_FORECAST_NULL_ROW_UNSCORABLE',
+        component="U3 red-flag gate",
+        source_path='experiments/research_funnel/e1_event_layer.py',
+        test_script='tests/test_red_flag_gate_semantics.py',
+        before='    scorable = bool(guidance_type) or high is not None',
+        after='    scorable = True',
+        expected_failure_marker='test_null_forecast_row_is_not_evidence',
+        rationale='A guidance row with no type and no bound is not evidence and cannot yield a clean check.',
+    ),
+    MutationCase(
+        mutation_id='U3_RED_FLAG_VERDICT_MAP',
+        component="U3 red-flag gate",
+        source_path='experiments/execution_tracker/red_flag_gate.py',
+        test_script='tests/test_red_flag_gate_semantics.py',
+        before='VERDICT_MAP = {"RED_FLAG": "RED_FLAG", "NO_RED_FLAG_FOUND": "PASS", "DATA_BLOCKED": "DATA_BLOCKED"}',
+        after='VERDICT_MAP = {"RED_FLAG": "RED_FLAG", "NO_RED_FLAG_FOUND": "PASS", "DATA_BLOCKED": "PASS"}',
+        expected_failure_marker='test_nan_latest_net_income_never_passes',
+        rationale='Missing evidence maps to DATA_BLOCKED, never PASS.',
+    ),
+    MutationCase(
+        mutation_id='U3_RED_FLAG_INCOME_SOURCE_REQUIRED',
+        component="U3 red-flag gate",
+        source_path='experiments/execution_tracker/red_flag_gate.py',
+        test_script='tests/test_red_flag_gate_semantics.py',
+        before='        income_rows = None; income_error = f"income:{e}"',
+        after='        income_rows = []; income_error = None',
+        expected_failure_marker='test_income_failure_blocks_even_negative_guidance',
+        rationale='Without filed statements supersession is unknowable, so guidance flags cannot be confirmed.',
+    ),
+    MutationCase(
+        mutation_id='U3_RED_FLAG_EXPRESS_FAILURE_NOT_PASS',
+        component="U3 red-flag gate",
+        source_path='experiments/execution_tracker/red_flag_gate.py',
+        test_script='tests/test_red_flag_gate_semantics.py',
+        before='        express_rows = []; errors.append(f"express:{e}")',
+        after='        express_rows = []',
+        expected_failure_marker='test_express_failure_never_passes',
+        rationale='An express endpoint failure is not an empty express history; it cannot PASS.',
+    ),
+    MutationCase(
+        mutation_id='U3_RED_FLAG_REASON_PREFIX_CONTRACT',
+        component="U3 red-flag gate",
+        source_path='experiments/execution_tracker/red_flag_gate.py',
+        test_script='tests/test_red_flag_gate_semantics.py',
+        before='        text = f"最新预告[',
+        after='        text = f"预告[',
+        expected_failure_marker='test_reason_text_prefixes_are_stable_for_downstream_parsers',
+        rationale='Downstream queue/trust parsers classify red-flag reasons by the 最新预告/最新快报净利同比/最近季度归母 prefixes.',
+    ),
+    MutationCase(
+        mutation_id='U3_RED_FLAG_SAME_PERIOD_FILING_SUPERSEDES',
+        component="U3 red-flag gate",
+        source_path='experiments/research_funnel/e1_event_layer.py',
+        test_script='tests/test_red_flag_gate_semantics.py',
+        before='            if not latest_filed_period or period > latest_filed_period',
+        after='            if not latest_filed_period or period >= latest_filed_period',
+        expected_failure_marker='test_same_period_filing_supersedes_guidance_and_express',
+        rationale='A filed statement for the SAME period (the common H1/FY case) retires that period\'s guidance and express.',
+    ),
+    MutationCase(
+        mutation_id='U3_RED_FLAG_ANY_ACTIVE_PERIOD_FLAGS',
+        component="U3 red-flag gate",
+        source_path='experiments/research_funnel/e1_event_layer.py',
+        test_script='tests/test_red_flag_gate_semantics.py',
+        before='    forecast_flag = any(flag for _ev, flag, _ok in forecast_results)',
+        after='    forecast_flag = bool(forecast_results) and forecast_results[0][1]',
+        expected_failure_marker='test_fy_first_loss_not_masked_by_later_q1_preincrease',
+        rationale='Judging only the latest-period guidance lets a later 预增 mask a live unfiled-period 首亏.',
+    ),
+    MutationCase(
+        mutation_id='U3_RED_FLAG_FILED_PERIOD_FRESHNESS',
+        component="U3 red-flag gate",
+        source_path='experiments/research_funnel/e1_event_layer.py',
+        test_script='tests/test_red_flag_gate_semantics.py',
+        before='    if due_period and latest_period < due_period:',
+        after='    if False:',
+        expected_failure_marker='test_stale_filings_with_positive_guidance_are_blocked',
+        rationale='A filer past its statutory deadline cannot PASS on year-old quarters; stale evidence is DATA_BLOCKED.',
+    ),
+    MutationCase(
+        mutation_id='U3_RED_FLAG_FORECAST_FAILURE_NOT_PASS',
+        component="U3 red-flag gate",
+        source_path='experiments/execution_tracker/red_flag_gate.py',
+        test_script='tests/test_red_flag_gate_semantics.py',
+        before='        forecast_rows = []; errors.append(f"forecast:{e}")',
+        after='        forecast_rows = []',
+        expected_failure_marker='test_forecast_failure_never_passes',
+        rationale='A forecast endpoint failure is not an empty guidance history; it cannot PASS.',
+    ),
+    MutationCase(
+        mutation_id='U3_RED_FLAG_EXPRESS_LOSS_SIGN_ABS',
+        component="U3 red-flag gate",
+        source_path='experiments/research_funnel/e1_event_layer.py',
+        test_script='tests/test_red_flag_gate_semantics.py',
+        before='        yoy_pct = (current_profit - prior_profit) / abs(prior_profit) * 100.0',
+        after='        yoy_pct = (current_profit - prior_profit) / prior_profit * 100.0',
+        expected_failure_marker='test_narrowing_loss_is_not_a_drop',
+        rationale='Against a prior-year loss the denominator must be |prior|; otherwise a narrowing loss reads as a drop.',
+    ),
+    MutationCase(
+        mutation_id='U3_RED_FLAG_FILING_RANK_VALUED_OVER_NULL',
+        component="U3 red-flag gate",
+        source_path='experiments/research_funnel/e1_event_layer.py',
+        test_script='tests/test_red_flag_gate_semantics.py',
+        before='        _number(row.get("n_income_attr_p")) is not None,\n        str(row.get("update_flag")',
+        after='        _number(row.get("n_income_attr_p")) is None,\n        str(row.get("update_flag")',
+        expected_failure_marker='test_valued_row_beats_null_on_same_announcement_date',
+        rationale='On a same-day duplicate filing the valued row is the filing; a null duplicate must not block or win.',
+    ),
+    MutationCase(
+        mutation_id='U3_RED_FLAG_FOREIGN_ROW_IGNORED',
+        component="U3 red-flag gate",
+        source_path='experiments/research_funnel/e1_event_layer.py',
+        test_script='tests/test_red_flag_gate_semantics.py',
+        before="            continue  # a foreign ticker's row is never evidence for this one",
+        after="            pass  # a foreign ticker's row is never evidence for this one",
+        expected_failure_marker='test_foreign_ticker_rows_are_ignored',
+        rationale='Another ticker\'s rows must never become this ticker\'s E1 evidence.',
+    ),
+)
+
+# 2026-09-29: INDUSTRY_VALUE_CHAIN no longer ranks hot-industry members by issuer
+# code.  Each pin restores one piece of the old (status, -streak, ts_code) cut.
+MUTATIONS = MUTATIONS + (
+    MutationCase(
+        mutation_id="FUNNEL_U1_INDUSTRY_CONTEXT_ONLY",
+        component="Research funnel U1 industry context boundary",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_funnel_industry_channel_context.py",
+        before=(
+            "            sector_rank = None\n"
+            "            sector_hit = False\n"
+            "            sector_values = {\n"
+            "                \"industry_key\": industry,\n"
+            "                \"rotation_status\""
+        ),
+        after=(
+            "            sector_rank = (\n"
+            "                sum(\n"
+            "                    1 for other in eligible\n"
+            "                    if other[\"ts_code\"] <= code\n"
+            "                    and (rotation_by_industry.get(str(other.get(\"industry_key\") or \"\")) or {})"
+            ".get(\"status\") in HOT_ROTATION_STATUSES\n"
+            "                )\n"
+            "                if sector and sector.get(\"status\") in HOT_ROTATION_STATUSES else None\n"
+            "            )\n"
+            "            sector_hit = bool(sector_rank and sector_rank <= channel_top_n)\n"
+            "            sector_values = {\n"
+            "                \"industry_key\": industry,\n"
+            "                \"rotation_status\""
+        ),
+        expected_failure_marker="test_industry_admission_is_invariant_to_issuer_code_relabeling",
+        rationale=(
+            "Hot-industry members share status and streak; ranking them by ts_code "
+            "truncates an industry signal by issuer code (9/24: 40 lowest SZSE codes). "
+            "Killed by the relabel-invariance assertion on the raw builder rows, "
+            "with the builder's validator bypassed, so the kill does not depend on "
+            "FUNNEL_U1_INDUSTRY_NO_ISSUER_CODE_RANK."
+        ),
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_U1_INDUSTRY_MODE_DECLARED",
+        component="Research funnel U1 industry context boundary",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_funnel_industry_channel_context.py",
+        before="            \"industry_channel_mode\": INDUSTRY_CHANNEL_MODE,\n",
+        after="",
+        expected_failure_marker="test_hot_industry_members_are_context_without_rank_or_trigger",
+        rationale=(
+            "A new scan without the mode key would fall back to the lenient "
+            "archived-replay path and escape the no-rank validator."
+        ),
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_U1_INDUSTRY_MODE_CLOSED",
+        component="Research funnel U1 industry context boundary",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_funnel_industry_channel_context.py",
+        before="    if industry_mode not in (None, INDUSTRY_CHANNEL_MODE):",
+        after="    if False:",
+        expected_failure_marker="test_unknown_industry_mode_is_refused",
+        rationale="An unknown industry mode cannot silently skip the no-rank validator.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_U1_INDUSTRY_NO_ISSUER_CODE_RANK",
+        component="Research funnel U1 industry context boundary",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_funnel_industry_channel_context.py",
+        before=(
+            "        if row[\"channel\"] == \"INDUSTRY_VALUE_CHAIN\" "
+            "and industry_context_only and ("
+        ),
+        after="        if False and (",
+        expected_failure_marker="test_industry_rank_tie_broken_by_ts_code_is_refused",
+        rationale=(
+            "A scan whose industry rows carry a code-ordered channel_rank, a trigger "
+            "or an entry reason must be refused, not published as evidence."
+        ),
+    ),
+)
+
+# 2026-09-29 review fixes for the industry context channel: missing rotation is
+# null (never "not hot"), context rows cannot drop the mode key, and a new U2 pool
+# discloses and is bound to the U1 industry mode it was admitted under.
+MUTATIONS = MUTATIONS + (
+    MutationCase(
+        mutation_id="FUNNEL_U1_INDUSTRY_HOT_MISSING_IS_NULL",
+        component="Research funnel U1 industry context boundary",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_funnel_industry_channel_context.py",
+        before="                    sector.get(\"status\") in HOT_ROTATION_STATUSES if sector else None\n",
+        after="                    bool(sector and sector.get(\"status\") in HOT_ROTATION_STATUSES)\n",
+        expected_failure_marker="test_hot_industry_members_are_context_without_rank_or_trigger",
+        rationale=(
+            "An industry with no rotation match is unknown; storing hot_industry "
+            "False writes missing data as a definite 'not hot' value."
+        ),
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_U1_INDUSTRY_HOT_MISSING_VALIDATED",
+        component="Research funnel U1 industry context boundary",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_funnel_industry_channel_context.py",
+        before=(
+            "            if \"hot_industry\" not in values "
+            "or values[\"hot_industry\"] is not expected_hot:"
+        ),
+        after="            if False:",
+        expected_failure_marker="test_missing_rotation_cannot_be_stored_as_not_hot",
+        rationale=(
+            "A DATA_BLOCKED industry row carrying hot_industry False must be refused, "
+            "not published as a 'not hot' fact."
+        ),
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_U1_INDUSTRY_CONTEXT_ROWS_NEED_MODE",
+        component="Research funnel U1 industry context boundary",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_funnel_industry_channel_context.py",
+        before=(
+            "        if row[\"channel\"] == \"INDUSTRY_VALUE_CHAIN\" "
+            "and not industry_context_only and ("
+        ),
+        after="        if False and (",
+        expected_failure_marker="test_context_rows_without_declared_mode_are_refused",
+        rationale=(
+            "A new-format scan that drops the mode key would otherwise enter the "
+            "lenient archived-replay path."
+        ),
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_U2_LEGACY_INDUSTRY_SCAN_REFUSED",
+        component="Research funnel U2 industry mode binding",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_funnel_industry_channel_context.py",
+        before="    if industry_mode is None and legacy_industry_replay is not True:",
+        after="    if False:",
+        expected_failure_marker="test_new_u2_pool_refuses_a_scan_without_declared_mode",
+        rationale=(
+            "A keyless (archived-format) scan may carry issuer-code-ranked industry "
+            "triggers; it cannot feed a new U2 pool without an explicit replay flag."
+        ),
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_U2_INDUSTRY_MODE_BOUND",
+        component="Research funnel U2 industry mode binding",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_funnel_industry_channel_context.py",
+        before=(
+            "    if policy.get(\"industry_channel_mode\") "
+            "!= _scan_industry_channel_mode(scan):"
+        ),
+        after="    if False:",
+        expected_failure_marker="test_candidate_review_mode_is_bound_to_its_scan",
+        rationale=(
+            "rule_version did not change with the industry mode, so pooled "
+            "evaluations need candidate_review.policy to disclose it exactly."
+        ),
+    ),
+)
+
+# Paid-model Vercel routes (2026-09-25 re-review P1 #7): every route that spends
+# the owner's Anthropic / OpenAI / Gemini keys must fail closed without the server
+# key, refuse foreign Origins, rate-limit per IP, and run the gate before any
+# provider call; the browser client stays locked and the CLI caller never sends
+# an unauthenticated request.
+MUTATIONS = MUTATIONS + (
+    MutationCase(
+        mutation_id="LLM_ROUTE_FAILS_CLOSED_WITHOUT_SERVER_KEY",
+        component="Paid-model route gate",
+        source_path="api/_lib/llm-route-guard.js",
+        test_script="tests/test_llm_route_guard.py",
+        before=(
+            "  // governance-mutation: LLM_ROUTE_FAILS_CLOSED_WITHOUT_SERVER_KEY\n"
+            "  if (typeof value !== 'string' || value.length < MIN_KEY_LENGTH) return null;"
+        ),
+        after=(
+            "  // governance-mutation: LLM_ROUTE_FAILS_CLOSED_WITHOUT_SERVER_KEY\n"
+            "  if (false) return null;"
+        ),
+        expected_failure_marker="test_guard_fails_closed_without_server_key",
+        rationale="A missing or short AR_LLM_ROUTE_KEY must disable the route (503), never open it.",
+    ),
+    MutationCase(
+        mutation_id="LLM_ROUTE_REQUIRES_KEY_MATCH",
+        component="Paid-model route gate",
+        source_path="api/_lib/llm-route-guard.js",
+        test_script="tests/test_llm_route_guard.py",
+        before=(
+            "  // governance-mutation: LLM_ROUTE_REQUIRES_KEY_MATCH\n"
+            "  if (!timingSafeEqualString(typeof providedKey === 'string' ? providedKey : '', configuredKey)) {"
+        ),
+        after=(
+            "  // governance-mutation: LLM_ROUTE_REQUIRES_KEY_MATCH\n"
+            "  if (false) {"
+        ),
+        expected_failure_marker="test_guard_rejects_missing_or_wrong_key",
+        rationale="Only a request carrying the exact server key may reach a paid provider.",
+    ),
+    MutationCase(
+        mutation_id="LLM_ROUTE_ORIGIN_ALLOWLIST",
+        component="Paid-model route gate",
+        source_path="api/_lib/llm-route-guard.js",
+        test_script="tests/test_llm_route_guard.py",
+        before=(
+            "  // governance-mutation: LLM_ROUTE_ORIGIN_ALLOWLIST\n"
+            "  if (origin !== undefined && !originAllowed) {"
+        ),
+        after=(
+            "  // governance-mutation: LLM_ROUTE_ORIGIN_ALLOWLIST\n"
+            "  if (false) {"
+        ),
+        expected_failure_marker="test_guard_refuses_foreign_origin_even_with_key",
+        rationale="A browser page on a foreign origin must be refused even if it holds the key.",
+    ),
+    MutationCase(
+        mutation_id="LLM_ROUTE_RATE_LIMIT",
+        component="Paid-model route gate",
+        source_path="api/_lib/llm-route-guard.js",
+        test_script="tests/test_llm_route_guard.py",
+        before=(
+            "  // governance-mutation: LLM_ROUTE_RATE_LIMIT\n"
+            "  if (retryAfter) {"
+        ),
+        after=(
+            "  // governance-mutation: LLM_ROUTE_RATE_LIMIT\n"
+            "  if (false) {"
+        ),
+        expected_failure_marker="test_guard_rate_limits_authenticated_bursts",
+        rationale="Even an authenticated caller is bounded per IP per warm instance.",
+    ),
+    MutationCase(
+        mutation_id="LLM_ROUTE_GUARD_RESEARCH_MULTI",
+        component="Paid-model route wiring",
+        source_path="api/research-multi.js",
+        test_script="tests/test_llm_route_guard.py",
+        before=(
+            "  // governance-mutation: LLM_ROUTE_GUARD_RESEARCH_MULTI\n"
+            "  if (!guardLlmRoute(req, res, 'research-multi')) return;"
+        ),
+        after=(
+            "  // governance-mutation: LLM_ROUTE_GUARD_RESEARCH_MULTI\n"
+            "  if (false) return;"
+        ),
+        expected_failure_marker="test_every_paid_handler_rejects_before_provider",
+        rationale="api/research-multi.js must run the key/origin/rate gate before any provider call.",
+    ),
+    MutationCase(
+        mutation_id="LLM_ROUTE_GUARD_RESEARCH",
+        component="Paid-model route wiring",
+        source_path="api/research.js",
+        test_script="tests/test_llm_route_guard.py",
+        before=(
+            "  // governance-mutation: LLM_ROUTE_GUARD_RESEARCH\n"
+            "  if (!guardLlmRoute(req, res, 'research')) return;"
+        ),
+        after=(
+            "  // governance-mutation: LLM_ROUTE_GUARD_RESEARCH\n"
+            "  if (false) return;"
+        ),
+        expected_failure_marker="test_every_paid_handler_rejects_before_provider",
+        rationale="api/research.js must run the key/origin/rate gate before any provider call.",
+    ),
+    MutationCase(
+        mutation_id="LLM_ROUTE_GUARD_CHAT",
+        component="Paid-model route wiring",
+        source_path="api/chat.js",
+        test_script="tests/test_llm_route_guard.py",
+        before=(
+            "  // governance-mutation: LLM_ROUTE_GUARD_CHAT\n"
+            "  if (!guardLlmRoute(req, res, 'chat')) return;"
+        ),
+        after=(
+            "  // governance-mutation: LLM_ROUTE_GUARD_CHAT\n"
+            "  if (false) return;"
+        ),
+        expected_failure_marker="test_every_paid_handler_rejects_before_provider",
+        rationale="api/chat.js must run the key/origin/rate gate before any provider call.",
+    ),
+    MutationCase(
+        mutation_id="LLM_ROUTE_GUARD_DEBATE",
+        component="Paid-model route wiring",
+        source_path="api/debate.js",
+        test_script="tests/test_llm_route_guard.py",
+        before=(
+            "  // governance-mutation: LLM_ROUTE_GUARD_DEBATE\n"
+            "  if (!guardLlmRoute(req, res, 'debate')) return;"
+        ),
+        after=(
+            "  // governance-mutation: LLM_ROUTE_GUARD_DEBATE\n"
+            "  if (false) return;"
+        ),
+        expected_failure_marker="test_every_paid_handler_rejects_before_provider",
+        rationale="api/debate.js must run the key/origin/rate gate before any provider call.",
+    ),
+    MutationCase(
+        mutation_id="LLM_ROUTE_GUARD_MACRO",
+        component="Paid-model route wiring",
+        source_path="api/macro.js",
+        test_script="tests/test_llm_route_guard.py",
+        before=(
+            "  // governance-mutation: LLM_ROUTE_GUARD_MACRO\n"
+            "  if (!guardLlmRoute(req, res, 'macro')) return;"
+        ),
+        after=(
+            "  // governance-mutation: LLM_ROUTE_GUARD_MACRO\n"
+            "  if (false) return;"
+        ),
+        expected_failure_marker="test_every_paid_handler_rejects_before_provider",
+        rationale="api/macro.js must run the key/origin/rate gate before any provider call.",
+    ),
+    MutationCase(
+        mutation_id="LLM_ROUTE_GUARD_MORNING_REPORT",
+        component="Paid-model route wiring",
+        source_path="api/morning-report.js",
+        test_script="tests/test_llm_route_guard.py",
+        before=(
+            "  // governance-mutation: LLM_ROUTE_GUARD_MORNING_REPORT\n"
+            "  if (!guardLlmRoute(req, res, 'morning-report')) return;"
+        ),
+        after=(
+            "  // governance-mutation: LLM_ROUTE_GUARD_MORNING_REPORT\n"
+            "  if (false) return;"
+        ),
+        expected_failure_marker="test_every_paid_handler_rejects_before_provider",
+        rationale="api/morning-report.js must run the key/origin/rate gate before any provider call.",
+    ),
+    MutationCase(
+        mutation_id="LLM_ROUTE_GUARD_RESEARCH_PULSE",
+        component="Paid-model route wiring",
+        source_path="api/research-pulse.js",
+        test_script="tests/test_llm_route_guard.py",
+        before=(
+            "  // governance-mutation: LLM_ROUTE_GUARD_RESEARCH_PULSE\n"
+            "  if (!guardLlmRoute(req, res, 'research-pulse')) return;"
+        ),
+        after=(
+            "  // governance-mutation: LLM_ROUTE_GUARD_RESEARCH_PULSE\n"
+            "  if (false) return;"
+        ),
+        expected_failure_marker="test_every_paid_handler_rejects_before_provider",
+        rationale="api/research-pulse.js must run the key/origin/rate gate before any provider call.",
+    ),
+    MutationCase(
+        mutation_id="LLM_BROWSER_LOCKED_WITHOUT_KEY",
+        component="Paid-model browser client",
+        source_path="src/llmRouteClient.js",
+        test_script="tests/test_llm_route_guard.py",
+        before=(
+            "  // governance-mutation: LLM_BROWSER_LOCKED_WITHOUT_KEY\n"
+            "  if (!browserRoutesEnabled) throw new LlmRouteLockedError('FLAG_OFF');"
+        ),
+        after=(
+            "  // governance-mutation: LLM_BROWSER_LOCKED_WITHOUT_KEY\n"
+            "  if (false) throw new LlmRouteLockedError('FLAG_OFF');"
+        ),
+        expected_failure_marker="test_browser_client_is_locked_without_flag_and_key",
+        rationale="With the build flag off the dashboard must not call a paid route at all.",
+    ),
+    MutationCase(
+        mutation_id="LLM_CALLER_RUN_RESEARCH_REQUIRES_KEY",
+        component="Paid-model CLI caller",
+        source_path="scripts/run_research.py",
+        test_script="tests/test_llm_route_guard.py",
+        before=(
+            "    # governance-mutation: LLM_CALLER_RUN_RESEARCH_REQUIRES_KEY\n"
+            "    if not key:"
+        ),
+        after=(
+            "    # governance-mutation: LLM_CALLER_RUN_RESEARCH_REQUIRES_KEY\n"
+            "    if False:"
+        ),
+        expected_failure_marker="test_run_research_refuses_to_call_without_key",
+        rationale="The CLI must not send an unauthenticated request to a paid route.",
+    ),
+)
+
+# Paid-model route gate review fixes (PR #387 review, 2026-09-29): a
+# whitespace-padded configured key fails closed (503) instead of a silent 401;
+# browser (Origin-bearing) and server-to-server callers use separate keys that
+# must differ; the key compare stays constant-time; the morning-report workflow
+# fails fast when its secret is missing.
+MUTATIONS = MUTATIONS + (
+    MutationCase(
+        mutation_id="LLM_ROUTE_KEY_WHITESPACE_FAILS_CLOSED",
+        component="Paid-model route gate",
+        source_path="api/_lib/llm-route-guard.js",
+        test_script="tests/test_llm_route_guard.py",
+        before=(
+            "  // governance-mutation: LLM_ROUTE_KEY_WHITESPACE_FAILS_CLOSED\n"
+            "  if (value !== value.trim()) return null;"
+        ),
+        after=(
+            "  // governance-mutation: LLM_ROUTE_KEY_WHITESPACE_FAILS_CLOSED\n"
+            "  if (false) return null;"
+        ),
+        expected_failure_marker="test_guard_fails_closed_on_whitespace_padded_key",
+        rationale="A configured key with a trailing newline can never match; it must surface as 503, not a silent 401.",
+    ),
+    MutationCase(
+        mutation_id="LLM_ROUTE_BROWSER_KEY_SEPARATE",
+        component="Paid-model route gate",
+        source_path="api/_lib/llm-route-guard.js",
+        test_script="tests/test_llm_route_guard.py",
+        before=(
+            "  // governance-mutation: LLM_ROUTE_BROWSER_KEY_SEPARATE\n"
+            "  const keyEnv = browserCaller ? LLM_BROWSER_KEY_ENV : LLM_KEY_ENV;"
+        ),
+        after=(
+            "  // governance-mutation: LLM_ROUTE_BROWSER_KEY_SEPARATE\n"
+            "  const keyEnv = LLM_KEY_ENV;"
+        ),
+        expected_failure_marker="test_guard_keeps_browser_and_server_keys_separate",
+        rationale="The automation key must never unlock an Origin-bearing (browser) request.",
+    ),
+    MutationCase(
+        mutation_id="LLM_ROUTE_BROWSER_KEY_MUST_DIFFER",
+        component="Paid-model route gate",
+        source_path="api/_lib/llm-route-guard.js",
+        test_script="tests/test_llm_route_guard.py",
+        before=(
+            "  // governance-mutation: LLM_ROUTE_BROWSER_KEY_MUST_DIFFER\n"
+            "  if (browserCaller && configuredKey === usableConfiguredKey(env[LLM_KEY_ENV])) {"
+        ),
+        after=(
+            "  // governance-mutation: LLM_ROUTE_BROWSER_KEY_MUST_DIFFER\n"
+            "  if (false) {"
+        ),
+        expected_failure_marker="test_guard_refuses_browser_key_equal_to_server_key",
+        rationale="A browser key equal to the server key would undo the per-caller rotation boundary.",
+    ),
+    MutationCase(
+        mutation_id="LLM_ROUTE_CONSTANT_TIME_COMPARE",
+        component="Paid-model route gate",
+        source_path="api/_lib/llm-route-guard.js",
+        test_script="tests/test_llm_route_guard.py",
+        before=(
+            "  // governance-mutation: LLM_ROUTE_CONSTANT_TIME_COMPARE\n"
+            "  return timingSafeEqual(digestA, digestB) && a.length === b.length;"
+        ),
+        after=(
+            "  // governance-mutation: LLM_ROUTE_CONSTANT_TIME_COMPARE\n"
+            "  timingSafeEqual(digestA, digestB); return a === b;"
+        ),
+        expected_failure_marker="test_key_compare_is_constant_time",
+        rationale="The provided key is compared only through equal-length digests with timingSafeEqual.",
+    ),
+    MutationCase(
+        mutation_id="LLM_CALLER_MORNING_REPORT_FAILS_FAST",
+        component="Paid-model workflow caller",
+        source_path=".github/workflows/morning-report.yml",
+        test_script="tests/test_llm_route_guard.py",
+        before=(
+            "            print(\"AR_LLM_ROUTE_KEY secret is not configured; "
+            "/api/morning-report would return 401/503.\")\n"
+            "            sys.exit(1)"
+        ),
+        after=(
+            "            print(\"AR_LLM_ROUTE_KEY secret is not configured; "
+            "/api/morning-report would return 401/503.\")\n"
+            "            pass"
+        ),
+        expected_failure_marker="test_morning_report_workflow_fails_fast_without_secret",
+        rationale="A missing secret must stop the step with a named error, not POST an empty key.",
+    ),
+)
+MUTATIONS = MUTATIONS + (
+    MutationCase(
+        mutation_id="FUNNEL_TRUST_E1_SAME_RUN_ONLY",
+        component="Funnel disagreement queue",
+        source_path="experiments/research_funnel/disagreement_queue.py",
+        test_script="tests/test_disagreement_queue_trust_line.py",
+        before='    if str(e1.get("as_of") or "") != as_of:\n',
+        after='    if False:\n',
+        expected_failure_marker="test_a_layer_from_another_night_is_refused",
+        rationale="An E1 layer from another night can never be compared with this run's U3 red flags.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_DISAGREEMENT_OUT_OF_WINDOW",
+        component="Funnel disagreement queue",
+        source_path="experiments/research_funnel/disagreement_queue.py",
+        test_script="tests/test_disagreement_queue_trust_line.py",
+        before='    if kind == "forecast" and period and min_period and period < min_period:\n',
+        after='    if False:\n',
+        expected_failure_marker="test_reason_staleness_maps_the_e1_coverage_vocabulary",
+        rationale="Evidence older than the E1 window is labelled, not silently mapped to E1's coverage.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_DISAGREEMENT_ACTIVE_PRECEDENCE",
+        component="Funnel disagreement queue",
+        source_path="experiments/research_funnel/disagreement_queue.py",
+        test_script="tests/test_disagreement_queue_trust_line.py",
+        before='    if ACTIVE in states:\n        return ACTIVE\n',
+        after='    if False:\n        return ACTIVE\n',
+        expected_failure_marker="test_row_precedence_is_conservative",
+        rationale='One reason resting on live evidence keeps the row ACTIVE; it cannot be relabelled stale.',
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_DISAGREEMENT_BLOCKED_NOT_COUNTED",
+        component="Funnel disagreement queue",
+        source_path="experiments/research_funnel/disagreement_queue.py",
+        test_script="tests/test_disagreement_queue_trust_line.py",
+        before='        if state != "RED_FLAG":\n            continue\n',
+        after='        if False:\n            continue\n',
+        expected_failure_marker="test_blocked_or_passing_fundamentals_are_never_counted_as_red_flags",
+        rationale='A blocked or passing 基本面 is never counted as a U3 red flag.',
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_DISAGREEMENT_HUMAN_CAP",
+        component="Funnel disagreement queue",
+        source_path="experiments/research_funnel/disagreement_queue.py",
+        test_script="tests/test_disagreement_queue_trust_line.py",
+        before='    if len(routed) > HUMAN_CAP or counts["human_routed_rows"] != len(routed):\n',
+        after='    if False:\n',
+        expected_failure_marker="test_validator_refuses_more_routed_rows_than_the_human_cap",
+        rationale='The queue cannot route more rows to the human than the declared cap.',
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_DISAGREEMENT_UNAVAILABLE_IS_NULL",
+        component="Funnel disagreement queue",
+        source_path="experiments/research_funnel/disagreement_queue.py",
+        test_script="tests/test_disagreement_queue_trust_line.py",
+        before='    if bindings["e1_basis"] == E1_UNAVAILABLE and any(\n',
+        after='    if False and any(\n',
+        expected_failure_marker="test_unavailable_e1_publishes_null_staleness_not_zero",
+        rationale='Without a bound E1 layer staleness counts are null, never 0.',
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_DISAGREEMENT_NO_AUTHORITY",
+        component="Funnel disagreement queue",
+        source_path="experiments/research_funnel/disagreement_queue.py",
+        test_script="tests/test_disagreement_queue_trust_line.py",
+        before='    if payload["authority"] != AUTHORITY:\n',
+        after='    if False:\n',
+        expected_failure_marker="test_queue_cannot_carry_authority_or_a_machine_filled_label",
+        rationale='The queue never changes a machine verdict or grants U4 admission.',
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_TRUST_MIN_SAMPLE_WITHHELD",
+        component="Funnel research trust line",
+        source_path="experiments/research_funnel/research_trust.py",
+        test_script="tests/test_disagreement_queue_trust_line.py",
+        before='    if denominator < MIN_N:\n        return None, WITHHELD\n',
+        after='    if False:\n        return None, WITHHELD\n',
+        expected_failure_marker="test_rate_below_min_n_is_withheld_never_zero",
+        rationale='A rate below MIN_N is withheld as null, never published as a number.',
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_TRUST_T1_E1_CONFIRMED_SUPERSESSION",
+        component="Funnel research trust line",
+        source_path="experiments/research_funnel/research_trust.py",
+        test_script="tests/test_disagreement_queue_trust_line.py",
+        before='                t1[code] = staleness == dq.SUPERSEDED\n',
+        after='                t1[code] = staleness in (dq.SUPERSEDED, dq.OUT_OF_WINDOW)\n',
+        expected_failure_marker="test_t1_counts_only_e1_confirmed_supersession",
+        rationale="T1's numerator is E1-confirmed supersession only; out-of-window rows are disclosed separately.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_TRUST_NEWS_STATUS_BLOCKED",
+        component="Funnel research trust line",
+        source_path="experiments/research_funnel/research_trust.py",
+        test_script="tests/test_disagreement_queue_trust_line.py",
+        before='        elif isinstance(dim, Mapping) and dim.get("status") in NEWS_BLOCKED_STATUSES:\n',
+        after='        elif isinstance(dim, Mapping) and dim.get("status") == "DATA_BLOCKED":\n',
+        expected_failure_marker="test_news_not_run_is_unavailable_and_unknown_status_is_unparsed",
+        rationale='A NOT_RUN news channel is unavailable, not unparsed or available.',
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_TRUST_U4_ROW_HASH_JOIN",
+        component="Funnel research trust line",
+        source_path="experiments/research_funnel/research_trust.py",
+        test_script="tests/test_disagreement_queue_trust_line.py",
+        before='        if row_hash.get(source.get("u3_battery_row_hash")) != code:\n',
+        after='        if code not in rows:\n',
+        expected_failure_marker="test_u4_labels_join_only_on_the_recomputed_battery_row_hash",
+        rationale="A human U4 label counts only when bound to this run's exact battery row.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_TRUST_NO_PERFORMANCE_KEYS",
+        component="Funnel research trust line",
+        source_path="experiments/research_funnel/research_trust.py",
+        test_script="tests/test_disagreement_queue_trust_line.py",
+        before='    offending = sorted(k for k in keys if any(part in k for part in FORBIDDEN_KEY_PARTS)\n',
+        after='    offending = sorted(k for k in keys if False and any(part in k for part in FORBIDDEN_KEY_PARTS)\n',
+        expected_failure_marker="test_line_refuses_performance_keys_and_claim_authority",
+        rationale='The trust line cannot carry return/hit/alpha/pnl/score/composite keys.',
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_TRUST_NO_CLAIM_AUTHORITY",
+        component="Funnel research trust line",
+        source_path="experiments/research_funnel/research_trust.py",
+        test_script="tests/test_disagreement_queue_trust_line.py",
+        before='    if (line["authority"] != AUTHORITY or line["claim_status"] != CLAIM_STATUS\n',
+        after='    if (False\n',
+        expected_failure_marker="test_line_refuses_performance_keys_and_claim_authority",
+        rationale='The trust line cannot claim performance, U4 selection authority or durable retention.',
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_TRUST_LEDGER_SAME_RUN_ONLY",
+        component="Funnel research trust line",
+        source_path="experiments/research_funnel/research_trust.py",
+        test_script="tests/test_disagreement_queue_trust_line.py",
+        before='        if line["source_binding"]["e1_layer_as_of"] not in (None, line["as_of"]):\n',
+        after='        if False:\n',
+        expected_failure_marker="test_a_line_against_another_nights_e1_is_refused",
+        rationale="A line computed against another night's E1 layer is never appended.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_TRUST_LEDGER_IDEMPOTENT",
+        component="Funnel research trust line",
+        source_path="experiments/research_funnel/research_trust.py",
+        test_script="tests/test_disagreement_queue_trust_line.py",
+        before='                if record["run_id"] == line["run_id"]:\n',
+        after='                if False:\n',
+        expected_failure_marker="test_append_is_chained_anchored_and_idempotent_per_run",
+        rationale='The trust ledger holds at most one line per run_id.',
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_TRUST_PRESENCE_BOUND",
+        component="Funnel research trust line",
+        source_path="experiments/research_funnel/research_trust.py",
+        test_script="tests/test_disagreement_queue_trust_line.py",
+        before='    if (len(extras), len(keys)) not in {(0, 0), (2, 2)}:\n',
+        after='    if False:\n',
+        expected_failure_marker="test_files_and_health_keys_must_appear_together",
+        rationale='Finalize-stage files and health keys appear together or not at all.',
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_DISAGREEMENT_QUEUE_RECOMPUTED",
+        component="Funnel disagreement queue",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_disagreement_queue_trust_line.py",
+        before='    if extras["queue_file"] != extras["queue_recomputed"]:\n',
+        after='    if False:\n',
+        expected_failure_marker="test_verifier_refuses_a_resealed_queue",
+        rationale='The nightly verifier recomputes the queue from the durable bundle.',
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_DISAGREEMENT_SUMMARY_RECOMPUTED",
+        component="Funnel disagreement queue",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_disagreement_queue_trust_line.py",
+        before='    if data.get("disagreement_summary") != extras["summary_recomputed"]:\n',
+        after='    if False:\n',
+        expected_failure_marker="test_verifier_recomputes_queue_summary_and_machine_metrics",
+        rationale='The published disagreement summary is recomputed, not self-reported.',
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_TRUST_LINE_BOUND_TO_HEALTH",
+        component="Funnel research trust line",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_disagreement_queue_trust_line.py",
+        before='    if data.get("research_trust") != extras["trust_file"] or not extras["trust_identity_ok"]:\n',
+        after='    if False:\n',
+        expected_failure_marker="test_verifier_recomputes_queue_summary_and_machine_metrics",
+        rationale='health.research_trust must equal the stage-hashed trust line bound to this run.',
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_TRUST_MACHINE_METRICS_RECOMPUTED",
+        component="Funnel research trust line",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_disagreement_queue_trust_line.py",
+        before='    if extras["machine_recorded"] != extras["machine_recomputed"]:\n',
+        after='    if False:\n',
+        expected_failure_marker="test_verifier_refuses_resealed_machine_metrics",
+        rationale='T1/T2/T6/T7 are recomputed by the verifier, not trusted from the file.',
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_TRUST_LEDGER_STATUS_DECLARED",
+        component="Funnel research trust line",
+        source_path="experiments/research_funnel/research_trust.py",
+        test_script="tests/test_disagreement_queue_trust_line.py",
+        before='    if "research_trust_ledger" in health and ledger_status not in FINALIZE_LEDGER_STATUSES:\n',
+        after='    if False:\n',
+        expected_failure_marker="test_verifier_recomputes_queue_summary_and_machine_metrics",
+        rationale='health.research_trust_ledger may only carry a finalize staging status, never a ledger append.',
+    ),
+    MutationCase(
+        mutation_id="U4_PREDECISION_FINALIZE_OPTIONAL_ONLY",
+        component="Research funnel U4 pre-decision runtime",
+        source_path="experiments/research_funnel/u4_pre_decision.py",
+        test_script="tests/test_disagreement_queue_trust_line.py",
+        before='    if stage == "finalize":\n        return names - set(dag.STAGE3_OPTIONAL_FILES)\n',
+        after='    if stage == "finalize":\n        return names & set(dag.STAGE3_FILES)\n',
+        expected_failure_marker="test_u4_packet_refuses_any_other_extra_finalize_file",
+        rationale='Only the queue and trust line may join the finalize stage; any other file is refused.',
+    ),
+    MutationCase(
+        mutation_id="EVIDENCE_VIEW_STAGE_ARTIFACT_CAPTURE",
+        component="U4 evidence view capture",
+        source_path="experiments/research_funnel/evidence_view.py",
+        test_script="tests/test_disagreement_queue_trust_line.py",
+        before='                refs.update(join_ref(bundle_ref, name) for name in stage_artifacts)\n',
+        after='                pass\n',
+        expected_failure_marker="test_evidence_view_captures_finalize_stage_artifacts",
+        rationale='Stage-hashed evidence outside the top-level manifest is captured in the same pass.',
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_DAG_FINALIZE_EXTRAS_STAGED",
+        component="Nightly funnel wiring DAG",
+        source_path="experiments/research_funnel/funnel_dag.py",
+        test_script="tests/test_disagreement_queue_trust_line.py",
+        before='        {"deep_research_queue.json": queue, "security_registry_projected.json": projected,\n         **extras},\n',
+        after='        {"deep_research_queue.json": queue, "security_registry_projected.json": projected},\n',
+        expected_failure_marker="test_finalize_writes_both_files_through_the_stage_and_health_keys",
+        rationale='The queue and trust line are hashed by the finalize stage, never left outside it.',
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_DISAGREEMENT_AFTER_E1_WINDOW",
+        component="Funnel disagreement queue",
+        source_path="experiments/research_funnel/disagreement_queue.py",
+        test_script="tests/test_disagreement_queue_trust_line.py",
+        before='    if kind == "forecast" and period and max_period and period > max_period:\n',
+        after='    if False:\n',
+        expected_failure_marker="test_a_cited_period_after_the_e1_window_is_undetermined",
+        rationale="E1's kind-level coverage never describes a cited filing after the E1 period window.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_TRUST_U4_SAME_RUN_ONLY",
+        component="Funnel research trust line",
+        source_path="experiments/research_funnel/research_trust.py",
+        test_script="tests/test_disagreement_queue_trust_line.py",
+        before='            if source.get("run_id") != run_id:\n                continue\n',
+        after='            if False:\n                continue\n',
+        expected_failure_marker="test_read_u4_decisions_keeps_this_run_and_the_decided_packet_rows",
+        rationale="Only U4 decisions bound to this run can label this run's machine claims.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_TRUST_ADJUDICATION_HUMAN_REVALIDATED",
+        component="Funnel research trust line",
+        source_path="experiments/research_funnel/research_trust.py",
+        test_script="tests/test_disagreement_queue_trust_line.py",
+        before='            if not human_ok:\n',
+        after='            if False:\n',
+        expected_failure_marker="test_adjudications_failing_the_contract_a_human_boundary_are_not_labels",
+        rationale="An adjudication counts only if its contract-A human boundary and information cutoff re-verify.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_TRUST_MACRO_SAME_RUN",
+        component="Funnel research trust line",
+        source_path="experiments/research_funnel/research_trust.py",
+        test_script="tests/test_disagreement_queue_trust_line.py",
+        before='        if manifest.get("run_id") != run_id or manifest.get("target_trade_date") != as_of:\n',
+        after='        if manifest.get("target_trade_date") != as_of:\n',
+        expected_failure_marker="test_macro_manifest_must_be_this_runs_and_hash_its_events",
+        rationale="T7 reads only this run's M1-C manifest.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_TRUST_MACRO_EVENTS_BOUND",
+        component="Funnel research trust line",
+        source_path="experiments/research_funnel/research_trust.py",
+        test_script="tests/test_disagreement_queue_trust_line.py",
+        before='        if hashlib.sha256(raw_events).hexdigest() != (manifest.get("artifacts") or {}).get("macro_events.json"):\n',
+        after='        if False:\n',
+        expected_failure_marker="test_macro_manifest_must_be_this_runs_and_hash_its_events",
+        rationale="T7 counts only the macro_events bytes the same-run manifest hashes.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_TRUST_T2_BLOCKED_UNPARSED",
+        component="Funnel research trust line",
+        source_path="experiments/research_funnel/research_trust.py",
+        test_script="tests/test_disagreement_queue_trust_line.py",
+        before='            if verdict in {"RED_FLAG", "NO_RED_FLAG_FOUND"}:\n',
+        after='            if True:\n',
+        expected_failure_marker="test_e1_data_blocked_rows_are_t2_unparsed_not_denominator",
+        rationale="An E1 DATA_BLOCKED or missing row is unparsed, never counted as E1 disagreeing.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_TRUST_T3_U3_ROWS_ONLY",
+        component="Funnel research trust line",
+        source_path="experiments/research_funnel/research_trust.py",
+        test_script="tests/test_disagreement_queue_trust_line.py",
+        before='            if row.get("disagreement_class") != dq.CLASS_U3_VS_E1:\n',
+        after='            if False:\n',
+        expected_failure_marker="test_control_row_verdicts_never_enter_t3",
+        rationale="T3 measures the U3 red-flag gate only; E1 control-row verdicts are reported apart.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_TRUST_U4_SUBSTANTIVE_REVIEW_ONLY",
+        component="Funnel research trust line",
+        source_path="experiments/research_funnel/research_trust.py",
+        test_script="tests/test_disagreement_queue_trust_line.py",
+        before='    if decision == "SELECT" or reasons & U4_SUBSTANTIVE_REVIEW_CODES:\n        return False\n    return None\n',
+        after='    return False\n',
+        expected_failure_marker="test_bulk_defer_and_forced_red_flag_reject_are_not_labels",
+        rationale="A bulk DEFER/HUMAN_JUDGMENT or forced REJECT is no label, never a confirmation the machine fills in.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_TRUST_U4_PACKET_READY",
+        component="Funnel research trust line",
+        source_path="experiments/research_funnel/research_trust.py",
+        test_script="tests/test_disagreement_queue_trust_line.py",
+        before='        ready = packet_row.get("ready") if isinstance(packet_row, Mapping) else None\n',
+        after='        ready = True\n',
+        expected_failure_marker="test_u4_ready_claim_comes_from_the_reviewed_packet_not_the_deep_queue",
+        rationale="T4's machine ready claim is the one in the packet the human reviewed.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_TRUST_ROLLING_ONE_PER_AS_OF",
+        component="Funnel research trust line",
+        source_path="experiments/research_funnel/research_trust.py",
+        test_script="tests/test_disagreement_queue_trust_line.py",
+        before='        if record_as_of >= as_of or (run_id is not None and record.get("run_id") == run_id):\n',
+        after='        if record_as_of > as_of:\n',
+        expected_failure_marker="test_rolling_pools_one_line_per_as_of_and_never_this_nights_own_line",
+        rationale="Rolling pools earlier accepted nights, one line per as_of, never this night's own or sibling line.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_TRUST_PENDING_SAME_RUN_ONLY",
+        component="Funnel research trust line",
+        source_path="experiments/research_funnel/research_trust.py",
+        test_script="tests/test_disagreement_queue_trust_line.py",
+        before='        if line["source_binding"].get("e1_layer_as_of") not in (None, line["as_of"]):\n',
+        after='        if False:\n',
+        expected_failure_marker="test_staging_refuses_a_line_against_another_nights_e1",
+        rationale="A line computed against another night's E1 layer is never staged for the ledger.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_TRUST_ACCEPT_BINDS_VERIFIED_LINE",
+        component="Funnel research trust line",
+        source_path="experiments/research_funnel/research_trust.py",
+        test_script="tests/test_disagreement_queue_trust_line.py",
+        before='                or pending.get("trust_line") != line\n                or pending.get("content_hash") != content_hash(line)\n',
+        after='',
+        expected_failure_marker="test_acceptance_refuses_a_pending_line_that_is_not_the_verified_one",
+        rationale="Only the staged line equal to the verified, published health line is appended.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_TRUST_LINE_SOURCE_BINDING",
+        component="Funnel research trust line",
+        source_path="experiments/research_funnel/research_trust.py",
+        test_script="tests/test_disagreement_queue_trust_line.py",
+        before='    binding_ok = all(binding.get(k) == v for k, v in expected_binding.items())\n',
+        after='    binding_ok = True\n',
+        expected_failure_marker="test_verifier_refuses_a_trust_line_resealed_with_another_runs_binding",
+        rationale="The verifier recomputes every source_binding hash of the trust line.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_TRUST_E1_BASIS_REPLAYS",
+        component="Funnel research trust line",
+        source_path="experiments/research_funnel/research_trust.py",
+        test_script="tests/test_disagreement_queue_trust_line.py",
+        before='    if basis != recorded_basis and not (\n',
+        after='    if False and not (\n',
+        expected_failure_marker="test_verifier_refuses_a_recorded_e1_basis_that_does_not_replay",
+        rationale="A recorded E1 basis must replay from the staged inputs.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_TRUST_NO_SILENT_DROP",
+        component="Funnel research trust line",
+        source_path="experiments/research_funnel/research_trust.py",
+        test_script="tests/test_disagreement_queue_trust_line.py",
+        before='        if ledger is not None and ledger_status != "BUILD_FAILED_NOT_STAGED":\n',
+        after='        if False:\n',
+        expected_failure_marker="test_dropping_both_files_and_keys_cannot_bypass_the_recompute",
+        rationale="Dropping the finalize extras and health keys together cannot bypass the recompute.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_TRUST_LINE_SOURCE_BINDING_ENFORCED",
+        component="Funnel research trust line",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_disagreement_queue_trust_line.py",
+        before='    if not extras["trust_binding_ok"]:\n',
+        after='    if False:\n',
+        expected_failure_marker="test_verifier_refuses_a_trust_line_resealed_with_another_runs_binding",
+        rationale="The nightly verifier refuses a trust line bound to another run's evidence.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_TRUST_LEDGER_ACCEPT_AFTER_VERIFY",
+        component="Funnel research trust line",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_disagreement_queue_trust_line.py",
+        before='    if (res.get("report") != "COMPLETE" or res.get("published") is not True\n            or not isinstance(finalize, dict) or finalize.get("status") != "OK"):\n',
+        after='    if False:\n',
+        expected_failure_marker="test_the_nightly_appends_only_after_an_accepted_published_finalize",
+        rationale="The durable trust ledger is appended only for a verified, COMPLETE, published night.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_TRUST_BUILD_FAILURE_DECLARED",
+        component="Nightly funnel wiring DAG",
+        source_path="experiments/research_funnel/funnel_dag.py",
+        test_script="tests/test_disagreement_queue_trust_line.py",
+        before='    except Exception as exc:  # noqa: BLE001 — advisory side-channel, declared below\n',
+        after='    except ArithmeticError as exc:  # mutated: an advisory build failure escapes\n',
+        expected_failure_marker="test_an_advisory_build_failure_is_declared_and_does_not_fail_finalize",
+        rationale="An advisory build failure is declared in health and never fails finalize.",
+    ),
+    MutationCase(
+        mutation_id="U4_PREDECISION_FINALIZE_OPTIONAL_ALL_OR_NONE",
+        component="Research funnel U4 pre-decision runtime",
+        source_path="experiments/research_funnel/u4_pre_decision.py",
+        test_script="tests/test_disagreement_queue_trust_line.py",
+        before='    if stage == "finalize" and names & optional and not optional <= names:\n',
+        after='    if False:\n',
+        expected_failure_marker="test_u4_packet_refuses_half_of_the_optional_pair",
+        rationale="The optional finalize pair is accepted all or none.",
+    ),
+)
+
+# Research trust line consumer (contract T): the dual-acceptance research sheet
+# and the nonproduction workbench only project the published line; these pins
+# keep absent lines explicit, withheld rates null and cross-run lines refused.
+MUTATIONS = MUTATIONS + (
+    MutationCase(
+        mutation_id="RESEARCH_TRUST_VIEW_ABSENT_NOT_ZERO",
+        component="Research trust line consumer",
+        source_path="experiments/research_funnel/research_trust_view.py",
+        test_script="tests/test_research_trust_view.py",
+        before=(
+            "    # governance-mutation: RESEARCH_TRUST_VIEW_ABSENT_NOT_ZERO\n"
+            "    if line is None:"
+        ),
+        after=(
+            "    # governance-mutation: RESEARCH_TRUST_VIEW_ABSENT_NOT_ZERO\n"
+            "    if False:"
+        ),
+        expected_failure_marker="test_absent_line_is_not_produced_not_zero",
+        rationale="A run without a trust line must read NOT_PRODUCED, never a zero or a refusal.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_TRUST_VIEW_WITHHELD_BELOW_MIN",
+        component="Research trust line consumer",
+        source_path="experiments/research_funnel/research_trust_view.py",
+        test_script="tests/test_research_trust_view.py",
+        before=(
+            "    # governance-mutation: RESEARCH_TRUST_VIEW_WITHHELD_BELOW_MIN\n"
+            "    if gate_n is None or gate_n < MIN_N or numerator is None or denominator is None:"
+        ),
+        after=(
+            "    # governance-mutation: RESEARCH_TRUST_VIEW_WITHHELD_BELOW_MIN\n"
+            "    if False:"
+        ),
+        expected_failure_marker="test_withheld_rate_stays_null_below_min_sample",
+        rationale="A rate or level below the minimum sample must stay withheld, never shown.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_TRUST_VIEW_LEVEL_RECOMPUTED",
+        component="Research trust line consumer",
+        source_path="experiments/research_funnel/research_trust_view.py",
+        test_script="tests/test_research_trust_view.py",
+        before=(
+            "    # governance-mutation: RESEARCH_TRUST_VIEW_LEVEL_RECOMPUTED\n"
+            "    if level not in _expected_level(numerator, denominator, direction, threshold):"
+        ),
+        after=(
+            "    # governance-mutation: RESEARCH_TRUST_VIEW_LEVEL_RECOMPUTED\n"
+            "    if False:"
+        ),
+        expected_failure_marker="test_level_is_recomputed_from_counts",
+        rationale="A published level must agree with its own counts and frozen threshold.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_TRUST_VIEW_FORBIDDEN_KEYS",
+        component="Research trust line consumer",
+        source_path="experiments/research_funnel/research_trust_view.py",
+        test_script="tests/test_research_trust_view.py",
+        before=(
+            "        # governance-mutation: RESEARCH_TRUST_VIEW_FORBIDDEN_KEYS\n"
+            "        _forbidden_keys(line)"
+        ),
+        after=(
+            "        # governance-mutation: RESEARCH_TRUST_VIEW_FORBIDDEN_KEYS\n"
+            "        pass"
+        ),
+        expected_failure_marker="test_performance_shaped_keys_refuse_the_line",
+        rationale="A trust line carrying return/hit/alpha/pnl/score/composite keys is refused whole.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_TRUST_VIEW_RUN_BINDING",
+        component="Research trust line consumer",
+        source_path="experiments/research_funnel/research_trust_view.py",
+        test_script="tests/test_research_trust_view.py",
+        before=(
+            "        # governance-mutation: RESEARCH_TRUST_VIEW_RUN_BINDING\n"
+            "        if (not isinstance(run_id, str) or not RUN_ID.fullmatch(run_id)\n"
+            "                or not isinstance(as_of, str) or not DATE8.fullmatch(as_of)\n"
+            "                or line.get(\"run_id\") != run_id or line.get(\"as_of\") != as_of):"
+        ),
+        after=(
+            "        # governance-mutation: RESEARCH_TRUST_VIEW_RUN_BINDING\n"
+            "        if False:"
+        ),
+        expected_failure_marker="test_line_from_another_run_is_refused",
+        rationale="A trust line bound to another run or date must not be shown for this run.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_TRUST_VIEW_AUTHORITY",
+        component="Research trust line consumer",
+        source_path="experiments/research_funnel/research_trust_view.py",
+        test_script="tests/test_research_trust_view.py",
+        before=(
+            "        # governance-mutation: RESEARCH_TRUST_VIEW_AUTHORITY\n"
+            "        if (line.get(\"authority\") != FIXED_AUTHORITY\n"
+            "                or line.get(\"claim_status\") != \"DESCRIPTIVE_ONLY\"):"
+        ),
+        after=(
+            "        # governance-mutation: RESEARCH_TRUST_VIEW_AUTHORITY\n"
+            "        if False:"
+        ),
+        expected_failure_marker="test_authority_or_claim_flags_refuse_the_line",
+        rationale="A line claiming performance or U4 selection authority is refused whole.",
+    ),
+    MutationCase(
+        mutation_id="NIGHTLY_ACCEPTANCE_TRUST_LINE_BINDING",
+        component="Nightly production acceptance",
+        source_path="experiments/execution_tracker/nightly_dual_acceptance.py",
+        test_script="tests/test_nightly_dual_acceptance.py",
+        before="    trust_line = research_trust_view.project(health, run_id, target)",
+        after=(
+            "    trust_line = research_trust_view.project(\n"
+            "        health, (health.get(\"research_trust\") or {}).get(\"run_id\"), target)"
+        ),
+        expected_failure_marker="test_research_sheet_refuses_cross_run_trust_line",
+        rationale="The receipt must bind the trust line to the accepted run, not to the line's own run_id.",
+    ),
+    MutationCase(
+        mutation_id="WORKBENCH_TRUST_LINE_HEALTH_BINDING",
+        component="AIOS nonproduction workbench",
+        source_path="scripts/llm/workbench_evidence.py",
+        test_script="tests/test_workbench_workspace.py",
+        before=(
+            "    # governance-mutation: WORKBENCH_TRUST_LINE_HEALTH_BINDING\n"
+            "    if (record.get(\"status\") != \"OBSERVED\" or record.get(\"binding\") != \"MATCH\"\n"
+            "            or not isinstance(health, dict) or health.get(\"run_id\") != run_id\n"
+            "            or health.get(\"as_of\") != target):"
+        ),
+        after=(
+            "    # governance-mutation: WORKBENCH_TRUST_LINE_HEALTH_BINDING\n"
+            "    if False:"
+        ),
+        expected_failure_marker="test_trust_line_refuses_unbound_health",
+        rationale="The workbench shows a trust line only from funnel_health hash-bound to the published run.",
+    ),
+)
+
+# Research trust line consumer, review fixes (PR #388): reliance is derived
+# from level + family, NOT_COMPUTABLE carries no counts, rolling pools distinct
+# rows, the E1 layer must be this run's, and the line never enters the status.
+MUTATIONS = MUTATIONS + (
+    MutationCase(
+        mutation_id="RESEARCH_TRUST_VIEW_RELIANCE_FROM_LEVEL",
+        component="Research trust line consumer",
+        source_path="experiments/research_funnel/research_trust_view.py",
+        test_script="tests/test_research_trust_view.py",
+        before=(
+            "    # governance-mutation: RESEARCH_TRUST_VIEW_RELIANCE_FROM_LEVEL\n"
+            "    if reliance != _expected_reliance(metric_id, level):"
+        ),
+        after=(
+            "    # governance-mutation: RESEARCH_TRUST_VIEW_RELIANCE_FROM_LEVEL\n"
+            "    if False:"
+        ),
+        expected_failure_marker="test_reliance_is_derived_from_level_and_family",
+        rationale="A withheld, not-computable or missed rate must never carry a trusted reliance label.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_TRUST_VIEW_NOT_COMPUTABLE_NO_COUNTS",
+        component="Research trust line consumer",
+        source_path="experiments/research_funnel/research_trust_view.py",
+        test_script="tests/test_research_trust_view.py",
+        before=(
+            "    # governance-mutation: RESEARCH_TRUST_VIEW_NOT_COMPUTABLE_NO_COUNTS\n"
+            "    if level == \"NOT_COMPUTABLE\" and (numerator is not None or denominator is not None):"
+        ),
+        after=(
+            "    # governance-mutation: RESEARCH_TRUST_VIEW_NOT_COMPUTABLE_NO_COUNTS\n"
+            "    if False:"
+        ),
+        expected_failure_marker="test_not_computable_metric_carries_no_counts",
+        rationale="A metric the producer declared uncomputable must not be shown with counts such as 0 / 0.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_TRUST_VIEW_ROLLING_DISTINCT_ROWS",
+        component="Research trust line consumer",
+        source_path="experiments/research_funnel/research_trust_view.py",
+        test_script="tests/test_research_trust_view.py",
+        before=(
+            "        # governance-mutation: RESEARCH_TRUST_VIEW_ROLLING_DISTINCT_ROWS\n"
+            "        if (denominator != distinct or (numerator is None) != (denominator is None)"
+        ),
+        after=(
+            "        # governance-mutation: RESEARCH_TRUST_VIEW_ROLLING_DISTINCT_ROWS\n"
+            "        if False and (denominator != distinct or (numerator is None) != (denominator is None)"
+        ),
+        expected_failure_marker="test_rolling_pools_distinct_rows_not_row_nights",
+        rationale="Sticky rows recurring nightly must not manufacture a rolling sample from row-nights.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_TRUST_VIEW_E1_SAME_RUN",
+        component="Research trust line consumer",
+        source_path="experiments/research_funnel/research_trust_view.py",
+        test_script="tests/test_research_trust_view.py",
+        before=(
+            "        # governance-mutation: RESEARCH_TRUST_VIEW_E1_SAME_RUN\n"
+            "        if e1_basis in E1_SAME_RUN_BASES:\n"
+            "            if binding.get(\"e1_layer_as_of\") != as_of:"
+        ),
+        after=(
+            "        # governance-mutation: RESEARCH_TRUST_VIEW_E1_SAME_RUN\n"
+            "        if e1_basis in E1_SAME_RUN_BASES:\n"
+            "            if False:"
+        ),
+        expected_failure_marker="test_e1_layer_must_be_from_this_run",
+        rationale="A trust line computed against an E1 layer from another night is refused.",
+    ),
+    MutationCase(
+        mutation_id="NIGHTLY_ACCEPTANCE_TRUST_LINE_DISPLAY_ONLY",
+        component="Nightly production acceptance",
+        source_path="experiments/execution_tracker/nightly_dual_acceptance.py",
+        test_script="tests/test_nightly_dual_acceptance.py",
+        before=(
+            "    return {\"status\": \"OBSERVED_WITH_GAPS\" if macro[\"quality\"] == \"DATA_BLOCKED\"\n"
+            "            or funnel[\"quality\"] != \"REVIEW_REQUIRED\"\n"
+        ),
+        after=(
+            "    return {\"status\": \"OBSERVED_WITH_GAPS\" if macro[\"quality\"] == \"DATA_BLOCKED\"\n"
+            "            or funnel[\"quality\"] != \"REVIEW_REQUIRED\"\n"
+            "            or trust_line[\"status\"] != \"PRESENT\"\n"
+        ),
+        expected_failure_marker="test_trust_line_never_changes_research_status_or_exit_code",
+        rationale="The trust line is display-only: it never changes the research status or the exit code.",
+    ),
+)
+
+
+# 2026-09-29 contract (A): disagreement adjudication ledger + U4 ledger v1.1.
+MUTATIONS = MUTATIONS + (
+    MutationCase(
+        mutation_id='DISAGREEMENT_LEDGER_REVIEWER_CHARTER',
+        component='Research funnel disagreement adjudication ledger',
+        source_path='experiments/research_funnel/disagreement_ledger.py',
+        test_script='tests/test_disagreement_ledger.py',
+        before='# governance-mutation: DISAGREEMENT_LEDGER_REVIEWER_CHARTER\nCLAIMED_REVIEWERS = ("Junyan",)',
+        after='# governance-mutation: DISAGREEMENT_LEDGER_REVIEWER_CHARTER\nCLAIMED_REVIEWERS = ("Junyan", "Reed")',
+        expected_failure_marker='test_reviewer_roster_is_a_single_charter_bound_constant',
+        rationale='Adding an adjudication signer is a charter change, not a silent code edit.',
+    ),
+    MutationCase(
+        mutation_id='DISAGREEMENT_LEDGER_QUEUE_ROWS_HASH',
+        component='Research funnel disagreement adjudication ledger',
+        source_path='experiments/research_funnel/disagreement_ledger.py',
+        test_script='tests/test_disagreement_ledger.py',
+        before='    # governance-mutation: DISAGREEMENT_LEDGER_QUEUE_ROWS_HASH\n    if _sha_ref(queue.get("rows_hash"), "queue rows_hash") != "sha256:" + funnel._hash(rows):',
+        after='    # governance-mutation: DISAGREEMENT_LEDGER_QUEUE_ROWS_HASH\n    if False:',
+        expected_failure_marker='test_queue_rows_hash_and_row_id_recompute',
+        rationale='A queue whose rows_hash does not recompute cannot be adjudicated.',
+    ),
+    MutationCase(
+        mutation_id='DISAGREEMENT_LEDGER_QUEUE_ROW_ID',
+        component='Research funnel disagreement adjudication ledger',
+        source_path='experiments/research_funnel/disagreement_ledger.py',
+        test_script='tests/test_disagreement_ledger.py',
+        before='        # governance-mutation: DISAGREEMENT_LEDGER_QUEUE_ROW_ID\n        if row.get("row_id") != queue_row_id(as_of, code, klass):',
+        after='        # governance-mutation: DISAGREEMENT_LEDGER_QUEUE_ROW_ID\n        if False:',
+        expected_failure_marker='test_queue_rows_hash_and_row_id_recompute',
+        rationale='Queue row identity must be the contract (as_of, ts_code, class) hash.',
+    ),
+    MutationCase(
+        mutation_id='DISAGREEMENT_LEDGER_FINALIZE_STAGE_BINDING',
+        component='Research funnel disagreement adjudication ledger',
+        source_path='experiments/research_funnel/disagreement_ledger.py',
+        test_script='tests/test_disagreement_ledger.py',
+        before='    # governance-mutation: DISAGREEMENT_LEDGER_FINALIZE_STAGE_BINDING\n    if (\n        stage.get("stage") != "finalize"',
+        after='    # governance-mutation: DISAGREEMENT_LEDGER_FINALIZE_STAGE_BINDING\n    if False and (\n        stage.get("stage") != "finalize"',
+        expected_failure_marker='test_queue_must_be_the_hashed_finalize_stage_artifact',
+        rationale='Only the finalize-stage-hashed queue is an adjudication source.',
+    ),
+    MutationCase(
+        mutation_id='DISAGREEMENT_LEDGER_CLAIMED_REVIEWER',
+        component='Research funnel disagreement adjudication ledger',
+        source_path='experiments/research_funnel/disagreement_ledger.py',
+        test_script='tests/test_disagreement_ledger.py',
+        before='    # governance-mutation: DISAGREEMENT_LEDGER_CLAIMED_REVIEWER\n    if (\n        human.get("claimed_reviewer") not in CLAIMED_REVIEWERS',
+        after='    # governance-mutation: DISAGREEMENT_LEDGER_CLAIMED_REVIEWER\n    if False and (\n        human.get("claimed_reviewer") not in CLAIMED_REVIEWERS',
+        expected_failure_marker='test_reviewer_and_identity_boundary',
+        rationale='Only the chartered reviewer, never a verified-identity claim, may sign.',
+    ),
+    MutationCase(
+        mutation_id='DISAGREEMENT_LEDGER_BATCH_AUTHORIZATION',
+        component='Research funnel disagreement adjudication ledger',
+        source_path='experiments/research_funnel/disagreement_ledger.py',
+        test_script='tests/test_disagreement_ledger.py',
+        before='    # governance-mutation: DISAGREEMENT_LEDGER_BATCH_AUTHORIZATION\n    if (\n        batch_hash[:12] not in authorization',
+        after='    # governance-mutation: DISAGREEMENT_LEDGER_BATCH_AUTHORIZATION\n    if False and (\n        batch_hash[:12] not in authorization',
+        expected_failure_marker='test_authorization_is_batch_bound_and_offline_scoped',
+        rationale='One authorization text must bind one exact batch and be offline-scoped.',
+    ),
+    MutationCase(
+        mutation_id='DISAGREEMENT_LEDGER_REVIEW_CHRONOLOGY',
+        component='Research funnel disagreement adjudication ledger',
+        source_path='experiments/research_funnel/disagreement_ledger.py',
+        test_script='tests/test_disagreement_ledger.py',
+        before='    # governance-mutation: DISAGREEMENT_LEDGER_REVIEW_CHRONOLOGY\n    if decided_at < _parse_time(queue_generated_at, "queue generated_at"):',
+        after='    # governance-mutation: DISAGREEMENT_LEDGER_REVIEW_CHRONOLOGY\n    if False:',
+        expected_failure_marker='test_decision_cannot_predate_queue_and_registration_cannot_predate_decision',
+        rationale='A human verdict cannot predate the queue it adjudicates.',
+    ),
+    MutationCase(
+        mutation_id='DISAGREEMENT_LEDGER_INFORMATION_CUTOFF',
+        component='Research funnel disagreement adjudication ledger',
+        source_path='experiments/research_funnel/disagreement_ledger.py',
+        test_script='tests/test_disagreement_ledger.py',
+        before='    # governance-mutation: DISAGREEMENT_LEDGER_INFORMATION_CUTOFF\n    if item.get("information_cutoff") != intent.get("as_of"):',
+        after='    # governance-mutation: DISAGREEMENT_LEDGER_INFORMATION_CUTOFF\n    if False:',
+        expected_failure_marker='test_information_cutoff_and_evidence_basis_are_closed',
+        rationale='Adjudication information cutoff is the queue as_of (no lookahead label).',
+    ),
+    MutationCase(
+        mutation_id='DISAGREEMENT_LEDGER_NO_AUTHORITY',
+        component='Research funnel disagreement adjudication ledger',
+        source_path='experiments/research_funnel/disagreement_ledger.py',
+        test_script='tests/test_disagreement_ledger.py',
+        before='    # governance-mutation: DISAGREEMENT_LEDGER_NO_AUTHORITY\n    if item.get("authority") != _authority() or forbidden_keys(item):',
+        after='    # governance-mutation: DISAGREEMENT_LEDGER_NO_AUTHORITY\n    if False:',
+        expected_failure_marker='test_authority_never_escalates',
+        rationale='An adjudication never changes a machine verdict, admits to U4, claims or trades.',
+    ),
+    MutationCase(
+        mutation_id='DISAGREEMENT_LEDGER_DRAFT_NO_PREFILL',
+        component='Research funnel disagreement adjudication ledger',
+        source_path='experiments/research_funnel/disagreement_ledger.py',
+        test_script='tests/test_disagreement_ledger.py',
+        before='            # governance-mutation: DISAGREEMENT_LEDGER_DRAFT_NO_PREFILL\n            "human_verdict": None,',
+        after='            # governance-mutation: DISAGREEMENT_LEDGER_DRAFT_NO_PREFILL\n            "human_verdict": "MACHINE_VERDICT_CONFIRMED",',
+        expected_failure_marker='test_draft_routes_only_human_rows_and_never_prefills_human_fields',
+        rationale='AI drafts never pre-fill a human verdict.',
+    ),
+    MutationCase(
+        mutation_id='DISAGREEMENT_LEDGER_QUEUE_BINDING',
+        component='Research funnel disagreement adjudication ledger',
+        source_path='experiments/research_funnel/disagreement_ledger.py',
+        test_script='tests/test_disagreement_ledger.py',
+        before='    # governance-mutation: DISAGREEMENT_LEDGER_QUEUE_BINDING\n    if (\n        batch.get("as_of") != queue["as_of"]',
+        after='    # governance-mutation: DISAGREEMENT_LEDGER_QUEUE_BINDING\n    if False and (\n        batch.get("as_of") != queue["as_of"]',
+        expected_failure_marker='test_batch_must_bind_the_exact_queue',
+        rationale='A batch is bound to one exact queue run, rows hash and generation time.',
+    ),
+    MutationCase(
+        mutation_id='DISAGREEMENT_LEDGER_HUMAN_ROUTED_ONLY',
+        component='Research funnel disagreement adjudication ledger',
+        source_path='experiments/research_funnel/disagreement_ledger.py',
+        test_script='tests/test_disagreement_ledger.py',
+        before='        # governance-mutation: DISAGREEMENT_LEDGER_HUMAN_ROUTED_ONLY\n        if queue_row["routing"]["queue"] != "HUMAN_ADJUDICATION":',
+        after='        # governance-mutation: DISAGREEMENT_LEDGER_HUMAN_ROUTED_ONLY\n        if False:',
+        expected_failure_marker='test_unrouted_unknown_or_altered_rows_are_refused',
+        rationale='Only rows the queue routed to a human can be adjudicated.',
+    ),
+    MutationCase(
+        mutation_id='DISAGREEMENT_LEDGER_INTENT_SUBJECT_SET',
+        component='Research funnel disagreement adjudication ledger',
+        source_path='experiments/research_funnel/disagreement_ledger.py',
+        test_script='tests/test_disagreement_ledger.py',
+        before='    # governance-mutation: DISAGREEMENT_LEDGER_INTENT_SUBJECT_SET\n    if not isinstance(batch_hash, str) or batch_hash != batch_hash_for(row_ids):',
+        after='    # governance-mutation: DISAGREEMENT_LEDGER_INTENT_SUBJECT_SET\n    if not isinstance(batch_hash, str):',
+        expected_failure_marker='test_intent_row_set_is_bound_by_batch_hash',
+        rationale='The authorized batch hash must bind the exact frozen row set.',
+    ),
+    MutationCase(
+        mutation_id='DISAGREEMENT_LEDGER_INTENT_HASH',
+        component='Research funnel disagreement adjudication ledger',
+        source_path='experiments/research_funnel/disagreement_ledger.py',
+        test_script='tests/test_disagreement_ledger.py',
+        before='    # governance-mutation: DISAGREEMENT_LEDGER_INTENT_HASH\n    if intent.get("intent_hash") != _intent_hash(intent):',
+        after='    # governance-mutation: DISAGREEMENT_LEDGER_INTENT_HASH\n    if False:',
+        expected_failure_marker='test_intent_row_set_is_bound_by_batch_hash',
+        rationale='The frozen batch intent hash is recomputed on replay.',
+    ),
+    MutationCase(
+        mutation_id='DISAGREEMENT_LEDGER_SINGLE_OPEN_BATCH',
+        component='Research funnel disagreement adjudication ledger',
+        source_path='experiments/research_funnel/disagreement_ledger.py',
+        test_script='tests/test_disagreement_ledger.py',
+        before='            # governance-mutation: DISAGREEMENT_LEDGER_SINGLE_OPEN_BATCH\n            if state["open_batch"] is not None:',
+        after='            # governance-mutation: DISAGREEMENT_LEDGER_SINGLE_OPEN_BATCH\n            if False:',
+        expected_failure_marker='test_replay_refuses_a_second_open_batch',
+        rationale='Replay refuses a second intent while a batch is still open.',
+    ),
+    MutationCase(
+        mutation_id='DISAGREEMENT_LEDGER_NO_DUPLICATE_ROW',
+        component='Research funnel disagreement adjudication ledger',
+        source_path='experiments/research_funnel/disagreement_ledger.py',
+        test_script='tests/test_disagreement_ledger.py',
+        before='                # governance-mutation: DISAGREEMENT_LEDGER_NO_DUPLICATE_ROW\n                if (row_id, reviewer) in state["claimed_rows"]:',
+        after='                # governance-mutation: DISAGREEMENT_LEDGER_NO_DUPLICATE_ROW\n                if False:',
+        expected_failure_marker='test_a_row_cannot_be_adjudicated_twice_by_the_same_reviewer',
+        rationale='One reviewer cannot re-adjudicate a row to flip the table.',
+    ),
+    MutationCase(
+        mutation_id='DISAGREEMENT_LEDGER_REGISTRATION_CHRONOLOGY',
+        component='Research funnel disagreement adjudication ledger',
+        source_path='experiments/research_funnel/disagreement_ledger.py',
+        test_script='tests/test_disagreement_ledger.py',
+        before='            # governance-mutation: DISAGREEMENT_LEDGER_REGISTRATION_CHRONOLOGY\n            if _parse_time(outer_ts, "intent R-015 ts") < _parse_time(',
+        after='            # governance-mutation: DISAGREEMENT_LEDGER_REGISTRATION_CHRONOLOGY\n            if False and _parse_time(outer_ts, "intent R-015 ts") < _parse_time(',
+        expected_failure_marker='test_replay_refuses_intent_registered_before_decision',
+        rationale='Durable registration cannot predate the claimed human decision.',
+    ),
+    MutationCase(
+        mutation_id='DISAGREEMENT_LEDGER_EVENT_INTENT_MATCH',
+        component='Research funnel disagreement adjudication ledger',
+        source_path='experiments/research_funnel/disagreement_ledger.py',
+        test_script='tests/test_disagreement_ledger.py',
+        before='            # governance-mutation: DISAGREEMENT_LEDGER_EVENT_INTENT_MATCH\n            if {key: payload[key] for key in ROW_INTENT_FIELDS} != item:',
+        after='            # governance-mutation: DISAGREEMENT_LEDGER_EVENT_INTENT_MATCH\n            if False:',
+        expected_failure_marker='test_verifier_detects_payload_tampering_even_when_chain_is_rehashed',
+        rationale='Each row event must equal its frozen batch intent.',
+    ),
+    MutationCase(
+        mutation_id='DISAGREEMENT_LEDGER_RECORD_HASH',
+        component='Research funnel disagreement adjudication ledger',
+        source_path='experiments/research_funnel/disagreement_ledger.py',
+        test_script='tests/test_disagreement_ledger.py',
+        before='            # governance-mutation: DISAGREEMENT_LEDGER_RECORD_HASH\n            if payload.get("record_hash") != _record_hash(payload):',
+        after='            # governance-mutation: DISAGREEMENT_LEDGER_RECORD_HASH\n            if False:',
+        expected_failure_marker='test_verifier_recomputes_record_hash',
+        rationale='The adjudication record_hash is recomputed on replay.',
+    ),
+    MutationCase(
+        mutation_id='DISAGREEMENT_LEDGER_CLOSURE_SET',
+        component='Research funnel disagreement adjudication ledger',
+        source_path='experiments/research_funnel/disagreement_ledger.py',
+        test_script='tests/test_disagreement_ledger.py',
+        before='            # governance-mutation: DISAGREEMENT_LEDGER_CLOSURE_SET\n            if len(written) != len(intent["row_ids"]):',
+        after='            # governance-mutation: DISAGREEMENT_LEDGER_CLOSURE_SET\n            if False:',
+        expected_failure_marker='test_closure_cannot_commit_an_incomplete_batch',
+        rationale='A closure cannot commit a batch with missing rows.',
+    ),
+    MutationCase(
+        mutation_id='DISAGREEMENT_LEDGER_VERIFY_REQUIRES_LEDGER',
+        component='Research funnel disagreement adjudication ledger',
+        source_path='experiments/research_funnel/disagreement_ledger.py',
+        test_script='tests/test_disagreement_ledger.py',
+        before='        # governance-mutation: DISAGREEMENT_LEDGER_VERIFY_REQUIRES_LEDGER\n        raise AdjudicationLedgerError("adjudication ledger does not exist")',
+        after='        # governance-mutation: DISAGREEMENT_LEDGER_VERIFY_REQUIRES_LEDGER\n        return _empty_state()',
+        expected_failure_marker='test_missing_ledger_is_not_a_clean_verification',
+        rationale='A missing ledger path never verifies as a clean empty ledger.',
+    ),
+    MutationCase(
+        mutation_id='DISAGREEMENT_LEDGER_TYPED_APPEND_QUEUE_BINDING',
+        component='Research funnel disagreement adjudication ledger',
+        source_path='experiments/research_funnel/disagreement_ledger.py',
+        test_script='tests/test_disagreement_ledger.py',
+        before='    # governance-mutation: DISAGREEMENT_LEDGER_TYPED_APPEND_QUEUE_BINDING\n    _validate_queue_binding(intent, load_bundle_queue(Path(bundle_dir)))',
+        after='    # governance-mutation: DISAGREEMENT_LEDGER_TYPED_APPEND_QUEUE_BINDING\n    pass',
+        expected_failure_marker='test_typed_append_rebinds_intent_to_the_bundle_queue',
+        rationale='The typed append re-binds every intent to the bundle queue.',
+    ),
+    MutationCase(
+        mutation_id='DISAGREEMENT_LEDGER_IDEMPOTENT_INTENT_MATCH',
+        component='Research funnel disagreement adjudication ledger',
+        source_path='experiments/research_funnel/disagreement_ledger.py',
+        test_script='tests/test_disagreement_ledger.py',
+        before='            # governance-mutation: DISAGREEMENT_LEDGER_IDEMPOTENT_INTENT_MATCH\n            if state["intents"][batch_id] != intent:',
+        after='            # governance-mutation: DISAGREEMENT_LEDGER_IDEMPOTENT_INTENT_MATCH\n            if False:',
+        expected_failure_marker='test_exact_retry_is_idempotent_and_conflicting_content_is_refused',
+        rationale='A committed batch_id cannot be re-reported with different verdicts.',
+    ),
+    MutationCase(
+        mutation_id='DISAGREEMENT_LEDGER_RATE_WITHHELD_BELOW_MIN',
+        component='Research funnel disagreement adjudication ledger',
+        source_path='experiments/research_funnel/disagreement_ledger.py',
+        test_script='tests/test_disagreement_ledger.py',
+        before='    # governance-mutation: DISAGREEMENT_LEDGER_RATE_WITHHELD_BELOW_MIN\n    if denominator < MIN_N:',
+        after='    # governance-mutation: DISAGREEMENT_LEDGER_RATE_WITHHELD_BELOW_MIN\n    if False:',
+        expected_failure_marker='test_report_is_descriptive_and_withholds_rates_below_minimum_sample',
+        rationale='Rates below the minimum sample are withheld (null), never computed.',
+    ),
+    MutationCase(
+        mutation_id='DISAGREEMENT_LEDGER_LATE_ADJUDICATION_EXCLUDED',
+        component='Research funnel disagreement adjudication ledger',
+        source_path='experiments/research_funnel/disagreement_ledger.py',
+        test_script='tests/test_disagreement_ledger.py',
+        before='        # governance-mutation: DISAGREEMENT_LEDGER_LATE_ADJUDICATION_EXCLUDED\n        if lag > LATE_ADJUDICATION_DAYS:',
+        after='        # governance-mutation: DISAGREEMENT_LEDGER_LATE_ADJUDICATION_EXCLUDED\n        if False:',
+        expected_failure_marker='test_late_adjudications_are_counted_but_excluded_from_shares',
+        rationale='Late (possibly lookahead) labels never enter a share.',
+    ),
+    MutationCase(
+        mutation_id='DISAGREEMENT_LEDGER_REPORT_CLAIM_STATUS',
+        component='Research funnel disagreement adjudication ledger',
+        source_path='experiments/research_funnel/disagreement_ledger.py',
+        test_script='tests/test_disagreement_ledger.py',
+        before='        # governance-mutation: DISAGREEMENT_LEDGER_REPORT_CLAIM_STATUS\n        "claim_status": "INSUFFICIENT_INDEPENDENT_SAMPLE",',
+        after='        # governance-mutation: DISAGREEMENT_LEDGER_REPORT_CLAIM_STATUS\n        "claim_status": "DESCRIPTIVE_ONLY_NOT_METHOD_VALIDATION",',
+        expected_failure_marker='test_report_is_descriptive_and_withholds_rates_below_minimum_sample',
+        rationale='Without causal clusters the report can never leave INSUFFICIENT_INDEPENDENT_SAMPLE.',
+    ),
+    MutationCase(
+        mutation_id='DISAGREEMENT_LEDGER_KIND_UNIQUE',
+        component='Research funnel R-015 typed adjudication transport',
+        source_path='experiments/execution_tracker/event_ledger.py',
+        test_script='tests/test_disagreement_ledger.py',
+        before='                # governance-mutation: DISAGREEMENT_LEDGER_KIND_UNIQUE\n                "disagreement_adjudication_intent", "disagreement_adjudication",\n                "disagreement_adjudication_closure",\n',
+        after='                # governance-mutation: DISAGREEMENT_LEDGER_KIND_UNIQUE\n',
+        expected_failure_marker='test_r015_adjudication_kind_uniqueness_is_independent',
+        rationale='R-015 enforces (kind,id) uniqueness for adjudication kinds under flock.',
+    ),
+    MutationCase(
+        mutation_id='DISAGREEMENT_LEDGER_TYPED_APPEND_VALIDATION',
+        component='Research funnel R-015 typed adjudication transport',
+        source_path='experiments/execution_tracker/event_ledger.py',
+        test_script='tests/test_disagreement_ledger.py',
+        before='            # governance-mutation: DISAGREEMENT_LEDGER_TYPED_APPEND_VALIDATION\n            disagreement_ledger.validate_typed_outer_append(\n                path, preview, bundle_dir=bundle_dir,\n            )',
+        after='            # governance-mutation: DISAGREEMENT_LEDGER_TYPED_APPEND_VALIDATION\n            pass',
+        expected_failure_marker='test_typed_append_rebinds_intent_to_the_bundle_queue',
+        rationale='The typed adjudication transport must replay-validate before writing.',
+    ),
+    MutationCase(
+        mutation_id='U4_LEDGER_V11_HUMAN_WARNING_SHAPE',
+        component='Research funnel U4 decision ledger v1.1',
+        source_path='experiments/research_funnel/u4_decision_ledger.py',
+        test_script='tests/test_u4_decision_ledger_v11.py',
+        before='        # governance-mutation: U4_LEDGER_V11_HUMAN_WARNING_SHAPE\n        if (\n            type(warning.get("retained")) is not bool',
+        after='        # governance-mutation: U4_LEDGER_V11_HUMAN_WARNING_SHAPE\n        if False and (\n            type(warning.get("retained")) is not bool',
+        expected_failure_marker='test_human_warning_shape_is_closed',
+        rationale='A structured human warning has a closed shape and target surface.',
+    ),
+    MutationCase(
+        mutation_id='U4_LEDGER_V11_DISPUTED_REF_SCOPE',
+        component='Research funnel U4 decision ledger v1.1',
+        source_path='experiments/research_funnel/u4_decision_ledger.py',
+        test_script='tests/test_u4_decision_ledger_v11.py',
+        before='    # governance-mutation: U4_LEDGER_V11_DISPUTED_REF_SCOPE\n    if value.get("decision") != "REJECT" or "RED_FLAG_ACTIVE" not in (value.get("reason_codes") or []):',
+        after='    # governance-mutation: U4_LEDGER_V11_DISPUTED_REF_SCOPE\n    if False:',
+        expected_failure_marker='test_disputed_ref_is_only_allowed_on_forced_red_flag_reject',
+        rationale='A disputed-flag reference lives only on a forced red-flag REJECT.',
+    ),
+    MutationCase(
+        mutation_id='U4_LEDGER_V11_COHERENT_EVENT_VERSION',
+        component='Research funnel U4 decision ledger v1.1',
+        source_path='experiments/research_funnel/u4_decision_ledger.py',
+        test_script='tests/test_u4_decision_ledger_v11.py',
+        before='    # governance-mutation: U4_LEDGER_V11_COHERENT_EVENT_VERSION\n    if len(row_versions) != 1:',
+        after='    # governance-mutation: U4_LEDGER_V11_COHERENT_EVENT_VERSION\n    if False:',
+        expected_failure_marker='test_one_revision_cannot_mix_event_versions',
+        rationale='One packet revision uses one event version.',
+    ),
+    MutationCase(
+        mutation_id='U4_LEDGER_V11_INTENT_VERSION_COHERENCE',
+        component='Research funnel U4 decision ledger v1.1',
+        source_path='experiments/research_funnel/u4_decision_ledger.py',
+        test_script='tests/test_u4_decision_ledger_v11.py',
+        before='    # governance-mutation: U4_LEDGER_V11_INTENT_VERSION_COHERENCE\n    if any(_is_v11(item) != expected_v11 for item in items):',
+        after='    # governance-mutation: U4_LEDGER_V11_INTENT_VERSION_COHERENCE\n    if False:',
+        expected_failure_marker='test_intent_version_must_match_candidate_intents',
+        rationale='The packet intent version must match its candidate intents.',
+    ),
+    MutationCase(
+        mutation_id='U4_LEDGER_V11_EVENT_VERSION_FIELDS',
+        component='Research funnel U4 decision ledger v1.1',
+        source_path='experiments/research_funnel/u4_decision_ledger.py',
+        test_script='tests/test_u4_decision_ledger_v11.py',
+        before='    # governance-mutation: U4_LEDGER_V11_EVENT_VERSION_FIELDS\n    _require_exact_keys(\n        event,\n        EVENT_FIELDS_V11 if version == EVENT_VERSION_V11 else EVENT_FIELDS,',
+        after='    # governance-mutation: U4_LEDGER_V11_EVENT_VERSION_FIELDS\n    _require_exact_keys(\n        event,\n        EVENT_FIELDS_V11 if _is_v11(event) else EVENT_FIELDS,',
+        expected_failure_marker='test_v10_event_cannot_smuggle_v11_fields',
+        rationale='A v1.0-labelled event cannot carry unvalidated v1.1 fields.',
+    ),
+    MutationCase(
+        mutation_id='U4_LEDGER_V11_DISPUTED_REF_RESOLVES',
+        component='Research funnel U4 decision ledger v1.1',
+        source_path='experiments/research_funnel/u4_decision_ledger.py',
+        test_script='tests/test_u4_decision_ledger_v11.py',
+        before='    # governance-mutation: U4_LEDGER_V11_DISPUTED_REF_RESOLVES\n    if (\n        record is None',
+        after='    # governance-mutation: U4_LEDGER_V11_DISPUTED_REF_RESOLVES\n    if False and (\n        record is None',
+        expected_failure_marker='test_disputed_ref_must_resolve_to_a_disputing_adjudication_of_the_same_ticker',
+        rationale='A disputed-flag reference must resolve to a committed disputing adjudication of the same ticker.',
+    ),
+    MutationCase(
+        mutation_id='U4_LEDGER_V11_DISPUTED_REF_REQUIRES_LEDGER',
+        component='Research funnel U4 decision ledger v1.1',
+        source_path='experiments/research_funnel/u4_decision_ledger.py',
+        test_script='tests/test_u4_decision_ledger_v11.py',
+        before='        # governance-mutation: U4_LEDGER_V11_DISPUTED_REF_REQUIRES_LEDGER\n        if adjudication_ledger_path is None:',
+        after='        # governance-mutation: U4_LEDGER_V11_DISPUTED_REF_REQUIRES_LEDGER\n        if False:',
+        expected_failure_marker='test_disputed_ref_requires_the_adjudication_ledger',
+        rationale='An unresolvable disputed-flag reference is never written.',
+    ),
+)
+
+
+# 2026-09-29 PR #392 review fixes: lag basis, false-kill numerator, forced-agreement
+# verification, queue authority, authorization/reason floors, same-night disputed ref.
+MUTATIONS = MUTATIONS + (
+    MutationCase(
+        mutation_id='DISAGREEMENT_LEDGER_LAG_BASIS_REGISTERED_AT',
+        component='Research funnel disagreement adjudication ledger',
+        source_path='experiments/research_funnel/disagreement_ledger.py',
+        test_script='tests/test_disagreement_ledger.py',
+        before='        # governance-mutation: DISAGREEMENT_LEDGER_LAG_BASIS_REGISTERED_AT\n        lag_basis = _parse_time(event["registered_at"], "registered_at")',
+        after='        # governance-mutation: DISAGREEMENT_LEDGER_LAG_BASIS_REGISTERED_AT\n        lag_basis = _parse_time(event["human_decision"]["decided_at"], "decided_at")',
+        expected_failure_marker='test_backdated_decision_registered_late_is_late',
+        rationale='Lateness follows the machine R-015 stamp; a backdated human decided_at cannot pull a late label into a share.',
+    ),
+    MutationCase(
+        mutation_id='DISAGREEMENT_LEDGER_FALSE_KILL_NUMERATOR',
+        component='Research funnel disagreement adjudication ledger',
+        source_path='experiments/research_funnel/disagreement_ledger.py',
+        test_script='tests/test_disagreement_ledger.py',
+        before='# governance-mutation: DISAGREEMENT_LEDGER_FALSE_KILL_NUMERATOR\nMACHINE_REJECTED_VERDICTS = frozenset({',
+        after='# governance-mutation: DISAGREEMENT_LEDGER_FALSE_KILL_NUMERATOR\nMACHINE_REJECTED_VERDICTS = frozenset({\n    "COUNTER_SIDE_REJECTED",',
+        expected_failure_marker='test_false_kill_numerator_counts_only_machine_rejections',
+        rationale='Only human rejections of the machine side count as false kills; siding with the flag never does.',
+    ),
+    MutationCase(
+        mutation_id='DISAGREEMENT_LEDGER_FORCED_AGREEMENT_MISSING_IS_NULL',
+        component='Research funnel disagreement adjudication ledger',
+        source_path='experiments/research_funnel/disagreement_ledger.py',
+        test_script='tests/test_disagreement_ledger.py',
+        before='    # governance-mutation: DISAGREEMENT_LEDGER_FORCED_AGREEMENT_MISSING_IS_NULL\n    if not os.path.lexists(path):',
+        after='    # governance-mutation: DISAGREEMENT_LEDGER_FORCED_AGREEMENT_MISSING_IS_NULL\n    if False:',
+        expected_failure_marker='test_forced_agreement_is_null_for_missing_or_unverifiable_u4_ledger',
+        rationale='A missing U4 ledger is disclosed as U4_LEDGER_MISSING with a null count, never 0.',
+    ),
+    MutationCase(
+        mutation_id='DISAGREEMENT_LEDGER_FORCED_AGREEMENT_VERIFIED_CURRENT',
+        component='Research funnel disagreement adjudication ledger',
+        source_path='experiments/research_funnel/disagreement_ledger.py',
+        test_script='tests/test_disagreement_ledger.py',
+        before='        # governance-mutation: DISAGREEMENT_LEDGER_FORCED_AGREEMENT_VERIFIED_CURRENT\n        current = list(u4._snapshot_state(path)["current"].values())',
+        after='        # governance-mutation: DISAGREEMENT_LEDGER_FORCED_AGREEMENT_VERIFIED_CURRENT\n        current = [json.loads(line).get("payload") for line in event_ledger._read_lines(str(path)) if json.loads(line).get("kind") == u4.EVENT_KIND]',
+        expected_failure_marker='test_forced_agreement_is_null_for_missing_or_unverifiable_u4_ledger',
+        rationale='Forced agreement is counted only from a chain/anchor-verified U4 replay, never from raw lines.',
+    ),
+    MutationCase(
+        mutation_id='DISAGREEMENT_LEDGER_QUEUE_AUTHORITY',
+        component='Research funnel disagreement adjudication ledger',
+        source_path='experiments/research_funnel/disagreement_ledger.py',
+        test_script='tests/test_disagreement_ledger.py',
+        before='    # governance-mutation: DISAGREEMENT_LEDGER_QUEUE_AUTHORITY\n    if queue.get("authority") != QUEUE_AUTHORITY:',
+        after='    # governance-mutation: DISAGREEMENT_LEDGER_QUEUE_AUTHORITY\n    if False:',
+        expected_failure_marker='test_queue_claiming_authority_is_refused',
+        rationale='A queue that claims machine-verdict, U4, claim or trade authority is not an adjudication source.',
+    ),
+    MutationCase(
+        mutation_id='DISAGREEMENT_LEDGER_AUTHORIZATION_SUBSTANTIVE',
+        component='Research funnel disagreement adjudication ledger',
+        source_path='experiments/research_funnel/disagreement_ledger.py',
+        test_script='tests/test_disagreement_ledger.py',
+        before='    # governance-mutation: DISAGREEMENT_LEDGER_AUTHORIZATION_SUBSTANTIVE\n    if not isinstance(authorization, str) or len(authorization.strip()) < 20:',
+        after='    # governance-mutation: DISAGREEMENT_LEDGER_AUTHORIZATION_SUBSTANTIVE\n    if not isinstance(authorization, str) or len(authorization.strip()) < 1:',
+        expected_failure_marker='test_authorization_text_must_be_substantive',
+        rationale='A batch authorization must be substantive verbatim human text, not a bare hash token.',
+    ),
+    MutationCase(
+        mutation_id='DISAGREEMENT_LEDGER_REASON_NOTE_REQUIRED',
+        component='Research funnel disagreement adjudication ledger',
+        source_path='experiments/research_funnel/disagreement_ledger.py',
+        test_script='tests/test_disagreement_ledger.py',
+        before='    # governance-mutation: DISAGREEMENT_LEDGER_REASON_NOTE_REQUIRED\n    if not isinstance(note, str) or not note.strip():',
+        after='    # governance-mutation: DISAGREEMENT_LEDGER_REASON_NOTE_REQUIRED\n    if False:',
+        expected_failure_marker='test_reason_note_must_be_non_empty_verbatim_text',
+        rationale='Every human verdict carries a non-empty verbatim reason.',
+    ),
+    MutationCase(
+        mutation_id='U4_LEDGER_V11_DISPUTED_REF_SAME_AS_OF',
+        component='Research funnel U4 decision ledger v1.1',
+        source_path='experiments/research_funnel/u4_decision_ledger.py',
+        test_script='tests/test_u4_decision_ledger_v11.py',
+        before='    # governance-mutation: U4_LEDGER_V11_DISPUTED_REF_SAME_AS_OF\n    if str(record.get("as_of") or "") != as_of:',
+        after='    # governance-mutation: U4_LEDGER_V11_DISPUTED_REF_SAME_AS_OF\n    if str(record.get("as_of") or "") > as_of:',
+        expected_failure_marker='test_disputed_ref_must_come_from_the_same_source_as_of',
+        rationale='A disputed-flag reference must name an adjudication of the same source night, not a stale earlier one.',
+    ),
+)
 
 # Announcement feed sidecar + research-increment label ledger (contract L).
 MUTATIONS = MUTATIONS + (
@@ -12784,7 +14927,9 @@ MUTATIONS = MUTATIONS + (
     # Identical to #393's case of the same id: whichever PR merges second drops
     # its copy (the gate refuses duplicate ids, so the collision cannot pass silently).
     MutationCase(
-        mutation_id="EVIDENCE_VIEW_STAGE_ARTIFACT_CAPTURE",
+        # Composition (#393 + #394): both PRs landed the identical evidence_view.py
+        # stage-artifact capture under one id; #394's test keeps its own pin here.
+        mutation_id="EVIDENCE_VIEW_STAGE_ARTIFACT_CAPTURE_BATTERY_SIDECAR",
         component="U4 evidence view capture",
         source_path="experiments/research_funnel/evidence_view.py",
         test_script="tests/test_announcement_feed.py",

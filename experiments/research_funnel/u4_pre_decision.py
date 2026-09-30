@@ -471,10 +471,18 @@ def _validate_funnel_health(
 
 
 def _required_stage_files(stage: str, names: set[str]) -> set[str]:
-    """Battery may also hash the announcement feed sidecar; nothing else is optional."""
+    """Battery may also hash the announcement feed sidecar; finalize may also hash the
+    advisory queue/trust files, all or none; nothing else is optional."""
     # governance-mutation: U4_PREDECISION_BATTERY_OPTIONAL_ONLY
     if stage == "battery":
         return names - set(dag.STAGE2_OPTIONAL_FILES)
+    optional = set(dag.STAGE3_OPTIONAL_FILES)
+    # governance-mutation: U4_PREDECISION_FINALIZE_OPTIONAL_ALL_OR_NONE
+    if stage == "finalize" and names & optional and not optional <= names:
+        return names  # a half pair never matches the expected file set
+    # governance-mutation: U4_PREDECISION_FINALIZE_OPTIONAL_ONLY
+    if stage == "finalize":
+        return names - set(dag.STAGE3_OPTIONAL_FILES)
     return names
 
 
