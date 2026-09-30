@@ -34,6 +34,10 @@ on:
       - "docs/team/TEAM_AI_WORKSPACE_V1.md"
       - ".gitignore"
       - "api/**"
+      # Paid-model route gate: the dashboard client and the morning-report
+      # caller are pinned by tests/test_llm_route_guard.py.
+      - "src/**"
+      - ".github/workflows/morning-report.yml"
       - ".github/workflows/python-ci.yml"
   # 直推 main 也必须过闸 —— 0712 的 git-reset-hard 正是这个形态,
   # 而本工作流此前只有 pull_request 触发器,直推完全不受任何检查。
@@ -57,6 +61,12 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+      # Node >= 20.6 is required by tests/llm-route-guard.test.mjs and the
+      # route-gate pins (node:module register() with data: URL hooks); pin it
+      # instead of relying on the runner image default.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
       - run: pip install pandas jsonschema==4.25.1
       - name: Independent research workflow trials (offline)
         run: |
@@ -363,6 +373,13 @@ jobs:
       # handlers are exercised with local provider stubs and socket-free input.
       - name: Research fact-check postprocessor regression (offline)
         run: python3 tests/test_fact_check.py
+      # Paid-model routes (research/research-multi/chat/debate/macro/
+      # morning-report/research-pulse) need the server key + origin allowlist +
+      # per-IP limit before any provider call; browser client locked by default.
+      - name: Paid-model route gate regression (node, offline)
+        run: node tests/llm-route-guard.test.mjs
+      - name: Paid-model route gate pins (offline)
+        run: python3 tests/test_llm_route_guard.py
       # ── Macro OS M0-A:源身份/事件分级/双时间点预判/共识冲突语义 ──
       - name: Macro OS M0-A contract selftest
         run: python3 experiments/macro_os/contracts.py --selftest
@@ -454,6 +471,11 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+      # Same Node pin as offline-tests: the LLM_ROUTE_* pins run node runners
+      # that need node:module register() (Node >= 20.6).
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
       - run: pip install pandas jsonschema==4.25.1
       - name: Macro and AIOS governance mutation gate shard (offline)
         run: >-
