@@ -1,6 +1,6 @@
 {
   "ticker": "300308.SZ",
-  "fetched_at": "2026-09-30T15:03:38Z",
+  "fetched_at": "2026-10-01T07:04:27Z",
   "permission_model": "runtime_probe",
   "_status": "partial",
   "data": {
@@ -824,22 +824,9 @@
           "pct_chg": -2.3622,
           "vol": 328617.91,
           "amount": 37702362.9488
-        },
-        {
-          "ts_code": "300308.SZ",
-          "trade_date": "20260702",
-          "open": 1160.0,
-          "high": 1198.0,
-          "low": 1127.4,
-          "close": 1143.0,
-          "pre_close": 1223.17,
-          "change": -80.17,
-          "pct_chg": -6.5543,
-          "vol": 317620.24,
-          "amount": 36721292.9271
         }
       ],
-      "row_count": 64,
+      "row_count": 63,
       "_status": "ok",
       "as_of": "20260930"
     },
@@ -2104,29 +2091,9 @@
           "free_share": 84012.6316,
           "total_mv": 124460192.52,
           "circ_mv": 123869281.68
-        },
-        {
-          "ts_code": "300308.SZ",
-          "trade_date": "20260702",
-          "close": 1143.0,
-          "turnover_rate": 2.8616,
-          "turnover_rate_f": 3.7806,
-          "volume_ratio": 0.97,
-          "pe": 118.059,
-          "pe_ttm": 85.2715,
-          "pb": 35.8195,
-          "ps": 33.3346,
-          "ps_ttm": 24.964,
-          "dv_ratio": 0.0784,
-          "dv_ttm": 0.1222,
-          "total_share": 111523.4641,
-          "float_share": 110993.9778,
-          "free_share": 84012.6316,
-          "total_mv": 127471326.21,
-          "circ_mv": 126866119.14
         }
       ],
-      "row_count": 64,
+      "row_count": 63,
       "_status": "ok",
       "as_of": "20260930"
     },
@@ -2446,14 +2413,9 @@
           "ts_code": "300308.SZ",
           "trade_date": "20260703",
           "adj_factor": 6.6039
-        },
-        {
-          "ts_code": "300308.SZ",
-          "trade_date": "20260702",
-          "adj_factor": 6.6039
         }
       ],
-      "row_count": 64,
+      "row_count": 63,
       "_status": "ok",
       "as_of": "20260930"
     },
