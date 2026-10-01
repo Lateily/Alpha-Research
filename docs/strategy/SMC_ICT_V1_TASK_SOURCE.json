@@ -1,0 +1,59 @@
+{
+  "schema": "ai-task.v1",
+  "task_id": "AR-SMC-ICT-V1-20261001",
+  "architecture_block": ["research-workflows", "smc-ict-shadow"],
+  "objective": "Build a deterministic, offline SMC/ICT evidence and strategy-proposal engine with complete concept coverage, explicit data gaps, and reproducible replay.",
+  "non_goals": [
+    "No production scheduling or live market-data calls",
+    "No paper registration or real trading authority",
+    "No win-rate or alpha claim",
+    "No mutation of existing historical research or execution ledgers"
+  ],
+  "human_owner": "Junyan",
+  "reviewer": "Independent human reviewer designated by Junyan",
+  "executor_candidates": ["Codex"],
+  "dependencies": [],
+  "authority_docs": [
+    "AGENTS.md",
+    "experiments/AGENTS.md",
+    "docs/strategy/EXECUTION_GATE_DATA_SOURCES.md"
+  ],
+  "file_scope": [
+    "experiments/research_workflows/",
+    "docs/strategy/",
+    "tests/test_smc_ict_engine.py",
+    ".github/workflows/python-ci.yml",
+    "scripts/governance_mutation_gate.py"
+  ],
+  "forbidden_scope": [
+    "experiments/execution_tracker/",
+    "public/data/v2/",
+    "scripts/run_nightly.py",
+    "data_history/"
+  ],
+  "input_contracts": [
+    "hash-bound settled raw OHLCV minute bars",
+    "settled daily bars and point-in-time corporate-action factors",
+    "versioned research and red-flag gates"
+  ],
+  "output_artifacts": [
+    "versioned rulebook and configuration",
+    "offline replay engine and receipts",
+    "negative behavior tests and mutation pins",
+    "draft pull request"
+  ],
+  "acceptance_tests": [
+    "python3 tests/test_smc_ict_engine.py",
+    "python3 scripts/governance_mutation_gate.py",
+    "git diff --check"
+  ],
+  "risk_level": "HIGH",
+  "network_policy": "OFFLINE",
+  "budget": {"max_cny": "0", "max_minutes": 240},
+  "approval_gates": [
+    "INDEPENDENT_PR_REVIEW",
+    "JUNYAN_MERGE",
+    "SEPARATE_MINUTE_ENTITLEMENT_ACCEPTANCE",
+    "SEPARATE_PAPER_APPROVAL"
+  ]
+}
