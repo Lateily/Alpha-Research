@@ -15171,6 +15171,33 @@ MUTATIONS = MUTATIONS + (
         expected_failure_marker="test_v1_concept_detector_rejects_custom_params_with_default_rule_hash",
         rationale="A custom detector configuration cannot retain the fixed V1 rule hash.",
     ),
+    MutationCase(
+        mutation_id="SMC_ICT_OBJECTIVE_UNCONSUMED", component="Independent SMC ICT engine",
+        source_path="experiments/research_workflows/smc_ict_concepts.py",
+        test_script="tests/test_smc_ict_engine.py",
+        before='        if point is not None and (future_high is None or future_high <= Decimal(point["price"])):',
+        after='        if point is not None:',
+        expected_failure_marker="test_frozen_retest_rejects_consumed_high_as_objective",
+        rationale="A later breach consumes a confirmed high before it can be used as a target.",
+    ),
+    MutationCase(
+        mutation_id="SMC_ICT_OBJECTIVE_SELECTION", component="Independent SMC ICT engine",
+        source_path="experiments/research_workflows/smc_ict_engine.py",
+        test_script="tests/test_smc_ict_engine.py",
+        before='        for high in structure.get(timeframe, {}).get("unconsumed_highs", []):',
+        after='        for high in ([structure[timeframe]["last_confirmed_high"]] if structure.get(timeframe, {}).get("last_confirmed_high") else []):',
+        expected_failure_marker="test_frozen_retest_rejects_consumed_high_as_objective",
+        rationale="The composition path must use unconsumed highs rather than the last high unconditionally.",
+    ),
+    MutationCase(
+        mutation_id="SMC_ICT_RETEST_OPPOSING_BREAK", component="Independent SMC ICT engine",
+        source_path="experiments/research_workflows/smc_ict_engine.py",
+        test_script="tests/test_smc_ict_engine.py",
+        before='        if any(item["kind"] in {"CHOCH_DOWN", "MSS_DOWN", "BOS_DOWN"}',
+        after='        if False and any(item["kind"] in {"CHOCH_DOWN", "MSS_DOWN", "BOS_DOWN"}',
+        expected_failure_marker="test_frozen_retest_rejects_later_opposing_structure",
+        rationale="A later opposing 5m break invalidates the older causal authorization of a retest.",
+    ),
 )
 
 @dataclass(frozen=True)

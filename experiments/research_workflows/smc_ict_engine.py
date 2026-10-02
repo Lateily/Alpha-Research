@@ -26,12 +26,12 @@ def _empty(status: str = "NO_SETUP", reason: str = "PATTERN_NOT_CONFIRMED") -> d
 def _objective(structure: Mapping[str, Any], entry: Decimal, now: str) -> dict[str, Any] | None:
     candidates = []
     for timeframe in ("5m", "15m", "60m", "1d"):
-        high = structure.get(timeframe, {}).get("last_confirmed_high")
-        if not high or not isinstance(high.get("known_at"), str) or high["known_at"] > now:
-            continue
-        price = Decimal(high["price"])
-        if price > entry:
-            candidates.append((price, timeframe, high))
+        for high in structure.get(timeframe, {}).get("unconsumed_highs", []):
+            if not isinstance(high.get("known_at"), str) or high["known_at"] > now:
+                continue
+            price = Decimal(high["price"])
+            if price > entry:
+                candidates.append((price, timeframe, high))
     if not candidates:
         return None
     price, timeframe, high = min(candidates, key=lambda item: item[0])
@@ -138,6 +138,10 @@ def compose_templates(concepts: Mapping[str, Any], five_minute_bars: tuple[Bar, 
                         and item["bar_id"] in causal_break_ids]
         if not prior_events:
             result[name] = _empty("WAIT", "STRUCTURE_CONFIRMATION_MISSING")
+            continue
+        if any(item["kind"] in {"CHOCH_DOWN", "MSS_DOWN", "BOS_DOWN"}
+               and prior_events[-1]["known_at"] < item["known_at"] <= now for item in events):
+            result[name] = _empty("WAIT", "OPPOSING_STRUCTURE_CONFLICT")
             continue
         source_ids = [prior_events[-1]["bar_id"], zone["bar_id"], latest.source_ids[-1]]
         entry = _tick(Decimal(zone["upper"]), ROUND_FLOOR)

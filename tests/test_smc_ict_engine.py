@@ -526,10 +526,11 @@ class AtomicConceptTests(unittest.TestCase):
 def proposal_context():
     bars = five_minute_bars([9.8] * 20, [10.2] * 20, [10.0] * 20)
     latest = bars[-1].end.isoformat()
+    high = {"price": "12.50", "bar_id": "known-high", "known_at": latest}
     concepts = {
         "structure": {
             "5m": {"trend": "BULLISH", "events": [],
-                   "last_confirmed_high": {"price": "12.50", "bar_id": "known-high", "known_at": latest},
+                   "last_confirmed_high": high, "unconsumed_highs": [high],
                    "last_confirmed_low": {"price": "9.00", "bar_id": "known-low", "known_at": latest}},
             "15m": {"trend": "BULLISH", "events": [], "last_confirmed_high": None},
             "60m": {"trend": "BULLISH", "events": [], "last_confirmed_high": None},
@@ -612,11 +613,49 @@ class StrategyReceiptTests(unittest.TestCase):
             (9.5, 14.3, 9.5, 14.2), (10.5, 14.4, 14.2, 11.0),
             (9.9, 11.0, 11.0, 10.6),
         ))
+        next(row for row in payload["daily_bars"] if row["date"] == "20260917")["high"] = 30.0
+        reseal(payload)
         receipt = evaluate(payload)
         self.assertEqual(receipt["templates"]["BOS_FVG_RETEST"]["status"], "SETUP")
         self.assertEqual(receipt["templates"]["BOS_FVG_RETEST"]["proposal"]["order_type"],
                          "LIMIT_RETEST")
+        self.assertEqual(receipt["templates"]["BOS_FVG_RETEST"]["proposal"]["target_reference"],
+                         "30.00")
         self.assertTrue(verify_receipt(payload, receipt))
+
+    def test_frozen_retest_rejects_consumed_high_as_objective(self):
+        payload = frozen_intraday_payload((
+            (9, 10, 9.5, 9.5), (10, 11, 10.5, 10.5),
+            (10, 14, 11.0, 11.5), (9.5, 11, 10.0, 10.0),
+            (9, 10.5, 10.0, 9.5), (9, 10, 9.8, 9.5),
+            (9.5, 14.3, 9.5, 14.2), (10.5, 14.4, 14.2, 11.0),
+            (9.9, 11.0, 11.0, 10.6),
+        ))
+        receipt = evaluate(payload)
+        template = receipt["templates"]["BOS_FVG_RETEST"]
+        self.assertEqual(template["status"], "WAIT")
+        self.assertEqual(template["reason"], "OBJECTIVE_TARGET_MISSING")
+        self.assertIsNone(template["proposal"])
+
+    def test_frozen_retest_rejects_later_opposing_structure(self):
+        payload = frozen_intraday_payload((
+            (9, 10, 9.5, 9.5), (10, 11, 10.5, 10.5),
+            (10, 14, 11, 11.5), (9.5, 11, 10, 10),
+            (9, 10.5, 10, 9.5), (9, 10, 9.8, 9.5),
+            (9.5, 17.9, 9.5, 17.8), (10.5, 18, 17.8, 13),
+            (12, 13.2, 12.5, 12.5), (11.6, 13.3, 12, 12),
+            (11.4, 13.4, 12, 12.5), (11.6, 13.5, 12.5, 12.5),
+            (11.8, 13.6, 12.5, 12.5), (12, 13.7, 12.5, 12.5),
+            (10.2, 13, 12.5, 10.6),
+        ))
+        receipt = evaluate(payload)
+        self.assertEqual(receipt["concepts"]["structure"]["5m"]["trend"], "BEARISH")
+        self.assertIn("CHOCH_DOWN", [event["kind"] for event in
+                                      receipt["concepts"]["structure"]["5m"]["events"]])
+        template = receipt["templates"]["BOS_FVG_RETEST"]
+        self.assertEqual(template["status"], "WAIT")
+        self.assertEqual(template["reason"], "OPPOSING_STRUCTURE_CONFLICT")
+        self.assertIsNone(template["proposal"])
 
     def test_frozen_source_to_receipt_detects_causally_bound_ob_retest(self):
         payload = frozen_intraday_payload((
@@ -626,10 +665,14 @@ class StrategyReceiptTests(unittest.TestCase):
             (8.5, 16.5, 8.8, 16.4), (10.5, 16.6, 16.4, 11.0),
             (9.9, 11.0, 11.0, 10.6),
         ))
+        next(row for row in payload["daily_bars"] if row["date"] == "20260917")["high"] = 30.0
+        reseal(payload)
         receipt = evaluate(payload)
         self.assertEqual(receipt["templates"]["CHOCH_OB_RETEST"]["status"], "SETUP")
         self.assertEqual(receipt["templates"]["CHOCH_OB_RETEST"]["proposal"]["order_type"],
                          "LIMIT_RETEST")
+        self.assertEqual(receipt["templates"]["CHOCH_OB_RETEST"]["proposal"]["target_reference"],
+                         "30.00")
         self.assertTrue(verify_receipt(payload, receipt))
 
     def test_partial_five_minute_bar_cannot_reuse_prior_closed_setup(self):

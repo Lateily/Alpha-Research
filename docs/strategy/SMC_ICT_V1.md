@@ -104,11 +104,14 @@ exists, after-cost reward/risk is below 2, an input is blocked, or long and
 short evidence conflicts, output `WAIT`, `NO_SETUP`, or `DATA_BLOCKED`, never
 invent a percentage target. FVG/OB retest is a *limit-retest* proposal; the
 current paper fill engine does not gain that execution mode through this PR.
-Each template finds its nearest confirmed opposing high from its own rounded
-entry reference; a stop-trigger entry cannot choose a limit-retest objective.
+Each template finds its nearest confirmed, still-unbreached opposing high from
+its own rounded entry reference. A later high above a pivot consumes that
+objective; when none remains, the template waits rather than reusing it. A
+stop-trigger entry cannot choose a limit-retest objective.
 The break confirming a retest must be tied by source bar ID to the FVG's
 displacement/third bar or the OB's recorded break bar; an older unrelated
-same-direction event is insufficient. V1 proposes **long-only A-share**
+same-direction event is insufficient. A later opposing 5-minute structure
+break also invalidates that earlier retest authorization. V1 proposes **long-only A-share**
 references; bearish concepts are observations or conflicts, not short orders.
 The V1 offline proposal checks 10 bps entry friction and 10 bps exit friction
 and compares the nearest confirmed opposing high with a stop buffered by

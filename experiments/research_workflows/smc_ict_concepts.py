@@ -137,7 +137,16 @@ def find_structure(bars: tuple[Bar, ...], pivots: dict[str, list[dict[str, Any]]
                        "reference_bar_id": reference["bar_id"],
                        "reference_price": reference["price"],
                        "displacement_confirmed": index in displaced})
-    return {"trend": direction, "events": events,
+    highs_by_index = {point["index"]: point for point in pivots["HIGH"]}
+    unconsumed_highs = []
+    future_high = None
+    for index in range(len(bars) - 1, -1, -1):
+        point = highs_by_index.get(index)
+        if point is not None and (future_high is None or future_high <= Decimal(point["price"])):
+            unconsumed_highs.append(point)
+        future_high = bars[index].high if future_high is None else max(future_high, bars[index].high)
+    unconsumed_highs.reverse()
+    return {"trend": direction, "events": events, "unconsumed_highs": unconsumed_highs,
             "last_confirmed_high": pivots["HIGH"][-1] if pivots["HIGH"] else None,
             "last_confirmed_low": pivots["LOW"][-1] if pivots["LOW"] else None}
 
