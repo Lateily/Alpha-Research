@@ -28,7 +28,7 @@
         "signal": null,
         "delta": null
       },
-      "engine_run_at": "2026-10-02T06:58:41.259667+00:00"
+      "engine_run_at": "2026-10-02T14:58:39.565988+00:00"
     },
     {
       "ticker": "002594.SZ",
@@ -57,7 +57,7 @@
         "signal": null,
         "delta": null
       },
-      "engine_run_at": "2026-10-02T06:58:41.259772+00:00"
+      "engine_run_at": "2026-10-02T14:58:39.566130+00:00"
     },
     {
       "ticker": "175.HK",
@@ -69,7 +69,7 @@
       "low_coverage": 50,
       "catalyst_prox": 50,
       "close": 14.55,
-      "volume": 123,
+      "volume": 130,
       "source": "vp_engine",
       "wrongIf_e": "[NEEDS_JUNYAN_REVIEW] revenue_growth < -10% for 2 consecutive quarters OR operating_margin < 3% (auto-industry stress proxy) OR EV market-share loss to BYD by >300bp QoQ",
       "wrongIf_z": "[等 Junyan 审核] 连续两季度营收增速<-10%，或经营利润率<3%（车企承压代理指标），或新能源车份额相比比亚迪季度环比下降>300bp",
@@ -84,7 +84,7 @@
         "source": "seed_fallback",
         "reason": "no_delta_in_rdcf"
       },
-      "engine_run_at": "2026-10-02T06:58:41.259850+00:00"
+      "engine_run_at": "2026-10-02T14:58:39.566230+00:00"
     },
     {
       "ticker": "603233.SH",
@@ -111,7 +111,7 @@
         "source": "seed_fallback",
         "reason": "no_delta_in_rdcf"
       },
-      "engine_run_at": "2026-10-02T06:58:41.259909+00:00"
+      "engine_run_at": "2026-10-02T14:58:39.566310+00:00"
     },
     {
       "ticker": "688120.SH",
@@ -138,7 +138,7 @@
         "source": "seed_fallback",
         "reason": "no_delta_in_rdcf"
       },
-      "engine_run_at": "2026-10-02T06:58:41.259958+00:00"
+      "engine_run_at": "2026-10-02T14:58:39.566381+00:00"
     },
     {
       "ticker": "300054.SZ",
@@ -165,7 +165,7 @@
         "source": "seed_fallback",
         "reason": "no_delta_in_rdcf"
       },
-      "engine_run_at": "2026-10-02T06:58:41.260006+00:00"
+      "engine_run_at": "2026-10-02T14:58:39.566449+00:00"
     }
   ]
 }
