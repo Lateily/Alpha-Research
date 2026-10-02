@@ -200,6 +200,41 @@ class MutationCase:
 
 MUTATIONS: tuple[MutationCase, ...] = (
     MutationCase(
+        mutation_id="NEWS_FLASH_SHADOW_NO_TRADE", component="Independent news flash shadow",
+        source_path="experiments/research_workflows/news_flash_shadow.py",
+        test_script="tests/test_news_flash_shadow.py",
+        before='    "trade_action": False,', after='    "trade_action": True,',
+        expected_failure_marker="test_deduplicates_and_never_grants_authority",
+        rationale="News cassette rows must never gain trading authority.",
+    ),
+    MutationCase(
+        mutation_id="NEWS_FLASH_SHADOW_ACCESS_DENIED", component="Independent news flash shadow",
+        source_path="experiments/research_workflows/news_flash_shadow.py",
+        test_script="tests/test_news_flash_shadow.py",
+        before='        result_status, reason = "DATA_BLOCKED", "ACCESS_DENIED"',
+        after='        result_status, reason = "EMPTY_VALID", "ACCESS_DENIED"',
+        expected_failure_marker="test_denied_source_is_data_blocked_not_empty_valid",
+        rationale="An unentitled provider cannot silently become empty-valid.",
+    ),
+    MutationCase(
+        mutation_id="NEWS_FLASH_SHADOW_COLLECTION_LAG", component="Independent news flash shadow",
+        source_path="experiments/research_workflows/news_flash_shadow.py",
+        test_script="tests/test_news_flash_shadow.py",
+        before='    elif checked - end > MAX_COLLECTION_LAG:',
+        after='    elif False:',
+        expected_failure_marker="test_late_collection_is_not_realtime_ok",
+        rationale="Late collection must not be displayed as current live evidence.",
+    ),
+    MutationCase(
+        mutation_id="NEWS_FLASH_SHADOW_ROOT_HANDLE", component="Independent news flash shadow",
+        source_path="experiments/research_workflows/news_flash_shadow.py",
+        test_script="tests/test_news_flash_shadow.py",
+        before='        os.mkdir(output.name, dir_fd=root_fd)',
+        after='        os.mkdir(output)',
+        expected_failure_marker="test_sandbox_root_rebound_never_writes_to_outside_directory",
+        rationale="A rebound sandbox path must not redirect batch creation outside the held root.",
+    ),
+    MutationCase(
         mutation_id="JEV_U4_PUBLIC_ADAPTER_BOUNDARY", component="Jev U4 shadow backend",
         source_path="scripts/llm/jev_u4_shadow.py", test_script="tests/test_jev_u4_shadow.py",
         before="    state_root: Path | str,\n    race_injector: Callable[[str], None] | None = None,",
