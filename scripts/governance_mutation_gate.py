@@ -15172,6 +15172,15 @@ MUTATIONS = MUTATIONS + (
         rationale="A custom detector configuration cannot retain the fixed V1 rule hash.",
     ),
     MutationCase(
+        mutation_id="SMC_ICT_SEMANTIC_RULE_VERSION", component="Independent SMC ICT engine",
+        source_path="experiments/research_workflows/smc_ict_concepts.py",
+        test_script="tests/test_smc_ict_engine.py",
+        before='VERSION = "AR-SMC-ICT-DEBUG-2"',
+        after='VERSION = "AR-SMC-ICT-DEBUG-1"',
+        expected_failure_marker="test_frozen_retest_rejects_consumed_high_as_objective",
+        rationale="A changed objective rule must not reuse the prior debug receipt identity.",
+    ),
+    MutationCase(
         mutation_id="SMC_ICT_OBJECTIVE_UNCONSUMED", component="Independent SMC ICT engine",
         source_path="experiments/research_workflows/smc_ict_concepts.py",
         test_script="tests/test_smc_ict_engine.py",

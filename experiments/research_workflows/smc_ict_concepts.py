@@ -9,7 +9,7 @@ from typing import Any, Mapping
 from .smc_ict_input import Bar, FrozenInput, TICK, _session_for, aggregate_minutes, digest
 
 
-VERSION = "AR-SMC-ICT-DEBUG-1"
+VERSION = "AR-SMC-ICT-DEBUG-2"
 RULE_PARAMS = {
     "pivot_left": 2,
     "pivot_right": 2,

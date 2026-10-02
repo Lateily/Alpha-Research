@@ -62,6 +62,8 @@ are *annotation/debug parameters*, not calibrated trading parameters.
 The V1 detector rejects custom parameter maps rather than returning a default
 rule hash for a changed configuration. A challenger uses a separately
 versioned contract and cannot relabel old V1 receipts.
+The consumed-objective and opposing-break correction uses `AR-SMC-ICT-DEBUG-2`;
+receipts produced under `AR-SMC-ICT-DEBUG-1` retain their original rule identity.
 
 Definitions that matter for replay:
 

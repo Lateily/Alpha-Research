@@ -636,6 +636,11 @@ class StrategyReceiptTests(unittest.TestCase):
         self.assertEqual(template["status"], "WAIT")
         self.assertEqual(template["reason"], "OBJECTIVE_TARGET_MISSING")
         self.assertIsNone(template["proposal"])
+        self.assertEqual(receipt["rule_version"], "AR-SMC-ICT-DEBUG-2")
+        self.assertNotEqual(
+            receipt["rule_hash"],
+            "sha256:bf64004fa47157a3299de8fad496daec58a8e354cf20ef38af013adcc3f66d71",
+        )
 
     def test_frozen_retest_rejects_later_opposing_structure(self):
         payload = frozen_intraday_payload((
