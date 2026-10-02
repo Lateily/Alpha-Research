@@ -6,9 +6,9 @@
     "no_size": true,
     "no_buy_sell": true,
     "no_position_mutation": true,
-    "run_date": "2026-10-01",
+    "run_date": "2026-10-02",
     "pilot_start_date": "2026-06-08",
-    "generated_at": "2026-10-01T15:41:10.922605+00:00",
+    "generated_at": "2026-10-02T06:58:41.441830+00:00",
     "fresh_pilot": true,
     "legacy_paper_positions_inherited": false,
     "sources": [
@@ -63,7 +63,7 @@
         },
         "quant_confluence": {
           "action": "NEUTRAL",
-          "score": 6,
+          "score": 4,
           "rationale": "Bullish: Rsi Recovering | RSI 40 | Price vs MA20 -2.1% | Regime: PERMISSIVE | VP 48"
         }
       },
@@ -105,7 +105,7 @@
         },
         "quant_confluence": {
           "action": "NEUTRAL",
-          "score": 17,
+          "score": 12,
           "rationale": "Bullish: Ma20 Bounce, Kdj Golden Cross | RSI 52 | Price vs MA20 +0.4% | VP 50"
         }
       },
@@ -281,7 +281,7 @@
             }
           ]
         },
-        "as_of": "2026-10-01",
+        "as_of": "2026-10-02",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -323,7 +323,7 @@
             }
           ]
         },
-        "as_of": "2026-10-01",
+        "as_of": "2026-10-02",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -358,7 +358,7 @@
           },
           "signals": []
         },
-        "as_of": "2026-10-01",
+        "as_of": "2026-10-02",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -400,7 +400,7 @@
             }
           ]
         },
-        "as_of": "2026-10-01",
+        "as_of": "2026-10-02",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -448,7 +448,7 @@
             }
           ]
         },
-        "as_of": "2026-10-01",
+        "as_of": "2026-10-02",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -502,7 +502,7 @@
             }
           ]
         },
-        "as_of": "2026-10-01",
+        "as_of": "2026-10-02",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -544,7 +544,7 @@
             }
           ]
         },
-        "as_of": "2026-10-01",
+        "as_of": "2026-10-02",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -579,7 +579,7 @@
           },
           "signals": []
         },
-        "as_of": "2026-10-01",
+        "as_of": "2026-10-02",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -614,7 +614,7 @@
           },
           "signals": []
         },
-        "as_of": "2026-10-01",
+        "as_of": "2026-10-02",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       }

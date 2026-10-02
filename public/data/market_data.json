@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "fetched_at": "2026-10-01T15:35:10.842612",
+    "fetched_at": "2026-10-02T06:52:45.149409",
     "version": "4.1",
     "tickers": [
       "300308.SZ",
@@ -163,16 +163,16 @@
     },
     "175.HK": {
       "price": {
-        "last": 14.98,
-        "prev_close": 14.98,
-        "change_pct": 0,
-        "high": 15,
-        "low": 14.54,
-        "volume": -287,
+        "last": 14.55,
+        "prev_close": 14.5,
+        "change_pct": 0.345,
+        "high": 14.76,
+        "low": 14.33,
+        "volume": 123,
         "avg_volume_20d": null,
         "volume_ratio": null,
-        "high_52w": 15,
-        "low_52w": 14.54
+        "high_52w": 14.76,
+        "low_52w": 14.33
       },
       "technical": {
         "sma_20": null,
@@ -461,14 +461,14 @@
       "5d_cumulative": 0.0,
       "20d_cumulative": 0.0,
       "trend": "outflow",
-      "updated": "2026-10-01"
+      "updated": "2026-10-02"
     },
     "southbound": {
       "latest_net_flow": 68.6361,
       "5d_cumulative": 66.7307,
       "20d_cumulative": 530.1866,
       "trend": "inflow",
-      "updated": "2026-10-01"
+      "updated": "2026-10-02"
     },
     "dragon_tiger": [
       {

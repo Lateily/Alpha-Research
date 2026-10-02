@@ -1,6 +1,6 @@
 {
   "ticker": "002594.SZ",
-  "fetched_at": "2026-10-01T15:35:47Z",
+  "fetched_at": "2026-10-02T06:53:20Z",
   "permission_model": "runtime_probe",
   "_status": "partial",
   "data": {
@@ -811,22 +811,9 @@
           "pct_chg": -1.0512,
           "vol": 485828.28,
           "amount": 4263991.76189
-        },
-        {
-          "ts_code": "002594.SZ",
-          "trade_date": "20260703",
-          "open": 83.73,
-          "high": 88.88,
-          "low": 83.6,
-          "close": 88.47,
-          "pre_close": 83.57,
-          "change": 4.9,
-          "pct_chg": 5.8633,
-          "vol": 838981.62,
-          "amount": 7298140.28407
         }
       ],
-      "row_count": 63,
+      "row_count": 62,
       "_status": "ok",
       "as_of": "20260930"
     },
@@ -2071,29 +2058,9 @@
           "free_share": 245652.5341,
           "total_mv": 79811947.7904,
           "circ_mv": 30521814.579
-        },
-        {
-          "ts_code": "002594.SZ",
-          "trade_date": "20260703",
-          "close": 88.47,
-          "turnover_rate": 2.4063,
-          "turnover_rate_f": 3.4153,
-          "volume_ratio": 1.45,
-          "pe": 24.7279,
-          "pe_ttm": 29.2791,
-          "pb": 3.478,
-          "ps": 1.0033,
-          "ps_ttm": 1.029,
-          "dv_ratio": 1.4973,
-          "dv_ttm": 1.4973,
-          "total_share": 911719.7565,
-          "float_share": 348661.35,
-          "free_share": 245652.5341,
-          "total_mv": 80659847.1672,
-          "circ_mv": 30846069.6345
         }
       ],
-      "row_count": 63,
+      "row_count": 62,
       "_status": "ok",
       "as_of": "20260930"
     },
@@ -2408,14 +2375,9 @@
           "ts_code": "002594.SZ",
           "trade_date": "20260706",
           "adj_factor": 3.1499
-        },
-        {
-          "ts_code": "002594.SZ",
-          "trade_date": "20260703",
-          "adj_factor": 3.1499
         }
       ],
-      "row_count": 63,
+      "row_count": 62,
       "_status": "ok",
       "as_of": "20260930"
     },
