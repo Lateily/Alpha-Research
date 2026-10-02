@@ -158,7 +158,7 @@ def find_sweeps(bars: tuple[Bar, ...], pivots: dict[str, list[dict[str, Any]]],
                 params: Mapping[str, Any]) -> list[dict[str, Any]]:
     """Consume a reference on its first breach; do not search for prettier later sweeps."""
     events = []
-    spent: set[str] = set()
+    spent: set[tuple[str, str, str]] = set()
     minimum = TICK * int(params["sweep_minimum_ticks"])
     window = int(params["reclaim_window_bars"])
     pools = find_equal_pools(pivots, params)
@@ -171,25 +171,32 @@ def find_sweeps(bars: tuple[Bar, ...], pivots: dict[str, list[dict[str, Any]]],
             if pool is not None and (point is None or pool["known_at"] >= point["known_at"]):
                 point = {"bar_id": pool["right_bar_id"], "price": pool["level"],
                          "known_at": pool["known_at"], "reference_kind": "EQUAL_POOL"}
-            if point is None or point["bar_id"] in spent:
+            if point is None:
+                continue
+            reference = (kind, point["bar_id"], point.get("reference_kind", "PIVOT"))
+            if reference in spent:
                 continue
             level = Decimal(point["price"])
             breached = bar.low <= level - minimum if kind == "LOW" else bar.high >= level + minimum
             if not breached:
                 continue
-            spent.add(point["bar_id"])
+            spent.add(reference)
             for later in range(index, min(len(bars), index + window + 1)):
                 current = bars[later]
                 if _session_for(current.end)[0] != _session_for(bar.end)[0]:
                     break
                 reclaimed = current.close >= level if kind == "LOW" else current.close <= level
                 if reclaimed:
+                    observed = bars[index:later + 1]
+                    extreme_bar = (min(observed, key=lambda item: item.low) if kind == "LOW"
+                                   else max(observed, key=lambda item: item.high))
                     events.append({"kind": f"SWEEP_{kind}_RECLAIM", "index": later,
                                    "bar_id": _id(current), "known_at": current.end.isoformat(),
                                    "sweep_bar_id": _id(bar), "reference_bar_id": point["bar_id"],
                                    "reference_kind": point.get("reference_kind", "PIVOT"),
                                    "reference_price": point["price"],
-                                   "extreme": str(bar.low if kind == "LOW" else bar.high)})
+                                   "extreme_bar_id": _id(extreme_bar),
+                                   "extreme": str(extreme_bar.low if kind == "LOW" else extreme_bar.high)})
                     break
     return events
 

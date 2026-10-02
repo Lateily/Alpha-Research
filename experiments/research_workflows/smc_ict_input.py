@@ -10,9 +10,12 @@ from datetime import date, datetime, time, timedelta, timezone
 from decimal import Decimal, InvalidOperation
 from typing import Any, Mapping
 
+from experiments.execution_tracker import session_calendar
+
 
 SHANGHAI = timezone(timedelta(hours=8))
 TICK = Decimal("0.01")
+MIN_MINUTE_SESSIONS = 2
 SESSIONS = ((time(9, 31), time(11, 30)), (time(13, 1), time(15, 0)))
 INPUT_KEYS = frozenset({
     "schema", "ticker", "as_of", "calendar", "minute_bars", "daily_bars",
@@ -151,6 +154,14 @@ def _expected_grid(calendar: tuple[str, ...], as_of: datetime) -> tuple[datetime
     return tuple(expected)
 
 
+def _exchange_sessions(first: str, last: str) -> tuple[str, ...]:
+    previous = datetime.strptime(first, "%Y%m%d").date() - timedelta(days=1)
+    result = session_calendar.static_calendar().sessions_between(previous.strftime("%Y%m%d"), last)
+    if result["sessions"] is None:
+        raise InputBlocked("EXCHANGE_CALENDAR_UNAVAILABLE")
+    return tuple(result["sessions"])
+
+
 def _parse_minutes(rows: Any, calendar: tuple[str, ...], as_of: datetime, ticker: str) -> tuple[Bar, ...]:
     if not isinstance(rows, list) or not rows:
         raise InputBlocked("MINUTE_BARS_MISSING")
@@ -182,6 +193,14 @@ def _parse_daily(rows: Any, as_of: datetime, ticker: str) -> tuple[Bar, ...]:
         raise InputError("DAILY_ORDER_OR_DUPLICATE")
     if bars[-1].end > as_of:
         raise InputError("FUTURE_DAILY_BAR")
+    if tuple(dates) != _exchange_sessions(dates[0], dates[-1]):
+        raise InputBlocked("DAILY_SESSION_MISMATCH")
+    current = as_of.strftime("%Y%m%d")
+    if as_of.time() == time(15):
+        if dates[-1] != current:
+            raise InputBlocked("DAILY_SESSION_MISMATCH")
+    elif session_calendar.static_calendar().sessions_between(dates[-1], current)["sessions"] != [current]:
+        raise InputBlocked("DAILY_SESSION_MISMATCH")
     return bars
 
 
@@ -216,6 +235,8 @@ def validate_input(payload: Any) -> FrozenInput:
     calendar = tuple(_date8(day) for day in calendar_raw)
     if list(calendar) != sorted(set(calendar)) or calendar[-1] != as_of.strftime("%Y%m%d"):
         raise InputError("CALENDAR_IDENTITY")
+    if len(calendar) < MIN_MINUTE_SESSIONS or calendar != _exchange_sessions(calendar[0], calendar[-1]):
+        raise InputBlocked("CALENDAR_SESSION_MISMATCH")
     hashes = payload["hashes"]
     if not isinstance(hashes, dict) or set(hashes) != set(HASHED_KEYS):
         raise InputError("HASH_SCHEMA")

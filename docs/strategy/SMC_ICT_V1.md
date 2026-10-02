@@ -25,6 +25,13 @@ TradingView display, U4 consumption, and paper-order adapter are **unwired**.
 - A frozen, SHA-256-bound ticker identity, settled 1-minute raw OHLCV bars,
   settled daily bars, point-in-time adjustment factors, a declared exchange
   calendar, and evidence-gate states.
+- The declared minute calendar is checked against the independent, offline
+  2026 SSE session table, including holidays; it cannot attest to its own
+  completeness. V1 requires at least two consecutive exchange sessions of
+  minutes and contiguous settled daily context through the as-of session.
+  A missing whole day or stale daily context is `DATA_BLOCKED` even when the
+  input hashes are internally consistent. Outside the independently covered
+  2026 dates, the engine blocks rather than guessing an exchange calendar.
 - Minute timestamps denote **bar end** in Asia/Shanghai. Normal sessions end
   at 09:31..11:30 and 13:01..15:00, yielding 240 expected bars per open day.
   A source adapter must establish this convention; raw provider timestamps
@@ -64,8 +71,10 @@ Definitions that matter for replay:
 - An equal-high/low pool is a pair of confirmed swings no farther apart than
   one exchange tick. A sweep crosses the known pool or pivot by at least one
   tick and reclaims within three closed bars **of the same exchange session**.
-  Its label is dated at reclaim,
-  not retroactively at the sweep.
+  Its label is dated at reclaim, not retroactively at the sweep. The recorded
+  extreme is the most adverse price across the whole breach-to-reclaim window,
+  and its bar ID remains attached to any resulting stop proposal. A high and
+  a low reference on the same outside candle are spent independently.
 - FVG is a three-bar gap confined to one exchange session, with at least one
   tick of width. An order block is the last opposing closed candle preceding
   a displacement-backed structure break. Mitigation and invalidation inspect

@@ -71,7 +71,7 @@ def frozen_payload():
     history = []
     day = date(2026, 9, 7)
     while day <= days[-1]:
-        if day.weekday() < 5:
+        if day.weekday() < 5 and day.strftime("%Y%m%d") != "20260925":
             history.append({"ts_code": "600000.SH", "date": day.strftime("%Y%m%d"), "open": 10.0,
                             "high": 10.0, "low": 10.0, "close": 10.0,
                             "volume": 240000})
@@ -141,6 +141,59 @@ class FrozenInputTests(unittest.TestCase):
         reseal(payload)
         with self.assertRaisesRegex(InputBlocked, "MINUTE_GAP"):
             validate_input(payload)
+
+    def test_resealed_whole_session_omission_is_blocked_at_receipt_entry(self):
+        payload = frozen_payload()
+        payload["calendar"].remove("20260929")
+        payload["minute_bars"] = [row for row in payload["minute_bars"]
+                                  if not row["end"].startswith("2026-09-29")]
+        reseal(payload)
+        receipt = evaluate(payload)
+        self.assertEqual(receipt["status"], "DATA_BLOCKED")
+        self.assertEqual(receipt["reason"], "CALENDAR_SESSION_MISMATCH")
+        self.assertEqual(receipt["templates"], {})
+
+    def test_resealed_interior_session_gap_is_blocked(self):
+        payload = frozen_payload()
+        previous = [dict(row, end=row["end"].replace("2026-09-29", "2026-09-28"))
+                    for row in payload["minute_bars"][:240]]
+        payload["calendar"].insert(0, "20260928")
+        payload["minute_bars"] = previous + payload["minute_bars"]
+        reseal(payload)
+        self.assertEqual(evaluate(payload)["status"], "NO_SETUP")
+        payload["calendar"].remove("20260929")
+        payload["minute_bars"] = [row for row in payload["minute_bars"]
+                                  if not row["end"].startswith("2026-09-29")]
+        reseal(payload)
+        receipt = evaluate(payload)
+        self.assertEqual(receipt["status"], "DATA_BLOCKED")
+        self.assertEqual(receipt["reason"], "CALENDAR_SESSION_MISMATCH")
+
+    def test_calendar_outside_independent_2026_coverage_blocks(self):
+        payload = frozen_payload()
+        payload["calendar"] = ["20270929", "20270930"]
+        payload["as_of"] = "2027-09-30T15:00:00+08:00"
+        reseal(payload)
+        receipt = evaluate(payload)
+        self.assertEqual(receipt["status"], "DATA_BLOCKED")
+        self.assertEqual(receipt["reason"], "EXCHANGE_CALENDAR_UNAVAILABLE")
+
+    def test_stale_or_gapped_daily_context_is_blocked_at_receipt_entry(self):
+        payload = frozen_intraday_payload(((9, 11, 10, 10),) * 5)
+        payload["daily_bars"].pop()
+        reseal(payload)
+        receipt = evaluate(payload)
+        self.assertEqual(receipt["status"], "DATA_BLOCKED")
+        self.assertEqual(receipt["reason"], "DAILY_SESSION_MISMATCH")
+        self.assertEqual(receipt["templates"], {})
+
+        payload = frozen_payload()
+        payload["daily_bars"] = [row for row in payload["daily_bars"]
+                                 if row["date"] != "20260924"]
+        reseal(payload)
+        receipt = evaluate(payload)
+        self.assertEqual(receipt["status"], "DATA_BLOCKED")
+        self.assertEqual(receipt["reason"], "DAILY_SESSION_MISMATCH")
 
     def test_resealed_future_bar_is_refused(self):
         payload = frozen_payload()
@@ -252,6 +305,53 @@ class AtomicConceptTests(unittest.TestCase):
         self.assertEqual(events[0]["sweep_bar_id"], "bar-5")
         self.assertEqual(events[0]["known_at"], bars[6].end.isoformat())
         self.assertEqual(find_sweeps(bars[:6], confirmed_pivots(bars[:6], 2, 2), RULE_PARAMS), [])
+
+    def test_sweep_extreme_includes_the_reclaim_bar(self):
+        payload = frozen_sweep_payload()
+        for row in payload["minute_bars"][-5:]:
+            row["low"] = 7.6
+        reseal(payload)
+        receipt = evaluate(payload)
+        sweep = receipt["concepts"]["liquidity"]["sweeps"][-1]
+        self.assertEqual(sweep["extreme"], "7.6")
+        proposal = receipt["templates"]["SWEEP_RECLAIM"]["proposal"]
+        self.assertEqual(receipt["status"], "REVIEW_REQUIRED")
+        self.assertLess(Decimal(proposal["stop_reference"]), Decimal("7.60"))
+
+        for row in payload["minute_bars"][-5:]:
+            row["low"] = 7.0
+        reseal(payload)
+        receipt = evaluate(payload)
+        self.assertEqual(receipt["concepts"]["liquidity"]["sweeps"][-1]["extreme"], "7.0")
+        self.assertEqual(receipt["templates"]["SWEEP_RECLAIM"]["status"], "WAIT")
+        self.assertEqual(receipt["templates"]["SWEEP_RECLAIM"]["reason"],
+                         "REWARD_RISK_BELOW_TWO_AFTER_COST")
+
+    def test_intermediate_sweep_extreme_is_bound_to_proposal_sources(self):
+        payload = frozen_intraday_payload((
+            (10, 11, 10, 10.5), (9, 10, 9, 9.5), (8, 12, 8, 8.5),
+            (9, 10, 9, 9.5), (10, 11, 10, 10.5), (7.98, 8.40, 7.98, 7.99),
+            (7.6, 8.5, 7.99, 7.99), (7.7, 8.6, 7.99, 8.2),
+        ))
+        receipt = evaluate(payload)
+        sweep = receipt["concepts"]["liquidity"]["sweeps"][-1]
+        self.assertEqual(sweep["extreme"], "7.6")
+        self.assertEqual(sweep["extreme_bar_id"], "2026-09-30T10:05:00+08:00")
+        proposal = receipt["templates"]["SWEEP_RECLAIM"]["proposal"]
+        self.assertIsNotNone(proposal)
+        self.assertIn(sweep["extreme_bar_id"], proposal["entry_source_bar_ids"])
+
+    def test_high_and_low_sweeps_from_one_pivot_remain_independent(self):
+        bars = five_minute_bars(
+            [10, 9, 8, 9, 10, 7.98, 9],
+            [11, 10, 12, 10, 11, 10, 12.5],
+            [10.5, 9.5, 8.5, 9.5, 10.5, 8.2, 11],
+        )
+        pivots = confirmed_pivots(bars, 2, 2)
+        self.assertEqual(pivots["LOW"][0]["bar_id"], pivots["HIGH"][0]["bar_id"])
+        events = find_sweeps(bars, pivots, RULE_PARAMS)
+        self.assertEqual([event["kind"] for event in events],
+                         ["SWEEP_LOW_RECLAIM", "SWEEP_HIGH_RECLAIM"])
 
     def test_sweep_cannot_reclaim_after_lunch_or_next_day(self):
         bars = list(five_minute_bars(

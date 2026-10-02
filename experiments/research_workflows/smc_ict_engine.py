@@ -104,10 +104,14 @@ def compose_templates(concepts: Mapping[str, Any], five_minute_bars: tuple[Bar, 
             result["SWEEP_RECLAIM"] = _empty("WAIT", "DISCOUNT_LOCATION_MISSING")
         else:
             sweep = sweeps[-1]
+            source_ids = list(dict.fromkeys([
+                sweep["reference_bar_id"], sweep["sweep_bar_id"],
+                sweep.get("extreme_bar_id", sweep["sweep_bar_id"]), sweep["bar_id"],
+            ]))
             result["SWEEP_RECLAIM"] = _propose(
                 order_type="STOP_TRIGGER", entry=latest.high + TICK,
                 extreme=Decimal(sweep["extreme"]), objective=target, atr=atr,
-                source_bar_ids=[sweep["reference_bar_id"], sweep["sweep_bar_id"], sweep["bar_id"]],
+                source_bar_ids=source_ids,
                 known_at=now,
             )
     events = structure.get("5m", {}).get("events", [])
