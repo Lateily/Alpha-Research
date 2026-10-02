@@ -317,6 +317,8 @@ def find_smt(bars: tuple[Bar, ...], benchmark: tuple[Bar, ...] | None,
 
 
 def detect_concepts(frozen: FrozenInput, params: Mapping[str, Any] = RULE_PARAMS) -> dict[str, Any]:
+    if dict(params) != RULE_PARAMS:
+        raise ValueError("CUSTOM_RULE_PARAMS_UNSUPPORTED")
     as_of_date = frozen.as_of.strftime("%Y%m%d")
     series = {"1m": _adjusted(frozen.minutes, frozen.factors, as_of_date),
               "1d": _adjusted(frozen.daily, frozen.factors, as_of_date)}

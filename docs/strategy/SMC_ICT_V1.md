@@ -59,6 +59,9 @@ range with equilibrium, OTE retracement zone, exchange-session bucket, and
 cross-asset SMT divergence when a bound benchmark is available. `DATA_BLOCKED`
 is an explicit detector result, never zero or `PASS`. The local numeric defaults
 are *annotation/debug parameters*, not calibrated trading parameters.
+The V1 detector rejects custom parameter maps rather than returning a default
+rule hash for a changed configuration. A challenger uses a separately
+versioned contract and cannot relabel old V1 receipts.
 
 Definitions that matter for replay:
 

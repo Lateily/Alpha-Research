@@ -15162,6 +15162,15 @@ MUTATIONS = MUTATIONS + (
         expected_failure_marker="test_limit_retest_uses_its_own_entry_to_find_nearest_objective",
         rationale="A limit retest must search objectives above its own entry, not the sweep trigger.",
     ),
+    MutationCase(
+        mutation_id="SMC_ICT_DEFAULT_RULE_HASH_ONLY", component="Independent SMC ICT engine",
+        source_path="experiments/research_workflows/smc_ict_concepts.py",
+        test_script="tests/test_smc_ict_engine.py",
+        before='if dict(params) != RULE_PARAMS:',
+        after='if False:',
+        expected_failure_marker="test_v1_concept_detector_rejects_custom_params_with_default_rule_hash",
+        rationale="A custom detector configuration cannot retain the fixed V1 rule hash.",
+    ),
 )
 
 @dataclass(frozen=True)

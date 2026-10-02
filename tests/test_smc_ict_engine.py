@@ -267,6 +267,13 @@ def five_minute_bars(lows, highs=None, closes=None, opens=None):
 
 
 class AtomicConceptTests(unittest.TestCase):
+    def test_v1_concept_detector_rejects_custom_params_with_default_rule_hash(self):
+        frozen = validate_input(frozen_sweep_payload())
+        self.assertEqual(detect_concepts(frozen)["rule_hash"], RULE_HASH)
+        changed = {**RULE_PARAMS, "pivot_right": 3}
+        with self.assertRaisesRegex(ValueError, "CUSTOM_RULE_PARAMS_UNSUPPORTED"):
+            detect_concepts(frozen, changed)
+
     def test_opposing_current_sweeps_block_the_receipt_proposal(self):
         payload = frozen_sweep_payload()
         payload["daily_bars"][3]["high"] = 30
