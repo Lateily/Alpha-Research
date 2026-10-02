@@ -1,6 +1,6 @@
 {
   "ticker": "300308.SZ",
-  "fetched_at": "2026-10-01T15:35:32Z",
+  "fetched_at": "2026-10-02T06:53:04Z",
   "permission_model": "runtime_probe",
   "_status": "partial",
   "data": {
@@ -811,22 +811,9 @@
           "pct_chg": -1.5305,
           "vol": 315566.1,
           "amount": 34704124.5513
-        },
-        {
-          "ts_code": "300308.SZ",
-          "trade_date": "20260703",
-          "open": 1130.0,
-          "high": 1188.01,
-          "low": 1115.0,
-          "close": 1116.0,
-          "pre_close": 1143.0,
-          "change": -27.0,
-          "pct_chg": -2.3622,
-          "vol": 328617.91,
-          "amount": 37702362.9488
         }
       ],
-      "row_count": 63,
+      "row_count": 62,
       "_status": "ok",
       "as_of": "20260930"
     },
@@ -2071,29 +2058,9 @@
           "free_share": 84012.6316,
           "total_mv": 122555371.6524,
           "circ_mv": 121973504.5016
-        },
-        {
-          "ts_code": "300308.SZ",
-          "trade_date": "20260703",
-          "close": 1116.0,
-          "turnover_rate": 2.9607,
-          "turnover_rate_f": 3.9115,
-          "volume_ratio": 1.05,
-          "pe": 115.2702,
-          "pe_ttm": 83.2572,
-          "pb": 34.9734,
-          "ps": 32.5472,
-          "ps_ttm": 24.3743,
-          "dv_ratio": 0.0803,
-          "dv_ttm": 0.1252,
-          "total_share": 111523.4641,
-          "float_share": 110993.9778,
-          "free_share": 84012.6316,
-          "total_mv": 124460192.52,
-          "circ_mv": 123869281.68
         }
       ],
-      "row_count": 63,
+      "row_count": 62,
       "_status": "ok",
       "as_of": "20260930"
     },
@@ -2408,14 +2375,9 @@
           "ts_code": "300308.SZ",
           "trade_date": "20260706",
           "adj_factor": 6.6039
-        },
-        {
-          "ts_code": "300308.SZ",
-          "trade_date": "20260703",
-          "adj_factor": 6.6039
         }
       ],
-      "row_count": 63,
+      "row_count": 62,
       "_status": "ok",
       "as_of": "20260930"
     },
