@@ -1,26 +1,26 @@
 # AR Equity Research Platform — Project Context
 
-> This file is auto-loaded at the start of every Claude session. Read it fully before writing any code.
-> **Last updated: 2026-06-07** (pivot pointer added — see PIVOT NOTICE below; prior 2026-05-01: repo reorganization — docs/ structure + auto-work-mode skill rename + STATUS.md mandatory pre-flight)
+> This file is auto-loaded at the start of every Claude session. It is PROJECT CONTEXT AND HISTORY.
+> **Last updated: 2026-09-14.** Authority order is set by `AGENTS.md`, not by this file: live human request, then `AGENTS.md` and the nearest nested one, then the compiled `ai-task.v1` manifest, then the architecture and constitution docs it names. Where this file conflicts with `AGENTS.md` or `docs/research/UNIFIED_RESEARCH_OS.md`, those win.
 
-> **⚠ 2026-06-07 PIVOT NOTICE — read before applying any "no buy/sell" rule below.**
-> The product pivoted to an **internal model-recommendation pilot** (Daily Model Portfolio). As of 2026-06-07, the pilot **may output explicitly-labeled UNVALIDATED model recommendations / target ranges / construction logic** — **not** validated alpha, **not** external advice, and **no auto-trade or sizing without human execution**. The **human still makes the final decision** (executes the trade). This *supplements*, does not delete, the "human makes all investment decisions" philosophy and Analysis Output Standard #3 below. Full reconciliation deferred post-demo. See **`STATUS.md` top block (2026-06-07)** for the full pilot positioning + the recommendation→execution→attribution→improvement loop.
+> **⚠ 2026-06-07 PIVOT NOTICE — SUPERSEDED 2026-08-03. Retained as history; do not act on it.**
+> Current rule: AI outputs evidence, tiering and a research posture only. No buy/sell instruction, no target price presented as a recommendation, no win-rate or alpha claim below 30 independent causal clusters. The ¥1,000,000 model fund is virtual and every order carries `no_trade_flag: true`. See `docs/research/UNIFIED_RESEARCH_OS.md` §7 and `docs/strategy/MODEL_PAPER_FUND_POLICY.md`.
+>
+> 原文(已失效,仅存档): The product pivoted to an **internal model-recommendation pilot** (Daily Model Portfolio). As of 2026-06-07, the pilot **may output explicitly-labeled UNVALIDATED model recommendations / target ranges / construction logic** — **not** validated alpha, **not** external advice, and **no auto-trade or sizing without human execution**. The **human still makes the final decision** (executes the trade). This *supplements*, does not delete, the "human makes all investment decisions" philosophy and Analysis Output Standard #3 below. Full reconciliation deferred post-demo. See **`STATUS.md` top block (2026-06-07)** for the full pilot positioning + the recommendation→execution→attribution→improvement loop.
 
-## ⚡ MANDATORY PRE-FLIGHT (before any work)
+## ⚡ PRE-FLIGHT (before any work)
 
-**Read these files in order, every session:**
+**Read in this order:**
 
-1. `STATUS.md` (root) — current state, bridges, recent lessons. **REQUIRED.**
-2. This file (`CLAUDE.md`) — architecture + immutable constraints
-3. `docs/research/THESIS_PROTOCOL.md` — if research-related work (7-step thesis)
-4. `docs/research/INVESTMENT_FRAMEWORK.md` — if research-related work (40+ perspective library)
-5. `docs/team/AGENT_PROTOCOL.md` — if multi-agent coordination
-6. `docs/team/REVIEW_REQUEST.md` — if exists, contains Franky's 反馈待处理
+1. `AGENTS.md` (root) plus the nearest nested one in `experiments/`, `scripts/llm/` or `web/` — the operating contract. **REQUIRED.**
+2. `docs/ARCHITECTURE_MAP.md` — the single progress source: eight blocks, owners, completion, and the current week's real state.
+3. Runtime state, read-only: `experiments/execution_tracker/nightly_run.json` for the last run, `public/data/v2/meta.json` for what is published.
+4. This file — project background and design history.
+5. Research work also needs `docs/research/UNIFIED_RESEARCH_OS.md` (v1.5, the六条机器可执行规则) and `docs/research/WEEKLY_RESEARCH_FACTORY.md` (posture ladder, E1–E4, two human gates).
 
-If you skip STATUS.md you're working from stale mental model. Don't.
+`STATUS.md` is FROZEN as of 2026-07-29 and is archive only. It is no longer a pre-flight requirement; anything it says about current state is stale by design.
 
-After pre-flight, answer one sentence: "today's KR is on which Bridge?
-What systemic gap does it close?" If you can't answer → wrong KR.
+After pre-flight, answer one sentence: which block in ARCHITECTURE_MAP does today's task belong to, and which gate does it move? If neither, it is not the task.
 
 ## What This Project Is
 
@@ -31,6 +31,11 @@ Inspired by UBS Finance Challenge (中际旭创 long + Pop Mart short both valid
 ---
 
 ## Deployment Architecture
+
+**现行(2026-09):** 生产运行时是本机 `~/ar-live`,由 launchd 驱动夜链 v4(周一至周五 20:30)、EOD(14:26)与哨兵(09:14)。
+引擎产物经 `export_contracts.py` 写入 `public/data/v2/` 的只读契约,消费入口有两个:对外的 GitHub Pages 旧 Dashboard,
+以及本机只读工作台(Tailscale 私有地址,仅 owner,team/paid/production 三个开关全部 DENY)。`web/` 新前端尚未开工。
+下面这张部署图是 2026-04 至 06 产品期的历史记录,Vercel API 按架构图标注为停用。
 
 ```
 src/Dashboard.jsx (React 18, Vite 5.4)
@@ -52,6 +57,8 @@ CI/CD: GitHub Actions (runs every weekday 08:30 UTC + 01:00 UTC)
 ---
 
 ## ⚠️ Single Source of Truth: watchlist.json
+
+> **历史段落。** 现行证券域是 U0 永久注册表(`security_registry.json`,约 5,558 个代码),观察名单在 `run_official_sample.py` 内;`watchlist.json` 属旧管道。
 
 **`public/data/watchlist.json` is the ONLY place to add/remove tickers.**
 
@@ -135,6 +142,8 @@ respectively.
 ---
 
 ## Current Watchlist (as of 2026-04-25)
+
+> **历史段落,勿作当前持仓或关注池使用。** 当前模拟盘 0 持仓,深研对象由 U4 闸门逐批选定。
 
 | Ticker | Company | VP Score | wrongIf Status |
 |--------|---------|----------|---------------|
@@ -298,7 +307,7 @@ git push
 
 1. Business model = first-principles (physical mechanism → money flow), not marketing description
 2. Variant view = ONE precise thesis: "Market believes X → We believe Y → Proves right if A → Proves wrong if B"
-3. AI never outputs buy/sell conclusions — only evidence, signals, structured scores *(supplemented 2026-06-07: the internal model-recommendation pilot MAY output explicitly-labeled UNVALIDATED model recommendations / target ranges / construction logic — not validated alpha, not external advice, no auto-trade or sizing without human execution. See PIVOT NOTICE at top.)*
+3. AI never outputs buy/sell conclusions — only evidence, tiering, and a posture on the ladder *(the 2026-06-07 recommendation-pilot supplement was superseded on 2026-08-03; posture-only is the rule again)*
 4. Every section needs evidence quality rating + AI limitations disclosure
 5. **After every feature: explicitly state what's causally validated vs numerically unvalidated**
 6. Never present invented weights as if they were calibrated
@@ -370,8 +379,14 @@ Hit rate: 67% (2/3 decidable predictions correct)
 
 ---
 
-## Collaborator Protocol
+## Collaborator Protocol (2026-09)
 
-- **Claude (this file)**: Primary builder. Reads CLAUDE.md on every session start. Owns all production scripts and Dashboard.jsx.
-- **Codex**: Experimental validation layer. Reads AGENTS.md on entry. Writes only to `experiments/` — never directly modifies production scripts without explicit user approval.
-- **Human (Junyan)**: Makes all investment decisions. Approves any production changes proposed by either AI.
+- **Junyan (human)**: sole decision maker. Owns both human gates: U4 SELECT authorises deep research only, and a separate verbatim, plan-hash-bound approval is required before any paper order. Only he merges PRs.
+- **Claude**: builder and independent reviewer. Owns the nightly chain, production scripts, ops and most R-items; reviews Codex PRs and records verdicts. Works in isolated worktrees, never pushes to main, never `git add .`.
+- **Codex**: work-order implementer, one order per branch per PR, file scope named in the order and a mutation pin per PR. Scope is set by the work order, not limited to `experiments/`; the 2026-09 orders include `api/`, `scripts/` and `experiments/`.
+- **Reed**: AI engineering and the Windows/WSL counterpart. Must not run production apply, must not touch `~/ar-live`, must not run the nightly.
+- **学长 / PM**: part-time PM and investment-logic challenger per `docs/team/PM_OPERATING_SYSTEM.md`. Reviews and challenges; has no real-money approval right. The weekly cadence has been stalled since 2026-W31.
+
+Shared rules: secrets never enter code, commits or chat; degraded data stays visible as DATA_BLOCKED or PARTIAL and is never turned into zero or a stale value presented as current.
+
+不是买卖指令;研究信号,human executes.
