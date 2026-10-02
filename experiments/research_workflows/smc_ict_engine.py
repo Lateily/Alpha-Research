@@ -89,6 +89,9 @@ def compose_templates(concepts: Mapping[str, Any], five_minute_bars: tuple[Bar, 
     now = latest.end.isoformat()
     structure = concepts["structure"]
     smt = concepts.get("smt", {"status": "DATA_BLOCKED"})
+    if any(item["kind"] == "SWEEP_HIGH_RECLAIM" and item["known_at"] == now
+           for item in concepts["liquidity"]["sweeps"]):
+        return {name: _empty("WAIT", "OPPOSING_SWEEP_CONFLICT") for name in TEMPLATES}
     if smt.get("status") == "CONFLICT" or (
         smt.get("status") == "OK" and smt.get("kind") == "BEARISH_SMT"
     ):
@@ -96,7 +99,6 @@ def compose_templates(concepts: Mapping[str, Any], five_minute_bars: tuple[Bar, 
     if any(structure.get(frame, {}).get("trend") == "BEARISH" for frame in ("15m", "60m", "1d")):
         return {name: _empty("WAIT", "HIGHER_TIMEFRAME_CONFLICT") for name in TEMPLATES}
     atr = atr_at(five_minute_bars, len(five_minute_bars) - 1, int(RULE_PARAMS["atr_period"]))
-    target = _objective(structure, latest.high + TICK, now)
     sweeps = [item for item in concepts["liquidity"]["sweeps"]
               if item["kind"] == "SWEEP_LOW_RECLAIM" and item["known_at"] == now]
     if sweeps:
@@ -110,7 +112,8 @@ def compose_templates(concepts: Mapping[str, Any], five_minute_bars: tuple[Bar, 
             ]))
             result["SWEEP_RECLAIM"] = _propose(
                 order_type="STOP_TRIGGER", entry=latest.high + TICK,
-                extreme=Decimal(sweep["extreme"]), objective=target, atr=atr,
+                extreme=Decimal(sweep["extreme"]),
+                objective=_objective(structure, latest.high + TICK, now), atr=atr,
                 source_bar_ids=source_ids,
                 known_at=now,
             )
@@ -137,9 +140,10 @@ def compose_templates(concepts: Mapping[str, Any], five_minute_bars: tuple[Bar, 
             result[name] = _empty("WAIT", "STRUCTURE_CONFIRMATION_MISSING")
             continue
         source_ids = [prior_events[-1]["bar_id"], zone["bar_id"], latest.source_ids[-1]]
+        entry = _tick(Decimal(zone["upper"]), ROUND_FLOOR)
         result[name] = _propose(
-            order_type="LIMIT_RETEST", entry=Decimal(zone["upper"]),
-            extreme=Decimal(zone["lower"]), objective=target, atr=atr,
+            order_type="LIMIT_RETEST", entry=entry,
+            extreme=Decimal(zone["lower"]), objective=_objective(structure, entry, now), atr=atr,
             source_bar_ids=source_ids, known_at=now,
         )
     return result

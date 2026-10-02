@@ -294,7 +294,7 @@ def find_smt(bars: tuple[Bar, ...], benchmark: tuple[Bar, ...] | None,
     left, right = aggregate_minutes(bars, 15), aggregate_minutes(benchmark, 15)
     if not left or not right:
         return {"status": "DATA_BLOCKED", "reason": "BENCHMARK_CONTEXT_MISSING"}
-    latest_day = left[-1].end.date()
+    latest_day = bars[-1].end.date()
     left = tuple(item for item in left if item.end.date() == latest_day)
     right = tuple(item for item in right if item.end.date() == latest_day)
     lookback = int(params["smt_lookback_bars"])

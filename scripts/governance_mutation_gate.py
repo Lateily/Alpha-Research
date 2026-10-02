@@ -15135,6 +15135,33 @@ MUTATIONS = MUTATIONS + (
         expected_failure_marker="test_intermediate_sweep_extreme_is_bound_to_proposal_sources",
         rationale="A proposal must identify the bar that established its structural stop.",
     ),
+    MutationCase(
+        mutation_id="SMC_ICT_OPPOSING_SWEEP_VETO", component="Independent SMC ICT engine",
+        source_path="experiments/research_workflows/smc_ict_engine.py",
+        test_script="tests/test_smc_ict_engine.py",
+        before='if any(item["kind"] == "SWEEP_HIGH_RECLAIM" and item["known_at"] == now',
+        after='if False and any(item["kind"] == "SWEEP_HIGH_RECLAIM" and item["known_at"] == now',
+        expected_failure_marker="test_opposing_current_sweeps_block_the_receipt_proposal",
+        rationale="A current bearish sweep cannot be silently discarded when proposing a long setup.",
+    ),
+    MutationCase(
+        mutation_id="SMC_ICT_SMT_CURRENT_SESSION", component="Independent SMC ICT engine",
+        source_path="experiments/research_workflows/smc_ict_concepts.py",
+        test_script="tests/test_smc_ict_engine.py",
+        before='latest_day = bars[-1].end.date()',
+        after='latest_day = left[-1].end.date()',
+        expected_failure_marker="test_intraday_smt_does_not_reuse_yesterdays_benchmark_signal",
+        rationale="Yesterday's last 15-minute bar cannot veto a new morning's proposal.",
+    ),
+    MutationCase(
+        mutation_id="SMC_ICT_LIMIT_OBJECTIVE_ENTRY", component="Independent SMC ICT engine",
+        source_path="experiments/research_workflows/smc_ict_engine.py",
+        test_script="tests/test_smc_ict_engine.py",
+        before='objective=_objective(structure, entry, now), atr=atr,',
+        after='objective=_objective(structure, latest.high + TICK, now), atr=atr,',
+        expected_failure_marker="test_limit_retest_uses_its_own_entry_to_find_nearest_objective",
+        rationale="A limit retest must search objectives above its own entry, not the sweep trigger.",
+    ),
 )
 
 @dataclass(frozen=True)

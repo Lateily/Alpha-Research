@@ -84,8 +84,11 @@ Definitions that matter for replay:
 - SMT compares a bound benchmark on the same day's closed 15-minute bars.
   A bar breaking both high and low against a non-confirming benchmark is
   `CONFLICT`, not arbitrarily bullish or bearish.
+  An intraday receipt cannot reuse yesterday's completed SMT bar before the
+  current session has enough closed 15-minute benchmark bars.
   Missing benchmark evidence remains visible but is optional for a long
   template; a confirmed bearish or contradictory SMT observation vetoes one.
+  A current opposing high sweep likewise makes all long templates `WAIT`.
 
 ## Strategy Proposal Templates
 
@@ -98,6 +101,8 @@ exists, after-cost reward/risk is below 2, an input is blocked, or long and
 short evidence conflicts, output `WAIT`, `NO_SETUP`, or `DATA_BLOCKED`, never
 invent a percentage target. FVG/OB retest is a *limit-retest* proposal; the
 current paper fill engine does not gain that execution mode through this PR.
+Each template finds its nearest confirmed opposing high from its own rounded
+entry reference; a stop-trigger entry cannot choose a limit-retest objective.
 The break confirming a retest must be tied by source bar ID to the FVG's
 displacement/third bar or the OB's recorded break bar; an older unrelated
 same-direction event is insufficient. V1 proposes **long-only A-share**

@@ -267,6 +267,37 @@ def five_minute_bars(lows, highs=None, closes=None, opens=None):
 
 
 class AtomicConceptTests(unittest.TestCase):
+    def test_opposing_current_sweeps_block_the_receipt_proposal(self):
+        payload = frozen_sweep_payload()
+        payload["daily_bars"][3]["high"] = 30
+        payload["minute_bars"][270]["high"] = 12.02
+        reseal(payload)
+        receipt = evaluate(payload)
+        current = [item["kind"] for item in receipt["concepts"]["liquidity"]["sweeps"]
+                   if item["known_at"] == payload["as_of"]]
+        self.assertIn("SWEEP_LOW_RECLAIM", current)
+        self.assertIn("SWEEP_HIGH_RECLAIM", current)
+        self.assertEqual(receipt["templates"]["SWEEP_RECLAIM"]["status"], "WAIT")
+        self.assertEqual(receipt["templates"]["SWEEP_RECLAIM"]["reason"],
+                         "OPPOSING_SWEEP_CONFLICT")
+
+    def test_intraday_smt_does_not_reuse_yesterdays_benchmark_signal(self):
+        payload = frozen_payload()
+        payload["minute_bars"] = payload["minute_bars"][:245]
+        payload["daily_bars"].pop()
+        payload["as_of"] = payload["minute_bars"][-1]["end"]
+        payload["benchmark_ticker"] = "000001.SZ"
+        payload["benchmark_minute_bars"] = [dict(row, ts_code="000001.SZ")
+                                             for row in payload["minute_bars"]]
+        for row in payload["minute_bars"][225:240]:
+            row["high"] = 11
+        payload["daily_bars"][-1]["high"] = 11
+        reseal(payload)
+        receipt = evaluate(payload)
+        self.assertEqual(receipt["concepts"]["smt"]["status"], "DATA_BLOCKED")
+        self.assertEqual(receipt["concepts"]["smt"]["reason"],
+                         "BENCHMARK_CONTEXT_MISSING")
+
     def test_pivot_is_unknown_until_right_hand_bars_have_closed(self):
         bars = five_minute_bars([10, 9, 8, 9, 10])
         self.assertEqual(confirmed_pivots(bars[:4], 2, 2)["LOW"], [])
@@ -508,6 +539,26 @@ def proposal_context():
 
 
 class StrategyReceiptTests(unittest.TestCase):
+    def test_limit_retest_uses_its_own_entry_to_find_nearest_objective(self):
+        bars, concepts = proposal_context()
+        last = bars[-1]
+        bars = bars[:-1] + (Bar(last.end, last.open, Decimal("12"), last.low,
+                               last.close, last.volume, last.source_ids),)
+        now = bars[-1].end.isoformat()
+        concepts["structure"]["5m"]["last_confirmed_high"]["price"] = "11.50"
+        concepts["structure"]["5m"]["events"] = [
+            {"kind": "BOS_UP", "bar_id": "bar-17", "known_at": bars[-3].end.isoformat()},
+        ]
+        concepts["fvg"] = [{
+            "kind": "BULLISH_FVG", "bar_id": "bar-18", "known_at": bars[-2].end.isoformat(),
+            "lower": "9.80", "upper": "10.00", "source_bar_ids": ["bar-16", "bar-17", "bar-18"],
+            "mitigated_at": now, "invalidated_at": None,
+        }]
+        result = compose_templates(concepts, bars)["BOS_FVG_RETEST"]
+        self.assertEqual(result["status"], "SETUP")
+        self.assertEqual(result["proposal"]["target_reference"], "11.50")
+        self.assertEqual(result["proposal"]["target_source_bar_id"], "known-high")
+
     def test_cli_replays_frozen_input_without_writing_an_artifact(self):
         payload = frozen_sweep_payload()
         with tempfile.TemporaryDirectory() as directory:
