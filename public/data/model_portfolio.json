@@ -8,7 +8,7 @@
     "no_position_mutation": true,
     "run_date": "2026-10-05",
     "pilot_start_date": "2026-06-08",
-    "generated_at": "2026-10-05T06:50:37.312851+00:00",
+    "generated_at": "2026-10-05T17:23:11.334954+00:00",
     "fresh_pilot": true,
     "legacy_paper_positions_inherited": false,
     "sources": [
@@ -64,7 +64,7 @@
         "quant_confluence": {
           "action": "NEUTRAL",
           "score": 0,
-          "rationale": "RSI 40 | Price vs MA20 -2.1% | Regime: PERMISSIVE | VP 48"
+          "rationale": "RSI 41 | Price vs MA20 -2.1% | Regime: PERMISSIVE | VP 48"
         }
       },
       "validation_status": "PENDING",
@@ -265,8 +265,8 @@
             "total": 1
           },
           "key_indicators": {
-            "rsi14": 40.4,
-            "macd_hist": -0.1429,
+            "rsi14": 40.6,
+            "macd_hist": -0.1302,
             "price_vs_ma20": -2.08,
             "price_vs_ma60": -6.56,
             "change_5d": -3.78,
@@ -277,7 +277,7 @@
               "type": "RSI_RECOVERING",
               "strength": "moderate",
               "bullish": true,
-              "desc": "RSI recovering 34.7→40.4 — momentum rebuilding"
+              "desc": "RSI recovering 34.9→40.6 — momentum rebuilding"
             }
           ]
         },
@@ -349,8 +349,8 @@
             "total": 0
           },
           "key_indicators": {
-            "rsi14": 40.9,
-            "macd_hist": 0.1434,
+            "rsi14": 40.8,
+            "macd_hist": 0.1088,
             "price_vs_ma20": -2.1,
             "price_vs_ma60": -7.64,
             "change_5d": -5.09,
@@ -384,8 +384,8 @@
             "total": 1
           },
           "key_indicators": {
-            "rsi14": 38.4,
-            "macd_hist": -12.6391,
+            "rsi14": 38.3,
+            "macd_hist": -12.4824,
             "price_vs_ma20": -7.95,
             "price_vs_ma60": -14.27,
             "change_5d": -12.86,
@@ -426,8 +426,8 @@
             "total": 2
           },
           "key_indicators": {
-            "rsi14": 52.2,
-            "macd_hist": -0.0324,
+            "rsi14": 52.1,
+            "macd_hist": -0.0304,
             "price_vs_ma20": 0.41,
             "price_vs_ma60": -0.41,
             "change_5d": 2.54,
@@ -528,8 +528,8 @@
             "total": 1
           },
           "key_indicators": {
-            "rsi14": 35.3,
-            "macd_hist": -3.7835,
+            "rsi14": 35.2,
+            "macd_hist": -3.7815,
             "price_vs_ma20": -8.06,
             "price_vs_ma60": -13.16,
             "change_5d": -10.79,

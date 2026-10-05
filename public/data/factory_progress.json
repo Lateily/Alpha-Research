@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "generated_at": "2026-10-05T06:50:38.256341+00:00",
+    "generated_at": "2026-10-05T17:23:12.208534+00:00",
     "layer": "Factory Progress aggregator (read-only over committed artifacts)",
     "disclaimer": "internal progress dashboard — UNVALIDATED research pipeline state; nothing here is a recommendation, a buy list, or validated alpha"
   },
@@ -442,7 +442,7 @@
           "signals": {
             "zone": "BEARISH",
             "generated_at": "2026-10-05",
-            "rsi14": 40.4,
+            "rsi14": 40.6,
             "ma20": 85.08,
             "ma60": 89.16,
             "signals": [
@@ -638,7 +638,7 @@
           "signals": {
             "zone": "BEARISH",
             "generated_at": "2026-10-05",
-            "rsi14": 35.3,
+            "rsi14": 35.2,
             "ma20": 247.37,
             "ma60": 261.88,
             "signals": [
@@ -834,7 +834,7 @@
           "signals": {
             "zone": "BEARISH",
             "generated_at": "2026-10-05",
-            "rsi14": 40.9,
+            "rsi14": 40.8,
             "ma20": 68.9,
             "ma60": 73.03,
             "signals": [],
