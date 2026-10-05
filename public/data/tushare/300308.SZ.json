@@ -1,6 +1,6 @@
 {
   "ticker": "300308.SZ",
-  "fetched_at": "2026-10-02T14:52:10Z",
+  "fetched_at": "2026-10-05T06:44:49Z",
   "permission_model": "runtime_probe",
   "_status": "partial",
   "data": {
@@ -798,22 +798,9 @@
           "pct_chg": 2.0911,
           "vol": 292864.43,
           "amount": 32709219.1951
-        },
-        {
-          "ts_code": "300308.SZ",
-          "trade_date": "20260706",
-          "open": 1136.54,
-          "high": 1141.0,
-          "low": 1060.34,
-          "close": 1098.92,
-          "pre_close": 1116.0,
-          "change": -17.08,
-          "pct_chg": -1.5305,
-          "vol": 315566.1,
-          "amount": 34704124.5513
         }
       ],
-      "row_count": 62,
+      "row_count": 61,
       "_status": "ok",
       "as_of": "20260930"
     },
@@ -2038,29 +2025,9 @@
           "free_share": 84012.6316,
           "total_mv": 125118180.993,
           "circ_mv": 124524146.162
-        },
-        {
-          "ts_code": "300308.SZ",
-          "trade_date": "20260706",
-          "close": 1098.92,
-          "turnover_rate": 2.8431,
-          "turnover_rate_f": 3.7562,
-          "volume_ratio": 1.02,
-          "pe": 113.5061,
-          "pe_ttm": 81.983,
-          "pb": 34.4382,
-          "ps": 32.0491,
-          "ps_ttm": 24.0012,
-          "dv_ratio": 0.0816,
-          "dv_ttm": 0.1271,
-          "total_share": 111523.4641,
-          "float_share": 110993.9778,
-          "free_share": 84012.6316,
-          "total_mv": 122555371.6524,
-          "circ_mv": 121973504.5016
         }
       ],
-      "row_count": 62,
+      "row_count": 61,
       "_status": "ok",
       "as_of": "20260930"
     },
@@ -2370,14 +2337,9 @@
           "ts_code": "300308.SZ",
           "trade_date": "20260707",
           "adj_factor": 6.6039
-        },
-        {
-          "ts_code": "300308.SZ",
-          "trade_date": "20260706",
-          "adj_factor": 6.6039
         }
       ],
-      "row_count": 62,
+      "row_count": 61,
       "_status": "ok",
       "as_of": "20260930"
     },
