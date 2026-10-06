@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-06T07:31:04.254740+00:00",
+  "generated_at": "2026-10-06T15:28:35.595533+00:00",
   "date": "2026-10-06",
   "model_state": "NORMAL_OBSERVATION_MODE",
   "brief_e": "1 Risk Review",
@@ -179,18 +179,6 @@
   ],
   "wrongif_alerts": [
     {
-      "ticker": "300308.SZ",
-      "severity": "NONE",
-      "status": "CLEAR",
-      "wrongIf_e": "1.6T mass production delayed beyond Q3 2026 OR NVDA+MSFT+GOOGL stock prices collectively drop >25% from ATH within 1 quarter (hyperscaler CapEx pullback proxy)",
-      "wrongIf_z": "1.6T量产推迟至2026年Q3后，或英伟达/微软/谷歌股价集体较ATH下跌>25%（超大规模CapEx削减代理指标）",
-      "note_e": "✅ Clear: hyperscaler_basket_drawdown_pct = 2.7 (threshold 25.0)",
-      "note_z": "✅ 正常：hyperscaler_basket_drawdown_pct = 2.7（阈值25.0）",
-      "indicator": "hyperscaler_basket_drawdown_pct",
-      "actual": 2.7,
-      "threshold": 25.0
-    },
-    {
       "ticker": "002594.SZ",
       "severity": "LOW",
       "status": "MANUAL",
@@ -201,6 +189,18 @@
       "indicator": "revenue_growth",
       "actual": null,
       "threshold": null
+    },
+    {
+      "ticker": "300308.SZ",
+      "severity": "NONE",
+      "status": "CLEAR",
+      "wrongIf_e": "1.6T mass production delayed beyond Q3 2026 OR NVDA+MSFT+GOOGL stock prices collectively drop >25% from ATH within 1 quarter (hyperscaler CapEx pullback proxy)",
+      "wrongIf_z": "1.6T量产推迟至2026年Q3后，或英伟达/微软/谷歌股价集体较ATH下跌>25%（超大规模CapEx削减代理指标）",
+      "note_e": "✅ Clear: hyperscaler_basket_drawdown_pct = 2.6 (threshold 25.0)",
+      "note_z": "✅ 正常：hyperscaler_basket_drawdown_pct = 2.6（阈值25.0）",
+      "indicator": "hyperscaler_basket_drawdown_pct",
+      "actual": 2.6,
+      "threshold": 25.0
     },
     {
       "ticker": "175.HK",
