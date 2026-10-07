@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-07T07:09:10.141158+00:00",
+  "generated_at": "2026-10-07T15:46:42.407689+00:00",
   "model_state": "NORMAL_OBSERVATION_MODE",
   "tickers_scored": 9,
   "summary": {
@@ -13,7 +13,7 @@
       "score": 0,
       "action": "NEUTRAL",
       "action_zh": "信号中性，等待",
-      "zone": "BEARISH",
+      "zone": "NEUTRAL",
       "regime": "PERMISSIVE",
       "model_state": "NORMAL_OBSERVATION_MODE",
       "vp_score": 48.0,
@@ -44,12 +44,12 @@
           "contribution": 0.0
         }
       ],
-      "rationale_e": "RSI 40 | Price vs MA20 -2.1% | Regime: PERMISSIVE | VP 48",
-      "rationale_z": "RSI 40 | 距MA20 -2.1% | 政策顺风 | VP 48",
+      "rationale_e": "RSI 41 | Price vs MA20 -2.1% | Regime: PERMISSIVE | VP 48",
+      "rationale_z": "RSI 41 | 距MA20 -2.1% | 政策顺风 | VP 48",
       "signal_types": [
         "RSI_RECOVERING"
       ],
-      "computed_at": "2026-10-07T07:09:10.140319+00:00"
+      "computed_at": "2026-10-07T15:46:42.407238+00:00"
     },
     {
       "ticker": "175.HK",
@@ -92,14 +92,14 @@
       "signal_types": [
         "KDJ_OVERSOLD"
       ],
-      "computed_at": "2026-10-07T07:09:10.140450+00:00"
+      "computed_at": "2026-10-07T15:46:42.407307+00:00"
     },
     {
       "ticker": "300054.SZ",
       "score": 0,
       "action": "NEUTRAL",
       "action_zh": "信号中性，等待",
-      "zone": "BEARISH",
+      "zone": "NEUTRAL",
       "regime": "NEUTRAL",
       "model_state": "NORMAL_OBSERVATION_MODE",
       "vp_score": 47.0,
@@ -112,17 +112,17 @@
       },
       "contributing": [],
       "contributing_signals": [],
-      "rationale_e": "RSI 41 | Price vs MA20 -2.1% | VP 47",
-      "rationale_z": "RSI 41 | 距MA20 -2.1% | VP 47",
+      "rationale_e": "RSI 40 | Price vs MA20 -2.1% | VP 47",
+      "rationale_z": "RSI 40 | 距MA20 -2.1% | VP 47",
       "signal_types": [],
-      "computed_at": "2026-10-07T07:09:10.140547+00:00"
+      "computed_at": "2026-10-07T15:46:42.407357+00:00"
     },
     {
       "ticker": "300308.SZ",
       "score": 0,
       "action": "NEUTRAL",
       "action_zh": "信号中性，等待",
-      "zone": "BEARISH",
+      "zone": "NEUTRAL",
       "regime": "PERMISSIVE",
       "model_state": "NORMAL_OBSERVATION_MODE",
       "vp_score": 48.0,
@@ -158,7 +158,7 @@
       "signal_types": [
         "KDJ_OVERSOLD"
       ],
-      "computed_at": "2026-10-07T07:09:10.140653+00:00"
+      "computed_at": "2026-10-07T15:46:42.407429+00:00"
     },
     {
       "ticker": "603233.SH",
@@ -218,7 +218,7 @@
         "MA20_BOUNCE",
         "KDJ_GOLDEN_CROSS"
       ],
-      "computed_at": "2026-10-07T07:09:10.140778+00:00"
+      "computed_at": "2026-10-07T15:46:42.407501+00:00"
     },
     {
       "ticker": "6160.HK",
@@ -295,14 +295,14 @@
         "MA60_BOUNCE",
         "MACD_GOLDEN_CROSS"
       ],
-      "computed_at": "2026-10-07T07:09:10.140892+00:00"
+      "computed_at": "2026-10-07T15:46:42.407560+00:00"
     },
     {
       "ticker": "688120.SH",
       "score": 0,
       "action": "NEUTRAL",
       "action_zh": "信号中性，等待",
-      "zone": "BEARISH",
+      "zone": "NEUTRAL",
       "regime": "NEUTRAL",
       "model_state": "NORMAL_OBSERVATION_MODE",
       "vp_score": 45.0,
@@ -333,12 +333,12 @@
           "contribution": 0.0
         }
       ],
-      "rationale_e": "RSI 35 | Price vs MA20 -8.1% | VP 45",
-      "rationale_z": "RSI 35 | 距MA20 -8.1% | VP 45",
+      "rationale_e": "RSI 33 | Price vs MA20 -8.1% | VP 45",
+      "rationale_z": "RSI 33 | 距MA20 -8.1% | VP 45",
       "signal_types": [
         "KDJ_OVERSOLD"
       ],
-      "computed_at": "2026-10-07T07:09:10.140985+00:00"
+      "computed_at": "2026-10-07T15:46:42.407604+00:00"
     },
     {
       "ticker": "700.HK",
@@ -361,7 +361,7 @@
       "rationale_e": "RSI 41 | Price vs MA20 -3.5%",
       "rationale_z": "RSI 41 | 距MA20 -3.5%",
       "signal_types": [],
-      "computed_at": "2026-10-07T07:09:10.141071+00:00"
+      "computed_at": "2026-10-07T15:46:42.407648+00:00"
     },
     {
       "ticker": "9999.HK",
@@ -384,7 +384,7 @@
       "rationale_e": "RSI 56 | Price vs MA20 +2.8%",
       "rationale_z": "RSI 56 | 距MA20 +2.8%",
       "signal_types": [],
-      "computed_at": "2026-10-07T07:09:10.141146+00:00"
+      "computed_at": "2026-10-07T15:46:42.407684+00:00"
     }
   ]
 }

@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "generated_at": "2026-10-07T07:09:11.232815+00:00",
+    "generated_at": "2026-10-07T15:46:43.237480+00:00",
     "layer": "Factory Progress aggregator (read-only over committed artifacts)",
     "disclaimer": "internal progress dashboard — UNVALIDATED research pipeline state; nothing here is a recommendation, a buy list, or validated alpha"
   },
@@ -440,11 +440,11 @@
           "alpha_score": 54.5,
           "source": "universe_a",
           "signals": {
-            "zone": "BEARISH",
+            "zone": "NEUTRAL",
             "generated_at": "2026-10-07",
-            "rsi14": 40.5,
+            "rsi14": 40.7,
             "ma20": 85.08,
-            "ma60": 89.16,
+            "ma60": null,
             "signals": [
               "RSI_RECOVERING"
             ],
@@ -636,11 +636,11 @@
           "alpha_score": 51.1,
           "source": "universe_a",
           "signals": {
-            "zone": "BEARISH",
+            "zone": "NEUTRAL",
             "generated_at": "2026-10-07",
-            "rsi14": 34.8,
+            "rsi14": 33.4,
             "ma20": 247.37,
-            "ma60": 261.88,
+            "ma60": null,
             "signals": [
               "KDJ_OVERSOLD"
             ],
@@ -832,11 +832,11 @@
           "alpha_score": 54.5,
           "source": "universe_a",
           "signals": {
-            "zone": "BEARISH",
+            "zone": "NEUTRAL",
             "generated_at": "2026-10-07",
-            "rsi14": 40.9,
+            "rsi14": 40.0,
             "ma20": 68.9,
-            "ma60": 73.03,
+            "ma60": null,
             "signals": [],
             "source": "signals_file"
           }
