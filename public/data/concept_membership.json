@@ -1,5 +1,5 @@
 {
-  "fetched_at": "2026-10-06T15:24:09Z",
+  "fetched_at": "2026-10-07T07:05:55Z",
   "_status": "ok",
   "api_used": "ths_index+ths_member",
   "scope": "watchlist_only",
@@ -667,6 +667,17 @@
       ]
     },
     {
+      "ts_code": "700051.TI",
+      "name": "同花顺金仓30",
+      "type": "TH",
+      "total_count": 30.0,
+      "member_count": 2,
+      "members": [
+        "300308.SZ",
+        "688120.SH"
+      ]
+    },
+    {
       "ts_code": "700052.TI",
       "name": "同花顺金仓50",
       "type": "TH",
@@ -1055,16 +1066,6 @@
       "member_count": 1,
       "members": [
         "603233.SH"
-      ]
-    },
-    {
-      "ts_code": "700051.TI",
-      "name": "同花顺金仓30",
-      "type": "TH",
-      "total_count": 30.0,
-      "member_count": 1,
-      "members": [
-        "300308.SZ"
       ]
     },
     {
@@ -2655,6 +2656,7 @@
       "700001.TI"
     ],
     "688120.SH": [
+      "700051.TI",
       "883920.TI",
       "883433.TI",
       "883432.TI",
@@ -2818,6 +2820,6 @@
     ]
   },
   "total_concepts": 225,
-  "total_memberships": 387,
+  "total_memberships": 388,
   "disclaimer": "不是买卖指令;研究信号,human executes."
 }

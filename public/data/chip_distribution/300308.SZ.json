@@ -1,11 +1,11 @@
 {
   "ticker": "300308.SZ",
-  "fetched_at": "2026-10-06T15:23:07Z",
-  "trade_date": "20261006",
+  "fetched_at": "2026-10-07T07:05:06Z",
+  "trade_date": "20261007",
   "_status": "STALE",
   "api_used": "cyq_chips",
   "as_of": "20260930",
-  "fallback_days": 6,
+  "fallback_days": 7,
   "chips": [
     {
       "price": 7.4,
@@ -772,5 +772,5 @@
       "percent": 0.03
     }
   ],
-  "_note": "requested trade_date=20261006 was empty (cyq_chips is T+1); fell back to most recent non-empty day 20260930"
+  "_note": "requested trade_date=20261007 was empty (cyq_chips is T+1); fell back to most recent non-empty day 20260930"
 }
