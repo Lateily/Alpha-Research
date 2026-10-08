@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-07T15:45:49Z",
+  "generated_at": "2026-10-08T07:18:07Z",
   "mode": "review_context_only",
   "_contract": "v1 第一版:不预测方向、不改仓位 — 仅作复盘/研究的宏观上下文原料。任何用本文件自动调仓的行为都超出契约。",
   "_status": "OK",
@@ -14,7 +14,7 @@
       "previous": 5.0,
       "as_of": "2026Q2",
       "previous_as_of": "2026Q1",
-      "freshness_days": 128
+      "freshness_days": 129
     },
     {
       "endpoint": "cn_cpi",
@@ -26,7 +26,7 @@
       "previous": 0.5,
       "as_of": "202608",
       "previous_as_of": "202607",
-      "freshness_days": 67
+      "freshness_days": 68
     },
     {
       "endpoint": "cn_ppi",
@@ -38,7 +38,7 @@
       "previous": 3.5,
       "as_of": "202608",
       "previous_as_of": "202607",
-      "freshness_days": 67
+      "freshness_days": 68
     },
     {
       "endpoint": "cn_pmi",
@@ -50,7 +50,7 @@
       "previous": 49.8,
       "as_of": "202609",
       "previous_as_of": "202608",
-      "freshness_days": 36,
+      "freshness_days": 37,
       "detail": {
         "制造业PMI": 50.1,
         "非制造业PMI": 50.2,
@@ -63,14 +63,14 @@
       "headline": "1w",
       "unit": "pct_annual",
       "_status": "OK",
-      "actual": 1.371,
-      "previous": 1.383,
-      "as_of": "20260930",
-      "previous_as_of": "20260929",
-      "freshness_days": 7,
+      "actual": 1.39,
+      "previous": 1.371,
+      "as_of": "20261008",
+      "previous_as_of": "20260930",
+      "freshness_days": 0,
       "detail": {
-        "on": 1.362,
-        "1w": 1.371,
+        "on": 1.3756,
+        "1w": 1.39,
         "3m": 1.43,
         "1y": 1.48
       }
@@ -81,14 +81,14 @@
       "headline": "2s10s",
       "unit": "pct_points",
       "_status": "OK",
-      "actual": 0.48,
-      "previous": 0.47,
-      "as_of": "20261006",
-      "previous_as_of": "20261005",
+      "actual": 0.51,
+      "previous": 0.48,
+      "as_of": "20261007",
+      "previous_as_of": "20261006",
       "freshness_days": 1,
       "detail": {
-        "y2": 4.79,
-        "y10": 5.27
+        "y2": 4.77,
+        "y10": 5.28
       }
     }
   ],
