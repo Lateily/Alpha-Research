@@ -1,5 +1,5 @@
 {
-  "fetched_at": "2026-10-08T07:15:11Z",
+  "fetched_at": "2026-10-08T15:48:30Z",
   "_status": "ok",
   "api_used": "ths_index+ths_member",
   "scope": "watchlist_only",
@@ -7,9 +7,9 @@
   "concepts": [
     {
       "ts_code": "700001.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "同花顺全A(加权)",
+      "type": "BB",
+      "total_count": 5524.0,
       "member_count": 5,
       "members": [
         "002594.SZ",
@@ -21,9 +21,9 @@
     },
     {
       "ts_code": "700002.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "同花顺全A(除金融、石油石化)",
+      "type": "BB",
+      "total_count": 5399.0,
       "member_count": 5,
       "members": [
         "002594.SZ",
@@ -35,9 +35,9 @@
     },
     {
       "ts_code": "700008.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "同花顺沪深全A",
+      "type": "BB",
+      "total_count": 5199.0,
       "member_count": 5,
       "members": [
         "002594.SZ",
@@ -49,9 +49,9 @@
     },
     {
       "ts_code": "700009.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "同花顺沪深全A(除金融、石油石化)",
+      "type": "BB",
+      "total_count": 5074.0,
       "member_count": 5,
       "members": [
         "002594.SZ",
@@ -63,9 +63,9 @@
     },
     {
       "ts_code": "700023.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "同花顺陆股通",
+      "type": "BB",
+      "total_count": 3515.0,
       "member_count": 5,
       "members": [
         "002594.SZ",
@@ -77,9 +77,9 @@
     },
     {
       "ts_code": "700031.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "同花顺大盘",
+      "type": "ST",
+      "total_count": 2629.0,
       "member_count": 5,
       "members": [
         "002594.SZ",
@@ -91,9 +91,9 @@
     },
     {
       "ts_code": "700036.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "同花顺高盈利",
+      "type": "ST",
+      "total_count": 1578.0,
       "member_count": 5,
       "members": [
         "002594.SZ",
@@ -105,9 +105,9 @@
     },
     {
       "ts_code": "700081.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "同花顺全A(沪深等权)",
+      "type": "BB",
+      "total_count": 5199.0,
       "member_count": 5,
       "members": [
         "002594.SZ",
@@ -119,9 +119,9 @@
     },
     {
       "ts_code": "700082.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "同花顺全A(沪深京等权)",
+      "type": "BB",
+      "total_count": 5524.0,
       "member_count": 5,
       "members": [
         "002594.SZ",
@@ -133,9 +133,9 @@
     },
     {
       "ts_code": "700101.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "同花顺全A市场",
+      "type": "BB",
+      "total_count": 5254.0,
       "member_count": 5,
       "members": [
         "002594.SZ",
@@ -147,9 +147,9 @@
     },
     {
       "ts_code": "883421.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "同花顺全A(沪深)",
+      "type": "S",
+      "total_count": 5201.0,
       "member_count": 5,
       "members": [
         "002594.SZ",
@@ -161,9 +161,9 @@
     },
     {
       "ts_code": "883957.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "同花顺全A(沪深京)",
+      "type": "S",
+      "total_count": 5529.0,
       "member_count": 5,
       "members": [
         "002594.SZ",
@@ -175,9 +175,9 @@
     },
     {
       "ts_code": "885338.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "融资融券",
+      "type": "N",
+      "total_count": 3844.0,
       "member_count": 5,
       "members": [
         "002594.SZ",
@@ -189,9 +189,9 @@
     },
     {
       "ts_code": "700003.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "同花顺全A(除科创板)",
+      "type": "BB",
+      "total_count": 4914.0,
       "member_count": 4,
       "members": [
         "002594.SZ",
@@ -202,9 +202,9 @@
     },
     {
       "ts_code": "700010.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "同花顺沪深全A(除科创板)",
+      "type": "BB",
+      "total_count": 4589.0,
       "member_count": 4,
       "members": [
         "002594.SZ",
@@ -215,9 +215,9 @@
     },
     {
       "ts_code": "700035.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "同花顺激进投资",
+      "type": "ST",
+      "total_count": 1559.0,
       "member_count": 4,
       "members": [
         "002594.SZ",
@@ -228,9 +228,9 @@
     },
     {
       "ts_code": "700043.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "同花顺均衡动量",
+      "type": "ST",
+      "total_count": 2101.0,
       "member_count": 4,
       "members": [
         "002594.SZ",
@@ -241,9 +241,9 @@
     },
     {
       "ts_code": "700102.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "同花顺A股大盘",
+      "type": "BB",
+      "total_count": 525.0,
       "member_count": 4,
       "members": [
         "002594.SZ",
@@ -254,9 +254,9 @@
     },
     {
       "ts_code": "700632.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "制造业指数",
+      "type": "I",
+      "total_count": 3803.0,
       "member_count": 4,
       "members": [
         "002594.SZ",
@@ -267,9 +267,9 @@
     },
     {
       "ts_code": "700752.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "制造业指数",
+      "type": "I",
+      "total_count": 3826.0,
       "member_count": 4,
       "members": [
         "002594.SZ",
@@ -280,9 +280,9 @@
     },
     {
       "ts_code": "883416.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "百日新高",
+      "type": "S",
+      "total_count": 33.0,
       "member_count": 4,
       "members": [
         "300054.SZ",
@@ -293,9 +293,9 @@
     },
     {
       "ts_code": "883926.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "高贝塔值",
+      "type": "S",
+      "total_count": 100.0,
       "member_count": 4,
       "members": [
         "300054.SZ",
@@ -306,9 +306,9 @@
     },
     {
       "ts_code": "885756.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "芯片概念",
+      "type": "N",
+      "total_count": 910.0,
       "member_count": 4,
       "members": [
         "002594.SZ",
@@ -319,9 +319,9 @@
     },
     {
       "ts_code": "700022.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "同花顺深股通",
+      "type": "BB",
+      "total_count": 1875.0,
       "member_count": 3,
       "members": [
         "002594.SZ",
@@ -331,9 +331,9 @@
     },
     {
       "ts_code": "700025.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "同花顺A500",
+      "type": "BB",
+      "total_count": 500.0,
       "member_count": 3,
       "members": [
         "300054.SZ",
@@ -343,9 +343,9 @@
     },
     {
       "ts_code": "700025R.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "同花顺A500全收益",
+      "type": "BB",
+      "total_count": 500.0,
       "member_count": 3,
       "members": [
         "300054.SZ",
@@ -355,9 +355,9 @@
     },
     {
       "ts_code": "700033.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "同花顺高估值",
+      "type": "ST",
+      "total_count": 1570.0,
       "member_count": 3,
       "members": [
         "300054.SZ",
@@ -367,9 +367,9 @@
     },
     {
       "ts_code": "700038.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "同花顺高动量",
+      "type": "ST",
+      "total_count": 1574.0,
       "member_count": 3,
       "members": [
         "300054.SZ",
@@ -379,9 +379,9 @@
     },
     {
       "ts_code": "700047.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "同花顺大盘股",
+      "type": "ST",
+      "total_count": 200.0,
       "member_count": 3,
       "members": [
         "002594.SZ",
@@ -391,9 +391,9 @@
     },
     {
       "ts_code": "700054.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "同花顺金仓200",
+      "type": "TH",
+      "total_count": 200.0,
       "member_count": 3,
       "members": [
         "300054.SZ",
@@ -403,9 +403,9 @@
     },
     {
       "ts_code": "700054R.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "同花顺金仓200全收益",
+      "type": "TH",
+      "total_count": 200.0,
       "member_count": 3,
       "members": [
         "300054.SZ",
@@ -415,9 +415,9 @@
     },
     {
       "ts_code": "883304.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "中证500成份股",
+      "type": "N",
+      "total_count": 500.0,
       "member_count": 3,
       "members": [
         "300054.SZ",
@@ -427,9 +427,9 @@
     },
     {
       "ts_code": "883408.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "近期新高",
+      "type": "S",
+      "total_count": 22.0,
       "member_count": 3,
       "members": [
         "300054.SZ",
@@ -439,9 +439,9 @@
     },
     {
       "ts_code": "883409.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "近期强势",
+      "type": "S",
+      "total_count": 26.0,
       "member_count": 3,
       "members": [
         "300054.SZ",
@@ -451,9 +451,9 @@
     },
     {
       "ts_code": "883417.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "大盘股",
+      "type": "S",
+      "total_count": 200.0,
       "member_count": 3,
       "members": [
         "002594.SZ",
@@ -463,9 +463,9 @@
     },
     {
       "ts_code": "883432.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "科技(TMT)",
+      "type": "S",
+      "total_count": 1317.0,
       "member_count": 3,
       "members": [
         "300054.SZ",
@@ -475,9 +475,9 @@
     },
     {
       "ts_code": "883901.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "昨日资金前十",
+      "type": "S",
+      "total_count": 10.0,
       "member_count": 3,
       "members": [
         "002594.SZ",
@@ -487,9 +487,9 @@
     },
     {
       "ts_code": "883906.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "昨日高振幅",
+      "type": "S",
+      "total_count": 1313.0,
       "member_count": 3,
       "members": [
         "300054.SZ",
@@ -499,9 +499,9 @@
     },
     {
       "ts_code": "883911.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "创历史新高",
+      "type": "S",
+      "total_count": 4.0,
       "member_count": 3,
       "members": [
         "300054.SZ",
@@ -511,9 +511,9 @@
     },
     {
       "ts_code": "883916.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "百元股",
+      "type": "S",
+      "total_count": 213.0,
       "member_count": 3,
       "members": [
         "300054.SZ",
@@ -523,9 +523,9 @@
     },
     {
       "ts_code": "883917.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "行业龙头",
+      "type": "S",
+      "total_count": 269.0,
       "member_count": 3,
       "members": [
         "002594.SZ",
@@ -535,9 +535,9 @@
     },
     {
       "ts_code": "885694.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "深股通",
+      "type": "N",
+      "total_count": 1875.0,
       "member_count": 3,
       "members": [
         "002594.SZ",
@@ -547,9 +547,9 @@
     },
     {
       "ts_code": "700004.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "同花顺主板",
+      "type": "BB",
+      "total_count": 3191.0,
       "member_count": 2,
       "members": [
         "002594.SZ",
@@ -558,9 +558,9 @@
     },
     {
       "ts_code": "700005.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "同花顺创指",
+      "type": "BB",
+      "total_count": 1398.0,
       "member_count": 2,
       "members": [
         "300054.SZ",
@@ -569,9 +569,9 @@
     },
     {
       "ts_code": "700021.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "同花顺沪股通",
+      "type": "BB",
+      "total_count": 1640.0,
       "member_count": 2,
       "members": [
         "603233.SH",
@@ -580,9 +580,9 @@
     },
     {
       "ts_code": "700026.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "同花顺蓝筹280",
+      "type": "BB",
+      "total_count": 280.0,
       "member_count": 2,
       "members": [
         "002594.SZ",
@@ -591,9 +591,9 @@
     },
     {
       "ts_code": "700027.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "同花顺300除银行",
+      "type": "BB",
+      "total_count": 276.0,
       "member_count": 2,
       "members": [
         "002594.SZ",
@@ -602,9 +602,9 @@
     },
     {
       "ts_code": "700028.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "同花顺300除金融",
+      "type": "BB",
+      "total_count": 249.0,
       "member_count": 2,
       "members": [
         "002594.SZ",
@@ -613,9 +613,9 @@
     },
     {
       "ts_code": "700040.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "同花顺均衡估值",
+      "type": "ST",
+      "total_count": 2104.0,
       "member_count": 2,
       "members": [
         "002594.SZ",
@@ -624,9 +624,9 @@
     },
     {
       "ts_code": "700042.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "同花顺均衡投资",
+      "type": "ST",
+      "total_count": 2079.0,
       "member_count": 2,
       "members": [
         "002594.SZ",
@@ -635,9 +635,9 @@
     },
     {
       "ts_code": "700044.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "同花顺高价股",
+      "type": "ST",
+      "total_count": 106.0,
       "member_count": 2,
       "members": [
         "300308.SZ",
@@ -646,9 +646,9 @@
     },
     {
       "ts_code": "700046.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "同花顺超大盘股",
+      "type": "ST",
+      "total_count": 20.0,
       "member_count": 2,
       "members": [
         "002594.SZ",
@@ -657,9 +657,9 @@
     },
     {
       "ts_code": "700048.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "同花顺中盘",
+      "type": "ST",
+      "total_count": 500.0,
       "member_count": 2,
       "members": [
         "300054.SZ",
@@ -668,9 +668,9 @@
     },
     {
       "ts_code": "700051.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "同花顺金仓30",
+      "type": "TH",
+      "total_count": 30.0,
       "member_count": 2,
       "members": [
         "300308.SZ",
@@ -679,9 +679,9 @@
     },
     {
       "ts_code": "700052.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "同花顺金仓50",
+      "type": "TH",
+      "total_count": 50.0,
       "member_count": 2,
       "members": [
         "300308.SZ",
@@ -690,9 +690,9 @@
     },
     {
       "ts_code": "700052R.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "同花顺金仓50全收益",
+      "type": "TH",
+      "total_count": 50.0,
       "member_count": 2,
       "members": [
         "300308.SZ",
@@ -701,9 +701,9 @@
     },
     {
       "ts_code": "700053.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "同花顺金仓100",
+      "type": "TH",
+      "total_count": 100.0,
       "member_count": 2,
       "members": [
         "300308.SZ",
@@ -712,9 +712,9 @@
     },
     {
       "ts_code": "700053R.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "同花顺金仓100全收益",
+      "type": "TH",
+      "total_count": 100.0,
       "member_count": 2,
       "members": [
         "300308.SZ",
@@ -723,9 +723,9 @@
     },
     {
       "ts_code": "700308.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "信息技术(A股)",
+      "type": "I",
+      "total_count": 1304.0,
       "member_count": 2,
       "members": [
         "300308.SZ",
@@ -734,9 +734,9 @@
     },
     {
       "ts_code": "700687.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "计算机、通信和其他电子设备制造业指数",
+      "type": "I",
+      "total_count": 678.0,
       "member_count": 2,
       "members": [
         "300054.SZ",
@@ -745,9 +745,9 @@
     },
     {
       "ts_code": "700802.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "计算机通信和其他电子设备制造业指数",
+      "type": "I",
+      "total_count": 671.0,
       "member_count": 2,
       "members": [
         "300054.SZ",
@@ -756,9 +756,9 @@
     },
     {
       "ts_code": "703004.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "华南指数",
+      "type": "TH",
+      "total_count": 966.0,
       "member_count": 2,
       "members": [
         "002594.SZ",
@@ -767,9 +767,9 @@
     },
     {
       "ts_code": "703764.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "珠三角城市群",
+      "type": "TH",
+      "total_count": 280.0,
       "member_count": 2,
       "members": [
         "002594.SZ",
@@ -778,9 +778,9 @@
     },
     {
       "ts_code": "883300.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "沪深300样本股",
+      "type": "N",
+      "total_count": 300.0,
       "member_count": 2,
       "members": [
         "002594.SZ",
@@ -789,9 +789,9 @@
     },
     {
       "ts_code": "883303.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "上证380成份股",
+      "type": "N",
+      "total_count": 380.0,
       "member_count": 2,
       "members": [
         "603233.SH",
@@ -800,9 +800,9 @@
     },
     {
       "ts_code": "883404.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "同花顺情绪指数",
+      "type": "S",
+      "total_count": 662.0,
       "member_count": 2,
       "members": [
         "603233.SH",
@@ -811,9 +811,9 @@
     },
     {
       "ts_code": "883411.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "密集调研",
+      "type": "S",
+      "total_count": 18.0,
       "member_count": 2,
       "members": [
         "002594.SZ",
@@ -822,9 +822,9 @@
     },
     {
       "ts_code": "883414.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "高市净率",
+      "type": "S",
+      "total_count": 200.0,
       "member_count": 2,
       "members": [
         "300308.SZ",
@@ -833,9 +833,9 @@
     },
     {
       "ts_code": "883420.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "减持新规(不可减持)",
+      "type": "S",
+      "total_count": 2404.0,
       "member_count": 2,
       "members": [
         "300308.SZ",
@@ -844,9 +844,9 @@
     },
     {
       "ts_code": "883441.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "高ROE股",
+      "type": "S",
+      "total_count": 200.0,
       "member_count": 2,
       "members": [
         "300308.SZ",
@@ -855,9 +855,9 @@
     },
     {
       "ts_code": "883910.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "同花顺热股",
+      "type": "S",
+      "total_count": 50.0,
       "member_count": 2,
       "members": [
         "002594.SZ",
@@ -866,9 +866,9 @@
     },
     {
       "ts_code": "883913.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "龙虎榜指数",
+      "type": "S",
+      "total_count": 72.0,
       "member_count": 2,
       "members": [
         "300308.SZ",
@@ -877,9 +877,9 @@
     },
     {
       "ts_code": "883920.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "近期解禁",
+      "type": "S",
+      "total_count": 81.0,
       "member_count": 2,
       "members": [
         "300308.SZ",
@@ -888,9 +888,9 @@
     },
     {
       "ts_code": "883927.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "高股息股",
+      "type": "S",
+      "total_count": 617.0,
       "member_count": 2,
       "members": [
         "002594.SZ",
@@ -899,9 +899,9 @@
     },
     {
       "ts_code": "883980.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "含可转债",
+      "type": "S",
+      "total_count": 321.0,
       "member_count": 2,
       "members": [
         "300054.SZ",
@@ -910,9 +910,9 @@
     },
     {
       "ts_code": "883990.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "机构重仓股",
+      "type": "S",
+      "total_count": 300.0,
       "member_count": 2,
       "members": [
         "300308.SZ",
@@ -921,9 +921,9 @@
     },
     {
       "ts_code": "885520.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "沪股通",
+      "type": "N",
+      "total_count": 1639.0,
       "member_count": 2,
       "members": [
         "603233.SH",
@@ -932,9 +932,9 @@
     },
     {
       "ts_code": "885710.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "锂电池概念",
+      "type": "N",
+      "total_count": 608.0,
       "member_count": 2,
       "members": [
         "002594.SZ",
@@ -943,9 +943,9 @@
     },
     {
       "ts_code": "885736.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "无人驾驶",
+      "type": "N",
+      "total_count": 407.0,
       "member_count": 2,
       "members": [
         "002594.SZ",
@@ -954,9 +954,9 @@
     },
     {
       "ts_code": "885887.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "数据中心(AIDC)",
+      "type": "N",
+      "total_count": 649.0,
       "member_count": 2,
       "members": [
         "002594.SZ",
@@ -965,9 +965,9 @@
     },
     {
       "ts_code": "885897.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "中芯国际概念",
+      "type": "N",
+      "total_count": 90.0,
       "member_count": 2,
       "members": [
         "300054.SZ",
@@ -976,9 +976,9 @@
     },
     {
       "ts_code": "885908.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "第三代半导体",
+      "type": "N",
+      "total_count": 180.0,
       "member_count": 2,
       "members": [
         "300054.SZ",
@@ -987,9 +987,9 @@
     },
     {
       "ts_code": "886009.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "先进封装",
+      "type": "N",
+      "total_count": 203.0,
       "member_count": 2,
       "members": [
         "300054.SZ",
@@ -998,9 +998,9 @@
     },
     {
       "ts_code": "886042.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "存储芯片",
+      "type": "N",
+      "total_count": 200.0,
       "member_count": 2,
       "members": [
         "300054.SZ",
@@ -1009,9 +1009,9 @@
     },
     {
       "ts_code": "886100.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "DeepSeek概念",
+      "type": "N",
+      "total_count": 769.0,
       "member_count": 2,
       "members": [
         "002594.SZ",
@@ -1020,9 +1020,9 @@
     },
     {
       "ts_code": "700024.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "同花顺A50",
+      "type": "BB",
+      "total_count": 50.0,
       "member_count": 1,
       "members": [
         "300308.SZ"
@@ -1030,9 +1030,9 @@
     },
     {
       "ts_code": "700024R.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "同花顺A50全收益",
+      "type": "BB",
+      "total_count": 50.0,
       "member_count": 1,
       "members": [
         "300308.SZ"
@@ -1040,9 +1040,9 @@
     },
     {
       "ts_code": "700039.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "同花顺低动量",
+      "type": "ST",
+      "total_count": 1577.0,
       "member_count": 1,
       "members": [
         "002594.SZ"
@@ -1050,9 +1050,9 @@
     },
     {
       "ts_code": "700041.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "同花顺均衡盈利",
+      "type": "ST",
+      "total_count": 2100.0,
       "member_count": 1,
       "members": [
         "002594.SZ"
@@ -1060,9 +1060,9 @@
     },
     {
       "ts_code": "700049.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "同花顺小盘",
+      "type": "ST",
+      "total_count": 1000.0,
       "member_count": 1,
       "members": [
         "603233.SH"
@@ -1070,9 +1070,9 @@
     },
     {
       "ts_code": "700051R.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "同花顺金仓30全收益",
+      "type": "TH",
+      "total_count": 30.0,
       "member_count": 1,
       "members": [
         "300308.SZ"
@@ -1080,9 +1080,9 @@
     },
     {
       "ts_code": "700055.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "茅指数",
+      "type": "TH",
+      "total_count": 42.0,
       "member_count": 1,
       "members": [
         "002594.SZ"
@@ -1090,9 +1090,9 @@
     },
     {
       "ts_code": "700056.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "宁组合",
+      "type": "TH",
+      "total_count": 25.0,
       "member_count": 1,
       "members": [
         "002594.SZ"
@@ -1100,9 +1100,9 @@
     },
     {
       "ts_code": "700103.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "同花顺A股中盘",
+      "type": "BB",
+      "total_count": 1050.0,
       "member_count": 1,
       "members": [
         "603233.SH"
@@ -1110,9 +1110,9 @@
     },
     {
       "ts_code": "700302.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "原材料(A股)",
+      "type": "I",
+      "total_count": 855.0,
       "member_count": 1,
       "members": [
         "300054.SZ"
@@ -1120,9 +1120,9 @@
     },
     {
       "ts_code": "700303.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "工业(A股)",
+      "type": "I",
+      "total_count": 1284.0,
       "member_count": 1,
       "members": [
         "300054.SZ"
@@ -1130,9 +1130,9 @@
     },
     {
       "ts_code": "700304.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "非日常生活消费品(A股)",
+      "type": "I",
+      "total_count": 682.0,
       "member_count": 1,
       "members": [
         "002594.SZ"
@@ -1140,9 +1140,9 @@
     },
     {
       "ts_code": "700305.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "日常消费品(A股)",
+      "type": "I",
+      "total_count": 302.0,
       "member_count": 1,
       "members": [
         "603233.SH"
@@ -1150,9 +1150,9 @@
     },
     {
       "ts_code": "700306.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "医疗保健(A股)",
+      "type": "I",
+      "total_count": 497.0,
       "member_count": 1,
       "members": [
         "603233.SH"
@@ -1160,9 +1160,9 @@
     },
     {
       "ts_code": "700309.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "通讯业务(A股)",
+      "type": "I",
+      "total_count": 149.0,
       "member_count": 1,
       "members": [
         "300308.SZ"
@@ -1170,9 +1170,9 @@
     },
     {
       "ts_code": "700323.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "商业和专业服务(A股)",
+      "type": "I",
+      "total_count": 210.0,
       "member_count": 1,
       "members": [
         "300054.SZ"
@@ -1180,9 +1180,9 @@
     },
     {
       "ts_code": "700325.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "汽车与汽车零部件(A股)",
+      "type": "I",
+      "total_count": 286.0,
       "member_count": 1,
       "members": [
         "002594.SZ"
@@ -1190,9 +1190,9 @@
     },
     {
       "ts_code": "700329.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "日常消费品分销和零售Ⅱ(A股)",
+      "type": "I",
+      "total_count": 55.0,
       "member_count": 1,
       "members": [
         "603233.SH"
@@ -1200,9 +1200,9 @@
     },
     {
       "ts_code": "700332.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "医疗保健设备与服务(A股)",
+      "type": "I",
+      "total_count": 147.0,
       "member_count": 1,
       "members": [
         "603233.SH"
@@ -1210,9 +1210,9 @@
     },
     {
       "ts_code": "700338.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "技术硬件与设备(A股)",
+      "type": "I",
+      "total_count": 752.0,
       "member_count": 1,
       "members": [
         "300308.SZ"
@@ -1220,9 +1220,9 @@
     },
     {
       "ts_code": "700339.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "半导体产品与设备Ⅱ(A股)",
+      "type": "I",
+      "total_count": 210.0,
       "member_count": 1,
       "members": [
         "688120.SH"
@@ -1230,9 +1230,9 @@
     },
     {
       "ts_code": "700340.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "电信业务(A股)",
+      "type": "I",
+      "total_count": 13.0,
       "member_count": 1,
       "members": [
         "300308.SZ"
@@ -1240,9 +1240,9 @@
     },
     {
       "ts_code": "700374.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "商业服务与商业用品(A股)",
+      "type": "I",
+      "total_count": 151.0,
       "member_count": 1,
       "members": [
         "300054.SZ"
@@ -1250,9 +1250,9 @@
     },
     {
       "ts_code": "700382.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "汽车(A股)",
+      "type": "I",
+      "total_count": 32.0,
       "member_count": 1,
       "members": [
         "002594.SZ"
@@ -1260,9 +1260,9 @@
     },
     {
       "ts_code": "700391.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "日常消费品分销和零售Ⅲ(A股)",
+      "type": "I",
+      "total_count": 55.0,
       "member_count": 1,
       "members": [
         "603233.SH"
@@ -1270,9 +1270,9 @@
     },
     {
       "ts_code": "700409.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "通信设备Ⅲ(A股)",
+      "type": "I",
+      "total_count": 115.0,
       "member_count": 1,
       "members": [
         "300308.SZ"
@@ -1280,9 +1280,9 @@
     },
     {
       "ts_code": "700412.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "半导体产品与设备Ⅲ(A股)",
+      "type": "I",
+      "total_count": 210.0,
       "member_count": 1,
       "members": [
         "688120.SH"
@@ -1290,9 +1290,9 @@
     },
     {
       "ts_code": "700486.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "办公服务与用品(A股)",
+      "type": "I",
+      "total_count": 6.0,
       "member_count": 1,
       "members": [
         "300054.SZ"
@@ -1300,9 +1300,9 @@
     },
     {
       "ts_code": "700503.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "汽车制造商(A股)",
+      "type": "I",
+      "total_count": 27.0,
       "member_count": 1,
       "members": [
         "002594.SZ"
@@ -1310,9 +1310,9 @@
     },
     {
       "ts_code": "700526.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "药品零售(A股)",
+      "type": "I",
+      "total_count": 26.0,
       "member_count": 1,
       "members": [
         "603233.SH"
@@ -1320,9 +1320,9 @@
     },
     {
       "ts_code": "700563.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "通信设备Ⅳ(A股)",
+      "type": "I",
+      "total_count": 115.0,
       "member_count": 1,
       "members": [
         "300308.SZ"
@@ -1330,9 +1330,9 @@
     },
     {
       "ts_code": "700569.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "半导体材料与设备(A股)",
+      "type": "I",
+      "total_count": 36.0,
       "member_count": 1,
       "members": [
         "688120.SH"
@@ -1340,9 +1340,9 @@
     },
     {
       "ts_code": "700635.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "批发和零售业指数",
+      "type": "I",
+      "total_count": 178.0,
       "member_count": 1,
       "members": [
         "603233.SH"
@@ -1350,9 +1350,9 @@
     },
     {
       "ts_code": "700683.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "专用设备制造业指数",
+      "type": "I",
+      "total_count": 426.0,
       "member_count": 1,
       "members": [
         "688120.SH"
@@ -1360,9 +1360,9 @@
     },
     {
       "ts_code": "700684.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "汽车制造业指数",
+      "type": "I",
+      "total_count": 210.0,
       "member_count": 1,
       "members": [
         "002594.SZ"
@@ -1370,9 +1370,9 @@
     },
     {
       "ts_code": "700700.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "零售业指数",
+      "type": "I",
+      "total_count": 94.0,
       "member_count": 1,
       "members": [
         "603233.SH"
@@ -1380,9 +1380,9 @@
     },
     {
       "ts_code": "700755.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "批发和零售业指数",
+      "type": "I",
+      "total_count": 172.0,
       "member_count": 1,
       "members": [
         "603233.SH"
@@ -1390,9 +1390,9 @@
     },
     {
       "ts_code": "700789.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "化学原料和化学制品制造业指数",
+      "type": "I",
+      "total_count": 378.0,
       "member_count": 1,
       "members": [
         "300054.SZ"
@@ -1400,9 +1400,9 @@
     },
     {
       "ts_code": "700798.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "专业设备制造业指数",
+      "type": "I",
+      "total_count": 413.0,
       "member_count": 1,
       "members": [
         "688120.SH"
@@ -1410,9 +1410,9 @@
     },
     {
       "ts_code": "700799.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "汽车制造业指数",
+      "type": "I",
+      "total_count": 234.0,
       "member_count": 1,
       "members": [
         "002594.SZ"
@@ -1420,9 +1420,9 @@
     },
     {
       "ts_code": "700813.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "零售业指数",
+      "type": "I",
+      "total_count": 87.0,
       "member_count": 1,
       "members": [
         "603233.SH"
@@ -1430,9 +1430,9 @@
     },
     {
       "ts_code": "703002.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "华北指数",
+      "type": "TH",
+      "total_count": 706.0,
       "member_count": 1,
       "members": [
         "688120.SH"
@@ -1440,9 +1440,9 @@
     },
     {
       "ts_code": "703003.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "华东指数",
+      "type": "TH",
+      "total_count": 2695.0,
       "member_count": 1,
       "members": [
         "300308.SZ"
@@ -1450,9 +1450,9 @@
     },
     {
       "ts_code": "703005.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "华中指数",
+      "type": "TH",
+      "total_count": 416.0,
       "member_count": 1,
       "members": [
         "300054.SZ"
@@ -1460,9 +1460,9 @@
     },
     {
       "ts_code": "703025.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "天津市指数",
+      "type": "TH",
+      "total_count": 72.0,
       "member_count": 1,
       "members": [
         "688120.SH"
@@ -1470,9 +1470,9 @@
     },
     {
       "ts_code": "703061.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "烟台市指数",
+      "type": "TH",
+      "total_count": 52.0,
       "member_count": 1,
       "members": [
         "300308.SZ"
@@ -1480,9 +1480,9 @@
     },
     {
       "ts_code": "703085.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "广州市指数",
+      "type": "TH",
+      "total_count": 159.0,
       "member_count": 1,
       "members": [
         "603233.SH"
@@ -1490,9 +1490,9 @@
     },
     {
       "ts_code": "703087.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "深圳市指数",
+      "type": "TH",
+      "total_count": 428.0,
       "member_count": 1,
       "members": [
         "002594.SZ"
@@ -1500,9 +1500,9 @@
     },
     {
       "ts_code": "703108.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "武汉市指数",
+      "type": "TH",
+      "total_count": 82.0,
       "member_count": 1,
       "members": [
         "300054.SZ"
@@ -1510,9 +1510,9 @@
     },
     {
       "ts_code": "703700.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "地方国企指数",
+      "type": "TH",
+      "total_count": 1006.0,
       "member_count": 1,
       "members": [
         "688120.SH"
@@ -1520,9 +1520,9 @@
     },
     {
       "ts_code": "703707.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "地方国企电子指数",
+      "type": "TH",
+      "total_count": 55.0,
       "member_count": 1,
       "members": [
         "688120.SH"
@@ -1530,9 +1530,9 @@
     },
     {
       "ts_code": "703750.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "地方国企天津市指数",
+      "type": "TH",
+      "total_count": 20.0,
       "member_count": 1,
       "members": [
         "688120.SH"
@@ -1540,9 +1540,9 @@
     },
     {
       "ts_code": "703765.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "京津冀城市群",
+      "type": "TH",
+      "total_count": 216.0,
       "member_count": 1,
       "members": [
         "688120.SH"
@@ -1550,9 +1550,9 @@
     },
     {
       "ts_code": "703767.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "长江中游城市群",
+      "type": "TH",
+      "total_count": 117.0,
       "member_count": 1,
       "members": [
         "300054.SZ"
@@ -1560,9 +1560,9 @@
     },
     {
       "ts_code": "703770.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "山东半岛城市群",
+      "type": "TH",
+      "total_count": 86.0,
       "member_count": 1,
       "members": [
         "300308.SZ"
@@ -1570,9 +1570,9 @@
     },
     {
       "ts_code": "703788.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "武汉都市圈",
+      "type": "TH",
+      "total_count": 30.0,
       "member_count": 1,
       "members": [
         "300054.SZ"
@@ -1580,9 +1580,9 @@
     },
     {
       "ts_code": "703793.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "广州都市圈",
+      "type": "TH",
+      "total_count": 78.0,
       "member_count": 1,
       "members": [
         "603233.SH"
@@ -1590,9 +1590,9 @@
     },
     {
       "ts_code": "881121.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "半导体",
+      "type": "I",
+      "total_count": 181.0,
       "member_count": 1,
       "members": [
         "688120.SH"
@@ -1600,9 +1600,9 @@
     },
     {
       "ts_code": "881125.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "汽车整车",
+      "type": "I",
+      "total_count": 23.0,
       "member_count": 1,
       "members": [
         "002594.SZ"
@@ -1610,9 +1610,9 @@
     },
     {
       "ts_code": "881129.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "通信设备",
+      "type": "I",
+      "total_count": 91.0,
       "member_count": 1,
       "members": [
         "300308.SZ"
@@ -1620,9 +1620,9 @@
     },
     {
       "ts_code": "881143.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "医药商业",
+      "type": "I",
+      "total_count": 32.0,
       "member_count": 1,
       "members": [
         "603233.SH"
@@ -1630,9 +1630,9 @@
     },
     {
       "ts_code": "881172.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "电子化学品",
+      "type": "I",
+      "total_count": 43.0,
       "member_count": 1,
       "members": [
         "300054.SZ"
@@ -1640,9 +1640,9 @@
     },
     {
       "ts_code": "882007.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "深圳",
+      "type": "R",
+      "total_count": 428.0,
       "member_count": 1,
       "members": [
         "002594.SZ"
@@ -1650,9 +1650,9 @@
     },
     {
       "ts_code": "882008.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "广东(除深圳)",
+      "type": "R",
+      "total_count": 469.0,
       "member_count": 1,
       "members": [
         "603233.SH"
@@ -1660,9 +1660,9 @@
     },
     {
       "ts_code": "882014.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "湖北",
+      "type": "R",
+      "total_count": 154.0,
       "member_count": 1,
       "members": [
         "300054.SZ"
@@ -1670,9 +1670,9 @@
     },
     {
       "ts_code": "882023.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "山东",
+      "type": "R",
+      "total_count": 315.0,
       "member_count": 1,
       "members": [
         "300308.SZ"
@@ -1680,9 +1680,9 @@
     },
     {
       "ts_code": "882029.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "天津",
+      "type": "R",
+      "total_count": 72.0,
       "member_count": 1,
       "members": [
         "688120.SH"
@@ -1690,9 +1690,9 @@
     },
     {
       "ts_code": "883405.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "高送转",
+      "type": "S",
+      "total_count": 3.0,
       "member_count": 1,
       "members": [
         "002594.SZ"
@@ -1700,9 +1700,9 @@
     },
     {
       "ts_code": "883406.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "基金重仓股",
+      "type": "S",
+      "total_count": 100.0,
       "member_count": 1,
       "members": [
         "300308.SZ"
@@ -1710,9 +1710,9 @@
     },
     {
       "ts_code": "883424.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "创业科创板昨日涨停",
+      "type": "S",
+      "total_count": 37.0,
       "member_count": 1,
       "members": [
         "688120.SH"
@@ -1720,9 +1720,9 @@
     },
     {
       "ts_code": "883426.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "同花顺拟回购指数",
+      "type": "S",
+      "total_count": 115.0,
       "member_count": 1,
       "members": [
         "300054.SZ"
@@ -1730,9 +1730,9 @@
     },
     {
       "ts_code": "883433.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "先进制造",
+      "type": "S",
+      "total_count": 1652.0,
       "member_count": 1,
       "members": [
         "688120.SH"
@@ -1740,9 +1740,9 @@
     },
     {
       "ts_code": "883434.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "消费",
+      "type": "S",
+      "total_count": 880.0,
       "member_count": 1,
       "members": [
         "002594.SZ"
@@ -1750,9 +1750,9 @@
     },
     {
       "ts_code": "883436.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "周期",
+      "type": "S",
+      "total_count": 1054.0,
       "member_count": 1,
       "members": [
         "300054.SZ"
@@ -1760,9 +1760,9 @@
     },
     {
       "ts_code": "883440.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "高成长股",
+      "type": "S",
+      "total_count": 139.0,
       "member_count": 1,
       "members": [
         "300308.SZ"
@@ -1770,9 +1770,9 @@
     },
     {
       "ts_code": "883443.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "同花顺算力主题精选",
+      "type": "S",
+      "total_count": 100.0,
       "member_count": 1,
       "members": [
         "300308.SZ"
@@ -1780,9 +1780,9 @@
     },
     {
       "ts_code": "883900.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "昨日涨停表现",
+      "type": "S",
+      "total_count": 121.0,
       "member_count": 1,
       "members": [
         "688120.SH"
@@ -1790,9 +1790,9 @@
     },
     {
       "ts_code": "883902.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "昨日成交前十",
+      "type": "S",
+      "total_count": 10.0,
       "member_count": 1,
       "members": [
         "300308.SZ"
@@ -1800,9 +1800,9 @@
     },
     {
       "ts_code": "883903.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "增发预案指数",
+      "type": "S",
+      "total_count": 392.0,
       "member_count": 1,
       "members": [
         "688120.SH"
@@ -1810,9 +1810,9 @@
     },
     {
       "ts_code": "883912.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "深股通成交前十",
+      "type": "S",
+      "total_count": 10.0,
       "member_count": 1,
       "members": [
         "300308.SZ"
@@ -1820,9 +1820,9 @@
     },
     {
       "ts_code": "883921.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "减持计划",
+      "type": "S",
+      "total_count": 787.0,
       "member_count": 1,
       "members": [
         "300054.SZ"
@@ -1830,9 +1830,9 @@
     },
     {
       "ts_code": "883922.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "社保重仓",
+      "type": "S",
+      "total_count": 609.0,
       "member_count": 1,
       "members": [
         "002594.SZ"
@@ -1840,9 +1840,9 @@
     },
     {
       "ts_code": "883924.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "QFII重仓",
+      "type": "S",
+      "total_count": 1546.0,
       "member_count": 1,
       "members": [
         "300308.SZ"
@@ -1850,9 +1850,9 @@
     },
     {
       "ts_code": "883925.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "股东户数减少",
+      "type": "S",
+      "total_count": 72.0,
       "member_count": 1,
       "members": [
         "688120.SH"
@@ -1860,9 +1860,9 @@
     },
     {
       "ts_code": "883934.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "保险重仓",
+      "type": "S",
+      "total_count": 524.0,
       "member_count": 1,
       "members": [
         "300054.SZ"
@@ -1870,9 +1870,9 @@
     },
     {
       "ts_code": "883959.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "近期并购",
+      "type": "S",
+      "total_count": 262.0,
       "member_count": 1,
       "members": [
         "300308.SZ"
@@ -1880,9 +1880,9 @@
     },
     {
       "ts_code": "883966.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "机构月调研前十",
+      "type": "S",
+      "total_count": 10.0,
       "member_count": 1,
       "members": [
         "300308.SZ"
@@ -1890,9 +1890,9 @@
     },
     {
       "ts_code": "883967.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "机构周调研前十",
+      "type": "S",
+      "total_count": 10.0,
       "member_count": 1,
       "members": [
         "300308.SZ"
@@ -1900,9 +1900,9 @@
     },
     {
       "ts_code": "883978.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "昨日打板表现",
+      "type": "S",
+      "total_count": 128.0,
       "member_count": 1,
       "members": [
         "688120.SH"
@@ -1910,9 +1910,9 @@
     },
     {
       "ts_code": "883979.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "昨日首板表现",
+      "type": "S",
+      "total_count": 116.0,
       "member_count": 1,
       "members": [
         "688120.SH"
@@ -1920,9 +1920,9 @@
     },
     {
       "ts_code": "883985.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "深市新主板",
+      "type": "S",
+      "total_count": 1493.0,
       "member_count": 1,
       "members": [
         "002594.SZ"
@@ -1930,9 +1930,9 @@
     },
     {
       "ts_code": "883986.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "昨日非ST涨停表现",
+      "type": "S",
+      "total_count": 121.0,
       "member_count": 1,
       "members": [
         "688120.SH"
@@ -1940,9 +1940,9 @@
     },
     {
       "ts_code": "883992.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "昨日非ST打板",
+      "type": "S",
+      "total_count": 128.0,
       "member_count": 1,
       "members": [
         "688120.SH"
@@ -1950,9 +1950,9 @@
     },
     {
       "ts_code": "883993.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "昨日非ST首板",
+      "type": "S",
+      "total_count": 116.0,
       "member_count": 1,
       "members": [
         "688120.SH"
@@ -1960,9 +1960,9 @@
     },
     {
       "ts_code": "883994.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "昨日打首板表现",
+      "type": "S",
+      "total_count": 123.0,
       "member_count": 1,
       "members": [
         "688120.SH"
@@ -1970,9 +1970,9 @@
     },
     {
       "ts_code": "884099.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "乘用车",
+      "type": "I",
+      "total_count": 10.0,
       "member_count": 1,
       "members": [
         "002594.SZ"
@@ -1980,9 +1980,9 @@
     },
     {
       "ts_code": "884229.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "半导体设备",
+      "type": "I",
+      "total_count": 25.0,
       "member_count": 1,
       "members": [
         "688120.SH"
@@ -1990,9 +1990,9 @@
     },
     {
       "ts_code": "884231.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "电子化学品Ⅲ",
+      "type": "I",
+      "total_count": 43.0,
       "member_count": 1,
       "members": [
         "300054.SZ"
@@ -2000,9 +2000,9 @@
     },
     {
       "ts_code": "884262.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "通信网络设备及器件",
+      "type": "I",
+      "total_count": 40.0,
       "member_count": 1,
       "members": [
         "300308.SZ"
@@ -2010,9 +2010,9 @@
     },
     {
       "ts_code": "884300.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "药店",
+      "type": "I",
+      "total_count": 8.0,
       "member_count": 1,
       "members": [
         "603233.SH"
@@ -2020,9 +2020,9 @@
     },
     {
       "ts_code": "885413.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "创投",
+      "type": "N",
+      "total_count": 465.0,
       "member_count": 1,
       "members": [
         "300308.SZ"
@@ -2030,9 +2030,9 @@
     },
     {
       "ts_code": "885431.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "新能源汽车",
+      "type": "N",
+      "total_count": 1061.0,
       "member_count": 1,
       "members": [
         "002594.SZ"
@@ -2040,9 +2040,9 @@
     },
     {
       "ts_code": "885461.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "充电桩",
+      "type": "N",
+      "total_count": 390.0,
       "member_count": 1,
       "members": [
         "002594.SZ"
@@ -2050,9 +2050,9 @@
     },
     {
       "ts_code": "885517.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "机器人概念",
+      "type": "N",
+      "total_count": 1216.0,
       "member_count": 1,
       "members": [
         "002594.SZ"
@@ -2060,9 +2060,9 @@
     },
     {
       "ts_code": "885521.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "粤港澳大湾区",
+      "type": "N",
+      "total_count": 489.0,
       "member_count": 1,
       "members": [
         "002594.SZ"
@@ -2070,9 +2070,9 @@
     },
     {
       "ts_code": "885531.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "光伏概念",
+      "type": "N",
+      "total_count": 601.0,
       "member_count": 1,
       "members": [
         "002594.SZ"
@@ -2080,9 +2080,9 @@
     },
     {
       "ts_code": "885539.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "医疗器械概念",
+      "type": "N",
+      "total_count": 408.0,
       "member_count": 1,
       "members": [
         "603233.SH"
@@ -2090,9 +2090,9 @@
     },
     {
       "ts_code": "885545.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "汽车电子",
+      "type": "N",
+      "total_count": 391.0,
       "member_count": 1,
       "members": [
         "300308.SZ"
@@ -2100,9 +2100,9 @@
     },
     {
       "ts_code": "885556.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "5G",
+      "type": "N",
+      "total_count": 455.0,
       "member_count": 1,
       "members": [
         "300308.SZ"
@@ -2110,9 +2110,9 @@
     },
     {
       "ts_code": "885661.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "医药电商",
+      "type": "N",
+      "total_count": 176.0,
       "member_count": 1,
       "members": [
         "603233.SH"
@@ -2120,9 +2120,9 @@
     },
     {
       "ts_code": "885662.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "车联网(车路协同)",
+      "type": "N",
+      "total_count": 297.0,
       "member_count": 1,
       "members": [
         "002594.SZ"
@@ -2130,9 +2130,9 @@
     },
     {
       "ts_code": "885738.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "OLED",
+      "type": "N",
+      "total_count": 156.0,
       "member_count": 1,
       "members": [
         "300054.SZ"
@@ -2140,9 +2140,9 @@
     },
     {
       "ts_code": "885761.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "超级品牌",
+      "type": "N",
+      "total_count": 48.0,
       "member_count": 1,
       "members": [
         "002594.SZ"
@@ -2150,9 +2150,9 @@
     },
     {
       "ts_code": "885770.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "智能物流",
+      "type": "N",
+      "total_count": 246.0,
       "member_count": 1,
       "members": [
         "603233.SH"
@@ -2160,9 +2160,9 @@
     },
     {
       "ts_code": "885809.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "柔性屏(折叠屏)",
+      "type": "N",
+      "total_count": 108.0,
       "member_count": 1,
       "members": [
         "300054.SZ"
@@ -2170,9 +2170,9 @@
     },
     {
       "ts_code": "885840.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "人民币贬值受益",
+      "type": "N",
+      "total_count": 606.0,
       "member_count": 1,
       "members": [
         "300308.SZ"
@@ -2180,9 +2180,9 @@
     },
     {
       "ts_code": "885864.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "光刻胶",
+      "type": "N",
+      "total_count": 79.0,
       "member_count": 1,
       "members": [
         "300054.SZ"
@@ -2190,9 +2190,9 @@
     },
     {
       "ts_code": "885902.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "汽车拆解概念",
+      "type": "N",
+      "total_count": 23.0,
       "member_count": 1,
       "members": [
         "002594.SZ"
@@ -2200,9 +2200,9 @@
     },
     {
       "ts_code": "885916.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "同花顺漂亮100",
+      "type": "N",
+      "total_count": 100.0,
       "member_count": 1,
       "members": [
         "002594.SZ"
@@ -2210,9 +2210,9 @@
     },
     {
       "ts_code": "885921.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "储能",
+      "type": "N",
+      "total_count": 894.0,
       "member_count": 1,
       "members": [
         "002594.SZ"
@@ -2220,9 +2220,9 @@
     },
     {
       "ts_code": "885922.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "盐湖提锂",
+      "type": "N",
+      "total_count": 45.0,
       "member_count": 1,
       "members": [
         "002594.SZ"
@@ -2230,9 +2230,9 @@
     },
     {
       "ts_code": "885928.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "钠离子电池",
+      "type": "N",
+      "total_count": 143.0,
       "member_count": 1,
       "members": [
         "002594.SZ"
@@ -2240,9 +2240,9 @@
     },
     {
       "ts_code": "885929.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "专精特新",
+      "type": "N",
+      "total_count": 1226.0,
       "member_count": 1,
       "members": [
         "688120.SH"
@@ -2250,9 +2250,9 @@
     },
     {
       "ts_code": "885944.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "动力电池回收",
+      "type": "N",
+      "total_count": 94.0,
       "member_count": 1,
       "members": [
         "002594.SZ"
@@ -2260,9 +2260,9 @@
     },
     {
       "ts_code": "885986.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "碳交易",
+      "type": "N",
+      "total_count": 121.0,
       "member_count": 1,
       "members": [
         "002594.SZ"
@@ -2270,9 +2270,9 @@
     },
     {
       "ts_code": "885987.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "MicroLED概念",
+      "type": "N",
+      "total_count": 81.0,
       "member_count": 1,
       "members": [
         "688120.SH"
@@ -2280,9 +2280,9 @@
     },
     {
       "ts_code": "885997.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "比亚迪概念",
+      "type": "N",
+      "total_count": 678.0,
       "member_count": 1,
       "members": [
         "002594.SZ"
@@ -2290,9 +2290,9 @@
     },
     {
       "ts_code": "885998.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "F5G概念",
+      "type": "N",
+      "total_count": 36.0,
       "member_count": 1,
       "members": [
         "300308.SZ"
@@ -2300,9 +2300,9 @@
     },
     {
       "ts_code": "886001.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "高压快充",
+      "type": "N",
+      "total_count": 124.0,
       "member_count": 1,
       "members": [
         "002594.SZ"
@@ -2310,9 +2310,9 @@
     },
     {
       "ts_code": "886021.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "国企改革",
+      "type": "N",
+      "total_count": 1468.0,
       "member_count": 1,
       "members": [
         "688120.SH"
@@ -2320,9 +2320,9 @@
     },
     {
       "ts_code": "886033.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "共封装光学(CPO)",
+      "type": "N",
+      "total_count": 204.0,
       "member_count": 1,
       "members": [
         "300308.SZ"
@@ -2330,9 +2330,9 @@
     },
     {
       "ts_code": "886044.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "液冷服务器",
+      "type": "N",
+      "total_count": 228.0,
       "member_count": 1,
       "members": [
         "300308.SZ"
@@ -2340,9 +2340,9 @@
     },
     {
       "ts_code": "886075.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "同花顺出海50",
+      "type": "N",
+      "total_count": 50.0,
       "member_count": 1,
       "members": [
         "002594.SZ"
@@ -2350,9 +2350,9 @@
     },
     {
       "ts_code": "886096.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "同花顺新质50",
+      "type": "N",
+      "total_count": 50.0,
       "member_count": 1,
       "members": [
         "300308.SZ"
@@ -2360,9 +2360,9 @@
     },
     {
       "ts_code": "886102.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "中国AI 50",
+      "type": "N",
+      "total_count": 50.0,
       "member_count": 1,
       "members": [
         "300308.SZ"
@@ -2380,9 +2380,9 @@
     },
     {
       "ts_code": "886109.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "2026一季报预增",
+      "type": "N",
+      "total_count": 101.0,
       "member_count": 1,
       "members": [
         "300054.SZ"
@@ -2390,9 +2390,9 @@
     },
     {
       "ts_code": "886110.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "2026中报预增",
+      "type": "N",
+      "total_count": 507.0,
       "member_count": 1,
       "members": [
         "300054.SZ"
@@ -2400,9 +2400,9 @@
     },
     {
       "ts_code": "886111.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "玻璃基板",
+      "type": "N",
+      "total_count": 54.0,
       "member_count": 1,
       "members": [
         "300054.SZ"
@@ -2410,9 +2410,9 @@
     },
     {
       "ts_code": "991001.TI",
-      "name": null,
-      "type": null,
-      "total_count": null,
+      "name": "上证指数(旧)",
+      "type": "S",
+      "total_count": 1739.0,
       "member_count": 1,
       "members": [
         "603233.SH"

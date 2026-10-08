@@ -1,5 +1,5 @@
 {
-  "fetched_at": "2026-10-08T07:12:54Z",
+  "fetched_at": "2026-10-08T15:47:51Z",
   "trade_date": "20261008",
   "tier": 15000,
   "_status": "partial",
@@ -205,7 +205,7 @@
     "_attempted_endpoints": [
       "moneyflow_ind_dc"
     ],
-    "row_count": 1031,
+    "row_count": 1032,
     "_status": "ok"
   }
 }

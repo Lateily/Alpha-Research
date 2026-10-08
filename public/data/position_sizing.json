@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-08T07:18:59.601355+00:00",
+  "generated_at": "2026-10-08T15:51:22.834436+00:00",
   "date": "2026-10-08",
   "portfolio_value": 248479.0,
   "risk_pct_per_trade": 0.02,
@@ -49,24 +49,6 @@
           "contribution": 0.0
         }
       ]
-    },
-    {
-      "recommended_pct": 25.0,
-      "recommended_value": 62120.0,
-      "stop_distance_pct": 5.0,
-      "atr_pct": 2.5,
-      "vp_multiplier": 0.67,
-      "conf_multiplier": 1.0,
-      "risk_cny": 4970.0,
-      "conviction_tier": "HIGH CONVICTION",
-      "conviction_tier_zh": "高信念",
-      "rationale_e": "HIGH CONVICTION: ATR-stop 5.0% · VP-mult 0.67× · conf-mult 1.00× → 25.0% of portfolio (¥62,120)",
-      "rationale_z": "高信念：ATR止损5.0% · VP系数0.67× · 信号系数1.00× → 仓位25.0%（¥62,120）",
-      "ticker": "300054.SZ",
-      "vp_score": 47,
-      "conf_score": 0,
-      "is_held": false,
-      "signals": []
     },
     {
       "recommended_pct": 25.0,
@@ -207,6 +189,29 @@
       "conf_score": 0,
       "is_held": true,
       "signals": []
+    },
+    {
+      "recommended_pct": 25.0,
+      "recommended_value": 62120.0,
+      "stop_distance_pct": 5.0,
+      "atr_pct": 2.5,
+      "vp_multiplier": 0.67,
+      "conf_multiplier": 0.93,
+      "risk_cny": 4970.0,
+      "conviction_tier": "HIGH CONVICTION",
+      "conviction_tier_zh": "高信念",
+      "rationale_e": "HIGH CONVICTION: ATR-stop 5.0% · VP-mult 0.67× · conf-mult 0.93× → 25.0% of portfolio (¥62,120)",
+      "rationale_z": "高信念：ATR止损5.0% · VP系数0.67× · 信号系数0.93× → 仓位25.0%（¥62,120）",
+      "ticker": "300054.SZ",
+      "vp_score": 47,
+      "conf_score": -2,
+      "is_held": false,
+      "signals": [
+        {
+          "type": "MACD_DEATH_CROSS",
+          "contribution": -2.4
+        }
+      ]
     }
   ]
 }
