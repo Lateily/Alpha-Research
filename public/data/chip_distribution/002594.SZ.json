@@ -1,11 +1,11 @@
 {
   "ticker": "002594.SZ",
-  "fetched_at": "2026-10-08T15:47:53Z",
-  "trade_date": "20261008",
+  "fetched_at": "2026-10-09T07:17:44Z",
+  "trade_date": "20261009",
   "_status": "ok",
   "api_used": "cyq_chips",
   "as_of": "20261008",
-  "fallback_days": 0,
+  "fallback_days": 1,
   "chips": [
     {
       "price": 3.9,
@@ -419,5 +419,6 @@
       "price": 136.5,
       "percent": 0.06
     }
-  ]
+  ],
+  "_note": "requested trade_date=20261009 was empty (cyq_chips is T+1); fell back to most recent non-empty day 20261008"
 }

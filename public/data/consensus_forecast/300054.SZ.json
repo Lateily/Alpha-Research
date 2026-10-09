@@ -1,15 +1,15 @@
 {
   "ticker": "300054.SZ",
-  "fetched_at": "2026-10-08T15:48:03Z",
+  "fetched_at": "2026-10-09T07:17:58Z",
   "_semantics": "issuer_guidance = 公司业绩预告(forecast) + 业绩快报(express) — 发行人自披露,NOT broker consensus. 卖方预测见 broker_recommend (report_rc, E2).",
   "disclaimer": "不是买卖指令;研究信号,human executes.",
   "_status": "PARTIAL",
-  "as_of": "20260710",
+  "as_of": "20261009",
   "dimensions": {
     "forecast": {
-      "row_count": 7,
+      "row_count": 8,
       "_status": "OK",
-      "as_of": "20260710"
+      "as_of": "20261009"
     },
     "express": {
       "row_count": 0,
@@ -18,6 +18,20 @@
     }
   },
   "guidance": [
+    {
+      "source": "forecast",
+      "ann_date": "20261009",
+      "end_date": "20260930",
+      "type": "预增",
+      "net_profit": 850000000.0,
+      "net_profit_min": 840000000.0,
+      "net_profit_max": 860000000.0,
+      "p_change_min": 61.72,
+      "p_change_max": 65.57,
+      "eps": null,
+      "revenue": null,
+      "summary": "预计2026年1-9月归属于上市公司股东的净利润盈利:84,000万元至86,000万元,同比上年增长:61.72%至65.57%。"
+    },
     {
       "source": "forecast",
       "ann_date": "20260710",
@@ -118,6 +132,20 @@
     }
   ],
   "forecasts": [
+    {
+      "source": "forecast",
+      "ann_date": "20261009",
+      "end_date": "20260930",
+      "type": "预增",
+      "net_profit": 850000000.0,
+      "net_profit_min": 840000000.0,
+      "net_profit_max": 860000000.0,
+      "p_change_min": 61.72,
+      "p_change_max": 65.57,
+      "eps": null,
+      "revenue": null,
+      "summary": "预计2026年1-9月归属于上市公司股东的净利润盈利:84,000万元至86,000万元,同比上年增长:61.72%至65.57%。"
+    },
     {
       "source": "forecast",
       "ann_date": "20260710",

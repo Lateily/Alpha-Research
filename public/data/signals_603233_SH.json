@@ -1,7 +1,7 @@
 {
   "ticker": "603233.SH",
-  "generated_at": "2026-10-08",
-  "price": 18.2,
+  "generated_at": "2026-10-09",
+  "price": 18.36,
   "zone": "NEUTRAL",
   "entry_zone": true,
   "exit_zone": false,
@@ -9,7 +9,7 @@
     {
       "type": "MA20_BOUNCE",
       "strength": "moderate",
-      "date": "20260930",
+      "date": "20261008",
       "bullish": true,
       "description": {
         "e": "Price bounced off MA20 (18.1) — near-term support held",
@@ -17,13 +17,13 @@
       }
     },
     {
-      "type": "KDJ_GOLDEN_CROSS",
+      "type": "MACD_GOLDEN_CROSS",
       "strength": "moderate",
-      "date": "20260930",
+      "date": "20261008",
       "bullish": true,
       "description": {
-        "e": "KDJ K(38.9) crossed above D(35.7) in oversold — reversal signal",
-        "z": "KDJ K(38.9)上穿D(35.7)，超卖区金叉看涨"
+        "e": "MACD DIF(-0.064) crossed above DEA(-0.086) below zero — bullish momentum",
+        "z": "MACD DIF(-0.064)上穿DEA(-0.086)零轴下方金叉看涨"
       }
     }
   ],
@@ -33,27 +33,27 @@
     "total": 2
   },
   "indicators": {
-    "ma5": 17.86,
-    "ma20": 18.13,
+    "ma5": 17.94,
+    "ma20": 18.14,
     "ma60": null,
-    "rsi14": 52.1,
-    "vol_ma20": 66914,
-    "vol_ratio": 0.88,
-    "price_vs_ma20": 0.41,
+    "rsi14": 54.2,
+    "vol_ma20": 68122,
+    "vol_ratio": 1.31,
+    "price_vs_ma20": 1.21,
     "price_vs_ma60": null,
-    "change_1d": 2.08,
-    "change_5d": 2.54,
-    "change_20d": -1.14,
-    "macd_dif": -0.1009,
-    "macd_dea": -0.0914,
-    "macd_hist": -0.0189,
-    "bb_upper": 18.74,
-    "bb_mid": 18.13,
+    "change_1d": 0.88,
+    "change_5d": 2.17,
+    "change_20d": 1.55,
+    "macd_dif": -0.0643,
+    "macd_dea": -0.086,
+    "macd_hist": 0.0433,
+    "bb_upper": 18.76,
+    "bb_mid": 18.14,
     "bb_lower": 17.52,
-    "bb_bandwidth": 6.72,
-    "kdj_k": 38.9,
-    "kdj_d": 35.7,
-    "kdj_j": 45.1,
+    "bb_bandwidth": 6.8,
+    "kdj_k": 48.3,
+    "kdj_d": 39.9,
+    "kdj_j": 65.0,
     "cvd_latest": null,
     "cvd_slope_5d": null,
     "cvd_chg_1d": null,
