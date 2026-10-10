@@ -1687,9 +1687,6 @@ def build_deep_research_queue(
             ),
             "candidate_status": candidate.get("review_status"),
             "battery_verdict": completeness.get("verdict"),
-            "event_assessment_status": (
-                "NOT_ASSESSED" if code in event_review_required else "NOT_REQUIRED_BY_RUN_SCOPE"
-            ),
             "blocked_reasons": blocked_reasons,
         })
     ready = {row["ts_code"] for row in ready_pool if row["ready"]}

@@ -14,6 +14,7 @@ sys.path.insert(0, str(ROOT / "experiments" / "research_funnel"))
 sys.path.insert(0, str(ROOT / "tests"))
 
 import etf_mainboard_universe as scope  # noqa: E402
+import closure_experiment as closure_contract  # noqa: E402
 import funnel_pipeline as fp  # noqa: E402
 import test_research_funnel_closure as closure  # noqa: E402
 from security_registry import _sha256  # noqa: E402
@@ -167,6 +168,7 @@ class FunnelScopeTests(unittest.TestCase):
         gate = next(row for row in queue["ready_pool"] if row["ts_code"] == code)
         self.assertFalse(gate["ready"])
         self.assertIn("EVENT_RISK_NOT_ASSESSED", gate["blocked_reasons"])
+        self.assertEqual(closure_contract.LEGACY_PACKET_READY_ROW_FIELDS, set(gate))
 
 
 if __name__ == "__main__":
