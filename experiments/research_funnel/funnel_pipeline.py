@@ -27,6 +27,7 @@ from typing import Any, Iterable, Mapping, Sequence
 
 from security_registry import _atomic_write_json, _date8, _sha256, validate_registry
 import semiconductor_inputs as semiconductor_evidence
+import etf_mainboard_universe as universe_scope_contract
 
 
 SCAN_SCHEMA = "ar.all_market_scan"
@@ -470,6 +471,8 @@ def build_all_market_scan(
     macro_industry: Mapping[str, Any] | None = None, trade_date: str,
     semiconductor_inputs: Mapping[str, Any] | None = None,
     industry_taxonomy: Mapping[str, Any] | None = None,
+    universe_scope: Mapping[str, Any] | None = None,
+    universe_scope_source: Mapping[str, Any] | None = None,
     generated_at: str | None = None, channel_top_n: int = 40,
 ) -> dict[str, Any]:
     """Build six independent channel rows; no cross-channel score exists."""
@@ -478,6 +481,19 @@ def build_all_market_scan(
     if channel_top_n < 1:
         raise FunnelError("channel_top_n must be positive")
     eligible = _eligible_rows(registry)
+    if universe_scope is not None:
+        if universe_scope_source is None:
+            raise FunnelError("universe scope source evidence is required")
+        try:
+            universe_scope_contract.validate_manifest(
+                universe_scope, registry, universe_scope_source,
+            )
+        except universe_scope_contract.UniverseError as exc:
+            raise FunnelError(f"universe scope is invalid: {exc}") from exc
+        if universe_scope.get("target_trade_date") != trade_date:
+            raise FunnelError("universe scope is not from the scan trade date")
+        scoped_codes = set(universe_scope["included_codes"])
+        eligible = [row for row in eligible if row["ts_code"] in scoped_codes]
     eligible_codes = {row["ts_code"] for row in eligible}
     e1_by_code = _e1_index(e1_events, trade_date, registry)
     rotation_by_industry = _rotation_index(rotation, trade_date)
@@ -847,6 +863,11 @@ def build_all_market_scan(
         "rows_hash": _hash(rows),
         "disclaimer": DISCLAIMER,
     }
+    if universe_scope is not None:
+        payload["universe_scope"] = copy.deepcopy(universe_scope)
+        payload["universe_scope_source"] = copy.deepcopy(universe_scope_source)
+    elif universe_scope_source is not None:
+        raise FunnelError("universe scope source was supplied without a scope manifest")
     validate_all_market_scan(payload, registry)
     return payload
 
@@ -907,6 +928,27 @@ def validate_all_market_scan(payload: Mapping[str, Any], registry: Mapping[str, 
     if not isinstance(rows, list) or payload.get("rows_hash") != _hash(rows):
         raise FunnelError("all_market_scan rows/hash mismatch")
     eligible_rows = {row["ts_code"]: row for row in _eligible_rows(registry)}
+    universe_scope = payload.get("universe_scope")
+    if universe_scope is not None:
+        if not isinstance(universe_scope, Mapping):
+            raise FunnelError("all_market_scan universe scope is invalid")
+        universe_scope_source = payload.get("universe_scope_source")
+        if not isinstance(universe_scope_source, Mapping):
+            raise FunnelError("all_market_scan universe scope source is invalid")
+        try:
+            universe_scope_contract.validate_manifest(
+                universe_scope, registry, universe_scope_source,
+            )
+        except universe_scope_contract.UniverseError as exc:
+            raise FunnelError(f"all_market_scan universe scope is invalid: {exc}") from exc
+        if universe_scope.get("target_trade_date") != payload.get("as_of"):
+            raise FunnelError("all_market_scan universe scope date mismatch")
+        scope_codes = set(universe_scope["included_codes"])
+        eligible_rows = {
+            code: row for code, row in eligible_rows.items() if code in scope_codes
+        }
+    elif payload.get("universe_scope_source") is not None:
+        raise FunnelError("all_market_scan has source evidence without a scope manifest")
     eligible = set(eligible_rows)
     as_of = _date8(str(payload.get("as_of") or ""))
     if registry.get("as_of") != as_of:
@@ -1152,7 +1194,10 @@ def build_candidate_review(
     if reserved_total >= target_size:
         raise FunnelError("reserved quotas leave no main-channel capacity")
 
-    registry_rows = _eligible_rows(registry)
+    scan_codes = {row["ts_code"] for row in scan["rows"]}
+    registry_rows = [
+        row for row in _eligible_rows(registry) if row["ts_code"] in scan_codes
+    ]
     registry_by_code = {row["ts_code"]: row for row in registry_rows}
     current_features = {
         code: row for code, row in features.items()
@@ -1301,7 +1346,8 @@ def build_candidate_review(
             "ts_code": code,
             "reason": "E1_RED_FLAG_OVERRIDES_ALL_POSITIVE_CHANNELS",
         }
-    for row in registry["rows"]:
+    frame_registry_rows = registry_rows if scan.get("universe_scope") is not None else registry["rows"]
+    for row in frame_registry_rows:
         if row.get("qualification", {}).get("u1_scan_eligible") is not True:
             excluded_by_code[row["ts_code"]] = {
                 "ts_code": row["ts_code"],
@@ -1411,6 +1457,8 @@ def validate_candidate_review(
     if not isinstance(rows, list) or payload.get("rows_hash") != _hash(rows):
         raise FunnelError("candidate_review rows/hash mismatch")
     eligible = {row["ts_code"] for row in _eligible_rows(registry)}
+    if scan.get("universe_scope") is not None:
+        eligible &= set(scan["universe_scope"]["included_codes"])
     triggered_by_code: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for scan_row in scan["rows"]:
         if scan_row["triggered"]:
@@ -1480,7 +1528,10 @@ def validate_candidate_review(
         len(drawn_codes) != len(set(drawn_codes))
         or len(excluded_codes) != len(set(excluded_codes))
         or set(drawn_codes).intersection(excluded_codes)
-        or set(drawn_codes).union(excluded_codes) != {row["ts_code"] for row in registry["rows"]}
+        or set(drawn_codes).union(excluded_codes) != (
+            eligible if scan.get("universe_scope") is not None
+            else {row["ts_code"] for row in registry["rows"]}
+        )
     ):
         raise FunnelError("random control frame does not partition the registered universe")
     pools: dict[str, list[str]] = defaultdict(list)
@@ -1579,6 +1630,7 @@ def build_deep_research_queue(
     selected_tickers: Sequence[str], trade_date: str, generated_at: str | None = None,
     research_questions: Mapping[str, str] | None = None,
     sector_os_industries: Sequence[str] = (),
+    required_event_assessment_codes: Sequence[str] = (),
 ) -> dict[str, Any]:
     """Create a U4 queue only from an explicit human-selected 3..5 ticker list."""
     generated_at = generated_at or _now_utc()
@@ -1589,6 +1641,11 @@ def build_deep_research_queue(
         for code, question in (research_questions or {}).items()
     }
     sector_os = {str(industry).strip() for industry in sector_os_industries if str(industry).strip()}
+    event_review_required = {
+        str(code).strip().upper()
+        for code in required_event_assessment_codes
+        if str(code).strip()
+    }
     if len(selected) != len(set(selected)):
         raise FunnelError("U4 human selection contains duplicates")
     # governance-mutation: FUNNEL_U4_HUMAN_SELECTION_SIZE
@@ -1611,6 +1668,7 @@ def build_deep_research_queue(
         blocked_reasons = (
             (["U3_BATTERY_INCOMPLETE"] if completeness.get("verdict") != "COMPLETE" else [])
             + ([RED_FLAG_BLOCK_REASON] if red_flagged else [])
+            + (["EVENT_RISK_NOT_ASSESSED"] if code in event_review_required else [])
         )
         ready_pool.append({
             "ts_code": code,
@@ -1622,6 +1680,9 @@ def build_deep_research_queue(
             ),
             "candidate_status": candidate.get("review_status"),
             "battery_verdict": completeness.get("verdict"),
+            "event_assessment_status": (
+                "NOT_ASSESSED" if code in event_review_required else "NOT_REQUIRED_BY_RUN_SCOPE"
+            ),
             "blocked_reasons": blocked_reasons,
         })
     ready = {row["ts_code"] for row in ready_pool if row["ready"]}

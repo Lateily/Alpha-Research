@@ -270,21 +270,33 @@ def run_candidates() -> int:
     except semiconductor_evidence.SemiconductorInputError as exc:
         raise FunnelError(f"semiconductor positive inputs are invalid: {exc}") from exc
     taxonomy = _load_json(INDUSTRY_TAXONOMY_PATH) if has_semiconductor_scope else None
+    scope_path = os.environ.get("AR_FUNNEL_UNIVERSE_MANIFEST")
+    universe_scope = _load_json(Path(scope_path)) if scope_path else None
+    scope_source_path = os.environ.get("AR_FUNNEL_UNIVERSE_SOURCE")
+    universe_scope_source = _load_json(Path(scope_source_path)) if scope_source_path else None
     scan = build_all_market_scan(
         registry=registry, e1_events=e1, features=features, rotation=rotation,
         macro_industry=None, semiconductor_inputs=semiconductor_inputs,
-        industry_taxonomy=taxonomy, trade_date=target, generated_at=generated_at,
+        industry_taxonomy=taxonomy, universe_scope=universe_scope,
+        universe_scope_source=universe_scope_source,
+        trade_date=target, generated_at=generated_at,
     )
     candidates = build_candidate_review(
         registry=registry, scan=scan, features=features, trade_date=target,
-        generated_at=generated_at,
+        generated_at=generated_at, target_size=100 if universe_scope is not None else 200,
     )
     manifest = build_candidate_manifest(candidate_review=candidates, scan=scan, run_id=run_id)
     validate_candidate_manifest(manifest)
+    stage_files = {
+        "all_market_scan.json": scan, "candidate_review.json": candidates,
+        "candidate_manifest.json": manifest,
+    }
+    if universe_scope is not None:
+        stage_files["universe_scope.json"] = universe_scope
+        stage_files["universe_scope_source.json"] = universe_scope_source
     _write_stage(
         bundle_dir, "candidates",
-        {"all_market_scan.json": scan, "candidate_review.json": candidates,
-         "candidate_manifest.json": manifest},
+        stage_files,
         as_of=target, run_id=run_id, generated_at=generated_at,
         binds={"candidate_manifest_hash": manifest["manifest_hash"]},
     )
@@ -294,6 +306,9 @@ def run_candidates() -> int:
         "step": "funnel_candidates", "target_trade_date": target, "run_id": run_id,
         "bundle": str(bundle_dir), "expected_candidates": manifest["expected_count"],
         "manifest_hash": manifest["manifest_hash"][:16],
+        "universe_scope_hash": (
+            universe_scope.get("manifest_hash", "")[:16] if universe_scope else None
+        ),
     }, ensure_ascii=False))
     print(DISCLAIMER)
     return 0
@@ -737,6 +752,11 @@ def run_finalize() -> int:
     queue = build_deep_research_queue(
         candidate_review=candidates, battery=battery, selected_tickers=(),
         trade_date=target, generated_at=generated_at,
+        required_event_assessment_codes=[
+            code.strip()
+            for code in os.environ.get("AR_FUNNEL_EVENT_REVIEW_CODES", "").split(",")
+            if code.strip()
+        ],
     )
     projected = advance_registry(
         registry=registry, scan=scan, candidate_review=candidates, battery=battery,
