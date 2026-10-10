@@ -480,7 +480,12 @@ def build_all_market_scan(
     generated_at = generated_at or _now_utc()
     if channel_top_n < 1:
         raise FunnelError("channel_top_n must be positive")
-    eligible = _eligible_rows(registry)
+    # A bounded research scope filters which issuers may be emitted, but it must
+    # not redefine an existing full-market rank.  Otherwise a TOP_40 channel
+    # becomes tautologically true when the scope itself contains fewer than 40
+    # securities.
+    ranking_eligible = _eligible_rows(registry)
+    eligible = ranking_eligible
     if universe_scope is not None:
         if universe_scope_source is None:
             raise FunnelError("universe scope source evidence is required")
@@ -495,6 +500,7 @@ def build_all_market_scan(
         scoped_codes = set(universe_scope["included_codes"])
         eligible = [row for row in eligible if row["ts_code"] in scoped_codes]
     eligible_codes = {row["ts_code"] for row in eligible}
+    ranking_codes = {row["ts_code"] for row in ranking_eligible}
     e1_by_code = _e1_index(e1_events, trade_date, registry)
     rotation_by_industry = _rotation_index(rotation, trade_date)
     macro_by_industry = _macro_index(macro_industry)
@@ -509,7 +515,7 @@ def build_all_market_scan(
     usable_price = [
         (code, _finite(row.get("return_20d")))
         for code, row in features.items()
-        if code in eligible_codes
+        if code in ranking_codes
         and str(row.get("trade_date")) == trade_date
         and _finite(row.get("return_20d")) is not None
     ]
@@ -845,6 +851,7 @@ def build_all_market_scan(
             "cross_channel_scoring": False,
             "threshold_mode": "PER_CHANNEL_TOP_N_RELATIVE_UNVALIDATED",
             "channel_top_n": channel_top_n,
+            "price_rank_universe": "FULL_REGISTRY_ELIGIBLE_THEN_SCOPE_FILTER",
             "macro_selection_authority": False,
             # governance-mutation: FUNNEL_U1_INDUSTRY_MODE_DECLARED
             "industry_channel_mode": INDUSTRY_CHANNEL_MODE,

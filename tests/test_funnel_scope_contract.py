@@ -119,6 +119,37 @@ class FunnelScopeTests(unittest.TestCase):
         self.assertEqual(30 * len(fp.CHANNELS), len(scan["rows"]))
         self.assertNotIn("universe_scope", scan)
 
+    def test_scoped_price_channel_preserves_full_registry_rank(self) -> None:
+        registry = scoped_registry()
+        manifest, source = scope_contract(registry)
+        features = closure.features_fixture(registry)
+        scoped_code = manifest["included_codes"][0]
+        outside_code = next(
+            row["ts_code"] for row in registry["rows"]
+            if row["ts_code"] not in set(manifest["included_codes"])
+        )
+        for row in features.values():
+            row["return_20d"] = -100.0
+        features[scoped_code]["return_20d"] = 10.0
+        features[outside_code]["return_20d"] = 20.0
+
+        scan = fp.build_all_market_scan(
+            registry=registry, e1_events=closure.e1_fixture(registry),
+            features=features, rotation=closure.rotation_fixture(),
+            trade_date=closure.TRADE_DATE, generated_at=closure.GENERATED_AT,
+            channel_top_n=1, universe_scope=manifest, universe_scope_source=source,
+        )
+        price_row = next(
+            row for row in scan["rows"]
+            if row["ts_code"] == scoped_code and row["channel"] == "PRICE_VOLUME"
+        )
+        self.assertEqual(2, price_row["channel_rank"])
+        self.assertFalse(price_row["triggered"])
+        self.assertEqual(
+            "FULL_REGISTRY_ELIGIBLE_THEN_SCOPE_FILTER",
+            scan["policy"]["price_rank_universe"],
+        )
+
     def test_required_event_review_keeps_named_security_out_of_ready_pool(self) -> None:
         _, _, _, candidates = closure.build_candidates()
         code = next(
