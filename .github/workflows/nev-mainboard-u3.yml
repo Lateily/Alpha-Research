@@ -35,7 +35,9 @@ jobs:
       AR_FUNNEL_OUTPUT_ROOT: ${{ github.workspace }}/scratch/research_funnel
       AR_FUNNEL_UNIVERSE_MANIFEST: ${{ github.workspace }}/scratch/nev-mainboard-universe.json
       AR_FUNNEL_UNIVERSE_SOURCE: ${{ github.workspace }}/scratch/nev-mainboard-universe-source.json
-      AR_FUNNEL_EVENT_REVIEW_CODES: 600418.SH
+      AR_FUNNEL_SCOPE_REGISTRY: ${{ github.workspace }}/scratch/nev-mainboard-security-registry.json
+      AR_FUNNEL_FULL_SCAN: ${{ github.workspace }}/nev-mainboard-u3-artifact/full-market-scan.json
+      AR_FUNNEL_PROJECTION_RECEIPT: ${{ github.workspace }}/nev-mainboard-u3-artifact/projection-receipt.json
       ARTIFACT_ROOT: ${{ github.workspace }}/nev-mainboard-u3-artifact
 
     steps:
@@ -108,6 +110,7 @@ jobs:
             --as-of "$AR_TARGET_TRADE_DATE" \
             --output public/data/v2/security_registry.json \
             --allow-partial-exit-zero
+          cp public/data/v2/security_registry.json "$ARTIFACT_ROOT/full-security-registry.json"
 
       - name: Freeze 399976 and 930997 main-board union
         env:
@@ -147,10 +150,12 @@ jobs:
           (cd experiments/execution_tracker && python rotation_panel.py)
           (cd experiments/execution_tracker && python export_contracts.py)
 
-      - name: Run scoped U0-U2 candidate funnel
+      - name: Project canonical full-market U1 into isolated U2 scope
         env:
           TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
-        run: python experiments/research_funnel/funnel_dag.py candidates
+        run: |
+          python experiments/research_funnel/etf_mainboard_projection.py candidates
+          cp "$AR_FUNNEL_SCOPE_REGISTRY" public/data/v2/security_registry.json
 
       - name: Run scoped U3 six-dimension battery
         env:
@@ -209,6 +214,9 @@ jobs:
           paths = {
               "scope_source": root / "nev-mainboard-universe-source.json",
               "scope": root / "nev-mainboard-universe.json",
+              "full_registry": root / "full-security-registry.json",
+              "full_scan": root / "full-market-scan.json",
+              "projection": root / "projection-receipt.json",
               "scan": bundle / "all_market_scan.json",
               "review": bundle / "candidate_review.json",
               "manifest": bundle / "candidate_manifest.json",
@@ -276,6 +284,11 @@ jobs:
                   },
                   "scope_manifest_hash": data["scope"].get("manifest_hash"),
                   "scope_source_hash": data["scope_source"].get("source_hash"),
+                  "full_registry_hash": data["projection"]["bindings"].get("full_registry_hash"),
+                  "scope_registry_hash": data["projection"]["bindings"].get("scoped_registry_hash"),
+                  "full_scan_rows_hash": data["projection"]["bindings"].get("full_scan_rows_hash"),
+                  "projected_scan_rows_hash": data["projection"]["bindings"].get("scoped_scan_rows_hash"),
+                  "projection_receipt_hash": data["projection"].get("receipt_hash"),
                   "candidate_manifest_hash": data["manifest"].get("manifest_hash"),
                   "battery_rows_hash": data["battery"].get("rows_hash"),
                   "bundle_hash": data["bundle_manifest"].get("bundle_hash"),
