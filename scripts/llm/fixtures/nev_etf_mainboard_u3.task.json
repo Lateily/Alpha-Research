@@ -1,0 +1,79 @@
+{
+  "schema": "ai-task.v1",
+  "task_id": "RESEARCH-NEV-ETF-MAINBOARD-U3-20261010",
+  "architecture_block": [
+    "A Core Research Funnel",
+    "Isolated ETF constituent scope"
+  ],
+  "objective": "Run an isolated, hash-bound U0-U3 research funnel for the 20261009 union of the 399976.SZ and 930997.CSI index constituents, restricted to eligible Shanghai and Shenzhen main-board securities, and stop for human review at U3.",
+  "non_goals": [
+    "No production nightly run, publication, or current_run update.",
+    "No automatic U4 selection, paper registration, simulated order, broker connection, or real trade.",
+    "No silent inclusion of ChiNext, STAR Market, Beijing Stock Exchange, ST, delisted, or out-of-scope securities.",
+    "No presumption that 600418.SH has or lacks an event risk; evidence must decide and missing evidence remains explicit."
+  ],
+  "human_owner": "Reed",
+  "reviewer": "Junyan",
+  "executor_candidates": ["Codex"],
+  "dependencies": [
+    "Origin/main baseline recorded at task creation: 0ebde2fb",
+    "Existing frozen three-stage funnel DAG (read-only dependency)",
+    "Existing frozen Research Closed Loop V1.5 channel rules (read-only dependency)",
+    "GitHub Actions TUSHARE_TOKEN secret"
+  ],
+  "authority_docs": [
+    "AGENTS.md",
+    "experiments/AGENTS.md",
+    "docs/research/RESEARCH_CLOSED_LOOP_V1.md"
+  ],
+  "file_scope": [
+    "experiments/research_funnel/etf_mainboard_universe.py",
+    "experiments/research_funnel/etf_mainboard_projection.py",
+    ".github/workflows/fetch-data.yml",
+    ".github/workflows/nev-mainboard-u3.yml",
+    ".github/workflows/python-ci.yml",
+    "tests/test_etf_mainboard_universe.py",
+    "tests/test_funnel_scope_contract.py",
+    "tests/test_nev_mainboard_u3_workflow_contract.py",
+    "scripts/llm/fixtures/nev_etf_mainboard_u3.task.json"
+  ],
+  "forbidden_scope": [
+    "/Users/years/ar-live",
+    "public/data/v2/current_run.json",
+    "experiments/execution_tracker/model_fund",
+    "production",
+    "broker"
+  ],
+  "input_contracts": [
+    "Tushare index_weight snapshots for 399976.SZ and 930997.CSI resolved on or before 20261009",
+    "Full same-day U0 security registry and E1 evidence",
+    "Same-run feature, rotation, candidate manifest, and battery artifacts"
+  ],
+  "output_artifacts": [
+    "Hash-bound ETF main-board universe manifest with inclusions and exclusions",
+    "Isolated U1 all-market-scope scan and U2 candidate manifest",
+    "U3 deep research queue and explicit blockers",
+    "Workflow summary and SHA256SUMS"
+  ],
+  "acceptance_tests": [
+    "Only eligible Shanghai and Shenzhen main-board securities from the two-index union can enter the scoped scan.",
+    "ChiNext, STAR Market, Beijing Stock Exchange, ST, delisted, missing, and out-of-scope securities remain excluded with explicit reasons.",
+    "The scope manifest is bound to index source dates, full registry hash, rows hash, and a self hash; tampering fails closed.",
+    "The scoped scan contains exactly six channels for every included security and no row outside the manifest.",
+    "The unscoped all-market funnel behavior remains unchanged.",
+    "The GitHub workflow is manual, read-only to repository contents, uploads only isolated artifacts, and contains no production, current_run, U4, paper, or trade step.",
+    "All targeted offline tests and the governance mutation gate pass before dispatch."
+  ],
+  "risk_level": "HIGH",
+  "network_policy": "LIVE_DATA",
+  "budget": {
+    "max_cny": "0",
+    "max_minutes": 240
+  },
+  "approval_gates": [
+    "User approved the main-board-only scope and isolated U3 run.",
+    "Draft PR and GitHub Actions run do not authorize merge or production publication.",
+    "Human review is required at U3 before any later U4 or paper action."
+  ],
+  "created_at": "2026-10-10T00:00:00+08:00"
+}

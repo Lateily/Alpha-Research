@@ -1,0 +1,341 @@
+name: Isolated NEV ETF Mainboard U3
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_trade_date:
+        description: Settled A-share trade date (YYYYMMDD)
+        required: true
+        type: string
+        default: '20261009'
+  workflow_call:
+    inputs:
+      target_trade_date:
+        required: true
+        type: string
+    secrets:
+      TUSHARE_TOKEN:
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: isolated-nev-mainboard-u3-${{ github.ref }}-${{ inputs.target_trade_date }}
+  cancel-in-progress: false
+
+jobs:
+  research:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      AR_TARGET_TRADE_DATE: ${{ inputs.target_trade_date }}
+      AR_RUN_ID: nev-mainboard-u3-${{ github.run_id }}-${{ github.run_attempt }}
+      AR_FEATURE_STORE_DB: ${{ github.workspace }}/scratch/feature_store.sqlite3
+      AR_FUNNEL_OUTPUT_ROOT: ${{ github.workspace }}/scratch/research_funnel
+      AR_FUNNEL_UNIVERSE_MANIFEST: ${{ github.workspace }}/scratch/nev-mainboard-universe.json
+      AR_FUNNEL_UNIVERSE_SOURCE: ${{ github.workspace }}/scratch/nev-mainboard-universe-source.json
+      AR_FUNNEL_SCOPE_REGISTRY: ${{ github.workspace }}/scratch/nev-mainboard-security-registry.json
+      AR_FUNNEL_FULL_SCAN: ${{ github.workspace }}/nev-mainboard-u3-artifact/full-market-scan.json
+      AR_FUNNEL_PROJECTION_RECEIPT: ${{ github.workspace }}/nev-mainboard-u3-artifact/projection-receipt.json
+      ARTIFACT_ROOT: ${{ github.workspace }}/nev-mainboard-u3-artifact
+
+    steps:
+      - name: Checkout requested branch
+        uses: actions/checkout@v6
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      - name: Install isolated research dependencies
+        run: pip install pandas requests tushare --quiet
+
+      - name: Validate exact settled run context
+        env:
+          TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$ARTIFACT_ROOT" "$(dirname "$AR_FEATURE_STORE_DB")"
+          [[ "$AR_TARGET_TRADE_DATE" =~ ^[0-9]{8}$ ]] || {
+            echo "::error::target_trade_date must be YYYYMMDD"
+            exit 2
+          }
+          test -n "$TUSHARE_TOKEN" || {
+            echo "::error::TUSHARE_TOKEN secret is unavailable"
+            exit 2
+          }
+          python - <<'PY'
+          import json
+          import os
+          from datetime import datetime, timezone
+          import tushare as ts
+
+          target = os.environ["AR_TARGET_TRADE_DATE"]
+          rows = ts.pro_api(os.environ["TUSHARE_TOKEN"]).trade_cal(
+              exchange="SSE", start_date=target, end_date=target,
+          ).to_dict("records")
+          if len(rows) != 1 or str(rows[0].get("cal_date")) != target or int(rows[0].get("is_open") or 0) != 1:
+              raise SystemExit(f"target is not a confirmed open A-share date: {target}")
+          payload = {
+              "schema": "ar.isolated_nev_mainboard_u3_context",
+              "schema_version": "1.0",
+              "target_trade_date": target,
+              "run_id": os.environ["AR_RUN_ID"],
+              "source_commit": os.environ["GITHUB_SHA"],
+              "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+              "scope": {
+                  "tracking_indices": ["399976.SZ", "930997.CSI"],
+                  "market": "SSE_AND_SZSE_MAIN_BOARD_ONLY",
+              },
+              "authority": {
+                  "auto_u4_selection": False,
+                  "paper_registration": False,
+                  "paper_order": False,
+                  "real_trade": False,
+                  "production_publication": False,
+              },
+          }
+          with open(os.path.join(os.environ["ARTIFACT_ROOT"], "run-context.json"), "w", encoding="utf-8") as handle:
+              json.dump(payload, handle, ensure_ascii=False, indent=2)
+              handle.write("\n")
+          PY
+
+      - name: Build same-day U0 security registry
+        env:
+          TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
+        run: |
+          python experiments/research_funnel/security_registry.py \
+            --as-of "$AR_TARGET_TRADE_DATE" \
+            --output public/data/v2/security_registry.json \
+            --allow-partial-exit-zero
+          cp public/data/v2/security_registry.json "$ARTIFACT_ROOT/full-security-registry.json"
+
+      - name: Freeze 399976 and 930997 main-board union
+        env:
+          TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
+        run: |
+          python experiments/research_funnel/etf_mainboard_universe.py \
+            --target-trade-date "$AR_TARGET_TRADE_DATE" \
+            --registry public/data/v2/security_registry.json \
+            --source-output "$AR_FUNNEL_UNIVERSE_SOURCE" \
+            --output "$AR_FUNNEL_UNIVERSE_MANIFEST"
+
+      - name: Build same-day feature store
+        env:
+          TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
+        run: |
+          python experiments/research_funnel/feature_store.py \
+            --registry public/data/v2/security_registry.json \
+            --db "$AR_FEATURE_STORE_DB" \
+            --out public/data/v2/feature_store_health.json \
+            --as-of "$AR_TARGET_TRADE_DATE" \
+            --lookback 25
+
+      - name: Build same-day E1 event gate
+        env:
+          TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
+        run: |
+          python experiments/research_funnel/e1_event_layer.py \
+            --as-of "$AR_TARGET_TRADE_DATE" \
+            --registry public/data/v2/security_registry.json \
+            --output public/data/v2/e1_event_layer.json \
+            --allow-partial-exit-zero
+
+      - name: Build same-day rotation evidence
+        env:
+          TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
+        run: |
+          (cd experiments/execution_tracker && python rotation_panel.py)
+          (cd experiments/execution_tracker && python export_contracts.py)
+
+      - name: Project canonical full-market U1 into isolated U2 scope
+        env:
+          TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
+        run: |
+          python experiments/research_funnel/etf_mainboard_projection.py candidates
+          cp "$AR_FUNNEL_SCOPE_REGISTRY" public/data/v2/security_registry.json
+
+      - name: Run scoped U3 six-dimension battery
+        env:
+          TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
+        run: python experiments/research_funnel/funnel_dag.py battery
+
+      - name: Finalize U3 human-review handoff
+        env:
+          TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
+        run: python experiments/research_funnel/funnel_dag.py finalize
+
+      - name: Confirm complete isolated U3 pipeline
+        run: echo "AR_U3_PIPELINE_COMPLETE=true" >> "$GITHUB_ENV"
+
+      - name: Freeze isolated results and hashes
+        if: always()
+        run: |
+          set -euo pipefail
+          mkdir -p "$ARTIFACT_ROOT/public-data-v2" "$ARTIFACT_ROOT/funnel"
+          for file in security_registry.json feature_store_health.json e1_event_layer.json rotation_panel.json funnel_stage_candidates.json funnel_stage_battery.json funnel_health.json; do
+            if [ -f "public/data/v2/$file" ]; then
+              cp "public/data/v2/$file" "$ARTIFACT_ROOT/public-data-v2/$file"
+            fi
+          done
+          if [ -f "$AR_FUNNEL_UNIVERSE_MANIFEST" ]; then
+            cp "$AR_FUNNEL_UNIVERSE_MANIFEST" "$ARTIFACT_ROOT/nev-mainboard-universe.json"
+          fi
+          if [ -f "$AR_FUNNEL_UNIVERSE_SOURCE" ]; then
+            cp "$AR_FUNNEL_UNIVERSE_SOURCE" "$ARTIFACT_ROOT/nev-mainboard-universe-source.json"
+          fi
+          if [ -d "$AR_FUNNEL_OUTPUT_ROOT/$AR_TARGET_TRADE_DATE/$AR_RUN_ID" ]; then
+            cp -a "$AR_FUNNEL_OUTPUT_ROOT/$AR_TARGET_TRADE_DATE/$AR_RUN_ID/." "$ARTIFACT_ROOT/funnel/"
+          fi
+          if [ "${AR_U3_PIPELINE_COMPLETE:-}" = "true" ]; then
+            python experiments/research_funnel/etf_mainboard_projection.py validate-artifact \
+              --artifact-root "$ARTIFACT_ROOT"
+          fi
+          python - <<'PY'
+          from collections import Counter
+          import json
+          import os
+          from pathlib import Path
+
+          root = Path(os.environ["ARTIFACT_ROOT"])
+          bundle = root / "funnel"
+          summary = {
+              "schema": "ar.isolated_nev_mainboard_u3_summary",
+              "schema_version": "1.0",
+              "target_trade_date": os.environ["AR_TARGET_TRADE_DATE"],
+              "run_id": os.environ["AR_RUN_ID"],
+              "source_commit": os.environ["GITHUB_SHA"],
+              "status": "INCOMPLETE",
+              "authority": {
+                  "human_review_required": True,
+                  "positive_candidate_selection_available": False,
+                  "auto_u4_selection": False,
+                  "paper_registration": False,
+                  "paper_order": False,
+                  "real_trade": False,
+              },
+          }
+          paths = {
+              "scope_source": root / "nev-mainboard-universe-source.json",
+              "scope": root / "nev-mainboard-universe.json",
+              "full_registry": root / "full-security-registry.json",
+              "full_scan": root / "full-market-scan.json",
+              "projection": root / "projection-receipt.json",
+              "isolated_projection_manifest": root / "isolated-projection-manifest.json",
+              "scan": bundle / "all_market_scan.json",
+              "review": bundle / "candidate_review.json",
+              "manifest": bundle / "candidate_manifest.json",
+              "battery": bundle / "candidate_battery.json",
+              "queue": bundle / "deep_research_queue.json",
+              "bundle_manifest": bundle / "manifest.json",
+              "health": root / "public-data-v2" / "funnel_health.json",
+          }
+          pipeline_complete = os.environ.get("AR_U3_PIPELINE_COMPLETE") == "true"
+          if pipeline_complete and all(path.is_file() for path in paths.values()):
+              data = {key: json.loads(path.read_text(encoding="utf-8")) for key, path in paths.items()}
+              candidate_rows = data["review"].get("rows") or []
+              battery_rows = data["battery"].get("results") or []
+              ready_pool = data["queue"].get("ready_pool") or []
+              active_candidates = [
+                  row["ts_code"] for row in candidate_rows
+                  if row.get("review_status") != "EXCLUDED_RED_FLAG"
+              ]
+              ready_rows = [row for row in ready_pool if row.get("ready") is True]
+              ready_codes = [row["ts_code"] for row in ready_rows]
+              ready_by_status = Counter(
+                  str(row.get("candidate_status") or "UNSPECIFIED") for row in ready_rows
+              )
+              main_ready_codes = [
+                  row["ts_code"] for row in ready_rows
+                  if row.get("candidate_status") == "MAIN_CHANNEL"
+              ]
+              reserve_review_codes = [
+                  row["ts_code"] for row in ready_rows
+                  if str(row.get("candidate_status") or "").startswith("RESERVED_")
+              ]
+              health = data["health"]
+              battery_coverage = health.get("battery_coverage") or {}
+              health_ok = (
+                  health.get("target_trade_date") == os.environ["AR_TARGET_TRADE_DATE"]
+                  and health.get("run_id") == os.environ["AR_RUN_ID"]
+                  and (health.get("bundle") or {}).get("published") is False
+                  and (health.get("policy") or {}).get("u4_selection_supplied") is False
+                  and battery_coverage.get("expected") == battery_coverage.get("observed")
+                  and battery_coverage.get("observed") == len(battery_rows)
+              )
+              if not health_ok:
+                  summary["status"] = "CONTRACT_MISMATCH"
+                  summary["blocking_reason"] = "FINAL_HEALTH_OR_BATTERY_RECEIPT_MISMATCH"
+              else:
+                  if main_ready_codes:
+                      summary["status"] = "READY_FOR_HUMAN_U3_REVIEW"
+                      summary["authority"]["positive_candidate_selection_available"] = True
+                  elif ready_codes:
+                      summary["status"] = "REVIEW_ONLY_NO_POSITIVE_MAIN_CHANNEL"
+                  else:
+                      summary["status"] = "DATA_BLOCKED_NO_U3_READY"
+              def first(rows, code):
+                  return next((row for row in rows if row.get("ts_code") == code), None)
+              scope_rows = [
+                  *data["scope"].get("included_rows", []),
+                  *data["scope"].get("excluded_rows", []),
+              ]
+              summary.update({
+                  "counts": {
+                      "index_union": data["scope"]["coverage"]["union"],
+                      "mainboard_scope": data["scope"]["coverage"]["included"],
+                      "scope_excluded": data["scope"]["coverage"]["excluded"],
+                      "u1_channel_rows": len(data["scan"].get("rows") or []),
+                      "u2_active_candidates": len(active_candidates),
+                      "u3_battery_rows": len(battery_rows),
+                      "u3_ready_for_human_review": len(ready_codes),
+                      "u3_main_channel_ready": len(main_ready_codes),
+                      "u3_reserve_review_only": len(reserve_review_codes),
+                      "u3_ready_by_candidate_status": dict(sorted(ready_by_status.items())),
+                  },
+                  "u2_active_candidates": active_candidates,
+                  "u3_ready_codes": ready_codes,
+                  "u3_main_channel_ready_codes": main_ready_codes,
+                  "u3_reserve_review_codes": reserve_review_codes,
+                  "u3_blocked": [
+                      {"ts_code": row["ts_code"], "blocked_reasons": row.get("blocked_reasons") or []}
+                      for row in ready_pool if row.get("ready") is not True
+                  ],
+                  "jianghuai_600418": {
+                      "scope": first(scope_rows, "600418.SH"),
+                      "candidate": first(candidate_rows, "600418.SH"),
+                      "battery": first(battery_rows, "600418.SH"),
+                      "u3_gate": first(ready_pool, "600418.SH"),
+                  },
+                  "scope_manifest_hash": data["scope"].get("manifest_hash"),
+                  "scope_source_hash": data["scope_source"].get("source_hash"),
+                  "full_registry_hash": data["projection"]["bindings"].get("full_registry_hash"),
+                  "scope_registry_hash": data["projection"]["bindings"].get("scoped_registry_hash"),
+                  "full_scan_rows_hash": data["projection"]["bindings"].get("full_scan_rows_hash"),
+                  "projected_scan_rows_hash": data["projection"]["bindings"].get("scoped_scan_rows_hash"),
+                  "projection_receipt_hash": data["projection"].get("receipt_hash"),
+                  "isolated_projection_bundle_hash": data["isolated_projection_manifest"].get("bundle_hash"),
+                  "candidate_manifest_hash": data["manifest"].get("manifest_hash"),
+                  "battery_rows_hash": data["battery"].get("rows_hash"),
+                  "bundle_hash": data["bundle_manifest"].get("bundle_hash"),
+              })
+          (root / "summary.json").write_text(
+              json.dumps(summary, ensure_ascii=False, indent=2) + "\n", encoding="utf-8",
+          )
+          print(json.dumps(summary, ensure_ascii=False, indent=2))
+          PY
+          (
+            cd "$ARTIFACT_ROOT"
+            find . -type f ! -name SHA256SUMS -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS
+          )
+
+      - name: Upload isolated U3 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nev-mainboard-u3-${{ inputs.target_trade_date }}-${{ github.run_id }}
+          path: ${{ env.ARTIFACT_ROOT }}
+          retention-days: 14
+          if-no-files-found: error

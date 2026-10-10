@@ -7,6 +7,20 @@ on:
     - cron: '30 8 * * 1-5'   # Primary: after-close digest
     - cron: '0 1  * * 1-5'   # Secondary: pre-market snapshot
   workflow_dispatch:          # Manual trigger from Actions tab
+    inputs:
+      mode:
+        description: Execution mode
+        required: true
+        type: choice
+        options:
+          - daily_refresh
+          - nev_mainboard_u3
+        default: daily_refresh
+      target_trade_date:
+        description: Settled A-share trade date for isolated NEV U3 (YYYYMMDD)
+        required: false
+        type: string
+        default: ''
 
 permissions:
   contents: write
@@ -15,7 +29,7 @@ permissions:
 # Both scheduled runs update one persistent review branch. A second run waits
 # instead of racing the first run or creating a second data PR.
 concurrency:
-  group: daily-market-data-pr
+  group: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'nev_mainboard_u3' && format('isolated-nev-mainboard-u3-{0}', github.ref) || 'daily-market-data-pr' }}
   cancel-in-progress: false
 
 env:
@@ -23,6 +37,7 @@ env:
 
 jobs:
   fetch-and-alert:
+    if: github.event_name != 'workflow_dispatch' || inputs.mode != 'nev_mainboard_u3'
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -628,3 +643,13 @@ jobs:
 
       # GitHub Pages deploys from the normal push-to-main trigger only after
       # Junyan merges the data PR. Unreviewed branch data is never published.
+
+  nev-mainboard-u3:
+    if: github.event_name == 'workflow_dispatch' && inputs.mode == 'nev_mainboard_u3'
+    permissions:
+      contents: read
+    uses: ./.github/workflows/nev-mainboard-u3.yml
+    with:
+      target_trade_date: ${{ inputs.target_trade_date }}
+    secrets:
+      TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
