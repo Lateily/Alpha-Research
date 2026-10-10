@@ -155,15 +155,43 @@ class FunnelScopeProjectionTests(unittest.TestCase):
         self.assertFalse(projected_price_row["triggered"])
         self.assertEqual(full_price_row, projected_price_row)
 
+        candidates = fp.build_candidate_review(
+            registry=scoped_registry, scan=scoped_scan, features=features,
+            trade_date=closure.TRADE_DATE, generated_at=closure.GENERATED_AT,
+            target_size=100,
+        )
+        candidate_manifest = fp.build_candidate_manifest(
+            candidate_review=candidates, scan=scoped_scan, run_id="projection-test",
+        )
         receipt = projection.build_projection_receipt(
             full_registry=registry, scoped_registry=scoped_registry,
             manifest=manifest, source_evidence=source,
             full_scan=full_scan, scoped_scan=scoped_scan,
-            run_id="projection-test",
+            candidate_manifest=candidate_manifest, run_id="projection-test",
         )
         self.assertEqual("FULL_REGISTRY_ELIGIBLE_THEN_SCOPE_FILTER", receipt["rank_basis"])
         self.assertEqual(full_scan["rows_hash"], receipt["bindings"]["full_scan_rows_hash"])
         self.assertEqual(scoped_scan["rows_hash"], receipt["bindings"]["scoped_scan_rows_hash"])
+
+        validator = getattr(projection, "validate_projection_receipt", None)
+        self.assertIsNotNone(validator, "projection receipt needs an independent validator")
+        validator(
+            receipt=receipt, full_registry=registry, scoped_registry=scoped_registry,
+            manifest=manifest, source_evidence=source, full_scan=full_scan,
+            scoped_scan=scoped_scan, candidate_manifest=candidate_manifest,
+            run_id="projection-test",
+        )
+
+        tampered = copy.deepcopy(full_scan)
+        tampered["rows"][0]["triggered"] = not tampered["rows"][0]["triggered"]
+        tampered["rows_hash"] = fp._hash(tampered["rows"])
+        with self.assertRaisesRegex(fp.FunnelError, "receipt|binding"):
+            validator(
+                receipt=receipt, full_registry=registry, scoped_registry=scoped_registry,
+                manifest=manifest, source_evidence=source, full_scan=tampered,
+                scoped_scan=scoped_scan, candidate_manifest=candidate_manifest,
+                run_id="projection-test",
+            )
 
     def test_projection_rejects_missing_or_out_of_scope_rows(self) -> None:
         registry = full_registry()

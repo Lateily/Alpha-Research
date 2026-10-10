@@ -189,7 +189,12 @@ jobs:
           if [ -d "$AR_FUNNEL_OUTPUT_ROOT/$AR_TARGET_TRADE_DATE/$AR_RUN_ID" ]; then
             cp -a "$AR_FUNNEL_OUTPUT_ROOT/$AR_TARGET_TRADE_DATE/$AR_RUN_ID/." "$ARTIFACT_ROOT/funnel/"
           fi
+          if [ "${AR_U3_PIPELINE_COMPLETE:-}" = "true" ]; then
+            python experiments/research_funnel/etf_mainboard_projection.py validate-artifact \
+              --artifact-root "$ARTIFACT_ROOT"
+          fi
           python - <<'PY'
+          from collections import Counter
           import json
           import os
           from pathlib import Path
@@ -204,7 +209,8 @@ jobs:
               "source_commit": os.environ["GITHUB_SHA"],
               "status": "INCOMPLETE",
               "authority": {
-                  "human_selection_required": True,
+                  "human_review_required": True,
+                  "positive_candidate_selection_available": False,
                   "auto_u4_selection": False,
                   "paper_registration": False,
                   "paper_order": False,
@@ -217,6 +223,7 @@ jobs:
               "full_registry": root / "full-security-registry.json",
               "full_scan": root / "full-market-scan.json",
               "projection": root / "projection-receipt.json",
+              "isolated_projection_manifest": root / "isolated-projection-manifest.json",
               "scan": bundle / "all_market_scan.json",
               "review": bundle / "candidate_review.json",
               "manifest": bundle / "candidate_manifest.json",
@@ -235,7 +242,19 @@ jobs:
                   row["ts_code"] for row in candidate_rows
                   if row.get("review_status") != "EXCLUDED_RED_FLAG"
               ]
-              ready_codes = [row["ts_code"] for row in ready_pool if row.get("ready") is True]
+              ready_rows = [row for row in ready_pool if row.get("ready") is True]
+              ready_codes = [row["ts_code"] for row in ready_rows]
+              ready_by_status = Counter(
+                  str(row.get("candidate_status") or "UNSPECIFIED") for row in ready_rows
+              )
+              main_ready_codes = [
+                  row["ts_code"] for row in ready_rows
+                  if row.get("candidate_status") == "MAIN_CHANNEL"
+              ]
+              reserve_review_codes = [
+                  row["ts_code"] for row in ready_rows
+                  if str(row.get("candidate_status") or "").startswith("RESERVED_")
+              ]
               health = data["health"]
               battery_coverage = health.get("battery_coverage") or {}
               health_ok = (
@@ -250,10 +269,13 @@ jobs:
                   summary["status"] = "CONTRACT_MISMATCH"
                   summary["blocking_reason"] = "FINAL_HEALTH_OR_BATTERY_RECEIPT_MISMATCH"
               else:
-                  summary["status"] = (
-                      "READY_FOR_HUMAN_U3_SELECTION"
-                      if ready_codes else "DATA_BLOCKED_NO_U3_READY"
-                  )
+                  if main_ready_codes:
+                      summary["status"] = "READY_FOR_HUMAN_U3_REVIEW"
+                      summary["authority"]["positive_candidate_selection_available"] = True
+                  elif ready_codes:
+                      summary["status"] = "REVIEW_ONLY_NO_POSITIVE_MAIN_CHANNEL"
+                  else:
+                      summary["status"] = "DATA_BLOCKED_NO_U3_READY"
               def first(rows, code):
                   return next((row for row in rows if row.get("ts_code") == code), None)
               scope_rows = [
@@ -269,9 +291,14 @@ jobs:
                       "u2_active_candidates": len(active_candidates),
                       "u3_battery_rows": len(battery_rows),
                       "u3_ready_for_human_review": len(ready_codes),
+                      "u3_main_channel_ready": len(main_ready_codes),
+                      "u3_reserve_review_only": len(reserve_review_codes),
+                      "u3_ready_by_candidate_status": dict(sorted(ready_by_status.items())),
                   },
                   "u2_active_candidates": active_candidates,
                   "u3_ready_codes": ready_codes,
+                  "u3_main_channel_ready_codes": main_ready_codes,
+                  "u3_reserve_review_codes": reserve_review_codes,
                   "u3_blocked": [
                       {"ts_code": row["ts_code"], "blocked_reasons": row.get("blocked_reasons") or []}
                       for row in ready_pool if row.get("ready") is not True
@@ -289,6 +316,7 @@ jobs:
                   "full_scan_rows_hash": data["projection"]["bindings"].get("full_scan_rows_hash"),
                   "projected_scan_rows_hash": data["projection"]["bindings"].get("scoped_scan_rows_hash"),
                   "projection_receipt_hash": data["projection"].get("receipt_hash"),
+                  "isolated_projection_bundle_hash": data["isolated_projection_manifest"].get("bundle_hash"),
                   "candidate_manifest_hash": data["manifest"].get("manifest_hash"),
                   "battery_rows_hash": data["battery"].get("rows_hash"),
                   "bundle_hash": data["bundle_manifest"].get("bundle_hash"),

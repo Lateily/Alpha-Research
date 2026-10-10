@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import json
 import unittest
 from pathlib import Path
 
@@ -10,6 +11,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 WORKFLOW = ROOT / ".github" / "workflows" / "nev-mainboard-u3.yml"
 BRIDGE = ROOT / ".github" / "workflows" / "fetch-data.yml"
+TASK = ROOT / "scripts" / "llm" / "fixtures" / "nev_etf_mainboard_u3.task.json"
 
 
 class WorkflowContractTests(unittest.TestCase):
@@ -33,6 +35,12 @@ class WorkflowContractTests(unittest.TestCase):
         self.assertIn("funnel_dag.py finalize", text)
         self.assertIn("full-security-registry.json", text)
         self.assertIn("projection-receipt.json", text)
+        self.assertIn("validate-artifact", text)
+        self.assertIn("isolated-projection-manifest.json", text)
+        self.assertIn('row.get("candidate_status") == "MAIN_CHANNEL"', text)
+        self.assertIn("READY_FOR_HUMAN_U3_REVIEW", text)
+        self.assertIn("REVIEW_ONLY_NO_POSITIVE_MAIN_CHANNEL", text)
+        self.assertNotIn("READY_FOR_HUMAN_U3_SELECTION", text)
         self.assertIn("actions/upload-artifact", text)
         self.assertIn('"paper_registration": False', text)
         for forbidden in (
@@ -52,6 +60,14 @@ class WorkflowContractTests(unittest.TestCase):
         self.assertNotIn("secrets: inherit", text)
         self.assertIn("TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}", text)
         self.assertIn("isolated-nev-mainboard-u3", text)
+
+    def test_ai_task_scope_matches_the_projection_implementation(self) -> None:
+        task = json.loads(TASK.read_text(encoding="utf-8"))
+        scope = set(task["file_scope"])
+        self.assertIn("experiments/research_funnel/etf_mainboard_projection.py", scope)
+        self.assertIn(".github/workflows/python-ci.yml", scope)
+        self.assertNotIn("experiments/research_funnel/funnel_pipeline.py", scope)
+        self.assertNotIn("experiments/research_funnel/funnel_dag.py", scope)
 
 
 if __name__ == "__main__":

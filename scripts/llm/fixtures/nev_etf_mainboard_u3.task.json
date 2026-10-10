@@ -16,8 +16,9 @@
   "reviewer": "Junyan",
   "executor_candidates": ["Codex"],
   "dependencies": [
-    "Current origin/main 0ebde2fb",
-    "Existing three-stage funnel DAG",
+    "Origin/main baseline recorded at task creation: 0ebde2fb",
+    "Existing frozen three-stage funnel DAG (read-only dependency)",
+    "Existing frozen Research Closed Loop V1.5 channel rules (read-only dependency)",
     "GitHub Actions TUSHARE_TOKEN secret"
   ],
   "authority_docs": [
@@ -27,10 +28,10 @@
   ],
   "file_scope": [
     "experiments/research_funnel/etf_mainboard_universe.py",
-    "experiments/research_funnel/funnel_pipeline.py",
-    "experiments/research_funnel/funnel_dag.py",
+    "experiments/research_funnel/etf_mainboard_projection.py",
     ".github/workflows/fetch-data.yml",
     ".github/workflows/nev-mainboard-u3.yml",
+    ".github/workflows/python-ci.yml",
     "tests/test_etf_mainboard_universe.py",
     "tests/test_funnel_scope_contract.py",
     "tests/test_nev_mainboard_u3_workflow_contract.py",
