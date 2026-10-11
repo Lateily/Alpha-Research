@@ -587,7 +587,8 @@ class TechnicalSemanticTests(unittest.TestCase):
     def ready_observation(self):
         rb = self.payloads['research_binding']
         flags = dict(rb['red_flags'], verdict='CLEAR', reasons=[], source_refs=[])
-        rb['red_flags'] = dict(flags, source_refs=[self.source('flags.json', flags)])
+        rb['red_flags'] = flags
+        self.red_flag_originals()
         context = self.payloads['context']
         context.update(review_status='REVIEWED', reviewed_by='synthetic-reviewer', reviewed_at=STAMP)
         context['source_refs'] = [self.source('discussion.json', {
@@ -601,6 +602,39 @@ class TechnicalSemanticTests(unittest.TestCase):
         self.context_receipt()
         flow = self.payloads['flow']['rows'][-1]
         self.payloads['flow']['rows'] = [dict(flow, trade_date='20261008', available_at=self.stamp('20261008')), flow]
+
+    def red_flag_originals(self, e1_active=False, u3_active=False):
+        legacy_path = str(Path(__file__).resolve().parents[1] / 'experiments/research_funnel')
+        sys.path.insert(0, legacy_path)
+        try:
+            from experiments.research_funnel import e1_event_layer as e1
+            from experiments.research_funnel import security_registry as registry
+            from experiments.research_funnel import closure_experiment as closure
+        finally:
+            sys.path.remove(legacy_path)
+        code, industry = self.request['ts_code'], self.request['industry_key']
+        u0 = registry.build_registry([dict(ts_code=code, symbol=code.split('.')[0],
+            name='Synthetic', area='Synthetic', industry=industry, market='main', exchange='SSE',
+            list_status='L', list_date='20200101', delist_date='')], as_of='20261009',
+            generated_at=STAMP, liquidity_by_code={code: [30000000.0] * 10}, traded_as_of={code})
+        periods = ['20260630', '20260331', '20251231', '20250930']
+        incomes = [dict(ts_code=code, end_date=period, ann_date='20260830', report_type='1',
+                        n_income_attr_p=value) for period, value in zip(periods,
+                            [-10.0 if e1_active else 60.0, 30.0, 100.0, 80.0])]
+        layer = e1.build_event_layer(u0, {'income_vip': incomes}, as_of='20261009',
+            generated_at=STAMP, periods=periods, source_calls=[dict(endpoint=endpoint,
+                period=period, status='OK', capped=False) for endpoint in e1.ENDPOINTS for period in periods])
+        e1.validate_event_layer(layer)
+        row = dict(ts_code=code, completeness=dict(verdict='COMPLETE', covered=6, of=6, missing=[]),
+                   dims={name: {'synthetic': True} for name in closure.BATTERY_DIMENSIONS})
+        row['dims']['基本面'] = {'红旗闸门': 'RED_FLAG' if u3_active else 'PASS'}
+        battery = dict(target_trade_date='20261009', data=dict(checked_at='20261009', results=[row]))
+        closure.validate_battery_evidence(battery, '20261009')
+        descriptor = dict(schema_version='technical-red-flag-sources.v1', ts_code=code,
+            industry_key=industry, as_of='20261009', published_at=STAMP, available_at=STAMP,
+            e1_ref=self.source('e1-original.json', layer), u3_ref=self.source('u3-original.json', battery))
+        self.payloads['research_binding']['red_flags']['source_refs'] = [self.source('flags.json', descriptor)]
+        return descriptor
 
     def context_receipt(self, reviewed_at=STAMP):
         context = self.payloads['context']
@@ -666,7 +700,8 @@ class TechnicalSemanticTests(unittest.TestCase):
             else:
                 self.payloads[role]['ts_code'] = code
         rb['red_flags']['ts_code'] = code
-        rb['red_flags']['source_refs'] = [self.source('flags.json', dict(rb['red_flags'], source_refs=[]))]
+        # The legacy U4 fixture uses invented non-security codes, not current E1 originals.
+        rb['red_flags'].update(verdict='UNKNOWN', source_refs=[])
         self.payloads['context']['industry_key'] = rb['industry_key']
         self.payloads['context']['source_refs'] = [self.source('discussion.json', {
             'schema_version': 'technical-context-source.v1', 'industry_key': rb['industry_key'],
@@ -784,23 +819,148 @@ class TechnicalSemanticTests(unittest.TestCase):
         self.ready_observation()
         rb = self.payloads['research_binding']
         rb['red_flags'].update(as_of='20261008', coverage_end='20261008')
-        rb['red_flags']['source_refs'] = [self.source('flags.json', dict(rb['red_flags'], source_refs=[]))]
         self.check('RED_FLAG_COVERAGE_UNKNOWN')
 
     def test_active_red_flag_not_cancelled_by_structure(self):
         self.ready_observation()
         rb = self.payloads['research_binding']
         rb['red_flags'].update(verdict='ACTIVE', reasons=['E1_ACTIVE'])
-        rb['red_flags']['source_refs'] = [self.source('flags.json', dict(rb['red_flags'], source_refs=[]))]
+        self.red_flag_originals(e1_active=True)
         result = self.check('ACTIVE_RED_FLAG')
         self.assertEqual(result['quality']['red_flags']['status'], 'ACTIVE')
 
     def test_copied_clear_flag_cannot_override_reopened_active_source(self):
         self.ready_observation()
-        flags = self.payloads['research_binding']['red_flags']
-        flags['source_refs'] = [self.source('flags.json', dict(flags, verdict='ACTIVE', reasons=['E1_ACTIVE'], source_refs=[]))]
+        self.red_flag_originals(e1_active=True)
         self.seal(register=True)
-        self.refused('RED_FLAG_SOURCE_MISMATCH')
+        result = self.load()
+        self.assertEqual(result['quality']['red_flags']['status'], 'ACTIVE')
+        self.assertIn('ACTIVE_RED_FLAG', result['quality']['roles']['research_binding']['reason_codes'])
+        self.assertEqual(result['quality']['roles']['research_binding']['semantic_status'], 'DATA_BLOCKED')
+        self.assertIn('E1_ACTIVE', result['quality']['red_flags']['reason_codes'])
+
+    def test_naked_clear_without_original_is_unknown(self):
+        self.ready_observation()
+        flags = self.payloads['research_binding']['red_flags']
+        flags['source_refs'] = [self.source('flags.json', dict(flags, source_refs=[]))]
+        self.seal(register=True)
+        result = self.load()
+        self.assertEqual(result['quality']['red_flags']['status'], 'UNKNOWN')
+        self.assertIn('RED_FLAG_COVERAGE_UNKNOWN', result['quality']['roles']['research_binding']['reason_codes'])
+        self.assertEqual(result['quality']['roles']['research_binding']['semantic_status'], 'DATA_BLOCKED')
+
+    def test_missing_bound_red_flag_original_is_unknown(self):
+        self.ready_observation()
+        descriptor = self.red_flag_originals()
+        descriptor['e1_ref']['path'] = 'missing-e1.json'
+        self.payloads['research_binding']['red_flags']['source_refs'] = [self.source('flags.json', descriptor)]
+        result = self.check('RED_FLAG_COVERAGE_UNKNOWN')
+        self.assertEqual(result['quality']['red_flags']['status'], 'UNKNOWN')
+        self.assertEqual(result['quality']['roles']['research_binding']['semantic_status'], 'DATA_BLOCKED')
+
+    def test_complete_current_original_negative_proof_is_clear(self):
+        self.ready_observation()
+        self.seal(register=True)
+        result = self.load()
+        self.assertEqual(result['quality']['red_flags']['status'], 'CLEAR')
+        self.assertNotIn('RED_FLAG_COVERAGE_UNKNOWN', result['quality']['roles']['research_binding']['reason_codes'])
+        self.assertEqual(result['quality']['red_flags']['coverage']['e1']['income'], 'COMPLETE')
+        self.assertEqual(result['quality']['red_flags']['coverage']['e1']['formal_announcements'], 'DATA_BLOCKED')
+        for name in ('e1-original.json', 'u3-original.json'):
+            self.assertEqual(result['bindings']['evidence_byte_hashes']['frozen:' + name],
+                             sha((self.evidence / name).read_bytes()))
+
+    def test_u3_original_active_overrides_copied_clear(self):
+        self.ready_observation()
+        self.red_flag_originals(u3_active=True)
+        result = self.check('ACTIVE_RED_FLAG')
+        self.assertEqual(result['quality']['red_flags']['status'], 'ACTIVE')
+        self.assertIn('U3_ACTIVE', result['quality']['red_flags']['reason_codes'])
+        self.assertEqual(result['quality']['roles']['research_binding']['semantic_status'], 'DATA_BLOCKED')
+
+    def test_partial_u3_negative_proof_is_unknown(self):
+        self.ready_observation()
+        descriptor = self.red_flag_originals()
+        battery = json.loads((self.evidence / 'u3-original.json').read_bytes())
+        row = battery['data']['results'][0]
+        row['completeness']['verdict'] = 'PARTIAL'
+        row['dims']['基本面'] = {'status': 'DATA_BLOCKED', '红旗闸门': 'PASS'}
+        descriptor['u3_ref'] = self.source('u3-original.json', battery)
+        self.payloads['research_binding']['red_flags']['source_refs'] = [self.source('flags.json', descriptor)]
+        result = self.check('RED_FLAG_COVERAGE_UNKNOWN')
+        self.assertEqual(result['quality']['red_flags']['status'], 'UNKNOWN')
+
+    def test_e1_negative_without_explicit_gap_coverage_is_unknown(self):
+        self.ready_observation()
+        descriptor = self.red_flag_originals()
+        from experiments.research_funnel import e1_event_layer as e1
+        layer = json.loads((self.evidence / 'e1-original.json').read_bytes())
+        del layer['rows'][0]['evidence_coverage']['income_period_source_blocked']
+        layer['rows_hash'] = e1._sha256(layer['rows'])
+        e1.validate_event_layer(layer)  # Older producer form is legal, not negative proof.
+        descriptor['e1_ref'] = self.source('e1-original.json', layer)
+        self.payloads['research_binding']['red_flags']['source_refs'] = [self.source('flags.json', descriptor)]
+        result = self.check('RED_FLAG_COVERAGE_UNKNOWN')
+        self.assertEqual(result['quality']['red_flags']['status'], 'UNKNOWN')
+
+    def test_current_original_active_survives_other_missing_check(self):
+        self.ready_observation()
+        descriptor = self.red_flag_originals(e1_active=True)
+        descriptor['u3_ref']['path'] = 'missing-u3.json'
+        self.payloads['research_binding']['red_flags']['source_refs'] = [self.source('flags.json', descriptor)]
+        result = self.check('ACTIVE_RED_FLAG')
+        self.assertEqual(result['quality']['red_flags']['status'], 'ACTIVE')
+        self.assertEqual(result['quality']['red_flags']['reason_codes'], ['E1_ACTIVE'])
+
+    def test_final_calendar_hole_never_confirms_older_flow_pair(self):
+        self.ready_observation()
+        flags = self.payloads['research_binding']['red_flags']
+        flags['source_refs'] = [self.source('flags.json', dict(flags, source_refs=[]))]
+        rows = self.payloads['flow']['rows']
+        rows.insert(0, dict(rows[0], trade_date='20261007', available_at=self.stamp('20261007')))
+        self.payloads['calendar']['days'].pop()
+        self.calendar_hash()
+        self.seal(register=True)
+        result = self.load()
+        flow = result['quality']['flow']
+        self.assertEqual(flow['status'], 'DATA_BLOCKED')
+        self.assertEqual(flow['trade_dates'], [])
+        self.assertIsNone(flow['last_two_sum'])
+        self.assertEqual(flow['missing_reason'], 'FLOW_CALENDAR_DEPENDENCY_BLOCKED')
+        self.assertIn('CALENDAR_HOLE', flow['dependency_reason_codes'])
+        self.assertEqual(result['quality']['roles']['flow']['semantic_status'], 'DATA_BLOCKED')
+        self.assertIn('FLOW_CALENDAR_DEPENDENCY_BLOCKED', result['quality']['roles']['flow']['reason_codes'])
+
+    def test_late_calendar_manifest_blocks_dependent_flow(self):
+        self.ready_observation()
+        flags = self.payloads['research_binding']['red_flags']
+        flags['source_refs'] = [self.source('flags.json', dict(flags, source_refs=[]))]
+        source = next(s for s in self.manifest['sources'] if s['role'] == 'calendar')
+        source.update(published_at='2026-10-10T15:00:00+08:00',
+                      available_at='2026-10-10T15:00:00+08:00', captured_at='2026-10-10T15:00:00+08:00')
+        self.seal(register=True)
+        result = self.load()
+        flow = result['quality']['flow']
+        self.assertEqual(flow['status'], 'DATA_BLOCKED')
+        self.assertEqual(flow['trade_dates'], [])
+        self.assertIsNone(flow['last_two_sum'])
+        self.assertEqual(flow['missing_reason'], 'FLOW_CALENDAR_DEPENDENCY_BLOCKED')
+        self.assertEqual(flow['dependency_reason_codes'], ['SOURCE_AFTER_CUTOFF'])
+        self.assertEqual(result['quality']['roles']['flow']['semantic_status'], 'DATA_BLOCKED')
+        self.assertIn('SOURCE_AFTER_CUTOFF', result['quality']['roles']['flow']['reason_codes'])
+
+    def test_complete_calendar_negative_flow_is_not_missing(self):
+        self.ready_observation()
+        for row in self.payloads['flow']['rows']:
+            row['main_net_flow'] = '-0.50'
+        result = self.check('FLOW_NOT_POSITIVE')
+        flow = result['quality']['flow']
+        self.assertEqual(flow['status'], 'NOT_CONFIRMED')
+        self.assertEqual(flow['trade_dates'], ['20261008', '20261009'])
+        self.assertEqual(flow['last_two_sum'], '-1.00')
+        self.assertIsNone(flow['missing_reason'])
+        self.assertEqual(flow['dependency_reason_codes'], [])
+        self.assertEqual(result['quality']['roles']['flow']['reason_codes'], ['FLOW_NOT_POSITIVE'])
 
     def test_wrong_company_and_future_red_flag_refused_or_blocked(self):
         self.ready_observation()
@@ -810,7 +970,6 @@ class TechnicalSemanticTests(unittest.TestCase):
         self.refused('RED_FLAG_IDENTITY_MISMATCH')
         flags['ts_code'] = self.request['ts_code']
         flags['available_at'] = '2026-10-10T15:00:00+08:00'
-        flags['source_refs'] = [self.source('flags.json', dict(flags, source_refs=[]))]
         self.check('RED_FLAG_COVERAGE_UNKNOWN')
 
     def test_exposed_window_cannot_be_promoted_to_prospective(self):
@@ -889,6 +1048,9 @@ class TechnicalSemanticTests(unittest.TestCase):
         result = self.check('FLOW_NOT_POSITIVE')
         self.assertEqual(result['quality']['flow']['last_two_sum'], '0')
         self.assertEqual(result['quality']['flow']['status'], 'NOT_CONFIRMED')
+        self.assertEqual(result['quality']['flow']['trade_dates'], ['20261008', '20261009'])
+        self.assertIsNone(result['quality']['flow']['missing_reason'])
+        self.assertEqual(result['quality']['roles']['flow']['reason_codes'], ['FLOW_NOT_POSITIVE'])
         rows.append(copy.deepcopy(rows[-1]))
         self.seal(register=True)
         self.refused('FLOW_DATE_DUPLICATE')
@@ -1098,6 +1260,8 @@ class TechnicalSemanticTests(unittest.TestCase):
         result = self.check('INSUFFICIENT_HISTORY', 'DATA_BLOCKED')
         self.assertEqual(result['quality']['flow']['trade_dates'], ['20261007', '20261008'])
         self.assertEqual(result['quality']['flow']['status'], 'CONFIRMED')
+        self.assertEqual(result['quality']['flow']['last_two_sum'], '40.00')
+        self.assertEqual(result['quality']['roles']['flow']['semantic_status'], 'VALIDATED')
 
     def test_refused_result_never_exposes_calculable_inputs(self):
         self.ready_observation()

@@ -9,6 +9,7 @@ import json
 import os
 import re
 import stat
+import sys
 import tempfile
 from contextlib import contextmanager
 from datetime import datetime, timedelta
@@ -54,6 +55,7 @@ SCHEMAS = {key: frozenset(fields.split()) for key, fields in {
     "research_binding": "schema_version ts_code industry_key packet decision packet_hash decision_row_hash cohort_id causal_cluster_id method_version research_case thesis valuation red_flags u4_sources",
     "optional_evidence": "source_ref missing_reason",
     "red_flags": "ts_code as_of available_at coverage_start coverage_end verdict reasons source_refs",
+    "red_flag_sources": "schema_version ts_code industry_key as_of published_at available_at e1_ref u3_ref",
     "evidence_ref": "root_alias path sha256 pointer",
     "u4_sources": "schema_version files bundle_ref feature_health_ref funnel_health_ref diagnostic_ref cyclical_flags_ref",
     "context_source": "schema_version industry_key as_of published_at available_at content",
@@ -930,13 +932,16 @@ def _semantics(result, evidence, profile):
                 _fail("OPTIONAL_RESEARCH_IDENTITY_MISMATCH")
             if any(_time(value[key]) > cutoff for key in ("published_at", "available_at")):
                 block("research_binding", field.upper() + "_AFTER_CUTOFF")
-    _flow(inputs["flow"], request, traded, quality, block)
+    calendar_reasons = list(quality["roles"]["calendar"]["reason_codes"])
+    if calendar is None or not bars:
+        calendar_reasons.append("CALENDAR_DATE_DERIVATION_UNAVAILABLE")
+    _flow(inputs["flow"], request, traded, calendar_reasons, quality, block)
     _context(inputs["context"], request, evidence, result["bindings"], quality, block)
     for role in ("context", "flow"):
         if quality["roles"][role]["reason_codes"]:
             if "SOURCE_AFTER_CUTOFF" in quality["roles"][role]["reason_codes"]:
                 quality[role]["status"] = "DATA_BLOCKED"
-                if role == "flow":
+                if role == "flow" and quality[role]["missing_reason"] != "FLOW_CALENDAR_DEPENDENCY_BLOCKED":
                     quality[role].update(last_two_sum=None, missing_reason="SOURCE_AFTER_CUTOFF")
     for role, data in quality["roles"].items():
         data["semantic_status"] = "DATA_BLOCKED" if data["reason_codes"] else "VALIDATED"
@@ -949,40 +954,134 @@ def _semantics(result, evidence, profile):
 def _red_flags(request, flags, evidence, quality, block):
     if flags["ts_code"] != request["ts_code"]:
         _fail("RED_FLAG_IDENTITY_MISMATCH")
-    original = {k: v for k, v in flags.items() if k != "source_refs"}
-    verified = bool(flags["source_refs"])
+    statuses, reasons, coverage = [], [], {}
     for ref in flags["source_refs"]:
         value = evidence.get(ref)
-        if value is None:
-            verified = False
+        # technical-guard: T2_FIX1_RED_FLAG_PROVENANCE
+        if not isinstance(value, dict) or value.get("schema_version") != "technical-red-flag-sources.v1":
+            statuses.append("UNKNOWN")
             continue
-        if flags["verdict"] == "UNKNOWN":
-            verified = False
+        _exact(value, "red_flag_sources")
+        for key in ("e1_ref", "u3_ref"):
+            _ref(value[key], [])
+            if value[key]["pointer"]:
+                _fail("RED_FLAG_ORIGINAL_OBJECT_REQUIRED")
+        if any(value[key] != request[key] for key in ("ts_code", "industry_key")):
+            _fail("RED_FLAG_IDENTITY_MISMATCH")
+        _date(value["as_of"])
+        if _time(value["available_at"]) < _time(value["published_at"]):
+            _fail("SOURCE_TIME_ORDER")
+        originals = {key: evidence.get(value[key + "_ref"], legacy=True) for key in ("e1", "u3")}
+        if (value["as_of"] != _market_date(request["as_of"])
+                or any(_time(value[key]) > _time(request["data_cutoff"]) for key in ("published_at", "available_at"))):
+            statuses.append("UNKNOWN")
             continue
-        _exact(value, "red_flags")
-        if value["source_refs"] or {k: v for k, v in value.items() if k != "source_refs"} != original:
-            _fail("RED_FLAG_SOURCE_MISMATCH")
+        derived, original_coverage = _original_red_flags(originals, request)
+        statuses.extend(derived)
+        coverage.update(original_coverage)
+        if derived[0] == "ACTIVE":
+            reasons.append("E1_ACTIVE")
+        if derived[1] == "ACTIVE":
+            reasons.append("U3_ACTIVE")
     date = _market_date(request["as_of"])
     # technical-guard: T2_CURRENT_RED_FLAG_COVERAGE
-    current = (verified and flags["as_of"] == date and flags["coverage_start"] <= date <= flags["coverage_end"]
+    current = (bool(statuses) and all(status == "CLEAR" for status in statuses)
+               and flags["as_of"] == date and flags["coverage_start"] <= date <= flags["coverage_end"]
                and _time(flags["available_at"]) <= _time(request["data_cutoff"]))
-    quality["red_flags"] = {"status": flags["verdict"] if current else "UNKNOWN", "source_refs": flags["source_refs"]}
-    if not current or flags["verdict"] == "UNKNOWN":
+    # technical-guard: T2_FIX1_ORIGINAL_ACTIVE_PRECEDENCE
+    status = "ACTIVE" if "ACTIVE" in statuses else "CLEAR" if current else "UNKNOWN"
+    quality["red_flags"] = {"status": status, "source_refs": flags["source_refs"],
+                            "reason_codes": reasons, "coverage": coverage}
+    if status == "UNKNOWN":
         block("research_binding", "RED_FLAG_COVERAGE_UNKNOWN")
-    if flags["verdict"] == "ACTIVE":
+    if status == "ACTIVE" or flags["verdict"] == "ACTIVE":
         block("research_binding", "ACTIVE_RED_FLAG")
+    if status == "UNKNOWN":
+        quality["red_flags"]["reason_codes"].append("RED_FLAG_COVERAGE_UNKNOWN")
 
 
-def _flow(flow, request, traded, quality, block):
+def _original_red_flags(originals, request):
+    # The legacy funnel uses sibling imports. Restore the import search path;
+    # call only its pure validators, never any reader, writer or provider.
+    legacy_path = str(Path(__file__).resolve().parents[1] / "research_funnel")
+    sys.path.insert(0, legacy_path)
+    try:
+        from experiments.research_funnel import e1_event_layer as e1
+        from experiments.research_funnel import closure_experiment as closure
+    finally:
+        sys.path.remove(legacy_path)
+    funnel = closure.funnel
+    statuses, coverage = ["UNKNOWN", "UNKNOWN"], {}
+    date, code = _market_date(request["as_of"]), request["ts_code"]
+    layer = originals["e1"]
+    if isinstance(layer, dict):
+        try:
+            e1.validate_event_layer(layer)
+            row = next((row for row in layer["rows"] if row["ts_code"] == code), None)
+            if row is not None and row["industry_key"] != request["industry_key"]:
+                _fail("RED_FLAG_IDENTITY_MISMATCH")
+            if (row is not None and layer["as_of"] == date
+                    and _time(layer["generated_at"]) <= _time(request["data_cutoff"])):
+                coverage["e1"] = row["evidence_coverage"]
+                if row["verdict"] == "RED_FLAG":
+                    statuses[0] = "ACTIVE"
+                else:
+                    source, covered = layer["source"], row["evidence_coverage"]
+                    calls = source["calls"]
+                    matrix = {(endpoint, period) for endpoint in e1.ENDPOINTS for period in source["periods"]}
+                    # technical-guard: T2_FIX1_E1_NEGATIVE_PROOF
+                    if (row["verdict"] == "NO_RED_FLAG_FOUND" and covered["income"] == "COMPLETE"
+                            and covered["forecast"] in {"PRESENT", "SUPERSEDED", "EMPTY_VALID"}
+                            and covered["express"] in {"PRESENT", "SUPERSEDED", "EMPTY_VALID"}
+                            and covered.get("income_missing_after_deadline") == []
+                            and covered.get("income_period_source_blocked") == []
+                            and matrix and not source["errors"]
+                            and {(call["endpoint"], call["period"]) for call in calls} == matrix
+                            and all(call["status"] == "OK" and not call.get("capped") for call in calls)):
+                        statuses[0] = "CLEAR"
+        except (e1.E1LayerError, KeyError, TypeError, ValueError) as exc:
+            if isinstance(exc, ContractError):
+                raise
+    battery = originals["u3"]
+    if isinstance(battery, dict):
+        try:
+            if "generated_at" in battery and _time(battery["generated_at"]) > _time(request["data_cutoff"]):
+                return statuses, coverage
+            closure.validate_battery_evidence(battery, date)
+            row = funnel._battery_rows(battery, date).get(code)
+            if row is not None and "checked_at" in row and str(row["checked_at"]).replace("-", "") != date:
+                return statuses, coverage
+            if row is not None:
+                coverage["u3"] = row["completeness"]
+                if funnel._u3_fundamental_red_flag_active(row):
+                    statuses[1] = "ACTIVE"
+                elif (row["completeness"]["verdict"] == "COMPLETE"
+                        and row["dims"]["基本面"].get("status") is None
+                        and row["dims"]["基本面"].get("红旗闸门") == "PASS"):
+                    statuses[1] = "CLEAR"
+        except (closure.ClosureError, funnel.FunnelError, KeyError, TypeError):
+            pass
+    return statuses, coverage
+
+
+def _flow(flow, request, traded, calendar_reasons, quality, block):
     quality["flow"] = {"status": "DATA_BLOCKED", "trade_dates": traded[-2:], "last_two_sum": None,
-                       "missing_reason": "FLOW_LAST_TWO_MISSING"}
+                       "missing_reason": "FLOW_LAST_TWO_MISSING", "dependency_reason_codes": sorted(set(calendar_reasons))}
+    if flow is not None:
+        if flow["ts_code"] != request["ts_code"]:
+            _fail("FLOW_IDENTITY_MISMATCH")
+        rows = flow["rows"]
+        if len({row["trade_date"] for row in rows}) != len(rows):
+            _fail("FLOW_DATE_DUPLICATE")
+    # technical-guard: T2_FIX1_FLOW_CALENDAR_DEPENDENCY
+    if calendar_reasons:
+        quality["flow"].update(trade_dates=[], missing_reason="FLOW_CALENDAR_DEPENDENCY_BLOCKED")
+        block("flow", "FLOW_CALENDAR_DEPENDENCY_BLOCKED")
+        for reason in calendar_reasons:
+            block("flow", reason)
+        return
     if flow is None:
         return
-    if flow["ts_code"] != request["ts_code"]:
-        _fail("FLOW_IDENTITY_MISMATCH")
-    rows = flow["rows"]
-    if len({row["trade_date"] for row in rows}) != len(rows):
-        _fail("FLOW_DATE_DUPLICATE")
     by_date = {row["trade_date"]: row for row in rows}
     # technical-guard: T2_FLOW_LAST_TWO
     if len(traded) < 2 or any(date not in by_date or by_date[date]["main_net_flow"] is None for date in traded[-2:]):

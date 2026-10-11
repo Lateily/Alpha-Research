@@ -131,6 +131,15 @@ two available rows. Duplicate dates are refused. Missing/null, pending/unknown o
 future-available values yield null sum plus a reason, never zero or an older pair.
 Two settled CNY values are summed with Decimal; positive is `CONFIRMED`, zero or
 negative is `NOT_CONFIRMED`. Structural events are not erased by flow weakness.
+Date derivation depends on a present, hash-verified calendar with complete civil
+date coverage, verified suspensions, and manifest availability at cutoff. Any
+calendar reason blocks dependent flow: nested status `DATA_BLOCKED`,
+`trade_dates=[]`, `last_two_sum=null`, and
+`missing_reason=FLOW_CALENDAR_DEPENDENCY_BLOCKED`. `dependency_reason_codes`
+contains the calendar reasons, which also propagate to the flow role along with
+the dependency reason. This does not substitute an older pair, and a late calendar
+is not treated as a late flow publication. Flow identity/duplicate-date refusals
+still apply before dependency handling.
 
 ## Original U4 Binding
 
@@ -193,17 +202,46 @@ approval. Existing historical SELECT evidence likewise grants no write authority
 
 ## Red Flags And Optional Research
 
-The red-flag source is an operator-frozen coverage extraction of existing E1/U3
-checks, not a new classifier. Each source ref resolves to the exact `red flags`
-record above, with `source_refs=[]` to avoid recursive self-reference. For
-`CLEAR/ACTIVE`, identity, date, availability, coverage, verdict and reasons must
-equal the package projection. A copied CLEAR cannot override an original ACTIVE.
-UNKNOWN or absent coverage stays UNKNOWN. Current coverage must include the
-request's Shanghai as-of date and itself have that date and availability <= cutoff.
-Old-day CLEAR is not current. ACTIVE always remains a promotion block, even with
-otherwise usable bars; neither technical structure nor context cancels it.
-Adapters must be operator-provisioned from originals, never a browser/package
-verdict promoted by its own hash. Hashes establish bytes, not truth or completeness.
+Red-flag source refs resolve to an operator-provisioned descriptor of existing
+checks, not a duplicated verdict or a new classifier. The only supported external
+descriptor is `technical-red-flag-sources.v1`, with these exact fields:
+`schema_version/ts_code/industry_key/as_of/published_at/available_at/e1_ref/u3_ref`.
+Both original refs have the ordinary exact `evidence_ref` form. They reopen whole
+original JSON objects (empty pointer): E1 `ar.e1_event_layer` and U3 battery in the
+existing `target_trade_date` or `data.checked_at` / `data.results` form. All reads
+remain bounded, no-follow and byte-hash checked. No ledger reader, classifier
+rewrite, provider or writer is invoked. A naked copied CLEAR extraction, missing
+original, unsupported adapter, absent company row, or unsupported coverage is
+UNKNOWN with `RED_FLAG_COVERAGE_UNKNOWN`; its own hash does not prove coverage.
+
+Descriptor company/industry match the request, its as-of is the Shanghai request
+date, and publication/availability are ordered and <= cutoff. E1 is checked by
+the existing `validate_event_layer`; its as-of and generation timestamp must be
+current/available at cutoff, and its company row must match industry. U3 is
+checked by the existing `validate_battery_evidence`, `_battery_rows`, and
+`_u3_fundamental_red_flag_active`, including the same-day battery and six-dimension
+COMPLETE proof. These are pure original validators, not lock-creating readers.
+If present, U3's original `generated_at` must be <= cutoff and a company's
+`checked_at` must match the requested date; a descriptor cannot backdate them.
+
+Current original E1 `RED_FLAG` or U3 fundamental `RED_FLAG` derives ACTIVE,
+even when the package says CLEAR or the other check is missing. It adds an
+`E1_ACTIVE` or `U3_ACTIVE` nested reason and blocks promotion. CLEAR requires both
+original negative proofs: E1 `NO_RED_FLAG_FOUND`, complete income with explicit
+empty deadline/source-blocked gaps, supported forecast/express coverage, and a
+complete successful endpoint/period call matrix without errors/truncation; U3
+COMPLETE with a nonblocked fundamental `PASS`. Missing dimensions or a PARTIAL
+battery never become clean by absence of an ACTIVE flag. Package as-of/coverage
+must include the current date and availability must be <= cutoff for CLEAR.
+
+`quality.red_flags.coverage` retains the original E1 coverage and U3 completeness.
+CLEAR means only no active flag in these existing locked checks, not research
+approval or exhaustive E1 coverage: E1's original formal-announcement dimension
+remains explicitly `DATA_BLOCKED`, exactly as its producer defines it. No new
+trading threshold or verdict oracle is introduced. A package ACTIVE claim also
+retains a conservative promotion block even if original coverage is UNKNOWN.
+Neither technical structure nor context cancels ACTIVE. Historical no-SELECT and
+unavailable cohort semantics are unchanged and confer no authority.
 
 Missing thesis/valuation each have `quality.missing_fields.<name>` with null value
 and an explicit reason. They do not block standalone structure observation, but
