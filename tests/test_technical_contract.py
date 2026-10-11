@@ -379,6 +379,58 @@ class TechnicalContractTests(unittest.TestCase):
         self.assertEqual(result["status"], "REFUSED")
         self.assertIn("EVIDENCE_ROOT_OVERRIDE", result["reason_codes"])
 
+    def test_double_slash_evidence_root_cannot_hide_registry_in_tree(self):
+        self.assertEqual(self.load()["status"], "DATA_BLOCKED")
+        inside = self.evidence / "operator-registry.json"
+        registry = json.loads(self.registry.read_text())
+        inside.write_bytes(encode(registry))
+        control = self.contract.load_registered_pack(inside, "synthetic-1", self.roots)
+        self.assertEqual(control["status"], "REFUSED")
+        self.assertIn("REGISTRY_IN_INPUT_TREE", control["reason_codes"])
+        alias = Path("/" + str(self.evidence))
+        registry["evidence_roots"]["frozen"] = str(alias)
+        inside.write_bytes(encode(registry))
+        result = self.contract.load_registered_pack(inside, "synthetic-1", {"frozen": alias})
+        self.assertEqual(result["status"], "REFUSED")
+        self.assertIn("UNSAFE_PATH", result["reason_codes"])
+        self.assertEqual(result["inputs"], {})
+
+    def test_double_slash_evidence_root_cannot_alias_pack(self):
+        self.assertEqual(self.load()["status"], "DATA_BLOCKED")
+        registry = json.loads(self.registry.read_text())
+        registry["evidence_roots"]["frozen"] = str(self.pack)
+        self.registry.write_bytes(encode(registry))
+        control = self.contract.load_registered_pack(self.registry, "synthetic-1", {"frozen": self.pack})
+        self.assertEqual(control["status"], "REFUSED")
+        self.assertIn("OVERLAPPING_INPUT_ROOTS", control["reason_codes"])
+        alias = Path("/" + str(self.pack))
+        registry["evidence_roots"]["frozen"] = str(alias)
+        self.registry.write_bytes(encode(registry))
+        result = self.contract.load_registered_pack(self.registry, "synthetic-1", {"frozen": alias})
+        self.assertEqual(result["status"], "REFUSED")
+        self.assertIn("UNSAFE_PATH", result["reason_codes"])
+        self.assertEqual(result["inputs"], {})
+
+    def test_double_slash_registry_path_refused(self):
+        self.assertEqual(self.load()["status"], "DATA_BLOCKED")
+        alias = Path("/" + str(self.registry))
+        result = self.contract.load_registered_pack(alias, "synthetic-1", self.roots)
+        self.assertEqual(result["status"], "REFUSED")
+        self.assertIn("UNSAFE_PATH", result["reason_codes"])
+        self.assertEqual(result["inputs"], {})
+
+    def test_out_of_range_timestamp_offsets_refused_by_loader(self):
+        for offset in ("Z", "+08:00", "-08:00", "+23:59", "-23:59", "+00:59"):
+            with self.subTest(valid_offset=offset):
+                self.request["generated_at"] = "2026-10-09T15:00:00" + offset
+                self.seal(register=True)
+                self.assertEqual(self.load()["status"], "DATA_BLOCKED")
+        for offset in ("+08:60", "+01:99", "-08:60", "-01:99", "+24:00", "-24:00", "+99:00"):
+            with self.subTest(invalid_offset=offset):
+                self.request["generated_at"] = "2026-10-09T15:00:00" + offset
+                self.seal(register=True)
+                self.refused("INVALID_TIMESTAMP")
+
     def test_no_input_self_registration(self):
         registry = json.loads(self.registry.read_text())
         registry["packs"] = {}

@@ -107,6 +107,8 @@ def _timestamp(value):
     if type(value) is not str or not re.fullmatch(
             r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\.[0-9]{1,6})?(?:Z|[+-][0-9]{2}:[0-9]{2})", value):
         _fail("INVALID_TIMESTAMP")
+    if not value.endswith("Z") and (int(value[-5:-3]) > 23 or int(value[-2:]) > 59):
+        _fail("INVALID_TIMESTAMP")
     try:
         if datetime.fromisoformat(value.replace("Z", "+00:00")).tzinfo is None:
             _fail("INVALID_TIMESTAMP")
@@ -166,7 +168,7 @@ def _absolute(value):
     if not isinstance(value, (str, Path)):
         _fail("UNSAFE_PATH")
     path = Path(value)
-    if not path.is_absolute() or ".." in path.parts or "\x00" in str(path):
+    if path.anchor != "/" or ".." in path.parts or "\x00" in str(path):
         _fail("UNSAFE_PATH")
     return path
 
