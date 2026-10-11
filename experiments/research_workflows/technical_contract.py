@@ -1528,6 +1528,64 @@ def _recheck_sources(captured):
             _fail("SOURCE_CHANGED")
 
 
+def _read_output(root_fd, relative, pair_identity=None):
+    parts = _relative(relative)
+    parent, fd = os.dup(root_fd), None
+    try:
+        for part in parts[:-1]:
+            child = os.open(part, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=parent)
+            os.close(parent)
+            parent = child
+        fd = os.open(parts[-1], os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=parent)
+        before = os.fstat(fd)
+        links = 1
+        if pair_identity is not None:
+            if relative not in {".manifest.pending", "manifest.json"}:
+                _fail("OUTPUT_CHANGED")
+            if (before.st_dev, before.st_ino) != pair_identity:
+                _fail("OUTPUT_CHANGED")
+            links = 2
+        if not stat.S_ISREG(before.st_mode) or before.st_nlink != links:
+            _fail("OUTPUT_CHANGED")
+        if before.st_size > MAX_TOTAL_BYTES:
+            _fail("OUTPUT_CHANGED")
+        chunks, size = [], 0
+        while True:
+            chunk = os.read(fd, min(65536, MAX_TOTAL_BYTES + 1 - size))
+            if not chunk:
+                break
+            chunks.append(chunk)
+            size += len(chunk)
+            if size > MAX_TOTAL_BYTES:
+                _fail("OUTPUT_CHANGED")
+        after = os.fstat(fd)
+        named = os.stat(parts[-1], dir_fd=parent, follow_symlinks=False)
+        if _fingerprint(before) != _fingerprint(after) or _fingerprint(after) != _fingerprint(named):
+            _fail("OUTPUT_CHANGED")
+        return b"".join(chunks), _fingerprint(after)
+    except OSError:
+        _fail("OUTPUT_CHANGED")
+    finally:
+        if fd is not None:
+            os.close(fd)
+        os.close(parent)
+
+
+def _verify_outputs(root_fd, files):
+    for relative, digest in files.items():
+        raw, _ = _read_output(root_fd, relative)
+        if sha(raw) != digest:
+            _fail("OUTPUT_CHANGED")
+
+
+def _verify_manifest(root_fd, manifest, staged_identity):
+    # Only this intentional two-name publication pair may share an inode.
+    for name in (".manifest.pending", "manifest.json"):
+        raw, _ = _read_output(root_fd, name, staged_identity[:2])
+        if raw != manifest:
+            _fail("OUTPUT_CHANGED")
+
+
 def _inspection_receipt(result, files):
     return {"schema": "technical-inspection-receipt.v1", "status": result["status"],
             "reason_codes": result["reason_codes"], "authority": result["authority"],
@@ -1611,21 +1669,30 @@ def inspect_registered_pack(registry_path: Path, pack_id: str,
                 _write_new(output, fd, ".manifest.pending", manifest)
                 _recheck_sources(captured)
                 _output_current(output, fd)
-                staged_raw, staged_identity = _read_file(output / ".manifest.pending", [0])
+                _verify_outputs(fd, files)
+                staged_raw, staged_identity = _read_output(fd, ".manifest.pending")
                 if staged_raw != manifest:
                     _fail("OUTPUT_CHANGED")
                 # Exclusive atomic publication: never overwrite an injected manifest/link.
                 os.link(".manifest.pending", "manifest.json", src_dir_fd=fd,
                         dst_dir_fd=fd, follow_symlinks=False)
+                published = None
                 try:
                     published = os.stat("manifest.json", dir_fd=fd, follow_symlinks=False)
-                    if (not stat.S_ISREG(published.st_mode)
-                            or (published.st_dev, published.st_ino) != staged_identity[:2]):
-                        _fail("OUTPUT_CHANGED")
+                    _verify_manifest(fd, manifest, staged_identity)
+                    _verify_outputs(fd, files)
+                    _recheck_sources(captured)
                     _output_current(output, fd)
-                except (ContractError, OSError):
+                except (ContractError, OSError) as exc:
                     # Remove only the commit entry this call just created, not prior artifacts.
-                    os.unlink("manifest.json", dir_fd=fd)
+                    try:
+                        named = os.stat("manifest.json", dir_fd=fd, follow_symlinks=False)
+                        if published is not None and (named.st_dev, named.st_ino) == (published.st_dev, published.st_ino):
+                            os.unlink("manifest.json", dir_fd=fd)
+                    except OSError:
+                        pass
+                    if isinstance(exc, ContractError):
+                        raise
                     _fail("OUTPUT_CHANGED")
                 return result
             except (ContractError, OSError) as exc:

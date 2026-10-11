@@ -4,6 +4,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import stat
 from pathlib import Path
 import subprocess
 import sys
@@ -50,6 +51,17 @@ def inject(boundary):
             pending = os.path.join(cfg["output"], ".manifest.pending")
             os.unlink(pending)
             os.symlink(cfg["stage_alias"], pending)
+        if cfg.get("stage_bytes"):
+            with open(os.path.join(cfg["output"], ".manifest.pending"), "wb") as stream:
+                stream.write(b'{"complete":true,"status":"VALIDATED","files":{}}')
+        if cfg.get("output_swap"):
+            target = os.path.join(cfg["output"], cfg["output_swap"])
+            with open(target, "rb") as stream: prior = stream.read()
+            os.unlink(target)
+            if cfg.get("link_type") == "symlink": os.symlink(cfg["scratch"], target)
+            elif cfg.get("link_type") == "hardlink": original_link(cfg["scratch"], target)
+            else:
+                with open(target, "wb") as stream: stream.write(prior + b" ")
         if cfg.get("fail"):
             raise OSError(errno.EIO, "SECRET_RAW_EXCEPTION")
 def mkdir(path, *a, **k):
@@ -140,7 +152,14 @@ class TechnicalInspectionTests(unittest.TestCase):
         manifest = self.read('manifest.json')
         self.assertTrue(manifest['complete'])
         for relative, digest in manifest['files'].items():
+            info = (self.output / relative).lstat()
+            self.assertTrue(stat.S_ISREG(info.st_mode))
+            self.assertEqual(info.st_nlink, 1)
             self.assertEqual(fixtures.sha((self.output / relative).read_bytes()), digest)
+        published, pending = self.output / 'manifest.json', self.output / '.manifest.pending'
+        self.assertEqual(published.read_bytes(), pending.read_bytes())
+        self.assertEqual(published.stat().st_ino, pending.stat().st_ino)
+        self.assertEqual(published.stat().st_nlink, 2)
         for path in self.f.pack.rglob('*'):
             if path.is_file():
                 self.assertEqual((self.output / 'evidence/pack' / path.relative_to(self.f.pack)).read_bytes(), path.read_bytes())
@@ -313,6 +332,52 @@ class TechnicalInspectionTests(unittest.TestCase):
         self.assert_refused(completed, 'OUTPUT_CHANGED')
         self.assertEqual(before, inventory([self.f.pack]))
 
+    def test_cli_manifest_inplace_bytes_at_link_refused(self):
+        before = inventory([self.f.registry, self.f.pack, self.f.evidence])
+        completed = self.run_cli(fault={'boundary': 'manifest.json', 'stage_bytes': True})
+        self.assert_refused(completed, 'OUTPUT_CHANGED')
+        self.assertEqual(before, inventory([self.f.registry, self.f.pack, self.f.evidence]))
+
+    def snapshot_link_matrix(self, link_type):
+        scratch = self.f.root / 'same-byte-scratch.json'
+        scratch.write_bytes((self.f.pack / 'inputs/bars.json').read_bytes())
+        before = inventory([self.f.registry, self.f.pack, self.f.evidence])
+        for boundary in ['receipt.json', 'manifest.json']:
+            with self.subTest(boundary=boundary):
+                self.output = self.f.root / ('snapshot-' + link_type + '-' + boundary)
+                completed = self.run_cli(fault={'boundary': boundary,
+                    'output_swap': 'evidence/pack/inputs/bars.json',
+                    'scratch': str(scratch), 'link_type': link_type})
+                self.assert_refused(completed, 'OUTPUT_CHANGED')
+                self.assertTrue((self.output / '.manifest.pending').exists())
+                self.assertEqual(before, inventory([self.f.registry, self.f.pack, self.f.evidence]))
+
+    def test_cli_snapshot_same_bytes_symlink_refused(self):
+        self.snapshot_link_matrix('symlink')
+
+    def test_cli_snapshot_same_bytes_hardlink_refused(self):
+        self.snapshot_link_matrix('hardlink')
+
+    def test_cli_source_edit_at_manifest_link_refused(self):
+        completed = self.run_cli(fault={'boundary': 'manifest.json',
+            'change': str(self.f.pack / 'inputs/bars.json')})
+        self.assert_refused(completed, 'SOURCE_CHANGED')
+        self.assertTrue((self.output / '.manifest.pending').exists())
+        self.assertEqual(self.read('failure-receipt.json')['publication_status'], 'INCOMPLETE')
+
+    def test_cli_registry_edit_at_manifest_link_refused(self):
+        completed = self.run_cli(fault={'boundary': 'manifest.json', 'change': str(self.f.registry)})
+        self.assert_refused(completed, 'SOURCE_CHANGED')
+        self.assertTrue((self.output / '.manifest.pending').exists())
+
+    def test_cli_output_hash_changes_before_and_at_commit_refused(self):
+        for boundary in ['receipt.json', 'manifest.json']:
+            for relative in ['evidence/pack/inputs/bars.json', 'validation.json']:
+                with self.subTest(boundary=boundary, relative=relative):
+                    self.output = self.f.root / ('hash-' + boundary + '-' + Path(relative).stem)
+                    completed = self.run_cli(fault={'boundary': boundary, 'output_swap': relative})
+                    self.assert_refused(completed, 'OUTPUT_CHANGED')
+
     def test_cli_each_writer_failure_leaves_no_complete_manifest(self):
         for boundary in ['bars.json', 'validation.json', 'receipt.json', 'SHA256SUMS',
                          '.manifest.pending', 'manifest.json', 'write:bars.json', 'fsync:.manifest.pending']:
@@ -323,6 +388,8 @@ class TechnicalInspectionTests(unittest.TestCase):
 
     def test_cli_partial_write_failure_retains_earlier_output(self):
         completed = self.run_cli(fault={'boundary': 'receipt.json', 'fail': True})
+        self.assertFalse((self.output / 'SHA256SUMS').exists(), 'fatal writer failure must stop later writers')
+        self.assertFalse((self.output / '.manifest.pending').exists())
         self.assert_refused(completed, 'OUTPUT_WRITE_FAILED')
         self.assertTrue((self.output / 'validation.json').exists())
         self.assertTrue((self.output / 'evidence/pack/inputs/bars.json').exists())
