@@ -1,9 +1,10 @@
 """Offline, strict, source-bound daily technical input validation.
 
-No provider, registration, calculation, output writer, or CLI lives here.
+Inspection writes only new nonproduction snapshots; no provider or calculation.
 """
 from __future__ import annotations
 
+import argparse
 import errno
 import json
 import os
@@ -12,6 +13,7 @@ import stat
 import sys
 import tempfile
 from contextlib import contextmanager
+from contextvars import ContextVar
 from datetime import datetime, timedelta
 from decimal import Decimal, InvalidOperation, localcontext
 from pathlib import Path
@@ -29,6 +31,7 @@ MAX_EVIDENCE_FILES = 64
 MAX_JSON_DEPTH = 32
 MAX_DECIMAL_TEXT = 80
 MAX_PACKAGE_ENTRIES = 10
+_CAPTURE = ContextVar("technical_source_capture", default=None)
 
 ROLE_PATHS = {
     "bars": "inputs/bars.json", "calendar": "inputs/trade-calendar.json",
@@ -212,7 +215,7 @@ def _fingerprint(info):
     return (info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns, info.st_ctime_ns, info.st_nlink)
 
 
-def _read(path, budget):
+def _read_file(path, budget):
     path = _absolute(path)
     with _directory(path.parent) as parent:
         fd = None
@@ -241,7 +244,7 @@ def _read(path, budget):
             if _fingerprint(before) != _fingerprint(after) or _fingerprint(after) != _fingerprint(named):
                 _fail("SOURCE_CHANGED_DURING_READ")
             budget[0] += size
-            return b"".join(chunks)
+            return b"".join(chunks), _fingerprint(after)
         except OSError as exc:
             if exc.errno == errno.ENOENT:
                 _fail("SOURCE_MISSING")
@@ -249,6 +252,25 @@ def _read(path, budget):
         finally:
             if fd is not None:
                 os.close(fd)
+
+
+def _read(path, budget):
+    path = _absolute(path)
+    capture = _CAPTURE.get()
+    try:
+        raw, fingerprint = _read_file(path, budget)
+    except ContractError as exc:
+        if capture is not None and exc.code == "SOURCE_MISSING":
+            capture.setdefault(path, None)
+        raise
+    if capture is not None:
+        entry = (raw, fingerprint)
+        if path in capture and capture[path] != entry:
+            _fail("SOURCE_CHANGED")
+        capture[path] = entry
+        if sum(len(value[0]) for value in capture.values() if value is not None) > MAX_TOTAL_BYTES:
+            _fail("TOTAL_BYTES_LIMIT")
+    return raw
 
 
 def _pairs(pairs):
@@ -696,9 +718,14 @@ def _u4_binding(request, rb, evidence, bindings, block):
     _relative(descriptor["bundle_ref"])
     for field in ("feature_health_ref", "funnel_health_ref", "diagnostic_ref", "cyclical_flags_ref"):
         _nullable(descriptor[field], _relative)
-    from experiments.research_funnel import u4_decision_ledger as ledger
-    from experiments.research_funnel import u4_pre_decision as pre
-    from experiments.research_funnel import closure_experiment as closure
+    legacy_path = str(Path(__file__).resolve().parents[1] / "research_funnel")
+    sys.path.insert(0, legacy_path)
+    try:
+        from experiments.research_funnel import u4_decision_ledger as ledger
+        from experiments.research_funnel import u4_pre_decision as pre
+        from experiments.research_funnel import closure_experiment as closure
+    finally:
+        sys.path.remove(legacy_path)
     try:
         if type(packet) is not dict:
             _fail("U4_PACKET_INVALID")
@@ -1384,3 +1411,251 @@ def load_registered_pack(registry_path: Path, pack_id: str, evidence_roots: dict
         return result
     except ContractError as exc:
         return _refusal(exc.code)
+
+
+def _inspection_config(raw):
+    registry = _json(raw)
+    _exact(registry, "registry")
+    _version(registry, "technical-registry.v1")
+    if type(registry["packs"]) is not dict or len(registry["packs"]) > MAX_PACKS:
+        _fail("INVALID_REGISTRY")
+    if type(registry["evidence_roots"]) is not dict or len(registry["evidence_roots"]) > MAX_ROOTS:
+        _fail("INVALID_ROOTS")
+    roots, packs = {}, []
+    for alias, root in registry["evidence_roots"].items():
+        _identifier(alias)
+        roots[alias] = _absolute(root)
+    for pack_id, binding in registry["packs"].items():
+        _identifier(pack_id)
+        _binding(binding)
+        packs.append(_absolute(binding["pack_root"]))
+    return roots, packs
+
+
+def _output_boundary(output, registry, protected):
+    try:
+        output = _absolute(output)
+    except ContractError:
+        _fail("OUTPUT_UNSAFE")
+    if (len(str(output)) > 512 or len(output.parts) > 32 or not output.name
+            or any(part in {"data_history", "public", "ar-live", "runtime", ".git",
+                               ".aws", ".codex", ".agents"} for part in output.parts)):
+        _fail("OUTPUT_UNSAFE")
+    # Protect exact roots and their descendants/ancestors, never an absent root's parent.
+    if output == registry or output in registry.parents or any(
+            output == root or root in output.parents or output in root.parents for root in protected):
+        _fail("OUTPUT_IN_SOURCE_TREE")
+    return output
+
+
+def _output_current(output, fd):
+    try:
+        with _directory(output) as named:
+            current, held = os.fstat(named), os.fstat(fd)
+            if (current.st_dev, current.st_ino) != (held.st_dev, held.st_ino):
+                _fail("OUTPUT_CHANGED")
+    except ContractError:
+        _fail("OUTPUT_CHANGED")
+
+
+@contextmanager
+def _new_output(output):
+    fd = None
+    try:
+        with _directory(output.parent) as parent:
+            try:
+                os.mkdir(output.name, mode=0o700, dir_fd=parent)
+            except FileExistsError:
+                _fail("OUTPUT_EXISTS")
+            except OSError:
+                _fail("OUTPUT_UNWRITABLE")
+            fd = os.open(output.name, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=parent)
+            _output_current(output, fd)
+            yield fd
+    except ContractError as exc:
+        if exc.code in {"SOURCE_MISSING", "UNSAFE_PATH"}:
+            _fail("OUTPUT_UNSAFE")
+        raise
+    except OSError:
+        _fail("OUTPUT_UNWRITABLE")
+    finally:
+        if fd is not None:
+            os.close(fd)
+
+
+def _write_new(output, root_fd, relative, raw):
+    _output_current(output, root_fd)
+    parts = _relative(relative)
+    if len(raw) > MAX_TOTAL_BYTES:
+        _fail("OUTPUT_BYTES_LIMIT")
+    parent, fd = os.dup(root_fd), None
+    try:
+        for part in parts[:-1]:
+            try:
+                os.mkdir(part, mode=0o700, dir_fd=parent)
+            except FileExistsError:
+                pass
+            child = os.open(part, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=parent)
+            os.close(parent)
+            parent = child
+        fd = os.open(parts[-1], os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW,
+                     0o600, dir_fd=parent)
+        offset = 0
+        while offset < len(raw):
+            count = os.write(fd, raw[offset:offset + 65536])
+            if count <= 0:
+                _fail("OUTPUT_WRITE_FAILED")
+            offset += count
+        os.fsync(fd)
+    except OSError:
+        _fail("OUTPUT_WRITE_FAILED")
+    finally:
+        if fd is not None:
+            os.close(fd)
+        os.close(parent)
+
+
+def _recheck_sources(captured):
+    budget = [0]
+    for path, accepted in captured.items():
+        try:
+            current = _read_file(path, budget)
+        except ContractError as exc:
+            if accepted is None and exc.code == "SOURCE_MISSING":
+                continue
+            _fail("SOURCE_CHANGED")
+        if current != accepted:
+            _fail("SOURCE_CHANGED")
+
+
+def _inspection_receipt(result, files):
+    return {"schema": "technical-inspection-receipt.v1", "status": result["status"],
+            "reason_codes": result["reason_codes"], "authority": result["authority"],
+            "publication_status": "INCOMPLETE" if result["status"] == "REFUSED" else "AWAITING_MANIFEST",
+            "code_file_sha256": sha(_read(Path(__file__).absolute(), [0])),
+            "command": ["technical_contract", "inspect"], "files": files}
+
+
+def _failure_output(output, fd, result):
+    # Never rewrite an earlier artifact, even when publication failed after receipt creation.
+    for name, value in (("validation.json", result),
+                        ("receipt.json", _inspection_receipt(result, {})),
+                        ("failure-receipt.json", _inspection_receipt(result, {}))):
+        try:
+            _write_new(output, fd, name, canonical(value))
+        except ContractError:
+            continue
+
+
+def inspect_registered_pack(registry_path: Path, pack_id: str,
+                            evidence_roots: dict[str, Path], output_root: Path) -> dict:
+    """Inspect only operator-registered evidence, with exclusive manifest-last output.
+
+    An absent manifest is incomplete, including refusals. Source bytes are captured
+    during actual validation, not reconstructed from parsed JSON. No Git or ledger
+    reader/writer is invoked. Operator output provisioning remains a deployment duty.
+    """
+    captured = {}
+    token = _CAPTURE.set(captured)
+    try:
+        registry = _absolute(registry_path)
+        roots, packs = _inspection_config(_read(registry, [0]))
+        output = _output_boundary(output_root, registry, packs + list(roots.values()))
+        result = load_registered_pack(registry, pack_id, evidence_roots)
+    except ContractError as exc:
+        return _refusal(exc.code)
+    finally:
+        _CAPTURE.reset(token)
+    try:
+        with _new_output(output) as fd:
+            try:
+                if result["status"] == "REFUSED":
+                    _failure_output(output, fd, result)
+                    return result
+                _recheck_sources(captured)
+                pack = Path(_json(captured[registry][0])["packs"][pack_id]["pack_root"])
+                files = {}
+                for source, accepted in captured.items():
+                    if accepted is None:
+                        continue
+                    if source == registry:
+                        relative = "evidence/operator-registry.json"
+                    elif pack in source.parents:
+                        relative = "evidence/pack/" + source.relative_to(pack).as_posix()
+                    else:
+                        # Snapshot the aliases actually referenced, not unused overlapping config.
+                        matching = []
+                        for key in result["bindings"]["evidence_byte_hashes"]:
+                            alias, path = key.split(":", 1)
+                            if roots[alias] / path == source:
+                                matching.append("evidence/external/" + alias + "/" + path)
+                        if not matching:
+                            _fail("SNAPSHOT_SOURCE_NOT_BOUND")
+                        for relative in matching:
+                            _write_new(output, fd, relative, accepted[0])
+                            files[relative] = sha(accepted[0])
+                        continue
+                    _write_new(output, fd, relative, accepted[0])
+                    files[relative] = sha(accepted[0])
+                raw = canonical(result)
+                _write_new(output, fd, "validation.json", raw)
+                files["validation.json"] = sha(raw)
+                raw = canonical(_inspection_receipt(result, dict(files)))
+                _write_new(output, fd, "receipt.json", raw)
+                files["receipt.json"] = sha(raw)
+                raw = "".join(f"{digest}  {name}\n" for name, digest in sorted(files.items())).encode("ascii")
+                _write_new(output, fd, "SHA256SUMS", raw)
+                files["SHA256SUMS"] = sha(raw)
+                manifest = canonical({"schema": "technical-inspection-manifest.v1", "complete": True,
+                                      "status": result["status"], "files": files})
+                _write_new(output, fd, ".manifest.pending", manifest)
+                _recheck_sources(captured)
+                _output_current(output, fd)
+                staged_raw, staged_identity = _read_file(output / ".manifest.pending", [0])
+                if staged_raw != manifest:
+                    _fail("OUTPUT_CHANGED")
+                # Exclusive atomic publication: never overwrite an injected manifest/link.
+                os.link(".manifest.pending", "manifest.json", src_dir_fd=fd,
+                        dst_dir_fd=fd, follow_symlinks=False)
+                try:
+                    published = os.stat("manifest.json", dir_fd=fd, follow_symlinks=False)
+                    if (not stat.S_ISREG(published.st_mode)
+                            or (published.st_dev, published.st_ino) != staged_identity[:2]):
+                        _fail("OUTPUT_CHANGED")
+                    _output_current(output, fd)
+                except (ContractError, OSError):
+                    # Remove only the commit entry this call just created, not prior artifacts.
+                    os.unlink("manifest.json", dir_fd=fd)
+                    _fail("OUTPUT_CHANGED")
+                return result
+            except (ContractError, OSError) as exc:
+                result = _refusal(exc.code if isinstance(exc, ContractError) else "OUTPUT_WRITE_FAILED")
+                _failure_output(output, fd, result)
+                return result
+    except ContractError as exc:
+        return _refusal(exc.code)
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(description="Offline registered technical input inspection")
+    sub = parser.add_subparsers(dest="command", required=True)
+    inspect = sub.add_parser("inspect")
+    inspect.add_argument("--registry", required=True)
+    inspect.add_argument("--pack-id", required=True)
+    inspect.add_argument("--output", required=True)
+    args = parser.parse_args(argv)
+    try:
+        registry = _absolute(args.registry)
+        roots, _ = _inspection_config(_read(registry, [0]))
+        result = inspect_registered_pack(registry, args.pack_id, roots, Path(args.output))
+    except ContractError as exc:
+        result = _refusal(exc.code)
+    if result["status"] == "REFUSED":
+        print("technical-inspect: REFUSED " + ",".join(result["reason_codes"]), file=sys.stderr)
+    else:
+        print("technical-inspect: " + result["status"])
+    return {"VALIDATED": 0, "REFUSED": 2, "DATA_BLOCKED": 3}[result["status"]]
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

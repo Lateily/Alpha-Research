@@ -78,6 +78,11 @@ jobs:
           python3 scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/workflow_followup.task.json
       - name: SMC ICT offline decision engine (zero network)
         run: python3 tests/test_smc_ict_engine.py
+      - name: Technical input contract inspection (offline, nonproduction)
+        run: |
+          python3 tests/test_technical_contract.py
+          python3 tests/test_technical_contract_cli.py
+          python3 scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/technical_input_contract.task.json
       - name: Three-subject source capture (synthetic transport, offline)
         run: python3 tests/test_research_workflow_sources.py
       - name: Full feature health JSON Schema (producer receipts, offline)

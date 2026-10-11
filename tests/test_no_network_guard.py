@@ -72,6 +72,21 @@ from experiments.research_funnel import u4_pre_decision  # noqa: E402,F401
 import paper_execution_audit  # noqa: E402,F401
 
 # ── 在守卫下跑完整离线套件入口(任何隐藏外呼 → NetworkAttempt 崩溃)──
+import json  # noqa: E402
+from pathlib import Path  # noqa: E402
+import test_technical_contract as technical_contract_tests  # noqa: E402
+import test_technical_contract_cli as technical_cli_tests  # noqa: E402
+from scripts.llm.ai_os.task_compiler import compile_task_manifest  # noqa: E402
+for technical_suite in (technical_contract_tests, technical_cli_tests):
+    technical_result = unittest.TextTestRunner(verbosity=0).run(
+        unittest.defaultTestLoader.loadTestsFromModule(technical_suite)
+    )
+    assert technical_result.wasSuccessful(), "technical input contract failed under socket guard"
+technical_task = json.loads((Path(HERE).parent / "scripts/llm/fixtures/technical_input_contract.task.json").read_text())
+technical_compiled = compile_task_manifest(technical_task).to_dict()
+assert technical_compiled["status"] == "SPEC_READY", technical_compiled["errors"]
+assert technical_compiled["manifest"]["budget"]["max_cny"] == "0"
+
 import test_research_workflow_sources as workflow_source_tests  # noqa: E402
 workflow_source_result = unittest.TextTestRunner(verbosity=0).run(
     unittest.defaultTestLoader.loadTestsFromModule(workflow_source_tests)

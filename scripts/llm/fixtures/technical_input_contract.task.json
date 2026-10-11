@@ -1,0 +1,22 @@
+{
+  "schema": "ai-task.v1",
+  "task_id": "TECHNICAL-INPUT-CONTRACT-TASK3",
+  "source_issue": null,
+  "architecture_block": ["research-workflows", "offline-input-contract"],
+  "objective": "Implement only Task 3: read-only registered pack inspection, exact-byte snapshots, bounded new-output receipts and CLI, with offline behavior mutation pins.",
+  "non_goals": ["No technical calculations or frontend", "No providers, production, U4, SQLite or Git refresh writes", "No upstream identity invention", "No full gate, full ci_local, push, PR or merge in this implementation task"],
+  "human_owner": "Junyan",
+  "reviewer": "Junyan",
+  "executor_candidates": ["Codex"],
+  "dependencies": [],
+  "authority_docs": ["AGENTS.md", "experiments/AGENTS.md", "scripts/llm/AGENTS.md", "docs/research/technical_workflow_v0_1/TECHNICAL_WORKFLOW_V0_1_REVIEW.md", "docs/research/technical_workflow_v0_1/INPUT_CONTRACT.md"],
+  "file_scope": ["experiments/research_workflows/technical_contract.py", "tests/test_technical_contract_cli.py", "scripts/llm/fixtures/technical_input_contract.task.json", ".github/workflows/python-ci.yml", "scripts/governance_mutation_gate.py", "tests/test_no_network_guard.py"],
+  "forbidden_scope": ["old modules", "profiles", "approved spec", "frontend", "calculation engine", "production runtime", "data_history", "public", "real U4 ledgers", "external ci_local runner"],
+  "input_contracts": ["technical-registry.v1", "technical-pack-validation.v1", "technical-input-contract Task 1 and Task 2 source-bound inputs"],
+  "output_artifacts": ["inspect_registered_pack API and inspection CLI", "New nonproduction snapshots and failure receipts", "Offline CLI regressions", "CI and mutation registrations", "Local ignored task-3-report.md"],
+  "acceptance_tests": ["AR_OFFLINE=1 python3 tests/test_technical_contract.py", "AR_OFFLINE=1 python3 tests/test_technical_contract_cli.py", "python3 scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/technical_input_contract.task.json", "CiCoverage tests", "AR_OFFLINE=1 python3 tests/test_no_network_guard.py", "Selected new mutations individually via existing gate APIs in disposable copies", "git diff --check"],
+  "risk_level": "MEDIUM",
+  "network_policy": "OFFLINE",
+  "budget": {"max_cny": "0", "max_minutes": 180},
+  "approval_gates": ["INDEPENDENT_REVIEW", "CONTROLLER_FINAL_VALIDATION", "JUNYAN_MERGE", "SEPARATE_PRODUCTION_APPROVAL"]
+}
