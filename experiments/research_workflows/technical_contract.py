@@ -571,7 +571,10 @@ def _time(value):
 
 
 def _market_date(value):
-    return _time(value).astimezone(ZoneInfo("Asia/Shanghai")).strftime("%Y%m%d")
+    try:
+        return _time(value).astimezone(ZoneInfo("Asia/Shanghai")).strftime("%Y%m%d")
+    except OverflowError:
+        _fail("INVALID_TIMESTAMP")
 
 
 def _ledger_records(raw):

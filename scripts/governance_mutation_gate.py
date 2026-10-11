@@ -15519,6 +15519,14 @@ MUTATIONS += (
         expected_failure_marker="test_cli_registry_edit_at_manifest_link_refused",
         rationale="Post-link source refusal must retain SOURCE_CHANGED, not relabel it as output corruption.",
     ),
+    MutationCase(
+        mutation_id="TECHNICAL_MARKET_DATE_OVERFLOW", component="Technical input contract",
+        source_path="experiments/research_workflows/technical_contract.py", test_script="tests/test_technical_contract_cli.py",
+        before='    except OverflowError:\n        _fail("INVALID_TIMESTAMP")',
+        after='    except OverflowError:\n        return _time(value).strftime("%Y%m%d")',
+        expected_failure_marker="test_cli_extreme_market_date_refused",
+        rationale="Unrepresentable market dates must refuse, not accept an unconverted date as blocked research.",
+    ),
 )
 
 

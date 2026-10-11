@@ -85,6 +85,8 @@ os.mkdir, os.open, os.link = mkdir, opener, link
 os.write, os.fsync = write, fsync
 '''
 
+EXTREME_TIMESTAMPS = ('9999-12-31T23:59:59-23:59', '0001-01-01T00:00:00+23:59')
+
 
 def inventory(paths):
     result = {}
@@ -140,6 +142,72 @@ class TechnicalInspectionTests(unittest.TestCase):
             if validation and validation['status'] == 'REFUSED':
                 self.assertEqual(validation['inputs'], {})
                 self.assertEqual(validation['bindings'], {})
+
+    def assert_timestamp_refusal(self, result):
+        self.assertEqual(result['status'], 'REFUSED')
+        self.assertEqual(result['reason_codes'], ['INVALID_TIMESTAMP'])
+        self.assertIsNone(result['request'])
+        self.assertIsNone(result['source_manifest'])
+        self.assertEqual(result['inputs'], {})
+        self.assertEqual(result['bindings'], {})
+        self.assertFalse(result['authority']['claim_allowed'])
+        self.assertTrue(result['authority']['no_trade_flag'])
+
+    def test_loader_and_api_extreme_market_date_refused(self):
+        for index, stamp in enumerate(EXTREME_TIMESTAMPS):
+            self.f.request.update(as_of=stamp, data_cutoff=stamp)
+            self.f.seal(register=True)
+            before = inventory([self.f.registry, self.f.pack, self.f.evidence])
+            for entry in ['loader', 'inspection']:
+                with self.subTest(stamp=stamp, entry=entry):
+                    self.output = self.f.root / ('extreme-api-' + str(index))
+                    try:
+                        result = (self.contract.load_registered_pack(self.f.registry, 'synthetic-1', self.f.roots)
+                                  if entry == 'loader' else self.inspect())
+                    except OverflowError:
+                        self.fail(entry + ' escaped instead of returning a bounded timestamp refusal')
+                    self.assert_timestamp_refusal(result)
+                    if entry == 'inspection':
+                        self.assert_timestamp_refusal(self.read('validation.json'))
+                        self.assertEqual(self.read('receipt.json')['status'], 'REFUSED')
+                        self.assertEqual(self.read('failure-receipt.json')['publication_status'], 'INCOMPLETE')
+                        self.assertFalse((self.output / 'manifest.json').exists())
+                    self.assertEqual(before, inventory([self.f.registry, self.f.pack, self.f.evidence]))
+
+    def test_cli_extreme_market_date_refused(self):
+        for index, stamp in enumerate(EXTREME_TIMESTAMPS):
+            with self.subTest(stamp=stamp):
+                self.f.request.update(as_of=stamp, data_cutoff=stamp)
+                self.f.seal(register=True)
+                self.output = self.f.root / ('extreme-cli-' + str(index))
+                before = inventory([self.f.registry, self.f.pack, self.f.evidence])
+                completed = self.run_cli()
+                self.assert_refused(completed, 'INVALID_TIMESTAMP')
+                self.assertEqual(completed.stderr, 'technical-inspect: REFUSED INVALID_TIMESTAMP\n')
+                self.assertEqual(completed.stdout, '')
+                self.assert_timestamp_refusal(self.read('validation.json'))
+                for name in ['receipt.json', 'failure-receipt.json']:
+                    receipt = self.read(name)
+                    self.assertEqual(receipt['status'], 'REFUSED')
+                    self.assertEqual(receipt['reason_codes'], ['INVALID_TIMESTAMP'])
+                    self.assertEqual(receipt['publication_status'], 'INCOMPLETE')
+                self.assertEqual(before, inventory([self.f.registry, self.f.pack, self.f.evidence]))
+
+    def test_ordinary_valid_offset_preserves_loader_api_and_cli(self):
+        self.f.request.update(as_of='2026-10-09T09:00:00+02:00', data_cutoff='2026-10-09T09:00:00+02:00')
+        self.f.seal(register=True)
+        before = inventory([self.f.registry, self.f.pack, self.f.evidence])
+        loaded = self.contract.load_registered_pack(self.f.registry, 'synthetic-1', self.f.roots)
+        self.assertEqual(loaded['status'], 'DATA_BLOCKED')
+        self.assertEqual(loaded['quality']['structural_input_status'], 'STRUCTURALLY_VALID')
+        self.assertIn('HISTORICAL_NO_U4_AUTHORITY', loaded['reason_codes'])
+        self.assertEqual(self.inspect(), loaded)
+        self.output = self.f.root / 'ordinary-offset-cli'
+        completed = self.run_cli()
+        self.assertEqual(completed.returncode, 3, completed.stderr)
+        self.assertEqual(self.read('validation.json'), loaded)
+        self.assertTrue(self.read('manifest.json')['complete'])
+        self.assertEqual(before, inventory([self.f.registry, self.f.pack, self.f.evidence]))
 
     def test_cli_historical_structural_observation_exact_snapshots(self):
         before = inventory([self.f.registry, self.f.pack, self.f.evidence])
