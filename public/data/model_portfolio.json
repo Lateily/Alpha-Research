@@ -8,7 +8,7 @@
     "no_position_mutation": true,
     "run_date": "2026-10-12",
     "pilot_start_date": "2026-06-08",
-    "generated_at": "2026-10-12T07:14:49.058858+00:00",
+    "generated_at": "2026-10-12T18:10:49.244676+00:00",
     "fresh_pilot": true,
     "legacy_paper_positions_inherited": false,
     "sources": [
@@ -106,7 +106,7 @@
         "quant_confluence": {
           "action": "NEUTRAL",
           "score": 5,
-          "rationale": "Bullish: Ma20 Bounce | RSI 59 | Price vs MA20 +3.4% | VP 50"
+          "rationale": "Bullish: Ma20 Bounce | RSI 58 | Price vs MA20 +3.4% | VP 50"
         }
       },
       "validation_status": "PENDING",
@@ -265,8 +265,8 @@
             "total": 3
           },
           "key_indicators": {
-            "rsi14": 48.3,
-            "macd_hist": 0.1439,
+            "rsi14": 48.0,
+            "macd_hist": 0.1655,
             "price_vs_ma20": 0.28,
             "price_vs_ma60": null,
             "change_5d": 0.72,
@@ -277,13 +277,13 @@
               "type": "RSI_RECOVERING",
               "strength": "moderate",
               "bullish": true,
-              "desc": "RSI recovering 36.5→48.3 — momentum rebuilding"
+              "desc": "RSI recovering 36.0→48.0 — momentum rebuilding"
             },
             {
               "type": "MACD_GOLDEN_CROSS",
               "strength": "moderate",
               "bullish": true,
-              "desc": "MACD DIF(-1.468) crossed above DEA(-1.540) below zero — bullish momentum"
+              "desc": "MACD DIF(-1.491) crossed above DEA(-1.574) below zero — bullish momentum"
             },
             {
               "type": "KDJ_GOLDEN_CROSS",
@@ -361,8 +361,8 @@
             "total": 2
           },
           "key_indicators": {
-            "rsi14": 34.7,
-            "macd_hist": -1.1092,
+            "rsi14": 34.4,
+            "macd_hist": -1.1488,
             "price_vs_ma20": -7.06,
             "price_vs_ma60": null,
             "change_5d": -9.39,
@@ -373,7 +373,7 @@
               "type": "RSI_RECOVERING",
               "strength": "moderate",
               "bullish": true,
-              "desc": "RSI recovering 32.8→34.7 — momentum rebuilding"
+              "desc": "RSI recovering 32.5→34.4 — momentum rebuilding"
             },
             {
               "type": "KDJ_OVERSOLD",
@@ -409,8 +409,8 @@
             "total": 1
           },
           "key_indicators": {
-            "rsi14": 34.7,
-            "macd_hist": -22.7945,
+            "rsi14": 34.2,
+            "macd_hist": -23.1414,
             "price_vs_ma20": -11.34,
             "price_vs_ma60": null,
             "change_5d": -13.46,
@@ -451,8 +451,8 @@
             "total": 1
           },
           "key_indicators": {
-            "rsi14": 58.8,
-            "macd_hist": 0.1372,
+            "rsi14": 58.1,
+            "macd_hist": 0.1404,
             "price_vs_ma20": 3.35,
             "price_vs_ma60": null,
             "change_5d": 6.89,
@@ -547,8 +547,8 @@
             "total": 1
           },
           "key_indicators": {
-            "rsi14": 34.2,
-            "macd_hist": -5.734,
+            "rsi14": 34.5,
+            "macd_hist": -5.9887,
             "price_vs_ma20": -7.91,
             "price_vs_ma60": null,
             "change_5d": -8.82,
@@ -559,7 +559,7 @@
               "type": "RSI_RECOVERING",
               "strength": "moderate",
               "bullish": true,
-              "desc": "RSI recovering 31.6→34.2 — momentum rebuilding"
+              "desc": "RSI recovering 31.9→34.5 — momentum rebuilding"
             }
           ]
         },

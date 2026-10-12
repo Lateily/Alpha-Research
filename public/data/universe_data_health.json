@@ -1,59 +1,52 @@
 {
-  "verdict": "BLOCKED",
-  "as_of": "2026-10-12T07:09:22.765228+00:00",
+  "verdict": "PASS",
+  "as_of": "2026-10-12T18:05:31.342603+00:00",
   "max_age_days": 2,
   "meta": {
-    "fetched_at": "2026-10-09T15:23:55.082102",
-    "count": 5559,
+    "fetched_at": "2026-10-12T18:04:39.173523",
+    "count": 5561,
     "version": "4.2",
     "scorer": "barra_lite_v1"
   },
   "coverage": {
     "price": 1.0,
-    "pe": 0.7386,
-    "pb": 0.9906,
-    "roe": 0.9611
+    "pe": 0.7385,
+    "pb": 0.9905,
+    "roe": 0.9612
   },
   "factor_summaries": {
     "value": {
-      "coverage": 0.9892066918510524,
-      "unique": 956,
-      "stdev": 24.217855,
-      "median": 54.8
+      "coverage": 0.9884912785470239,
+      "unique": 961,
+      "stdev": 24.190766,
+      "median": 54.9
     },
     "quality": {
-      "coverage": 0.9892066918510524,
-      "unique": 977,
-      "stdev": 28.327875,
+      "coverage": 0.9884912785470239,
+      "unique": 978,
+      "stdev": 28.326989,
       "median": 50.0
     },
     "momentum": {
-      "coverage": 0.9892066918510524,
+      "coverage": 0.9884912785470239,
       "unique": 1001,
-      "stdev": 28.40445,
+      "stdev": 28.401656,
       "median": 50.0
     },
     "size": {
-      "coverage": 0.9892066918510524,
+      "coverage": 0.9884912785470239,
       "unique": 1001,
-      "stdev": 28.873104,
+      "stdev": 28.87295,
       "median": 50.0
     },
     "low_vol": {
-      "coverage": 0.9892066918510524,
-      "unique": 1001,
-      "stdev": 28.87292,
+      "coverage": 0.9884912785470239,
+      "unique": 999,
+      "stdev": 28.872703,
       "median": 50.0
     }
   },
-  "errors": [
-    {
-      "code": "stale_universe_snapshot",
-      "message": "Universe snapshot is 3 calendar days old (max 2). Do not use for execution or entry zones.",
-      "fetched_at": "2026-10-09T15:23:55.082102+00:00",
-      "as_of": "2026-10-12"
-    }
-  ],
+  "errors": [],
   "warnings": [],
   "ticker_checks": []
 }

@@ -12,8 +12,8 @@
       "date": "20261009",
       "bullish": true,
       "description": {
-        "e": "RSI recovering 36.5→48.3 — momentum rebuilding",
-        "z": "RSI从36.5回升至48.3，动能修复"
+        "e": "RSI recovering 36.0→48.0 — momentum rebuilding",
+        "z": "RSI从36.0回升至48.0，动能修复"
       }
     },
     {
@@ -22,8 +22,8 @@
       "date": "20261009",
       "bullish": true,
       "description": {
-        "e": "MACD DIF(-1.468) crossed above DEA(-1.540) below zero — bullish momentum",
-        "z": "MACD DIF(-1.468)上穿DEA(-1.540)零轴下方金叉看涨"
+        "e": "MACD DIF(-1.491) crossed above DEA(-1.574) below zero — bullish momentum",
+        "z": "MACD DIF(-1.491)上穿DEA(-1.574)零轴下方金叉看涨"
       }
     },
     {
@@ -46,7 +46,7 @@
     "ma5": 83.07,
     "ma20": 84.71,
     "ma60": null,
-    "rsi14": 48.3,
+    "rsi14": 48.0,
     "vol_ma20": 241624,
     "vol_ratio": 1.66,
     "price_vs_ma20": 0.28,
@@ -54,9 +54,9 @@
     "change_1d": 3.95,
     "change_5d": 0.72,
     "change_20d": -2.7,
-    "macd_dif": -1.4682,
-    "macd_dea": -1.5401,
-    "macd_hist": 0.1439,
+    "macd_dif": -1.4914,
+    "macd_dea": -1.5742,
+    "macd_hist": 0.1655,
     "bb_upper": 87.67,
     "bb_mid": 84.71,
     "bb_lower": 81.74,

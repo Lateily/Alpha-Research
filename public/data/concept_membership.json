@@ -1,5 +1,5 @@
 {
-  "fetched_at": "2026-10-12T07:11:33Z",
+  "fetched_at": "2026-10-12T18:07:40Z",
   "_status": "ok",
   "api_used": "ths_index+ths_member",
   "scope": "watchlist_only",
@@ -678,6 +678,17 @@
       ]
     },
     {
+      "ts_code": "700051R.TI",
+      "name": "同花顺金仓30全收益",
+      "type": "TH",
+      "total_count": 30.0,
+      "member_count": 2,
+      "members": [
+        "300308.SZ",
+        "688120.SH"
+      ]
+    },
+    {
       "ts_code": "700052.TI",
       "name": "同花顺金仓50",
       "type": "TH",
@@ -851,6 +862,17 @@
       "members": [
         "300308.SZ",
         "603233.SH"
+      ]
+    },
+    {
+      "ts_code": "883443.TI",
+      "name": "同花顺算力主题精选",
+      "type": "S",
+      "total_count": 100.0,
+      "member_count": 2,
+      "members": [
+        "300308.SZ",
+        "688120.SH"
       ]
     },
     {
@@ -1066,16 +1088,6 @@
       "member_count": 1,
       "members": [
         "603233.SH"
-      ]
-    },
-    {
-      "ts_code": "700051R.TI",
-      "name": "同花顺金仓30全收益",
-      "type": "TH",
-      "total_count": 30.0,
-      "member_count": 1,
-      "members": [
-        "300308.SZ"
       ]
     },
     {
@@ -1769,13 +1781,13 @@
       ]
     },
     {
-      "ts_code": "883443.TI",
-      "name": "同花顺算力主题精选",
+      "ts_code": "883442.TI",
+      "name": "养老金持股",
       "type": "S",
-      "total_count": 100.0,
+      "total_count": 197.0,
       "member_count": 1,
       "members": [
-        "300308.SZ"
+        "300054.SZ"
       ]
     },
     {
@@ -1803,6 +1815,16 @@
       "name": "增发预案指数",
       "type": "S",
       "total_count": 392.0,
+      "member_count": 1,
+      "members": [
+        "688120.SH"
+      ]
+    },
+    {
+      "ts_code": "883904.TI",
+      "name": "增发募集指数",
+      "type": "S",
+      "total_count": 36.0,
       "member_count": 1,
       "members": [
         "688120.SH"
@@ -1876,6 +1898,16 @@
       "member_count": 1,
       "members": [
         "300308.SZ"
+      ]
+    },
+    {
+      "ts_code": "883964.TI",
+      "name": "定增破发",
+      "type": "S",
+      "total_count": 56.0,
+      "member_count": 1,
+      "members": [
+        "688120.SH"
       ]
     },
     {
@@ -2259,6 +2291,16 @@
       ]
     },
     {
+      "ts_code": "885945.TI",
+      "name": "汽车芯片",
+      "type": "N",
+      "total_count": 144.0,
+      "member_count": 1,
+      "members": [
+        "002594.SZ"
+      ]
+    },
+    {
       "ts_code": "885986.TI",
       "name": "碳交易",
       "type": "N",
@@ -2520,6 +2562,7 @@
       "700001.TI"
     ],
     "002594.SZ": [
+      "885945.TI",
       "883434.TI",
       "703764.TI",
       "703087.TI",
@@ -2656,6 +2699,10 @@
       "700001.TI"
     ],
     "688120.SH": [
+      "883964.TI",
+      "883904.TI",
+      "883443.TI",
+      "700051R.TI",
       "700051.TI",
       "883920.TI",
       "883433.TI",
@@ -2744,6 +2791,7 @@
       "700001.TI"
     ],
     "300054.SZ": [
+      "883442.TI",
       "700054.TI",
       "700054R.TI",
       "883426.TI",
@@ -2819,7 +2867,7 @@
       "700001.TI"
     ]
   },
-  "total_concepts": 225,
-  "total_memberships": 388,
+  "total_concepts": 229,
+  "total_memberships": 394,
   "disclaimer": "不是买卖指令;研究信号,human executes."
 }
