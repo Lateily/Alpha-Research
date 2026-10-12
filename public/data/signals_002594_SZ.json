@@ -1,49 +1,69 @@
 {
   "ticker": "002594.SZ",
-  "generated_at": "2026-10-09",
-  "price": 81.72,
+  "generated_at": "2026-10-12",
+  "price": 84.95,
   "zone": "NEUTRAL",
   "entry_zone": true,
   "exit_zone": false,
   "signals": [
     {
-      "type": "KDJ_OVERSOLD",
-      "strength": "strong",
-      "date": "20261008",
+      "type": "RSI_RECOVERING",
+      "strength": "moderate",
+      "date": "20261009",
       "bullish": true,
       "description": {
-        "e": "KDJ J=-1.5 (extreme <0) — high-probability reversal zone",
-        "z": "KDJ J=-1.5极度超卖，高概率反转区间"
+        "e": "RSI recovering 36.5→48.3 — momentum rebuilding",
+        "z": "RSI从36.5回升至48.3，动能修复"
+      }
+    },
+    {
+      "type": "MACD_GOLDEN_CROSS",
+      "strength": "moderate",
+      "date": "20261009",
+      "bullish": true,
+      "description": {
+        "e": "MACD DIF(-1.468) crossed above DEA(-1.540) below zero — bullish momentum",
+        "z": "MACD DIF(-1.468)上穿DEA(-1.540)零轴下方金叉看涨"
+      }
+    },
+    {
+      "type": "KDJ_GOLDEN_CROSS",
+      "strength": "moderate",
+      "date": "20261009",
+      "bullish": true,
+      "description": {
+        "e": "KDJ K(33.1) crossed above D(30.9) in oversold — reversal signal",
+        "z": "KDJ K(33.1)上穿D(30.9)，超卖区金叉看涨"
       }
     }
   ],
   "signal_count": {
-    "bullish": 1,
+    "bullish": 3,
     "bearish": 0,
-    "total": 1
+    "total": 3
   },
   "indicators": {
-    "ma5": 82.95,
-    "ma20": 84.83,
+    "ma5": 83.07,
+    "ma20": 84.71,
     "ma60": null,
-    "rsi14": 36.5,
-    "vol_ma20": 231712,
-    "vol_ratio": 1.07,
-    "price_vs_ma20": -3.66,
+    "rsi14": 48.3,
+    "vol_ma20": 241624,
+    "vol_ratio": 1.66,
+    "price_vs_ma20": 0.28,
     "price_vs_ma60": null,
-    "change_1d": -1.91,
-    "change_5d": -4.81,
-    "change_20d": -5.85,
-    "macd_dif": -1.6645,
-    "macd_dea": -1.5581,
-    "macd_hist": -0.2127,
-    "bb_upper": 88.0,
-    "bb_mid": 84.83,
-    "bb_lower": 81.65,
-    "bb_bandwidth": 7.48,
-    "kdj_k": 19.4,
-    "kdj_d": 29.9,
-    "kdj_j": -1.5,
+    "change_1d": 3.95,
+    "change_5d": 0.72,
+    "change_20d": -2.7,
+    "macd_dif": -1.4682,
+    "macd_dea": -1.5401,
+    "macd_hist": 0.1439,
+    "bb_upper": 87.67,
+    "bb_mid": 84.71,
+    "bb_lower": 81.74,
+    "bb_bandwidth": 7.0,
+    "kdj_k": 33.1,
+    "kdj_d": 30.9,
+    "kdj_j": 37.4,
     "cvd_latest": null,
     "cvd_slope_5d": null,
     "cvd_chg_1d": null,

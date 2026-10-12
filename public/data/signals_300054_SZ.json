@@ -1,29 +1,29 @@
 {
   "ticker": "300054.SZ",
-  "generated_at": "2026-10-09",
-  "price": 62.94,
+  "generated_at": "2026-10-12",
+  "price": 63.53,
   "zone": "NEUTRAL",
   "entry_zone": true,
   "exit_zone": false,
   "signals": [
     {
-      "type": "BB_LOWER_BREAK",
+      "type": "RSI_RECOVERING",
       "strength": "moderate",
-      "date": "20261008",
+      "date": "20261009",
       "bullish": true,
       "description": {
-        "e": "Price (62.9) touched Bollinger lower (64.1) — oversold, mean reversion watch",
-        "z": "股价(62.9)触及布林下轨(64.1)，超卖，关注均值回归"
+        "e": "RSI recovering 32.8→34.7 — momentum rebuilding",
+        "z": "RSI从32.8回升至34.7，动能修复"
       }
     },
     {
       "type": "KDJ_OVERSOLD",
       "strength": "strong",
-      "date": "20261008",
+      "date": "20261009",
       "bullish": true,
       "description": {
-        "e": "KDJ J=-9.6 (extreme <0) — high-probability reversal zone",
-        "z": "KDJ J=-9.6极度超卖，高概率反转区间"
+        "e": "KDJ J=-0.3 (extreme <0) — high-probability reversal zone",
+        "z": "KDJ J=-0.3极度超卖，高概率反转区间"
       }
     }
   ],
@@ -33,27 +33,27 @@
     "total": 2
   },
   "indicators": {
-    "ma5": 67.28,
-    "ma20": 68.61,
+    "ma5": 65.96,
+    "ma20": 68.36,
     "ma60": null,
-    "rsi14": 32.8,
-    "vol_ma20": 186252,
-    "vol_ratio": 1.26,
-    "price_vs_ma20": -8.26,
+    "rsi14": 34.7,
+    "vol_ma20": 194867,
+    "vol_ratio": 1.65,
+    "price_vs_ma20": -7.06,
     "price_vs_ma60": null,
-    "change_1d": -6.69,
-    "change_5d": -11.51,
-    "change_20d": -8.42,
-    "macd_dif": -1.2201,
-    "macd_dea": -0.8206,
-    "macd_hist": -0.7991,
-    "bb_upper": 73.16,
-    "bb_mid": 68.61,
-    "bb_lower": 64.06,
-    "bb_bandwidth": 13.26,
-    "kdj_k": 23.4,
-    "kdj_d": 39.9,
-    "kdj_j": -9.6,
+    "change_1d": 0.94,
+    "change_5d": -9.39,
+    "change_20d": -7.27,
+    "macd_dif": -1.5139,
+    "macd_dea": -0.9593,
+    "macd_hist": -1.1092,
+    "bb_upper": 73.42,
+    "bb_mid": 68.36,
+    "bb_lower": 63.3,
+    "bb_bandwidth": 14.81,
+    "kdj_k": 22.7,
+    "kdj_d": 34.2,
+    "kdj_j": -0.3,
     "cvd_latest": null,
     "cvd_slope_5d": null,
     "cvd_chg_1d": null,
