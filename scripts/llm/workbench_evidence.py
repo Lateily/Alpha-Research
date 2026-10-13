@@ -386,6 +386,44 @@ def _research_quality_counts(snapshot):
     }
 
 
+def module_sources(snapshot):
+    """Publication date and underlying observation period are different fields."""
+    rid, date = snapshot.get("published_run_id"), snapshot.get("target_trade_date")
+    paths = {
+        "Nightly": f"public/data/v2/runs/{rid}/manifest.json",
+        "Macro": "public/data/v2/macro/macro_events.json",
+        "Candidates": "public/data/v2/funnel_health.json",
+        "Paper": "public/data/v2/model_portfolio_state.json",
+    }
+    result = []
+    for name, path in paths.items():
+        record = snapshot["records"].get(path, {})
+        payload = record.get("payload") or {}
+        reported_run = payload.get("run_id")
+        reported_date = payload.get("target_trade_date")
+        if reported_date is None and re.fullmatch(r"\d{8}", str(payload.get("as_of", ""))):
+            reported_date = payload["as_of"]
+        status = "BOUND_TO_PUBLISHED_RUN"
+        if record.get("status") != "OBSERVED" or record.get("binding") != "MATCH":
+            status = "MISSING_OR_UNBOUND"
+        # governance-mutation: WORKBENCH_MODULE_RUN_IDENTITY
+        elif reported_run is not None and reported_run != rid:
+            status = "RUN_MISMATCH"
+        elif reported_date is not None and reported_date != date:
+            status = "DATE_MISMATCH"
+        elif reported_run is None:
+            status = "IDENTITY_UNAVAILABLE"
+        result.append({
+            "module": name, "path": path, "run_id": reported_run,
+            "published_trade_date": date, "source_trade_date": reported_date,
+            "source_as_of": payload.get("as_of"),
+            "date_basis": "SOURCE_EXPLICIT" if reported_date else "PUBLICATION_CONTEXT_ONLY",
+            "identity_status": status, "sha256": record.get("source_sha256"),
+            "data_quality": payload.get("data_quality", payload.get("report", payload.get("status", "UNAVAILABLE"))),
+        })
+    return result
+
+
 def view(snapshot, now=None):
     verify(snapshot)
     records = snapshot["records"]
@@ -402,6 +440,14 @@ def view(snapshot, now=None):
     paper = {k: portfolio.get(k) for k in ("paper_only", "cash", "initial_capital", "nav_latest", "nav_series", "open_positions", "closed_trades", "closed_trades_n", "win_rate_note")}
     result = {k: snapshot[k] for k in ("snapshot_hash", "observed_at", "published_run_id", "target_trade_date", "issues", "publication_verified", "manifest_available")}
     result.update({
+        "run_identity": {
+            "latest_attempt": {k: (records.get("experiments/execution_tracker/nightly_run.json", {}).get("payload") or {}).get(k)
+                               for k in ("run_id", "target_trade_date", "report", "published")},
+            "last_published": {"run_id": snapshot["published_run_id"], "target_trade_date": snapshot["target_trade_date"]},
+            "displayed": {"run_id": snapshot["published_run_id"], "target_trade_date": snapshot["target_trade_date"],
+                          "snapshot_hash": snapshot["snapshot_hash"], "observed_at": snapshot["observed_at"]},
+        },
+        "module_sources": module_sources(snapshot),
         "freshness": freshness(snapshot.get("target_trade_date"), now or utc_now()),
         "attempt": (records.get("experiments/execution_tracker/nightly_run.json", {}).get("payload") or {}),
         "funnel": value("funnel_health.json"), "feature": value("feature_store_health.json"),

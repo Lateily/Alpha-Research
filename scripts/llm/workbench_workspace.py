@@ -23,7 +23,7 @@ import workbench_evidence as evidence
 import workbench_earnings_trial as earnings_trial
 
 SCHEDULE_KINDS = {"observe", "integrity", "research-replay", "backup"}
-KINDS = SCHEDULE_KINDS | {"brief-trial", "earnings-trial"}
+KINDS = SCHEDULE_KINDS | {"brief-trial", "earnings-trial", "snapshot-brief"}
 DOCUMENT_FIELDS = {"title", "ticker", "thesis", "valuation", "timing", "invalidation", "evidence_ref"}
 REVIEW_OUTCOMES = {"ACCEPTED_LOCAL", "CHANGES_REQUESTED", "REJECTED_LOCAL"}
 MAX_EVENTS = 10000
@@ -309,6 +309,15 @@ class Workspace:
             elif payload["kind"] == "backup":
                 import workbench_backup
                 result = workbench_backup.create(self, job_id)
+            elif payload["kind"] == "snapshot-brief":
+                if self.source_root is None:
+                    raise WorkspaceError("READ_ONLY_SOURCE_NOT_CONFIGURED", 409)
+                import workbench_snapshot_brief
+                target_root = self.store.path.parent / "snapshot-briefs"
+                if target_root.is_symlink():
+                    raise WorkspaceError("BRIEF_OUTPUT_SYMLINK_REFUSED", 409)
+                target_root.mkdir(mode=0o700, exist_ok=True)
+                result = workbench_snapshot_brief.run(self.source_root, target_root / job_id)
             elif payload["kind"] == "brief-trial":
                 if self.brief_pack_root is None:
                     raise WorkspaceError("FROZEN_BRIEF_PACK_NOT_CONFIGURED", 409)
@@ -334,9 +343,11 @@ class Workspace:
             status = "STOP"
             # Never persist raw exception text from engines or provider transports.
             import workbench_brief_trial
+            import workbench_snapshot_brief
             code = str(exc) if isinstance(exc, (WorkspaceError, evidence.EvidenceError,
                                                 workbench_brief_trial.BriefTrialError,
-                                                earnings_trial.EarningsTrialError)) else "LOCAL_JOB_FAILED"
+                                                earnings_trial.EarningsTrialError,
+                                                workbench_snapshot_brief.SnapshotBriefError)) else "LOCAL_JOB_FAILED"
             result = {"error": code}
         with self.store.connect() as db:
             db.execute("BEGIN IMMEDIATE")
@@ -353,7 +364,28 @@ class Workspace:
                     raise WorkspaceError("OBSERVATION_ID_BINDING_INVALID", 409)
         replay_state = self.store.snapshot()["research_runs"]
         broken = [r["command_id"] for r in replay_state if r["status"] == "INTEGRITY_ERROR"]
+        with self.store.connect() as db:
+            jobs = self.brief_job_views(projection(self.events(db))["jobs"])
+        broken += [j["job_id"] for j in jobs if j.get("artifact_integrity") == "INTEGRITY_ERROR"]
         return {"status": "INTEGRITY_ERROR" if broken else "LOCAL_INTEGRITY_OK", "events": len(events), "observations": len(rows), "broken_replays": broken, "production_acceptance": False}
+
+    def brief_job_views(self, jobs):
+        import workbench_snapshot_brief as brief
+        result = []
+        for original in jobs:
+            job = dict(original)
+            if job.get("kind") == "snapshot-brief" and job.get("status") == "SUCCEEDED":
+                try:
+                    receipt = brief.verify(self.store.path.parent / "snapshot-briefs" / job["job_id"])
+                    if (receipt["snapshot_hash"] != job["result"]["snapshot_hash"]
+                            or receipt["files"]["report.md"] != job["result"]["report_sha256"]):
+                        raise brief.SnapshotBriefError("FROZEN_BRIEF_EVENT_BINDING_INVALID")
+                    job["artifact_integrity"] = "VERIFIED"
+                except (OSError, ValueError, KeyError, TypeError) as exc:
+                    job.update(recorded_status="SUCCEEDED", status="STOP", artifact_integrity="INTEGRITY_ERROR",
+                               result={"error": str(exc) if isinstance(exc, brief.SnapshotBriefError) else "FROZEN_BRIEF_ARTIFACT_INVALID"})
+            result.append(job)
+        return result
 
     def tick(self):
         if not self.lock.acquire(blocking=False):
@@ -401,6 +433,7 @@ class Workspace:
                 observation = evidence.view(raw)
             except (ValueError, KeyError):
                 issue = "OBSERVATION_INTEGRITY_ERROR"
+        state["jobs"] = self.brief_job_views(state["jobs"])
         return {"schema": "ar-local-workspace.v1", **state, "observation": observation,
                 "observation_error": issue, "events": events, "owner_configured": owner,
                 "read_only_source_configured": self.source_root is not None,
