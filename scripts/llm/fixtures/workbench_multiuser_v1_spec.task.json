@@ -1,0 +1,22 @@
+{
+  "schema": "ai-task.v1",
+  "task_id": "WORKBENCH-MULTIUSER-V1-SPEC-20261013",
+  "architecture_block": ["Private shared research workbench"],
+  "objective": "Record the reviewed-direction A design and acceptance contract for two independent actor-owned workspaces, a bounded persistent read-only job queue with recovery, and automatic read-only production snapshot ingestion; deliver specifications only in this stage.",
+  "non_goals": ["No product implementation before written specification and implementation-plan review.", "No existing service replacement, merge, push, production sync, collection, model calls, registration, ACL changes, new member grants or cloud resources.", "No administrative whitelist UI or new research engine in this batch."],
+  "human_owner": "Junyan",
+  "reviewer": "Junyan written specification review; later independent code reviewer",
+  "executor_candidates": ["Codex"],
+  "dependencies": ["#401 at 4208af0efe6cf5aa082186133f145b05355da743", "#402 at 1566657ddfcf0674f06c16c03b9b62415cb9d388; both remain Draft", "Final integration must be verified on current main containing parent changes"],
+  "authority_docs": ["AGENTS.md", "scripts/llm/AGENTS.md", "docs/llm/WORKBENCH_SHARED_BRIEF_V1.md", "docs/llm/WORKBENCH_SNAPSHOT_BRIEF_V1.md"],
+  "file_scope": ["docs/superpowers/specs/2026-10-13-shared-workbench-v1-design.md", "docs/team/SHARED_WORKBENCH_V1_ACCEPTANCE.md", "scripts/llm/fixtures/workbench_multiuser_v1_spec.task.json"],
+  "forbidden_scope": ["/Users/years/ar-live", "Existing serving workbench worktrees and isolated state", "Tailscale configuration and member list", "Product Python/React code, CI workflows, mutation manifest and production ledgers in this specification stage"],
+  "input_contracts": ["Junyan approved central execution with independent outputs, shared query, read-only automatic production input sync and one formal production writer.", "Source reads inspect the fixed existing workbench code; no production files are read for specification creation.", "Baselines and actual test results must not be treated as acceptance of the unimplemented new design."],
+  "output_artifacts": ["Versioned design and acceptance checklist with NOT_RUN new-feature status", "Compiled ai-task.v1 result and local baseline evidence outside tracked files", "Exact-file documentation commit on the isolated specification branch; no push or PR in this stage"],
+  "acceptance_tests": ["python3 -B scripts/team_ai_workspace.py doctor", "python3 -B scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/workbench_multiuser_v1_spec.task.json", "python3 -B tests/test_workbench_workspace.py", "python3 -B tests/test_nonprod_workbench.py", "git diff --check and verify that only the three declared specification files are changed", "Self-review verifies identity, source/attempt separation, immutable input binding, each crash write point, migration, capacity bounds, unchanged production authority and actual two-computer acceptance requirements"],
+  "risk_level": "MEDIUM",
+  "network_policy": "OFFLINE",
+  "budget": {"max_cny": "0", "max_minutes": 60},
+  "approval_gates": ["Conversation direction approved; written specification is REVIEW_REQUIRED before implementation planning.", "Written implementation plan and execution method require review before product changes.", "Merge, shared runtime cutover and formal production authority are separate gates; none inferred from access identity."],
+  "created_at": "2026-10-13T16:49:36+00:00"
+}
