@@ -5,6 +5,7 @@ No SQL from the archive is executed. Fixed tables receive parameterized rows.
 """
 import json
 import os
+import re
 import tempfile
 from pathlib import Path
 
@@ -17,6 +18,7 @@ TABLES = {
     "workspace_events": ("seq", "command_id", "request_hash", "body"),
     "workspace_observations": ("snapshot_hash", "body"),
 }
+BRIEF_PATH = re.compile(r"snapshot-briefs/[A-Za-z0-9_-]{8,100}/(?:snapshot\.json|report\.md|citations\.json|source-manifest\.json|receipt\.json|SHA256SUMS|sources/\d{3}\.json)\Z")
 
 
 def write_new(path, raw):
@@ -41,7 +43,7 @@ def verify(directory):
     if actual != set(catalog) | {"manifest.json"}:
         raise ev.EvidenceError("BACKUP_FILE_SET_INVALID")
     for name, expected in catalog.items():
-        if name != "data.json" and not name.startswith("research-runs/"):
+        if name != "data.json" and not name.startswith("research-runs/") and not BRIEF_PATH.fullmatch(name):
             raise ev.EvidenceError("BACKUP_FILE_PATH_INVALID")
         if ev.sha(ev.read_local(directory, name)) != expected:
             raise ev.EvidenceError("BACKUP_ARTIFACT_HASH_INVALID")
@@ -68,7 +70,7 @@ def restore_check(directory, scratch):
                     raise ev.EvidenceError("BACKUP_ROW_SHAPE_INVALID")
                 db.execute(f"INSERT INTO {table} ({', '.join(columns)}) VALUES ({', '.join('?' for _ in columns)})", row)
     for name in manifest["files"]:
-        if name.startswith("research-runs/"):
+        if name.startswith("research-runs/") or BRIEF_PATH.fullmatch(name):
             write_new(scratch / name, ev.read_local(directory, name))
     result = system.verify_all()
     if result["status"] != "LOCAL_INTEGRITY_OK":
@@ -92,7 +94,7 @@ def create(system, command_id):
         # Snapshot rows and their immutable replay files under the same writer
         # exclusion used by the workbench. An in-flight replay cannot half-copy.
         db.execute("BEGIN IMMEDIATE")
-        system.events(db)
+        events = system.events(db)
         tables = {table: db.execute(f"SELECT {', '.join(columns)} FROM {table} ORDER BY rowid").fetchall() for table, columns in TABLES.items()}
         for _identity, raw in tables["workspace_observations"]:
             ev.verify(json.loads(raw))
@@ -100,6 +102,21 @@ def create(system, command_id):
             receipt = system.store.verified_research(identity, json.loads(raw))
             for name in [*receipt["artifacts"], "receipt.json"]:
                 relative = f"research-runs/{identity}/{name}"
+                raw_file = ev.read_local(system.store.path.parent, relative)
+                write_new(directory / relative, raw_file)
+                catalog[relative] = ev.sha(raw_file)
+        import workbench_snapshot_brief as brief
+        for job in ws.projection(events)["jobs"]:
+            if job["kind"] != "snapshot-brief" or job["status"] != "SUCCEEDED":
+                continue
+            ws.identifier(job["job_id"])
+            relative_root = f"snapshot-briefs/{job['job_id']}"
+            receipt = brief.verify(system.store.path.parent / relative_root)
+            if (receipt["snapshot_hash"] != job["result"]["snapshot_hash"]
+                    or receipt["files"]["report.md"] != job["result"]["report_sha256"]):
+                raise ev.EvidenceError("BACKUP_BRIEF_EVENT_BINDING_INVALID")
+            for name in [*receipt["files"], "receipt.json", "SHA256SUMS"]:
+                relative = f"{relative_root}/{name}"
                 raw_file = ev.read_local(system.store.path.parent, relative)
                 write_new(directory / relative, raw_file)
                 catalog[relative] = ev.sha(raw_file)

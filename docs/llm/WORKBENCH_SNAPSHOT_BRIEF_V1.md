@@ -27,5 +27,16 @@ displayed observation. Each module carries its own identity and source date.
 For Macro, the source period/as-of is distinct from the publication trade date.
 No missing source date is silently relabelled as the publication date.
 
+Candidate identity includes its displayed review file and bound bundle
+dependencies, not just funnel health. Explicit contradictions STOP. Pipeline
+status is separate from data quality; absent paper quality stays unavailable.
+STARTED means awaiting a terminal result, not a proven interruption.
+
+Local backups include receipt-bound successful snapshot briefs and restore
+their original bytes before integrity checking. They do not restore owner
+credentials. Pre-review prototype reports rendered by earlier code are not
+rewritten or promoted; verification can reject them after renderer corrections.
+Use a fresh isolated acceptance state for the corrected renderer.
+
 Deploying this code, granting team access and production operations require
 their own acceptance. Local preview does not prove cross-device access.

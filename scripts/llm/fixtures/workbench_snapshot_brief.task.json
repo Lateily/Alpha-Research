@@ -9,7 +9,7 @@
   "executor_candidates": ["Codex"],
   "dependencies": ["origin/main 0ebde2fb", "ar-workbench-observation.v1"],
   "authority_docs": ["AGENTS.md", "scripts/llm/AGENTS.md", "docs/team/NONPROD_WORKBENCH_V1.md"],
-  "file_scope": ["scripts/llm/workbench_evidence.py", "scripts/llm/workbench_snapshot_brief.py", "scripts/llm/workbench_workspace.py", "tools/nonprod_workbench/ui/workspace.jsx", "tools/nonprod_workbench/ui/workspace.css", "tests/test_workbench_workspace.py", "scripts/governance_mutation_gate.py", "scripts/llm/fixtures/workbench_snapshot_brief.task.json", "docs/llm/WORKBENCH_SNAPSHOT_BRIEF_V1.md", ".github/workflows/python-ci.yml"],
+  "file_scope": ["scripts/llm/workbench_evidence.py", "scripts/llm/workbench_snapshot_brief.py", "scripts/llm/workbench_workspace.py", "scripts/llm/workbench_backup.py", "tools/nonprod_workbench/ui/workspace.jsx", "tools/nonprod_workbench/ui/workspace.css", "tools/nonprod_workbench/ui/job-view.mjs", "tests/test_workbench_workspace.py", "scripts/governance_mutation_gate.py", "scripts/llm/fixtures/workbench_snapshot_brief.task.json", "docs/llm/WORKBENCH_SNAPSHOT_BRIEF_V1.md", ".github/workflows/python-ci.yml"],
   "forbidden_scope": ["/Users/years/ar-live", "experiments/execution_tracker", "experiments/research_funnel", "public/data"],
   "input_contracts": ["Operator-configured local source root only; no HTTP-selected filesystem path.", "Public pointer and bound local artifacts are captured once, with latest attempt kept separate."],
   "output_artifacts": ["Immutable snapshot, report, citations, receipt and SHA256SUMS under nonproduction state.", "Module identity table and latest attempted brief with readable STOP evidence."],

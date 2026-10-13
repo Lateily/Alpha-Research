@@ -58,6 +58,15 @@ class StatusToneTests(unittest.TestCase):
         self.assertEqual(json.loads(result.stdout),
                          {"kind": "brief-trial", "status": "STOP", "job_id": "new"})
 
+    def test_pending_snapshot_brief_is_not_a_failure(self):
+        module = (ROOT / "tools/nonprod_workbench/ui/job-view.mjs").as_uri()
+        script = (f"import * as view from {json.dumps(module)};"
+                  "console.log(JSON.stringify(['STARTED','SUCCEEDED','STOP'].map(status => "
+                  "view.snapshotBriefPresentation ? view.snapshotBriefPresentation({status}) : null)));" )
+        result = subprocess.run(["node", "--input-type=module", "-e", script],
+                                capture_output=True, text=True, check=True)
+        self.assertEqual(json.loads(result.stdout), ["pending", "ready", "failed"])
+
 
 def write(root, name, value):
     path = root / name
@@ -251,6 +260,91 @@ class EvidenceTests(unittest.TestCase):
                     with self.assertRaisesRegex(brief.SnapshotBriefError, "CREDENTIAL"):
                         brief.run(self.root, output)
                     self.assertFalse(output.exists())
+
+    def test_snapshot_brief_refuses_repository_credential_shapes_before_persistence(self):
+        markers = ["ghp_" + "A" * 36, "github_pat_" + "B" * 40,
+                   "-----BEGIN " + "RSA PRIVATE KEY-----", 'API_TOKEN="' + "C" * 24 + '"']
+        for marker in markers:
+            with self.subTest(kind=marker[:10]):
+                self.pointer["artifacts"]["public:macro/source_health.json"] = write(
+                    self.root, "public/data/v2/macro/source_health.json", {"source_health": {"diagnostic": marker}})
+                write(self.root, "public/data/v2/current_run.json", self.pointer)
+                with tempfile.TemporaryDirectory() as temporary:
+                    state = Path(temporary)
+                    system = ws.Workspace(wb.Store(state), self.root)
+                    result = system.start_job({"command_id": "credential_shape_test", "kind": "snapshot-brief"})
+                    self.assertEqual(result["status"], "STOP")
+                    self.assertEqual(result["result"]["error"], "CREDENTIAL_SHAPED_CONTENT_REFUSED")
+                    self.assertFalse((state / "snapshot-briefs/credential_shape_test").exists())
+                    self.assertNotIn(marker.encode(), system.store.path.read_bytes())
+
+    def test_backup_restores_successful_snapshot_briefs_and_event_bindings(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            state = Path(temporary)
+            system = ws.Workspace(wb.Store(state), self.root)
+            self.assertEqual(system.start_job({"command_id": "backup_before_brief", "kind": "backup"})["status"], "SUCCEEDED")
+            self.assertEqual(system.start_job({"command_id": "brief_for_backup", "kind": "snapshot-brief"})["status"], "SUCCEEDED")
+            result = system.start_job({"command_id": "backup_after_brief", "kind": "backup"})
+            self.assertEqual(result["status"], "SUCCEEDED")
+            directory = state / result["result"]["location"]
+            restored = state / "restored-brief"
+            backup.restore_check(directory, restored)
+            self.assertEqual(ws.Workspace(wb.Store(restored)).verify_all()["status"], "LOCAL_INTEGRITY_OK")
+            for path in (state / "snapshot-briefs/brief_for_backup").rglob("*"):
+                if path.is_file():
+                    relative = path.relative_to(state)
+                    self.assertEqual(path.read_bytes(), (restored / relative).read_bytes())
+            (directory / "snapshot-briefs/brief_for_backup/report.md").write_bytes(b"tampered")
+            with self.assertRaisesRegex(ev.EvidenceError, "BACKUP_ARTIFACT_HASH"):
+                backup.restore_check(directory, state / "tampered-restore")
+            (state / "snapshot-briefs/brief_for_backup/report.md").write_bytes(b"tampered source")
+            self.assertEqual(system.start_job({"command_id": "backup_tampered_brief", "kind": "backup"})["status"], "STOP")
+
+    def test_bound_candidate_bundle_contradictions_stop_and_project_mismatch(self):
+        import workbench_snapshot_brief as brief
+        for filename, updates, expected in (
+                ("candidate_review.json", {"as_of": "20260827"}, "DATE_MISMATCH"),
+                ("candidate_manifest.json", {"run_id": "foreign-run"}, "RUN_MISMATCH")):
+            with self.subTest(filename=filename):
+                self.pointer = source(self.root)
+                health = json.loads((self.root / "public/data/v2/funnel_health.json").read_bytes())
+                path = health["bundle"]["location"] + "/" + filename
+                payload = json.loads((self.root / path).read_bytes())
+                payload.update(updates)
+                health["bundle"]["artifacts"][filename] = write(self.root, path, payload)
+                self.pointer["artifacts"]["public:funnel_health.json"] = write(self.root, "public/data/v2/funnel_health.json", health)
+                write(self.root, "public/data/v2/current_run.json", self.pointer)
+                snapshot = self.capture()
+                candidate = next(r for r in ev.module_sources(snapshot) if r["module"] == "Candidates")
+                self.assertEqual(candidate["identity_status"], expected)
+                with self.assertRaisesRegex(brief.SnapshotBriefError, "IDENTITY_MISMATCH"):
+                    brief.render(snapshot)
+
+    def test_paper_quality_never_falls_back_to_pipeline_success(self):
+        self.pointer["artifacts"]["public:model_portfolio_state.json"] = write(
+            self.root, "public/data/v2/model_portfolio_state.json", {
+                "run_id": self.pointer["run_id"], "target_trade_date": "20260828", "status": "OK"})
+        write(self.root, "public/data/v2/current_run.json", self.pointer)
+        paper = next(r for r in ev.module_sources(self.capture()) if r["module"] == "Paper")
+        self.assertEqual(paper["data_quality"], "UNAVAILABLE")
+        self.assertEqual(paper["pipeline_status"], "OK")
+
+    def test_backup_accepts_full_api_brief_identifier_length(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            system = ws.Workspace(wb.Store(Path(temporary)), self.root)
+            result = system.start_job({"command_id": "b" * 100, "kind": "snapshot-brief"})
+            self.assertEqual(result["status"], "SUCCEEDED")
+            self.assertEqual(system.start_job({"command_id": "backup_long_identifier", "kind": "backup"})["status"], "SUCCEEDED")
+
+    def test_health_only_cannot_supply_displayed_candidate_identity(self):
+        self.pointer["artifacts"]["public:funnel_health.json"] = write(
+            self.root, "public/data/v2/funnel_health.json", {
+                "run_id": self.pointer["run_id"], "as_of": "20260828", "status": "COMPLETE"})
+        write(self.root, "public/data/v2/current_run.json", self.pointer)
+        candidate = next(r for r in ev.module_sources(self.capture()) if r["module"] == "Candidates")
+        self.assertEqual(candidate["identity_status"], "MISSING_OR_UNBOUND")
+        self.assertIsNone(candidate["path"])
+        self.assertEqual(candidate["data_quality"], "UNAVAILABLE")
 
     def test_snapshot_brief_tamper_after_restart_is_visible_as_stop(self):
         with tempfile.TemporaryDirectory() as temporary:

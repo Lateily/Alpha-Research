@@ -85,3 +85,6 @@ textarea:focus-visible { outline: 3px solid #8bb6e5; outline-offset: 2px; }
 .snapshot-brief-result .source-strip { flex-wrap: wrap; }
 .snapshot-brief-result h3 { font-size: 15px; }
 .snapshot-brief-result .json-evidence { margin-bottom: 8px; }
+.run-identity .workspace-table table { min-width: 1050px; }
+.run-identity td:nth-child(2) { min-width: 300px; }
+.run-identity td small { display: block; max-width: 160px; margin-top: 6px; line-height: 1.5; color: #727c77; }

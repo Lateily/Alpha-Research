@@ -386,40 +386,64 @@ def _research_quality_counts(snapshot):
     }
 
 
+def artifact_identity(record, rid, date):
+    payload = record.get("payload") or {}
+    reported_run = payload.get("run_id")
+    reported_date = payload.get("target_trade_date")
+    if reported_date is None and re.fullmatch(r"\d{8}", str(payload.get("as_of", ""))):
+        reported_date = payload["as_of"]
+    status = "BOUND_TO_PUBLISHED_RUN"
+    if record.get("status") != "OBSERVED" or record.get("binding") != "MATCH":
+        status = "MISSING_OR_UNBOUND"
+    # governance-mutation: WORKBENCH_MODULE_RUN_IDENTITY
+    elif reported_run is not None and reported_run != rid:
+        status = "RUN_MISMATCH"
+    elif reported_date is not None and reported_date != date:
+        status = "DATE_MISMATCH"
+    elif reported_run is None:
+        status = "IDENTITY_UNAVAILABLE"
+    return status, reported_run, reported_date
+
+
 def module_sources(snapshot):
     """Publication date and underlying observation period are different fields."""
     rid, date = snapshot.get("published_run_id"), snapshot.get("target_trade_date")
     paths = {
         "Nightly": f"public/data/v2/runs/{rid}/manifest.json",
         "Macro": "public/data/v2/macro/macro_events.json",
-        "Candidates": "public/data/v2/funnel_health.json",
+        "Candidates": next((p for p in snapshot["records"] if p.endswith("/candidate_review.json")), None),
         "Paper": "public/data/v2/model_portfolio_state.json",
     }
     result = []
     for name, path in paths.items():
         record = snapshot["records"].get(path, {})
         payload = record.get("payload") or {}
-        reported_run = payload.get("run_id")
-        reported_date = payload.get("target_trade_date")
-        if reported_date is None and re.fullmatch(r"\d{8}", str(payload.get("as_of", ""))):
-            reported_date = payload["as_of"]
-        status = "BOUND_TO_PUBLISHED_RUN"
-        if record.get("status") != "OBSERVED" or record.get("binding") != "MATCH":
-            status = "MISSING_OR_UNBOUND"
-        # governance-mutation: WORKBENCH_MODULE_RUN_IDENTITY
-        elif reported_run is not None and reported_run != rid:
-            status = "RUN_MISMATCH"
-        elif reported_date is not None and reported_date != date:
-            status = "DATE_MISMATCH"
-        elif reported_run is None:
-            status = "IDENTITY_UNAVAILABLE"
+        status, reported_run, reported_date = artifact_identity(record, rid, date)
+        if name == "Candidates":
+            dependencies = [r for p, r in snapshot["records"].items()
+                            if p.startswith("data_history/funnel/") or p == "public/data/v2/funnel_health.json"]
+            for dependency in dependencies:
+                dependency_status, dependency_run, dependency_date = artifact_identity(dependency, rid, date)
+                if dependency_status in {"RUN_MISMATCH", "DATE_MISMATCH", "MISSING_OR_UNBOUND"}:
+                    status, reported_run, reported_date = dependency_status, dependency_run, dependency_date
+                    break
+        health = (snapshot["records"].get("public/data/v2/funnel_health.json", {}).get("payload") or {}) if name == "Candidates" else payload
+        quality = health.get("research_data_quality") if name == "Nightly" else health.get("data_quality")
+        quality_basis = "EXPLICIT_QUALITY_FIELD"
+        if quality is None and name in {"Macro", "Candidates"}:
+            quality = health.get("status")
+            quality_basis = "SCHEMA_AVAILABILITY_NOT_RESEARCH_APPROVAL"
+        if name == "Candidates" and record.get("status") != "OBSERVED":
+            quality = None
         result.append({
             "module": name, "path": path, "run_id": reported_run,
             "published_trade_date": date, "source_trade_date": reported_date,
             "source_as_of": payload.get("as_of"),
             "date_basis": "SOURCE_EXPLICIT" if reported_date else "PUBLICATION_CONTEXT_ONLY",
             "identity_status": status, "sha256": record.get("source_sha256"),
-            "data_quality": payload.get("data_quality", payload.get("report", payload.get("status", "UNAVAILABLE"))),
+            "pipeline_status": health.get("report", health.get("status", "UNAVAILABLE")),
+            "data_quality": quality if quality is not None else "UNAVAILABLE",
+            "quality_basis": quality_basis,
         })
     return result
 

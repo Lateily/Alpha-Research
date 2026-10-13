@@ -4,10 +4,13 @@ from __future__ import annotations
 
 import json
 import re
+import sys
 from datetime import datetime
 from pathlib import Path
 
 import workbench_evidence as evidence
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from team_ai_workspace import SECRET_PATTERNS
 
 
 class SnapshotBriefError(ValueError):
@@ -27,6 +30,8 @@ def reject_credentials(value):
         elif isinstance(item, str):
             # Inspect decoded values and common log escapes, never rewritten originals.
             text = item.replace("\\t", "\t").replace("\\n", "\n").replace("\\r", "\r")
+            if any(pattern.search(text.encode()) for _name, pattern in SECRET_PATTERNS):
+                raise SnapshotBriefError("CREDENTIAL_SHAPED_CONTENT_REFUSED")
             if re.search(r"(?i)(authorization\s*:\s*bearer\s+\S+|\bbearer\s+[A-Za-z0-9_.-]{8,}|\bsk-[A-Za-z0-9_-]{12,}|\bAKIA[A-Z0-9]{16})", text):
                 raise SnapshotBriefError("CREDENTIAL_SHAPED_CONTENT_REFUSED")
 
@@ -50,7 +55,7 @@ def render(snapshot):
     if any(row["identity_status"] in {"RUN_MISMATCH", "DATE_MISMATCH"} for row in modules):
         raise SnapshotBriefError("FROZEN_MODULE_IDENTITY_MISMATCH")
     for path, record in snapshot["records"].items():
-        if not path.startswith("public/data/v2/") or record.get("binding") != "MATCH":
+        if record.get("binding") != "MATCH":
             continue
         payload = record.get("payload") or {}
         source_run = payload.get("run_id")

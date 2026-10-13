@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { statusTone } from './status-tone.mjs';
-import { latestJobByKind } from './job-view.mjs';
+import { latestJobByKind, snapshotBriefPresentation } from './job-view.mjs';
 import { countText, fileBindingText, levelChip, metricLabel, rateText, relianceText, runQualityPairs, thresholdText, trustLineStatus } from './trust-line-view.mjs';
 import { Activity, ArrowRight, CalendarClock, Check, ClipboardCheck, Database, Download, FileText, Layers3, ListFilter, LockKeyhole, Play, Plus, RefreshCw, Save, Search, Send, ShieldCheck, Wallet, X } from 'lucide-react';
 export const workspaceTabs = [['desk', '研究总览', Layers3], ['nightly', '夜链与计划', CalendarClock], ['macro', '宏观与数据', Activity], ['models', '模型与方法', ShieldCheck], ['candidates', '候选证据', ListFilter], ['drafts', '研究稿', FileText], ['reviews', '提交与审核', ClipboardCheck], ['paper', '模拟盘与归因', Wallet], ['records', '数据与审计', Database]];
@@ -94,22 +94,23 @@ function RunIdentity({ observation }) {
     <Table heads={['身份', 'run_id', '交易日', '状态']}>
       {[['最新尝试', identity?.latest_attempt], ['最后发布', identity?.last_published], ['当前展示', identity?.displayed]].map(([label, row]) => <tr key={label}><td>{label}</td><td><code>{row?.run_id || 'UNAVAILABLE'}</code></td><td>{row?.target_trade_date || 'UNAVAILABLE'}</td><td>{row?.report || (row?.run_id ? 'OBSERVED' : 'UNAVAILABLE')}</td></tr>)}
     </Table>
-    <Table heads={['模块', '源 run_id', '发布交易日', '源日期 / 时点', '绑定', '数据质量']}>
-      {(observation?.module_sources || []).map(row => <tr key={row.module}><td>{row.module}</td><td><code>{row.run_id || 'UNAVAILABLE'}</code></td><td>{row.published_trade_date || 'UNAVAILABLE'}</td><td>{row.source_trade_date || row.source_as_of || '未提供源日期'}</td><td><Status value={row.identity_status} /></td><td><Status value={row.data_quality} /></td></tr>)}
+    <Table heads={['模块', '源 run_id', '发布交易日', '源日期 / 时点', '绑定', '运行状态', '数据质量']}>
+      {(observation?.module_sources || []).map(row => <tr key={row.module}><td>{row.module}</td><td><code>{row.run_id || 'UNAVAILABLE'}</code></td><td>{row.published_trade_date || 'UNAVAILABLE'}</td><td>{row.source_trade_date || row.source_as_of || '未提供源日期'}</td><td><Status value={row.identity_status} /></td><td><Status value={row.pipeline_status} /></td><td><Status value={row.data_quality} /><small>{row.quality_basis === 'SCHEMA_AVAILABILITY_NOT_RESEARCH_APPROVAL' ? '来源可用性，非研究批准' : '显式质量字段'}</small></td></tr>)}
     </Table>
   </section>;
 }
 function SnapshotBrief({ job }) {
   if (!job) return <Empty title="尚未运行冻结简报" />;
   const result = job.result || {};
+  const presentation = snapshotBriefPresentation(job);
   return <div className="snapshot-brief-result"><div className="section-title"><h3>最新简报任务</h3><Status value={job.status} /></div>
     <div className="source-strip"><span>任务 <code>{job.job_id}</code></span><span>run <code>{result.run_id || 'UNAVAILABLE'}</code></span><span>交易日 {result.target_trade_date || 'UNAVAILABLE'}</span><span>人工核验 {result.human_review || '未产生核验件'}</span></div>
-    {job.status === 'SUCCEEDED' ? <><div className="source-strip"><span>快照 <code>{result.snapshot_hash}</code></span><span>报告 <code>{result.report_sha256}</code></span><Status value={result.status} /></div>
+    {presentation === 'ready' ? <><div className="source-strip"><span>快照 <code>{result.snapshot_hash}</code></span><span>报告 <code>{result.report_sha256}</code></span><Status value={result.status} /></div>
       <pre className="brief-report">{result.report}</pre>
       <details className="json-evidence"><summary>任务日志</summary><ol>{(result.log || []).map(phase => <li key={phase}><code>{phase}</code></li>)}</ol></details>
       <h3>原始工件引用</h3>{(result.citations || []).map(c => <details className="json-evidence" key={c.id}><summary>{c.id} · {c.path} · {c.json_pointer}</summary><p><code>SHA256 {c.source_sha256}</code></p><pre>{JSON.stringify(c.value, null, 2)}</pre></details>)}
       <button onClick={() => exportJSON(`brief-${job.job_id}.json`, result)}><Download size={16} />导出简报回执</button>
-    </> : <div className="alert error" role="alert"><X size={16} /><div><strong>简报未完成</strong><p>本次失败，不使用上一份报告替代。</p><code>{result.error || 'INTERRUPTED_OR_UNAVAILABLE'}</code></div></div>}
+    </> : presentation === 'pending' ? <div className="alert" role="status"><CalendarClock size={16} /><p>任务已接收，等待最终状态；尚不能判定成功或失败。</p></div> : <div className="alert error" role="alert"><X size={16} /><div><strong>简报未完成</strong><p>本次失败，不使用上一份报告替代。</p><code>{result.error || 'INTERRUPTED_OR_UNAVAILABLE'}</code></div></div>}
   </div>;
 }
 function Chart({
