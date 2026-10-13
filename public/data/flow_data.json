@@ -1,18 +1,18 @@
 {
-  "fetched_at": "2026-10-12T18:05:31.122054",
+  "fetched_at": "2026-10-13T07:39:54.250522",
   "northbound": {
     "latest_net_flow": null,
     "5d_cumulative": 0.0,
     "20d_cumulative": 0.0,
     "trend": "outflow",
-    "updated": "2026-10-12"
+    "updated": "2026-10-13"
   },
   "southbound": {
     "latest_net_flow": 26.0327,
     "5d_cumulative": 162.4967,
     "20d_cumulative": 649.2244,
     "trend": "inflow",
-    "updated": "2026-10-12"
+    "updated": "2026-10-13"
   },
   "dragon_tiger": [
     {
@@ -239,7 +239,7 @@
       "code": "001336",
       "name": "楚环科技",
       "date": "",
-      "reason": "日振幅值达到15%的前5只证券",
+      "reason": "日换手率达到20%的前5只证券",
       "buy_amt": null,
       "sell_amt": null,
       "net_amt": null,
@@ -249,7 +249,7 @@
       "code": "001336",
       "name": "楚环科技",
       "date": "",
-      "reason": "日换手率达到20%的前5只证券",
+      "reason": "日振幅值达到15%的前5只证券",
       "buy_amt": null,
       "sell_amt": null,
       "net_amt": null,
@@ -329,7 +329,7 @@
       "code": "002242",
       "name": "九阳股份",
       "date": "",
-      "reason": "日涨幅偏离值达到7%的前5只证券",
+      "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
       "buy_amt": null,
       "sell_amt": null,
       "net_amt": null,
@@ -339,7 +339,7 @@
       "code": "002242",
       "name": "九阳股份",
       "date": "",
-      "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
+      "reason": "日涨幅偏离值达到7%的前5只证券",
       "buy_amt": null,
       "sell_amt": null,
       "net_amt": null,
@@ -419,7 +419,7 @@
       "code": "002316",
       "name": "亚联发展",
       "date": "",
-      "reason": "日振幅值达到15%的前5只证券",
+      "reason": "日换手率达到20%的前5只证券",
       "buy_amt": null,
       "sell_amt": null,
       "net_amt": null,
@@ -429,7 +429,7 @@
       "code": "002316",
       "name": "亚联发展",
       "date": "",
-      "reason": "日换手率达到20%的前5只证券",
+      "reason": "日振幅值达到15%的前5只证券",
       "buy_amt": null,
       "sell_amt": null,
       "net_amt": null,
