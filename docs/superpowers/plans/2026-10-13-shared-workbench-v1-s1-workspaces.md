@@ -29,6 +29,7 @@
 
 **Files:**
 - Create: `scripts/llm/workbench_shared_workspace.py`。
+- Create: `scripts/llm/fixtures/workbench_shared_workspace_v1.task.json`。
 - Modify: `scripts/llm/nonprod_workbench.py`、`scripts/llm/workbench_workspace.py`。
 - Create: `tools/nonprod_workbench/ui/shared-workspace.jsx`、`tools/nonprod_workbench/ui/shared-view.mjs`。
 - Modify: `tools/nonprod_workbench/ui/workspace.jsx`、`workspace.css`、`status-tone.mjs`。
@@ -47,6 +48,10 @@
 - `selectMyJobs(jobs: Array, login: string) -> Array`、`latestOwnedJob(jobs, login, kind) -> object|null`。
 - 测试helper：`fixture_state(root: Path) -> tuple[Store, Workspace]`，创建新shared状态和现有质量夹具；只测试代码使用。
 
+- [ ] **Step 0: 编译本片任务。** 用ai-task.v1建立上述task fixture，file_scope逐项列本片文件，
+  forbidden_scope包含在用服务和ar-live；OFFLINE、max_cny=0，记录已审计划与执行方法。
+  `python3 -B scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/workbench_shared_workspace_v1.task.json`
+  必须SPEC_READY/errors=[]；SPEC_BLOCKED就停，不按规划阶段的仅文档manifest写产品代码。
 - [ ] **Step 1: 写失败用例并同PR登记CI。**
   `test_identity_stable_across_restart`断言两账号ID不同、重开后不变；
   `test_my_view_filters_but_team_can_read_both`断言本人任务归属与团队只读详情；

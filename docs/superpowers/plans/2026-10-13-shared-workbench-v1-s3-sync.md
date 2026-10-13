@@ -29,6 +29,7 @@
 ## Task S3: Poller, Ingestion Safety And Shared Display
 
 **Files:** Create `scripts/llm/workbench_shared_sync.py`；
+create `scripts/llm/fixtures/workbench_shared_sync_v1.task.json`；
 modify `workbench_shared_inputs.py`、`workbench_shared_workspace.py`、`nonprod_workbench.py`；
 modify `tools/nonprod_workbench/ui/shared-workspace.jsx`、`shared-view.mjs`、`workspace.css`；
 test `tests/test_workbench_shared_sync.py`、`tests/nonprod-workbench-shared.test.mjs`；CI/gate登记。
@@ -42,6 +43,10 @@ test `tests/test_workbench_shared_sync.py`、`tests/nonprod-workbench-shared.tes
 - CLI `--read-only-auto-sync`仅与`--shared-workspace-v1`及已固定`--read-only-source-root`一起允许。
   未启用不创建poller；HTTP不能传source_root、interval或enable标记。
 
+- [ ] **Step 0: 编译本片任务。** ai-task.v1明确S3文件，OFFLINE、max_cny=0；
+  测试只用隔离source fixture，不把源路径配置当真实生产采集授权。
+  `python3 -B scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/workbench_shared_sync_v1.task.json`
+  必须SPEC_READY/errors=[]；真实生产只读部署属于S4批准门，不在实现时启动。
 - [ ] **Step 1: 写红测试并CI登记。**
   `test_new_publication_imported_once_within_poll_budget`、`test_unchanged_source_not_duplicated`；
   `test_new_failed_attempt_does_not_replace_last_publication`；

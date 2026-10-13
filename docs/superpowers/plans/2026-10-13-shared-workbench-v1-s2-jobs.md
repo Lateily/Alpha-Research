@@ -28,6 +28,7 @@
 ## Task S2a: Frozen Inputs And Explicit State Migration
 
 **Files:** Create `scripts/llm/workbench_shared_inputs.py`、`scripts/llm/workbench_shared_state.py`；
+create `scripts/llm/fixtures/workbench_shared_jobs_v1.task.json`；
 modify `workbench_snapshot_brief.py`、`workbench_shared_workspace.py`、`workbench_backup.py`；
 test `tests/test_workbench_shared_inputs.py`、`tests/test_workbench_shared_state.py`；CI/gate登记。
 
@@ -39,6 +40,10 @@ test `tests/test_workbench_shared_inputs.py`、`tests/test_workbench_shared_stat
 - `migrate_legacy(backup_root: Path, target_root: Path) -> dict`：新目的地迁移；不打开/修改在用源库。
 - `backup_shared(store: Store, target_root: Path) -> dict`、`restore_shared(backup_root: Path, scratch_root: Path) -> dict`。
 
+- [ ] **Step 0: 编译本片任务。** task fixture用ai-task.v1，范围包含S2a/S2b精确文件与CI/gate，
+  不包含生产、在用服务、成员权限。OFFLINE、max_cny=0。
+  `python3 -B scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/workbench_shared_jobs_v1.task.json`
+  必须SPEC_READY/errors=[]，之后才能写产品代码。
 - [ ] **Step 1: 写红测试。** `test_frozen_input_survives_new_publication`、`test_same_input_same_report_bytes`、
   `test_missing_or_resealed_conflicting_input_refused`、`test_original_report_bytes_unchanged`；
   `test_migration_preserves_event_chain_and_unknown_actor`、`test_migration_requires_new_target`、
