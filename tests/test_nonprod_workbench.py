@@ -169,21 +169,203 @@ class WorkbenchTests(unittest.TestCase):
         headers["Cookie"] = "ar_workbench=other-session"
         self.rejected(lambda: wb.authorize(headers, "http://127.0.0.1:8766", "local-test", True), "LOCAL_SESSION_REQUIRED")
 
-    def http(self, path, body=None, extra_headers=None):
+    def http(self, path, body=None, extra_headers=None, private=None, system=None,
+             duplicate_headers=(), peer="127.0.0.1"):
         assets = {"/": (b"test index", "text/html"), "/index.html": (b"test index", "text/html")}
-        Handler = wb.make_handler(self.store, assets, "http://127.0.0.1:8766", "local-test")
+        origin = private.origin if private else "http://127.0.0.1:8766"
+        options = {"private": private} if private else {}
+        Handler = wb.make_handler(self.store, assets, origin, "local-test", system=system, **options)
         handler = object.__new__(Handler)
         handler.path = path
+        handler.client_address = (peer, 12345)
         handler.headers = Message()
         raw = wb.canonical(body).encode() if body is not None else b""
-        headers = {"Host": "127.0.0.1:8766", "Origin": "http://127.0.0.1:8766", "Cookie": "ar_workbench=local-test", "Content-Type": "application/json", "Content-Length": str(len(raw))}
+        headers = {"Host": origin.split("//", 1)[1], "Origin": origin, "Cookie": "ar_workbench=local-test", "Content-Type": "application/json", "Content-Length": str(len(raw))}
         headers.update(extra_headers or {})
+        if private and "Cookie" not in (extra_headers or {}) and headers.get("Tailscale-User-Login"):
+            headers["Cookie"] = "ar_workbench=" + wb.private_session("local-test", headers["Tailscale-User-Login"])
         for key, value in headers.items():
+            handler.headers[key] = value
+        for key, value in duplicate_headers:
             handler.headers[key] = value
         handler.rfile, handler.wfile = io.BytesIO(raw), io.BytesIO()
         handler.request_version, handler.requestline, handler.command = "HTTP/1.1", "test", "POST" if body is not None else "GET"
         (handler.do_POST if body is not None else handler.do_GET)()
         return handler.wfile.getvalue()
+
+    def private(self, members=("member@example.com",)):
+        self.assertTrue(callable(getattr(wb, "private_access", None)), "missing bounded private access")
+        path = Path(self.tmp.name).resolve() / "allowlist.json"
+        path.write_text(json.dumps({"members": list(members)}))
+        path.chmod(0o600)
+        return wb.private_access("https://workbench.test-tail.ts.net:8443", "owner@example.com", path)
+
+    def test_private_identity_and_cookie_are_access_only(self):
+        private = self.private()
+        system = wb.workspace.Workspace(self.store, private_mode=True)
+        for login, role in (("owner@example.com", "OWNER"), ("member@example.com", "MEMBER")):
+            headers = {"Tailscale-User-Login": login}
+            entry = self.http("/", extra_headers=headers, private=private, system=system)
+            self.assertIn(b"200 OK", entry)
+            self.assertIn(b"HttpOnly; SameSite=Strict; Path=/; Secure", entry)
+            raw = self.http("/api/workspace", extra_headers=headers, private=private, system=system)
+            state = json.loads(raw.split(b"\r\n\r\n", 1)[1])
+            self.assertEqual(state["access"]["login"], login)
+            self.assertEqual(state["access"]["role"], role)
+            self.assertFalse(state["access"]["human_research_approval"])
+            self.assertEqual(state["access"]["allowed_job_kinds"], ["observe", "snapshot-brief"])
+            policy_raw = self.http("/api/state", extra_headers=headers, private=private, system=system)
+            self.assertIn(b"NONPRODUCTION_PRIVATE", policy_raw)
+        events = system.snapshot()["events"]
+        self.assertEqual([(e["kind"], e["actor"]) for e in events],
+                         [("PRIVATE_LOGIN", "owner@example.com"), ("PRIVATE_LOGIN", "member@example.com")])
+
+    def test_private_missing_foreign_duplicate_identity_and_peer_refused(self):
+        private = self.private()
+        for login in (None, "forged@example.com", "Member@example.com", "member@example.com "):
+            headers = {"Tailscale-User-Login": login} if login is not None else {}
+            self.assertIn(b"403 Forbidden", self.http("/", extra_headers=headers, private=private))
+        owner = {"Tailscale-User-Login": "owner@example.com"}
+        self.assertIn(b"403 Forbidden", self.http("/", extra_headers=owner, private=private, peer="100.64.0.2"))
+        for name, value in (("Tailscale-User-Login", "owner@example.com"), ("Host", private.origin.split("//")[1]),
+                            ("Origin", private.origin), ("Cookie", "ar_workbench=bad"),
+                            ("Sec-Fetch-Site", "same-origin"), ("Content-Type", "application/json"),
+                            ("Content-Length", "0"), ("Transfer-Encoding", "identity")):
+            self.assertIn(b"403 Forbidden", self.http("/", extra_headers={**owner, name: value},
+                          private=private, duplicate_headers=[(name, value)]), name)
+
+    def test_private_wrong_host_origin_cookie_and_cookie_reuse_refused(self):
+        private = self.private()
+        member = {"Tailscale-User-Login": "member@example.com"}
+        owner_cookie = wb.private_session("local-test", "owner@example.com")
+        for overrides in ({"Host": "evil.example"}, {"Origin": "https://evil.example"},
+                          {"Cookie": "ar_workbench=wrong"}, {"Cookie": "ar_workbench=" + owner_cookie},
+                          {"Cookie": "ar_workbench=wrong; ar_workbench=" + wb.private_session("local-test", "member@example.com")},
+                          {"Sec-Fetch-Site": "cross-site"}):
+            self.assertIn(b"403 Forbidden", self.http("/api/state", extra_headers={**member, **overrides}, private=private))
+        self.assertIn(b"403 Forbidden", self.http("/api/workspace/job", {"command_id": "private-observe", "kind": "observe"},
+                      {**member, "Origin": ""}, private=private))
+
+    def test_private_noncanonical_cookie_refused_before_execution(self):
+        private = self.private()
+        system = wb.workspace.Workspace(self.store, private_mode=True)
+        login = "member@example.com"
+        valid = "ar_workbench=" + wb.private_session("local-test", login)
+        for separator in (";", "; ", " ", "\t", ", "):
+            for cookie in ("ar_workbench=wrong" + separator + valid,
+                           valid + separator + valid):
+                with mock.patch.object(system, "dispatch", side_effect=AssertionError("ambiguous cookie executed")):
+                    raw = self.http("/api/workspace/job", {"command_id": "cookie-probe-001", "kind": "observe"},
+                                    {"Tailscale-User-Login": login, "Cookie": cookie}, private, system)
+                self.assertIn(b"403 Forbidden", raw, repr(cookie))
+        self.assertEqual(system.snapshot()["events"], [])
+        self.assertIn(b"200 OK", self.http("/", extra_headers={"Tailscale-User-Login": login, "Cookie": ""},
+                                          private=private, system=system))
+        self.assertIn(b"200 OK", self.http("/", extra_headers={"Tailscale-User-Login": login,
+                                          "Cookie": "ar_workbench=old-runtime-token"},
+                                          private=private, system=system))
+
+    def test_private_owner_and_member_forbidden_writes_have_no_effect(self):
+        private = self.private()
+        system = wb.workspace.Workspace(self.store, private_mode=True)
+        before = self.store.path.read_bytes()
+        paths = ("/api/workspace/owner", "/api/workspace/draft", "/api/workspace/submit", "/api/workspace/review",
+                 "/api/workspace/schedule", "/api/gateway/probe", "/api/deployment-draft", "/api/research/replay",
+                 "/api/team/grants", "/api/gateway/live", "/api/production/write", "/api/workspace/job?kind=observe")
+        for login in ("owner@example.com", "member@example.com"):
+            for path in paths:
+                self.assertIn(b"403 Forbidden", self.http(path, {}, {"Tailscale-User-Login": login}, private, system), path)
+            for kind in ("integrity", "backup", "research-replay", "brief-trial", "earnings-trial", "production", "collect", "schedule"):
+                self.assertIn(b"403 Forbidden", self.http("/api/workspace/job", {"command_id": "private-forbidden", "kind": kind},
+                              {"Tailscale-User-Login": login}, private, system), kind)
+        self.assertEqual(self.store.path.read_bytes(), before)
+        self.assertEqual(system.snapshot()["events"], [])
+
+    def test_private_http_jobs_share_actor_bound_state(self):
+        private = self.private()
+        source_root = Path(self.tmp.name) / "source"
+        source_root.mkdir()
+        system = wb.workspace.Workspace(self.store, source_root, private_mode=True)
+        member = {"Tailscale-User-Login": "member@example.com"}
+        owner = {"Tailscale-User-Login": "owner@example.com"}
+        payload = {"command_id": "shared-observe-001", "kind": "observe"}
+        self.assertIn(b"200 OK", self.http("/api/workspace/job", payload, member, private, system))
+        self.assertIn(b"IDEMPOTENT", self.http("/api/workspace/job", payload, member, private, system))
+        self.assertIn(b"409 Conflict", self.http("/api/workspace/job", payload, owner, private, system))
+        states = [json.loads(self.http("/api/workspace", extra_headers=h, private=private, system=system).split(b"\r\n\r\n", 1)[1]) for h in (member, owner)]
+        for key in ("jobs", "events", "observation"):
+            self.assertEqual(states[0][key], states[1][key])
+        self.assertEqual([e["actor"] for e in states[0]["events"]], ["member@example.com"] * 2)
+        for name in ("actor", "source_root", "read_only_source_root", "network_policy", "provider"):
+            self.assertIn(b"400 Bad Request", self.http("/api/workspace/job", {**payload, name: "untrusted"}, member, private, system))
+
+    def test_private_origin_owner_and_allowlist_fail_closed(self):
+        private = self.private()
+        self.assertIsNone(wb.private_access(None, None))
+        for origin in (None, "http://workbench.test-tail.ts.net:8443", "https://public.example:8443",
+                       private.origin + "/", "https://workbench.test-tail.ts.net:443", private.origin + "?x=1"):
+            self.rejected(lambda: wb.private_access(origin, "owner@example.com"), "PRIVATE_HTTPS_ORIGIN_REQUIRED")
+        self.rejected(lambda: wb.private_access(private.origin, None), "EXACT_OWNER_LOGIN_REQUIRED")
+        path = Path(self.tmp.name).resolve() / "allowlist.json"
+        for data in ({"members": ["member@example.com", "member@example.com"]}, {"members": ["owner@example.com"]},
+                     {"members": ["not a login"]}, {"members": "member@example.com"}, {"members": [], "approved": True}):
+            path.write_text(json.dumps(data))
+            self.rejected(lambda: wb.private_access(private.origin, "owner@example.com", path), "PRIVATE_ALLOWLIST_INVALID")
+        path.write_text('{"members":[],"members":["member@example.com"]}')
+        with self.assertRaises(wb.WorkbenchError):
+            wb.private_access(private.origin, "owner@example.com", path)
+        path.write_text(json.dumps({"members": ["member@example.com"]}))
+        for mode in (0o644, 0o400, 0o660):
+            path.chmod(mode)
+            self.rejected(lambda: wb.private_access(private.origin, "owner@example.com", path), "PRIVATE_ALLOWLIST_UNSAFE")
+        path.chmod(0o600)
+        link = path.parent / "allowlist-link"; link.symlink_to(path)
+        self.rejected(lambda: wb.private_access(private.origin, "owner@example.com", link), "PRIVATE_ALLOWLIST_UNSAFE")
+        parent = path.parent / "parent-link"; parent.symlink_to(path.parent, target_is_directory=True)
+        self.rejected(lambda: wb.private_access(private.origin, "owner@example.com", parent / path.name), "PRIVATE_ALLOWLIST_UNSAFE")
+        self.rejected(lambda: wb.private_access(private.origin, "owner@example.com", ROOT / "allowlist.json"), "PRIVATE_ALLOWLIST_UNSAFE")
+        self.rejected(lambda: wb.private_access(private.origin, "owner@example.com", path.parent), "PRIVATE_ALLOWLIST_UNSAFE")
+        with mock.patch.object(wb.os, "getuid", return_value=os.getuid() + 1):
+            self.rejected(lambda: wb.private_access(private.origin, "owner@example.com", path), "PRIVATE_ALLOWLIST_UNSAFE")
+        path.write_bytes(b" " * 4097)
+        self.rejected(lambda: wb.private_access(private.origin, "owner@example.com", path), "PRIVATE_ALLOWLIST_UNSAFE")
+
+    def test_private_malformed_kind_never_reaches_execution(self):
+        private = self.private()
+        system = wb.workspace.Workspace(self.store, private_mode=True)
+        member = {"Tailscale-User-Login": "member@example.com"}
+        with mock.patch.object(system, "dispatch", side_effect=AssertionError("forbidden executor reached")):
+            for kind in ([], {}, None, True, "backup", "earnings-trial"):
+                raw = self.http("/api/workspace/job", {"command_id": "malformed-job-001", "kind": kind}, member, private, system)
+                self.assertIn(b"403 Forbidden", raw, repr(kind))
+        self.assertEqual(system.snapshot()["events"], [])
+
+    def test_private_startup_has_no_scheduler_and_keeps_pack_arguments(self):
+        private = self.private()
+        root = Path(self.tmp.name).resolve()
+        state = root / "startup-state"
+        brief = root / "brief-pack"; brief.mkdir()
+        earnings = root / "earnings-pack"; earnings.mkdir()
+        created = []
+        real_workspace = wb.workspace.Workspace
+        def capture(*args, **kwargs):
+            system = real_workspace(*args, **kwargs)
+            created.append(system)
+            return system
+        server = mock.Mock()
+        with mock.patch.object(wb, "load_assets", return_value={"/": (b"index", "text/html")}), \
+             mock.patch.object(wb, "ThreadingHTTPServer", return_value=server), \
+             mock.patch.object(wb.threading, "Thread", side_effect=AssertionError("private scheduler activated")), \
+             mock.patch.object(wb.workspace, "Workspace", side_effect=capture), \
+             mock.patch("builtins.print"):
+            result = wb.main(["--private-origin", private.origin, "--owner-login", "owner@example.com",
+                              "--private-allowlist", str(root / "allowlist.json"), "--state-root", str(state),
+                              "--brief-pack-root", str(brief), "--earnings-pack-root", str(earnings)])
+        self.assertEqual(result, 0)
+        self.assertTrue(created[0].private_mode)
+        self.assertEqual(created[0].brief_pack_root, brief)
+        self.assertEqual(created[0].earnings_pack_root, earnings)
+        self.assertEqual(created[0].snapshot()["scheduler"]["status"], "DISABLED_PRIVATE_MODE")
 
     def test_http_real_dispatch_security_and_roundtrip(self):
         raw = self.http("/api/gateway/probe", request())

@@ -7,6 +7,8 @@ import subprocess
 import sys
 import tempfile
 import unittest
+import socket
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from unittest import mock
 
@@ -21,6 +23,90 @@ from experiments.macro_os import collectors, contracts, m1a
 from experiments.research_workflows import trial
 
 PASSWORD = "test-only-local-password"
+
+
+class SharedBriefWorkspaceTests(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.root = Path(self.tmp.name)
+        self.source = self.root / "source"; self.source.mkdir()
+        source(self.source)
+        self.store = wb.Store(self.root / "state")
+        for name in ("socket", "create_connection", "getaddrinfo"):
+            guard = mock.patch.object(socket, name, side_effect=AssertionError("unexpected network"))
+            guard.start(); self.addCleanup(guard.stop)
+
+    def private_workspace(self):
+        try:
+            return ws.Workspace(self.store, self.source, private_mode=True)
+        except TypeError:
+            self.fail("missing private workspace boundary")
+
+    def test_private_actor_retry_conflict_restart_and_local_bytes(self):
+        system = self.private_workspace()
+        payload = {"command_id": "shared-brief-001", "kind": "snapshot-brief"}
+        first = system.dispatch("/api/workspace/job", payload, actor="member@example.com")
+        self.assertEqual(first["status"], "SUCCEEDED")
+        self.assertEqual(system.dispatch("/api/workspace/job", payload, actor="member@example.com")["disposition"], "IDEMPOTENT")
+        reopened = self.private_workspace()
+        with self.assertRaises(ws.WorkspaceError) as found:
+            reopened.dispatch("/api/workspace/job", payload, actor="owner@example.com")
+        self.assertEqual(found.exception.code, "WORKSPACE_COMMAND_ID_CONFLICT")
+        self.assertEqual(reopened.snapshot()["jobs"], system.snapshot()["jobs"])
+        events = system.snapshot()["events"]
+        self.assertEqual([e.get("actor") for e in events], ["member@example.com"] * 2)
+        self.assertEqual(events[0]["request_hash"], ev.sealed({**payload, "actor": "member@example.com"}))
+        self.assertNotEqual(events[0]["request_hash"], ev.sealed(payload))
+        self.assertEqual(events[1]["request_hash"], events[0]["request_hash"])
+        local = ws.Workspace(wb.Store(self.root / "local"), self.source)
+        local.start_job({"command_id": "legacy-job-001", "kind": "observe"})
+        local_events = local.snapshot()["events"]
+        self.assertNotIn("actor", local_events[0])
+        self.assertEqual(local_events[0]["request_hash"], ev.sealed({"command_id": "legacy-job-001", "kind": "observe"}))
+
+    def test_private_simultaneous_different_jobs_share_one_state(self):
+        system = self.private_workspace()
+        requests = [("owner@example.com", "observe"), ("member@example.com", "snapshot-brief")]
+        def run(item):
+            login, kind = item
+            return system.dispatch("/api/workspace/job", {"command_id": "concurrent_" + kind, "kind": kind}, actor=login)
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            results = list(pool.map(run, requests))
+        self.assertEqual([r["status"] for r in results], ["SUCCEEDED"] * 2)
+        state = system.snapshot()
+        self.assertEqual(len(state["jobs"]), 2)
+        self.assertEqual(len(state["events"]), 4)
+        self.assertEqual({e["actor"] for e in state["events"]}, {"owner@example.com", "member@example.com"})
+        self.assertIsNotNone(state["observation"])
+
+    def test_private_workspace_rejects_direct_forbidden_dispatch_and_scheduled_jobs(self):
+        system = self.private_workspace()
+        for path in ("/api/workspace/owner", "/api/workspace/draft", "/api/workspace/submit", "/api/workspace/review", "/api/workspace/schedule"):
+            with self.assertRaises(ws.WorkspaceError) as found:
+                system.dispatch(path, {}, actor="owner@example.com")
+            self.assertEqual(found.exception.code, "PRIVATE_OPERATION_DISABLED")
+        for actor, kind, scheduled in ((None, "observe", False), ("owner@example.com", "backup", False),
+                                       ("member@example.com", "observe", True)):
+            with self.assertRaises(ws.WorkspaceError):
+                system.start_job({"command_id": "forbidden-job-001", "kind": kind}, actor=actor, scheduled=scheduled)
+        self.assertEqual(system.snapshot()["events"], [])
+
+    def test_private_existing_enabled_schedules_never_execute(self):
+        local = ws.Workspace(self.store, self.source, clock=lambda: 1000)
+        with self.store.connect() as db:
+            local.append(db, [], "legacy-schedule-001", ev.sealed("schedule"), "SCHEDULE_SET",
+                         {"schedule_id": "legacy-schedule-001", "kind": "observe", "enabled": True,
+                          "interval_minutes": 10, "starts_at": 0, "revision": 1})
+        system = self.private_workspace()
+        try:
+            system.tick()
+        except ws.WorkspaceError as exc:
+            self.fail("private scheduler reached saved schedule: " + exc.code)
+        state = system.snapshot()
+        self.assertEqual(state["jobs"], [])
+        self.assertEqual(len(state["events"]), 1)
+        self.assertEqual(state["scheduler"]["status"], "DISABLED_PRIVATE_MODE")
 
 
 class StatusToneTests(unittest.TestCase):

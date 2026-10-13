@@ -170,7 +170,8 @@ export default function Workspace({
   tab,
   api,
   reloadBase,
-  refreshRevision
+  refreshRevision,
+  access
 }) {
   const [state, setState] = useState(null),
     [error, setError] = useState(''),
@@ -188,6 +189,7 @@ export default function Workspace({
   const [scheduleKind, setScheduleKind] = useState('observe'),
     [intervalMinutes, setIntervalMinutes] = useState(60),
     [pending, setPending] = useState(null);
+  const privateMode = (access || state?.access)?.mode === 'PRIVATE_SHARED_BRIEF';
   async function reload() {
     const data = await api('/api/workspace');
     setState(data);
@@ -199,6 +201,10 @@ export default function Workspace({
     return () => window.clearInterval(timer);
   }, [tab, refreshRevision]);
   async function act(path, body, message = '已记录', onReload = null) {
+    if (privateMode && (path !== '/api/workspace/job' || !['observe', 'snapshot-brief'].includes(body.kind))) {
+      setError('PRIVATE_OPERATION_DISABLED');
+      return;
+    }
     setBusy(true);
     setError('');
     setNotice('');
@@ -267,12 +273,13 @@ export default function Workspace({
         <div className="workspace-metrics"><article><span>最后公开数据</span><strong>{obs?.target_trade_date || '未导入'}</strong><Status value={obs?.freshness.status || 'NO_SNAPSHOT'} /></article><article><span>最近夜链尝试</span><RunQuality attempt={attempt} /><span>{attempt.generated_at || '没有运行凭证'}</span></article><article><span>本地待审核</span><strong>{inReview.length}<small>份</small></strong><span>不等于正式 U4 授权</span></article><article><span>本入口已付费用</span><strong>0<small>CNY</small></strong><span>DeepSeek 与云资源未启用</span></article></div>
         <section><div className="section-title"><h2>今日运行台账</h2><button className="primary" disabled={busy || !state.read_only_source_configured || !!pending} onClick={() => run('observe')}><RefreshCw size={16} />读取本地实物</button></div><div className="status-lines"><div><span>最后公开 run</span><code>{obs?.published_run_id || 'UNAVAILABLE'}</code></div><div><span>最近尝试 run</span><code>{attempt.run_id || 'UNAVAILABLE'}</code></div><div><span>公开文件哈希/绑定（不含数据质量）</span><Status value={fileBindingText(obs)} /></div><div><span>最近尝试数据质量</span><Status value={attempt.data_quality || 'UNAVAILABLE'} /></div><div><span>最近尝试研究数据质量</span><Status value={attempt.research_data_quality || 'UNAVAILABLE'} /></div><div><span>宏观运行权限</span><Status value="CALIBRATING / NO_BLOCKING_AUTHORITY" /></div><div><span>正式交易 / 生产切换</span><Status value="DISABLED" /></div></div></section>
         <section><div className="section-title"><h2>已发布 run 的研究质量</h2><Status value={quality.status || 'NOT_EVALUATED'} /></div><div className="status-lines"><div><span>来源覆盖</span><Status value={quality.macro?.source_coverage_complete == null ? 'UNVERIFIED' : quality.macro.source_coverage_complete ? 'MATCH' : 'MISMATCH'} /></div><div><span>事件覆盖</span><Status value={quality.macro ? (quality.macro.event_coverage_complete ? 'MATCH' : 'MISMATCH') : 'UNVERIFIED'} /></div><div><span>当前计划差异（未验）</span><strong>{quality.macro ? `${quality.macro.missing_source_rows} / ${quality.macro.expected_sources}` : '未验'}</strong></div><div><span>事件缺行</span><strong>{quality.macro ? `${quality.macro.missing_event_rows} / ${quality.macro.expected_events}` : '未验'}</strong></div><div><span>宏观不可用</span><strong>{quality.macro ? `${quality.macro.unavailable_sources} / ${quality.macro.sources_total}` : '未验'}</strong></div><div><span>实际值缺失</span><strong>{quality.macro ? `${quality.macro.actual_blocked_events} / ${quality.macro.events_total}` : '未验'}</strong></div><div><span>实际值陈旧</span><strong>{quality.macro ? `${quality.macro.stale_actual_events} / ${quality.macro.events_total}` : '未验'}</strong></div><div><span>缺预期差</span><strong>{quality.macro ? `${quality.macro.missing_consensus} / ${quality.macro.events_total}` : '未验'}</strong></div><div><span>候选零维</span><strong>{quality.funnel ? `${quality.funnel.coverage.zero} / ${quality.funnel.candidate_count}` : '未验'}</strong></div><div><span>未开始电池</span><strong>{quality.funnel?.batch_not_started ?? '未验'}</strong></div></div><div className="source-strip"><span>观察 run <code>{quality.run_id || 'UNAVAILABLE'}</code></span><span>只读计数，不等于自动轮验收或研究批准</span></div><TrustLine trust={quality.trust_line} /></section>
-        <section><div className="section-title"><h2>研究闭环</h2><Status value="LOCAL WORKSPACE / WORKFLOW_DEBUG" /></div><div className="workflow-rail">{[['数据采集', '旧生产只读观察'], ['U1–U3 筛选', '实物候选 / 缺数保留'], ['深研与估值', '人类稿件 / 版本冻结'], ['审核', '本地稿件审核'], ['模拟成交', '隔离合成回放'], ['五轴复盘', '回放工件与归因']].map(([title, sub], i) => <div key={title}><span>{String(i + 1).padStart(2, '0')}</span><h3>{title}</h3><p>{sub}</p>{i < 5 && <ArrowRight size={14} />}</div>)}</div></section>
-        <section><div className="section-title"><h2>最近工作记录</h2><button className="icon-button" title="导出本地审计记录" onClick={() => exportJSON('workspace-events.json', state.events)}><Download size={16} /></button></div><Table heads={['时间（北京时间）', '事件', '序号 / hash']}>{[...state.events].reverse().slice(0, 8).map(e => <tr key={e.seq}><td>{dateTime(e.at)}</td><td>{e.kind}</td><td><code>{e.seq} / {e.event_hash.slice(0, 16)}</code></td></tr>)}</Table>{!state.events.length && <Empty title="尚无本地工作记录" />}</section>
+        <section hidden={privateMode}><div className="section-title"><h2>研究闭环</h2><Status value="LOCAL WORKSPACE / WORKFLOW_DEBUG" /></div><div className="workflow-rail">{[['数据采集', '旧生产只读观察'], ['U1–U3 筛选', '实物候选 / 缺数保留'], ['深研与估值', '人类稿件 / 版本冻结'], ['审核', '本地稿件审核'], ['模拟成交', '隔离合成回放'], ['五轴复盘', '回放工件与归因']].map(([title, sub], i) => <div key={title}><span>{String(i + 1).padStart(2, '0')}</span><h3>{title}</h3><p>{sub}</p>{i < 5 && <ArrowRight size={14} />}</div>)}</div></section>
+        <section><div className="section-title"><h2>最近工作记录</h2><button className="icon-button" title="导出本地审计记录" onClick={() => exportJSON('workspace-events.json', state.events)}><Download size={16} /></button></div><Table heads={['时间（北京时间）', '事件', '序号 / hash']}>{[...state.events].reverse().slice(0, 8).map(e => <tr key={e.seq}><td>{dateTime(e.at)}</td><td>{e.kind}{e.actor && <p><code>{e.actor}</code></p>}</td><td><code>{e.seq} / {e.event_hash.slice(0, 16)}</code></td></tr>)}</Table>{!state.events.length && <Empty title="尚无本地工作记录" />}</section>
       </>}
       {tab === 'nightly' && <>
+        {privateMode && <div className="source-strip"><span>计划任务：DISABLED_PRIVATE_MODE</span><span>已有启用计划也不执行</span></div>}
         <section><div className="section-title"><h2>旧生产最近尝试</h2><RunQuality attempt={attempt} /></div><div className="source-strip"><span>步骤 OK 只表示进程完成，不表示数据完整</span><span>数据质量以上方数据质量 / 研究数据质量为准</span></div><div className="step-grid">{(attempt.steps || []).map((s, i) => <article key={s.step} className={s.status === 'OK' ? 'step-ok' : 'step-gap'}><span>{String(i + 1).padStart(2, '0')}</span><h3>{s.step}</h3><Status value={s.status} /><small>{s.elapsed_sec == null ? '—' : `${s.elapsed_sec}s`}</small></article>)}</div>{!attempt.steps?.length && <Empty title="尚无夜链状态快照" />}</section>
-        <section><div className="section-title"><h2>本地计划任务</h2><Status value={state.scheduler.status} /></div><div className="source-strip"><span>服务器运行且电脑唤醒时执行</span><span>错过时段不补跑</span><span>新任务默认不启用 · 无实时采集权</span></div><div className="toolbar">{Object.entries(jobLabels).map(([kind, label]) => <button key={kind} disabled={busy || !!pending || (kind === 'brief-trial' && !state.brief_pack_configured) || (kind === 'earnings-trial' && !state.earnings_pack_configured)} onClick={() => run(kind)}><Play size={14} />{label}</button>)}</div><Table heads={['任务', '频率', '状态', '变更']}>{state.schedules.map(s => <tr key={s.schedule_id}><td>{jobLabels[s.kind]}</td><td>{s.interval_minutes} 分钟</td><td><Status value={s.enabled ? 'ENABLED_LOCAL' : 'PAUSED'} /></td><td><button disabled={busy || !password || !!pending} onClick={() => act('/api/workspace/schedule', {
+        <section hidden={privateMode}><div className="section-title"><h2>本地计划任务</h2><Status value={state.scheduler.status} /></div><div className="source-strip"><span>服务器运行且电脑唤醒时执行</span><span>错过时段不补跑</span><span>新任务默认不启用 · 无实时采集权</span></div><div className="toolbar">{Object.entries(jobLabels).map(([kind, label]) => <button key={kind} disabled={busy || !!pending || (kind === 'brief-trial' && !state.brief_pack_configured) || (kind === 'earnings-trial' && !state.earnings_pack_configured)} onClick={() => run(kind)}><Play size={14} />{label}</button>)}</div><Table heads={['任务', '频率', '状态', '变更']}>{state.schedules.map(s => <tr key={s.schedule_id}><td>{jobLabels[s.kind]}</td><td>{s.interval_minutes} 分钟</td><td><Status value={s.enabled ? 'ENABLED_LOCAL' : 'PAUSED'} /></td><td><button disabled={busy || !password || !!pending} onClick={() => act('/api/workspace/schedule', {
                   command_id: id('schedule'),
                   schedule_id: s.schedule_id,
                   expected_revision: s.revision,
@@ -281,7 +288,7 @@ export default function Workspace({
                   enabled: !s.enabled,
                   password
                 })}>{s.enabled ? '暂停' : '启用'}</button></td></tr>)}</Table>
-          <form className="schedule-form" onSubmit={e => {
+          <form className="schedule-form" hidden={privateMode} onSubmit={e => {
             e.preventDefault();
             act('/api/workspace/schedule', {
               command_id: id('schedule'),
@@ -324,7 +331,7 @@ export default function Workspace({
         <section><div className="section-title"><h2>半导体方法卡</h2><span>{state.catalog?.methods?.cards?.length || 0} 张 · REVIEWED 不等于 VALIDATED</span></div><Status value={state.catalog?.methods?.status}/><Table heads={['方法','状态 / 证据层级','逻辑类型 / 数据获取','依据与证伪条件']}>{(state.catalog?.methods?.cards || []).map(card=><tr key={card.card_id}><td><strong>{card.variable}</strong><p><code>{card.card_id}</code></p></td><td><Status value={card.status}/><p>{card.evidence_tier} / {card.sub_sector}</p></td><td><span>{card.judgment_logic.type}</span><p>{card.data_source.availability}</p><JsonEvidence title="实际采集覆盖" value={card.collection_coverage}/></td><td><JsonEvidence title="完整研究方法卡" value={card}/></td></tr>)}</Table></section>
         <div className="source-strip"><span>方法迭代：提出修改 → 离线检查 → 独立复审 → Junyan 批准</span><span>模型不能自改准入规则、自动晋级方法或绕过人类</span></div>
       </>}
-      {tab === 'drafts' && <>
+      {tab === 'drafts' && !privateMode && <>
         <section><div className="section-title"><h2>财报逐条回应 thesis</h2><Status value="HISTORICAL_REPLAY / WORKFLOW_DEBUG" /></div><div className="source-strip"><span>仅运行启动时固定的冻结包；非今日财报</span><span>命题回应与来源仍待具名人工核验</span><span>无 U4、paper 或交易权限</span></div><button disabled={busy || !!pending || !state.earnings_pack_configured} onClick={() => run('earnings-trial')}><Play size={16} />运行冻结财报回应</button>{!state.earnings_pack_configured && <p className="muted">尚未配置冻结财报输入包</p>}{latestEarnings && <div className="earnings-results"><div className="section-title"><h3>最新试跑</h3><Status value={latestEarnings.status} /></div>{latestEarnings.status === 'SUCCEEDED' ? latestEarnings.result.reports.map(row => <article className="earnings-report" key={row.company}><div className="section-title"><h3>{row.company}</h3><Status value={row.data_status} /></div><div className="source-strip"><span>截止 {row.as_of}</span><span>预登记 {row.registration_status}</span><span>人工核验 {row.human_review}</span><span>报告 SHA256 <code>{row.report_sha256}</code></span></div><pre>{row.report}</pre></article>) : <JsonEvidence title="阻断回执" value={latestEarnings.result} />}</div>}</section>
         <section><div className="section-title"><h2>人类研究稿</h2><button disabled={busy} onClick={() => {
               setContent(newContent());
@@ -357,7 +364,7 @@ export default function Workspace({
                   content_hash: selectedDoc.content_hash
                 }, '版本已冻结并进入本地待审核')}><Send size={16} />提交审核</button></div></div></form>{selectedDoc?.review && <JsonEvidence title="上一轮审核记录" value={selectedDoc.review} />}</section>
       </>}
-      {tab === 'reviews' && <>
+      {tab === 'reviews' && !privateMode && <>
         <section><div className="section-title"><h2>本地审核身份</h2><Status value={state.owner_configured ? 'LOCAL OWNER CONFIGURED' : 'NOT CONFIGURED'} /></div>{!state.owner_configured ? <form className="config-form" onSubmit={e => {
             e.preventDefault();
             act('/api/workspace/owner', {
@@ -380,10 +387,10 @@ export default function Workspace({
               sample_purpose: 'WORKFLOW_DEBUG',
               source_date: obs?.target_trade_date,
               paper
-            })}><Download size={16} /></button></div><JsonEvidence title={`未平仓 ${paper.open_positions?.length ?? '未知'} 条`} value={paper.open_positions} /><JsonEvidence title={`历史平仓 ${paper.closed_trades_n ?? '未知'} 条`} value={paper.closed_trades} /></section><section><div className="section-title"><h2>新载体规则执行</h2><Status value="SYNTHETIC / WORKFLOW_DEBUG" /></div><div className="status-lines"><div><span>成交与出场</span><span>复用 model_paper_fund / paper_portfolio</span></div><div><span>归因</span><span>Thesis / Valuation / Timing / Execution / Market beta</span></div><div><span>人类稿件 → 正式注册</span><Status value="PRODUCTION_UNWIRED" /></div></div><button disabled={busy || !!pending} onClick={() => run('research-replay')}><Play size={16} />运行固定规则回放</button></section>
+            })}><Download size={16} /></button></div><JsonEvidence title={`未平仓 ${paper.open_positions?.length ?? '未知'} 条`} value={paper.open_positions} /><JsonEvidence title={`历史平仓 ${paper.closed_trades_n ?? '未知'} 条`} value={paper.closed_trades} /></section><section><div className="section-title"><h2>新载体规则执行</h2><Status value="SYNTHETIC / WORKFLOW_DEBUG" /></div><div className="status-lines"><div><span>成交与出场</span><span>复用 model_paper_fund / paper_portfolio</span></div><div><span>归因</span><span>Thesis / Valuation / Timing / Execution / Market beta</span></div><div><span>人类稿件 → 正式注册</span><Status value="PRODUCTION_UNWIRED" /></div></div><button disabled={privateMode || busy || !!pending} onClick={() => run('research-replay')}><Play size={16} />运行固定规则回放</button></section>
       </>}
       {tab === 'records' && <>
-        <section><div className="section-title"><h2>本地完整性</h2><div className="actions"><button disabled={busy || !!pending} onClick={() => run('integrity')}><ShieldCheck size={16} />重新检查</button><button onClick={() => exportJSON('workspace-audit-export.json', state)}><Download size={16} />导出审计包</button></div></div><div className="status-lines"><div><span>最近快照 SHA256</span><code>{obs?.snapshot_hash || 'UNAVAILABLE'}</code></div><div><span>事件链尾</span><code>{state.events.at(-1)?.event_hash || 'EMPTY'}</code></div><div><span>数据库保护</span><span>事务 + UPDATE/DELETE 触发器 + 逐行 hash；不抵御主机管理员重写</span></div></div></section><section><div className="section-title"><h2>观察文件目录</h2><span>{obs?.files?.length || 0} 文件</span></div><Table heads={['文件', '读取状态', '源端哈希绑定', 'SHA256']}>{(obs?.files || []).map(f => <tr key={f.path}><td><code>{f.path}</code></td><td><Status value={f.status} /></td><td><Status value={f.binding} /></td><td><code>{f.source_sha256 || 'UNAVAILABLE'}</code></td></tr>)}</Table></section><section><div className="section-title"><h2>追加事件</h2><span>{state.events.length} 条</span></div><Table heads={['序号', '时间（北京时间）', '动作', '冻结内容']}>{[...state.events].reverse().map(e => <tr key={e.seq}><td>{e.seq}</td><td>{dateTime(e.at)}</td><td>{e.kind}</td><td><JsonEvidence title={e.command_id} value={e} /></td></tr>)}</Table></section>
+        <section><div className="section-title"><h2>本地完整性</h2><div className="actions"><button disabled={privateMode || busy || !!pending} onClick={() => run('integrity')}><ShieldCheck size={16} />重新检查</button><button onClick={() => exportJSON('workspace-audit-export.json', state)}><Download size={16} />导出审计包</button></div></div><div className="status-lines"><div><span>最近快照 SHA256</span><code>{obs?.snapshot_hash || 'UNAVAILABLE'}</code></div><div><span>事件链尾</span><code>{state.events.at(-1)?.event_hash || 'EMPTY'}</code></div><div><span>数据库保护</span><span>事务 + UPDATE/DELETE 触发器 + 逐行 hash；不抵御主机管理员重写</span></div></div></section><section><div className="section-title"><h2>观察文件目录</h2><span>{obs?.files?.length || 0} 文件</span></div><Table heads={['文件', '读取状态', '源端哈希绑定', 'SHA256']}>{(obs?.files || []).map(f => <tr key={f.path}><td><code>{f.path}</code></td><td><Status value={f.status} /></td><td><Status value={f.binding} /></td><td><code>{f.source_sha256 || 'UNAVAILABLE'}</code></td></tr>)}</Table></section><section><div className="section-title"><h2>追加事件</h2><span>{state.events.length} 条</span></div><Table heads={['序号', '时间（北京时间）', '动作', '冻结内容']}>{[...state.events].reverse().map(e => <tr key={e.seq}><td>{e.seq}</td><td>{dateTime(e.at)}</td><td>{e.kind}</td><td><JsonEvidence title={e.command_id} value={e} /></td></tr>)}</Table></section>
       </>}
     </>}
   </div>;
