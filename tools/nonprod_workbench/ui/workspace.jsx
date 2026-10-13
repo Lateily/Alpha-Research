@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { statusTone } from './status-tone.mjs';
-import { latestJobByKind } from './job-view.mjs';
+import { latestJobByKind, snapshotBriefPresentation } from './job-view.mjs';
 import { countText, fileBindingText, levelChip, metricLabel, rateText, relianceText, runQualityPairs, thresholdText, trustLineStatus } from './trust-line-view.mjs';
 import { Activity, ArrowRight, CalendarClock, Check, ClipboardCheck, Database, Download, FileText, Layers3, ListFilter, LockKeyhole, Play, Plus, RefreshCw, Save, Search, Send, ShieldCheck, Wallet, X } from 'lucide-react';
 export const workspaceTabs = [['desk', '研究总览', Layers3], ['nightly', '夜链与计划', CalendarClock], ['macro', '宏观与数据', Activity], ['models', '模型与方法', ShieldCheck], ['candidates', '候选证据', ListFilter], ['drafts', '研究稿', FileText], ['reviews', '提交与审核', ClipboardCheck], ['paper', '模拟盘与归因', Wallet], ['records', '数据与审计', Database]];
@@ -10,7 +10,7 @@ const scheduledJobLabels = {
   'research-replay': '固定研究用例回放',
   backup: '备份与恢复自检'
 };
-const jobLabels = { ...scheduledJobLabels, 'brief-trial': '冻结简报试跑', 'earnings-trial': '冻结财报逐条回应' };
+const jobLabels = { ...scheduledJobLabels, 'brief-trial': '冻结简报试跑', 'earnings-trial': '冻结财报逐条回应', 'snapshot-brief': '冻结已发布数据并生成简报' };
 const scheduleLabels = scheduledJobLabels;
 const labels = {
   title: '研究标题',
@@ -87,6 +87,31 @@ function SourceStrip({
 }) {
   if (!observation) return null;
   return <div className="source-strip"><span>数据日期 <strong>{observation.target_trade_date || '未确定'}</strong></span><Status value={observation.freshness.status} /><span>日历年龄 {observation.freshness.calendar_age_days ?? '未知'} 天</span><span>源端状态为历史值 · 未签发生产验收</span></div>;
+}
+function RunIdentity({ observation }) {
+  const identity = observation?.run_identity;
+  return <section className="run-identity"><div className="section-title"><h2>数据来源与运行身份</h2><span>当前展示是冻结观察，不是运行中的输出</span></div>
+    <Table heads={['身份', 'run_id', '交易日', '状态']}>
+      {[['最新尝试', identity?.latest_attempt], ['最后发布', identity?.last_published], ['当前展示', identity?.displayed]].map(([label, row]) => <tr key={label}><td>{label}</td><td><code>{row?.run_id || 'UNAVAILABLE'}</code></td><td>{row?.target_trade_date || 'UNAVAILABLE'}</td><td>{row?.report || (row?.run_id ? 'OBSERVED' : 'UNAVAILABLE')}</td></tr>)}
+    </Table>
+    <Table heads={['模块', '源 run_id', '发布交易日', '源日期 / 时点', '绑定', '运行状态', '数据质量']}>
+      {(observation?.module_sources || []).map(row => <tr key={row.module}><td>{row.module}</td><td><code>{row.run_id || 'UNAVAILABLE'}</code></td><td>{row.published_trade_date || 'UNAVAILABLE'}</td><td>{row.source_trade_date || row.source_as_of || '未提供源日期'}</td><td><Status value={row.identity_status} /></td><td><Status value={row.pipeline_status} /></td><td><Status value={row.data_quality} /><small>{row.quality_basis === 'SCHEMA_AVAILABILITY_NOT_RESEARCH_APPROVAL' ? '来源可用性，非研究批准' : '显式质量字段'}</small></td></tr>)}
+    </Table>
+  </section>;
+}
+function SnapshotBrief({ job }) {
+  if (!job) return <Empty title="尚未运行冻结简报" />;
+  const result = job.result || {};
+  const presentation = snapshotBriefPresentation(job);
+  return <div className="snapshot-brief-result"><div className="section-title"><h3>最新简报任务</h3><Status value={job.status} /></div>
+    <div className="source-strip"><span>任务 <code>{job.job_id}</code></span><span>run <code>{result.run_id || 'UNAVAILABLE'}</code></span><span>交易日 {result.target_trade_date || 'UNAVAILABLE'}</span><span>人工核验 {result.human_review || '未产生核验件'}</span></div>
+    {presentation === 'ready' ? <><div className="source-strip"><span>快照 <code>{result.snapshot_hash}</code></span><span>报告 <code>{result.report_sha256}</code></span><Status value={result.status} /></div>
+      <pre className="brief-report">{result.report}</pre>
+      <details className="json-evidence"><summary>任务日志</summary><ol>{(result.log || []).map(phase => <li key={phase}><code>{phase}</code></li>)}</ol></details>
+      <h3>原始工件引用</h3>{(result.citations || []).map(c => <details className="json-evidence" key={c.id}><summary>{c.id} · {c.path} · {c.json_pointer}</summary><p><code>SHA256 {c.source_sha256}</code></p><pre>{JSON.stringify(c.value, null, 2)}</pre></details>)}
+      <button onClick={() => exportJSON(`brief-${job.job_id}.json`, result)}><Download size={16} />导出简报回执</button>
+    </> : presentation === 'pending' ? <div className="alert" role="status"><CalendarClock size={16} /><p>任务已接收，等待最终状态；尚不能判定成功或失败。</p></div> : <div className="alert error" role="alert"><X size={16} /><div><strong>简报未完成</strong><p>本次失败，不使用上一份报告替代。</p><code>{result.error || 'INTERRUPTED_OR_UNAVAILABLE'}</code></div></div>}
+  </div>;
 }
 function Chart({
   series
@@ -223,6 +248,7 @@ export default function Workspace({
   const frozen = selectedDoc && ['IN_REVIEW', 'ACCEPTED_LOCAL'].includes(selectedDoc.status);
   const inReview = state?.documents.filter(d => d.status === 'IN_REVIEW') || [];
   const latestBrief = latestJobByKind(state?.jobs || [], 'brief-trial');
+  const latestSnapshotBrief = latestJobByKind(state?.jobs || [], 'snapshot-brief');
   const latestEarnings = latestJobByKind(state?.jobs || [], 'earnings-trial');
   const macroRegions = obs?.macro?.macro_state?.payload?.data?.regions || {};
   return <div className="workspace-surface">
@@ -235,7 +261,9 @@ export default function Workspace({
     {!state ? <Empty title="工作台状态读取中" /> : <>
       {state.observation_error && <div className="alert error" role="alert">{state.observation_error}</div>}
       {['desk', 'nightly', 'macro', 'candidates', 'paper'].includes(tab) && <SourceStrip observation={obs} />}
+      {['desk', 'nightly', 'macro', 'candidates', 'paper'].includes(tab) && <RunIdentity observation={obs} />}
       {tab === 'desk' && <>
+        <section className="snapshot-brief-section"><div className="section-title"><h2>每日运行与组合简报</h2><button className="primary" disabled={busy || !!pending || !state.read_only_source_configured} onClick={() => run('snapshot-brief')}><Play size={16} />冻结输入并运行简报</button></div><SnapshotBrief job={latestSnapshotBrief} /></section>
         <div className="workspace-metrics"><article><span>最后公开数据</span><strong>{obs?.target_trade_date || '未导入'}</strong><Status value={obs?.freshness.status || 'NO_SNAPSHOT'} /></article><article><span>最近夜链尝试</span><RunQuality attempt={attempt} /><span>{attempt.generated_at || '没有运行凭证'}</span></article><article><span>本地待审核</span><strong>{inReview.length}<small>份</small></strong><span>不等于正式 U4 授权</span></article><article><span>本入口已付费用</span><strong>0<small>CNY</small></strong><span>DeepSeek 与云资源未启用</span></article></div>
         <section><div className="section-title"><h2>今日运行台账</h2><button className="primary" disabled={busy || !state.read_only_source_configured || !!pending} onClick={() => run('observe')}><RefreshCw size={16} />读取本地实物</button></div><div className="status-lines"><div><span>最后公开 run</span><code>{obs?.published_run_id || 'UNAVAILABLE'}</code></div><div><span>最近尝试 run</span><code>{attempt.run_id || 'UNAVAILABLE'}</code></div><div><span>公开文件哈希/绑定（不含数据质量）</span><Status value={fileBindingText(obs)} /></div><div><span>最近尝试数据质量</span><Status value={attempt.data_quality || 'UNAVAILABLE'} /></div><div><span>最近尝试研究数据质量</span><Status value={attempt.research_data_quality || 'UNAVAILABLE'} /></div><div><span>宏观运行权限</span><Status value="CALIBRATING / NO_BLOCKING_AUTHORITY" /></div><div><span>正式交易 / 生产切换</span><Status value="DISABLED" /></div></div></section>
         <section><div className="section-title"><h2>已发布 run 的研究质量</h2><Status value={quality.status || 'NOT_EVALUATED'} /></div><div className="status-lines"><div><span>来源覆盖</span><Status value={quality.macro?.source_coverage_complete == null ? 'UNVERIFIED' : quality.macro.source_coverage_complete ? 'MATCH' : 'MISMATCH'} /></div><div><span>事件覆盖</span><Status value={quality.macro ? (quality.macro.event_coverage_complete ? 'MATCH' : 'MISMATCH') : 'UNVERIFIED'} /></div><div><span>当前计划差异（未验）</span><strong>{quality.macro ? `${quality.macro.missing_source_rows} / ${quality.macro.expected_sources}` : '未验'}</strong></div><div><span>事件缺行</span><strong>{quality.macro ? `${quality.macro.missing_event_rows} / ${quality.macro.expected_events}` : '未验'}</strong></div><div><span>宏观不可用</span><strong>{quality.macro ? `${quality.macro.unavailable_sources} / ${quality.macro.sources_total}` : '未验'}</strong></div><div><span>实际值缺失</span><strong>{quality.macro ? `${quality.macro.actual_blocked_events} / ${quality.macro.events_total}` : '未验'}</strong></div><div><span>实际值陈旧</span><strong>{quality.macro ? `${quality.macro.stale_actual_events} / ${quality.macro.events_total}` : '未验'}</strong></div><div><span>缺预期差</span><strong>{quality.macro ? `${quality.macro.missing_consensus} / ${quality.macro.events_total}` : '未验'}</strong></div><div><span>候选零维</span><strong>{quality.funnel ? `${quality.funnel.coverage.zero} / ${quality.funnel.candidate_count}` : '未验'}</strong></div><div><span>未开始电池</span><strong>{quality.funnel?.batch_not_started ?? '未验'}</strong></div></div><div className="source-strip"><span>观察 run <code>{quality.run_id || 'UNAVAILABLE'}</code></span><span>只读计数，不等于自动轮验收或研究批准</span></div><TrustLine trust={quality.trust_line} /></section>

@@ -58,6 +58,15 @@ class StatusToneTests(unittest.TestCase):
         self.assertEqual(json.loads(result.stdout),
                          {"kind": "brief-trial", "status": "STOP", "job_id": "new"})
 
+    def test_pending_snapshot_brief_is_not_a_failure(self):
+        module = (ROOT / "tools/nonprod_workbench/ui/job-view.mjs").as_uri()
+        script = (f"import * as view from {json.dumps(module)};"
+                  "console.log(JSON.stringify(['STARTED','SUCCEEDED','STOP'].map(status => "
+                  "view.snapshotBriefPresentation ? view.snapshotBriefPresentation({status}) : null)));" )
+        result = subprocess.run(["node", "--input-type=module", "-e", script],
+                                capture_output=True, text=True, check=True)
+        self.assertEqual(json.loads(result.stdout), ["pending", "ready", "failed"])
+
 
 def write(root, name, value):
     path = root / name
@@ -155,6 +164,297 @@ class EvidenceTests(unittest.TestCase):
 
     def capture(self):
         return ev.capture(self.root, "2026-09-06T00:00:00+00:00")
+
+    def test_module_identity_does_not_present_latest_failure_as_published_data(self):
+        state = ev.view(self.capture())
+        self.assertEqual(state.get("run_identity", {}).get("latest_attempt", {}).get("run_id"),
+                         "failed-newer-run")
+        self.assertEqual(state.get("run_identity", {}).get("last_published", {}).get("run_id"),
+                         "20260828_163504_test")
+        self.assertEqual(state.get("run_identity", {}).get("displayed", {}).get("target_trade_date"),
+                         "20260828")
+        self.assertEqual({x["module"] for x in state.get("module_sources", [])},
+                         {"Nightly", "Macro", "Candidates", "Paper"})
+
+    def test_module_identity_does_not_hide_bound_but_contradictory_run(self):
+        path = "public/data/v2/model_portfolio_state.json"
+        self.pointer["artifacts"]["public:model_portfolio_state.json"] = write(self.root, path, {
+            "run_id": "another-run", "target_trade_date": "20260828", "data": {"cash": 99}})
+        write(self.root, "public/data/v2/current_run.json", self.pointer)
+        state = ev.view(self.capture())
+        paper = next((x for x in state.get("module_sources", []) if x["module"] == "Paper"), {})
+        self.assertEqual(paper.get("identity_status"), "RUN_MISMATCH")
+
+    def test_snapshot_brief_is_a_real_frozen_job_not_unknown_kind(self):
+        state_temp = tempfile.TemporaryDirectory()
+        self.addCleanup(state_temp.cleanup)
+        state_root = Path(state_temp.name).resolve()
+        system = ws.Workspace(wb.Store(state_root), self.root)
+        result = system.start_job({"command_id": "snapshot_brief_test", "kind": "snapshot-brief"})
+        self.assertEqual(result["status"], "SUCCEEDED")
+        self.assertEqual(result["result"]["human_review"], "PENDING")
+        self.assertEqual(result["result"]["run_id"], "20260828_163504_test")
+        self.assertIn("failed-newer-run", result["result"]["report"])
+        self.assertNotIn("untrusted stdout omitted", result["result"]["report"])
+        self.assertFalse(result["result"]["production_authority"])
+        output = state_root / "snapshot-briefs/snapshot_brief_test"
+        self.assertTrue((output / "snapshot.json").is_file())
+        self.assertTrue((output / "SHA256SUMS").is_file())
+        count = len(system.snapshot()["events"])
+        self.assertEqual(system.start_job({"command_id": "snapshot_brief_test", "kind": "snapshot-brief"})["disposition"], "IDEMPOTENT")
+        self.assertEqual(len(system.snapshot()["events"]), count)
+        restarted = ws.Workspace(wb.Store(state_root), self.root)
+        self.assertEqual(restarted.snapshot()["jobs"][-1]["result"], result["result"])
+
+    def test_snapshot_brief_rejects_cross_run_identity_even_after_hash_reseal(self):
+        import workbench_snapshot_brief as brief
+        self.pointer["artifacts"]["public:model_portfolio_state.json"] = write(self.root, "public/data/v2/model_portfolio_state.json", {
+            "run_id": "other-run", "target_trade_date": "20260828", "data": {"cash": 99}})
+        write(self.root, "public/data/v2/current_run.json", self.pointer)
+        with self.assertRaisesRegex(brief.SnapshotBriefError, "MODULE_IDENTITY"):
+            brief.render(self.capture())
+
+    def test_snapshot_brief_hash_mismatch_stops_without_report(self):
+        import workbench_snapshot_brief as brief
+        write(self.root, "public/data/v2/model_portfolio_state.json", {"data": {"cash": 99}})
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary) / "brief"
+            with self.assertRaisesRegex(brief.SnapshotBriefError, "HASH_MISMATCH"):
+                brief.run(self.root, output)
+            self.assertFalse(output.exists())
+
+    def test_snapshot_brief_missing_cash_is_blocked_not_zero(self):
+        import workbench_snapshot_brief as brief
+        report = brief.render(self.capture())["report"]
+        self.assertIn("现金：DATA_BLOCKED", report)
+        self.assertNotIn("现金：0", report)
+
+    def test_snapshot_brief_zero_cash_is_not_treated_as_missing(self):
+        import workbench_snapshot_brief as brief
+        self.pointer["artifacts"]["public:model_portfolio_state.json"] = write(self.root, "public/data/v2/model_portfolio_state.json", {
+            "run_id": "20260828_163504_test", "target_trade_date": "20260828", "data": {"cash": 0}})
+        write(self.root, "public/data/v2/current_run.json", self.pointer)
+        self.assertIn("现金：0 [", brief.render(self.capture())["report"])
+
+    def test_snapshot_brief_reopens_real_nested_metrics_without_key_order_drift(self):
+        import workbench_snapshot_brief as brief
+        self.pointer["artifacts"]["public:macro/source_health.json"] = write(self.root, "public/data/v2/macro/source_health.json", {
+            "source_health": {"total": 15, "ok": 11}})
+        write(self.root, "public/data/v2/current_run.json", self.pointer)
+        with tempfile.TemporaryDirectory() as temporary:
+            try:
+                result = brief.run(self.root, Path(temporary) / "brief")
+            except brief.SnapshotBriefError as exc:
+                result = {"status": str(exc)}
+            self.assertEqual(result["status"], "COMPLETED_WITH_GAPS")
+
+    def test_snapshot_brief_refuses_credentials_in_non_secret_diagnostic_field(self):
+        import workbench_snapshot_brief as brief
+        for space in (" ", "\t", "\n", "\r\n", "\u00a0", "\\t"):
+            with self.subTest(separator=repr(space)):
+                self.pointer["artifacts"]["public:macro/source_health.json"] = write(self.root, "public/data/v2/macro/source_health.json", {
+                    "source_health": {"total": 1}, "diagnostics": f"Authorization:{space}Bearer{space}FAKE_REVIEW_ONLY_TOKEN"})
+                write(self.root, "public/data/v2/current_run.json", self.pointer)
+                with tempfile.TemporaryDirectory() as temporary:
+                    output = Path(temporary) / "brief"
+                    with self.assertRaisesRegex(brief.SnapshotBriefError, "CREDENTIAL"):
+                        brief.run(self.root, output)
+                    self.assertFalse(output.exists())
+
+    def test_snapshot_brief_refuses_repository_credential_shapes_before_persistence(self):
+        markers = ["ghp_" + "A" * 36, "github_pat_" + "B" * 40,
+                   "-----BEGIN " + "RSA PRIVATE KEY-----", 'API_TOKEN="' + "C" * 24 + '"']
+        for marker in markers:
+            with self.subTest(kind=marker[:10]):
+                self.pointer["artifacts"]["public:macro/source_health.json"] = write(
+                    self.root, "public/data/v2/macro/source_health.json", {"source_health": {"diagnostic": marker}})
+                write(self.root, "public/data/v2/current_run.json", self.pointer)
+                with tempfile.TemporaryDirectory() as temporary:
+                    state = Path(temporary)
+                    system = ws.Workspace(wb.Store(state), self.root)
+                    result = system.start_job({"command_id": "credential_shape_test", "kind": "snapshot-brief"})
+                    self.assertEqual(result["status"], "STOP")
+                    self.assertEqual(result["result"]["error"], "CREDENTIAL_SHAPED_CONTENT_REFUSED")
+                    self.assertFalse((state / "snapshot-briefs/credential_shape_test").exists())
+                    self.assertNotIn(marker.encode(), system.store.path.read_bytes())
+
+    def test_backup_restores_successful_snapshot_briefs_and_event_bindings(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            state = Path(temporary)
+            system = ws.Workspace(wb.Store(state), self.root)
+            self.assertEqual(system.start_job({"command_id": "backup_before_brief", "kind": "backup"})["status"], "SUCCEEDED")
+            self.assertEqual(system.start_job({"command_id": "brief_for_backup", "kind": "snapshot-brief"})["status"], "SUCCEEDED")
+            result = system.start_job({"command_id": "backup_after_brief", "kind": "backup"})
+            self.assertEqual(result["status"], "SUCCEEDED")
+            directory = state / result["result"]["location"]
+            restored = state / "restored-brief"
+            backup.restore_check(directory, restored)
+            self.assertEqual(ws.Workspace(wb.Store(restored)).verify_all()["status"], "LOCAL_INTEGRITY_OK")
+            for path in (state / "snapshot-briefs/brief_for_backup").rglob("*"):
+                if path.is_file():
+                    relative = path.relative_to(state)
+                    self.assertEqual(path.read_bytes(), (restored / relative).read_bytes())
+            (directory / "snapshot-briefs/brief_for_backup/report.md").write_bytes(b"tampered")
+            with self.assertRaisesRegex(ev.EvidenceError, "BACKUP_ARTIFACT_HASH"):
+                backup.restore_check(directory, state / "tampered-restore")
+            (state / "snapshot-briefs/brief_for_backup/report.md").write_bytes(b"tampered source")
+            self.assertEqual(system.start_job({"command_id": "backup_tampered_brief", "kind": "backup"})["status"], "STOP")
+
+    def test_bound_candidate_bundle_contradictions_stop_and_project_mismatch(self):
+        import workbench_snapshot_brief as brief
+        for filename, updates, expected in (
+                ("candidate_review.json", {"as_of": "20260827"}, "DATE_MISMATCH"),
+                ("candidate_manifest.json", {"run_id": "foreign-run"}, "RUN_MISMATCH")):
+            with self.subTest(filename=filename):
+                self.pointer = source(self.root)
+                health = json.loads((self.root / "public/data/v2/funnel_health.json").read_bytes())
+                path = health["bundle"]["location"] + "/" + filename
+                payload = json.loads((self.root / path).read_bytes())
+                payload.update(updates)
+                health["bundle"]["artifacts"][filename] = write(self.root, path, payload)
+                self.pointer["artifacts"]["public:funnel_health.json"] = write(self.root, "public/data/v2/funnel_health.json", health)
+                write(self.root, "public/data/v2/current_run.json", self.pointer)
+                snapshot = self.capture()
+                candidate = next(r for r in ev.module_sources(snapshot) if r["module"] == "Candidates")
+                self.assertEqual(candidate["identity_status"], expected)
+                with self.assertRaisesRegex(brief.SnapshotBriefError, "IDENTITY_MISMATCH"):
+                    brief.render(snapshot)
+
+    def test_paper_quality_never_falls_back_to_pipeline_success(self):
+        self.pointer["artifacts"]["public:model_portfolio_state.json"] = write(
+            self.root, "public/data/v2/model_portfolio_state.json", {
+                "run_id": self.pointer["run_id"], "target_trade_date": "20260828", "status": "OK"})
+        write(self.root, "public/data/v2/current_run.json", self.pointer)
+        paper = next(r for r in ev.module_sources(self.capture()) if r["module"] == "Paper")
+        self.assertEqual(paper["data_quality"], "UNAVAILABLE")
+        self.assertEqual(paper["pipeline_status"], "OK")
+
+    def test_backup_accepts_full_api_brief_identifier_length(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            system = ws.Workspace(wb.Store(Path(temporary)), self.root)
+            result = system.start_job({"command_id": "b" * 100, "kind": "snapshot-brief"})
+            self.assertEqual(result["status"], "SUCCEEDED")
+            self.assertEqual(system.start_job({"command_id": "backup_long_identifier", "kind": "backup"})["status"], "SUCCEEDED")
+
+    def test_health_only_cannot_supply_displayed_candidate_identity(self):
+        self.pointer["artifacts"]["public:funnel_health.json"] = write(
+            self.root, "public/data/v2/funnel_health.json", {
+                "run_id": self.pointer["run_id"], "as_of": "20260828", "status": "COMPLETE"})
+        write(self.root, "public/data/v2/current_run.json", self.pointer)
+        candidate = next(r for r in ev.module_sources(self.capture()) if r["module"] == "Candidates")
+        self.assertEqual(candidate["identity_status"], "MISSING_OR_UNBOUND")
+        self.assertIsNone(candidate["path"])
+        self.assertEqual(candidate["data_quality"], "UNAVAILABLE")
+
+    def test_snapshot_brief_tamper_after_restart_is_visible_as_stop(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            state = Path(temporary)
+            system = ws.Workspace(wb.Store(state), self.root)
+            system.start_job({"command_id": "tamper_restart_test", "kind": "snapshot-brief"})
+            (state / "snapshot-briefs/tamper_restart_test/report.md").write_bytes(b"tampered")
+            reopened = ws.Workspace(wb.Store(state), self.root)
+            self.assertEqual(reopened.snapshot()["jobs"][-1]["status"], "STOP")
+            self.assertNotIn("report", reopened.snapshot()["jobs"][-1]["result"])
+            self.assertEqual(reopened.verify_all()["status"], "INTEGRITY_ERROR")
+
+    def test_snapshot_brief_date_contradiction_without_run_is_not_hidden(self):
+        import workbench_snapshot_brief as brief
+        self.pointer["artifacts"]["public:model_portfolio_state.json"] = write(self.root, "public/data/v2/model_portfolio_state.json", {
+            "target_trade_date": "20260827", "data": {"cash": 99}})
+        write(self.root, "public/data/v2/current_run.json", self.pointer)
+        with self.assertRaisesRegex(brief.SnapshotBriefError, "IDENTITY_MISMATCH"):
+            brief.render(self.capture())
+
+    def test_snapshot_brief_rotation_identity_is_checked_too(self):
+        import workbench_snapshot_brief as brief
+        self.pointer["artifacts"]["public:rotation_panel.json"] = write(self.root, "public/data/v2/rotation_panel.json", {
+            "run_id": "another-run", "target_trade_date": "20260828", "data": {"n_sectors": 9}})
+        write(self.root, "public/data/v2/current_run.json", self.pointer)
+        with self.assertRaisesRegex(brief.SnapshotBriefError, "IDENTITY_MISMATCH"):
+            brief.render(self.capture())
+
+    def test_snapshot_brief_receipt_identity_and_inventory_are_bound(self):
+        import workbench_snapshot_brief as brief
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary) / "brief"
+            brief.run(self.root, output)
+            receipt = json.loads((output / "receipt.json").read_bytes())
+            receipt.update(run_id="wrong-run", target_trade_date="20260827", status="VERIFIED", schema="wrong-schema")
+            write(output, "receipt.json", receipt)
+            with self.assertRaisesRegex(brief.SnapshotBriefError, "RECEIPT"):
+                brief.verify(output)
+
+    def test_snapshot_brief_receipt_cannot_read_symlink_ancestor(self):
+        import workbench_snapshot_brief as brief
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary) / "brief"
+            brief.run(self.root, output)
+            outside = Path(temporary) / "outside"
+            outside.mkdir()
+            sha = write(outside, "probe.json", {"outside": True})
+            (output / "linked").symlink_to(outside, target_is_directory=True)
+            receipt = json.loads((output / "receipt.json").read_bytes())
+            receipt["files"]["linked/probe.json"] = sha
+            write(output, "receipt.json", receipt)
+            with self.assertRaisesRegex(brief.SnapshotBriefError, "INVENTORY"):
+                brief.verify(output)
+
+    def test_snapshot_brief_extra_regular_file_is_not_permitted_even_if_rehashed(self):
+        import workbench_snapshot_brief as brief
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary) / "brief"
+            brief.run(self.root, output)
+            sha = write(output, "extra.json", {"unapproved": True})
+            receipt = json.loads((output / "receipt.json").read_bytes())
+            receipt["files"]["extra.json"] = sha
+            receipt_hash = write(output, "receipt.json", receipt)
+            sums = {**receipt["files"], "receipt.json": receipt_hash}
+            (output / "SHA256SUMS").write_text("".join(f"{h}  {name}\n" for name,h in sorted(sums.items())))
+            with self.assertRaisesRegex(brief.SnapshotBriefError, "INVENTORY"):
+                brief.verify(output)
+
+    def test_snapshot_brief_macro_observation_timestamp_is_not_dropped(self):
+        import workbench_snapshot_brief as brief
+        self.pointer["artifacts"]["public:macro/macro_events.json"] = write(self.root, "public/data/v2/macro/macro_events.json", {
+            "run_id": "20260828_163504_test", "as_of": "2026-08-28T16:35:00+00:00"})
+        write(self.root, "public/data/v2/current_run.json", self.pointer)
+        self.assertIn("2026-08-28T16:35:00+00:00", brief.render(self.capture())["report"])
+
+    def test_snapshot_brief_cannot_be_scheduled(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            system = ws.Workspace(wb.Store(Path(temporary)), self.root)
+            system.configure_owner({"password": PASSWORD, "confirmation": PASSWORD})
+            with self.assertRaisesRegex(ws.WorkspaceError, "SCHEDULE_ALLOWLIST"):
+                system.command("schedule", {"command_id": "schedule_brief_test", "schedule_id": "schedule_brief_id",
+                                           "expected_revision": 0, "kind": "snapshot-brief", "interval_minutes": 10,
+                                           "enabled": True, "password": PASSWORD})
+
+    def test_snapshot_brief_failure_is_latest_attempt_not_old_success(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            system = ws.Workspace(wb.Store(Path(temporary)), self.root)
+            self.assertEqual(system.start_job({"command_id": "brief_success_test", "kind": "snapshot-brief"})["status"], "SUCCEEDED")
+            write(self.root, "public/data/v2/model_portfolio_state.json", {"data": {"cash": 999}})
+            failure = system.start_job({"command_id": "brief_failure_test", "kind": "snapshot-brief"})
+            self.assertEqual(failure["status"], "STOP")
+            self.assertEqual(failure["result"]["error"], "FROZEN_SOURCE_HASH_MISMATCH")
+            self.assertNotIn("report", failure["result"])
+            self.assertEqual(system.snapshot()["jobs"][-1]["job_id"], "brief_failure_test")
+
+    def test_snapshot_brief_output_and_authority_tampering_are_rejected(self):
+        import workbench_snapshot_brief as brief
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary) / "brief"
+            brief.run(self.root, output)
+            original = (output / "report.md").read_bytes()
+            (output / "report.md").write_bytes(original + b"changed")
+            with self.assertRaisesRegex(brief.SnapshotBriefError, "OUTPUT_CHANGED"):
+                brief.verify(output)
+            (output / "report.md").write_bytes(original)
+            receipt = json.loads((output / "receipt.json").read_bytes())
+            receipt["human_review"] = "VERIFIED"
+            write(output, "receipt.json", receipt)
+            with self.assertRaisesRegex(brief.SnapshotBriefError, "AUTHORITY_INVALID"):
+                brief.verify(output)
 
     def test_observation_uses_actual_hash_and_retains_failure(self):
         before = {str(p): p.read_bytes() for p in self.root.rglob("*") if p.is_file()}
