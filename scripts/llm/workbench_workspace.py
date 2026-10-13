@@ -108,6 +108,8 @@ def projection(events):
             schedules[item["schedule_id"]] = item
         elif kind == "JOB_STARTED":
             jobs[item["job_id"]] = {**item, "status": "STARTED", "result": None}
+            if "actor" in event:
+                jobs[item["job_id"]]["actor"] = event["actor"]
         elif kind == "JOB_FINISHED":
             jobs[item["job_id"]].update(status=item["status"], result=item["result"])
     return {"documents": list(documents.values()), "schedules": list(schedules.values()), "jobs": list(jobs.values())}
@@ -115,8 +117,9 @@ def projection(events):
 
 class Workspace:
     def __init__(self, store, source_root=None, clock=time.time,
-                 brief_pack_root=None, earnings_pack_root=None):
+                 brief_pack_root=None, earnings_pack_root=None, private_mode=False):
         self.store, self.clock = store, clock
+        self.private_mode = private_mode
         self.source_root = Path(source_root) if source_root else None
         self.brief_pack_root = Path(brief_pack_root) if brief_pack_root else None
         self.earnings_pack_root = Path(earnings_pack_root) if earnings_pack_root else None
@@ -161,15 +164,25 @@ class Workspace:
             events.append(event)
         return events
 
-    def append(self, db, events, command_id, request_hash, kind, data):
+    def append(self, db, events, command_id, request_hash, kind, data, actor=None):
         if len(events) >= MAX_EVENTS:
             raise WorkspaceError("WORKSPACE_EVENT_LIMIT", 429)
         event = {"seq": len(events) + 1, "prev_hash": events[-1]["event_hash"] if events else "0" * 64,
                  "command_id": command_id, "request_hash": request_hash, "kind": kind, "data": data,
                  "at": self.clock(), "sample_purpose": "WORKFLOW_DEBUG", "production_authority": False}
+        if actor is not None:
+            event["actor"] = actor
         event["event_hash"] = evidence.sealed(event)
         db.execute("INSERT INTO workspace_events VALUES (?, ?, ?, ?)", (event["seq"], command_id, request_hash, evidence.canonical(event)))
         return event
+
+    def audit_login(self, actor):
+        with self.store.connect() as db:
+            db.execute("BEGIN IMMEDIATE")
+            self.append(db, self.events(db), "login_" + secrets.token_hex(16),
+                        evidence.sealed({"actor": actor, "scope": "PRIVATE_SHARED_BRIEF_ACCESS_ONLY"}),
+                        "PRIVATE_LOGIN", {"scope": "PRIVATE_SHARED_BRIEF_ACCESS_ONLY", "human_research_approval": False},
+                        actor=actor)
 
     def owner_exists(self, db):
         return bool(db.execute("SELECT 1 FROM workspace_owner").fetchone())
@@ -282,12 +295,15 @@ class Workspace:
             db.execute("INSERT OR IGNORE INTO workspace_observations VALUES (?, ?)", (snapshot["snapshot_hash"], evidence.canonical(snapshot)))
         return {"snapshot_hash": snapshot["snapshot_hash"], "issues": len(snapshot["issues"]), "status": "OBSERVED_WITH_GAPS" if snapshot["issues"] else "OBSERVED_NOT_PUBLICATION_ACCEPTED"}
 
-    def start_job(self, payload, scheduled=False, schedule_guard=None):
+    def start_job(self, payload, scheduled=False, schedule_guard=None, actor=None):
         exact(payload, {"command_id", "kind"})
         identifier(payload["command_id"])
+        if self.private_mode and (not isinstance(actor, str) or not actor or scheduled
+                                  or not isinstance(payload["kind"], str) or payload["kind"] not in {"observe", "snapshot-brief"}):
+            raise WorkspaceError("PRIVATE_OPERATION_DISABLED", 403)
         if payload["kind"] not in KINDS:
             raise WorkspaceError("JOB_KIND_NOT_OFFLINE_ALLOWLIST", 403)
-        job_id, request_hash = payload["command_id"], evidence.sealed(payload)
+        job_id, request_hash = payload["command_id"], evidence.sealed({**payload, **({"actor": actor} if actor is not None else {})})
         with self.store.connect() as db:
             db.execute("BEGIN IMMEDIATE")
             events = self.events(db)
@@ -300,7 +316,7 @@ class Workspace:
                 if prior["request_hash"] != request_hash:
                     raise WorkspaceError("WORKSPACE_COMMAND_ID_CONFLICT", 409)
                 return {"disposition": "IDEMPOTENT", "job_id": job_id}
-            self.append(db, events, job_id, request_hash, "JOB_STARTED", {"job_id": job_id, "kind": payload["kind"], "scheduled": scheduled, "recovery": "NO_AUTOMATIC_RETRY_IF_INTERRUPTED"})
+            self.append(db, events, job_id, request_hash, "JOB_STARTED", {"job_id": job_id, "kind": payload["kind"], "scheduled": scheduled, "recovery": "NO_AUTOMATIC_RETRY_IF_INTERRUPTED"}, actor=actor)
         try:
             if payload["kind"] == "observe":
                 result = self.observe()
@@ -351,7 +367,7 @@ class Workspace:
             result = {"error": code}
         with self.store.connect() as db:
             db.execute("BEGIN IMMEDIATE")
-            self.append(db, self.events(db), "finish_" + job_id, request_hash, "JOB_FINISHED", {"job_id": job_id, "status": status, "result": result})
+            self.append(db, self.events(db), "finish_" + job_id, request_hash, "JOB_FINISHED", {"job_id": job_id, "status": status, "result": result}, actor=actor)
         return {"disposition": "CREATED", "job_id": job_id, "status": status, "result": result}
 
     def verify_all(self):
@@ -388,6 +404,8 @@ class Workspace:
         return result
 
     def tick(self):
+        if self.private_mode:
+            return
         if not self.lock.acquire(blocking=False):
             return
         try:
@@ -439,16 +457,18 @@ class Workspace:
                 "read_only_source_configured": self.source_root is not None,
                 "brief_pack_configured": self.brief_pack_root is not None,
                 "earnings_pack_configured": self.earnings_pack_root is not None,
-                "scheduler": {"runtime": "IN_PROCESS_LOCAL_SERVER", "status": getattr(self, "scheduler_error", None) or "AVAILABLE", "missed_policy": "NO_BACKFILL", "requires_awake_host": True},
+                "scheduler": {"runtime": "IN_PROCESS_LOCAL_SERVER", "status": "DISABLED_PRIVATE_MODE" if self.private_mode else getattr(self, "scheduler_error", None) or "AVAILABLE", "missed_policy": "NO_BACKFILL", "requires_awake_host": True},
                 "authority": {"team_access": False, "paid_calls": False, "production_write": False, "formal_u4_approval": False, "local_review_only": True},
                 "catalog": self.catalog,
                 "sample_purpose": "WORKFLOW_DEBUG"}
 
-    def dispatch(self, path, payload):
+    def dispatch(self, path, payload, actor=None):
+        if self.private_mode and path != "/api/workspace/job":
+            raise WorkspaceError("PRIVATE_OPERATION_DISABLED", 403)
         if path == "/api/workspace/owner":
             return self.configure_owner(payload)
         if path == "/api/workspace/job":
-            return self.start_job(payload)
+            return self.start_job(payload, actor=actor)
         routes = {"/api/workspace/draft": "draft", "/api/workspace/submit": "submit", "/api/workspace/review": "review", "/api/workspace/schedule": "schedule"}
         if path not in routes:
             raise WorkspaceError("WORKSPACE_OPERATION_DISABLED", 403)

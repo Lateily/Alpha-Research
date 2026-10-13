@@ -1,0 +1,22 @@
+{
+  "schema": "ai-task.v1",
+  "task_id": "WORKBENCH-SHARED-BRIEF-BRIDGE-20261013",
+  "architecture_block": ["Nonproduction workbench"],
+  "objective": "Add an opt-in bounded Tailscale private shared-brief bridge over the existing isolated state DB, with exact owner/member access identity, login audit, actor-bound retries and only explicit observe/snapshot-brief jobs.",
+  "non_goals": ["No public listener or Funnel, paid/model/market calls, collection, scheduling, approval, U4, paper or production operations.", "No production reads, runtime activation, server start, Tailscale changes, commits, pushes or PRs by the implementer.", "No unrelated old PR382/Jev changes or source configuration from HTTP."],
+  "human_owner": "Junyan",
+  "reviewer": "Parent independent review",
+  "executor_candidates": ["Codex"],
+  "dependencies": ["Fixed #401 commit 4208af0efe6cf5aa082186133f145b05355da743", "Old b98b686 private identity pattern is reference only, not merged"],
+  "authority_docs": ["AGENTS.md", "scripts/llm/AGENTS.md", "docs/team/NONPROD_WORKBENCH_V1.md", "docs/llm/WORKBENCH_SNAPSHOT_BRIEF_V1.md"],
+  "file_scope": ["scripts/llm/nonprod_workbench.py", "scripts/llm/workbench_workspace.py", "scripts/llm/workbench_private_access.py", "tools/nonprod_workbench/ui/main.jsx", "tools/nonprod_workbench/ui/workspace.jsx", "tests/test_nonprod_workbench.py", "tests/test_workbench_workspace.py", "scripts/governance_mutation_gate.py", "scripts/llm/fixtures/workbench_shared_brief.task.json", "docs/llm/WORKBENCH_SHARED_BRIEF_V1.md", ".github/workflows/python-ci.yml"],
+  "forbidden_scope": ["Parent #401 worktree", "/Users/years/ar-live", "Production runtime/data/config", "Old team-allowlist worktree edits", "All unrelated source modules"],
+  "input_contracts": ["Optional exact HTTPS *.ts.net:8443 origin and owner login; outside-repository owner-owned mode0600 regular allowlist <=4096 bytes, with safe parents and unique exact member logins.", "Tailscale Serve identity arrives from loopback only; duplicate security headers, foreign Host/Origin and wrong identity-bound cookie fail closed.", "HTTP jobs contain only command_id and kind; owner and member may run only observe or snapshot-brief over operator-fixed local evidence."],
+  "output_artifacts": ["Scoped uncommitted source, tests, task fixture and short operator documentation.", "Login and private job events with actor and actor-bound request hashes in the same isolated workbench DB.", "Zero-network test/build/mutation/ci_local evidence under /Users/years/Desktop/Stock/AR/runtime/workbench-data-brief/20261013/shared-bridge/ only."],
+  "acceptance_tests": ["python3 tests/test_nonprod_workbench.py", "python3 tests/test_workbench_workspace.py", "node node_modules/vite/bin/vite.js build --config tools/nonprod_workbench/vite.config.js", "python3 scripts/governance_mutation_gate.py", "python3 /Users/years/Desktop/Stock/e2e-twin/twin-20260902/tools/ci_local.py if feasible within timebox", "Missing/forged/duplicate identities, unsafe allowlists, wrong origins/cookies and all forbidden writes fail before execution; same-actor retry is idempotent, cross-actor reuse conflicts and simultaneous different jobs share one state; existing enabled schedules never execute in private mode."],
+  "risk_level": "HIGH",
+  "network_policy": "OFFLINE",
+  "budget": {"max_cny": "0", "max_minutes": 60},
+  "approval_gates": ["Design and bounded access scope explicitly approved by Junyan via parent; no new approval inferred from model roles or access login.", "Parent performs independent review and any later fresh-state private runtime acceptance; deployment is not part of this implementation."],
+  "created_at": "2026-10-13T15:00:00+00:00"
+}

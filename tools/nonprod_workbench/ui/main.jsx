@@ -168,25 +168,28 @@ function App() {
     }
   }
   const items = audit.rows.filter(r => (filter === 'ALL' || r.state === filter) && `${r.surface} ${r.evidence} ${r.next}`.toLowerCase().includes(query.toLowerCase()));
+  const privateMode = state?.access?.mode === 'PRIVATE_SHARED_BRIEF';
+  const visibleTabs = privateMode ? workspaceTabs.filter(([key]) => ['desk', 'nightly', 'macro', 'candidates', 'paper', 'records'].includes(key)) : tabs;
   return <div className="app">
     <aside className="sidebar">
       <div className="brand"><div className="brand-icon"><Layers3 size={22} /></div><div><strong>AR 工作台</strong><span>CONTROL PLANE</span></div></div>
-      <div className="environment"><span className="dot" />非生产 · 本机</div>
-      <nav aria-label="工作台导航">{tabs.map(([key, label, Icon]) => <button key={key} aria-current={tab === key ? 'page' : undefined} className={tab === key ? 'active' : ''} onClick={() => {
+      <div className="environment"><span className="dot" />{privateMode ? '非生产 · 私有共享简报' : '非生产 · 本机'}</div>
+      <nav aria-label="工作台导航">{visibleTabs.map(([key, label, Icon]) => <button key={key} aria-current={tab === key ? 'page' : undefined} className={tab === key ? 'active' : ''} onClick={() => {
           setTab(key);
           setNotice('');
         }}><Icon size={18} />{label}<ChevronRight size={14} /></button>)}</nav>
-      <div className="sidebar-footer"><ShieldCheck size={18} /><div>最终裁决：Junyan<span>未签发任何团队权限</span></div></div>
+      <div className="sidebar-footer"><ShieldCheck size={18} /><div>最终裁决：Junyan<span>{privateMode ? '访问身份不构成人类研究批准' : '未签发任何团队权限'}</span></div></div>
     </aside>
     <main>
       <header><div className="breadcrumb">AR / LOCAL WORKSPACE / <span>{tabs.find(t => t[0] === tab)[1]}</span></div><button className="icon-button" title="重新读取本地状态（会重载未保存草稿）" aria-label="刷新状态" disabled={busy} onClick={reload}><RefreshCw size={17} className={busy ? 'spinning' : ''} /></button></header>
       <div className="page">
         <div className="page-heading"><div><div className="eyebrow">WORKSPACE / 01</div><h1>{tabs.find(t => t[0] === tab)[1]}</h1></div><Badge tone="amber"><LockKeyhole size={13} />CUTOVER HOLD</Badge></div>
-        <div className="authority-strip"><span><LockKeyhole size={14} />团队访问：关闭</span><span>模型付费调用：关闭</span><span>生产写入：关闭</span><span>会话：本机开发态，未认证人类身份</span></div>
+        <div className="authority-strip"><span><LockKeyhole size={14} />{privateMode ? '私有访问：具名允许名单' : '团队访问：关闭'}</span><span>模型付费调用：关闭</span><span>生产写入：关闭</span><span>{privateMode ? <><span>{state.access.role}</span><code>{state.access.login}</code></> : '会话：本机开发态，未认证人类身份'}</span></div>
+        {privateMode && <div className="source-strip"><span>共享结果 · 仅观察与快照简报</span><span>采集、调度、稿件写入与批准：关闭</span><span>访问身份与模型角色不构成人类研究批准</span></div>}
         {error && <div role="alert" className="alert error"><X size={17} /><strong>请求未完成</strong><code>{error}</code><button onClick={reload} disabled={busy}>重载状态</button></div>}
         {notice && <div role="status" className="alert success"><Check size={16} />{notice}</div>}
         {!state ? <div className="empty" role="status"><Database size={30} /><h2>{error ? '本地服务不可用' : '正在读取工作台'}</h2><p>未显示任何缓存状态</p></div> : <>
-          {workspaceTabs.some(t => t[0] === tab) && <Workspace tab={tab} api={api} reloadBase={reload} refreshRevision={workspaceRefresh}/>}
+          {workspaceTabs.some(t => t[0] === tab) && <Workspace tab={tab} api={api} reloadBase={reload} refreshRevision={workspaceRefresh} access={state.access}/>}
           {tab === 'research' && <Research runs={state.research_runs || []} busy={busy} run={runResearch} pending={researchPending} endPending={() => {setResearchPending(null); sessionStorage.removeItem('ar-research-pending'); setNotice('已结束等待；原运行目录未修改');}} viewReceipt={setReceipt}/>}
           {tab === 'overview' && <>
             <div className="metrics"><article><span>本地离线回执</span><strong>{state.receipts.length}<small>条</small></strong><span>不是模型真实推理</span></article><article><span>本入口模型支出</span><strong>0<small>CNY</small></strong><span>未联系模型提供方</span></article><article><span>部署草稿待填</span><strong>{state.readiness.missing.length}<small>/ 6 项</small></strong><span>填写不等于批准</span></article><article><span>旧链切换状态</span><strong className="text-amber">HOLD</strong><span>旧写入尚未统一停止</span></article></div>
