@@ -1,11 +1,11 @@
 {
   "ticker": "300308.SZ",
-  "fetched_at": "2026-10-13T07:41:49Z",
-  "trade_date": "20261013",
+  "fetched_at": "2026-10-13T16:17:50Z",
+  "trade_date": "20261014",
   "_status": "ok",
   "api_used": "top_list",
   "days_window": 30,
-  "as_of": "20261012",
+  "as_of": "20261013",
   "appearances": [],
   "summary": {
     "total_appearances": 0,

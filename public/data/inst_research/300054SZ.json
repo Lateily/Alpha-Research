@@ -1,7 +1,7 @@
 {
   "_status": "ok",
   "ticker": "300054.SZ",
-  "fetched_at": "2026-10-13T07:42:08Z",
+  "fetched_at": "2026-10-13T16:18:11Z",
   "api_used": "stk_surv",
   "_attempted_endpoints": [
     "stk_surv"
@@ -553,25 +553,11 @@
       "inst_count": 2,
       "surv_type": "特定对象调研",
       "description": null
-    },
-    {
-      "ts_code": "300054.SZ",
-      "name": "鼎龙股份",
-      "surv_date": "20260715",
-      "fund_visitors": "周传根,王帅,周光远,钱冠宇,童秋涛",
-      "rece_place": "公司6楼多功能厅",
-      "rece_mode": "特定对象调研",
-      "rece_org": "平安养老",
-      "org_type": "寿险公司",
-      "comp_rece": "董事长助理、投关总监 熊亚威",
-      "inst_count": 6,
-      "surv_type": "特定对象调研",
-      "description": null
     }
   ],
   "summary": {
     "total_30d": 6,
-    "total_90d": 40,
+    "total_90d": 39,
     "unique_inst_30d": 29,
     "latest_date": "2026-09-17"
   }

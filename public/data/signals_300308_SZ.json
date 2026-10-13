@@ -12,8 +12,8 @@
       "date": "20261012",
       "bullish": true,
       "description": {
-        "e": "RSI(14) = 29.5 — oversold, watch for reversal",
-        "z": "RSI(14)=29.5，超卖，关注反转信号"
+        "e": "RSI(14) = 29.6 — oversold, watch for reversal",
+        "z": "RSI(14)=29.6，超卖，关注反转信号"
       }
     },
     {
@@ -46,7 +46,7 @@
     "ma5": 780.84,
     "ma20": 869.97,
     "ma60": null,
-    "rsi14": 29.5,
+    "rsi14": 29.6,
     "vol_ma20": 239448,
     "vol_ratio": 0.88,
     "price_vs_ma20": -16.72,
@@ -54,9 +54,9 @@
     "change_1d": -6.55,
     "change_5d": -11.11,
     "change_20d": -11.0,
-    "macd_dif": -35.906,
-    "macd_dea": -20.7798,
-    "macd_hist": -30.2524,
+    "macd_dif": -35.5553,
+    "macd_dea": -20.2627,
+    "macd_hist": -30.5852,
     "bb_upper": 989.82,
     "bb_mid": 869.97,
     "bb_lower": 750.12,
