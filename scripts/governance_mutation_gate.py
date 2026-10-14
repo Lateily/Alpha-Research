@@ -200,6 +200,46 @@ class MutationCase:
 
 MUTATIONS: tuple[MutationCase, ...] = (
     MutationCase(
+        mutation_id="WORKBENCH_SHARED_PUBLISHER_MANIFEST", component="Frozen shared inputs S2a compatibility",
+        source_path="scripts/llm/workbench_shared_inputs.py", test_script="tests/test_workbench_shared_inputs.py",
+        before='MANIFEST_SCHEMAS = {"nightly_publish_manifest/v2", "nightly_manifest/v2"}',
+        after='MANIFEST_SCHEMAS = {"nightly_manifest/v2"}',
+        expected_failure_marker="test_publisher_schema_rehash_preserves_existing_identity_guards",
+        rationale="A fully hash-bound publisher v2 manifest is supported without changing its producer or intrinsic identities.",
+    ),
+    MutationCase(
+        mutation_id="WORKBENCH_SHARED_DECLARED_ALIAS_BYTES", component="Frozen shared inputs S2a compatibility",
+        source_path="scripts/llm/workbench_shared_inputs.py", test_script="tests/test_workbench_shared_inputs.py",
+        before='        if "public:" + name not in catalog:', after='        if True:',
+        expected_failure_marker="test_optional_alias_is_degraded_but_declared_bytes_are_required",
+        rationale="An optional alias becomes mandatory when declared; its original cannot be silently omitted or replaced with degraded evidence.",
+    ),
+    MutationCase(
+        mutation_id="WORKBENCH_SHARED_CONTEXT_CONTRADICTION", component="Frozen shared inputs S2a compatibility",
+        source_path="scripts/llm/workbench_shared_inputs.py", test_script="tests/test_workbench_shared_inputs.py",
+        before='        if ((payload.get("run_id") is not None and payload["run_id"] != rid)\n'
+               '                or (payload.get("target_trade_date") is not None and payload["target_trade_date"] != date)\n'
+               '                or (isinstance(as_of, str) and re.fullmatch(r"\\d{8}", as_of) and as_of != date)):',
+        after='        if False:',
+        expected_failure_marker="test_context_provenance_never_admits_present_conflicts",
+        rationale="Publication-context provenance permits absent intrinsic fields, never a present contradictory run/date, including an unbound alias.",
+    ),
+    MutationCase(
+        mutation_id="WORKBENCH_SHARED_COMPLETE_MIGRATION_INVENTORY", component="Explicit shared state migration S2a",
+        source_path="scripts/llm/workbench_shared_state.py", test_script="tests/test_workbench_shared_state.py",
+        before='    if manifest["inventory_scope"] != "ISOLATED_STATE_ARTIFACT_ROOTS":', after='    if False:',
+        expected_failure_marker="test_limited_historical_export_blocks_complete_migration",
+        rationale="A successful-only legacy archive cannot be promoted to a complete new shared root without complete reconciliation.",
+    ),
+    MutationCase(
+        mutation_id="WORKBENCH_SHARED_ATOMIC_FILE_PUBLISH", component="Explicit shared state migration S2a",
+        source_path="scripts/llm/workbench_backup.py", test_script="tests/test_workbench_shared_state.py",
+        before='    fd = os.open(temporary, os.O_CREAT | os.O_EXCL | os.O_WRONLY | os.O_NOFOLLOW, 0o600)',
+        after='    fd = os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY | os.O_NOFOLLOW, 0o600)',
+        expected_failure_marker="test_atomic_publish_hides_partial_file_and_never_replaces_committed_bytes",
+        rationale="Creation and partial writes must remain in source-bound staging, not poison the immutable published destination.",
+    ),
+    MutationCase(
         mutation_id="WORKBENCH_SHARED_FROZEN_INPUT", component="Frozen shared inputs S2a",
         source_path="scripts/llm/workbench_snapshot_brief.py", test_script="tests/test_workbench_shared_inputs.py",
         before="    validate_snapshot(snapshot, frozen_root, sealed_originals=True)", after="    pass",

@@ -7,7 +7,7 @@ import sqlite3
 from pathlib import Path
 
 import workbench_evidence as ev
-from workbench_backup import TABLES, write_new
+from workbench_backup import TABLES, durable_directory, write_new
 from workbench_workspace import Workspace, projection
 
 STORAGE_SCHEMA = "ar.shared-workspace-storage.v2"
@@ -77,11 +77,11 @@ def _promote(staging, target):
     finally: os.close(fd)
 
 
-def _ensure(path, raw):
+def _ensure(path, raw, *, evidence_root):
     if path.exists() or path.is_symlink():
         if ev.read_local(path.parent, path.name) != raw: raise ev.EvidenceError("MIGRATION_STAGING_CONFLICT")
     else:
-        write_new(path, raw)
+        write_new(path, raw, evidence_root=evidence_root)
 
 
 def migrate_legacy(backup_root: Path, target_root: Path) -> dict:
@@ -93,9 +93,17 @@ def migrate_legacy(backup_root: Path, target_root: Path) -> dict:
     if source == destination or source in destination.parents or destination in source.parents:
         raise ev.EvidenceError("MIGRATION_REQUIRES_DISJOINT_NEW_TARGET")
     manifest, data = backup.read_shared(backup_root)
+    # Limited successful-only exports cannot account for unknown orphan history.
+    # governance-mutation: WORKBENCH_SHARED_COMPLETE_MIGRATION_INVENTORY
+    if manifest["inventory_scope"] != "ISOLATED_STATE_ARTIFACT_ROOTS":
+        raise ev.EvidenceError("BACKUP_COMPLETE_INVENTORY_REQUIRED")
     backup_hash = manifest["backup_hash"]
     staging = target.parent / ("." + target.name + ".migration")
     intent = {"schema": "ar.shared-migration-intent.v1", "backup_hash": backup_hash, "target": target.name}
+    evidence_base = staging / "migration-evidence"
+    evidence_root = evidence_base / backup_hash
+    if "migration-evidence/" + backup_hash in manifest["directories"]:
+        raise ev.EvidenceError("MIGRATION_EVIDENCE_BINDING_CONFLICT")
     if target.exists():
         try: prior = ev.parse(ev.read_local(target, "migration-receipt.json"))
         except (OSError, ValueError): raise ev.EvidenceError("MIGRATION_REQUIRES_NEW_TARGET") from None
@@ -107,14 +115,24 @@ def migrate_legacy(backup_root: Path, target_root: Path) -> dict:
     if staging.exists():
         if staging.is_symlink() or not staging.is_dir(): raise ev.EvidenceError("MIGRATION_STAGING_UNSAFE")
         if any(staging.iterdir()):
-            saved = ev.parse(ev.read_local(staging, "migration-intent.json"))
-            if saved != intent: raise ev.EvidenceError("MIGRATION_SOURCE_CONFLICT")
+            if (staging / "migration-intent.json").exists():
+                saved = ev.parse(ev.read_local(staging, "migration-intent.json"))
+                if saved != intent: raise ev.EvidenceError("MIGRATION_SOURCE_CONFLICT")
+            elif any(path.name != "migration-evidence" for path in staging.iterdir()):
+                raise ev.EvidenceError("MIGRATION_UNBOUND_STAGING_REQUIRES_RECONCILIATION")
+            if evidence_base.exists():
+                if evidence_base.is_symlink() or not evidence_base.is_dir(): raise ev.EvidenceError("MIGRATION_STAGING_UNSAFE")
+                if any(path.name != backup_hash for path in evidence_base.iterdir()):
+                    raise ev.EvidenceError("MIGRATION_SOURCE_CONFLICT")
     else:
-        staging.mkdir(parents=True, mode=0o700)
-    _ensure(staging / "migration-intent.json", ev.canonical(intent).encode())
+        durable_directory(staging)
+    # A directory entry binds the source before the first byte of intent is written.
+    durable_directory(evidence_root)
+    _ensure(staging / "migration-intent.json", ev.canonical(intent).encode(), evidence_root=evidence_root)
     jobs = backup.legacy_jobs(data["tables"]["workspace_events"])
     receipt = {"schema": "ar.shared-migration.v1", "status": "SHARED_MIGRATION_VERIFIED",
                "backup_hash": backup_hash, "storage_schema": STORAGE_SCHEMA,
+               "source_inventory_scope": manifest["inventory_scope"],
                "table_counts": manifest["table_counts"], "event_tail": manifest["event_tail"],
                "legacy_jobs": jobs,
                "artifact_inventory": [{**row, "source_backup_hash": backup_hash} for row in manifest["artifact_inventory"]],
@@ -122,11 +140,11 @@ def migrate_legacy(backup_root: Path, target_root: Path) -> dict:
     for name in manifest["directories"]:
         (staging / name).mkdir(parents=True, exist_ok=True, mode=0o700)
     for name in manifest["files"]:
-        if name != "data.json": _ensure(staging / name, ev.read_local(backup_root, name))
+        if name != "data.json": _ensure(staging / name, ev.read_local(backup_root, name), evidence_root=evidence_root)
     fence = staging / "workbench.sqlite3"
     fence.mkdir(exist_ok=True, mode=0o700)
     _build_state(staging, data["tables"], receipt)
-    _ensure(staging / "migration-receipt.json", ev.canonical(receipt).encode())
+    _ensure(staging / "migration-receipt.json", ev.canonical(receipt).encode(), evidence_root=evidence_root)
     backup.check_restored(staging, manifest, data, receipt)
     _promote(staging, target)
     return receipt

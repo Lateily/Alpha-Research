@@ -16,6 +16,10 @@ from workbench_workspace import WorkspaceError
 POINTER = "public/data/v2/current_run.json"
 ATTEMPT = "experiments/execution_tracker/nightly_run.json"
 SCOPE = "SCOPED_SNAPSHOT_NOT_FULL_NIGHTLY_ACCEPTANCE"
+OPTIONAL_ALIASES = {"macro_gate.json"}
+# The second spelling is the explicitly retained legacy observation contract.
+# governance-mutation: WORKBENCH_SHARED_PUBLISHER_MANIFEST
+MANIFEST_SCHEMAS = {"nightly_publish_manifest/v2", "nightly_manifest/v2"}
 
 
 def publication_paths(snapshot):
@@ -29,6 +33,44 @@ def publication_paths(snapshot):
             *(f"data_history/funnel/{date}/{rid}/" + name for name in ev.BUNDLE)}
 
 
+def _required_paths(snapshot):
+    paths = publication_paths(snapshot)
+    pointer = snapshot["records"][POINTER].get("payload") or {}
+    catalog = pointer.get("artifacts") or {}
+    for name in OPTIONAL_ALIASES:
+        # governance-mutation: WORKBENCH_SHARED_DECLARED_ALIAS_BYTES
+        if "public:" + name not in catalog:
+            paths.remove("public/data/v2/" + name)
+    return paths
+
+
+def _intrinsic_date(payload):
+    if payload.get("target_trade_date") is not None:
+        return payload["target_trade_date"]
+    value = payload.get("as_of")
+    return value if isinstance(value, str) and re.fullmatch(r"\d{8}", value) else None
+
+
+def publication_provenance(snapshot, originals):
+    records = snapshot["records"]
+    result = {}
+    for name in originals:
+        row = records[name]
+        payload = row["payload"]
+        run, date = payload.get("run_id"), _intrinsic_date(payload)
+        result[name] = {
+            "basis": "PUBLICATION_POINTER" if name == POINTER else
+                     "HASH_BOUND_PUBLICATION_CONTEXT" if run is None or date is None else "INTRINSIC_AND_HASH_BOUND_PUBLICATION",
+            "intrinsic_run_id": run, "intrinsic_trade_date": date,
+            "intrinsic_run_status": "ABSENT" if run is None else "PRESENT",
+            "intrinsic_date_status": "ABSENT" if date is None else "PRESENT",
+            "publication_run_id": snapshot["published_run_id"], "publication_trade_date": snapshot["target_trade_date"],
+            "source_sha256": row["source_sha256"], "pointer_sha256": records[POINTER]["source_sha256"],
+            "manifest_sha256": records[f"public/data/v2/runs/{snapshot['published_run_id']}/manifest.json"]["source_sha256"],
+        }
+    return result
+
+
 def validate_snapshot(snapshot, frozen_root, *, sealed_originals=False):
     """One boundary for imports, reopening and isolated rendering."""
     ev.verify(snapshot)
@@ -36,17 +78,37 @@ def validate_snapshot(snapshot, frozen_root, *, sealed_originals=False):
     if any(p.is_symlink() for p in (frozen_root, *frozen_root.parents)):
         raise WorkspaceError("FROZEN_ROOT_SYMLINK", 409)
     paths = publication_paths(snapshot)
-    if sealed_originals:
-        actual = {p.relative_to(frozen_root).as_posix() for p in frozen_root.rglob("*") if p.is_file() or p.is_symlink()}
-        if actual != paths | {"publication.json"}:
-            raise WorkspaceError("FROZEN_ORIGINAL_INVENTORY_INVALID", 409)
     records = snapshot.get("records")
     if not isinstance(records, dict) or set(records) != paths | {ATTEMPT}:
         raise WorkspaceError("FROZEN_WHITELIST_INVALID", 409)
     brief.render(snapshot)  # Existing date, credential, run and module guards.
+    required = _required_paths(snapshot)
+    if sealed_originals:
+        actual = {p.relative_to(frozen_root).as_posix() for p in frozen_root.rglob("*") if p.is_file() or p.is_symlink()}
+        if actual != required | {"publication.json"}:
+            raise WorkspaceError("FROZEN_ORIGINAL_INVENTORY_INVALID", 409)
     originals = {}
     for name in sorted(paths):
         row = records[name]
+        payload = row.get("payload") or {}
+        rid, date = snapshot["published_run_id"], snapshot["target_trade_date"]
+        as_of = payload.get("as_of")
+        # Absent intrinsic fields stay absent; present contradictions never inherit context.
+        # governance-mutation: WORKBENCH_SHARED_CONTEXT_CONTRADICTION
+        if ((payload.get("run_id") is not None and payload["run_id"] != rid)
+                or (payload.get("target_trade_date") is not None and payload["target_trade_date"] != date)
+                or (isinstance(as_of, str) and re.fullmatch(r"\d{8}", as_of) and as_of != date)):
+            raise WorkspaceError("FROZEN_MODULE_IDENTITY_CONFLICT", 409)
+        if name not in required:
+            if ((sealed_originals or "frozen_input_hash" in snapshot)
+                    and (row.get("status") not in {"OPTIONAL_UNBOUND", "OPTIONAL_MISSING_OR_INVALID"}
+                         or row.get("payload") is not None or row.get("binding") not in {"UNBOUND", "UNVERIFIED"})):
+                raise WorkspaceError("FROZEN_OPTIONAL_ALIAS_NOT_DEGRADED", 409)
+            if (frozen_root / name).is_symlink() or row.get("binding") == "MISMATCH":
+                raise WorkspaceError("FROZEN_OPTIONAL_ALIAS_UNSAFE_OR_CONFLICTING", 409)
+            if row.get("status") not in {"OBSERVED", "MISSING_OR_INVALID", "OPTIONAL_UNBOUND", "OPTIONAL_MISSING_OR_INVALID"}:
+                raise WorkspaceError("FROZEN_OPTIONAL_ALIAS_INVALID", 409)
+            continue
         if row.get("status") != "OBSERVED" or row.get("binding") != ("UNBOUND" if name == POINTER else "MATCH"):
             raise WorkspaceError("FROZEN_PUBLICATION_MISSING_OR_CONFLICTING", 409)
         try:
@@ -55,10 +117,6 @@ def validate_snapshot(snapshot, frozen_root, *, sealed_originals=False):
             raise WorkspaceError("FROZEN_ORIGINAL_UNAVAILABLE", 409) from None
         value = ev.parse(raw)
         brief.reject_credentials(value)
-        if name != POINTER:
-            identity, _run, date = ev.artifact_identity(row, snapshot["published_run_id"], snapshot["target_trade_date"])
-            if identity != "BOUND_TO_PUBLISHED_RUN" or date != snapshot["target_trade_date"]:
-                raise WorkspaceError("FROZEN_MODULE_IDENTITY_REQUIRED", 409)
         if ev.sha(raw) != row.get("source_sha256") or value != row.get("payload"):
             raise WorkspaceError("FROZEN_ORIGINAL_CONFLICT", 409)
         originals[name] = raw
@@ -67,11 +125,15 @@ def validate_snapshot(snapshot, frozen_root, *, sealed_originals=False):
     manifest = records[f"public/data/v2/runs/{rid}/manifest.json"]["payload"]
     if (pointer.get("schema") != "nightly_current_run/v2" or pointer.get("run_id") != rid
             or pointer.get("target_trade_date") != date or pointer.get("manifest_path") != f"runs/{rid}/manifest.json"
-            or manifest.get("schema") != "nightly_manifest/v2" or manifest.get("run_id") != rid
+            or manifest.get("schema") not in MANIFEST_SCHEMAS or manifest.get("run_id") != rid
             or manifest.get("target_trade_date") != date
             or not isinstance(pointer.get("manifest_sha256"), str)
             or pointer["manifest_sha256"].removeprefix("sha256:") != records[f"public/data/v2/runs/{rid}/manifest.json"]["source_sha256"]):
         raise WorkspaceError("FROZEN_PUBLICATION_BINDING_INVALID", 409)
+    # The publisher copies the same artifact catalog into its manifest and pointer.
+    if ((manifest["schema"] == "nightly_publish_manifest/v2" and not isinstance(manifest.get("artifacts"), dict))
+            or ("artifacts" in manifest and manifest["artifacts"] != pointer.get("artifacts"))):
+        raise WorkspaceError("FROZEN_MANIFEST_CATALOG_CONFLICT", 409)
     health = records["public/data/v2/funnel_health.json"]["payload"]
     bundle = health.get("bundle")
     location = f"data_history/funnel/{date}/{rid}"
@@ -85,6 +147,8 @@ def validate_snapshot(snapshot, frozen_root, *, sealed_originals=False):
         if not isinstance(hashes, dict):
             raise WorkspaceError("FROZEN_HASH_CATALOG_INVALID", 409)
         for name in names:
+            if prefix + name not in required:
+                continue
             expected = hashes.get(key_prefix + name)
             if not isinstance(expected, str) or expected.removeprefix("sha256:") != records[prefix + name]["source_sha256"]:
                 raise WorkspaceError("FROZEN_HASH_CATALOG_INVALID", 409)
@@ -100,6 +164,8 @@ def validate_snapshot(snapshot, frozen_root, *, sealed_originals=False):
     elif attempt != {"status": "MISSING_OR_INVALID", "binding": "UNVERIFIED", "payload": None, "source_sha256": None}:
         raise WorkspaceError("FROZEN_ATTEMPT_PROJECTION_INVALID", 409)
     if sealed_originals or "frozen_input_hash" in snapshot:
+        if snapshot.get("publication_provenance") != publication_provenance(snapshot, originals):
+            raise WorkspaceError("FROZEN_PUBLICATION_PROVENANCE_INVALID", 409)
         _publication, pub_hash, attempt_hash = fingerprints(snapshot, originals)
         if snapshot.get("frozen_input_hash") != ev.sealed({"publication_fingerprint": pub_hash, "attempt_fingerprint": attempt_hash}):
             raise WorkspaceError("FROZEN_CONTENT_IDENTITY_INVALID", 409)
@@ -112,14 +178,14 @@ def fingerprints(snapshot, originals):
     return publication, ev.sealed(publication), ev.sealed(snapshot["records"][ATTEMPT])
 
 
-def _new_or_identical(path, raw):
+def _new_or_identical(path, raw, *, evidence_root=None):
     if len(raw) > ev.MAX_FILE:
         raise WorkspaceError("FROZEN_FILE_SIZE_LIMIT", 409)
     if path.exists() or path.is_symlink():
         if ev.read_local(path.parent, path.name) != raw:
             raise WorkspaceError("FROZEN_EXISTING_CONTENT_CONFLICT", 409)
     else:
-        write_new(path, raw)
+        write_new(path, raw, evidence_root=evidence_root)
 
 
 class FrozenInputs:
@@ -137,6 +203,11 @@ class FrozenInputs:
             raise WorkspaceError("FROZEN_SOURCE_STATE_OVERLAP", 409)
         snapshot = ev.capture(source_root)
         originals = validate_snapshot(snapshot, source_root)
+        for name in publication_paths(snapshot) - _required_paths(snapshot):
+            row = snapshot["records"][name]
+            row.update(status="OPTIONAL_UNBOUND" if row["status"] == "OBSERVED" else "OPTIONAL_MISSING_OR_INVALID",
+                       payload=None, degraded_reason="NOT_DECLARED_IN_PUBLICATION")
+        snapshot["publication_provenance"] = publication_provenance(snapshot, originals)
         publication, pub_hash, attempt_hash = fingerprints(snapshot, originals)
         input_hash = ev.sealed({"publication_fingerprint": pub_hash, "attempt_fingerprint": attempt_hash})
         snapshot["frozen_input_hash"] = input_hash
@@ -153,6 +224,25 @@ class FrozenInputs:
                 return self._descriptor(self.verify(prior[0]))
             if db.execute("SELECT COUNT(*) FROM shared_inputs").fetchone()[0] >= 100:
                 raise WorkspaceError("FROZEN_INPUT_CAPACITY_BLOCKED", 429)
+            work = self.store.path.parent / "input-write-evidence" / input_hash
+            snapshot_id = str(uuid.uuid5(uuid.NAMESPACE_URL, "ar.shared-input.v1:" + input_hash))
+            capture_path = work / "capture.json"
+            if capture_path.exists() or capture_path.is_symlink():
+                capture = ev.parse(ev.read_local(work, "capture.json"))
+                if (set(capture) != {"schema", "input_hash", "snapshot_id", "snapshot"}
+                        or capture["schema"] != "ar.shared-input-capture.v1" or capture["input_hash"] != input_hash
+                        or capture["snapshot_id"] != snapshot_id):
+                    raise WorkspaceError("FROZEN_CAPTURE_BINDING_CONFLICT", 409)
+                captured = capture["snapshot"]
+                captured_originals = validate_snapshot(captured, source_root)
+                _pub, captured_pub, captured_attempt = fingerprints(captured, captured_originals)
+                if (captured_pub, captured_attempt) != (pub_hash, attempt_hash):
+                    raise WorkspaceError("FROZEN_CAPTURE_BINDING_CONFLICT", 409)
+                snapshot = captured
+            else:
+                capture = {"schema": "ar.shared-input-capture.v1", "input_hash": input_hash,
+                           "snapshot_id": snapshot_id, "snapshot": snapshot}
+                _new_or_identical(capture_path, ev.canonical(capture).encode(), evidence_root=work / "writes")
             publications = self.base / "publications"
             publications.mkdir(parents=True, exist_ok=True, mode=0o700)
             frozen_root = publications / pub_hash
@@ -161,20 +251,21 @@ class FrozenInputs:
                     staging = Path(temporary) / "publication"
                     staging.mkdir(mode=0o700)
                     for name, raw in originals.items():
-                        _new_or_identical(staging / name, raw)
-                    _new_or_identical(staging / "publication.json", ev.canonical(publication).encode())
+                        _new_or_identical(staging / name, raw, evidence_root=work / "writes")
+                    _new_or_identical(staging / "publication.json", ev.canonical(publication).encode(), evidence_root=work / "writes")
                     validate_snapshot(snapshot, staging, sealed_originals=True)
                     os.rename(staging, frozen_root)
-            _new_or_identical(frozen_root / "publication.json", ev.canonical(publication).encode())
+                    from workbench_backup import fsync_directory
+                    fsync_directory(publications)
+            _new_or_identical(frozen_root / "publication.json", ev.canonical(publication).encode(), evidence_root=work / "writes")
             validate_snapshot(snapshot, frozen_root, sealed_originals=True)
             attempt = snapshot["records"][ATTEMPT]
-            _new_or_identical(self.base / "attempts" / (attempt_hash + ".json"), ev.canonical(attempt).encode())
-            snapshot_id = str(uuid.uuid4())
+            _new_or_identical(self.base / "attempts" / (attempt_hash + ".json"), ev.canonical(attempt).encode(), evidence_root=work / "writes")
             envelope = {"schema": "ar.shared-input.v1", "snapshot_id": snapshot_id, "input_hash": input_hash,
                         "publication_fingerprint": pub_hash, "attempt_fingerprint": attempt_hash,
                         "source_run_id": snapshot["published_run_id"], "source_trade_date": snapshot["target_trade_date"],
                         "validation_scope": SCOPE, "snapshot": snapshot}
-            _new_or_identical(self.base / "envelopes" / (snapshot_id + ".json"), ev.canonical(envelope).encode())
+            _new_or_identical(self.base / "envelopes" / (snapshot_id + ".json"), ev.canonical(envelope).encode(), evidence_root=work / "writes")
             if ev.read_local(source_root, POINTER) != originals[POINTER]:
                 raise WorkspaceError("SOURCE_CHANGED", 409)
             db.execute("INSERT INTO shared_inputs VALUES (?, ?, ?)", (snapshot_id, input_hash, ev.canonical(envelope)))

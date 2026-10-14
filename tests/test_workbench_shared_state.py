@@ -7,6 +7,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from contextlib import contextmanager
 from pathlib import Path
 from unittest.mock import patch
 
@@ -18,6 +19,38 @@ import workbench_backup as backup
 import workbench_evidence as ev
 import workbench_workspace as ws
 from workbench_shared_test_support import historical_state, frozen_source
+
+
+@contextmanager
+def interrupted_file_write(module, selected, phase, seen):
+    """Interrupt real file I/O, preserving the created inode and written prefix."""
+    write, fdopen, opened = module.write_new, backup.os.fdopen, backup.os.open
+    paths = {}
+    class InterruptedStream:
+        def __init__(self, stream, path): self.stream, self.path = stream, path
+        def __enter__(self): self.stream.__enter__(); return self
+        def __exit__(self, *args): return self.stream.__exit__(*args)
+        def __getattr__(self, name): return getattr(self.stream, name)
+        def write(self, raw):
+            seen["partial"] = self.path
+            if phase != "after_creation":
+                self.stream.write(raw[:8] if phase == "during_write" else raw)
+            self.stream.flush(); backup.os.fsync(self.stream.fileno())
+            raise RuntimeError("INJECTED_FILE_WRITE")
+    def open_file(path, flags, *args, **kwargs):
+        fd = opened(path, flags, *args, **kwargs)
+        if flags & backup.os.O_CREAT: paths[fd] = Path(path)
+        return fd
+    def open_stream(fd, *args, **kwargs):
+        stream = fdopen(fd, *args, **kwargs)
+        return InterruptedStream(stream, paths[fd]) if fd in paths else stream
+    def writer(path, raw, *args, **kwargs):
+        if selected(Path(path)) and not seen:
+            seen.update(destination=Path(path), raw=raw)
+            with patch.object(backup.os, "open", side_effect=open_file), patch.object(backup.os, "fdopen", side_effect=open_stream):
+                return write(path, raw, *args, **kwargs)
+        return write(path, raw, *args, **kwargs)
+    with patch.object(module, "write_new", side_effect=writer): yield
 
 
 class MigrationTests(unittest.TestCase):
@@ -85,13 +118,13 @@ class MigrationTests(unittest.TestCase):
         original = state.write_new
         # Every actual persistent file write is crashed immediately after fsync.
         calls = []
-        def record(path, raw): calls.append(str(path)); return original(path, raw)
+        def record(path, raw, **kwargs): calls.append(str(path)); return original(path, raw, **kwargs)
         with patch.object(state, "write_new", side_effect=record): state.migrate_legacy(archive, self.root / "probe")
         self.assertGreater(len(calls), 5)
         for position in range(1, len(calls) + 1):
             target = self.root / f"crash-{position}"; counter = [0]
-            def crash(path, raw):
-                original(path, raw); counter[0] += 1
+            def crash(path, raw, **kwargs):
+                original(path, raw, **kwargs); counter[0] += 1
                 if counter[0] == position: raise RuntimeError("injected crash")
             with patch.object(state, "write_new", side_effect=crash):
                 with self.assertRaises(RuntimeError): state.migrate_legacy(archive, target)
@@ -215,18 +248,102 @@ class MigrationTests(unittest.TestCase):
         (archive / "manifest.json").write_bytes(ev.canonical(manifest).encode())
         with self.assertRaises(ValueError): backup.verify_shared(archive)
 
-    def test_historical_export_is_migrated_without_changing_original_backup(self):
+    def test_limited_historical_export_blocks_complete_migration(self):
         state = self.state()
         result = backup.create(self.system, "old_format_backup")
         archive = self.store.path.parent / result["location"]
         before = (archive / "manifest.json").read_bytes()
-        migrated = state.migrate_legacy(archive, self.root / "historical-target")
-        self.assertEqual(migrated["event_tail"], self.system.events(self.store.connect())[-1]["event_hash"])
+        with self.assertRaisesRegex(ValueError, "COMPLETE_INVENTORY_REQUIRED"):
+            state.migrate_legacy(archive, self.root / "historical-target")
+        self.assertFalse((self.root / "historical-target").exists())
+        self.assertFalse((self.root / ".historical-target.migration").exists())
         self.assertEqual((archive / "manifest.json").read_bytes(), before)
-        absent = next((row for row in migrated["artifact_inventory"] if row["path"] == "snapshot-briefs/started_brief"), None)
-        self.assertIsNotNone(absent)
-        self.assertEqual(absent["presence"], "NOT_PRESENT_IN_ARCHIVED_SCOPE")
-        self.assertEqual(absent["source_scope"], "LEGACY_BACKUP_CONTENT_ONLY")
+
+    def test_complete_backup_shared_reconciles_legacy_omissions(self):
+        state = self.state(); archive = self.archived("complete-reconciliation")
+        target = self.root / "reconciled-target"
+        source_raw = self.store.path.read_bytes()
+        with patch.object(self.store, "connect", side_effect=AssertionError("MIGRATION_OPENED_OLD_SOURCE")):
+            result = state.migrate_legacy(archive, target)
+        self.assertEqual(result["status"], "SHARED_MIGRATION_VERIFIED")
+        for name in ("stopped_brief", "started_brief", "orphan_brief"):
+            path = "snapshot-briefs/" + name + "/partial.json"
+            self.assertEqual((target / path).read_bytes(), (self.store.path.parent / path).read_bytes())
+        self.assertEqual(self.store.path.read_bytes(), source_raw)
+        self.assertEqual({row["status"] for row in result["artifact_inventory"]}, {"SUCCEEDED", "STOP", "INTERRUPTED", "ORPHAN"})
+
+    def test_bound_migration_partial_file_writes_converge(self):
+        state = self.state(); archive = self.archived()
+        source_raw = self.store.path.read_bytes()
+        for name in ("migration-intent.json", "snapshot-briefs/stopped_brief/partial.json", "migration-receipt.json"):
+            for phase in ("after_creation", "during_write", "before_publish"):
+                with self.subTest(name=name, phase=phase):
+                    target = self.root / (name.replace("/", "-") + "-" + phase); seen = {}
+                    with interrupted_file_write(state, lambda path: path.as_posix().endswith("/" + name), phase, seen):
+                        with self.assertRaises(RuntimeError): state.migrate_legacy(archive, target)
+                    self.assertFalse(target.exists())
+                    self.assertFalse(seen["destination"].exists())
+                    self.assertTrue(seen["partial"].is_file())
+                    partial = seen["partial"].read_bytes()
+                    stage = target.parent / ("." + target.name + ".migration")
+                    with self.assertRaises(ValueError): wb.Store(stage, shared_v1=True)
+                    result = state.migrate_legacy(archive, target)
+                    self.assertEqual(result["status"], "SHARED_MIGRATION_VERIFIED")
+                    self.assertEqual(state.migrate_legacy(archive, target), result)
+                    moved_partial = target / seen["partial"].relative_to(stage)
+                    self.assertEqual(moved_partial.read_bytes(), partial)
+                    receipt = target / "migration-receipt.json"; receipt.write_bytes(b'{"broken')
+                    with self.assertRaises(ValueError): state.migrate_legacy(archive, target)
+                    self.assertEqual(receipt.read_bytes(), b'{"broken')
+        self.assertEqual(self.store.path.read_bytes(), source_raw)
+
+    def test_partial_intent_binding_refuses_different_backup(self):
+        state = self.state(); first = self.archived("first-bound"); target = self.root / "bound-target"
+        seen = {}
+        with interrupted_file_write(state, lambda path: path.name == "migration-intent.json", "during_write", seen):
+            with self.assertRaises(RuntimeError): state.migrate_legacy(first, target)
+        second = self.root / "second-bound"; shutil.copytree(first, second)
+        manifest = ev.parse((second / "manifest.json").read_bytes()); manifest["archive_label"] = "different-source"
+        manifest["backup_hash"] = ev.sealed({k: v for k, v in manifest.items() if k != "backup_hash"})
+        (second / "manifest.json").write_bytes(ev.canonical(manifest).encode())
+        partial = seen["partial"].read_bytes()
+        with self.assertRaisesRegex(ValueError, "MIGRATION_SOURCE_CONFLICT"): state.migrate_legacy(second, target)
+        self.assertEqual(seen["partial"].read_bytes(), partial)
+        self.assertEqual(state.migrate_legacy(first, target)["status"], "SHARED_MIGRATION_VERIFIED")
+
+    def test_recovered_partial_evidence_is_preserved_by_complete_backup(self):
+        state = self.state(); archive = self.archived(); target = self.root / "evidence-target"
+        seen = {}
+        with interrupted_file_write(state, lambda path: path.name == "migration-receipt.json", "during_write", seen):
+            with self.assertRaises(RuntimeError): state.migrate_legacy(archive, target)
+        stage = target.parent / ("." + target.name + ".migration")
+        relative = seen["partial"].relative_to(stage)
+        raw = seen["partial"].read_bytes()
+        state.migrate_legacy(archive, target)
+        exported = self.root / "evidence-backup"
+        backup.backup_shared(wb.Store(target, shared_v1=True), exported)
+        restored = self.root / "evidence-restored"; backup.restore_shared(exported, restored)
+        self.assertEqual((restored / relative).read_bytes(), raw)
+        self.assertTrue(any(row["status"] == "RECOVERY_EVIDENCE" for row in backup.verify_shared(exported)["artifact_inventory"]))
+
+    def test_atomic_publish_hides_partial_file_and_never_replaces_committed_bytes(self):
+        raw = b'{"status":"UNSEALED_TEST_EVIDENCE"}'
+        for phase in ("after_creation", "during_write", "before_publish"):
+            destination = self.root / (phase + ".json")
+            evidence_root = self.root / "write-evidence" / ev.sha(raw)
+            seen = {}
+            with interrupted_file_write(backup, lambda path: path == destination, phase, seen):
+                with self.assertRaises(RuntimeError): backup.write_new(destination, raw, evidence_root=evidence_root)
+            self.assertFalse(destination.exists())
+            partial = seen["partial"].read_bytes()
+            backup.write_new(destination, raw, evidence_root=evidence_root)
+            self.assertEqual(destination.read_bytes(), raw)
+            self.assertEqual(seen["partial"].read_bytes(), partial)
+            with self.assertRaises(FileExistsError): backup.write_new(destination, b"different", evidence_root=evidence_root)
+            self.assertEqual(destination.read_bytes(), raw)
+            destination.write_bytes(b"committed-corruption")
+            with self.assertRaises(FileExistsError): backup.write_new(destination, raw, evidence_root=evidence_root)
+            self.assertEqual(destination.read_bytes(), b"committed-corruption")
 
     def test_crash_each_schema_statement_and_directory_creation(self):
         state = self.state(); archive = self.archived()

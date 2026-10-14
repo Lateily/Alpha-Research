@@ -22,7 +22,8 @@ TABLES = {
     "workspace_observations": ("snapshot_hash", "body"),
 }
 BRIEF_PATH = re.compile(r"snapshot-briefs/[A-Za-z0-9_-]{8,100}/(?:snapshot\.json|report\.md|citations\.json|source-manifest\.json|receipt\.json|SHA256SUMS|sources/\d{3}\.json)\Z")
-ARTIFACT_ROOTS = {"research-runs", "snapshot-briefs", "brief-trials", "earnings-trials", "workspaces", "shared-jobs", "frozen-inputs"}
+RECOVERY_ROOTS = {"input-write-evidence", "migration-evidence"}
+ARTIFACT_ROOTS = {"research-runs", "snapshot-briefs", "brief-trials", "earnings-trials", "workspaces", "shared-jobs", "frozen-inputs"} | RECOVERY_ROOTS
 
 
 @contextmanager
@@ -39,13 +40,48 @@ def sqlite_snapshot(store):
             guard.rollback()
 
 
-def write_new(path, raw):
-    path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
-    fd = os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY | os.O_NOFOLLOW, 0o600)
+def fsync_directory(path):
+    fd = os.open(path, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+    try: os.fsync(fd)
+    finally: os.close(fd)
+
+
+def durable_directory(path):
+    path = Path(path)
+    if any(p.is_symlink() for p in (path, *path.parents)):
+        raise ev.EvidenceError("WRITE_DIRECTORY_SYMLINK")
+    if path.exists():
+        if not path.is_dir(): raise ev.EvidenceError("WRITE_DIRECTORY_INVALID")
+        return
+    durable_directory(path.parent)
+    path.mkdir(mode=0o700)
+    fsync_directory(path)
+    fsync_directory(path.parent)
+
+
+def write_new(path, raw, *, evidence_root=None):
+    """Publish a durable inode without replacement; retain failed temporary writes."""
+    path = Path(path)
+    if len(raw) > ev.MAX_FILE: raise ev.EvidenceError("WRITE_FILE_SIZE_LIMIT")
+    durable_directory(path.parent)
+    if evidence_root is None:
+        temporary = path.parent / (".write-" + uuid.uuid4().hex + ".partial")
+    else:
+        directory = Path(evidence_root) / ev.sealed({"destination": str(path)})
+        durable_directory(directory)
+        temporary = directory / (ev.sha(raw) + "-" + uuid.uuid4().hex + ".partial")
+    # governance-mutation: WORKBENCH_SHARED_ATOMIC_FILE_PUBLISH
+    fd = os.open(temporary, os.O_CREAT | os.O_EXCL | os.O_WRONLY | os.O_NOFOLLOW, 0o600)
     with os.fdopen(fd, "wb") as stream:
+        fsync_directory(temporary.parent)
         stream.write(raw)
         stream.flush()
         os.fsync(stream.fileno())
+    # Hard-link publication is atomic and, unlike replace(), cannot overwrite history.
+    os.link(temporary, path, follow_symlinks=False)
+    fsync_directory(path.parent)
+    temporary.unlink()
+    fsync_directory(temporary.parent)
 
 
 def verify(directory):
@@ -218,6 +254,8 @@ def _inventory(root, tables, *, scope="ISOLATED_STATE_ARTIFACT_ROOTS"):
                 group = "/".join(parts[:4]) if len(parts) >= 4 else "/".join(parts[:2])
             elif area == "frozen-inputs":
                 group = area
+            elif area in RECOVERY_ROOTS:
+                group = "/".join(parts[:2])
             elif area == "shared-jobs":
                 group = "/".join(parts[:3])
             else:
@@ -227,7 +265,7 @@ def _inventory(root, tables, *, scope="ISOLATED_STATE_ARTIFACT_ROOTS"):
                 raw = ev.read_local(root, relative)
                 import workbench_snapshot_brief as brief
                 if relative.endswith(".json"): brief.reject_credentials(ev.parse(b'{"artifact":' + raw + b'}'))
-                else: brief.reject_credentials(raw.decode("utf-8"))
+                else: brief.reject_credentials(raw.decode("utf-8", errors="replace" if area in RECOVERY_ROOTS else "strict"))
                 files[relative] = raw
                 groups[group].append(relative)
     inventory = []
@@ -236,7 +274,7 @@ def _inventory(root, tables, *, scope="ISOLATED_STATE_ARTIFACT_ROOTS"):
         job = jobs.get(job_id)
         registered_replay = group.startswith("research-runs/") and job_id in replays
         inventory.append({"path": group, "job_id": job_id if job or registered_replay else None,
-                          "status": job["status"] if job else "REGISTERED_REPLAY" if registered_replay else "FROZEN_INPUT" if group == "frozen-inputs" else "ORPHAN",
+                          "status": job["status"] if job else "REGISTERED_REPLAY" if registered_replay else "RECOVERY_EVIDENCE" if group.split("/")[0] in RECOVERY_ROOTS else "FROZEN_INPUT" if group == "frozen-inputs" else "ORPHAN",
                           "files": sorted(names), "presence": "PRESENT", "source_scope": scope})
     for job_id, job in jobs.items():
         area = {"snapshot-brief": "snapshot-briefs", "brief-trial": "brief-trials", "earnings-trial": "earnings-trials"}.get(job.get("kind"))
@@ -397,6 +435,10 @@ def check_restored(root, manifest, data, receipt):
         if name != "data.json" and ev.sha(ev.read_local(root, name)) != expected:
             raise ev.EvidenceError("RESTORE_ARTIFACT_BINDING_INVALID")
     _files, inventory, directories = _inventory(root, data["tables"], scope=manifest["inventory_scope"])
+    recovery = "migration-evidence/" + receipt["backup_hash"]
+    inventory = [row for row in inventory if row["path"] != recovery]
+    directories = [name for name in directories if name != recovery and not name.startswith(recovery + "/")
+                   and not (name == "migration-evidence" and name not in manifest["directories"])]
     if inventory != manifest["artifact_inventory"] or directories != manifest["directories"]:
         raise ev.EvidenceError("RESTORE_ARTIFACT_INVENTORY_INVALID")
     _verify_completed(root, data["tables"])
