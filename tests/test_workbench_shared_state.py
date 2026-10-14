@@ -70,6 +70,44 @@ class MigrationTests(unittest.TestCase):
         backup.backup_shared(self.store, path)
         return path
 
+    def test_sync_selection_backup_restores_reused_cursor(self):
+        from workbench_shared_inputs import FrozenInputs
+        from workbench_shared_sync import ReadOnlySync
+        from workbench_shared_test_support import publisher_source
+        source = self.root / "cursor-source"; publisher_source(source)
+        store = wb.Store(self.root / "cursor-state", shared_v1=True)
+        inputs = FrozenInputs(store); poller = ReadOnlySync(inputs, source)
+        try:
+            poller.start(); first = poller.state()
+            publisher_source(source, "second_cursor", "20261014"); poller.tick()
+            publisher_source(source); reused = poller.tick()
+        finally: poller.stop()
+        with store.connect() as db: before = ws.Workspace.events(None, db)
+        self.assertEqual(len([e for e in before if e["kind"] == "SHARED_INPUT_SELECTED"]), 3)
+        archive = self.root / "cursor-backup"; backup.backup_shared(store, archive)
+        scratch = self.root / "cursor-restored"; backup.restore_shared(archive, scratch)
+        restored = wb.Store(scratch, shared_v1=True)
+        with restored.connect() as db: self.assertEqual(ws.Workspace.events(None, db), before)
+        (source / "public/data/v2/current_run.json").unlink()
+        state = ReadOnlySync(FrozenInputs(restored), source).tick()
+        self.assertEqual(state["current_snapshot_id"], first["current_snapshot_id"])
+        self.assertEqual(state["current_snapshot_id"], reused["current_snapshot_id"])
+        self.assertEqual(state["status"], "SYNC_FAILED")
+
+    def test_backup_refuses_selection_not_bound_to_registered_original(self):
+        from workbench_shared_inputs import FrozenInputs
+        from workbench_shared_sync import ReadOnlySync
+        source = self.root / "bad-cursor-source"; frozen_source(source)
+        store = wb.Store(self.root / "bad-cursor-state", shared_v1=True)
+        inputs = FrozenInputs(store); first = ReadOnlySync(inputs, source).tick()
+        system = ws.Workspace(store, private_mode=True)
+        forged = {**inputs._descriptor(inputs.verify(first["current_snapshot_id"])), "input_hash": "f" * 64}
+        with store.connect() as db:
+            db.execute("BEGIN IMMEDIATE")
+            system.append(db, system.events(db), "synthetic_bad_selection", ev.sealed(forged), "SHARED_INPUT_SELECTED", forged, actor="SYSTEM_READ_ONLY_SYNC")
+        with self.assertRaises(ValueError): backup.backup_shared(store, self.root / "bad-cursor-backup")
+        self.assertFalse((self.root / "bad-cursor-backup").exists())
+
     def test_migration_preserves_event_chain_and_unknown_actor(self):
         state = self.state(); archive = self.archived()
         with self.store.connect() as db: before = db.execute("SELECT * FROM workspace_events ORDER BY seq").fetchall()

@@ -6,18 +6,23 @@ import os
 import re
 import stat
 import tempfile
+import time
 import uuid
 from pathlib import Path
+from types import SimpleNamespace
 
 import workbench_evidence as ev
 import workbench_snapshot_brief as brief
 from workbench_backup import write_new
-from workbench_workspace import WorkspaceError
+from workbench_workspace import Workspace, WorkspaceError
 
 POINTER = "public/data/v2/current_run.json"
 ATTEMPT = "experiments/execution_tracker/nightly_run.json"
 SCOPE = "SCOPED_SNAPSHOT_NOT_FULL_NIGHTLY_ACCEPTANCE"
 OPTIONAL_ALIASES = {"macro_gate.json"}
+_UNSET_ATTEMPT = object()
+SELECTION_EVENT = "SHARED_INPUT_SELECTED"
+SYNC_ACTOR = "SYSTEM_READ_ONLY_SYNC"
 # The second spelling is the explicitly retained legacy observation contract.
 # governance-mutation: WORKBENCH_SHARED_PUBLISHER_MANIFEST
 MANIFEST_SCHEMAS = {"nightly_publish_manifest/v2", "nightly_manifest/v2"}
@@ -189,12 +194,54 @@ def _new_or_identical(path, raw, *, evidence_root=None):
         write_new(path, raw, evidence_root=evidence_root)
 
 
+def verify_selection_events(events, verify):
+    """Selection is authority only when its event binds registered reopened originals."""
+    selected, reopened = None, {}
+    for event in events:
+        if event["kind"] != SELECTION_EVENT:
+            continue
+        try:
+            binding = event["data"]
+            snapshot_id = binding["snapshot_id"]
+            if snapshot_id not in reopened:
+                reopened[snapshot_id] = verify(snapshot_id)
+            descriptor = FrozenInputs._descriptor(reopened[snapshot_id])
+            if (binding != descriptor or event.get("actor") != SYNC_ACTOR
+                    or event.get("production_authority") is not False
+                    or event["request_hash"] != ev.sealed(descriptor)
+                    or type(event["at"]) not in {int, float}):
+                raise WorkspaceError("SYNC_SELECTION_BINDING_INVALID", 409)
+            selected = {"binding": descriptor, "at": event["at"]}
+        except (OSError, ValueError, KeyError, TypeError):
+            raise WorkspaceError("SYNC_SELECTION_BINDING_INVALID", 409) from None
+    return selected
+
+
 class FrozenInputs:
     def __init__(self, store):
         if not store.shared_v1:
             raise WorkspaceError("SHARED_INPUT_STORE_REQUIRED", 403)
         self.store = store
         self.base = store.path.parent / "frozen-inputs"
+
+    def current_selection(self):
+        with self.store.connect() as db:
+            events = Workspace.events(None, db)
+        return verify_selection_events(events, self.verify)
+
+    def select_current(self, snapshot_id, *, clock=time.time):
+        descriptor = self._descriptor(self.verify(snapshot_id))
+        with self.store.connect() as db:
+            db.execute("BEGIN IMMEDIATE")
+            events = Workspace.events(None, db)
+            selected = verify_selection_events(events, self.verify)
+            if selected is not None and selected["binding"] == descriptor:
+                return selected
+            # Reuse the existing append-only event and reserved-terminal capacity gate.
+            event = Workspace.append(SimpleNamespace(store=self.store, clock=clock), db, events,
+                                     "sync_select_" + uuid.uuid4().hex, ev.sealed(descriptor),
+                                     SELECTION_EVENT, descriptor, actor=SYNC_ACTOR)
+        return {"binding": descriptor, "at": event["at"]}
 
     def check_source_root(self, source_root):
         source_root = Path(source_root).absolute()
@@ -217,17 +264,66 @@ class FrozenInputs:
             rows.append((item.st_dev, item.st_ino, item.st_mtime_ns, item.st_ctime_ns))
         return rows
 
-    def _capacity(self, db, input_hash):
-        registered = dict(db.execute("SELECT snapshot_id, input_hash FROM shared_inputs"))
-        history = set(registered.values())
+    @staticmethod
+    def _history_fingerprints(snapshot):
+        ev.verify(snapshot)
+        files = {name: snapshot["records"][name]["source_sha256"] for name in _required_paths(snapshot)}
+        if any(not isinstance(value, str) or not re.fullmatch(r"[0-9a-f]{64}", value) for value in files.values()):
+            raise WorkspaceError("FROZEN_CAPTURE_BINDING_CONFLICT", 409)
+        publication = {"source_run_id": snapshot["published_run_id"], "source_trade_date": snapshot["target_trade_date"], "files": files}
+        pub_hash, attempt_hash = ev.sealed(publication), ev.sealed(snapshot["records"][ATTEMPT])
+        input_hash = ev.sealed({"publication_fingerprint": pub_hash, "attempt_fingerprint": attempt_hash})
+        if snapshot.get("frozen_input_hash") != input_hash:
+            raise WorkspaceError("FROZEN_CAPTURE_BINDING_CONFLICT", 409)
+        return input_hash, pub_hash, attempt_hash
+
+    def _capacity(self, db, input_hash, pub_hash, attempt_hash):
+        registered = db.execute("SELECT snapshot_id, input_hash, body FROM shared_inputs").fetchall()
+        history = {row[1] for row in registered}
+        linked_publications, linked_attempts = {pub_hash}, {attempt_hash}
+        def link(snapshot_id, expected_hash, snapshot):
+            actual, publication, attempt = self._history_fingerprints(snapshot)
+            if actual != expected_hash or snapshot_id != str(uuid.uuid5(uuid.NAMESPACE_URL, "ar.shared-input.v1:" + actual)):
+                raise WorkspaceError("FROZEN_CAPTURE_BINDING_CONFLICT", 409)
+            return actual, publication, attempt
+        def envelope_binding(envelope, snapshot_id, expected_hash):
+            actual, publication, attempt = link(snapshot_id, expected_hash, envelope["snapshot"])
+            if (envelope.get("schema") != "ar.shared-input.v1" or envelope.get("snapshot_id") != snapshot_id
+                    or envelope.get("input_hash") != actual or envelope.get("publication_fingerprint") != publication
+                    or envelope.get("attempt_fingerprint") != attempt or envelope.get("validation_scope") != SCOPE):
+                raise WorkspaceError("FROZEN_CAPTURE_BINDING_CONFLICT", 409)
+            linked_publications.add(publication); linked_attempts.add(attempt)
+            return actual
+        for snapshot_id, expected_hash, body in registered:
+            envelope_binding(ev.parse(body), snapshot_id, expected_hash)
         work = self.store.path.parent / "input-write-evidence"
-        if work.exists(): history.update(p.name for p in work.iterdir())
-        known_ids = set(registered) | {str(uuid.uuid5(uuid.NAMESPACE_URL, "ar.shared-input.v1:" + value))
-                                     for value in history if re.fullmatch(r"[0-9a-f]{64}", value)}
+        if work.exists():
+            for path in work.iterdir():
+                history.add(path.name)
+                try:
+                    capture = ev.parse(ev.read_local(path, "capture.json"))
+                    if capture.get("schema") != "ar.shared-input-capture.v1" or capture.get("input_hash") != path.name:
+                        continue
+                    _actual, publication, attempt = link(capture["snapshot_id"], path.name, capture["snapshot"])
+                    linked_publications.add(publication); linked_attempts.add(attempt)
+                except (OSError, ValueError, KeyError, TypeError):
+                    pass  # Unbound or partial evidence still spends its own history slot.
         envelopes = self.base / "envelopes"
         if envelopes.exists():
-            history.update("orphan:" + p.name for p in envelopes.iterdir()
-                           if p.stem not in known_ids and str(uuid.uuid5(uuid.NAMESPACE_URL, "ar.shared-input.v1:" + input_hash)) != p.stem)
+            for path in envelopes.iterdir():
+                try:
+                    envelope = ev.parse(ev.read_local(envelopes, path.name))
+                    history.add(envelope_binding(envelope, path.stem, envelope["input_hash"]))
+                except (OSError, ValueError, KeyError, TypeError):
+                    history.add("orphan-envelope:" + path.name)
+        # governance-mutation: WORKBENCH_SHARED_SYNC_ORPHAN_BUDGET
+        for name, linked in (("publications", linked_publications), ("attempts", linked_attempts)):
+            path = self.base / name
+            if path.exists():
+                for entry in path.iterdir():
+                    identity = entry.name if name == "publications" else entry.name.removesuffix(".json")
+                    if identity not in linked:
+                        history.add(name + ":" + entry.name)
         from workbench_workspace import MAX_EVENTS
         events = db.execute("SELECT COUNT(*) FROM workspace_events").fetchone()[0]
         reserved = db.execute("SELECT COUNT(*) FROM shared_jobs WHERE json_extract(body, '$.terminal_event_reserved')=1").fetchone()[0]
@@ -235,12 +331,24 @@ class FrozenInputs:
         # governance-mutation: WORKBENCH_SHARED_SYNC_CAPACITY
         if len(history | {input_hash}) > 100 or events + reserved >= MAX_EVENTS:
             raise WorkspaceError("FROZEN_INPUT_CAPACITY_BLOCKED", 429)
-        for name in ("publications", "attempts"):
-            path = self.base / name
-            if path.exists() and len(list(path.iterdir())) >= 100:
-                raise WorkspaceError("FROZEN_INPUT_CAPACITY_BLOCKED", 429)
 
-    def _recheck_source(self, snapshot, source_root, originals, stamp):
+    def _check_sync_attempt(self, snapshot, source_root, expected_attempt_sha):
+        # governance-mutation: WORKBENCH_SHARED_SYNC_EXPECTED_ATTEMPT
+        if expected_attempt_sha is _UNSET_ATTEMPT:
+            return
+        if expected_attempt_sha is not None and (not isinstance(expected_attempt_sha, str)
+                                                or not re.fullmatch(r"[0-9a-f]{64}", expected_attempt_sha)):
+            raise WorkspaceError("SYNC_ATTEMPT_HASH_INVALID", 409)
+        try:
+            raw = ev.read_local(source_root, ATTEMPT)
+            brief.reject_credentials(ev.parse(raw))
+            actual = ev.sha(raw)
+        except FileNotFoundError:
+            actual = None
+        if actual != expected_attempt_sha or snapshot["records"][ATTEMPT].get("source_sha256") != expected_attempt_sha:
+            raise WorkspaceError("SOURCE_CHANGED", 409)
+
+    def _recheck_source(self, snapshot, source_root, originals, stamp, *, expected_attempt_sha=_UNSET_ATTEMPT):
         # governance-mutation: WORKBENCH_SHARED_SYNC_FILE_BINDING
         try:
             reopened = validate_snapshot(snapshot, source_root)
@@ -255,16 +363,18 @@ class FrozenInputs:
                 actual_attempt = None
             if actual_attempt != expected_attempt:
                 raise WorkspaceError("SOURCE_CHANGED", 409)
+            self._check_sync_attempt(snapshot, source_root, expected_attempt_sha)
         except (OSError, ValueError, TypeError):
             raise WorkspaceError("SOURCE_CHANGED", 409) from None
         # governance-mutation: WORKBENCH_SHARED_SYNC_POST_POINTER
         if self._source_stamp(source_root) != stamp or ev.read_local(source_root, POINTER) != originals[POINTER]:
             raise WorkspaceError("SOURCE_CHANGED", 409)
 
-    def import_once(self, source_root: Path) -> dict:
+    def import_once(self, source_root: Path, *, expected_attempt_sha=_UNSET_ATTEMPT) -> dict:
         source_root = self.check_source_root(source_root)
         stamp = self._source_stamp(source_root)
         snapshot = ev.capture(source_root)
+        self._check_sync_attempt(snapshot, source_root, expected_attempt_sha)
         originals = validate_snapshot(snapshot, source_root)
         for name in publication_paths(snapshot) - _required_paths(snapshot):
             row = snapshot["records"][name]
@@ -284,9 +394,9 @@ class FrozenInputs:
             db.execute("BEGIN IMMEDIATE")
             prior = db.execute("SELECT snapshot_id FROM shared_inputs WHERE input_hash=?", (input_hash,)).fetchone()
             if prior:
-                self._recheck_source(snapshot, source_root, originals, stamp)
+                self._recheck_source(snapshot, source_root, originals, stamp, expected_attempt_sha=expected_attempt_sha)
                 return self._descriptor(self.verify(prior[0]))
-            self._capacity(db, input_hash)
+            self._capacity(db, input_hash, pub_hash, attempt_hash)
             work = self.store.path.parent / "input-write-evidence" / input_hash
             snapshot_id = str(uuid.uuid5(uuid.NAMESPACE_URL, "ar.shared-input.v1:" + input_hash))
             capture_path = work / "capture.json"
@@ -329,7 +439,7 @@ class FrozenInputs:
                         "source_run_id": snapshot["published_run_id"], "source_trade_date": snapshot["target_trade_date"],
                         "validation_scope": SCOPE, "snapshot": snapshot}
             _new_or_identical(self.base / "envelopes" / (snapshot_id + ".json"), ev.canonical(envelope).encode(), evidence_root=work / "writes")
-            self._recheck_source(snapshot, source_root, originals, stamp)
+            self._recheck_source(snapshot, source_root, originals, stamp, expected_attempt_sha=expected_attempt_sha)
             db.execute("INSERT INTO shared_inputs VALUES (?, ?, ?)", (snapshot_id, input_hash, ev.canonical(envelope)))
         return self._descriptor(self.verify(snapshot_id))
 

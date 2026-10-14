@@ -34,15 +34,15 @@ class ReadOnlySync:
                        "current_snapshot_id": None, "source_run_id": None, "source_trade_date": None,
                        "safe_error": None, "latest_attempt": None, "actor": "SYSTEM_READ_ONLY_SYNC",
                        "missed_policy": "NO_BACKFILL", "production_authority": False, "human_review": "PENDING"}
-        with inputs.store.connect() as db:
-            latest = db.execute("SELECT snapshot_id FROM shared_inputs ORDER BY rowid DESC LIMIT 1").fetchone()
-        if latest:
-            try:
-                envelope = inputs.verify(latest[0])
-                self._state.update(current_snapshot_id=latest[0], source_run_id=envelope["source_run_id"],
-                                   source_trade_date=envelope["source_trade_date"])
-            except (OSError, ValueError):
-                self._state.update(status="SYNC_FAILED", safe_error="FROZEN_INPUT_UNAVAILABLE")
+        try:
+            # governance-mutation: WORKBENCH_SHARED_SYNC_SELECTION_RESTORE
+            selected = inputs.current_selection()
+            if selected is not None:
+                binding = selected["binding"]
+                self._state.update(current_snapshot_id=binding["snapshot_id"], source_run_id=binding["source_run_id"],
+                                   source_trade_date=binding["source_trade_date"], last_successful_sync_at=selected["at"])
+        except (OSError, ValueError):
+            self._state.update(status="SYNC_FAILED", safe_error="SYNC_SELECTION_BINDING_INVALID")
 
     def state(self):
         with self._lock: return copy.deepcopy(self._state)
@@ -76,13 +76,22 @@ class ReadOnlySync:
                     if self._state["current_snapshot_id"]:
                         self.inputs.verify(self._state["current_snapshot_id"])
                     return self.state()
-                descriptor = self.inputs.import_once(self.source_root)
-                self._fingerprint = fingerprint
-                self._state.update(status="SYNCED", safe_error=None, last_successful_sync_at=self.clock(),
+                descriptor = self.inputs.import_once(self.source_root, expected_attempt_sha=attempt_hash)
+                envelope = self.inputs.verify(descriptor["snapshot_id"])
+                # governance-mutation: WORKBENCH_SHARED_SYNC_SELECTION_COMMIT
+                selected = self.inputs.select_current(descriptor["snapshot_id"], clock=self.clock)
+                records = envelope["snapshot"]["records"]
+                captured_attempt = records[ATTEMPT].get("payload")
+                self._state["latest_attempt"] = ({k: captured_attempt.get(k) for k in ("run_id", "target_trade_date", "report", "published")}
+                                                 if captured_attempt else None)
+                self._fingerprint = (records[POINTER]["source_sha256"], records[ATTEMPT].get("source_sha256"))
+                self._state.update(status="SYNCED", safe_error=None, last_successful_sync_at=selected["at"],
                                    **{k: descriptor[k] for k in ("source_run_id", "source_trade_date")},
                                    current_snapshot_id=descriptor["snapshot_id"])
-            except (OSError, ValueError, TypeError) as exc:
-                code = exc.code if isinstance(exc, WorkspaceError) else "SOURCE_UNAVAILABLE_OR_INVALID"
+            except Exception as exc:
+                code = exc.code if isinstance(exc, WorkspaceError) else (
+                    "SOURCE_SHAPE_INVALID" if isinstance(exc, ev.EvidenceError) and str(exc) == "SOURCE_SHAPE_INVALID"
+                    else "SOURCE_UNAVAILABLE_OR_INVALID")
                 self._state.update(status="CAPACITY_BLOCKED" if "CAPACITY" in code or code == "WORKSPACE_EVENT_LIMIT" else "SYNC_FAILED",
                                    safe_error=code)
             return self.state()
@@ -116,7 +125,12 @@ class ReadOnlySync:
                 remaining = max(0, deadline - time.monotonic())
                 if self.stop_event.wait(remaining): return
                 if time.monotonic() >= deadline: break
-            self.tick()
+            # governance-mutation: WORKBENCH_SHARED_SYNC_WORKER_BOUNDARY
+            try:
+                self.tick()
+            except Exception:
+                with self._lock:
+                    self._state.update(status="SYNC_FAILED", safe_error="SYNC_WORKER_FAILURE")
 
     def stop(self) -> None:
         with self._lifecycle:

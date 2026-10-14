@@ -131,6 +131,8 @@ def capture(root: Path, now=None):
         try:
             raw = read_local(root, path)
             value = parse(raw)
+            if expected is not None and not isinstance(expected, str):
+                raise EvidenceError("SOURCE_HASH_SHAPE_INVALID")
             actual = sha(raw)
             binding = "UNBOUND" if not expected else "MATCH" if actual == expected.removeprefix("sha256:") else "MISMATCH"
             records[path] = {"status": "OBSERVED", "source_sha256": actual, "binding": binding, "payload": value}
@@ -158,13 +160,19 @@ def capture(root: Path, now=None):
     for name in PUBLIC:
         take("public/data/v2/" + name, hashes.get("public:" + name))
     health = records["public/data/v2/funnel_health.json"]["payload"] or {}
-    bundle = health.get("bundle") or {}
+    bundle = health.get("bundle")
+    # governance-mutation: WORKBENCH_SHARED_SYNC_NESTED_SHAPE
+    if bundle is not None and not isinstance(bundle, dict):
+        raise EvidenceError("SOURCE_SHAPE_INVALID")
+    bundle = bundle or {}
     location = bundle.get("location")
     date = health.get("as_of")
     if (isinstance(date, str) and re.fullmatch(r"\d{8}", date) and isinstance(rid, str)
             and re.fullmatch(ID, rid) and health.get("run_id") == rid
             and location == f"data_history/funnel/{date}/{rid}"):
         bundle_hashes = bundle.get("artifacts") or {}
+        if not isinstance(bundle_hashes, dict):
+            raise EvidenceError("SOURCE_SHAPE_INVALID")
         for name in BUNDLE:
             take(location + "/" + name, bundle_hashes.get(name))
     else:
@@ -173,10 +181,13 @@ def capture(root: Path, now=None):
     attempt_path = "experiments/execution_tracker/nightly_run.json"
     attempt = take(attempt_path)
     if attempt:
+        steps = attempt.get("steps", [])
+        if not isinstance(steps, list):
+            raise EvidenceError("SOURCE_SHAPE_INVALID")
         records[attempt_path]["payload"] = {k: attempt.get(k) for k in (
             "run_id", "target_trade_date", "generated_at", "report", "data_quality", "research_data_quality", "published")}
         records[attempt_path]["payload"]["steps"] = [{k: row.get(k) for k in (
-            "step", "status", "exit_code", "elapsed_sec", "blocks_publication")} for row in attempt.get("steps", []) if isinstance(row, dict)]
+            "step", "status", "exit_code", "elapsed_sec", "blocks_publication")} for row in steps if isinstance(row, dict)]
         records[attempt_path]["projection"] = "OPERATIONAL_FIELDS_ONLY"
     try:
         if sha(read_local(root, pointer_path)) != records[pointer_path]["source_sha256"]:

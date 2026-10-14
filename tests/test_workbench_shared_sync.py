@@ -46,6 +46,152 @@ class SharedSyncTests(unittest.TestCase):
         with self.store.connect() as db:
             return db.execute("SELECT COUNT(*) FROM shared_inputs").fetchone()[0]
 
+    def wait_for(self, predicate):
+        deadline = time.monotonic() + 3
+        while not predicate() and time.monotonic() < deadline:
+            time.sleep(.01)
+        self.assertTrue(predicate(), "background condition not reached")
+
+    def test_malformed_source_repairs_in_background_without_dead_poller(self):
+        from workbench_shared_test_support import reseal_publisher
+        failures = []
+        with mock.patch.object(sync, "POLL_SECONDS", .01), mock.patch.object(threading, "excepthook", lambda args: failures.append(args.exc_type.__name__)):
+            self.poller.start()
+            first = self.poller.state()
+            path = "public/data/v2/funnel_health.json"
+            health = ev.parse((self.source / path).read_bytes()); health["bundle"] = "malformed-nested-object"
+            reseal_publisher(self.source, path, health)
+            self.wait_for(lambda: self.poller.state()["safe_error"] == "SOURCE_SHAPE_INVALID" or failures)
+            state = self.poller.state()
+            self.assertEqual(state["status"], "SYNC_FAILED")
+            self.assertEqual(state["safe_error"], "SOURCE_SHAPE_INVALID")
+            self.assertTrue(self.poller._thread.is_alive())
+            self.assertEqual(state["current_snapshot_id"], first["current_snapshot_id"])
+            publisher_source(self.source, "repaired_background", "20261014")
+            self.wait_for(lambda: self.poller.state()["source_run_id"] == "repaired_background")
+            self.assertEqual(self.poller.state()["status"], "SYNCED")
+            self.poller.stop()
+        self.assertEqual(failures, [])
+
+    def test_unexpected_background_worker_failure_degrades_and_recovers(self):
+        allow = threading.Event(); failures = []; calls = []
+        tick = self.poller.tick
+        def failing_tick():
+            calls.append(1)
+            if len(calls) == 1: raise RuntimeError("synthetic internal fault not for display")
+            return tick() if allow.is_set() else self.poller.state()
+        with mock.patch.object(sync, "POLL_SECONDS", .01), mock.patch.object(threading, "excepthook", lambda args: failures.append(args.exc_type.__name__)):
+            self.poller.start()
+            with mock.patch.object(self.poller, "tick", side_effect=failing_tick):
+                self.wait_for(lambda: self.poller.state()["status"] == "SYNC_FAILED" or failures)
+                state = self.poller.state()
+                self.assertEqual(state["safe_error"], "SYNC_WORKER_FAILURE")
+                self.assertNotIn("synthetic internal fault", ev.canonical(state))
+                self.assertTrue(self.poller._thread.is_alive())
+                publisher_source(self.source, "worker_repaired")
+                allow.set()
+                self.wait_for(lambda: self.poller.state()["source_run_id"] == "worker_repaired")
+            self.poller.stop()
+        self.assertEqual(failures, [])
+
+    def test_probed_safe_attempt_changed_before_import_refused_before_writes(self):
+        first = self.poller.tick()
+        path = self.source / frozen.ATTEMPT
+        initial = self.inputs.verify(first["current_snapshot_id"])["snapshot"]["records"][frozen.ATTEMPT]
+        safe = ev.parse(path.read_bytes()); safe["run_id"] = "safe_new_probe"
+        path.write_bytes(ev.canonical(safe).encode())
+        imported = self.inputs.import_once
+        def race(source_root, **kwargs):
+            unsafe = {**safe, "run_id": "late_credential_attempt", "steps": [{"step": "synthetic", "tail": "Bearer synthetic-review-canary-only"}]}
+            path.write_bytes(ev.canonical(unsafe).encode())
+            return imported(source_root, **kwargs)
+        with mock.patch.object(self.inputs, "import_once", side_effect=race), mock.patch.object(frozen, "_new_or_identical", wraps=frozen._new_or_identical) as writes:
+            result = self.poller.tick()
+        self.assertEqual(result["status"], "SYNC_FAILED")
+        self.assertEqual(result["current_snapshot_id"], first["current_snapshot_id"])
+        writes.assert_not_called()
+        self.assertEqual(self.count(), 1)
+        common = self.common()
+        self.assertEqual(common["observation"]["attempt"]["run_id"], initial["payload"]["run_id"])
+        self.assertNotIn("late_credential_attempt", ev.canonical(common))
+        self.assertNotIn("synthetic-review-canary-only", ev.canonical(common))
+        verified = self.inputs.verify(result["current_snapshot_id"])
+        self.assertEqual(verified["snapshot"]["records"][frozen.ATTEMPT], initial)
+
+    def test_expected_raw_attempt_matches_capture_and_final_source(self):
+        raw = ev.read_local(self.source, frozen.ATTEMPT)
+        first = self.poller.tick()
+        self.assertEqual(self.poller.state()["latest_attempt"], ev.view(self.inputs.verify(first["current_snapshot_id"])["snapshot"])["run_identity"]["latest_attempt"])
+        path = self.source / frozen.ATTEMPT
+        value = ev.parse(raw); value["run_id"] = "before_stage"
+        path.write_bytes(ev.canonical(value).encode())
+        write = frozen._new_or_identical
+        def race(target, data, **kwargs):
+            result = write(target, data, **kwargs)
+            if target.parent.name == "envelopes":
+                value["run_id"] = "after_stage"
+                path.write_bytes(ev.canonical(value).encode())
+            return result
+        with mock.patch.object(frozen, "_new_or_identical", side_effect=race): state = self.poller.tick()
+        self.assertEqual(state["status"], "SYNC_FAILED")
+        self.assertEqual(state["safe_error"], "SOURCE_CHANGED")
+        self.assertEqual(state["current_snapshot_id"], first["current_snapshot_id"])
+        self.assertEqual(self.count(), 1)
+
+    def test_combined_publication_and_attempt_orphans_share_one_budget(self):
+        for index in range(50):
+            (self.inputs.base / "publications" / f"{1024 + index:064x}").mkdir(parents=True)
+            path = self.inputs.base / "attempts" / (f"{2048 + index:064x}" + ".json")
+            path.parent.mkdir(parents=True, exist_ok=True); path.write_bytes(b"{}")
+        result = self.poller.tick()
+        self.assertEqual(result["status"], "CAPACITY_BLOCKED")
+        self.assertEqual(self.count(), 0)
+        self.assertEqual(len(list((self.inputs.base / "publications").iterdir())), 50)
+        self.assertEqual(len(list((self.inputs.base / "attempts").iterdir())), 50)
+        self.assertFalse((self.store.path.parent / "input-write-evidence").exists())
+
+    def test_linked_capture_artifacts_not_double_counted_in_budget(self):
+        self.poller.tick()
+        for index in range(98): (self.inputs.base / "publications" / f"{4096 + index:064x}").mkdir()
+        publisher_source(self.source, "budget_hundred")
+        state = self.poller.tick()
+        self.assertEqual(state["status"], "SYNCED")
+        self.assertEqual(self.count(), 2)
+        publisher_source(self.source, "over_budget")
+        self.assertEqual(self.poller.tick()["status"], "CAPACITY_BLOCKED")
+        self.assertEqual(self.count(), 2)
+
+    def test_selected_cursor_survives_dedup_restart_and_source_failure(self):
+        first = self.poller.tick()
+        publisher_source(self.source, "second_publication", "20261014")
+        second = self.poller.tick()
+        publisher_source(self.source)
+        reused = self.poller.tick()
+        self.assertEqual(reused["current_snapshot_id"], first["current_snapshot_id"])
+        self.assertNotEqual(reused["current_snapshot_id"], second["current_snapshot_id"])
+        with self.store.connect() as db: events = self.system.events(db)
+        selections = [e for e in events if e["kind"] == "SHARED_INPUT_SELECTED"]
+        self.assertEqual(len(selections), 3)
+        for event in selections:
+            self.assertEqual(event["actor"], "SYSTEM_READ_ONLY_SYNC")
+            self.assertFalse(event["production_authority"])
+            self.assertEqual(event["data"], self.inputs._descriptor(self.inputs.verify(event["data"]["snapshot_id"])))
+        self.poller.tick()
+        with self.store.connect() as db: self.assertEqual(self.system.events(db), events)
+        (self.source / frozen.POINTER).unlink()
+        restarted = sync.ReadOnlySync(self.inputs, self.source)
+        state = restarted.tick()
+        self.assertEqual(state["status"], "SYNC_FAILED")
+        self.assertEqual(state["current_snapshot_id"], first["current_snapshot_id"])
+        self.assertEqual(state["source_run_id"], "publisher_run")
+
+    def test_restart_never_substitutes_unselected_registry(self):
+        self.inputs.import_once(self.source)
+        (self.source / frozen.POINTER).unlink()
+        restored = sync.ReadOnlySync(self.inputs, self.source).tick()
+        self.assertIsNone(restored["current_snapshot_id"])
+        self.assertEqual(restored["status"], "SYNC_FAILED")
+
     def test_new_publication_imported_once_within_poll_budget(self):
         self.poller.start()
         first = self.poller.state()
@@ -81,7 +227,7 @@ class SharedSyncTests(unittest.TestCase):
         self.assertEqual(before, {p.relative_to(self.root / "state").as_posix(): p.read_bytes()
                                  for p in (self.root / "state/input-write-evidence").rglob("*") if p.is_file()})
         with self.store.connect() as db:
-            self.assertEqual(db.execute("SELECT COUNT(*) FROM workspace_events").fetchone()[0], 0)
+            self.assertEqual(db.execute("SELECT COUNT(*) FROM workspace_events").fetchone()[0], 1)
 
     def test_new_failed_attempt_does_not_replace_last_publication(self):
         first = self.poller.tick()
@@ -276,7 +422,7 @@ class SharedSyncTests(unittest.TestCase):
         self.assertEqual(state["status"], "CAPACITY_BLOCKED")
         self.assertEqual(state["current_snapshot_id"], first["current_snapshot_id"])
         with self.store.connect() as db:
-            self.assertEqual(db.execute("SELECT COUNT(*) FROM workspace_events").fetchone()[0], 1)
+            self.assertEqual(db.execute("SELECT COUNT(*) FROM workspace_events").fetchone()[0], 2)
         self.assertEqual(self.count(), 1)
 
     def test_default_and_private_legacy_have_no_sync(self):

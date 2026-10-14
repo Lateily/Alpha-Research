@@ -312,12 +312,15 @@ def _verify_completed(root, tables):
         if ev.parse(ev.read_local(root, f"research-runs/{identity}/receipt.json")) != receipt:
             raise ev.EvidenceError("BACKUP_REPLAY_RECEIPT_INVALID")
         research.verify_receipt(root / "research-runs" / identity, receipt)
-    from workbench_shared_inputs import FrozenInputs
+    from workbench_shared_inputs import FrozenInputs, verify_selection_events
+    reopened = {}
     for snapshot_id, input_hash, body in tables.get("shared_inputs", []):
         try:
             if str(uuid.UUID(snapshot_id)) != snapshot_id: raise ValueError
         except (ValueError, TypeError, AttributeError): raise ev.EvidenceError("BACKUP_SNAPSHOT_ID_INVALID") from None
-        FrozenInputs.verify_registered(root / "frozen-inputs", snapshot_id, (input_hash, body))
+        reopened[snapshot_id] = FrozenInputs.verify_registered(root / "frozen-inputs", snapshot_id, (input_hash, body))
+    # governance-mutation: WORKBENCH_SHARED_SYNC_SELECTION_BACKUP
+    verify_selection_events([ev.parse(row[3]) for row in tables["workspace_events"]], reopened.__getitem__)
     if tables.get("shared_jobs") or tables.get("shared_attempts"):
         from workbench_shared_jobs import verify_queue_state
         try:
@@ -335,7 +338,7 @@ def backup_shared(store, target_root: Path) -> dict:
     source = store.path.parent.resolve(); destination = target.resolve()
     if destination == source or destination in source.parents or source in destination.parents:
         raise ev.EvidenceError("BACKUP_REQUIRES_DISJOINT_TARGET")
-    ignored = {"workbench.sqlite3", "shared-workbench.sqlite3", "service.lock", "backups",
+    ignored = {"workbench.sqlite3", "shared-workbench.sqlite3", "service.lock", "read-only-sync.lock", "backups",
                "allowlist.json", "cookie.key", "migration-intent.json", "migration-receipt.json"}
     ignored.update(name + suffix for name in ("workbench.sqlite3", "shared-workbench.sqlite3") for suffix in ("-wal", "-shm", "-journal"))
     if any(p.is_symlink() for p in (store.path.parent, *store.path.parent.parents)):

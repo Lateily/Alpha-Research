@@ -200,6 +200,59 @@ class MutationCase:
 
 MUTATIONS: tuple[MutationCase, ...] = (
     MutationCase(
+        mutation_id="WORKBENCH_SHARED_SYNC_NESTED_SHAPE", component="S3 Fix Round1 R1",
+        source_path="scripts/llm/workbench_evidence.py", test_script="tests/test_workbench_shared_sync.py",
+        before='    if bundle is not None and not isinstance(bundle, dict):', after='    if False:',
+        expected_failure_marker="test_malformed_source_repairs_in_background_without_dead_poller",
+        rationale="Malformed producer objects must become explicit safe contract errors while background ingestion can recover.",
+    ),
+    MutationCase(
+        mutation_id="WORKBENCH_SHARED_SYNC_WORKER_BOUNDARY", component="S3 Fix Round1 R1",
+        source_path="scripts/llm/workbench_shared_sync.py", test_script="tests/test_workbench_shared_sync.py",
+        before='            except Exception:\n'
+               '                with self._lock:\n'
+               '                    self._state.update(status="SYNC_FAILED", safe_error="SYNC_WORKER_FAILURE")',
+        after='            except Exception:\n                raise',
+        expected_failure_marker="test_unexpected_background_worker_failure_degrades_and_recovers",
+        rationale="Unexpected worker failure must explicitly degrade the shared state without terminating its only background poller.",
+    ),
+    MutationCase(
+        mutation_id="WORKBENCH_SHARED_SYNC_EXPECTED_ATTEMPT", component="S3 Fix Round1 R2",
+        source_path="scripts/llm/workbench_shared_inputs.py", test_script="tests/test_workbench_shared_sync.py",
+        before='        if expected_attempt_sha is _UNSET_ATTEMPT:\n            return', after='        if True:\n            return',
+        expected_failure_marker="test_probed_safe_attempt_changed_before_import_refused_before_writes",
+        rationale="The safe-probed raw attempt must match capture/final source and unsafe replacement must be refused before persistent writes.",
+    ),
+    MutationCase(
+        mutation_id="WORKBENCH_SHARED_SYNC_ORPHAN_BUDGET", component="S3 Fix Round1 R3",
+        source_path="scripts/llm/workbench_shared_inputs.py", test_script="tests/test_workbench_shared_sync.py",
+        before='                    if identity not in linked:', after='                    if False:',
+        expected_failure_marker="test_combined_publication_and_attempt_orphans_share_one_budget",
+        rationale="Unreferenced publication and attempt artifacts together spend the same 100-observation budget.",
+    ),
+    MutationCase(
+        mutation_id="WORKBENCH_SHARED_SYNC_SELECTION_COMMIT", component="S3 Fix Round1 R4",
+        source_path="scripts/llm/workbench_shared_sync.py", test_script="tests/test_workbench_shared_sync.py",
+        before='                selected = self.inputs.select_current(descriptor["snapshot_id"], clock=self.clock)',
+        after='                selected = {"at": self.clock()}',
+        expected_failure_marker="test_selected_cursor_survives_dedup_restart_and_source_failure",
+        rationale="Deduplicated selection must persist a bound SYSTEM_READ_ONLY_SYNC event before changing the current cursor.",
+    ),
+    MutationCase(
+        mutation_id="WORKBENCH_SHARED_SYNC_SELECTION_RESTORE", component="S3 Fix Round1 R4",
+        source_path="scripts/llm/workbench_shared_sync.py", test_script="tests/test_workbench_shared_sync.py",
+        before='            selected = inputs.current_selection()', after='            selected = None',
+        expected_failure_marker="test_selected_cursor_survives_dedup_restart_and_source_failure",
+        rationale="Restart must restore the verified selected cursor rather than newest registry insertion or no cursor.",
+    ),
+    MutationCase(
+        mutation_id="WORKBENCH_SHARED_SYNC_SELECTION_BACKUP", component="S3 Fix Round1 R4",
+        source_path="scripts/llm/workbench_backup.py", test_script="tests/test_workbench_shared_state.py",
+        before='    verify_selection_events([ev.parse(row[3]) for row in tables["workspace_events"]], reopened.__getitem__)',
+        after='    pass', expected_failure_marker="test_backup_refuses_selection_not_bound_to_registered_original",
+        rationale="Consistent backup and restore must reject selection events that are not bound to registered reopened originals.",
+    ),
+    MutationCase(
         mutation_id="WORKBENCH_SHARED_SYNC_OPT_IN", component="Scoped read-only sync S3",
         source_path="scripts/llm/nonprod_workbench.py", test_script="tests/test_workbench_shared_sync.py",
         before='    if args.read_only_auto_sync and (not args.shared_workspace_v1 or private is None or args.read_only_source_root is None):',
