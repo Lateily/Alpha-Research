@@ -1,52 +1,15 @@
 {
-  "_status": "ok",
+  "_status": "empty",
   "ticker": "002594.SZ",
-  "fetched_at": "2026-10-13T16:20:10Z",
+  "fetched_at": "2026-10-14T06:03:59Z",
   "api_used": "pledge_stat",
   "window_quarters": 4,
-  "records": [
-    {
-      "ts_code": "002594.SZ",
-      "end_date": "20261009",
-      "pledge_count": 68,
-      "unrest_pledge": 20514.0,
-      "rest_pledge": 0.0,
-      "total_share": 543379.76,
-      "pledge_ratio": 3.78
-    },
-    {
-      "ts_code": "002594.SZ",
-      "end_date": "20260930",
-      "pledge_count": 68,
-      "unrest_pledge": 20514.0,
-      "rest_pledge": 0.0,
-      "total_share": 543379.76,
-      "pledge_ratio": 3.78
-    },
-    {
-      "ts_code": "002594.SZ",
-      "end_date": "20260924",
-      "pledge_count": 71,
-      "unrest_pledge": 21347.0,
-      "rest_pledge": 0.0,
-      "total_share": 543379.76,
-      "pledge_ratio": 3.93
-    },
-    {
-      "ts_code": "002594.SZ",
-      "end_date": "20260918",
-      "pledge_count": 72,
-      "unrest_pledge": 21842.0,
-      "rest_pledge": 0.0,
-      "total_share": 543379.76,
-      "pledge_ratio": 4.02
-    }
-  ],
+  "records": [],
   "summary": {
-    "latest_pledge_ratio": 3.78,
-    "latest_end_date": "2026-10-09",
-    "trend_direction": "falling",
-    "risk_level": "LOW",
-    "records_count": 4
+    "latest_pledge_ratio": null,
+    "latest_end_date": null,
+    "trend_direction": null,
+    "risk_level": null,
+    "records_count": 0
   }
 }

@@ -1,7 +1,7 @@
 {
   "ticker": "688120.SH",
-  "generated_at": "2026-10-13",
-  "price": 229.0,
+  "generated_at": "2026-10-14",
+  "price": 233.15,
   "zone": "NEUTRAL",
   "entry_zone": true,
   "exit_zone": false,
@@ -9,41 +9,51 @@
     {
       "type": "RSI_RECOVERING",
       "strength": "moderate",
-      "date": "20261012",
+      "date": "20261013",
       "bullish": true,
       "description": {
-        "e": "RSI recovering 34.8→37.9 — momentum rebuilding",
-        "z": "RSI从34.8回升至37.9，动能修复"
+        "e": "RSI recovering 37.9→41.2 — momentum rebuilding",
+        "z": "RSI从37.9回升至41.2，动能修复"
+      }
+    },
+    {
+      "type": "KDJ_GOLDEN_CROSS",
+      "strength": "strong",
+      "date": "20261013",
+      "bullish": true,
+      "description": {
+        "e": "KDJ K(29.5) crossed above D(25.3) in oversold — reversal signal",
+        "z": "KDJ K(29.5)上穿D(25.3)，超卖区金叉看涨"
       }
     }
   ],
   "signal_count": {
-    "bullish": 1,
+    "bullish": 2,
     "bearish": 0,
-    "total": 1
+    "total": 2
   },
   "indicators": {
-    "ma5": 227.42,
-    "ma20": 244.0,
+    "ma5": 227.45,
+    "ma20": 243.35,
     "ma60": null,
-    "rsi14": 37.9,
-    "vol_ma20": 81408,
-    "vol_ratio": 1.11,
-    "price_vs_ma20": -6.15,
+    "rsi14": 41.2,
+    "vol_ma20": 82173,
+    "vol_ratio": 1.18,
+    "price_vs_ma20": -4.19,
     "price_vs_ma60": null,
-    "change_1d": 1.61,
-    "change_5d": -2.24,
-    "change_20d": -5.95,
-    "macd_dif": -7.492,
-    "macd_dea": -4.8264,
-    "macd_hist": -5.3311,
-    "bb_upper": 270.66,
-    "bb_mid": 244.0,
-    "bb_lower": 217.34,
-    "bb_bandwidth": 21.85,
-    "kdj_k": 21.7,
-    "kdj_d": 23.3,
-    "kdj_j": 18.6,
+    "change_1d": 1.81,
+    "change_5d": 0.06,
+    "change_20d": -5.3,
+    "macd_dif": -7.2712,
+    "macd_dea": -5.3154,
+    "macd_hist": -3.9116,
+    "bb_upper": 270.39,
+    "bb_mid": 243.35,
+    "bb_lower": 216.3,
+    "bb_bandwidth": 22.23,
+    "kdj_k": 29.5,
+    "kdj_d": 25.3,
+    "kdj_j": 37.7,
     "cvd_latest": null,
     "cvd_slope_5d": null,
     "cvd_chg_1d": null,
