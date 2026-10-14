@@ -576,7 +576,7 @@ def make_handler(store, assets, origin, session, system=None, private=None, shar
                     raise WorkbenchError("BODY_TRUNCATED")
                 payload = decode_json(raw)
                 if identity:
-                    workspace.exact(payload, {"command_id", "kind"})
+                    workspace.exact(payload, {"command_id", "kind", "snapshot_id"} if shared is not None and shared.queue is not None else {"command_id", "kind"})
                     if not isinstance(payload["kind"], str) or payload["kind"] not in {"observe", "snapshot-brief"}:
                         raise WorkbenchError("PRIVATE_OPERATION_DISABLED", 403)
                 if self.path.startswith("/api/workspace/") and system is not None:
@@ -588,7 +588,7 @@ def make_handler(store, assets, origin, session, system=None, private=None, shar
                         result = system.dispatch(self.path, payload)
                 else:
                     result = dispatch(store, self.path, payload)
-                self.reply(200, result)
+                self.reply(202 if shared is not None and shared.queue is not None else 200, result)
             except WorkbenchError as exc:
                 self.reply(exc.status, {"error": exc.code})
             except workspace.WorkspaceError as exc:
@@ -610,12 +610,15 @@ def main(argv=None):
     parser.add_argument("--private-origin", help="Exact existing Tailscale Serve HTTPS origin on port 8443")
     parser.add_argument("--owner-login", help="Exact owner Tailscale login; access identity is not research approval")
     parser.add_argument("--private-allowlist", type=Path, help="Outside-repo owner-owned mode0600 member allowlist")
-    parser.add_argument("--shared-workspace-v1", action="store_true", help="Opt-in isolated S1 shared workspaces; requires private access")
+    parser.add_argument("--shared-workspace-v1", action="store_true", help="Opt-in isolated persistent shared jobs; requires private access")
+    parser.add_argument("--shared-import-once", type=Path, help="Explicit one-time frozen input import for shared mode; no automatic synchronizer")
     args = parser.parse_args(argv)
     host = serve_host(args.host)
     private = private_access(args.private_origin, args.owner_login, args.private_allowlist)
     if args.shared_workspace_v1 and private is None:
         raise WorkbenchError("SHARED_PRIVATE_MODE_REQUIRED", 403)
+    if args.shared_import_once and not args.shared_workspace_v1:
+        raise WorkbenchError("SHARED_INPUT_STORE_REQUIRED", 403)
     assets = load_assets(ROOT / "tools/nonprod_workbench/dist")
     state_root = args.state_root or ROOT / ".ai-workspace/nonprod-workbench"
     if args.read_only_source_root and (state_root.resolve() == args.read_only_source_root.resolve() or args.read_only_source_root.resolve() in state_root.resolve().parents):
@@ -634,7 +637,7 @@ def main(argv=None):
         raise WorkbenchError("STATE_PARENT_SYMLINK_REFUSED")
     store = Store(state_root, shared_v1=True) if args.shared_workspace_v1 else Store(state_root)
     lifetime_lock = service_lock(state_root)
-    system = workspace.Workspace(store, args.read_only_source_root,
+    system = workspace.Workspace(store, None if args.shared_workspace_v1 else args.read_only_source_root,
                                  brief_pack_root=args.brief_pack_root,
                                  earnings_pack_root=args.earnings_pack_root,
                                  private_mode=private is not None)
@@ -642,10 +645,19 @@ def main(argv=None):
     shared = None
     if args.shared_workspace_v1:
         from workbench_shared_workspace import SharedWorkspace
+        from workbench_shared_inputs import FrozenInputs
+        from workbench_shared_jobs import SharedJobQueue
+        from workbench_shared_worker import SharedWorker
         shared = SharedWorkspace(system)
+        inputs = FrozenInputs(store)
+        if args.shared_import_once: inputs.import_once(args.shared_import_once)
+        queue = SharedJobQueue(shared, inputs, shared._execution_identity["code_sha"])
     server = ThreadingHTTPServer((host, args.port), make_handler(store, assets, origin, secrets.token_hex(32), system, private=private, shared=shared))
     server.daemon_threads = True
     worker = None
+    if shared is not None:
+        worker = SharedWorker(queue)
+        worker.start()
     if private is None:
         worker = threading.Thread(target=system.scheduler, daemon=True)
         worker.start()
@@ -659,7 +671,9 @@ def main(argv=None):
         pass
     finally:
         system.stopping.set()
-        if worker is not None:
+        if shared is not None and worker is not None:
+            worker.stop()
+        elif worker is not None:
             worker.join(timeout=35)
         server.server_close()
         lifetime_lock.close()

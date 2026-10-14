@@ -167,6 +167,12 @@ class Workspace:
     def append(self, db, events, command_id, request_hash, kind, data, actor=None):
         if len(events) >= MAX_EVENTS:
             raise WorkspaceError("WORKSPACE_EVENT_LIMIT", 429)
+        if self.store.shared_v1:
+            reserved = db.execute("SELECT COUNT(*) FROM shared_jobs WHERE json_extract(body, '$.terminal_event_reserved') = 1").fetchone()[0]
+            # Terminal commits release their own reservation in this same transaction.
+            # governance-mutation: WORKBENCH_SHARED_TERMINAL_RESERVATION
+            if len(events) + reserved >= MAX_EVENTS:
+                raise WorkspaceError("WORKSPACE_EVENT_LIMIT", 429)
         event = {"seq": len(events) + 1, "prev_hash": events[-1]["event_hash"] if events else "0" * 64,
                  "command_id": command_id, "request_hash": request_hash, "kind": kind, "data": data,
                  "at": self.clock(), "sample_purpose": "WORKFLOW_DEBUG", "production_authority": False}

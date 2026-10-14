@@ -98,10 +98,16 @@ class MigrationTests(unittest.TestCase):
         src = self.root / "complete"; frozen_source(src)
         shared = wb.Store(self.root / "shared", shared_v1=True)
         item = inputs.FrozenInputs(shared).import_once(src)
-        with shared.connect() as db:
-            db.execute("INSERT INTO shared_workspaces VALUES ('known@example.invalid', '11111111-1111-4111-8111-111111111111')")
-            db.execute("INSERT INTO shared_jobs VALUES (?, ?, ?, ?)", ("queued_job", "queued_command", "2" * 64,
-                        ev.canonical({"job_id": "queued_job", "status": "QUEUED", "snapshot_id": item["snapshot_id"]})))
+        import workbench_shared_workspace as views
+        from workbench_shared_jobs import SharedJobQueue
+        from workbench_workspace import Workspace
+        from workbench_shared_test_support import committed_code
+        code = self.root / "queue-code"
+        sha = committed_code(code, views.EXECUTION_FILES)
+        with patch.object(views, "CODE_ROOT", code):
+            view = views.SharedWorkspace(Workspace(shared, private_mode=True))
+            queue = SharedJobQueue(view, inputs.FrozenInputs(shared), sha)
+            queue.enqueue({"command_id": "queued_command", "kind": "observe", "snapshot_id": item["snapshot_id"]}, "known@example.invalid")
         archive = self.root / "shared-backup"; backup.backup_shared(shared, archive)
         scratch = self.root / "restored"; result = backup.restore_shared(archive, scratch)
         self.assertEqual(result["status"], "LOCAL_SHARED_RESTORE_VERIFIED")

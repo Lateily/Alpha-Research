@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight, Database, Download, FileText, Play, RefreshCw, Users, X } from 'lucide-react';
 import { statusTone } from './status-tone.mjs';
-import { latestOwnedJob, retainedStatus, sharedQueryState, sharedViewFreshness } from './shared-view.mjs';
+import { getPending, latestOwnedJob, pollSharedPending, recordSubmissionFailure, retainedStatus, savePending, sharedQueryState, sharedRead, sharedViewFreshness } from './shared-view.mjs';
 
 const views = [['my', '我的任务', FileText], ['team', '团队结果', Users], ['common', '共同数据', Database]];
 function Status({ value, stale = false }) {
@@ -17,15 +17,25 @@ function download(name, value, type = 'application/json') {
 export default function SharedWorkspace({ api, access, refreshRevision }) {
   const [view, setView] = useState('my'), [page, setPage] = useState(0);
   const [query, setQuery] = useState({ data: null, connection: 'WAIT', stale: false, error: '' });
-  const [busy, setBusy] = useState(false), [pending, setPending] = useState(null);
+  const [busy, setBusy] = useState(false), [pending, setPending] = useState([]);
   const [detail, setDetail] = useState(null), [selected, setSelected] = useState(null), [detailError, setDetailError] = useState('');
   const [detailStale, setDetailStale] = useState(false);
   const sequence = useRef(0), detailSequence = useRef(0);
+  async function renew() {
+    const response = await fetch('/', { credentials: 'same-origin', cache: 'no-store' });
+    if (!response.ok) throw new Error('SESSION_RENEWAL_FAILED');
+  }
   async function reload() {
     const request = ++sequence.current;
     try {
-      const data = await api(`/api/shared-workspace?page=${page}`);
-      if (request === sequence.current) setQuery(previous => sharedQueryState(previous, data));
+      const data = await sharedRead(api, `/api/shared-workspace?page=${page}`, renew);
+      const workspaceId = data.my_workspace.workspace_id;
+      await pollSharedPending(api, window.localStorage, workspaceId, data.owned_commands || {}, renew);
+      if (request === sequence.current) {
+        setQuery(previous => sharedQueryState(previous, data));
+        setPending(getPending(window.localStorage, workspaceId));
+        if (selected) await open(selected);
+      }
     } catch (error) {
       if (request === sequence.current) {
         setQuery(previous => sharedQueryState(previous, null, error.message));
@@ -37,24 +47,37 @@ export default function SharedWorkspace({ api, access, refreshRevision }) {
     reload();
     const timer = window.setInterval(reload, 5000);
     return () => { window.clearInterval(timer); ++sequence.current; };
-  }, [page, refreshRevision]);
+  }, [page, refreshRevision, selected]);
+  useEffect(() => {
+    ++detailSequence.current;
+    setSelected(null); setDetail(null); setDetailStale(true);
+    setPending(getPending(window.localStorage, query.data?.my_workspace.workspace_id));
+  }, [query.data?.my_workspace.workspace_id]);
   async function open(jobId) {
     const request = ++detailSequence.current;
     setSelected(jobId); setDetail(null); setDetailError(''); setDetailStale(true);
     try {
-      const data = await api(`/api/shared-workspace/jobs/${encodeURIComponent(jobId)}`);
+      const data = await sharedRead(api, `/api/shared-workspace/jobs/${encodeURIComponent(jobId)}`, renew);
       if (request === detailSequence.current) { setDetail(data); setDetailStale(false); }
     } catch (error) {
       if (request === detailSequence.current) setDetailError(error.message);
     }
   }
   async function run(kind) {
-    const body = pending || { command_id: `shared_${crypto.randomUUID().replaceAll('-', '')}`, kind };
-    setPending(body); setBusy(true);
+    const workspaceId = query.data?.my_workspace.workspace_id;
+    const snapshotId = query.data?.common_data.current_snapshot_id;
+    if (!workspaceId || !snapshotId || query.stale) return;
+    const body = { command_id: `shared_${crypto.randomUUID().replaceAll('-', '')}`, kind, snapshot_id: snapshotId };
+    setBusy(true);
     try {
+      savePending(window.localStorage, workspaceId, body);
+      setPending(getPending(window.localStorage, workspaceId));
       const receipt = await api('/api/workspace/job', body);
-      setPending(null); await reload(); await open(receipt.job_id);
+      savePending(window.localStorage, workspaceId, body, receipt.job_id);
+      await reload(); await open(receipt.job_id);
     } catch (error) {
+      recordSubmissionFailure(window.localStorage, workspaceId, body.command_id, error);
+      setPending(getPending(window.localStorage, workspaceId));
       setQuery(previous => sharedQueryState(previous, null, error.message));
       setDetailStale(true);
     } finally { setBusy(false); }
@@ -71,9 +94,10 @@ export default function SharedWorkspace({ api, access, refreshRevision }) {
     </div>
     <div className="source-strip"><span>WORKFLOW_DEBUG</span><span>人工核验 PENDING</span><span>生产 / 交易权限 false</span><span>最新本人简报 <Status value={latest?.status} stale={freshness.commonStale} /></span></div>
     {query.error && <div className="shared-error" role="alert">DISCONNECTED · {query.error}</div>}
+    {pending.some(item => !item.job_id) && <div className="source-strip"><Status value="SUBMISSION_UNCONFIRMED" stale={freshness.commonStale} /></div>}
     <nav className="shared-tabs" aria-label="共享工作区视图">{views.map(([key, label, Icon]) => <button key={key} aria-current={view === key ? 'page' : undefined} onClick={() => { setView(key); setPage(0); }}><Icon size={16} />{label}</button>)}</nav>
     {view !== 'common' ? <>
-      <div className="shared-toolbar"><span>{total} 个任务</span>{view === 'my' && <div><button disabled={busy || !!pending} onClick={() => run('observe')}><Database size={16} />观察</button><button className="primary" disabled={busy || !!pending} onClick={() => run('snapshot-brief')}><Play size={16} />{busy ? '执行中' : '生成简报'}</button>{pending && !busy && <button onClick={() => run(pending.kind)}><RefreshCw size={16} />核对原请求</button>}</div>}</div>
+      <div className="shared-toolbar"><span>{total} 个任务</span>{view === 'my' && <div><button disabled={busy || pending.length >= 2 || freshness.commonStale || !common?.current_snapshot_id} onClick={() => run('observe')}><Database size={16} />观察</button><button className="primary" disabled={busy || pending.length >= 2 || freshness.commonStale || !common?.current_snapshot_id} onClick={() => run('snapshot-brief')}><Play size={16} />{busy ? '提交中' : '生成简报'}</button>{pending.length > 0 && !busy && <button onClick={reload}><RefreshCw size={16} />核对原任务</button>}</div>}</div>
       <div className="shared-job-list">{rows.map(job => <button className="shared-job-row" key={job.job_id} onClick={() => open(job.job_id)}>
         <div><code>{job.job_id}</code><span>{job.actor}</span><span>{job.kind} · {new Date(job.submitted_at * 1000).toLocaleString()}</span></div>
         <div><Status value={job.status} stale={freshness.commonStale} />{job.error && <span className="text-red">{job.error}</span>}<code>{job.input_hash || 'INPUT_NOT_BOUND'}</code></div><ChevronRight size={16} />

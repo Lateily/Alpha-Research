@@ -280,6 +280,8 @@ def _inventory(root, tables, *, scope="ISOLATED_STATE_ARTIFACT_ROOTS"):
         area = {"snapshot-brief": "snapshot-briefs", "brief-trial": "brief-trials", "earnings-trial": "earnings-trials"}.get(job.get("kind"))
         if not area: continue
         group = (f"workspaces/{job['workspace_id']}/" if job.get("workspace_id") else "") + area + "/" + job_id
+        if job.get("job_schema") == "ar.shared-job.v1":
+            group = f"shared-jobs/{job['workspace_id']}/{job_id}"
         if group not in groups:
             inventory.append({"path": group, "job_id": job_id, "status": job["status"], "files": [],
                               "presence": "NOT_PRESENT_IN_ARCHIVED_SCOPE", "source_scope": scope})
@@ -316,6 +318,12 @@ def _verify_completed(root, tables):
             if str(uuid.UUID(snapshot_id)) != snapshot_id: raise ValueError
         except (ValueError, TypeError, AttributeError): raise ev.EvidenceError("BACKUP_SNAPSHOT_ID_INVALID") from None
         FrozenInputs.verify_registered(root / "frozen-inputs", snapshot_id, (input_hash, body))
+    if tables.get("shared_jobs") or tables.get("shared_attempts"):
+        from workbench_shared_jobs import verify_queue_state
+        try:
+            verify_queue_state(root, tables)
+        except (OSError, ValueError, KeyError, TypeError, StopIteration):
+            raise ev.EvidenceError("BACKUP_SHARED_QUEUE_BINDING_INVALID") from None
 
 
 def backup_shared(store, target_root: Path) -> dict:

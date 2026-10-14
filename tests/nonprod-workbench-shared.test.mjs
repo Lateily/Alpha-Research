@@ -47,3 +47,67 @@ test('detail remains stale after list reconnect until its own successful revalid
   assert.deepEqual(view.sharedViewFreshness(connected, false), { commonStale: false, detailStale: false, downloadsEnabled: true });
   assert.equal(view.retainedStatus('SUCCEEDED', false), 'SUCCEEDED');
 });
+
+function storageFixture() {
+  const values = new Map();
+  return { getItem: key => values.get(key) || null, setItem: (key, value) => values.set(key, value), removeItem: key => values.delete(key) };
+}
+test('pending requests keep their frozen input and are isolated by workspace', () => {
+  assert.equal(typeof view.savePending, 'function', 'missing persistent pending storage');
+  const storage = storageFixture();
+  const body = { command_id: 'pending-command-001', kind: 'snapshot-brief', snapshot_id: 'frozen-one' };
+  view.savePending(storage, 'workspace-one', body);
+  assert.deepEqual(view.getPending(storage, 'workspace-two'), []);
+  assert.deepEqual(view.getPending(storage, 'workspace-one')[0].body, body);
+  view.savePending(storage, 'workspace-one', { ...body, snapshot_id: 'new-source' }, 'original-job');
+  assert.equal(view.getPending(storage, 'workspace-one')[0].body.snapshot_id, 'frozen-one');
+});
+test('cookie renewal and reconnect only query the original job and never POST', async () => {
+  assert.equal(typeof view.pollSharedPending, 'function', 'missing read-only pending recovery');
+  const storage = storageFixture(), calls = [];
+  const body = { command_id: 'lost-response-001', kind: 'observe', snapshot_id: 'original-input' };
+  view.savePending(storage, 'mine', body);
+  let cookie = false;
+  const api = async (...args) => {
+    calls.push(args);
+    assert.equal(args.length, 1, 'reconnect must not send a request body');
+    if (!cookie) { const error = new Error('COOKIE_REQUIRED'); error.status = 403; throw error; }
+    return { job_id: 'original-job', workspace_id: 'mine', status: 'RUNNING' };
+  };
+  const renew = async () => { cookie = true; calls.push(['entry-renewal']); };
+  await view.pollSharedPending(api, storage, 'mine', { 'lost-response-001': { job_id: 'original-job', status: 'RUNNING' } }, renew);
+  assert.deepEqual(calls, [['/api/shared-workspace/jobs/original-job'], ['entry-renewal'], ['/api/shared-workspace/jobs/original-job']]);
+  assert.equal(view.getPending(storage, 'mine')[0].job_id, 'original-job');
+  assert.deepEqual(await view.pollSharedPending(api, storage, 'someone-else', {}, renew), []);
+});
+test('unconfirmed submission is not automatically resubmitted', async () => {
+  assert.equal(typeof view.pollSharedPending, 'function');
+  const storage = storageFixture();
+  view.savePending(storage, 'mine', { command_id: 'unknown-command', kind: 'observe', snapshot_id: 'original-input' });
+  await view.pollSharedPending(() => assert.fail('no accepted job exists to query'), storage, 'mine', {}, () => assert.fail('no renewal needed'));
+  assert.equal(view.getPending(storage, 'mine').length, 1);
+});
+test('definitive HTTP rejection frees only that workspace pending record', () => {
+  assert.equal(typeof view.recordSubmissionFailure, 'function', 'missing rejected submission cleanup');
+  const storage = storageFixture();
+  const body = { command_id: 'rejected-command', kind: 'observe', snapshot_id: 'original-input' };
+  view.savePending(storage, 'mine', body); view.savePending(storage, 'other', body);
+  view.recordSubmissionFailure(storage, 'mine', body.command_id, { status: 500 });
+  assert.equal(view.getPending(storage, 'mine').length, 1, 'uncertain delivery must remain queryable');
+  view.recordSubmissionFailure(storage, 'mine', body.command_id, { status: 429 });
+  assert.deepEqual(view.getPending(storage, 'mine'), []);
+  assert.equal(view.getPending(storage, 'other').length, 1);
+});
+test('terminal STOP clears only its own pending item and remains latest', async () => {
+  assert.equal(typeof view.pollSharedPending, 'function');
+  const storage = storageFixture();
+  const body = { command_id: 'terminal-command', kind: 'snapshot-brief', snapshot_id: 'original-input' };
+  view.savePending(storage, 'mine', body, 'mine-new'); view.savePending(storage, 'other', body, 'team-green');
+  const details = await view.pollSharedPending(async () => ({ job_id: 'mine-new', workspace_id: 'mine', status: 'STOP' }), storage, 'mine', {}, async () => {});
+  assert.equal(details[0].status, 'STOP');
+  assert.deepEqual(view.getPending(storage, 'mine'), []);
+  assert.equal(view.getPending(storage, 'other').length, 1);
+  for (const status of ['QUEUED', 'RUNNING', 'INTERRUPTED', 'RECOVERY_REQUIRED']) {
+    assert.equal(view.latestOwnedJob([...jobs, { ...jobs[1], status, submitted_at: 5 }], 'owner@example.com', 'snapshot-brief').status, status);
+  }
+});

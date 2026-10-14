@@ -200,6 +200,57 @@ class MutationCase:
 
 MUTATIONS: tuple[MutationCase, ...] = (
     MutationCase(
+        mutation_id="WORKBENCH_SHARED_ATOMIC_CLAIM", component="Shared queue S2b",
+        source_path="scripts/llm/workbench_shared_jobs.py", test_script="tests/test_workbench_shared_jobs.py",
+        before='                if job["status"] != "QUEUED": continue',
+        after='                if job["status"] not in ACTIVE: continue',
+        expected_failure_marker="test_two_claimers_one_job",
+        rationale="Two synchronized SQLite claimers must not issue two tokens for the same queued job.",
+    ),
+    MutationCase(
+        mutation_id="WORKBENCH_SHARED_QUEUE_LIMITS", component="Shared queue S2b",
+        source_path="scripts/llm/workbench_shared_jobs.py", test_script="tests/test_workbench_shared_jobs.py",
+        before='            if len(active) >= 20 or sum(job["actor"] == actor for job in active) >= 2:',
+        after='            if len(active) >= 200 or sum(job["actor"] == actor for job in active) >= 200:',
+        expected_failure_marker="test_fifo_two_slots_and_actor_limits",
+        rationale="FIFO keeps two running slots, actor two and global twenty outstanding jobs with truthful 429 responses.",
+    ),
+    MutationCase(
+        mutation_id="WORKBENCH_SHARED_TERMINAL_RESERVATION", component="Shared queue S2b",
+        source_path="scripts/llm/workbench_workspace.py", test_script="tests/test_workbench_shared_jobs.py",
+        before='            if len(events) + reserved >= MAX_EVENTS:', after='            if False:',
+        expected_failure_marker="test_terminal_capacity_reserved",
+        rationale="An ordinary login cannot spend the final event slot reserved for an already accepted job.",
+    ),
+    MutationCase(
+        mutation_id="WORKBENCH_SHARED_WORKER_TIMEOUT", component="Shared queue S2b",
+        source_path="scripts/llm/workbench_shared_worker.py", test_script="tests/test_workbench_shared_jobs.py",
+        before='            code = process.wait(timeout=min(timeout_seconds, 120))', after='            code = process.wait(timeout=None)',
+        expected_failure_marker="test_timeout_releases_slot_and_kills_process_group",
+        rationale="A real sleeping child and its descendant must be killed at the internal short test deadline and release the slot.",
+    ),
+    MutationCase(
+        mutation_id="WORKBENCH_SHARED_TOKEN_FENCE", component="Shared queue S2b",
+        source_path="scripts/llm/workbench_shared_jobs.py", test_script="tests/test_workbench_shared_jobs.py",
+        before='            if job["status"] != "RUNNING" or job["attempt_id"] != claim["attempt_id"] or job["token_hash"] != ev.sha(claim["token"].encode()):',
+        after='            if False:', expected_failure_marker="test_old_token_finish_refused",
+        rationale="An abandoned generation cannot submit a terminal result after recovery has claimed a different attempt.",
+    ),
+    MutationCase(
+        mutation_id="WORKBENCH_SHARED_RECOVERY_SEAL", component="Shared queue S2b",
+        source_path="scripts/llm/workbench_shared_worker.py", test_script="tests/test_workbench_shared_jobs.py",
+        before='    if _files(directory) != seal["files"] or actual_result != seal["result"]:',
+        after='    if actual_result != seal["result"]:', expected_failure_marker="test_conflicting_output_seal_requires_recovery",
+        rationale="A changed output file set must stop recovery even when the renderer receipt remains superficially valid.",
+    ),
+    MutationCase(
+        mutation_id="WORKBENCH_SHARED_RECOVERY_ATTEMPT_CAP", component="Shared queue S2b",
+        source_path="scripts/llm/workbench_shared_jobs.py", test_script="tests/test_workbench_shared_jobs.py",
+        before='                    if job["attempt_count"] >= 2:', after='                    if job["attempt_count"] >= 200:',
+        expected_failure_marker="test_recovery_attempt_limit",
+        rationale="A second interrupted attempt is terminal, never a third automatically rescheduled render.",
+    ),
+    MutationCase(
         mutation_id="WORKBENCH_SHARED_PUBLISHER_MANIFEST", component="Frozen shared inputs S2a compatibility",
         source_path="scripts/llm/workbench_shared_inputs.py", test_script="tests/test_workbench_shared_inputs.py",
         before='MANIFEST_SCHEMAS = {"nightly_publish_manifest/v2", "nightly_manifest/v2"}',
