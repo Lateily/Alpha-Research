@@ -1,0 +1,317 @@
+"""Explicit migration and portable scrubbed state, never an in-use service."""
+import importlib.util
+import json
+import shutil
+import sqlite3
+import subprocess
+import sys
+import tempfile
+import unittest
+from pathlib import Path
+from unittest.mock import patch
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "scripts/llm"))
+sys.path.insert(0, str(ROOT / "tests"))
+import nonprod_workbench as wb
+import workbench_backup as backup
+import workbench_evidence as ev
+import workbench_workspace as ws
+from workbench_shared_test_support import historical_state, frozen_source
+
+
+class MigrationTests(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory(); self.addCleanup(self.temp.cleanup)
+        self.root = Path(self.temp.name)
+        self.store, self.system = historical_state(self.root)
+
+    def state(self):
+        self.assertIsNotNone(importlib.util.find_spec("workbench_shared_state"), "shared migration missing")
+        import workbench_shared_state
+        return workbench_shared_state
+
+    def archived(self, name="backup"):
+        self.assertTrue(hasattr(backup, "backup_shared"), "consistent shared backup missing")
+        path = self.root / name
+        backup.backup_shared(self.store, path)
+        return path
+
+    def test_migration_preserves_event_chain_and_unknown_actor(self):
+        state = self.state(); archive = self.archived()
+        with self.store.connect() as db: before = db.execute("SELECT * FROM workspace_events ORDER BY seq").fetchall()
+        result = state.migrate_legacy(archive, self.root / "target")
+        restored = wb.Store(self.root / "target", shared_v1=True)
+        with restored.connect() as db:
+            self.assertEqual(before, db.execute("SELECT * FROM workspace_events ORDER BY seq").fetchall())
+            self.assertEqual(db.execute("SELECT COUNT(*) FROM shared_workspaces").fetchone()[0], 0)
+        jobs = result["legacy_jobs"]
+        started = next(j for j in jobs if j["job_id"] == "started_brief")
+        self.assertEqual((started["actor"], started["workspace_id"], started["status"]),
+                         ("LEGACY_UNATTRIBUTED", None, "INTERRUPTED"))
+        self.assertEqual(started["recovery"], "LEGACY_NOT_RECOVERABLE")
+        for path in (self.store.path.parent / "snapshot-briefs").rglob("*"):
+            if path.is_file(): self.assertEqual(path.read_bytes(), (restored.path.parent / path.relative_to(self.store.path.parent)).read_bytes())
+
+    def test_migration_requires_new_target(self):
+        state = self.state(); archive = self.archived()
+        for target in (self.store.path.parent, archive, self.root / "existing"):
+            target.mkdir(exist_ok=True)
+            with self.assertRaises(ValueError): state.migrate_legacy(archive, target)
+
+    def test_shared_backup_restore_includes_inputs_and_jobs(self):
+        state = self.state()
+        import workbench_shared_inputs as inputs
+        src = self.root / "complete"; frozen_source(src)
+        shared = wb.Store(self.root / "shared", shared_v1=True)
+        item = inputs.FrozenInputs(shared).import_once(src)
+        with shared.connect() as db:
+            db.execute("INSERT INTO shared_workspaces VALUES ('known@example.invalid', '11111111-1111-4111-8111-111111111111')")
+            db.execute("INSERT INTO shared_jobs VALUES (?, ?, ?, ?)", ("queued_job", "queued_command", "2" * 64,
+                        ev.canonical({"job_id": "queued_job", "status": "QUEUED", "snapshot_id": item["snapshot_id"]})))
+        archive = self.root / "shared-backup"; backup.backup_shared(shared, archive)
+        scratch = self.root / "restored"; result = backup.restore_shared(archive, scratch)
+        self.assertEqual(result["status"], "LOCAL_SHARED_RESTORE_VERIFIED")
+        restored = wb.Store(scratch, shared_v1=True)
+        self.assertEqual(inputs.FrozenInputs(restored).verify(item["snapshot_id"])["input_hash"], item["input_hash"])
+        with restored.connect() as db:
+            self.assertEqual(json.loads(db.execute("SELECT body FROM shared_jobs").fetchone()[0])["status"], "QUEUED")
+            self.assertEqual(db.execute("SELECT COUNT(*) FROM shared_workspaces").fetchone()[0], 1)
+
+    def test_migration_crash_converges_without_rewriting_source(self):
+        state = self.state(); archive = self.archived()
+        source_bytes = self.store.path.read_bytes()
+        archive_bytes = {p.relative_to(archive): p.read_bytes() for p in archive.rglob("*") if p.is_file()}
+        original = state.write_new
+        # Every actual persistent file write is crashed immediately after fsync.
+        calls = []
+        def record(path, raw): calls.append(str(path)); return original(path, raw)
+        with patch.object(state, "write_new", side_effect=record): state.migrate_legacy(archive, self.root / "probe")
+        self.assertGreater(len(calls), 5)
+        for position in range(1, len(calls) + 1):
+            target = self.root / f"crash-{position}"; counter = [0]
+            def crash(path, raw):
+                original(path, raw); counter[0] += 1
+                if counter[0] == position: raise RuntimeError("injected crash")
+            with patch.object(state, "write_new", side_effect=crash):
+                with self.assertRaises(RuntimeError): state.migrate_legacy(archive, target)
+            if target.exists():
+                with self.assertRaises(ValueError): wb.Store(target, shared_v1=True)
+            result = state.migrate_legacy(archive, target)
+            self.assertEqual(result["status"], "SHARED_MIGRATION_VERIFIED")
+            self.assertEqual(state.migrate_legacy(archive, target), result)
+        for boundary in ("_build_state", "_promote"):
+            target = self.root / boundary
+            function = getattr(state, boundary)
+            def crash_boundary(*args, **kwargs): function(*args, **kwargs); raise RuntimeError("injected crash")
+            with patch.object(state, boundary, side_effect=crash_boundary):
+                with self.assertRaises(RuntimeError): state.migrate_legacy(archive, target)
+            staging = target.parent / ("." + target.name + ".migration")
+            if staging.exists():
+                with self.assertRaisesRegex(ValueError, "MIGRATION_STAGING_NOT_SERVABLE"):
+                    wb.Store(staging, shared_v1=True)
+            self.assertEqual(state.migrate_legacy(archive, target)["status"], "SHARED_MIGRATION_VERIFIED")
+        self.assertEqual(self.store.path.read_bytes(), source_bytes)
+        self.assertEqual({p.relative_to(archive): p.read_bytes() for p in archive.rglob("*") if p.is_file()}, archive_bytes)
+
+    def test_legacy_stop_and_orphan_artifacts_are_accounted(self):
+        state = self.state(); archive = self.archived()
+        result = state.migrate_legacy(archive, self.root / "target")
+        inventory = {r["path"]: r for r in result["artifact_inventory"]}
+        for job, status in (("success_brief", "SUCCEEDED"), ("stopped_brief", "STOP"),
+                            ("started_brief", "INTERRUPTED"), ("orphan_brief", "ORPHAN")):
+            row = inventory["snapshot-briefs/" + job]
+            self.assertEqual(row["status"], status)
+            self.assertTrue(row["files"])
+            self.assertEqual(row["source_backup_hash"], result["backup_hash"])
+
+    def test_migration_binding_rejects_different_source(self):
+        state = self.state(); first = self.archived("first")
+        target = self.root / "target"; state.migrate_legacy(first, target)
+        equivalent = self.root / "equivalent"
+        shutil.copytree(first, equivalent)
+        manifest = ev.parse((equivalent / "manifest.json").read_bytes())
+        manifest["archive_label"] = "different-backup-identity"
+        manifest["backup_hash"] = ev.sealed({k: v for k, v in manifest.items() if k != "backup_hash"})
+        (equivalent / "manifest.json").write_bytes(ev.canonical(manifest).encode())
+        with self.assertRaises(ValueError): state.migrate_legacy(equivalent, target)
+        with self.store.connect() as db:
+            self.system.append(db, self.system.events(db), "extra_event", "3" * 64, "PRIVATE_LOGIN", {"scope": "TEST"})
+        second = self.archived("second")
+        with self.assertRaisesRegex(ValueError, "MIGRATION_SOURCE_CONFLICT"): state.migrate_legacy(second, target)
+
+    def test_backup_uses_consistent_sqlite_api_and_scrubs_credentials(self):
+        self.state()
+        with self.store.connect() as db:
+            db.execute("PRAGMA journal_mode=WAL")
+            db.execute("PRAGMA wal_autocheckpoint=0")
+            self.system.append(db, self.system.events(db), "wal_only_event", "4" * 64, "PRIVATE_LOGIN", {"scope": "WAL_TEST"})
+            db.commit()
+            copied = self.root / "unsafe-file-copy.sqlite3"; shutil.copyfile(self.store.path, copied)
+            with sqlite3.connect(copied) as unsafe:
+                self.assertLess(unsafe.execute("SELECT COUNT(*) FROM workspace_events").fetchone()[0], 6)
+            archive = self.archived()
+        data = ev.parse((archive / "data.json").read_bytes())
+        self.assertNotIn("workspace_owner", data["tables"])
+        self.assertFalse(any(p.name in {"cookie.key", "allowlist.json"} or p.suffix == ".sqlite3" for p in archive.rglob("*")))
+        manifest = backup.verify_shared(archive)
+        self.assertEqual(manifest["integrity_check"], "ok")
+        self.assertEqual(manifest["table_counts"]["workspace_events"], 6)
+        self.assertEqual(data["tables"]["workspace_events"][-1][1], "wal_only_event")
+        self.assertEqual(manifest["event_tail"], self.system.events(self.store.connect())[-1]["event_hash"])
+
+    def test_backup_refuses_unsafe_or_missing_orphan_and_resealed_counts(self):
+        self.state()
+        link = self.store.path.parent / "snapshot-briefs/orphan_brief/unsafe.json"
+        link.symlink_to(self.root / "source/public/data/v2/current_run.json")
+        with self.assertRaises(ValueError): backup.backup_shared(self.store, self.root / "unsafe")
+        link.unlink(); archive = self.archived()
+        missing_archive = self.root / "missing-artifact"; shutil.copytree(archive, missing_archive)
+        (missing_archive / "snapshot-briefs/orphan_brief/partial.json").unlink()
+        with self.assertRaises(ValueError): backup.restore_shared(missing_archive, self.root / "missing-restore")
+        manifest = ev.parse((archive / "manifest.json").read_bytes())
+        manifest["table_counts"]["workspace_events"] = 0
+        manifest["backup_hash"] = ev.sealed({k: v for k, v in manifest.items() if k != "backup_hash"})
+        (archive / "manifest.json").write_bytes(ev.canonical(manifest).encode())
+        with self.assertRaises(ValueError): backup.restore_shared(archive, self.root / "bad-restore")
+
+    def test_s1_binary_refuses_persistent_schema_and_no_implicit_upgrade(self):
+        self.state()
+        new = wb.Store(self.root / "new", shared_v1=True)
+        old_code = subprocess.check_output(["git", "show", "b30b1979cfc5edefd2291fb516f4c9d38a64597d:scripts/llm/nonprod_workbench.py"], cwd=ROOT)
+        namespace = {"__name__": "historical_s1", "__file__": str(ROOT / "scripts/llm/nonprod_workbench.py")}
+        exec(compile(old_code, namespace["__file__"], "exec"), namespace)
+        with self.assertRaisesRegex(ValueError, "SHARED_SCHEMA_INCOMPATIBLE"):
+            namespace["Store"](new.path.parent, shared_v1=True)
+        s1 = self.root / "s1"; namespace["Store"](s1, shared_v1=True)
+        raw = (s1 / "shared-workbench.sqlite3").read_bytes()
+        with self.assertRaisesRegex(ValueError, "SHARED_SCHEMA_INCOMPATIBLE"): wb.Store(s1, shared_v1=True)
+        self.assertEqual((s1 / "shared-workbench.sqlite3").read_bytes(), raw)
+
+    def test_empty_stop_orphan_directories_are_preserved(self):
+        state = self.state()
+        path = self.store.path.parent / "snapshot-briefs/empty_orphan"
+        path.mkdir()
+        (self.store.path.parent / "snapshot-briefs/stopped_brief/empty_nested").mkdir()
+        archive = self.archived(); target = self.root / "target"
+        result = state.migrate_legacy(archive, target)
+        self.assertTrue((target / "snapshot-briefs/empty_orphan").is_dir())
+        self.assertTrue((target / "snapshot-briefs/stopped_brief/empty_nested").is_dir())
+        self.assertEqual(next(row for row in result["artifact_inventory"] if row["path"] == "snapshot-briefs/empty_orphan")["status"], "ORPHAN")
+
+    def test_backup_verifier_rejects_resealed_frozen_registry_conflict(self):
+        self.state()
+        import workbench_shared_inputs as inputs
+        shared = wb.Store(self.root / "shared", shared_v1=True)
+        src = self.root / "complete"; frozen_source(src)
+        inputs.FrozenInputs(shared).import_once(src)
+        archive = self.root / "archive"; backup.backup_shared(shared, archive)
+        data = ev.parse((archive / "data.json").read_bytes())
+        data["tables"]["shared_inputs"][0][1] = "0" * 64
+        raw = ev.canonical(data).encode(); (archive / "data.json").write_bytes(raw)
+        manifest = ev.parse((archive / "manifest.json").read_bytes())
+        manifest["files"]["data.json"] = ev.sha(raw)
+        manifest["backup_hash"] = ev.sealed({k: v for k, v in manifest.items() if k != "backup_hash"})
+        (archive / "manifest.json").write_bytes(ev.canonical(manifest).encode())
+        with self.assertRaises(ValueError): backup.verify_shared(archive)
+
+    def test_historical_export_is_migrated_without_changing_original_backup(self):
+        state = self.state()
+        result = backup.create(self.system, "old_format_backup")
+        archive = self.store.path.parent / result["location"]
+        before = (archive / "manifest.json").read_bytes()
+        migrated = state.migrate_legacy(archive, self.root / "historical-target")
+        self.assertEqual(migrated["event_tail"], self.system.events(self.store.connect())[-1]["event_hash"])
+        self.assertEqual((archive / "manifest.json").read_bytes(), before)
+        absent = next((row for row in migrated["artifact_inventory"] if row["path"] == "snapshot-briefs/started_brief"), None)
+        self.assertIsNotNone(absent)
+        self.assertEqual(absent["presence"], "NOT_PRESENT_IN_ARCHIVED_SCOPE")
+        self.assertEqual(absent["source_scope"], "LEGACY_BACKUP_CONTENT_ONLY")
+
+    def test_crash_each_schema_statement_and_directory_creation(self):
+        state = self.state(); archive = self.archived()
+        source_bytes = self.store.path.read_bytes()
+        real_connect, real_build, real_mkdir = sqlite3.connect, state._build_state, Path.mkdir
+        statements = []
+        class Recording(sqlite3.Connection):
+            def execute(self, sql, parameters=()):
+                if sql.startswith(("CREATE ", "INSERT ")): statements.append(sql)
+                return super().execute(sql, parameters)
+        def recording_build(*args):
+            with patch.object(sqlite3, "connect", side_effect=lambda *a, **k: real_connect(*a, **k, factory=Recording)):
+                real_build(*args)
+        with patch.object(state, "_build_state", side_effect=recording_build):
+            state.migrate_legacy(archive, self.root / "sql-probe")
+        self.assertGreater(len(statements), 25)
+        for phase in ("before", "after"):
+            for position in range(1, len(statements) + 1):
+                target = self.root / f"sql-{phase}-{position}"; counter = [0]
+                class Crashing(sqlite3.Connection):
+                    def execute(self, sql, parameters=()):
+                        writing = sql.startswith(("CREATE ", "INSERT "))
+                        if writing: counter[0] += 1
+                        if writing and counter[0] == position and phase == "before": raise RuntimeError("sql crash")
+                        result = super().execute(sql, parameters)
+                        if writing and counter[0] == position and phase == "after": raise RuntimeError("sql crash")
+                        return result
+                def crashing_build(*args):
+                    with patch.object(sqlite3, "connect", side_effect=lambda *a, **k: real_connect(*a, **k, factory=Crashing)):
+                        real_build(*args)
+                with patch.object(state, "_build_state", side_effect=crashing_build):
+                    with self.assertRaises(RuntimeError): state.migrate_legacy(archive, target)
+                staging = target.parent / ("." + target.name + ".migration")
+                with self.assertRaises(ValueError): wb.Store(staging, shared_v1=True)
+                state.migrate_legacy(archive, target)
+                self.assertEqual((target / "shared-workbench.sqlite3").stat().st_mode & 0o777, 0o600)
+        for phase in ("before_commit", "after_commit"):
+            target = self.root / phase
+            class CommitCrashing(sqlite3.Connection):
+                def __exit__(self, typ, value, trace):
+                    if typ is None:
+                        if phase == "before_commit":
+                            super().__exit__(RuntimeError, RuntimeError("commit crash"), None)
+                        else:
+                            super().__exit__(typ, value, trace)
+                        raise RuntimeError("commit crash")
+                    return super().__exit__(typ, value, trace)
+            def commit_crash_build(*args):
+                with patch.object(sqlite3, "connect", side_effect=lambda *a, **k: real_connect(*a, **k, factory=CommitCrashing)):
+                    real_build(*args)
+            with patch.object(state, "_build_state", side_effect=commit_crash_build):
+                with self.assertRaises(RuntimeError): state.migrate_legacy(archive, target)
+            state.migrate_legacy(archive, target)
+            self.assertEqual((target / "shared-workbench.sqlite3").stat().st_mode & 0o777, 0o600)
+        dirs = []; probe = self.root / "dir-probe"; stage = self.root / ".dir-probe.migration"
+        def record_mkdir(path, *args, **kwargs):
+            if (path == stage or stage in path.parents) and not path.exists(): dirs.append(path)
+            return real_mkdir(path, *args, **kwargs)
+        with patch.object(Path, "mkdir", record_mkdir): state.migrate_legacy(archive, probe)
+        for phase in ("before", "after"):
+            for position in range(1, len(dirs) + 1):
+                target = self.root / f"dir-{phase}-{position}"; stage = self.root / ("." + target.name + ".migration")
+                counter = [0]
+                def crash_mkdir(path, *args, **kwargs):
+                    creating = (path == stage or stage in path.parents) and not path.exists()
+                    if creating: counter[0] += 1
+                    if creating and counter[0] == position and phase == "before": raise RuntimeError("directory crash")
+                    result = real_mkdir(path, *args, **kwargs)
+                    if creating and counter[0] == position and phase == "after": raise RuntimeError("directory crash")
+                    return result
+                with patch.object(Path, "mkdir", crash_mkdir):
+                    with self.assertRaises(RuntimeError): state.migrate_legacy(archive, target)
+                state.migrate_legacy(archive, target)
+        self.assertEqual(self.store.path.read_bytes(), source_bytes)
+        print(f"CRASH_MATRIX schema={len(statements)}x2 directories={len(dirs)}x2")
+
+    def test_unclassified_orphan_or_credential_shaped_artifact_blocks_backup(self):
+        self.state()
+        unknown = self.store.path.parent / "unclassified-output"
+        unknown.mkdir(); (unknown / "result.json").write_bytes(b"{}")
+        with self.assertRaises(ValueError): backup.backup_shared(self.store, self.root / "unknown-backup")
+        shutil.rmtree(unknown)
+        path = self.store.path.parent / "snapshot-briefs/orphan_brief/partial.json"
+        path.write_bytes(b'{"diagnostic":"Bearer fixture_token_123456"}')
+        with self.assertRaises(ValueError): backup.backup_shared(self.store, self.root / "credential-backup")
+
+
+if __name__ == "__main__": unittest.main(verbosity=2)

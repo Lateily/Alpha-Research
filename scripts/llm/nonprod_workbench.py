@@ -182,6 +182,11 @@ class Store:
         if not shared_v1 and (shared.exists() or legacy.is_dir()):
             raise WorkbenchError("SHARED_STATE_FLAG_REQUIRED", 409)
         if shared_v1:
+            from workbench_shared_state import STORAGE_SCHEMA
+            if (directory / "migration-intent.json").exists():
+                intent = workspace.evidence.parse(workspace.evidence.read_local(directory, "migration-intent.json"))
+                if intent.get("target") != directory.name or not (directory / "migration-receipt.json").is_file():
+                    raise WorkbenchError("MIGRATION_STAGING_NOT_SERVABLE", 409)
             if any(parent.is_symlink() for parent in directory.parents):
                 raise WorkbenchError("STATE_SYMLINK_REFUSED")
             if legacy.exists() and not legacy.is_dir():
@@ -194,7 +199,7 @@ class Store:
                         version = db.execute("SELECT schema FROM shared_metadata WHERE singleton=1").fetchone()
                     except sqlite3.Error:
                         raise WorkbenchError("SHARED_SCHEMA_INCOMPATIBLE", 409) from None
-                    if version != ("ar.shared-workspace.v1",):
+                    if version != (STORAGE_SCHEMA,):
                         raise WorkbenchError("SHARED_SCHEMA_INCOMPATIBLE", 409)
             elif directory.exists() and any(directory.iterdir()):
                 raise WorkbenchError("STATE_MIGRATION_REQUIRED", 409)
@@ -204,16 +209,14 @@ class Store:
         if shared_v1:
             legacy.mkdir(exist_ok=True, mode=0o700)
         with self.connect() as db:
+            if shared_v1:
+                db.execute("BEGIN IMMEDIATE")
             db.execute("CREATE TABLE IF NOT EXISTS receipts (id TEXT PRIMARY KEY, request_hash TEXT NOT NULL, receipt TEXT NOT NULL)")
             db.execute("CREATE TABLE IF NOT EXISTS drafts (revision INTEGER PRIMARY KEY, payload TEXT NOT NULL)")
             db.execute("CREATE TABLE IF NOT EXISTS research_runs (id TEXT PRIMARY KEY, request_hash TEXT NOT NULL, receipt TEXT NOT NULL)")
             if shared_v1:
-                db.execute("CREATE TABLE IF NOT EXISTS shared_metadata (singleton INTEGER PRIMARY KEY CHECK(singleton=1), schema TEXT NOT NULL)")
-                db.execute("INSERT OR IGNORE INTO shared_metadata VALUES (1, 'ar.shared-workspace.v1')")
-                db.execute("CREATE TABLE IF NOT EXISTS shared_workspaces (login TEXT PRIMARY KEY, workspace_id TEXT UNIQUE NOT NULL)")
-                for table in ("shared_metadata", "shared_workspaces"):
-                    for action in ("UPDATE", "DELETE"):
-                        db.execute(f"CREATE TRIGGER IF NOT EXISTS {table}_{action.lower()} BEFORE {action} ON {table} BEGIN SELECT RAISE(ABORT, 'shared immutable'); END")
+                from workbench_shared_state import initialize
+                initialize(db)
         self.path.chmod(0o600)
 
     def connect(self):

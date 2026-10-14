@@ -9,9 +9,69 @@ from pathlib import Path
 import nonprod_workbench as wb
 import workbench_workspace as ws
 from test_workbench_workspace import source
+import workbench_evidence as ev
 
 ROOT = Path(__file__).resolve().parents[1]
 OWNER, MEMBER = "owner@example.com", "member@example.com"
+
+
+def frozen_source(root, rid="published_one", date="20261013", *, cash=None):
+    """Complete scoped publication; no producer/provider is run."""
+    def write(name, value):
+        target = root / name
+        target.parent.mkdir(parents=True, exist_ok=True)
+        raw = ev.canonical(value).encode()
+        target.write_bytes(raw)
+        return ev.sha(raw)
+
+    base = "public/data/v2/"
+    location = f"data_history/funnel/{date}/{rid}"
+    hashes = {name: write(location + "/" + name,
+                         {"run_id": rid, "target_trade_date": date, "status": "DATA_BLOCKED"})
+              for name in ev.BUNDLE}
+    health = {"run_id": rid, "as_of": date, "status": "PARTIAL",
+              "bundle": {"location": location, "artifacts": hashes}}
+    public = {}
+    for name in ev.PUBLIC:
+        value = {"run_id": rid, "target_trade_date": date, "status": "DATA_BLOCKED"}
+        if name == "funnel_health.json":
+            value = health
+        if name == "model_portfolio_state.json":
+            value["data"] = {} if cash is None else {"cash": cash}
+        public["public:" + name] = write(base + name, value)
+    manifest = {"schema": "nightly_manifest/v2", "run_id": rid, "target_trade_date": date}
+    mh = write(base + f"runs/{rid}/manifest.json", manifest)
+    pointer = {"schema": "nightly_current_run/v2", "run_id": rid, "target_trade_date": date,
+               "manifest_path": f"runs/{rid}/manifest.json", "manifest_sha256": mh, "artifacts": public}
+    write(base + "current_run.json", pointer)
+    write("experiments/execution_tracker/nightly_run.json",
+          {"run_id": "attempt_newer", "target_trade_date": "20261014", "report": "INCOMPLETE",
+           "generated_at": "2026-10-14T00:00:00+00:00", "published": False,
+           "steps": [{"step": "sample", "status": "FAILED", "tail": "omitted raw diagnostic"}]})
+    return pointer
+
+
+def historical_state(root):
+    """Old audit bytes include success, STOP, STARTED and an unregistered directory."""
+    src = root / "source"
+    frozen_source(src)
+    store = wb.Store(root / "legacy")
+    system = ws.Workspace(store, src)
+    system.start_job({"command_id": "success_brief", "kind": "snapshot-brief"})
+    (src / "public/data/v2/model_portfolio_state.json").write_bytes(b"{}")
+    system.start_job({"command_id": "stopped_brief", "kind": "snapshot-brief"})
+    with store.connect() as db:
+        db.execute("BEGIN IMMEDIATE")
+        system.append(db, system.events(db), "started_brief", "1" * 64, "JOB_STARTED",
+                      {"job_id": "started_brief", "kind": "snapshot-brief", "scheduled": False})
+        db.execute("INSERT INTO workspace_owner VALUES (1, 'not-a-secret-salt', 'not-a-secret-hash')")
+    for name in ("stopped_brief", "started_brief", "orphan_brief"):
+        path = store.path.parent / "snapshot-briefs" / name
+        path.mkdir(parents=True, exist_ok=True)
+        (path / "partial.json").write_bytes(b'{"status":"UNSEALED"}')
+    (store.path.parent / "allowlist.json").write_bytes(b'{"members":["private"]}')
+    (store.path.parent / "cookie.key").write_bytes(b"local-session-material")
+    return store, system
 
 
 def fixture_state(root: Path) -> tuple[wb.Store, ws.Workspace]:

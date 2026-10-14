@@ -200,6 +200,20 @@ class MutationCase:
 
 MUTATIONS: tuple[MutationCase, ...] = (
     MutationCase(
+        mutation_id="WORKBENCH_SHARED_FROZEN_INPUT", component="Frozen shared inputs S2a",
+        source_path="scripts/llm/workbench_snapshot_brief.py", test_script="tests/test_workbench_shared_inputs.py",
+        before="    validate_snapshot(snapshot, frozen_root, sealed_originals=True)", after="    pass",
+        expected_failure_marker="test_run_frozen_rechecks_originals_and_whitelist",
+        rationale="The isolated renderer must reject a changed frozen original before creating any output directory.",
+    ),
+    MutationCase(
+        mutation_id="WORKBENCH_SHARED_MIGRATION_BINDING", component="Explicit shared state migration S2a",
+        source_path="scripts/llm/workbench_shared_state.py", test_script="tests/test_workbench_shared_state.py",
+        before='        if prior.get("backup_hash") != backup_hash:', after="        if False:",
+        expected_failure_marker="test_migration_binding_rejects_different_source",
+        rationale="A completed new target cannot be reused for a different archive identity even when its exported content is identical.",
+    ),
+    MutationCase(
         mutation_id="WORKBENCH_SHARED_EXECUTOR_REVISION", component="Independent shared workspaces S1",
         source_path="scripts/llm/workbench_shared_workspace.py", test_script="tests/test_workbench_shared_workspace.py",
         before='            if current["source_tree_hash"] != self._execution_identity["source_tree_hash"]:',

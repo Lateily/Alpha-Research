@@ -16,6 +16,8 @@ EXECUTION_FILES = (
     "scripts/llm/nonprod_workbench.py", "scripts/llm/workbench_shared_workspace.py",
     "scripts/llm/workbench_workspace.py", "scripts/llm/workbench_evidence.py",
     "scripts/llm/workbench_snapshot_brief.py", "scripts/llm/workbench_brief_trial.py",
+    "scripts/llm/workbench_shared_inputs.py", "scripts/llm/workbench_shared_state.py",
+    "scripts/llm/workbench_backup.py",
     "scripts/llm/workbench_earnings_trial.py", "scripts/llm/workbench_research.py",
     "scripts/llm/adapters/base.py", "scripts/llm/adapters/deepseek.py",
     "scripts/llm/adapters/__init__.py", "scripts/llm/adapters/deterministic.py",

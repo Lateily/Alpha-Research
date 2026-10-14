@@ -169,6 +169,11 @@ jobs:
           python3 -B tests/test_workbench_shared_workspace.py
           node --test tests/nonprod-workbench-shared.test.mjs
           python3 -B scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/workbench_shared_workspace_v1.task.json
+      - name: Frozen shared inputs and isolated migration S2a (offline)
+        run: |
+          python3 -B tests/test_workbench_shared_inputs.py
+          python3 -B tests/test_workbench_shared_state.py
+          python3 -B scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/workbench_shared_jobs_v1.task.json
       # AIOS-K1:A-006/A-007/A-008 任务合同、状态重放、只读对账
       - name: AIOS K1 task registry regression (offline)
         run: python3 tests/test_ai_os_k1_offline.py
