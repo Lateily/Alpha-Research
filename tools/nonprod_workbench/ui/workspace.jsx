@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import SharedWorkspace from './shared-workspace.jsx';
 import { statusTone } from './status-tone.mjs';
 import { latestJobByKind, snapshotBriefPresentation } from './job-view.mjs';
 import { countText, fileBindingText, levelChip, metricLabel, rateText, relianceText, runQualityPairs, thresholdText, trustLineStatus } from './trust-line-view.mjs';
@@ -166,7 +167,11 @@ function Chart({
   }, [series]);
   return <canvas ref={ref} className="nav-chart" role="img" aria-label="已发布模拟盘历史净值曲线，非方法有效性证明" />;
 }
-export default function Workspace({
+export default function Workspace(props) {
+  return props.access?.shared_workspace_v1 ? <SharedWorkspace {...props} /> : <LegacyWorkspace {...props} />;
+}
+
+function LegacyWorkspace({
   tab,
   api,
   reloadBase,

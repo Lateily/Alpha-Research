@@ -111,7 +111,7 @@ def projection(events):
             if "actor" in event:
                 jobs[item["job_id"]]["actor"] = event["actor"]
         elif kind == "JOB_FINISHED":
-            jobs[item["job_id"]].update(status=item["status"], result=item["result"])
+            jobs[item["job_id"]].update(item)
     return {"documents": list(documents.values()), "schedules": list(schedules.values()), "jobs": list(jobs.values())}
 
 
@@ -295,9 +295,11 @@ class Workspace:
             db.execute("INSERT OR IGNORE INTO workspace_observations VALUES (?, ?)", (snapshot["snapshot_hash"], evidence.canonical(snapshot)))
         return {"snapshot_hash": snapshot["snapshot_hash"], "issues": len(snapshot["issues"]), "status": "OBSERVED_WITH_GAPS" if snapshot["issues"] else "OBSERVED_NOT_PUBLICATION_ACCEPTED"}
 
-    def start_job(self, payload, scheduled=False, schedule_guard=None, actor=None):
+    def start_job(self, payload, scheduled=False, schedule_guard=None, actor=None, shared_binding=None):
         exact(payload, {"command_id", "kind"})
         identifier(payload["command_id"])
+        if self.store.shared_v1 and shared_binding is None:
+            raise WorkspaceError("SHARED_DISPATCH_REQUIRED", 403)
         if self.private_mode and (not isinstance(actor, str) or not actor or scheduled
                                   or not isinstance(payload["kind"], str) or payload["kind"] not in {"observe", "snapshot-brief"}):
             raise WorkspaceError("PRIVATE_OPERATION_DISABLED", 403)
@@ -316,10 +318,18 @@ class Workspace:
                 if prior["request_hash"] != request_hash:
                     raise WorkspaceError("WORKSPACE_COMMAND_ID_CONFLICT", 409)
                 return {"disposition": "IDEMPOTENT", "job_id": job_id}
-            self.append(db, events, job_id, request_hash, "JOB_STARTED", {"job_id": job_id, "kind": payload["kind"], "scheduled": scheduled, "recovery": "NO_AUTOMATIC_RETRY_IF_INTERRUPTED"}, actor=actor)
+            data = {"job_id": job_id, "kind": payload["kind"], "scheduled": scheduled, "recovery": "NO_AUTOMATIC_RETRY_IF_INTERRUPTED"}
+            if shared_binding is not None:
+                data.update(shared_binding)
+            self.append(db, events, job_id, request_hash, "JOB_STARTED", data, actor=actor)
         try:
             if payload["kind"] == "observe":
                 result = self.observe()
+                if shared_binding is not None:
+                    with self.store.connect() as db:
+                        row = db.execute("SELECT body FROM workspace_observations WHERE snapshot_hash=?", (result["snapshot_hash"],)).fetchone()
+                    snapshot = evidence.verify(json.loads(row[0]))
+                    result.update(run_id=snapshot["published_run_id"], target_trade_date=snapshot["target_trade_date"])
             elif payload["kind"] == "integrity":
                 result = self.verify_all()
             elif payload["kind"] == "backup":
@@ -329,10 +339,10 @@ class Workspace:
                 if self.source_root is None:
                     raise WorkspaceError("READ_ONLY_SOURCE_NOT_CONFIGURED", 409)
                 import workbench_snapshot_brief
-                target_root = self.store.path.parent / "snapshot-briefs"
+                target_root = self.output_root(shared_binding) / "snapshot-briefs"
                 if target_root.is_symlink():
                     raise WorkspaceError("BRIEF_OUTPUT_SYMLINK_REFUSED", 409)
-                target_root.mkdir(mode=0o700, exist_ok=True)
+                target_root.mkdir(parents=True, mode=0o700, exist_ok=True)
                 result = workbench_snapshot_brief.run(self.source_root, target_root / job_id)
             elif payload["kind"] == "brief-trial":
                 if self.brief_pack_root is None:
@@ -367,8 +377,25 @@ class Workspace:
             result = {"error": code}
         with self.store.connect() as db:
             db.execute("BEGIN IMMEDIATE")
-            self.append(db, self.events(db), "finish_" + job_id, request_hash, "JOB_FINISHED", {"job_id": job_id, "status": status, "result": result}, actor=actor)
+            data = {"job_id": job_id, "status": status, "result": result}
+            if shared_binding is not None:
+                data.update(input_hash=result.get("snapshot_hash"), output_hash=result.get("report_sha256", result.get("snapshot_hash")),
+                            source_run_id=result.get("run_id"), source_trade_date=result.get("target_trade_date"))
+            self.append(db, self.events(db), "finish_" + job_id, request_hash, "JOB_FINISHED", data, actor=actor)
         return {"disposition": "CREATED", "job_id": job_id, "status": status, "result": result}
+
+    def output_root(self, binding=None):
+        base = self.store.path.parent
+        if binding and binding.get("workspace_id"):
+            import uuid
+            try:
+                workspace_id = str(uuid.UUID(binding["workspace_id"]))
+            except (ValueError, TypeError, AttributeError):
+                raise WorkspaceError("SHARED_WORKSPACE_ID_INVALID", 409) from None
+            base = base / "workspaces" / workspace_id
+            if any(p.is_symlink() for p in (base, *base.parents)):
+                raise WorkspaceError("BRIEF_OUTPUT_SYMLINK_REFUSED", 409)
+        return base
 
     def verify_all(self):
         with self.store.connect() as db:
@@ -392,7 +419,7 @@ class Workspace:
             job = dict(original)
             if job.get("kind") == "snapshot-brief" and job.get("status") == "SUCCEEDED":
                 try:
-                    receipt = brief.verify(self.store.path.parent / "snapshot-briefs" / job["job_id"])
+                    receipt = brief.verify(self.output_root(job) / "snapshot-briefs" / job["job_id"])
                     if (receipt["snapshot_hash"] != job["result"]["snapshot_hash"]
                             or receipt["files"]["report.md"] != job["result"]["report_sha256"]):
                         raise brief.SnapshotBriefError("FROZEN_BRIEF_EVENT_BINDING_INVALID")

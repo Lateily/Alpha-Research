@@ -200,6 +200,36 @@ class MutationCase:
 
 MUTATIONS: tuple[MutationCase, ...] = (
     MutationCase(
+        mutation_id="WORKBENCH_SHARED_ACTOR_BINDING", component="Independent shared workspaces S1",
+        source_path="scripts/llm/workbench_shared_workspace.py", test_script="tests/test_workbench_shared_workspace.py",
+        before="        return self.system.start_job(payload, actor=actor, shared_binding=binding)",
+        after="        return self.system.start_job(payload, actor='forged@example.com', shared_binding=binding)",
+        expected_failure_marker="test_my_view_filters_but_team_can_read_both",
+        rationale="The verified actor, not a different identity, owns both job events and the personal projection.",
+    ),
+    MutationCase(
+        mutation_id="WORKBENCH_SHARED_LEGACY_SCHEMA_FENCE", component="Independent shared workspaces S1",
+        source_path="scripts/llm/nonprod_workbench.py", test_script="tests/test_workbench_shared_workspace.py",
+        before="            legacy.mkdir(exist_ok=True, mode=0o700)", after="            pass",
+        expected_failure_marker="test_default_mode_refuses_shared_state",
+        rationale="A physical empty-directory fence prevents even the actual old SQLite opener from creating misleading legacy state.",
+    ),
+    MutationCase(
+        mutation_id="WORKBENCH_SHARED_EXECUTION_IDENTITY", component="Independent shared workspaces S1",
+        source_path="scripts/llm/workbench_shared_workspace.py", test_script="tests/test_workbench_shared_workspace.py",
+        before='        if raw != git("show", code_sha + ":" + name):', after="        if False:",
+        expected_failure_marker="test_code_identity_is_server_derived_and_dirty_code_refused",
+        rationale="Dirty execution bytes cannot dispatch a task under a committed code identity.",
+    ),
+    MutationCase(
+        mutation_id="WORKBENCH_SHARED_LATEST_OWNED_FAILURE", component="Independent shared workspaces S1",
+        source_path="tools/nonprod_workbench/ui/shared-view.mjs", test_script="tests/test_workbench_shared_workspace.py",
+        before="  return selectMyJobs(jobs, login).filter(job => job.kind === kind)",
+        after="  return jobs.filter(job => job.kind === kind)",
+        expected_failure_marker="test_latest_owned_failure",
+        rationale="A team success cannot replace the current actor's latest STOP in the UI.",
+    ),
+    MutationCase(
         mutation_id="WORKBENCH_PRIVATE_ORIGIN", component="Bounded shared brief access",
         source_path="scripts/llm/nonprod_workbench.py", test_script="tests/test_nonprod_workbench.py",
         before="        if not isinstance(origin, str) or not re.fullmatch(\n            r\"https://[a-z0-9]+(?:-[a-z0-9]+)*\\.[a-z0-9]+(?:-[a-z0-9]+)*\\.ts\\.net:8443\", origin\n        ):",
