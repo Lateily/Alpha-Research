@@ -1,4 +1,4 @@
-"""Default-off shared attribution and read-only projections; no automatic sync."""
+"""Default-off shared attribution and verified read-only projections."""
 from __future__ import annotations
 
 import json
@@ -19,6 +19,7 @@ EXECUTION_FILES = (
     "scripts/llm/workbench_shared_inputs.py", "scripts/llm/workbench_shared_state.py",
     "scripts/llm/workbench_backup.py",
     "scripts/llm/workbench_shared_jobs.py", "scripts/llm/workbench_shared_worker.py",
+    "scripts/llm/workbench_shared_sync.py",
     "scripts/llm/workbench_earnings_trial.py", "scripts/llm/workbench_research.py",
     "scripts/llm/adapters/base.py", "scripts/llm/adapters/deepseek.py",
     "scripts/llm/adapters/__init__.py", "scripts/llm/adapters/deterministic.py",
@@ -63,6 +64,7 @@ class SharedWorkspace:
         self.system, self.store = system, system.store
         self._execution_identity = execution_identity(CODE_ROOT)
         self.queue = None
+        self.sync = None
 
     def identity(self, actor: str) -> dict:
         if not isinstance(actor, str) or not actor or len(actor) > 254 or any(ord(c) <= 32 for c in actor):
@@ -147,13 +149,27 @@ class SharedWorkspace:
             common.update(sync_status="EXPLICIT_IMPORT_ONLY", current_snapshot_id=None)
             with self.store.connect() as db:
                 latest_input = db.execute("SELECT snapshot_id FROM shared_inputs ORDER BY rowid DESC LIMIT 1").fetchone()
+            if self.sync is not None:
+                state = self.sync.state()
+                common.update(sync=state, automatic_sync=True, sync_status=state["status"],
+                              error=state["safe_error"], latest_attempt=state["latest_attempt"])
+                latest_input = (state["current_snapshot_id"],) if state["current_snapshot_id"] else None
             if latest_input:
                 try:
                     envelope = self.queue.inputs.verify(latest_input[0])
                     common.update(current_snapshot_id=envelope["snapshot_id"], input_hash=envelope["input_hash"],
-                                  observation=evidence.view(envelope["snapshot"]), error=None)
+                                  observation=evidence.view(envelope["snapshot"]), validation_scope=envelope["validation_scope"],
+                                  source_run_id=envelope["source_run_id"], source_trade_date=envelope["source_trade_date"],
+                                  full_nightly_acceptance="NOT_EVALUATED")
+                    if self.sync is None: common["error"] = None
+                    # governance-mutation: WORKBENCH_SHARED_ATTEMPT_SEPARATION
+                    if self.sync is not None:
+                        common["observation"]["run_identity"]["latest_attempt"] = state["latest_attempt"] or {
+                            "run_id": None, "target_trade_date": None, "report": None, "published": None}
                 except (OSError, ValueError):
-                    common.update(observation=None, error="FROZEN_INPUT_UNAVAILABLE")
+                    common.update(observation=None, current_snapshot_id=None, error="FROZEN_INPUT_UNAVAILABLE")
+            elif self.sync is not None:
+                common.update(observation=None, error=common["error"] or "NO_FROZEN_PUBLICATION")
         latest = [next((job for job in reversed(mine) if job["kind"] == kind), None)
                   for kind in ("observe", "snapshot-brief")]
         latest = self._views([job for job in latest if job is not None])
@@ -161,7 +177,7 @@ class SharedWorkspace:
                 "latest_owned_jobs": [self._metadata(job) for job in latest],
                 "owned_commands": {job["command_id"]: {"job_id": job["job_id"]} for job in mine if job.get("command_id")},
                 "page": page, "page_size": PAGE_SIZE, "my_total": len(mine), "team_total": len(jobs),
-                "common_data": common,
+                "common_data": common, "execution_identity": self._execution_identity,
                 "sample_purpose": "WORKFLOW_DEBUG", "human_review": "PENDING",
                 "production_authority": False, "trading_authority": False}
 

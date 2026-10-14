@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight, Database, Download, FileText, Play, RefreshCw, Users, X } from 'lucide-react';
 import { statusTone } from './status-tone.mjs';
-import { getPending, latestOwnedJob, pollSharedPending, recordSubmissionFailure, retainedStatus, savePending, sharedQueryState, sharedRead, sharedViewFreshness } from './shared-view.mjs';
+import { commonSyncView, getPending, latestOwnedJob, pollSharedPending, recordSubmissionFailure, retainedStatus, savePending, sharedQueryState, sharedRead, sharedViewFreshness } from './shared-view.mjs';
 
 const views = [['my', '我的任务', FileText], ['team', '团队结果', Users], ['common', '共同数据', Database]];
 function Status({ value, stale = false }) {
@@ -88,13 +88,16 @@ export default function SharedWorkspace({ api, access, refreshRevision }) {
   const total = view === 'my' ? data?.my_total || 0 : data?.team_total || 0;
   const common = data?.common_data, observation = common?.observation;
   const freshness = sharedViewFreshness(query, detailStale);
+  const syncView = commonSyncView(common, freshness.commonStale);
+  const syncTime = value => value == null ? 'NOT_CHECKED' : new Date(value * 1000).toLocaleString();
   return <div className="workspace-surface shared-workspace">
     <div className="shared-heading"><div><h2>共享研究工作台</h2><code>{login}</code></div>
-      <div className="shared-status"><Status value={query.connection} /><button className="icon-button" title="刷新" aria-label="刷新共享工作区" onClick={reload}><RefreshCw size={17} /></button></div>
+      <div className="shared-status"><code>{data?.execution_identity?.code_sha || 'VERSION_UNAVAILABLE'}</code><Status value={query.connection} /><button className="icon-button" title="刷新" aria-label="刷新共享工作区" onClick={reload}><RefreshCw size={17} /></button></div>
     </div>
     <div className="source-strip"><span>WORKFLOW_DEBUG</span><span>人工核验 PENDING</span><span>生产 / 交易权限 false</span><span>最新本人简报 <Status value={latest?.status} stale={freshness.commonStale} /></span></div>
     {query.error && <div className="shared-error" role="alert">DISCONNECTED · {query.error}</div>}
     {pending.some(item => !item.job_id) && <div className="source-strip"><Status value="SUBMISSION_UNCONFIRMED" stale={freshness.commonStale} /></div>}
+    {!syncView.canBrief && <div className="shared-error" role="status">{freshness.commonStale ? 'DISCONNECTED' : common?.error || 'NO_FROZEN_PUBLICATION'}</div>}
     <nav className="shared-tabs" aria-label="共享工作区视图">{views.map(([key, label, Icon]) => <button key={key} aria-current={view === key ? 'page' : undefined} onClick={() => { setView(key); setPage(0); }}><Icon size={16} />{label}</button>)}</nav>
     {view !== 'common' ? <>
       <div className="shared-toolbar"><span>{total} 个任务</span>{view === 'my' && <div><button disabled={busy || pending.length >= 2 || freshness.commonStale || !common?.current_snapshot_id} onClick={() => run('observe')}><Database size={16} />观察</button><button className="primary" disabled={busy || pending.length >= 2 || freshness.commonStale || !common?.current_snapshot_id} onClick={() => run('snapshot-brief')}><Play size={16} />{busy ? '提交中' : '生成简报'}</button>{pending.length > 0 && !busy && <button onClick={reload}><RefreshCw size={16} />核对原任务</button>}</div>}</div>
@@ -104,9 +107,12 @@ export default function SharedWorkspace({ api, access, refreshRevision }) {
       </button>)}{!rows.length && <p className="shared-empty">{data ? '暂无任务' : 'WAIT'}</p>}</div>
       <div className="shared-pagination"><button className="icon-button" title="上一页" aria-label="上一页" disabled={!page} onClick={() => setPage(p => p - 1)}><ChevronLeft size={17} /></button><span>{page + 1} / {Math.max(1, Math.ceil(total / 50))}</span><button className="icon-button" title="下一页" aria-label="下一页" disabled={(page + 1) * 50 >= total} onClick={() => setPage(p => p + 1)}><ChevronRight size={17} /></button></div>
     </> : <section className="shared-common">
-      <div className="section-title"><h3>共同数据</h3><Status value={common?.error || common?.sync_status || 'NOT_PRODUCED'} stale={freshness.commonStale} /></div>
+      <div className="section-title"><h3>共同数据</h3><Status value={syncView.status} /></div>
+      <dl className="shared-sync-times"><dt>上次检查</dt><dd>{syncTime(syncView.lastCheckedAt)}</dd><dt>上次同步成功</dt><dd>{syncTime(syncView.lastSuccessfulSyncAt)}</dd><dt>验证范围</dt><dd><code>{common?.validation_scope || 'NOT_EVALUATED'}</code></dd><dt>完整夜链验收</dt><dd>NOT_EVALUATED</dd></dl>
+      {syncView.error && <div className="shared-error" role="alert">{syncView.error}</div>}
       {freshness.commonStale && <div className="shared-error" role="status">DISCONNECTED · STALE</div>}
-      {observation ? <><div className="shared-source-identities">{[['最新尝试', observation.run_identity.latest_attempt], ['最后发布', observation.run_identity.last_published], ['当前观察', observation.run_identity.displayed]].map(([label, identity]) => <div key={label}><h3>{label}</h3><code>{identity.run_id || 'NOT_PRODUCED'}</code><span>{identity.target_trade_date || 'UNBOUND'}</span>{identity.report && <Status value={identity.report} stale={freshness.commonStale} />}{identity.snapshot_hash && <code>{identity.snapshot_hash}</code>}</div>)}</div>
+      <div className="shared-source-identities">{[['最新尝试', syncView.latestAttempt], ['最后发布', syncView.lastPublished], ['当前冻结输入', syncView.currentSnapshot]].map(([label, identity]) => <div key={label}><h3>{label}</h3><code>{identity.run_id || 'NOT_PRODUCED'}</code><span>{identity.target_trade_date || 'UNBOUND'}</span>{identity.report && <Status value={identity.report} stale={freshness.commonStale} />}{identity.snapshot_hash && <code>{identity.snapshot_hash}</code>}{identity.snapshot_id && <code>{identity.snapshot_id}</code>}</div>)}</div>
+      {observation ? <>
         <div className="table-scroll"><table><thead><tr><th>模块</th><th>源身份</th><th>身份 / 质量</th></tr></thead><tbody>{(observation.module_sources || []).map((item, i) => <tr key={i}><td>{item.module}</td><td><code>{item.run_id || 'UNBOUND'}</code><span>{item.source_trade_date || 'UNBOUND'}</span></td><td><Status value={item.identity_status} stale={freshness.commonStale} /><Status value={item.data_quality} stale={freshness.commonStale} /></td></tr>)}</tbody></table></div>
         <details><summary>来源与质量</summary><pre>{JSON.stringify(observation, null, 2)}</pre></details></> : <p className="shared-empty">{common?.error || 'NOT_PRODUCED'}</p>}
     </section>}

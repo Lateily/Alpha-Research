@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import stat
 import tempfile
 import uuid
 from pathlib import Path
@@ -195,12 +196,74 @@ class FrozenInputs:
         self.store = store
         self.base = store.path.parent / "frozen-inputs"
 
-    def import_once(self, source_root: Path) -> dict:
-        source_root = Path(source_root)
-        state_root = self.store.path.parent.resolve()
+    def check_source_root(self, source_root):
+        source_root = Path(source_root).absolute()
+        state = self.store.path.parent.resolve()
         source = source_root.resolve()
-        if source == state_root or source in state_root.parents or state_root in source.parents:
+        if source == state or source in state.parents or state in source.parents:
             raise WorkspaceError("FROZEN_SOURCE_STATE_OVERLAP", 409)
+        if (any(p.is_symlink() for p in (source_root, *source_root.parents))
+                or not source_root.is_dir()):
+            raise WorkspaceError("READ_ONLY_SOURCE_ROOT_INVALID", 409)
+        return source_root
+
+    @staticmethod
+    def _source_stamp(source_root):
+        # Content equality alone cannot distinguish a pointer ABA replacement.
+        rows = []
+        for path in (source_root, source_root / POINTER):
+            item = path.stat(follow_symlinks=False)
+            if stat.S_ISLNK(item.st_mode): raise WorkspaceError("SOURCE_CHANGED", 409)
+            rows.append((item.st_dev, item.st_ino, item.st_mtime_ns, item.st_ctime_ns))
+        return rows
+
+    def _capacity(self, db, input_hash):
+        registered = dict(db.execute("SELECT snapshot_id, input_hash FROM shared_inputs"))
+        history = set(registered.values())
+        work = self.store.path.parent / "input-write-evidence"
+        if work.exists(): history.update(p.name for p in work.iterdir())
+        known_ids = set(registered) | {str(uuid.uuid5(uuid.NAMESPACE_URL, "ar.shared-input.v1:" + value))
+                                     for value in history if re.fullmatch(r"[0-9a-f]{64}", value)}
+        envelopes = self.base / "envelopes"
+        if envelopes.exists():
+            history.update("orphan:" + p.name for p in envelopes.iterdir()
+                           if p.stem not in known_ids and str(uuid.uuid5(uuid.NAMESPACE_URL, "ar.shared-input.v1:" + input_hash)) != p.stem)
+        from workbench_workspace import MAX_EVENTS
+        events = db.execute("SELECT COUNT(*) FROM workspace_events").fetchone()[0]
+        reserved = db.execute("SELECT COUNT(*) FROM shared_jobs WHERE json_extract(body, '$.terminal_event_reserved')=1").fetchone()[0]
+        # Count uncommitted/staged/orphan directories as well as registry rows.
+        # governance-mutation: WORKBENCH_SHARED_SYNC_CAPACITY
+        if len(history | {input_hash}) > 100 or events + reserved >= MAX_EVENTS:
+            raise WorkspaceError("FROZEN_INPUT_CAPACITY_BLOCKED", 429)
+        for name in ("publications", "attempts"):
+            path = self.base / name
+            if path.exists() and len(list(path.iterdir())) >= 100:
+                raise WorkspaceError("FROZEN_INPUT_CAPACITY_BLOCKED", 429)
+
+    def _recheck_source(self, snapshot, source_root, originals, stamp):
+        # governance-mutation: WORKBENCH_SHARED_SYNC_FILE_BINDING
+        try:
+            reopened = validate_snapshot(snapshot, source_root)
+            if reopened != originals:
+                raise WorkspaceError("SOURCE_CHANGED", 409)
+            expected_attempt = snapshot["records"][ATTEMPT].get("source_sha256")
+            try:
+                raw_attempt = ev.read_local(source_root, ATTEMPT)
+                ev.parse(raw_attempt)
+                actual_attempt = ev.sha(raw_attempt)
+            except FileNotFoundError:
+                actual_attempt = None
+            if actual_attempt != expected_attempt:
+                raise WorkspaceError("SOURCE_CHANGED", 409)
+        except (OSError, ValueError, TypeError):
+            raise WorkspaceError("SOURCE_CHANGED", 409) from None
+        # governance-mutation: WORKBENCH_SHARED_SYNC_POST_POINTER
+        if self._source_stamp(source_root) != stamp or ev.read_local(source_root, POINTER) != originals[POINTER]:
+            raise WorkspaceError("SOURCE_CHANGED", 409)
+
+    def import_once(self, source_root: Path) -> dict:
+        source_root = self.check_source_root(source_root)
+        stamp = self._source_stamp(source_root)
         snapshot = ev.capture(source_root)
         originals = validate_snapshot(snapshot, source_root)
         for name in publication_paths(snapshot) - _required_paths(snapshot):
@@ -221,9 +284,9 @@ class FrozenInputs:
             db.execute("BEGIN IMMEDIATE")
             prior = db.execute("SELECT snapshot_id FROM shared_inputs WHERE input_hash=?", (input_hash,)).fetchone()
             if prior:
+                self._recheck_source(snapshot, source_root, originals, stamp)
                 return self._descriptor(self.verify(prior[0]))
-            if db.execute("SELECT COUNT(*) FROM shared_inputs").fetchone()[0] >= 100:
-                raise WorkspaceError("FROZEN_INPUT_CAPACITY_BLOCKED", 429)
+            self._capacity(db, input_hash)
             work = self.store.path.parent / "input-write-evidence" / input_hash
             snapshot_id = str(uuid.uuid5(uuid.NAMESPACE_URL, "ar.shared-input.v1:" + input_hash))
             capture_path = work / "capture.json"
@@ -266,8 +329,7 @@ class FrozenInputs:
                         "source_run_id": snapshot["published_run_id"], "source_trade_date": snapshot["target_trade_date"],
                         "validation_scope": SCOPE, "snapshot": snapshot}
             _new_or_identical(self.base / "envelopes" / (snapshot_id + ".json"), ev.canonical(envelope).encode(), evidence_root=work / "writes")
-            if ev.read_local(source_root, POINTER) != originals[POINTER]:
-                raise WorkspaceError("SOURCE_CHANGED", 409)
+            self._recheck_source(snapshot, source_root, originals, stamp)
             db.execute("INSERT INTO shared_inputs VALUES (?, ?, ?)", (snapshot_id, input_hash, ev.canonical(envelope)))
         return self._descriptor(self.verify(snapshot_id))
 

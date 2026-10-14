@@ -621,16 +621,20 @@ def main(argv=None):
     parser.add_argument("--private-allowlist", type=Path, help="Outside-repo owner-owned mode0600 member allowlist")
     parser.add_argument("--shared-workspace-v1", action="store_true", help="Opt-in isolated persistent shared jobs; requires private access")
     parser.add_argument("--shared-import-once", type=Path, help="Explicit one-time frozen input import for shared mode; no automatic synchronizer")
+    parser.add_argument("--read-only-auto-sync", action="store_true", help="Opt-in scoped file sync every 60 seconds; shared private mode and fixed source required")
     args = parser.parse_args(argv)
     host = serve_host(args.host)
     private = private_access(args.private_origin, args.owner_login, args.private_allowlist)
+    # governance-mutation: WORKBENCH_SHARED_SYNC_OPT_IN
+    if args.read_only_auto_sync and (not args.shared_workspace_v1 or private is None or args.read_only_source_root is None):
+        raise WorkbenchError("READ_ONLY_SYNC_CONFIGURATION_REQUIRED", 403)
     if args.shared_workspace_v1 and private is None:
         raise WorkbenchError("SHARED_PRIVATE_MODE_REQUIRED", 403)
     if args.shared_import_once and not args.shared_workspace_v1:
         raise WorkbenchError("SHARED_INPUT_STORE_REQUIRED", 403)
     assets = load_assets(ROOT / "tools/nonprod_workbench/dist")
     state_root = args.state_root or ROOT / ".ai-workspace/nonprod-workbench"
-    if args.read_only_source_root and (state_root.resolve() == args.read_only_source_root.resolve() or args.read_only_source_root.resolve() in state_root.resolve().parents):
+    if args.read_only_source_root and (state_root.resolve() == args.read_only_source_root.resolve() or args.read_only_source_root.resolve() in state_root.resolve().parents or state_root.resolve() in args.read_only_source_root.resolve().parents):
         raise WorkbenchError("STATE_MUST_BE_OUTSIDE_READ_ONLY_SOURCE")
     if args.brief_pack_root:
         pack_dir = args.brief_pack_root.resolve()
@@ -664,17 +668,21 @@ def main(argv=None):
     server = ThreadingHTTPServer((host, args.port), make_handler(store, assets, origin, secrets.token_hex(32), system, private=private, shared=shared))
     server.daemon_threads = True
     worker = None
-    if shared is not None:
-        worker = SharedWorker(queue)
-        worker.start()
-    if private is None:
-        worker = threading.Thread(target=system.scheduler, daemon=True)
-        worker.start()
-    if private:
-        print(f"NONPRODUCTION_PRIVATE {origin} | access=BRIEF_ONLY schedules=DENY paid=DENY production=DENY", flush=True)
-    else:
-        print(f"NONPRODUCTION_LOCAL {origin} | team=DENY paid=DENY production=DENY", flush=True)
     try:
+        if shared is not None:
+            worker = SharedWorker(queue)
+            if args.read_only_auto_sync:
+                from workbench_shared_sync import ReadOnlySync
+                shared.sync = ReadOnlySync(inputs, args.read_only_source_root)
+                shared.sync.start()
+            worker.start()
+        if private is None:
+            worker = threading.Thread(target=system.scheduler, daemon=True)
+            worker.start()
+        if private:
+            print(f"NONPRODUCTION_PRIVATE {origin} | access=BRIEF_ONLY schedules=DENY paid=DENY production=DENY", flush=True)
+        else:
+            print(f"NONPRODUCTION_LOCAL {origin} | team=DENY paid=DENY production=DENY", flush=True)
         server.serve_forever()
     except KeyboardInterrupt:
         pass
@@ -682,6 +690,7 @@ def main(argv=None):
         system.stopping.set()
         if shared is not None and worker is not None:
             worker.stop()
+            if shared.sync is not None: shared.sync.stop()
         elif worker is not None:
             worker.join(timeout=35)
         server.server_close()

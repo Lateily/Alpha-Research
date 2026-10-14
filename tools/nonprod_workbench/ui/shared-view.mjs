@@ -21,6 +21,20 @@ export function retainedStatus(value, stale) {
   return stale ? 'DISCONNECTED' : value;
 }
 
+export function commonSyncView(common, stale) {
+  const identities = common?.observation?.run_identity || {};
+  return {
+    status: retainedStatus(common?.sync_status || 'NOT_PRODUCED', stale),
+    error: common?.error || '',
+    lastCheckedAt: common?.sync?.last_checked_at ?? null,
+    lastSuccessfulSyncAt: common?.sync?.last_successful_sync_at ?? null,
+    latestAttempt: common?.latest_attempt || identities.latest_attempt || {},
+    lastPublished: identities.last_published || {},
+    currentSnapshot: { ...identities.displayed, snapshot_id: common?.current_snapshot_id },
+    canBrief: Boolean(common?.current_snapshot_id) && !stale
+  };
+}
+
 const pendingKey = workspaceId => `ar.shared.pending.v1.${workspaceId}`;
 export function getPending(storage, workspaceId) {
   if (!workspaceId) return [];

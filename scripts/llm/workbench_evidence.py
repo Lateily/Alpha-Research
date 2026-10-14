@@ -56,20 +56,33 @@ def read_local(root: Path, relative: str):
     # Open every component without following links. The configured root is
     # trusted by the launcher; paths obtained from artifacts are not trusted.
     flags = os.O_RDONLY | os.O_NOFOLLOW
-    fd = os.open(root, flags | os.O_DIRECTORY)
+    root_parts = Path(root).absolute().parts
+    if ".." in root_parts:
+        raise EvidenceError("SOURCE_PATH_INVALID")
+    fd = os.open(root_parts[0], flags | os.O_DIRECTORY)
     try:
-        for component in parts[:-1]:
+        for component in (*root_parts[1:], *parts[:-1]):
             new = os.open(component, flags | os.O_DIRECTORY, dir_fd=fd)
             os.close(fd)
             fd = new
-        file_fd = os.open(parts[-1], flags, dir_fd=fd)
+        # Refuse devices before opening; nonblocking also closes the stat/open FIFO race.
+        # governance-mutation: WORKBENCH_SHARED_SYNC_SPECIAL_FILE
+        entry = os.stat(parts[-1], dir_fd=fd, follow_symlinks=False)
+        if stat.S_ISLNK(entry.st_mode):
+            raise OSError("SOURCE_LINK_REFUSED")
+        if not stat.S_ISREG(entry.st_mode) or entry.st_size > MAX_FILE or not entry.st_mode & 0o444:
+            raise EvidenceError("SOURCE_SIZE_OR_TYPE_INVALID")
+        file_fd = os.open(parts[-1], flags | os.O_NONBLOCK, dir_fd=fd)
         with os.fdopen(file_fd, "rb") as stream:
             before = os.fstat(stream.fileno())
-            if not stat.S_ISREG(before.st_mode) or before.st_size > MAX_FILE:
+            if (not stat.S_ISREG(before.st_mode) or before.st_size > MAX_FILE
+                    or (entry.st_dev, entry.st_ino) != (before.st_dev, before.st_ino)
+                    or not before.st_mode & 0o444):
                 raise EvidenceError("SOURCE_SIZE_OR_TYPE_INVALID")
             raw = stream.read(MAX_FILE + 1)
             after = os.fstat(stream.fileno())
-            if (before.st_size, before.st_mtime_ns) != (after.st_size, after.st_mtime_ns) or len(raw) > MAX_FILE:
+            if ((before.st_size, before.st_mtime_ns, before.st_ctime_ns, before.st_mode)
+                    != (after.st_size, after.st_mtime_ns, after.st_ctime_ns, after.st_mode) or len(raw) > MAX_FILE):
                 raise EvidenceError("SOURCE_CHANGED_DURING_READ")
             return raw
     finally:

@@ -200,6 +200,60 @@ class MutationCase:
 
 MUTATIONS: tuple[MutationCase, ...] = (
     MutationCase(
+        mutation_id="WORKBENCH_SHARED_SYNC_OPT_IN", component="Scoped read-only sync S3",
+        source_path="scripts/llm/nonprod_workbench.py", test_script="tests/test_workbench_shared_sync.py",
+        before='    if args.read_only_auto_sync and (not args.shared_workspace_v1 or private is None or args.read_only_source_root is None):',
+        after='    if False:', expected_failure_marker="test_default_and_private_legacy_have_no_sync",
+        rationale="Automatic sync requires explicit shared/private/fixed-source configuration before runtime creation.",
+    ),
+    MutationCase(
+        mutation_id="WORKBENCH_SHARED_SYNC_POST_POINTER", component="Scoped read-only sync S3",
+        source_path="scripts/llm/workbench_shared_inputs.py", test_script="tests/test_workbench_shared_sync.py",
+        before='        if self._source_stamp(source_root) != stamp or ev.read_local(source_root, POINTER) != originals[POINTER]:',
+        after='        if False:', expected_failure_marker="test_pointer_aba_and_source_hash_change_refused",
+        rationale="A byte-identical pointer ABA must still prevent a staged input from becoming current.",
+    ),
+    MutationCase(
+        mutation_id="WORKBENCH_SHARED_SYNC_FILE_BINDING", component="Scoped read-only sync S3",
+        source_path="scripts/llm/workbench_shared_inputs.py", test_script="tests/test_workbench_shared_sync.py",
+        before='            reopened = validate_snapshot(snapshot, source_root)', after='            reopened = originals',
+        expected_failure_marker="test_pointer_aba_and_source_hash_change_refused",
+        rationale="Post-staging original hash/date/catalog changes must be rechecked against the captured publication.",
+    ),
+    MutationCase(
+        mutation_id="WORKBENCH_SHARED_SYNC_CAPACITY", component="Scoped read-only sync S3",
+        source_path="scripts/llm/workbench_shared_inputs.py", test_script="tests/test_workbench_shared_sync.py",
+        before='        if len(history | {input_hash}) > 100 or events + reserved >= MAX_EVENTS:', after='        if False:',
+        expected_failure_marker="test_failed_staging_counts_against_capacity",
+        rationale="Failed and orphan captures spend capacity even without a successful shared_inputs registry row.",
+    ),
+    MutationCase(
+        mutation_id="WORKBENCH_SHARED_ATTEMPT_SEPARATION", component="Scoped read-only sync S3",
+        source_path="scripts/llm/workbench_shared_workspace.py", test_script="tests/test_workbench_shared_sync.py",
+        before='                    if self.sync is not None:\n'
+               '                        common["observation"]["run_identity"]["latest_attempt"] = state["latest_attempt"] or {\n'
+               '                            "run_id": None, "target_trade_date": None, "report": None, "published": None}',
+        after='                    if False:\n'
+              '                        common["observation"]["run_identity"]["latest_attempt"] = state["latest_attempt"] or {\n'
+              '                            "run_id": None, "target_trade_date": None, "report": None, "published": None}',
+        expected_failure_marker="test_missing_pointer_still_displays_latest_safe_failed_attempt",
+        rationale="A new safe failed attempt remains visible beside an older retained publication even when the pointer is missing.",
+    ),
+    MutationCase(
+        mutation_id="WORKBENCH_SHARED_SYNC_SPECIAL_FILE", component="Scoped read-only sync S3",
+        source_path="scripts/llm/workbench_evidence.py", test_script="tests/test_workbench_shared_sync.py",
+        before='        entry = os.stat(parts[-1], dir_fd=fd, follow_symlinks=False)\n'
+               '        if stat.S_ISLNK(entry.st_mode):\n'
+               '            raise OSError("SOURCE_LINK_REFUSED")\n'
+               '        if not stat.S_ISREG(entry.st_mode) or entry.st_size > MAX_FILE or not entry.st_mode & 0o444:\n'
+               '            raise EvidenceError("SOURCE_SIZE_OR_TYPE_INVALID")\n'
+               '        file_fd = os.open(parts[-1], flags | os.O_NONBLOCK, dir_fd=fd)',
+        after='        file_fd = os.open(parts[-1], flags, dir_fd=fd)\n'
+              '        entry = os.fstat(file_fd)',
+        expected_failure_marker="test_real_fifo_and_socket_are_bounded_refusals",
+        rationale="Removing the pre-open special-file boundary reproduces a real FIFO block, caught as a bounded behavior assertion.",
+    ),
+    MutationCase(
         mutation_id="WORKBENCH_SHARED_CURRENT_ATTEMPT", component="Shared queue S2b R1",
         source_path="scripts/llm/workbench_shared_jobs.py", test_script="tests/test_workbench_shared_jobs.py",
         before='        if (current is None or current != attempts[-1] or current.get("status") != job["status"]\n'
@@ -505,8 +559,8 @@ MUTATIONS: tuple[MutationCase, ...] = (
     MutationCase(
         mutation_id="WORKBENCH_PRIVATE_STARTUP_SCHEDULER", component="Bounded shared brief access",
         source_path="scripts/llm/nonprod_workbench.py", test_script="tests/test_nonprod_workbench.py",
-        before="    if private is None:\n        worker = threading.Thread(target=system.scheduler, daemon=True)",
-        after="    if True:\n        worker = threading.Thread(target=system.scheduler, daemon=True)",
+        before="        if private is None:\n            worker = threading.Thread(target=system.scheduler, daemon=True)",
+        after="        if True:\n            worker = threading.Thread(target=system.scheduler, daemon=True)",
         expected_failure_marker="test_private_startup_has_no_scheduler_and_keeps_pack_arguments",
         rationale="Private startup cannot activate the local scheduler.",
     ),
@@ -2216,7 +2270,7 @@ MUTATIONS: tuple[MutationCase, ...] = (
     MutationCase(
         mutation_id="WORKSPACE_SOURCE_PREWRITE_CHECK", component="AIOS local workspace",
         source_path="scripts/llm/nonprod_workbench.py", test_script="tests/test_workbench_workspace.py",
-        before='    if args.read_only_source_root and (state_root.resolve() == args.read_only_source_root.resolve() or args.read_only_source_root.resolve() in state_root.resolve().parents):', after='    if False:',
+        before='    if args.read_only_source_root and (state_root.resolve() == args.read_only_source_root.resolve() or args.read_only_source_root.resolve() in state_root.resolve().parents or state_root.resolve() in args.read_only_source_root.resolve().parents):', after='    if False:',
         expected_failure_marker="test_source_overlap_is_rejected_before_store_creates_files",
         rationale="Source/state overlap must be refused before the Store constructor writes anything.",
     ),

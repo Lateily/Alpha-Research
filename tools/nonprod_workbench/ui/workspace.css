@@ -122,3 +122,7 @@ textarea:focus-visible { outline: 3px solid #8bb6e5; outline-offset: 2px; }
 .run-identity .workspace-table table { min-width: 1050px; }
 .run-identity td:nth-child(2) { min-width: 300px; }
 .run-identity td small { display: block; max-width: 160px; margin-top: 6px; line-height: 1.5; color: #727c77; }
+.shared-sync-times { display: grid; grid-template-columns: minmax(90px, auto) minmax(0, 1fr); gap: 8px 16px; margin: 16px 0; }
+.shared-sync-times dd { margin: 0; overflow-wrap: anywhere; }
+.shared-status code { max-width: 180px; overflow-wrap: anywhere; font-size: 11px; }
+@media (max-width: 600px) { .shared-heading { align-items: flex-start; } .shared-status { flex-wrap: wrap; justify-content: flex-end; } .shared-status code { max-width: 110px; } }

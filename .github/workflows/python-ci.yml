@@ -185,6 +185,10 @@ jobs:
       # runtime baseline metadata, and redacted secret/local-state hygiene.
       - name: Team AI Workspace contract and doctor regression (offline)
         run: python3 tests/test_team_ai_workspace.py
+      - name: Scoped read-only shared sync S3 (synthetic offline fixtures)
+        run: |
+          python3 -B tests/test_workbench_shared_sync.py
+          python3 -B scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/workbench_shared_sync_v1.task.json
       - name: AIOS shared skill registry regression (offline)
         run: python3 tests/test_skill_registry.py
       - name: Transactional forward-return backfill selftest

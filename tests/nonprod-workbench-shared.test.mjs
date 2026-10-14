@@ -3,6 +3,24 @@ import test from 'node:test';
 import { existsSync } from 'node:fs';
 const url = new URL('../tools/nonprod_workbench/ui/shared-view.mjs', import.meta.url);
 const view = existsSync(url) ? await import(url) : {};
+test('common sync display retains old dates, new errors, times and separate identities', () => {
+  assert.equal(typeof view.commonSyncView, 'function', 'missing common synchronization display');
+  const common = { current_snapshot_id: 'old-input', error: 'SOURCE_CHANGED', sync_status: 'SYNC_FAILED',
+    sync: { last_checked_at: 200, last_successful_sync_at: 100, source_run_id: 'old-run', source_trade_date: '20261012' },
+    latest_attempt: { run_id: 'new-failed', report: 'INCOMPLETE', target_trade_date: '20261014' },
+    observation: { run_identity: { latest_attempt: { run_id: 'old-attempt' }, last_published: { run_id: 'old-run', target_trade_date: '20261012' }, displayed: { run_id: 'old-run' } } } };
+  const result = view.commonSyncView(common, false);
+  assert.equal(result.status, 'SYNC_FAILED');
+  assert.equal(result.error, 'SOURCE_CHANGED');
+  assert.equal(result.lastCheckedAt, 200);
+  assert.equal(result.lastSuccessfulSyncAt, 100);
+  assert.equal(result.latestAttempt.run_id, 'new-failed');
+  assert.equal(result.lastPublished.target_trade_date, '20261012');
+  assert.equal(result.currentSnapshot.run_id, 'old-run');
+  assert.equal(view.commonSyncView(common, true).status, 'DISCONNECTED');
+  assert.equal(view.commonSyncView({ error: 'FROZEN_PUBLICATION_MISSING_OR_CONFLICTING' }, false).canBrief, false);
+  assert.equal(result.canBrief, true);
+});
 const jobs = [
   { job_id: 'mine-old', actor: 'owner@example.com', kind: 'snapshot-brief', status: 'SUCCEEDED', submitted_at: 1 },
   { job_id: 'mine-new', actor: 'owner@example.com', kind: 'snapshot-brief', status: 'STOP', submitted_at: 3 },
