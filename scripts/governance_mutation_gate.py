@@ -254,6 +254,31 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="A completed new target cannot be reused for a different archive identity even when its exported content is identical.",
     ),
     MutationCase(
+        mutation_id="WORKBENCH_SHARED_HISTORICAL_EVIDENCE_RETRY", component="Bound historical migration evidence S2a",
+        source_path="scripts/llm/workbench_shared_state.py", test_script="tests/test_workbench_shared_state.py",
+        before='                if any(path.name != backup_hash and (not has_intent or path.relative_to(staging).as_posix() not in historical)\n'
+               '                       for path in evidence_base.iterdir()):',
+        after='                if any(path.name != backup_hash for path in evidence_base.iterdir()):',
+        expected_failure_marker="test_second_generation_partial_receipt_retry_preserves_bound_history",
+        rationale="Manifest-bound prior recovery evidence must coexist with the identical current source during interrupted migration and restore retries.",
+    ),
+    MutationCase(
+        mutation_id="WORKBENCH_SHARED_HISTORICAL_EVIDENCE_INVENTORY", component="Bound historical migration evidence S2a",
+        source_path="scripts/llm/workbench_shared_state.py", test_script="tests/test_workbench_shared_state.py",
+        before='    if complete and (directories != expected_dirs or files != set(expected_files)):',
+        after='    if False:',
+        expected_failure_marker="test_second_generation_missing_or_altered_history_is_not_healed",
+        rationale="After artifact restoration reaches database creation, missing archived historical evidence is corruption and must not be reconstructed on retry.",
+    ),
+    MutationCase(
+        mutation_id="WORKBENCH_SHARED_HISTORICAL_EVIDENCE_CURRENT_INTENT", component="Bound historical migration evidence S2a",
+        source_path="scripts/llm/workbench_shared_state.py", test_script="tests/test_workbench_shared_state.py",
+        before='path.name != backup_hash and (not has_intent or path.relative_to(staging).as_posix() not in historical)',
+        after='path.name != backup_hash and path.relative_to(staging).as_posix() not in historical',
+        expected_failure_marker="test_second_generation_retry_refuses_foreign_or_different_current_source",
+        rationale="Archived history alone cannot bind an unpublished current intent; foreign evidence and different current backups remain refused.",
+    ),
+    MutationCase(
         mutation_id="WORKBENCH_SHARED_EXECUTOR_REVISION", component="Independent shared workspaces S1",
         source_path="scripts/llm/workbench_shared_workspace.py", test_script="tests/test_workbench_shared_workspace.py",
         before='            if current["source_tree_hash"] != self._execution_identity["source_tree_hash"]:',

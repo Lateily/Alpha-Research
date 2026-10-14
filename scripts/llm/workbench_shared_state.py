@@ -84,6 +84,32 @@ def _ensure(path, raw, *, evidence_root):
         write_new(path, raw, evidence_root=evidence_root)
 
 
+def _check_historical_evidence(staging, manifest, backup_hash):
+    base = staging / "migration-evidence"
+    current = base / backup_hash
+    expected_dirs = {name for name in manifest["directories"] if name.startswith("migration-evidence/")}
+    expected_files = {name: digest for name, digest in manifest["files"].items() if name.startswith("migration-evidence/")}
+    directories, files = set(), set()
+    for path in base.rglob("*"):
+        if path == current or current in path.parents: continue
+        name = path.relative_to(staging).as_posix()
+        if path.is_symlink(): raise ev.EvidenceError("MIGRATION_HISTORICAL_EVIDENCE_CONFLICT")
+        if path.is_dir():
+            if name not in expected_dirs: raise ev.EvidenceError("MIGRATION_HISTORICAL_EVIDENCE_CONFLICT")
+            directories.add(name)
+        elif path.is_file():
+            if name not in expected_files or ev.sha(ev.read_local(staging, name)) != expected_files[name]:
+                raise ev.EvidenceError("MIGRATION_HISTORICAL_EVIDENCE_CONFLICT")
+            files.add(name)
+        else: raise ev.EvidenceError("MIGRATION_HISTORICAL_EVIDENCE_CONFLICT")
+    # Database creation follows all source artifact writes, so missing history
+    # after this boundary is damage, not an unfinished restore to fill in.
+    complete = (staging / "shared-workbench.sqlite3").exists()
+    # governance-mutation: WORKBENCH_SHARED_HISTORICAL_EVIDENCE_INVENTORY
+    if complete and (directories != expected_dirs or files != set(expected_files)):
+        raise ev.EvidenceError("MIGRATION_HISTORICAL_EVIDENCE_CONFLICT")
+
+
 def migrate_legacy(backup_root: Path, target_root: Path) -> dict:
     import workbench_backup as backup
     backup_root, target = Path(backup_root), Path(target_root)
@@ -115,15 +141,20 @@ def migrate_legacy(backup_root: Path, target_root: Path) -> dict:
     if staging.exists():
         if staging.is_symlink() or not staging.is_dir(): raise ev.EvidenceError("MIGRATION_STAGING_UNSAFE")
         if any(staging.iterdir()):
-            if (staging / "migration-intent.json").exists():
+            has_intent = (staging / "migration-intent.json").exists()
+            if has_intent:
                 saved = ev.parse(ev.read_local(staging, "migration-intent.json"))
                 if saved != intent: raise ev.EvidenceError("MIGRATION_SOURCE_CONFLICT")
             elif any(path.name != "migration-evidence" for path in staging.iterdir()):
                 raise ev.EvidenceError("MIGRATION_UNBOUND_STAGING_REQUIRES_RECONCILIATION")
             if evidence_base.exists():
                 if evidence_base.is_symlink() or not evidence_base.is_dir(): raise ev.EvidenceError("MIGRATION_STAGING_UNSAFE")
-                if any(path.name != backup_hash for path in evidence_base.iterdir()):
+                historical = {name for name in manifest["directories"] if name.startswith("migration-evidence/") and name.count("/") == 1}
+                # governance-mutation: WORKBENCH_SHARED_HISTORICAL_EVIDENCE_RETRY
+                if any(path.name != backup_hash and (not has_intent or path.relative_to(staging).as_posix() not in historical)
+                       for path in evidence_base.iterdir()):
                     raise ev.EvidenceError("MIGRATION_SOURCE_CONFLICT")
+            _check_historical_evidence(staging, manifest, backup_hash)
     else:
         durable_directory(staging)
     # A directory entry binds the source before the first byte of intent is written.

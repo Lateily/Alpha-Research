@@ -326,6 +326,114 @@ class MigrationTests(unittest.TestCase):
         self.assertEqual((restored / relative).read_bytes(), raw)
         self.assertTrue(any(row["status"] == "RECOVERY_EVIDENCE" for row in backup.verify_shared(exported)["artifact_inventory"]))
 
+    def second_generation_archive(self):
+        state = self.state()
+        shared = wb.Store(self.root / "generation-source", shared_v1=True)
+        first = self.root / "generation-A"; backup.backup_shared(shared, first)
+        migrated = self.root / "generation-B"; seen = {}
+        with interrupted_file_write(state, lambda path: path.name == "migration-receipt.json", "during_write", seen):
+            with self.assertRaises(RuntimeError): state.migrate_legacy(first, migrated)
+        state.migrate_legacy(first, migrated)
+        archive = self.root / "generation-C"
+        backup.backup_shared(wb.Store(migrated, shared_v1=True), archive)
+        return archive, backup.verify_shared(archive)
+
+    def test_second_generation_partial_receipt_retry_preserves_bound_history(self):
+        state = self.state(); archive, manifest = self.second_generation_archive()
+        before = {p.relative_to(archive): p.read_bytes() for p in archive.rglob("*") if p.is_file()}
+        history = {name: (archive / name).read_bytes() for name in manifest["files"] if name.startswith("migration-evidence/")}
+        self.assertTrue(history)
+        for restore in (False, True):
+            with self.subTest(restore=restore):
+                target = self.root / ("generation-D-restore" if restore else "generation-D-migrate")
+                migrate = backup.restore_shared if restore else state.migrate_legacy
+                seen = {}
+                with interrupted_file_write(state, lambda path: path.name == "migration-receipt.json", "during_write", seen):
+                    with self.assertRaises(RuntimeError): migrate(archive, target)
+                stage = target.parent / ("." + target.name + ".migration")
+                partial = seen["partial"].read_bytes()
+                self.assertEqual(len(partial), 8)
+                self.assertFalse(target.exists())
+                self.assertFalse(seen["destination"].exists())
+                with self.assertRaisesRegex(ValueError, "MIGRATION_STAGING_NOT_SERVABLE"): wb.Store(stage, shared_v1=True)
+                try: result = migrate(archive, target)
+                except ValueError as exc: self.fail("identical second-generation retry refused: " + str(exc))
+                self.assertEqual(result["status"], "LOCAL_SHARED_RESTORE_VERIFIED" if restore else "SHARED_MIGRATION_VERIFIED")
+                self.assertEqual(result["backup_hash"], manifest["backup_hash"])
+                self.assertEqual({name: (target / name).read_bytes() for name in history}, history)
+                self.assertEqual((target / seen["partial"].relative_to(stage)).read_bytes(), partial)
+                wb.Store(target, shared_v1=True)
+                self.assertEqual(state.migrate_legacy(archive, target)["backup_hash"], manifest["backup_hash"])
+        self.assertEqual({p.relative_to(archive): p.read_bytes() for p in archive.rglob("*") if p.is_file()}, before)
+
+    def test_second_generation_missing_or_altered_history_is_not_healed(self):
+        state = self.state(); archive, manifest = self.second_generation_archive()
+        historical = next(name for name in manifest["files"] if name.startswith("migration-evidence/"))
+        for damage in ("missing-file", "altered-file", "missing-directory", "extra-file", "extra-directory"):
+            with self.subTest(damage=damage):
+                target = self.root / ("history-" + damage); seen = {}
+                with interrupted_file_write(state, lambda path: path.name == "migration-receipt.json", "during_write", seen):
+                    with self.assertRaises(RuntimeError): state.migrate_legacy(archive, target)
+                stage = target.parent / ("." + target.name + ".migration")
+                path = stage / historical
+                if damage == "missing-file": path.unlink()
+                elif damage == "altered-file": path.write_bytes(b"altered-historical-evidence")
+                elif damage == "missing-directory": shutil.rmtree(path.parent)
+                elif damage == "extra-file": (path.parent / "unbound.partial").write_bytes(b"foreign")
+                else: (path.parent / "unbound-directory").mkdir()
+                before = {p.relative_to(stage): p.read_bytes() for p in stage.rglob("*") if p.is_file()}
+                with self.assertRaisesRegex(ValueError, "MIGRATION_HISTORICAL_EVIDENCE_CONFLICT"):
+                    state.migrate_legacy(archive, target)
+                self.assertFalse(target.exists())
+                self.assertEqual({p.relative_to(stage): p.read_bytes() for p in stage.rglob("*") if p.is_file()}, before)
+
+    def test_second_generation_retry_refuses_foreign_or_different_current_source(self):
+        state = self.state(); archive, manifest = self.second_generation_archive()
+        different = self.root / "different-generation-C"; shutil.copytree(archive, different)
+        other_manifest = {**manifest, "archive_label": "different-current-backup"}
+        other_manifest["backup_hash"] = ev.sealed({k: v for k, v in other_manifest.items() if k != "backup_hash"})
+        (different / "manifest.json").write_bytes(ev.canonical(other_manifest).encode())
+        for foreign in (False, True):
+            target = self.root / ("foreign-history" if foreign else "different-current"); seen = {}
+            with interrupted_file_write(state, lambda path: path.name == "migration-receipt.json", "during_write", seen):
+                with self.assertRaises(RuntimeError): state.migrate_legacy(archive, target)
+            stage = target.parent / ("." + target.name + ".migration")
+            if foreign:
+                (stage / "migration-evidence" / ("f" * 64)).mkdir()
+            before = {p.relative_to(stage): p.read_bytes() for p in stage.rglob("*") if p.is_file()}
+            with self.assertRaisesRegex(ValueError, "MIGRATION_SOURCE_CONFLICT"):
+                state.migrate_legacy(archive if foreign else different, target)
+            self.assertFalse(target.exists())
+            self.assertEqual({p.relative_to(stage): p.read_bytes() for p in stage.rglob("*") if p.is_file()}, before)
+
+        target = self.root / "unbound-historical"; seen = {}
+        with interrupted_file_write(state, lambda path: path.name == "migration-intent.json", "during_write", seen):
+            with self.assertRaises(RuntimeError): state.migrate_legacy(archive, target)
+        stage = target.parent / ("." + target.name + ".migration")
+        historical_root = next(name for name in manifest["directories"] if name.startswith("migration-evidence/") and name.count("/") == 1)
+        (stage / historical_root).mkdir()
+        partial = seen["partial"].read_bytes()
+        with self.assertRaisesRegex(ValueError, "MIGRATION_SOURCE_CONFLICT"):
+            state.migrate_legacy(archive, target)
+        self.assertFalse(target.exists())
+        self.assertEqual(seen["partial"].read_bytes(), partial)
+
+    def test_second_generation_interrupted_historical_file_restore_converges(self):
+        state = self.state(); archive, manifest = self.second_generation_archive()
+        historical = next(name for name in manifest["files"] if name.startswith("migration-evidence/"))
+        target = self.root / "partial-history-restore"; seen = {}
+        with interrupted_file_write(state, lambda path: path.as_posix().endswith("/" + historical), "during_write", seen):
+            with self.assertRaises(RuntimeError): state.migrate_legacy(archive, target)
+        stage = target.parent / ("." + target.name + ".migration")
+        self.assertFalse((stage / "shared-workbench.sqlite3").exists())
+        self.assertFalse(seen["destination"].exists())
+        partial = seen["partial"].read_bytes()
+        try: result = state.migrate_legacy(archive, target)
+        except ValueError as exc: self.fail("incomplete historical restore refused: " + str(exc))
+        self.assertEqual(result["status"], "SHARED_MIGRATION_VERIFIED")
+        self.assertEqual((target / historical).read_bytes(), (archive / historical).read_bytes())
+        self.assertEqual((target / seen["partial"].relative_to(stage)).read_bytes(), partial)
+
     def test_atomic_publish_hides_partial_file_and_never_replaces_committed_bytes(self):
         raw = b'{"status":"UNSEALED_TEST_EVIDENCE"}'
         for phase in ("after_creation", "during_write", "before_publish"):
