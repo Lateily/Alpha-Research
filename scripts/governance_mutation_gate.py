@@ -200,6 +200,29 @@ class MutationCase:
 
 MUTATIONS: tuple[MutationCase, ...] = (
     MutationCase(
+        mutation_id="WORKBENCH_SHARED_CURRENT_ATTEMPT", component="Shared queue S2b R1",
+        source_path="scripts/llm/workbench_shared_jobs.py", test_script="tests/test_workbench_shared_jobs.py",
+        before='        if (current is None or current != attempts[-1] or current.get("status") != job["status"]\n'
+               '                or (job["status"] == "RUNNING" and current["token_hash"] != job["token_hash"])):',
+        after='        if False:', expected_failure_marker="test_current_attempt_contract_shared_by_backup_recovery_and_finish",
+        rationale="Backup, recovery and finish must reject stale, abandoned or token-contradictory current attempts.",
+    ),
+    MutationCase(
+        mutation_id="WORKBENCH_SHARED_RECOVERY_OBSERVATION", component="Shared queue S2b R2",
+        source_path="scripts/llm/workbench_shared_jobs.py", test_script="tests/test_workbench_shared_jobs.py",
+        before='        if job["kind"] == "observe":', after='        if False:',
+        expected_failure_marker="test_sealed_observe_recovery_restores_observation_projection",
+        rationale="Sealed observe recovery must persist the verified observation before its unique success terminal.",
+    ),
+    MutationCase(
+        mutation_id="WORKBENCH_SHARED_CAPACITY_RENEWAL", component="Shared queue S2b R3",
+        source_path="scripts/llm/nonprod_workbench.py", test_script="tests/test_workbench_shared_jobs.py",
+        before='                            if shared is None or exc.code != "WORKSPACE_EVENT_LIMIT": raise',
+        after='                            if True: raise',
+        expected_failure_marker="test_session_renewal_remains_available_at_reserved_event_capacity",
+        rationale="Verified shared entry renews read-only sessions at reserved or full event capacity without spending a terminal slot.",
+    ),
+    MutationCase(
         mutation_id="WORKBENCH_SHARED_ATOMIC_CLAIM", component="Shared queue S2b",
         source_path="scripts/llm/workbench_shared_jobs.py", test_script="tests/test_workbench_shared_jobs.py",
         before='                if job["status"] != "QUEUED": continue',

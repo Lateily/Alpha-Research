@@ -487,7 +487,7 @@ def make_handler(store, assets, origin, session, system=None, private=None, shar
         def log_message(self, *_args):
             pass
 
-        def reply(self, status, payload, mime="application/json", cookie=False, session_value=None):
+        def reply(self, status, payload, mime="application/json", cookie=False, session_value=None, login_audit=None):
             raw = payload if isinstance(payload, bytes) else canonical(payload).encode()
             self.send_response(status)
             self.send_header("Content-Type", mime + "; charset=utf-8")
@@ -496,6 +496,8 @@ def make_handler(store, assets, origin, session, system=None, private=None, shar
             self.send_header("X-Content-Type-Options", "nosniff")
             self.send_header("Referrer-Policy", "no-referrer")
             self.send_header("Content-Security-Policy", "default-src 'self'; connect-src 'self'; img-src 'self' data:; style-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'")
+            if login_audit is not None:
+                self.send_header("X-Workbench-Login-Audit", login_audit)
             if cookie:
                 secure = "; Secure" if private is not None else ""
                 self.send_header("Set-Cookie", f"ar_workbench={session_value or session}; HttpOnly; SameSite=Strict; Path=/" + secure)
@@ -512,9 +514,16 @@ def make_handler(store, assets, origin, session, system=None, private=None, shar
                     headers["Cookie"] = f"ar_workbench={browser_session}"
                     authorize(headers, origin, browser_session)
                     content, mime = assets[self.path]
+                    login_audit = None
                     if identity and system is not None:
-                        system.audit_login(identity["login"])
-                    self.reply(200, content, mime, cookie=True, session_value=browser_session)
+                        try:
+                            system.audit_login(identity["login"])
+                            if shared is not None: login_audit = "APPENDED"
+                        except workspace.WorkspaceError as exc:
+                            # governance-mutation: WORKBENCH_SHARED_CAPACITY_RENEWAL
+                            if shared is None or exc.code != "WORKSPACE_EVENT_LIMIT": raise
+                            login_audit = "EVENT_CAPACITY_EXHAUSTED"
+                    self.reply(200, content, mime, cookie=True, session_value=browser_session, login_audit=login_audit)
                     return
                 authorize(self.headers, origin, browser_session)
                 if self.path == "/api/state":

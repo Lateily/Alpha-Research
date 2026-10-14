@@ -2,9 +2,11 @@
 import contextlib
 import http.client
 import importlib.util
+import io
 import json
 import os
 import signal
+import shutil
 import sqlite3
 import subprocess
 import sys
@@ -185,6 +187,27 @@ class SharedJobTests(unittest.TestCase):
             response = connection.getresponse(); raw = response.read()
             return response.status, (json.loads(raw) if path != "/" else raw), response.getheader("Set-Cookie")
         finally: connection.close()
+
+    def entry_get(self, path="/", *, headers=None, shared_mode=True):
+        values = {"Host": self.private.origin.split("//")[1], "Origin": self.private.origin,
+                  "Tailscale-User-Login": OWNER,
+                  "Cookie": "ar_workbench=" + wb.private_session("first-session", OWNER)}
+        values.update(headers or {})
+        class Transport:
+            def __init__(self):
+                self.input = io.BytesIO((f"GET {path} HTTP/1.0\r\n" + "".join(
+                    f"{key}: {value}\r\n" for key, value in values.items()) + "\r\n").encode())
+                self.output = b""
+            def makefile(self, *args): return self.input
+            def settimeout(self, value): pass
+            def sendall(self, value): self.output += value
+        transport = Transport()
+        handler = wb.make_handler(self.store, {"/": (b"fixture", "text/html")}, self.private.origin,
+                                  "renewed-session", self.system, self.private, self.view if shared_mode else None)
+        handler(transport, ("127.0.0.1", 12345), object())
+        head, body = transport.output.split(b"\r\n\r\n", 1)
+        lines = head.split(b"\r\n", 1)
+        return int(lines[0].split()[1]), http.client.parse_headers(io.BytesIO(lines[1] + b"\r\n\r\n")), body
 
     def test_enqueue_returns_before_renderer_completes(self):
         with self.server() as port:
@@ -428,6 +451,110 @@ class SharedJobTests(unittest.TestCase):
         except Exception as exc: self.fail(f"missing technical attempt must be quarantined, not crash: {type(exc).__name__}")
         self.assertEqual(report["recovery_required"], [job["job_id"]])
         self.assertEqual(self.enqueue()["status"], "RECOVERY_REQUIRED")
+
+    def test_dangling_current_attempt_is_quarantined(self):
+        job = self.enqueue(); self.queue.claim()
+        body = self.body(job["job_id"]); body["attempt_id"] = "00000000-0000-4000-8000-000000000001"
+        with self.store.connect() as db:
+            db.execute("UPDATE shared_jobs SET body=? WHERE job_id=?", (ev.canonical(body), job["job_id"]))
+        try: report = self.queue.recover()
+        except Exception as exc: self.fail(f"intact attempt rows with dangling pointer must not crash: {type(exc).__name__}")
+        self.assertEqual(report["recovery_required"], [job["job_id"]])
+        self.assertEqual(self.body(job["job_id"])["status"], "RECOVERY_REQUIRED")
+
+    def test_current_attempt_contract_shared_by_backup_recovery_and_finish(self):
+        job = self.enqueue(); old = self.queue.claim()
+        self.queue.recover(); current = self.queue.claim()
+        self.assertEqual(worker.run_attempt(old)["status"], "SUCCEEDED")
+        original = self.body(job["job_id"])
+        with self.store.connect() as db:
+            rows = db.execute("SELECT attempt_id, body FROM shared_attempts ORDER BY rowid").fetchall()
+        cases = ("old_pointer", "status", "token", "number", "binding")
+        for mode in cases:
+            for consumer in ("backup", "recovery", "finish"):
+                with self.subTest(mode=mode, consumer=consumer):
+                    state = self.root / (mode + "-" + consumer)
+                    shutil.copytree(self.store.path.parent, state)
+                    store = wb.Store(state, shared_v1=True)
+                    view = shared.SharedWorkspace(ws.Workspace(store, private_mode=True))
+                    queue = jobs.SharedJobQueue(view, FrozenInputs(store), self.sha)
+                    body = dict(original)
+                    changed = json.loads(rows[-1][1])
+                    if mode == "old_pointer": body["attempt_id"] = old["attempt_id"]
+                    elif mode == "status": changed["status"] = "ABANDONED"
+                    elif mode == "token": changed["token_hash"] = "0" * 64
+                    elif mode == "number": changed["number"] = 1
+                    else: changed["binding"]["input_hash"] = "0" * 64
+                    with store.connect() as db:
+                        db.execute("UPDATE shared_jobs SET body=? WHERE job_id=?", (ev.canonical(body), job["job_id"]))
+                        db.execute("UPDATE shared_attempts SET body=? WHERE attempt_id=?", (ev.canonical(changed), current["attempt_id"]))
+                    if consumer == "backup":
+                        with self.assertRaises(ev.EvidenceError):
+                            backup.backup_shared(store, self.root / ("invalid-" + mode))
+                    elif consumer == "recovery":
+                        self.assertEqual(queue.recover()["recovery_required"], [job["job_id"]])
+                    else:
+                        claim = dict(current)
+                        if mode == "old_pointer": claim["attempt_id"] = old["attempt_id"]
+                        self.assertEqual(queue.finish(claim, {"status": "STOP"})["status"], "RECOVERY_REQUIRED")
+
+    def test_sealed_observe_recovery_restores_observation_projection(self):
+        job = self.enqueue(kind="observe"); claim = self.queue.claim()
+        self.assertEqual(worker.run_attempt(claim)["status"], "SUCCEEDED")
+        seal = Path(claim["output_root"]) / "seal.json"
+        before = (seal.stat().st_ino, seal.stat().st_mtime_ns, seal.read_bytes())
+        self.assertEqual(self.queue.recover()["converged"], [job["job_id"]])
+        with self.store.connect() as db:
+            observed = db.execute("SELECT snapshot_hash, body FROM workspace_observations").fetchall()
+            self.assertEqual(len(observed), 1)
+            self.assertEqual(json.loads(observed[0][1]), claim["envelope"]["snapshot"])
+            self.assertEqual(sum(e["kind"] == "SHARED_JOB_TERMINAL" for e in self.system.events(db)), 1)
+        self.assertEqual(self.queue.recover()["converged"], [])
+        self.assertEqual((seal.stat().st_ino, seal.stat().st_mtime_ns, seal.read_bytes()), before)
+
+    def test_sealed_observe_recovery_checks_observation_capacity(self):
+        job = self.enqueue(kind="observe"); claim = self.queue.claim()
+        self.assertEqual(worker.run_attempt(claim)["status"], "SUCCEEDED")
+        with self.store.connect() as db:
+            db.executemany("INSERT INTO workspace_observations VALUES (?, ?)", [(f"existing-{n}", "{}") for n in range(100)])
+        self.assertEqual(self.queue.recover()["recovery_required"], [job["job_id"]])
+        with self.store.connect() as db:
+            self.assertEqual(db.execute("SELECT COUNT(*) FROM workspace_observations").fetchone()[0], 100)
+        self.assertEqual(self.body(job["job_id"])["status"], "RECOVERY_REQUIRED")
+
+    def test_session_renewal_remains_available_at_reserved_event_capacity(self):
+        with mock.patch.object(ws, "MAX_EVENTS", 4):
+            self.system.audit_login(OWNER)
+            job = self.enqueue(kind="observe"); claim = self.queue.claim()
+            self.system.audit_login(OWNER)
+            path = "/api/shared-workspace/jobs/" + job["job_id"]
+            self.assertEqual(self.entry_get(path)[0], 403)
+            for full in (False, True):
+                with self.subTest(full=full):
+                    if full: self.complete(claim)
+                    with self.store.connect() as db: before = db.execute("SELECT body FROM workspace_events ORDER BY seq").fetchall()
+                    status, headers, _ = self.entry_get()
+                    self.assertEqual(status, 200)
+                    self.assertEqual(headers.get("X-Workbench-Login-Audit"), "EVENT_CAPACITY_EXHAUSTED")
+                    cookie = headers.get("Set-Cookie")
+                    self.assertIsNotNone(cookie)
+                    status, _, raw = self.entry_get(path, headers={"Cookie": cookie.split(";")[0]})
+                    self.assertEqual(status, 200)
+                    self.assertEqual(json.loads(raw)["job_id"], job["job_id"])
+                    for invalid in ({"Host": "evil.invalid"}, {"Origin": "https://evil.invalid"},
+                                    {"Tailscale-User-Login": "stranger@example.com"}):
+                        rejected, denied, _ = self.entry_get(headers=invalid)
+                        self.assertEqual(rejected, 403)
+                        self.assertIsNone(denied.get("Set-Cookie"))
+                    self.assertEqual(self.entry_get(shared_mode=False)[0], 429)
+                    with self.store.connect() as db: self.assertEqual(db.execute("SELECT body FROM workspace_events ORDER BY seq").fetchall(), before)
+
+    def test_shared_entry_reports_appended_login_audit(self):
+        status, headers, _ = self.entry_get()
+        self.assertEqual(status, 200)
+        self.assertEqual(headers.get("X-Workbench-Login-Audit"), "APPENDED")
+        with self.store.connect() as db:
+            self.assertEqual([event["kind"] for event in self.system.events(db)], ["PRIVATE_LOGIN"])
 
     def test_corrupt_pending_binding_remains_attributed_to_acceptance(self):
         job = self.enqueue(); original = self.body(job["job_id"])

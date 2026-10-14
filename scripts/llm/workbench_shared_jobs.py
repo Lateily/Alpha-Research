@@ -46,6 +46,29 @@ def _check_job(job, row, events, identities):
         raise WorkspaceError("SHARED_JOB_BINDING_INVALID", 409)
 
 
+def _current_attempt(job, attempts):
+    if len(attempts) > 2 or job["attempt_count"] != len(attempts):
+        raise WorkspaceError("SHARED_ATTEMPT_COUNT_INVALID", 409)
+    binding = {key: job[key] for key in BINDING_FIELDS}
+    for number, attempt in enumerate(attempts, 1):
+        if (attempt.get("number") != number or attempt.get("job_id") != job["job_id"]
+                or attempt.get("binding") != binding
+                or not isinstance(attempt.get("token_hash"), str) or len(attempt["token_hash"]) != 64):
+            raise WorkspaceError("SHARED_ATTEMPT_BINDING_INVALID", 409)
+    current = next((a for a in attempts if a.get("attempt_id") == job.get("attempt_id")), None)
+    if job.get("attempt_id"):
+        # governance-mutation: WORKBENCH_SHARED_CURRENT_ATTEMPT
+        if (current is None or current != attempts[-1] or current.get("status") != job["status"]
+                or (job["status"] == "RUNNING" and current["token_hash"] != job["token_hash"])):
+            raise WorkspaceError("SHARED_ATTEMPT_BINDING_INVALID", 409)
+    elif job["status"] in {"RUNNING", "SUCCEEDED"}:
+        raise WorkspaceError("SHARED_ATTEMPT_BINDING_INVALID", 409)
+    if (job["status"] != "RUNNING" and job.get("token_hash") is not None
+            or any(a.get("status") != "ABANDONED" for a in attempts if a is not current)):
+        raise WorkspaceError("SHARED_ATTEMPT_BINDING_INVALID", 409)
+    return current
+
+
 def verify_queue_state(root: Path, tables: dict) -> None:
     """The backup verifier uses the same binding and reopened-seal boundary."""
     events = [ev.parse(row[3]) for row in tables["workspace_events"]]
@@ -63,11 +86,7 @@ def verify_queue_state(root: Path, tables: dict) -> None:
     for job_id, row in registered.items():
         job = ev.parse(row[3]); _check_job(job, row, events, identities)
         owned = attempts.get(job_id, [])
-        if len(owned) > 2 or job["attempt_count"] != len(owned):
-            raise WorkspaceError("SHARED_ATTEMPT_COUNT_INVALID", 409)
-        for number, attempt in enumerate(owned, 1):
-            if attempt.get("number") != number or attempt.get("binding") != {key: job[key] for key in BINDING_FIELDS}:
-                raise WorkspaceError("SHARED_ATTEMPT_BINDING_INVALID", 409)
+        current = _current_attempt(job, owned)
         terminal = [e for e in events if e["kind"] == "SHARED_JOB_TERMINAL" and e["data"].get("job_id") == job_id]
         if (len(terminal) != (0 if job["status"] in ACTIVE else 1)
                 or job.get("terminal_event_reserved") != (job["status"] in ACTIVE)):
@@ -75,11 +94,6 @@ def verify_queue_state(root: Path, tables: dict) -> None:
         envelope = FrozenInputs.verify_registered(Path(root) / "frozen-inputs", job["snapshot_id"], inputs[job["snapshot_id"]])
         if envelope["input_hash"] != job["input_hash"]:
             raise WorkspaceError("SHARED_JOB_INPUT_INVALID", 409)
-        if job.get("attempt_id"):
-            current = next((a for a in owned if a["attempt_id"] == job["attempt_id"]), None)
-            if current is None: raise WorkspaceError("SHARED_ATTEMPT_BINDING_INVALID", 409)
-        elif job["status"] == "RUNNING" or job["status"] == "SUCCEEDED":
-            raise WorkspaceError("SHARED_ATTEMPT_BINDING_INVALID", 409)
         if terminal:
             if terminal[0]["data"] != {"job_id": job_id, "attempt_id": job["attempt_id"],
                                        "status": job["status"], "result": job["result"]}:
@@ -171,6 +185,13 @@ class SharedJobQueue:
                 "frozen_root": envelope["frozen_root"], "output_root": _output_root(self.store.path.parent, job, attempt),
                 "code_root": shared_module.CODE_ROOT, "envelope": envelope}
 
+    def _success_projection(self, db, job, envelope):
+        # governance-mutation: WORKBENCH_SHARED_RECOVERY_OBSERVATION
+        if job["kind"] == "observe":
+            self._observation_capacity(db, envelope)
+            snapshot = envelope["snapshot"]
+            db.execute("INSERT OR IGNORE INTO workspace_observations VALUES (?, ?)", (snapshot["snapshot_hash"], ev.canonical(snapshot)))
+
     def claim(self) -> dict | None:
         with self.store.connect() as db:
             db.execute("BEGIN IMMEDIATE")
@@ -220,15 +241,12 @@ class SharedJobQueue:
                 raise WorkspaceError("SHARED_ATTEMPT_TOKEN_STALE", 409)
             try:
                 envelope = self._compatible(db, row, job)
-                attempt = next(a for a in self._attempts(db, job["job_id"]) if a["attempt_id"] == job["attempt_id"])
+                attempt = _current_attempt(job, self._attempts(db, job["job_id"]))
                 output = _output_root(self.store.path.parent, job, attempt)
                 sealed = (output / "seal.json").exists() or (output / "seal.json").is_symlink()
                 if result.get("status") == "SUCCEEDED" or sealed:
                     result = verify_seal(output, job, attempt, envelope, publish=True)
-                    if job["kind"] == "observe":
-                        self._observation_capacity(db, envelope)
-                        snapshot = envelope["snapshot"]
-                        db.execute("INSERT OR IGNORE INTO workspace_observations VALUES (?, ?)", (snapshot["snapshot_hash"], ev.canonical(snapshot)))
+                    self._success_projection(db, job, envelope)
                 else:
                     code = result.get("error")
                     result = {"error": code if code in {"WORKER_TIMEOUT", "WORKER_RENDER_FAILED", "WORKER_START_FAILED", "WORKER_OUTPUT_INVALID"} else "WORKER_RENDER_FAILED"}
@@ -248,12 +266,12 @@ class SharedJobQueue:
                 try:
                     envelope = self._compatible(db, row, job)
                     attempts = self._attempts(db, job["job_id"])
-                    if len(attempts) != job["attempt_count"]: raise ValueError
+                    attempt = _current_attempt(job, attempts)
                     if job["status"] == "QUEUED": continue
-                    attempt = next(a for a in attempts if a["attempt_id"] == job["attempt_id"])
                     output = _output_root(self.store.path.parent, job, attempt)
                     if (output / "seal.json").exists() or (output / "seal.json").is_symlink():
                         result = verify_seal(output, job, attempt, envelope, publish=True)
+                        self._success_projection(db, job, envelope)
                         self._terminal(db, row, job, "SUCCEEDED", result)
                         report["converged"].append(job["job_id"]); continue
                     if (output / "result").exists() or (output / "result").is_symlink():
@@ -295,9 +313,7 @@ class SharedJobQueue:
             try:
                 envelope = self.inputs.verify(job["snapshot_id"])
                 with self.store.connect() as db:
-                    attempt = next(a for a in self._attempts(db, job["job_id"]) if a["attempt_id"] == job["attempt_id"])
-                if attempt["binding"] != {key: job[key] for key in BINDING_FIELDS} or attempt["status"] != "SUCCEEDED":
-                    raise WorkspaceError("SHARED_ATTEMPT_BINDING_INVALID", 409)
+                    attempt = _current_attempt(job, self._attempts(db, job["job_id"]))
                 terminals = [e for e in events if e["kind"] == "SHARED_JOB_TERMINAL" and e["data"].get("job_id") == job["job_id"]]
                 if len(terminals) != 1 or terminals[0]["data"] != {"job_id": job["job_id"], "attempt_id": job["attempt_id"], "status": "SUCCEEDED", "result": job["result"]}:
                     raise WorkspaceError("SHARED_TERMINAL_BINDING_INVALID", 409)
