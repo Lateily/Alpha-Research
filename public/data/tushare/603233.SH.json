@@ -1,11 +1,24 @@
 {
   "ticker": "603233.SH",
-  "fetched_at": "2026-10-14T05:58:59Z",
+  "fetched_at": "2026-10-14T13:55:19Z",
   "permission_model": "runtime_probe",
   "_status": "partial",
   "data": {
     "daily": {
       "rows": [
+        {
+          "ts_code": "603233.SH",
+          "trade_date": "20261014",
+          "open": 18.89,
+          "high": 19.28,
+          "low": 18.61,
+          "close": 18.99,
+          "pre_close": 18.94,
+          "change": 0.05,
+          "pct_chg": 0.264,
+          "vol": 141421.96,
+          "amount": 267413.86
+        },
         {
           "ts_code": "603233.SH",
           "trade_date": "20261013",
@@ -761,12 +774,32 @@
           "amount": 208655.392
         }
       ],
-      "row_count": 58,
+      "row_count": 59,
       "_status": "ok",
-      "as_of": "20261013"
+      "as_of": "20261014"
     },
     "daily_basic": {
       "rows": [
+        {
+          "ts_code": "603233.SH",
+          "trade_date": "20261014",
+          "close": 18.99,
+          "turnover_rate": 1.2418,
+          "turnover_rate_f": 3.143,
+          "volume_ratio": 1.19,
+          "pe": 17.5087,
+          "pe_ttm": 15.8585,
+          "pb": 2.8675,
+          "ps": 0.7864,
+          "ps_ttm": 0.7732,
+          "dv_ratio": 3.4025,
+          "dv_ttm": 4.3448,
+          "total_share": 113889.2282,
+          "float_share": 113889.2282,
+          "free_share": 44996.0356,
+          "total_mv": 2162756.4777,
+          "circ_mv": 2162756.4777
+        },
         {
           "ts_code": "603233.SH",
           "trade_date": "20261013",
@@ -1928,9 +1961,9 @@
           "circ_mv": 2192294.9125
         }
       ],
-      "row_count": 58,
+      "row_count": 59,
       "_status": "ok",
-      "as_of": "20261013"
+      "as_of": "20261014"
     },
     "adj_factor": {
       "rows": [
@@ -6855,10 +6888,651 @@
       "as_of": "20260630"
     },
     "fina_mainbz_product": {
-      "rows": [],
-      "row_count": 0,
-      "_status": "empty",
-      "as_of": null
+      "rows": [
+        {
+          "ts_code": "603233.SH",
+          "end_date": "20260630",
+          "bz_item": "非药品",
+          "bz_code": "P",
+          "bz_sales": 1405515941.64,
+          "bz_profit": 638467862.17,
+          "bz_cost": 767048079.47,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "603233.SH",
+          "end_date": "20260630",
+          "bz_item": "合计特别调整",
+          "bz_code": "P",
+          "bz_sales": -7213520.01,
+          "bz_profit": null,
+          "bz_cost": null,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "603233.SH",
+          "end_date": "20260630",
+          "bz_item": "其他业务",
+          "bz_code": "P",
+          "bz_sales": 459658404.5,
+          "bz_profit": 457630811.22,
+          "bz_cost": 2027593.28,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "603233.SH",
+          "end_date": "20260630",
+          "bz_item": "产品",
+          "bz_code": "P",
+          "bz_sales": 13991095399.26,
+          "bz_profit": 4980526515.19,
+          "bz_cost": 9010568884.07,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "603233.SH",
+          "end_date": "20260630",
+          "bz_item": "中西成药",
+          "bz_code": "P",
+          "bz_sales": 10961692017.24,
+          "bz_profit": 3343107700.52,
+          "bz_cost": 7618584316.72,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "603233.SH",
+          "end_date": "20260630",
+          "bz_item": "中参药材",
+          "bz_code": "P",
+          "bz_sales": 1171442555.89,
+          "bz_profit": 548533661.29,
+          "bz_cost": 622908894.6,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "603233.SH",
+          "end_date": "20251231",
+          "bz_item": "非药品",
+          "bz_code": "P",
+          "bz_sales": 2856077634.3,
+          "bz_profit": 1294568456.77,
+          "bz_cost": 1561509177.53,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "603233.SH",
+          "end_date": "20251231",
+          "bz_item": "其他业务",
+          "bz_code": "P",
+          "bz_sales": 657100491.73,
+          "bz_profit": 652498192.13,
+          "bz_cost": 4602299.6,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "603233.SH",
+          "end_date": "20251231",
+          "bz_item": "产品",
+          "bz_code": "P",
+          "bz_sales": 27502188411.03,
+          "bz_profit": 9438135600.21,
+          "bz_cost": 18064052810.82,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "603233.SH",
+          "end_date": "20251231",
+          "bz_item": "中西成药",
+          "bz_code": "P",
+          "bz_sales": 21311693644.35,
+          "bz_profit": 6304696996.29,
+          "bz_cost": 15006996648.06,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "603233.SH",
+          "end_date": "20251231",
+          "bz_item": "中参药材",
+          "bz_code": "P",
+          "bz_sales": 2677316640.65,
+          "bz_profit": 1186371955.02,
+          "bz_cost": 1490944685.63,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "603233.SH",
+          "end_date": "20250630",
+          "bz_item": "非药品",
+          "bz_code": "P",
+          "bz_sales": 1781062873.95,
+          "bz_profit": 995999680.31,
+          "bz_cost": 785063193.64,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "603233.SH",
+          "end_date": "20250630",
+          "bz_item": "合计特别调整",
+          "bz_code": "P",
+          "bz_sales": 19902576.45,
+          "bz_profit": 19899355.37,
+          "bz_cost": 3221.08,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "603233.SH",
+          "end_date": "20250630",
+          "bz_item": "产品",
+          "bz_code": "P",
+          "bz_sales": 13522572876.63,
+          "bz_profit": 4714365822.41,
+          "bz_cost": 8808207054.22,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "603233.SH",
+          "end_date": "20250630",
+          "bz_item": "中西成药",
+          "bz_code": "P",
+          "bz_sales": 10402771965.44,
+          "bz_profit": 3138460802.17,
+          "bz_cost": 7264311163.27,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "603233.SH",
+          "end_date": "20250630",
+          "bz_item": "中参药材",
+          "bz_code": "P",
+          "bz_sales": 1318835460.79,
+          "bz_profit": 560005984.56,
+          "bz_cost": 758829476.23,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "603233.SH",
+          "end_date": "20241231",
+          "bz_item": "非药品",
+          "bz_code": "P",
+          "bz_sales": 2948310679.04,
+          "bz_profit": 1230068294.12,
+          "bz_cost": 1718242384.92,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "603233.SH",
+          "end_date": "20241231",
+          "bz_item": "其他业务",
+          "bz_code": "P",
+          "bz_sales": 635564567.57,
+          "bz_profit": 627827979.06,
+          "bz_cost": 7736588.51,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "603233.SH",
+          "end_date": "20241231",
+          "bz_item": "产品",
+          "bz_code": "P",
+          "bz_sales": 26496547002.32,
+          "bz_profit": 9095407989.37,
+          "bz_cost": 17401139012.95,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "603233.SH",
+          "end_date": "20241231",
+          "bz_item": "中西成药",
+          "bz_code": "P",
+          "bz_sales": 19968057488.66,
+          "bz_profit": 5991237589.44,
+          "bz_cost": 13976819899.22,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "603233.SH",
+          "end_date": "20241231",
+          "bz_item": "中参药材",
+          "bz_code": "P",
+          "bz_sales": 2944614267.05,
+          "bz_profit": 1246274126.75,
+          "bz_cost": 1698340140.3,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "603233.SH",
+          "end_date": "20240630",
+          "bz_item": "非药品",
+          "bz_code": "P",
+          "bz_sales": 1563634190.39,
+          "bz_profit": 658241352.52,
+          "bz_cost": 905392837.87,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "603233.SH",
+          "end_date": "20240630",
+          "bz_item": "其他业务",
+          "bz_code": "P",
+          "bz_sales": 307102814.83,
+          "bz_profit": 306673627.93,
+          "bz_cost": 429186.9,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "603233.SH",
+          "end_date": "20240630",
+          "bz_item": "产品",
+          "bz_code": "P",
+          "bz_sales": 13345351847.62,
+          "bz_profit": 4656677602.96,
+          "bz_cost": 8688674244.66,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "603233.SH",
+          "end_date": "20240630",
+          "bz_item": "中西成药",
+          "bz_code": "P",
+          "bz_sales": 9959418755.03,
+          "bz_profit": 3051088223.53,
+          "bz_cost": 6908330531.5,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "603233.SH",
+          "end_date": "20240630",
+          "bz_item": "中参药材",
+          "bz_code": "P",
+          "bz_sales": 1515196087.37,
+          "bz_profit": 640674398.98,
+          "bz_cost": 874521688.39,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "603233.SH",
+          "end_date": "20231231",
+          "bz_item": "非药品",
+          "bz_code": "P",
+          "bz_sales": 3258655869.56,
+          "bz_profit": 1418212309.81,
+          "bz_cost": 1840443559.75,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "603233.SH",
+          "end_date": "20231231",
+          "bz_item": "其他业务",
+          "bz_code": "P",
+          "bz_sales": 599944993.68,
+          "bz_profit": 598939129.14,
+          "bz_cost": 1005864.54,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "603233.SH",
+          "end_date": "20231231",
+          "bz_item": "产品",
+          "bz_code": "P",
+          "bz_sales": 24531390152.75,
+          "bz_profit": 8807320151.19,
+          "bz_cost": 15724070001.56,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "603233.SH",
+          "end_date": "20231231",
+          "bz_item": "中西成药",
+          "bz_code": "P",
+          "bz_sales": 17698849360.94,
+          "bz_profit": 5514848766.13,
+          "bz_cost": 12184000594.81,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "603233.SH",
+          "end_date": "20231231",
+          "bz_item": "中参药材",
+          "bz_code": "P",
+          "bz_sales": 2973939928.57,
+          "bz_profit": 1275319946.11,
+          "bz_cost": 1698619982.46,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "603233.SH",
+          "end_date": "20230930",
+          "bz_item": "非药品",
+          "bz_code": "P",
+          "bz_sales": 2423080875.37,
+          "bz_profit": 1108253915.11,
+          "bz_cost": 1314826960.26,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "603233.SH",
+          "end_date": "20230930",
+          "bz_item": "合计特别调整",
+          "bz_code": "P",
+          "bz_sales": 476335279.54,
+          "bz_profit": 474839096.73,
+          "bz_cost": 1496182.81,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "603233.SH",
+          "end_date": "20230930",
+          "bz_item": "产品",
+          "bz_code": "P",
+          "bz_sales": 17723152022.13,
+          "bz_profit": 6566978752.84,
+          "bz_cost": 11156173269.29,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "603233.SH",
+          "end_date": "20230930",
+          "bz_item": "中西成药",
+          "bz_code": "P",
+          "bz_sales": 12741529374.33,
+          "bz_profit": 4081120857.56,
+          "bz_cost": 8660408516.77,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "603233.SH",
+          "end_date": "20230930",
+          "bz_item": "中参药材",
+          "bz_code": "P",
+          "bz_sales": 2082206492.89,
+          "bz_profit": 902764883.44,
+          "bz_cost": 1179441609.45,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "603233.SH",
+          "end_date": "20230630",
+          "bz_item": "非药品",
+          "bz_code": "P",
+          "bz_sales": 1973313872.61,
+          "bz_profit": 1079288482.01,
+          "bz_cost": 894025390.6,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "603233.SH",
+          "end_date": "20230630",
+          "bz_item": "合计特别调整",
+          "bz_code": "P",
+          "bz_sales": null,
+          "bz_profit": null,
+          "bz_cost": 0.01,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "603233.SH",
+          "end_date": "20230630",
+          "bz_item": "产品",
+          "bz_code": "P",
+          "bz_sales": 11991880375.48,
+          "bz_profit": 4490165260.52,
+          "bz_cost": 7501715114.96,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "603233.SH",
+          "end_date": "20230630",
+          "bz_item": "中西成药",
+          "bz_code": "P",
+          "bz_sales": 8624317938.91,
+          "bz_profit": 2804376215.02,
+          "bz_cost": 5819941723.89,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "603233.SH",
+          "end_date": "20230630",
+          "bz_item": "中参药材",
+          "bz_code": "P",
+          "bz_sales": 1394248563.96,
+          "bz_profit": 606500563.5,
+          "bz_cost": 787748000.46,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "603233.SH",
+          "end_date": "20221231",
+          "bz_item": "非药品",
+          "bz_code": "P",
+          "bz_sales": 3019119932.87,
+          "bz_profit": 1425618726.94,
+          "bz_cost": 1593501205.93,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "603233.SH",
+          "end_date": "20221231",
+          "bz_item": "合计特别调整",
+          "bz_code": "P",
+          "bz_sales": null,
+          "bz_profit": null,
+          "bz_cost": null,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "603233.SH",
+          "end_date": "20221231",
+          "bz_item": "其他业务",
+          "bz_code": "P",
+          "bz_sales": 467665044.05,
+          "bz_profit": 464766005.83,
+          "bz_cost": 2899038.22,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "603233.SH",
+          "end_date": "20221231",
+          "bz_item": "产品",
+          "bz_code": "P",
+          "bz_sales": 21248086692.45,
+          "bz_profit": 8031228955.19,
+          "bz_cost": 13216857737.26,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "603233.SH",
+          "end_date": "20221231",
+          "bz_item": "中西成药",
+          "bz_code": "P",
+          "bz_sales": 15176167146.66,
+          "bz_profit": 5046354210.26,
+          "bz_cost": 10129812936.4,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "603233.SH",
+          "end_date": "20221231",
+          "bz_item": "中参药材",
+          "bz_code": "P",
+          "bz_sales": 2585134568.87,
+          "bz_profit": 1094490012.16,
+          "bz_cost": 1490644556.71,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "603233.SH",
+          "end_date": "20220930",
+          "bz_item": "非药品",
+          "bz_code": "P",
+          "bz_sales": 2086722135.71,
+          "bz_profit": 1003696526.26,
+          "bz_cost": 1083025609.45,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "603233.SH",
+          "end_date": "20220930",
+          "bz_item": "合计特别调整",
+          "bz_code": "P",
+          "bz_sales": 396976932.72,
+          "bz_profit": 392077289.71,
+          "bz_cost": 4899643.01,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "603233.SH",
+          "end_date": "20220930",
+          "bz_item": "产品",
+          "bz_code": "P",
+          "bz_sales": 14817588400.74,
+          "bz_profit": 5744744753.58,
+          "bz_cost": 9072843647.16,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "603233.SH",
+          "end_date": "20220930",
+          "bz_item": "中西成药",
+          "bz_code": "P",
+          "bz_sales": 10541283470.8,
+          "bz_profit": 3598788273.31,
+          "bz_cost": 6942495197.49,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "603233.SH",
+          "end_date": "20220930",
+          "bz_item": "中参药材",
+          "bz_code": "P",
+          "bz_sales": 1792605861.51,
+          "bz_profit": 750182664.3,
+          "bz_cost": 1042423197.21,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "603233.SH",
+          "end_date": "20220630",
+          "bz_item": "非药品",
+          "bz_code": "P",
+          "bz_sales": 1313364513.68,
+          "bz_profit": 653624896.61,
+          "bz_cost": 659739617.07,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "603233.SH",
+          "end_date": "20220630",
+          "bz_item": "合计特别调整",
+          "bz_code": "P",
+          "bz_sales": null,
+          "bz_profit": null,
+          "bz_cost": -0.01,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "603233.SH",
+          "end_date": "20220630",
+          "bz_item": "其他业务",
+          "bz_code": "P",
+          "bz_sales": 283660115.54,
+          "bz_profit": 280221352.02,
+          "bz_cost": 3438763.52,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "603233.SH",
+          "end_date": "20220630",
+          "bz_item": "产品",
+          "bz_code": "P",
+          "bz_sales": 9720557220.95,
+          "bz_profit": 3843114008.48,
+          "bz_cost": 5877443212.47,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "603233.SH",
+          "end_date": "20220630",
+          "bz_item": "中西成药",
+          "bz_code": "P",
+          "bz_sales": 6959813258.74,
+          "bz_profit": 2418032377.14,
+          "bz_cost": 4541780881.6,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "603233.SH",
+          "end_date": "20220630",
+          "bz_item": "中参药材",
+          "bz_code": "P",
+          "bz_sales": 1163719332.99,
+          "bz_profit": 491235382.7,
+          "bz_cost": 672483950.29,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "603233.SH",
+          "end_date": "20211231",
+          "bz_item": "非药品",
+          "bz_code": "P",
+          "bz_sales": 2477186139.24,
+          "bz_profit": 1183391393.7,
+          "bz_cost": 1293794745.54,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "603233.SH",
+          "end_date": "20211231",
+          "bz_item": "合计特别调整",
+          "bz_code": "P",
+          "bz_sales": null,
+          "bz_profit": null,
+          "bz_cost": null,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "603233.SH",
+          "end_date": "20211231",
+          "bz_item": "其他业务",
+          "bz_code": "P",
+          "bz_sales": 467772644.0,
+          "bz_profit": 461066609.81,
+          "bz_cost": 6706034.19,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "603233.SH",
+          "end_date": "20211231",
+          "bz_item": "产品",
+          "bz_code": "P",
+          "bz_sales": 16759335264.61,
+          "bz_profit": 6393587463.14,
+          "bz_cost": 10365747801.47,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "603233.SH",
+          "end_date": "20211231",
+          "bz_item": "中西成药",
+          "bz_code": "P",
+          "bz_sales": 11353194224.94,
+          "bz_profit": 3698450754.35,
+          "bz_cost": 7654743470.59,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "603233.SH",
+          "end_date": "20211231",
+          "bz_item": "中参药材",
+          "bz_code": "P",
+          "bz_sales": 2461182256.43,
+          "bz_profit": 1050678705.28,
+          "bz_cost": 1410503551.15,
+          "curr_type": "CNY"
+        }
+      ],
+      "row_count": 64,
+      "_status": "ok",
+      "as_of": "20260630"
     },
     "forecast": {
       "rows": [],
@@ -6867,5 +7541,5 @@
       "as_of": null
     }
   },
-  "completeness_pct": 70
+  "completeness_pct": 80
 }
