@@ -20,11 +20,11 @@ sys.path.insert(0, str(ROOT / "tests"))
 import nonprod_workbench as wb
 import workbench_workspace as ws
 import workbench_evidence as ev
+import workbench_shared_test_support as support
 from workbench_shared_test_support import OWNER, MEMBER, committed_code, fixture_state, http
 
 spec = importlib.util.find_spec("workbench_shared_workspace")
 shared = __import__("workbench_shared_workspace") if spec else None
-BASE = "942ba9657413370e55566a8063aa7b6d5c097986"
 
 
 class SharedWorkspaceTests(unittest.TestCase):
@@ -153,7 +153,7 @@ class SharedWorkspaceTests(unittest.TestCase):
         self.assertEqual((self.store.path.stat().st_ino, self.store.path.stat().st_mtime_ns, self.store.path.read_bytes()), before)
 
     def test_legacy_binary_cannot_open_shared_state(self):
-        old = subprocess.check_output(["git", "show", BASE + ":scripts/llm/nonprod_workbench.py"])
+        old = support.historical_script("pre-shared")
         script = self.root / "legacy.py"
         script.write_bytes(old)
         command = [sys.executable, "-B", "-c", "import runpy,sys; from pathlib import Path; m=runpy.run_path(sys.argv[1]); s=m['Store'](Path(sys.argv[2])); print(s.probe({'command_id':'legacy-probe-001','provider':'deepseek','mode':'offline','fixture':'contract-smoke'})['receipt']['result'])", str(script)]
@@ -166,6 +166,35 @@ class SharedWorkspaceTests(unittest.TestCase):
         self.assertNotEqual(negative.returncode, 0)
         self.assertIn("unable to open database file", negative.stderr)
         self.assertEqual((self.store.path.stat().st_ino, self.store.path.stat().st_mtime_ns, self.store.path.read_bytes()), before)
+
+    def test_legacy_binary_portable_without_historical_git(self):
+        previous = Path.cwd()
+        try:
+            os.chdir(self.root)
+            with mock.patch.object(subprocess, "check_output", side_effect=AssertionError("historical Git extraction unavailable")):
+                self.test_legacy_binary_cannot_open_shared_state()
+        finally:
+            os.chdir(previous)
+
+    def test_historical_fixture_full_bytes_and_integrity_fail_closed(self):
+        self.assertTrue(hasattr(support, "historical_script"), "verified historical fixture loader missing")
+        for name, digest in (("pre-shared", "56833b05d5ae622ad34f0357f6bbbb2a945caa9273d6999e098c305286750d25"),
+                             ("s1", "2835ebb7da89ff9f202aff3513b903b6b7a2dfebd81d0002986afa2ae79f40ed")):
+            with self.subTest(name=name):
+                raw = support.historical_script(name)
+                self.assertEqual(hashlib.sha256(raw).hexdigest(), digest)
+                isolated = self.root / name
+                fixtures = isolated / "tests/fixtures/workbench-history"
+                fixtures.mkdir(parents=True)
+                path = fixtures / (name + ".py.txt")
+                with mock.patch.object(support, "ROOT", isolated):
+                    with self.assertRaisesRegex(ValueError, "HISTORICAL_FIXTURE_MISSING"):
+                        support.historical_script(name)
+                    path.write_bytes(raw)
+                    self.assertEqual(support.historical_script(name), raw)
+                    path.write_bytes(raw + b"\n# corrupted fixture\n")
+                    with self.assertRaisesRegex(ValueError, "HISTORICAL_FIXTURE_CORRUPT"):
+                        support.historical_script(name)
 
     def test_shared_mode_never_migrates_or_follows_links(self):
         old = wb.Store(self.root / "old")

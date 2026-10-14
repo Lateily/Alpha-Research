@@ -281,6 +281,14 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="Failed and orphan captures spend capacity even without a successful shared_inputs registry row.",
     ),
     MutationCase(
+        mutation_id="WORKBENCH_SHARED_SYNC_TERMINAL_RESERVATION", component="Scoped read-only sync S3",
+        source_path="scripts/llm/workbench_shared_inputs.py", test_script="tests/test_workbench_shared_sync.py",
+        before='        if len(history | {input_hash}) > 100 or events + reserved >= MAX_EVENTS:',
+        after='        if len(history | {input_hash}) > 100 or events >= MAX_EVENTS:',
+        expected_failure_marker="test_event_capacity_preserves_reserved_job_terminal_and_last_good",
+        rationale="Two existing events plus one queued terminal reservation must block a new frozen input at the three-event boundary.",
+    ),
+    MutationCase(
         mutation_id="WORKBENCH_SHARED_ATTEMPT_SEPARATION", component="Scoped read-only sync S3",
         source_path="scripts/llm/workbench_shared_workspace.py", test_script="tests/test_workbench_shared_sync.py",
         before='                    if self.sync is not None:\n'

@@ -418,7 +418,7 @@ class SharedSyncTests(unittest.TestCase):
         first = self.poller.tick(); self.common()
         self.view.queue.enqueue({"command_id": "reserved-s3-job", "kind": "snapshot-brief", "snapshot_id": first["current_snapshot_id"]}, OWNER)
         publisher_source(self.source, "capacity_publication")
-        with mock.patch.object(ws, "MAX_EVENTS", 2): state = self.poller.tick()
+        with mock.patch.object(ws, "MAX_EVENTS", 3): state = self.poller.tick()
         self.assertEqual(state["status"], "CAPACITY_BLOCKED")
         self.assertEqual(state["current_snapshot_id"], first["current_snapshot_id"])
         with self.store.connect() as db:

@@ -1,5 +1,6 @@
 """Test-only shared-state and committed-source fixtures."""
 import io
+import hashlib
 import json
 import shutil
 import subprocess
@@ -13,6 +14,22 @@ import workbench_evidence as ev
 
 ROOT = Path(__file__).resolve().parents[1]
 OWNER, MEMBER = "owner@example.com", "member@example.com"
+
+
+def historical_script(name):
+    """Complete pinned originals, without a dependency on historical Git objects."""
+    digests = {
+        "pre-shared": "56833b05d5ae622ad34f0357f6bbbb2a945caa9273d6999e098c305286750d25",
+        "s1": "2835ebb7da89ff9f202aff3513b903b6b7a2dfebd81d0002986afa2ae79f40ed",
+    }
+    path = ROOT / "tests/fixtures/workbench-history" / (name + ".py.txt")
+    try:
+        raw = path.read_bytes()
+    except FileNotFoundError:
+        raise ValueError("HISTORICAL_FIXTURE_MISSING") from None
+    if hashlib.sha256(raw).hexdigest() != digests[name]:
+        raise ValueError("HISTORICAL_FIXTURE_CORRUPT")
+    return raw
 
 
 def frozen_source(root, rid="published_one", date="20261013", *, cash=None):

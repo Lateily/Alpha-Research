@@ -1,6 +1,7 @@
 """Explicit migration and portable scrubbed state, never an in-use service."""
 import importlib.util
 import json
+import os
 import shutil
 import sqlite3
 import subprocess
@@ -18,7 +19,7 @@ import nonprod_workbench as wb
 import workbench_backup as backup
 import workbench_evidence as ev
 import workbench_workspace as ws
-from workbench_shared_test_support import historical_state, frozen_source
+from workbench_shared_test_support import historical_state, frozen_source, historical_script
 
 
 @contextmanager
@@ -255,7 +256,7 @@ class MigrationTests(unittest.TestCase):
     def test_s1_binary_refuses_persistent_schema_and_no_implicit_upgrade(self):
         self.state()
         new = wb.Store(self.root / "new", shared_v1=True)
-        old_code = subprocess.check_output(["git", "show", "b30b1979cfc5edefd2291fb516f4c9d38a64597d:scripts/llm/nonprod_workbench.py"], cwd=ROOT)
+        old_code = historical_script("s1")
         namespace = {"__name__": "historical_s1", "__file__": str(ROOT / "scripts/llm/nonprod_workbench.py")}
         exec(compile(old_code, namespace["__file__"], "exec"), namespace)
         with self.assertRaisesRegex(ValueError, "SHARED_SCHEMA_INCOMPATIBLE"):
@@ -264,6 +265,15 @@ class MigrationTests(unittest.TestCase):
         raw = (s1 / "shared-workbench.sqlite3").read_bytes()
         with self.assertRaisesRegex(ValueError, "SHARED_SCHEMA_INCOMPATIBLE"): wb.Store(s1, shared_v1=True)
         self.assertEqual((s1 / "shared-workbench.sqlite3").read_bytes(), raw)
+
+    def test_s1_binary_portable_without_historical_git(self):
+        previous = Path.cwd()
+        try:
+            os.chdir(self.root)
+            with patch.object(subprocess, "check_output", side_effect=AssertionError("historical Git extraction unavailable")):
+                self.test_s1_binary_refuses_persistent_schema_and_no_implicit_upgrade()
+        finally:
+            os.chdir(previous)
 
     def test_empty_stop_orphan_directories_are_preserved(self):
         state = self.state()
