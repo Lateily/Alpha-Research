@@ -58,6 +58,7 @@ class SharedWorkspace:
         if not system.store.shared_v1 or not system.private_mode:
             raise WorkspaceError("SHARED_PRIVATE_MODE_REQUIRED", 403)
         self.system, self.store = system, system.store
+        self._execution_identity = execution_identity(CODE_ROOT)
 
     def identity(self, actor: str) -> dict:
         if not isinstance(actor, str) or not actor or len(actor) > 254 or any(ord(c) <= 32 for c in actor):
@@ -74,7 +75,15 @@ class SharedWorkspace:
         if not isinstance(payload["kind"], str) or payload["kind"] not in {"observe", "snapshot-brief"}:
             raise WorkspaceError("PRIVATE_OPERATION_DISABLED", 403)
         owner = self.identity(actor)
-        code = execution_identity(CODE_ROOT)
+        with self.store.connect() as db:
+            prior = any(event["command_id"] == payload["command_id"] for event in self.system.events(db))
+        # Existing requests only reach the executor's actor-bound idempotency check.
+        if not prior:
+            current = execution_identity(CODE_ROOT)
+            # governance-mutation: WORKBENCH_SHARED_EXECUTOR_REVISION
+            if current["source_tree_hash"] != self._execution_identity["source_tree_hash"]:
+                raise WorkspaceError("EXECUTION_CODE_CHANGED_RESTART_REQUIRED", 409)
+        code = self._execution_identity
         binding = {**code, "workspace_id": owner["workspace_id"], "schema_version": SCHEMA,
                    "submitted_at": self.system.clock(), "attempt_id": str(uuid.uuid4()),
                    "input_hash": None, "human_review": "PENDING", "trading_authority": False}

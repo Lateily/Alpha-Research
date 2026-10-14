@@ -11,3 +11,12 @@ export function sharedQueryState(previous, data, error = '') {
   if (error) return { data: previous?.data || null, connection: 'DISCONNECTED', stale: true, error };
   return { data, connection: 'CONNECTED', stale: false, error: '' };
 }
+
+export function sharedViewFreshness(query, detailStale = false) {
+  const commonStale = query.stale || query.connection === 'DISCONNECTED';
+  return { commonStale, detailStale: commonStale || detailStale, downloadsEnabled: !commonStale && !detailStale };
+}
+
+export function retainedStatus(value, stale) {
+  return stale ? 'DISCONNECTED' : value;
+}

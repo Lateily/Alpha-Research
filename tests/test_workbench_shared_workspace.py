@@ -197,6 +197,45 @@ class SharedWorkspaceTests(unittest.TestCase):
         with self.store.connect() as db:
             self.assertEqual(len(self.system.events(db)), 2)
 
+    def test_running_executor_refuses_committed_execution_drift(self):
+        self.request("pinned-job-001")
+        changed = self.code / "scripts/llm/workbench_evidence.py"
+        original = changed.read_text()
+        replacement = original.replace("return hashlib.sha256(raw).hexdigest()", "return hashlib.sha256(b'changed-executor' + raw).hexdigest()")
+        self.assertNotEqual(original, replacement)
+        changed.write_text(replacement)
+        subprocess.run(["git", "-C", str(self.code), "add", "--", "scripts/llm/workbench_evidence.py"], check=True, capture_output=True)
+        subprocess.run(["git", "-C", str(self.code), "-c", "user.name=Fixture", "-c", "user.email=fixture@example.invalid", "-c", "commit.gpgsign=false", "commit", "-qm", "genuine execution-code change"], check=True, capture_output=True)
+        new_sha = subprocess.check_output(["git", "-C", str(self.code), "rev-parse", "HEAD"], text=True).strip()
+        self.assertNotEqual(new_sha, self.sha)
+        self.assertEqual(self.request("pinned-job-001")["disposition"], "IDEMPOTENT")
+        self.assertEqual(self.view.job("pinned-job-001", OWNER)["code_sha"], self.sha)
+        with self.assertRaises(ws.WorkspaceError) as found:
+            self.request("drifted-new-job-001")
+        self.assertEqual(found.exception.code, "EXECUTION_CODE_CHANGED_RESTART_REQUIRED")
+        with self.store.connect() as db:
+            self.assertEqual(len(self.system.events(db)), 2)
+
+    def test_dirty_code_refused_at_executor_construction_but_retry_does_not_execute(self):
+        self.request("pinned-dirty-001")
+        changed = self.code / "scripts/llm/workbench_evidence.py"
+        changed.write_bytes(changed.read_bytes() + b"\n# dirty execution bytes\n")
+        try:
+            retry = self.request("pinned-dirty-001")
+        except ws.WorkspaceError as exc:
+            self.fail("an idempotent query attempted dirty-code execution: " + exc.code)
+        self.assertEqual(retry["disposition"], "IDEMPOTENT")
+        with self.assertRaises(ws.WorkspaceError) as found:
+            shared.SharedWorkspace(self.system)
+        self.assertEqual(found.exception.code, "EXECUTION_CODE_DIRTY")
+        with self.assertRaises(ws.WorkspaceError) as found:
+            self.request("pinned-dirty-001", actor=MEMBER)
+        self.assertEqual(found.exception.status, 409)
+
+    def test_retained_view_staleness(self):
+        result = subprocess.run(["node", "--test", str(ROOT / "tests/nonprod-workbench-shared.test.mjs")], capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
     def test_detail_revalidates_and_never_treats_ids_as_paths(self):
         self.request("sealed-brief-001", "snapshot-brief")
         workspace_id = self.view.identity(OWNER)["workspace_id"]

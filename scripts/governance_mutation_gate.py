@@ -200,6 +200,22 @@ class MutationCase:
 
 MUTATIONS: tuple[MutationCase, ...] = (
     MutationCase(
+        mutation_id="WORKBENCH_SHARED_EXECUTOR_REVISION", component="Independent shared workspaces S1",
+        source_path="scripts/llm/workbench_shared_workspace.py", test_script="tests/test_workbench_shared_workspace.py",
+        before='            if current["source_tree_hash"] != self._execution_identity["source_tree_hash"]:',
+        after="            if False:",
+        expected_failure_marker="test_running_executor_refuses_committed_execution_drift",
+        rationale="A running executor cannot accept newly committed execution bytes under a different release identity.",
+    ),
+    MutationCase(
+        mutation_id="WORKBENCH_SHARED_RETAINED_STALE", component="Independent shared workspaces S1",
+        source_path="tools/nonprod_workbench/ui/shared-view.mjs", test_script="tests/test_workbench_shared_workspace.py",
+        before="  const commonStale = query.stale || query.connection === 'DISCONNECTED';",
+        after="  const commonStale = false;",
+        expected_failure_marker="test_retained_view_staleness",
+        rationale="Shared polling failure marks retained common/detail status stale and disables unverified downloads.",
+    ),
+    MutationCase(
         mutation_id="WORKBENCH_SHARED_ACTOR_BINDING", component="Independent shared workspaces S1",
         source_path="scripts/llm/workbench_shared_workspace.py", test_script="tests/test_workbench_shared_workspace.py",
         before="        return self.system.start_job(payload, actor=actor, shared_binding=binding)",

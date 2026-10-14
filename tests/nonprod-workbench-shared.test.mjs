@@ -27,3 +27,23 @@ test('query failure explicitly marks disconnected without discarding stale owner
   assert.equal(failed.data, previous.data);
   assert.equal(view.sharedQueryState(failed, { my_jobs: [] }).connection, 'CONNECTED');
 });
+test('retained detail and common-data statuses and downloads are disconnected', () => {
+  assert.equal(typeof view.sharedViewFreshness, 'function', 'missing retained-view freshness');
+  assert.equal(typeof view.retainedStatus, 'function', 'missing retained-status protection');
+  const failed = view.sharedQueryState({ data: { my_jobs: jobs }, connection: 'CONNECTED' }, null, 'LOCAL_STATE_UNAVAILABLE');
+  const freshness = view.sharedViewFreshness(failed, false);
+  assert.equal(freshness.commonStale, true);
+  assert.equal(freshness.detailStale, true);
+  assert.equal(freshness.downloadsEnabled, false);
+  for (const status of ['SUCCEEDED', 'OK', 'MATCH', 'MANUAL_OBSERVE_ONLY']) {
+    assert.equal(view.retainedStatus(status, freshness.commonStale), 'DISCONNECTED');
+    assert.equal(view.retainedStatus(status, freshness.detailStale), 'DISCONNECTED');
+  }
+});
+test('detail remains stale after list reconnect until its own successful revalidation', () => {
+  assert.equal(typeof view.sharedViewFreshness, 'function', 'missing detail freshness');
+  const connected = view.sharedQueryState(null, { my_jobs: jobs });
+  assert.deepEqual(view.sharedViewFreshness(connected, true), { commonStale: false, detailStale: true, downloadsEnabled: false });
+  assert.deepEqual(view.sharedViewFreshness(connected, false), { commonStale: false, detailStale: false, downloadsEnabled: true });
+  assert.equal(view.retainedStatus('SUCCEEDED', false), 'SUCCEEDED');
+});
