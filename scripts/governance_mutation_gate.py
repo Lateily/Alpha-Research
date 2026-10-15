@@ -450,6 +450,22 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="An optional alias becomes mandatory when declared; its original cannot be silently omitted or replaced with degraded evidence.",
     ),
     MutationCase(
+        mutation_id="WORKBENCH_SHARED_BUNDLE_CATALOG_AGREEMENT", component="Frozen shared inputs S2a compatibility",
+        source_path="scripts/llm/workbench_shared_inputs.py", test_script="tests/test_workbench_shared_inputs.py",
+        before='    if catalog != manifest["artifacts"]:', after='    if False:',
+        expected_failure_marker="test_producer_bundle_catalog_cannot_disagree_with_health",
+        rationale="A valid manifest seal cannot bless different scoped bytes rehashed only into public health.",
+    ),
+    MutationCase(
+        mutation_id="WORKBENCH_SHARED_BUNDLE_MANIFEST_SEAL", component="Frozen shared inputs S2a compatibility",
+        source_path="scripts/llm/workbench_shared_inputs.py", test_script="tests/test_workbench_shared_inputs.py",
+        before='    if (manifest.get("bundle_hash") != ev.sealed(catalog)\n'
+               '            or bundle.get("bundle_hash") != manifest["bundle_hash"]):',
+        after='    if False:',
+        expected_failure_marker="test_producer_bundle_seal_recomputed_not_self_reported",
+        rationale="Matching self-reported bundle hashes must be recomputed from the exact six-entry producer catalog.",
+    ),
+    MutationCase(
         mutation_id="WORKBENCH_SHARED_CONTEXT_CONTRADICTION", component="Frozen shared inputs S2a compatibility",
         source_path="scripts/llm/workbench_shared_inputs.py", test_script="tests/test_workbench_shared_inputs.py",
         before='        if ((payload.get("run_id") is not None and payload["run_id"] != rid)\n'

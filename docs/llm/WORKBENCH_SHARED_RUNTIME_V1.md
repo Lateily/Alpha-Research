@@ -150,6 +150,18 @@ Verification is `SCOPED_SNAPSHOT_NOT_FULL_NIGHTLY_ACCEPTANCE`, not the complete
 `NOT_EVALUATED` and explicit Macro/Funnel/NAV gaps. COMPLETE transport or a valid
 hash cannot invent missing values, source verification or issuer-original review.
 
+The current funnel producer's `ar.research_funnel_bundle/1.0` manifest seals its
+six child-file hash catalog as `bundle_hash`; the catalog deliberately excludes
+the manifest itself. Intake recomputes that seal, matches the health catalog and
+run/date/schema/rule identity, and retains the manifest's observed byte hash.
+Its binding remains `UNBOUND`, with explicit provenance
+`BUNDLE_CATALOG_BOUND_NOT_MANIFEST_BYTE_HASH`, never a fabricated byte-hash MATCH.
+Only the existing four consumed child originals and manifest are frozen/reopened.
+The catalog entries `all_market_scan.json` and `security_registry_projected.json`
+are explicitly `unread_catalog_paths`: their bytes are not read, frozen or claimed
+verified by this scoped intake. The fixed whitelist and 12 MiB file limit remain.
+Legacy inputs with an explicit manifest-byte hash retain that older binding path.
+
 Current selection persists as append-only `SHARED_INPUT_SELECTED` events by
 `SYSTEM_READ_ONLY_SYNC`, bound to registered originals. Restart restores the
 verified selected cursor, not the newest insertion. Identical selection adds

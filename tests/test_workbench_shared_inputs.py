@@ -13,7 +13,7 @@ sys.path.insert(0, str(ROOT / "tests"))
 import nonprod_workbench as wb
 import workbench_evidence as ev
 import workbench_snapshot_brief as brief
-from workbench_shared_test_support import frozen_source, publisher_source, reseal_publisher
+from workbench_shared_test_support import frozen_source, publisher_source, reseal_publisher, catalog_bundle_source
 from test_workbench_shared_state import interrupted_file_write
 
 
@@ -30,6 +30,90 @@ class FrozenInputTests(unittest.TestCase):
         self.assertIsNotNone(importlib.util.find_spec("workbench_shared_inputs"), "FrozenInputs missing")
         from workbench_shared_inputs import FrozenInputs
         return FrozenInputs(self.store)
+
+    def test_catalog_bound_producer_manifest_freezes_scoped_originals(self):
+        directory = catalog_bundle_source(self.source)
+        try:
+            item = self.inputs().import_once(self.source)
+        except ValueError as exc:
+            self.fail("current producer catalog was refused: " + str(exc))
+        verified = self.inputs().verify(item["snapshot_id"])
+        relative = (directory / "manifest.json").relative_to(self.source).as_posix()
+        record = verified["snapshot"]["records"][relative]
+        self.assertEqual(record["binding"], "UNBOUND")
+        provenance = verified["snapshot"]["publication_provenance"][relative]
+        self.assertEqual(provenance["basis"], "BUNDLE_CATALOG_BOUND_NOT_MANIFEST_BYTE_HASH")
+        self.assertEqual(provenance["catalog_entries"], 6)
+        self.assertEqual(provenance["unread_catalog_paths"],
+                         ["all_market_scan.json", "security_registry_projected.json"])
+        for name in ev.BUNDLE:
+            source = directory / name
+            self.assertEqual(source.read_bytes(), (verified["frozen_root"] / source.relative_to(self.source)).read_bytes())
+        for name in provenance["unread_catalog_paths"]:
+            self.assertFalse((verified["frozen_root"] / (directory / name).relative_to(self.source)).exists())
+        self.source.rename(self.root / "source-offline")
+        result = brief.run_frozen(verified["snapshot"], verified["frozen_root"], self.root / "catalog-report")
+        self.assertEqual(result["run_id"], "catalog_publication")
+
+    def test_producer_bundle_seal_recomputed_not_self_reported(self):
+        directory = catalog_bundle_source(self.source)
+        original = self.inputs().import_once(self.source)
+        self.assertEqual(self.inputs().verify(original["snapshot_id"])["source_run_id"], "catalog_publication")
+        manifest = ev.parse((directory / "manifest.json").read_bytes())
+        manifest["bundle_hash"] = "f" * 64
+        (directory / "manifest.json").write_bytes(ev.canonical(manifest).encode())
+        health_path = "public/data/v2/funnel_health.json"
+        health = ev.parse((self.source / health_path).read_bytes())
+        health["bundle"]["bundle_hash"] = manifest["bundle_hash"]
+        reseal_publisher(self.source, health_path, health)
+        with self.assertRaisesRegex(ValueError, "FROZEN_BUNDLE_MANIFEST_SEAL_INVALID"):
+            self.inputs().import_once(self.source)
+
+    def test_producer_bundle_catalog_cannot_disagree_with_health(self):
+        directory = catalog_bundle_source(self.source)
+        self.inputs().import_once(self.source)
+        child = directory / "candidate_review.json"
+        changed = ev.parse(child.read_bytes()); changed["rows"] = [{"changed": True}]
+        child.write_bytes(ev.canonical(changed).encode())
+        health_path = "public/data/v2/funnel_health.json"
+        health = ev.parse((self.source / health_path).read_bytes())
+        health["bundle"]["artifacts"][child.name] = ev.sha(child.read_bytes())
+        reseal_publisher(self.source, health_path, health)
+        with self.assertRaisesRegex(ValueError, "FROZEN_BUNDLE_CATALOG_CONFLICT"):
+            self.inputs().import_once(self.source)
+
+    def test_producer_manifest_missing_conflicting_or_malformed_is_refused(self):
+        for case in ("missing_manifest", "schema", "version", "rule", "run", "date", "seal", "missing_key", "extra_key"):
+            with self.subTest(case=case):
+                source = self.root / ("producer-" + case)
+                directory = catalog_bundle_source(source)
+                path = directory / "manifest.json"
+                manifest = ev.parse(path.read_bytes())
+                if case == "missing_manifest": path.unlink()
+                else:
+                    if case == "schema": manifest["schema"] = "other"
+                    if case == "version": manifest["schema_version"] = "2.0"
+                    if case == "rule": manifest["rule_version"] = "other"
+                    if case == "run": manifest["run_id"] = "another"
+                    if case == "date": manifest["as_of"] = "20261014"
+                    if case == "seal": manifest["bundle_hash"] = "f" * 64
+                    if case == "missing_key": manifest["artifacts"].pop("all_market_scan.json")
+                    if case == "extra_key": manifest["artifacts"]["../outside.json"] = "f" * 64
+                    path.write_bytes(ev.canonical(manifest).encode())
+                with self.assertRaises(ValueError): self.inputs().import_once(source)
+        with self.store.connect() as db:
+            self.assertEqual(db.execute("SELECT COUNT(*) FROM shared_inputs").fetchone()[0], 0)
+
+    def test_producer_scoped_children_missing_or_tampered_are_refused(self):
+        for name in ev.BUNDLE[1:]:
+            for fault in ("missing", "tampered"):
+                with self.subTest(name=name, fault=fault):
+                    source = self.root / (name + "-" + fault)
+                    directory = catalog_bundle_source(source)
+                    path = directory / name
+                    if fault == "missing": path.unlink()
+                    else: path.write_bytes(b'{}')
+                    with self.assertRaises(ValueError): self.inputs().import_once(source)
 
     def test_frozen_input_survives_new_publication(self):
         inputs = self.inputs()

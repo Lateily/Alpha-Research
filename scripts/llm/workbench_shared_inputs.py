@@ -26,6 +26,43 @@ SYNC_ACTOR = "SYSTEM_READ_ONLY_SYNC"
 # The second spelling is the explicitly retained legacy observation contract.
 # governance-mutation: WORKBENCH_SHARED_PUBLISHER_MANIFEST
 MANIFEST_SCHEMAS = {"nightly_publish_manifest/v2", "nightly_manifest/v2"}
+PRODUCER_BUNDLE_CHILDREN = frozenset({"all_market_scan.json", "candidate_review.json",
+    "deep_research_queue.json", "security_registry_projected.json",
+    "candidate_manifest.json", "candidate_battery.json"})
+
+
+def _bundle_catalog_binding(snapshot):
+    records = snapshot["records"]
+    health = records["public/data/v2/funnel_health.json"].get("payload") or {}
+    bundle = health.get("bundle") or {}
+    location = f"data_history/funnel/{snapshot['target_trade_date']}/{snapshot['published_run_id']}"
+    manifest = records[location + "/manifest.json"].get("payload") or {}
+    catalog = bundle.get("artifacts") or {}
+    current = (manifest.get("schema") == "ar.research_funnel_bundle"
+               or "bundle_hash" in bundle or "manifest.json" not in catalog)
+    if not current:
+        return None
+    if (manifest.get("schema") != "ar.research_funnel_bundle"
+            or manifest.get("schema_version") != "1.0"
+            or manifest.get("rule_version") != "research_funnel_v1"
+            or manifest.get("run_id") != snapshot["published_run_id"]
+            or manifest.get("as_of") != snapshot["target_trade_date"]
+            or not isinstance(manifest.get("artifacts"), dict)
+            or set(manifest["artifacts"]) != PRODUCER_BUNDLE_CHILDREN
+            or any(not isinstance(value, str) or not re.fullmatch(r"[0-9a-f]{64}", value)
+                   for value in manifest["artifacts"].values())):
+        raise WorkspaceError("FROZEN_BUNDLE_MANIFEST_INVALID", 409)
+    # governance-mutation: WORKBENCH_SHARED_BUNDLE_CATALOG_AGREEMENT
+    if catalog != manifest["artifacts"]:
+        raise WorkspaceError("FROZEN_BUNDLE_CATALOG_CONFLICT", 409)
+    # The producer seals the six-entry catalog, not its own manifest bytes.
+    # governance-mutation: WORKBENCH_SHARED_BUNDLE_MANIFEST_SEAL
+    if (manifest.get("bundle_hash") != ev.sealed(catalog)
+            or bundle.get("bundle_hash") != manifest["bundle_hash"]):
+        raise WorkspaceError("FROZEN_BUNDLE_MANIFEST_SEAL_INVALID", 409)
+    return {"basis": "BUNDLE_CATALOG_BOUND_NOT_MANIFEST_BYTE_HASH", "catalog_entries": 6,
+            "catalog_hash": manifest["bundle_hash"],
+            "unread_catalog_paths": sorted(PRODUCER_BUNDLE_CHILDREN - set(ev.BUNDLE))}
 
 
 def publication_paths(snapshot):
@@ -60,6 +97,8 @@ def _intrinsic_date(payload):
 def publication_provenance(snapshot, originals):
     records = snapshot["records"]
     result = {}
+    catalog_binding = _bundle_catalog_binding(snapshot)
+    bundle_manifest = f"data_history/funnel/{snapshot['target_trade_date']}/{snapshot['published_run_id']}/manifest.json"
     for name in originals:
         row = records[name]
         payload = row["payload"]
@@ -74,6 +113,8 @@ def publication_provenance(snapshot, originals):
             "source_sha256": row["source_sha256"], "pointer_sha256": records[POINTER]["source_sha256"],
             "manifest_sha256": records[f"public/data/v2/runs/{snapshot['published_run_id']}/manifest.json"]["source_sha256"],
         }
+        if catalog_binding is not None and name == bundle_manifest:
+            result[name].update(catalog_binding)
     return result
 
 
@@ -89,6 +130,8 @@ def validate_snapshot(snapshot, frozen_root, *, sealed_originals=False):
         raise WorkspaceError("FROZEN_WHITELIST_INVALID", 409)
     brief.render(snapshot)  # Existing date, credential, run and module guards.
     required = _required_paths(snapshot)
+    catalog_binding = _bundle_catalog_binding(snapshot)
+    bundle_manifest = f"data_history/funnel/{snapshot['target_trade_date']}/{snapshot['published_run_id']}/manifest.json"
     if sealed_originals:
         actual = {p.relative_to(frozen_root).as_posix() for p in frozen_root.rglob("*") if p.is_file() or p.is_symlink()}
         if actual != required | {"publication.json"}:
@@ -115,7 +158,8 @@ def validate_snapshot(snapshot, frozen_root, *, sealed_originals=False):
             if row.get("status") not in {"OBSERVED", "MISSING_OR_INVALID", "OPTIONAL_UNBOUND", "OPTIONAL_MISSING_OR_INVALID"}:
                 raise WorkspaceError("FROZEN_OPTIONAL_ALIAS_INVALID", 409)
             continue
-        if row.get("status") != "OBSERVED" or row.get("binding") != ("UNBOUND" if name == POINTER else "MATCH"):
+        catalog_manifest = catalog_binding is not None and name == bundle_manifest
+        if row.get("status") != "OBSERVED" or row.get("binding") != ("UNBOUND" if name == POINTER or catalog_manifest else "MATCH"):
             raise WorkspaceError("FROZEN_PUBLICATION_MISSING_OR_CONFLICTING", 409)
         try:
             raw = ev.read_local(Path(frozen_root), name)
@@ -154,6 +198,8 @@ def validate_snapshot(snapshot, frozen_root, *, sealed_originals=False):
             raise WorkspaceError("FROZEN_HASH_CATALOG_INVALID", 409)
         for name in names:
             if prefix + name not in required:
+                continue
+            if catalog_binding is not None and prefix + name == bundle_manifest:
                 continue
             expected = hashes.get(key_prefix + name)
             if not isinstance(expected, str) or expected.removeprefix("sha256:") != records[prefix + name]["source_sha256"]:

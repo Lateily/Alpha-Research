@@ -134,6 +134,30 @@ def reseal_publisher(root, name, value):
     pointer_path.write_bytes(ev.canonical(pointer).encode())
 
 
+def catalog_bundle_source(root, rid="catalog_publication", date="20261015"):
+    """Synthetic scoped data with the real producer's six-entry catalog shape."""
+    publisher_source(root, rid, date)
+    location = f"data_history/funnel/{date}/{rid}"
+    directory = root / location
+    for name in ("all_market_scan.json", "security_registry_projected.json"):
+        (directory / name).write_bytes(ev.canonical({"run_id": rid, "as_of": date, "rows": []}).encode())
+    names = ("all_market_scan.json", "candidate_review.json", "deep_research_queue.json",
+             "security_registry_projected.json", "candidate_manifest.json", "candidate_battery.json")
+    catalog = {name: ev.sha((directory / name).read_bytes()) for name in names}
+    manifest = {"schema": "ar.research_funnel_bundle", "schema_version": "1.0",
+                "rule_version": "research_funnel_v1", "run_id": rid, "as_of": date,
+                "generated_at": "2026-10-15T19:44:55+00:00", "artifacts": catalog,
+                "dag": {"stages": ["candidates", "battery", "finalize"]},
+                "bundle_hash": ev.sealed(catalog)}
+    (directory / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
+    health_path = "public/data/v2/funnel_health.json"
+    health = ev.parse((root / health_path).read_bytes())
+    health["bundle"] = {"location": location, "artifacts": catalog,
+                        "bundle_hash": manifest["bundle_hash"], "immutable": True, "published": False}
+    reseal_publisher(root, health_path, health)
+    return directory
+
+
 def historical_state(root):
     """Old audit bytes include success, STOP, STARTED and an unregistered directory."""
     src = root / "source"
