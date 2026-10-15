@@ -67,6 +67,20 @@ export async function sharedRead(api, path, renew) {
   }
 }
 
+export async function retrySharedPending(api, storage, workspaceId, commandId, renew) {
+  const current = await sharedRead(api, '/api/shared-workspace', renew);
+  if (current.my_workspace.workspace_id !== workspaceId) throw new Error('PENDING_WORKSPACE_MISMATCH');
+  const item = getPending(storage, workspaceId).find(row => row.body.command_id === commandId);
+  if (!item) throw new Error('PENDING_COMMAND_NOT_FOUND');
+  const knownJob = item.job_id || current.owned_commands?.[commandId]?.job_id;
+  // Only an explicit user action can deliver the retained, original request.
+  const body = { ...item.body };
+  const receipt = knownJob ? { job_id: knownJob } : await api('/api/workspace/job', body);
+  if (!receipt.job_id) throw new Error('SUBMISSION_UNCONFIRMED');
+  savePending(storage, workspaceId, item.body, receipt.job_id);
+  return receipt;
+}
+
 export async function pollSharedPending(api, storage, workspaceId, commands, renew) {
   const details = [];
   for (const item of getPending(storage, workspaceId)) {

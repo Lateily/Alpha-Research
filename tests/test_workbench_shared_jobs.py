@@ -107,10 +107,22 @@ else:
             if path.name == "seal.json" and phase == "seal_before": crash()
             if path.name == "seal.json" and phase == "seal_middle":
                 # Exercise a genuinely partial fsynced inode, never a fake complete seal.
-                partial = path.parent/".seal.partial"
-                with partial.open("xb") as file:
-                    file.write(raw[:len(raw)//2]); file.flush(); os.fsync(file.fileno())
-                backup.fsync_directory(path.parent); crash()
+                backup.os.link = lambda *args, **kwargs: crash()
+                write(path,raw[:len(raw)//2])
+            if phase in {"temporary_created", "temporary_fsynced"}:
+                original_open, original_fsync = backup.os.open, backup.os.fsync
+                temporary_fds = set()
+                def open_temporary(name,flags,*args,**options):
+                    fd = original_open(name,flags,*args,**options)
+                    if Path(name).name.startswith(".write-") and flags & os.O_CREAT:
+                        temporary_fds.add(fd)
+                        if phase == "temporary_created": crash()
+                    return fd
+                def fsync_temporary(fd):
+                    result = original_fsync(fd)
+                    if fd in temporary_fds: crash()
+                    return result
+                backup.os.open, backup.os.fsync = open_temporary, fsync_temporary
             result = write(path,raw,**kwargs)
             if path.name == "seal.json" and phase == "seal_after": crash()
             return result
@@ -740,6 +752,82 @@ class SharedJobTests(unittest.TestCase):
             self.assertEqual(len(runner.threads), 2)
         finally: runner.stop()
         self.assertTrue(all(not thread.is_alive() for thread in runner.threads))
+
+    def test_first_use_directory_race_completes_both_bound_tasks(self):
+        for same_actor in (False, True):
+            with self.subTest(same_actor=same_actor):
+                store = wb.Store(self.root / ("race-same" if same_actor else "race-distinct"), shared_v1=True)
+                view = shared.SharedWorkspace(ws.Workspace(store, private_mode=True))
+                inputs = FrozenInputs(store); descriptor = inputs.import_once(self.source)
+                queue = jobs.SharedJobQueue(view, inputs, self.sha)
+                accepted = [queue.enqueue({"command_id": f"race-command-{i}", "kind": "snapshot-brief",
+                                           "snapshot_id": descriptor["snapshot_id"]}, actor)
+                            for i, actor in enumerate((OWNER, OWNER if same_actor else MEMBER))]
+                claims = [queue.claim(), queue.claim()]
+                common = store.path.parent / "shared-jobs"
+                barrier = threading.Barrier(2)
+                original_mkdir = Path.mkdir
+                results, errors = {}, []
+                def synchronized_mkdir(path, *args, **kwargs):
+                    if path == common: barrier.wait(timeout=5)
+                    return original_mkdir(path, *args, **kwargs)
+                def execute(claim):
+                    try: results[claim["job_id"]] = queue.finish(claim, worker.run_attempt(claim))
+                    except Exception as error: errors.append(repr(error))
+                with mock.patch.object(Path, "mkdir", synchronized_mkdir):
+                    threads = [threading.Thread(target=execute, args=(claim,)) for claim in claims]
+                    for thread in threads: thread.start()
+                    for thread in threads: thread.join(timeout=15)
+                self.assertTrue(all(not thread.is_alive() for thread in threads))
+                self.assertEqual(errors, [])
+                self.assertEqual([results[item["job_id"]]["status"] for item in accepted], ["SUCCEEDED", "SUCCEEDED"])
+                for claim in claims:
+                    detail = queue.job(claim["job_id"])
+                    for key in ("job_id", "workspace_id", "actor", "input_hash", "snapshot_id", "code_sha"):
+                        self.assertEqual(detail[key], claim[key])
+                self.assertEqual(queue.job(accepted[0]["job_id"])["output_hash"], queue.job(accepted[1]["job_id"])["output_hash"])
+
+    def test_retained_worker_temporaries_survive_recovery_backup_restore(self):
+        for phase in ("temporary_created", "temporary_fsynced", "seal_middle"):
+            with self.subTest(phase=phase):
+                store = wb.Store(self.root / phase, shared_v1=True)
+                view = shared.SharedWorkspace(ws.Workspace(store, private_mode=True))
+                inputs = FrozenInputs(store); descriptor = inputs.import_once(self.source)
+                queue = jobs.SharedJobQueue(view, inputs, self.sha)
+                accepted = queue.enqueue({"command_id": "fault-command-001", "kind": "snapshot-brief",
+                                          "snapshot_id": descriptor["snapshot_id"]}, OWNER)
+                crashed = subprocess.run([sys.executable, "-I", "-B", "-c", FAULT_SCRIPT,
+                                          str(self.code), str(store.path.parent), descriptor["snapshot_id"], phase], capture_output=True, text=True)
+                self.assertEqual(crashed.returncode, 77, crashed.stderr)
+                partials = list((store.path.parent / "shared-jobs").rglob(".write-*.partial"))
+                self.assertEqual(len(partials), 1)
+                relative = partials[0].relative_to(store.path.parent).as_posix()
+                raw = partials[0].read_bytes()
+                self.assertEqual(bool(raw), phase != "temporary_created")
+                queue.recover()
+                claim = queue.claim(); self.assertIsNotNone(claim)
+                self.assertEqual(queue.finish(claim, worker.run_attempt(claim))["status"], "SUCCEEDED")
+                self.assertEqual(queue.job(accepted["job_id"])["input_hash"], descriptor["input_hash"])
+                archive = self.root / (phase + "-backup")
+                try: receipt = backup.backup_shared(store, archive)
+                except ValueError as error: self.fail(f"retained service temporary must be backuppable: {error}")
+                self.assertEqual(receipt["status"], "LOCAL_SHARED_BACKUP_VERIFIED")
+                manifest = backup.verify_shared(archive)
+                self.assertEqual(manifest["files"][relative], ev.sha(raw))
+                self.assertTrue(any(relative in row.get("recovery_evidence", []) for row in manifest["artifact_inventory"]))
+                source_files = {path.relative_to(store.path.parent).as_posix(): path.read_bytes()
+                                for area in backup.ARTIFACT_ROOTS for path in (store.path.parent / area).rglob("*") if path.is_file()}
+                self.assertEqual(set(manifest["files"]) - {"data.json"}, set(source_files))
+                scratch = self.root / (phase + "-restored")
+                self.assertEqual(backup.restore_shared(archive, scratch)["status"], "LOCAL_SHARED_RESTORE_VERIFIED")
+                for name, original in source_files.items():
+                    self.assertEqual((archive / name).read_bytes(), original)
+                    self.assertEqual((scratch / name).read_bytes(), original)
+                restored_files = {path.relative_to(scratch).as_posix()
+                                  for area in backup.ARTIFACT_ROOTS - {"migration-evidence"}
+                                  for path in (scratch / area).rglob("*") if path.is_file()}
+                self.assertEqual(restored_files, set(source_files))
+                self.assertEqual((scratch / relative).read_bytes(), raw)
 
 
 if __name__ == "__main__": unittest.main(verbosity=2)

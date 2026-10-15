@@ -105,6 +105,70 @@ test('unconfirmed submission is not automatically resubmitted', async () => {
   await view.pollSharedPending(() => assert.fail('no accepted job exists to query'), storage, 'mine', {}, () => assert.fail('no renewal needed'));
   assert.equal(view.getPending(storage, 'mine').length, 1);
 });
+test('explicit retry resolves two unknown deliveries with original inputs and late acceptance', async () => {
+  assert.equal(typeof view.retrySharedPending, 'function', 'missing explicit original-command retry');
+  const storage = storageFixture(), calls = [], accepted = new Map();
+  const originals = [
+    { command_id: 'unknown-first', kind: 'observe', snapshot_id: 'original-one' },
+    { command_id: 'unknown-second', kind: 'snapshot-brief', snapshot_id: 'original-two' }
+  ];
+  for (const body of originals) view.savePending(storage, 'mine', body);
+  view.savePending(storage, 'other', { ...originals[0], snapshot_id: 'other-input' });
+  const otherBefore = view.getPending(storage, 'other');
+  let executions = 0, lateAcceptance = false;
+  const accept = body => {
+    const prior = accepted.get(body.command_id);
+    if (prior) { assert.deepEqual(prior.body, body); return prior; }
+    const job = { job_id: `original-job-${++executions}`, body: { ...body } };
+    accepted.set(body.command_id, job); return job;
+  };
+  const api = async (path, body) => {
+    calls.push({ path, body });
+    if (path === '/api/shared-workspace') {
+      const owned_commands = Object.fromEntries([...accepted].map(([id, job]) => [id, { job_id: job.job_id }]));
+      // Simulate an original request accepted after this GET's image was read.
+      if (lateAcceptance) { accept(originals[1]); lateAcceptance = false; }
+      return { my_workspace: { workspace_id: 'mine' }, owned_commands,
+        common_data: { current_snapshot_id: 'newest-must-not-replace-original' } };
+    }
+    if (body) {
+      assert.equal(path, '/api/workspace/job');
+      assert.deepEqual(body, originals.find(row => row.command_id === body.command_id));
+      return { job_id: accept(body).job_id, status: 'QUEUED' };
+    }
+    return { workspace_id: 'mine', job_id: path.split('/').at(-1), status: 'SUCCEEDED' };
+  };
+  const renew = () => assert.fail('no cookie renewal needed');
+  await view.pollSharedPending(api, storage, 'mine', {}, renew);
+  assert.deepEqual(calls, [], 'automatic reconnect must not POST unknown deliveries');
+  await view.retrySharedPending(api, storage, 'mine', originals[0].command_id, renew);
+  assert.equal(view.getPending(storage, 'mine')[0].job_id, 'original-job-1');
+  await view.pollSharedPending(api, storage, 'mine', {}, renew);
+  assert.equal(view.getPending(storage, 'mine').length, 1, 'terminal query frees the original slot');
+  lateAcceptance = true;
+  await view.retrySharedPending(api, storage, 'mine', originals[1].command_id, renew);
+  assert.equal(executions, 2, 'late original acceptance and retry must share one job');
+  await view.pollSharedPending(api, storage, 'mine', {}, renew);
+  assert.deepEqual(view.getPending(storage, 'mine'), []);
+  assert.deepEqual(view.getPending(storage, 'other'), otherBefore);
+  assert.deepEqual(calls.filter(call => call.body).map(call => call.body), originals);
+  // Already accepted original: reconcile by GET without another intentional POST.
+  view.savePending(storage, 'mine', originals[0]);
+  await view.retrySharedPending(api, storage, 'mine', originals[0].command_id, renew);
+  assert.equal(calls.filter(call => call.body).length, 2);
+  assert.equal(view.getPending(storage, 'mine')[0].job_id, 'original-job-1');
+});
+test('explicit retry refuses a changed actor workspace without posting or touching pending', async () => {
+  assert.equal(typeof view.retrySharedPending, 'function', 'missing actor-bound retry');
+  const storage = storageFixture(), body = { command_id: 'same-command', kind: 'observe', snapshot_id: 'original-input' };
+  view.savePending(storage, 'mine', body); view.savePending(storage, 'other', body);
+  const before = ['mine', 'other'].map(id => view.getPending(storage, id));
+  await assert.rejects(view.retrySharedPending(async (path, request) => {
+    assert.equal(path, '/api/shared-workspace'); assert.equal(request, undefined);
+    return { my_workspace: { workspace_id: 'other' }, owned_commands: {} };
+  }, storage, 'mine', body.command_id, () => {}), /PENDING_WORKSPACE_MISMATCH/);
+  assert.deepEqual(['mine', 'other'].map(id => view.getPending(storage, id)), before);
+});
 test('definitive HTTP rejection frees only that workspace pending record', () => {
   assert.equal(typeof view.recordSubmissionFailure, 'function', 'missing rejected submission cleanup');
   const storage = storageFixture();

@@ -54,7 +54,14 @@ def durable_directory(path):
         if not path.is_dir(): raise ev.EvidenceError("WRITE_DIRECTORY_INVALID")
         return
     durable_directory(path.parent)
-    path.mkdir(mode=0o700)
+    # Cooperative workers may create the same ancestor after our absence check.
+    try:
+        path.mkdir(mode=0o700)
+    except FileExistsError:
+        pass
+    if any(p.is_symlink() for p in (path, *path.parents)):
+        raise ev.EvidenceError("WRITE_DIRECTORY_SYMLINK")
+    if not path.is_dir(): raise ev.EvidenceError("WRITE_DIRECTORY_INVALID")
     fsync_directory(path)
     fsync_directory(path.parent)
 
@@ -199,9 +206,20 @@ def legacy_jobs(rows):
     return jobs
 
 
+def _worker_partial(name):
+    parts = name.split("/")
+    if (len(parts) != 6 or parts[0] != "shared-jobs" or parts[3] != "attempts"
+            or not re.fullmatch(r"\.write-[0-9a-f]{32}\.partial", parts[-1])):
+        return False
+    try:
+        return all(str(uuid.UUID(parts[i])) == parts[i] for i in (1, 2, 4))
+    except ValueError:
+        return False
+
+
 def _safe_artifact(name):
     parts = name.split("/")
-    return (len(parts) >= 2 and parts[0] in ARTIFACT_ROOTS
+    return _worker_partial(name) or (len(parts) >= 2 and parts[0] in ARTIFACT_ROOTS
             and all(re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,150}", p) and p not in {".", ".."} for p in parts))
 
 
@@ -246,7 +264,9 @@ def _inventory(root, tables, *, scope="ISOLATED_STATE_ARTIFACT_ROOTS"):
         for path in sorted(base.rglob("*")):
             relative = path.relative_to(root).as_posix()
             if path.is_symlink() or not _safe_artifact(relative): raise ev.EvidenceError("BACKUP_ORPHAN_UNSAFE")
-            if not path.is_dir() and not path.is_file(): raise ev.EvidenceError("BACKUP_ORPHAN_UNSAFE")
+            if (not path.is_dir() and not path.is_file()
+                    or _worker_partial(relative) and not path.is_file()):
+                raise ev.EvidenceError("BACKUP_ORPHAN_UNSAFE")
             if path.is_dir(): directories.add(relative)
             parts = relative.split("/")
             if area == "workspaces":
@@ -265,7 +285,7 @@ def _inventory(root, tables, *, scope="ISOLATED_STATE_ARTIFACT_ROOTS"):
                 raw = ev.read_local(root, relative)
                 import workbench_snapshot_brief as brief
                 if relative.endswith(".json"): brief.reject_credentials(ev.parse(b'{"artifact":' + raw + b'}'))
-                else: brief.reject_credentials(raw.decode("utf-8", errors="replace" if area in RECOVERY_ROOTS else "strict"))
+                else: brief.reject_credentials(raw.decode("utf-8", errors="replace" if area in RECOVERY_ROOTS or _worker_partial(relative) else "strict"))
                 files[relative] = raw
                 groups[group].append(relative)
     inventory = []
@@ -276,6 +296,8 @@ def _inventory(root, tables, *, scope="ISOLATED_STATE_ARTIFACT_ROOTS"):
         inventory.append({"path": group, "job_id": job_id if job or registered_replay else None,
                           "status": job["status"] if job else "REGISTERED_REPLAY" if registered_replay else "RECOVERY_EVIDENCE" if group.split("/")[0] in RECOVERY_ROOTS else "FROZEN_INPUT" if group == "frozen-inputs" else "ORPHAN",
                           "files": sorted(names), "presence": "PRESENT", "source_scope": scope})
+        partials = sorted(name for name in names if _worker_partial(name))
+        if partials: inventory[-1]["recovery_evidence"] = partials
     for job_id, job in jobs.items():
         area = {"snapshot-brief": "snapshot-briefs", "brief-trial": "brief-trials", "earnings-trial": "earnings-trials"}.get(job.get("kind"))
         if not area: continue

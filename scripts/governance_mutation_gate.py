@@ -200,6 +200,52 @@ class MutationCase:
 
 MUTATIONS: tuple[MutationCase, ...] = (
     MutationCase(
+        mutation_id="WORKBENCH_SHARED_DIRECTORY_CONCURRENCY", component="Final fix R1",
+        source_path="scripts/llm/workbench_backup.py", test_script="tests/test_workbench_shared_jobs.py",
+        before='    except FileExistsError:\n        pass\n', after='    except FileExistsError:\n        raise\n',
+        expected_failure_marker="test_first_use_directory_race_completes_both_bound_tasks",
+        rationale="Two real tasks must both succeed when their first durable ancestor is created concurrently.",
+    ),
+    MutationCase(
+        mutation_id="WORKBENCH_SHARED_DIRECTORY_RACE_RECHECK", component="Final fix R1",
+        source_path="scripts/llm/workbench_backup.py", test_script="tests/test_workbench_shared_state.py",
+        before='    except FileExistsError:\n        pass\n', after='    except FileExistsError:\n        return\n',
+        expected_failure_marker="test_durable_directory_rechecks_raced_entries_and_fsyncs",
+        rationale="Concurrent creation must still validate the actual directory and durably sync it and its parent.",
+    ),
+    MutationCase(
+        mutation_id="WORKBENCH_SHARED_RETRY_ORIGINAL_INPUT", component="Final fix R2",
+        source_path="tools/nonprod_workbench/ui/shared-view.mjs", test_script="tests/test_workbench_workspace.py",
+        before='  const body = { ...item.body };',
+        after='  const body = { ...item.body, snapshot_id: current.common_data.current_snapshot_id };',
+        expected_failure_marker="test_unknown_delivery_explicit_retry_keeps_original_input_and_actor",
+        rationale="Intentional delivery retry must use the original frozen input, never the newest common data.",
+    ),
+    MutationCase(
+        mutation_id="WORKBENCH_SHARED_RETRY_WORKSPACE", component="Final fix R2",
+        source_path="tools/nonprod_workbench/ui/shared-view.mjs", test_script="tests/test_workbench_workspace.py",
+        before="  if (current.my_workspace.workspace_id !== workspaceId) throw new Error('PENDING_WORKSPACE_MISMATCH');",
+        after="  if (false) throw new Error('PENDING_WORKSPACE_MISMATCH');",
+        expected_failure_marker="test_unknown_delivery_explicit_retry_keeps_original_input_and_actor",
+        rationale="An explicit retry cannot deliver a retained request after verified identity changes workspace.",
+    ),
+    MutationCase(
+        mutation_id="WORKBENCH_SHARED_WORKER_PARTIAL_ARCHIVE", component="Final fix R3",
+        source_path="scripts/llm/workbench_backup.py", test_script="tests/test_workbench_shared_jobs.py",
+        before='    return _worker_partial(name) or (len(parts) >= 2 and parts[0] in ARTIFACT_ROOTS',
+        after='    return (len(parts) >= 2 and parts[0] in ARTIFACT_ROOTS',
+        expected_failure_marker="test_retained_worker_temporaries_survive_recovery_backup_restore",
+        rationale="Retained real worker crash temporaries must survive recovery, complete archive and scratch restore.",
+    ),
+    MutationCase(
+        mutation_id="WORKBENCH_SHARED_WORKER_PARTIAL_SCOPE", component="Final fix R3",
+        source_path="scripts/llm/workbench_backup.py", test_script="tests/test_workbench_shared_state.py",
+        before='            or not re.fullmatch(r"\\.write-[0-9a-f]{32}\\.partial", parts[-1])):',
+        after='            or False):',
+        expected_failure_marker="test_worker_partial_allowance_is_exact_and_keeps_safety_checks",
+        rationale="Service temporary compatibility cannot admit arbitrary dot files, links, directories or sensitive bytes.",
+    ),
+    MutationCase(
         mutation_id="WORKBENCH_SHARED_SYNC_NESTED_SHAPE", component="S3 Fix Round1 R1",
         source_path="scripts/llm/workbench_evidence.py", test_script="tests/test_workbench_shared_sync.py",
         before='    if bundle is not None and not isinstance(bundle, dict):', after='    if False:',

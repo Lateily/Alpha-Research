@@ -71,6 +71,60 @@ class MigrationTests(unittest.TestCase):
         backup.backup_shared(self.store, path)
         return path
 
+    def test_durable_directory_rechecks_raced_entries_and_fsyncs(self):
+        original_mkdir, original_fsync = Path.mkdir, backup.fsync_directory
+        outside = self.root / "outside-directory"; outside.mkdir()
+        for kind in ("directory", "file", "link", "broken-link", "permission"):
+            with self.subTest(kind=kind):
+                target = self.root / ("raced-" + kind)
+                synced = []
+                def competing_mkdir(path, *args, **kwargs):
+                    if path != target: return original_mkdir(path, *args, **kwargs)
+                    if kind == "permission": raise PermissionError("injected mkdir refusal")
+                    if kind == "file": path.write_bytes(b"not a directory")
+                    elif kind in {"link", "broken-link"}: path.symlink_to(outside if kind == "link" else outside / "missing", target_is_directory=True)
+                    else: original_mkdir(path, *args, **kwargs)
+                    raise FileExistsError("concurrent creator")
+                def sync(path):
+                    synced.append(Path(path)); return original_fsync(path)
+                refused = False
+                with patch.object(Path, "mkdir", competing_mkdir), patch.object(backup, "fsync_directory", side_effect=sync):
+                    try: backup.durable_directory(target)
+                    except (OSError, ValueError): refused = True
+                self.assertEqual(refused, kind != "directory", "only a genuine concurrent directory is allowed")
+                if kind == "directory": self.assertEqual(synced, [target, target.parent])
+        with patch.object(backup, "fsync_directory", side_effect=OSError("injected sync failure")):
+            with self.assertRaises(OSError): backup.durable_directory(self.root / "sync-failure")
+
+    def test_worker_partial_allowance_is_exact_and_keeps_safety_checks(self):
+        from uuid import uuid4
+        store = wb.Store(self.root / "partial-state", shared_v1=True)
+        attempt = store.path.parent / "shared-jobs" / str(uuid4()) / str(uuid4()) / "attempts" / str(uuid4())
+        attempt.mkdir(parents=True)
+        temporary = ".write-" + "a" * 32 + ".partial"
+        outside = self.root / "outside-partial"; outside.write_bytes(b"outside")
+        cases = ("arbitrary-dot", "bad-id", "bad-parent", "nested", "directory", "link", "oversize", "credential")
+        for kind in cases:
+            with self.subTest(kind=kind):
+                path = attempt / temporary
+                if kind == "arbitrary-dot": path = attempt / ".seal.partial"
+                elif kind == "bad-id": path = attempt / ".write-not-a-uuid.partial"
+                elif kind == "bad-parent": path = attempt.parent / temporary
+                elif kind == "nested":
+                    (attempt / "staging").mkdir(); path = attempt / "staging" / temporary
+                if kind == "directory": path.mkdir()
+                elif kind == "link": path.symlink_to(outside)
+                elif kind == "oversize": path.write_bytes(b"x" * (ev.MAX_FILE + 1))
+                elif kind == "credential": path.write_bytes(b"Authorization: Bearer synthetic-recovery-secret")
+                else: path.write_bytes(b"safe partial")
+                refused = False
+                try: backup.backup_shared(store, self.root / ("unsafe-partial-" + kind))
+                except (OSError, ValueError): refused = True
+                self.assertTrue(refused, "temporary allowance must not admit " + kind)
+                if path.is_dir() and not path.is_symlink(): path.rmdir()
+                else: path.unlink()
+                if kind == "nested": (attempt / "staging").rmdir()
+
     def test_sync_selection_backup_restores_reused_cursor(self):
         from workbench_shared_inputs import FrozenInputs
         from workbench_shared_sync import ReadOnlySync

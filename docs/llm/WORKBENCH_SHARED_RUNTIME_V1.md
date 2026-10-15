@@ -100,6 +100,14 @@ changed content or another actor reusing the command ID yields 409. A reconnect
 queries the original job ID, not a new submission. STOP is not revived by retry;
 a deliberate new attempt needs a new command ID and retains the prior failure.
 
+For `SUBMISSION_UNCONFIRMED`, first reconnect and use the normal GET-only
+reconciliation. If delivery is still unknown, My Tasks shows each retained
+command, kind and frozen snapshot with an explicit `重试原提交` action (accessible
+name: `重试原提交 <original command_id>`). This action checks the current verified
+workspace, then queries an accepted original or deliberately retries the exact
+original command/kind/snapshot. It does not choose the newest input or mint a new
+command ID. Merely reloading or reconnecting never POSTs unknown deliveries.
+
 FIFO dispatch has at most two running slots, two unfinished jobs per actor and
 20 globally; excess is 429. Each renderer has a 120-second hard deadline and
 process-group cleanup, including descendants. Its environment is restricted to
@@ -230,6 +238,13 @@ manifest, verifies it and automatically performs an additional temporary scratch
 restore. Archive inventory must be `ISOLATED_STATE_ARTIFACT_ROOTS`. Credentials,
 owner secrets, allowlist/cookies, raw SQLite/WAL and technical leases are not
 exported; do not substitute a filesystem copy of a live SQLite file.
+
+Retain worker crash files: only `.write-<32 lowercase hex>.partial` directly in
+`shared-jobs/<workspace UUID>/<job UUID>/attempts/<attempt UUID>/` is recognized
+as worker temporary evidence. The inventory lists these under `recovery_evidence`;
+backup and scratch restore preserve their exact bytes, including empty or
+incomplete writes, with normal type/no-follow/size/credential checks. Other dot
+paths still require review. Do not delete partials to make a backup pass.
 
 For an approved legacy migration, replace `Store(state, shared_v1=True)` above
 with `Store(legacy_state)` for old local storage, or use `shared_v1=True` only
