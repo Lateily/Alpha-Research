@@ -8,7 +8,7 @@
     "no_position_mutation": true,
     "run_date": "2026-10-15",
     "pilot_start_date": "2026-06-08",
-    "generated_at": "2026-10-15T05:49:22.289400+00:00",
+    "generated_at": "2026-10-15T13:40:20.333103+00:00",
     "fresh_pilot": true,
     "legacy_paper_positions_inherited": false,
     "sources": [
@@ -106,7 +106,7 @@
         "quant_confluence": {
           "action": "NEUTRAL",
           "score": 0,
-          "rationale": "RSI 59 | Price vs MA20 +4.1% | VP 50"
+          "rationale": "RSI 60 | Price vs MA20 +4.1% | VP 50"
         }
       },
       "validation_status": "PENDING",
@@ -250,7 +250,7 @@
         "model_action": "HOLD",
         "horizon_days": 5,
         "evidence_tier": "quant_confluence",
-        "why": "Bullish: Rsi Oversold, Bb Lower Break | RSI 29 | Price vs MA20 -11.2% | VP 47",
+        "why": "Bullish: Rsi Oversold, Bb Lower Break | RSI 30 | Price vs MA20 -11.2% | VP 47",
         "target_range": {
           "basis": "quant_signal",
           "calibrated": false,
@@ -267,7 +267,7 @@
           "quant_confluence": {
             "action": "HOLD",
             "score": 20,
-            "rationale": "Bullish: Rsi Oversold, Bb Lower Break | RSI 29 | Price vs MA20 -11.2% | VP 47",
+            "rationale": "Bullish: Rsi Oversold, Bb Lower Break | RSI 30 | Price vs MA20 -11.2% | VP 47",
             "regime": "NEUTRAL"
           }
         },
@@ -282,7 +282,7 @@
         "model_action": "HOLD",
         "horizon_days": 5,
         "evidence_tier": "quant_confluence",
-        "why": "Bullish: Rsi Oversold, Bb Lower Break | RSI 28 | Price vs MA20 -18.6% | Regime: PERMISSIVE | VP 48",
+        "why": "Bullish: Rsi Oversold, Bb Lower Break | RSI 29 | Price vs MA20 -18.6% | Regime: PERMISSIVE | VP 48",
         "target_range": {
           "basis": "quant_signal",
           "calibrated": false,
@@ -299,7 +299,7 @@
           "quant_confluence": {
             "action": "HOLD",
             "score": 24,
-            "rationale": "Bullish: Rsi Oversold, Bb Lower Break | RSI 28 | Price vs MA20 -18.6% | Regime: PERMISSIVE | VP 48",
+            "rationale": "Bullish: Rsi Oversold, Bb Lower Break | RSI 29 | Price vs MA20 -18.6% | Regime: PERMISSIVE | VP 48",
             "regime": "PERMISSIVE"
           }
         },
@@ -330,8 +330,8 @@
             "total": 0
           },
           "key_indicators": {
-            "rsi14": 38.3,
-            "macd_hist": 0.0171,
+            "rsi14": 38.4,
+            "macd_hist": 0.0138,
             "price_vs_ma20": -3.16,
             "price_vs_ma60": null,
             "change_5d": -2.24,
@@ -407,8 +407,8 @@
             "total": 3
           },
           "key_indicators": {
-            "rsi14": 29.2,
-            "macd_hist": -1.7707,
+            "rsi14": 29.5,
+            "macd_hist": -1.7691,
             "price_vs_ma20": -11.23,
             "price_vs_ma60": null,
             "change_5d": -11.18,
@@ -419,7 +419,7 @@
               "type": "RSI_OVERSOLD",
               "strength": "moderate",
               "bullish": true,
-              "desc": "RSI(14) = 29.2 — oversold, watch for reversal"
+              "desc": "RSI(14) = 29.5 — oversold, watch for reversal"
             },
             {
               "type": "BB_LOWER_BREAK",
@@ -461,8 +461,8 @@
             "total": 3
           },
           "key_indicators": {
-            "rsi14": 28.4,
-            "macd_hist": -36.0213,
+            "rsi14": 28.9,
+            "macd_hist": -36.3875,
             "price_vs_ma20": -18.61,
             "price_vs_ma60": null,
             "change_5d": -14.29,
@@ -473,7 +473,7 @@
               "type": "RSI_OVERSOLD",
               "strength": "moderate",
               "bullish": true,
-              "desc": "RSI(14) = 28.4 — oversold, watch for reversal"
+              "desc": "RSI(14) = 28.9 — oversold, watch for reversal"
             },
             {
               "type": "BB_LOWER_BREAK",
@@ -515,8 +515,8 @@
             "total": 0
           },
           "key_indicators": {
-            "rsi14": 59.3,
-            "macd_hist": 0.2709,
+            "rsi14": 59.7,
+            "macd_hist": 0.2708,
             "price_vs_ma20": 4.13,
             "price_vs_ma60": null,
             "change_5d": 4.34,
@@ -604,8 +604,8 @@
             "total": 0
           },
           "key_indicators": {
-            "rsi14": 39.9,
-            "macd_hist": -3.2966,
+            "rsi14": 40.3,
+            "macd_hist": -3.3281,
             "price_vs_ma20": -5.38,
             "price_vs_ma60": null,
             "change_5d": 0.98,
