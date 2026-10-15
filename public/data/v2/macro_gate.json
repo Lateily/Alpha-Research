@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-10-14T13:58:57Z",
+  "generated_at": "2026-10-15T05:48:51Z",
   "mode": "review_context_only",
   "_contract": "v1 第一版:不预测方向、不改仓位 — 仅作复盘/研究的宏观上下文原料。任何用本文件自动调仓的行为都超出契约。",
-  "_status": "PARTIAL",
+  "_status": "OK",
   "items": [
     {
       "endpoint": "cn_gdp",
@@ -14,31 +14,31 @@
       "previous": 5.0,
       "as_of": "2026Q2",
       "previous_as_of": "2026Q1",
-      "freshness_days": 135
+      "freshness_days": 136
     },
     {
       "endpoint": "cn_cpi",
       "cadence": "monthly",
       "headline": "nt_yoy",
       "unit": "pct_yoy",
-      "_status": "STALE",
-      "actual": 0.8,
-      "previous": 0.5,
-      "as_of": "202608",
-      "previous_as_of": "202607",
-      "freshness_days": 74
+      "_status": "OK",
+      "actual": 0.9,
+      "previous": 0.8,
+      "as_of": "202609",
+      "previous_as_of": "202608",
+      "freshness_days": 44
     },
     {
       "endpoint": "cn_ppi",
       "cadence": "monthly",
       "headline": "ppi_yoy",
       "unit": "pct_yoy",
-      "_status": "STALE",
-      "actual": 3.8,
-      "previous": 3.5,
-      "as_of": "202608",
-      "previous_as_of": "202607",
-      "freshness_days": 74
+      "_status": "OK",
+      "actual": 5.0,
+      "previous": 3.8,
+      "as_of": "202609",
+      "previous_as_of": "202608",
+      "freshness_days": 44
     },
     {
       "endpoint": "cn_pmi",
@@ -50,7 +50,7 @@
       "previous": 49.8,
       "as_of": "202609",
       "previous_as_of": "202608",
-      "freshness_days": 43,
+      "freshness_days": 44,
       "detail": {
         "制造业PMI": 50.1,
         "非制造业PMI": 50.2,
@@ -63,16 +63,16 @@
       "headline": "1w",
       "unit": "pct_annual",
       "_status": "OK",
-      "actual": 1.3484,
-      "previous": 1.341,
-      "as_of": "20261014",
-      "previous_as_of": "20261013",
+      "actual": 1.346,
+      "previous": 1.3484,
+      "as_of": "20261015",
+      "previous_as_of": "20261014",
       "freshness_days": 0,
       "detail": {
-        "on": 1.269,
-        "1w": 1.3484,
+        "on": 1.266,
+        "1w": 1.346,
         "3m": 1.43,
-        "1y": 1.4748
+        "1y": 1.474
       }
     },
     {
@@ -81,14 +81,14 @@
       "headline": "2s10s",
       "unit": "pct_points",
       "_status": "OK",
-      "actual": 0.42,
-      "previous": 0.44,
-      "as_of": "20261013",
-      "previous_as_of": "20261009",
+      "actual": 0.37,
+      "previous": 0.42,
+      "as_of": "20261014",
+      "previous_as_of": "20261013",
       "freshness_days": 1,
       "detail": {
-        "y2": 4.79,
-        "y10": 5.21
+        "y2": 4.82,
+        "y10": 5.19
       }
     }
   ],

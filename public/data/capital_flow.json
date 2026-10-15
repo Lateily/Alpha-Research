@@ -1,194 +1,12 @@
 {
-  "fetched_at": "2026-10-14T13:55:56Z",
-  "trade_date": "20261014",
+  "fetched_at": "2026-10-15T05:45:39Z",
+  "trade_date": "20261015",
   "tier": 15000,
   "_status": "partial",
   "hot_concepts": [],
   "cold_concepts": [],
-  "hot_industries": [
-    {
-      "name": "传媒",
-      "ts_code": "BK0486.DC",
-      "net_inflow_yuan": 23461166080000.0,
-      "pct_chg": 1.65
-    },
-    {
-      "name": "印制电路板",
-      "ts_code": "BK1340.DC",
-      "net_inflow_yuan": 17234892800000.0,
-      "pct_chg": 0.63
-    },
-    {
-      "name": "元件",
-      "ts_code": "BK0459.DC",
-      "net_inflow_yuan": 12769239040000.0,
-      "pct_chg": 0.07
-    },
-    {
-      "name": "影视概念",
-      "ts_code": "BK0847.DC",
-      "net_inflow_yuan": 12086616480000.0,
-      "pct_chg": 0.87
-    },
-    {
-      "name": "文娱消费",
-      "ts_code": "BK1654.DC",
-      "net_inflow_yuan": 11017285120000.0,
-      "pct_chg": 0.87
-    },
-    {
-      "name": "石油石化",
-      "ts_code": "BK0464.DC",
-      "net_inflow_yuan": 10590335360000.0,
-      "pct_chg": 0.33
-    },
-    {
-      "name": "AI语料",
-      "ts_code": "BK1172.DC",
-      "net_inflow_yuan": 10184255840000.0,
-      "pct_chg": 1.67
-    },
-    {
-      "name": "知识产权",
-      "ts_code": "BK0839.DC",
-      "net_inflow_yuan": 8943535680000.0,
-      "pct_chg": 0.12
-    },
-    {
-      "name": "资源开采概念",
-      "ts_code": "BK1017.DC",
-      "net_inflow_yuan": 8675358080000.0,
-      "pct_chg": 0.92
-    },
-    {
-      "name": "公用事业",
-      "ts_code": "BK0427.DC",
-      "net_inflow_yuan": 8318532480000.0,
-      "pct_chg": 0.38
-    },
-    {
-      "name": "快手概念",
-      "ts_code": "BK0972.DC",
-      "net_inflow_yuan": 8237830080000.0,
-      "pct_chg": 0.31
-    },
-    {
-      "name": "短剧互动游戏",
-      "ts_code": "BK1151.DC",
-      "net_inflow_yuan": 8232934400000.0,
-      "pct_chg": 1.41
-    },
-    {
-      "name": "煤炭",
-      "ts_code": "BK0437.DC",
-      "net_inflow_yuan": 7701542400000.0,
-      "pct_chg": 1.23
-    },
-    {
-      "name": "AIGC概念",
-      "ts_code": "BK1111.DC",
-      "net_inflow_yuan": 7643939840000.0,
-      "pct_chg": -0.05
-    },
-    {
-      "name": "煤炭开采",
-      "ts_code": "BK1250.DC",
-      "net_inflow_yuan": 7300335520000.0,
-      "pct_chg": 0.96
-    },
-    {
-      "name": "动力煤",
-      "ts_code": "BK1493.DC",
-      "net_inflow_yuan": 7284471520000.0,
-      "pct_chg": 1.69
-    },
-    {
-      "name": "数字媒体",
-      "ts_code": "BK1221.DC",
-      "net_inflow_yuan": 7174984160000.0,
-      "pct_chg": 1.62
-    },
-    {
-      "name": "电力",
-      "ts_code": "BK0428.DC",
-      "net_inflow_yuan": 6956915520000.0,
-      "pct_chg": 0.19
-    },
-    {
-      "name": "中特估",
-      "ts_code": "BK1139.DC",
-      "net_inflow_yuan": 6583979520000.0,
-      "pct_chg": 0.51
-    },
-    {
-      "name": "虚拟数字人",
-      "ts_code": "BK1055.DC",
-      "net_inflow_yuan": 6528171520000.0,
-      "pct_chg": -0.25
-    }
-  ],
-  "cold_industries": [
-    {
-      "name": "融资融券",
-      "ts_code": "BK0596.DC",
-      "net_inflow_yuan": -361174548480000.0,
-      "pct_chg": -1.68
-    },
-    {
-      "name": "MSCI中国",
-      "ts_code": "BK0821.DC",
-      "net_inflow_yuan": -283230248960000.0,
-      "pct_chg": -1.34
-    },
-    {
-      "name": "富时罗素",
-      "ts_code": "BK0867.DC",
-      "net_inflow_yuan": -253469470720000.0,
-      "pct_chg": -0.96
-    },
-    {
-      "name": "大盘股",
-      "ts_code": "BK1663.DC",
-      "net_inflow_yuan": -215557544960000.0,
-      "pct_chg": -1.24
-    },
-    {
-      "name": "深股通",
-      "ts_code": "BK0804.DC",
-      "net_inflow_yuan": -203646187520000.0,
-      "pct_chg": -1.77
-    },
-    {
-      "name": "HS300_",
-      "ts_code": "BK0500.DC",
-      "net_inflow_yuan": -189282593280000.0,
-      "pct_chg": -0.83
-    },
-    {
-      "name": "深成500",
-      "ts_code": "BK0568.DC",
-      "net_inflow_yuan": -178280478720000.0,
-      "pct_chg": -1.31
-    },
-    {
-      "name": "标准普尔",
-      "ts_code": "BK0879.DC",
-      "net_inflow_yuan": -159878914560000.0,
-      "pct_chg": -0.78
-    },
-    {
-      "name": "沪股通",
-      "ts_code": "BK0707.DC",
-      "net_inflow_yuan": -152582789120000.0,
-      "pct_chg": -1.29
-    },
-    {
-      "name": "2026中报预增",
-      "ts_code": "BK1749.DC",
-      "net_inflow_yuan": -147873515520000.0,
-      "pct_chg": -1.94
-    }
-  ],
+  "hot_industries": [],
+  "cold_industries": [],
   "concept_meta": {
     "api_used": null,
     "_attempted_endpoints": [
@@ -205,7 +23,7 @@
     "_attempted_endpoints": [
       "moneyflow_ind_dc"
     ],
-    "row_count": 1033,
+    "row_count": 0,
     "_status": "ok"
   }
 }
