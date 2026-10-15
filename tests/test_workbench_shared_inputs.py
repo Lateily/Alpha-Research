@@ -78,6 +78,10 @@ class FrozenInputTests(unittest.TestCase):
         health_path = "public/data/v2/funnel_health.json"
         health = ev.parse((self.source / health_path).read_bytes())
         health["bundle"]["artifacts"][child.name] = ev.sha(child.read_bytes())
+        health["bundle"]["bundle_hash"] = ev.sealed(health["bundle"]["artifacts"])
+        manifest = ev.parse((directory / "manifest.json").read_bytes())
+        manifest["bundle_hash"] = health["bundle"]["bundle_hash"]
+        (directory / "manifest.json").write_bytes(ev.canonical(manifest).encode())
         reseal_publisher(self.source, health_path, health)
         with self.assertRaisesRegex(ValueError, "FROZEN_BUNDLE_CATALOG_CONFLICT"):
             self.inputs().import_once(self.source)
