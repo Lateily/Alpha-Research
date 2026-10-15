@@ -919,6 +919,7 @@ class UnifiedRunContextTest(unittest.TestCase):
     def test_candidate_battery_step_gets_its_own_ceiling(self) -> None:
         """2026-09-21:采全要求电池单独放宽时限;其余步骤仍是统一 600 秒。"""
         with tempfile.TemporaryDirectory() as tmp:
+            fixture_time = 1_700_000_000.0
             old_steps, old_artifacts = nightly.STEPS, nightly.ARTIFACTS
             nightly.STEPS = [
                 ("official_sample", ["python3", "official.py"], False, []),
@@ -935,11 +936,16 @@ class UnifiedRunContextTest(unittest.TestCase):
                         "trade_date": "20260804", "target_trade_date": "20260804",
                         "run_id": env["AR_RUN_ID"],
                     })
+                    os.utime(os.path.join(cwd, "run_target.json"), (fixture_time, fixture_time))
                 return mock.Mock(returncode=0, stdout="ok", stderr="")
 
             try:
-                with mock.patch.object(nightly.subprocess, "run", side_effect=fake_run):
-                    nightly.run_steps(require_live=False, verify=True, base=tmp, run_id="CTX9")
+                # Test timeouts, not the filesystem's wall-clock/mtime precision.
+                with mock.patch.object(nightly.subprocess, "run", side_effect=fake_run), \
+                        mock.patch.object(nightly.time, "time", return_value=fixture_time):
+                    result = nightly.run_steps(require_live=False, verify=True, base=tmp, run_id="CTX9")
+                self.assertEqual(result["report"], "COMPLETE", result)
+                self.assertEqual(result["target_trade_date"], "20260804")
             finally:
                 nightly.STEPS, nightly.ARTIFACTS = old_steps, old_artifacts
         self.assertEqual({"official_sample": 600, "candidate_battery": 1800}, seen)
