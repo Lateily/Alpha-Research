@@ -497,7 +497,7 @@ def module_sources(snapshot, *, display=False):
                 if dependency_status in {"RUN_MISMATCH", "DATE_MISMATCH", "MISSING_OR_UNBOUND"}:
                     status, reported_run, reported_date = dependency_status, dependency_run, dependency_date
                     break
-            if catalog_binding and status == "BOUND_TO_PUBLISHED_RUN":
+            if catalog_binding and status in {"BOUND_TO_PUBLISHED_RUN", "IDENTITY_UNAVAILABLE"}:
                 status = "CATALOG_BOUND_SCOPED"
         health = (snapshot["records"].get("public/data/v2/funnel_health.json", {}).get("payload") or {}) if name == "Candidates" else payload
         quality = health.get("research_data_quality") if name == "Nightly" else health.get("data_quality")

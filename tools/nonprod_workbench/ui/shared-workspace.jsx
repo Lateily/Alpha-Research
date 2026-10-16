@@ -20,7 +20,7 @@ export default function SharedWorkspace({ api, access, refreshRevision }) {
   const [busy, setBusy] = useState(false), [pending, setPending] = useState([]);
   const [detail, setDetail] = useState(null), [selected, setSelected] = useState(null), [detailError, setDetailError] = useState('');
   const [detailStale, setDetailStale] = useState(false);
-  const poller = useRef(null), selectedRef = useRef(null), detailSequence = useRef(0);
+  const poller = useRef(null), selectedRef = useRef(null), detailSequence = useRef(0), detailLoading = useRef(null);
   const [now, setNow] = useState(Date.now);
   selectedRef.current = selected;
   async function renew() {
@@ -38,7 +38,7 @@ export default function SharedWorkspace({ api, access, refreshRevision }) {
         await pollSharedPending(api, window.localStorage, workspaceId, data.owned_commands || {}, renew);
         if (poller.current !== current) return;
         setPending(getPending(window.localStorage, workspaceId));
-        if (selectedRef.current) await open(selectedRef.current);
+        if (selectedRef.current) await open(selectedRef.current, false);
       },
       fail: error => {
         setQuery(previous => sharedQueryState(previous, null, error.message));
@@ -55,18 +55,22 @@ export default function SharedWorkspace({ api, access, refreshRevision }) {
   }, []);
   useEffect(() => {
     ++detailSequence.current;
+    selectedRef.current = null;
     setSelected(null); setDetail(null); setDetailStale(true);
     setPending(getPending(window.localStorage, query.data?.my_workspace.workspace_id));
   }, [query.data?.my_workspace.workspace_id]);
-  async function open(jobId) {
+  async function open(jobId, select = true) {
+    if (!select && (selectedRef.current !== jobId || detailLoading.current !== null)) return;
     const request = ++detailSequence.current;
-    setSelected(jobId); setDetail(null); setDetailError(''); setDetailStale(true);
+    detailLoading.current = request;
+    if (select) { selectedRef.current = jobId; setSelected(jobId); setDetail(null); }
+    setDetailError(''); setDetailStale(true);
     try {
       const data = await sharedRead(api, `/api/shared-workspace/jobs/${encodeURIComponent(jobId)}`, renew);
       if (request === detailSequence.current) { setDetail(data); setDetailStale(false); }
     } catch (error) {
       if (request === detailSequence.current) setDetailError(error.message);
-    }
+    } finally { if (detailLoading.current === request) detailLoading.current = null; }
   }
   async function run(kind) {
     const workspaceId = query.data?.my_workspace.workspace_id;
@@ -136,7 +140,7 @@ export default function SharedWorkspace({ api, access, refreshRevision }) {
         <div className="table-scroll"><table><thead><tr><th>模块</th><th>源身份</th><th>绑定 / 数据状态</th><th>状态依据</th></tr></thead><tbody>{(observation.module_sources || []).map((item, i) => <tr key={i}><td>{item.module}</td><td><code>{item.run_id || 'UNBOUND'}</code><span>{item.source_trade_date || 'UNBOUND'}</span></td><td><Status value={item.identity_status} stale={freshness.commonStale} /><Status value={item.data_quality} stale={freshness.commonStale} /></td><td><code>{item.quality_basis}</code>{item.research_quality && <span>研究核验 {item.research_quality}</span>}</td></tr>)}</tbody></table></div>
         <details><summary>来源与质量</summary><pre>{JSON.stringify(observation, null, 2)}</pre></details></> : <p className="shared-empty">{common?.error || 'NOT_PRODUCED'}</p>}
     </section>}
-    {selected && <section className="shared-detail"><div className="section-title"><h3>任务详情</h3><div><button className="icon-button" title="重新验证" aria-label="重新验证任务" onClick={() => open(selected)}><RefreshCw size={17} /></button><button className="icon-button" title="关闭详情" aria-label="关闭任务详情" onClick={() => { ++detailSequence.current; setSelected(null); setDetail(null); }}><X size={17} /></button></div></div><code>{selected}</code>
+    {selected && <section className="shared-detail"><div className="section-title"><h3>任务详情</h3><div><button className="icon-button" title="重新验证" aria-label="重新验证任务" onClick={() => open(selected)}><RefreshCw size={17} /></button><button className="icon-button" title="关闭详情" aria-label="关闭任务详情" onClick={() => { ++detailSequence.current; selectedRef.current = null; setSelected(null); setDetail(null); }}><X size={17} /></button></div></div><code>{selected}</code>
       {detailError && <div role="alert" className="shared-error">DISCONNECTED · {detailError}</div>}
       {detail ? <>{freshness.detailStale && <div className="shared-error" role="status">DISCONNECTED · STALE</div>}<div className="source-strip"><Status value={detail.status} stale={freshness.detailStale} /><code>{detail.actor}</code><code>{detail.workspace_id || 'LEGACY_UNATTRIBUTED'}</code></div><dl>{[['执行版本', detail.code_sha], ['输入 hash', detail.input_hash], ['输出 hash', detail.output_hash], ['失败原因', detail.error]].map(([label, value]) => <React.Fragment key={label}><dt>{label}</dt><dd><code>{value || 'NOT_PRODUCED'}</code></dd></React.Fragment>)}</dl>
         <div className="shared-toolbar"><button disabled={!freshness.downloadsEnabled} onClick={() => download(`${selected}.json`, detail)}><Download size={16} />任务回执</button>{detail.report && <><button disabled={!freshness.downloadsEnabled} onClick={() => download(`${selected}.md`, detail.report, 'text/markdown')}><Download size={16} />报告</button><button disabled={!freshness.downloadsEnabled} onClick={() => download(`${selected}-citations.json`, detail.citations)}><Download size={16} />引用</button></>}</div>

@@ -91,6 +91,29 @@ class FrozenInputTests(unittest.TestCase):
         self.assertEqual(ev.canonical(snapshot), before)
         self.assertEqual(brief.render(snapshot)["report"], rendered)
 
+    def test_catalog_display_accepts_absent_intrinsic_run_not_a_conflicting_one(self):
+        directory = catalog_bundle_source(self.source)
+        path = directory / "candidate_review.json"
+        row = ev.parse(path.read_bytes()); row.pop("run_id")
+        path.write_bytes(ev.canonical(row).encode())
+        manifest_path = directory / "manifest.json"
+        manifest = ev.parse(manifest_path.read_bytes())
+        manifest["artifacts"][path.name] = ev.sha(path.read_bytes())
+        manifest["bundle_hash"] = ev.sealed(manifest["artifacts"])
+        manifest_path.write_bytes(ev.canonical(manifest).encode())
+        health_path = "public/data/v2/funnel_health.json"
+        health = ev.parse((self.source / health_path).read_bytes())
+        health["bundle"].update(artifacts=manifest["artifacts"], bundle_hash=manifest["bundle_hash"])
+        reseal_publisher(self.source, health_path, health)
+        item = self.inputs().import_once(self.source)
+        snapshot = self.inputs().verify(item["snapshot_id"])["snapshot"]
+        module = next(row for row in ev.view(snapshot)["module_sources"] if row["module"] == "Candidates")
+        self.assertEqual(module["identity_status"], "CATALOG_BOUND_SCOPED")
+        self.assertIsNone(module["run_id"], 'publication context must not invent intrinsic identity')
+        row["run_id"] = "foreign"
+        path.write_bytes(ev.canonical(row).encode())
+        with self.assertRaises(ValueError): self.inputs().import_once(self.source)
+
     def test_producer_bundle_seal_recomputed_not_self_reported(self):
         directory = catalog_bundle_source(self.source)
         original = self.inputs().import_once(self.source)
