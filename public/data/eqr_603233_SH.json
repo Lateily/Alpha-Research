@@ -1,6 +1,6 @@
 {
   "ticker": "603233.SH",
-  "generated_at": "2026-10-15T13:35:06.643353+00:00",
+  "generated_at": "2026-10-16T05:44:17.138467+00:00",
   "overall": "MED",
   "sections": {
     "business_model": {
@@ -49,9 +49,9 @@
     "⚠️ Consensus estimates are 999 days old — expectation gap may be stale"
   ],
   "data_freshness": {
-    "financials": "2026-07-17",
-    "price": "2026-10-15",
+    "financials": "2026-07-18",
+    "price": "2026-10-16",
     "consensus": null,
-    "news": "2026-10-15"
+    "news": "2026-10-16"
   }
 }

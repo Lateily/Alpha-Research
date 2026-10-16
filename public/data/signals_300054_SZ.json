@@ -1,7 +1,7 @@
 {
   "ticker": "300054.SZ",
-  "generated_at": "2026-10-15",
-  "price": 59.91,
+  "generated_at": "2026-10-16",
+  "price": 57.6,
   "zone": "OVERSOLD",
   "entry_zone": true,
   "exit_zone": false,
@@ -9,61 +9,51 @@
     {
       "type": "RSI_OVERSOLD",
       "strength": "moderate",
-      "date": "20261014",
+      "date": "20261015",
       "bullish": true,
       "description": {
-        "e": "RSI(14) = 29.5 — oversold, watch for reversal",
-        "z": "RSI(14)=29.5，超卖，关注反转信号"
-      }
-    },
-    {
-      "type": "BB_LOWER_BREAK",
-      "strength": "moderate",
-      "date": "20261014",
-      "bullish": true,
-      "description": {
-        "e": "Price (59.9) touched Bollinger lower (60.4) — oversold, mean reversion watch",
-        "z": "股价(59.9)触及布林下轨(60.4)，超卖，关注均值回归"
+        "e": "RSI(14) = 26.3 — oversold, watch for reversal",
+        "z": "RSI(14)=26.3，超卖，关注反转信号"
       }
     },
     {
       "type": "KDJ_OVERSOLD",
       "strength": "strong",
-      "date": "20261014",
+      "date": "20261015",
       "bullish": true,
       "description": {
-        "e": "KDJ J=-2.4 (extreme <0) — high-probability reversal zone",
-        "z": "KDJ J=-2.4极度超卖，高概率反转区间"
+        "e": "KDJ J=-3.7 (extreme <0) — high-probability reversal zone",
+        "z": "KDJ J=-3.7极度超卖，高概率反转区间"
       }
     }
   ],
   "signal_count": {
-    "bullish": 3,
+    "bullish": 2,
     "bearish": 0,
-    "total": 3
+    "total": 2
   },
   "indicators": {
-    "ma5": 62.26,
-    "ma20": 67.49,
+    "ma5": 61.19,
+    "ma20": 66.98,
     "ma60": null,
-    "rsi14": 29.5,
-    "vol_ma20": 190221,
-    "vol_ratio": 0.83,
-    "price_vs_ma20": -11.23,
+    "rsi14": 26.3,
+    "vol_ma20": 193921,
+    "vol_ratio": 1.15,
+    "price_vs_ma20": -14.01,
     "price_vs_ma60": null,
-    "change_1d": -4.07,
-    "change_5d": -11.18,
-    "change_20d": -11.31,
-    "macd_dif": -2.3024,
-    "macd_dea": -1.4179,
-    "macd_hist": -1.7691,
-    "bb_upper": 74.54,
-    "bb_mid": 67.49,
-    "bb_lower": 60.44,
-    "bb_bandwidth": 20.9,
-    "kdj_k": 14.0,
-    "kdj_d": 22.2,
-    "kdj_j": -2.4,
+    "change_1d": -3.86,
+    "change_5d": -8.48,
+    "change_20d": -14.94,
+    "macd_dif": -2.7367,
+    "macd_dea": -1.6817,
+    "macd_hist": -2.1101,
+    "bb_upper": 75.25,
+    "bb_mid": 66.98,
+    "bb_lower": 58.72,
+    "bb_bandwidth": 24.67,
+    "kdj_k": 11.1,
+    "kdj_d": 18.5,
+    "kdj_j": -3.7,
     "cvd_latest": null,
     "cvd_slope_5d": null,
     "cvd_chg_1d": null,
