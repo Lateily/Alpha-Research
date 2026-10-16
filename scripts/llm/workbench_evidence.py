@@ -27,6 +27,9 @@ BUNDLE = ("manifest.json", "candidate_review.json", "candidate_manifest.json",
           "candidate_battery.json", "deep_research_queue.json")
 MAX_FILE = 12 * 1024 * 1024
 ID = r"[A-Za-z0-9][A-Za-z0-9_-]{0,100}"
+PRODUCER_BUNDLE_CHILDREN = frozenset({"all_market_scan.json", "candidate_review.json",
+    "deep_research_queue.json", "security_registry_projected.json",
+    "candidate_manifest.json", "candidate_battery.json"})
 
 
 class EvidenceError(ValueError):
@@ -429,7 +432,41 @@ def artifact_identity(record, rid, date):
     return status, reported_run, reported_date
 
 
-def module_sources(snapshot):
+def bundle_catalog_binding(snapshot):
+    records = snapshot["records"]
+    health = records.get("public/data/v2/funnel_health.json", {}).get("payload") or {}
+    bundle = health.get("bundle") or {}
+    location = f"data_history/funnel/{snapshot['target_trade_date']}/{snapshot['published_run_id']}"
+    manifest = records.get(location + "/manifest.json", {}).get("payload") or {}
+    catalog = bundle.get("artifacts") or {}
+    current = (manifest.get("schema") == "ar.research_funnel_bundle"
+               or "bundle_hash" in bundle or "manifest.json" not in catalog)
+    if not current:
+        return None
+    if (manifest.get("schema") != "ar.research_funnel_bundle"
+            or manifest.get("schema_version") != "1.0"
+            or manifest.get("rule_version") != "research_funnel_v1"
+            or manifest.get("run_id") != snapshot["published_run_id"]
+            or manifest.get("as_of") != snapshot["target_trade_date"]
+            or not isinstance(manifest.get("artifacts"), dict)
+            or set(manifest["artifacts"]) != PRODUCER_BUNDLE_CHILDREN
+            or any(not isinstance(value, str) or not re.fullmatch(r"[0-9a-f]{64}", value)
+                   for value in manifest["artifacts"].values())):
+        raise EvidenceError("FROZEN_BUNDLE_MANIFEST_INVALID")
+    # governance-mutation: WORKBENCH_SHARED_BUNDLE_CATALOG_AGREEMENT
+    if catalog != manifest["artifacts"]:
+        raise EvidenceError("FROZEN_BUNDLE_CATALOG_CONFLICT")
+    # The producer seals the six-entry catalog, not its own manifest bytes.
+    # governance-mutation: WORKBENCH_SHARED_BUNDLE_MANIFEST_SEAL
+    if (manifest.get("bundle_hash") != sealed(catalog)
+            or bundle.get("bundle_hash") != manifest["bundle_hash"]):
+        raise EvidenceError("FROZEN_BUNDLE_MANIFEST_SEAL_INVALID")
+    return {"basis": "BUNDLE_CATALOG_BOUND_NOT_MANIFEST_BYTE_HASH", "catalog_entries": 6,
+            "catalog_hash": manifest["bundle_hash"],
+            "unread_catalog_paths": sorted(PRODUCER_BUNDLE_CHILDREN - set(BUNDLE))}
+
+
+def module_sources(snapshot, *, display=False):
     """Publication date and underlying observation period are different fields."""
     rid, date = snapshot.get("published_run_id"), snapshot.get("target_trade_date")
     paths = {
@@ -443,20 +480,42 @@ def module_sources(snapshot):
         record = snapshot["records"].get(path, {})
         payload = record.get("payload") or {}
         status, reported_run, reported_date = artifact_identity(record, rid, date)
+        catalog_binding = None
         if name == "Candidates":
+            if display and payload:
+                try:
+                    catalog_binding = bundle_catalog_binding(snapshot)
+                except (ValueError, KeyError, TypeError):
+                    status = "MISSING_OR_UNBOUND"
             dependencies = [r for p, r in snapshot["records"].items()
                             if p.startswith("data_history/funnel/") or p == "public/data/v2/funnel_health.json"]
             for dependency in dependencies:
+                if (catalog_binding and (dependency.get("payload") or {}).get("schema") == "ar.research_funnel_bundle"
+                        and dependency.get("status") == "OBSERVED" and dependency.get("binding") == "UNBOUND"):
+                    continue
                 dependency_status, dependency_run, dependency_date = artifact_identity(dependency, rid, date)
                 if dependency_status in {"RUN_MISMATCH", "DATE_MISMATCH", "MISSING_OR_UNBOUND"}:
                     status, reported_run, reported_date = dependency_status, dependency_run, dependency_date
                     break
+            if catalog_binding and status == "BOUND_TO_PUBLISHED_RUN":
+                status = "CATALOG_BOUND_SCOPED"
         health = (snapshot["records"].get("public/data/v2/funnel_health.json", {}).get("payload") or {}) if name == "Candidates" else payload
         quality = health.get("research_data_quality") if name == "Nightly" else health.get("data_quality")
         quality_basis = "EXPLICIT_QUALITY_FIELD"
         if quality is None and name in {"Macro", "Candidates"}:
             quality = health.get("status")
             quality_basis = "SCHEMA_AVAILABILITY_NOT_RESEARCH_APPROVAL"
+        if display and name == "Macro":
+            availability = health.get("status")
+            if health.get("schema") == "ar.macro.events" and health.get("schema_version") == "1.0":
+                availability = health.get("report")
+            if availability not in {"COMPLETE", "PARTIAL", "DATA_BLOCKED", "OK"}:
+                availability = None
+            if quality is None:
+                quality = availability
+                quality_basis = "SCHEMA_AVAILABILITY_NOT_RESEARCH_APPROVAL"
+            elif availability is not None and quality != availability:
+                quality, quality_basis = "CONFLICTING", "QUALITY_STATUS_CONFLICT"
         if name == "Candidates" and record.get("status") != "OBSERVED":
             quality = None
         result.append({
@@ -468,6 +527,8 @@ def module_sources(snapshot):
             "pipeline_status": health.get("report", health.get("status", "UNAVAILABLE")),
             "data_quality": quality if quality is not None else "UNAVAILABLE",
             "quality_basis": quality_basis,
+            **({"catalog_binding": catalog_binding} if display and name == "Candidates" else {}),
+            **({"research_quality": "NOT_EVALUATED"} if display and name == "Macro" else {}),
         })
     return result
 
@@ -495,7 +556,7 @@ def view(snapshot, now=None):
             "displayed": {"run_id": snapshot["published_run_id"], "target_trade_date": snapshot["target_trade_date"],
                           "snapshot_hash": snapshot["snapshot_hash"], "observed_at": snapshot["observed_at"]},
         },
-        "module_sources": module_sources(snapshot),
+        "module_sources": module_sources(snapshot, display=True),
         "freshness": freshness(snapshot.get("target_trade_date"), now or utc_now()),
         "attempt": (records.get("experiments/execution_tracker/nightly_run.json", {}).get("payload") or {}),
         "funnel": value("funnel_health.json"), "feature": value("feature_store_health.json"),

@@ -7,14 +7,39 @@ export function latestOwnedJob(jobs, login, kind) {
     .sort((a, b) => b.submitted_at - a.submitted_at)[0] || null;
 }
 
-export function sharedQueryState(previous, data, error = '') {
-  if (error) return { data: previous?.data || null, connection: 'DISCONNECTED', stale: true, error };
-  return { data, connection: 'CONNECTED', stale: false, error: '' };
+export function sharedQueryState(previous, data, error = '', now = Date.now()) {
+  if (error) return { data: previous?.data || null, connection: 'DISCONNECTED', stale: true, error, lastSuccessAt: previous?.lastSuccessAt };
+  return { data, connection: 'CONNECTED', stale: false, error: '', lastSuccessAt: now };
 }
 
-export function sharedViewFreshness(query, detailStale = false) {
+export function sharedViewFreshness(query, detailStale = false, now = Date.now()) {
   const commonStale = query.stale || query.connection === 'DISCONNECTED';
-  return { commonStale, detailStale: commonStale || detailStale, downloadsEnabled: !commonStale && !detailStale };
+  const expired = !Number.isFinite(query.lastSuccessAt) || now - query.lastSuccessAt > 15000;
+  const stale = commonStale || expired;
+  return { commonStale: stale, detailStale: stale || detailStale, downloadsEnabled: !stale && !detailStale };
+}
+
+// One GET in flight per view. Disposal rejects late results, not slow results.
+export function createSharedPoller({ read, apply, fail, schedule = setTimeout, cancel = clearTimeout }) {
+  let stopped = false, inFlight = null, timer = null;
+  function refresh() {
+    if (stopped) return Promise.resolve();
+    if (inFlight) return inFlight;
+    cancel(timer); timer = null;
+    inFlight = (async () => {
+      try {
+        const data = await read();
+        if (!stopped) await apply(data);
+      } catch (error) {
+        if (!stopped) fail(error);
+      } finally {
+        inFlight = null;
+        if (!stopped) timer = schedule(refresh, 5000);
+      }
+    })();
+    return inFlight;
+  }
+  return { refresh, stop() { stopped = true; cancel(timer); } };
 }
 
 export function retainedStatus(value, stale) {

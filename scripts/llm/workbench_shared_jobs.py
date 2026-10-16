@@ -292,7 +292,7 @@ class SharedJobQueue:
                     report["interrupted"].append(job["job_id"])
         return report
 
-    def _view(self, job, *, context=None):
+    def _view(self, job, *, context=None, verified_inputs=None):
         job = dict(job)
         accepted = None
         try:
@@ -311,7 +311,12 @@ class SharedJobQueue:
             return job
         if job["status"] == "SUCCEEDED":
             try:
-                envelope = self.inputs.verify(job["snapshot_id"])
+                if verified_inputs is None:
+                    envelope = self.inputs.verify(job["snapshot_id"])
+                else:
+                    if job["snapshot_id"] not in verified_inputs:
+                        verified_inputs[job["snapshot_id"]] = self.inputs.verify(job["snapshot_id"])
+                    envelope = verified_inputs[job["snapshot_id"]]
                 with self.store.connect() as db:
                     attempt = _current_attempt(job, self._attempts(db, job["job_id"]))
                 terminals = [e for e in events if e["kind"] == "SHARED_JOB_TERMINAL" and e["data"].get("job_id") == job["job_id"]]
@@ -339,12 +344,12 @@ class SharedJobQueue:
             result.append(job)
         return result
 
-    def views(self, selected):
+    def views(self, selected, *, verified_inputs=None):
         with self.store.connect() as db:
             events = self.shared.system.events(db)
             identities = dict(db.execute("SELECT login, workspace_id FROM shared_workspaces"))
             contexts = [(self._load(db, job["job_id"])[0], events, identities) for job in selected]
-        return [self._view(job, context=context) for job, context in zip(selected, contexts)]
+        return [self._view(job, context=context, verified_inputs=verified_inputs) for job, context in zip(selected, contexts)]
 
     def job(self, job_id):
         identifier(job_id)

@@ -451,15 +451,15 @@ MUTATIONS: tuple[MutationCase, ...] = (
     ),
     MutationCase(
         mutation_id="WORKBENCH_SHARED_BUNDLE_CATALOG_AGREEMENT", component="Frozen shared inputs S2a compatibility",
-        source_path="scripts/llm/workbench_shared_inputs.py", test_script="tests/test_workbench_shared_inputs.py",
+        source_path="scripts/llm/workbench_evidence.py", test_script="tests/test_workbench_shared_inputs.py",
         before='    if catalog != manifest["artifacts"]:', after='    if False:',
         expected_failure_marker="test_producer_bundle_catalog_cannot_disagree_with_health",
         rationale="A valid manifest seal cannot bless different scoped bytes rehashed only into public health.",
     ),
     MutationCase(
         mutation_id="WORKBENCH_SHARED_BUNDLE_MANIFEST_SEAL", component="Frozen shared inputs S2a compatibility",
-        source_path="scripts/llm/workbench_shared_inputs.py", test_script="tests/test_workbench_shared_inputs.py",
-        before='    if (manifest.get("bundle_hash") != ev.sealed(catalog)\n'
+        source_path="scripts/llm/workbench_evidence.py", test_script="tests/test_workbench_shared_inputs.py",
+        before='    if (manifest.get("bundle_hash") != sealed(catalog)\n'
                '            or bundle.get("bundle_hash") != manifest["bundle_hash"]):',
         after='    if False:',
         expected_failure_marker="test_producer_bundle_seal_recomputed_not_self_reported",
@@ -544,6 +544,49 @@ MUTATIONS: tuple[MutationCase, ...] = (
         after="  const commonStale = false;",
         expected_failure_marker="test_retained_view_staleness",
         rationale="Shared polling failure marks retained common/detail status stale and disables unverified downloads.",
+    ),
+    MutationCase(
+        mutation_id="WORKBENCH_SHARED_POLL_SINGLE_FLIGHT", component="Independent shared workspaces S1",
+        source_path="tools/nonprod_workbench/ui/shared-view.mjs", test_script="tests/test_workbench_shared_workspace.py",
+        before="    if (inFlight) return inFlight;", after="    if (false) return inFlight;",
+        expected_failure_marker="test_slow_poll_and_age_guards",
+        rationale="Slow GETs cannot be overlapped by manual refresh or starved by newer polls.",
+    ),
+    MutationCase(
+        mutation_id="WORKBENCH_SHARED_POLL_DISPOSAL", component="Independent shared workspaces S1",
+        source_path="tools/nonprod_workbench/ui/shared-view.mjs", test_script="tests/test_workbench_shared_workspace.py",
+        before="        if (!stopped) await apply(data);", after="        await apply(data);",
+        expected_failure_marker="test_slow_poll_and_age_guards",
+        rationale="Late responses from a disposed actor or page must not replace the current view.",
+    ),
+    MutationCase(
+        mutation_id="WORKBENCH_SHARED_READ_EXPIRES", component="Independent shared workspaces S1",
+        source_path="tools/nonprod_workbench/ui/shared-view.mjs", test_script="tests/test_workbench_shared_workspace.py",
+        before="  const stale = commonStale || expired;", after="  const stale = commonStale;",
+        expected_failure_marker="test_slow_poll_and_age_guards",
+        rationale="A hung next GET cannot leave stale retained data marked connected or downloadable.",
+    ),
+    MutationCase(
+        mutation_id="WORKBENCH_SHARED_MACRO_REPORT_MAPPING", component="Independent shared workspaces S1",
+        source_path="scripts/llm/workbench_evidence.py", test_script="tests/test_workbench_shared_inputs.py",
+        before='                availability = health.get("report")', after='                availability = None',
+        expected_failure_marker="test_macro_report_maps_availability_not_research_approval",
+        rationale="Versioned Macro report availability is displayed without inventing research approval.",
+    ),
+    MutationCase(
+        mutation_id="WORKBENCH_SHARED_CATALOG_DISPLAY", component="Independent shared workspaces S1",
+        source_path="scripts/llm/workbench_evidence.py", test_script="tests/test_workbench_shared_inputs.py",
+        before='                status = "CATALOG_BOUND_SCOPED"', after='                status = "MISSING_OR_UNBOUND"',
+        expected_failure_marker="test_catalog_bound_producer_manifest_freezes_scoped_originals",
+        rationale="Catalog-bound scope is distinct from a missing source, without relabeling raw manifest bytes.",
+    ),
+    MutationCase(
+        mutation_id="WORKBENCH_SHARED_REQUEST_VERIFY_ONCE", component="Independent shared workspaces S1",
+        source_path="scripts/llm/workbench_shared_workspace.py", test_script="tests/test_workbench_shared_jobs.py",
+        before='self._views(list(selected.values()), verified_inputs=verified_inputs)',
+        after='self._views([*my_window, *team_window, *latest], verified_inputs=verified_inputs)',
+        expected_failure_marker="test_request_dedup_never_caches_a_seal_across_requests",
+        rationale="My/team/latest projections share request-local verification while each next read reopens physical seals.",
     ),
     MutationCase(
         mutation_id="WORKBENCH_SHARED_ACTOR_BINDING", component="Independent shared workspaces S1",

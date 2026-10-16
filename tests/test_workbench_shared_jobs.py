@@ -680,6 +680,26 @@ class SharedJobTests(unittest.TestCase):
             data = self.view.snapshot(OWNER, page=1)
         self.assertEqual(data["my_jobs"][0]["job_id"], submitted[1]["job_id"])
         self.assertEqual(set(reopened), {submitted[1]["job_id"], submitted[2]["job_id"]})
+        self.assertEqual(len(reopened), 2, 'my/team/latest duplicate jobs must be verified once per request')
+
+    def test_request_dedup_never_caches_a_seal_across_requests(self):
+        owner = self.enqueue("owner-read-dedup"); self.complete()
+        member = self.enqueue("member-read-dedup", MEMBER); self.complete()
+        original = jobs.verify_seal
+        with mock.patch.object(jobs, "verify_seal", wraps=original) as seals, mock.patch.object(self.inputs, "verify", wraps=self.inputs.verify) as inputs:
+            for actor in (OWNER, MEMBER):
+                data = self.view.snapshot(actor)
+                self.assertEqual(len(data["my_jobs"]), 1)
+                self.assertEqual(len(data["team_jobs"]), 2)
+                self.assertTrue(all(row["status"] == "SUCCEEDED" for row in data["team_jobs"]))
+            self.assertEqual(seals.call_count, 4, 'two physical seals must be reopened on each request')
+            self.assertEqual(inputs.call_count, 2, 'one shared input must be reopened once per request, not cached across requests')
+        current = self.body(owner["job_id"])
+        output = jobs._output_root(self.store.path.parent, current, {"attempt_id": current["attempt_id"]})
+        (output / "result/report.md").write_bytes(b"tampered between requests")
+        data = self.view.snapshot(MEMBER)
+        self.assertEqual(next(row for row in data["team_jobs"] if row["job_id"] == owner["job_id"])["status"], "RECOVERY_REQUIRED")
+        self.assertEqual(data["my_jobs"][0]["job_id"], member["job_id"])
 
     def test_crash_at_every_persistent_boundary(self):
         phases = ("enqueue_before", "enqueue_after", "claim_before", "claim_after",

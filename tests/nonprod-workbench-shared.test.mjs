@@ -3,6 +3,37 @@ import test from 'node:test';
 import { existsSync } from 'node:fs';
 const url = new URL('../tools/nonprod_workbench/ui/shared-view.mjs', import.meta.url);
 const view = existsSync(url) ? await import(url) : {};
+test('slow shared GET is single-flight and applies every completed read', async () => {
+  assert.equal(typeof view.createSharedPoller, 'function', 'missing completion-driven polling');
+  const responses = [], applied = [], timers = new Map(); let nextTimer = 0;
+  const poller = view.createSharedPoller({
+    read: () => new Promise(resolve => responses.push(resolve)),
+    apply: value => applied.push(value), fail: error => assert.fail(error),
+    schedule: callback => { timers.set(++nextTimer, callback); return nextTimer; },
+    cancel: id => timers.delete(id)
+  });
+  const first = poller.refresh();
+  for (let i = 0; i < 4; i++) poller.refresh();
+  assert.equal(responses.length, 1, 'manual refresh must join the slow in-flight GET');
+  assert.equal(timers.size, 0, 'no fixed interval while the request is pending');
+  responses.shift()({ jobs: ['new-result'] }); await first;
+  assert.deepEqual(applied, [{ jobs: ['new-result'] }]);
+  assert.equal(timers.size, 1);
+  const timer = [...timers.values()][0]; timers.clear(); timer();
+  assert.equal(responses.length, 1);
+  poller.stop(); responses.shift()({ jobs: ['old-page-or-identity'] });
+  await Promise.resolve(); await Promise.resolve();
+  assert.equal(applied.length, 1, 'disposed view must not apply an old response');
+  assert.equal(timers.size, 0);
+});
+test('successful read expires by age even if the next GET never resolves', () => {
+  const query = view.sharedQueryState(null, { my_jobs: [] }, '', 1000);
+  assert.equal(view.sharedViewFreshness(query, false, 16001).commonStale, true);
+  assert.equal(view.sharedViewFreshness(query, false, 16001).downloadsEnabled, false);
+  assert.equal(view.sharedViewFreshness(query, false, 1001).commonStale, false);
+  const failed = view.sharedQueryState(query, null, 'DISCONNECTED', 17000);
+  assert.equal(failed.lastSuccessAt, 1000);
+});
 test('common sync display retains old dates, new errors, times and separate identities', () => {
   assert.equal(typeof view.commonSyncView, 'function', 'missing common synchronization display');
   const common = { current_snapshot_id: 'old-input', error: 'SOURCE_CHANGED', sync_status: 'SYNC_FAILED',

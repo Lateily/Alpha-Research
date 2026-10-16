@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight, Database, Download, FileText, Play, RefreshCw, Users, X } from 'lucide-react';
 import { statusTone } from './status-tone.mjs';
-import { commonSyncView, getPending, latestOwnedJob, pollSharedPending, recordSubmissionFailure, retainedStatus, retrySharedPending, savePending, sharedQueryState, sharedRead, sharedViewFreshness } from './shared-view.mjs';
+import { commonSyncView, createSharedPoller, getPending, latestOwnedJob, pollSharedPending, recordSubmissionFailure, retainedStatus, retrySharedPending, savePending, sharedQueryState, sharedRead, sharedViewFreshness } from './shared-view.mjs';
 
 const views = [['my', '我的任务', FileText], ['team', '团队结果', Users], ['common', '共同数据', Database]];
 function Status({ value, stale = false }) {
@@ -20,34 +20,39 @@ export default function SharedWorkspace({ api, access, refreshRevision }) {
   const [busy, setBusy] = useState(false), [pending, setPending] = useState([]);
   const [detail, setDetail] = useState(null), [selected, setSelected] = useState(null), [detailError, setDetailError] = useState('');
   const [detailStale, setDetailStale] = useState(false);
-  const sequence = useRef(0), detailSequence = useRef(0);
+  const poller = useRef(null), selectedRef = useRef(null), detailSequence = useRef(0);
+  const [now, setNow] = useState(Date.now);
+  selectedRef.current = selected;
   async function renew() {
     const response = await fetch('/', { credentials: 'same-origin', cache: 'no-store' });
     if (!response.ok) throw new Error('SESSION_RENEWAL_FAILED');
   }
-  async function reload() {
-    const request = ++sequence.current;
-    try {
-      const data = await sharedRead(api, `/api/shared-workspace?page=${page}`, renew);
-      const workspaceId = data.my_workspace.workspace_id;
-      await pollSharedPending(api, window.localStorage, workspaceId, data.owned_commands || {}, renew);
-      if (request === sequence.current) {
+  function reload() { return poller.current?.refresh(); }
+  useEffect(() => {
+    const current = createSharedPoller({
+      read: () => sharedRead(api, `/api/shared-workspace?page=${page}`, renew),
+      apply: async data => {
+        if (data.my_workspace.login !== access.login) throw new Error('SHARED_IDENTITY_CHANGED');
+        const workspaceId = data.my_workspace.workspace_id;
         setQuery(previous => sharedQueryState(previous, data));
+        await pollSharedPending(api, window.localStorage, workspaceId, data.owned_commands || {}, renew);
+        if (poller.current !== current) return;
         setPending(getPending(window.localStorage, workspaceId));
-        if (selected) await open(selected);
-      }
-    } catch (error) {
-      if (request === sequence.current) {
+        if (selectedRef.current) await open(selectedRef.current);
+      },
+      fail: error => {
         setQuery(previous => sharedQueryState(previous, null, error.message));
         setDetailStale(true);
       }
-    }
-  }
+    });
+    poller.current = current; current.refresh();
+    return () => { current.stop(); ++detailSequence.current; };
+  }, [page, access.login]);
+  useEffect(() => { reload(); }, [refreshRevision]);
   useEffect(() => {
-    reload();
-    const timer = window.setInterval(reload, 5000);
-    return () => { window.clearInterval(timer); ++sequence.current; };
-  }, [page, refreshRevision, selected]);
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
   useEffect(() => {
     ++detailSequence.current;
     setSelected(null); setDetail(null); setDetailStale(true);
@@ -66,7 +71,7 @@ export default function SharedWorkspace({ api, access, refreshRevision }) {
   async function run(kind) {
     const workspaceId = query.data?.my_workspace.workspace_id;
     const snapshotId = query.data?.common_data.current_snapshot_id;
-    if (!workspaceId || !snapshotId || query.stale) return;
+    if (!workspaceId || !snapshotId || sharedViewFreshness(query).commonStale) return;
     const body = { command_id: `shared_${crypto.randomUUID().replaceAll('-', '')}`, kind, snapshot_id: snapshotId };
     setBusy(true);
     try {
@@ -84,7 +89,7 @@ export default function SharedWorkspace({ api, access, refreshRevision }) {
   }
   async function retry(commandId) {
     const workspaceId = query.data?.my_workspace.workspace_id;
-    if (!workspaceId || query.stale || busy) return;
+    if (!workspaceId || sharedViewFreshness(query).commonStale || busy) return;
     setBusy(true);
     try {
       const receipt = await retrySharedPending(api, window.localStorage, workspaceId, commandId, renew);
@@ -101,12 +106,12 @@ export default function SharedWorkspace({ api, access, refreshRevision }) {
   const rows = view === 'my' ? data?.my_jobs || [] : data?.team_jobs || [];
   const total = view === 'my' ? data?.my_total || 0 : data?.team_total || 0;
   const common = data?.common_data, observation = common?.observation;
-  const freshness = sharedViewFreshness(query, detailStale);
+  const freshness = sharedViewFreshness(query, detailStale, now);
   const syncView = commonSyncView(common, freshness.commonStale);
   const syncTime = value => value == null ? 'NOT_CHECKED' : new Date(value * 1000).toLocaleString();
   return <div className="workspace-surface shared-workspace">
     <div className="shared-heading"><div><h2>共享研究工作台</h2><code>{login}</code></div>
-      <div className="shared-status"><code>{data?.execution_identity?.code_sha || 'VERSION_UNAVAILABLE'}</code><Status value={query.connection} /><button className="icon-button" title="刷新" aria-label="刷新共享工作区" onClick={reload}><RefreshCw size={17} /></button></div>
+      <div className="shared-status"><code>{data?.execution_identity?.code_sha || 'VERSION_UNAVAILABLE'}</code><Status value={freshness.commonStale ? 'DISCONNECTED' : query.connection} /><button className="icon-button" title="刷新" aria-label="刷新共享工作区" onClick={reload}><RefreshCw size={17} /></button></div>
     </div>
     <div className="source-strip"><span>WORKFLOW_DEBUG</span><span>人工核验 PENDING</span><span>生产 / 交易权限 false</span><span>最新本人简报 <Status value={latest?.status} stale={freshness.commonStale} /></span></div>
     {query.error && <div className="shared-error" role="alert">DISCONNECTED · {query.error}</div>}
@@ -128,7 +133,7 @@ export default function SharedWorkspace({ api, access, refreshRevision }) {
       {freshness.commonStale && <div className="shared-error" role="status">DISCONNECTED · STALE</div>}
       <div className="shared-source-identities">{[['最新尝试', syncView.latestAttempt], ['最后发布', syncView.lastPublished], ['当前冻结输入', syncView.currentSnapshot]].map(([label, identity]) => <div key={label}><h3>{label}</h3><code>{identity.run_id || 'NOT_PRODUCED'}</code><span>{identity.target_trade_date || 'UNBOUND'}</span>{identity.report && <Status value={identity.report} stale={freshness.commonStale} />}{identity.snapshot_hash && <code>{identity.snapshot_hash}</code>}{identity.snapshot_id && <code>{identity.snapshot_id}</code>}</div>)}</div>
       {observation ? <>
-        <div className="table-scroll"><table><thead><tr><th>模块</th><th>源身份</th><th>身份 / 质量</th></tr></thead><tbody>{(observation.module_sources || []).map((item, i) => <tr key={i}><td>{item.module}</td><td><code>{item.run_id || 'UNBOUND'}</code><span>{item.source_trade_date || 'UNBOUND'}</span></td><td><Status value={item.identity_status} stale={freshness.commonStale} /><Status value={item.data_quality} stale={freshness.commonStale} /></td></tr>)}</tbody></table></div>
+        <div className="table-scroll"><table><thead><tr><th>模块</th><th>源身份</th><th>绑定 / 数据状态</th><th>状态依据</th></tr></thead><tbody>{(observation.module_sources || []).map((item, i) => <tr key={i}><td>{item.module}</td><td><code>{item.run_id || 'UNBOUND'}</code><span>{item.source_trade_date || 'UNBOUND'}</span></td><td><Status value={item.identity_status} stale={freshness.commonStale} /><Status value={item.data_quality} stale={freshness.commonStale} /></td><td><code>{item.quality_basis}</code>{item.research_quality && <span>研究核验 {item.research_quality}</span>}</td></tr>)}</tbody></table></div>
         <details><summary>来源与质量</summary><pre>{JSON.stringify(observation, null, 2)}</pre></details></> : <p className="shared-empty">{common?.error || 'NOT_PRODUCED'}</p>}
     </section>}
     {selected && <section className="shared-detail"><div className="section-title"><h3>任务详情</h3><div><button className="icon-button" title="重新验证" aria-label="重新验证任务" onClick={() => open(selected)}><RefreshCw size={17} /></button><button className="icon-button" title="关闭详情" aria-label="关闭任务详情" onClick={() => { ++detailSequence.current; setSelected(null); setDetail(null); }}><X size={17} /></button></div></div><code>{selected}</code>

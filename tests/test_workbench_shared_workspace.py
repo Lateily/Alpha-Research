@@ -265,6 +265,10 @@ class SharedWorkspaceTests(unittest.TestCase):
         result = subprocess.run(["node", "--test", str(ROOT / "tests/nonprod-workbench-shared.test.mjs")], capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
+    def test_slow_poll_and_age_guards(self):
+        result = subprocess.run(["node", "--test", str(ROOT / "tests/nonprod-workbench-shared.test.mjs")], capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
     def test_detail_revalidates_and_never_treats_ids_as_paths(self):
         self.request("sealed-brief-001", "snapshot-brief")
         workspace_id = self.view.identity(OWNER)["workspace_id"]

@@ -116,11 +116,11 @@ class SharedWorkspace:
     def _jobs(self):
         return self._legacy_jobs() + (self.queue.jobs() if self.queue is not None else [])
 
-    def _views(self, jobs):
+    def _views(self, jobs, *, verified_inputs=None):
         legacy = [job for job in jobs if not job.get("job_schema")]
         viewed = {job["job_id"]: job for job in self.system.brief_job_views(legacy)}
         if self.queue is not None:
-            viewed.update({job["job_id"]: job for job in self.queue.views([job for job in jobs if job.get("job_schema")])})
+            viewed.update({job["job_id"]: job for job in self.queue.views([job for job in jobs if job.get("job_schema")], verified_inputs=verified_inputs)})
         return [viewed.get(job["job_id"], job) for job in jobs]
 
     def _metadata(self, job):
@@ -139,8 +139,17 @@ class SharedWorkspace:
         mine = [j for j in jobs if j["actor"] == actor]
         start = page * PAGE_SIZE
         def window(rows):
-            selected = sorted(rows, key=lambda j: j["submitted_at"], reverse=True)[start:start + PAGE_SIZE]
-            return [self._metadata(j) for j in self._views(selected)]
+            return sorted(rows, key=lambda j: j["submitted_at"], reverse=True)[start:start + PAGE_SIZE]
+        my_window, team_window = window(mine), window(jobs)
+        latest = [next((job for job in reversed(mine) if job["kind"] == kind), None)
+                  for kind in ("observe", "snapshot-brief")]
+        latest = [job for job in latest if job is not None]
+        # The memo exists only for this request, never across reads or actors.
+        verified_inputs = {}
+        selected = {job["job_id"]: job for job in [*my_window, *team_window, *latest]}
+        viewed = {job["job_id"]: job for job in self._views(list(selected.values()), verified_inputs=verified_inputs)}
+        def metadata(rows):
+            return [self._metadata(viewed[job["job_id"]]) for job in rows]
         # Common data reuses the existing bounded observation verifier, without reports/events.
         current = self.system.snapshot()
         common = {"observation": current["observation"], "error": current["observation_error"],
@@ -156,7 +165,7 @@ class SharedWorkspace:
                 latest_input = (state["current_snapshot_id"],) if state["current_snapshot_id"] else None
             if latest_input:
                 try:
-                    envelope = self.queue.inputs.verify(latest_input[0])
+                    envelope = verified_inputs.get(latest_input[0]) or self.queue.inputs.verify(latest_input[0])
                     common.update(current_snapshot_id=envelope["snapshot_id"], input_hash=envelope["input_hash"],
                                   observation=evidence.view(envelope["snapshot"]), validation_scope=envelope["validation_scope"],
                                   source_run_id=envelope["source_run_id"], source_trade_date=envelope["source_trade_date"],
@@ -170,11 +179,8 @@ class SharedWorkspace:
                     common.update(observation=None, current_snapshot_id=None, error="FROZEN_INPUT_UNAVAILABLE")
             elif self.sync is not None:
                 common.update(observation=None, error=common["error"] or "NO_FROZEN_PUBLICATION")
-        latest = [next((job for job in reversed(mine) if job["kind"] == kind), None)
-                  for kind in ("observe", "snapshot-brief")]
-        latest = self._views([job for job in latest if job is not None])
-        return {"schema": SCHEMA, "my_workspace": owner, "my_jobs": window(mine), "team_jobs": window(jobs),
-                "latest_owned_jobs": [self._metadata(job) for job in latest],
+        return {"schema": SCHEMA, "my_workspace": owner, "my_jobs": metadata(my_window), "team_jobs": metadata(team_window),
+                "latest_owned_jobs": metadata(latest),
                 "owned_commands": {job["command_id"]: {"job_id": job["job_id"]} for job in mine if job.get("command_id")},
                 "page": page, "page_size": PAGE_SIZE, "my_total": len(mine), "team_total": len(jobs),
                 "common_data": common, "execution_identity": self._execution_identity,

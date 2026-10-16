@@ -41,6 +41,10 @@ class FrozenInputTests(unittest.TestCase):
         relative = (directory / "manifest.json").relative_to(self.source).as_posix()
         record = verified["snapshot"]["records"][relative]
         self.assertEqual(record["binding"], "UNBOUND")
+        module = next(row for row in ev.view(verified["snapshot"])["module_sources"] if row["module"] == "Candidates")
+        self.assertEqual(module["identity_status"], "CATALOG_BOUND_SCOPED")
+        self.assertEqual(module["catalog_binding"]["unread_catalog_paths"],
+                         ["all_market_scan.json", "security_registry_projected.json"])
         provenance = verified["snapshot"]["publication_provenance"][relative]
         self.assertEqual(provenance["basis"], "BUNDLE_CATALOG_BOUND_NOT_MANIFEST_BYTE_HASH")
         self.assertEqual(provenance["catalog_entries"], 6)
@@ -54,6 +58,38 @@ class FrozenInputTests(unittest.TestCase):
         self.source.rename(self.root / "source-offline")
         result = brief.run_frozen(verified["snapshot"], verified["frozen_root"], self.root / "catalog-report")
         self.assertEqual(result["run_id"], "catalog_publication")
+
+    def test_macro_report_maps_availability_not_research_approval(self):
+        path = "public/data/v2/macro/macro_events.json"
+        for fields, expected, basis in (
+                ({"schema": "ar.macro.events", "schema_version": "1.0", "report": "PARTIAL"}, "PARTIAL", "SCHEMA_AVAILABILITY_NOT_RESEARCH_APPROVAL"),
+                ({"schema": "ar.macro.events", "schema_version": "1.0", "report": "COMPLETE"}, "COMPLETE", "SCHEMA_AVAILABILITY_NOT_RESEARCH_APPROVAL"),
+                ({"schema": "ar.macro.events", "schema_version": "future", "report": "COMPLETE"}, "UNAVAILABLE", "SCHEMA_AVAILABILITY_NOT_RESEARCH_APPROVAL"),
+                ({"status": "PARTIAL"}, "PARTIAL", "SCHEMA_AVAILABILITY_NOT_RESEARCH_APPROVAL"),
+                ({}, "UNAVAILABLE", "SCHEMA_AVAILABILITY_NOT_RESEARCH_APPROVAL"),
+                ({"schema": "ar.macro.events", "schema_version": "1.0", "report": "PARTIAL", "data_quality": "COMPLETE"}, "CONFLICTING", "QUALITY_STATUS_CONFLICT")):
+            with self.subTest(fields=fields):
+                publisher_source(self.source)
+                reseal_publisher(self.source, path, {"run_id": "publisher_run", "target_trade_date": "20261012", **fields})
+                item = self.inputs().import_once(self.source)
+                snapshot = self.inputs().verify(item["snapshot_id"])["snapshot"]
+                module = next(row for row in ev.view(snapshot)["module_sources"] if row["module"] == "Macro")
+                self.assertEqual(module["data_quality"], expected)
+                self.assertEqual(module["quality_basis"], basis)
+                self.assertEqual(module.get("research_quality"), "NOT_EVALUATED")
+
+    def test_display_does_not_rewrite_legacy_sealed_render_or_raw_bindings(self):
+        catalog_bundle_source(self.source)
+        item = self.inputs().import_once(self.source)
+        envelope = self.inputs().verify(item["snapshot_id"])
+        snapshot = envelope["snapshot"]
+        before = ev.canonical(snapshot)
+        rendered = brief.render(snapshot)["report"]
+        self.assertIn("MISSING_OR_UNBOUND", rendered, 'legacy renderer must retain its sealed presentation')
+        displayed = ev.view(snapshot)
+        self.assertEqual(next(row for row in displayed["module_sources"] if row["module"] == "Candidates")["identity_status"], "CATALOG_BOUND_SCOPED")
+        self.assertEqual(ev.canonical(snapshot), before)
+        self.assertEqual(brief.render(snapshot)["report"], rendered)
 
     def test_producer_bundle_seal_recomputed_not_self_reported(self):
         directory = catalog_bundle_source(self.source)
