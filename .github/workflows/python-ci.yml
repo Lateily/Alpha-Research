@@ -164,6 +164,17 @@ jobs:
           python3 scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/workbench_earnings_trial.task.json
           python3 scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/workbench_snapshot_brief.task.json
           python3 scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/workbench_shared_brief.task.json
+      - name: Independent shared workspace S1 (offline)
+        run: |
+          python3 -B tests/test_workbench_shared_workspace.py
+          node --test tests/nonprod-workbench-shared.test.mjs
+          python3 -B scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/workbench_shared_workspace_v1.task.json
+      - name: Frozen inputs, bounded shared jobs and isolated recovery S2 (offline)
+        run: |
+          python3 -B tests/test_workbench_shared_inputs.py
+          python3 -B tests/test_workbench_shared_state.py
+          python3 -B tests/test_workbench_shared_jobs.py
+          python3 -B scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/workbench_shared_jobs_v1.task.json
       # AIOS-K1:A-006/A-007/A-008 任务合同、状态重放、只读对账
       - name: AIOS K1 task registry regression (offline)
         run: python3 tests/test_ai_os_k1_offline.py
@@ -174,6 +185,10 @@ jobs:
       # runtime baseline metadata, and redacted secret/local-state hygiene.
       - name: Team AI Workspace contract and doctor regression (offline)
         run: python3 tests/test_team_ai_workspace.py
+      - name: Scoped read-only shared sync S3 (synthetic offline fixtures)
+        run: |
+          python3 -B tests/test_workbench_shared_sync.py
+          python3 -B scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/workbench_shared_sync_v1.task.json
       - name: AIOS shared skill registry regression (offline)
         run: python3 tests/test_skill_registry.py
       - name: Transactional forward-return backfill selftest

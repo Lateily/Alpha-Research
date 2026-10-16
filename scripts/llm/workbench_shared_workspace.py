@@ -1,0 +1,212 @@
+"""Default-off shared attribution and verified read-only projections."""
+from __future__ import annotations
+
+import json
+import subprocess
+import uuid
+from pathlib import Path
+
+import workbench_evidence as evidence
+from workbench_workspace import Workspace, WorkspaceError, exact, identifier, projection
+
+CODE_ROOT = Path(__file__).resolve().parents[2]
+SCHEMA = "ar.shared-workspace.v1"
+PAGE_SIZE = 50
+EXECUTION_FILES = (
+    "scripts/llm/nonprod_workbench.py", "scripts/llm/workbench_shared_workspace.py",
+    "scripts/llm/workbench_workspace.py", "scripts/llm/workbench_evidence.py",
+    "scripts/llm/workbench_snapshot_brief.py", "scripts/llm/workbench_brief_trial.py",
+    "scripts/llm/workbench_shared_inputs.py", "scripts/llm/workbench_shared_state.py",
+    "scripts/llm/workbench_backup.py",
+    "scripts/llm/workbench_shared_jobs.py", "scripts/llm/workbench_shared_worker.py",
+    "scripts/llm/workbench_shared_sync.py",
+    "scripts/llm/workbench_earnings_trial.py", "scripts/llm/workbench_research.py",
+    "scripts/llm/adapters/base.py", "scripts/llm/adapters/deepseek.py",
+    "scripts/llm/adapters/__init__.py", "scripts/llm/adapters/deterministic.py",
+    "scripts/llm/ai_os/__init__.py", "scripts/llm/ai_os/skill_registry.py",
+    "scripts/team_ai_workspace.py", "experiments/research_funnel/research_trust_view.py",
+    "experiments/macro_os/collectors.py", "experiments/macro_os/contracts.py",
+    "experiments/macro_os/m1a.py",
+    "experiments/macro_os/__init__.py", "experiments/macro_os/storage.py",
+    "experiments/macro_os/official_releases.py",
+)
+
+
+def execution_identity(root: Path) -> dict:
+    def git(*args):
+        result = subprocess.run(["git", "-C", str(root), *args], capture_output=True, check=False)
+        if result.returncode:
+            raise WorkspaceError("EXECUTION_IDENTITY_UNAVAILABLE", 409)
+        return result.stdout
+
+    if Path(git("rev-parse", "--show-toplevel").decode().strip()).resolve() != root.resolve():
+        raise WorkspaceError("EXECUTION_IDENTITY_UNAVAILABLE", 409)
+    code_sha = git("rev-parse", "HEAD").decode().strip()
+    hashes = {}
+    for name in EXECUTION_FILES:
+        path = root / name
+        if any(p.is_symlink() for p in (path, *path.parents)) or not path.is_file():
+            raise WorkspaceError("EXECUTION_SOURCE_INVALID", 409)
+        raw = path.read_bytes()
+        # governance-mutation: WORKBENCH_SHARED_EXECUTION_IDENTITY
+        if raw != git("show", code_sha + ":" + name):
+            raise WorkspaceError("EXECUTION_CODE_DIRTY", 409)
+        hashes[name] = evidence.sha(raw)
+    if git("rev-parse", "HEAD").decode().strip() != code_sha:
+        raise WorkspaceError("EXECUTION_CODE_CHANGED", 409)
+    return {"code_sha": code_sha, "source_tree_hash": evidence.sealed(hashes)}
+
+
+class SharedWorkspace:
+    def __init__(self, system: Workspace):
+        if not system.store.shared_v1 or not system.private_mode:
+            raise WorkspaceError("SHARED_PRIVATE_MODE_REQUIRED", 403)
+        self.system, self.store = system, system.store
+        self._execution_identity = execution_identity(CODE_ROOT)
+        self.queue = None
+        self.sync = None
+
+    def identity(self, actor: str) -> dict:
+        if not isinstance(actor, str) or not actor or len(actor) > 254 or any(ord(c) <= 32 for c in actor):
+            raise WorkspaceError("SHARED_ACTOR_REQUIRED", 403)
+        with self.store.connect() as db:
+            db.execute("BEGIN IMMEDIATE")
+            db.execute("INSERT OR IGNORE INTO shared_workspaces VALUES (?, ?)", (actor, str(uuid.uuid4())))
+            row = db.execute("SELECT workspace_id FROM shared_workspaces WHERE login=?", (actor,)).fetchone()
+        return {"login": actor, "workspace_id": row[0]}
+
+    def dispatch(self, payload: dict, actor: str) -> dict:
+        if self.queue is not None:
+            return self.queue.enqueue(payload, actor)
+        exact(payload, {"command_id", "kind"})
+        identifier(payload["command_id"])
+        if not isinstance(payload["kind"], str) or payload["kind"] not in {"observe", "snapshot-brief"}:
+            raise WorkspaceError("PRIVATE_OPERATION_DISABLED", 403)
+        owner = self.identity(actor)
+        with self.store.connect() as db:
+            prior = any(event["command_id"] == payload["command_id"] for event in self.system.events(db))
+        # Existing requests only reach the executor's actor-bound idempotency check.
+        if not prior:
+            current = execution_identity(CODE_ROOT)
+            # governance-mutation: WORKBENCH_SHARED_EXECUTOR_REVISION
+            if current["source_tree_hash"] != self._execution_identity["source_tree_hash"]:
+                raise WorkspaceError("EXECUTION_CODE_CHANGED_RESTART_REQUIRED", 409)
+        code = self._execution_identity
+        binding = {**code, "workspace_id": owner["workspace_id"], "schema_version": SCHEMA,
+                   "submitted_at": self.system.clock(), "attempt_id": str(uuid.uuid4()),
+                   "input_hash": None, "human_review": "PENDING", "trading_authority": False}
+        # governance-mutation: WORKBENCH_SHARED_ACTOR_BINDING
+        return self.system.start_job(payload, actor=actor, shared_binding=binding)
+
+    def _legacy_jobs(self):
+        with self.store.connect() as db:
+            events = self.system.events(db)
+            identities = dict(db.execute("SELECT login, workspace_id FROM shared_workspaces"))
+        jobs = projection(events)["jobs"]
+        started = {e["data"]["job_id"]: e for e in events if e["kind"] == "JOB_STARTED"}
+        for job in jobs:
+            actor = job.get("actor", "LEGACY_UNATTRIBUTED")
+            job.update(actor=actor, workspace_id=job.get("workspace_id", identities.get(actor)),
+                       submitted_at=job.get("submitted_at", started[job["job_id"]]["at"]))
+            if job["status"] == "STARTED":
+                job["status"] = "INTERRUPTED" if self.queue is not None or actor == "LEGACY_UNATTRIBUTED" else "RUNNING"
+                if job["status"] == "INTERRUPTED": job["recovery"] = "LEGACY_NOT_RECOVERABLE"
+        return jobs
+
+    def _jobs(self):
+        return self._legacy_jobs() + (self.queue.jobs() if self.queue is not None else [])
+
+    def _views(self, jobs, *, verified_inputs=None):
+        legacy = [job for job in jobs if not job.get("job_schema")]
+        viewed = {job["job_id"]: job for job in self.system.brief_job_views(legacy)}
+        if self.queue is not None:
+            viewed.update({job["job_id"]: job for job in self.queue.views([job for job in jobs if job.get("job_schema")], verified_inputs=verified_inputs)})
+        return [viewed.get(job["job_id"], job) for job in jobs]
+
+    def _metadata(self, job):
+        keys = ("job_id", "command_id", "workspace_id", "actor", "kind", "snapshot_id", "input_hash", "source_run_id", "source_trade_date",
+                "submitted_at", "code_sha", "source_tree_hash", "schema_version", "status", "attempt_id", "output_hash")
+        return {**{key: job.get(key) for key in keys}, "error": (job.get("result") or {}).get("error") or
+                ("LEGACY_NOT_RECOVERABLE" if job.get("recovery") == "LEGACY_NOT_RECOVERABLE" else None),
+                "sample_purpose": "WORKFLOW_DEBUG", "human_review": "PENDING",
+                "production_authority": False, "trading_authority": False}
+
+    def snapshot(self, actor: str, *, page: int = 0) -> dict:
+        owner = self.identity(actor)
+        if type(page) is not int or not 0 <= page <= 999:
+            raise WorkspaceError("SHARED_PAGE_INVALID")
+        jobs = self._jobs()
+        mine = [j for j in jobs if j["actor"] == actor]
+        start = page * PAGE_SIZE
+        def window(rows):
+            return sorted(rows, key=lambda j: j["submitted_at"], reverse=True)[start:start + PAGE_SIZE]
+        my_window, team_window = window(mine), window(jobs)
+        latest = [next((job for job in reversed(mine) if job["kind"] == kind), None)
+                  for kind in ("observe", "snapshot-brief")]
+        latest = [job for job in latest if job is not None]
+        # The memo exists only for this request, never across reads or actors.
+        verified_inputs = {}
+        selected = {job["job_id"]: job for job in [*my_window, *team_window, *latest]}
+        viewed = {job["job_id"]: job for job in self._views(list(selected.values()), verified_inputs=verified_inputs)}
+        def metadata(rows):
+            return [self._metadata(viewed[job["job_id"]]) for job in rows]
+        # Common data reuses the existing bounded observation verifier, without reports/events.
+        current = self.system.snapshot()
+        common = {"observation": current["observation"], "error": current["observation_error"],
+                  "sync_status": "MANUAL_OBSERVE_ONLY", "automatic_sync": False}
+        if self.queue is not None:
+            common.update(sync_status="EXPLICIT_IMPORT_ONLY", current_snapshot_id=None)
+            with self.store.connect() as db:
+                latest_input = db.execute("SELECT snapshot_id FROM shared_inputs ORDER BY rowid DESC LIMIT 1").fetchone()
+            if self.sync is not None:
+                state = self.sync.state()
+                common.update(sync=state, automatic_sync=True, sync_status=state["status"],
+                              error=state["safe_error"], latest_attempt=state["latest_attempt"])
+                latest_input = (state["current_snapshot_id"],) if state["current_snapshot_id"] else None
+            if latest_input:
+                try:
+                    envelope = verified_inputs.get(latest_input[0]) or self.queue.inputs.verify(latest_input[0])
+                    common.update(current_snapshot_id=envelope["snapshot_id"], input_hash=envelope["input_hash"],
+                                  observation=evidence.view(envelope["snapshot"]), validation_scope=envelope["validation_scope"],
+                                  source_run_id=envelope["source_run_id"], source_trade_date=envelope["source_trade_date"],
+                                  full_nightly_acceptance="NOT_EVALUATED")
+                    if self.sync is None: common["error"] = None
+                    # governance-mutation: WORKBENCH_SHARED_ATTEMPT_SEPARATION
+                    if self.sync is not None:
+                        common["observation"]["run_identity"]["latest_attempt"] = state["latest_attempt"] or {
+                            "run_id": None, "target_trade_date": None, "report": None, "published": None}
+                except (OSError, ValueError):
+                    common.update(observation=None, current_snapshot_id=None, error="FROZEN_INPUT_UNAVAILABLE")
+            elif self.sync is not None:
+                common.update(observation=None, error=common["error"] or "NO_FROZEN_PUBLICATION")
+        return {"schema": SCHEMA, "my_workspace": owner, "my_jobs": metadata(my_window), "team_jobs": metadata(team_window),
+                "latest_owned_jobs": metadata(latest),
+                "owned_commands": {job["command_id"]: {"job_id": job["job_id"]} for job in mine if job.get("command_id")},
+                "page": page, "page_size": PAGE_SIZE, "my_total": len(mine), "team_total": len(jobs),
+                "common_data": common, "execution_identity": self._execution_identity,
+                "sample_purpose": "WORKFLOW_DEBUG", "human_review": "PENDING",
+                "production_authority": False, "trading_authority": False}
+
+    def job(self, job_id: str, actor: str) -> dict:
+        self.identity(actor)
+        identifier(job_id)
+        if self.queue is not None:
+            with self.store.connect() as db:
+                queued = db.execute("SELECT 1 FROM shared_jobs WHERE job_id=?", (job_id,)).fetchone()
+            if queued: return self.queue.job(job_id)
+        registered = next((j for j in self._jobs() if j["job_id"] == job_id), None)
+        if registered is None:
+            raise WorkspaceError("SHARED_JOB_NOT_FOUND", 404)
+        job = self.system.brief_job_views([registered])[0]
+        detail = {**self._metadata(job), "result": job.get("result")}
+        if job["kind"] == "snapshot-brief" and job["status"] == "SUCCEEDED":
+            import workbench_snapshot_brief as brief
+            output = self.system.output_root(job) / "snapshot-briefs" / job_id
+            receipt = brief.verify(output)
+            report = evidence.read_local(output, "report.md")
+            citations = evidence.read_local(output, "citations.json")
+            if (evidence.sha(report) != receipt["files"]["report.md"]
+                    or evidence.sha(citations) != receipt["files"]["citations.json"]):
+                raise WorkspaceError("SHARED_REPORT_CHANGED", 409)
+            detail.update(report=report.decode("utf-8"), citations=json.loads(citations))
+        return detail

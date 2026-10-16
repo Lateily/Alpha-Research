@@ -95,9 +95,14 @@ def render(snapshot):
     paper = public + "model_portfolio_state.json"
     health = public + "funnel_health.json"
     macro = public + "macro/"
+    input_line = f"输入快照 SHA256 `{snapshot['snapshot_hash']}`；取得时间 {snapshot['observed_at']}"
+    if "frozen_input_hash" in snapshot:
+        if not isinstance(snapshot["frozen_input_hash"], str) or not re.fullmatch(r"[0-9a-f]{64}", snapshot["frozen_input_hash"]):
+            raise SnapshotBriefError("FROZEN_INPUT_IDENTITY_INVALID")
+        input_line = f"输入封套 SHA256 `{snapshot['frozen_input_hash']}`；按原件内容绑定，取得时间保留于封套。"
     lines = [f"# 研究运行简报 · {date}",
              f"WORKFLOW_DEBUG · 人工核验 PENDING · 冻结 run `{rid}`",
-             f"输入快照 SHA256 `{snapshot['snapshot_hash']}`；取得时间 {snapshot['observed_at']}",
+             input_line,
              "## 运行与展示身份",
              f"最新尝试：{field(attempt, ['run_id'])}；状态 {field(attempt, ['report'])}。",
              f"最后发布与本次展示：`{rid}`，发布交易日 `{date}`。最新尝试不是最后发布。",
@@ -184,6 +189,17 @@ def verify(output):
 
 def run(source_root, output):
     snapshot = evidence.capture(Path(source_root))
+    return _run_snapshot(snapshot, source_root, output)
+
+
+def run_frozen(snapshot: dict, frozen_root: Path, output: Path) -> dict:
+    from workbench_shared_inputs import validate_snapshot
+    # governance-mutation: WORKBENCH_SHARED_FROZEN_INPUT
+    validate_snapshot(snapshot, frozen_root, sealed_originals=True)
+    return _run_snapshot(snapshot, frozen_root, output)
+
+
+def _run_snapshot(snapshot, source_root, output):
     rendered = render(snapshot)
     output = Path(output)
     if output.is_symlink() or output.parent.is_symlink():

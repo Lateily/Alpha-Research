@@ -1,0 +1,22 @@
+{
+  "schema": "ai-task.v1",
+  "task_id": "WORKBENCH-MULTIUSER-V1-PLAN-20261013",
+  "architecture_block": ["Private shared research workbench"],
+  "objective": "Decompose the explicitly approved shared-workbench specification into ordered S1 workspace, S2 frozen queue/recovery, S3 read-only sync and S4 actual two-computer acceptance plans; documentation only before plan review.",
+  "non_goals": ["No product implementation before written plan review and execution-method confirmation.", "No serving service restart, production write, paid/model/market call, member or Tailscale changes, merge, push or PR in this planning stage.", "No new research strategy, whitelist UI, cloud resources or formal human approval inferred from login."],
+  "human_owner": "Junyan",
+  "reviewer": "Junyan plan review; later fresh implementation reviewers",
+  "executor_candidates": ["Codex"],
+  "dependencies": ["Approved specification and acceptance at ef5cf7ca3ed95d8e4aabf14f200602ca66720850", "Spec SHA256 5c427cf22779c20c877010941b7a17539b03dab9a31640e1323b794f0ac8dfd9", "Parent #401/#402 remain Draft; final implementation integration must be reverified on main"],
+  "authority_docs": ["AGENTS.md", "scripts/llm/AGENTS.md", "docs/superpowers/specs/2026-10-13-shared-workbench-v1-design.md", "docs/team/SHARED_WORKBENCH_V1_ACCEPTANCE.md"],
+  "file_scope": ["docs/superpowers/plans/2026-10-13-shared-workbench-v1-implementation.md", "docs/superpowers/plans/2026-10-13-shared-workbench-v1-s1-workspaces.md", "docs/superpowers/plans/2026-10-13-shared-workbench-v1-s2-jobs.md", "docs/superpowers/plans/2026-10-13-shared-workbench-v1-s3-sync.md", "scripts/llm/fixtures/workbench_multiuser_v1_plan.task.json"],
+  "forbidden_scope": ["Approved specification/acceptance snapshot edits", "Product Python/React, CI and mutation source in this planning stage", "/Users/years/ar-live", "Serving workbench worktree, isolated DB and Tailscale configuration"],
+  "input_contracts": ["Latest direct user message approves the specification and acceptance, preserving the requested S1->S2->S3 sequence and real Junyan/Reed acceptance.", "Plan must preserve default-off opt-in, immutable input binding, two workers, bounded recovery, source integrity, quotas and formal single-writer authority.", "Existing code and tests provide interface context only; future tests and commands remain NOT_RUN."],
+  "output_artifacts": ["Four coherent linked implementation plans", "Compiled ai-task.v1 planning result and local review/validation evidence", "Exact-file local documentation commit without push or PR"],
+  "acceptance_tests": ["python3 -B scripts/team_ai_workspace.py doctor", "python3 -B scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/workbench_multiuser_v1_plan.task.json", "git diff --check and exact five-file scope check", "Verify approved spec/acceptance SHA256 remain unchanged", "Plan self-review maps 42 acceptance cases and all crash boundaries to named tests and task owners, checks signatures/fields and validates linked plan files exist"],
+  "risk_level": "MEDIUM",
+  "network_policy": "OFFLINE",
+  "budget": {"max_cny": "0", "max_minutes": 60},
+  "approval_gates": ["Specification and acceptance explicitly approved in current user message; no formal research/production authority granted.", "Implementation plan and execution method must be confirmed before product changes.", "Merge and shared runtime deployment remain separate; actual Windows acceptance cannot be filled by this agent."],
+  "created_at": "2026-10-13T17:09:28+00:00"
+}

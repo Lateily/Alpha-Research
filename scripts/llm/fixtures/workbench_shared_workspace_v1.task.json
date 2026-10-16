@@ -1,0 +1,22 @@
+{
+  "schema": "ai-task.v1",
+  "task_id": "WORKBENCH-SHARED-WORKSPACES-S1-20261014",
+  "architecture_block": ["Nonproduction workbench", "Independent shared workspace projection"],
+  "objective": "Implement approved S1 independent shared workspaces, server-derived execution identity, default-off isolated storage fence and synchronous observe/snapshot-brief projections using the task-1 brief at BASE 942ba9657413370e55566a8063aa7b6d5c097986.",
+  "non_goals": ["No queue or automatic input synchronization; S2/S3 own these.", "No production/runtime/ACL/network/provider changes, migration, service switch, push or merge.", "No subagents, ledger edits or claim of browser/two-device acceptance."],
+  "human_owner": "Junyan",
+  "reviewer": "Controller-provided independent reviewer",
+  "executor_candidates": ["Codex inline executing-plans with test-driven-development"],
+  "dependencies": ["Approved isolated workbench project at BASE 942ba9657413370e55566a8063aa7b6d5c097986", "Approved task-1-brief.md and controller SDD preflight"],
+  "authority_docs": ["AGENTS.md", "scripts/llm/AGENTS.md", "docs/superpowers/specs/2026-10-13-shared-workbench-v1-design.md", "docs/superpowers/plans/2026-10-13-shared-workbench-v1-s1-workspaces.md", "docs/team/SHARED_WORKBENCH_V1_ACCEPTANCE.md"],
+  "file_scope": ["scripts/llm/workbench_shared_workspace.py", "scripts/llm/fixtures/workbench_shared_workspace_v1.task.json", "scripts/llm/nonprod_workbench.py", "scripts/llm/workbench_workspace.py", "tools/nonprod_workbench/ui/shared-workspace.jsx", "tools/nonprod_workbench/ui/shared-view.mjs", "tools/nonprod_workbench/ui/workspace.jsx", "tools/nonprod_workbench/ui/workspace.css", "tools/nonprod_workbench/ui/status-tone.mjs", "tests/test_workbench_shared_workspace.py", "tests/nonprod-workbench-shared.test.mjs", "tests/workbench_shared_test_support.py", ".github/workflows/python-ci.yml", "scripts/governance_mutation_gate.py"],
+  "forbidden_scope": ["/Users/years/ar-live", "In-use workbench service and state", "Production/runtime/data/config", "ACL/members/network/providers", "All other worktrees and source files", "SDD ledger"],
+  "input_contracts": ["Verified Serve actor only; HTTP retains command_id/kind only in S1.", "Store(directory, shared_v1=True) uses a fresh shared-workbench.sqlite3 and empty-directory workbench.sqlite3 fence; never migrates old state.", "execution_identity is derived from committed server source; dirty execution code is refused and tested in a temporary committed fixture repository."],
+  "output_artifacts": ["S1 scoped code/tests and exact-file commit feat(workbench): add independent shared workspaces on current branch", "Ignored task-1-report.md and full red/green/build/mutation logs alongside it"],
+  "acceptance_tests": ["python3 -B tests/test_workbench_shared_workspace.py", "node --test tests/nonprod-workbench-shared.test.mjs", "python3 -B tests/test_nonprod_workbench.py", "python3 -B tests/test_workbench_workspace.py", "node node_modules/vite/bin/vite.js build --config tools/nonprod_workbench/vite.config.js", "Targeted WORKBENCH_SHARED_ACTOR_BINDING, WORKBENCH_SHARED_LEGACY_SCHEMA_FENCE, WORKBENCH_SHARED_EXECUTION_IDENTITY and WORKBENCH_SHARED_LATEST_OWNED_FAILURE mutations must fail behavioral assertions", "Positive legacy state control, forged identity rejection with zero execution, cross-actor 409, preserved unattributed event bytes, stable IDs and latest-owned STOP/disconnected UI"],
+  "risk_level": "HIGH",
+  "network_policy": "OFFLINE",
+  "budget": {"max_cny": "0", "max_minutes": 180},
+  "approval_gates": ["Human approved S1 bounded brief and isolated workbench; inline TDD, no subagents", "Controller owns browser QA, ledger, independent review and later deployment/two-device gates"],
+  "created_at": "2026-10-14T00:00:00+00:00"
+}

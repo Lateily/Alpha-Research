@@ -153,6 +153,12 @@ class StatusToneTests(unittest.TestCase):
                                 capture_output=True, text=True, check=True)
         self.assertEqual(json.loads(result.stdout), ["pending", "ready", "failed"])
 
+    def test_unknown_delivery_explicit_retry_keeps_original_input_and_actor(self):
+        result = subprocess.run(["node", "--test", "--test-name-pattern", "explicit retry",
+                                 str(ROOT / "tests/nonprod-workbench-shared.test.mjs")],
+                                capture_output=True, text=True, cwd=ROOT)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
 
 def write(root, name, value):
     path = root / name
@@ -841,13 +847,47 @@ class EvidenceTests(unittest.TestCase):
         self.assertIsNone(view["macro"]["macro_panel"]["payload"])
 
     def test_source_symlink_is_never_followed(self):
-        outside = self.root / "outside.json"
+        external = tempfile.TemporaryDirectory(); self.addCleanup(external.cleanup)
+        outside = Path(external.name).resolve() / "outside.json"
         outside.write_text('{"secret_data":"not for import"}')
         target = self.root / "public/data/v2/macro/macro_panel.json"
         target.unlink(); target.symlink_to(outside)
         with self.assertRaises(OSError):
             ev.read_local(self.root, "public/data/v2/macro/macro_panel.json")
         self.assertNotIn("not for import", ev.canonical(self.capture()))
+        target.unlink()
+        real_open = os.open
+        outside_identity = (outside.stat().st_dev, outside.stat().st_ino)
+        for case in ("parent", "root", "leaf-swap"):
+            with self.subTest(case=case):
+                parent = self.root / (case + "-parent")
+                parent.mkdir()
+                leaf = parent / "piece.json"
+                leaf.write_bytes(b'{"source":"inside"}')
+                if case == "parent":
+                    leaf.unlink(); parent.rmdir(); parent.symlink_to(outside.parent, target_is_directory=True)
+                    root, relative = self.root, parent.name + "/outside.json"
+                elif case == "root":
+                    linked_root = self.root / "linked-root"
+                    linked_root.symlink_to(parent, target_is_directory=True)
+                    root, relative = linked_root, "piece.json"
+                else:
+                    root, relative = parent, "piece.json"
+                opened_outside, swapped = [], []
+                def observe_open(name, flags, *args, **kwargs):
+                    if case == "leaf-swap" and name == "piece.json" and kwargs.get("dir_fd") is not None:
+                        leaf.unlink(); leaf.symlink_to(outside); swapped.append(True)
+                    fd = real_open(name, flags, *args, **kwargs)
+                    actual = os.fstat(fd)
+                    if (actual.st_dev, actual.st_ino) == outside_identity: opened_outside.append(fd)
+                    return fd
+                refused = False
+                with mock.patch.object(ev.os, "open", side_effect=observe_open):
+                    try: ev.read_local(root, relative)
+                    except (OSError, ev.EvidenceError): refused = True
+                self.assertTrue(refused, "source links must be refused, including parent/root traversal")
+                if case == "leaf-swap": self.assertEqual(swapped, [True], "must reach the real stat/open boundary")
+                self.assertEqual(opened_outside, [], "source link must never open an outside descriptor")
 
     def test_location_traversal_refused(self):
         path = self.root / "public/data/v2/funnel_health.json"

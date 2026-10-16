@@ -174,15 +174,49 @@ def execute_offline(payload):
 class Store:
     """Sandbox SQLite transactions; not the production append-only WAL."""
 
-    def __init__(self, directory: Path):
-        if directory.is_symlink() or (directory / "workbench.sqlite3").is_symlink():
+    def __init__(self, directory: Path, *, shared_v1: bool = False):
+        legacy, shared = directory / "workbench.sqlite3", directory / "shared-workbench.sqlite3"
+        if directory.is_symlink() or legacy.is_symlink() or shared.is_symlink():
             raise WorkbenchError("STATE_SYMLINK_REFUSED")
+        # governance-mutation: WORKBENCH_SHARED_LEGACY_SCHEMA_FENCE
+        if not shared_v1 and (shared.exists() or legacy.is_dir()):
+            raise WorkbenchError("SHARED_STATE_FLAG_REQUIRED", 409)
+        if shared_v1:
+            from workbench_shared_state import STORAGE_SCHEMA
+            if (directory / "migration-intent.json").exists():
+                intent = workspace.evidence.parse(workspace.evidence.read_local(directory, "migration-intent.json"))
+                if intent.get("target") != directory.name or not (directory / "migration-receipt.json").is_file():
+                    raise WorkbenchError("MIGRATION_STAGING_NOT_SERVABLE", 409)
+            if any(parent.is_symlink() for parent in directory.parents):
+                raise WorkbenchError("STATE_SYMLINK_REFUSED")
+            if legacy.exists() and not legacy.is_dir():
+                raise WorkbenchError("STATE_MIGRATION_REQUIRED", 409)
+            if shared.exists():
+                if not shared.is_file() or not legacy.is_dir() or any(legacy.iterdir()):
+                    raise WorkbenchError("SHARED_STATE_FENCE_INVALID", 409)
+                with sqlite3.connect(f"file:{shared}?mode=ro", uri=True) as db:
+                    try:
+                        version = db.execute("SELECT schema FROM shared_metadata WHERE singleton=1").fetchone()
+                    except sqlite3.Error:
+                        raise WorkbenchError("SHARED_SCHEMA_INCOMPATIBLE", 409) from None
+                    if version != (STORAGE_SCHEMA,):
+                        raise WorkbenchError("SHARED_SCHEMA_INCOMPATIBLE", 409)
+            elif directory.exists() and any(directory.iterdir()):
+                raise WorkbenchError("STATE_MIGRATION_REQUIRED", 409)
         directory.mkdir(parents=True, exist_ok=True, mode=0o700)
-        self.path = directory / "workbench.sqlite3"
+        self.shared_v1 = shared_v1
+        self.path = shared if shared_v1 else legacy
+        if shared_v1:
+            legacy.mkdir(exist_ok=True, mode=0o700)
         with self.connect() as db:
+            if shared_v1:
+                db.execute("BEGIN IMMEDIATE")
             db.execute("CREATE TABLE IF NOT EXISTS receipts (id TEXT PRIMARY KEY, request_hash TEXT NOT NULL, receipt TEXT NOT NULL)")
             db.execute("CREATE TABLE IF NOT EXISTS drafts (revision INTEGER PRIMARY KEY, payload TEXT NOT NULL)")
             db.execute("CREATE TABLE IF NOT EXISTS research_runs (id TEXT PRIMARY KEY, request_hash TEXT NOT NULL, receipt TEXT NOT NULL)")
+            if shared_v1:
+                from workbench_shared_state import initialize
+                initialize(db)
         self.path.chmod(0o600)
 
     def connect(self):
@@ -442,7 +476,9 @@ def load_assets(directory):
     return assets
 
 
-def make_handler(store, assets, origin, session, system=None, private=None):
+def make_handler(store, assets, origin, session, system=None, private=None, shared=None):
+    if shared is not None and (private is None or not store.shared_v1):
+        raise WorkbenchError("SHARED_PRIVATE_MODE_REQUIRED", 403)
     class Handler(BaseHTTPRequestHandler):
         def setup(self):
             super().setup()
@@ -451,7 +487,7 @@ def make_handler(store, assets, origin, session, system=None, private=None):
         def log_message(self, *_args):
             pass
 
-        def reply(self, status, payload, mime="application/json", cookie=False, session_value=None):
+        def reply(self, status, payload, mime="application/json", cookie=False, session_value=None, login_audit=None):
             raw = payload if isinstance(payload, bytes) else canonical(payload).encode()
             self.send_response(status)
             self.send_header("Content-Type", mime + "; charset=utf-8")
@@ -460,6 +496,8 @@ def make_handler(store, assets, origin, session, system=None, private=None):
             self.send_header("X-Content-Type-Options", "nosniff")
             self.send_header("Referrer-Policy", "no-referrer")
             self.send_header("Content-Security-Policy", "default-src 'self'; connect-src 'self'; img-src 'self' data:; style-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'")
+            if login_audit is not None:
+                self.send_header("X-Workbench-Login-Audit", login_audit)
             if cookie:
                 secure = "; Secure" if private is not None else ""
                 self.send_header("Set-Cookie", f"ar_workbench={session_value or session}; HttpOnly; SameSite=Strict; Path=/" + secure)
@@ -476,9 +514,16 @@ def make_handler(store, assets, origin, session, system=None, private=None):
                     headers["Cookie"] = f"ar_workbench={browser_session}"
                     authorize(headers, origin, browser_session)
                     content, mime = assets[self.path]
+                    login_audit = None
                     if identity and system is not None:
-                        system.audit_login(identity["login"])
-                    self.reply(200, content, mime, cookie=True, session_value=browser_session)
+                        try:
+                            system.audit_login(identity["login"])
+                            if shared is not None: login_audit = "APPENDED"
+                        except workspace.WorkspaceError as exc:
+                            # governance-mutation: WORKBENCH_SHARED_CAPACITY_RENEWAL
+                            if shared is None or exc.code != "WORKSPACE_EVENT_LIMIT": raise
+                            login_audit = "EVENT_CAPACITY_EXHAUSTED"
+                    self.reply(200, content, mime, cookie=True, session_value=browser_session, login_audit=login_audit)
                     return
                 authorize(self.headers, origin, browser_session)
                 if self.path == "/api/state":
@@ -489,8 +534,18 @@ def make_handler(store, assets, origin, session, system=None, private=None):
                                            "team_access_enabled": bool(private.members),
                                            "team_grants": [], "access_scope": identity["scope"]}
                         state["access"] = identity
+                        if shared is not None:
+                            state["access"] = {**identity, "shared_workspace_v1": True}
                     self.reply(200, state)
-                elif self.path == "/api/workspace" and system is not None:
+                elif shared is not None and self.path.split("?", 1)[0] == "/api/shared-workspace":
+                    from urllib.parse import parse_qs
+                    query = parse_qs(urlsplit(self.path).query, keep_blank_values=True)
+                    if set(query) - {"page"} or (query and (len(query["page"]) != 1 or not re.fullmatch(r"[0-9]{1,3}", query["page"][0]))):
+                        raise WorkbenchError("SHARED_PAGE_INVALID")
+                    self.reply(200, shared.snapshot(identity["login"], page=int(query.get("page", ["0"])[0])))
+                elif shared is not None and self.path.startswith("/api/shared-workspace/jobs/"):
+                    self.reply(200, shared.job(self.path.removeprefix("/api/shared-workspace/jobs/"), identity["login"]))
+                elif self.path == "/api/workspace" and system is not None and shared is None:
                     state = system.snapshot()
                     if identity:
                         state["access"] = identity
@@ -530,17 +585,19 @@ def make_handler(store, assets, origin, session, system=None, private=None):
                     raise WorkbenchError("BODY_TRUNCATED")
                 payload = decode_json(raw)
                 if identity:
-                    workspace.exact(payload, {"command_id", "kind"})
+                    workspace.exact(payload, {"command_id", "kind", "snapshot_id"} if shared is not None and shared.queue is not None else {"command_id", "kind"})
                     if not isinstance(payload["kind"], str) or payload["kind"] not in {"observe", "snapshot-brief"}:
                         raise WorkbenchError("PRIVATE_OPERATION_DISABLED", 403)
                 if self.path.startswith("/api/workspace/") and system is not None:
-                    if identity:
+                    if shared is not None:
+                        result = shared.dispatch(payload, identity["login"])
+                    elif identity:
                         result = system.dispatch(self.path, payload, actor=identity["login"])
                     else:
                         result = system.dispatch(self.path, payload)
                 else:
                     result = dispatch(store, self.path, payload)
-                self.reply(200, result)
+                self.reply(202 if shared is not None and shared.queue is not None else 200, result)
             except WorkbenchError as exc:
                 self.reply(exc.status, {"error": exc.code})
             except workspace.WorkspaceError as exc:
@@ -562,12 +619,22 @@ def main(argv=None):
     parser.add_argument("--private-origin", help="Exact existing Tailscale Serve HTTPS origin on port 8443")
     parser.add_argument("--owner-login", help="Exact owner Tailscale login; access identity is not research approval")
     parser.add_argument("--private-allowlist", type=Path, help="Outside-repo owner-owned mode0600 member allowlist")
+    parser.add_argument("--shared-workspace-v1", action="store_true", help="Opt-in isolated persistent shared jobs; requires private access")
+    parser.add_argument("--shared-import-once", type=Path, help="Explicit one-time frozen input import for shared mode; no automatic synchronizer")
+    parser.add_argument("--read-only-auto-sync", action="store_true", help="Opt-in scoped file sync every 60 seconds; shared private mode and fixed source required")
     args = parser.parse_args(argv)
     host = serve_host(args.host)
     private = private_access(args.private_origin, args.owner_login, args.private_allowlist)
+    # governance-mutation: WORKBENCH_SHARED_SYNC_OPT_IN
+    if args.read_only_auto_sync and (not args.shared_workspace_v1 or private is None or args.read_only_source_root is None):
+        raise WorkbenchError("READ_ONLY_SYNC_CONFIGURATION_REQUIRED", 403)
+    if args.shared_workspace_v1 and private is None:
+        raise WorkbenchError("SHARED_PRIVATE_MODE_REQUIRED", 403)
+    if args.shared_import_once and not args.shared_workspace_v1:
+        raise WorkbenchError("SHARED_INPUT_STORE_REQUIRED", 403)
     assets = load_assets(ROOT / "tools/nonprod_workbench/dist")
     state_root = args.state_root or ROOT / ".ai-workspace/nonprod-workbench"
-    if args.read_only_source_root and (state_root.resolve() == args.read_only_source_root.resolve() or args.read_only_source_root.resolve() in state_root.resolve().parents):
+    if args.read_only_source_root and (state_root.resolve() == args.read_only_source_root.resolve() or args.read_only_source_root.resolve() in state_root.resolve().parents or state_root.resolve() in args.read_only_source_root.resolve().parents):
         raise WorkbenchError("STATE_MUST_BE_OUTSIDE_READ_ONLY_SOURCE")
     if args.brief_pack_root:
         pack_dir = args.brief_pack_root.resolve()
@@ -581,30 +648,50 @@ def main(argv=None):
             raise WorkbenchError("STATE_MUST_BE_OUTSIDE_FROZEN_EARNINGS_PACK")
     if (ROOT / ".ai-workspace").is_symlink():
         raise WorkbenchError("STATE_PARENT_SYMLINK_REFUSED")
-    store = Store(state_root)
+    store = Store(state_root, shared_v1=True) if args.shared_workspace_v1 else Store(state_root)
     lifetime_lock = service_lock(state_root)
-    system = workspace.Workspace(store, args.read_only_source_root,
+    system = workspace.Workspace(store, None if args.shared_workspace_v1 else args.read_only_source_root,
                                  brief_pack_root=args.brief_pack_root,
                                  earnings_pack_root=args.earnings_pack_root,
                                  private_mode=private is not None)
     origin = private.origin if private else f"http://{host}:{args.port}"
-    server = ThreadingHTTPServer((host, args.port), make_handler(store, assets, origin, secrets.token_hex(32), system, private=private))
+    shared = None
+    if args.shared_workspace_v1:
+        from workbench_shared_workspace import SharedWorkspace
+        from workbench_shared_inputs import FrozenInputs
+        from workbench_shared_jobs import SharedJobQueue
+        from workbench_shared_worker import SharedWorker
+        shared = SharedWorkspace(system)
+        inputs = FrozenInputs(store)
+        if args.shared_import_once: inputs.import_once(args.shared_import_once)
+        queue = SharedJobQueue(shared, inputs, shared._execution_identity["code_sha"])
+    server = ThreadingHTTPServer((host, args.port), make_handler(store, assets, origin, secrets.token_hex(32), system, private=private, shared=shared))
     server.daemon_threads = True
     worker = None
-    if private is None:
-        worker = threading.Thread(target=system.scheduler, daemon=True)
-        worker.start()
-    if private:
-        print(f"NONPRODUCTION_PRIVATE {origin} | access=BRIEF_ONLY schedules=DENY paid=DENY production=DENY", flush=True)
-    else:
-        print(f"NONPRODUCTION_LOCAL {origin} | team=DENY paid=DENY production=DENY", flush=True)
     try:
+        if shared is not None:
+            worker = SharedWorker(queue)
+            if args.read_only_auto_sync:
+                from workbench_shared_sync import ReadOnlySync
+                shared.sync = ReadOnlySync(inputs, args.read_only_source_root)
+                shared.sync.start()
+            worker.start()
+        if private is None:
+            worker = threading.Thread(target=system.scheduler, daemon=True)
+            worker.start()
+        if private:
+            print(f"NONPRODUCTION_PRIVATE {origin} | access=BRIEF_ONLY schedules=DENY paid=DENY production=DENY", flush=True)
+        else:
+            print(f"NONPRODUCTION_LOCAL {origin} | team=DENY paid=DENY production=DENY", flush=True)
         server.serve_forever()
     except KeyboardInterrupt:
         pass
     finally:
         system.stopping.set()
-        if worker is not None:
+        if shared is not None and worker is not None:
+            worker.stop()
+            if shared.sync is not None: shared.sync.stop()
+        elif worker is not None:
             worker.join(timeout=35)
         server.server_close()
         lifetime_lock.close()

@@ -1,0 +1,22 @@
+{
+  "schema": "ai-task.v1",
+  "task_id": "WORKBENCH-SHARED-FINAL-FIX-20261014",
+  "architecture_block": ["Nonproduction shared workbench V1", "One bounded final review fix wave R1-R4"],
+  "objective": "At BASE c8227e15e9f4e753156c8b7a589abb79ddea9d34 fix cooperative first-use directory races, explicit original-command uncertain-delivery recovery, complete preservation of retained worker crash temporaries, and genuine no-follow mutation coverage. Preserve all existing authority and runtime guards.",
+  "non_goals": ["No new features or broad reopening of completed slices", "No full gate, ci_local, remote CI, deployment or real-device acceptance", "No current-service, production, ACL, network, installation, provider, paid, push or merge actions"],
+  "human_owner": "Junyan",
+  "reviewer": "Controller-owned scoped final R1-R4 rereview",
+  "executor_candidates": ["Codex inline implementer using the implementer template and TDD; no subagents"],
+  "dependencies": ["Clean requested branch at exact BASE", "Existing Python 3.12 and Node runtimes and installed UI dependencies", "Finalized review and controller verified RED probes"],
+  "authority_docs": ["AGENTS.md", "scripts/llm/AGENTS.md", "docs/superpowers/specs/2026-10-13-shared-workbench-v1-design.md", "docs/team/SHARED_WORKBENCH_V1_ACCEPTANCE.md", "docs/superpowers/plans/2026-10-13-shared-workbench-v1-implementation.md", ".superpowers/sdd/2026-10-13-shared-workbench-v1-implementation/final-fix-brief.md", ".superpowers/sdd/2026-10-13-shared-workbench-v1-implementation/final-review.md"],
+  "file_scope": ["scripts/llm/workbench_backup.py", "tools/nonprod_workbench/ui/shared-view.mjs", "tools/nonprod_workbench/ui/shared-workspace.jsx", "tools/nonprod_workbench/ui shared CSS only if directly required", "tests/test_workbench_shared_jobs.py", "tests/test_workbench_shared_state.py", "tests/test_workbench_workspace.py", "tests/nonprod-workbench-shared.test.mjs", "tests/workbench_shared_test_support.py only if needed", "scripts/governance_mutation_gate.py", "scripts/llm/fixtures/workbench_shared_runtime_v1.task.json", "docs/llm/WORKBENCH_SHARED_RUNTIME_V1.md only for exact recovery procedure", ".superpowers/sdd/2026-10-13-shared-workbench-v1-implementation/final-fix-report.md and local evidence"],
+  "forbidden_scope": ["Immutable approved snapshots and controller-owned progress ledger", "New test files without scope decision and CI registration", "Source reader guard weakening or new public authority", "Outside-worktree changes, current service, production, ACL, network, installation, push or merge", "Full mutation gate or ci_local during fixes"],
+  "input_contracts": ["R1 tolerate only concurrent genuine directory creation, preserving no-follow and fsync; real barrier-based distinct/same actor tasks must succeed", "R2 intentional retry preserves workspace and original command_id/kind/snapshot_id; automatic reconnect remains GET-only and actor isolated", "R3 retain exact service crash temporary bytes through recovery, complete backup and scratch restore with exact inventory and all safety guards", "R4 static leaf, symlinked parent, and post-lstat swap behavior must show no outside descriptor opened; preserve exact WORKSPACE_SOURCE_NOFOLLOW pin ID"],
+  "output_artifacts": ["Exact-file final-fix commit", "Permanent behavioral regressions and genuine targeted mutation pins", "Ignored final-fix-report.md with commands, exits, RED/GREEN and targeted IDs"],
+  "acceptance_tests": ["python3 -B scripts/team_ai_workspace.py doctor", "python3 -B scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/workbench_shared_runtime_v1.task.json => SPEC_READY/errors=[] before product/test edits", "Observe permanent regressions RED then GREEN for R1-R4", "Run affected focused Python and shared JS regressions and UI build", "Run actual targeted pin shards with baseline PASS and mutant AssertionError at intended behavior; no full gate", "git diff --check, exact-file commit, clean tracked handoff, no active required sessions"],
+  "risk_level": "HIGH",
+  "network_policy": "OFFLINE",
+  "budget": {"max_cny": "0", "max_minutes": 120},
+  "approval_gates": ["SPEC_BLOCKED stops implementation", "No extra fix wave or new feature", "Controller owns scoped rereview and final same-HEAD full gate/CI/UI acceptance", "Deployment, production, private entry and actual two-device checks require separate human approval"],
+  "created_at": "2026-10-14T00:00:00+00:00"
+}
