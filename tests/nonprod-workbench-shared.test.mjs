@@ -88,8 +88,11 @@ test('query failure explicitly marks disconnected without discarding stale owner
 test('retained detail and common-data statuses and downloads are disconnected', () => {
   assert.equal(typeof view.sharedViewFreshness, 'function', 'missing retained-view freshness');
   assert.equal(typeof view.retainedStatus, 'function', 'missing retained-status protection');
-  const failed = view.sharedQueryState({ data: { my_jobs: jobs }, connection: 'CONNECTED' }, null, 'LOCAL_STATE_UNAVAILABLE');
-  const freshness = view.sharedViewFreshness(failed, false);
+  // Keep the read younger than the age limit so only disconnect protection
+  // can disable it; expiry must not accidentally kill this old mutation pin.
+  const connected = view.sharedQueryState(null, { my_jobs: jobs }, '', 1000);
+  const failed = view.sharedQueryState(connected, null, 'LOCAL_STATE_UNAVAILABLE', 1001);
+  const freshness = view.sharedViewFreshness(failed, false, 1002);
   assert.equal(freshness.commonStale, true);
   assert.equal(freshness.detailStale, true);
   assert.equal(freshness.downloadsEnabled, false);
