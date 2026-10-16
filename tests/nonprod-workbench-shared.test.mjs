@@ -34,6 +34,15 @@ test('successful read expires by age even if the next GET never resolves', () =>
   const failed = view.sharedQueryState(query, null, 'DISCONNECTED', 17000);
   assert.equal(failed.lastSuccessAt, 1000);
 });
+test('actor switch immediately hides and disables retained workspace data', () => {
+  assert.equal(typeof view.sharedActorQuery, 'function', 'missing current-actor projection');
+  const query = view.sharedQueryState(null, {my_workspace:{login:'owner',workspace_id:'owner-workspace'}, my_jobs:[{job_id:'old'}]}, '', 1000);
+  assert.equal(view.sharedActorQuery(query, 'owner'), query);
+  const switched = view.sharedActorQuery(query, 'member');
+  assert.equal(switched.data, null);
+  assert.equal(view.sharedViewFreshness(switched, false, 1001).downloadsEnabled, false);
+  assert.equal(view.sharedViewFreshness(switched, false, 1001).commonStale, true);
+});
 test('common sync display retains old dates, new errors, times and separate identities', () => {
   assert.equal(typeof view.commonSyncView, 'function', 'missing common synchronization display');
   const common = { current_snapshot_id: 'old-input', error: 'SOURCE_CHANGED', sync_status: 'SYNC_FAILED',

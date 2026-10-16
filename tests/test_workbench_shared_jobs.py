@@ -25,7 +25,7 @@ import workbench_shared_workspace as shared
 import workbench_evidence as ev
 import workbench_backup as backup
 from workbench_shared_inputs import FrozenInputs
-from workbench_shared_test_support import OWNER, MEMBER, committed_code, frozen_source, historical_state
+from workbench_shared_test_support import OWNER, MEMBER, committed_code, frozen_source, historical_state, publisher_source, reseal_publisher
 
 jobs = __import__("workbench_shared_jobs") if importlib.util.find_spec("workbench_shared_jobs") else None
 worker = __import__("workbench_shared_worker") if importlib.util.find_spec("workbench_shared_worker") else None
@@ -700,6 +700,21 @@ class SharedJobTests(unittest.TestCase):
         data = self.view.snapshot(MEMBER)
         self.assertEqual(next(row for row in data["team_jobs"] if row["job_id"] == owner["job_id"])["status"], "RECOVERY_REQUIRED")
         self.assertEqual(data["my_jobs"][0]["job_id"], member["job_id"])
+
+    def test_malformed_macro_display_does_not_break_shared_overview(self):
+        for report in ({"invalid": True}, [], "UNKNOWN", None):
+            with self.subTest(report=report):
+                publisher_source(self.source)
+                reseal_publisher(self.source, "public/data/v2/macro/macro_events.json", {
+                    "schema": "ar.macro.events", "schema_version": "1.0",
+                    "run_id": "publisher_run", "report": report})
+                self.inputs.import_once(self.source)
+                data = self.view.snapshot(OWNER)
+                self.assertEqual(data["my_jobs"], [])
+                self.assertIsNone(data["common_data"]["error"])
+                macro = next(row for row in data["common_data"]["observation"]["module_sources"] if row["module"] == "Macro")
+                self.assertEqual(macro["data_quality"], "UNAVAILABLE")
+                self.assertEqual(macro["pipeline_status"], "UNAVAILABLE")
 
     def test_crash_at_every_persistent_boundary(self):
         phases = ("enqueue_before", "enqueue_after", "claim_before", "claim_after",

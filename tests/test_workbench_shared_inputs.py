@@ -65,6 +65,11 @@ class FrozenInputTests(unittest.TestCase):
                 ({"schema": "ar.macro.events", "schema_version": "1.0", "report": "PARTIAL"}, "PARTIAL", "SCHEMA_AVAILABILITY_NOT_RESEARCH_APPROVAL"),
                 ({"schema": "ar.macro.events", "schema_version": "1.0", "report": "COMPLETE"}, "COMPLETE", "SCHEMA_AVAILABILITY_NOT_RESEARCH_APPROVAL"),
                 ({"schema": "ar.macro.events", "schema_version": "future", "report": "COMPLETE"}, "UNAVAILABLE", "SCHEMA_AVAILABILITY_NOT_RESEARCH_APPROVAL"),
+                ({"schema": "ar.macro.events", "schema_version": "future", "report": "PARTIAL", "status": "COMPLETE"}, "UNAVAILABLE", "SCHEMA_AVAILABILITY_NOT_RESEARCH_APPROVAL"),
+                ({"schema": "ar.macro.events", "schema_version": "1.0", "status": "COMPLETE"}, "UNAVAILABLE", "SCHEMA_AVAILABILITY_NOT_RESEARCH_APPROVAL"),
+                ({"schema": "ar.macro.events", "schema_version": "1.0", "report": {}}, "UNAVAILABLE", "SCHEMA_AVAILABILITY_NOT_RESEARCH_APPROVAL"),
+                ({"schema": "ar.macro.events", "schema_version": "1.0", "report": []}, "UNAVAILABLE", "SCHEMA_AVAILABILITY_NOT_RESEARCH_APPROVAL"),
+                ({"status": "PASS"}, "UNAVAILABLE", "SCHEMA_AVAILABILITY_NOT_RESEARCH_APPROVAL"),
                 ({"status": "PARTIAL"}, "PARTIAL", "SCHEMA_AVAILABILITY_NOT_RESEARCH_APPROVAL"),
                 ({}, "UNAVAILABLE", "SCHEMA_AVAILABILITY_NOT_RESEARCH_APPROVAL"),
                 ({"schema": "ar.macro.events", "schema_version": "1.0", "report": "PARTIAL", "data_quality": "COMPLETE"}, "CONFLICTING", "QUALITY_STATUS_CONFLICT")):

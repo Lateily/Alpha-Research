@@ -12,6 +12,13 @@ export function sharedQueryState(previous, data, error = '', now = Date.now()) {
   return { data, connection: 'CONNECTED', stale: false, error: '', lastSuccessAt: now };
 }
 
+export function sharedActorQuery(query, login) {
+  if (!login || query.data?.my_workspace?.login !== login) {
+    return { data: null, connection: 'WAIT', stale: true, error: '' };
+  }
+  return query;
+}
+
 export function sharedViewFreshness(query, detailStale = false, now = Date.now()) {
   const commonStale = query.stale || query.connection === 'DISCONNECTED';
   const expired = !Number.isFinite(query.lastSuccessAt) || now - query.lastSuccessAt > 15000;

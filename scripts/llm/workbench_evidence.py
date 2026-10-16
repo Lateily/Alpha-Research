@@ -506,16 +506,18 @@ def module_sources(snapshot, *, display=False):
             quality = health.get("status")
             quality_basis = "SCHEMA_AVAILABILITY_NOT_RESEARCH_APPROVAL"
         if display and name == "Macro":
-            availability = health.get("status")
+            valid_statuses = {"COMPLETE", "PARTIAL", "DATA_BLOCKED", "OK"}
+            legacy = health.get("schema") is None and health.get("schema_version") is None
+            availability = health.get("status") if legacy else None
             if health.get("schema") == "ar.macro.events" and health.get("schema_version") == "1.0":
                 availability = health.get("report")
-            if availability not in {"COMPLETE", "PARTIAL", "DATA_BLOCKED", "OK"}:
+            if not isinstance(availability, str) or availability not in valid_statuses:
                 availability = None
-            if quality is None:
-                quality = availability
-                quality_basis = "SCHEMA_AVAILABILITY_NOT_RESEARCH_APPROVAL"
-            elif availability is not None and quality != availability:
-                quality, quality_basis = "CONFLICTING", "QUALITY_STATUS_CONFLICT"
+            quality, quality_basis = availability, "SCHEMA_AVAILABILITY_NOT_RESEARCH_APPROVAL"
+            if availability is not None:
+                explicit = [health[key] for key in ("data_quality", "status") if health.get(key) is not None]
+                if any(not isinstance(value, str) or value != availability for value in explicit):
+                    quality, quality_basis = "CONFLICTING", "QUALITY_STATUS_CONFLICT"
         if name == "Candidates" and record.get("status") != "OBSERVED":
             quality = None
         result.append({
@@ -524,7 +526,7 @@ def module_sources(snapshot, *, display=False):
             "source_as_of": payload.get("as_of"),
             "date_basis": "SOURCE_EXPLICIT" if reported_date else "PUBLICATION_CONTEXT_ONLY",
             "identity_status": status, "sha256": record.get("source_sha256"),
-            "pipeline_status": health.get("report", health.get("status", "UNAVAILABLE")),
+            "pipeline_status": (availability or "UNAVAILABLE") if display and name == "Macro" else health.get("report", health.get("status", "UNAVAILABLE")),
             "data_quality": quality if quality is not None else "UNAVAILABLE",
             "quality_basis": quality_basis,
             **({"catalog_binding": catalog_binding} if display and name == "Candidates" else {}),
