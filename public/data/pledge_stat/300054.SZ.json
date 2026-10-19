@@ -1,10 +1,19 @@
 {
   "_status": "ok",
   "ticker": "300054.SZ",
-  "fetched_at": "2026-10-16T13:28:07Z",
+  "fetched_at": "2026-10-19T06:00:26Z",
   "api_used": "pledge_stat",
   "window_quarters": 4,
   "records": [
+    {
+      "ts_code": "300054.SZ",
+      "end_date": "20261016",
+      "pledge_count": 6,
+      "unrest_pledge": 2008.0,
+      "rest_pledge": 0.0,
+      "total_share": 95477.17,
+      "pledge_ratio": 2.1
+    },
     {
       "ts_code": "300054.SZ",
       "end_date": "20261009",
@@ -31,20 +40,11 @@
       "rest_pledge": 0.0,
       "total_share": 95471.95,
       "pledge_ratio": 2.7
-    },
-    {
-      "ts_code": "300054.SZ",
-      "end_date": "20260918",
-      "pledge_count": 6,
-      "unrest_pledge": 2803.0,
-      "rest_pledge": 0.0,
-      "total_share": 95471.95,
-      "pledge_ratio": 2.94
     }
   ],
   "summary": {
-    "latest_pledge_ratio": 2.7,
-    "latest_end_date": "2026-10-09",
+    "latest_pledge_ratio": 2.1,
+    "latest_end_date": "2026-10-16",
     "trend_direction": "falling",
     "risk_level": "LOW",
     "records_count": 4

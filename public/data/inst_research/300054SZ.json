@@ -1,13 +1,41 @@
 {
   "_status": "ok",
   "ticker": "300054.SZ",
-  "fetched_at": "2026-10-16T13:26:03Z",
+  "fetched_at": "2026-10-19T05:58:07Z",
   "api_used": "stk_surv",
   "_attempted_endpoints": [
     "stk_surv"
   ],
   "window_days": 90,
   "surveys": [
+    {
+      "ts_code": "300054.SZ",
+      "name": "鼎龙股份",
+      "surv_date": "20261016",
+      "fund_visitors": "徐波,李晓星,方建,张腾,苏静然,施航,焦巍,薄官辉,王浩,王利刚,范昭楠,蒋婉莹,吴颖,和玮,贲兴振,陈晓雅,倪明,郭磊,方新一,唐泽辉等",
+      "rece_place": "公司9楼会议室",
+      "rece_mode": "特定对象调研",
+      "rece_org": "银华基金",
+      "org_type": "基金管理公司",
+      "comp_rece": "董事长 朱双全,投资者关系总监 熊亚威",
+      "inst_count": 21,
+      "surv_type": "特定对象调研",
+      "description": null
+    },
+    {
+      "ts_code": "300054.SZ",
+      "name": "鼎龙股份",
+      "surv_date": "20261016",
+      "fund_visitors": "管镠,李晓金,刘宁,王嘉艺,魏博,程子诺等",
+      "rece_place": "公司9楼会议室",
+      "rece_mode": "特定对象调研",
+      "rece_org": "泰康",
+      "org_type": "寿险公司",
+      "comp_rece": "董秘 杨平彩,投资者关系总监 熊亚威",
+      "inst_count": 7,
+      "surv_type": "特定对象调研",
+      "description": null
+    },
     {
       "ts_code": "300054.SZ",
       "name": "鼎龙股份",
@@ -556,9 +584,9 @@
     }
   ],
   "summary": {
-    "total_30d": 6,
-    "total_90d": 39,
-    "unique_inst_30d": 29,
-    "latest_date": "2026-09-17"
+    "total_30d": 2,
+    "total_90d": 41,
+    "unique_inst_30d": 28,
+    "latest_date": "2026-10-16"
   }
 }
