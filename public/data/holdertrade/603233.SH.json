@@ -1,17 +1,33 @@
 {
-  "_status": "empty",
+  "_status": "ok",
   "ticker": "603233.SH",
-  "fetched_at": "2026-10-20T05:52:20Z",
+  "fetched_at": "2026-10-20T13:48:32Z",
   "api_used": "stk_holdertrade",
   "window_days": 180,
-  "events": [],
+  "events": [
+    {
+      "ts_code": "603233.SH",
+      "ann_date": "20261020",
+      "holder_name": "国泰海通证券股份有限公司总部",
+      "holder_type": "C",
+      "in_de": "DE",
+      "change_vol": 943400,
+      "change_ratio": 0.0828,
+      "after_share": null,
+      "after_ratio": null,
+      "avg_price": 18.2,
+      "total_share": null,
+      "begin_date": null,
+      "close_date": null
+    }
+  ],
   "summary": {
-    "total_count": 0,
+    "total_count": 1,
     "in_count": 0,
-    "de_count": 0,
-    "net_change_vol_180d": 0,
-    "net_change_ratio_180d": 0.0,
-    "last_announce_date": null,
+    "de_count": 1,
+    "net_change_vol_180d": -943400,
+    "net_change_ratio_180d": -0.0828,
+    "last_announce_date": "2026-10-20",
     "signal_level": "NEUTRAL"
   }
 }
