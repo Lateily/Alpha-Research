@@ -1,7 +1,7 @@
 {
   "_status": "ok",
   "ticker": "300054.SZ",
-  "fetched_at": "2026-10-20T13:48:33Z",
+  "fetched_at": "2026-10-21T06:04:51Z",
   "api_used": "stk_holdertrade",
   "window_days": 180,
   "events": [
@@ -184,29 +184,14 @@
       "total_share": null,
       "begin_date": null,
       "close_date": null
-    },
-    {
-      "ts_code": "300054.SZ",
-      "ann_date": "20260423",
-      "holder_name": "渤海证券股份有限公司天津水上公园东路证券营业部",
-      "holder_type": "C",
-      "in_de": "DE",
-      "change_vol": 40000,
-      "change_ratio": 0.0054,
-      "after_share": null,
-      "after_ratio": null,
-      "avg_price": 65.48,
-      "total_share": null,
-      "begin_date": null,
-      "close_date": null
     }
   ],
   "summary": {
-    "total_count": 13,
+    "total_count": 12,
     "in_count": 0,
-    "de_count": 13,
-    "net_change_vol_180d": -1663300,
-    "net_change_ratio_180d": -0.2236,
+    "de_count": 12,
+    "net_change_vol_180d": -1623300,
+    "net_change_ratio_180d": -0.2182,
     "last_announce_date": "2026-08-17",
     "signal_level": "NEUTRAL"
   }
