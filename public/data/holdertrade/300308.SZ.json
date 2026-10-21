@@ -1,10 +1,25 @@
 {
   "_status": "ok",
   "ticker": "300308.SZ",
-  "fetched_at": "2026-10-21T06:04:48Z",
+  "fetched_at": "2026-10-21T14:06:35Z",
   "api_used": "stk_holdertrade",
   "window_days": 180,
   "events": [
+    {
+      "ts_code": "300308.SZ",
+      "ann_date": "20261021",
+      "holder_name": "机构专用",
+      "holder_type": "P",
+      "in_de": "DE",
+      "change_vol": 10000,
+      "change_ratio": 0.0009,
+      "after_share": null,
+      "after_ratio": null,
+      "avg_price": 646.77,
+      "total_share": null,
+      "begin_date": null,
+      "close_date": null
+    },
     {
       "ts_code": "300308.SZ",
       "ann_date": "20261020",
@@ -847,12 +862,12 @@
     }
   ],
   "summary": {
-    "total_count": 56,
+    "total_count": 57,
     "in_count": 0,
-    "de_count": 56,
-    "net_change_vol_180d": -5059400,
-    "net_change_ratio_180d": -0.4557,
-    "last_announce_date": "2026-10-20",
+    "de_count": 57,
+    "net_change_vol_180d": -5069400,
+    "net_change_ratio_180d": -0.45659999999999995,
+    "last_announce_date": "2026-10-21",
     "signal_level": "NET_SELL_MED"
   }
 }
