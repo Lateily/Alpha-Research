@@ -1,25 +1,10 @@
 {
   "_status": "ok",
   "ticker": "300054.SZ",
-  "fetched_at": "2026-10-22T05:59:09Z",
+  "fetched_at": "2026-10-22T14:04:15Z",
   "api_used": "stk_holdertrade",
   "window_days": 180,
   "events": [
-    {
-      "ts_code": "300054.SZ",
-      "ann_date": "20260817",
-      "holder_name": "华泰证券股份有限公司合肥创新大道证券营业部",
-      "holder_type": "C",
-      "in_de": "DE",
-      "change_vol": 100000,
-      "change_ratio": 0.0134,
-      "after_share": null,
-      "after_ratio": null,
-      "avg_price": 81.3,
-      "total_share": null,
-      "begin_date": null,
-      "close_date": null
-    },
     {
       "ts_code": "300054.SZ",
       "ann_date": "20260804",
@@ -187,12 +172,12 @@
     }
   ],
   "summary": {
-    "total_count": 12,
+    "total_count": 11,
     "in_count": 0,
-    "de_count": 12,
-    "net_change_vol_180d": -1623300,
-    "net_change_ratio_180d": -0.2182,
-    "last_announce_date": "2026-08-17",
+    "de_count": 11,
+    "net_change_vol_180d": -1523300,
+    "net_change_ratio_180d": -0.20480000000000004,
+    "last_announce_date": "2026-08-04",
     "signal_level": "NEUTRAL"
   }
 }

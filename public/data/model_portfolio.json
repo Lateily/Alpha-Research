@@ -8,7 +8,7 @@
     "no_position_mutation": true,
     "run_date": "2026-10-22",
     "pilot_start_date": "2026-06-08",
-    "generated_at": "2026-10-22T05:59:53.556700+00:00",
+    "generated_at": "2026-10-22T14:05:00.018509+00:00",
     "fresh_pilot": true,
     "legacy_paper_positions_inherited": false,
     "sources": [
@@ -265,8 +265,8 @@
             "total": 0
           },
           "key_indicators": {
-            "rsi14": 38.2,
-            "macd_hist": 0.0648,
+            "rsi14": 38.3,
+            "macd_hist": 0.0583,
             "price_vs_ma20": -3.39,
             "price_vs_ma60": null,
             "change_5d": -0.91,
@@ -342,8 +342,8 @@
             "total": 2
           },
           "key_indicators": {
-            "rsi14": 29.7,
-            "macd_hist": -1.4687,
+            "rsi14": 29.6,
+            "macd_hist": -1.4592,
             "price_vs_ma20": -10.58,
             "price_vs_ma60": null,
             "change_5d": -2.85,
@@ -354,7 +354,7 @@
               "type": "RSI_OVERSOLD",
               "strength": "moderate",
               "bullish": true,
-              "desc": "RSI(14) = 29.7 — oversold, watch for reversal"
+              "desc": "RSI(14) = 29.6 — oversold, watch for reversal"
             },
             {
               "type": "KDJ_GOLDEN_CROSS",
@@ -390,8 +390,8 @@
             "total": 1
           },
           "key_indicators": {
-            "rsi14": 26.2,
-            "macd_hist": -30.2339,
+            "rsi14": 26.4,
+            "macd_hist": -30.4311,
             "price_vs_ma20": -18.37,
             "price_vs_ma60": null,
             "change_5d": -6.66,
@@ -402,7 +402,7 @@
               "type": "RSI_OVERSOLD",
               "strength": "moderate",
               "bullish": true,
-              "desc": "RSI(14) = 26.2 — oversold, watch for reversal"
+              "desc": "RSI(14) = 26.4 — oversold, watch for reversal"
             }
           ]
         },
@@ -432,8 +432,8 @@
             "total": 1
           },
           "key_indicators": {
-            "rsi14": 45.9,
-            "macd_hist": -0.0191,
+            "rsi14": 46.0,
+            "macd_hist": -0.0202,
             "price_vs_ma20": -1.45,
             "price_vs_ma60": null,
             "change_5d": -4.79,
@@ -444,7 +444,7 @@
               "type": "MACD_DEATH_CROSS",
               "strength": "moderate",
               "bullish": false,
-              "desc": "MACD DIF(0.094) crossed below DEA(0.104) above zero — bearish momentum"
+              "desc": "MACD DIF(0.095) crossed below DEA(0.105) above zero — bearish momentum"
             }
           ]
         },
@@ -528,8 +528,8 @@
             "total": 0
           },
           "key_indicators": {
-            "rsi14": 36.0,
-            "macd_hist": -2.7448,
+            "rsi14": 35.9,
+            "macd_hist": -2.7241,
             "price_vs_ma20": -10.36,
             "price_vs_ma60": null,
             "change_5d": -6.37,
