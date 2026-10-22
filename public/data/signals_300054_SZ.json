@@ -1,7 +1,7 @@
 {
   "ticker": "300054.SZ",
-  "generated_at": "2026-10-21",
-  "price": 58.09,
+  "generated_at": "2026-10-22",
+  "price": 58.2,
   "zone": "OVERSOLD",
   "entry_zone": true,
   "exit_zone": false,
@@ -9,41 +9,51 @@
     {
       "type": "RSI_OVERSOLD",
       "strength": "moderate",
-      "date": "20261020",
+      "date": "20261021",
       "bullish": true,
       "description": {
-        "e": "RSI(14) = 29.2 — oversold, watch for reversal",
-        "z": "RSI(14)=29.2，超卖，关注反转信号"
+        "e": "RSI(14) = 29.7 — oversold, watch for reversal",
+        "z": "RSI(14)=29.7，超卖，关注反转信号"
+      }
+    },
+    {
+      "type": "KDJ_GOLDEN_CROSS",
+      "strength": "strong",
+      "date": "20261021",
+      "bullish": true,
+      "description": {
+        "e": "KDJ K(16.4) crossed above D(14.0) in oversold — reversal signal",
+        "z": "KDJ K(16.4)上穿D(14.0)，超卖区金叉看涨"
       }
     }
   ],
   "signal_count": {
-    "bullish": 1,
+    "bullish": 2,
     "bearish": 0,
-    "total": 1
+    "total": 2
   },
   "indicators": {
-    "ma5": 58.04,
-    "ma20": 65.57,
+    "ma5": 57.7,
+    "ma20": 65.08,
     "ma60": null,
-    "rsi14": 29.2,
-    "vol_ma20": 197598,
-    "vol_ratio": 0.83,
-    "price_vs_ma20": -11.41,
+    "rsi14": 29.7,
+    "vol_ma20": 194814,
+    "vol_ratio": 0.69,
+    "price_vs_ma20": -10.58,
     "price_vs_ma60": null,
-    "change_1d": 1.72,
-    "change_5d": -6.98,
-    "change_20d": -13.22,
-    "macd_dif": -3.3982,
-    "macd_dea": -2.4908,
-    "macd_hist": -1.8148,
-    "bb_upper": 76.23,
-    "bb_mid": 65.57,
-    "bb_lower": 54.92,
-    "bb_bandwidth": 32.5,
-    "kdj_k": 12.0,
-    "kdj_d": 12.8,
-    "kdj_j": 10.4,
+    "change_1d": 0.19,
+    "change_5d": -2.85,
+    "change_20d": -14.44,
+    "macd_dif": -3.4088,
+    "macd_dea": -2.6744,
+    "macd_hist": -1.4687,
+    "bb_upper": 76.14,
+    "bb_mid": 65.08,
+    "bb_lower": 54.03,
+    "bb_bandwidth": 33.98,
+    "kdj_k": 16.4,
+    "kdj_d": 14.0,
+    "kdj_j": 21.1,
     "cvd_latest": null,
     "cvd_slope_5d": null,
     "cvd_chg_1d": null,

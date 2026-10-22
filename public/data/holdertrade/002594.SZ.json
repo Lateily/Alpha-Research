@@ -1,7 +1,7 @@
 {
   "_status": "ok",
   "ticker": "002594.SZ",
-  "fetched_at": "2026-10-21T14:06:35Z",
+  "fetched_at": "2026-10-22T05:59:07Z",
   "api_used": "stk_holdertrade",
   "window_days": 180,
   "events": [
@@ -214,29 +214,14 @@
       "total_share": null,
       "begin_date": null,
       "close_date": null
-    },
-    {
-      "ts_code": "002594.SZ",
-      "ann_date": "20260424",
-      "holder_name": "中国中金财富证券有限公司厦门分公司",
-      "holder_type": "C",
-      "in_de": "DE",
-      "change_vol": 300000,
-      "change_ratio": 0.0086,
-      "after_share": null,
-      "after_ratio": null,
-      "avg_price": 89.98,
-      "total_share": null,
-      "begin_date": null,
-      "close_date": null
     }
   ],
   "summary": {
-    "total_count": 15,
+    "total_count": 14,
     "in_count": 0,
-    "de_count": 15,
-    "net_change_vol_180d": -6082000,
-    "net_change_ratio_180d": -0.1744,
+    "de_count": 14,
+    "net_change_vol_180d": -5782000,
+    "net_change_ratio_180d": -0.1658,
     "last_announce_date": "2026-07-17",
     "signal_level": "NEUTRAL"
   }
