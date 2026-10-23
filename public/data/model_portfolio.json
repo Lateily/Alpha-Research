@@ -8,7 +8,7 @@
     "no_position_mutation": true,
     "run_date": "2026-10-23",
     "pilot_start_date": "2026-06-08",
-    "generated_at": "2026-10-23T05:58:12.760508+00:00",
+    "generated_at": "2026-10-23T13:45:31.684953+00:00",
     "fresh_pilot": true,
     "legacy_paper_positions_inherited": false,
     "sources": [
@@ -266,7 +266,7 @@
           },
           "key_indicators": {
             "rsi14": 36.6,
-            "macd_hist": -0.147,
+            "macd_hist": -0.1396,
             "price_vs_ma20": -3.97,
             "price_vs_ma60": null,
             "change_5d": -2.7,
@@ -277,7 +277,7 @@
               "type": "MACD_DEATH_CROSS",
               "strength": "strong",
               "bullish": false,
-              "desc": "MACD DIF(-1.479) crossed below DEA(-1.406) below zero — bearish momentum"
+              "desc": "MACD DIF(-1.488) crossed below DEA(-1.418) below zero — bearish momentum"
             }
           ]
         },
@@ -349,8 +349,8 @@
             "total": 1
           },
           "key_indicators": {
-            "rsi14": 26.6,
-            "macd_hist": -1.3433,
+            "rsi14": 26.7,
+            "macd_hist": -1.3387,
             "price_vs_ma20": -12.36,
             "price_vs_ma60": null,
             "change_5d": -2.03,
@@ -361,7 +361,7 @@
               "type": "RSI_OVERSOLD",
               "strength": "moderate",
               "bullish": true,
-              "desc": "RSI(14) = 26.6 — oversold, watch for reversal"
+              "desc": "RSI(14) = 26.7 — oversold, watch for reversal"
             }
           ]
         },
@@ -391,8 +391,8 @@
             "total": 2
           },
           "key_indicators": {
-            "rsi14": 22.1,
-            "macd_hist": -32.5371,
+            "rsi14": 21.9,
+            "macd_hist": -32.6811,
             "price_vs_ma20": -24.0,
             "price_vs_ma60": null,
             "change_5d": -10.17,
@@ -403,7 +403,7 @@
               "type": "RSI_OVERSOLD",
               "strength": "moderate",
               "bullish": true,
-              "desc": "RSI(14) = 22.1 — oversold, watch for reversal"
+              "desc": "RSI(14) = 21.9 — oversold, watch for reversal"
             },
             {
               "type": "KDJ_OVERSOLD",
@@ -439,8 +439,8 @@
             "total": 0
           },
           "key_indicators": {
-            "rsi14": 48.9,
-            "macd_hist": -0.0526,
+            "rsi14": 48.8,
+            "macd_hist": -0.0537,
             "price_vs_ma20": -0.28,
             "price_vs_ma60": null,
             "change_5d": -2.35,
@@ -528,8 +528,8 @@
             "total": 1
           },
           "key_indicators": {
-            "rsi14": 33.3,
-            "macd_hist": -4.271,
+            "rsi14": 33.2,
+            "macd_hist": -4.2646,
             "price_vs_ma20": -12.14,
             "price_vs_ma60": null,
             "change_5d": -14.54,
