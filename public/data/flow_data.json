@@ -1,18 +1,18 @@
 {
-  "fetched_at": "2026-10-22T13:58:48.612865",
+  "fetched_at": "2026-10-23T05:52:46.145554",
   "northbound": {
     "latest_net_flow": null,
     "5d_cumulative": 0.0,
     "20d_cumulative": 0.0,
     "trend": "outflow",
-    "updated": "2026-10-22"
+    "updated": "2026-10-23"
   },
   "southbound": {
     "latest_net_flow": -92.1808,
     "5d_cumulative": -240.2451,
     "20d_cumulative": 148.4866,
     "trend": "outflow",
-    "updated": "2026-10-22"
+    "updated": "2026-10-23"
   },
   "dragon_tiger": [
     {
