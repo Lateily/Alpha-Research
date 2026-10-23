@@ -2478,7 +2478,7 @@ MUTATIONS: tuple[MutationCase, ...] = (
         test_script="tests/test_macro_m0b_offline.py",
         before=(
             '    # governance-mutation: MACRO_M0B_FRED_CSV_SERIES_BINDING\n'
-            "    if reader.fieldnames != expected_header:"
+            "    if header != expected_header:"
         ),
         after=(
             '    # governance-mutation: MACRO_M0B_FRED_CSV_SERIES_BINDING\n'
@@ -2486,6 +2486,98 @@ MUTATIONS: tuple[MutationCase, ...] = (
         ),
         expected_failure_marker="test_fred_csv_header_is_bound_to_requested_series",
         rationale="A FRED CSV response must be bound to the exact requested native series.",
+    ),
+    MutationCase(
+        mutation_id="MACRO_M0B_FRED_MAINTENANCE",
+        component="Macro M0-B collection",
+        source_path="experiments/macro_os/collectors.py",
+        test_script="tests/test_macro_m0b_offline.py",
+        before=(
+            '        # governance-mutation: MACRO_M0B_FRED_MAINTENANCE\n'
+            '        if all(marker in page_text for marker in (\n'
+            '            "site maintenance | st. louis fed", "undergoing proactive maintenance"\n'
+            '        )):'
+        ),
+        after=(
+            '        # governance-mutation: MACRO_M0B_FRED_MAINTENANCE\n'
+            '        if False:'
+        ),
+        expected_failure_marker="test_fred_maintenance_is_source_down_for_all_five_metrics",
+        rationale="A real-shaped 200 maintenance page must remain unavailable source evidence, not a CSV schema error.",
+    ),
+    MutationCase(
+        mutation_id="MACRO_M0B_FRED_HTML_RESPONSE",
+        component="Macro M0-B collection",
+        source_path="experiments/macro_os/collectors.py",
+        test_script="tests/test_macro_m0b_offline.py",
+        before=(
+            '    # governance-mutation: MACRO_M0B_FRED_HTML_RESPONSE\n'
+            '    if text.lstrip().lower().startswith(("<!doctype html", "<html")):'
+        ),
+        after=(
+            '    # governance-mutation: MACRO_M0B_FRED_HTML_RESPONSE\n'
+            '    if False:'
+        ),
+        expected_failure_marker="test_fred_unrelated_html_remains_invalid",
+        rationale="An unrelated HTML page must be explicitly invalid non-data, not mistaken for provider maintenance.",
+    ),
+    MutationCase(
+        mutation_id="MACRO_M0B_FAILED_RESPONSE_STATUS",
+        component="Macro M0-B collection",
+        source_path="experiments/macro_os/collectors.py",
+        test_script="tests/test_macro_m0b_offline.py",
+        before=(
+            '                    # governance-mutation: MACRO_M0B_FAILED_RESPONSE_STATUS\n'
+            '                    failure_status=exc.status,'
+        ),
+        after=(
+            '                    # governance-mutation: MACRO_M0B_FAILED_RESPONSE_STATUS\n'
+            '                    failure_status="DATA_INVALID",'
+        ),
+        expected_failure_marker="test_fred_maintenance_after_good_data_does_not_reuse_old_health",
+        rationale="Fetch results, stored attempt and health must agree on SOURCE_DOWN while retaining old values only as labeled history.",
+    ),
+    MutationCase(
+        mutation_id="MACRO_M0B_FAILED_STATUS_CLOSED",
+        component="Macro M0-B collection",
+        source_path="experiments/macro_os/storage.py",
+        test_script="tests/test_macro_m0b_offline.py",
+        before=(
+            '        # governance-mutation: MACRO_M0B_FAILED_STATUS_CLOSED\n'
+            '        if not isinstance(failure_status, str) or failure_status not in {"DATA_BLOCKED", "SOURCE_DOWN", "DATA_INVALID"}:'
+        ),
+        after=(
+            '        # governance-mutation: MACRO_M0B_FAILED_STATUS_CLOSED\n'
+            '        if False:'
+        ),
+        expected_failure_marker="test_failed_2xx_status_cannot_be_ok",
+        rationale="Preserved failed response bytes can never be recorded as an OK zero-row fetch.",
+    ),
+    MutationCase(
+        mutation_id="MACRO_M0B_FRED_CSV_ROW_WIDTH",
+        component="Macro M0-B collection",
+        source_path="experiments/macro_os/collectors.py",
+        test_script="tests/test_macro_m0b_offline.py",
+        before=(
+            '            # governance-mutation: MACRO_M0B_FRED_CSV_ROW_WIDTH\n'
+            '            if set(row) != set(expected_header) or any(row[key] is None for key in expected_header):'
+        ),
+        after=(
+            '            # governance-mutation: MACRO_M0B_FRED_CSV_ROW_WIDTH\n'
+            '            if any(row.get(key) is None for key in expected_header):'
+        ),
+        expected_failure_marker="test_fred_csv_malformed_rows_are_not_silently_accepted",
+        rationale="Extra CSV cells must not be ignored while valid requested values are silently admitted.",
+    ),
+    MutationCase(
+        mutation_id="MACRO_M0B_FRED_CSV_QUOTING",
+        component="Macro M0-B collection",
+        source_path="experiments/macro_os/collectors.py",
+        test_script="tests/test_macro_m0b_offline.py",
+        before='    reader = csv.DictReader(io.StringIO(text), strict=True)',
+        after='    reader = csv.DictReader(io.StringIO(text), strict=False)',
+        expected_failure_marker="test_fred_csv_malformed_rows_are_not_silently_accepted",
+        rationale="An unterminated CSV quote must not be normalized into a numeric observation.",
     ),
     MutationCase(
         mutation_id="MACRO_M0B_TIMEOUT_TRANSLATION",

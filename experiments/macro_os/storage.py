@@ -786,8 +786,12 @@ class MacroHistoryStore:
         transport_meta: dict[str, Any],
         error_code: str,
         error_message: str,
+        failure_status: str = "DATA_INVALID",
     ) -> StoredFetch:
         """Persist a 2xx response that failed semantic parsing without calling it OK."""
+        # governance-mutation: MACRO_M0B_FAILED_STATUS_CLOSED
+        if not isinstance(failure_status, str) or failure_status not in {"DATA_BLOCKED", "SOURCE_DOWN", "DATA_INVALID"}:
+            raise MacroStoreError("failed response requires a non-OK failure status")
         source_id, identity_hash = self._validate_source(source, registry_hash)
         started = _iso(started_at, "started_at")
         fetched = _iso(fetched_at, "fetched_at")
@@ -866,7 +870,7 @@ class MacroHistoryStore:
                     "requested_series_json": _canonical(requested_series).decode("utf-8"),
                     "started_at": started,
                     "completed_at": fetched,
-                    "status": "DATA_INVALID",
+                    "status": failure_status,
                     "snapshot_hash": snapshot_hash,
                     "row_count": 0,
                     "error_code": error_code,
@@ -882,7 +886,7 @@ class MacroHistoryStore:
                     attempt_facts["requested_series_json"],
                     started,
                     fetched,
-                    "DATA_INVALID",
+                    failure_status,
                     snapshot_hash,
                     0,
                     error_code,

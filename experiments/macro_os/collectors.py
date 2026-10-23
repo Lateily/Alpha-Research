@@ -27,6 +27,7 @@ import urllib.parse
 import urllib.request
 from dataclasses import dataclass
 from datetime import datetime, timezone
+from html.parser import HTMLParser
 from pathlib import Path
 from typing import Any, Callable, Iterable, Protocol
 
@@ -44,7 +45,7 @@ from experiments.macro_os.storage import (
 )
 
 
-COLLECTOR_VERSION = "macro-m0b/1.1"
+COLLECTOR_VERSION = "macro-m0b/1.2"
 DEFAULT_HEALTH = Path("public/data/v2/macro/source_health.json")
 DISCLAIMER = "不是买卖指令;研究信号,human executes."
 FAILURE_STATUSES = {"DATA_BLOCKED", "SOURCE_DOWN", "DATA_INVALID"}
@@ -507,6 +508,15 @@ def _fred_json_parser(
     return observations
 
 
+class _FredPageText(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.parts: list[str] = []
+
+    def handle_data(self, data: str) -> None:
+        self.parts.append(data)
+
+
 def _fred_csv_parser(
     raw: bytes, fetched_at: str, spec: RequestSpec
 ) -> list[Observation]:
@@ -516,37 +526,62 @@ def _fred_csv_parser(
         raise CollectionError(
             "DATA_INVALID", "FRED_CSV_ENCODING", "FRED CSV is not UTF-8"
         ) from exc
-    reader = csv.DictReader(io.StringIO(text))
+    # FRED can serve its maintenance page with HTTP 200 at the CSV URL.
+    # This is a failed source attempt, never a different accepted CSV schema.
+    # governance-mutation: MACRO_M0B_FRED_HTML_RESPONSE
+    if text.lstrip().lower().startswith(("<!doctype html", "<html")):
+        page = _FredPageText()
+        page.feed(text)
+        page_text = " ".join(" ".join(page.parts).split()).casefold()
+        # governance-mutation: MACRO_M0B_FRED_MAINTENANCE
+        if all(marker in page_text for marker in (
+            "site maintenance | st. louis fed", "undergoing proactive maintenance"
+        )):
+            raise CollectionError(
+                "SOURCE_DOWN", "FRED_MAINTENANCE", "FRED returned its maintenance page instead of data"
+            )
+        raise CollectionError("DATA_INVALID", "FRED_HTML_RESPONSE", "FRED returned HTML instead of data")
+    reader = csv.DictReader(io.StringIO(text), strict=True)
     metric = spec.metrics[0]
     expected_header = ["observation_date", metric.native_series_id]
+    try:
+        header = reader.fieldnames
+    except csv.Error as exc:
+        raise CollectionError("DATA_INVALID", "FRED_CSV_FORMAT", "FRED CSV is malformed") from exc
     # governance-mutation: MACRO_M0B_FRED_CSV_SERIES_BINDING
-    if reader.fieldnames != expected_header:
+    if header != expected_header:
         raise CollectionError(
             "DATA_INVALID",
             "FRED_CSV_HEADER",
             "FRED CSV header differs from the requested series",
         )
     observations: list[Observation] = []
-    for row in reader:
-        raw_value = str(row.get(metric.native_series_id, "")).strip()
-        if not raw_value or raw_value == ".":
-            continue
-        value_text, value = _number_text(raw_value)
-        observations.append(
-            Observation(
-                series_id=metric.series_id,
-                metric_key=metric.metric_key,
-                observation_at=_period_iso(str(row.get("observation_date", ""))),
-                vintage_at=fetched_at,
-                value_text=value_text,
-                value=value,
-                unit=metric.unit,
-                attributes={
-                    "native_series_id": metric.native_series_id,
-                    "transport_mode": "FRED_GRAPH_CSV_CURRENT_VINTAGE",
-                },
+    try:
+        for row in reader:
+            # governance-mutation: MACRO_M0B_FRED_CSV_ROW_WIDTH
+            if set(row) != set(expected_header) or any(row[key] is None for key in expected_header):
+                raise CollectionError("DATA_INVALID", "FRED_CSV_ROW_WIDTH", "FRED CSV row width differs from its header")
+            raw_value = row[metric.native_series_id].strip()
+            if not raw_value or raw_value == ".":
+                continue
+            value_text, value = _number_text(raw_value)
+            observations.append(
+                Observation(
+                    series_id=metric.series_id,
+                    metric_key=metric.metric_key,
+                    observation_at=_period_iso(row["observation_date"]),
+                    vintage_at=fetched_at,
+                    value_text=value_text,
+                    value=value,
+                    unit=metric.unit,
+                    attributes={
+                        "native_series_id": metric.native_series_id,
+                        "transport_mode": "FRED_GRAPH_CSV_CURRENT_VINTAGE",
+                    },
+                )
             )
-        )
+    except csv.Error as exc:
+        raise CollectionError("DATA_INVALID", "FRED_CSV_FORMAT", "FRED CSV is malformed") from exc
     if not observations:
         raise CollectionError(
             "DATA_INVALID", "FRED_CSV_EMPTY", "FRED CSV returned no usable rows"
@@ -927,6 +962,8 @@ def collect(
                     transport_meta=transport_meta,
                     error_code=exc.code,
                     error_message=exc.safe_message,
+                    # governance-mutation: MACRO_M0B_FAILED_RESPONSE_STATUS
+                    failure_status=exc.status,
                 )
                 snapshot_hash = stored.snapshot_hash
                 locator = request.public_locator

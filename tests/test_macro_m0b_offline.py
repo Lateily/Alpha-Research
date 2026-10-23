@@ -12,7 +12,7 @@ import sys
 import tempfile
 import threading
 import unittest
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 
@@ -144,6 +144,16 @@ def fred_csv_fixture(native_series_id: str = "DGS2") -> bytes:
         "2026-08-05,.\n"
         "2026-08-06,4.25\n"
     ).encode("utf-8")
+
+
+def fred_maintenance_fixture() -> bytes:
+    return (
+        b'<!doctype html><html lang="en"><head>'
+        b"<title>Site Maintenance | St. Louis Fed</title></head><body>"
+        b"<h1>We'll be back soon!</h1>"
+        b"<p>This web site is currently undergoing proactive maintenance. "
+        b"We will be back soon.</p></body></html>"
+    )
 
 
 def bea_fixture(line: str, period: str, value: str) -> bytes:
@@ -717,7 +727,7 @@ class MacroM0BTests(unittest.TestCase):
             snapshot = conn.execute(
                 "SELECT collector_version FROM raw_snapshots"
             ).fetchone()
-        self.assertEqual("macro-m0b/1.1", snapshot["collector_version"])
+        self.assertEqual("macro-m0b/1.2", snapshot["collector_version"])
         source, _registry_hash = source_row("fred_alfred")
         self.assertFalse(source["official"])
         self.assertEqual("E2", source["evidence_level"])
@@ -734,10 +744,145 @@ class MacroM0BTests(unittest.TestCase):
 
     def test_fred_csv_header_is_bound_to_requested_series(self) -> None:
         spec = next(row for row in collectors.collection_plan() if row.request_id == "fred_dgs2")
-        with self.assertRaisesRegex(
-            collectors.CollectionError, "header differs from the requested series"
-        ):
-            spec.parser(fred_csv_fixture("DGS10"), NOW_ISO, spec)
+        for raw in (fred_csv_fixture("DGS10"), b"DGS2,observation_date\n4.25,2026-08-06\n"):
+            with self.subTest(raw=raw):
+                with self.assertRaises(collectors.CollectionError):
+                    spec.parser(raw, NOW_ISO, spec)
+
+    def test_fred_maintenance_is_source_down_for_all_five_metrics(self) -> None:
+        specs = tuple(s for s in collectors.collection_plan() if s.source_id == "fred_alfred")
+        self.assertEqual(5, len(specs))
+        raw = fred_maintenance_fixture()
+        mapping = {}
+        for spec in specs:
+            request = spec.build_request(NOW, {})
+            mapping[request.public_locator] = collectors.HttpResponse(
+                200, request.url, {"content-type": "text/html; charset=utf-8"}, raw
+            )
+        transport = MappingTransport(mapping)
+        result = collectors.collect(store=self.store, transport=transport, specs=specs,
+                                    run_id="fred_maintenance", now=NOW, env={})
+        self.assertEqual(5, transport.calls)
+        for spec, row in zip(specs, result):
+            self.assertEqual("SOURCE_DOWN", row["status"])
+            self.assertEqual("FRED_MAINTENANCE", row["error_code"])
+            self.assertEqual(0, row["rows"])
+            attempt = self.store.latest_attempt("fred_alfred", spec.request_id)
+            self.assertEqual("SOURCE_DOWN", attempt["status"])
+            self.assertEqual("FRED_MAINTENANCE", attempt["error_code"])
+            self.assertEqual(spec.build_request(NOW, {}).public_locator, attempt["public_locator"])
+        health = collectors.build_health(store=self.store, specs=specs, now=NOW)
+        self.assertEqual(0, health["source_health"]["ok"])
+        self.assertEqual(5, health["source_health"]["blocked_or_failed"])
+        self.assertTrue(all(row["status"] == "SOURCE_DOWN" for row in health["data"]))
+        self.assertEqual(0, self.store.counts()["observations"])
+        with self.store.connect() as db:
+            snapshots = db.execute("SELECT raw_payload FROM raw_snapshots").fetchall()
+        self.assertEqual([raw], [bytes(row["raw_payload"]) for row in snapshots])
+
+    def test_fred_maintenance_after_good_data_does_not_reuse_old_health(self) -> None:
+        spec = next(s for s in collectors.collection_plan() if s.request_id == "fred_dgs2")
+        request = spec.build_request(NOW, {})
+        good = MappingTransport({request.url: collectors.HttpResponse(
+            200, request.url, {"content-type": "text/csv"}, fred_csv_fixture())})
+        collectors.collect(store=self.store, transport=good, specs=(spec,),
+                           run_id="before_maintenance", now=NOW, env={})
+        outage_at = NOW + timedelta(minutes=1)
+        outage_request = spec.build_request(outage_at, {})
+        bad = MappingTransport({outage_request.url: collectors.HttpResponse(
+            200, outage_request.url, {"content-type": "text/html"}, fred_maintenance_fixture())})
+        collectors.collect(store=self.store, transport=bad, specs=(spec,),
+                           run_id="during_maintenance", now=outage_at, env={})
+        health = collectors.build_health(store=self.store, specs=(spec,), now=outage_at)
+        self.assertEqual("SOURCE_DOWN", health["data"][0]["status"])
+        self.assertEqual("FRED_MAINTENANCE", health["data"][0]["last_error_code"])
+        self.assertEqual("2026-08-06T00:00:00Z", health["data"][0]["as_of"])
+        self.assertEqual(0, health["source_health"]["ok"])
+        recovered_at = NOW + timedelta(minutes=2)
+        recovery = collectors.collect(store=self.store, transport=good, specs=(spec,),
+                                      run_id="after_maintenance", now=recovered_at, env={})
+        self.assertEqual("OK", recovery[0]["status"])
+        health = collectors.build_health(store=self.store, specs=(spec,), now=recovered_at)
+        self.assertEqual("OK", health["data"][0]["status"])
+        self.assertFalse(health["data"][0]["official"])
+        self.assertEqual("E2", health["data"][0]["evidence_level"])
+        self.assertEqual("LIMITED", health["data"][0]["vintage_support"])
+        with self.store.connect() as db:
+            failures = db.execute("SELECT status, error_code FROM fetch_attempts WHERE run_id='during_maintenance'").fetchall()
+            raw = db.execute("SELECT raw_payload FROM raw_snapshots WHERE media_type='text/html'").fetchone()
+        self.assertEqual([("SOURCE_DOWN", "FRED_MAINTENANCE")], [tuple(row) for row in failures])
+        self.assertEqual(fred_maintenance_fixture(), bytes(raw[0]))
+        self.assertEqual(2, self.store.counts()["observations"])
+
+    def test_fred_unrelated_html_remains_invalid(self) -> None:
+        spec = next(s for s in collectors.collection_plan() if s.request_id == "fred_dgs2")
+        for raw in (b"<!doctype html><html><title>Sign in</title></html>",
+                    b"<html><title>Site Maintenance | Other Provider</title><p>maintenance</p></html>"):
+            with self.subTest(raw=raw):
+                with self.assertRaises(collectors.CollectionError) as caught:
+                    spec.parser(raw, NOW_ISO, spec)
+                self.assertEqual("DATA_INVALID", caught.exception.status)
+                self.assertEqual("FRED_HTML_RESPONSE", caught.exception.code)
+
+    def test_fred_maintenance_does_not_bypass_origin_guard(self) -> None:
+        spec = next(s for s in collectors.collection_plan() if s.request_id == "fred_dgs2")
+        request = spec.build_request(NOW, {})
+        for final_url in ("https://example.net/maintenance", "http://fred.stlouisfed.org/maintenance"):
+            with self.subTest(final_url=final_url):
+                transport = MappingTransport({request.url: collectors.HttpResponse(
+                    200, final_url, {"content-type": "text/html"}, fred_maintenance_fixture())})
+                rows = collectors.collect(store=self.store, transport=transport, specs=(spec,),
+                                          run_id="origin_" + str(len(final_url)), now=NOW, env={})
+                self.assertEqual("DATA_INVALID", rows[0]["status"])
+                self.assertEqual("UNAPPROVED_RESPONSE_ORIGIN", rows[0]["error_code"])
+        self.assertEqual(0, self.store.counts()["raw_snapshots"])
+        self.assertEqual(0, self.store.counts()["observations"])
+
+    def test_fred_csv_format_remains_strict_for_all_five_metrics(self) -> None:
+        specs = [s for s in collectors.collection_plan() if s.source_id == "fred_alfred"]
+        for spec in specs:
+            native = spec.metrics[0].native_series_id
+            with self.subTest(native=native):
+                rows = spec.parser(fred_csv_fixture(native), NOW_ISO, spec)
+                self.assertEqual([4.2, 4.25], [r.value for r in rows])
+                self.assertTrue(all(r.attributes["native_series_id"] == native for r in rows))
+                self.assertTrue(all(r.attributes["transport_mode"] == "FRED_GRAPH_CSV_CURRENT_VINTAGE" for r in rows))
+            invalid = [
+                f"DATE,{native}\n2026-08-06,4.25\n",
+                f"{native},observation_date\n4.25,2026-08-06\n",
+                f"observation_date,OTHER\n2026-08-06,4.25\n",
+                f"observation_date,{native},{native}\n2026-08-06,4.25,4.25\n",
+                "observation_date\n2026-08-06\n",
+                f"observation_date,{native}\n2026-08-06,NaN\n",
+                f"observation_date,{native}\n2026-08-06,Inf\n",
+            ]
+            for raw in invalid:
+                with self.subTest(native=native, invalid=raw):
+                    with self.assertRaises(collectors.CollectionError):
+                        spec.parser(raw.encode(), NOW_ISO, spec)
+
+    def test_failed_2xx_status_cannot_be_ok(self) -> None:
+        source, registry_hash = source_row("fred_alfred")
+        with self.assertRaises(MacroStoreError):
+            self.store.record_invalid_response(
+                run_id="invalid_failure_status", request_id="fred_dgs2", source=source,
+                registry_hash=registry_hash, requested_series=["us_treasury_curve"],
+                started_at=NOW_ISO, fetched_at=NOW_ISO,
+                public_locator="https://fred.stlouisfed.org/graph/fredgraph.csv?id=DGS2",
+                response_url="https://fred.stlouisfed.org/graph/fredgraph.csv?id=DGS2",
+                response_status=200, media_type="text/html", raw_payload=fred_maintenance_fixture(),
+                collector_version=collectors.COLLECTOR_VERSION, transport_meta={},
+                error_code="FRED_MAINTENANCE", error_message="maintenance", failure_status="OK",
+            )
+        self.assertEqual(0, self.store.counts()["raw_snapshots"])
+        self.assertEqual(0, self.store.counts()["fetch_attempts"])
+
+    def test_fred_csv_malformed_rows_are_not_silently_accepted(self) -> None:
+        spec = next(s for s in collectors.collection_plan() if s.request_id == "fred_dgs2")
+        for row in ("2026-08-06,4.25,unexpected", "2026-08-06", '2026-08-06,"4.25'):
+            with self.subTest(row=row):
+                with self.assertRaises(collectors.CollectionError):
+                    spec.parser(("observation_date,DGS2\n" + row + "\n").encode(), NOW_ISO, spec)
 
     def test_offline_transport_refuses_network(self) -> None:
         spec = next(row for row in collectors.collection_plan() if row.request_id == "cboe_vix_history")
