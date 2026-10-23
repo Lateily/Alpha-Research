@@ -1,20 +1,36 @@
 {
-  "_status": "empty",
+  "_status": "ok",
   "ticker": "603233.SH",
-  "fetched_at": "2026-08-05T11:18:54Z",
-  "api_used": "stk_surv",
+  "fetched_at": "2026-10-23T13:42:30Z",
+  "api_used": "stk_holdertrade",
   "_attempted_endpoints": [
     "stk_surv",
-    "stk_holdertrade",
-    "surv_holdertrade",
-    "investor_research"
+    "stk_holdertrade"
   ],
   "window_days": 90,
-  "surveys": [],
+  "surveys": [
+    {
+      "ts_code": "603233.SH",
+      "ann_date": "20261020",
+      "holder_name": "国泰海通证券股份有限公司总部",
+      "holder_type": "C",
+      "in_de": "DE",
+      "change_vol": 943400.0,
+      "change_ratio": 0.0828,
+      "after_share": null,
+      "after_ratio": null,
+      "avg_price": 18.2,
+      "total_share": null,
+      "surv_date": "20261020",
+      "inst_count": null,
+      "surv_type": null,
+      "description": null
+    }
+  ],
   "summary": {
-    "total_30d": 0,
-    "total_90d": 0,
+    "total_30d": 1,
+    "total_90d": 1,
     "unique_inst_30d": null,
-    "latest_date": null
+    "latest_date": "2026-10-20"
   }
 }

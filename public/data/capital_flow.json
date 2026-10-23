@@ -1,192 +1,192 @@
 {
-  "fetched_at": "2026-08-05T11:18:07Z",
-  "trade_date": "20260805",
+  "fetched_at": "2026-10-23T13:41:42Z",
+  "trade_date": "20261023",
   "tier": 15000,
   "_status": "partial",
   "hot_concepts": [],
   "cold_concepts": [],
   "hot_industries": [
     {
-      "name": "融资融券",
-      "ts_code": "BK0596.DC",
-      "net_inflow_yuan": 505223331840000.0,
-      "pct_chg": 1.99
+      "name": "人工智能",
+      "ts_code": "BK0800.DC",
+      "net_inflow_yuan": 114298019840000.0,
+      "pct_chg": 3.33
     },
     {
-      "name": "2026中报预增",
-      "ts_code": "BK1749.DC",
-      "net_inflow_yuan": 332321955840000.0,
-      "pct_chg": 3.16
-    },
-    {
-      "name": "沪股通",
-      "ts_code": "BK0707.DC",
-      "net_inflow_yuan": 318038958080000.0,
-      "pct_chg": 1.86
-    },
-    {
-      "name": "电子",
-      "ts_code": "BK1201.DC",
-      "net_inflow_yuan": 301456793600000.0,
-      "pct_chg": 4.89
-    },
-    {
-      "name": "MSCI中国",
-      "ts_code": "BK0821.DC",
-      "net_inflow_yuan": 298673070080000.0,
-      "pct_chg": 1.73
-    },
-    {
-      "name": "富时罗素",
-      "ts_code": "BK0867.DC",
-      "net_inflow_yuan": 279549501440000.0,
-      "pct_chg": 1.07
-    },
-    {
-      "name": "昨日高振幅",
-      "ts_code": "BK1633.DC",
-      "net_inflow_yuan": 268369879040000.0,
-      "pct_chg": 4.63
-    },
-    {
-      "name": "大盘股",
-      "ts_code": "BK1663.DC",
-      "net_inflow_yuan": 244377149440000.0,
-      "pct_chg": 1.86
-    },
-    {
-      "name": "半导体概念",
-      "ts_code": "BK0917.DC",
-      "net_inflow_yuan": 240264028160000.0,
-      "pct_chg": 4.94
-    },
-    {
-      "name": "科技风格",
-      "ts_code": "BK1713.DC",
-      "net_inflow_yuan": 221700259840000.0,
-      "pct_chg": 5.0
-    },
-    {
-      "name": "深股通",
-      "ts_code": "BK0804.DC",
-      "net_inflow_yuan": 214201344000000.0,
-      "pct_chg": 2.01
-    },
-    {
-      "name": "标准普尔",
-      "ts_code": "BK0879.DC",
-      "net_inflow_yuan": 211364782080000.0,
-      "pct_chg": 0.84
-    },
-    {
-      "name": "百元股",
-      "ts_code": "BK1059.DC",
-      "net_inflow_yuan": 180284948480000.0,
-      "pct_chg": 5.32
-    },
-    {
-      "name": "HS300_",
-      "ts_code": "BK0500.DC",
-      "net_inflow_yuan": 176892313600000.0,
-      "pct_chg": 1.21
+      "name": "消费电子概念",
+      "ts_code": "BK1646.DC",
+      "net_inflow_yuan": 80389025280000.0,
+      "pct_chg": 3.38
     },
     {
       "name": "国产芯片",
       "ts_code": "BK0891.DC",
-      "net_inflow_yuan": 167438581760000.0,
-      "pct_chg": 3.67
+      "net_inflow_yuan": 79917826560000.0,
+      "pct_chg": 3.16
     },
     {
-      "name": "物联网",
-      "ts_code": "BK0554.DC",
-      "net_inflow_yuan": 164388131840000.0,
-      "pct_chg": 2.06
+      "name": "人形机器人",
+      "ts_code": "BK1184.DC",
+      "net_inflow_yuan": 71431889920000.0,
+      "pct_chg": 4.92
     },
     {
-      "name": "广东板块",
-      "ts_code": "BK0153.DC",
-      "net_inflow_yuan": 162900480000000.0,
-      "pct_chg": 2.42
+      "name": "深股通",
+      "ts_code": "BK0804.DC",
+      "net_inflow_yuan": 70109306880000.0,
+      "pct_chg": 2.29
+    },
+    {
+      "name": "半导体",
+      "ts_code": "BK1036.DC",
+      "net_inflow_yuan": 68687160320000.0,
+      "pct_chg": 3.7
+    },
+    {
+      "name": "电子",
+      "ts_code": "BK1201.DC",
+      "net_inflow_yuan": 66516892160000.0,
+      "pct_chg": 2.72
+    },
+    {
+      "name": "数字芯片设计",
+      "ts_code": "BK1331.DC",
+      "net_inflow_yuan": 62455301120000.0,
+      "pct_chg": 5.27
+    },
+    {
+      "name": "机器人概念",
+      "ts_code": "BK1090.DC",
+      "net_inflow_yuan": 59910958080000.0,
+      "pct_chg": 3.72
+    },
+    {
+      "name": "东方财富热股",
+      "ts_code": "BK1637.DC",
+      "net_inflow_yuan": 58082411520000.0,
+      "pct_chg": 2.2
     },
     {
       "name": "深成500",
       "ts_code": "BK0568.DC",
-      "net_inflow_yuan": 161927045120000.0,
-      "pct_chg": 1.89
+      "net_inflow_yuan": 57979904000000.0,
+      "pct_chg": 2.62
     },
     {
-      "name": "大盘成长",
-      "ts_code": "BK1665.DC",
-      "net_inflow_yuan": 150414827520000.0,
-      "pct_chg": 3.69
+      "name": "虚拟现实",
+      "ts_code": "BK0722.DC",
+      "net_inflow_yuan": 55417103360000.0,
+      "pct_chg": 3.62
     },
     {
-      "name": "中盘股",
-      "ts_code": "BK1664.DC",
-      "net_inflow_yuan": 147229736960000.0,
-      "pct_chg": 2.16
+      "name": "深证100R",
+      "ts_code": "BK0743.DC",
+      "net_inflow_yuan": 54614712320000.0,
+      "pct_chg": 2.54
+    },
+    {
+      "name": "智能穿戴",
+      "ts_code": "BK0641.DC",
+      "net_inflow_yuan": 54255795200000.0,
+      "pct_chg": 3.91
+    },
+    {
+      "name": "科技风格",
+      "ts_code": "BK1713.DC",
+      "net_inflow_yuan": 54066216960000.0,
+      "pct_chg": 2.81
+    },
+    {
+      "name": "百元股",
+      "ts_code": "BK1059.DC",
+      "net_inflow_yuan": 53797724160000.0,
+      "pct_chg": 3.39
+    },
+    {
+      "name": "AI应用",
+      "ts_code": "BK1629.DC",
+      "net_inflow_yuan": 50335941120000.0,
+      "pct_chg": 3.74
+    },
+    {
+      "name": "半导体概念",
+      "ts_code": "BK0917.DC",
+      "net_inflow_yuan": 48909301760000.0,
+      "pct_chg": 2.7
+    },
+    {
+      "name": "无线耳机",
+      "ts_code": "BK0893.DC",
+      "net_inflow_yuan": 47242506240000.0,
+      "pct_chg": 3.81
+    },
+    {
+      "name": "小米概念",
+      "ts_code": "BK0833.DC",
+      "net_inflow_yuan": 46503249920000.0,
+      "pct_chg": 3.3
     }
   ],
   "cold_industries": [
     {
-      "name": "题材股",
-      "ts_code": "BK1717.DC",
-      "net_inflow_yuan": -32522910720000.0,
-      "pct_chg": 3.88
+      "name": "沪股通",
+      "ts_code": "BK0707.DC",
+      "net_inflow_yuan": -90159636480000.0,
+      "pct_chg": 1.88
     },
     {
-      "name": "抖音概念(字节概念)",
-      "ts_code": "BK0923.DC",
-      "net_inflow_yuan": -31512419840000.0,
-      "pct_chg": 1.49
+      "name": "央国企改革",
+      "ts_code": "BK0683.DC",
+      "net_inflow_yuan": -77912312320000.0,
+      "pct_chg": 1.08
     },
     {
-      "name": "通信网络设备及器件",
-      "ts_code": "BK1591.DC",
-      "net_inflow_yuan": -28480634880000.0,
-      "pct_chg": 2.74
-    },
-    {
-      "name": "电商概念",
-      "ts_code": "BK0665.DC",
-      "net_inflow_yuan": -26037288960000.0,
-      "pct_chg": 0.65
-    },
-    {
-      "name": "传媒",
-      "ts_code": "BK0486.DC",
-      "net_inflow_yuan": -20677703680000.0,
-      "pct_chg": 0.57
-    },
-    {
-      "name": "百日新高",
-      "ts_code": "BK1676.DC",
-      "net_inflow_yuan": -17729569280000.0,
-      "pct_chg": 4.3
-    },
-    {
-      "name": "文娱消费",
-      "ts_code": "BK1654.DC",
-      "net_inflow_yuan": -17472381440000.0,
-      "pct_chg": 0.24
-    },
-    {
-      "name": "近期新高",
-      "ts_code": "BK1674.DC",
-      "net_inflow_yuan": -17470392320000.0,
-      "pct_chg": 4.02
-    },
-    {
-      "name": "食品饮料",
-      "ts_code": "BK0438.DC",
-      "net_inflow_yuan": -16364008800000.0,
-      "pct_chg": 0.1
+      "name": "标准普尔",
+      "ts_code": "BK0879.DC",
+      "net_inflow_yuan": -56192163840000.0,
+      "pct_chg": 1.38
     },
     {
       "name": "破净股",
       "ts_code": "BK1112.DC",
-      "net_inflow_yuan": -15863587840000.0,
-      "pct_chg": -0.35
+      "net_inflow_yuan": -47625103360000.0,
+      "pct_chg": 0.61
+    },
+    {
+      "name": "上证180_",
+      "ts_code": "BK0612.DC",
+      "net_inflow_yuan": -43956044800000.0,
+      "pct_chg": 1.35
+    },
+    {
+      "name": "PCB",
+      "ts_code": "BK0877.DC",
+      "net_inflow_yuan": -40705177600000.0,
+      "pct_chg": 1.39
+    },
+    {
+      "name": "大盘价值",
+      "ts_code": "BK1666.DC",
+      "net_inflow_yuan": -37440675840000.0,
+      "pct_chg": 0.61
+    },
+    {
+      "name": "中特估",
+      "ts_code": "BK1139.DC",
+      "net_inflow_yuan": -32138214400000.0,
+      "pct_chg": 0.14
+    },
+    {
+      "name": "长期破净",
+      "ts_code": "BK1635.DC",
+      "net_inflow_yuan": -31078256640000.0,
+      "pct_chg": 0.34
+    },
+    {
+      "name": "银行",
+      "ts_code": "BK1283.DC",
+      "net_inflow_yuan": -29907325440000.0,
+      "pct_chg": -0.54
     }
   ],
   "concept_meta": {
@@ -205,7 +205,7 @@
     "_attempted_endpoints": [
       "moneyflow_ind_dc"
     ],
-    "row_count": 1030,
+    "row_count": 1043,
     "_status": "ok"
   }
 }
