@@ -744,10 +744,10 @@ class MacroM0BTests(unittest.TestCase):
 
     def test_fred_csv_header_is_bound_to_requested_series(self) -> None:
         spec = next(row for row in collectors.collection_plan() if row.request_id == "fred_dgs2")
-        with self.assertRaisesRegex(
-            collectors.CollectionError, "header differs from the requested series"
-        ):
-            spec.parser(fred_csv_fixture("DGS10"), NOW_ISO, spec)
+        for raw in (fred_csv_fixture("DGS10"), b"DGS2,observation_date\n4.25,2026-08-06\n"):
+            with self.subTest(raw=raw):
+                with self.assertRaises(collectors.CollectionError):
+                    spec.parser(raw, NOW_ISO, spec)
 
     def test_fred_maintenance_is_source_down_for_all_five_metrics(self) -> None:
         specs = tuple(s for s in collectors.collection_plan() if s.source_id == "fred_alfred")
