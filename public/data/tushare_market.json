@@ -1,10 +1,28 @@
 {
-  "fetched_at": "2026-10-23T13:41:38Z",
+  "fetched_at": "2026-10-26T05:55:27Z",
   "permission_model": "runtime_probe",
   "_status": "ok",
   "data": {
     "trade_cal": {
       "rows": [
+        {
+          "exchange": "SSE",
+          "cal_date": "20261026",
+          "is_open": 1,
+          "pretrade_date": "20261023"
+        },
+        {
+          "exchange": "SSE",
+          "cal_date": "20261025",
+          "is_open": 0,
+          "pretrade_date": "20261023"
+        },
+        {
+          "exchange": "SSE",
+          "cal_date": "20261024",
+          "is_open": 0,
+          "pretrade_date": "20261023"
+        },
         {
           "exchange": "SSE",
           "cal_date": "20261023",
@@ -1782,9 +1800,9 @@
           "pretrade_date": "20251231"
         }
       ],
-      "row_count": 296,
+      "row_count": 299,
       "_status": "ok",
-      "as_of": "20261023"
+      "as_of": "20261026"
     },
     "moneyflow_hsgt": {
       "rows": [
@@ -2102,36 +2120,9 @@
           "sgt": "150743.4",
           "north_money": "284908.73",
           "south_money": "54736.1"
-        },
-        {
-          "trade_date": "20260826",
-          "ggt_ss": "31818.96",
-          "ggt_sz": "22885.35",
-          "hgt": "119827.38",
-          "sgt": "135741.86",
-          "north_money": "255569.24",
-          "south_money": "54704.3"
-        },
-        {
-          "trade_date": "20260825",
-          "ggt_ss": "31830.2",
-          "ggt_sz": "22869.57",
-          "hgt": "122860.7",
-          "sgt": "144560.51",
-          "north_money": "267421.21",
-          "south_money": "54699.78"
-        },
-        {
-          "trade_date": "20260824",
-          "ggt_ss": "31875.02",
-          "ggt_sz": "22890.81",
-          "hgt": "135005.55",
-          "sgt": "156029.94",
-          "north_money": "291035.49",
-          "south_money": "54765.83"
         }
       ],
-      "row_count": 38,
+      "row_count": 35,
       "_status": "ok",
       "as_of": "20261023"
     }
