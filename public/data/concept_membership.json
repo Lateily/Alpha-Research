@@ -1,5 +1,5 @@
 {
-  "fetched_at": "2026-10-27T06:09:22Z",
+  "fetched_at": "2026-10-27T14:46:51Z",
   "_status": "ok",
   "api_used": "ths_index+ths_member",
   "scope": "watchlist_only",
@@ -2451,6 +2451,16 @@
       ]
     },
     {
+      "ts_code": "886113.TI",
+      "name": null,
+      "type": null,
+      "total_count": null,
+      "member_count": 1,
+      "members": [
+        "300054.SZ"
+      ]
+    },
+    {
       "ts_code": "991001.TI",
       "name": "上证指数(旧)",
       "type": "S",
@@ -2791,6 +2801,7 @@
       "700001.TI"
     ],
     "300054.SZ": [
+      "886113.TI",
       "883442.TI",
       "700054.TI",
       "700054R.TI",
@@ -2867,7 +2878,7 @@
       "700001.TI"
     ]
   },
-  "total_concepts": 229,
-  "total_memberships": 394,
+  "total_concepts": 230,
+  "total_memberships": 395,
   "disclaimer": "不是买卖指令;研究信号,human executes."
 }

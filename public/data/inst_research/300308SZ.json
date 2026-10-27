@@ -1,7 +1,7 @@
 {
   "_status": "ok",
   "ticker": "300308.SZ",
-  "fetched_at": "2026-10-27T06:09:24Z",
+  "fetched_at": "2026-10-27T14:46:53Z",
   "api_used": "stk_holdertrade",
   "_attempted_endpoints": [
     "stk_surv",

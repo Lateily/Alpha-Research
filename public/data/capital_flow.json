@@ -1,12 +1,194 @@
 {
-  "fetched_at": "2026-10-27T06:08:45Z",
+  "fetched_at": "2026-10-27T14:46:14Z",
   "trade_date": "20261027",
   "tier": 15000,
   "_status": "partial",
   "hot_concepts": [],
   "cold_concepts": [],
-  "hot_industries": [],
-  "cold_industries": [],
+  "hot_industries": [
+    {
+      "name": "银行",
+      "ts_code": "BK1283.DC",
+      "net_inflow_yuan": 7695810560000.0,
+      "pct_chg": 1.34
+    },
+    {
+      "name": "银行Ⅱ",
+      "ts_code": "BK0475.DC",
+      "net_inflow_yuan": 7695810560000.0,
+      "pct_chg": 1.34
+    },
+    {
+      "name": "电机Ⅲ",
+      "ts_code": "BK1307.DC",
+      "net_inflow_yuan": 7251303520000.0,
+      "pct_chg": 1.38
+    },
+    {
+      "name": "电机Ⅱ",
+      "ts_code": "BK1030.DC",
+      "net_inflow_yuan": 7251303520000.0,
+      "pct_chg": 1.38
+    },
+    {
+      "name": "股份制银行Ⅲ",
+      "ts_code": "BK1610.DC",
+      "net_inflow_yuan": 6773549760000.0,
+      "pct_chg": 1.61
+    },
+    {
+      "name": "保险重仓",
+      "ts_code": "BK1685.DC",
+      "net_inflow_yuan": 6673556480000.0,
+      "pct_chg": -1.06
+    },
+    {
+      "name": "冰雪经济",
+      "ts_code": "BK1185.DC",
+      "net_inflow_yuan": 4503246880000.0,
+      "pct_chg": -0.77
+    },
+    {
+      "name": "跨境支付",
+      "ts_code": "BK1071.DC",
+      "net_inflow_yuan": 4046330880000.0,
+      "pct_chg": -3.13
+    },
+    {
+      "name": "天然气",
+      "ts_code": "BK0843.DC",
+      "net_inflow_yuan": 3792928800000.0,
+      "pct_chg": -2.08
+    },
+    {
+      "name": "供销社概念",
+      "ts_code": "BK1109.DC",
+      "net_inflow_yuan": 3639403360000.0,
+      "pct_chg": -2.5
+    },
+    {
+      "name": "国有大型银行Ⅲ",
+      "ts_code": "BK1611.DC",
+      "net_inflow_yuan": 3540031200000.0,
+      "pct_chg": 0.83
+    },
+    {
+      "name": "红利破净股",
+      "ts_code": "BK1636.DC",
+      "net_inflow_yuan": 3444403200000.0,
+      "pct_chg": 0.42
+    },
+    {
+      "name": "油气资源",
+      "ts_code": "BK1649.DC",
+      "net_inflow_yuan": 3354314400000.0,
+      "pct_chg": -2.09
+    },
+    {
+      "name": "光学元件",
+      "ts_code": "BK1334.DC",
+      "net_inflow_yuan": 3216785600000.0,
+      "pct_chg": -2.33
+    },
+    {
+      "name": "医疗研发外包",
+      "ts_code": "BK1600.DC",
+      "net_inflow_yuan": 2948139200000.0,
+      "pct_chg": -4.29
+    },
+    {
+      "name": "工业金属",
+      "ts_code": "BK1287.DC",
+      "net_inflow_yuan": 2815102560000.0,
+      "pct_chg": -1.42
+    },
+    {
+      "name": "铝",
+      "ts_code": "BK1613.DC",
+      "net_inflow_yuan": 2720461440000.0,
+      "pct_chg": -1.52
+    },
+    {
+      "name": "油气设服",
+      "ts_code": "BK0606.DC",
+      "net_inflow_yuan": 2698524320000.0,
+      "pct_chg": -2.72
+    },
+    {
+      "name": "一般零售",
+      "ts_code": "BK0482.DC",
+      "net_inflow_yuan": 2488142400000.0,
+      "pct_chg": 0.98
+    },
+    {
+      "name": "个护用品",
+      "ts_code": "BK1251.DC",
+      "net_inflow_yuan": 2463555010000.0,
+      "pct_chg": -2.49
+    }
+  ],
+  "cold_industries": [
+    {
+      "name": "融资融券",
+      "ts_code": "BK0596.DC",
+      "net_inflow_yuan": -445686046720000.0,
+      "pct_chg": -2.84
+    },
+    {
+      "name": "基金增仓",
+      "ts_code": "BK1690.DC",
+      "net_inflow_yuan": -297092874240000.0,
+      "pct_chg": -3.11
+    },
+    {
+      "name": "MSCI中国",
+      "ts_code": "BK0821.DC",
+      "net_inflow_yuan": -247087144960000.0,
+      "pct_chg": -2.13
+    },
+    {
+      "name": "深股通",
+      "ts_code": "BK0804.DC",
+      "net_inflow_yuan": -235228372480000.0,
+      "pct_chg": -2.82
+    },
+    {
+      "name": "富时罗素",
+      "ts_code": "BK0867.DC",
+      "net_inflow_yuan": -234718673920000.0,
+      "pct_chg": -2.15
+    },
+    {
+      "name": "沪股通",
+      "ts_code": "BK0707.DC",
+      "net_inflow_yuan": -202016092160000.0,
+      "pct_chg": -2.56
+    },
+    {
+      "name": "深成500",
+      "ts_code": "BK0568.DC",
+      "net_inflow_yuan": -177651407360000.0,
+      "pct_chg": -2.61
+    },
+    {
+      "name": "大盘股",
+      "ts_code": "BK1663.DC",
+      "net_inflow_yuan": -166334699520000.0,
+      "pct_chg": -1.61
+    },
+    {
+      "name": "2026中报预增",
+      "ts_code": "BK1749.DC",
+      "net_inflow_yuan": -156115863040000.0,
+      "pct_chg": -2.88
+    },
+    {
+      "name": "电子",
+      "ts_code": "BK1201.DC",
+      "net_inflow_yuan": -150361528320000.0,
+      "pct_chg": -3.96
+    }
+  ],
   "concept_meta": {
     "api_used": null,
     "_attempted_endpoints": [
@@ -23,7 +205,7 @@
     "_attempted_endpoints": [
       "moneyflow_ind_dc"
     ],
-    "row_count": 0,
+    "row_count": 1043,
     "_status": "ok"
   }
 }
