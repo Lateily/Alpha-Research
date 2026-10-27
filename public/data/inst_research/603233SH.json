@@ -1,7 +1,7 @@
 {
   "_status": "ok",
   "ticker": "603233.SH",
-  "fetched_at": "2026-10-26T15:23:06Z",
+  "fetched_at": "2026-10-27T06:09:26Z",
   "api_used": "stk_holdertrade",
   "_attempted_endpoints": [
     "stk_surv",

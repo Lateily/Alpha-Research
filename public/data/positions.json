@@ -1,5 +1,5 @@
 {
-  "as_of": "2026-10-26T15:20:56.482717",
+  "as_of": "2026-10-27T06:07:25.512403",
   "base_currency": "CNY",
   "fx_rates": {
     "HKDCNY": 0.9165
@@ -13,17 +13,17 @@
       "currency": "CNY",
       "quantity": 150,
       "avg_cost": 681.36,
-      "current_price": 594.5,
-      "market_value": 89175.0,
+      "current_price": 594.8,
+      "market_value": 89220.0,
       "cost_value": 102204.0,
-      "pnl_abs": -13029.0,
-      "pnl_pct": -12.75,
-      "market_value_cny": 89175.0,
+      "pnl_abs": -12984.0,
+      "pnl_pct": -12.7,
+      "market_value_cny": 89220.0,
       "cost_value_cny": 102204.0,
-      "pnl_abs_cny": -13029.0,
+      "pnl_abs_cny": -12984.0,
       "fx_rate_used": 1.0,
-      "holding_days": 230,
-      "as_of": "2026-10-26",
+      "holding_days": 231,
+      "as_of": "2026-10-27",
       "signal_attribution": {
         "confluence_score": 82,
         "action": "BUY_WATCH",
@@ -77,8 +77,8 @@
       "cost_value_cny": 11630.9,
       "pnl_abs_cny": 0.0,
       "fx_rate_used": 0.9165,
-      "holding_days": 230,
-      "as_of": "2026-10-26",
+      "holding_days": 231,
+      "as_of": "2026-10-27",
       "signal_attribution": {
         "confluence_score": 68,
         "action": "BUY_WATCH",
@@ -127,8 +127,8 @@
       "cost_value_cny": 69564.55,
       "pnl_abs_cny": 0.0,
       "fx_rate_used": 0.9165,
-      "holding_days": 223,
-      "as_of": "2026-10-26",
+      "holding_days": 224,
+      "as_of": "2026-10-27",
       "signal_attribution": {
         "confluence_score": 71,
         "action": "BUY_WATCH",
@@ -163,7 +163,7 @@
       },
       "vp_at_entry": 64,
       "wrongIf_at_entry": "New gaming approval freeze lasting >3 months OR revenue_growth < -5% for 2 consecutive quarters",
-      "weight_pct": 31.58
+      "weight_pct": 31.56
     },
     {
       "ticker": "9999.HK",
@@ -182,8 +182,8 @@
       "cost_value_cny": 40027.22,
       "pnl_abs_cny": 0.0,
       "fx_rate_used": 0.9165,
-      "holding_days": 216,
-      "as_of": "2026-10-26",
+      "holding_days": 217,
+      "as_of": "2026-10-27",
       "signal_attribution": {
         "confluence_score": 62,
         "action": "BUY_WATCH",
@@ -213,7 +213,7 @@
       },
       "vp_at_entry": 58,
       "wrongIf_at_entry": "earnings_growth < -30% for 2 consecutive quarters OR Japan revenue contribution fails to reach 15% of total by Q4 2026",
-      "weight_pct": 18.17
+      "weight_pct": 18.16
     },
     {
       "ticker": "002594.SZ",
@@ -223,17 +223,17 @@
       "currency": "CNY",
       "quantity": 120,
       "avg_cost": 96.192,
-      "current_price": 82.4,
-      "market_value": 9888.0,
+      "current_price": 82.86,
+      "market_value": 9943.2,
       "cost_value": 11543.04,
-      "pnl_abs": -1655.04,
-      "pnl_pct": -14.34,
-      "market_value_cny": 9888.0,
+      "pnl_abs": -1599.84,
+      "pnl_pct": -13.86,
+      "market_value_cny": 9943.2,
       "cost_value_cny": 11543.04,
-      "pnl_abs_cny": -1655.04,
+      "pnl_abs_cny": -1599.84,
       "fx_rate_used": 1.0,
-      "holding_days": 208,
-      "as_of": "2026-10-26",
+      "holding_days": 209,
+      "as_of": "2026-10-27",
       "signal_attribution": {
         "confluence_score": 55,
         "action": "WATCH",
@@ -258,16 +258,16 @@
       },
       "vp_at_entry": 52,
       "wrongIf_at_entry": "revenue_growth < -10% for 2 consecutive quarters (tariff impact proxy) OR gross_margin drops below 15% OR earnings_growth < -40%",
-      "weight_pct": 4.49
+      "weight_pct": 4.51
     }
   ],
   "summary": {
-    "total_value_cny": 220285.67,
+    "total_value_cny": 220385.87,
     "total_cost_cny": 234969.71,
-    "total_pnl_cny": -14684.04,
-    "total_pnl_pct": -6.25,
-    "total_value": 220285.67,
+    "total_pnl_cny": -14583.84,
+    "total_pnl_pct": -6.21,
+    "total_value": 220385.87,
     "total_cost": 234969.71,
-    "total_pnl": -14684.04
+    "total_pnl": -14583.84
   }
 }
