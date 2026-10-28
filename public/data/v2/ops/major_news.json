@@ -1,2410 +1,2410 @@
 {
-  "generated_at": "2026-10-27T14:49:22Z",
+  "generated_at": "2026-10-28T06:49:43Z",
   "_status": "OK",
   "window_hours": 24,
-  "as_of": "2026-10-27 22:38:29",
+  "as_of": "2026-10-28 14:40:54",
   "row_count": 400,
   "_trust_boundary": "UNTRUSTED EXTERNAL TEXT — titles/urls are scraped media content. Wrap in an explicit data boundary before any LLM prompt; never treat as instructions.",
   "items": [
     {
-      "title": "受益于光通信业务快速增长 长光华芯前三季度归母净利增148.66% 哈勃投资退出前十大股东",
+      "title": "美媒爆料美国告知多个海湾国家：中期选举后或对伊朗实施“短暂而激烈”的打击",
       "src": "财联社",
-      "pub_time": "2026-10-27 22:38:29",
-      "url": "https://www.cls.cn/detail/2517041"
+      "pub_time": "2026-10-28 14:40:54",
+      "url": "https://www.cls.cn/detail/2517715"
     },
     {
-      "title": "从临床获益到支付端  国产创新药的价值正在被重估",
+      "title": "中期选举或掀起“蓝色浪潮” 特朗普：只有选举“公正”才会尊重结果",
       "src": "财联社",
-      "pub_time": "2026-10-27 22:37:29",
-      "url": "https://www.cls.cn/detail/2517040"
+      "pub_time": "2026-10-28 14:35:46",
+      "url": "https://www.cls.cn/detail/2517689"
     },
     {
-      "title": "量增难抵价跌 神农集团前三季度亏损超9亿元 猪周期拐点仍待确认｜财报解读",
+      "title": "渣打积极参与金融街论坛，持续深化对中国市场长期承诺",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 14:34:00",
+      "url": "https://finance.sina.com.cn/money/bank/2026-10-28/doc-iniwueft3725984.shtml"
+    },
+    {
+      "title": "营收净利双增长，上海家化三季报再次印证“四个聚焦”成效",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 14:32:00",
+      "url": "https://finance.sina.com.cn/jjxw/2026-10-28/doc-iniwuefy3421623.shtml"
+    },
+    {
+      "title": "从建科股份到联检科技：至少7家企业卷入并购版图，前三季亏损2999万元，杨江金为何仍要斥资3.25亿元收购？",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 14:30:00",
+      "url": "https://finance.sina.com.cn/stock/csjzbj/2026-10-28/doc-iniwuefz9587982.shtml"
+    },
+    {
+      "title": "七丰精工盘中涨超5%，融资余额上升",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 14:28:48",
+      "url": "http://stock.10jqka.com.cn/rzrq/20261028/c681181656.shtml"
+    },
+    {
+      "title": "江苏一批省管领导干部明确新职",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 14:28:00",
+      "url": "https://finance.sina.com.cn/jjxw/2026-10-28/doc-iniwuefw6644562.shtml"
+    },
+    {
+      "title": "天壕能源：因交易价格等关键条款未达成一致意见，决定终止收购天壕新能100%股权",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 14:27:00",
+      "url": "https://finance.sina.com.cn/jjxw/2026-10-28/doc-iniwuefy3418132.shtml"
+    },
+    {
+      "title": "马斯克：未来机器人对内存的需求将远超地球上的一切",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 14:25:00",
+      "url": "https://finance.sina.com.cn/jjxw/2026-10-28/doc-iniwueft3723236.shtml"
+    },
+    {
+      "title": "公允价值损失大增 盈趣科技第三季度转亏1.86亿元",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 14:25:00",
+      "url": "https://finance.sina.com.cn/jjxw/2026-10-28/doc-iniwuefw6643769.shtml"
+    },
+    {
+      "title": "机器人ETF博时(158037)跟踪指数最高涨超6%，成份股双环传动涨超8%",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 14:23:00",
+      "url": "https://finance.sina.com.cn/jjxw/2026-10-28/doc-iniwuefw6639580.shtml"
+    },
+    {
+      "title": "订单盈利双修复 CXO板块三年调整后迎复苏拐点",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 14:21:00",
+      "url": "https://finance.sina.com.cn/stock/observe/2026-10-28/doc-iniwuefw6637356.shtml"
+    },
+    {
+      "title": "国产双抗、ADC频现亮眼结果 肺癌、结直肠癌实现多项里程碑突破 | 2026 ESMO",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 14:20:00",
+      "url": "https://finance.sina.com.cn/stock/observe/2026-10-28/doc-iniwuefy3412355.shtml"
+    },
+    {
+      "title": "净利最高增327.41%，木林森等5企发布三季报",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 14:20:00",
+      "url": "https://finance.sina.com.cn/cj/2026-10-28/doc-iniwuefw6644195.shtml"
+    },
+    {
+      "title": "洲明科技：海外签单回暖，明确四大出海规划",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 14:20:00",
+      "url": "https://finance.sina.com.cn/cj/2026-10-28/doc-iniwuefw6643942.shtml"
+    },
+    {
+      "title": "美康生物前三季度扣非净利润增长157.49%",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 14:18:00",
+      "url": "https://finance.sina.com.cn/roll/2026-10-28/doc-iniwuefz9585473.shtml"
+    },
+    {
+      "title": "超大马力混动拖拉机面世！中联重科再创行业新纪录",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 14:18:00",
+      "url": "https://finance.sina.com.cn/jjxw/2026-10-28/doc-iniwuefw6644587.shtml"
+    },
+    {
+      "title": "华尔街警惕美元“假避险”！AI叙事瓦解之时 恐是全球资本踩踏之日？",
       "src": "财联社",
-      "pub_time": "2026-10-27 22:29:13",
-      "url": "https://www.cls.cn/detail/2517035"
+      "pub_time": "2026-10-28 14:17:40",
+      "url": "https://www.cls.cn/detail/2517665"
     },
     {
-      "title": "金徽酒Q3净利由盈转亏 业绩恶化程度超出券商预期|财报解读",
+      "title": "科创板IPO的这一轮集中终止，不仅在A股，港股也激增",
       "src": "财联社",
-      "pub_time": "2026-10-27 22:22:36",
-      "url": "https://www.cls.cn/detail/2517028"
+      "pub_time": "2026-10-28 14:17:15",
+      "url": "https://www.cls.cn/detail/2517671"
     },
     {
-      "title": "华尔街仍看好逾七成上涨空间 存储股能否重拾升势？",
+      "title": "营收净利双增长 上海家化三季报再次印证“四个聚焦”成效",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 14:15:00",
+      "url": "https://finance.sina.com.cn/jjxw/2026-10-28/doc-iniwueft3719988.shtml"
+    },
+    {
+      "title": "2026南京名表回收全景解析：劳力士水鬼、百达翡丽复杂款定价逻辑  新街口、百家湖11区丞川中古汇门店全览",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 14:14:00",
+      "url": "https://finance.sina.com.cn/tjhz/2026-10-28/doc-iniwuefz9582256.shtml"
+    },
+    {
+      "title": "深化产教融合 赋能文旅创新 青岛酒店管理职业技术学院文旅学院一行到福瑞达智美科创园考察交流",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 14:13:00",
+      "url": "https://finance.sina.com.cn/roll/2026-10-28/doc-iniwuefz9587483.shtml"
+    },
+    {
+      "title": "机器人盯着桌子愣住了，这事能怪它吗",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 14:11:00",
+      "url": "https://finance.sina.com.cn/stock/t/2026-10-28/doc-iniwuefz9583898.shtml"
+    },
+    {
+      "title": "前三季度利润阶段性承压 保立佳海外产能与功能新品建设稳步向前",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 14:11:00",
+      "url": "https://finance.sina.com.cn/roll/2026-10-28/doc-iniwuefy3421017.shtml"
+    },
+    {
+      "title": "破发股中农联合连亏3年3季 2021年上市募6亿光大证券保荐",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 14:10:00",
+      "url": "https://finance.sina.com.cn/jjxw/2026-10-28/doc-iniwuefz9582758.shtml"
+    },
+    {
+      "title": "青岛食品三连板：控股股东拟转让所持29.24%股权，实控人或变更为青岛市国资委",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 14:09:00",
+      "url": "https://finance.sina.com.cn/jjxw/2026-10-28/doc-iniwuefy3406359.shtml"
+    },
+    {
+      "title": "格力电器三季报：原材料挤压毛利率，不涨价承诺护品质",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 14:04:00",
+      "url": "https://finance.sina.com.cn/stock/zqgd/2026-10-28/doc-iniwuefy3403637.shtml"
+    },
+    {
+      "title": "肯特催化2026年前三季度营收保持稳健 新业务深耕储蓄动能",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 14:03:00",
+      "url": "https://finance.sina.com.cn/roll/2026-10-28/doc-iniwuefz9580018.shtml"
+    },
+    {
+      "title": "集体上调！工行、农行、建行、中行、交行、邮储银行，全都在列",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 14:03:00",
+      "url": "https://finance.sina.com.cn/wm/2026-10-28/doc-iniwuefw6636118.shtml"
+    },
+    {
+      "title": "ST中珠披露股东增持进展 未来继续增持被看好",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 14:03:00",
+      "url": "https://finance.sina.com.cn/roll/2026-10-28/doc-iniwuefz9580185.shtml"
+    },
+    {
+      "title": "构建算力PCB全场景解决方案，杰美特旗下中德纳微携核心产品亮相CPCA Show Plus 2026",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 14:03:00",
+      "url": "https://finance.sina.com.cn/roll/2026-10-28/doc-iniwuefz9580022.shtml"
+    },
+    {
+      "title": "业绩超强劲催化，南亚新材Q3净利同比增近13倍！上纬新材一度20CM涨停，科创新材料ETF汇添富(589180)指数大涨近5%",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 14:02:00",
+      "url": "https://finance.sina.com.cn/jjxw/2026-10-28/doc-iniwuefz9578284.shtml"
+    },
+    {
+      "title": "熊猫乳品三季报：收入微增利润承压，Q3单季恶化加速",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 14:01:00",
+      "url": "https://finance.sina.com.cn/roll/2026-10-28/doc-iniwueft3718723.shtml"
+    },
+    {
+      "title": "ST麦趣三季报：净资产缩水四成、流动比率0.2",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 14:01:00",
+      "url": "https://finance.sina.com.cn/roll/2026-10-28/doc-iniwueft3718633.shtml"
+    },
+    {
+      "title": "浙商证券李超：政策协同发力 资本市场稳定向好基础进一步夯实",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 14:00:00",
+      "url": "https://finance.sina.com.cn/roll/2026-10-28/doc-iniwuefz9583599.shtml"
+    },
+    {
+      "title": "集体上调！工行、农行、建行、中行、交行、邮储银行，全部在列",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 14:00:00",
+      "url": "https://finance.sina.com.cn/wm/2026-10-28/doc-iniwueft3719112.shtml"
+    },
+    {
+      "title": "网宿科技出资2000万元参与趋境科技B轮融资",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 13:59:00",
+      "url": "https://finance.sina.com.cn/roll/2026-10-28/doc-iniwuefy3401433.shtml"
+    },
+    {
+      "title": "金盾护航，五维守防 | TCL Solar金盾全防护BC组件正式发布，引领分布式光伏迈入4.0时代",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 13:58:00",
+      "url": "https://finance.sina.com.cn/roll/2026-10-28/doc-iniwuefz9578351.shtml"
+    },
+    {
+      "title": "前三季度中国石油乙烯产量同比增长26.4%，创历史新高，化工ETF博时(158006)跟踪指数涨近1%",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 13:54:00",
+      "url": "https://finance.sina.com.cn/jjxw/2026-10-28/doc-iniwuefw6621225.shtml"
+    },
+    {
+      "title": "光模块公司IPO“临门一脚” ，深科技突然要“提前下车”",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 13:54:00",
+      "url": "https://finance.sina.com.cn/roll/2026-10-28/doc-iniwuefw6622047.shtml"
+    },
+    {
+      "title": "全国首单水利设施发电REITs今日上市",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 13:53:56",
+      "url": "http://field.10jqka.com.cn/20261028/c681181029.shtml"
+    },
+    {
+      "title": "【湖北资讯】武汉量子计算公司完成种子轮融资",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 13:53:07",
+      "url": "http://field.10jqka.com.cn/20261028/c681181017.shtml"
+    },
+    {
+      "title": "券商观点|医药生物周报：建议关注药店与中药的防御配置价值",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 13:53:02",
+      "url": "http://field.10jqka.com.cn/20261028/c681181015.shtml"
+    },
+    {
+      "title": "宇树科技绩前暴涨超15%，月内累涨64%，大摩连升两级！",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 13:53:00",
+      "url": "https://finance.sina.com.cn/jjxw/2026-10-28/doc-iniwuefy3400904.shtml"
+    },
+    {
+      "title": "全国首单水利设施发电REITs今日上市",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 13:52:59",
+      "url": "http://field.10jqka.com.cn/20261028/c681181016.shtml"
+    },
+    {
+      "title": "科创半导体设备ETF鹏华(589020)标的指数涨超3%，机器人提振存储需求，催化板块行情",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 13:52:00",
+      "url": "https://finance.sina.com.cn/jjxw/2026-10-28/doc-iniwuefy3396319.shtml"
+    },
+    {
+      "title": "绿泡泡月活亮眼！AI漫剧概念涨势扩大，百纳千成、果麦文化20cm涨停",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 13:50:55",
+      "url": "http://field.10jqka.com.cn/20261028/c681180997.shtml"
+    },
+    {
+      "title": "人事局 | 江苏一批省管领导干部明确新职",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 13:50:00",
+      "url": "https://finance.sina.com.cn/wm/2026-10-28/doc-iniwuefz9576180.shtml"
+    },
+    {
+      "title": "马斯克称机器人内存需求将超一切，机器人ETF天弘（159770）标的指数飙升4.4%",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 13:50:00",
+      "url": "https://finance.sina.com.cn/jjxw/2026-10-28/doc-iniwuefz9576891.shtml"
+    },
+    {
+      "title": "长安益电：班子揭榜领题 攻坚赋能发展",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 13:50:00",
+      "url": "https://finance.sina.com.cn/roll/2026-10-28/doc-iniwuefy3401013.shtml"
+    },
+    {
+      "title": "城投发债审核口径或再收紧  “纸面达标”时代落幕",
       "src": "财联社",
-      "pub_time": "2026-10-27 22:15:28",
-      "url": "https://www.cls.cn/detail/2516995"
+      "pub_time": "2026-10-28 13:49:28",
+      "url": "https://www.cls.cn/detail/2516787"
     },
     {
-      "title": "海外研选 | AI安全风险加剧 美银预计2027年网络安全预算增长7%",
+      "title": "《全国农产品品质提升“十五五”规划》发布，明确六项重点任务",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 13:49:00",
+      "url": "https://finance.sina.com.cn/roll/2026-10-28/doc-iniwueft3720480.shtml"
+    },
+    {
+      "title": "低空经济下的智慧农业，农用无人机晶体要如何选？",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 13:48:46",
+      "url": "http://field.10jqka.com.cn/20261028/c681180957.shtml"
+    },
+    {
+      "title": "中国气象局发布14项气象行业标准",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 13:47:59",
+      "url": "http://field.10jqka.com.cn/20261028/c681180944.shtml"
+    },
+    {
+      "title": "2026南京劳力士百达翡丽名表回收新标准：四维验真 + 六步核验，秦淮门店持证鉴定分档估价",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 13:47:00",
+      "url": "https://finance.sina.com.cn/tjhz/2026-10-28/doc-iniwuefz9573414.shtml"
+    },
+    {
+      "title": "物理AI获政策力挺！寒武纪涨超5%，物理AI含量30%的——科创人工智能ETF华宝（589520）跟踪指数盘中涨近4%",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 13:47:00",
+      "url": "https://finance.sina.com.cn/money/fund/etf/2026-10-28/doc-iniwuefw6614715.shtml"
+    },
+    {
+      "title": "彭博行业研究：中国AI大模型将在2030年引领全球",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 13:46:50",
+      "url": "http://field.10jqka.com.cn/20261028/c681180891.shtml"
+    },
+    {
+      "title": "公募三季度如何持仓腾挪？减算力、加医药，科技筹码仍在出清",
       "src": "财联社",
-      "pub_time": "2026-10-27 22:15:11",
-      "url": "https://www.cls.cn/detail/2516854"
+      "pub_time": "2026-10-28 13:44:54",
+      "url": "https://www.cls.cn/detail/2517615"
     },
     {
-      "title": "AI算力拉动覆铜板需求上行 南亚新材Q3净利同比增1296% 应收账款持续上升",
+      "title": "长鑫科技已纳入上证综指、科创综指 成为两大指数第一大权重股",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 13:44:00",
+      "url": "https://finance.sina.com.cn/roll/2026-10-28/doc-iniwueft3709809.shtml"
+    },
+    {
+      "title": "江苏唯一！把酿酒经验拆成2000个参数，洋河入选国家卓越级智能工厂名单",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 13:43:15",
+      "url": "http://field.10jqka.com.cn/20261028/c681180846.shtml"
+    },
+    {
+      "title": "双十一”比平时还贵！有人气得直呼“套路太深”，有人掐点付尾款还凑单“感觉像个笑话”，“期待省钱”变成“担心被坑",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 13:42:49",
+      "url": "http://field.10jqka.com.cn/20261028/c681180839.shtml"
+    },
+    {
+      "title": "茂业商业、深赛格涨停！百货零售板块直线拉升",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 13:42:42",
+      "url": "http://field.10jqka.com.cn/20261028/c681180829.shtml"
+    },
+    {
+      "title": "伊朗战争何时结束？特朗普：我想结束的时候就结束",
       "src": "财联社",
-      "pub_time": "2026-10-27 22:05:17",
-      "url": "https://www.cls.cn/detail/2517019"
+      "pub_time": "2026-10-28 13:42:28",
+      "url": "https://www.cls.cn/detail/2517598"
     },
     {
-      "title": "软通动力2026年三季报｜持续深化AI工厂战略，营收293.67亿元，Q3单季净利环比大幅增长",
+      "title": "苹果春季新品发布线索浮现：亲民款iPhone 18e能在何处砍成本？",
       "src": "财联社",
-      "pub_time": "2026-10-27 22:04:06",
-      "url": "https://www.cls.cn/detail/2516976"
+      "pub_time": "2026-10-28 13:41:46",
+      "url": "https://www.cls.cn/detail/2517497"
     },
     {
-      "title": "沪市连锁药店业绩回暖 行业集中度持续提升",
+      "title": "总台体育青少中心发言人：不认可皇马的表态",
       "src": "财联社",
-      "pub_time": "2026-10-27 22:03:41",
-      "url": "https://www.cls.cn/detail/2517009"
+      "pub_time": "2026-10-28 13:41:32",
+      "url": "https://www.cls.cn/detail/2517612"
     },
     {
-      "title": "金融行业应如何构建自主可控的AI？这场重要论坛上，五家科技企业负责人共话生态跃迁",
+      "title": "新榜单出炉！非货公募规模缩水，逆势增长的几家如何做到的？",
       "src": "财联社",
-      "pub_time": "2026-10-27 21:59:23",
-      "url": "https://www.cls.cn/detail/2517004"
+      "pub_time": "2026-10-28 13:41:10",
+      "url": "https://www.cls.cn/detail/2517611"
     },
     {
-      "title": "海量数据肖枫：AI存在“不可能三角”，标向量混合数据库筑牢智能基座",
+      "title": "全栈布局具身智能数据采集终端矩阵，重新定义第一视角Ego数据采集",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 13:40:53",
+      "url": "http://field.10jqka.com.cn/20261028/c681180817.shtml"
+    },
+    {
+      "title": "2026汽车质量安全提升行动健康汽车技术分享活动成功举办",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 13:38:52",
+      "url": "http://field.10jqka.com.cn/20261028/c681180777.shtml"
+    },
+    {
+      "title": "看好晶圆设备空间上修，半导体设备板块走强，东方嘉盛涨停",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 13:38:43",
+      "url": "http://field.10jqka.com.cn/20261028/c681180756.shtml"
+    },
+    {
+      "title": "港股AI硬件、机器人股走强！多股涨超10%，机构看多存储、晶圆设备高景气",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 13:38:43",
+      "url": "http://field.10jqka.com.cn/20261028/c681180757.shtml"
+    },
+    {
+      "title": "涨停潮来袭！半导体设备集体拉升",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 13:36:42",
+      "url": "http://field.10jqka.com.cn/20261028/c681180686.shtml"
+    },
+    {
+      "title": "协会秘书处带队走访大华福利院和上海市养老科技产业园，探访智慧养老新场景",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 13:36:04",
+      "url": "http://field.10jqka.com.cn/20261028/c681180680.shtml"
+    },
+    {
+      "title": "今年双十一，最火的AI硬件是电视遥控器",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 13:36:04",
+      "url": "http://field.10jqka.com.cn/20261028/c681180682.shtml"
+    },
+    {
+      "title": "创新药临床数据窗口开启，近岸蛋白、百普赛斯等个股20cm涨停，板块批量大涨",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 13:35:49",
+      "url": "http://field.10jqka.com.cn/20261028/c681180696.shtml"
+    },
+    {
+      "title": "突然，集体上调！工行、农行、建行、中行、交行、邮储银行，全都在列",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 13:35:28",
+      "url": "http://field.10jqka.com.cn/20261028/c681180671.shtml"
+    },
+    {
+      "title": "芯片巨头营业利润暴涨632%刷新纪录，东方嘉盛、金海通、宇晶股份涨停",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 13:33:47",
+      "url": "http://field.10jqka.com.cn/20261028/c681180648.shtml"
+    },
+    {
+      "title": "科创板硬科技板块集体走强，芯片与工业自动化多股涨超5%",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 13:33:42",
+      "url": "http://field.10jqka.com.cn/20261028/c681180643.shtml"
+    },
+    {
+      "title": "春秋航空2026-2027冬春航季换季新开复飞及加密航线第二期",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 13:33:03",
+      "url": "http://field.10jqka.com.cn/20261028/c681180650.shtml"
+    },
+    {
+      "title": "存储荒叠加HBM涨价，科创芯片设计ETF易方达涨5.43%",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 13:29:48",
+      "url": "http://field.10jqka.com.cn/20261028/c681180524.shtml"
+    },
+    {
+      "title": "光大期货农产品类日报20261028",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 13:29:00",
+      "url": "https://finance.sina.com.cn/money/future/fmnews/2026-10-28/doc-iniwuefw6603251.shtml"
+    },
+    {
+      "title": "消费电子ETF平安(561600)标的指数上涨4.9%，马斯克看好机器人DRAM需求，存储芯片午后再度拉升",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 13:29:00",
+      "url": "https://finance.sina.com.cn/jjxw/2026-10-28/doc-iniwuefy3379835.shtml"
+    },
+    {
+      "title": "镁资源高质高效综合利用系列讲座：镁矿采选加先进技术与装备（第三期）圆满落幕",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 13:27:53",
+      "url": "http://field.10jqka.com.cn/20261028/c681180502.shtml"
+    },
+    {
+      "title": "具身智能数据采集降温？千万小时缺口与商业模式之困",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 13:27:19",
+      "url": "http://field.10jqka.com.cn/20261028/c681180501.shtml"
+    },
+    {
+      "title": "美联储按兵不动成定局 声明语气定价美元",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 13:27:16",
+      "url": "http://fe.10jqka.com.cn/20261028/c681180493.shtml"
+    },
+    {
+      "title": "集体上调！工行、农行、建行、中行、交行、邮储银行，全都在列",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 13:25:57",
+      "url": "http://field.10jqka.com.cn/20261028/c681180473.shtml"
+    },
+    {
+      "title": "光大期货有色金属类日报20261028",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 13:25:00",
+      "url": "https://finance.sina.com.cn/money/future/fmnews/2026-10-28/doc-iniwuefw6600911.shtml"
+    },
+    {
+      "title": "腾讯WorkBuddy上线“远程控制”：可实时查看电脑桌面并接管操作",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 13:24:46",
+      "url": "http://field.10jqka.com.cn/20261028/c681180434.shtml"
+    },
+    {
+      "title": "银行双轮驱动加大不良化解力度",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 13:23:41",
+      "url": "http://field.10jqka.com.cn/20261028/c681180418.shtml"
+    },
+    {
+      "title": "董事长首成中国女首富，蓝思科技净利润却腰斩了",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 13:23:00",
+      "url": "https://finance.sina.com.cn/roll/2026-10-28/doc-iniwueft3703144.shtml"
+    },
+    {
+      "title": "存储芯片涨价致终端需求承压，蓝思科技前三季度净利遭“腰斩”",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 13:23:00",
+      "url": "https://finance.sina.com.cn/roll/2026-10-28/doc-iniwueft3703113.shtml"
+    },
+    {
+      "title": "A股大反弹，沪市小盘股批量涨停，上证580ETF易方达涨3.24%",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 13:22:43",
+      "url": "http://field.10jqka.com.cn/20261028/c681180413.shtml"
+    },
+    {
+      "title": "长鑫科技已被纳入上证指数，位列第一大权重股",
       "src": "财联社",
-      "pub_time": "2026-10-27 21:58:34",
-      "url": "https://www.cls.cn/detail/2516928"
+      "pub_time": "2026-10-28 13:22:24",
+      "url": "https://www.cls.cn/detail/2517601"
     },
     {
-      "title": "上海加码卫星互联网产业布局 关键技术攻关提速",
+      "title": "全国盐文化场馆联盟年度工作会议顺利召开 共话盐文化保护传承与创新传播",
       "src": "同花顺",
-      "pub_time": "2026-10-27 21:52:19",
-      "url": "http://field.10jqka.com.cn/20261027/c681156411.shtml"
+      "pub_time": "2026-10-28 13:20:04",
+      "url": "http://field.10jqka.com.cn/20261028/c681180337.shtml"
     },
     {
-      "title": "前三季度营收超93亿，芒果超媒Q3环比回暖释放拐点信号",
-      "src": "财联社",
-      "pub_time": "2026-10-27 21:52:15",
-      "url": "https://www.cls.cn/detail/2516916"
-    },
-    {
-      "title": "诚邀认购北京农村商业银行股份有限公司2026年第二期金融债券",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 21:40:36",
-      "url": "http://bond.10jqka.com.cn/20261027/c681156274.shtml"
-    },
-    {
-      "title": "诚邀认购北京农村商业银行股份有限公司2026年第一期金融债券",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 21:40:36",
-      "url": "http://bond.10jqka.com.cn/20261027/c681156273.shtml"
-    },
-    {
-      "title": "雄安高端高新产业积厚成势",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 21:38:00",
-      "url": "https://finance.sina.com.cn/roll/2026-10-27/doc-iniwssem4359776.shtml"
-    },
-    {
-      "title": "唯一乳企！亮相亚太地区人口老龄化会议，伊利以“美好圈”提供中国解法",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 21:34:00",
-      "url": "https://finance.sina.com.cn/roll/2026-10-27/doc-iniwsseq6963097.shtml"
-    },
-    {
-      "title": "“三合一”并购完成交割，万亿中金来了",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 21:34:00",
-      "url": "https://finance.sina.com.cn/wm/2026-10-27/doc-iniwssem4360357.shtml"
-    },
-    {
-      "title": "多所高校通知：通过数字人民币发工资",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 21:33:00",
-      "url": "https://finance.sina.com.cn/roll/2026-10-27/doc-iniwssem4356509.shtml"
-    },
-    {
-      "title": "福莱蒽特Q3净利润同比增长355% 染料行业回暖带动盈利提高｜财报解读",
-      "src": "财联社",
-      "pub_time": "2026-10-27 21:31:49",
-      "url": "https://www.cls.cn/detail/2516978"
-    },
-    {
-      "title": "一瓶茅台的「确定性」",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 21:31:00",
-      "url": "https://finance.sina.com.cn/wm/2026-10-27/doc-iniwsses3734337.shtml"
-    },
-    {
-      "title": "存储芯片业务大爆发！君正股份，单季暴增超2595%",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 21:30:00",
-      "url": "https://finance.sina.com.cn/jjxw/2026-10-27/doc-iniwsseu0219531.shtml"
-    },
-    {
-      "title": "海南机场：前三季营收42.37亿元，拟不低于5000万回购注销",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 21:26:00",
-      "url": "https://finance.sina.com.cn/roll/2026-10-27/doc-iniwssem4360750.shtml"
-    },
-    {
-      "title": "前三季度业绩增长 恒瑞医药：预计全年创新药收入增速与目标存差距",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 21:20:00",
-      "url": "https://finance.sina.com.cn/jjxw/2026-10-27/doc-iniwsses3723947.shtml"
-    },
-    {
-      "title": "亚太实业第三季度亏损同比收窄至343万元，营收同比降6.5%",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 21:19:00",
-      "url": "https://finance.sina.com.cn/stock/zqgd/2026-10-27/doc-iniwsseq6945915.shtml"
-    },
-    {
-      "title": "最高回购价411.95元/股！存储龙头兆易创新，已耗资11亿元回购股份，拟全部注销，股价较年内高点回撤逾六成",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 21:18:00",
-      "url": "https://finance.sina.com.cn/jjxw/2026-10-27/doc-iniwssem4351506.shtml"
-    },
-    {
-      "title": "特色农产品喜获丰收 助力乡村全面振兴",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 21:18:00",
-      "url": "https://finance.sina.com.cn/jjxw/2026-10-27/doc-iniwssem4359462.shtml"
-    },
-    {
-      "title": "依依股份：拟年内第三次分红，产业资本入局彰显长期价值",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 21:15:00",
-      "url": "https://finance.sina.com.cn/roll/2026-10-27/doc-iniwsseq6947065.shtml"
-    },
-    {
-      "title": "慧博云通：2026年前三季度营收19.44亿元，扣非归母净利润同比增长76.57%",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 21:15:00",
-      "url": "https://finance.sina.com.cn/roll/2026-10-27/doc-iniwssem4353350.shtml"
-    },
-    {
-      "title": "票息超 3%，为何赚不到钱？外币理财被汇率改写收益账，41只产品中仅澳元实现正收益，最高超4%",
-      "src": "财联社",
-      "pub_time": "2026-10-27 21:14:00",
-      "url": "https://www.cls.cn/detail/2516264"
-    },
-    {
-      "title": "我国聚变领域这一平台投入试运行！",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 21:13:48",
-      "url": "http://field.10jqka.com.cn/20261027/c681155614.shtml"
-    },
-    {
-      "title": "REITs市场悄悄回暖，一个多月以来最多上涨7%，资产比价优势明显|公募REITs面面观",
-      "src": "财联社",
-      "pub_time": "2026-10-27 21:13:27",
-      "url": "https://www.cls.cn/detail/2516790"
-    },
-    {
-      "title": "“一娃放假，全家放飞”，被秋假解锁的文旅增量空间",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 21:12:36",
-      "url": "http://field.10jqka.com.cn/20261027/c681155596.shtml"
-    },
-    {
-      "title": "“徽剑”遭买凶杀害，反诈攻坚战远未到鸣金收兵时",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 21:12:04",
-      "url": "http://field.10jqka.com.cn/20261027/c681155597.shtml"
-    },
-    {
-      "title": "刚刚出炉，中际旭创大消息",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 21:11:00",
-      "url": "https://finance.sina.com.cn/roll/2026-10-27/doc-iniwssem4356973.shtml"
-    },
-    {
-      "title": "AI算力需求挤爆先进封装产能！传台积电(TSM.US)拟涨价10-20%，英伟达、苹果成本承压",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 21:10:31",
-      "url": "http://field.10jqka.com.cn/20261027/c681155576.shtml"
-    },
-    {
-      "title": "陈得信到中国二十二冶中冶重工产业园调研并开展安全生产检查",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 21:10:31",
-      "url": "http://field.10jqka.com.cn/20261027/c681155567.shtml"
-    },
-    {
-      "title": "泡泡玛特三季度收入同比降45%-50%，首席运营官司德：中国区域市场全年仍预计同比正增长|直击业绩会",
-      "src": "财联社",
-      "pub_time": "2026-10-27 21:10:20",
-      "url": "https://www.cls.cn/detail/2516943"
-    },
-    {
-      "title": "机构：当AI叙事开始动摇 那些被市场忽视已久的风险正悄然浮出水面",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 21:10:10",
-      "url": "http://field.10jqka.com.cn/20261027/c681155550.shtml"
-    },
-    {
-      "title": "AI融资冷热分化：股票投资者热情升温 债券投资者趋谨慎",
-      "src": "财联社",
-      "pub_time": "2026-10-27 21:10:04",
-      "url": "https://www.cls.cn/detail/2516946"
-    },
-    {
-      "title": "烹饪机器人产业进入加速期：渗透率升至30% 橡鹿等龙头订单大增",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 21:09:59",
-      "url": "http://field.10jqka.com.cn/20261027/c681155547.shtml"
-    },
-    {
-      "title": "焕新上线！开源“小满”开发平台面向全球伙伴开放申请",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 21:09:33",
-      "url": "http://field.10jqka.com.cn/20261027/c681155544.shtml"
-    },
-    {
-      "title": "中国电科党组召开2026年下半年巡视工作动员部署培训会",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 21:09:22",
-      "url": "http://field.10jqka.com.cn/20261027/c681155538.shtml"
-    },
-    {
-      "title": "拓邦股份：第三季度归母净利润6937万元 同比下降23.25%",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 21:09:00",
-      "url": "https://finance.sina.com.cn/stock/zqgd/2026-10-27/doc-iniwsses3721971.shtml"
-    },
-    {
-      "title": "露天矿山前端粗碎怎么选？大宏立KZ系列颚式破碎站应用解析",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 21:08:57",
-      "url": "http://field.10jqka.com.cn/20261027/c681155535.shtml"
-    },
-    {
-      "title": "配套活动海洋周圆满落幕，以山海连城为起点凝聚海洋命运共同体共识",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 21:08:56",
-      "url": "http://field.10jqka.com.cn/20261027/c681155569.shtml"
-    },
-    {
-      "title": "限制为界 赋能为核——智能时代中小学 AI 教育的育人问题探讨",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 21:08:56",
-      "url": "http://field.10jqka.com.cn/20261027/c681155534.shtml"
-    },
-    {
-      "title": "王者荣耀周年庆深圳落幕，吸引五万名玩家参与",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 21:08:09",
-      "url": "http://field.10jqka.com.cn/20261027/c681155514.shtml"
-    },
-    {
-      "title": "“00后”手搓“飞行器”，普通人如何把科幻变成现实",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 21:08:09",
-      "url": "http://field.10jqka.com.cn/20261027/c681155517.shtml"
-    },
-    {
-      "title": "双线业务协同发力，若羽臣前三季度营收35.19亿元、净利润2.31亿元",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 21:08:00",
-      "url": "https://finance.sina.com.cn/jjxw/2026-10-27/doc-iniwsseu0212023.shtml"
-    },
-    {
-      "title": "西南证券的“重庆辨识度”是怎么炼成的？|《新定位 新征程 “十五五”规划下的券商使命》系列节目",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 21:07:00",
-      "url": "https://finance.sina.com.cn/wm/2026-10-27/doc-iniwsses3718926.shtml"
-    },
-    {
-      "title": "国机集团重磅亮相2026中国国际农机展",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 21:06:33",
-      "url": "http://field.10jqka.com.cn/20261027/c681155491.shtml"
-    },
-    {
-      "title": "自主领航 强链固基 国机集团举办农机产业链高质量发展研讨会",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 21:06:25",
-      "url": "http://field.10jqka.com.cn/20261027/c681155488.shtml"
-    },
-    {
-      "title": "11月重点城市土拍将迎来“小高潮”",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 21:06:17",
-      "url": "http://field.10jqka.com.cn/20261027/c681155484.shtml"
-    },
-    {
-      "title": "AI概念股有望延续反弹 红利龙头业绩强劲 | 今夜看点",
-      "src": "财联社",
-      "pub_time": "2026-10-27 21:06:04",
-      "url": "https://www.cls.cn/detail/2516945"
-    },
-    {
-      "title": "老百姓大药房25周年庆暨第二届生态合作伙伴大会在长沙举行",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 21:06:04",
-      "url": "http://field.10jqka.com.cn/20261027/c681155481.shtml"
-    },
-    {
-      "title": "浦发银行信用卡中心被罚320万元，8项违规涉及多个业务环节",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 21:06:00",
-      "url": "https://finance.sina.com.cn/jjxw/2026-10-27/doc-iniwsseu0213407.shtml"
-    },
-    {
-      "title": "建科智能：前三季度净利润同比增长116.66% 新增设人工智能创新事业部",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 21:05:00",
-      "url": "https://finance.sina.com.cn/roll/2026-10-27/doc-iniwssem4353335.shtml"
-    },
-    {
-      "title": "中国广电党委理论学习中心组召开集体学习（扩大）会议",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 21:04:45",
-      "url": "http://field.10jqka.com.cn/20261027/c681155454.shtml"
-    },
-    {
-      "title": "蓝思科技前三季度净利润降50.06% 汇兑净损失拖累利润",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 21:02:00",
-      "url": "https://finance.sina.com.cn/stock/s/2026-10-27/doc-iniwssem4347704.shtml"
-    },
-    {
-      "title": "Q3净利同比大增26倍！500亿存储芯片概念股发布三季报|创业板盘后公告集锦",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 21:00:00",
-      "url": "https://finance.sina.com.cn/roll/2026-10-27/doc-iniwssem4346525.shtml"
-    },
-    {
-      "title": "自有品牌已成转型关键引擎 步步高前三季度扣非净利润同比增长262.32%",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 21:00:00",
-      "url": "https://finance.sina.com.cn/roll/2026-10-27/doc-iniwsseu0209746.shtml"
-    },
-    {
-      "title": "港股公告精选｜华勤技术年内营收超1600亿元 中国交建前三季新签合同额同比降逾一成",
-      "src": "财联社",
-      "pub_time": "2026-10-27 20:59:47",
-      "url": "https://www.cls.cn/detail/2516936"
-    },
-    {
-      "title": "欧洲天然气价格逼近100欧元！寒潮来袭叠加库存偏低 冬季能源供应承压",
-      "src": "财联社",
-      "pub_time": "2026-10-27 20:59:05",
-      "url": "https://www.cls.cn/detail/2516922"
-    },
-    {
-      "title": "华勤技术年内营收超1600亿元 中国交建前三季新签合同额同比降逾一成",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 20:59:00",
-      "url": "https://finance.sina.com.cn/jjxw/2026-10-27/doc-iniwsseq6931643.shtml"
-    },
-    {
-      "title": "文远知行启动全球保险合作计划，为 L4 级自动驾驶护航",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 20:58:16",
-      "url": "http://invest.10jqka.com.cn/20261027/c681155307.shtml"
-    },
-    {
-      "title": "广汇能源释放增长动能 前三季度归母净利润同比提升174%",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 20:57:00",
-      "url": "https://finance.sina.com.cn/stock/wbstock/2026-10-27/doc-iniwsses3709984.shtml"
-    },
-    {
-      "title": "四足机器人“量价分野” 行业级应用正成为市场增长的核心引擎",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 20:56:18",
-      "url": "http://field.10jqka.com.cn/20261027/c681155258.shtml"
-    },
-    {
-      "title": "盘后观察：工行建行再创新高，千元股仅剩茅台，缩量市中的“抱团”与“出清”",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 20:55:00",
-      "url": "https://finance.sina.com.cn/wm/2026-10-27/doc-iniwsses3724036.shtml"
-    },
-    {
-      "title": "CVD金刚石业务放量 四方达前三季度净利润增长超四成 | 财报解读",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 20:55:00",
-      "url": "https://finance.sina.com.cn/roll/2026-10-27/doc-iniwsseq6934402.shtml"
-    },
-    {
-      "title": "CVD金刚石业务放量 四方达前三季度净利润增长超四成 | 财报解读",
-      "src": "财联社",
-      "pub_time": "2026-10-27 20:54:40",
-      "url": "https://www.cls.cn/detail/2516934"
-    },
-    {
-      "title": "CVD金刚石业务放量 四方达前三季度净利润增长超四成",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 20:54:00",
-      "url": "https://finance.sina.com.cn/jjxw/2026-10-27/doc-iniwsmww0338600.shtml"
-    },
-    {
-      "title": "中国电信“星海御风”获2026年“数据要素×”大赛全国总决赛三等奖",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 20:54:00",
-      "url": "https://finance.sina.com.cn/wm/2026-10-27/doc-iniwsseu0211296.shtml"
-    },
-    {
-      "title": "2026女子围甲联赛第16轮，八冠王江苏国缘V3“草房子”大捷",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 20:53:00",
-      "url": "https://finance.sina.com.cn/jjxw/2026-10-27/doc-iniwsses3708843.shtml"
-    },
-    {
-      "title": "中国石油乙烯产量创历史同期新高",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 20:52:00",
-      "url": "https://finance.sina.com.cn/wm/2026-10-27/doc-iniwsses3707927.shtml"
-    },
-    {
-      "title": "群智咨询：10月全球显示器面板价格全面持平 笔记本面板价格延续下行",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 20:51:05",
-      "url": "http://field.10jqka.com.cn/20261027/c681155154.shtml"
-    },
-    {
-      "title": "净利大增超14倍 国际复材第三季度业绩继续提速",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 20:51:00",
-      "url": "https://finance.sina.com.cn/roll/2026-10-27/doc-iniwssem4346922.shtml"
-    },
-    {
-      "title": "购物中心调改促客流回暖 步步高前三季度扣非净利增超两倍 | 财报解读",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 20:51:00",
-      "url": "https://finance.sina.com.cn/roll/2026-10-27/doc-iniwsmws7059212.shtml"
-    },
-    {
-      "title": "魔芋零食赛道“降温”，盐津铺子前三季度增收不增利",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 20:51:00",
-      "url": "https://finance.sina.com.cn/jjxw/2026-10-27/doc-iniwsmww0337143.shtml"
-    },
-    {
-      "title": "超捷股份：前三季度营收达6.43亿元  汽车零部件与商业航天业务拓展成长空间",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 20:51:00",
-      "url": "https://finance.sina.com.cn/roll/2026-10-27/doc-iniwsses3709652.shtml"
-    },
-    {
-      "title": "九丰能源：前三季经营稳健 氦气毛利实现跨越式增长",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 20:51:00",
-      "url": "https://finance.sina.com.cn/roll/2026-10-27/doc-iniwsseq6933637.shtml"
-    },
-    {
-      "title": "富创精密前三季度归母净利润23,319.03万元 同比增长522.10%",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 20:51:00",
-      "url": "https://finance.sina.com.cn/stock/estate/integration/2026-10-27/doc-iniwsmws7060848.shtml"
-    },
-    {
-      "title": "购物中心调改促客流回暖 步步高前三季度扣非净利增超两倍 | 财报解读",
-      "src": "财联社",
-      "pub_time": "2026-10-27 20:50:54",
-      "url": "https://www.cls.cn/detail/2516932"
-    },
-    {
-      "title": "购物中心调改促客流回暖 步步高前三季度扣非净利增超两倍",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 20:50:00",
-      "url": "https://finance.sina.com.cn/jjxw/2026-10-27/doc-iniwsmww0336966.shtml"
-    },
-    {
-      "title": "公告精选｜恒瑞医药第三季净利增近九成 中科曙光拟3亿至5亿元回购股票",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 20:50:00",
-      "url": "https://finance.sina.com.cn/jjxw/2026-10-27/doc-iniwsseq6931541.shtml"
-    },
-    {
-      "title": "当甜蜜变成负担：绕地球N圈的香飘飘，有点绕不动了",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 20:50:00",
-      "url": "https://finance.sina.com.cn/roll/2026-10-27/doc-iniwsseu0208840.shtml"
-    },
-    {
-      "title": "金力永磁：前三季度营收同比增40.81%至75.66亿元 机器人及工业伺服电机领域增势亮眼",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 20:50:00",
-      "url": "https://finance.sina.com.cn/roll/2026-10-27/doc-iniwsseq6933655.shtml"
-    },
-    {
-      "title": "合肥城建控股子公司滨润置业注册资本由18亿元减至4亿元",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 20:50:00",
-      "url": "https://finance.sina.com.cn/stock/estate/integration/2026-10-27/doc-iniwsmwu3836841.shtml"
-    },
-    {
-      "title": "人民网 | 潮阳丝苗米“链”上发力，把“土特产”做成大产业",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 20:50:00",
-      "url": "https://finance.sina.com.cn/wm/2026-10-27/doc-iniwsses3707126.shtml"
-    },
-    {
-      "title": "“仅退款”纠纷没完没了，“不强制”原则必须强力落地",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 20:47:55",
-      "url": "http://field.10jqka.com.cn/20261027/c681155104.shtml"
-    },
-    {
-      "title": "京基智农第三季度亏损1.94亿元 前三季度亏损6.83亿元",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 20:47:00",
-      "url": "https://finance.sina.com.cn/stock/estate/integration/2026-10-27/doc-iniwsmwu3829985.shtml"
-    },
-    {
-      "title": "老板电器前三季度归母净利润8.39亿元同比下降27.53%",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 20:47:00",
-      "url": "https://finance.sina.com.cn/stock/estate/integration/2026-10-27/doc-iniwsmwp4473105.shtml"
-    },
-    {
-      "title": "软通动力前三季度营收293.67亿元 归母净亏损1.15亿元",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 20:47:00",
-      "url": "https://finance.sina.com.cn/stock/estate/integration/2026-10-27/doc-iniwsmwp4473086.shtml"
-    },
-    {
-      "title": "凡拓数创前三季度净亏损1.23亿元 营收同比下降19.45%",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 20:46:00",
-      "url": "https://finance.sina.com.cn/stock/estate/integration/2026-10-27/doc-iniwsmwu3829977.shtml"
-    },
-    {
-      "title": "粤桂股份Q3受益硫磺超级周期赚近5亿元，产品价格下行，红利恐难持续 | 财报解读",
-      "src": "财联社",
-      "pub_time": "2026-10-27 20:45:30",
-      "url": "https://www.cls.cn/detail/2516929"
-    },
-    {
-      "title": "佛山照明：正协同国星光电推进多项经营改善举措",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 20:45:00",
-      "url": "https://finance.sina.com.cn/stock/relnews/dongmiqa/2026-10-27/doc-iniwsmwu3828508.shtml"
-    },
-    {
-      "title": "两面针前三季度净利亏损3190.86万元 营收降12.65%",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 20:45:00",
-      "url": "https://finance.sina.com.cn/stock/estate/integration/2026-10-27/doc-iniwsmww0336013.shtml"
-    },
-    {
-      "title": "创新药销售收入达138亿元 恒瑞医药2026年前三季度净利润增长20.38%",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 20:45:00",
-      "url": "https://finance.sina.com.cn/jjxw/2026-10-27/doc-iniwsmws7054709.shtml"
-    },
-    {
-      "title": "合肥城建前三季度净亏损1.29亿元 营收同比下降43.07%",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 20:45:00",
-      "url": "https://finance.sina.com.cn/stock/estate/integration/2026-10-27/doc-iniwsmwp4473108.shtml"
-    },
-    {
-      "title": "曹操出行物理AI全场景智能通行样板项目落地苏州 加快推进RoboX战略布局",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 20:44:22",
-      "url": "http://field.10jqka.com.cn/20261027/c681155066.shtml"
-    },
-    {
-      "title": "蒙牛、东鹏、妙可蓝多集体\"割席\"姆巴佩，律师：品牌方可索赔",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 20:44:18",
-      "url": "http://field.10jqka.com.cn/20261027/c681155070.shtml"
-    },
-    {
-      "title": "“深海一号”船携“蛟龙”号访问瑙鲁",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 20:43:27",
-      "url": "http://field.10jqka.com.cn/20261027/c681155053.shtml"
-    },
-    {
-      "title": "Q3净利同比大增26倍！500亿存储芯片股发布三季报|盘后公告集锦",
-      "src": "财联社",
-      "pub_time": "2026-10-27 20:42:53",
-      "url": "https://www.cls.cn/detail/2516924"
-    },
-    {
-      "title": "美国2年期和5年期国债收益率触及日内高点",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 20:42:25",
-      "url": "http://bond.10jqka.com.cn/20261027/c681155022.shtml"
-    },
-    {
-      "title": "美国30年期国债收益率上升",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 20:42:23",
-      "url": "http://bond.10jqka.com.cn/20261027/c681155023.shtml"
-    },
-    {
-      "title": "一季度暴涨两倍大牛股法尔胜：净资产为负",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 20:41:00",
-      "url": "https://finance.sina.com.cn/jjxw/2026-10-27/doc-iniwsmwu3827122.shtml"
-    },
-    {
-      "title": "上海家化发布三季报：前三季度营收净利双增长，美妆业务全渠道同比增速近40%",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 20:41:00",
-      "url": "https://finance.sina.com.cn/jjxw/2026-10-27/doc-iniwsmwp4471991.shtml"
-    },
-    {
-      "title": "资金重回机器人赛道：从“造身体”到“喂大脑”，物理AI新叙事浮现",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 20:39:00",
-      "url": "https://finance.sina.com.cn/jjxw/2026-10-27/doc-iniwsmww0336247.shtml"
-    },
-    {
-      "title": "“法士特·智坤”全系智能农机装备亮相2026中国国际农机展",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 20:38:41",
-      "url": "http://field.10jqka.com.cn/20261027/c681154473.shtml"
-    },
-    {
-      "title": "自营拖累三季度业绩，中信证券提三大举措应对市场波动",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 20:37:00",
-      "url": "https://finance.sina.com.cn/roll/2026-10-27/doc-iniwsmwp4469529.shtml"
-    },
-    {
-      "title": "黑五备战进入“冲刺周”，跨境电商海外平台密集排兵布阵",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 20:36:03",
-      "url": "http://field.10jqka.com.cn/20261027/c681154083.shtml"
-    },
-    {
-      "title": "联通南洋、串起山海！贵阳机场新航季上新两条特色航线",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 20:36:00",
-      "url": "https://finance.sina.com.cn/jjxw/2026-10-27/doc-iniwsmws7044250.shtml"
-    },
-    {
-      "title": "东山精密H股暗盘破发 开盘较发行价下跌9.10%",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 20:36:00",
-      "url": "https://finance.sina.com.cn/roll/2026-10-27/doc-iniwsmws7045672.shtml"
-    },
-    {
-      "title": "微信输入法发布“AI录音笔”功能",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 20:35:36",
-      "url": "http://field.10jqka.com.cn/20261027/c681153958.shtml"
-    },
-    {
-      "title": "钟睒睒位列胡润百富榜第二位，财富一年缩水1200亿元",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 20:35:01",
-      "url": "http://field.10jqka.com.cn/20261027/c681153754.shtml"
-    },
-    {
-      "title": "荣耀手表 5 Ultra / 5 Pro 开推 MagicOS 11，界面 UX 焕新、新增电动车钥匙等",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 20:33:55",
-      "url": "http://field.10jqka.com.cn/20261027/c681153585.shtml"
-    },
-    {
-      "title": "NECPC 发布 2 款 LAVIE 平板电脑，分别基于天玑 6400、曦力 G85",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 20:33:47",
-      "url": "http://field.10jqka.com.cn/20261027/c681153760.shtml"
-    },
-    {
-      "title": "卖爆了！20元~40元成金银“平替”，设计团队：每月出约500款新品",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 20:32:36",
-      "url": "http://field.10jqka.com.cn/20261027/c681153384.shtml"
-    },
-    {
-      "title": "供强需弱之下，千亿钢铁龙头宝钢股份三季报出炉：Q3利润总额同比降三成，但环比增长",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 20:32:00",
-      "url": "https://finance.sina.com.cn/roll/2026-10-27/doc-iniwsmwp4467682.shtml"
-    },
-    {
-      "title": "学大教育发布三季报：前三季度归母净利润同比增长38.70%",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 20:32:00",
-      "url": "https://finance.sina.com.cn/roll/2026-10-27/doc-iniwsmws7041393.shtml"
-    },
-    {
-      "title": "上海国资拟战略调整华鑫股份股权布局，助力本地券商高质量发展",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 20:31:00",
-      "url": "https://finance.sina.com.cn/roll/2026-10-27/doc-iniwsmwp4472258.shtml"
-    },
-    {
-      "title": "从油电同价开创者到守擂王，比亚迪第三代秦PLUS DM-i杀入7万元档位",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 20:30:18",
-      "url": "http://field.10jqka.com.cn/20261027/c681152820.shtml"
-    },
-    {
-      "title": "新招47人！合肥百大集团公开招聘",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 20:30:00",
-      "url": "https://finance.sina.com.cn/wm/2026-10-27/doc-iniwsmwu3828767.shtml"
-    },
-    {
-      "title": "研发导盲机器人，这位盲人创业者拿到了数千万元股权融资",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 20:30:00",
-      "url": "https://finance.sina.com.cn/stock/wbstock/2026-10-27/doc-iniwsmws7049955.shtml"
-    },
-    {
-      "title": "从油电同价开创者到守擂王，比亚迪第三代秦PLUS DM-i杀入7万元档位",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 20:29:00",
-      "url": "https://finance.sina.com.cn/jjxw/2026-10-27/doc-iniwsmwu3814947.shtml"
-    },
-    {
-      "title": "公告精选：东方盛虹、金安国纪、君正股份等公司前三季度业绩大增",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 20:29:00",
-      "url": "https://finance.sina.com.cn/jjxw/2026-10-27/doc-iniwsmww0329753.shtml"
-    },
-    {
-      "title": "国海化工|新莱福2026年三季报点评：主业持续稳健增长，粉体产业化打开增长空间",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 20:28:00",
-      "url": "https://finance.sina.com.cn/roll/2026-10-27/doc-iniwsmwu3814866.shtml"
-    },
-    {
-      "title": "高校也用数字人民币发工资！基础设施升级下多元生态实践落地",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 20:27:29",
-      "url": "http://field.10jqka.com.cn/20261027/c681152750.shtml"
-    },
-    {
-      "title": "金山办公第三季度营收17.66亿元   同比增长16.11%",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 20:27:00",
-      "url": "https://finance.sina.com.cn/jjxw/2026-10-27/doc-iniwsmwp4466814.shtml"
-    },
-    {
-      "title": "业绩承压，老板电器前三季净利同比减少27.5%",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 20:26:00",
-      "url": "https://finance.sina.com.cn/roll/2026-10-27/doc-iniwsmws7037861.shtml"
-    },
-    {
-      "title": "资金重回机器人：从“造身体”到“喂大脑”，物理AI新叙事浮现",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 20:24:00",
-      "url": "https://finance.sina.com.cn/roll/2026-10-27/doc-iniwsmww0329140.shtml"
-    },
-    {
-      "title": "前三季度赚26亿元，同比翻倍！金山办公三季报出炉",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 20:24:00",
-      "url": "https://finance.sina.com.cn/jjxw/2026-10-27/doc-iniwsmws7036668.shtml"
-    },
-    {
-      "title": "南信大龙山书院学生走进南京水科院铁心桥基地开展科普研学行",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 20:23:00",
-      "url": "https://finance.sina.com.cn/jjxw/2026-10-27/doc-iniwsmwu3821471.shtml"
-    },
-    {
-      "title": "中国建筑租赁住房REIT 10月28日上交所上市 募资净额13.675亿元",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 20:22:00",
-      "url": "https://finance.sina.com.cn/stock/estate/integration/2026-10-27/doc-iniwsmwu3813905.shtml"
-    },
-    {
-      "title": "上证指数等四只指数“换算法”落地 指数基金是否需要调仓？",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 20:21:00",
-      "url": "https://finance.sina.com.cn/roll/2026-10-27/doc-iniwsmws7052061.shtml"
-    },
-    {
-      "title": "金山办公第三季度实现营收17.66亿元 WPS Office全球月活跃设备数达6.78亿",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 20:21:00",
-      "url": "https://finance.sina.com.cn/roll/2026-10-27/doc-iniwsmww0326244.shtml"
-    },
-    {
-      "title": "扣非净利同比增582%，电子铜箔龙头铜冠铜箔前三季度净赚3.3亿元，期内股东减少1.66万户",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 20:20:00",
-      "url": "https://finance.sina.com.cn/jjxw/2026-10-27/doc-iniwsmwu3806063.shtml"
-    },
-    {
-      "title": "净利同比增89%，“药王”恒瑞医药第三季度业绩重回正增速，赚超24亿元，期末股东增至60万户",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 20:19:00",
-      "url": "https://finance.sina.com.cn/jjxw/2026-10-27/doc-iniwsmws7030086.shtml"
-    },
-    {
-      "title": "进出口银行完成2026年新型政策性金融工具投放任务 拉动总投资逾1.7万亿元",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 20:18:36",
-      "url": "http://field.10jqka.com.cn/20261027/c681152588.shtml"
-    },
-    {
-      "title": "财富浪潮兴起，豪华游艇市场水涨船高",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 20:17:00",
-      "url": "https://finance.sina.com.cn/stock/usstock/c/2026-10-27/doc-iniwsmwu3803616.shtml"
-    },
-    {
-      "title": "华熙生物国际产业合作再拓展：战略投资INIBO相关业务获批，持续夯实医美长期发展基础",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 20:16:00",
-      "url": "https://finance.sina.com.cn/stock/zqgd/2026-10-27/doc-iniwsmwu3807251.shtml"
-    },
-    {
-      "title": "赵海涛教授谈高危肝癌新辅助治疗的破局探索",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 20:15:35",
-      "url": "http://field.10jqka.com.cn/20261027/c681152549.shtml"
-    },
-    {
-      "title": "从度电攀升看智能经济产业链的“成长密码”",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 20:14:46",
-      "url": "http://field.10jqka.com.cn/20261027/c681152539.shtml"
-    },
-    {
-      "title": "A股公告精选 | 控股股东拟变更为国盛集团 华鑫股份(600621.SH)26.99%股份作价39.66亿元",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 20:14:00",
-      "url": "https://finance.sina.com.cn/stock/hkstock/hkstocknews/2026-10-27/doc-iniwsmww0324775.shtml"
-    },
-    {
-      "title": "姆巴佩道歉：我的言论欠妥，这绝非我的本意；我对中国人民及其历史怀有深深的敬意，我真心感到抱歉",
-      "src": "财联社",
-      "pub_time": "2026-10-27 20:14:00",
-      "url": "https://www.cls.cn/detail/2516901"
-    },
-    {
-      "title": "百川股份前三季度归母净利润6189.04万元 同比增1187.59%",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 20:12:00",
-      "url": "https://finance.sina.com.cn/stock/estate/integration/2026-10-27/doc-iniwsmws7028261.shtml"
-    },
-    {
-      "title": "羊绒原料同比上涨20%：成衣大范围调价、一件大衣加价500元，晚晚、章小蕙等接连入局",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 20:11:39",
-      "url": "http://field.10jqka.com.cn/20261027/c681152479.shtml"
-    },
-    {
-      "title": "AI制药走到哪一步了？多位基金经理把脉",
-      "src": "财联社",
-      "pub_time": "2026-10-27 20:11:21",
-      "url": "https://www.cls.cn/detail/2516897"
-    },
-    {
-      "title": "服务有温度，供电“不打烊”",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 20:10:52",
-      "url": "http://field.10jqka.com.cn/20261027/c681152475.shtml"
-    },
-    {
-      "title": "百万悬赏杀害“徽剑”，电诈圈的报复有多狠？",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 20:10:18",
-      "url": "http://field.10jqka.com.cn/20261027/c681152476.shtml"
-    },
-    {
-      "title": "果链厂商业绩逆势上行 水晶光电Q3营收同比增28% | 财报解读",
-      "src": "财联社",
-      "pub_time": "2026-10-27 20:10:12",
-      "url": "https://www.cls.cn/detail/2516887"
-    },
-    {
-      "title": "茅台见证2026香港高尔夫公开赛圆满收官",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 20:10:00",
-      "url": "https://finance.sina.com.cn/roll/2026-10-27/doc-iniwsmwu3814087.shtml"
-    },
-    {
-      "title": "果链厂商业绩逆势上行 水晶光电Q3营收同比增28% | 财报解读",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 20:10:00",
-      "url": "https://finance.sina.com.cn/roll/2026-10-27/doc-iniwsmwp4459456.shtml"
-    },
-    {
-      "title": "上海家化发布2026年三季报：Q3扣非净利润同比增长157.3%，前三季度美妆业务全渠道同比增速近40%",
-      "src": "财联社",
-      "pub_time": "2026-10-27 20:09:23",
-      "url": "https://www.cls.cn/detail/2516892"
-    },
-    {
-      "title": "这家特色上海券商将迎新控股股东，又是怎样一盘大棋？",
-      "src": "财联社",
-      "pub_time": "2026-10-27 20:09:13",
-      "url": "https://www.cls.cn/detail/2516890"
-    },
-    {
-      "title": "丹宁之境，探索自在型格 Calvin Klein限时体验空间登陆上海西岸",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 20:09:10",
-      "url": "http://field.10jqka.com.cn/20261027/c681152463.shtml"
-    },
-    {
-      "title": "净利润狂飙但现金流承压 南亚新材定增落地未满月又筹划赴港上市 | 财报解读",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 20:09:00",
-      "url": "https://finance.sina.com.cn/roll/2026-10-27/doc-iniwsmws7026499.shtml"
-    },
-    {
-      "title": "【明日主题前瞻】腾讯绿泡泡短剧小程序月活过亿，10月首周周活环比增长44.1%",
-      "src": "财联社",
-      "pub_time": "2026-10-27 20:08:55",
-      "url": "https://www.cls.cn/detail/2516493"
-    },
-    {
-      "title": "净利润狂飙但现金流承压 南亚新材定增落地未满月又筹划赴港上市 | 财报解读",
-      "src": "财联社",
-      "pub_time": "2026-10-27 20:08:39",
-      "url": "https://www.cls.cn/detail/2516886"
-    },
-    {
-      "title": "影石创新前三季度营收94.36亿元 归母净利润下降93.96%",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 20:08:00",
-      "url": "https://finance.sina.com.cn/stock/estate/integration/2026-10-27/doc-iniwsmwp4457015.shtml"
-    },
-    {
-      "title": "《三角洲行动》协助警方侦破特大DMA外挂案 涉案金额超2000万元",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 20:07:13",
-      "url": "http://field.10jqka.com.cn/20261027/c681152278.shtml"
-    },
-    {
-      "title": "AATS ITSOS中国之声：陈海泉教授ECTOP-1033研究，围术期替雷利珠单抗治疗为可切除的LS-SCLC带来积极的病理缓解与获益希望",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 20:06:47",
-      "url": "http://field.10jqka.com.cn/20261027/c681152270.shtml"
-    },
-    {
-      "title": "从4.38亿元消费看“票根经济”，一场演唱会如何让一座城“留人”？",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 20:05:53",
-      "url": "http://field.10jqka.com.cn/20261027/c681152267.shtml"
-    },
-    {
-      "title": "亿万人流奔涌处 流动中国气象新",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 20:05:06",
-      "url": "http://field.10jqka.com.cn/20261027/c681152250.shtml"
-    },
-    {
-      "title": "快时代留住慢时光 小票价托起大民生",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 20:05:05",
-      "url": "http://field.10jqka.com.cn/20261027/c681152242.shtml"
-    },
-    {
-      "title": "聚焦光电子与智算产业，平安银行以全链条金融服务赋能产业发展",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 20:05:00",
-      "url": "https://finance.sina.com.cn/money/insurance/2026-10-27/doc-iniwsmwp4468458.shtml"
-    },
-    {
-      "title": "估价6万多元！热门手游账号二次法拍3.5万余元起拍",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 20:04:04",
-      "url": "http://field.10jqka.com.cn/20261027/c681152240.shtml"
-    },
-    {
-      "title": "14位院士齐聚淮安，国家级创新设计盛会即将举行",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 20:04:03",
-      "url": "http://field.10jqka.com.cn/20261027/c681152214.shtml"
-    },
-    {
-      "title": "简历靠AI改、面试被AI筛，毕业生如何拥抱数智化求职？",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 20:04:03",
-      "url": "http://field.10jqka.com.cn/20261027/c681152251.shtml"
-    },
-    {
-      "title": "手机直连卫星上网，大消息！",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 20:03:49",
-      "url": "http://field.10jqka.com.cn/20261027/c681152258.shtml"
-    },
-    {
-      "title": "2026顶尖孵化器大会在临港中心开幕",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 20:03:03",
-      "url": "http://field.10jqka.com.cn/20261027/c681152177.shtml"
-    },
-    {
-      "title": "五粮液三季度净利9.58亿元下滑48%，市场需求偏弱产品销量减少",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 20:03:00",
-      "url": "https://finance.sina.com.cn/jjxw/2026-10-27/doc-iniwsmws7019246.shtml"
-    },
-    {
-      "title": "周星驰《功夫女足》烂番茄开分为0，狂卷23亿的票房冠军不灵了？",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 20:02:21",
-      "url": "http://field.10jqka.com.cn/20261027/c681152008.shtml"
-    },
-    {
-      "title": "【公司研究】苏州银行 002966",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 20:02:00",
-      "url": "https://finance.sina.com.cn/money/fund/jjzl/2026-10-27/doc-iniwsmww0323430.shtml"
-    },
-    {
-      "title": "普京与芬兰、挪威领导人通电话 讨论乌克兰冲突解决方案",
-      "src": "财联社",
-      "pub_time": "2026-10-27 20:01:26",
-      "url": "https://www.cls.cn/detail/2516864"
-    },
-    {
-      "title": "全年指引再上调，药明康德却高开低走跌超4%！科创创新药ETF汇添富(589120)标的指数重挫超5%，发生了什么？",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 20:01:00",
-      "url": "https://finance.sina.com.cn/jjxw/2026-10-27/doc-iniwsmws7016851.shtml"
-    },
-    {
-      "title": "玲珑·阿特拉斯农业轮胎新品亮相2026中国国际农机展",
+      "title": "创新药数据窗口开启，ESMO重磅临床集中读出，CRO板块多股大涨",
       "src": "同花顺",
-      "pub_time": "2026-10-27 20:00:12",
-      "url": "http://field.10jqka.com.cn/20261027/c681151995.shtml"
+      "pub_time": "2026-10-28 13:18:47",
+      "url": "http://field.10jqka.com.cn/20261028/c681180324.shtml"
     },
     {
-      "title": "山西焦化：搭建多维成才平台 培育行业技能尖兵",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 20:00:00",
-      "url": "https://finance.sina.com.cn/roll/2026-10-27/doc-iniwsmwu3801538.shtml"
-    },
-    {
-      "title": "规划部门回应“南京豪宅地库出入口在隧道”：隧道属性自始至终是市政道路，通车已通过备案",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 20:00:00",
-      "url": "https://finance.sina.com.cn/jjxw/2026-10-27/doc-iniwsmwr1230909.shtml"
-    },
-    {
-      "title": "南航新开广州—亳州直飞航线",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 19:59:25",
-      "url": "http://field.10jqka.com.cn/20261027/c681151993.shtml"
-    },
-    {
-      "title": "北交所发布第三季度证券公司执业质量评价结果 国信证券跃居榜首",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 19:58:44",
-      "url": "http://field.10jqka.com.cn/20261027/c681151959.shtml"
-    },
-    {
-      "title": "进出口银行完成2026年新型政策性金融工具投放",
+      "title": "自动化设备与半导体板块多股涨停，成长板块聚焦电子通信计算机，成长ETF易方达涨5.14%",
       "src": "同花顺",
-      "pub_time": "2026-10-27 19:57:10",
-      "url": "http://field.10jqka.com.cn/20261027/c681151936.shtml"
+      "pub_time": "2026-10-28 13:18:15",
+      "url": "http://field.10jqka.com.cn/20261028/c681180264.shtml"
     },
     {
-      "title": "多所高校将通过数字人民币发工资，热搜第一！网友热议",
+      "title": "聚力磁都，共话新局！磁性材料行业盛会在横店举行",
       "src": "同花顺",
-      "pub_time": "2026-10-27 19:54:48",
-      "url": "http://field.10jqka.com.cn/20261027/c681151827.shtml"
+      "pub_time": "2026-10-28 13:18:05",
+      "url": "http://field.10jqka.com.cn/20261028/c681180273.shtml"
     },
     {
-      "title": "2026世界智能制造大会将于11月19日至21日在南京举行",
+      "title": "君正股份触及20CM涨停！存储芯片概念午后再度拉升",
       "src": "同花顺",
-      "pub_time": "2026-10-27 19:53:52",
-      "url": "http://field.10jqka.com.cn/20261027/c681151832.shtml"
+      "pub_time": "2026-10-28 13:17:56",
+      "url": "http://field.10jqka.com.cn/20261028/c681180265.shtml"
     },
     {
-      "title": "汇聚跨界智慧 共探AI时代教育创新之路",
+      "title": "马斯克力挺内存，君正股份触及20CM涨停",
       "src": "同花顺",
-      "pub_time": "2026-10-27 19:53:52",
-      "url": "http://field.10jqka.com.cn/20261027/c681151815.shtml"
-    },
-    {
-      "title": "南京青奥城市客厅解锁新街口运动 N 种打开方式",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 19:53:00",
-      "url": "https://finance.sina.com.cn/roll/2026-10-27/doc-iniwsmwu3788644.shtml"
-    },
-    {
-      "title": "五粮液：前三季度净利润97.11亿元，同比增长49.98%",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 19:52:00",
-      "url": "https://finance.sina.com.cn/wm/2026-10-27/doc-iniwsmwu3794788.shtml"
+      "pub_time": "2026-10-28 13:17:43",
+      "url": "http://field.10jqka.com.cn/20261028/c681180310.shtml"
     },
     {
-      "title": "沿着长城看忻州 · 守护文脉促振兴 | 长城，何以长存——忻州探索长城保护与传承的实践之路",
+      "title": "中际旭创居首，公募前十大重仓股出炉：坚守科技主线、拥抱红利资产",
       "src": "新浪财经",
-      "pub_time": "2026-10-27 19:52:00",
-      "url": "https://finance.sina.com.cn/wm/2026-10-27/doc-iniwsmwr1229371.shtml"
+      "pub_time": "2026-10-28 13:17:00",
+      "url": "https://finance.sina.com.cn/roll/2026-10-28/doc-iniwueft3704299.shtml"
     },
     {
-      "title": "冀中能源井矿集团改革创新激活力聚力发展提质效",
+      "title": "皇马称姆巴佩不当言论为个人行为，赞助合作未受影响，海信回应：与皇马合作不涉中国市场，已发函谴责",
       "src": "新浪财经",
-      "pub_time": "2026-10-27 19:52:00",
-      "url": "https://finance.sina.com.cn/roll/2026-10-27/doc-iniwsmww0321578.shtml"
-    },
-    {
-      "title": "悟空租车、点读通等84款应用被通报！违规收集使用个人信息",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 19:50:53",
-      "url": "http://field.10jqka.com.cn/20261027/c681151744.shtml"
-    },
-    {
-      "title": "音缘新声，助力原创音乐生长！《音乐缘计划》第三季正式启程",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 19:50:39",
-      "url": "http://field.10jqka.com.cn/20261027/c681151738.shtml"
-    },
-    {
-      "title": "国家广电总局新规发布：开机广告被禁，违者最高可罚十万",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 19:48:14",
-      "url": "http://field.10jqka.com.cn/20261027/c681151703.shtml"
-    },
-    {
-      "title": "共守 “舌尖上的安全”，新京报消费研究院联合各界发布食安倡议",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 19:47:35",
-      "url": "http://field.10jqka.com.cn/20261027/c681151696.shtml"
-    },
-    {
-      "title": "《数字化安全工程导论》在京发布",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 19:47:13",
-      "url": "http://field.10jqka.com.cn/20261027/c681151685.shtml"
-    },
-    {
-      "title": "广电总局新规发布：有线电视不得播放开机广告",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 19:45:59",
-      "url": "http://field.10jqka.com.cn/20261027/c681151674.shtml"
-    },
-    {
-      "title": "让10万卡级集群协同运转，腾讯AI平台获广东科技进步特等奖",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 19:44:24",
-      "url": "http://field.10jqka.com.cn/20261027/c681151638.shtml"
-    },
-    {
-      "title": "柔宇媒体群解散！昔日折叠屏“鼻祖”退场，行业正迎存量洗牌",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 19:44:03",
-      "url": "http://field.10jqka.com.cn/20261027/c681151642.shtml"
+      "pub_time": "2026-10-28 13:14:00",
+      "url": "https://finance.sina.com.cn/jjxw/2026-10-28/doc-iniwueft3703606.shtml"
     },
     {
-      "title": "四国合作落地，小鹏集团加速布局中东非及西巴尔干市场",
+      "title": "稀土龙头三季报业绩翻倍，永磁材料在机器人与AI算力需求中加速放量",
       "src": "同花顺",
-      "pub_time": "2026-10-27 19:43:52",
-      "url": "http://field.10jqka.com.cn/20261027/c681151626.shtml"
-    },
-    {
-      "title": "猪价拖累东瑞股份：前三季度由盈转亏 计提减值准备1.69亿 | 财报解读",
-      "src": "财联社",
-      "pub_time": "2026-10-27 19:41:44",
-      "url": "https://www.cls.cn/detail/2516868"
+      "pub_time": "2026-10-28 13:12:26",
+      "url": "http://field.10jqka.com.cn/20261028/c681180172.shtml"
     },
     {
-      "title": "英伟达投资印度AI初创公司Simplismart",
+      "title": "低轨28组卫星入轨叠加沪产业方案落地，卫星互联网组网部署进入加速期",
       "src": "同花顺",
-      "pub_time": "2026-10-27 19:41:34",
-      "url": "http://field.10jqka.com.cn/20261027/c681151572.shtml"
+      "pub_time": "2026-10-28 13:11:48",
+      "url": "http://field.10jqka.com.cn/20261028/c681180185.shtml"
     },
     {
-      "title": "老百姓大药房25周年庆暨第二届生态合作伙伴大会在长沙召开",
+      "title": "秋假2.0催热研学游 南京酒店预订量全国第二",
       "src": "同花顺",
-      "pub_time": "2026-10-27 19:40:04",
-      "url": "http://field.10jqka.com.cn/20261027/c681151538.shtml"
-    },
-    {
-      "title": "陕西煤业三季报出炉：煤炭销量下滑，但毛利大增，公司前三季归母净利润超170亿元",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 19:37:00",
-      "url": "https://finance.sina.com.cn/roll/2026-10-27/doc-iniwsmwp4446658.shtml"
-    },
-    {
-      "title": "佛塑科技Q3净利增逾14倍后再推扩产，面临新一轮供给竞争｜看财报",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 19:36:00",
-      "url": "https://finance.sina.com.cn/cj/2026-10-27/doc-iniwsmwp4447162.shtml"
-    },
-    {
-      "title": "泰尔股份前三季度营收8.81亿元 净亏损3746.85万元",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 19:36:00",
-      "url": "https://finance.sina.com.cn/stock/estate/integration/2026-10-27/doc-iniwsmwr1223864.shtml"
+      "pub_time": "2026-10-28 13:10:25",
+      "url": "http://field.10jqka.com.cn/20261028/c681180119.shtml"
     },
     {
-      "title": "鲜啤“狂奔”之后 供应链成行业“必答题”",
+      "title": "我国聚变领域最大规模供电系统半实物仿真平台投入试运行",
       "src": "同花顺",
-      "pub_time": "2026-10-27 19:35:55",
-      "url": "http://field.10jqka.com.cn/20261027/c681151398.shtml"
-    },
-    {
-      "title": "【国泰第一时间20261027】通胀担忧叠加三季报谨慎情绪，创业板指下跌3.41%",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 19:35:00",
-      "url": "https://finance.sina.com.cn/roll/2026-10-27/doc-iniwsmwp4446680.shtml"
+      "pub_time": "2026-10-28 13:08:43",
+      "url": "http://field.10jqka.com.cn/20261028/c681180088.shtml"
     },
     {
-      "title": "中国电力国际发展：9月合并总售电量971万兆瓦时，同比增2.58%",
+      "title": "AI驱动全球广告创新——第33届中国国际广告节主论坛在北京海淀举行",
       "src": "同花顺",
-      "pub_time": "2026-10-27 19:34:37",
-      "url": "http://field.10jqka.com.cn/20261027/c681151368.shtml"
+      "pub_time": "2026-10-28 13:08:09",
+      "url": "http://field.10jqka.com.cn/20261028/c681180101.shtml"
     },
     {
-      "title": "ST福能拟挂牌转让广州烽云21%股权 底价12172.22万元",
+      "title": "龙迅股份(688486)香港IPO，获中国证监会备案",
       "src": "新浪财经",
-      "pub_time": "2026-10-27 19:34:00",
-      "url": "https://finance.sina.com.cn/stock/estate/integration/2026-10-27/doc-iniwsmwu3777343.shtml"
+      "pub_time": "2026-10-28 13:08:00",
+      "url": "https://finance.sina.com.cn/stock/stockzmt/2026-10-28/doc-iniwuefw6596561.shtml"
     },
     {
-      "title": "出版社回应：正通知全网下架，召回涉事图书",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 19:33:45",
-      "url": "http://field.10jqka.com.cn/20261027/c681151331.shtml"
-    },
-    {
-      "title": "三力士前三季度亏损2215.27万元 营收同比增长6.59%",
+      "title": "南亚新材(688519)筹划赴香港上市",
       "src": "新浪财经",
-      "pub_time": "2026-10-27 19:33:00",
-      "url": "https://finance.sina.com.cn/stock/estate/integration/2026-10-27/doc-iniwsmwp4446623.shtml"
+      "pub_time": "2026-10-28 13:08:00",
+      "url": "https://finance.sina.com.cn/stock/stockzmt/2026-10-28/doc-iniwueft3700071.shtml"
     },
     {
-      "title": "华能国际：前三季度净利润78.22亿元，同比下降47.29%",
+      "title": "专家提出：新一代智能制造关键在自主化",
       "src": "同花顺",
-      "pub_time": "2026-10-27 19:33:00",
-      "url": "http://field.10jqka.com.cn/20261027/c681151317.shtml"
-    },
-    {
-      "title": "双十一成本激增：贝泰妮业绩回暖按下“暂停键”丨美妆财报观察",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 19:32:00",
-      "url": "https://finance.sina.com.cn/roll/2026-10-27/doc-iniwsmws6998531.shtml"
-    },
-    {
-      "title": "西甲官方：代表联盟所有俱乐部向中国球迷致以诚挚的歉意",
-      "src": "财联社",
-      "pub_time": "2026-10-27 19:31:03",
-      "url": "https://www.cls.cn/detail/2516853"
+      "pub_time": "2026-10-28 13:04:20",
+      "url": "http://field.10jqka.com.cn/20261028/c681180037.shtml"
     },
     {
-      "title": "广合科技前三季度净利14.88亿元 同比增105.59%",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 19:31:00",
-      "url": "https://finance.sina.com.cn/stock/estate/integration/2026-10-27/doc-iniwsmwu3777365.shtml"
-    },
-    {
-      "title": "宁波东力前三季度净利增39.45%至8151.34万元",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 19:31:00",
-      "url": "https://finance.sina.com.cn/stock/estate/integration/2026-10-27/doc-iniwsmwp4446614.shtml"
-    },
-    {
-      "title": "邓敏首份成绩单：五粮液前三季度收入增长7%",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 19:31:00",
-      "url": "https://finance.sina.com.cn/roll/2026-10-27/doc-iniwsmws6998440.shtml"
-    },
-    {
-      "title": "单季赚超20亿元！铜产业龙头铜陵有色，Q3净利同比大增517%，股价较年内高点回撤45%",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 19:30:00",
-      "url": "https://finance.sina.com.cn/roll/2026-10-27/doc-iniwsmws6997126.shtml"
-    },
-    {
-      "title": "刘文强在枣庄调研山东出版万阅文化广场（枣庄）项目",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 19:30:00",
-      "url": "https://finance.sina.com.cn/roll/2026-10-27/doc-iniwsmwr1224855.shtml"
-    },
-    {
-      "title": "每日互动（个推）亮相DACon2026，分享AIBI本体驱动的可信数据分析实践",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 19:29:00",
-      "url": "https://finance.sina.com.cn/stock/enterprise/cn/2026-10-27/doc-iniwsmwr1221084.shtml"
-    },
-    {
-      "title": "北京延庆城管“三步走”靶向治理 焕新八达岭长城脚下古城风貌",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 19:29:00",
-      "url": "https://finance.sina.com.cn/jjxw/2026-10-27/doc-iniwsmws6998987.shtml"
-    },
-    {
-      "title": "聚飞光电前三季度净利润1.25亿元 同比下降40.85%",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 19:28:00",
-      "url": "https://finance.sina.com.cn/stock/estate/integration/2026-10-27/doc-iniwsmwp4444215.shtml"
-    },
-    {
-      "title": "“亦企同行·智联优达”特色产业服务活动举行",
+      "title": "工业清洗迎来“四化”转型关键阶段",
       "src": "同花顺",
-      "pub_time": "2026-10-27 19:25:32",
-      "url": "http://field.10jqka.com.cn/20261027/c681151103.shtml"
+      "pub_time": "2026-10-28 13:04:17",
+      "url": "http://field.10jqka.com.cn/20261028/c681180036.shtml"
     },
     {
-      "title": "信用卡“瘦身”持续深化 民生银行信用卡两家分中心相继终止营业",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 19:25:00",
-      "url": "https://finance.sina.com.cn/roll/2026-10-27/doc-iniwsmws6995951.shtml"
-    },
-    {
-      "title": "第十六届中国纺织学术年会在武汉开幕",
+      "title": "Switch 2越狱新进展：开发者成功在苹果macOS上运行《马力欧卡丁车 世界》",
       "src": "同花顺",
-      "pub_time": "2026-10-27 19:24:33",
-      "url": "http://field.10jqka.com.cn/20261027/c681151084.shtml"
-    },
-    {
-      "title": "80亿港元极智嘉，押注物流机器人",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 19:23:00",
-      "url": "https://finance.sina.com.cn/stock/wbstock/2026-10-27/doc-iniwsmwr1221395.shtml"
+      "pub_time": "2026-10-28 13:04:06",
+      "url": "http://field.10jqka.com.cn/20261028/c681180034.shtml"
     },
     {
-      "title": "每日互动出席2026汽车AI World创享年会，分享AI营销创新实践",
+      "title": "兴业银行青岛分行深耕蓝色金融沃土 赋能深远海智慧养殖",
       "src": "新浪财经",
-      "pub_time": "2026-10-27 19:23:00",
-      "url": "https://finance.sina.com.cn/stock/enterprise/cn/2026-10-27/doc-iniwsmws6992503.shtml"
-    },
-    {
-      "title": "印度10年期国债收益率下跌5个基点至7.43%",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 19:22:43",
-      "url": "http://bond.10jqka.com.cn/20261027/c681151066.shtml"
-    },
-    {
-      "title": "湖北交投“全明星”阵容，亮相2026武汉智博会",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 19:22:08",
-      "url": "http://field.10jqka.com.cn/20261027/c681151059.shtml"
+      "pub_time": "2026-10-28 13:04:00",
+      "url": "https://finance.sina.com.cn/jjxw/2026-10-28/doc-iniwueft3699210.shtml"
     },
     {
-      "title": "太平鸟前三季度净利8212万元同比增1.9倍，计提减值准备1.44亿元",
+      "title": "中国铁建·西派云间，双冠红盘再启文化盛宴",
       "src": "新浪财经",
-      "pub_time": "2026-10-27 19:22:00",
-      "url": "https://finance.sina.com.cn/jjxw/2026-10-27/doc-iniwsmws6992809.shtml"
+      "pub_time": "2026-10-28 13:04:00",
+      "url": "https://finance.sina.com.cn/jjxw/2026-10-28/doc-iniwuefz9559416.shtml"
     },
     {
-      "title": "三季度净利润增速普遍抬升 PCB企业加码高端产能与技术升级",
+      "title": "29项中国创新药研究入选欧洲肿瘤学会突破性摘要，医疗ETF易方达涨1.27%",
       "src": "同花顺",
-      "pub_time": "2026-10-27 19:21:35",
-      "url": "http://field.10jqka.com.cn/20261027/c681151050.shtml"
+      "pub_time": "2026-10-28 13:03:47",
+      "url": "http://field.10jqka.com.cn/20261028/c681180038.shtml"
     },
     {
-      "title": "金龙鱼外婆乡小榨菜籽油周末寻香｜九头鲸生活超市两天收官，菜油香飘出了门",
+      "title": "豫园有蒙古包？杭盖乐队即将“燃炸”空降！",
       "src": "新浪财经",
-      "pub_time": "2026-10-27 19:21:00",
-      "url": "https://finance.sina.com.cn/roll/2026-10-27/doc-iniwsmwu3772350.shtml"
+      "pub_time": "2026-10-28 13:03:00",
+      "url": "https://finance.sina.com.cn/jjxw/2026-10-28/doc-iniwuefy3364379.shtml"
     },
     {
-      "title": "国家级“数据要素×”大赛，中建西南院荣获全国一等奖",
+      "title": "创业板科技成长股集体走强，自动化设备与芯片产业链领涨，创业板ETF易方达涨3.12%",
       "src": "同花顺",
-      "pub_time": "2026-10-27 19:20:12",
-      "url": "http://field.10jqka.com.cn/20261027/c681151029.shtml"
-    },
-    {
-      "title": "建元信托前三季度扣非净利2.79亿元同比增95%，营业总收入降17.82%",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 19:20:00",
-      "url": "https://finance.sina.com.cn/jjxw/2026-10-27/doc-iniwsmwu3765689.shtml"
-    },
-    {
-      "title": "究竟丨上证指数等四只指数“换算法”落地，指数基金是否需要调仓？",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 19:19:00",
-      "url": "https://finance.sina.com.cn/jjxw/2026-10-27/doc-iniwsmwu3765966.shtml"
+      "pub_time": "2026-10-28 13:02:55",
+      "url": "http://field.10jqka.com.cn/20261028/c681180042.shtml"
     },
     {
-      "title": "中行、农行等再发答疑公告：组合贷中的商贷可享受财政贴息",
+      "title": "第35届中国厨师节在苏州举行",
       "src": "同花顺",
-      "pub_time": "2026-10-27 19:16:12",
-      "url": "http://field.10jqka.com.cn/20261027/c681150890.shtml"
-    },
-    {
-      "title": "圣邦股份8.33亿元申矽凌：标的去年盈利仅720.37万元，近十年老股东等来退出日",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 19:16:00",
-      "url": "https://finance.sina.com.cn/jjxw/2026-10-27/doc-iniwsmwu3763591.shtml"
+      "pub_time": "2026-10-28 13:02:45",
+      "url": "http://field.10jqka.com.cn/20261028/c681180035.shtml"
     },
     {
-      "title": "翻开茅台、五粮液等32家头部酒企的碳账本",
+      "title": "去哪儿旅行：“秋假”等关键词搜索量月环比增长2.2倍",
       "src": "同花顺",
-      "pub_time": "2026-10-27 19:15:08",
-      "url": "http://field.10jqka.com.cn/20261027/c681150861.shtml"
+      "pub_time": "2026-10-28 13:01:44",
+      "url": "http://field.10jqka.com.cn/20261028/c681179999.shtml"
     },
     {
-      "title": "零售、乐园、工厂、医院，机器人密集落地“上岗”！专家：想让它像真人一样干活，还需要3到5年",
+      "title": "价格前线|10月28日升达子洲天然气异动提示",
       "src": "同花顺",
-      "pub_time": "2026-10-27 19:14:08",
-      "url": "http://field.10jqka.com.cn/20261027/c681151012.shtml"
+      "pub_time": "2026-10-28 13:00:31",
+      "url": "http://field.10jqka.com.cn/20261028/c681179991.shtml"
     },
     {
-      "title": "4天票房124万元，上座率不足1%！国内首部AI院线电影上映遇冷",
+      "title": "从装机量到可靠性，“十五五”能源投资换赛道",
       "src": "同花顺",
-      "pub_time": "2026-10-27 19:13:49",
-      "url": "http://field.10jqka.com.cn/20261027/c681150846.shtml"
-    },
-    {
-      "title": "巨力索具新董秘，曾是天津证监局主任科员 | 董秘沙龙",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 19:13:00",
-      "url": "https://finance.sina.com.cn/roll/2026-10-27/doc-iniwsmwp4439491.shtml"
-    },
-    {
-      "title": "多氟多前三季度净利润增长659%，单季盈利回落：规模增长之后，盈利韧性接受检验",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 19:13:00",
-      "url": "https://finance.sina.com.cn/roll/2026-10-27/doc-iniwsmwp4439043.shtml"
-    },
-    {
-      "title": "10只PCB概念股齐发三季报，南亚新材、金安国纪Q3净利增超10倍",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 19:12:00",
-      "url": "https://finance.sina.com.cn/roll/2026-10-27/doc-iniwsmws6985671.shtml"
-    },
-    {
-      "title": "10只PCB概念股齐发三季报，南亚新材、金安国纪Q3净利增超10倍",
-      "src": "财联社",
-      "pub_time": "2026-10-27 19:11:36",
-      "url": "https://www.cls.cn/detail/2516828"
-    },
-    {
-      "title": "上市十载穿越周期，稳健经营行而不辍：杭州银行上市十周年之际发布三季度经营答卷",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 19:11:00",
-      "url": "https://finance.sina.com.cn/roll/2026-10-27/doc-iniwsmwu3768366.shtml"
-    },
-    {
-      "title": "西部矿业董秘辞职，董事长“顶班” | 董秘沙龙",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 19:10:00",
-      "url": "https://finance.sina.com.cn/jjxw/2026-10-27/doc-iniwsmws6986177.shtml"
-    },
-    {
-      "title": "数种声源混叠也能精准解析！科大讯飞亮出语音基座大模型SparkAudio 1.0",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 19:10:00",
-      "url": "https://finance.sina.com.cn/roll/2026-10-27/doc-iniwsmwr1217194.shtml"
-    },
-    {
-      "title": "零售、乐园、工厂、医院，机器人密集落地“上岗”！专家：想让它像真人一样干活，还需要3到5年",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 19:10:00",
-      "url": "https://finance.sina.com.cn/jjxw/2026-10-27/doc-iniwsmws6988152.shtml"
+      "pub_time": "2026-10-28 13:00:31",
+      "url": "http://field.10jqka.com.cn/20261028/c681179992.shtml"
     },
     {
-      "title": "哪些银行理财子“具有系统性影响”？央行新工具引热议，理财与投债规模成两大维度",
-      "src": "财联社",
-      "pub_time": "2026-10-27 19:09:34",
-      "url": "https://www.cls.cn/detail/2516832"
-    },
-    {
-      "title": "江苏金租迎来新董秘，资格还待核准 | 董秘沙龙",
+      "title": "惠发食品40000公斤香菜采购解菜农燃眉之急",
       "src": "新浪财经",
-      "pub_time": "2026-10-27 19:09:00",
-      "url": "https://finance.sina.com.cn/jjxw/2026-10-27/doc-iniwsmwr1215531.shtml"
+      "pub_time": "2026-10-28 13:00:00",
+      "url": "https://finance.sina.com.cn/jjxw/2026-10-28/doc-iniwueft3697186.shtml"
     },
     {
-      "title": "新能源车事故后，为何更易被保险公司推定全损？",
+      "title": "创业板科技成长股集体走强，自动化设备与芯片产业链领涨，创业板ETF易方达涨3.12%",
       "src": "新浪财经",
-      "pub_time": "2026-10-27 19:07:00",
-      "url": "https://finance.sina.com.cn/stock/hyyj/2026-10-27/doc-iniwsmwr1223570.shtml"
-    },
-    {
-      "title": "周杰伦、Lisa等明星都爱穿，一枚戒指20万元，一条牛仔裤20万元，还经常缺货！一个无代言的品牌，怎么火出圈的？",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 19:06:06",
-      "url": "http://field.10jqka.com.cn/20261027/c681150845.shtml"
-    },
-    {
-      "title": "华强北商家：内存条销量大降",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 19:05:35",
-      "url": "http://field.10jqka.com.cn/20261027/c681150389.shtml"
+      "pub_time": "2026-10-28 12:59:00",
+      "url": "https://finance.sina.com.cn/jjxw/2026-10-28/doc-iniwuefz9557496.shtml"
     },
     {
-      "title": "“一哥”业绩降速 中信证券第三季度净利润同比下滑20.19%",
+      "title": "得利斯以实干助力乡村全面振兴与共同富裕建设",
       "src": "新浪财经",
-      "pub_time": "2026-10-27 19:05:00",
-      "url": "https://finance.sina.com.cn/wm/2026-10-27/doc-iniwsmwp4439297.shtml"
+      "pub_time": "2026-10-28 12:58:00",
+      "url": "https://finance.sina.com.cn/jjxw/2026-10-28/doc-iniwueft3697211.shtml"
     },
     {
-      "title": "“银伟达”卷土重来，建设银行又新高！银行ETF华宝（512800）标的指数再涨逾1%，四季度逻辑较强",
+      "title": "“江苏首富”，身家一年暴涨1120亿元",
       "src": "新浪财经",
-      "pub_time": "2026-10-27 19:05:00",
-      "url": "https://finance.sina.com.cn/money/fund/etf/2026-10-27/doc-iniwsmws6978751.shtml"
+      "pub_time": "2026-10-28 12:58:00",
+      "url": "https://finance.sina.com.cn/wm/2026-10-28/doc-iniwueft3695953.shtml"
     },
     {
-      "title": "净利增89.94%！“东北水王”泉阳泉靠一瓶矿泉水加速突围",
+      "title": "纵览热点丨江苏连云港一建筑外墙皮掉落，疑有行人被砸送医，当地城管和有关部门人员已到现场查看",
       "src": "新浪财经",
-      "pub_time": "2026-10-27 19:05:00",
-      "url": "https://finance.sina.com.cn/jjxw/2026-10-27/doc-iniwsmwp4438157.shtml"
+      "pub_time": "2026-10-28 12:58:00",
+      "url": "https://finance.sina.com.cn/jjxw/2026-10-28/doc-iniwuefw6589742.shtml"
     },
     {
-      "title": "三天寻味收官｜金龙鱼外婆乡小榨菜籽油，把儿时菜油香留在尚璟瑞府",
+      "title": "中裕科技（920694）前三季净利增超四成 Q3业绩同比下滑",
       "src": "新浪财经",
-      "pub_time": "2026-10-27 19:05:00",
-      "url": "https://finance.sina.com.cn/roll/2026-10-27/doc-iniwsmwp4440937.shtml"
+      "pub_time": "2026-10-28 12:57:00",
+      "url": "https://finance.sina.com.cn/roll/2026-10-28/doc-iniwuefz9557174.shtml"
     },
     {
-      "title": "中金公司“三合一”交割完成 万亿级券商聚势启航",
+      "title": "“新鲜生活”进商圈，“社区生活”扎社区：来伊份双业态错位补位",
       "src": "新浪财经",
-      "pub_time": "2026-10-27 19:05:00",
-      "url": "https://finance.sina.com.cn/jjxw/2026-10-27/doc-iniwsmwu3757048.shtml"
-    },
-    {
-      "title": "多地雪场开启新雪季 冰雪旅游消费前置升温态势显著",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 19:04:32",
-      "url": "http://field.10jqka.com.cn/20261027/c681150833.shtml"
-    },
-    {
-      "title": "专项整治围标串标，以检察方案守护招投标公平",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 19:03:56",
-      "url": "http://field.10jqka.com.cn/20261027/c681150338.shtml"
+      "pub_time": "2026-10-28 12:51:00",
+      "url": "https://finance.sina.com.cn/cj/2026-10-28/doc-iniwueft3697538.shtml"
     },
     {
-      "title": "5天票房130.4万，首部“龙标”AI院线长片票房遇冷",
+      "title": "客户重疾获赔10万元，富德生命人寿日照中心支公司快速理赔获赞誉",
       "src": "同花顺",
-      "pub_time": "2026-10-27 19:03:09",
-      "url": "http://field.10jqka.com.cn/20261027/c681150322.shtml"
+      "pub_time": "2026-10-28 12:50:06",
+      "url": "http://invest.10jqka.com.cn/20261028/c681179940.shtml"
     },
     {
-      "title": "给大坝做“CT”、给电芯拆“堵点”，硬核项目同台竞技",
+      "title": "一份赔付守护一个家庭——富德生命人寿济宁中心支公司理赔10.6万元温暖陪伴",
       "src": "同花顺",
-      "pub_time": "2026-10-27 19:03:09",
-      "url": "http://field.10jqka.com.cn/20261027/c681150324.shtml"
+      "pub_time": "2026-10-28 12:50:03",
+      "url": "http://field.10jqka.com.cn/20261028/c681179942.shtml"
     },
     {
-      "title": "“奋斗者”号上周五完成新一轮科考 我国北极极点6次下潜成全球唯一",
+      "title": "小鹏机器人固态电池小批量量产",
       "src": "同花顺",
-      "pub_time": "2026-10-27 19:03:09",
-      "url": "http://field.10jqka.com.cn/20261027/c681150325.shtml"
-    },
-    {
-      "title": "三季报发布后，海信股价还在跌",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 19:03:00",
-      "url": "https://finance.sina.com.cn/roll/2026-10-27/doc-iniwsmws6980402.shtml"
-    },
-    {
-      "title": "奏响世界钢琴之声，众多国际钢琴巨匠登台南京文化艺术中心",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 19:00:00",
-      "url": "https://finance.sina.com.cn/jjxw/2026-10-27/doc-iniwsmwu3770236.shtml"
-    },
-    {
-      "title": "活动回顾 | “投资未来，守护当下”：中金财富华中管理总部成功举办上交所ETF大讲堂活动",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 19:00:00",
-      "url": "https://finance.sina.com.cn/money/fund/jjzl/2026-10-27/doc-iniwsmwp4434987.shtml"
-    },
-    {
-      "title": "南京横梁石庙，何以收获稳稳的幸福",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 19:00:00",
-      "url": "https://finance.sina.com.cn/jjxw/2026-10-27/doc-iniwsmwu3770519.shtml"
-    },
-    {
-      "title": "均胜电子(00699)前三季度新获全球订单615亿元 新兴业务发展加速",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 18:58:00",
-      "url": "https://finance.sina.com.cn/stock/hkstock/ggscyd/2026-10-27/doc-iniwsmwr1212506.shtml"
+      "pub_time": "2026-10-28 12:49:32",
+      "url": "http://field.10jqka.com.cn/20261028/c681179934.shtml"
     },
     {
-      "title": "Anthropic发招股书催化AI基建板块反弹 全球科技股表现分化",
+      "title": "英伟达向Meta投资30亿元 AI循环交易延伸至美股七巨头",
       "src": "财新网",
-      "pub_time": "2026-10-27 18:55:52",
-      "url": "https://www.caixin.com/2026-10-27/102497933.html"
+      "pub_time": "2026-10-28 12:49:17",
+      "url": "https://www.caixin.com/2026-10-28/102498144.html"
     },
     {
-      "title": "张坤还是笃信科技：独管产品十大重仓半数押注全球AI半导体",
+      "title": "腾讯WorkBuddy正式上线“远程控制”功能",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 12:47:50",
+      "url": "http://field.10jqka.com.cn/20261028/c681179924.shtml"
+    },
+    {
+      "title": "2026第九届氟硅行业绿色发展大会——以绿色合规赢得高质量发展主动权",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 12:46:09",
+      "url": "http://field.10jqka.com.cn/20261028/c681179912.shtml"
+    },
+    {
+      "title": "以催化技术创新推动石化业价值提升",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 12:45:48",
+      "url": "http://field.10jqka.com.cn/20261028/c681179914.shtml"
+    },
+    {
+      "title": "氯碱破局要锚定产业链纵向延伸",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 12:45:43",
+      "url": "http://field.10jqka.com.cn/20261028/c681179897.shtml"
+    },
+    {
+      "title": "第十七届石化行业职业技能竞赛决赛开幕",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 12:45:39",
+      "url": "http://field.10jqka.com.cn/20261028/c681179899.shtml"
+    },
+    {
+      "title": "集体上调！工行、农行、中行、建行、交行、邮储，全部在列！",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 12:44:31",
+      "url": "http://field.10jqka.com.cn/20261028/c681179830.shtml"
+    },
+    {
+      "title": "年内最冷新股诞生！东山精密港股上市首日盘中破发 有打新投资者最多浮亏318万港元",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 12:44:00",
+      "url": "https://finance.sina.com.cn/roll/2026-10-28/doc-iniwtxxv3820571.shtml"
+    },
+    {
+      "title": "可做手术的5G急救车亮相！上汽大通解锁移动医疗新范式",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 12:43:00",
+      "url": "https://finance.sina.com.cn/wm/2026-10-28/doc-iniwueft3699594.shtml"
+    },
+    {
+      "title": "华大基因卡位AI4S：数据反哺模型，智能贯通临床",
       "src": "财联社",
-      "pub_time": "2026-10-27 18:53:58",
-      "url": "https://www.cls.cn/detail/2516819"
+      "pub_time": "2026-10-28 12:42:30",
+      "url": "https://www.cls.cn/detail/2517520"
     },
     {
-      "title": "智能装备添彩盛会，绘就智慧农业新“丰”景",
+      "title": "澳大利亚向我国返还2件流失文物",
+      "src": "财联社",
+      "pub_time": "2026-10-28 12:42:22",
+      "url": "https://www.cls.cn/detail/2517567"
+    },
+    {
+      "title": "稀土龙头三季报业绩翻倍，永磁材料在机器人与AI算力需求中加速放量",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 12:42:00",
+      "url": "https://finance.sina.com.cn/jjxw/2026-10-28/doc-iniwtxxv3820383.shtml"
+    },
+    {
+      "title": "麒盛科技前三季度营收增长11.65% 研发与海外市场布局持续加码",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 12:42:00",
+      "url": "https://finance.sina.com.cn/jjxw/2026-10-28/doc-iniwtxya3480682.shtml"
+    },
+    {
+      "title": "存储芯片业绩爆发，科技ETF易方达涨2.60%",
       "src": "同花顺",
-      "pub_time": "2026-10-27 18:53:17",
-      "url": "http://field.10jqka.com.cn/20261027/c681149614.shtml"
+      "pub_time": "2026-10-28 12:41:31",
+      "url": "http://field.10jqka.com.cn/20261028/c681179758.shtml"
     },
     {
-      "title": "电机板块上涨0.52% 多重利好提振板块表现",
+      "title": "创新药临床数据集中发布，生物科技ETF易方达涨1.50%",
       "src": "同花顺",
-      "pub_time": "2026-10-27 18:53:12",
-      "url": "http://field.10jqka.com.cn/20261027/c681149606.shtml"
+      "pub_time": "2026-10-28 12:39:31",
+      "url": "http://field.10jqka.com.cn/20261028/c681179701.shtml"
     },
     {
-      "title": "感谢有你——化学科技举办退休职工荣退仪式",
+      "title": "奥来德：前三季度净利润1.82亿元，同比增长481.77%",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 12:39:00",
+      "url": "https://finance.sina.com.cn/roll/2026-10-28/doc-iniwueft3694182.shtml"
+    },
+    {
+      "title": "青岛啤酒拟控股青岛食品，青岛新一轮国企改革再迎大动作",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 12:39:00",
+      "url": "https://finance.sina.com.cn/roll/2026-10-28/doc-iniwtxyc9685548.shtml"
+    },
+    {
+      "title": "索尼推出手机主摄图像传感器 LYTIA 720，提升暗光及 HDR 视频拍摄表现",
       "src": "同花顺",
-      "pub_time": "2026-10-27 18:52:51",
-      "url": "http://field.10jqka.com.cn/20261027/c681149541.shtml"
+      "pub_time": "2026-10-28 12:38:21",
+      "url": "http://field.10jqka.com.cn/20261028/c681179668.shtml"
     },
     {
-      "title": "进博会前瞻：精准诊疗提速，作为首要疾病负担的心脑血管疾病如何“看得清、治得准”？",
+      "title": "腾讯 WorkBuddy 手机远程控制电脑功能上线，实时显示屏幕内容",
       "src": "同花顺",
-      "pub_time": "2026-10-27 18:50:26",
-      "url": "http://field.10jqka.com.cn/20261027/c681149455.shtml"
+      "pub_time": "2026-10-28 12:38:01",
+      "url": "http://field.10jqka.com.cn/20261028/c681179644.shtml"
     },
     {
-      "title": "《三角洲行动》安全团队协助警方破获特大DMA外挂案",
+      "title": "总靠 AI 干活，你的专业能力可能正在悄悄退化",
       "src": "同花顺",
-      "pub_time": "2026-10-27 18:48:05",
-      "url": "http://field.10jqka.com.cn/20261027/c681149319.shtml"
+      "pub_time": "2026-10-28 12:38:01",
+      "url": "http://field.10jqka.com.cn/20261028/c681179638.shtml"
     },
     {
-      "title": "工业具身智能焊接与检测技术联合实验室在京揭牌",
+      "title": "因非法获取并破解《崩坏：星穹铁道》测试版本内容，泄密人员被判赔偿米哈游 100 万元",
       "src": "同花顺",
-      "pub_time": "2026-10-27 18:47:58",
-      "url": "http://field.10jqka.com.cn/20261027/c681149315.shtml"
+      "pub_time": "2026-10-28 12:38:01",
+      "url": "http://field.10jqka.com.cn/20261028/c681179640.shtml"
     },
     {
-      "title": "小鹏获批广州全域L4级Robotaxi示范运营资质",
+      "title": "多款主流固态硬盘 SSD 单周跌幅超过 10%，渠道报价明显松动",
       "src": "同花顺",
-      "pub_time": "2026-10-27 18:46:59",
-      "url": "http://field.10jqka.com.cn/20261027/c681149284.shtml"
+      "pub_time": "2026-10-28 12:38:01",
+      "url": "http://field.10jqka.com.cn/20261028/c681179637.shtml"
     },
     {
-      "title": "微软启动6万人自愿离职 AI资本开支一年增约八成",
+      "title": "索尼公布紧凑型裸眼 3D 显示器 ELF-MN1，6\" 1080×2160 470nits",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 12:38:00",
+      "url": "http://field.10jqka.com.cn/20261028/c681179639.shtml"
+    },
+    {
+      "title": "“编程面试已死”：Anthropic 称 AI 时代编程题已无法筛选程序员",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 12:38:00",
+      "url": "http://field.10jqka.com.cn/20261028/c681179656.shtml"
+    },
+    {
+      "title": "*ST湘邮财报虚增已资不抵债 财技保壳？溢价1259倍增资",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 12:37:00",
+      "url": "https://finance.sina.com.cn/stock/observe/2026-10-28/doc-iniwtxxy6698809.shtml"
+    },
+    {
+      "title": "各界人士祝贺新华网上市10周年",
+      "src": "新华网",
+      "pub_time": "2026-10-28 12:36:40",
+      "url": "http://www.news.cn/fortune/20261028/97250057b29249e68d3fce225b669739/c.html"
+    },
+    {
+      "title": "连板 + 20CM 齐现！人形机器人大爆发",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 12:32:59",
+      "url": "http://field.10jqka.com.cn/20261028/c681179497.shtml"
+    },
+    {
+      "title": "平安理财稳健精选目标盈封闭第4期固收类理财产品发行失败",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 12:32:19",
+      "url": "http://field.10jqka.com.cn/20261028/c681179443.shtml"
+    },
+    {
+      "title": "康圣环球旗下基准医疗与新华保险达成合作，共筑肺癌早筛早诊早治新防线",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 12:31:00",
+      "url": "https://finance.sina.com.cn/roll/2026-10-28/doc-iniwtxxy6699955.shtml"
+    },
+    {
+      "title": "恒瑞医药第十届董事会第五次会议决议公告",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 12:30:00",
+      "url": "https://finance.sina.com.cn/roll/2026-10-28/doc-iniwtxxv3814938.shtml"
+    },
+    {
+      "title": "数智时代，组织如何进化？博彦科技董事长韩洁出席清华经管-MIT斯隆合作30周年校友论坛，分享转型思考",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 12:30:00",
+      "url": "https://finance.sina.com.cn/roll/2026-10-28/doc-iniwtxya3480737.shtml"
+    },
+    {
+      "title": "创世纪前三季度净利同比增65.60%：新兴赛道全面起势，高端装备平台价值加速兑现",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 12:28:00",
+      "url": "https://finance.sina.com.cn/jjxw/2026-10-28/doc-iniwtxxy6696044.shtml"
+    },
+    {
+      "title": "差异化创新进入全球化阶段，海外三期临床与商业化兑现将成核心驱动力",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 12:25:33",
+      "url": "http://field.10jqka.com.cn/20261028/c681179247.shtml"
+    },
+    {
+      "title": "一件衣服的“智能之旅”：从设计、生产到上架，AI做了什么？",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 12:25:33",
+      "url": "http://field.10jqka.com.cn/20261028/c681179246.shtml"
+    },
+    {
+      "title": "差异化创新进入全球化阶段，海外三期临床与商业化兑现将成核心驱动力",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 12:25:00",
+      "url": "https://finance.sina.com.cn/jjxw/2026-10-28/doc-iniwtxya3470238.shtml"
+    },
+    {
+      "title": "中国新晋女首富诞生",
+      "src": "财联社",
+      "pub_time": "2026-10-28 12:24:18",
+      "url": "https://www.cls.cn/detail/2517553"
+    },
+    {
+      "title": "【午报】创业板指半日涨3%，全市场近4500股收红，人形机器人概念股再度爆发",
+      "src": "财联社",
+      "pub_time": "2026-10-28 12:24:11",
+      "url": "https://www.cls.cn/detail/2517555"
+    },
+    {
+      "title": "Growing Together 2026 全球伙伴峰会及全球租房品牌日在重庆举行",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 12:23:57",
+      "url": "http://field.10jqka.com.cn/20261028/c681179187.shtml"
+    },
+    {
+      "title": "存储巨头业绩超预期，科创芯片设计ETF易方达涨4.75%",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 12:23:06",
+      "url": "http://field.10jqka.com.cn/20261028/c681179159.shtml"
+    },
+    {
+      "title": "“江苏首富”身家一年暴涨1120亿元，成为最令胡润意外的超级富豪",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 12:23:00",
+      "url": "https://finance.sina.com.cn/roll/2026-10-28/doc-iniwtxxv3813024.shtml"
+    },
+    {
+      "title": "山东科技大学能源与矿业工程学院成立战略发展咨询委员会 6位院士领衔共谋高质量发展",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 12:22:07",
+      "url": "http://field.10jqka.com.cn/20261028/c681179134.shtml"
+    },
+    {
+      "title": "研发投入同比大增50%！复星医药阿尔茨海默病创新药三期结果即将揭晓",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 12:22:00",
+      "url": "https://finance.sina.com.cn/roll/2026-10-28/doc-iniwtxya3467785.shtml"
+    },
+    {
+      "title": "山东能源枣矿八亿橡胶公司携精品轮胎亮相第140届广交会",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 12:21:41",
+      "url": "http://field.10jqka.com.cn/20261028/c681179118.shtml"
+    },
+    {
+      "title": "海光信息、寒武纪三季报业绩高增 未提振股价",
       "src": "财新网",
-      "pub_time": "2026-10-27 18:45:35",
-      "url": "https://www.caixin.com/2026-10-27/102497916.html"
+      "pub_time": "2026-10-28 12:21:05",
+      "url": "https://www.caixin.com/2026-10-28/102498133.html"
     },
     {
-      "title": "四国市场落地，小鹏加速布局中东非及西巴尔干市场",
+      "title": "字母标AUDI是什么定位？上汽奥迪为何集中发展智能电动车",
       "src": "同花顺",
-      "pub_time": "2026-10-27 18:45:33",
-      "url": "http://field.10jqka.com.cn/20261027/c681149208.shtml"
+      "pub_time": "2026-10-28 12:18:39",
+      "url": "http://field.10jqka.com.cn/20261028/c681179031.shtml"
     },
     {
-      "title": "「AI新世代」声网抛出“五级对话能力框架”，对话式AI距“深度沟通”还有多久",
+      "title": "工银安盛人寿浙江分公司被罚10万，涉违规返利",
       "src": "同花顺",
-      "pub_time": "2026-10-27 18:45:07",
-      "url": "http://field.10jqka.com.cn/20261027/c681149281.shtml"
+      "pub_time": "2026-10-28 12:18:34",
+      "url": "http://invest.10jqka.com.cn/20261028/c681179028.shtml"
     },
     {
-      "title": "宁波联合前三季度归母净利润636.63万元 同比下降90.51%",
+      "title": "AI算力点燃PCB：净利最高飙1177%，涨价链上谁最赚？",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 12:17:52",
+      "url": "http://field.10jqka.com.cn/20261028/c681179027.shtml"
+    },
+    {
+      "title": "净利增67%！南华期货前三季度营收13.76亿元，风控指标远超监管线",
       "src": "新浪财经",
-      "pub_time": "2026-10-27 18:45:00",
-      "url": "https://finance.sina.com.cn/stock/estate/integration/2026-10-27/doc-iniwsmwu3742968.shtml"
+      "pub_time": "2026-10-28 12:17:00",
+      "url": "https://finance.sina.com.cn/roll/2026-10-28/doc-iniwtxxy6707346.shtml"
     },
     {
-      "title": "机器人实现“边上岗边进化” 智元发布具身Agent框架Genie Master",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 18:45:00",
-      "url": "https://finance.sina.com.cn/jjxw/2026-10-27/doc-iniwsmwr1205122.shtml"
-    },
-    {
-      "title": "方正科技前三季度归母净利润11.89亿元同比增长275.65%",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 18:44:00",
-      "url": "https://finance.sina.com.cn/stock/estate/integration/2026-10-27/doc-iniwsmwu3742975.shtml"
-    },
-    {
-      "title": "浪潮数字企业助力8家客户获评2026年度卓越级智能工厂",
+      "title": "凯撒旅业保障国际大型海岸赛艇赛事 提升海洋体育运营服务能力",
       "src": "同花顺",
-      "pub_time": "2026-10-27 18:42:52",
-      "url": "http://field.10jqka.com.cn/20261027/c681148723.shtml"
+      "pub_time": "2026-10-28 12:16:34",
+      "url": "http://field.10jqka.com.cn/20261028/c681178908.shtml"
     },
     {
-      "title": "“拼”字当头，我们全力攻坚突破！",
+      "title": "直播间有奖销售套路曝光！",
       "src": "同花顺",
-      "pub_time": "2026-10-27 18:41:45",
-      "url": "http://field.10jqka.com.cn/20261027/c681148825.shtml"
+      "pub_time": "2026-10-28 12:16:14",
+      "url": "http://field.10jqka.com.cn/20261028/c681178923.shtml"
     },
     {
-      "title": "晶闸管拉动台基股份收入回暖 三季度增长进一步提速",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 18:39:00",
-      "url": "https://finance.sina.com.cn/stock/observe/2026-10-27/doc-iniwsfqu7089861.shtml"
-    },
-    {
-      "title": "黄酒龙头“借道”白酒大商渠道捷径如何通向真实动销",
+      "title": "一餐饮公司亏损想扣员工薪水“分担”，共担风险不可逾越法律红线",
       "src": "同花顺",
-      "pub_time": "2026-10-27 18:38:57",
-      "url": "http://field.10jqka.com.cn/20261027/c681148464.shtml"
+      "pub_time": "2026-10-28 12:15:41",
+      "url": "http://field.10jqka.com.cn/20261028/c681178874.shtml"
     },
     {
-      "title": "手握1200亿元商业资产，新城控股试水存量盘活",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 18:37:00",
-      "url": "https://finance.sina.com.cn/roll/2026-10-27/doc-iniwsfqw3866054.shtml"
-    },
-    {
-      "title": "建元信托前三季度归母净利润11.64亿元 同比增长2157.39%",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 18:36:00",
-      "url": "https://finance.sina.com.cn/stock/estate/integration/2026-10-27/doc-iniwsfqr4554260.shtml"
-    },
-    {
-      "title": "创业板高开低走跌超3%，两市成交不足1.5万亿，银行股逆市走强丨复盘论",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 18:36:00",
-      "url": "https://finance.sina.com.cn/stock/wbstock/2026-10-27/doc-iniwsfqw3868348.shtml"
-    },
-    {
-      "title": "苹果再“砍手”：韩国官网iPad mini海报移除手部",
+      "title": "人形机器人指数涨逾5%，多股涨停！量产预期升温，核心零部件再受关注",
       "src": "同花顺",
-      "pub_time": "2026-10-27 18:35:26",
-      "url": "http://field.10jqka.com.cn/20261027/c681147992.shtml"
+      "pub_time": "2026-10-28 12:15:34",
+      "url": "http://field.10jqka.com.cn/20261028/c681178868.shtml"
     },
     {
-      "title": "Token经济与智能经济｜读懂Token经济的三层含义",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 18:35:11",
-      "url": "http://field.10jqka.com.cn/20261027/c681147952.shtml"
-    },
-    {
-      "title": "*ST英飞拟1元底价挂牌出售两家子公司 预计构成重大资产重组",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 18:35:00",
-      "url": "https://finance.sina.com.cn/roll/2026-10-27/doc-iniwsmwu3738888.shtml"
-    },
-    {
-      "title": "杭州银行前三季度净利润174.35亿元 同比增长9.76%",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 18:35:00",
-      "url": "https://finance.sina.com.cn/stock/estate/integration/2026-10-27/doc-iniwsfqw3865280.shtml"
-    },
-    {
-      "title": "“坐着高铁看中国·穿‘粤’黔滇 山海同频”活动正式启动",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 18:34:08",
-      "url": "http://field.10jqka.com.cn/20261027/c681147954.shtml"
-    },
-    {
-      "title": "红板科技前三季净利润8.6亿元 同比增长108.18%",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 18:34:00",
-      "url": "https://finance.sina.com.cn/stock/estate/integration/2026-10-27/doc-iniwsfqw3865222.shtml"
-    },
-    {
-      "title": "优惠力度增大？实探奥迪门店：上汽奥迪明年停产“四环”车型，销售对AUDI字母标看法不一",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 18:34:00",
-      "url": "https://finance.sina.com.cn/roll/2026-10-27/doc-iniwsfqr4553803.shtml"
-    },
-    {
-      "title": "优惠力度增大？实探奥迪门店：上汽奥迪明年停产“四环”车型，销售对AUDI字母标看法不一",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 18:33:21",
-      "url": "http://field.10jqka.com.cn/20261027/c681147921.shtml"
-    },
-    {
-      "title": "七十五载广交情：中外客商共话开放记忆",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 18:33:03",
-      "url": "http://field.10jqka.com.cn/20261027/c681147939.shtml"
-    },
-    {
-      "title": "工银理财研究报告入选2026金融街论坛年会“金融街发布”",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 18:33:00",
-      "url": "https://finance.sina.com.cn/money/bank/bank_hydt/2026-10-27/doc-iniwsfqu7088163.shtml"
-    },
-    {
-      "title": "智能体AI时代，CPU性能的评估标准正在被重新定义",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 18:32:54",
-      "url": "http://field.10jqka.com.cn/20261027/c681147860.shtml"
-    },
-    {
-      "title": "国内商业航天最大直径，深蓝航天星云二号 5 米一子级贮箱全部交付",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 18:32:46",
-      "url": "http://field.10jqka.com.cn/20261027/c681147866.shtml"
-    },
-    {
-      "title": "2027 款零跑 B10/B01 车型 OTA 更新：支持华为 HiCar4.0 手机互联、腾讯云游戏等",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 18:32:45",
-      "url": "http://field.10jqka.com.cn/20261027/c681147872.shtml"
-    },
-    {
-      "title": "格斗游戏《碧蓝幻想 Versus：崛起》免费版 11 月 1 日终止运营，玩家可限时体验正式版全部 38 个角色",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 18:32:43",
-      "url": "http://field.10jqka.com.cn/20261027/c681147878.shtml"
-    },
-    {
-      "title": "财报解读｜创新药对外授权收入到账，恒瑞医药业绩回到两位数增长",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 18:31:00",
-      "url": "https://finance.sina.com.cn/jjxw/2026-10-27/doc-iniwsfqt1329450.shtml"
-    },
-    {
-      "title": "筑牢防线促安全// 中板罩退作业区着力开展格栅板更换工作",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 18:30:28",
-      "url": "http://field.10jqka.com.cn/20261027/c681147783.shtml"
-    },
-    {
-      "title": "南航正式新开广州—亳州直飞航线",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 18:30:27",
-      "url": "http://field.10jqka.com.cn/20261027/c681147780.shtml"
-    },
-    {
-      "title": "从企业KNIT到行业IP-KNIT，沙利文开启AI时代信任基础设施共建",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 18:30:26",
-      "url": "http://field.10jqka.com.cn/20261027/c681147793.shtml"
-    },
-    {
-      "title": "第七届现代职业教育西湖论坛在杭州召开",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 18:30:04",
-      "url": "http://field.10jqka.com.cn/20261027/c681147728.shtml"
-    },
-    {
-      "title": "广汇能源前三季度归母净利润27.73亿元 同比增长174.04%",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 18:30:00",
-      "url": "https://finance.sina.com.cn/stock/estate/integration/2026-10-27/doc-iniwsfqw3865265.shtml"
-    },
-    {
-      "title": "双汇发展前三季度营收428.1 亿元、净利36.42亿元，同比双降",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 18:30:00",
-      "url": "https://finance.sina.com.cn/jjxw/2026-10-27/doc-iniwsfqt1328078.shtml"
-    },
-    {
-      "title": "年薪1亿挖科学家、月薪10万招实习生，机器人公司天价抢人",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 18:30:00",
-      "url": "https://finance.sina.com.cn/stock/t/2026-10-27/doc-iniwsfqt1329927.shtml"
-    },
-    {
-      "title": "第五届教育局长论坛在京召开",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 18:29:51",
-      "url": "http://field.10jqka.com.cn/20261027/c681147725.shtml"
-    },
-    {
-      "title": "黄金跌至4000美元之际 欧洲最大资管喊话：最糟糕的时期已经过去",
+      "title": "高端芯片不只拼制程，算力需求正在推高封装与互连门槛",
       "src": "财联社",
-      "pub_time": "2026-10-27 18:29:19",
-      "url": "https://www.cls.cn/detail/2516780"
+      "pub_time": "2026-10-28 12:14:47",
+      "url": "https://www.cls.cn/detail/2517508"
     },
     {
-      "title": "喜报！齐鲁医药学院1项成果荣获中国医药教育协会2026年度科学技术奖",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 18:29:14",
-      "url": "http://field.10jqka.com.cn/20261027/c681147713.shtml"
-    },
-    {
-      "title": "第七届全球教育学院院长论坛在华东师范大学举行",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 18:29:01",
-      "url": "http://field.10jqka.com.cn/20261027/c681147712.shtml"
-    },
-    {
-      "title": "上港集团以1.27004元/股回购注销26826股限制性股票",
+      "title": "戈碧迦股东减持套现1.09亿元 4亿元定增获北交所受理",
       "src": "新浪财经",
-      "pub_time": "2026-10-27 18:29:00",
-      "url": "https://finance.sina.com.cn/stock/estate/integration/2026-10-27/doc-iniwsfqw3865271.shtml"
+      "pub_time": "2026-10-28 12:14:00",
+      "url": "https://finance.sina.com.cn/roll/2026-10-28/doc-iniwtxyc9671645.shtml"
     },
     {
-      "title": "全国统一电力市场信用评价指引征求意见：信用评价C/D级 提高注册条件核验频次",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 18:28:06",
-      "url": "http://field.10jqka.com.cn/20261027/c681147689.shtml"
-    },
-    {
-      "title": "海光信息：拟对参股子公司增资不超过1.15亿元",
+      "title": "科沃斯滚筒扫地机怎么选？",
       "src": "新浪财经",
-      "pub_time": "2026-10-27 18:28:00",
-      "url": "https://finance.sina.com.cn/jjxw/2026-10-27/doc-iniwsfqt1327761.shtml"
+      "pub_time": "2026-10-28 12:13:00",
+      "url": "https://finance.sina.com.cn/tjhz/2026-10-28/doc-iniwtxxv3806840.shtml"
     },
     {
-      "title": "人事变动丨招金黄金换帅落定",
+      "title": "江苏省盐城市滨海县市场监督管理局食品安全监督抽检信息的公告（2026年第4期）",
       "src": "新浪财经",
-      "pub_time": "2026-10-27 18:28:00",
-      "url": "https://finance.sina.com.cn/wm/2026-10-27/doc-iniwsfqu7091212.shtml"
+      "pub_time": "2026-10-28 12:13:00",
+      "url": "https://finance.sina.com.cn/jjxw/2026-10-28/doc-iniwtxxv3808934.shtml"
     },
     {
-      "title": "廖应灿到明阳制糖公司检查指导开榨前准备工作",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 18:27:47",
-      "url": "http://field.10jqka.com.cn/20261027/c681147685.shtml"
-    },
-    {
-      "title": "3-氨基-4,4,4-三氟丁烯酸乙酯商品报价动态",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 18:27:43",
-      "url": "http://field.10jqka.com.cn/20261027/c681147680.shtml"
-    },
-    {
-      "title": "4,5-二氢-5,5-二甲基-3-异硫脲-异噁唑盐酸盐商品报价动态",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 18:27:43",
-      "url": "http://field.10jqka.com.cn/20261027/c681147694.shtml"
-    },
-    {
-      "title": "券商观点|有色金属-海外季报：海德鲁2026Q3铝土矿/氧化铝产量分别环比减少9.0%/1.0%至241.0/149.3万吨，电解铝产量环比增加1.2%至50.3万吨",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 18:27:02",
-      "url": "http://field.10jqka.com.cn/20261027/c681147666.shtml"
-    },
-    {
-      "title": "券商观点|有色金属-海外季报：凯撒铝业2026Q3加工收入环比增0.5%至4.39亿美元，净利润环比降68%至3100万美元",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 18:26:55",
-      "url": "http://field.10jqka.com.cn/20261027/c681147664.shtml"
-    },
-    {
-      "title": "券商观点|通信行业周报：AI基础设施迭代加速，全球IT资本开支向好",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 18:26:46",
-      "url": "http://field.10jqka.com.cn/20261027/c681147661.shtml"
-    },
-    {
-      "title": "券商观点|农林牧渔行业周报：猪价持续下行，养殖利润亏损加剧",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 18:26:19",
-      "url": "http://field.10jqka.com.cn/20261027/c681147646.shtml"
-    },
-    {
-      "title": "券商观点|化工行业周报：国际原油、草铵膦价格上涨，硫磺价格下跌",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 18:26:10",
-      "url": "http://field.10jqka.com.cn/20261027/c681147643.shtml"
-    },
-    {
-      "title": "1.4GWh储能新单：这次宁德时代角色不一样",
+      "title": "机器人游戏有哪些好玩 十大经典机器人游戏排行榜前十",
       "src": "新浪财经",
-      "pub_time": "2026-10-27 18:26:00",
-      "url": "https://finance.sina.com.cn/roll/2026-10-27/doc-iniwsfqw3859655.shtml"
+      "pub_time": "2026-10-28 12:12:00",
+      "url": "https://finance.sina.com.cn/roll/2026-10-28/doc-iniwtxya3468502.shtml"
     },
     {
-      "title": "10月27日汇市晚评：日本财务大臣表示已经做好干预准备 美元/日元在156附近修复反弹",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 18:25:25",
-      "url": "http://fe.10jqka.com.cn/20261027/c681147633.shtml"
-    },
-    {
-      "title": "【会员动态】鹏辉能源前三季度净利润约11.78亿元，同比增长928.81%",
+      "title": "绝味食品摘帽首份季报：单季净利降68%，主业仍在修复",
       "src": "新浪财经",
-      "pub_time": "2026-10-27 18:25:00",
-      "url": "https://finance.sina.com.cn/roll/2026-10-27/doc-iniwsfqw3865570.shtml"
+      "pub_time": "2026-10-28 12:12:00",
+      "url": "https://finance.sina.com.cn/wm/2026-10-28/doc-iniwtxyc9675551.shtml"
     },
     {
-      "title": "九丰能源：第三季度归母净利润3.54亿元 同比下降6.97%",
+      "title": "2026年江苏省苏州市吴江区一、二季度工业产品抽检结果公布",
       "src": "新浪财经",
-      "pub_time": "2026-10-27 18:23:00",
-      "url": "https://finance.sina.com.cn/stock/zqgd/2026-10-27/doc-iniwsfqt1331217.shtml"
+      "pub_time": "2026-10-28 12:11:00",
+      "url": "https://finance.sina.com.cn/jjxw/2026-10-28/doc-iniwtxya3459700.shtml"
     },
     {
-      "title": "中国机器人出海广东领跑  如何补齐短板？",
+      "title": "宇树狂飙！",
       "src": "新浪财经",
-      "pub_time": "2026-10-27 18:23:00",
-      "url": "https://finance.sina.com.cn/roll/2026-10-27/doc-iniwsfqu7090130.shtml"
+      "pub_time": "2026-10-28 12:11:00",
+      "url": "https://finance.sina.com.cn/cj/2026-10-28/doc-iniwtxxy6699669.shtml"
     },
     {
-      "title": "工业机器人黑科技离“产线可用”还有多远？在临港，供需两端坐在一张桌前",
+      "title": "甘李药业股份有限公司 2026 年第三季度报告",
       "src": "新浪财经",
-      "pub_time": "2026-10-27 18:23:00",
-      "url": "https://finance.sina.com.cn/jjxw/2026-10-27/doc-iniwsfqt1325645.shtml"
+      "pub_time": "2026-10-28 12:10:00",
+      "url": "https://finance.sina.com.cn/roll/2026-10-28/doc-iniwtxyc9670991.shtml"
     },
     {
-      "title": "一笼热气里的青春归乡！江苏大学生团队纪录片斩获国际短片节荣誉，镜头定格江海老味道",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 18:23:00",
-      "url": "https://finance.sina.com.cn/jjxw/2026-10-27/doc-iniwsfqu7089704.shtml"
-    },
-    {
-      "title": "X387丝路电商班列成功完成隆基绿能光伏组件项目发运",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 18:22:24",
-      "url": "http://field.10jqka.com.cn/20261027/c681147561.shtml"
-    },
-    {
-      "title": "人形机器人也要抢内存？马斯克称其需求将超过其他领域",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 18:21:29",
-      "url": "http://field.10jqka.com.cn/20261027/c681147532.shtml"
-    },
-    {
-      "title": "10月29日上线！！！6000元以上手机消费券",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 18:21:01",
-      "url": "http://field.10jqka.com.cn/20261027/c681147530.shtml"
-    },
-    {
-      "title": "券商座次调位，“新中金”跻身百亿净利券商",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 18:21:00",
-      "url": "https://finance.sina.com.cn/roll/2026-10-27/doc-iniwsfqt1327032.shtml"
-    },
-    {
-      "title": "价格前线|10月27日液化天然气（LNG）异动提示",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 18:20:09",
-      "url": "http://field.10jqka.com.cn/20261027/c681147481.shtml"
-    },
-    {
-      "title": "价格前线|10月27日环氧丙烷现货异动提示",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 18:20:09",
-      "url": "http://field.10jqka.com.cn/20261027/c681147480.shtml"
-    },
-    {
-      "title": "筑牢安康防线 共促治本攻坚——首创环保2026“安康杯”技能竞赛圆满收官",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 18:20:00",
-      "url": "https://finance.sina.com.cn/roll/2026-10-27/doc-iniwsfqt1330879.shtml"
-    },
-    {
-      "title": "中炬高新披露2026年三季报：连续三季验证增长趋势，经营质效持续改善",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 18:18:00",
-      "url": "https://finance.sina.com.cn/cj/2026-10-27/doc-iniwsfqu7080668.shtml"
-    },
-    {
-      "title": "2,2,2-三氟乙胺盐酸盐商品报价动态",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 18:17:55",
-      "url": "http://field.10jqka.com.cn/20261027/c681147455.shtml"
-    },
-    {
-      "title": "PriceSeek提醒：多地全钒液流储能项目推进 利好五氧化二钒",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 18:17:21",
-      "url": "http://field.10jqka.com.cn/20261027/c681147405.shtml"
-    },
-    {
-      "title": "上海家化发布三季报：前三季度营收净利双增长，美妆业务全渠道同比增速近40%",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 18:17:00",
-      "url": "https://finance.sina.com.cn/money/bond/2026-10-27/doc-iniwsfqu7082074.shtml"
-    },
-    {
-      "title": "北京、安徽、江西、辽宁……医保局相继发布征求意见稿！肿瘤类器官药敏检测进入密集落地期",
-      "src": "同花顺",
-      "pub_time": "2026-10-27 18:16:53",
-      "url": "http://field.10jqka.com.cn/20261027/c681147375.shtml"
-    },
-    {
-      "title": "沪市多领域龙头齐发声：产业升级与业绩增长双向共振",
+      "title": "抖音副总裁李亮回应秦朔：关于中国互联网“字节时间”的分析存在常识性错误",
       "src": "财联社",
-      "pub_time": "2026-10-27 18:16:48",
-      "url": "https://www.cls.cn/detail/2516768"
+      "pub_time": "2026-10-28 12:09:46",
+      "url": "https://www.cls.cn/detail/2517516"
     },
     {
-      "title": "南向资金追踪｜近两周净流出近300亿港元 今日加仓智谱和小米流出中芯国际",
+      "title": "空中丝路飞友俱乐部在北京启动",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 12:09:17",
+      "url": "http://field.10jqka.com.cn/20261028/c681178675.shtml"
+    },
+    {
+      "title": "三季度“减亏不扭亏”，徐家汇业绩承压，17亿元城市更新等待兑现",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 12:08:00",
+      "url": "https://finance.sina.com.cn/roll/2026-10-28/doc-iniwtxxv3806721.shtml"
+    },
+    {
+      "title": "重走八年来时路 全程换电到新疆：蔚来ES8用户车队完成8,045公里全程换电之行",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 12:05:58",
+      "url": "http://field.10jqka.com.cn/20261028/c681178502.shtml"
+    },
+    {
+      "title": "南京农业大学开展“丰·收”嘉年华活动",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 12:05:00",
+      "url": "https://finance.sina.com.cn/tjhz/2026-10-28/doc-iniwtxya3451618.shtml"
+    },
+    {
+      "title": "中信证券明明：企业盈利周期有望上行，关注A股板块估值分化",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 12:05:00",
+      "url": "https://finance.sina.com.cn/roll/2026-10-28/doc-iniwtxxv3815504.shtml"
+    },
+    {
+      "title": "铁路需求回暖带动业绩增长，晋西车轴前三季度量利齐升",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 12:05:00",
+      "url": "https://finance.sina.com.cn/jjxw/2026-10-28/doc-iniwtxxv3812664.shtml"
+    },
+    {
+      "title": "​广州爱尔眼科俞晓艺教授团队亮相2026美国眼科年会，展现中国力量",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 12:05:00",
+      "url": "https://finance.sina.com.cn/roll/2026-10-28/doc-iniwtxya3455742.shtml"
+    },
+    {
+      "title": "AI中试基地启动与家电智能化升级，智能控制部件成增长引擎",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 12:04:33",
+      "url": "http://field.10jqka.com.cn/20261028/c681178456.shtml"
+    },
+    {
+      "title": "工信部公开征求《重型汽车自动紧急制动系统技术要求及试验方法》强制性国家标准（报批稿）意见",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 12:04:19",
+      "url": "http://field.10jqka.com.cn/20261028/c681178429.shtml"
+    },
+    {
+      "title": "新宝股份前三季度内销稳健  智能新品矩阵加速扩容",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 12:03:00",
+      "url": "https://finance.sina.com.cn/roll/2026-10-28/doc-iniwtxxy6688702.shtml"
+    },
+    {
+      "title": "护航风电延寿稳运营",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 12:02:35",
+      "url": "http://field.10jqka.com.cn/20261028/c681178385.shtml"
+    },
+    {
+      "title": "中铁九局焦平铁路JPZQ-4标项目桥梁工程墩身浇筑突破百座大关",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 12:02:34",
+      "url": "http://field.10jqka.com.cn/20261028/c681178365.shtml"
+    },
+    {
+      "title": "2026世界智能制造大会将于11月19日在南京举办",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 12:02:30",
+      "url": "http://field.10jqka.com.cn/20261028/c681178379.shtml"
+    },
+    {
+      "title": "美联储谨慎基调利好加元",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 12:02:09",
+      "url": "http://fe.10jqka.com.cn/20261028/c681178351.shtml"
+    },
+    {
+      "title": "央视曝光防控镜片乱象，广州爱尔眼科提醒：配镜务必认准三正规",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 12:01:00",
+      "url": "https://finance.sina.com.cn/roll/2026-10-28/doc-iniwtxya3453032.shtml"
+    },
+    {
+      "title": "哪款镜头值得买 户外实拍稳定耐候胶片用户专属",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 12:01:00",
+      "url": "https://finance.sina.com.cn/roll/2026-10-28/doc-iniwtxyc9676751.shtml"
+    },
+    {
+      "title": "山西高速：Q3归母净利润同比增13.64%，前三季度股权收购贡献投资收益",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 12:01:00",
+      "url": "https://finance.sina.com.cn/jjxw/2026-10-28/doc-iniwtxyc9675544.shtml"
+    },
+    {
+      "title": "2026世界智能制造大会将于11月19日在南京举办",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 12:01:00",
+      "url": "https://finance.sina.com.cn/roll/2026-10-28/doc-iniwtxxy6677723.shtml"
+    },
+    {
+      "title": "美锦能源：单季与前三季度均陷入亏损，经营现金流仍为正",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 12:01:00",
+      "url": "https://finance.sina.com.cn/jjxw/2026-10-28/doc-iniwtxxy6691076.shtml"
+    },
+    {
+      "title": "比亚迪商用车：首批纯电动牵引车交付，并与密尔克卫达成战略合作！",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 12:00:00",
+      "url": "https://finance.sina.com.cn/roll/2026-10-28/doc-iniwtxyc9672158.shtml"
+    },
+    {
+      "title": "海科新源前三季度净利增593%并扩产20万吨电池级EC装置，电解液溶剂供不应求",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 11:59:00",
+      "url": "https://finance.sina.com.cn/jjxw/2026-10-28/doc-iniwtxya3448144.shtml"
+    },
+    {
+      "title": "广生堂前三季度研发投入同比增长138% 乙肝创新药管线提速",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 11:58:00",
+      "url": "https://finance.sina.com.cn/roll/2026-10-28/doc-iniwtxxy6675028.shtml"
+    },
+    {
+      "title": "香山股份前三季度营收37.2亿元 机器人关键部件产业化提速",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 11:57:00",
+      "url": "https://finance.sina.com.cn/roll/2026-10-28/doc-iniwtxyc9667167.shtml"
+    },
+    {
+      "title": "美的风尊3代Pro柜机制热够用吗？横跨103℃的答案",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 11:56:00",
+      "url": "https://finance.sina.com.cn/roll/2026-10-28/doc-iniwtxya3468960.shtml"
+    },
+    {
+      "title": "机器人ETF华安(159039)标的指数飙升涨近6%，宇树科技上市后首份财报明日披露",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 11:56:00",
+      "url": "https://finance.sina.com.cn/jjxw/2026-10-28/doc-iniwtxya3447355.shtml"
+    },
+    {
+      "title": "机构风向标 | 双汇发展(000895)2026年三季度已披露前十大机构累计持仓占比79.41%",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 11:56:00",
+      "url": "https://finance.sina.com.cn/jjxw/2026-10-28/doc-iniwtxxy6671339.shtml"
+    },
+    {
+      "title": "中信博Q3净利同比增长138.34%，同比扭亏光伏反内卷下行业迎来盈利修复窗口",
       "src": "财联社",
-      "pub_time": "2026-10-27 18:16:04",
-      "url": "https://www.cls.cn/detail/2516761"
+      "pub_time": "2026-10-28 11:55:38",
+      "url": "https://www.cls.cn/detail/2517506"
     },
     {
-      "title": "南向资金追踪｜近两周净流出近300亿港元 今日加仓智谱和小米流出中芯国际",
+      "title": "创十年来历史同期新低！“鸭脖一哥”绝味食品三季度净利降近七成",
       "src": "新浪财经",
-      "pub_time": "2026-10-27 18:16:00",
-      "url": "https://finance.sina.com.cn/roll/2026-10-27/doc-iniwsfqr4549312.shtml"
+      "pub_time": "2026-10-28 11:55:00",
+      "url": "https://finance.sina.com.cn/jjxw/2026-10-28/doc-iniwtxya3446134.shtml"
     },
     {
-      "title": "耳挂式耳机值得买清单 多设备切换+会议降噪高频需求族",
+      "title": "超4200股上涨，A股半导体、存储芯片大幅拉升，君正股份大涨超15%，普冉股份涨7%，兆易创新涨5%，机器人多股连板",
       "src": "新浪财经",
-      "pub_time": "2026-10-27 18:16:00",
-      "url": "https://finance.sina.com.cn/roll/2026-10-27/doc-iniwsfqu7077697.shtml"
+      "pub_time": "2026-10-28 11:55:00",
+      "url": "https://finance.sina.com.cn/wm/2026-10-28/doc-iniwtxxy6675735.shtml"
     },
     {
-      "title": "哈药股份前三季利润增82%，多家外资机构现身前十大股东！销售费用是研发费用18倍",
+      "title": "中信博Q3净利同比增长138.34%，同比扭亏光伏反内卷下行业迎来盈利修复窗口",
       "src": "新浪财经",
-      "pub_time": "2026-10-27 18:16:00",
-      "url": "https://finance.sina.com.cn/jjxw/2026-10-27/doc-iniwsfqw3858179.shtml"
+      "pub_time": "2026-10-28 11:55:00",
+      "url": "https://finance.sina.com.cn/roll/2026-10-28/doc-iniwtxxv3809191.shtml"
     },
     {
-      "title": "第三届粤港澳大湾区博创赛收官",
+      "title": "广交会AI医疗产品出海受追捧，手术机器人出口大增",
       "src": "同花顺",
-      "pub_time": "2026-10-27 18:15:06",
-      "url": "http://field.10jqka.com.cn/20261027/c681147386.shtml"
+      "pub_time": "2026-10-28 11:54:43",
+      "url": "http://field.10jqka.com.cn/20261028/c681177985.shtml"
     },
     {
-      "title": "世界石油理事会卓越奖揭晓！中国石油两项成果入围",
+      "title": "【解盘】AI硬件回血！创业板AI(159243)权重新易盛、中际旭创、天孚通信集体拉升，发生了啥？",
       "src": "新浪财经",
-      "pub_time": "2026-10-27 18:15:00",
-      "url": "https://finance.sina.com.cn/wm/2026-10-27/doc-iniwsfqu7080960.shtml"
+      "pub_time": "2026-10-28 11:54:00",
+      "url": "https://finance.sina.com.cn/jjxw/2026-10-28/doc-iniwtxxv3801472.shtml"
     },
     {
-      "title": "第二批交通物流降本提质增效交通强国专项试点经验做法(第1期)",
+      "title": "广交会AI医疗产品出海受追捧，手术机器人出口大增",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 11:54:00",
+      "url": "https://finance.sina.com.cn/jjxw/2026-10-28/doc-iniwtxxv3802912.shtml"
+    },
+    {
+      "title": "物理AI产业链，批量涨停",
       "src": "同花顺",
-      "pub_time": "2026-10-27 18:14:50",
-      "url": "http://field.10jqka.com.cn/20261027/c681147313.shtml"
+      "pub_time": "2026-10-28 11:53:35",
+      "url": "http://field.10jqka.com.cn/20261028/c681177954.shtml"
     },
     {
-      "title": "明确费用分担 做好个人结算《长期护理保险基金个人结算清单》规范解读",
+      "title": "南山区“两优一先”表彰出炉，文丰装饰党支部获评“先进基层党组织”",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 11:53:00",
+      "url": "https://finance.sina.com.cn/roll/2026-10-28/doc-iniwtxxv3802166.shtml"
+    },
+    {
+      "title": "盛达资源前三季度净利润同比增长超112%  储量扩容与项目投产共筑成长新周期",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 11:53:00",
+      "url": "https://finance.sina.com.cn/roll/2026-10-28/doc-iniwtxxy6675181.shtml"
+    },
+    {
+      "title": "【热点】小盘，再爆发！中证1000、中证2000纷纷涨超1.5%，159680、159552盘中双双跑赢！",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 11:52:00",
+      "url": "https://finance.sina.com.cn/jjxw/2026-10-28/doc-iniwtxxv3800950.shtml"
+    },
+    {
+      "title": "创业板指上涨3% 全市场近4500股飘红 机器人产业链爆发",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 11:52:00",
+      "url": "https://finance.sina.com.cn/roll/2026-10-28/doc-iniwtxya3446671.shtml"
+    },
+    {
+      "title": "水晶光电第三季度归母净利润环比增长逾87%",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 11:52:00",
+      "url": "https://finance.sina.com.cn/roll/2026-10-28/doc-iniwtxyc9667282.shtml"
+    },
+    {
+      "title": "存储芯片概念走强 业内判断存储芯片短缺仍将持续",
       "src": "同花顺",
-      "pub_time": "2026-10-27 18:14:10",
-      "url": "http://field.10jqka.com.cn/20261027/c681147305.shtml"
+      "pub_time": "2026-10-28 11:51:43",
+      "url": "http://field.10jqka.com.cn/20261028/c681177884.shtml"
     },
     {
-      "title": "海科新源前三季度净利润大增593% 拟投资6.3亿元扩产电池级EC",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 18:14:00",
-      "url": "https://finance.sina.com.cn/jjxw/2026-10-27/doc-iniwsfqu7067154.shtml"
-    },
-    {
-      "title": "中国信保江苏分公司党委书记、总经理毛剑明一行到访苏豪控股集团",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 18:13:00",
-      "url": "https://finance.sina.com.cn/roll/2026-10-27/doc-iniwsfqw3855987.shtml"
-    },
-    {
-      "title": "李子明教授：破局HER2过表达NSCLC诊疗困境，瑞康曲妥珠单抗±阿得贝利单抗方案交出硬核“高分”答卷",
+      "title": "存储重磅催化！SK海力士财报引爆存储行情，三星、铠侠、A股存储集体上涨",
       "src": "同花顺",
-      "pub_time": "2026-10-27 18:12:25",
-      "url": "http://field.10jqka.com.cn/20261027/c681147253.shtml"
+      "pub_time": "2026-10-28 11:51:42",
+      "url": "http://field.10jqka.com.cn/20261028/c681177914.shtml"
     },
     {
-      "title": "Mysteel日报：今日上海市场钢筋网片价格继续小幅下跌运行",
+      "title": "26Q4机器人板块进入催化相对密集期，机器人ETF嘉实(159526)全面布局机器人产业发展机会",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 11:51:00",
+      "url": "https://finance.sina.com.cn/jjxw/2026-10-28/doc-iniwtxxy6666679.shtml"
+    },
+    {
+      "title": "第三季度国家标准下载量超1200万人次 同比增长78%",
       "src": "同花顺",
-      "pub_time": "2026-10-27 18:12:07",
-      "url": "http://field.10jqka.com.cn/20261027/c681147274.shtml"
+      "pub_time": "2026-10-28 11:50:40",
+      "url": "http://field.10jqka.com.cn/20261028/c681177849.shtml"
     },
     {
-      "title": "长城资产、中国信达招聘公告",
+      "title": "象屿铝业与拓璞数控签署战略合作协议",
       "src": "新浪财经",
-      "pub_time": "2026-10-27 18:12:00",
-      "url": "https://finance.sina.com.cn/roll/2026-10-27/doc-iniwsfqr4546825.shtml"
+      "pub_time": "2026-10-28 11:50:00",
+      "url": "https://finance.sina.com.cn/roll/2026-10-28/doc-iniwtxya3446849.shtml"
     },
     {
-      "title": "玲珑轮胎开大会，董事长王锋亲自部署",
+      "title": "恒瑞医药信息披露暂缓与豁免管理制度",
       "src": "新浪财经",
-      "pub_time": "2026-10-27 18:12:00",
-      "url": "https://finance.sina.com.cn/roll/2026-10-27/doc-iniwsfqw3844557.shtml"
+      "pub_time": "2026-10-28 11:50:00",
+      "url": "https://finance.sina.com.cn/roll/2026-10-28/doc-iniwtxya3458402.shtml"
     },
     {
-      "title": "两款药品因断供被拉黑",
+      "title": "高CXO含量的创新药ETF天弘(517380)标的指数盘中涨超2%，恒瑞医药第三季度净利润同比大增88.9%",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 11:50:00",
+      "url": "https://finance.sina.com.cn/jjxw/2026-10-28/doc-iniwtxxy6666708.shtml"
+    },
+    {
+      "title": "科创100ETF鹏华(588220)标的指数涨超3.5%，产业层面频传利好，机器人、光通信、半导体集体拉升",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 11:50:00",
+      "url": "https://finance.sina.com.cn/jjxw/2026-10-28/doc-iniwtxya3442940.shtml"
+    },
+    {
+      "title": "明源云联合主办，2026国资国企高质量发展创新大会在京举行",
       "src": "同花顺",
-      "pub_time": "2026-10-27 18:10:53",
-      "url": "http://field.10jqka.com.cn/20261027/c681147206.shtml"
+      "pub_time": "2026-10-28 11:48:42",
+      "url": "http://field.10jqka.com.cn/20261028/c681177819.shtml"
     },
     {
-      "title": "崔东树：预计国内车市今年零售1850万辆，2027年或探底回暖",
+      "title": "存储巨头业绩狂飙，净利暴增超25倍，君正股份绩后一度涨超18%！芯片ETF汇添富(516920)标的指数涨超3%！SK海力士财报详细解读来了",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 11:48:00",
+      "url": "https://finance.sina.com.cn/jjxw/2026-10-28/doc-iniwtxya3440891.shtml"
+    },
+    {
+      "title": "【答疑室】人形机器人领域进展如何？瑞德智能回应",
       "src": "同花顺",
-      "pub_time": "2026-10-27 18:10:15",
-      "url": "http://field.10jqka.com.cn/20261027/c681147156.shtml"
+      "pub_time": "2026-10-28 11:47:58",
+      "url": "http://field.10jqka.com.cn/20261028/c681177749.shtml"
     },
     {
-      "title": "广东机器人链主，前三季度工业机器人签单10000台！",
+      "title": "麦浪更名小海鲸，海尔2026年无管一级能效燃气热水器深度选购指",
       "src": "新浪财经",
-      "pub_time": "2026-10-27 18:10:00",
-      "url": "https://finance.sina.com.cn/roll/2026-10-27/doc-iniwsfqr4544092.shtml"
+      "pub_time": "2026-10-28 11:47:00",
+      "url": "https://finance.sina.com.cn/roll/2026-10-28/doc-iniwtxxy6693040.shtml"
     },
     {
-      "title": "利润跌近四成，现金却涨了166％：小熊电器怎么了？",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 18:10:00",
-      "url": "https://finance.sina.com.cn/roll/2026-10-27/doc-iniwsfqt1329516.shtml"
+      "title": "三季报集体报喜 PCB产业链板块爆发 龙头警告供需缺口或延续",
+      "src": "财联社",
+      "pub_time": "2026-10-28 11:46:26",
+      "url": "https://www.cls.cn/detail/2517459"
     },
     {
-      "title": "嘉立创前三季度营收119.98亿元 归母净利润同比增长98.71%",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 18:09:00",
-      "url": "https://finance.sina.com.cn/stock/estate/integration/2026-10-27/doc-iniwsfqt1321578.shtml"
-    },
-    {
-      "title": "招金黄金前三季度归母净利2.35亿元 同比增长185.55%",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 18:09:00",
-      "url": "https://finance.sina.com.cn/stock/estate/integration/2026-10-27/doc-iniwsfqt1321611.shtml"
-    },
-    {
-      "title": "万华化学，增长84%！",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 18:09:00",
-      "url": "https://finance.sina.com.cn/roll/2026-10-27/doc-iniwsfqw3848812.shtml"
-    },
-    {
-      "title": "华峰化学：前三季度净利润翻倍！",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 18:09:00",
-      "url": "https://finance.sina.com.cn/roll/2026-10-27/doc-iniwsfqu7072839.shtml"
-    },
-    {
-      "title": "中国核电拟27.96亿元转让辛安核电项目1、2号机组相关资产",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 18:09:00",
-      "url": "https://finance.sina.com.cn/stock/estate/integration/2026-10-27/doc-iniwsfqt1321621.shtml"
-    },
-    {
-      "title": "佰维存储、拓荆科技、澜起科技、格科微、海光信息、生益电子、华海清科等集体宣布！预计回购上限超50亿元",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 18:09:00",
-      "url": "https://finance.sina.com.cn/wm/2026-10-27/doc-iniwsfqw3848478.shtml"
-    },
-    {
-      "title": "第四届长三角高价值专利运营大赛（安徽赛区）决赛顺利举办",
+      "title": "科技情绪回暖，物理AI发酵，机器人板块领涨",
       "src": "同花顺",
-      "pub_time": "2026-10-27 18:08:31",
-      "url": "http://field.10jqka.com.cn/20261027/c681147111.shtml"
+      "pub_time": "2026-10-28 11:46:12",
+      "url": "http://field.10jqka.com.cn/20261028/c681177679.shtml"
     },
     {
-      "title": "“AI+外贸”护航企业出海路，赋能轻工企业创新突围",
+      "title": "乌外长：已准备好参加乌美俄三方会谈，愿接受部分停火以及全面停止敌对行动",
       "src": "同花顺",
-      "pub_time": "2026-10-27 18:08:04",
-      "url": "http://field.10jqka.com.cn/20261027/c681147085.shtml"
+      "pub_time": "2026-10-28 11:45:07",
+      "url": "http://fe.10jqka.com.cn/20261028/c681177647.shtml"
     },
     {
-      "title": "招金黄金选举汤磊为董事长 聘任邵鹏王怀斌为副总经理",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 18:08:00",
-      "url": "https://finance.sina.com.cn/stock/estate/integration/2026-10-27/doc-iniwsfqu7059711.shtml"
-    },
-    {
-      "title": "水网愈密，江苏高质量发展的底盘愈稳",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 18:08:00",
-      "url": "https://finance.sina.com.cn/jjxw/2026-10-27/doc-iniwsfqr4538602.shtml"
-    },
-    {
-      "title": "金山办公前三季度归母净利26.37亿元 同比增长123.77%",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 18:08:00",
-      "url": "https://finance.sina.com.cn/stock/estate/integration/2026-10-27/doc-iniwsfqw3835331.shtml"
-    },
-    {
-      "title": "伟明环保：第三季度归母净利润同比降33.4%，营收降7.6%",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 18:08:00",
-      "url": "https://finance.sina.com.cn/stock/zqgd/2026-10-27/doc-iniwsfqu7073464.shtml"
-    },
-    {
-      "title": "从“包袱”到“财富”，看江苏各地如何写出新“秸”局",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 18:08:00",
-      "url": "https://finance.sina.com.cn/jjxw/2026-10-27/doc-iniwsfqr4538647.shtml"
-    },
-    {
-      "title": "江苏苏州：方寸美好，暖在推门可见",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 18:08:00",
-      "url": "https://finance.sina.com.cn/jjxw/2026-10-27/doc-iniwsfqr4538643.shtml"
-    },
-    {
-      "title": "21秒下线一台电饭煲，廉江小家电抱团掘金APEC",
+      "title": "第三季度国家标准下载量同比增长78% 安全类标准社会关注度持续居于高位",
       "src": "同花顺",
-      "pub_time": "2026-10-27 18:07:51",
-      "url": "http://field.10jqka.com.cn/20261027/c681147143.shtml"
+      "pub_time": "2026-10-28 11:44:59",
+      "url": "http://field.10jqka.com.cn/20261028/c681177628.shtml"
     },
     {
-      "title": "索通发展三季度归母净利润2.51亿元 同比增长91.93%",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 18:07:00",
-      "url": "https://finance.sina.com.cn/stock/estate/integration/2026-10-27/doc-iniwsfqw3835345.shtml"
-    },
-    {
-      "title": "伟明环保前三季度归母净利润14.03亿元 同比下降34.29%",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 18:06:00",
-      "url": "https://finance.sina.com.cn/stock/estate/integration/2026-10-27/doc-iniwsfqw3835271.shtml"
-    },
-    {
-      "title": "高端珠宝提前半个月在外滩预展！JSD SPACE“进博直通车”助力海外品牌对接中国市场",
+      "title": "中国图像图形学会专家团队赴广州民营科技园多家企业走访调研",
       "src": "同花顺",
-      "pub_time": "2026-10-27 18:05:35",
-      "url": "http://field.10jqka.com.cn/20261027/c681146996.shtml"
+      "pub_time": "2026-10-28 11:44:43",
+      "url": "http://field.10jqka.com.cn/20261028/c681177642.shtml"
     },
     {
-      "title": "“2026进博交通出行服务专区”今起上线！首次引入AI出行智能体",
+      "title": "2026腾冲科学家论坛有色金属新材料智能制造专题活动在云南文山举办",
       "src": "同花顺",
-      "pub_time": "2026-10-27 18:05:10",
-      "url": "http://field.10jqka.com.cn/20261027/c681146993.shtml"
+      "pub_time": "2026-10-28 11:44:04",
+      "url": "http://field.10jqka.com.cn/20261028/c681177611.shtml"
     },
     {
-      "title": "国家发改委价格成本和认证中心赴中国农业国际合作促进会调研",
+      "title": "全球AI算力投入开启新一轮扩张周期，产业链业绩密集兑现",
       "src": "同花顺",
-      "pub_time": "2026-10-27 18:05:06",
-      "url": "http://field.10jqka.com.cn/20261027/c681146982.shtml"
+      "pub_time": "2026-10-28 11:38:36",
+      "url": "http://field.10jqka.com.cn/20261028/c681177357.shtml"
     },
     {
-      "title": "恒瑞医药前三季度营收244亿元，授权收入成新利润池",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 18:05:00",
-      "url": "https://finance.sina.com.cn/roll/2026-10-27/doc-iniwsfqt1315948.shtml"
-    },
-    {
-      "title": "南京33岁小伙自信“扛冻”坚持“秋冻”，早晚只穿短袖晚饭后还骑电动车，突发脑出血！医生：有这些基础病就别盲目“秋冻”",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 18:05:00",
-      "url": "https://finance.sina.com.cn/roll/2026-10-27/doc-iniwsfqr4545945.shtml"
-    },
-    {
-      "title": "蜜雪集团与悦鲜活达成战略合作 鲜奶供应已覆盖约1.5万家门店",
+      "title": "新加坡国立大学李浩老师等：灾害响应中众源地理信息与跨视角地理定位的协同应用研究进展",
       "src": "同花顺",
-      "pub_time": "2026-10-27 18:04:25",
-      "url": "http://field.10jqka.com.cn/20261027/c681147127.shtml"
+      "pub_time": "2026-10-28 11:38:04",
+      "url": "http://field.10jqka.com.cn/20261028/c681177328.shtml"
     },
     {
-      "title": "格灵深瞳前三季度营收6894.74万元同比下降26.83%",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 18:04:00",
-      "url": "https://finance.sina.com.cn/stock/estate/integration/2026-10-27/doc-iniwsfqu7059786.shtml"
-    },
-    {
-      "title": "新易盛回应股价大跌",
-      "src": "中新经纬",
-      "pub_time": "2026-10-27 18:03:47",
-      "url": "https://www.jwview.com/jingwei/html/10-27/694413.shtml"
-    },
-    {
-      "title": "L3自动驾驶第二批试点来了 这可不是行业狂欢",
+      "title": "OpenAI 宣布三项重大科学突破，科研界却不满其成果发布方式",
       "src": "同花顺",
-      "pub_time": "2026-10-27 18:03:25",
-      "url": "http://field.10jqka.com.cn/20261027/c681146948.shtml"
+      "pub_time": "2026-10-28 11:37:41",
+      "url": "http://field.10jqka.com.cn/20261028/c681177341.shtml"
     },
     {
-      "title": "【标委会动态】标委会秘书处参加2026年国际标准化人才线上公益培训",
+      "title": "索尼网络通信公司通报数据库被攻破，影响约 258 万用户",
       "src": "同花顺",
-      "pub_time": "2026-10-27 18:03:05",
-      "url": "http://field.10jqka.com.cn/20261027/c681146889.shtml"
+      "pub_time": "2026-10-28 11:37:39",
+      "url": "http://field.10jqka.com.cn/20261028/c681177336.shtml"
     },
     {
-      "title": "凯尔达前三季度归母净利润3647.66万元同比增长186.02%",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 18:03:00",
-      "url": "https://finance.sina.com.cn/stock/estate/integration/2026-10-27/doc-iniwsfqr4538618.shtml"
-    },
-    {
-      "title": "三峡水利前三季度归母净利润5.7亿元 同比增长62.60%",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 18:03:00",
-      "url": "https://finance.sina.com.cn/stock/estate/integration/2026-10-27/doc-iniwsfqr4538624.shtml"
-    },
-    {
-      "title": "2026双十一万元级全画幅微单盘点：有基础想升级，哪款主力机值得买？",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 18:03:00",
-      "url": "https://finance.sina.com.cn/roll/2026-10-27/doc-iniwsfqu7074414.shtml"
-    },
-    {
-      "title": "中国核电第三季度归母净利润24.2亿元，同比增长3.8%",
-      "src": "新浪财经",
-      "pub_time": "2026-10-27 18:02:00",
-      "url": "https://finance.sina.com.cn/stock/zqgd/2026-10-27/doc-iniwsfqt1315227.shtml"
-    },
-    {
-      "title": "异地旅游、会销陷阱、演艺退票成三季度投诉热点！",
+      "title": "PCB概念走高，金安国纪涨停，东山精密涨超3%",
       "src": "同花顺",
-      "pub_time": "2026-10-27 18:00:53",
-      "url": "http://field.10jqka.com.cn/20261027/c681146831.shtml"
+      "pub_time": "2026-10-28 11:35:42",
+      "url": "http://field.10jqka.com.cn/20261028/c681177173.shtml"
     },
     {
-      "title": "借收藏品投资设局诈骗上千万元！一批“坑老”套路曝光",
+      "title": "苹果折叠屏预购火爆出货目标上调，消费电子低位布局窗口或将打开",
       "src": "同花顺",
-      "pub_time": "2026-10-27 18:00:44",
-      "url": "http://field.10jqka.com.cn/20261027/c681146871.shtml"
+      "pub_time": "2026-10-28 11:35:09",
+      "url": "http://field.10jqka.com.cn/20261028/c681177112.shtml"
     },
     {
-      "title": "国家首批重大应用场景，“危化储罐无人智能灭火项目”入选",
+      "title": "恒生科技成分股多点上涨，AI大模型与智驾芯片标的活跃",
       "src": "同花顺",
-      "pub_time": "2026-10-27 18:00:18",
-      "url": "http://field.10jqka.com.cn/20261027/c681146821.shtml"
+      "pub_time": "2026-10-28 11:35:02",
+      "url": "http://field.10jqka.com.cn/20261028/c681177110.shtml"
     },
     {
-      "title": "民间物议｜南京地铁站那些暂放的行李箱，价值“万亿”",
+      "title": "上海定商业航天八千亿目标与低轨卫星发射，组网建设进入实质落地期",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 11:34:55",
+      "url": "http://field.10jqka.com.cn/20261028/c681177098.shtml"
+    },
+    {
+      "title": "SK海力士三季度营业利润同比大增632%，半导体全链业绩与存储荒共振",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 11:34:50",
+      "url": "http://field.10jqka.com.cn/20261028/c681177096.shtml"
+    },
+    {
+      "title": "巨头签订千亿美元级算力协议，全球AI算力投入进入新一轮扩张周期",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 11:34:17",
+      "url": "http://field.10jqka.com.cn/20261028/c681177077.shtml"
+    },
+    {
+      "title": "对簿公堂！一险企员工用AI做PPT被开除",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 11:31:08",
+      "url": "http://field.10jqka.com.cn/20261028/c681176927.shtml"
+    },
+    {
+      "title": "超威半导体领涨超5%，美股核心标的映射AI算力与电力需求",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 11:30:04",
+      "url": "http://field.10jqka.com.cn/20261028/c681176874.shtml"
+    },
+    {
+      "title": "国际航协：2025年全球航空公司支付成本高达245亿美元",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 11:29:13",
+      "url": "http://field.10jqka.com.cn/20261028/c681176857.shtml"
+    },
+    {
+      "title": "卫星产业从技术验证迈向规模化应用，火箭一子级回收打通低成本组网",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 11:28:42",
+      "url": "http://field.10jqka.com.cn/20261028/c681177221.shtml"
+    },
+    {
+      "title": "我国农用无人机保有量超30万架 居全球首位",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 11:27:51",
+      "url": "http://field.10jqka.com.cn/20261028/c681176786.shtml"
+    },
+    {
+      "title": "八部门推动智能体嵌入产业内核，国产大模型密集迭代加速落地",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 11:27:50",
+      "url": "http://field.10jqka.com.cn/20261028/c681177109.shtml"
+    },
+    {
+      "title": "债市公告精选 | 广州天建新增涉案金额2.89亿元重大诉讼；九洲控股前三季度净亏损2.86亿元",
+      "src": "财联社",
+      "pub_time": "2026-10-28 11:26:32",
+      "url": "https://www.cls.cn/detail/2517440"
+    },
+    {
+      "title": "陆控三季度总收入为61.8亿，消金业务保持增速",
+      "src": "财联社",
+      "pub_time": "2026-10-28 11:24:54",
+      "url": "https://www.cls.cn/detail/2517480"
+    },
+    {
+      "title": "山东山大华天软件与阿里云达成合作",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 11:24:44",
+      "url": "http://field.10jqka.com.cn/20261028/c681176602.shtml"
+    },
+    {
+      "title": "第八届智能驾驶大会暨2026环秀湖物理AI产业发展推介会举办",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 11:24:39",
+      "url": "http://field.10jqka.com.cn/20261028/c681176603.shtml"
+    },
+    {
+      "title": "中东危局现和平希望？R4加大与伊磋商，卡塔尔劝伊先停止军事威胁",
+      "src": "财联社",
+      "pub_time": "2026-10-28 11:22:12",
+      "url": "https://www.cls.cn/detail/2517463"
+    },
+    {
+      "title": "AI算力建设重塑光纤供需逻辑，高速光互联与特种光纤有望开启景气上行",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 11:21:43",
+      "url": "http://field.10jqka.com.cn/20261028/c681176467.shtml"
+    },
+    {
+      "title": "持续深化全球化布局！海尔大暖通亮相里约暖通制冷展",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 11:20:47",
+      "url": "http://field.10jqka.com.cn/20261028/c681176424.shtml"
+    },
+    {
+      "title": "国际标准化组织传统医药技术委员会（ISO/TC 249）第十六次全体成员大会成功召开",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 11:19:39",
+      "url": "http://field.10jqka.com.cn/20261028/c681176382.shtml"
+    },
+    {
+      "title": "事关算力定价权！英伟达头号梦魇，藏在Anthropic招股书中",
+      "src": "财联社",
+      "pub_time": "2026-10-28 11:19:06",
+      "url": "https://www.cls.cn/detail/2517474"
+    },
+    {
+      "title": "国家级零碳园区与工厂建设目标明确，绿电直供比例要求落地",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 11:18:06",
+      "url": "http://field.10jqka.com.cn/20261028/c681176273.shtml"
+    },
+    {
+      "title": "自动化设备与汽车热管理板块多股涨停，中盘制造转型逻辑进入兑现期",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 11:17:16",
+      "url": "http://field.10jqka.com.cn/20261028/c681176210.shtml"
+    },
+    {
+      "title": "首批券商三季报出炉：整体增长态势稳固 单季盈利分化加剧",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 11:16:45",
+      "url": "http://field.10jqka.com.cn/20261028/c681176314.shtml"
+    },
+    {
+      "title": "SK海力士财报会实录：未来三年存储产能几近售罄 预计供需紧张延续至2030年",
+      "src": "财联社",
+      "pub_time": "2026-10-28 11:15:00",
+      "url": "https://www.cls.cn/detail/2517443"
+    },
+    {
+      "title": "离谱！券商向客户泄露其他客户持仓，被监管警示",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 11:14:40",
+      "url": "http://field.10jqka.com.cn/20261028/c681176024.shtml"
+    },
+    {
+      "title": "深蓝航天星云二号一子级贮箱全部交付",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 11:12:51",
+      "url": "http://field.10jqka.com.cn/20261028/c681175918.shtml"
+    },
+    {
+      "title": "姆巴佩“塌房”后，球衣在二级市场遭抛售，最多降价九成",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 11:10:41",
+      "url": "http://field.10jqka.com.cn/20261028/c681175914.shtml"
+    },
+    {
+      "title": "PCB概念走高 多家产业链公司三季报业绩大增",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 11:09:56",
+      "url": "http://field.10jqka.com.cn/20261028/c681175680.shtml"
+    },
+    {
+      "title": "德勤中国举办“2026大湾区领军企业家活动”并发布AI白皮书",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 11:09:17",
+      "url": "http://field.10jqka.com.cn/20261028/c681175636.shtml"
+    },
+    {
+      "title": "低开高走！泡泡玛特Q3营收近乎腰斩 大摩与主流机构多空激辩估值锚",
+      "src": "财联社",
+      "pub_time": "2026-10-28 11:09:02",
+      "url": "https://www.cls.cn/detail/2517465"
+    },
+    {
+      "title": "自由黄金-DRS盘中跌超5%",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 11:04:43",
+      "url": "http://field.10jqka.com.cn/20261028/c681175521.shtml"
+    },
+    {
+      "title": "山东山大华天软件与阿里云达成合作",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 11:02:38",
+      "url": "http://field.10jqka.com.cn/20261028/c681175195.shtml"
+    },
+    {
+      "title": "工业自动化及定制芯片需求传导，科创200ETF易方达涨2.51%",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 10:58:36",
+      "url": "http://field.10jqka.com.cn/20261028/c681174933.shtml"
+    },
+    {
+      "title": "中国海油海洋平台运维工程钢构件预制智能工厂正式投产",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 10:57:42",
+      "url": "http://field.10jqka.com.cn/20261028/c681174869.shtml"
+    },
+    {
+      "title": "iPhone 18 Pro系列首销三周，中国销量增29%、美日下滑",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 10:57:39",
+      "url": "http://field.10jqka.com.cn/20261028/c681174962.shtml"
+    },
+    {
+      "title": "OpenAI计划采购谷歌TPU！英伟达算力霸权遭遇新挑战",
+      "src": "财联社",
+      "pub_time": "2026-10-28 10:57:26",
+      "url": "https://www.cls.cn/detail/2517432"
+    },
+    {
+      "title": "纽联储暂停加息预期落空 纽元下行压力提前显现",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 10:57:16",
+      "url": "http://fe.10jqka.com.cn/20261028/c681174839.shtml"
+    },
+    {
+      "title": "机器人所需内存容量预期催化，人形机器人概念涨势扩大",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 10:57:07",
+      "url": "http://field.10jqka.com.cn/20261028/c681174814.shtml"
+    },
+    {
+      "title": "AI推高内存等成本 消息称惠普等PC大厂将部分生产转回中国",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 10:56:00",
+      "url": "http://field.10jqka.com.cn/20261028/c681174750.shtml"
+    },
+    {
+      "title": "我国首个智慧货运枢纽领域国标发布",
+      "src": "新华网",
+      "pub_time": "2026-10-28 10:55:35",
+      "url": "http://www.news.cn/fortune/20261028/aced85eddbec4a6fbcaa27eb3cad6766/c.html"
+    },
+    {
+      "title": "迎战“双11”快递高峰 AI加速渗透物流业",
+      "src": "新华网",
+      "pub_time": "2026-10-28 10:55:30",
+      "url": "http://www.news.cn/fortune/20261028/9c3d93ac9b634f0ca8db5c04c4952d83/c.html"
+    },
+    {
+      "title": "全国统一电力市场建设提速 前9月交易电量增18.9%",
+      "src": "新华网",
+      "pub_time": "2026-10-28 10:55:26",
+      "url": "http://www.news.cn/fortune/20261028/521a67613f0d460a91fc543c4177e869/c.html"
+    },
+    {
+      "title": "前9月规上工业企业利润同比增15.5% 电子行业贡献显著",
+      "src": "新华网",
+      "pub_time": "2026-10-28 10:55:21",
+      "url": "http://www.news.cn/fortune/20261028/16a5600b2bb845fba723d866fbcc6982/c.html"
+    },
+    {
+      "title": "多省推出“十五五”就业规划 力促产业就业双向奔赴",
+      "src": "新华网",
+      "pub_time": "2026-10-28 10:55:17",
+      "url": "http://www.news.cn/fortune/20261028/3b9c20788184494a80bc325cc612151e/c.html"
+    },
+    {
+      "title": "PCB板块集体大涨！南亚新材、金安国纪Q3净利暴涨超十倍",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 10:55:07",
+      "url": "http://field.10jqka.com.cn/20261028/c681174705.shtml"
+    },
+    {
+      "title": "探访前沿科技 赋能企业创新｜协会联合8 家商协会组团赴深参观 2026 智能机器人博览会",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 10:54:13",
+      "url": "http://field.10jqka.com.cn/20261028/c681174692.shtml"
+    },
+    {
+      "title": "绿泡泡月活迅速飙升！AI漫剧概念异动拉升，果麦文化涨超10%",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 10:51:38",
+      "url": "http://field.10jqka.com.cn/20261028/c681174538.shtml"
+    },
+    {
+      "title": "特斯拉Optimus正式开启大批量量产，OpenAI将AI大脑作为核心突破口",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 10:50:16",
+      "url": "http://field.10jqka.com.cn/20261028/c681174418.shtml"
+    },
+    {
+      "title": "黄河水利委员会部署黑河干流2026—2027年度水量调度工作",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 10:48:37",
+      "url": "http://field.10jqka.com.cn/20261028/c681174320.shtml"
+    },
+    {
+      "title": "AI硬件链回暖，创业板指早盘涨逾2%，关注长期配置价值",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 10:48:36",
+      "url": "http://field.10jqka.com.cn/20261028/c681174321.shtml"
+    },
+    {
+      "title": "从“攒够养老钱”到“养老韧性”， 中国家庭还差什么？",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 10:48:33",
+      "url": "http://field.10jqka.com.cn/20261028/c681174301.shtml"
+    },
+    {
+      "title": "国台办回应蔡康永发文称“没有支持过‘台独’”",
+      "src": "财联社",
+      "pub_time": "2026-10-28 10:48:23",
+      "url": "https://www.cls.cn/detail/2517448"
+    },
+    {
+      "title": "创新药临床数据集中发布，多家生物制品公司现重大利好",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 10:47:16",
+      "url": "http://field.10jqka.com.cn/20261028/c681174225.shtml"
+    },
+    {
+      "title": "科创再贷款 助力氢能催化剂研发主体技术攻关",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 10:46:25",
+      "url": "http://field.10jqka.com.cn/20261028/c681174299.shtml"
+    },
+    {
+      "title": "三季度银行业理财市场规模站上35万亿元",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 10:45:56",
+      "url": "http://field.10jqka.com.cn/20261028/c681174160.shtml"
+    },
+    {
+      "title": "上半年清算业务优惠约2亿元",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 10:45:43",
+      "url": "http://field.10jqka.com.cn/20261028/c681174123.shtml"
+    },
+    {
+      "title": "1000千伏武汉—黄石特高压交流输电工程完成首次年度检修",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 10:45:10",
+      "url": "http://field.10jqka.com.cn/20261028/c681174198.shtml"
+    },
+    {
+      "title": "以“电影+”催生文化新力量 塔斯汀×《欢迎来龙餐馆》联名营销案例获行业认可",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 10:44:07",
+      "url": "http://field.10jqka.com.cn/20261028/c681174014.shtml"
+    },
+    {
+      "title": "退役电池回收进入规范化阶段，流向管理决定资源价值",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 10:43:39",
+      "url": "http://field.10jqka.com.cn/20261028/c681173987.shtml"
+    },
+    {
+      "title": "微信上线新功能",
+      "src": "财联社",
+      "pub_time": "2026-10-28 10:43:30",
+      "url": "https://www.cls.cn/detail/2517435"
+    },
+    {
+      "title": "报告认为：中国银行业务软件市场规模将达到670亿元",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 10:43:30",
+      "url": "http://field.10jqka.com.cn/20261028/c681174037.shtml"
+    },
+    {
+      "title": "长安期货范磊：供需双弱或有改善，沥青强势水平存减弱可能",
       "src": "新浪财经",
-      "pub_time": "2026-10-27 18:00:00",
-      "url": "https://finance.sina.com.cn/cj/2026-10-27/doc-iniwsfqt1324287.shtml"
+      "pub_time": "2026-10-28 10:42:00",
+      "url": "https://finance.sina.com.cn/money/future/2026-10-28/doc-iniwtxyc9634046.shtml"
+    },
+    {
+      "title": "金证股份关于召开2026年第三次临时股东会的通知",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 10:40:00",
+      "url": "https://finance.sina.com.cn/roll/2026-10-28/doc-iniwtxyc9636056.shtml"
+    },
+    {
+      "title": "华润双鹤2026年第三季度报告",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 10:40:00",
+      "url": "https://finance.sina.com.cn/roll/2026-10-28/doc-iniwtxya3379622.shtml"
+    },
+    {
+      "title": "腾讯一游戏突然宣布：全球停运！补偿方案公布",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 10:39:23",
+      "url": "http://field.10jqka.com.cn/20261028/c681173858.shtml"
+    },
+    {
+      "title": "七年拥军路 一颗赤子心 徐智勇以实干书写金融拥军温暖答卷",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 10:38:57",
+      "url": "http://field.10jqka.com.cn/20261028/c681173695.shtml"
+    },
+    {
+      "title": "国内首例：偏瘫患者弹响《小星星》，脑机接口实现手指精细动作重建、填补空白",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 10:37:39",
+      "url": "http://field.10jqka.com.cn/20261028/c681173625.shtml"
+    },
+    {
+      "title": "14万列新里程碑，钢铁驼队畅通亚欧开放大道",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 10:37:37",
+      "url": "http://field.10jqka.com.cn/20261028/c681173623.shtml"
+    },
+    {
+      "title": "SpaceX收购特斯拉是一次扶贫？知名学者称：这像是用别克换湾流",
+      "src": "财联社",
+      "pub_time": "2026-10-28 10:36:58",
+      "url": "https://www.cls.cn/detail/2517428"
+    },
+    {
+      "title": "科创成长早盘走强，AI融资与利率预期带来新催化",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 10:36:48",
+      "url": "http://field.10jqka.com.cn/20261028/c681173528.shtml"
+    },
+    {
+      "title": "欧洲肿瘤大会中国创新药入选占比高，多家药企发布利好",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 10:36:38",
+      "url": "http://field.10jqka.com.cn/20261028/c681173520.shtml"
+    },
+    {
+      "title": "马斯克再放豪言！人形机器人概念持续爆发，福莱新材8天5板创新高",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 10:36:15",
+      "url": "http://field.10jqka.com.cn/20261028/c681173499.shtml"
+    },
+    {
+      "title": "建元信托披露三季报，归母扣非净利润同比增长95%",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 10:35:00",
+      "url": "https://finance.sina.com.cn/roll/2026-10-28/doc-iniwttsf9761142.shtml"
+    },
+    {
+      "title": "人形机器人概念持续走强！工业母机盘中异动拉升，沈阳机床直线涨停",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 10:34:37",
+      "url": "http://field.10jqka.com.cn/20261028/c681173418.shtml"
+    },
+    {
+      "title": "AI融资收紧下的存储链重估！SK海力士(SKHY.US)“盈喜大涨”、希捷(STX.US)“盈喜重挫”，市场正在定价什么？",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 10:34:14",
+      "url": "http://field.10jqka.com.cn/20261028/c681173384.shtml"
+    },
+    {
+      "title": "【机械|拓斯达（300607）2026年三季报点评】业绩增长表现亮眼，业务结构持续优化",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 10:34:00",
+      "url": "https://finance.sina.com.cn/stock/stockzmt/2026-10-28/doc-iniwtxyc9635417.shtml"
+    },
+    {
+      "title": "公安部新设无人机安全防控局，低空治理走向“全国一盘棋”",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 10:33:50",
+      "url": "http://field.10jqka.com.cn/20261028/c681173354.shtml"
+    },
+    {
+      "title": "南方东英资产管理公布杠杆及反向系列产品2026年10月28日每日目标杠杆倍数",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 10:33:45",
+      "url": "http://field.10jqka.com.cn/20261028/c681173350.shtml"
+    },
+    {
+      "title": "2026年“数据要素×”大赛全国总决赛结果出炉 气象服务赛道20个方案脱颖而出",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 10:33:06",
+      "url": "http://field.10jqka.com.cn/20261028/c681173344.shtml"
+    },
+    {
+      "title": "帝尔激光前三季度营收、净利双降，TGV业务仍处于产业导入阶段",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 10:33:00",
+      "url": "https://finance.sina.com.cn/stock/wbstock/2026-10-28/doc-iniwtxxv3771570.shtml"
+    },
+    {
+      "title": "恒瑞医药三季报业绩大增！机构：板块核心叙事逻辑有望从炒预期逐步演化为业绩驱动",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 10:33:00",
+      "url": "https://finance.sina.com.cn/jjxw/2026-10-28/doc-iniwtxyc9635885.shtml"
+    },
+    {
+      "title": "韩国股市暴涨超6%！SK海力士盘中涨超8%，三星电子涨超9%，马斯克坚定看好内存需求，称机器人所需内存将超过其他任何领域",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 10:33:00",
+      "url": "https://finance.sina.com.cn/roll/2026-10-28/doc-iniwttrx3899519.shtml"
+    },
+    {
+      "title": "中国气象局规范全国农业气象灾害风险预警服务质量评估工作",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 10:32:20",
+      "url": "http://field.10jqka.com.cn/20261028/c681173297.shtml"
+    },
+    {
+      "title": "水电资产再整合！华能水电拟87亿元收购HNYL公司",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 10:32:00",
+      "url": "https://finance.sina.com.cn/stock/wbstock/2026-10-28/doc-iniwtxxv3773981.shtml"
+    },
+    {
+      "title": "美媒感叹在墨西哥试驾中国车后，“它们最终会来到美国”",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 10:31:48",
+      "url": "http://field.10jqka.com.cn/20261028/c681173251.shtml"
+    },
+    {
+      "title": "首届“东西方智慧融合论坛”在穗举行",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 10:31:03",
+      "url": "http://field.10jqka.com.cn/20261028/c681173196.shtml"
+    },
+    {
+      "title": "前三季度实现营收49亿元，上海莱士营销改革显成效？",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 10:30:00",
+      "url": "https://finance.sina.com.cn/roll/2026-10-28/doc-iniwttsa6719853.shtml"
+    },
+    {
+      "title": "国产五轴机床出圈！上线40分钟筹款破百万美元，乔锋智能涨超10%",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 10:29:39",
+      "url": "http://field.10jqka.com.cn/20261028/c681173135.shtml"
+    },
+    {
+      "title": "突然！腾讯一游戏官宣：全球停运，补偿方案公布；上线不足两年，网友：大概一辈子都忘不了",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 10:29:36",
+      "url": "http://field.10jqka.com.cn/20261028/c681173278.shtml"
+    },
+    {
+      "title": "2026年“中国铜业杯”有色金属行业班组长综合管理技能竞赛举办",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 10:29:01",
+      "url": "http://field.10jqka.com.cn/20261028/c681173104.shtml"
+    },
+    {
+      "title": "长鑫科技、贵州茅台成公募前10大重仓股，药明康德地位提升",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 10:29:00",
+      "url": "https://finance.sina.com.cn/jjxw/2026-10-28/doc-iniwttsa6715321.shtml"
+    },
+    {
+      "title": "A股公司天地数码董事长被前妻起诉，要为女儿争取价值近9000万元股份",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 10:28:00",
+      "url": "https://finance.sina.com.cn/roll/2026-10-28/doc-iniwttrx3896403.shtml"
+    },
+    {
+      "title": "机器人所需内存容量预期催化，人形机器人概念涨势扩大",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 10:26:00",
+      "url": "https://finance.sina.com.cn/jjxw/2026-10-28/doc-iniwttrx3896041.shtml"
+    },
+    {
+      "title": "三季报净利高增，恒瑞医药H股暴拉逾12%！港股医药全线反弹，520880、159137携手向上",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 10:25:00",
+      "url": "https://finance.sina.com.cn/money/fund/etf/2026-10-28/doc-iniwttrx3894019.shtml"
+    },
+    {
+      "title": "电鳗财经｜我国新能源智能汽车已落地海外 自动驾驶监管标准何时出海？",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 10:25:00",
+      "url": "https://finance.sina.com.cn/stock/stockzmt/2026-10-28/doc-iniwtxyc9635787.shtml"
+    },
+    {
+      "title": "彤程新材(09607.HK)前三季度特种橡胶助剂营业收入16.46亿元|港E声",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 10:24:00",
+      "url": "https://finance.sina.com.cn/jjxw/2026-10-28/doc-iniwttsa6716827.shtml"
+    },
+    {
+      "title": "中国人寿利明光：寿险经营是一场跨越周期的长跑",
+      "src": "新华网",
+      "pub_time": "2026-10-28 10:23:35",
+      "url": "http://www.news.cn/money/20261028/c5fc8a7dc23342c89fa06ed5f188690e/c.html"
+    },
+    {
+      "title": "港股速报 | 港股早盘高开 东山精密上市破发 开盘跌超5%",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 10:23:00",
+      "url": "https://finance.sina.com.cn/roll/2026-10-28/doc-iniwttrx3893195.shtml"
+    },
+    {
+      "title": "净利暴增10倍，PCB龙头一字涨停，封单超21万手",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 10:22:50",
+      "url": "http://field.10jqka.com.cn/20261028/c681172717.shtml"
+    },
+    {
+      "title": "东北证券：医美产业链价值向下游转移 美妆国货重视品牌建设",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 10:22:00",
+      "url": "https://finance.sina.com.cn/stock/hkstock/ggscyd/2026-10-28/doc-iniwtxxv3769855.shtml"
+    },
+    {
+      "title": "上海前往这些城市更方便！上海机场加密避寒游、冰雪游航班",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 10:22:00",
+      "url": "https://finance.sina.com.cn/wm/2026-10-28/doc-iniwtxxy6601679.shtml"
+    },
+    {
+      "title": "人形机器人概念，多股直线涨停",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 10:20:05",
+      "url": "http://field.10jqka.com.cn/20261028/c681172570.shtml"
+    },
+    {
+      "title": "康恩贝第十一届董事会第二十二次（临时）会议决议公告",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 10:20:00",
+      "url": "https://finance.sina.com.cn/roll/2026-10-28/doc-iniwttsa6716376.shtml"
+    },
+    {
+      "title": "【解盘】机器人，大涨3%！双环传动、绿的谐波领衔，560770顺势大涨！国标+量产双催化",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 10:19:00",
+      "url": "https://finance.sina.com.cn/jjxw/2026-10-28/doc-iniwttse3480315.shtml"
+    },
+    {
+      "title": "东山精密港股上市即破发 公司A股10月累跌近四成",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 10:19:00",
+      "url": "https://finance.sina.com.cn/jjxw/2026-10-28/doc-iniwttsa6716329.shtml"
+    },
+    {
+      "title": "上海智能制造方案落地，工业机器人密度提至600台/万人，机器人ETF博时(158037)跟踪指数早盘最高涨超3%",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 10:18:00",
+      "url": "https://finance.sina.com.cn/jjxw/2026-10-28/doc-iniwttse3480324.shtml"
+    },
+    {
+      "title": "谷歌发布新世界模型Genie 4，AI人工智能ETF平安(512930)标的指数上涨2.1%",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 10:16:00",
+      "url": "https://finance.sina.com.cn/jjxw/2026-10-28/doc-iniwttse3476995.shtml"
+    },
+    {
+      "title": "所有企业都会犯错，比亚迪最可怕的是纠错能力",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 10:16:00",
+      "url": "https://finance.sina.com.cn/wm/2026-10-28/doc-iniwttsa6708753.shtml"
+    },
+    {
+      "title": "Q3营收超预期，SK海力士涨超8%！A股科技强势反攻弹，澜起科技涨超5%，科创芯片设计ETF汇添富(589290)标的指数大涨超3%",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 10:16:00",
+      "url": "https://finance.sina.com.cn/jjxw/2026-10-28/doc-iniwttsf9752582.shtml"
+    },
+    {
+      "title": "水泥网评论：磷石膏制酸联产水泥熟料为何引发行业“恐慌”？——打破了当前价格维护逻辑",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 10:15:30",
+      "url": "http://field.10jqka.com.cn/20261028/c681172317.shtml"
+    },
+    {
+      "title": "我国学者提出阿尔茨海默病诊疗“生理空间”新思路",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 10:15:03",
+      "url": "http://field.10jqka.com.cn/20261028/c681172316.shtml"
+    },
+    {
+      "title": "被指围标串标！中国电信某全资子公司被某系统暂停投标资格",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 10:15:00",
+      "url": "https://finance.sina.com.cn/wm/2026-10-28/doc-iniwttrx3898112.shtml"
+    },
+    {
+      "title": "零售板块探底回升！茂业商业斩获2连板，仓储会员店等新业态增速超25%",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 10:14:53",
+      "url": "http://field.10jqka.com.cn/20261028/c681172272.shtml"
+    },
+    {
+      "title": "SK海力士三季度业绩狂飙提振港股存储股 澜起科技大涨超7%",
+      "src": "财联社",
+      "pub_time": "2026-10-28 10:14:46",
+      "url": "https://www.cls.cn/detail/2517410"
+    },
+    {
+      "title": "南方两倍做多三星电子涨超18%，南方两倍（最高）做多SK海力士涨16%",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 10:14:45",
+      "url": "http://field.10jqka.com.cn/20261028/c681172281.shtml"
+    },
+    {
+      "title": "海外存储巨头大涨叠加HBM价格看翻倍，半导体全链共振兑现",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 10:14:44",
+      "url": "http://field.10jqka.com.cn/20261028/c681172673.shtml"
+    },
+    {
+      "title": "SK海力士三季度业绩狂飙提振港股存储股 澜起科技大涨超7%",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 10:14:00",
+      "url": "https://finance.sina.com.cn/jjxw/2026-10-28/doc-iniwttsf9751750.shtml"
+    },
+    {
+      "title": "复星医药2026：前三季度收入超300亿元，创新药研发投入增长55%",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 10:13:00",
+      "url": "https://finance.sina.com.cn/wm/2026-10-28/doc-iniwttse3493967.shtml"
+    },
+    {
+      "title": "邮储银行上海分行与远景能源落地超10亿元供应链金融业务",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 10:13:00",
+      "url": "https://finance.sina.com.cn/jjxw/2026-10-28/doc-iniwttse3473594.shtml"
+    },
+    {
+      "title": "2026智能测评前沿发展与生态研讨会成功举办",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 10:12:52",
+      "url": "http://field.10jqka.com.cn/20261028/c681172187.shtml"
+    },
+    {
+      "title": "2026第六届电磁频谱安全与控制大会在武汉成功举办",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 10:12:50",
+      "url": "http://field.10jqka.com.cn/20261028/c681172190.shtml"
+    },
+    {
+      "title": "报告认为：中国银行业务软件市场规模将达到670亿元",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 10:12:00",
+      "url": "https://finance.sina.com.cn/jjxw/2026-10-28/doc-iniwttsf9751134.shtml"
+    },
+    {
+      "title": "Cell Metab：南京大学团队领衔发文揭示产后抑郁经乳液囊泡影响子代神经发育的全新通路",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 10:12:00",
+      "url": "https://finance.sina.com.cn/wm/2026-10-28/doc-iniwttse3489789.shtml"
+    },
+    {
+      "title": "券商观点|社会服务行业双周报：秋假有望助力淡季出行消费，三季报将集中披露",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 10:11:52",
+      "url": "http://field.10jqka.com.cn/20261028/c681172088.shtml"
+    },
+    {
+      "title": "AI下游应用端持续升温 物理AI概念震荡反弹",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 10:10:20",
+      "url": "http://field.10jqka.com.cn/20261028/c681172010.shtml"
+    },
+    {
+      "title": "天风证券股份有限公司 2026年第三次临时股东会决议公告",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 10:10:00",
+      "url": "https://finance.sina.com.cn/roll/2026-10-28/doc-iniwttsf9751782.shtml"
+    },
+    {
+      "title": "集体上调！工行、农行、建行、中行、交行、邮储银行，全都在列！",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 10:09:00",
+      "url": "https://finance.sina.com.cn/roll/2026-10-28/doc-iniwttse3465482.shtml"
+    },
+    {
+      "title": "创业板算力ETF鹏华(158057)标的指数涨近3%，AI基建浪潮加速，存储芯片、算力租赁早盘走强",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 10:08:00",
+      "url": "https://finance.sina.com.cn/jjxw/2026-10-28/doc-iniwttse3467796.shtml"
+    },
+    {
+      "title": "人形机器人概念表现活跃 五洲新春、宁波东力涨停",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 10:07:07",
+      "url": "http://field.10jqka.com.cn/20261028/c681171792.shtml"
+    },
+    {
+      "title": "玲珑轮胎坚持“三个向上”重塑商用车胎渠道盈利逻辑",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 10:07:00",
+      "url": "https://finance.sina.com.cn/jjxw/2026-10-28/doc-iniwttsa6698900.shtml"
+    },
+    {
+      "title": "长久物流携手西班牙物流企业布局海外市场",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 10:06:00",
+      "url": "https://finance.sina.com.cn/roll/2026-10-28/doc-iniwttse3478276.shtml"
+    },
+    {
+      "title": "国证2000ETF平安(159521)标的指数上涨0.72%，成分股富瀚微上涨20.00%",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 10:06:00",
+      "url": "https://finance.sina.com.cn/jjxw/2026-10-28/doc-iniwttse3464951.shtml"
+    },
+    {
+      "title": "上证180指数下跌1.03%，上证180ETF平安(530280)成分股方面涨跌互现，沪农商行领涨4.22%",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 10:06:00",
+      "url": "https://finance.sina.com.cn/jjxw/2026-10-28/doc-iniwttrx3885313.shtml"
+    },
+    {
+      "title": "盛邦安全亮相海博会 打通“船—海—港”一体化防护链路",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 10:06:00",
+      "url": "https://finance.sina.com.cn/roll/2026-10-28/doc-iniwttsf9753027.shtml"
+    },
+    {
+      "title": "致远互联前三季度营收同比增长8.25%",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 10:06:00",
+      "url": "https://finance.sina.com.cn/roll/2026-10-28/doc-iniwttrx3890095.shtml"
+    },
+    {
+      "title": "“吉祥方舟”号首访加纳 一张张笑脸是最美赞誉",
+      "src": "新浪财经",
+      "pub_time": "2026-10-28 10:06:00",
+      "url": "https://finance.sina.com.cn/wm/2026-10-28/doc-iniwttsa6695200.shtml"
+    },
+    {
+      "title": "从购票到观演：票牛持续提升用户服务体验",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 10:05:16",
+      "url": "http://field.10jqka.com.cn/20261028/c681171669.shtml"
+    },
+    {
+      "title": "千年黎锦邂逅国际时尚 海南五指山Miss黎·黎锦服饰文创设计大赛颁奖典礼在深圳落幕",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 10:03:50",
+      "url": "http://field.10jqka.com.cn/20261028/c681171649.shtml"
+    },
+    {
+      "title": "专家解读之五：建立健全工业领域碳排放双控工作体系 推动石化化工行业绿色低碳转型迈上新台阶",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 10:03:21",
+      "url": "http://field.10jqka.com.cn/20261028/c681171552.shtml"
+    },
+    {
+      "title": "高盛猛调光模块行业空间！港股光通信集体走强，海光芯正涨超10%",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 10:02:59",
+      "url": "http://field.10jqka.com.cn/20261028/c681171937.shtml"
+    },
+    {
+      "title": "Anthropic携手六家新药研发机构！AI制药概念震荡反弹，百普赛斯涨超10%",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 09:57:30",
+      "url": "http://field.10jqka.com.cn/20261028/c681171218.shtml"
+    },
+    {
+      "title": "A股公司回购增持升温 用实际行动筑信心稳市场",
+      "src": "新华网",
+      "pub_time": "2026-10-28 09:57:03",
+      "url": "http://www.news.cn/money/20261028/e25739a537ff4f0da480306b41558477/c.html"
+    },
+    {
+      "title": "中期分红陆续兑现 银行股红利属性持续强化",
+      "src": "新华网",
+      "pub_time": "2026-10-28 09:57:00",
+      "url": "http://www.news.cn/money/20261028/794fe8a24ff44abdbd52d75a58263b86/c.html"
+    },
+    {
+      "title": "A500ETF华夏：10月27日融资买入1701.89万元，融资融券余额1.07亿元",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 09:55:34",
+      "url": "http://stock.10jqka.com.cn/rzrq/20261028/c681171099.shtml"
+    },
+    {
+      "title": "XD中证A500ETF泰康：10月27日融资买入647.46万元，融资融券余额894.32万元",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 09:54:34",
+      "url": "http://stock.10jqka.com.cn/rzrq/20261028/c681171020.shtml"
+    },
+    {
+      "title": "客户抢订2030年产能！光模块供需缺口巨大，“易中天”齐涨，CPO集体暴动",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 09:54:31",
+      "url": "http://field.10jqka.com.cn/20261028/c681171011.shtml"
+    },
+    {
+      "title": "港股物理AI股走强 欢创科技涨超7%",
+      "src": "同花顺",
+      "pub_time": "2026-10-28 09:52:41",
+      "url": "http://field.10jqka.com.cn/20261028/c681170958.shtml"
     }
   ],
   "disclaimer": "不是买卖指令;研究信号,human executes."
