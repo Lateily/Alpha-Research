@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-28T06:50:13.381727+00:00",
+  "generated_at": "2026-10-28T15:22:01.984944+00:00",
   "date": "2026-10-28",
   "model_state": "NORMAL_OBSERVATION_MODE",
   "brief_e": "1 Risk Review",
@@ -13,15 +13,15 @@
         "action": "REVIEW_STOP",
         "priority": "HIGH",
         "confidence": 0,
-        "pnl_pct": -13.93,
+        "pnl_pct": -13.98,
         "holding_days": 210,
         "weight_pct": 4.4,
         "vp_score": 48,
         "confluence": 0,
-        "reason_e": "Position in drawdown -13.9%. Signal: NEUTRAL (score 0). Review thesis — is the wrongIf condition still intact?",
-        "reason_z": "亏损-13.9%，信号评分0。复核投资逻辑，检查wrongIf条件是否触发。",
+        "reason_e": "Position in drawdown -14.0%. Signal: NEUTRAL (score 0). Review thesis — is the wrongIf condition still intact?",
+        "reason_z": "亏损-14.0%，信号评分0。复核投资逻辑，检查wrongIf条件是否触发。",
         "entry_target": null,
-        "exit_trigger": "P&L -13.9% ≤ -10.0% → thesis review required",
+        "exit_trigger": "P&L -14.0% ≤ -10.0% → thesis review required",
         "execution_posture": null
       },
       {
@@ -31,13 +31,13 @@
         "action": "HOLD",
         "priority": "LOW",
         "confidence": 13,
-        "pnl_pct": -7.38,
+        "pnl_pct": -6.61,
         "holding_days": 232,
-        "weight_pct": 41.9,
+        "weight_pct": 42.1,
         "vp_score": 48,
         "confluence": 13,
-        "reason_e": "Signal neutral (score 13). P&L -7.4% after 232d. Paper-hold — no new review trigger. Bullish: Rsi Oversold | RSI 24 | Price vs MA20 -20.7% | Regime: PERMISSIVE | VP 48.",
-        "reason_z": "信号中性（评分13），浮盈-7.4%，持有232天，无新触发条件。多头：RSI超卖 | RSI 24 | 距MA20 -20.7% | 政策顺风 | VP 48。",
+        "reason_e": "Signal neutral (score 13). P&L -6.6% after 232d. Paper-hold — no new review trigger. Bullish: Rsi Oversold | RSI 25 | Price vs MA20 -20.7% | Regime: PERMISSIVE | VP 48.",
+        "reason_z": "信号中性（评分13），浮盈-6.6%，持有232天，无新触发条件。多头：RSI超卖 | RSI 25 | 距MA20 -20.7% | 政策顺风 | VP 48。",
         "entry_target": null,
         "exit_trigger": "Score ≤ -60 OR P&L ≤ -10.0%",
         "execution_posture": null
@@ -51,7 +51,7 @@
         "confidence": 0,
         "pnl_pct": 0.0,
         "holding_days": 232,
-        "weight_pct": 5.2,
+        "weight_pct": 5.1,
         "vp_score": null,
         "confluence": 0,
         "reason_e": "Signal neutral (score 0). P&L +0.0% after 232d. Paper-hold — no new review trigger. RSI 59 | Price vs MA20 +3.0%.",
@@ -69,7 +69,7 @@
         "confidence": 0,
         "pnl_pct": 0.0,
         "holding_days": 225,
-        "weight_pct": 30.8,
+        "weight_pct": 30.7,
         "vp_score": null,
         "confluence": 0,
         "reason_e": "Signal neutral (score 0). P&L +0.0% after 225d. Paper-hold — no new review trigger. RSI 41 | Price vs MA20 -3.5%.",
@@ -110,8 +110,8 @@
         "weight_pct": 0,
         "vp_score": 45,
         "confluence": 14,
-        "reason_e": "No evidence-review condition. Score 14, VP 45. Bullish: Rsi Oversold, Kdj Oversold | RSI 24 | Price vs MA20 -20.4% | VP 45.",
-        "reason_z": "暂无证据复核条件。评分14，VP45。多头：RSI超卖、KDJ极度超卖(J<0) | RSI 24 | 距MA20 -20.4% | VP 45。",
+        "reason_e": "No evidence-review condition. Score 14, VP 45. Bullish: Rsi Oversold, Kdj Oversold | RSI 25 | Price vs MA20 -20.4% | VP 45.",
+        "reason_z": "暂无证据复核条件。评分14，VP45。多头：RSI超卖、KDJ极度超卖(J<0) | RSI 25 | 距MA20 -20.4% | VP 45。",
         "entry_target": null,
         "exit_trigger": null,
         "execution_posture": null
@@ -146,8 +146,8 @@
         "weight_pct": 0,
         "vp_score": 47,
         "confluence": 0,
-        "reason_e": "No evidence-review condition. Score 0, VP 47. RSI 32 | Price vs MA20 -9.8% | VP 47.",
-        "reason_z": "暂无证据复核条件。评分0，VP47。RSI 32 | 距MA20 -9.8% | VP 47。",
+        "reason_e": "No evidence-review condition. Score 0, VP 47. RSI 33 | Price vs MA20 -9.8% | VP 47.",
+        "reason_z": "暂无证据复核条件。评分0，VP47。RSI 33 | 距MA20 -9.8% | VP 47。",
         "entry_target": null,
         "exit_trigger": null,
         "execution_posture": null
@@ -175,21 +175,9 @@
   "buy_watches": [],
   "portfolio_risk": [
     "⚠️ CONCENTRATION: 300308.SZ (中际旭创) = 42% of portfolio — above 40.0% limit",
-    "🔴 DRAWDOWN REVIEW: 002594.SZ -13.9% — review thesis and wrongIf conditions"
+    "🔴 DRAWDOWN REVIEW: 002594.SZ -14.0% — review thesis and wrongIf conditions"
   ],
   "wrongif_alerts": [
-    {
-      "ticker": "002594.SZ",
-      "severity": "LOW",
-      "status": "MANUAL",
-      "wrongIf_e": "revenue_growth < -10% for 2 consecutive quarters (tariff impact proxy) OR gross_margin drops below 15% OR earnings_growth < -40%",
-      "wrongIf_z": "连续两季度营收增速<-10%（关税冲击代理指标），或毛利率跌破15%，或盈利增速<-40%",
-      "note_e": "Cannot auto-verify 'revenue_growth' — manual check required.",
-      "note_z": "无法自动核验「revenue_growth」——需人工检查。",
-      "indicator": "revenue_growth",
-      "actual": null,
-      "threshold": null
-    },
     {
       "ticker": "300308.SZ",
       "severity": "NONE",
@@ -201,6 +189,18 @@
       "indicator": "hyperscaler_basket_drawdown_pct",
       "actual": 8.7,
       "threshold": 25.0
+    },
+    {
+      "ticker": "002594.SZ",
+      "severity": "LOW",
+      "status": "MANUAL",
+      "wrongIf_e": "revenue_growth < -10% for 2 consecutive quarters (tariff impact proxy) OR gross_margin drops below 15% OR earnings_growth < -40%",
+      "wrongIf_z": "连续两季度营收增速<-10%（关税冲击代理指标），或毛利率跌破15%，或盈利增速<-40%",
+      "note_e": "Cannot auto-verify 'revenue_growth' — manual check required.",
+      "note_z": "无法自动核验「revenue_growth」——需人工检查。",
+      "indicator": "revenue_growth",
+      "actual": null,
+      "threshold": null
     },
     {
       "ticker": "688120.SH",

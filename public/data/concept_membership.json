@@ -1,5 +1,5 @@
 {
-  "fetched_at": "2026-10-28T06:47:20Z",
+  "fetched_at": "2026-10-28T15:19:04Z",
   "_status": "ok",
   "api_used": "ths_index+ths_member",
   "scope": "watchlist_only",
@@ -474,6 +474,18 @@
       ]
     },
     {
+      "ts_code": "883441.TI",
+      "name": "高ROE股",
+      "type": "S",
+      "total_count": 200.0,
+      "member_count": 3,
+      "members": [
+        "300054.SZ",
+        "300308.SZ",
+        "603233.SH"
+      ]
+    },
+    {
       "ts_code": "883901.TI",
       "name": "昨日资金前十",
       "type": "S",
@@ -854,17 +866,6 @@
       ]
     },
     {
-      "ts_code": "883441.TI",
-      "name": "高ROE股",
-      "type": "S",
-      "total_count": 200.0,
-      "member_count": 2,
-      "members": [
-        "300308.SZ",
-        "603233.SH"
-      ]
-    },
-    {
       "ts_code": "883443.TI",
       "name": "同花顺算力主题精选",
       "type": "S",
@@ -905,6 +906,17 @@
       "member_count": 2,
       "members": [
         "300308.SZ",
+        "688120.SH"
+      ]
+    },
+    {
+      "ts_code": "883925.TI",
+      "name": "股东户数减少",
+      "type": "S",
+      "total_count": 72.0,
+      "member_count": 2,
+      "members": [
+        "300054.SZ",
         "688120.SH"
       ]
     },
@@ -1871,16 +1883,6 @@
       ]
     },
     {
-      "ts_code": "883925.TI",
-      "name": "股东户数减少",
-      "type": "S",
-      "total_count": 72.0,
-      "member_count": 1,
-      "members": [
-        "688120.SH"
-      ]
-    },
-    {
       "ts_code": "883934.TI",
       "name": "保险重仓",
       "type": "S",
@@ -2801,6 +2803,8 @@
       "700001.TI"
     ],
     "300054.SZ": [
+      "883441.TI",
+      "883925.TI",
       "886113.TI",
       "883442.TI",
       "700054.TI",
@@ -2879,6 +2883,6 @@
     ]
   },
   "total_concepts": 230,
-  "total_memberships": 395,
+  "total_memberships": 397,
   "disclaimer": "不是买卖指令;研究信号,human executes."
 }

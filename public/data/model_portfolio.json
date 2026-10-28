@@ -8,7 +8,7 @@
     "no_position_mutation": true,
     "run_date": "2026-10-28",
     "pilot_start_date": "2026-06-08",
-    "generated_at": "2026-10-28T06:50:13.426487+00:00",
+    "generated_at": "2026-10-28T15:22:02.035997+00:00",
     "fresh_pilot": true,
     "legacy_paper_positions_inherited": false,
     "sources": [
@@ -265,8 +265,8 @@
             "total": 0
           },
           "key_indicators": {
-            "rsi14": 44.1,
-            "macd_hist": 0.2548,
+            "rsi14": 43.9,
+            "macd_hist": 0.253,
             "price_vs_ma20": -1.07,
             "price_vs_ma60": null,
             "change_5d": -0.71,
@@ -342,8 +342,8 @@
             "total": 0
           },
           "key_indicators": {
-            "rsi14": 32.1,
-            "macd_hist": -0.4965,
+            "rsi14": 32.6,
+            "macd_hist": -0.4699,
             "price_vs_ma20": -9.75,
             "price_vs_ma60": null,
             "change_5d": -3.32,
@@ -377,8 +377,8 @@
             "total": 1
           },
           "key_indicators": {
-            "rsi14": 24.5,
-            "macd_hist": -23.5416,
+            "rsi14": 24.9,
+            "macd_hist": -23.4056,
             "price_vs_ma20": -20.69,
             "price_vs_ma60": null,
             "change_5d": -10.94,
@@ -389,7 +389,7 @@
               "type": "RSI_OVERSOLD",
               "strength": "moderate",
               "bullish": true,
-              "desc": "RSI(14) = 24.5 — oversold, watch for reversal"
+              "desc": "RSI(14) = 24.9 — oversold, watch for reversal"
             }
           ]
         },
@@ -419,8 +419,8 @@
             "total": 0
           },
           "key_indicators": {
-            "rsi14": 50.5,
-            "macd_hist": -0.0199,
+            "rsi14": 50.4,
+            "macd_hist": -0.0232,
             "price_vs_ma20": 0.43,
             "price_vs_ma60": null,
             "change_5d": 1.26,
@@ -508,8 +508,8 @@
             "total": 2
           },
           "key_indicators": {
-            "rsi14": 24.5,
-            "macd_hist": -8.9546,
+            "rsi14": 24.6,
+            "macd_hist": -8.9385,
             "price_vs_ma20": -20.36,
             "price_vs_ma60": null,
             "change_5d": -17.37,
@@ -520,7 +520,7 @@
               "type": "RSI_OVERSOLD",
               "strength": "moderate",
               "bullish": true,
-              "desc": "RSI(14) = 24.5 — oversold, watch for reversal"
+              "desc": "RSI(14) = 24.6 — oversold, watch for reversal"
             },
             {
               "type": "KDJ_OVERSOLD",
