@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-29T07:05:03.683472+00:00",
+  "generated_at": "2026-10-29T15:27:32.673519+00:00",
   "date": "2026-10-29",
   "portfolio_summary": {
     "total_attributed_trades": 5,
@@ -105,7 +105,7 @@
       "win_rate": 0.0,
       "avg_pnl": -4.74,
       "best_pnl": 0.0,
-      "worst_pnl": -14.21,
+      "worst_pnl": -14.23,
       "avg_weight": 12.0,
       "tickers": [
         "700.HK",
@@ -120,7 +120,7 @@
       "win_rate": 0.0,
       "avg_pnl": -4.74,
       "best_pnl": 0.0,
-      "worst_pnl": -14.21,
+      "worst_pnl": -14.23,
       "avg_weight": 10.0,
       "tickers": [
         "700.HK",
@@ -140,7 +140,7 @@
       "action": "WATCH",
       "count": 1,
       "win_rate": 0.0,
-      "avg_pnl": -14.21
+      "avg_pnl": -14.23
     }
   ],
   "vp_buckets": [
@@ -160,7 +160,7 @@
       "bucket": "VP 50-60",
       "count": 2,
       "win_rate": 0.0,
-      "avg_pnl": -7.11
+      "avg_pnl": -7.12
     }
   ],
   "by_ticker": [
@@ -202,7 +202,7 @@
     },
     {
       "ticker": "002594.SZ",
-      "pnl_pct": -14.21,
+      "pnl_pct": -14.23,
       "vp_at_entry": 52,
       "conf_at_entry": 55,
       "signal_count": 3,

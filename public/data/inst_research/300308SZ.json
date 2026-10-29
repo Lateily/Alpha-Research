@@ -1,7 +1,7 @@
 {
   "_status": "ok",
   "ticker": "300308.SZ",
-  "fetched_at": "2026-10-29T07:01:42Z",
+  "fetched_at": "2026-10-29T15:24:12Z",
   "api_used": "stk_holdertrade",
   "_attempted_endpoints": [
     "stk_surv",
@@ -9,6 +9,23 @@
   ],
   "window_days": 90,
   "surveys": [
+    {
+      "ts_code": "300308.SZ",
+      "ann_date": "20261029",
+      "holder_name": "机构专用",
+      "holder_type": "P",
+      "in_de": "DE",
+      "change_vol": 35000.0,
+      "change_ratio": 0.0032,
+      "after_share": null,
+      "after_ratio": null,
+      "avg_price": 582.05,
+      "total_share": null,
+      "surv_date": "20261029",
+      "inst_count": null,
+      "surv_type": null,
+      "description": null
+    },
     {
       "ts_code": "300308.SZ",
       "ann_date": "20261026",
@@ -368,9 +385,9 @@
     }
   ],
   "summary": {
-    "total_30d": 12,
-    "total_90d": 21,
+    "total_30d": 13,
+    "total_90d": 22,
     "unique_inst_30d": null,
-    "latest_date": "2026-10-26"
+    "latest_date": "2026-10-29"
   }
 }

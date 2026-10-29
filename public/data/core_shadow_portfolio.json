@@ -11,7 +11,7 @@
       "paper": "/home/runner/work/Alpha-Research/Alpha-Research/public/data/positions.json (read-only)",
       "registered": "/home/runner/work/Alpha-Research/Alpha-Research/public/data/thesis_queue.json"
     },
-    "as_of_paper": "2026-10-29T06:59:20"
+    "as_of_paper": "2026-10-29T15:21:46"
   },
   "books": {
     "A_current_paper": {
@@ -49,7 +49,7 @@
           "name": "比亚迪",
           "side": "LONG",
           "weight_pct": 4.53,
-          "pnl_pct": -14.21
+          "pnl_pct": -14.23
         }
       ],
       "gross_pct": 99.99,

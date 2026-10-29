@@ -12,21 +12,31 @@
       "date": "20261028",
       "bullish": true,
       "description": {
-        "e": "RSI recovering 32.6→40.7 — momentum rebuilding",
-        "z": "RSI从32.6回升至40.7，动能修复"
+        "e": "RSI recovering 32.3→40.5 — momentum rebuilding",
+        "z": "RSI从32.3回升至40.5，动能修复"
+      }
+    },
+    {
+      "type": "MACD_GOLDEN_CROSS",
+      "strength": "moderate",
+      "date": "20261028",
+      "bullish": true,
+      "description": {
+        "e": "MACD DIF(-3.262) crossed above DEA(-3.266) below zero — bullish momentum",
+        "z": "MACD DIF(-3.262)上穿DEA(-3.266)零轴下方金叉看涨"
       }
     }
   ],
   "signal_count": {
-    "bullish": 1,
+    "bullish": 2,
     "bearish": 0,
-    "total": 1
+    "total": 2
   },
   "indicators": {
     "ma5": 57.53,
     "ma20": 61.6,
     "ma60": null,
-    "rsi14": 40.7,
+    "rsi14": 40.5,
     "vol_ma20": 183717,
     "vol_ratio": 1.29,
     "price_vs_ma20": -4.87,
@@ -34,9 +44,9 @@
     "change_1d": 4.34,
     "change_5d": 0.69,
     "change_20d": -17.55,
-    "macd_dif": -3.2143,
-    "macd_dea": -3.1949,
-    "macd_hist": -0.0388,
+    "macd_dif": -3.2623,
+    "macd_dea": -3.2656,
+    "macd_hist": 0.0067,
     "bb_upper": 71.13,
     "bb_mid": 61.6,
     "bb_lower": 52.07,
