@@ -1,7 +1,7 @@
 {
   "_status": "ok",
   "ticker": "300308.SZ",
-  "fetched_at": "2026-10-28T15:19:05Z",
+  "fetched_at": "2026-10-29T07:01:42Z",
   "api_used": "stk_holdertrade",
   "_attempted_endpoints": [
     "stk_surv",
@@ -365,28 +365,11 @@
       "inst_count": null,
       "surv_type": null,
       "description": null
-    },
-    {
-      "ts_code": "300308.SZ",
-      "ann_date": "20260730",
-      "holder_name": "招商证券交易单元(052300)",
-      "holder_type": "P",
-      "in_de": "DE",
-      "change_vol": 30400.0,
-      "change_ratio": 0.0027,
-      "after_share": null,
-      "after_ratio": null,
-      "avg_price": 864.0,
-      "total_share": null,
-      "surv_date": "20260730",
-      "inst_count": null,
-      "surv_type": null,
-      "description": null
     }
   ],
   "summary": {
     "total_30d": 12,
-    "total_90d": 22,
+    "total_90d": 21,
     "unique_inst_30d": null,
     "latest_date": "2026-10-26"
   }
