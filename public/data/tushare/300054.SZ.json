@@ -1,6 +1,6 @@
 {
   "ticker": "300054.SZ",
-  "fetched_at": "2026-10-29T15:23:15Z",
+  "fetched_at": "2026-10-30T06:57:22Z",
   "permission_model": "runtime_probe",
   "_status": "partial",
   "data": {
@@ -759,22 +759,9 @@
           "pct_chg": -8.4158,
           "vol": 405500.87,
           "amount": 2618421.7067
-        },
-        {
-          "ts_code": "300054.SZ",
-          "trade_date": "20260731",
-          "open": 70.98,
-          "high": 73.33,
-          "low": 68.57,
-          "close": 68.68,
-          "pre_close": 65.53,
-          "change": 3.15,
-          "pct_chg": 4.807,
-          "vol": 464053.34,
-          "amount": 3293259.46452
         }
       ],
-      "row_count": 59,
+      "row_count": 58,
       "_status": "ok",
       "as_of": "20261029"
     },
@@ -1939,34 +1926,19 @@
           "free_share": 67384.8246,
           "total_mv": 5995997.223,
           "circ_mv": 4674529.865
-        },
-        {
-          "ts_code": "300054.SZ",
-          "trade_date": "20260731",
-          "close": 68.68,
-          "turnover_rate": 6.2443,
-          "turnover_rate_f": 6.8866,
-          "volume_ratio": 1.09,
-          "pe": 90.9045,
-          "pe_ttm": 78.8634,
-          "pb": 11.9871,
-          "ps": 17.8884,
-          "ps_ttm": 16.9781,
-          "dv_ratio": 0.1443,
-          "dv_ttm": 0.1455,
-          "total_share": 95325.8681,
-          "float_share": 74316.8479,
-          "free_share": 67384.8246,
-          "total_mv": 6546980.7516,
-          "circ_mv": 5104081.258
         }
       ],
-      "row_count": 59,
+      "row_count": 58,
       "_status": "ok",
       "as_of": "20261029"
     },
     "adj_factor": {
       "rows": [
+        {
+          "ts_code": "300054.SZ",
+          "trade_date": "20261030",
+          "adj_factor": 12.967
+        },
         {
           "ts_code": "300054.SZ",
           "trade_date": "20261029",
@@ -2256,16 +2228,11 @@
           "ts_code": "300054.SZ",
           "trade_date": "20260803",
           "adj_factor": 12.967
-        },
-        {
-          "ts_code": "300054.SZ",
-          "trade_date": "20260731",
-          "adj_factor": 12.967
         }
       ],
       "row_count": 59,
       "_status": "ok",
-      "as_of": "20261029"
+      "as_of": "20261030"
     },
     "income": {
       "rows": [
