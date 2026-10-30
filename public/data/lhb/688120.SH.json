@@ -1,11 +1,11 @@
 {
   "ticker": "688120.SH",
-  "fetched_at": "2026-10-30T06:58:02Z",
+  "fetched_at": "2026-10-30T15:12:01Z",
   "trade_date": "20261030",
   "_status": "ok",
   "api_used": "top_list",
   "days_window": 30,
-  "as_of": "20261029",
+  "as_of": "20261030",
   "appearances": [],
   "summary": {
     "total_appearances": 0,

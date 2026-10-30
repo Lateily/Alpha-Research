@@ -8,7 +8,7 @@
     "no_position_mutation": true,
     "run_date": "2026-10-30",
     "pilot_start_date": "2026-06-08",
-    "generated_at": "2026-10-30T07:01:43.031420+00:00",
+    "generated_at": "2026-10-30T15:15:46.178960+00:00",
     "fresh_pilot": true,
     "legacy_paper_positions_inherited": false,
     "sources": [
@@ -265,8 +265,8 @@
             "total": 0
           },
           "key_indicators": {
-            "rsi14": 45.9,
-            "macd_hist": 0.4876,
+            "rsi14": 46.0,
+            "macd_hist": 0.4824,
             "price_vs_ma20": -0.05,
             "price_vs_ma60": null,
             "change_5d": 3.1,
@@ -342,8 +342,8 @@
             "total": 0
           },
           "key_indicators": {
-            "rsi14": 38.7,
-            "macd_hist": 0.2214,
+            "rsi14": 39.3,
+            "macd_hist": 0.251,
             "price_vs_ma20": -5.27,
             "price_vs_ma60": null,
             "change_5d": 2.29,
@@ -377,8 +377,8 @@
             "total": 0
           },
           "key_indicators": {
-            "rsi14": 31.8,
-            "macd_hist": -9.9368,
+            "rsi14": 31.9,
+            "macd_hist": -9.9511,
             "price_vs_ma20": -16.36,
             "price_vs_ma60": null,
             "change_5d": -1.37,
@@ -412,8 +412,8 @@
             "total": 0
           },
           "key_indicators": {
-            "rsi14": 49.7,
-            "macd_hist": -0.0512,
+            "rsi14": 49.9,
+            "macd_hist": -0.0539,
             "price_vs_ma20": -0.21,
             "price_vs_ma60": null,
             "change_5d": 0.66,
@@ -501,8 +501,8 @@
             "total": 2
           },
           "key_indicators": {
-            "rsi14": 24.4,
-            "macd_hist": -9.9612,
+            "rsi14": 24.9,
+            "macd_hist": -9.904,
             "price_vs_ma20": -19.29,
             "price_vs_ma60": null,
             "change_5d": -15.01,
@@ -513,7 +513,7 @@
               "type": "RSI_OVERSOLD",
               "strength": "moderate",
               "bullish": true,
-              "desc": "RSI(14) = 24.4 — oversold, watch for reversal"
+              "desc": "RSI(14) = 24.9 — oversold, watch for reversal"
             },
             {
               "type": "KDJ_OVERSOLD",

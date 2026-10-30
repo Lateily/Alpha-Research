@@ -1,5 +1,5 @@
 {
-  "fetched_at": "2026-10-30T06:58:18Z",
+  "fetched_at": "2026-10-30T15:12:17Z",
   "_status": "ok",
   "api_used": "ths_index+ths_member",
   "scope": "watchlist_only",
@@ -928,6 +928,17 @@
       "member_count": 2,
       "members": [
         "002594.SZ",
+        "603233.SH"
+      ]
+    },
+    {
+      "ts_code": "883959.TI",
+      "name": "近期并购",
+      "type": "S",
+      "total_count": 262.0,
+      "member_count": 2,
+      "members": [
+        "300308.SZ",
         "603233.SH"
       ]
     },
@@ -1893,16 +1904,6 @@
       ]
     },
     {
-      "ts_code": "883959.TI",
-      "name": "近期并购",
-      "type": "S",
-      "total_count": 262.0,
-      "member_count": 1,
-      "members": [
-        "300308.SZ"
-      ]
-    },
-    {
       "ts_code": "883964.TI",
       "name": "定增破发",
       "type": "S",
@@ -2656,6 +2657,7 @@
       "700001.TI"
     ],
     "603233.SH": [
+      "883959.TI",
       "885770.TI",
       "700332.TI",
       "700306.TI",
@@ -2883,6 +2885,6 @@
     ]
   },
   "total_concepts": 230,
-  "total_memberships": 397,
+  "total_memberships": 398,
   "disclaimer": "不是买卖指令;研究信号,human executes."
 }
