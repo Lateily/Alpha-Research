@@ -1,25 +1,25 @@
 {
-  "generated_at": "2026-08-05T11:16:44.380291+00:00",
+  "generated_at": "2026-10-30T15:09:48.393308+00:00",
   "industry": "ai_infrastructure",
-  "composite_score": 67.8,
+  "composite_score": 66.2,
   "composite_signal": "MODERATE",
   "hyperscaler_basket": {
     "NVDA": {
-      "price": 211.94,
-      "ath_3mo": 235.47,
-      "drawdown_3mo_pct": -10.0
+      "price": 206.6,
+      "ath_3mo": 239.24,
+      "drawdown_3mo_pct": -13.6
     },
     "MSFT": {
-      "price": 492.81,
-      "ath_3mo": 492.81,
-      "drawdown_3mo_pct": 0.0
+      "price": 522.23,
+      "ath_3mo": 543.45,
+      "drawdown_3mo_pct": -3.9
     },
     "GOOGL": {
-      "price": 377.65,
-      "ath_3mo": 402.38,
-      "drawdown_3mo_pct": -6.1
+      "price": 282.33,
+      "ath_3mo": 377.41,
+      "drawdown_3mo_pct": -25.2
     },
-    "_avg_drawdown_pct": 5.4,
+    "_avg_drawdown_pct": 14.2,
     "_window": "3 months (~63 trading days)",
     "_constituents": [
       "NVDA",
@@ -30,9 +30,9 @@
   "interpretation": "Capex cycle healthy but not accelerating. Existing thesis intact; no incremental urgency.",
   "component_scores": {
     "nvda_revenue": 68,
-    "hyperscaler_capex": 73,
-    "tsmc_revenue": 55,
-    "price_momentum": 75
+    "hyperscaler_capex": 68,
+    "tsmc_revenue": 68,
+    "price_momentum": 50
   },
   "indicators": {
     "nvda_revenue": {
@@ -40,6 +40,11 @@
       "name": "NVIDIA",
       "role": "AI compute buildout proxy (~85% data center revenue)",
       "quarters": [
+        {
+          "quarter": "2026-07-31",
+          "revenue_bn": 96.22,
+          "qoq_pct": 17.9
+        },
         {
           "quarter": "2026-04-30",
           "revenue_bn": 81.61,
@@ -54,27 +59,22 @@
           "quarter": "2025-10-31",
           "revenue_bn": 57.01,
           "qoq_pct": 22.0
-        },
-        {
-          "quarter": "2025-07-31",
-          "revenue_bn": 46.74,
-          "qoq_pct": 6.1
         }
       ],
       "price": {
-        "price": 211.94,
-        "return_3m_pct": 19.4,
-        "ath_3mo": 235.47,
-        "drawdown_3mo_pct": -10.0
+        "price": 206.6,
+        "return_3m_pct": 3.4,
+        "ath_3mo": 239.24,
+        "drawdown_3mo_pct": -13.6
       },
-      "latest_qoq": 19.8,
+      "latest_qoq": 17.9,
       "score": 68,
       "signal": "STABLE"
     },
     "hyperscaler_capex": {
-      "combined_capex_latest_bn": 155.0,
-      "combined_capex_qoq_pct": 24.0,
-      "score": 73,
+      "combined_capex_latest_bn": 158.9,
+      "combined_capex_qoq_pct": 16.6,
+      "score": 68,
       "components": {
         "MSFT": {
           "name": "Microsoft",
@@ -101,10 +101,10 @@
             }
           ],
           "price": {
-            "price": 492.81,
-            "return_3m_pct": 32.4,
-            "ath_3mo": 492.81,
-            "drawdown_3mo_pct": 0.0
+            "price": 522.23,
+            "return_3m_pct": 40.3,
+            "ath_3mo": 543.45,
+            "drawdown_3mo_pct": -3.9
           },
           "latest_qoq": 16.0,
           "score": 65,
@@ -135,10 +135,10 @@
             }
           ],
           "price": {
-            "price": 377.65,
-            "return_3m_pct": 26.0,
-            "ath_3mo": 402.38,
-            "drawdown_3mo_pct": -6.1
+            "price": 282.33,
+            "return_3m_pct": -20.9,
+            "ath_3mo": 377.41,
+            "drawdown_3mo_pct": -25.2
           },
           "latest_qoq": 25.9,
           "score": 78,
@@ -147,6 +147,11 @@
         "META": {
           "name": "Meta",
           "quarters": [
+            {
+              "quarter": "2026-09-30",
+              "capex_bn": 33.94,
+              "qoq_pct": 12.7
+            },
             {
               "quarter": "2026-06-30",
               "capex_bn": 30.12,
@@ -161,21 +166,16 @@
               "quarter": "2025-12-31",
               "capex_bn": 21.38,
               "qoq_pct": 13.6
-            },
-            {
-              "quarter": "2025-09-30",
-              "capex_bn": 18.83,
-              "qoq_pct": 13.9
             }
           ],
           "price": {
-            "price": 587.94,
-            "return_3m_pct": 2.7,
-            "ath_3mo": 681.31,
-            "drawdown_3mo_pct": -13.7
+            "price": 625.43,
+            "return_3m_pct": 11.1,
+            "ath_3mo": 777.59,
+            "drawdown_3mo_pct": -19.6
           },
-          "latest_qoq": 58.5,
-          "score": 90,
+          "latest_qoq": 12.7,
+          "score": 65,
           "weight": 0.2
         },
         "AMZN": {
@@ -203,10 +203,10 @@
             }
           ],
           "price": {
-            "price": 277.42,
-            "return_3m_pct": 30.4,
-            "ath_3mo": 284.02,
-            "drawdown_3mo_pct": -2.3
+            "price": 239.9,
+            "return_3m_pct": 0.7,
+            "ath_3mo": 278.09,
+            "drawdown_3mo_pct": -13.7
           },
           "latest_qoq": 11.8,
           "score": 65,
@@ -221,6 +221,11 @@
       "role": "Semiconductor supply chain health; HPC/AI chip fab proxy",
       "quarters": [
         {
+          "quarter": "2026-09-30",
+          "revenue_bn": 1494.24,
+          "qoq_pct": 17.6
+        },
+        {
           "quarter": "2026-06-30",
           "revenue_bn": 1270.38,
           "qoq_pct": 12.0
@@ -234,27 +239,22 @@
           "quarter": "2025-12-31",
           "revenue_bn": 1046.09,
           "qoq_pct": 5.7
-        },
-        {
-          "quarter": "2025-09-30",
-          "revenue_bn": 989.92,
-          "qoq_pct": 6.0
         }
       ],
       "price": {
-        "price": 417.17,
-        "return_3m_pct": 22.4,
-        "ath_3mo": 477.57,
-        "drawdown_3mo_pct": -12.6
+        "price": 411.98,
+        "return_3m_pct": -13.5,
+        "ath_3mo": 485.8,
+        "drawdown_3mo_pct": -15.2
       },
-      "latest_qoq": 12.0,
-      "score": 55,
-      "signal": "MODERATE"
+      "latest_qoq": 17.6,
+      "score": 68,
+      "signal": "STRONG"
     },
     "price_momentum": {
-      "basket_return_3m_pct": 24.4,
-      "score": 75,
-      "signal": "BULLISH"
+      "basket_return_3m_pct": 9.3,
+      "score": 50,
+      "signal": "NEUTRAL"
     }
   },
   "stock_implications": {

@@ -1,17 +1,63 @@
 {
-  "_status": "empty",
+  "_status": "ok",
   "ticker": "002594.SZ",
-  "fetched_at": "2026-08-05T11:23:03Z",
+  "fetched_at": "2026-10-30T15:15:03Z",
   "api_used": "stk_holdertrade",
   "window_days": 180,
-  "events": [],
+  "events": [
+    {
+      "ts_code": "002594.SZ",
+      "ann_date": "20261028",
+      "holder_name": "机构专用",
+      "holder_type": "P",
+      "in_de": "DE",
+      "change_vol": 26000,
+      "change_ratio": 0.0007,
+      "after_share": null,
+      "after_ratio": null,
+      "avg_price": 82.74,
+      "total_share": null,
+      "begin_date": null,
+      "close_date": null
+    },
+    {
+      "ts_code": "002594.SZ",
+      "ann_date": "20260717",
+      "holder_name": "机构专用",
+      "holder_type": "P",
+      "in_de": "DE",
+      "change_vol": 58300,
+      "change_ratio": 0.0017,
+      "after_share": null,
+      "after_ratio": null,
+      "avg_price": 93.47,
+      "total_share": null,
+      "begin_date": null,
+      "close_date": null
+    },
+    {
+      "ts_code": "002594.SZ",
+      "ann_date": "20260615",
+      "holder_name": "机构专用",
+      "holder_type": "P",
+      "in_de": "DE",
+      "change_vol": 48300,
+      "change_ratio": 0.0014,
+      "after_share": null,
+      "after_ratio": null,
+      "avg_price": 91.6,
+      "total_share": null,
+      "begin_date": null,
+      "close_date": null
+    }
+  ],
   "summary": {
-    "total_count": 0,
+    "total_count": 3,
     "in_count": 0,
-    "de_count": 0,
-    "net_change_vol_180d": 0,
-    "net_change_ratio_180d": 0.0,
-    "last_announce_date": null,
+    "de_count": 3,
+    "net_change_vol_180d": -132600,
+    "net_change_ratio_180d": -0.0037999999999999996,
+    "last_announce_date": "2026-10-28",
     "signal_level": "NEUTRAL"
   }
 }
