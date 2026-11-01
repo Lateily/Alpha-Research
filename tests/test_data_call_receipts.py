@@ -108,7 +108,7 @@ class CallReceiptTests(unittest.TestCase):
             self.sink.finish(self.ctx["logical_call_id"], terminal)
 
     def test_credentials_and_raw_error_not_persisted(self):
-        secret = "FAKE-DO-NOT-PERSIST-TOKEN"
+        secret = "test-DO-NOT-PERSIST-TOKEN"
         with self.assertRaises(ValueError):
             self.call(params={"ts_code": "600000.SH", "token": secret})
         self.invoke.assert_not_called()

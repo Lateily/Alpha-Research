@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight, Database, Download, FileText, Play, RefreshCw, Users, X } from 'lucide-react';
 import { statusTone } from './status-tone.mjs';
 import { commonSyncView, createSharedPoller, getPending, latestOwnedJob, pollSharedPending, recordSubmissionFailure, retainedStatus, retrySharedPending, savePending, sharedActorQuery, sharedQueryState, sharedRead, sharedViewFreshness } from './shared-view.mjs';
+import DataCenter from './data-center';
 
 const views = [['my', '我的任务', FileText], ['team', '团队结果', Users], ['common', '共同数据', Database]];
 function Status({ value, stale = false }) {
@@ -160,6 +161,7 @@ export default function SharedWorkspace({ api, access, refreshRevision }) {
         <div className="table-scroll"><table><thead><tr><th>模块</th><th>源身份</th><th>绑定 / 数据状态</th><th>状态依据</th></tr></thead><tbody>{(observation.module_sources || []).map((item, i) => <tr key={i}><td>{item.module}</td><td><code>{item.run_id || 'UNBOUND'}</code><span>{item.source_trade_date || 'UNBOUND'}</span></td><td><Status value={item.identity_status} stale={freshness.commonStale} /><Status value={item.data_quality} stale={freshness.commonStale} /></td><td><code>{item.quality_basis}</code>{item.research_quality && <span>研究核验 {item.research_quality}</span>}</td></tr>)}</tbody></table></div>
         <details><summary>来源与质量</summary><pre>{JSON.stringify(observation, null, 2)}</pre></details></> : <p className="shared-empty">{common?.error || 'NOT_PRODUCED'}</p>}
     </section>}
+    {view === 'common' && <DataCenter api={api} renew={renew} login={login} snapshotId={common?.current_snapshot_id} parentStale={freshness.commonStale} refreshRevision={refreshRevision} onOpenJob={open} />}
     {data && selected && <section className="shared-detail"><div className="section-title"><h3>任务详情</h3><div><button className="icon-button" title="重新验证" aria-label="重新验证任务" onClick={() => open(selected)}><RefreshCw size={17} /></button><button className="icon-button" title="关闭详情" aria-label="关闭任务详情" onClick={() => { ++detailSequence.current; selectedRef.current = null; setSelected(null); setDetail(null); }}><X size={17} /></button></div></div><code>{selected}</code>
       {detailError && <div role="alert" className="shared-error">DISCONNECTED · {detailError}</div>}
       {detail ? <>{freshness.detailStale && <div className="shared-error" role="status">DISCONNECTED · STALE</div>}<div className="source-strip"><Status value={detail.status} stale={freshness.detailStale} /><code>{detail.actor}</code><code>{detail.workspace_id || 'LEGACY_UNATTRIBUTED'}</code></div><dl>{[['执行版本', detail.code_sha], ['输入 hash', detail.input_hash], ['输出 hash', detail.output_hash], ['失败原因', detail.error]].map(([label, value]) => <React.Fragment key={label}><dt>{label}</dt><dd><code>{value || 'NOT_PRODUCED'}</code></dd></React.Fragment>)}</dl>

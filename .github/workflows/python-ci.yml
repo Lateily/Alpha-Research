@@ -133,6 +133,10 @@ jobs:
           python3 -B tests/test_data_source_catalog.py
           python3 -B tests/test_data_call_receipts.py
           python3 -B tests/test_data_governance_health.py
+          python3 -B tests/test_workbench_data_catalog.py
+          python3 -B tests/test_workbench_data_catalog_http.py
+          python3 -B tests/test_data_governance_vertical.py
+          node --test tests/nonprod-workbench-data-center.test.mjs
       - name: U0 security registry transport retry
         run: python3 tests/test_security_registry_transport.py
       - name: Nightly staged dependencies and HTTPS entry points (offline)

@@ -545,6 +545,26 @@ def make_handler(store, assets, origin, session, system=None, private=None, shar
                     self.reply(200, shared.snapshot(identity["login"], page=int(query.get("page", ["0"])[0])))
                 elif shared is not None and self.path.startswith("/api/shared-workspace/jobs/"):
                     self.reply(200, shared.job(self.path.removeprefix("/api/shared-workspace/jobs/"), identity["login"]))
+                elif shared is not None and self.path.startswith("/api/shared-workspace/input-card/"):
+                    parsed = urlsplit(self.path)
+                    if parsed.query or parsed.fragment:
+                        raise WorkbenchError("MATERIAL_QUERY_INVALID")
+                    self.reply(200, shared.input_card(parsed.path.removeprefix("/api/shared-workspace/input-card/"), identity["login"]))
+                elif shared is not None and urlsplit(self.path).path == "/api/shared-workspace/materials":
+                    from urllib.parse import parse_qs
+                    try:
+                        parsed = urlsplit(self.path)
+                        query = parse_qs(parsed.query, keep_blank_values=True, strict_parsing=True, max_num_fields=6, errors="strict")
+                        if (parsed.fragment or set(query) - {"snapshot_id", "industry_key", "trade_date", "ts_code", "page"}
+                                or any(len(values) != 1 for values in query.values())):
+                            raise ValueError
+                        params = {key: values[0] for key, values in query.items()}
+                        if "page" in params:
+                            if not re.fullmatch(r"[0-9]{1,3}", params["page"]): raise ValueError
+                            params["page"] = int(params["page"])
+                    except (ValueError, UnicodeError):
+                        raise WorkbenchError("MATERIAL_QUERY_INVALID") from None
+                    self.reply(200, shared.materials(identity["login"], **params))
                 elif self.path == "/api/workspace" and system is not None and shared is None:
                     state = system.snapshot()
                     if identity:
@@ -620,6 +640,7 @@ def main(argv=None):
     parser.add_argument("--owner-login", help="Exact owner Tailscale login; access identity is not research approval")
     parser.add_argument("--private-allowlist", type=Path, help="Outside-repo owner-owned mode0600 member allowlist")
     parser.add_argument("--shared-workspace-v1", action="store_true", help="Opt-in isolated persistent shared jobs; requires private access")
+    parser.add_argument("--governance-evidence-v1", action="store_true", help="Read operator-registered governance evidence from fixed isolated state; shared private mode only")
     parser.add_argument("--shared-import-once", type=Path, help="Explicit one-time frozen input import for shared mode; no automatic synchronizer")
     parser.add_argument("--read-only-auto-sync", action="store_true", help="Opt-in scoped file sync every 60 seconds; shared private mode and fixed source required")
     args = parser.parse_args(argv)
@@ -630,6 +651,8 @@ def main(argv=None):
         raise WorkbenchError("READ_ONLY_SYNC_CONFIGURATION_REQUIRED", 403)
     if args.shared_workspace_v1 and private is None:
         raise WorkbenchError("SHARED_PRIVATE_MODE_REQUIRED", 403)
+    if args.governance_evidence_v1 and (not args.shared_workspace_v1 or private is None):
+        raise WorkbenchError("GOVERNANCE_SHARED_PRIVATE_MODE_REQUIRED", 403)
     if args.shared_import_once and not args.shared_workspace_v1:
         raise WorkbenchError("SHARED_INPUT_STORE_REQUIRED", 403)
     assets = load_assets(ROOT / "tools/nonprod_workbench/dist")
@@ -661,7 +684,7 @@ def main(argv=None):
         from workbench_shared_inputs import FrozenInputs
         from workbench_shared_jobs import SharedJobQueue
         from workbench_shared_worker import SharedWorker
-        shared = SharedWorkspace(system)
+        shared = SharedWorkspace(system, governance_evidence_enabled=args.governance_evidence_v1)
         inputs = FrozenInputs(store)
         if args.shared_import_once: inputs.import_once(args.shared_import_once)
         queue = SharedJobQueue(shared, inputs, shared._execution_identity["code_sha"])

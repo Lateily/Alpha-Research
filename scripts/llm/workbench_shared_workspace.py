@@ -20,6 +20,9 @@ EXECUTION_FILES = (
     "scripts/llm/workbench_backup.py",
     "scripts/llm/workbench_shared_jobs.py", "scripts/llm/workbench_shared_worker.py",
     "scripts/llm/workbench_shared_sync.py",
+    "scripts/llm/workbench_data_catalog.py", "config/data-source-catalog.v1.json",
+    "experiments/data_governance/__init__.py", "experiments/data_governance/catalog.py",
+    "experiments/data_governance/call_receipts.py", "experiments/data_governance/health.py",
     "scripts/llm/workbench_earnings_trial.py", "scripts/llm/workbench_research.py",
     "scripts/llm/adapters/base.py", "scripts/llm/adapters/deepseek.py",
     "scripts/llm/adapters/__init__.py", "scripts/llm/adapters/deterministic.py",
@@ -58,13 +61,88 @@ def execution_identity(root: Path) -> dict:
 
 
 class SharedWorkspace:
-    def __init__(self, system: Workspace):
+    def __init__(self, system: Workspace, *, governance_evidence_enabled=False):
         if not system.store.shared_v1 or not system.private_mode:
             raise WorkspaceError("SHARED_PRIVATE_MODE_REQUIRED", 403)
         self.system, self.store = system, system.store
         self._execution_identity = execution_identity(CODE_ROOT)
         self.queue = None
         self.sync = None
+        if type(governance_evidence_enabled) is not bool:
+            raise WorkspaceError("GOVERNANCE_CONFIGURATION_INVALID", 400)
+        self.governance_evidence_enabled = governance_evidence_enabled
+
+    @staticmethod
+    def _snapshot_id(value):
+        try:
+            if not isinstance(value, str) or str(uuid.UUID(value)) != value:
+                raise ValueError
+        except (ValueError, AttributeError):
+            raise WorkspaceError("MATERIAL_SNAPSHOT_INVALID", 400) from None
+        return value
+
+    def input_card(self, snapshot_id, actor):
+        import workbench_data_catalog as dc
+        from workbench_shared_inputs import FrozenInputs
+        from experiments.data_governance.catalog import load_catalog
+        self._snapshot_id(snapshot_id)
+        owner = self.identity(actor)
+        try:
+            # Per-request verification, never a cached verified projection.
+            envelope = FrozenInputs(self.store).verify(snapshot_id)
+            root = self.store.path.parent / "governance-evidence"
+            registry = dc.load_governance_registry(root) if self.governance_evidence_enabled else None
+            health = dc.verify_governance_attachment(envelope, registry=registry,
+                                                      root=root if self.governance_evidence_enabled else None)
+            card = dc.build_input_card(envelope, catalog=load_catalog(CODE_ROOT / "config/data-source-catalog.v1.json"),
+                                       health=health, execution_identity=self._execution_identity)
+        except WorkspaceError:
+            raise
+        except (ValueError, OSError, KeyError, TypeError):
+            raise WorkspaceError("DATA_CATALOG_EVIDENCE_INVALID", 409) from None
+        return {**card, "my_workspace": owner}
+
+    def materials(self, actor, *, snapshot_id=None, industry_key=None, trade_date=None, ts_code=None, page=0):
+        import workbench_data_catalog as dc
+        from workbench_shared_inputs import FrozenInputs
+        filters = dict(industry_key=industry_key, trade_date=trade_date, ts_code=ts_code, page=page)
+        try:
+            dc.query_materials({"rows": []}, **filters)
+        except (ValueError, TypeError):
+            raise WorkspaceError("MATERIAL_QUERY_INVALID", 400) from None
+        if snapshot_id is not None: self._snapshot_id(snapshot_id)
+        owner = self.identity(actor)
+        with self.store.connect() as db:
+            registered = [row[0] for row in db.execute("SELECT snapshot_id FROM shared_inputs ORDER BY snapshot_id LIMIT 101")]
+        if len(registered) > 100:
+            raise WorkspaceError("MATERIAL_INDEX_CAPACITY", 409)
+        ids = [snapshot_id] if snapshot_id is not None else registered
+        inputs = FrozenInputs(self.store)
+        index = {"schema": "ar.material-index.v1", "scope": dc.SCOPE, "rows": [], "issues": [],
+                 "missing_material_types": dc.MISSING_TYPES[:], "missing_material_basis": "NOT_INDEXED_IN_THIS_SCOPE"}
+        jobs = self._jobs()
+        try:
+            for sid in ids:
+                envelope = inputs.verify(sid)
+                verified_jobs = []
+                if (trade_date is None or trade_date == envelope["source_trade_date"]) and industry_key is None and ts_code is None:
+                    for job in jobs:
+                        if job.get("snapshot_id") == sid and job.get("status") == "SUCCEEDED" and job.get("kind") == "snapshot-brief":
+                            detail = self.job(job["job_id"], actor)
+                            if detail.get("status") != "SUCCEEDED":
+                                raise WorkspaceError("MATERIAL_REPORT_UNAVAILABLE", 409)
+                            verified_jobs.append(detail)
+                part = dc.build_material_index([envelope], verified_jobs)
+                index["rows"].extend(part["rows"]); index["issues"].extend(part["issues"])
+                if len(index["rows"]) > 50000:
+                    raise WorkspaceError("MATERIAL_INDEX_CAPACITY", 409)
+            result = dc.query_materials(index, **filters)
+        except WorkspaceError:
+            raise
+        except (ValueError, OSError, KeyError, TypeError):
+            raise WorkspaceError("DATA_CATALOG_EVIDENCE_INVALID", 409) from None
+        return {**result, "my_workspace": owner, "consumer_code_sha": self._execution_identity["code_sha"],
+                "production_authority": False, "trading_authority": False}
 
     def identity(self, actor: str) -> dict:
         if not isinstance(actor, str) or not actor or len(actor) > 254 or any(ord(c) <= 32 for c in actor):

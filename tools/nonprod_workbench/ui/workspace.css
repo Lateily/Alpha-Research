@@ -125,4 +125,26 @@ textarea:focus-visible { outline: 3px solid #8bb6e5; outline-offset: 2px; }
 .shared-sync-times { display: grid; grid-template-columns: minmax(90px, auto) minmax(0, 1fr); gap: 8px 16px; margin: 16px 0; }
 .shared-sync-times dd { margin: 0; overflow-wrap: anywhere; }
 .shared-status code { max-width: 180px; overflow-wrap: anywhere; font-size: 11px; }
+.data-center { min-width: 0; margin-top: 24px; border-top: 1px solid #dce2e4; padding-top: 20px; }
+.data-center h4 { font-size: 14px; margin: 0; }
+.data-center .section-title > div { display: flex; align-items: center; gap: 10px; }
+.data-center section { min-width: 0; padding: 18px 0; border-bottom: 1px solid #dce2e4; }
+.input-card-fields { display: grid; grid-template-columns: 128px minmax(0,1fr); gap: 9px 16px; font-size: 12px; }
+.input-card-fields dt { color: #67736d; }
+.input-card-fields dd { margin: 0; min-width: 0; }
+.data-center code { overflow-wrap: anywhere; word-break: break-word; }
+.data-center td > span, .data-center td > code { display: block; margin-top: 5px; }
+.data-center .badge { display: inline-block; max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
+.data-center details { margin-top: 16px; }
+.data-center summary { cursor: pointer; padding: 8px 0; font-size: 12px; }
+.data-center pre { max-height: 320px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 12px; }
+.data-center table { table-layout: fixed; min-width: 640px; width: 100%; }
+.data-center td, .data-center th { overflow-wrap: anywhere; vertical-align: top; }
+.data-center .material-section td:last-child, .data-center .material-section th:last-child { width: 76px; }
+.data-all-inputs { display: inline-flex; gap: 8px; align-items: center; font-size: 12px; }
+.data-all-inputs input { min-height: 0; width: 16px; height: 16px; }
+.material-filters { display: grid; grid-template-columns: minmax(100px,1fr) 160px minmax(110px,1fr) 38px; align-items: end; gap: 12px; margin: 16px 0; }
+.material-filters label { display: grid; gap: 6px; min-width: 0; font-size: 12px; }
+.material-filters input { width: 100%; }
+@media(max-width:700px) { .material-filters { grid-template-columns: minmax(0,1fr) minmax(0,1fr); } .input-card-fields { grid-template-columns: 90px minmax(0,1fr); gap: 9px; } .data-center .section-title { flex-wrap: wrap; gap: 12px; } }
 @media (max-width: 600px) { .shared-heading { align-items: flex-start; } .shared-status { flex-wrap: wrap; justify-content: flex-end; } .shared-status code { max-width: 110px; } }
