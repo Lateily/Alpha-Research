@@ -31,6 +31,7 @@ on:
       - "web/AGENTS.md"
       - "config/team-ai-workspace.v1.json"
       - "config/aios-skills.v1.json"
+      - "config/data-source-catalog.v1.json"
       - "docs/team/TEAM_AI_WORKSPACE_V1.md"
       - ".gitignore"
       - "api/**"
@@ -125,6 +126,13 @@ jobs:
       # Retry only transport failures; HTTP/API/schema failures remain fail-closed.
       - name: Official sample transport retry regression (offline)
         run: python3 tests/test_fund_source_transport.py
+      - name: Source governance contracts and no-replay receipts (offline)
+        env:
+          AR_OFFLINE: "1"
+        run: |
+          python3 -B tests/test_data_source_catalog.py
+          python3 -B tests/test_data_call_receipts.py
+          python3 -B tests/test_data_governance_health.py
       - name: U0 security registry transport retry
         run: python3 tests/test_security_registry_transport.py
       - name: Nightly staged dependencies and HTTPS entry points (offline)

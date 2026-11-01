@@ -120,12 +120,28 @@ def eastmoney_stock_fund(ticker, retries=3):
     raise RuntimeError(f"eastmoney fetch failed for {ticker}: {last_err}")
 
 
-def _tushare_call(api, token, params, fields):
+def _tushare_call(api, token, params, fields, *, observation_context=None, receipt_sink=None):
     body = json.dumps({"api_name": api, "token": token, "params": params,
                        "fields": fields}).encode()
-    r = _http_json(url=TUSHARE_URL, data=body,
-                   headers={"Content-Type": "application/json"},
-                   attempts=TUSHARE_TRANSPORT_ATTEMPTS)
+    def invoke():
+        return _http_json(url=TUSHARE_URL, data=body,
+                          headers={"Content-Type": "application/json"},
+                          attempts=TUSHARE_TRANSPORT_ATTEMPTS)
+
+    if observation_context is not None or receipt_sink is not None:
+        if observation_context is None or receipt_sink is None:
+            raise ValueError("OBSERVATION_CONTEXT_AND_SINK_REQUIRED")
+        if api not in {"daily", "moneyflow_dc"} or observation_context.get("source_id") != "tushare." + api:
+            raise ValueError("OBSERVATION_SOURCE_MISMATCH")
+        from datetime import datetime, timezone
+        from pathlib import Path
+        from experiments.data_governance.catalog import load_catalog
+        from experiments.data_governance.call_receipts import record_call
+        catalog = load_catalog(Path(__file__).resolve().parents[2] / "config/data-source-catalog.v1.json")
+        r = record_call(catalog, observation_context, dict(params, fields=fields), invoke,
+                        receipt_sink, lambda: datetime.now(timezone.utc))
+    else:
+        r = invoke()
     if r.get("code") != 0:
         raise RuntimeError(f"tushare {api} error: {r.get('msg')}")
     return r.get("data") or {}
@@ -149,10 +165,37 @@ def tushare_daily(ticker, token=None, n=130):
             "ohlc_bars": bars, "source": "tushare_daily"}
 
 
-def tushare_stock_fund(ticker, token, trade_date=""):
+def tushare_stock_fund(ticker, token, trade_date="", *, observation_context=None, receipt_sink=None):
     """东财口径 via Tushare moneyflow_dc. Prod path; needs a working token.
     moneyflow_dc amounts are 万元 -> /1e4 = 亿. [CONFIRMED 2026-06-25: 利通
     net_amount -117479.36万 = -11.75亿; net_amount == buy_elg + buy_lg]"""
+    if observation_context is not None or receipt_sink is not None:
+        data = _tushare_call("moneyflow_dc", token,
+                             {"ts_code": ticker, "trade_date": trade_date},
+                             "ts_code,trade_date,close,pct_change,net_amount,"
+                             "buy_elg_amount,buy_lg_amount,buy_md_amount,buy_sm_amount",
+                             observation_context=observation_context, receipt_sink=receipt_sink)
+    else:
+        data = _legacy_stock_fund_data(ticker, token, trade_date)
+    items, fields = data.get("items") or [], data.get("fields") or []
+    if not items:
+        raise RuntimeError("tushare returned no rows")
+    if observation_context is not None:
+        matches = [item for item in items if dict(zip(fields, item)).get("trade_date") ==
+                   observation_context["target_trade_date"]]
+        if len(matches) != 1:
+            raise RuntimeError("OBSERVATION_TARGET_ROW_REQUIRED")
+        row = dict(zip(fields, matches[0]))
+    else:
+        row = dict(zip(fields, items[0]))                # legacy provider order
+    w = lambda k: round((row.get(k) or 0) / 1e4, 4)      # 万元 -> 亿
+    return {"ticker": ticker, "date": row.get("trade_date"),
+            "main": w("net_amount"), "super_large": w("buy_elg_amount"),
+            "large": w("buy_lg_amount"), "medium": w("buy_md_amount"),
+            "small": w("buy_sm_amount"), "source": "tushare"}
+
+
+def _legacy_stock_fund_data(ticker, token, trade_date):
     body = json.dumps({"api_name": "moneyflow_dc", "token": token,
                        "params": {"ts_code": ticker, "trade_date": trade_date},
                        "fields": ("ts_code,trade_date,close,pct_change,net_amount,"
@@ -162,16 +205,7 @@ def tushare_stock_fund(ticker, token, trade_date=""):
                    attempts=TUSHARE_TRANSPORT_ATTEMPTS)
     if r.get("code") != 0:
         raise RuntimeError(f"tushare error: {r.get('msg')}")
-    data = r.get("data") or {}
-    items, fields = data.get("items") or [], data.get("fields") or []
-    if not items:
-        raise RuntimeError("tushare returned no rows")
-    row = dict(zip(fields, items[0]))                    # latest
-    w = lambda k: round((row.get(k) or 0) / 1e4, 4)      # 万元 -> 亿
-    return {"ticker": ticker, "date": row.get("trade_date"),
-            "main": w("net_amount"), "super_large": w("buy_elg_amount"),
-            "large": w("buy_lg_amount"), "medium": w("buy_md_amount"),
-            "small": w("buy_sm_amount"), "source": "tushare"}
+    return r.get("data") or {}
 
 
 def get_stock_fund(ticker, source="auto", token=None):
