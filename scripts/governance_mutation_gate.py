@@ -200,6 +200,30 @@ class MutationCase:
 
 MUTATIONS: tuple[MutationCase, ...] = (
     MutationCase(
+        mutation_id="DG_BACKUP_ATTACHMENT_PORTABLE", component="B6 isolated recovery",
+        source_path="scripts/llm/workbench_backup.py", test_script="tests/test_data_governance_vertical.py",
+        before='"shared-jobs", "frozen-inputs", "governance-evidence"} | RECOVERY_ROOTS',
+        after='"shared-jobs", "frozen-inputs"} | RECOVERY_ROOTS',
+        expected_failure_marker="test_backup_restore_preserves_cards_queries_reports_and_attachments",
+        rationale="Registered optional evidence must survive the existing complete backup, not fail as an unclassified orphan.",
+    ),
+    MutationCase(
+        mutation_id="DG_BACKUP_ATTACHMENT_REVERIFY", component="B6 isolated recovery",
+        source_path="scripts/llm/workbench_backup.py", test_script="tests/test_data_governance_vertical.py",
+        before='            verify_governance_attachment(reopened[snapshot_id], registry=registry, root=governance)\n',
+        after='            pass\n',
+        expected_failure_marker="test_resealed_backup_cannot_launder_false_attachment_health",
+        rationale="Resealing archive and registry hashes cannot replace health rederivation during restore.",
+    ),
+    MutationCase(
+        mutation_id="DG_BACKUP_ATTACHMENT_ROOT_SET", component="B6 isolated recovery",
+        source_path="scripts/llm/workbench_backup.py", test_script="tests/test_data_governance_vertical.py",
+        before='        if set(path.name for path in governance.iterdir()) != {"registry.json", *registry["bindings"]}:\n',
+        after='        if False:\n',
+        expected_failure_marker="test_attachment_backup_refuses_missing_registry_foreign_binding_and_corruption",
+        rationale="Only exact operator-registered attachment directories may enter a portable state backup.",
+    ),
+    MutationCase(
         mutation_id="DG_MATERIAL_GAP_DATE_SCOPE", component="Data center review fixes",
         source_path="scripts/llm/workbench_data_catalog.py", test_script="tests/test_workbench_data_catalog.py",
         before='    issues = [i for i in index.get("issues", []) if trade_date is None or i.get("trade_date") in (None, trade_date)]\n',

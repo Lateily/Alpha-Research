@@ -23,7 +23,7 @@ TABLES = {
 }
 BRIEF_PATH = re.compile(r"snapshot-briefs/[A-Za-z0-9_-]{8,100}/(?:snapshot\.json|report\.md|citations\.json|source-manifest\.json|receipt\.json|SHA256SUMS|sources/\d{3}\.json)\Z")
 RECOVERY_ROOTS = {"input-write-evidence", "migration-evidence"}
-ARTIFACT_ROOTS = {"research-runs", "snapshot-briefs", "brief-trials", "earnings-trials", "workspaces", "shared-jobs", "frozen-inputs"} | RECOVERY_ROOTS
+ARTIFACT_ROOTS = {"research-runs", "snapshot-briefs", "brief-trials", "earnings-trials", "workspaces", "shared-jobs", "frozen-inputs", "governance-evidence"} | RECOVERY_ROOTS
 
 
 @contextmanager
@@ -341,6 +341,19 @@ def _verify_completed(root, tables):
             if str(uuid.UUID(snapshot_id)) != snapshot_id: raise ValueError
         except (ValueError, TypeError, AttributeError): raise ev.EvidenceError("BACKUP_SNAPSHOT_ID_INVALID") from None
         reopened[snapshot_id] = FrozenInputs.verify_registered(root / "frozen-inputs", snapshot_id, (input_hash, body))
+    # Portable attachments retain the independent registry and are rederived.
+    governance = root / "governance-evidence"
+    if governance.exists() or governance.is_symlink():
+        from workbench_data_catalog import load_governance_registry, verify_governance_attachment
+        registry = load_governance_registry(governance)
+        if registry is None:
+            raise ev.EvidenceError("BACKUP_GOVERNANCE_REGISTRY_REQUIRED")
+        if set(path.name for path in governance.iterdir()) != {"registry.json", *registry["bindings"]}:
+            raise ev.EvidenceError("BACKUP_GOVERNANCE_UNREGISTERED_ARTIFACT")
+        if set(registry["bindings"]) - set(reopened):
+            raise ev.EvidenceError("BACKUP_GOVERNANCE_UNKNOWN_INPUT")
+        for snapshot_id in registry["bindings"]:
+            verify_governance_attachment(reopened[snapshot_id], registry=registry, root=governance)
     # governance-mutation: WORKBENCH_SHARED_SYNC_SELECTION_BACKUP
     verify_selection_events([ev.parse(row[3]) for row in tables["workspace_events"]], reopened.__getitem__)
     if tables.get("shared_jobs") or tables.get("shared_attempts"):

@@ -45,9 +45,12 @@ against the frozen publication, and health is recomputed from validated receipts
 Health cannot attest itself. Old runs without call records stay NOT_ATTACHED;
 historical requests are never invented. The original snapshot seal remains intact.
 
-Attachments currently remain operator-managed local evidence, outside the old
-backup allowlist. Existing input/report restore tests do not certify attachment
-backup or disaster recovery; that is a separate storage slice.
+Attachments remain operator-managed local evidence. The B6 portable backup adds
+this one fixed artifact root; it requires a complete registry with no foreign
+snapshot or unregistered directory and rederives attachment health on backup,
+archive verification and scratch restore. The original input/report seals remain
+unchanged. Credentials are not restored. A verified local scratch restore is not
+an off-machine backup, a running-service replacement or a disaster-recovery SLA.
 
 ## UI
 

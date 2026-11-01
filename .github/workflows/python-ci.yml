@@ -126,7 +126,7 @@ jobs:
       # Retry only transport failures; HTTP/API/schema failures remain fail-closed.
       - name: Official sample transport retry regression (offline)
         run: python3 tests/test_fund_source_transport.py
-      - name: Source governance contracts and no-replay receipts (offline)
+      - name: Source governance, input cards and portable recovery (offline)
         env:
           AR_OFFLINE: "1"
         run: |
