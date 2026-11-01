@@ -203,5 +203,37 @@ class VerticalTests(unittest.TestCase):
         self.assertEqual(card["governance_status"], "NOT_ATTACHED")
         self.assertEqual(card["instrumentation_status"], "NOT_INSTRUMENTED")
 
+    def test_resealed_count_date_contradiction_refused_on_get_backup_and_restore(self):
+        root = self.attached()
+        sid = self.envelope["snapshot_id"]
+        archive = self.root / "count-conflict-backup"
+        backup.backup_shared(self.store, archive)
+        def forge(governance):
+            terminal_path = next((governance / sid / "receipts").glob("*/terminal.json"))
+            terminal = ev.parse(terminal_path.read_bytes())
+            terminal["result"]["first_date"] = "20261014"
+            terminal_path.write_bytes(ev.canonical(terminal).encode())
+            start = ev.parse((terminal_path.parent / "start.json").read_bytes())
+            projected = dict(start, start_hash=terminal["start_hash"])
+            projected.update(terminal["result"])
+            registry_path = governance / "registry.json"
+            registry = ev.parse(registry_path.read_bytes())
+            registry["bindings"][sid]["receipt_catalog_hash"] = ev.sealed([projected])
+            registry_path.write_bytes(ev.canonical(registry).encode())
+            return terminal_path, registry_path
+        forge(root)
+        self.assertEqual(self.get("input-card/" + sid)[0], 409)
+        with self.assertRaises(ValueError):
+            backup.backup_shared(self.store, self.root / "bad-count-export")
+        changed = forge(archive / "governance-evidence")
+        manifest_path = archive / "manifest.json"
+        manifest = ev.parse(manifest_path.read_bytes())
+        for path in changed:
+            manifest["files"][path.relative_to(archive).as_posix()] = ev.sha(path.read_bytes())
+        manifest["backup_hash"] = ev.sealed({k: v for k, v in manifest.items() if k != "backup_hash"})
+        manifest_path.write_bytes(ev.canonical(manifest).encode())
+        with self.assertRaises(ValueError): backup.verify_shared(archive)
+        with self.assertRaises(ValueError): backup.restore_shared(archive, self.root / "bad-count-restored")
+
 
 if __name__ == "__main__": unittest.main()

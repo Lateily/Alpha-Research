@@ -188,7 +188,9 @@ def tushare_stock_fund(ticker, token, trade_date="", *, observation_context=None
         row = dict(zip(fields, matches[0]))
     else:
         row = dict(zip(fields, items[0]))                # legacy provider order
-    w = lambda k: round((row.get(k) or 0) / 1e4, 4)      # 万元 -> 亿
+    def w(key):
+        value = row[key] if observation_context is not None else (row.get(key) or 0)
+        return round(value / 1e4, 4)  # 万元 -> 亿; opt-in values were validated before receipt commit.
     return {"ticker": ticker, "date": row.get("trade_date"),
             "main": w("net_amount"), "super_large": w("buy_elg_amount"),
             "large": w("buy_lg_amount"), "medium": w("buy_md_amount"),

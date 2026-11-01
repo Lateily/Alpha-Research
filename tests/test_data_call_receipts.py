@@ -30,8 +30,9 @@ NOW = datetime(2026, 10, 30, 8, 0, 0, tzinfo=timezone.utc)
 
 
 def response(date="20261030", ticker="600000.SH"):
-    return {"code": 0, "data": {"fields": ["ts_code", "trade_date", "close", "net_amount"],
-                                "items": [[ticker, date, 10.0, 10000]]}}
+    return {"code": 0, "data": {"fields": ["ts_code", "trade_date", "close", "net_amount", "pct_change",
+                                                   "buy_elg_amount", "buy_lg_amount", "buy_md_amount", "buy_sm_amount"],
+                                "items": [[ticker, date, 10.0, 10000, 1.0, 5000, 5000, 0, 0]]}}
 
 
 class CallReceiptTests(unittest.TestCase):
@@ -103,7 +104,7 @@ class CallReceiptTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "RECEIPT_CONFLICT"):
             self.sink.start(dict(self.ctx, target_trade_date="20261029"), {"ts_code": "600000.SH"})
         terminal = json.loads((self.root / self.ctx["logical_call_id"] / "terminal.json").read_text())["result"]
-        terminal["rows"] = 99
+        terminal.update(rows=99, missing_date_rows=98)
         with self.assertRaisesRegex(ValueError, "RECEIPT_CONFLICT"):
             self.sink.finish(self.ctx["logical_call_id"], terminal)
 
@@ -234,7 +235,7 @@ class CallReceiptTests(unittest.TestCase):
 
     def test_opt_in_fund_consumes_target_row_not_provider_order(self):
         value = response("20261029")
-        value["data"]["items"].append(["600000.SH", "20261030", 11.0, 20000])
+        value["data"]["items"].append(["600000.SH", "20261030", 11.0, 20000, 1.0, 10000, 10000, 0, 0])
         ctx = context("tushare.moneyflow_dc")
         with mock.patch.object(fs, "_http_json", return_value=value):
             legacy = fs.tushare_stock_fund("600000.SH", "FAKE-KEY", "20261030")
@@ -246,7 +247,7 @@ class CallReceiptTests(unittest.TestCase):
     def test_ambiguous_target_is_rejected_through_adapter_receipt_and_health(self):
         from experiments.data_governance.health import evaluate_health, plan_backfills
         value = response()
-        value["data"]["items"].append(["600000.SH", "20261030", 11.0, 20000])
+        value["data"]["items"].append(["600000.SH", "20261030", 11.0, 20000, 1.0, 10000, 10000, 0, 0])
         ctx = context("tushare.moneyflow_dc")
         with mock.patch.object(fs, "_http_json", return_value=value):
             with self.assertRaisesRegex(RuntimeError, "INVALID_RESPONSE"):
@@ -304,6 +305,43 @@ class CallReceiptTests(unittest.TestCase):
         with mock.patch.object(fs, "_http_json", return_value=response()):
             fs._tushare_call("unregistered_legacy", "FAKE-KEY", {}, "")
         self.assertEqual(len(read_call_receipts(self.root)), 2)
+
+    def test_invalid_numeric_inputs_fail_before_success_receipt_and_health(self):
+        from experiments.data_governance.health import evaluate_health
+        for invalid in (None, True, False, "NaN", "Infinity", float("nan"), float("inf"), "OMITTED"):
+            with self.subTest(invalid=invalid):
+                value = response()
+                position = value["data"]["fields"].index("net_amount")
+                if invalid == "OMITTED":
+                    value["data"]["fields"].pop(position)
+                    value["data"]["items"][0].pop(position)
+                else:
+                    value["data"]["items"][0][position] = invalid
+                ctx = context("tushare.moneyflow_dc", call_id=str(uuid.uuid4()))
+                with mock.patch.object(fs, "_http_json", return_value=value) as provider:
+                    error = None
+                    try:
+                        fs.tushare_stock_fund("600000.SH", "FAKE-KEY", "20261030",
+                                              observation_context=ctx, receipt_sink=self.sink)
+                    except Exception as caught:
+                        error = caught
+                    self.assertIsInstance(error, RuntimeError)
+                    self.assertEqual(str(error), "INVALID_RESPONSE")
+                    self.assertEqual(provider.call_count, 1)
+                row, = [r for r in read_call_receipts(self.root) if r["context"]["logical_call_id"] == ctx["logical_call_id"]]
+                self.assertEqual((row["status"], row["error_code"]), ("FAILED", "INVALID_RESPONSE"))
+                health = evaluate_health(self.catalog, [row], target_trade_date="20261030")
+                self.assertEqual(health["sources"]["tushare.moneyflow_dc"]["status"], "DATA_BLOCKED")
+
+    def test_finite_zero_amount_remains_valid_not_missing(self):
+        value = response()
+        value["data"]["items"][0][value["data"]["fields"].index("net_amount")] = 0
+        ctx = context("tushare.moneyflow_dc")
+        with mock.patch.object(fs, "_http_json", return_value=value):
+            result = fs.tushare_stock_fund("600000.SH", "FAKE-KEY", "20261030",
+                                          observation_context=ctx, receipt_sink=self.sink)
+        self.assertEqual(result["main"], 0.0)
+        self.assertEqual(read_call_receipts(self.root)[0]["status"], "SUCCEEDED")
 
 
 if __name__ == "__main__":

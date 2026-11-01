@@ -16,6 +16,7 @@ sys.path.insert(0, str(ROOT / "tests"))
 from experiments.data_governance.call_receipts import CallReceiptSink, read_call_receipts, record_call
 from experiments.data_governance.catalog import load_catalog, aware_time, canonical
 import hashlib
+import copy
 from experiments.data_governance.health import evaluate_health, plan_backfills
 from test_data_source_catalog import CATALOG, context
 from test_data_call_receipts import NOW, response
@@ -174,6 +175,28 @@ class HealthTests(unittest.TestCase):
         self.assertEqual(health["sources"]["tushare.daily"]["status"], "DATA_BLOCKED")
         plan, = [p for p in plan_backfills(health, now=NOW) if p["source_id"] == "tushare.daily"]
         self.assertEqual(plan["status"], "BLOCKED_EVIDENCE")
+
+    def test_historical_count_and_date_relationships_are_consistent(self):
+        self.add()
+        original = read_call_receipts(self.root)[0]
+        invalid = [
+            {"first_date": "20261029"},
+            {"first_date": None, "last_date": None},
+            {"rows": 0, "target_rows": 0},
+            {"rows": 2, "target_rows": 0},
+            {"rows": 2},
+            {"first_date": "20261028", "last_date": "20261029"},
+            {"rows": 2, "target_rows": 1, "first_date": "20261029", "last_date": "20261102"},
+        ]
+        for changes in invalid:
+            with self.subTest(changes=changes), self.assertRaises(ValueError):
+                row = copy.deepcopy(original); row.update(changes)
+                evaluate_health(self.catalog, [row], target_trade_date="20261030")
+        for changes in ({"rows": 2, "first_date": "20261029"},
+                        {"rows": 3, "missing_date_rows": 2}):
+            row = copy.deepcopy(original); row.update(changes)
+            self.assertIn(evaluate_health(self.catalog, [row], target_trade_date="20261030")["sources"]["tushare.daily"]["status"],
+                          {"OK", "DATA_BLOCKED"})
 
 
 if __name__ == "__main__":

@@ -43,6 +43,21 @@ Historical backups without this root must still restore as NOT_INSTRUMENTED.
 Unknown files outside approved artifact roots and credential-shaped content
 remain refusals. Recovery uses a fresh target and never replaces a running state.
 
+### Independent Review Counterexamples
+
+| Counterexample | Required outcome | Behavioral regression |
+| --- | --- | --- |
+| Requested amount null/Boolean/string-NaN/omitted | Before arithmetic: persisted FAILED/INVALID_RESPONSE and DATA_BLOCKED health; finite zero remains valid | `test_invalid_numeric_inputs_fail_before_success_receipt_and_health` |
+| Rehashed one-row receipt spans two dates | Reject GET, backup export, rehashed archive verification and scratch restore | `test_resealed_count_date_contradiction_refused_on_get_backup_and_restore` |
+
+The opt-in recorder checks requested numeric columns and returned known numeric
+values before terminal publication. It does not reinterpret missing values as
+zero or count a later arithmetic failure as source success. Historical receipt
+validation checks dated-row counts, date extrema and target-row bounds before
+health derivation. These are consistency checks on recorded summaries, not proof
+that a provider response or an investment conclusion was independently verified.
+Legacy non-instrumented adapter behavior is unchanged by this candidate.
+
 ## Before Any Shared Upgrade
 
 - [ ] Exact-SHA offline-tests, full mutation receipt, build and independent review.

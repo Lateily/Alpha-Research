@@ -200,6 +200,28 @@ class MutationCase:
 
 MUTATIONS: tuple[MutationCase, ...] = (
     MutationCase(
+        mutation_id="DG_RECEIPT_NUMERIC_TYPE", component="B6 review counterexamples",
+        source_path="experiments/data_governance/call_receipts.py", test_script="tests/test_data_call_receipts.py",
+        before='            if type(row[field]) not in {int, float} or not math.isfinite(row[field]):\n',
+        after='            if False:\n',
+        expected_failure_marker="test_invalid_numeric_inputs_fail_before_success_receipt_and_health",
+        rationale="Null, Boolean and string-NaN amounts cannot become successful persisted source calls.",
+    ),
+    MutationCase(
+        mutation_id="DG_RECEIPT_REQUESTED_NUMERIC", component="B6 review counterexamples",
+        source_path="experiments/data_governance/call_receipts.py", test_script="tests/test_data_call_receipts.py",
+        before='    if not required <= set(fields):\n', after='    if False:\n',
+        expected_failure_marker="test_invalid_numeric_inputs_fail_before_success_receipt_and_health",
+        rationale="Omitted requested numeric columns must fail before receipt commit, not during consumer arithmetic.",
+    ),
+    MutationCase(
+        mutation_id="DG_RECEIPT_DATE_COUNTS", component="B6 review counterexamples",
+        source_path="experiments/data_governance/call_receipts.py", test_script="tests/test_data_governance_vertical.py",
+        before='        if not _consistent_date_counts(value, context):\n', after='        if False:\n',
+        expected_failure_marker="test_resealed_count_date_contradiction_refused_on_get_backup_and_restore",
+        rationale="A rehashed one-row summary spanning two dates must stop HTTP, backup verification and restore.",
+    ),
+    MutationCase(
         mutation_id="DG_BACKUP_ATTACHMENT_PORTABLE", component="B6 isolated recovery",
         source_path="scripts/llm/workbench_backup.py", test_script="tests/test_data_governance_vertical.py",
         before='"shared-jobs", "frozen-inputs", "governance-evidence"} | RECOVERY_ROOTS',

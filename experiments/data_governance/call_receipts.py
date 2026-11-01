@@ -6,6 +6,7 @@ investigation, never an automatic second invocation under the same identity.
 from __future__ import annotations
 
 import hashlib
+import math
 import os
 from pathlib import Path
 import re
@@ -113,6 +114,21 @@ RESULT_FIELDS = {"status", "rows", "first_date", "last_date", "target_rows",
                  "missing_date_rows", "response_hash", "elapsed_ms", "error_code", "completed_at"}
 
 
+def _consistent_date_counts(value, context):
+    dated = value["rows"] - value["missing_date_rows"]
+    dates = [value["first_date"], value["last_date"]]
+    if dated == 0:
+        return dates == [None, None] and value["target_rows"] == 0
+    if None in dates or dated < len(set(dates)):
+        return False
+    if context is None:
+        return True
+    target = context["target_trade_date"]
+    minimum = (dated if dates[0] == dates[1] == target else int(target in dates))
+    maximum = dated - len(set(dates) - {target}) if dates[0] <= target <= dates[1] else 0
+    return minimum <= value["target_rows"] <= maximum
+
+
 def _validate_result(value, context=None):
     if not isinstance(value, dict) or set(value) != RESULT_FIELDS:
         raise ValueError("INVALID_TERMINAL_RECEIPT")
@@ -143,6 +159,8 @@ def _validate_result(value, context=None):
                 raise ValueError("RECEIPT_DATE_CONFLICT")
         elif value["target_rows"]:
             raise ValueError("RECEIPT_DATE_CONFLICT")
+        if not _consistent_date_counts(value, context):
+            raise ValueError("RECEIPT_DATE_COUNT_CONFLICT")
     return value
 
 
@@ -187,7 +205,7 @@ class CallReceiptSink:
         _write_new(directory / "terminal.json", terminal, self.max_record_bytes)
 
 
-def _summary(response, context, source):
+def _summary(response, context, source, params):
     if not isinstance(response, dict) or type(response.get("code")) is not int or response["code"] != 0:
         raise ValueError("INVALID_RESPONSE")
     data = response.get("data")
@@ -200,12 +218,19 @@ def _summary(response, context, source):
         raise ValueError("INVALID_RESPONSE")
     # Check finite JSON before deriving metrics; never persist provider text/data.
     response_hash = _digest(response)
+    numeric_fields = SAFE_FIELDS - {"ts_code", "trade_date"}
+    required = set(params.get("fields", "").split(",")) & numeric_fields
+    if not required <= set(fields):
+        raise ValueError("INVALID_RESPONSE")
     dates = []
     missing = 0
     for item in items:
         if not isinstance(item, list) or len(item) != len(fields):
             raise ValueError("INVALID_RESPONSE")
         row = dict(zip(fields, item))
+        for field in set(fields) & numeric_fields:
+            if type(row[field]) not in {int, float} or not math.isfinite(row[field]):
+                raise ValueError("INVALID_RESPONSE")
         if context["ts_code"] and "ts_code" in row and row["ts_code"] != context["ts_code"]:
             raise ValueError("INVALID_RESPONSE")
         date = row.get(source["date_field"])
@@ -253,7 +278,7 @@ def record_call(catalog, context, params, invoke, sink, clock):
         error = "SOURCE_DOWN"
     else:
         try:
-            summary = _summary(response, context, source)
+            summary = _summary(response, context, source, params)
         except Exception:
             error = "INVALID_RESPONSE"
     try:
