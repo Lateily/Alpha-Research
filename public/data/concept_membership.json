@@ -1,5 +1,5 @@
 {
-  "fetched_at": "2026-11-02T07:33:29Z",
+  "fetched_at": "2026-11-02T18:38:33Z",
   "_status": "ok",
   "api_used": "ths_index+ths_member",
   "scope": "watchlist_only",
@@ -390,6 +390,18 @@
       ]
     },
     {
+      "ts_code": "700048.TI",
+      "name": "同花顺中盘",
+      "type": "ST",
+      "total_count": 500.0,
+      "member_count": 3,
+      "members": [
+        "300054.SZ",
+        "603233.SH",
+        "688120.SH"
+      ]
+    },
+    {
       "ts_code": "700054.TI",
       "name": "同花顺金仓200",
       "type": "TH",
@@ -668,17 +680,6 @@
       ]
     },
     {
-      "ts_code": "700048.TI",
-      "name": "同花顺中盘",
-      "type": "ST",
-      "total_count": 500.0,
-      "member_count": 2,
-      "members": [
-        "300054.SZ",
-        "688120.SH"
-      ]
-    },
-    {
       "ts_code": "700051.TI",
       "name": "同花顺金仓30",
       "type": "TH",
@@ -877,6 +878,17 @@
       ]
     },
     {
+      "ts_code": "883900.TI",
+      "name": "昨日涨停表现",
+      "type": "S",
+      "total_count": 121.0,
+      "member_count": 2,
+      "members": [
+        "603233.SH",
+        "688120.SH"
+      ]
+    },
+    {
       "ts_code": "883910.TI",
       "name": "同花顺热股",
       "type": "S",
@@ -943,6 +955,28 @@
       ]
     },
     {
+      "ts_code": "883978.TI",
+      "name": "昨日打板表现",
+      "type": "S",
+      "total_count": 128.0,
+      "member_count": 2,
+      "members": [
+        "603233.SH",
+        "688120.SH"
+      ]
+    },
+    {
+      "ts_code": "883979.TI",
+      "name": "昨日首板表现",
+      "type": "S",
+      "total_count": 116.0,
+      "member_count": 2,
+      "members": [
+        "603233.SH",
+        "688120.SH"
+      ]
+    },
+    {
       "ts_code": "883980.TI",
       "name": "含可转债",
       "type": "S",
@@ -954,6 +988,17 @@
       ]
     },
     {
+      "ts_code": "883986.TI",
+      "name": "昨日非ST涨停表现",
+      "type": "S",
+      "total_count": 121.0,
+      "member_count": 2,
+      "members": [
+        "603233.SH",
+        "688120.SH"
+      ]
+    },
+    {
       "ts_code": "883990.TI",
       "name": "机构重仓股",
       "type": "S",
@@ -961,6 +1006,39 @@
       "member_count": 2,
       "members": [
         "300308.SZ",
+        "688120.SH"
+      ]
+    },
+    {
+      "ts_code": "883992.TI",
+      "name": "昨日非ST打板",
+      "type": "S",
+      "total_count": 128.0,
+      "member_count": 2,
+      "members": [
+        "603233.SH",
+        "688120.SH"
+      ]
+    },
+    {
+      "ts_code": "883993.TI",
+      "name": "昨日非ST首板",
+      "type": "S",
+      "total_count": 116.0,
+      "member_count": 2,
+      "members": [
+        "603233.SH",
+        "688120.SH"
+      ]
+    },
+    {
+      "ts_code": "883994.TI",
+      "name": "昨日打首板表现",
+      "type": "S",
+      "total_count": 123.0,
+      "member_count": 2,
+      "members": [
+        "603233.SH",
         "688120.SH"
       ]
     },
@@ -1744,6 +1822,16 @@
       ]
     },
     {
+      "ts_code": "883423.TI",
+      "name": "沪深主板昨日涨停",
+      "type": "S",
+      "total_count": 83.0,
+      "member_count": 1,
+      "members": [
+        "603233.SH"
+      ]
+    },
+    {
       "ts_code": "883424.TI",
       "name": "创业科创板昨日涨停",
       "type": "S",
@@ -1811,16 +1899,6 @@
       "member_count": 1,
       "members": [
         "300054.SZ"
-      ]
-    },
-    {
-      "ts_code": "883900.TI",
-      "name": "昨日涨停表现",
-      "type": "S",
-      "total_count": 121.0,
-      "member_count": 1,
-      "members": [
-        "688120.SH"
       ]
     },
     {
@@ -1934,26 +2012,6 @@
       ]
     },
     {
-      "ts_code": "883978.TI",
-      "name": "昨日打板表现",
-      "type": "S",
-      "total_count": 128.0,
-      "member_count": 1,
-      "members": [
-        "688120.SH"
-      ]
-    },
-    {
-      "ts_code": "883979.TI",
-      "name": "昨日首板表现",
-      "type": "S",
-      "total_count": 116.0,
-      "member_count": 1,
-      "members": [
-        "688120.SH"
-      ]
-    },
-    {
       "ts_code": "883985.TI",
       "name": "深市新主板",
       "type": "S",
@@ -1961,46 +2019,6 @@
       "member_count": 1,
       "members": [
         "002594.SZ"
-      ]
-    },
-    {
-      "ts_code": "883986.TI",
-      "name": "昨日非ST涨停表现",
-      "type": "S",
-      "total_count": 121.0,
-      "member_count": 1,
-      "members": [
-        "688120.SH"
-      ]
-    },
-    {
-      "ts_code": "883992.TI",
-      "name": "昨日非ST打板",
-      "type": "S",
-      "total_count": 128.0,
-      "member_count": 1,
-      "members": [
-        "688120.SH"
-      ]
-    },
-    {
-      "ts_code": "883993.TI",
-      "name": "昨日非ST首板",
-      "type": "S",
-      "total_count": 116.0,
-      "member_count": 1,
-      "members": [
-        "688120.SH"
-      ]
-    },
-    {
-      "ts_code": "883994.TI",
-      "name": "昨日打首板表现",
-      "type": "S",
-      "total_count": 123.0,
-      "member_count": 1,
-      "members": [
-        "688120.SH"
       ]
     },
     {
@@ -2657,6 +2675,15 @@
       "700001.TI"
     ],
     "603233.SH": [
+      "883423.TI",
+      "883994.TI",
+      "883986.TI",
+      "700048.TI",
+      "883979.TI",
+      "883978.TI",
+      "883992.TI",
+      "883900.TI",
+      "883993.TI",
       "883959.TI",
       "885770.TI",
       "700332.TI",
@@ -2884,7 +2911,7 @@
       "700001.TI"
     ]
   },
-  "total_concepts": 230,
-  "total_memberships": 398,
+  "total_concepts": 231,
+  "total_memberships": 407,
   "disclaimer": "不是买卖指令;研究信号,human executes."
 }

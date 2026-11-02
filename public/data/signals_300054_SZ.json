@@ -4,29 +4,18 @@
   "price": 54.0,
   "zone": "NEUTRAL",
   "entry_zone": false,
-  "exit_zone": true,
-  "signals": [
-    {
-      "type": "MACD_DEATH_CROSS",
-      "strength": "strong",
-      "date": "20261030",
-      "bullish": false,
-      "description": {
-        "e": "MACD DIF(-3.311) crossed below DEA(-3.289) below zero — bearish momentum",
-        "z": "MACD DIF(-3.311)下穿DEA(-3.289)零轴下方死叉看跌"
-      }
-    }
-  ],
+  "exit_zone": false,
+  "signals": [],
   "signal_count": {
     "bullish": 0,
-    "bearish": 1,
-    "total": 1
+    "bearish": 0,
+    "total": 0
   },
   "indicators": {
     "ma5": 56.77,
     "ma20": 60.13,
     "ma60": null,
-    "rsi14": 32.6,
+    "rsi14": 31.8,
     "vol_ma20": 192452,
     "vol_ratio": 1.21,
     "price_vs_ma20": -10.19,
@@ -34,9 +23,9 @@
     "change_1d": -6.44,
     "change_5d": -8.63,
     "change_20d": -22.98,
-    "macd_dif": -3.3113,
-    "macd_dea": -3.2893,
-    "macd_hist": -0.044,
+    "macd_dif": -3.3634,
+    "macd_dea": -3.3652,
+    "macd_hist": 0.0037,
     "bb_upper": 68.13,
     "bb_mid": 60.13,
     "bb_lower": 52.12,
