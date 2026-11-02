@@ -38,8 +38,8 @@ class CatalogTests(unittest.TestCase):
         self.assertEqual(catalog["coverage"], "FIRST_FIVE_REQUIRED_ENDPOINTS_ONLY")
         self.assertTrue(all(v["rights_status"] == "UNVERIFIED"
                             for v in catalog["sources"].values()))
-        self.assertEqual(catalog["sources"]["tushare.daily_basic"]["instrumentation"],
-                         "NOT_INSTRUMENTED")
+        self.assertTrue(all(value["instrumentation"] == "OPT_IN_LOGICAL_CALL"
+                            for value in catalog["sources"].values()))
 
     def test_unknown_source_refused(self):
         with self.assertRaisesRegex(ValueError, "SOURCE_NOT_REGISTERED"):

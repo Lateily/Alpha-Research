@@ -11,6 +11,7 @@ No materials were ingested during implementation.
 ingest_material(source_root, library_root, manifest) -> dict
 verify_library(library_root, *, expected_library_hash=None) -> dict
 query_library(library_root, *, industry_key=None, trade_date=None, ts_code=None) -> dict
+inspect_material_source(source_root, manifest) -> dict
 ```
 
 Only the explicit ingest call writes. The module introduces no own dispatcher or
@@ -115,6 +116,19 @@ an offline publisher document identifier. Credential-shaped values and decoded
 control characters are refused, not logged/redacted into apparently complete
 provenance. Keep credentials and signed URLs outside the manifest; provide a
 stable publisher locator. No locator is fetched or independently validated.
+
+## Explicit Legacy Date Precision And Source Admission
+
+The optional original-provenance field `publication_precision` has exactly
+`basis: DATE_ONLY_UPPER_BOUND_NOT_OBSERVED_TIME` and `published_on: YYYYMMDD`.
+It requires published_at to equal the end-of-day upper bound (23:59:59 UTC+08)
+for that source date, not an invented observed publication time. Old provenance
+objects without this field retain their original caller-asserted semantics.
+PDF and text/JSON extension checks are case-insensitive, while stored content
+addressed extensions are lowercase. Bytes, magic, active-content, credential,
+size and link checks are unchanged. Source inspection applies those same byte
+checks without writing, so a failed original can be accounted for before a
+create-only registration begins. Inspection is not approval or code acceptance.
 
 ## Clocks And Authority
 

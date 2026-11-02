@@ -30,6 +30,7 @@ CLI:
 import argparse
 import http.client
 import json
+import math
 import os
 import socket
 import ssl
@@ -120,7 +121,13 @@ def eastmoney_stock_fund(ticker, retries=3):
     raise RuntimeError(f"eastmoney fetch failed for {ticker}: {last_err}")
 
 
-def _tushare_call(api, token, params, fields, *, observation_context=None, receipt_sink=None):
+def _tushare_call(api, token, params, fields, *, observation_context=None, receipt_sink=None,
+                  endpoint_session=None):
+    old_observer = observation_context is not None or receipt_sink is not None
+    if endpoint_session is not None and old_observer:
+        raise ValueError("OBSERVATION_MODES_MUTUALLY_EXCLUSIVE")
+    if endpoint_session is not None and os.environ.get("AR_OFFLINE"):
+        raise RuntimeError("TUSHARE_OFFLINE")
     body = json.dumps({"api_name": api, "token": token, "params": params,
                        "fields": fields}).encode()
     def invoke():
@@ -128,11 +135,18 @@ def _tushare_call(api, token, params, fields, *, observation_context=None, recei
                           headers={"Content-Type": "application/json"},
                           attempts=TUSHARE_TRANSPORT_ATTEMPTS)
 
-    if observation_context is not None or receipt_sink is not None:
+    if endpoint_session is not None:
+        from experiments.data_governance.call_receipts import observe_endpoint
+        r = observe_endpoint(endpoint_session, api, params, fields, invoke)
+    elif old_observer:
         if observation_context is None or receipt_sink is None:
             raise ValueError("OBSERVATION_CONTEXT_AND_SINK_REQUIRED")
-        if api not in {"daily", "moneyflow_dc"} or observation_context.get("source_id") != "tushare." + api:
+        from experiments.data_governance.catalog import SOURCE_IDS
+        if "tushare." + api not in SOURCE_IDS or observation_context.get("source_id") != "tushare." + api:
             raise ValueError("OBSERVATION_SOURCE_MISMATCH")
+        if api == "daily_basic" and (observation_context.get("ts_code") is None
+                                     or params.get("ts_code") != observation_context["ts_code"]):
+            raise ValueError("STOCK_REQUEST_SCOPE_REQUIRED")
         from datetime import datetime, timezone
         from pathlib import Path
         from experiments.data_governance.catalog import load_catalog
@@ -142,21 +156,89 @@ def _tushare_call(api, token, params, fields, *, observation_context=None, recei
                         receipt_sink, lambda: datetime.now(timezone.utc))
     else:
         r = invoke()
+    if endpoint_session is not None and (not isinstance(r, dict) or type(r.get("code")) is not int
+                                         or r["code"] != 0 or not isinstance(r.get("data"), dict)):
+        raise RuntimeError("TUSHARE_OBSERVED_RESPONSE_FAILED")
     if r.get("code") != 0:
         raise RuntimeError(f"tushare {api} error: {r.get('msg')}")
     return r.get("data") or {}
 
 
-def tushare_daily(ticker, token=None, n=130):
+def _observation_target(observation_context=None, receipt_sink=None, endpoint_session=None):
+    if endpoint_session is not None and (observation_context is not None or receipt_sink is not None):
+        raise ValueError("OBSERVATION_MODES_MUTUALLY_EXCLUSIVE")
+    if endpoint_session is None and (observation_context is None or receipt_sink is None):
+        raise ValueError("OBSERVATION_CONTEXT_AND_SINK_REQUIRED")
+    from experiments.data_governance.catalog import valid_date
+    try:
+        target = (endpoint_session.target_trade_date if endpoint_session is not None
+                  else observation_context["target_trade_date"])
+        return valid_date(target)
+    except Exception:
+        raise RuntimeError("OBSERVATION_TARGET_REQUIRED") from None
+
+
+def _observed_stock_rows(data, ticker, target):
+    from experiments.data_governance.catalog import valid_date
+    if not isinstance(data, dict):
+        raise RuntimeError("OBSERVATION_ROW_SHAPE")
+    fields, items = data.get("fields"), data.get("items")
+    if (not isinstance(fields, list) or not isinstance(items, list)
+            or any(not isinstance(f, str) for f in fields)
+            or not {"ts_code", "trade_date"} <= set(fields)
+            or len(fields) != len(set(fields))):
+        raise RuntimeError("OBSERVATION_ENTITY_AND_DATE_REQUIRED")
+    rows = []
+    for item in items:
+        if not isinstance(item, list) or len(item) != len(fields):
+            raise RuntimeError("OBSERVATION_ROW_SHAPE")
+        row = dict(zip(fields, item))
+        if row["ts_code"] != ticker:
+            raise RuntimeError("OBSERVATION_ENTITY_REQUIRED")
+        try:
+            valid_date(row["trade_date"])
+        except (TypeError, ValueError):
+            raise RuntimeError("OBSERVATION_DATE_REQUIRED") from None
+        rows.append(row)
+    if sum(r["trade_date"] == target for r in rows) != 1:
+        raise RuntimeError("OBSERVATION_TARGET_ROW_REQUIRED")
+    return rows
+
+
+def _observed_number(value):
+    try:
+        valid = type(value) in {int, float} and math.isfinite(value)
+    except (OverflowError, TypeError, ValueError):
+        valid = False
+    if not valid:
+        raise RuntimeError("OBSERVATION_NUMERIC_REQUIRED")
+    return value
+
+
+def tushare_daily(ticker, token=None, n=130, *, observation_context=None, receipt_sink=None,
+                  endpoint_session=None):
     """Daily 定盘 OHLC via Tushare `daily` (newest n bars), oldest->newest.
     Each bar = {high, low, close} for compute_technicals (MA20/60/120, ATR14)."""
     token = token if token is not None else os.environ.get("TUSHARE_TOKEN", "")
     if not token:
         raise RuntimeError("no TUSHARE_TOKEN")
-    d = _tushare_call("daily", token, {"ts_code": ticker},
-                      "trade_date,open,high,low,close,pct_chg")
-    items, fields = d.get("items") or [], d.get("fields") or []
-    rows = [dict(zip(fields, it)) for it in items]            # newest-first from tushare
+    observed = observation_context is not None or receipt_sink is not None or endpoint_session is not None
+    fields = "trade_date,open,high,low,close,pct_chg"
+    if observed:
+        target = _observation_target(observation_context, receipt_sink, endpoint_session)
+        d = _tushare_call("daily", token, {"ts_code": ticker}, "ts_code," + fields,
+                          observation_context=observation_context, receipt_sink=receipt_sink,
+                          endpoint_session=endpoint_session)
+    else:
+        d = _tushare_call("daily", token, {"ts_code": ticker}, fields)
+    if observed:
+        rows = [r for r in _observed_stock_rows(d, ticker, target) if r["trade_date"] <= target]
+        for row in rows:
+            for field in ("high", "low", "close", "pct_chg"):
+                _observed_number(row.get(field))
+    else:
+        items, fields = d.get("items") or [], d.get("fields") or []
+        rows = [dict(zip(fields, it)) for it in items]        # newest-first from tushare
     rows.sort(key=lambda r: r["trade_date"])                  # -> oldest-first
     bars = [{"high": r["high"], "low": r["low"], "close": r["close"]} for r in rows[-n:]]
     latest = rows[-1] if rows else {}
@@ -165,32 +247,43 @@ def tushare_daily(ticker, token=None, n=130):
             "ohlc_bars": bars, "source": "tushare_daily"}
 
 
-def tushare_stock_fund(ticker, token, trade_date="", *, observation_context=None, receipt_sink=None):
+def tushare_daily_basic(token, params=None, fields="", *, observation_context=None, receipt_sink=None,
+                        endpoint_session=None):
+    """Raw daily_basic data for the existing DataFrame caller; no extra fetch."""
+    params = {} if params is None else params
+    if observation_context is not None or receipt_sink is not None or endpoint_session is not None:
+        return _tushare_call("daily_basic", token, params, fields,
+                              observation_context=observation_context, receipt_sink=receipt_sink,
+                              endpoint_session=endpoint_session)
+    return _tushare_call("daily_basic", token, params, fields)
+
+
+def tushare_stock_fund(ticker, token, trade_date="", *, observation_context=None, receipt_sink=None,
+                        endpoint_session=None):
     """东财口径 via Tushare moneyflow_dc. Prod path; needs a working token.
     moneyflow_dc amounts are 万元 -> /1e4 = 亿. [CONFIRMED 2026-06-25: 利通
     net_amount -117479.36万 = -11.75亿; net_amount == buy_elg + buy_lg]"""
-    if observation_context is not None or receipt_sink is not None:
+    observed = observation_context is not None or receipt_sink is not None or endpoint_session is not None
+    if observed:
+        target = _observation_target(observation_context, receipt_sink, endpoint_session)
         data = _tushare_call("moneyflow_dc", token,
                              {"ts_code": ticker, "trade_date": trade_date},
                              "ts_code,trade_date,close,pct_change,net_amount,"
                              "buy_elg_amount,buy_lg_amount,buy_md_amount,buy_sm_amount",
-                             observation_context=observation_context, receipt_sink=receipt_sink)
+                             observation_context=observation_context, receipt_sink=receipt_sink,
+                             endpoint_session=endpoint_session)
     else:
         data = _legacy_stock_fund_data(ticker, token, trade_date)
-    items, fields = data.get("items") or [], data.get("fields") or []
-    if not items:
-        raise RuntimeError("tushare returned no rows")
-    if observation_context is not None:
-        matches = [item for item in items if dict(zip(fields, item)).get("trade_date") ==
-                   observation_context["target_trade_date"]]
-        if len(matches) != 1:
-            raise RuntimeError("OBSERVATION_TARGET_ROW_REQUIRED")
-        row = dict(zip(fields, matches[0]))
+    if observed:
+        row = next(r for r in _observed_stock_rows(data, ticker, target) if r["trade_date"] == target)
     else:
+        items, fields = data.get("items") or [], data.get("fields") or []
+        if not items:
+            raise RuntimeError("tushare returned no rows")
         row = dict(zip(fields, items[0]))                # legacy provider order
     def w(key):
-        value = row[key] if observation_context is not None else (row.get(key) or 0)
-        return round(value / 1e4, 4)  # 万元 -> 亿; opt-in values were validated before receipt commit.
+        value = _observed_number(row.get(key)) if observed else (row.get(key) or 0)
+        return round(value / 1e4, 4)  # 万元 -> 亿; observed missing values never become zero.
     return {"ticker": ticker, "date": row.get("trade_date"),
             "main": w("net_amount"), "super_large": w("buy_elg_amount"),
             "large": w("buy_lg_amount"), "medium": w("buy_md_amount"),
@@ -210,9 +303,15 @@ def _legacy_stock_fund_data(ticker, token, trade_date):
     return r.get("data") or {}
 
 
-def get_stock_fund(ticker, source="auto", token=None):
+def get_stock_fund(ticker, source="auto", token=None, *, endpoint_session=None):
     """Return unified {main,super_large,large,medium,small,date,source} in 亿."""
     token = token if token is not None else os.environ.get("TUSHARE_TOKEN", "")
+    if endpoint_session is not None:
+        if source not in {"auto", "tushare"}:
+            raise ValueError("OBSERVATION_TUSHARE_SOURCE_REQUIRED")
+        if not token:
+            raise RuntimeError("no TUSHARE_TOKEN")
+        return tushare_stock_fund(ticker, token, endpoint_session=endpoint_session)
     order = {"auto": ["tushare", "eastmoney"], "tushare": ["tushare"],
              "eastmoney": ["eastmoney"], "manual": []}[source]
     errs = []
@@ -230,11 +329,14 @@ def get_stock_fund(ticker, source="auto", token=None):
                        f"falls to manual. tried: {' | '.join(errs)}")
 
 
-def get_many(tickers, source="auto", token=None, pace=1.2):
+def get_many(tickers, source="auto", token=None, pace=1.2, *, endpoint_session=None):
     out = []
     for i, t in enumerate(tickers):
         if i:
             time.sleep(pace)                            # space requests; push2 throttles bursts
+        if endpoint_session is not None:
+            out.append(get_stock_fund(t, source=source, token=token, endpoint_session=endpoint_session))
+            continue
         try:
             out.append(get_stock_fund(t, source=source, token=token))
         except Exception as e:                          # noqa: BLE001

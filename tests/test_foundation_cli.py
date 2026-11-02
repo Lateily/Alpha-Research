@@ -114,5 +114,17 @@ class FoundationCliTests(unittest.TestCase):
             self.assertEqual((code, output), (2, ""))
             operation.assert_not_called()
 
+    def test_cninfo_intake_routes_only_with_explicit_write_root(self):
+        from foundation_intake import REQUEST_KEYS
+        filename = self.request({key: None for key in REQUEST_KEYS})
+        with mock.patch("foundation_intake.run_cninfo_intake", return_value={"status": "BLOCKED"}) as run:
+            code, _output, _error = self.run_cli(["cninfo-intake", "--request", filename])
+            self.assertEqual(code, 2)
+            run.assert_not_called()
+            code, output, error = self.run_cli(["cninfo-intake", "--request", filename, "--write-root", "/synthetic/new-intake"])
+        self.assertEqual((code, error), (0, ""))
+        self.assertEqual(json.loads(output)["testing_status"], "NOT_RUN")
+        run.assert_called_once()
+
 
 if __name__ == "__main__": unittest.main()

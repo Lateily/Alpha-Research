@@ -21,7 +21,16 @@ ERRORS = {None, "PERMISSION_DENIED", "INVALID_RESPONSE", "PARAM_ERROR",
           "SOURCE_DOWN", "CALL_RECORDING_INCOMPLETE"}
 SAFE_FIELDS = {"ts_code", "trade_date", "open", "high", "low", "close", "pre_close",
                "change", "pct_chg", "pct_change", "vol", "amount", "net_amount",
-               "buy_elg_amount", "buy_lg_amount", "buy_md_amount", "buy_sm_amount"}
+               "buy_elg_amount", "buy_lg_amount", "buy_md_amount", "buy_sm_amount",
+               "pe", "pe_ttm", "pb", "total_mv", "name"}
+
+
+def observe_endpoint(session, api_name, params, fields, invoke):
+    """Keep duck-typed recorder failures out of retry loops and public errors."""
+    try:
+        return session.observe(api_name, params, fields, invoke)
+    except Exception:
+        raise RuntimeError("ENDPOINT_OBSERVATION_FAILED") from None
 
 
 def safe_params(value, context):
@@ -218,7 +227,7 @@ def _summary(response, context, source, params):
         raise ValueError("INVALID_RESPONSE")
     # Check finite JSON before deriving metrics; never persist provider text/data.
     response_hash = _digest(response)
-    numeric_fields = SAFE_FIELDS - {"ts_code", "trade_date"}
+    numeric_fields = SAFE_FIELDS - {"ts_code", "trade_date", "name"}
     required = set(params.get("fields", "").split(",")) & numeric_fields
     if not required <= set(fields):
         raise ValueError("INVALID_RESPONSE")

@@ -200,6 +200,43 @@ class MutationCase:
 
 MUTATIONS: tuple[MutationCase, ...] = (
     MutationCase(
+        mutation_id="ENDPOINT_TARGET_EXTREMA_COUNTS", component="Foundation endpoint evidence",
+        source_path="experiments/data_governance/endpoint_calls.py", test_script="tests/test_endpoint_counterexamples.py",
+        before='            if not minimum <= target_rows <= maximum:\n', after='            if False:\n',
+        expected_failure_marker="test_coordinated_target_count_and_gap_forgery_still_refused",
+        rationale="A coordinated re-sealing of count, quality and gap labels cannot contradict observed date extrema.",
+    ),
+    MutationCase(
+        mutation_id="ENDPOINT_NO_SECOND_INVOKE", component="Foundation endpoint evidence",
+        source_path="experiments/data_governance/endpoint_calls.py", test_script="tests/test_endpoint_counterexamples.py",
+        before='        if not created:\n', after='        if False:\n',
+        expected_failure_marker="test_existing_logical_identity_never_invokes_provider_twice",
+        rationale="Revisiting a recorded logical identity must not invoke the provider a second time.",
+    ),
+    MutationCase(
+        mutation_id="ENDPOINT_PERMISSION_STOP_RETRY", component="Foundation endpoint transport",
+        source_path="experiments/execution_tracker/tushare_rows.py", test_script="tests/test_source_observation_hooks.py",
+        before='                if endpoint_session is not None and (isinstance(exc, PermissionError)\n                                                       or exc.code in {401, 403}):\n',
+        after='                if False:\n',
+        expected_failure_marker="test_real_session_rows_denials_record_permission_denied_after_one_attempt",
+        rationale="Observed HTTP denials must remain permission failures without retrying into a false recovery.",
+    ),
+    MutationCase(
+        mutation_id="MATERIAL_INTAKE_EXTERNAL_ANCHOR", component="Real material intake",
+        source_path="scripts/llm/foundation_intake.py", test_script="tests/test_foundation_intake.py",
+        before='    if len(raw) > 1024 * 1024 or ev.sha(raw) != _hash(expected):\n',
+        after='    if len(raw) > 1024 * 1024:\n',
+        expected_failure_marker="test_external_manifest_hash_mismatch_has_no_write",
+        rationale="An independently pinned source manifest must not be replaced by a self-consistent intake.",
+    ),
+    MutationCase(
+        mutation_id="MATERIAL_PUBLICATION_DATE_PRECISION", component="Real material intake",
+        source_path="scripts/llm/foundation_materials.py", test_script="tests/test_foundation_intake.py",
+        before='        if published != expected:\n', after='        if False:\n',
+        expected_failure_marker="test_date_only_precision_and_case_insensitive_pdf_are_preserved",
+        rationale="A date-only source cannot silently become an arbitrary exact publication timestamp.",
+    ),
+    MutationCase(
         mutation_id="DG_RECEIPT_NUMERIC_TYPE", component="B6 review counterexamples",
         source_path="experiments/data_governance/call_receipts.py", test_script="tests/test_data_call_receipts.py",
         before='            if type(row[field]) not in {int, float} or not math.isfinite(row[field]):\n',
@@ -373,8 +410,8 @@ MUTATIONS: tuple[MutationCase, ...] = (
     MutationCase(
         mutation_id="DG_STOCK_TARGET_ROW", component="Source governance review fixes",
         source_path="experiments/execution_tracker/fund_source.py", test_script="tests/test_data_call_receipts.py",
-        before='        matches = [item for item in items if dict(zip(fields, item)).get("trade_date") ==\n                   observation_context["target_trade_date"]]\n',
-        after='        matches = items[:1]\n', expected_failure_marker="test_opt_in_fund_consumes_target_row_not_provider_order",
+        before='        row = next(r for r in _observed_stock_rows(data, ticker, target) if r["trade_date"] == target)\n',
+        after='        row = _observed_stock_rows(data, ticker, target)[0]\n', expected_failure_marker="test_opt_in_fund_consumes_target_row_not_provider_order",
         rationale="A healthy target-day receipt cannot feed a stale first provider row.",
     ),
     MutationCase(
@@ -9170,8 +9207,8 @@ MUTATIONS = MUTATIONS + (
         component="Rotation missing-data honesty",
         source_path="experiments/execution_tracker/tushare_rows.py",
         test_script="tests/test_rotation_nav_missing.py",
-        before="    return None, reason\n\n\ndef optional_float(value):",
-        after="    return [], None\n\n\ndef optional_float(value):",
+        before="        if not succeeded:\n            return None, reason\n",
+        after="        if not succeeded:\n            return [], None\n",
         expected_failure_marker="test_failure_is_none_with_reason_not_empty_list",
         rationale="A failed provider call must never look like a real empty answer.",
     ),

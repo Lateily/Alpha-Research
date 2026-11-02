@@ -14,9 +14,9 @@
       "source_id": "tushare.daily_basic", "provider": "tushare", "endpoint": "daily_basic",
       "date_field": "trade_date",
       "unit_map": {"total_mv": "CNY_10000_SOURCE_DECLARED", "pe_ttm": "RATIO_SOURCE_DECLARED"},
-      "consumers": ["scripts/fetch_data.py", "experiments/execution_tracker/full_battery.py"],
+      "consumers": ["scripts/fetch_data.py", "experiments/execution_tracker/full_battery.py", "experiments/execution_tracker/fund_source.py:tushare_daily_basic", "experiments/execution_tracker/tushare_https.py:TushareHTTPS.query"],
       "rights_status": "UNVERIFIED", "rights_evidence_refs": [],
-      "freshness_rule": "EXACT_TARGET_TRADE_DATE", "instrumentation": "NOT_INSTRUMENTED"
+      "freshness_rule": "EXACT_TARGET_TRADE_DATE", "instrumentation": "OPT_IN_LOGICAL_CALL"
     },
     "tushare.moneyflow_dc": {
       "source_id": "tushare.moneyflow_dc", "provider": "tushare", "endpoint": "moneyflow_dc",
@@ -30,14 +30,14 @@
       "date_field": "trade_date", "unit_map": {"net_amount": "UNVERIFIED"},
       "consumers": ["scripts/fetch_capital_flow.py", "experiments/execution_tracker/rotation_panel.py"],
       "rights_status": "UNVERIFIED", "rights_evidence_refs": [],
-      "freshness_rule": "EXACT_TARGET_TRADE_DATE", "instrumentation": "NOT_INSTRUMENTED"
+      "freshness_rule": "EXACT_TARGET_TRADE_DATE", "instrumentation": "OPT_IN_LOGICAL_CALL"
     },
     "tushare.moneyflow_mkt_dc": {
       "source_id": "tushare.moneyflow_mkt_dc", "provider": "tushare", "endpoint": "moneyflow_mkt_dc",
       "date_field": "trade_date", "unit_map": {"net_amount": "CNY_SOURCE_DECLARED_NOT_REVERIFIED"},
       "consumers": ["experiments/execution_tracker/run_official_sample.py:_market_main_flow"],
       "rights_status": "UNVERIFIED", "rights_evidence_refs": [],
-      "freshness_rule": "EXACT_TARGET_TRADE_DATE", "instrumentation": "NOT_INSTRUMENTED"
+      "freshness_rule": "EXACT_TARGET_TRADE_DATE", "instrumentation": "OPT_IN_LOGICAL_CALL"
     }
   }
 }

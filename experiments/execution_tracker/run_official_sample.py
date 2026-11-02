@@ -149,8 +149,20 @@ def _index_chg(token, code):
     return rows[-1] if rows else {}
 
 
-def _market_main_flow(token):
+def _market_main_flow(token, *, endpoint_session=None):
     """moneyflow_mkt_dc net_amount (元) -> 亿; None if unavailable/tier-locked."""
+    if endpoint_session is not None:
+        target = fs._observation_target(endpoint_session=endpoint_session)
+        d = fs._tushare_call("moneyflow_mkt_dc", token, {}, "", endpoint_session=endpoint_session)
+        try:
+            rows = [dict(zip(d["fields"], it)) for it in d["items"]]
+            matches = [r for r in rows if r.get("trade_date") == target]
+        except Exception:
+            raise RuntimeError("OBSERVATION_ROW_SHAPE") from None
+        if len(matches) != 1:
+            raise RuntimeError("OBSERVATION_TARGET_ROW_REQUIRED")
+        na = fs._observed_number(matches[0].get("net_amount"))
+        return round(na / 1e8, 2)
     try:
         d = fs._tushare_call("moneyflow_mkt_dc", token, {}, "")
         rows = sorted((dict(zip(d["fields"], it)) for it in d["items"]), key=lambda r: r["trade_date"])

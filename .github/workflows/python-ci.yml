@@ -33,6 +33,7 @@ on:
       - "config/aios-skills.v1.json"
       - "config/data-source-catalog.v1.json"
       - "config/data-source-inventory.v1.json"
+      - "config/data-endpoint-contracts.v1.json"
       - "config/workflow-catalog.v1.json"
       - "docs/team/TEAM_AI_WORKSPACE_V1.md"
       - ".gitignore"
@@ -151,6 +152,11 @@ jobs:
           python3 -B tests/test_foundation_materials.py
           python3 -B tests/test_foundation_preservation.py
           python3 -B tests/test_foundation_release.py
+          python3 -B tests/test_foundation_intake.py
+          python3 -B tests/test_endpoint_contracts.py
+          python3 -B tests/test_endpoint_calls.py
+          python3 -B tests/test_endpoint_counterexamples.py
+          python3 -B tests/test_source_observation_hooks.py
       - name: U0 security registry transport retry
         run: python3 tests/test_security_registry_transport.py
       - name: Nightly staged dependencies and HTTPS entry points (offline)

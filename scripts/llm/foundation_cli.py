@@ -31,6 +31,13 @@ def arguments(argv=None):
     ingest = commands.add_parser("material-ingest")
     ingest.add_argument("--request", required=True)
     ingest.add_argument("--write-root", required=True)
+    batch = commands.add_parser("cninfo-intake")
+    batch.add_argument("--request", required=True)
+    batch.add_argument("--write-root", required=True)
+    endpoint_health = commands.add_parser("endpoint-health")
+    endpoint_health.add_argument("--receipts-root", required=True)
+    endpoint_health.add_argument("--target-date", required=True)
+    endpoint_health.add_argument("--catalog")
     materials = commands.add_parser("materials")
     materials.add_argument("--library-root", required=True)
     materials.add_argument("--industry")
@@ -75,6 +82,17 @@ def execute(args):
         if source == destination or source in destination.parents or destination in source.parents:
             raise ValueError("FOUNDATION_MATERIAL_ROOT_OVERLAP")
         return ingest_material(value["source_root"], args.write_root, value["manifest"])
+    if args.command == "cninfo-intake":
+        from foundation_intake import REQUEST_KEYS, run_cninfo_intake
+        value = request_json(args.request, required=REQUEST_KEYS)
+        return run_cninfo_intake(value, args.write_root)
+    if args.command == "endpoint-health":
+        sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+        from experiments.data_governance.endpoints import load_catalog, project_endpoint_health, propose_backfills
+        from experiments.data_governance.endpoint_calls import read_endpoint_receipts
+        catalog = load_catalog(Path(args.catalog) if args.catalog else Path(__file__).resolve().parents[2] / "config/data-endpoint-contracts.v1.json")
+        health = project_endpoint_health(catalog, read_endpoint_receipts(args.receipts_root), target_trade_date=args.target_date)
+        return {"health": health, "backfill_proposals": propose_backfills(health)}
     if args.command == "materials":
         from foundation_materials import query_library
         return query_library(args.library_root, industry_key=args.industry, trade_date=args.date, ts_code=args.ticker)

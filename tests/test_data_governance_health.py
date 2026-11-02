@@ -82,11 +82,18 @@ class HealthTests(unittest.TestCase):
         self.assertEqual(source["status"], "DATA_BLOCKED")
         self.assertEqual({s["reason"] for s in source["scopes"]}, {"MISSING_DATE", "FUTURE_DATE"})
 
-    def test_registered_but_uninstrumented(self):
+    def test_opt_in_support_without_receipts_is_not_observed_success(self):
         self.add()
         source = self.health()["sources"]["tushare.daily_basic"]
         self.assertEqual(source["status"], "NOT_RUN")
-        self.assertEqual(source["reason"], "NOT_INSTRUMENTED")
+        self.assertEqual(source["reason"], "NO_RECEIPTS")
+        self.assertEqual(source["scopes"], [])
+
+    def test_historical_uninstrumented_catalog_keeps_its_original_meaning(self):
+        historical = copy.deepcopy(self.catalog)
+        historical["sources"]["tushare.daily_basic"]["instrumentation"] = "NOT_INSTRUMENTED"
+        source = evaluate_health(historical, [], target_trade_date="20261030")["sources"]["tushare.daily_basic"]
+        self.assertEqual((source["status"], source["reason"]), ("NOT_RUN", "NOT_INSTRUMENTED"))
 
     def test_empty_required_is_not_valid_empty(self):
         self.add(empty=True)

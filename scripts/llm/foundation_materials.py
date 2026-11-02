@@ -148,14 +148,26 @@ def _relative(value):
             r"[A-Za-z0-9][A-Za-z0-9_.-]{0,150}(?:/[A-Za-z0-9][A-Za-z0-9_.-]{0,150}){0,7}", value)
             or any(part in {".", ".."} or SECRET_PATH.search(part) for part in value.split("/"))):
         _fail("SOURCE_PATH_INVALID")
-    suffix = Path(value).suffix
+    suffix = Path(value).suffix.lower()
     if suffix not in SUFFIXES:
         _fail("FILE_TYPE_REFUSED")
     return suffix
 
 
-def _provenance(value, *, available, created):
-    _exact(value, {"publisher", "provider_id", "source_locator", "captured_at"})
+def _provenance(value, *, published, available, created):
+    fields = {"publisher", "provider_id", "source_locator", "captured_at"}
+    if type(value) is not dict or set(value) not in (fields, fields | {"publication_precision"}):
+        _fail("FIELDS_INVALID")
+    if "publication_precision" in value:
+        precision = value["publication_precision"]
+        _exact(precision, {"basis", "published_on"})
+        if precision["basis"] != "DATE_ONLY_UPPER_BOUND_NOT_OBSERVED_TIME":
+            _fail("PUBLICATION_PRECISION_INVALID")
+        day = _date(precision["published_on"])
+        expected = datetime.combine(day, datetime.max.time().replace(microsecond=0),
+                                    tzinfo=timezone(timedelta(hours=8)))
+        if published != expected:
+            _fail("PUBLICATION_PRECISION_CONFLICT")
     publisher = value["publisher"]
     if (type(publisher) is not str or not publisher.strip() or len(publisher) > 500
             or any(ord(char) < 32 or ord(char) == 127 for char in publisher)):
@@ -229,7 +241,7 @@ def _manifest(value):
         if row["kind"] == "original":
             if available > cutoff:
                 _fail("ORIGINAL_NOT_AVAILABLE_AT_CUTOFF")
-            _provenance(row["provenance"], available=available, created=created)
+            _provenance(row["provenance"], published=published, available=available, created=created)
         elif row["provenance"] is not None:
             _fail("DERIVED_PROVENANCE_MUST_USE_ORIGINAL_REFS")
         refs = row["original_refs"]
@@ -409,7 +421,7 @@ def _stream(fd, *, size, suffix, destination=None):
 
 
 def _blob_name(item):
-    return item["sha256"] + Path(item["source_path"]).suffix
+    return item["sha256"] + Path(item["source_path"]).suffix.lower()
 
 
 def _lineage(rows):
@@ -529,6 +541,32 @@ def verify_library(library_root, *, expected_library_hash=None) -> dict:
         return _verify_open(fd, expected_library_hash=expected_library_hash)
 
 
+def inspect_material_source(source_root, manifest) -> dict:
+    """Admit explicitly listed source bytes before starting an immutable write."""
+    manifest = _manifest(manifest)
+    source = _root(source_root)
+    checked = {}
+    with _directory(source) as source_fd:
+        for row in manifest["materials"]:
+            for item in row["files"]:
+                parts = item["source_path"].split("/")
+                fd = os.dup(source_fd)
+                try:
+                    for component in parts[:-1]:
+                        child = os.open(component, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=fd)
+                        os.close(fd)
+                        fd = child
+                    with _regular(fd, parts[-1], MAX_FILE_BYTES) as (original, _info):
+                        actual = _stream(original, size=item["size_bytes"], suffix=Path(item["source_path"]).suffix.lower())
+                    if actual != item["sha256"]:
+                        _fail("ORIGINAL_HASH_MISMATCH")
+                    checked[item["source_path"]] = actual
+                finally:
+                    os.close(fd)
+    return {"schema": "ar.material-source-admission.v1", **LABELS,
+            "status": "SOURCE_BYTES_ADMITTED_NOT_RESEARCH_APPROVAL", "files": checked}
+
+
 def ingest_material(source_root, library_root, manifest) -> dict:
     """Explicit create-only intake; any interrupted directory blocks later use.
 
@@ -593,7 +631,7 @@ def ingest_material(source_root, library_root, manifest) -> dict:
                                                          0o600, dir_fd=blobs)
                                         try:
                                             actual = _stream(original, size=item["size_bytes"],
-                                                             suffix=Path(item["source_path"]).suffix, destination=target)
+                                                             suffix=Path(item["source_path"]).suffix.lower(), destination=target)
                                             if actual != item["sha256"]:
                                                 _fail("ORIGINAL_HASH_MISMATCH")
                                             os.fsync(target)
