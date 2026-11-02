@@ -24,20 +24,29 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "rotation_panel.json")
 
 
-def _api(name, token, **params):
+def _api(name, token, *, endpoint_session=None, **params):
     """(rows, None) | (None, reason) — a failed call is never an empty answer."""
+    if endpoint_session is not None:
+        return tushare_rows.fetch_rows(name, token, timeout=30, endpoint_session=endpoint_session, **params)
     return tushare_rows.fetch_rows(name, token, timeout=30, **params)
 
 
-def recent_trade_dates(token, n=5):
+def recent_trade_dates(token, n=5, *, endpoint_session=None):
+    observer = {"endpoint_session": endpoint_session} if endpoint_session is not None else {}
+    if endpoint_session is not None:
+        from fund_source import _observation_target
+        today = _observation_target(endpoint_session=endpoint_session)
     rows, err = _api("trade_cal", token, exchange="SSE", is_open="1",
-                     start_date="20260601", end_date="20301231")
+                     start_date="20260601", end_date="20301231", **observer)
     if err:
         print(f"DATA_BLOCKED: trade_cal 调用失败 {err}")
         return None
     dates = sorted(r["cal_date"] for r in rows)
-    today = target_trade_date()
+    if endpoint_session is None:
+        today = target_trade_date()
     past = [d for d in dates if d <= today]            # official_sample 已确认 target 定盘
+    if endpoint_session is not None and (not past or past[-1] != today):
+        raise RuntimeError("OBSERVATION_TARGET_ROW_REQUIRED")
     return past[-n:]
 
 
@@ -113,8 +122,9 @@ def render(panel):
     return "\n".join(L)
 
 
-def run(token, n_days=5):
-    days = recent_trade_dates(token, n_days)
+def run(token, n_days=5, *, endpoint_session=None):
+    observer = {"endpoint_session": endpoint_session} if endpoint_session is not None else {}
+    days = recent_trade_dates(token, n_days, **observer)
     if days is None:
         return None
     if len(days) < n_days:
@@ -122,10 +132,12 @@ def run(token, n_days=5):
         return None
     flows, dropped = {}, 0
     for d in days:
-        rows, err = _api("moneyflow_ind_dc", token, trade_date=d)
+        rows, err = _api("moneyflow_ind_dc", token, trade_date=d, **observer)
         if err or not rows:
             print(f"DATA_BLOCKED: moneyflow_ind_dc {d} {err or '无数据'}")
             return None
+        if endpoint_session is not None and any(r.get("trade_date") != d for r in rows):
+            raise RuntimeError("OBSERVATION_REQUEST_DATE_REQUIRED")
         for r in rows:
             nm = r.get("name")
             net = tushare_rows.optional_float(r.get("net_amount"))

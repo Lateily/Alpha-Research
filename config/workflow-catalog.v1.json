@@ -1,0 +1,224 @@
+{
+  "schema": "ar.workflow-catalog.v1",
+  "catalog_version": "1.0",
+  "catalog_hash": "8f258a070b667f72844de00bd65fea64eed66a343939990d902904f51cf96322",
+  "sample_purpose": "WORKFLOW_DEBUG",
+  "testing_status": "NOT_RUN",
+  "human_review": "PENDING",
+  "production_authority": false,
+  "trading_authority": false,
+  "dispatch_authority": false,
+  "provider": "NONE",
+  "network_policy": "OFFLINE",
+  "workflows": [
+    {
+      "schema": "ar.workflow-definition.v1",
+      "kind": "observe",
+      "sample_purpose": "WORKFLOW_DEBUG",
+      "testing_status": "NOT_RUN",
+      "human_review": "PENDING",
+      "production_authority": false,
+      "trading_authority": false,
+      "dispatch_authority": false,
+      "provider": "NONE",
+      "network_policy": "OFFLINE",
+      "availability": "existing-shared",
+      "shared_status": "existing-shared",
+      "profile": {
+        "slots": 2,
+        "per_actor_limit": 2,
+        "global_limit": 20,
+        "timeout_seconds": 120,
+        "max_attempts": 2
+      },
+      "inputs": [
+        {"name": "isolated-job-request", "schema": null, "schema_status": "UNSPECIFIED"},
+        {"name": "shared-input", "schema": "ar.shared-input.v1", "schema_status": "DECLARED"}
+      ],
+      "outputs": [
+        {"name": "job-result", "schema": null, "schema_status": "UNSPECIFIED"},
+        {"name": "observation", "schema": "ar-workbench-observation.v1", "schema_status": "DECLARED"},
+        {"name": "shared-output-seal", "schema": "ar.shared-job-output.v1", "schema_status": "DECLARED"}
+      ],
+      "evidence_refs": [
+        "scripts/llm/workbench_workspace.py#Workspace.observe",
+        "scripts/llm/workbench_evidence.py#capture",
+        "scripts/llm/workbench_shared_inputs.py#FrozenInputs",
+        "scripts/llm/workbench_shared_worker.py#_output_result"
+      ]
+    },
+    {
+      "schema": "ar.workflow-definition.v1",
+      "kind": "snapshot-brief",
+      "sample_purpose": "WORKFLOW_DEBUG",
+      "testing_status": "NOT_RUN",
+      "human_review": "PENDING",
+      "production_authority": false,
+      "trading_authority": false,
+      "dispatch_authority": false,
+      "provider": "NONE",
+      "network_policy": "OFFLINE",
+      "availability": "existing-shared",
+      "shared_status": "existing-shared",
+      "profile": {
+        "slots": 2,
+        "per_actor_limit": 2,
+        "global_limit": 20,
+        "timeout_seconds": 120,
+        "max_attempts": 2
+      },
+      "inputs": [
+        {"name": "isolated-job-request", "schema": null, "schema_status": "UNSPECIFIED"},
+        {"name": "shared-input", "schema": "ar.shared-input.v1", "schema_status": "DECLARED"},
+        {"name": "observation", "schema": "ar-workbench-observation.v1", "schema_status": "DECLARED"}
+      ],
+      "outputs": [
+        {"name": "job-result", "schema": null, "schema_status": "UNSPECIFIED"},
+        {"name": "brief-receipt", "schema": "ar.workbench-snapshot-brief.v1", "schema_status": "DECLARED"},
+        {"name": "shared-output-seal", "schema": "ar.shared-job-output.v1", "schema_status": "DECLARED"}
+      ],
+      "evidence_refs": [
+        "scripts/llm/workbench_workspace.py#Workspace.start_job",
+        "scripts/llm/workbench_snapshot_brief.py#run",
+        "scripts/llm/workbench_snapshot_brief.py#run_frozen",
+        "scripts/llm/workbench_shared_worker.py#verify_seal"
+      ]
+    },
+    {
+      "schema": "ar.workflow-definition.v1",
+      "kind": "integrity",
+      "sample_purpose": "WORKFLOW_DEBUG",
+      "testing_status": "NOT_RUN",
+      "human_review": "PENDING",
+      "production_authority": false,
+      "trading_authority": false,
+      "dispatch_authority": false,
+      "provider": "NONE",
+      "network_policy": "OFFLINE",
+      "availability": "isolated-only",
+      "shared_status": "not-wired",
+      "profile": null,
+      "inputs": [
+        {"name": "isolated-job-request", "schema": null, "schema_status": "UNSPECIFIED"}
+      ],
+      "outputs": [
+        {"name": "job-result", "schema": null, "schema_status": "UNSPECIFIED"}
+      ],
+      "evidence_refs": ["scripts/llm/workbench_workspace.py#Workspace.verify_all"]
+    },
+    {
+      "schema": "ar.workflow-definition.v1",
+      "kind": "backup",
+      "sample_purpose": "WORKFLOW_DEBUG",
+      "testing_status": "NOT_RUN",
+      "human_review": "PENDING",
+      "production_authority": false,
+      "trading_authority": false,
+      "dispatch_authority": false,
+      "provider": "NONE",
+      "network_policy": "OFFLINE",
+      "availability": "isolated-only",
+      "shared_status": "not-wired",
+      "profile": null,
+      "inputs": [
+        {"name": "isolated-job-request", "schema": null, "schema_status": "UNSPECIFIED"}
+      ],
+      "outputs": [
+        {"name": "job-result", "schema": null, "schema_status": "UNSPECIFIED"},
+        {"name": "backup-manifest", "schema": "ar-workspace-backup.v1", "schema_status": "DECLARED"},
+        {"name": "data-export", "schema": "ar-workspace-data-export.v1", "schema_status": "DECLARED"}
+      ],
+      "evidence_refs": [
+        "scripts/llm/workbench_workspace.py#Workspace.start_job",
+        "scripts/llm/workbench_backup.py#create"
+      ]
+    },
+    {
+      "schema": "ar.workflow-definition.v1",
+      "kind": "research-replay",
+      "sample_purpose": "WORKFLOW_DEBUG",
+      "testing_status": "NOT_RUN",
+      "human_review": "PENDING",
+      "production_authority": false,
+      "trading_authority": false,
+      "dispatch_authority": false,
+      "provider": "NONE",
+      "network_policy": "OFFLINE",
+      "availability": "isolated-only",
+      "shared_status": "not-wired",
+      "profile": null,
+      "inputs": [
+        {"name": "isolated-job-request", "schema": null, "schema_status": "UNSPECIFIED"}
+      ],
+      "outputs": [
+        {"name": "job-result", "schema": null, "schema_status": "UNSPECIFIED"},
+        {"name": "replay-receipt", "schema": "ar-workbench-research-receipt.v1", "schema_status": "DECLARED"}
+      ],
+      "evidence_refs": [
+        "scripts/llm/workbench_workspace.py#Workspace.start_job",
+        "scripts/llm/nonprod_workbench.py#Store.replay",
+        "scripts/llm/workbench_research.py#perform"
+      ]
+    },
+    {
+      "schema": "ar.workflow-definition.v1",
+      "kind": "brief-trial",
+      "sample_purpose": "WORKFLOW_DEBUG",
+      "testing_status": "NOT_RUN",
+      "human_review": "PENDING",
+      "production_authority": false,
+      "trading_authority": false,
+      "dispatch_authority": false,
+      "provider": "NONE",
+      "network_policy": "OFFLINE",
+      "availability": "isolated-only",
+      "shared_status": "not-wired",
+      "profile": null,
+      "inputs": [
+        {"name": "isolated-job-request", "schema": null, "schema_status": "UNSPECIFIED"},
+        {"name": "frozen-trial-request", "schema": "ar.workflow-trial.v1", "schema_status": "DECLARED"}
+      ],
+      "outputs": [
+        {"name": "job-result", "schema": null, "schema_status": "UNSPECIFIED"},
+        {"name": "trial-artifact", "schema": "ar.workflow-trial-result.v1", "schema_status": "DECLARED"},
+        {"name": "trial-receipt", "schema": "ar.workflow-trial-result.v1", "schema_status": "DECLARED"},
+        {"name": "review-template", "schema": "ar.workflow-trial-review-template.v1", "schema_status": "DECLARED"}
+      ],
+      "evidence_refs": [
+        "scripts/llm/workbench_workspace.py#Workspace.start_job",
+        "scripts/llm/workbench_brief_trial.py#run",
+        "experiments/research_workflows/trial.py#build"
+      ]
+    },
+    {
+      "schema": "ar.workflow-definition.v1",
+      "kind": "earnings-trial",
+      "sample_purpose": "WORKFLOW_DEBUG",
+      "testing_status": "NOT_RUN",
+      "human_review": "PENDING",
+      "production_authority": false,
+      "trading_authority": false,
+      "dispatch_authority": false,
+      "provider": "NONE",
+      "network_policy": "OFFLINE",
+      "availability": "isolated-only",
+      "shared_status": "not-wired",
+      "profile": null,
+      "inputs": [
+        {"name": "isolated-job-request", "schema": null, "schema_status": "UNSPECIFIED"},
+        {"name": "frozen-trial-request", "schema": "ar.workflow-trial.v1", "schema_status": "DECLARED"}
+      ],
+      "outputs": [
+        {"name": "job-result", "schema": null, "schema_status": "UNSPECIFIED"},
+        {"name": "trial-artifact", "schema": "ar.workflow-trial-result.v1", "schema_status": "DECLARED"},
+        {"name": "trial-receipt", "schema": "ar.workflow-trial-result.v1", "schema_status": "DECLARED"},
+        {"name": "review-template", "schema": "ar.workflow-trial-review-template.v1", "schema_status": "DECLARED"}
+      ],
+      "evidence_refs": [
+        "scripts/llm/workbench_workspace.py#Workspace.start_job",
+        "scripts/llm/workbench_earnings_trial.py#run",
+        "experiments/research_workflows/trial.py#build"
+      ]
+    }
+  ]
+}

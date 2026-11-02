@@ -16,10 +16,11 @@ READ_APIS = frozenset({
 
 
 class TushareHTTPS:
-    def __init__(self, token):
+    def __init__(self, token, *, endpoint_session=None):
         if not isinstance(token, str) or not token.strip():
             raise ValueError("TUSHARE_TOKEN_REQUIRED")
         self.__token = token.strip()
+        self.__endpoint_session = endpoint_session
 
     def __getattr__(self, name):
         return partial(self.query, name)
@@ -34,7 +35,12 @@ class TushareHTTPS:
         if not isinstance(fields, str):
             raise ValueError("TUSHARE_FIELDS_MUST_BE_STRING")
         try:
-            data = fund_source._tushare_call(api, self.__token, params, fields)
+            observer = ({"endpoint_session": self.__endpoint_session}
+                        if self.__endpoint_session is not None else {})
+            if api == "daily_basic":
+                data = fund_source.tushare_daily_basic(self.__token, params, fields, **observer)
+            else:
+                data = fund_source._tushare_call(api, self.__token, params, fields, **observer)
         except Exception as exc:
             # Upstream errors may echo the credential-bearing request payload.
             raise RuntimeError("TUSHARE_READ_FAILED:" + type(exc).__name__) from None

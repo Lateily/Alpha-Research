@@ -20,6 +20,7 @@ token.  Under ``AR_OFFLINE`` it refuses before opening a socket.
 import json
 import os
 import time
+import urllib.error
 import urllib.request
 
 TUSHARE_URL = "https://api.tushare.pro"
@@ -33,8 +34,8 @@ def _scrub(text, token):
 
 
 def fetch_rows(name, token, *, timeout=30, attempts=4, pause=1.5,
-               opener=None, sleep=time.sleep, **params):
-    """Return ``(rows, None)`` on a code-0 answer or ``(None, reason)`` on failure."""
+               opener=None, sleep=time.sleep, endpoint_session=None, **params):
+    """Return rows/reason by default; explicit observer failures propagate."""
     if os.environ.get("AR_OFFLINE"):
         return None, "TUSHARE_OFFLINE"
     if not isinstance(token, str) or not token.strip():
@@ -43,32 +44,82 @@ def fetch_rows(name, token, *, timeout=30, attempts=4, pause=1.5,
     body = json.dumps({"api_name": name, "token": token,
                        "params": params, "fields": ""}).encode()
     reason = "TUSHARE_NO_ATTEMPT"
-    for attempt in range(max(1, int(attempts))):
-        try:
-            req = urllib.request.Request(TUSHARE_URL, body,
-                                         {"Content-Type": "application/json"})
-            payload = json.load(opener(req, timeout=timeout))
-            if not isinstance(payload, dict):
-                reason = "TUSHARE_PAYLOAD_SHAPE"
-            elif payload.get("code") == 0:
-                data = payload.get("data")
-                fields = data.get("fields") if isinstance(data, dict) else None
-                items = data.get("items") if isinstance(data, dict) else None
-                if (not isinstance(fields, list) or not isinstance(items, list)
-                        or any(not isinstance(row, list) or len(row) != len(fields)
-                               for row in items)):
-                    reason = "TUSHARE_DATA_SHAPE"
+    succeeded = False
+    transport_failed = False
+    rows = None
+
+    def invoke():
+        nonlocal reason, succeeded, transport_failed, rows
+        payload = None
+        for attempt in range(max(1, int(attempts))):
+            payload = None
+            transport_failed = False
+            response_received = False
+            try:
+                req = urllib.request.Request(TUSHARE_URL, body,
+                                             {"Content-Type": "application/json"})
+                payload = json.load(opener(req, timeout=timeout))
+                response_received = True
+                if not isinstance(payload, dict):
+                    reason = "TUSHARE_PAYLOAD_SHAPE"
+                elif payload.get("code") == 0:
+                    data = payload.get("data")
+                    fields = data.get("fields") if isinstance(data, dict) else None
+                    items = data.get("items") if isinstance(data, dict) else None
+                    if (not isinstance(fields, list) or not isinstance(items, list)
+                            or any(not isinstance(row, list) or len(row) != len(fields)
+                                   for row in items)):
+                        reason = "TUSHARE_DATA_SHAPE"
+                    else:
+                        rows = [dict(zip(fields, row)) for row in items]
+                        succeeded = True
+                        return payload
                 else:
-                    return [dict(zip(fields, row)) for row in items], None
-            else:
-                reason = (f"TUSHARE_CODE_{payload.get('code')}:"
-                          f"{_scrub(payload.get('msg'), token)}")
-        except Exception as exc:                        # noqa: BLE001
-            # Upstream exception text may echo the request payload (token).
-            reason = f"TUSHARE_EXCEPTION:{type(exc).__name__}"
-        if attempt + 1 < max(1, int(attempts)):
-            sleep(pause)
-    return None, reason
+                    if endpoint_session is not None:
+                        return payload
+                    reason = (f"TUSHARE_CODE_{payload.get('code')}:"
+                              f"{_scrub(payload.get('msg'), token)}")
+            except (urllib.error.HTTPError, PermissionError) as exc:
+                if endpoint_session is not None and (isinstance(exc, PermissionError)
+                                                       or exc.code in {400, 401, 403, 422}):
+                    raise
+                transport_failed = not response_received
+                reason = ("TUSHARE_TRANSPORT_FAILED" if endpoint_session is not None else
+                          f"TUSHARE_EXCEPTION:{type(exc).__name__}")
+            except Exception as exc:                    # noqa: BLE001
+                transport_failed = not response_received
+                # Upstream exception text may echo the request payload (token).
+                reason = ("TUSHARE_TRANSPORT_FAILED" if endpoint_session is not None else
+                          f"TUSHARE_EXCEPTION:{type(exc).__name__}")
+            if attempt + 1 < max(1, int(attempts)):
+                sleep(pause)
+        return payload
+
+    if endpoint_session is None:
+        invoke()
+        if not succeeded:
+            return None, reason
+        return rows, None
+    else:
+        from experiments.data_governance.call_receipts import observe_endpoint
+
+        def invoke_observed():
+            payload = invoke()
+            if transport_failed:
+                raise RuntimeError("TUSHARE_TRANSPORT_FAILED")
+            return payload
+
+        # Recorder errors must never enter the provider retry sequence.
+        payload = observe_endpoint(endpoint_session, name, params, "", invoke_observed)
+        if not succeeded:
+            raise RuntimeError("TUSHARE_OBSERVED_RESPONSE_FAILED")
+    try:
+        if not isinstance(payload, dict) or type(payload.get("code")) is not int or payload["code"] != 0:
+            raise ValueError("INVALID_RESPONSE")
+        data = payload["data"]
+        return [dict(zip(data["fields"], row)) for row in data["items"]], None
+    except Exception:
+        raise RuntimeError("TUSHARE_OBSERVED_RESPONSE_FAILED") from None
 
 
 def optional_float(value):

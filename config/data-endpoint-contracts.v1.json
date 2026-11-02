@@ -1,0 +1,182 @@
+{
+  "schema": "ar.endpoint-contracts.v1",
+  "coverage": "FINITE_READER_ENDPOINTS_ONLY",
+  "outside_coverage": "NOT_INSTRUMENTED",
+  "evidence_grade": "WORKFLOW_DEBUG",
+  "verification": "NOT_RUN",
+  "human_review": "PENDING",
+  "authorities": {"provider_call_allowed": false, "dispatch_allowed": false, "production_write_allowed": false, "research_approval": false, "rights_expansion_allowed": false},
+  "endpoints": {
+    "daily": {
+      "api_name": "daily", "entity_scope": "STOCK_OR_MARKET",
+      "request": {"scope_rule": "ENTITY_OR_DATE", "required_params": [], "allowed_params": {"ts_code": "STOCK_ID", "trade_date": "DATE", "start_date": "DATE", "end_date": "DATE", "offset": "OFFSET", "limit": "LIMIT"}},
+      "response": {"identity_fields": ["ts_code"], "date_field": "trade_date", "period_field": null, "required_fields": ["ts_code", "trade_date", "close"], "required_numeric_fields": ["close"], "numeric_fields": ["open", "high", "low", "close", "pre_close", "change", "pct_chg", "vol", "amount"], "other_fields": []},
+      "units": {
+        "open": {"unit": "UNVERIFIED", "status": "UNVERIFIED"}, "high": {"unit": "UNVERIFIED", "status": "UNVERIFIED"}, "low": {"unit": "UNVERIFIED", "status": "UNVERIFIED"},
+        "close": {"unit": "UNVERIFIED", "status": "UNVERIFIED"}, "pre_close": {"unit": "UNVERIFIED", "status": "UNVERIFIED"}, "change": {"unit": "UNVERIFIED", "status": "UNVERIFIED"},
+        "pct_chg": {"unit": "PERCENT", "status": "SOURCE_CODE_DECLARED_NOT_REVERIFIED"}, "vol": {"unit": "UNVERIFIED", "status": "UNVERIFIED"}, "amount": {"unit": "CNY_1000", "status": "SOURCE_CODE_DECLARED_NOT_REVERIFIED"}
+      },
+      "freshness": "EXACT_REQUESTED_MARKET_DATE", "absence": "EMPTY_REQUIRED",
+      "paging": {"max_limit": 6000, "max_offset": 100000, "max_rows": 10000, "provider_limit_status": "UNVERIFIED", "completeness": "REQUEST_PAGE_ONLY"},
+      "consumers": ["experiments/execution_tracker/fund_source.py:tushare_daily", "experiments/execution_tracker/full_battery.py:battery", "experiments/execution_tracker/momentum_prefilter.py:run", "experiments/execution_tracker/court_wakeup.py:run"],
+      "provenance": ["experiments/execution_tracker/fund_source.py:tushare_daily", "experiments/execution_tracker/full_battery.py:battery"],
+      "rights": {"status": "UNVERIFIED", "evidence_refs": [], "permission_expansion_allowed": false}, "instrumentation": "OPT_IN_ONLY_NOT_RUN"
+    },
+    "daily_basic": {
+      "api_name": "daily_basic", "entity_scope": "STOCK_OR_MARKET",
+      "request": {"scope_rule": "ENTITY_OR_DATE", "required_params": [], "allowed_params": {"ts_code": "STOCK_ID", "trade_date": "DATE", "start_date": "DATE", "end_date": "DATE", "offset": "OFFSET", "limit": "LIMIT"}},
+      "response": {"identity_fields": ["ts_code"], "date_field": "trade_date", "period_field": null, "required_fields": ["ts_code", "trade_date", "pe_ttm", "pb", "total_mv"], "required_numeric_fields": ["pe_ttm", "pb", "total_mv"], "numeric_fields": ["close", "pe", "pe_ttm", "pb", "ps", "ps_ttm", "total_mv", "circ_mv", "turnover_rate", "turnover_rate_f", "volume_ratio", "total_share", "float_share", "free_share", "dv_ratio", "dv_ttm"], "other_fields": []},
+      "units": {
+        "close": {"unit": "UNVERIFIED", "status": "UNVERIFIED"}, "pe": {"unit": "UNVERIFIED", "status": "UNVERIFIED"}, "pe_ttm": {"unit": "RATIO", "status": "SOURCE_CODE_DECLARED_NOT_REVERIFIED"}, "pb": {"unit": "UNVERIFIED", "status": "UNVERIFIED"},
+        "ps": {"unit": "UNVERIFIED", "status": "UNVERIFIED"}, "ps_ttm": {"unit": "UNVERIFIED", "status": "UNVERIFIED"}, "total_mv": {"unit": "CNY_10000", "status": "SOURCE_CODE_DECLARED_NOT_REVERIFIED"}, "circ_mv": {"unit": "UNVERIFIED", "status": "UNVERIFIED"},
+        "turnover_rate": {"unit": "UNVERIFIED", "status": "UNVERIFIED"}, "turnover_rate_f": {"unit": "UNVERIFIED", "status": "UNVERIFIED"}, "volume_ratio": {"unit": "UNVERIFIED", "status": "UNVERIFIED"}, "total_share": {"unit": "UNVERIFIED", "status": "UNVERIFIED"},
+        "float_share": {"unit": "UNVERIFIED", "status": "UNVERIFIED"}, "free_share": {"unit": "UNVERIFIED", "status": "UNVERIFIED"}, "dv_ratio": {"unit": "UNVERIFIED", "status": "UNVERIFIED"}, "dv_ttm": {"unit": "UNVERIFIED", "status": "UNVERIFIED"}
+      },
+      "freshness": "EXACT_REQUESTED_MARKET_DATE", "absence": "EMPTY_REQUIRED",
+      "paging": {"max_limit": 6000, "max_offset": 100000, "max_rows": 10000, "provider_limit_status": "UNVERIFIED", "completeness": "REQUEST_PAGE_ONLY"},
+      "consumers": ["experiments/execution_tracker/full_battery.py:battery", "scripts/fetch_data.py"], "provenance": ["experiments/execution_tracker/full_battery.py:battery", "config/data-source-catalog.v1.json:tushare.daily_basic"],
+      "rights": {"status": "UNVERIFIED", "evidence_refs": [], "permission_expansion_allowed": false}, "instrumentation": "OPT_IN_ONLY_NOT_RUN"
+    },
+    "moneyflow_dc": {
+      "api_name": "moneyflow_dc", "entity_scope": "STOCK_OR_MARKET",
+      "request": {"scope_rule": "ENTITY_OR_DATE", "required_params": [], "allowed_params": {"ts_code": "STOCK_ID", "trade_date": "DATE", "start_date": "DATE", "end_date": "DATE", "offset": "OFFSET", "limit": "LIMIT"}},
+      "response": {"identity_fields": ["ts_code"], "date_field": "trade_date", "period_field": null, "required_fields": ["ts_code", "trade_date", "net_amount"], "required_numeric_fields": ["net_amount"], "numeric_fields": ["close", "pct_change", "net_amount", "buy_elg_amount", "buy_lg_amount", "buy_md_amount", "buy_sm_amount"], "other_fields": ["name"]},
+      "units": {
+        "close": {"unit": "UNVERIFIED", "status": "UNVERIFIED"}, "pct_change": {"unit": "UNVERIFIED", "status": "UNVERIFIED"}, "net_amount": {"unit": "CNY_10000", "status": "SOURCE_CODE_DECLARED_NOT_REVERIFIED"},
+        "buy_elg_amount": {"unit": "CNY_10000", "status": "SOURCE_CODE_DECLARED_NOT_REVERIFIED"}, "buy_lg_amount": {"unit": "CNY_10000", "status": "SOURCE_CODE_DECLARED_NOT_REVERIFIED"}, "buy_md_amount": {"unit": "CNY_10000", "status": "SOURCE_CODE_DECLARED_NOT_REVERIFIED"}, "buy_sm_amount": {"unit": "CNY_10000", "status": "SOURCE_CODE_DECLARED_NOT_REVERIFIED"}
+      },
+      "freshness": "EXACT_REQUESTED_MARKET_DATE", "absence": "EMPTY_REQUIRED",
+      "paging": {"max_limit": 6000, "max_offset": 100000, "max_rows": 10000, "provider_limit_status": "UNVERIFIED", "completeness": "REQUEST_PAGE_ONLY"},
+      "consumers": ["experiments/execution_tracker/fund_source.py:tushare_stock_fund", "experiments/execution_tracker/full_battery.py:battery"], "provenance": ["experiments/execution_tracker/fund_source.py:tushare_stock_fund"],
+      "rights": {"status": "UNVERIFIED", "evidence_refs": [], "permission_expansion_allowed": false}, "instrumentation": "OPT_IN_ONLY_NOT_RUN"
+    },
+    "moneyflow_ind_dc": {
+      "api_name": "moneyflow_ind_dc", "entity_scope": "INDUSTRY",
+      "request": {"scope_rule": "ENTITY_OR_DATE", "required_params": [], "allowed_params": {"ts_code": "INDUSTRY_ID", "trade_date": "DATE", "start_date": "DATE", "end_date": "DATE", "offset": "OFFSET", "limit": "LIMIT"}},
+      "response": {"identity_fields": ["ts_code"], "date_field": "trade_date", "period_field": null, "required_fields": ["ts_code", "name", "trade_date", "net_amount", "pct_change"], "required_numeric_fields": ["net_amount", "pct_change"], "numeric_fields": ["net_amount", "pct_change", "buy_elg_amount", "buy_lg_amount", "buy_md_amount", "buy_sm_amount"], "other_fields": ["name"]},
+      "units": {"net_amount": {"unit": "UNVERIFIED", "status": "UNVERIFIED"}, "pct_change": {"unit": "UNVERIFIED", "status": "UNVERIFIED"}, "buy_elg_amount": {"unit": "UNVERIFIED", "status": "UNVERIFIED"}, "buy_lg_amount": {"unit": "UNVERIFIED", "status": "UNVERIFIED"}, "buy_md_amount": {"unit": "UNVERIFIED", "status": "UNVERIFIED"}, "buy_sm_amount": {"unit": "UNVERIFIED", "status": "UNVERIFIED"}},
+      "freshness": "EXACT_REQUESTED_MARKET_DATE", "absence": "EMPTY_REQUIRED",
+      "paging": {"max_limit": 6000, "max_offset": 100000, "max_rows": 10000, "provider_limit_status": "UNVERIFIED", "completeness": "REQUEST_PAGE_ONLY"},
+      "consumers": ["experiments/execution_tracker/rotation_panel.py:run", "experiments/execution_tracker/rotation_validation.py:backfill", "scripts/fetch_capital_flow.py:fetch_industry_flow"], "provenance": ["experiments/execution_tracker/rotation_panel.py:run", "scripts/fetch_capital_flow.py:fetch_industry_flow"],
+      "rights": {"status": "UNVERIFIED", "evidence_refs": [], "permission_expansion_allowed": false}, "instrumentation": "OPT_IN_ONLY_NOT_RUN"
+    },
+    "moneyflow_mkt_dc": {
+      "api_name": "moneyflow_mkt_dc", "entity_scope": "MARKET",
+      "request": {"scope_rule": "MARKET", "required_params": [], "allowed_params": {"trade_date": "DATE", "start_date": "DATE", "end_date": "DATE", "offset": "OFFSET", "limit": "LIMIT"}},
+      "response": {"identity_fields": [], "date_field": "trade_date", "period_field": null, "required_fields": ["trade_date", "net_amount"], "required_numeric_fields": ["net_amount"], "numeric_fields": ["net_amount", "buy_elg_amount", "buy_lg_amount", "buy_md_amount", "buy_sm_amount"], "other_fields": []},
+      "units": {"net_amount": {"unit": "CNY", "status": "SOURCE_CODE_DECLARED_NOT_REVERIFIED"}, "buy_elg_amount": {"unit": "UNVERIFIED", "status": "UNVERIFIED"}, "buy_lg_amount": {"unit": "UNVERIFIED", "status": "UNVERIFIED"}, "buy_md_amount": {"unit": "UNVERIFIED", "status": "UNVERIFIED"}, "buy_sm_amount": {"unit": "UNVERIFIED", "status": "UNVERIFIED"}},
+      "freshness": "EXACT_REQUESTED_MARKET_DATE", "absence": "EMPTY_REQUIRED",
+      "paging": {"max_limit": 6000, "max_offset": 100000, "max_rows": 10000, "provider_limit_status": "UNVERIFIED", "completeness": "REQUEST_PAGE_ONLY"},
+      "consumers": ["experiments/execution_tracker/run_official_sample.py:_market_main_flow"], "provenance": ["experiments/execution_tracker/run_official_sample.py:_market_main_flow"],
+      "rights": {"status": "UNVERIFIED", "evidence_refs": [], "permission_expansion_allowed": false}, "instrumentation": "OPT_IN_ONLY_NOT_RUN"
+    },
+    "index_daily": {
+      "api_name": "index_daily", "entity_scope": "DOMESTIC_INDEX",
+      "request": {"scope_rule": "ENTITY_REQUIRED", "required_params": ["ts_code"], "allowed_params": {"ts_code": "DOMESTIC_INDEX_ID", "trade_date": "DATE", "start_date": "DATE", "end_date": "DATE", "offset": "OFFSET", "limit": "LIMIT"}},
+      "response": {"identity_fields": ["ts_code"], "date_field": "trade_date", "period_field": null, "required_fields": ["ts_code", "trade_date", "pct_chg"], "required_numeric_fields": ["pct_chg"], "numeric_fields": ["open", "high", "low", "close", "pre_close", "change", "pct_chg", "vol", "amount"], "other_fields": []},
+      "units": {"open": {"unit": "UNVERIFIED", "status": "UNVERIFIED"}, "high": {"unit": "UNVERIFIED", "status": "UNVERIFIED"}, "low": {"unit": "UNVERIFIED", "status": "UNVERIFIED"}, "close": {"unit": "UNVERIFIED", "status": "UNVERIFIED"}, "pre_close": {"unit": "UNVERIFIED", "status": "UNVERIFIED"}, "change": {"unit": "UNVERIFIED", "status": "UNVERIFIED"}, "pct_chg": {"unit": "PERCENT", "status": "SOURCE_CODE_DECLARED_NOT_REVERIFIED"}, "vol": {"unit": "UNVERIFIED", "status": "UNVERIFIED"}, "amount": {"unit": "UNVERIFIED", "status": "UNVERIFIED"}},
+      "freshness": "EXACT_REQUESTED_MARKET_DATE", "absence": "EMPTY_REQUIRED",
+      "paging": {"max_limit": 6000, "max_offset": 100000, "max_rows": 10000, "provider_limit_status": "UNVERIFIED", "completeness": "REQUEST_PAGE_ONLY"},
+      "consumers": ["experiments/execution_tracker/run_official_sample.py:_index_chg"], "provenance": ["experiments/execution_tracker/run_official_sample.py:INDICES", "experiments/execution_tracker/run_official_sample.py:_index_chg"],
+      "rights": {"status": "UNVERIFIED", "evidence_refs": [], "permission_expansion_allowed": false}, "instrumentation": "OPT_IN_ONLY_NOT_RUN"
+    },
+    "trade_cal": {
+      "api_name": "trade_cal", "entity_scope": "EXCHANGE_CALENDAR",
+      "request": {"scope_rule": "CALENDAR", "required_params": ["exchange", "start_date", "end_date"], "allowed_params": {"exchange": "EXCHANGE", "is_open": "IS_OPEN", "start_date": "DATE", "end_date": "DATE", "offset": "OFFSET", "limit": "LIMIT"}},
+      "response": {"identity_fields": ["exchange"], "date_field": "cal_date", "period_field": null, "required_fields": ["exchange", "cal_date", "is_open"], "required_numeric_fields": ["is_open"], "numeric_fields": ["is_open"], "other_fields": ["pretrade_date"]},
+      "units": {"is_open": {"unit": "BINARY", "status": "SOURCE_CODE_DECLARED_NOT_REVERIFIED"}},
+      "freshness": "REQUESTED_CALENDAR_WINDOW", "absence": "EMPTY_REQUIRED",
+      "paging": {"max_limit": 6000, "max_offset": 100000, "max_rows": 10000, "provider_limit_status": "UNVERIFIED", "completeness": "REQUEST_PAGE_ONLY"},
+      "consumers": ["experiments/execution_tracker/rotation_panel.py:recent_trade_dates", "experiments/execution_tracker/rotation_validation.py:backfill", "experiments/execution_tracker/momentum_prefilter.py:run"], "provenance": ["experiments/execution_tracker/rotation_panel.py:recent_trade_dates"],
+      "rights": {"status": "UNVERIFIED", "evidence_refs": [], "permission_expansion_allowed": false}, "instrumentation": "OPT_IN_ONLY_NOT_RUN"
+    },
+    "forecast": {
+      "api_name": "forecast", "entity_scope": "STOCK",
+      "request": {"scope_rule": "ENTITY_REQUIRED", "required_params": ["ts_code"], "allowed_params": {"ts_code": "STOCK_ID", "ann_date": "DATE", "start_date": "DATE", "end_date": "DATE", "period": "DATE", "type": "FORECAST_TYPE", "offset": "OFFSET", "limit": "LIMIT"}},
+      "response": {"identity_fields": ["ts_code"], "date_field": "ann_date", "period_field": "end_date", "required_fields": ["ts_code", "ann_date", "end_date", "type", "p_change_min", "p_change_max"], "required_numeric_fields": ["p_change_min", "p_change_max"], "numeric_fields": ["p_change_min", "p_change_max", "net_profit_min", "net_profit_max", "last_parent_net"], "other_fields": ["type", "summary", "change_reason", "first_ann_date"]},
+      "units": {"p_change_min": {"unit": "UNVERIFIED", "status": "UNVERIFIED"}, "p_change_max": {"unit": "UNVERIFIED", "status": "UNVERIFIED"}, "net_profit_min": {"unit": "UNVERIFIED", "status": "UNVERIFIED"}, "net_profit_max": {"unit": "UNVERIFIED", "status": "UNVERIFIED"}, "last_parent_net": {"unit": "UNVERIFIED", "status": "UNVERIFIED"}},
+      "freshness": "ANNOUNCEMENT_WINDOW_NOT_MARKET_DATE", "absence": "WINDOW_ABSENCE_NOT_RESEARCH_CLEARANCE",
+      "paging": {"max_limit": 6000, "max_offset": 100000, "max_rows": 10000, "provider_limit_status": "UNVERIFIED", "completeness": "REQUEST_PAGE_ONLY"},
+      "consumers": ["experiments/execution_tracker/red_flag_gate.py:check_ticker"], "provenance": ["experiments/research_funnel/e1_event_layer.py:FORECAST_FIELDS", "experiments/execution_tracker/red_flag_gate.py:check_ticker"],
+      "rights": {"status": "UNVERIFIED", "evidence_refs": [], "permission_expansion_allowed": false}, "instrumentation": "OPT_IN_ONLY_NOT_RUN"
+    },
+    "express": {
+      "api_name": "express", "entity_scope": "STOCK",
+      "request": {"scope_rule": "ENTITY_REQUIRED", "required_params": ["ts_code"], "allowed_params": {"ts_code": "STOCK_ID", "ann_date": "DATE", "start_date": "DATE", "end_date": "DATE", "period": "DATE", "offset": "OFFSET", "limit": "LIMIT"}},
+      "response": {"identity_fields": ["ts_code"], "date_field": "ann_date", "period_field": "end_date", "required_fields": ["ts_code", "ann_date", "end_date", "n_income", "yoy_net_profit"], "required_numeric_fields": ["n_income", "yoy_net_profit"], "numeric_fields": ["revenue", "n_income", "yoy_net_profit", "yoy_dedu_np", "diluted_eps"], "other_fields": ["perf_summary", "is_audit", "remark"]},
+      "units": {"revenue": {"unit": "UNVERIFIED", "status": "UNVERIFIED"}, "n_income": {"unit": "UNVERIFIED", "status": "UNVERIFIED"}, "yoy_net_profit": {"unit": "UNVERIFIED", "status": "UNVERIFIED"}, "yoy_dedu_np": {"unit": "UNVERIFIED", "status": "UNVERIFIED"}, "diluted_eps": {"unit": "UNVERIFIED", "status": "UNVERIFIED"}},
+      "freshness": "ANNOUNCEMENT_WINDOW_NOT_MARKET_DATE", "absence": "WINDOW_ABSENCE_NOT_RESEARCH_CLEARANCE",
+      "paging": {"max_limit": 6000, "max_offset": 100000, "max_rows": 10000, "provider_limit_status": "UNVERIFIED", "completeness": "REQUEST_PAGE_ONLY"},
+      "consumers": ["experiments/execution_tracker/red_flag_gate.py:check_ticker"], "provenance": ["experiments/research_funnel/e1_event_layer.py:EXPRESS_FIELDS", "experiments/execution_tracker/red_flag_gate.py:check_ticker"],
+      "rights": {"status": "UNVERIFIED", "evidence_refs": [], "permission_expansion_allowed": false}, "instrumentation": "OPT_IN_ONLY_NOT_RUN"
+    },
+    "income": {
+      "api_name": "income", "entity_scope": "STOCK",
+      "request": {"scope_rule": "ENTITY_REQUIRED", "required_params": ["ts_code"], "allowed_params": {"ts_code": "STOCK_ID", "ann_date": "DATE", "f_ann_date": "DATE", "start_date": "DATE", "end_date": "DATE", "period": "DATE", "report_type": "REPORT_TYPE", "comp_type": "COMP_TYPE", "offset": "OFFSET", "limit": "LIMIT"}},
+      "response": {"identity_fields": ["ts_code"], "date_field": "ann_date", "period_field": "end_date", "required_fields": ["ts_code", "ann_date", "end_date", "report_type", "n_income_attr_p"], "required_numeric_fields": ["n_income_attr_p"], "numeric_fields": ["revenue", "oper_cost", "n_income", "n_income_attr_p", "total_revenue", "basic_eps", "diluted_eps"], "other_fields": ["report_type", "comp_type", "f_ann_date", "update_flag"]},
+      "units": {"revenue": {"unit": "UNVERIFIED", "status": "UNVERIFIED"}, "oper_cost": {"unit": "UNVERIFIED", "status": "UNVERIFIED"}, "n_income": {"unit": "UNVERIFIED", "status": "UNVERIFIED"}, "n_income_attr_p": {"unit": "UNVERIFIED", "status": "UNVERIFIED"}, "total_revenue": {"unit": "UNVERIFIED", "status": "UNVERIFIED"}, "basic_eps": {"unit": "UNVERIFIED", "status": "UNVERIFIED"}, "diluted_eps": {"unit": "UNVERIFIED", "status": "UNVERIFIED"}},
+      "freshness": "ANNOUNCEMENT_WINDOW_NOT_MARKET_DATE", "absence": "EMPTY_REQUIRED",
+      "paging": {"max_limit": 6000, "max_offset": 100000, "max_rows": 10000, "provider_limit_status": "UNVERIFIED", "completeness": "REQUEST_PAGE_ONLY"},
+      "consumers": ["experiments/execution_tracker/red_flag_gate.py:check_ticker", "experiments/execution_tracker/full_battery.py:battery"], "provenance": ["experiments/research_funnel/e1_event_layer.py:INCOME_FIELDS", "experiments/execution_tracker/full_battery.py:battery"],
+      "rights": {"status": "UNVERIFIED", "evidence_refs": [], "permission_expansion_allowed": false}, "instrumentation": "OPT_IN_ONLY_NOT_RUN"
+    },
+    "fina_indicator": {
+      "api_name": "fina_indicator", "entity_scope": "STOCK",
+      "request": {"scope_rule": "ENTITY_REQUIRED", "required_params": ["ts_code"], "allowed_params": {"ts_code": "STOCK_ID", "ann_date": "DATE", "start_date": "DATE", "end_date": "DATE", "period": "DATE", "offset": "OFFSET", "limit": "LIMIT"}},
+      "response": {"identity_fields": ["ts_code"], "date_field": "ann_date", "period_field": "end_date", "required_fields": ["ts_code", "ann_date", "end_date", "roe", "grossprofit_margin"], "required_numeric_fields": ["roe", "grossprofit_margin"], "numeric_fields": ["roe", "grossprofit_margin"], "other_fields": ["update_flag"]},
+      "units": {"roe": {"unit": "UNVERIFIED", "status": "UNVERIFIED"}, "grossprofit_margin": {"unit": "UNVERIFIED", "status": "UNVERIFIED"}},
+      "freshness": "ANNOUNCEMENT_WINDOW_NOT_MARKET_DATE", "absence": "EMPTY_REQUIRED",
+      "paging": {"max_limit": 6000, "max_offset": 100000, "max_rows": 10000, "provider_limit_status": "UNVERIFIED", "completeness": "REQUEST_PAGE_ONLY"},
+      "consumers": ["experiments/execution_tracker/full_battery.py:battery"], "provenance": ["experiments/execution_tracker/full_battery.py:battery"],
+      "rights": {"status": "UNVERIFIED", "evidence_refs": [], "permission_expansion_allowed": false}, "instrumentation": "OPT_IN_ONLY_NOT_RUN"
+    },
+    "anns_d": {
+      "api_name": "anns_d", "entity_scope": "STOCK",
+      "request": {"scope_rule": "ENTITY_REQUIRED", "required_params": ["ts_code"], "allowed_params": {"ts_code": "STOCK_ID", "ann_date": "DATE", "start_date": "DATE", "end_date": "DATE", "offset": "OFFSET", "limit": "LIMIT"}},
+      "response": {"identity_fields": ["ts_code"], "date_field": "ann_date", "period_field": null, "required_fields": ["ts_code", "ann_date", "title"], "required_numeric_fields": [], "numeric_fields": [], "other_fields": ["name", "title", "url", "rec_time"]},
+      "units": {}, "freshness": "ANNOUNCEMENT_WINDOW_NOT_MARKET_DATE", "absence": "WINDOW_ABSENCE_NOT_RESEARCH_CLEARANCE",
+      "paging": {"max_limit": 6000, "max_offset": 100000, "max_rows": 10000, "provider_limit_status": "UNVERIFIED", "completeness": "REQUEST_PAGE_ONLY"},
+      "consumers": ["experiments/execution_tracker/full_battery.py:battery"], "provenance": ["experiments/execution_tracker/full_battery.py:battery"],
+      "rights": {"status": "UNVERIFIED", "evidence_refs": [], "permission_expansion_allowed": false}, "instrumentation": "OPT_IN_ONLY_NOT_RUN"
+    },
+    "index_global": {
+      "api_name": "index_global", "entity_scope": "GLOBAL_INDEX",
+      "request": {"scope_rule": "ENTITY_REQUIRED", "required_params": ["ts_code"], "allowed_params": {"ts_code": "GLOBAL_INDEX_ID", "trade_date": "DATE", "start_date": "DATE", "end_date": "DATE", "offset": "OFFSET", "limit": "LIMIT"}},
+      "response": {"identity_fields": ["ts_code"], "date_field": "trade_date", "period_field": null, "required_fields": ["ts_code", "trade_date", "close", "pct_chg"], "required_numeric_fields": ["close", "pct_chg"], "numeric_fields": ["open", "high", "low", "close", "pre_close", "change", "pct_chg", "swing", "vol", "amount"], "other_fields": []},
+      "units": {"open": {"unit": "UNVERIFIED", "status": "UNVERIFIED"}, "high": {"unit": "UNVERIFIED", "status": "UNVERIFIED"}, "low": {"unit": "UNVERIFIED", "status": "UNVERIFIED"}, "close": {"unit": "UNVERIFIED", "status": "UNVERIFIED"}, "pre_close": {"unit": "UNVERIFIED", "status": "UNVERIFIED"}, "change": {"unit": "UNVERIFIED", "status": "UNVERIFIED"}, "pct_chg": {"unit": "UNVERIFIED", "status": "UNVERIFIED"}, "swing": {"unit": "UNVERIFIED", "status": "UNVERIFIED"}, "vol": {"unit": "UNVERIFIED", "status": "UNVERIFIED"}, "amount": {"unit": "UNVERIFIED", "status": "UNVERIFIED"}},
+      "freshness": "GLOBAL_ASOF_CALENDAR_UNVERIFIED", "absence": "EMPTY_REQUIRED",
+      "paging": {"max_limit": 6000, "max_offset": 100000, "max_rows": 10000, "provider_limit_status": "UNVERIFIED", "completeness": "REQUEST_PAGE_ONLY"},
+      "consumers": ["experiments/execution_tracker/overnight_anchor.py:fetch_auto_anchors"], "provenance": ["experiments/execution_tracker/overnight_anchor.py:AUTO_SOURCES", "experiments/execution_tracker/overnight_anchor.py:fetch_auto_anchors"],
+      "rights": {"status": "UNVERIFIED", "evidence_refs": [], "permission_expansion_allowed": false}, "instrumentation": "OPT_IN_ONLY_NOT_RUN"
+    },
+    "limit_list_d": {
+      "api_name": "limit_list_d", "entity_scope": "STOCK_OR_MARKET",
+      "request": {"scope_rule": "ENTITY_OR_DATE", "required_params": [], "allowed_params": {"ts_code": "STOCK_ID", "trade_date": "DATE", "start_date": "DATE", "end_date": "DATE", "limit_type": "LIMIT_TYPE", "exchange": "EXCHANGE", "offset": "OFFSET", "limit": "LIMIT"}},
+      "response": {"identity_fields": ["ts_code"], "date_field": "trade_date", "period_field": null, "required_fields": ["ts_code", "trade_date", "industry", "limit", "limit_times"], "required_numeric_fields": ["limit_times"], "numeric_fields": ["limit_times", "close", "pct_chg", "amount", "float_mv", "total_mv", "turnover_ratio", "fd_amount", "open_times"], "other_fields": ["name", "industry", "limit", "first_time", "last_time", "up_stat"]},
+      "units": {"limit_times": {"unit": "UNVERIFIED", "status": "UNVERIFIED"}, "close": {"unit": "UNVERIFIED", "status": "UNVERIFIED"}, "pct_chg": {"unit": "UNVERIFIED", "status": "UNVERIFIED"}, "amount": {"unit": "UNVERIFIED", "status": "UNVERIFIED"}, "float_mv": {"unit": "UNVERIFIED", "status": "UNVERIFIED"}, "total_mv": {"unit": "UNVERIFIED", "status": "UNVERIFIED"}, "turnover_ratio": {"unit": "UNVERIFIED", "status": "UNVERIFIED"}, "fd_amount": {"unit": "UNVERIFIED", "status": "UNVERIFIED"}, "open_times": {"unit": "UNVERIFIED", "status": "UNVERIFIED"}},
+      "freshness": "EXACT_REQUESTED_MARKET_DATE", "absence": "EMPTY_REQUIRED",
+      "paging": {"max_limit": 6000, "max_offset": 100000, "max_rows": 10000, "provider_limit_status": "UNVERIFIED", "completeness": "REQUEST_PAGE_ONLY"},
+      "consumers": ["experiments/execution_tracker/rotation_validation.py:limit_counts_from_rows"], "provenance": ["experiments/execution_tracker/rotation_validation.py:limit_counts_from_rows"],
+      "rights": {"status": "UNVERIFIED", "evidence_refs": [], "permission_expansion_allowed": false}, "instrumentation": "OPT_IN_ONLY_NOT_RUN"
+    },
+    "moneyflow_hsgt": {
+      "api_name": "moneyflow_hsgt", "entity_scope": "MARKET",
+      "request": {"scope_rule": "MARKET", "required_params": [], "allowed_params": {"trade_date": "DATE", "start_date": "DATE", "end_date": "DATE", "offset": "OFFSET", "limit": "LIMIT"}},
+      "response": {"identity_fields": [], "date_field": "trade_date", "period_field": null, "required_fields": ["trade_date", "north_money", "south_money"], "required_numeric_fields": ["north_money", "south_money"], "numeric_fields": ["north_money", "south_money", "hgt", "sgt", "ggt_ss", "ggt_sz"], "other_fields": []},
+      "units": {"north_money": {"unit": "CNY_100000000", "status": "SOURCE_CODE_DECLARED_NOT_REVERIFIED"}, "south_money": {"unit": "CNY_100000000", "status": "SOURCE_CODE_DECLARED_NOT_REVERIFIED"}, "hgt": {"unit": "UNVERIFIED", "status": "UNVERIFIED"}, "sgt": {"unit": "UNVERIFIED", "status": "UNVERIFIED"}, "ggt_ss": {"unit": "UNVERIFIED", "status": "UNVERIFIED"}, "ggt_sz": {"unit": "UNVERIFIED", "status": "UNVERIFIED"}},
+      "freshness": "EXACT_REQUESTED_MARKET_DATE", "absence": "EMPTY_REQUIRED",
+      "paging": {"max_limit": 6000, "max_offset": 100000, "max_rows": 10000, "provider_limit_status": "UNVERIFIED", "completeness": "REQUEST_PAGE_ONLY"},
+      "consumers": ["scripts/fetch_data.py:_fetch_northbound_tushare"], "provenance": ["scripts/fetch_data.py:_fetch_northbound_tushare"],
+      "rights": {"status": "UNVERIFIED", "evidence_refs": [], "permission_expansion_allowed": false}, "instrumentation": "OPT_IN_ONLY_NOT_RUN"
+    },
+    "stock_basic": {
+      "api_name": "stock_basic", "entity_scope": "STOCK_DIRECTORY",
+      "request": {"scope_rule": "DIRECTORY", "required_params": ["list_status"], "allowed_params": {"ts_code": "STOCK_ID", "list_status": "LIST_STATUS", "exchange": "EXCHANGE", "offset": "OFFSET", "limit": "LIMIT"}},
+      "response": {"identity_fields": ["ts_code"], "date_field": null, "period_field": null, "required_fields": ["ts_code", "name", "industry", "list_status", "list_date"], "required_numeric_fields": [], "numeric_fields": [], "other_fields": ["symbol", "name", "area", "industry", "fullname", "enname", "cnspell", "market", "exchange", "curr_type", "list_status", "list_date", "delist_date", "is_hs", "act_name", "act_ent_type"]},
+      "units": {}, "freshness": "POINT_IN_TIME_UNVERIFIED", "absence": "EMPTY_REQUIRED",
+      "paging": {"max_limit": 6000, "max_offset": 100000, "max_rows": 10000, "provider_limit_status": "UNVERIFIED", "completeness": "REQUEST_PAGE_ONLY"},
+      "consumers": ["experiments/execution_tracker/momentum_prefilter.py:run"], "provenance": ["experiments/execution_tracker/momentum_prefilter.py:run"],
+      "rights": {"status": "UNVERIFIED", "evidence_refs": [], "permission_expansion_allowed": false}, "instrumentation": "OPT_IN_ONLY_NOT_RUN"
+    }
+  }
+}
