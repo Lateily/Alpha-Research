@@ -16,6 +16,7 @@ sys.path.insert(0, str(ROOT / "tests"))
 import workbench_backup as backup
 import workbench_evidence as ev
 from workbench_shared_test_support import historical_state
+from workbench_shared_test_support import frozen_source
 from workbench_shared_state import ALL_TABLES
 
 
@@ -293,6 +294,47 @@ class ChunkedBackupTests(unittest.TestCase):
         self.assertEqual(pin["jobs"][0]["status"], "SUCCEEDED")
         self.assertFalse(pin["production_authority"])
         self.assertEqual(retention.verify_retention_pin(pin, archive, expected_backup_hash=expected), pin)
+
+    def test_dense_success_history_uses_bounded_source_bound_migration_receipt(self):
+        import nonprod_workbench as wb
+        import workbench_workspace as ws
+        import workbench_shared_state as state
+        frozen_source(self.root / "source", cash="offline historical material " * 24000)
+        store = wb.Store(self.root / "state")
+        system = ws.Workspace(store, self.root / "source")
+        for number in range(10):
+            result = system.start_job({"command_id": "history_%03d" % number, "kind": "snapshot-brief"})
+            self.assertEqual(result["status"], "SUCCEEDED")
+        with store.connect() as db:
+            expected_events = db.execute("SELECT seq,command_id,request_hash,body FROM workspace_events ORDER BY seq").fetchall()
+        archive, restored = self.root / "dense-archive", self.root / "dense-restored"
+        failure = None
+        try: backup.backup_shared(store, archive)
+        except ValueError as exc: failure = str(exc)
+        self.assertIsNone(failure, "dense result history must remain fully restorable: " + str(failure))
+        manifest, data = backup.read_shared(archive)
+        result = backup.restore_shared(archive, restored)
+        raw = (restored / "migration-receipt.json").read_bytes()
+        receipt = ev.parse(raw)
+        self.assertEqual(receipt["schema"], "ar.shared-migration.v2")
+        self.assertLessEqual(len(raw), 12582912)
+        self.assertEqual(receipt["legacy_jobs_ref"]["count"], 10)
+        self.assertEqual(receipt["legacy_jobs_ref"]["table"], "workspace_events")
+        with sqlite3.connect(restored / "shared-workbench.sqlite3") as db:
+            self.assertEqual(db.execute("SELECT seq,command_id,request_hash,body FROM workspace_events ORDER BY seq").fetchall(), expected_events)
+            stored = db.execute("SELECT receipt FROM shared_migrations WHERE backup_hash=?", (result["backup_hash"],)).fetchone()[0]
+            self.assertLessEqual(len(stored.encode()), 12582912)
+        # Offline corruption of both copies must not replace original-history binding.
+        receipt["legacy_jobs_ref"]["projection_hash"] = "0" * 64
+        forged = ev.canonical(receipt)
+        (restored / "migration-receipt.json").write_text(forged)
+        with sqlite3.connect(restored / "shared-workbench.sqlite3") as db:
+            db.execute("DROP TRIGGER shared_migrations_update")
+            db.execute("UPDATE shared_migrations SET receipt=? WHERE backup_hash=?", (forged, result["backup_hash"]))
+        failure = None
+        try: state.migrate_legacy(archive, restored)
+        except ValueError as exc: failure = str(exc)
+        self.assertEqual(failure, "RESTORE_RECEIPT_SOURCE_BINDING_INVALID")
 
     def test_actual_size_history_roundtrip_preserves_every_row_and_artifact(self):
         store, system = historical_state(self.root)

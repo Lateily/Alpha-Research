@@ -35,6 +35,15 @@ parameterized inserts, fresh staging, source-bound intent, complete artifact
 verification and atomic promotion. Old complete v1 archives remain restorable;
 limited legacy archives retain their existing migration refusal.
 
+Generated migration receipts are bounded too, including their escaped database
+row representation for subsequent backups. If a v1 receipt would exceed either
+file bound, `ar.shared-migration.v2` binds the complete restored event projection
+and source artifact inventory by count/head/hash references instead of copying
+job results into a second large field. Original table rows, historical receipts
+and report bytes remain unchanged. Restore rederives these references from the
+validated archive; coherent edits to both receipt file and database still fail.
+Existing valid v1 receipts retain their original representation on verification.
+
 ## Release
 
 No alternate physical SQLite-copy path. No deleting or rewriting old history.

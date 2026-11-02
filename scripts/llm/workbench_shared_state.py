@@ -110,6 +110,36 @@ def _check_historical_evidence(staging, manifest, backup_hash):
         raise ev.EvidenceError("MIGRATION_HISTORICAL_EVIDENCE_CONFLICT")
 
 
+def migration_receipt(manifest, data, *, legacy=False):
+    import workbench_backup as backup
+    import workbench_backup_chunks as chunks
+    backup_hash = manifest["backup_hash"]
+    jobs = backup.legacy_jobs(data["tables"]["workspace_events"])
+    receipt = {"schema": "ar.shared-migration.v1", "status": "SHARED_MIGRATION_VERIFIED",
+               "backup_hash": backup_hash, "storage_schema": STORAGE_SCHEMA,
+               "source_inventory_scope": manifest["inventory_scope"],
+               "table_counts": manifest["table_counts"], "event_tail": manifest["event_tail"],
+               "legacy_jobs": jobs,
+               "artifact_inventory": [{**row, "source_backup_hash": backup_hash} for row in manifest["artifact_inventory"]],
+               "owner_credentials_restored": False, "production_restored": False}
+    raw = ev.canonical(receipt)
+    # Bound both the standalone receipt and its escaped future-backup row.
+    projected = {"schema": chunks.CHUNK_SCHEMA, "table": "shared_migrations",
+                 "index": chunks.MAX_CHUNKS - 1, "row_start": chunks.MAX_ROWS,
+                 "rows": [[backup_hash, raw]], "chunk_hash": "0" * 64}
+    if legacy or (len(raw.encode()) <= ev.MAX_FILE and len(ev.canonical(projected).encode()) <= ev.MAX_FILE):
+        return receipt
+    receipt = {key: value for key, value in receipt.items() if key not in {"legacy_jobs", "artifact_inventory"}}
+    receipt.update(schema="ar.shared-migration.v2",
+        legacy_jobs_ref={"table": "workspace_events", "projection": "legacy_jobs/v1", "count": len(jobs),
+                         "event_tail": manifest["event_tail"], "projection_hash": ev.sealed(jobs)},
+        artifact_inventory_ref={"source_backup_hash": backup_hash, "field": "artifact_inventory",
+                                "inventory_hash": ev.sealed(manifest["artifact_inventory"])})
+    if len(ev.canonical(receipt).encode()) > ev.MAX_FILE:
+        raise ev.EvidenceError("MIGRATION_RECEIPT_SIZE_LIMIT")
+    return receipt
+
+
 def migrate_legacy(backup_root: Path, target_root: Path) -> dict:
     import workbench_backup as backup
     backup_root, target = Path(backup_root), Path(target_root)
@@ -160,14 +190,7 @@ def migrate_legacy(backup_root: Path, target_root: Path) -> dict:
     # A directory entry binds the source before the first byte of intent is written.
     durable_directory(evidence_root)
     _ensure(staging / "migration-intent.json", ev.canonical(intent).encode(), evidence_root=evidence_root)
-    jobs = backup.legacy_jobs(data["tables"]["workspace_events"])
-    receipt = {"schema": "ar.shared-migration.v1", "status": "SHARED_MIGRATION_VERIFIED",
-               "backup_hash": backup_hash, "storage_schema": STORAGE_SCHEMA,
-               "source_inventory_scope": manifest["inventory_scope"],
-               "table_counts": manifest["table_counts"], "event_tail": manifest["event_tail"],
-               "legacy_jobs": jobs,
-               "artifact_inventory": [{**row, "source_backup_hash": backup_hash} for row in manifest["artifact_inventory"]],
-               "owner_credentials_restored": False, "production_restored": False}
+    receipt = migration_receipt(manifest, data)
     for name in manifest["directories"]:
         (staging / name).mkdir(parents=True, exist_ok=True, mode=0o700)
     for name in manifest["files"]:

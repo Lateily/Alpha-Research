@@ -473,7 +473,11 @@ def is_export_file(manifest, name):
 
 
 def check_restored(root, manifest, data, receipt):
-    from workbench_shared_state import ALL_TABLES, STORAGE_SCHEMA
+    from workbench_shared_state import ALL_TABLES, STORAGE_SCHEMA, migration_receipt
+    expected = migration_receipt(manifest, data, legacy=receipt.get("schema") == "ar.shared-migration.v1")
+    # governance-mutation: WORKBENCH_BACKUP_RECEIPT_SOURCE_BINDING
+    if receipt != expected:
+        raise ev.EvidenceError("RESTORE_RECEIPT_SOURCE_BINDING_INVALID")
     database = root / "shared-workbench.sqlite3"
     fence = root / "workbench.sqlite3"
     if database.is_symlink() or not database.is_file() or fence.is_symlink() or not fence.is_dir() or any(fence.iterdir()):

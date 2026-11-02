@@ -950,6 +950,13 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="Per-chunk byte counts are checked against reopened bytes, not trusted from a resealed descriptor.",
     ),
     MutationCase(
+        mutation_id="WORKBENCH_BACKUP_RECEIPT_SOURCE_BINDING", component="Bounded complete migration receipt v2",
+        source_path="scripts/llm/workbench_backup.py", test_script="tests/test_workbench_backup_chunks.py",
+        before='    if receipt != expected:', after='    if False:',
+        expected_failure_marker="test_dense_success_history_uses_bounded_source_bound_migration_receipt",
+        rationale="Even coherent offline edits to the receipt file and database cannot replace source-bound restored history references.",
+    ),
+    MutationCase(
         mutation_id="WORKBENCH_SHARED_HISTORICAL_EVIDENCE_RETRY", component="Bound historical migration evidence S2a",
         source_path="scripts/llm/workbench_shared_state.py", test_script="tests/test_workbench_shared_state.py",
         before='                if any(path.name != backup_hash and (not has_intent or path.relative_to(staging).as_posix() not in historical)\n'

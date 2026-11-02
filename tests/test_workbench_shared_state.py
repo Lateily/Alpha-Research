@@ -266,7 +266,7 @@ class MigrationTests(unittest.TestCase):
         manifest["archive_label"] = "different-backup-identity"
         manifest["backup_hash"] = ev.sealed({k: v for k, v in manifest.items() if k != "backup_hash"})
         (equivalent / "manifest.json").write_bytes(ev.canonical(manifest).encode())
-        with self.assertRaises(ValueError): state.migrate_legacy(equivalent, target)
+        with self.assertRaisesRegex(ValueError, "MIGRATION_SOURCE_CONFLICT"): state.migrate_legacy(equivalent, target)
         with self.store.connect() as db:
             self.system.append(db, self.system.events(db), "extra_event", "3" * 64, "PRIVATE_LOGIN", {"scope": "TEST"})
         second = self.archived("second")
