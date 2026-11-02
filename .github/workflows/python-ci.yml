@@ -153,6 +153,7 @@ jobs:
           python3 -B tests/test_foundation_preservation.py
           python3 -B tests/test_foundation_release.py
           python3 -B tests/test_foundation_intake.py
+          python3 -B tests/test_foundation_quarantine.py
           python3 -B tests/test_endpoint_contracts.py
           python3 -B tests/test_endpoint_calls.py
           python3 -B tests/test_endpoint_counterexamples.py

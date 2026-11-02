@@ -54,3 +54,11 @@ pytest files that would run zero tests under the existing command), and that all
 new mutation declarations cover count contradictions, duplicate invocation,
 permission retries, independent source anchors and date precision; two old targets
 were retargeted after source-reader refactoring. None of these mutations ran.
+
+The first explicitly requested real intake at ccf10b1 registered 120 of 128
+original PDFs; eight hit the PDF security admission rule. A bounded opaque
+quarantine now retains such exact bytes separately with research/render/execute/
+transfer disallowed, and is included in preservation without weakening admission.
+The next actual operation must use the new final SHA and a new root; ccf10b1's
+PARTIAL receipt remains immutable. A sixth new deferred mutation pins no-approval
+quarantine policy. The final actual counts belong in the delivery record.

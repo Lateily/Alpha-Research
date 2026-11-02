@@ -31,7 +31,7 @@ verify_preservation_copy(manifest, package_roots, *, expected_preservation_hash)
 | Field | Contract |
 | --- | --- |
 | `package_id` | Unique ASCII identifier; 1-101 letters, digits, underscores, or hyphens, starting with a letter or digit. Case-fold collisions are refused. |
-| `kind` | Exactly `SHARED_BACKUP` or `RESEARCH_LIBRARY`. |
+| `kind` | Exactly `SHARED_BACKUP`, `RESEARCH_LIBRARY` or `QUARANTINED_ORIGINALS`. |
 | `local_root` | Existing, caller-selected local directory. A string or `Path`, never a URL or symlink. Used only for reading; not included in the result. |
 | `expected_content_hash` | Independently retained, lowercase 64-character SHA-256. No inferred/default hash. |
 
@@ -83,6 +83,12 @@ For `RESEARCH_LIBRARY`, it calls
 requires both an exact `library_hash` match and a `files` mapping of relative
 path -> SHA-256 equal to the complete independently read package inventory.
 An omitted, extra, or changed file is not accepted as a partial preservation.
+
+For `QUARANTINED_ORIGINALS`, the same exact-inventory binding uses
+`foundation_quarantine.verify_quarantine` and its independently expected
+quarantine_hash. Its fixed disposition remains opaque, unreviewed and barred
+from research, rendering, execution or implicit transfer. Byte preservation is
+not security clearance, library admission or evidence the PDF is malicious.
 
 Inventories are reread around semantic validation. Concurrent changes fail
 closed when observed; this is not a filesystem lock or an atomic snapshot of

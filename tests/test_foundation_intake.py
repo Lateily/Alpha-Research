@@ -113,5 +113,21 @@ class IntakeTests(unittest.TestCase):
         query = ev.parse((self.root / "operation/records/query-cohort.json").read_bytes())
         self.assertEqual(query["materials"][0]["industry_taxonomy"], "AR_RESEARCH_COHORT")
 
+    def test_security_refusal_keeps_opaque_bytes_out_of_admitted_library(self):
+        raw = b"%PDF-1.4\n/OpenAction synthetic opaque original\n%%EOF\n"
+        (self.company / "raw/original.PDF").write_bytes(raw)
+        self.document["originals"]["source-1"]["sha256"] = ev.sha(raw)
+        self.document["capture_meta"]["source-1"]["bytes"] = len(raw)
+        self.anchor_path.write_bytes(ev.canonical(self.document).encode())
+        self.request["manifests"][0]["expected_sha256"] = ev.sha(self.anchor_path.read_bytes())
+        result = self.run_intake()
+        self.assertEqual(result["status"], "BLOCKED")
+        self.assertEqual(result["registered_originals"], 0)
+        self.assertEqual(result["quarantined_originals"], 1)
+        self.assertFalse((self.root / "operation/library").exists())
+        manifest = ev.parse((self.root / "operation/records/preservation.json").read_bytes())
+        self.assertEqual(manifest["packages"][0]["kind"], "QUARANTINED_ORIGINALS")
+        self.assertFalse(manifest["packages"][0]["semantics"]["policy"]["research_use_allowed"])
+
 
 if __name__ == "__main__": unittest.main()

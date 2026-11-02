@@ -55,6 +55,7 @@ The new private output root contains:
 ```text
 library/   # exact immutable material-library inventory
 records/   # controls outside that inventory, so no circular/self-invalidating seal
+quarantine/ # opaque security-refused originals; never research inputs or rendered
 ```
 
 Records include the original manifest bytes, optional draft-cohort anchor,
@@ -62,7 +63,7 @@ request, preflight/start record, normalized intake, actual library verification,
 per-ticker/date queries, cohort query, retention pin, preservation manifest,
 same-local-root preservation reread and final receipt. The pin requires keeping
 the material snapshot until explicit human release; it implements no deletion.
-The preservation manifest covers the exact library package. Control records and
+The preservation manifest covers the exact library and any opaque quarantine packages. Control records and
 their independently retained receipt/hash must be kept separately alongside it;
 they are not silently inserted into the package's exact file set.
 
@@ -70,6 +71,26 @@ Preservation reread of the same local library proves only reopened local bytes
 when it actually executes. No other machine, copy, encryption, upload, external
 durability, provider retention or restoration is attested. Real transfer remains
 separately authorized. All reports retain PENDING and false authorities.
+
+## Security-Refused Originals
+
+The first actual ccf10b1 intake admitted 120/128 PDFs and refused eight with
+MATERIALS_ACTIVE_OR_ENCRYPTED_PDF_REFUSED. This rule is not weakened and does not
+by itself prove a file is malicious. The guarded library stays incomplete.
+
+Opaque quarantine is a separate exact inventory, not an alternate research
+admission path. It rechecks the original expected hash/size and PDF magic, copies
+only explicitly listed bytes into non-executable private files, and never parses,
+decrypts, renders, extracts, executes, serves or enables research use. Its fixed
+policy refuses any resealed promotion of research/render/execution/transfer flags.
+An independent quarantine hash and immutable manifest bind its exact file set.
+It is bounded to 64 files, 12 MiB per file and 64 MiB in aggregate. Oversize or
+hash-mismatched originals remain blocked, not silently substituted.
+
+The final operation may preserve both admitted and quarantined originals, but
+its status remains PARTIAL while any document is refused for research. A new
+final code SHA and new output root are required; the ccf10b1 first attempt is
+retained and never spliced into the later attempt as a single-version success.
 
 ## Deferred Acceptance
 

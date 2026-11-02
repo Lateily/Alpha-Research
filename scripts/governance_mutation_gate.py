@@ -200,6 +200,13 @@ class MutationCase:
 
 MUTATIONS: tuple[MutationCase, ...] = (
     MutationCase(
+        mutation_id="MATERIAL_QUARANTINE_NO_APPROVAL", component="Opaque original retention",
+        source_path="scripts/llm/foundation_quarantine.py", test_script="tests/test_foundation_quarantine.py",
+        before='            or ev.canonical(value["policy"]) != ev.canonical(POLICY)\n', after='',
+        expected_failure_marker="test_self_resealed_policy_cannot_enable_research_or_rendering",
+        rationale="Re-sealing quarantined metadata cannot turn unsafe opaque originals into approved research input.",
+    ),
+    MutationCase(
         mutation_id="ENDPOINT_TARGET_EXTREMA_COUNTS", component="Foundation endpoint evidence",
         source_path="experiments/data_governance/endpoint_calls.py", test_script="tests/test_endpoint_counterexamples.py",
         before='            if not minimum <= target_rows <= maximum:\n', after='            if False:\n',

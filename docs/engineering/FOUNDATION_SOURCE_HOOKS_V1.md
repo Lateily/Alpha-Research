@@ -86,9 +86,9 @@ data quality or research readiness. Callers selecting narrow fields without
 identity fields (including the unchanged full_battery daily_basic request) may
 record missing-identity gaps; hooks do not invent provider identity cells.
 
-The existing out-of-scope `tests/test_data_source_catalog.py` asserts daily_basic
-is NOT_INSTRUMENTED. The coordinator must reconcile that stale expectation with
-the now-reachable opt-in support before the deferred unified test run.
+The coordinator reconciled the former daily_basic NOT_INSTRUMENTED catalog
+expectation with the now-reachable opt-in support, while retaining historical
+uninstrumented-catalog coverage. No receipts still means NOT_RUN/NO_RECEIPTS.
 No CI/CLI/material/worker-B files were edited here. No doctor, compiler, tests,
 build, mutation, browser, feature operation, provider/network request, Git
 operation, production/shared state, ledger, secret, permission or service action

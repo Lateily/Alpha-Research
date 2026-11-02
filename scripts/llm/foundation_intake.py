@@ -8,6 +8,7 @@ import sys
 from urllib.parse import urlsplit
 
 import foundation_materials as materials
+from foundation_quarantine import REASON as QUARANTINE_REASON, create_quarantine
 from foundation_preservation import build_preservation_manifest, verify_preservation_copy
 from foundation_runtime import collect_runtime_inventory
 import workbench_backup as backup
@@ -72,6 +73,8 @@ def _request(value):
         _fail("SCHEMA_INVALID")
     for key in ("run_id", "library_id"):
         _identifier(value[key])
+    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_-]{0,70}", value["library_id"]):
+        _fail("PORTABLE_LIBRARY_ID_REQUIRED")
     if type(value["code_sha"]) is not str or not re.fullmatch(r"[0-9a-f]{40}", value["code_sha"]):
         _fail("CODE_SHA_INVALID")
     day = materials._date(value["research_date"])
@@ -205,7 +208,7 @@ def _execution_identity(request):
     if row["status"] != "OBSERVED_LOCAL_ONLY" or row["code_sha"] != request["code_sha"] or row["dirty"] is not False:
         _fail("CLEAN_EXPECTED_CODE_REQUIRED")
     names = ("foundation_intake.py", "foundation_materials.py", "foundation_preservation.py",
-             "foundation_runtime.py", "foundation_cli.py", "workbench_backup.py", "workbench_evidence.py")
+             "foundation_quarantine.py", "foundation_runtime.py", "foundation_cli.py", "workbench_backup.py", "workbench_evidence.py")
     files = {"scripts/llm/" + name: ev.sha(ev.read_local(root, "scripts/llm/" + name)) for name in names}
     return {"code_sha": row["code_sha"], "implementation_files": files, "source_tree_hash": ev.sealed(files),
             "python_version": ".".join(map(str, sys.version_info[:3])), "scope": "LOCAL_CLEAN_HEAD_AND_LISTED_FILES_ONLY"}
@@ -221,6 +224,7 @@ def run_cninfo_intake(request, output_root):
         _fail("NEW_OUTPUT_ROOT_WITH_EXISTING_PARENT_REQUIRED")
     identity = _execution_identity(request)
     anchors, rows, rejected, source_rows, seen, seen_files = [], [], [], [], set(), set()
+    quarantine_rows = []
     for anchor in request["manifests"]:
         raw = _read_anchor(source, anchor["relative_path"], anchor["expected_sha256"])
         document = ev.parse(raw)
@@ -231,6 +235,7 @@ def run_cninfo_intake(request, output_root):
         if sum(row["declared_originals"] for row in source_rows) > materials.MAX_MATERIALS:
             _fail("TOTAL_MATERIAL_LIMIT")
         for source_name, original in originals:
+            row = None
             try:
                 row = _material(request, anchor, document, source_name, original)
                 key = (row["material_id"], row["version"])
@@ -243,6 +248,8 @@ def run_cninfo_intake(request, output_root):
                 seen_files.add(row["files"][0]["sha256"])
                 rows.append(row)
             except (ValueError, TypeError, KeyError, OSError) as error:
+                if row is not None and _reason(error) == QUARANTINE_REASON:
+                    quarantine_rows.append(row)
                 rejected.append({"ts_code": anchor["ts_code"], "source_name": source_name if type(source_name) is str else None,
                                  "source_manifest_hash": anchor["expected_sha256"], "reason": _reason(error)})
     classification = request["classification"]
@@ -274,6 +281,7 @@ def run_cninfo_intake(request, output_root):
                "accepted_preflight": len(rows), "rejected": rejected}
     record("started.json", started)
     result = None
+    quarantined = None
     failure = None
     try:
         if rows:
@@ -286,16 +294,30 @@ def run_cninfo_intake(request, output_root):
             industry = classification["industry_key"] if classification else "UNSPECIFIED"
             record("query-cohort.json", materials.query_library(root / "library", industry_key=industry,
                                                                trade_date=request["research_date"]))
+        packages, package_roots = [], {}
+        if result:
+            packages.append({"package_id": request["library_id"], "kind": "RESEARCH_LIBRARY", "local_root": str(root / "library"),
+                             "expected_content_hash": result["library_hash"]})
+            package_roots[request["library_id"]] = str(root / "library")
+        if quarantine_rows:
+            quarantined = create_quarantine(source, root / "quarantine", quarantine_rows, created_at=request["created_at"])
+            record("quarantine-verification.json", quarantined)
+            package_id = request["library_id"] + "-quarantine"
+            packages.append({"package_id": package_id, "kind": "QUARANTINED_ORIGINALS", "local_root": str(root / "quarantine"),
+                             "expected_content_hash": quarantined["quarantine_hash"]})
+            package_roots[package_id] = str(root / "quarantine")
+        if packages:
             preservation = build_preservation_manifest(
-                [{"package_id": request["library_id"], "kind": "RESEARCH_LIBRARY", "local_root": str(root / "library"),
-                  "expected_content_hash": result["library_hash"]}], created_at=request["created_at"])
+                packages, created_at=request["created_at"])
             record("preservation.json", preservation)
-            checked = verify_preservation_copy(preservation, {request["library_id"]: str(root / "library")},
+            checked = verify_preservation_copy(preservation, package_roots,
                                                 expected_preservation_hash=preservation["preservation_hash"])
             record("preservation-local-reopen.json", checked)
             pin = {"schema": "ar.material-retention-pin.v1", **LABELS,
-                   "run_id": request["run_id"], "library_hash": result["library_hash"],
-                   "registration_hash": result["registration_hash"], "preservation_hash": preservation["preservation_hash"],
+                   "run_id": request["run_id"], "library_hash": result["library_hash"] if result else None,
+                   "quarantine_hash": quarantined["quarantine_hash"] if quarantined else None,
+                   "registration_hash": result["registration_hash"] if result else None,
+                   "preservation_hash": preservation["preservation_hash"],
                    "policy": "KEEP_UNTIL_EXPLICIT_HUMAN_RELEASE", "deletion_authority": False,
                    "off_machine_retention": "NOT_ATTESTED",
                    "source_anchors": [{"path": value["path"], "sha256": value["sha256"]} for value in anchors]}
@@ -312,6 +334,8 @@ def run_cninfo_intake(request, output_root):
                "date_scope": "RESEARCH_INDEX_DATE_NOT_MARKET_DATA_OR_SESSION_ATTESTATION",
                "source_rows": source_rows, "declared_originals": sum(value["declared_originals"] for value in source_rows),
                "admitted_originals": len(rows), "registered_originals": len(result["materials"]) if result else 0,
+               "quarantined_originals": len(quarantined["entries"]) if quarantined else 0,
+               "quarantine_hash": quarantined["quarantine_hash"] if quarantined else None,
                "library_hash": result["library_hash"] if result else None, "rejected": rejected, "failure": failure,
                "classification_status": "UNVERIFIED_RESEARCH_COHORT_NOT_PROVIDER_INDUSTRY" if classification else "UNSPECIFIED",
                "publication_time_scope": "SOURCE_DATE_ONLY_UPPER_BOUND_NOT_OBSERVED_TIME",

@@ -251,7 +251,7 @@ def _package(package_id, kind, root, expected, *, max_bytes, max_entries):
                                                      "artifact_inventory", "directories")}}
         if backup.verify_shared(root) != manifest:
             _fail("PACKAGE_CHANGED")
-    else:
+    elif kind == "RESEARCH_LIBRARY":
         from foundation_materials import verify_library
         library = verify_library(root, expected_library_hash=expected)
         if type(library) is not dict or library.get("library_hash") != expected:
@@ -259,6 +259,13 @@ def _package(package_id, kind, root, expected, *, max_bytes, max_entries):
         catalog = library.get("files")
         semantics = {"validator": "foundation_materials.verify_library",
                      "validation_scope": "EXISTING_LIBRARY_BYTES_AND_LINEAGE"}
+    else:
+        from foundation_quarantine import verify_quarantine
+        checked = verify_quarantine(root, expected_quarantine_hash=expected)
+        catalog = checked["files"]
+        semantics = {"validator": "foundation_quarantine.verify_quarantine",
+                     "validation_scope": "OPAQUE_BYTES_ONLY_NOT_RESEARCH_APPROVAL",
+                     "policy": checked["policy"]}
     if type(catalog) is not dict or catalog != inventory["files"]:
         _fail("VALIDATOR_FILE_SET_MISMATCH")
     if inventory != _inventory(root, max_bytes=max_bytes, max_entries=max_entries):
@@ -275,7 +282,7 @@ def _requests(packages):
         _exact(package, PACKAGE_FIELDS)
         identity = _identifier(package["package_id"])
         kind = package["kind"]
-        if type(kind) is not str or kind not in {"SHARED_BACKUP", "RESEARCH_LIBRARY"}:
+        if type(kind) is not str or kind not in {"SHARED_BACKUP", "RESEARCH_LIBRARY", "QUARANTINED_ORIGINALS"}:
             _fail("PACKAGE_KIND_INVALID")
         if identity.casefold() in identities:
             _fail("PACKAGE_ID_DUPLICATE")
