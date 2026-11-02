@@ -74,5 +74,45 @@ class FoundationCliTests(unittest.TestCase):
             build.assert_not_called()
             write.assert_not_called()
 
+    def test_material_ingest_requires_an_explicit_nonoverlapping_write_root(self):
+        filename = self.request({"source_root": "/synthetic/source", "manifest": {}})
+        for tail in ([], ["--write-root", "/synthetic/source"], ["--write-root", "/synthetic/source/library"],
+                     ["--write-root", "/synthetic"]):
+            with mock.patch("foundation_materials.ingest_material") as ingest:
+                code, output, _error = self.run_cli(["material-ingest", "--request", filename, *tail])
+            self.assertEqual((code, output), (2, ""))
+            ingest.assert_not_called()
+
+    def test_coverage_and_material_query_do_not_ingest_or_dispatch(self):
+        with mock.patch("foundation_sources.build_source_coverage", return_value={"schema": "coverage"}) as coverage:
+            code, output, error = self.run_cli(["sources", "--repository", "/synthetic/repository"])
+        self.assertEqual((code, error), (0, ""))
+        coverage.assert_called_once_with("/synthetic/repository", inventory_path=None)
+        self.assertFalse(json.loads(output)["deployment_authority"])
+        with mock.patch("foundation_materials.query_library", return_value={"schema": "query"}) as query:
+            code, _output, error = self.run_cli(["materials", "--library-root", "/synthetic/library", "--industry", "semiconductors",
+                                                "--date", "20261029", "--ticker", "002119.SZ"])
+        self.assertEqual((code, error), (0, ""))
+        query.assert_called_once_with("/synthetic/library", industry_key="semiconductors", trade_date="20261029", ts_code="002119.SZ")
+
+    def test_preservation_and_reconciliation_are_read_only_request_routes(self):
+        rows = (("preservation", "foundation_preservation.build_preservation_manifest",
+                 {"packages": [], "created_at": "2026-11-02T10:00:00Z"}),
+                ("preservation-verify", "foundation_preservation.verify_preservation_copy",
+                 {"manifest": {}, "package_roots": {}, "expected_preservation_hash": "a" * 64}),
+                ("reconcile", "foundation_release.reconcile_deployments", {"inventory": {}, "release": {}}))
+        for command, function, value in rows:
+            filename = self.request(value)
+            with mock.patch(function, return_value={"schema": "stub"}) as operation:
+                code, output, error = self.run_cli([command, "--request", filename])
+            self.assertEqual((code, error), (0, ""))
+            operation.assert_called_once()
+            self.assertEqual(json.loads(output)["testing_status"], "NOT_RUN")
+            value["upload"] = True; filename = self.request(value)
+            with mock.patch(function) as operation:
+                code, output, _error = self.run_cli([command, "--request", filename])
+            self.assertEqual((code, output), (2, ""))
+            operation.assert_not_called()
+
 
 if __name__ == "__main__": unittest.main()

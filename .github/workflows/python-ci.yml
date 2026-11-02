@@ -32,6 +32,7 @@ on:
       - "config/team-ai-workspace.v1.json"
       - "config/aios-skills.v1.json"
       - "config/data-source-catalog.v1.json"
+      - "config/data-source-inventory.v1.json"
       - "config/workflow-catalog.v1.json"
       - "docs/team/TEAM_AI_WORKSPACE_V1.md"
       - ".gitignore"
@@ -138,7 +139,7 @@ jobs:
           python3 -B tests/test_workbench_data_catalog_http.py
           python3 -B tests/test_data_governance_vertical.py
           node --test tests/nonprod-workbench-data-center.test.mjs
-      - name: Runtime inventory, workflow catalog and archive retention contracts (offline)
+      - name: Foundation source, material, preservation and runtime contracts (offline)
         env:
           AR_OFFLINE: "1"
         run: |
@@ -146,6 +147,10 @@ jobs:
           python3 -B tests/test_foundation_workflows.py
           python3 -B tests/test_foundation_retention.py
           python3 -B tests/test_foundation_cli.py
+          python3 -B tests/test_foundation_sources.py
+          python3 -B tests/test_foundation_materials.py
+          python3 -B tests/test_foundation_preservation.py
+          python3 -B tests/test_foundation_release.py
       - name: U0 security registry transport retry
         run: python3 tests/test_security_registry_transport.py
       - name: Nightly staged dependencies and HTTPS entry points (offline)
