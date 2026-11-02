@@ -8,9 +8,16 @@ Two independent domain reviews found seven P2 blockers, all reproduced with
 synthetic responses and local files. No live source, production, ledger or
 shared-service mutation was authorized by these probes.
 
+A subsequent non-author review of `cf17b22` found an eighth P2: default-field
+v1 observations could accept identity/date-only rows as numeric source evidence.
+Its in-progress acceptance runs were explicitly stopped and retained, not marked
+PASS. The repair below covers every first-five default numeric baseline, with
+contract-parity, explicit narrow-field, empty-response and finite-zero controls.
+
 | Finding | Correction | Behavioral pin |
 | --- | --- | --- |
 | V1 missing ticker recorded success before consumer refusal | Require the requested stock identity before successful receipt publication | `test_v1_missing_response_ticker_cannot_record_success_or_ok_health` |
+| V1 provider-default fields allowed date-only rows to report OK | Enforce the existing five-endpoint numeric baselines on nonempty default-field responses; preserve explicit narrow scopes, empty responses and numeric zero | `test_v1_default_fields_require_endpoint_numeric_evidence` and real daily-basic helper controls |
 | Duplicate historical bars returned as normal OHLC | Refuse duplicate observed stock dates before returning bars; legacy path unchanged | `test_observed_daily_duplicate_historical_dates_cannot_return_ohlc_bars` |
 | Future forecast period confused with future publication | Exempt forecast report periods only; publication cutoffs and filed-report guards remain | `test_forecast_published_future_report_period_is_not_invalid_period` and selector/control cases |
 | HTTP parameter failure retried as outage | Preserve typed 400/422 errors in observed mode; legacy retries unchanged | `test_observed_http_parameter_error_is_one_attempt_param_error_and_blocked_plan` |

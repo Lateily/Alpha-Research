@@ -200,6 +200,14 @@ class MutationCase:
 
 MUTATIONS: tuple[MutationCase, ...] = (
     MutationCase(
+        mutation_id="ENDPOINT_REVIEW_DEFAULT_NUMERIC_FIELDS", component="Endpoint independent review",
+        source_path="experiments/data_governance/call_receipts.py", test_script="tests/test_endpoint_review_regressions.py",
+        before='    if items and not params.get("fields"):\n        required = DEFAULT_NUMERIC_FIELDS[source["endpoint"]]\n',
+        after='',
+        expected_failure_marker="test_v1_default_fields_require_endpoint_numeric_evidence",
+        rationale="A provider-default field request cannot count date-only rows as complete numeric evidence.",
+    ),
+    MutationCase(
         mutation_id="ENDPOINT_REVIEW_RESPONSE_IDENTITY", component="Endpoint independent review",
         source_path="experiments/data_governance/call_receipts.py", test_script="tests/test_endpoint_review_regressions.py",
         before='        if context["ts_code"] is not None and row.get("ts_code") != context["ts_code"]:\n',

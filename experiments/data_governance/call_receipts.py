@@ -23,6 +23,13 @@ SAFE_FIELDS = {"ts_code", "trade_date", "open", "high", "low", "close", "pre_clo
                "change", "pct_chg", "pct_change", "vol", "amount", "net_amount",
                "buy_elg_amount", "buy_lg_amount", "buy_md_amount", "buy_sm_amount",
                "pe", "pe_ttm", "pb", "total_mv", "name"}
+DEFAULT_NUMERIC_FIELDS = {
+    "daily": {"close"},
+    "daily_basic": {"pe_ttm", "pb", "total_mv"},
+    "moneyflow_dc": {"net_amount"},
+    "moneyflow_ind_dc": {"net_amount", "pct_change"},
+    "moneyflow_mkt_dc": {"net_amount"},
+}
 
 
 def observe_endpoint(session, api_name, params, fields, invoke):
@@ -229,6 +236,8 @@ def _summary(response, context, source, params):
     response_hash = _digest(response)
     numeric_fields = SAFE_FIELDS - {"ts_code", "trade_date", "name"}
     required = set(params.get("fields", "").split(",")) & numeric_fields
+    if items and not params.get("fields"):
+        required = DEFAULT_NUMERIC_FIELDS[source["endpoint"]]
     if not required <= set(fields):
         raise ValueError("INVALID_RESPONSE")
     dates = []

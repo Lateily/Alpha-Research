@@ -19,7 +19,7 @@ sys.path.insert(0, str(ROOT / "experiments/execution_tracker"))
 import fund_source as fs  # noqa: E402
 import tushare_rows  # noqa: E402
 from experiments.data_governance.call_receipts import (  # noqa: E402
-    CallReceiptSink, read_call_receipts,
+    CallReceiptSink, read_call_receipts, record_call,
 )
 from experiments.data_governance.catalog import catalog_hash, load_catalog  # noqa: E402
 from experiments.data_governance.endpoint_calls import (  # noqa: E402
@@ -101,6 +101,58 @@ class EndpointReviewRegressions(unittest.TestCase):
         self.assertEqual(result["close"], 0)
         health = evaluate_health(catalog, read_call_receipts(self.root), target_trade_date=TARGET)
         self.assertEqual(health["sources"]["tushare.daily"]["status"], "OK")
+
+    def test_v1_default_fields_require_endpoint_numeric_evidence(self):
+        catalog, original = self.v1_context()
+        for index, api in enumerate(("daily", "daily_basic", "moneyflow_dc", "moneyflow_ind_dc", "moneyflow_mkt_dc")):
+            with self.subTest(api=api):
+                context = {**original, "source_id": "tushare." + api,
+                           "ts_code": "600000.SH" if api in {"daily", "daily_basic", "moneyflow_dc"} else None}
+                params = {"ts_code": context["ts_code"]} if context["ts_code"] else {}
+                root = self.root / str(index)
+                with self.assertRaisesRegex(RuntimeError, "INVALID_RESPONSE"):
+                    record_call(catalog, context, params,
+                                lambda: rpc("ts_code,trade_date", [["600000.SH", TARGET]]),
+                                CallReceiptSink(root), lambda: NOW)
+                rows = read_call_receipts(root)
+                self.assertEqual(rows[0]["status"], "FAILED")
+                self.assertEqual(evaluate_health(catalog, rows, target_trade_date=TARGET)["sources"][context["source_id"]]["status"], "DATA_BLOCKED")
+
+    def test_v1_default_numeric_zero_and_explicit_narrow_fields_remain_valid(self):
+        catalog, original = self.v1_context()
+        baseline = {"daily": ["close"], "daily_basic": ["pe_ttm", "pb", "total_mv"],
+                    "moneyflow_dc": ["net_amount"], "moneyflow_ind_dc": ["net_amount", "pct_change"],
+                    "moneyflow_mkt_dc": ["net_amount"]}
+        endpoint_catalog = json.loads((ROOT / "config/data-endpoint-contracts.v1.json").read_text())
+        for index, (api, numbers) in enumerate(baseline.items()):
+            self.assertEqual(set(numbers), set(endpoint_catalog["endpoints"][api]["response"]["required_numeric_fields"]))
+            for narrow in (False, True):
+                with self.subTest(api=api, narrow=narrow):
+                    context = {**original, "source_id": "tushare." + api,
+                               "ts_code": "600000.SH" if api in {"daily", "daily_basic", "moneyflow_dc"} else None}
+                    params = {"ts_code": context["ts_code"]} if context["ts_code"] else {}
+                    if narrow: params["fields"] = "ts_code,trade_date"
+                    names = ["ts_code", "trade_date"] + ([] if narrow else numbers)
+                    raw = rpc(",".join(names), [["600000.SH", TARGET] + ([0] * (len(names) - 2))])
+                    root = self.root / (str(index) + str(narrow))
+                    self.assertEqual(record_call(catalog, context, params, lambda: raw, CallReceiptSink(root), lambda: NOW), raw)
+                    self.assertEqual(read_call_receipts(root)[0]["status"], "SUCCEEDED")
+
+    def test_v1_daily_basic_default_helper_blocks_each_missing_numeric_column(self):
+        catalog, original = self.v1_context()
+        for index, omitted in enumerate(("pe_ttm", "pb", "total_mv", "all")):
+            with self.subTest(omitted=omitted):
+                context = {**original, "source_id": "tushare.daily_basic"}
+                numbers = [name for name in ("pe_ttm", "pb", "total_mv") if name != omitted and omitted != "all"]
+                raw = rpc(",".join(["ts_code", "trade_date", *numbers]), [["600000.SH", TARGET] + [0] * len(numbers)])
+                root = self.root / str(index)
+                with mock.patch.object(fs, "_http_json", return_value=raw):
+                    with self.assertRaisesRegex(RuntimeError, "INVALID_RESPONSE"):
+                        fs.tushare_daily_basic("dummy", {"ts_code": "600000.SH", "trade_date": TARGET},
+                                              observation_context=context, receipt_sink=CallReceiptSink(root))
+                rows = read_call_receipts(root)
+                self.assertEqual(rows[0]["error_code"], "INVALID_RESPONSE")
+                self.assertEqual(evaluate_health(catalog, rows, target_trade_date=TARGET)["sources"][context["source_id"]]["status"], "DATA_BLOCKED")
 
     def test_observed_daily_duplicate_historical_dates_cannot_return_ohlc_bars(self):
         session = self.session()

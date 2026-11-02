@@ -56,7 +56,7 @@ def attach(root, envelope):
            "source_id": "tushare.daily", "target_trade_date": envelope["source_trade_date"],
            "ts_code": "600000.SH", "invoked_at": "2026-10-15T19:00:00Z",
            "catalog_hash": catalog_hash(catalog)}
-    record_call(catalog, ctx, {"ts_code": "600000.SH"},
+    record_call(catalog, ctx, {"ts_code": "600000.SH", "fields": "ts_code,trade_date"},
                 lambda: {"code": 0, "data": {"fields": ["ts_code", "trade_date"],
                                               "items": [["600000.SH", envelope["source_trade_date"]]]}},
                 CallReceiptSink(bundle / "receipts"), lambda: datetime(2026, 10, 15, 20, tzinfo=timezone.utc))
