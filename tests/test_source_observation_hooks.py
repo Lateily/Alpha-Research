@@ -31,7 +31,7 @@ from experiments.data_governance.call_receipts import (  # noqa: E402
 from experiments.data_governance.catalog import catalog_hash, load_catalog  # noqa: E402
 
 TARGET = "20261030"
-TOKEN = "synthetic-credential-not-a-real-token"
+TOKEN = "dummy-credential-for-offline-test"
 NOW = datetime(2026, 10, 30, 8, tzinfo=timezone.utc)
 
 
