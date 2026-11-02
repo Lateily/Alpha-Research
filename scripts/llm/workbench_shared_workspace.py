@@ -17,7 +17,7 @@ EXECUTION_FILES = (
     "scripts/llm/workbench_workspace.py", "scripts/llm/workbench_evidence.py",
     "scripts/llm/workbench_snapshot_brief.py", "scripts/llm/workbench_brief_trial.py",
     "scripts/llm/workbench_shared_inputs.py", "scripts/llm/workbench_shared_state.py",
-    "scripts/llm/workbench_backup.py",
+    "scripts/llm/workbench_backup.py", "scripts/llm/workbench_backup_chunks.py",
     "scripts/llm/workbench_shared_jobs.py", "scripts/llm/workbench_shared_worker.py",
     "scripts/llm/workbench_shared_sync.py",
     "scripts/llm/workbench_data_catalog.py", "config/data-source-catalog.v1.json",

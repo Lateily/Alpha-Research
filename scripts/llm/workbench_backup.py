@@ -13,6 +13,7 @@ from contextlib import closing, contextmanager
 from pathlib import Path
 
 import workbench_evidence as ev
+import workbench_backup_chunks as chunks
 
 TABLES = {
     "receipts": ("id", "request_hash", "receipt"),
@@ -394,11 +395,10 @@ def backup_shared(store, target_root: Path) -> dict:
         _verify_completed(store.path.parent, tables)
         target.mkdir(parents=True, mode=0o700)
         for name in directories: (target / name).mkdir(parents=True, exist_ok=True, mode=0o700)
-        data = ev.canonical({"schema": "ar-shared-workspace-data-export.v1", "tables": tables}).encode()
-        if len(data) > ev.MAX_FILE: raise ev.EvidenceError("BACKUP_DATA_SIZE_LIMIT")
-        files["data.json"] = data
+        archive_schema, export_files = chunks.export(tables)
+        files.update(export_files)
         for name, raw in files.items(): write_new(target / name, raw)
-        manifest = {"schema": "ar-shared-workspace-backup.v1", "source_storage_schema": version,
+        manifest = {"schema": archive_schema, "source_storage_schema": version,
                     "credentials_included": False, "sample_purpose": "WORKFLOW_DEBUG", "production_authority": False,
                     "integrity_check": "ok", "table_counts": {t: len(rows) for t, rows in tables.items()},
                     "event_tail": tail, "artifact_inventory": inventory, "directories": directories,
@@ -431,7 +431,7 @@ def read_shared(directory):
                     "source_storage_schema": "ar-local-workspace.v1", "inventory_scope": "LEGACY_BACKUP_CONTENT_ONLY"}
         _verify_completed(Path(directory), data["tables"])
         return manifest, data
-    if (manifest.get("schema") != "ar-shared-workspace-backup.v1" or manifest.get("credentials_included") is not False
+    if (manifest.get("schema") not in {"ar-shared-workspace-backup.v1", chunks.BACKUP_SCHEMA} or manifest.get("credentials_included") is not False
             or manifest.get("production_authority") is not False or manifest.get("integrity_check") != "ok"
             or manifest.get("inventory_scope") != "ISOLATED_STATE_ARTIFACT_ROOTS"
             or manifest.get("source_storage_schema") not in {"ar-local-workspace.v1", "ar.shared-workspace.v1", STORAGE_SCHEMA}
@@ -442,9 +442,17 @@ def read_shared(directory):
     actual = {p.relative_to(directory).as_posix() for p in Path(directory).rglob("*") if p.is_file() or p.is_symlink()}
     if actual != set(catalog) | {"manifest.json"}: raise ev.EvidenceError("BACKUP_FILE_SET_INVALID")
     for name, expected in catalog.items():
-        if name != "data.json" and not _safe_artifact(name): raise ev.EvidenceError("BACKUP_FILE_PATH_INVALID")
-        if expected != ev.sha(ev.read_local(directory, name)): raise ev.EvidenceError("BACKUP_ARTIFACT_HASH_INVALID")
-    data = ev.parse(ev.read_local(directory, "data.json"))
+        if not is_export_file(manifest, name) and not _safe_artifact(name): raise ev.EvidenceError("BACKUP_FILE_PATH_INVALID")
+    data_raw = ev.read_local(directory, "data.json")
+    if ev.sha(data_raw) != catalog["data.json"]:
+        raise ev.EvidenceError("BACKUP_ARTIFACT_HASH_INVALID")
+    data = ev.parse(data_raw)
+    if manifest["schema"] == chunks.BACKUP_SCHEMA:
+        data = {"schema": "ar-shared-workspace-data-export.v1",
+                "tables": chunks.decode(directory, data, catalog, ALL_TABLES)}
+    for name, expected in catalog.items():
+        if not is_export_file(manifest, name) and expected != ev.sha(ev.read_local(directory, name)):
+            raise ev.EvidenceError("BACKUP_ARTIFACT_HASH_INVALID")
     if data.get("schema") != "ar-shared-workspace-data-export.v1": raise ev.EvidenceError("BACKUP_DATA_SCHEMA_INVALID")
     tail = _validate_tables(data.get("tables"))
     _files, inventory, directories = _inventory(Path(directory), data["tables"])
@@ -458,6 +466,10 @@ def read_shared(directory):
 
 def verify_shared(directory):
     return read_shared(Path(directory))[0]
+
+
+def is_export_file(manifest, name):
+    return name == "data.json" or (manifest["schema"] == chunks.BACKUP_SCHEMA and name.startswith("data-chunks/"))
 
 
 def check_restored(root, manifest, data, receipt):
@@ -478,7 +490,7 @@ def check_restored(root, manifest, data, receipt):
         if db.execute("SELECT COUNT(*) FROM workspace_owner").fetchone()[0] != 0:
             raise ev.EvidenceError("RESTORE_OWNER_CREDENTIALS_REFUSED")
     for name, expected in manifest["files"].items():
-        if name != "data.json" and ev.sha(ev.read_local(root, name)) != expected:
+        if not is_export_file(manifest, name) and ev.sha(ev.read_local(root, name)) != expected:
             raise ev.EvidenceError("RESTORE_ARTIFACT_BINDING_INVALID")
     _files, inventory, directories = _inventory(root, data["tables"], scope=manifest["inventory_scope"])
     recovery = "migration-evidence/" + receipt["backup_hash"]

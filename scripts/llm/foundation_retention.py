@@ -155,7 +155,7 @@ def _validate_pin(value):
     _exact(pin["backup"], BACKUP_KEYS)
     archive = pin["backup"]
     _hash(archive["backup_hash"])
-    if (archive["schema"] not in ("ar-workspace-backup.v1", "ar-shared-workspace-backup.v1")
+    if (archive["schema"] not in ("ar-workspace-backup.v1", "ar-shared-workspace-backup.v1", "ar-shared-workspace-backup.v2")
             or archive["inventory_scope"] not in ("ISOLATED_STATE_ARTIFACT_ROOTS", "LEGACY_BACKUP_CONTENT_ONLY")
             or archive["manifest_ref"] != "manifest.json" or archive["data_ref"] != "data.json"
             or archive["credentials_included"] is not False):

@@ -171,7 +171,8 @@ def migrate_legacy(backup_root: Path, target_root: Path) -> dict:
     for name in manifest["directories"]:
         (staging / name).mkdir(parents=True, exist_ok=True, mode=0o700)
     for name in manifest["files"]:
-        if name != "data.json": _ensure(staging / name, ev.read_local(backup_root, name), evidence_root=evidence_root)
+        if not backup.is_export_file(manifest, name):
+            _ensure(staging / name, ev.read_local(backup_root, name), evidence_root=evidence_root)
     fence = staging / "workbench.sqlite3"
     fence.mkdir(exist_ok=True, mode=0o700)
     _build_state(staging, data["tables"], receipt)

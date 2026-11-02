@@ -901,6 +901,55 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="A completed new target cannot be reused for a different archive identity even when its exported content is identical.",
     ),
     MutationCase(
+        mutation_id="WORKBENCH_BACKUP_CHUNK_EXPORT_BOUNDS", component="Chunked shared portable backup v2",
+        source_path="scripts/llm/workbench_backup_chunks.py", test_script="tests/test_workbench_backup_chunks.py",
+        before='            if total > MAX_EXPORT_BYTES or len(files) >= MAX_CHUNKS:', after='            if False:',
+        expected_failure_marker="test_chunk_bounds_refuse_row_total_and_chunk_overflow",
+        rationale="A bounded chunk count is enforced before publishing archive metadata, without raising the global file limit.",
+    ),
+    MutationCase(
+        mutation_id="WORKBENCH_BACKUP_CHUNK_ORDER", component="Chunked shared portable backup v2",
+        source_path="scripts/llm/workbench_backup_chunks.py", test_script="tests/test_workbench_backup_chunks.py",
+        before='            if (descriptor["path"] != name or descriptor["table"] != table\n'
+               '                    or descriptor["index"] != ordinal or descriptor["row_start"] != start):',
+        after='            if False:',
+        expected_failure_marker="test_resealed_descriptor_and_body_cannot_move_chunk_ordinal",
+        rationale="Rehashing a descriptor and payload together cannot change the canonical contiguous chunk sequence.",
+    ),
+    MutationCase(
+        mutation_id="WORKBENCH_BACKUP_CHUNK_AGGREGATE", component="Chunked shared portable backup v2",
+        source_path="scripts/llm/workbench_backup_chunks.py", test_script="tests/test_workbench_backup_chunks.py",
+        before='    if (chunk_count != index["chunk_count"] or chunk_count > MAX_CHUNKS\n'
+               '            or row_count != index["row_count"] or row_count > MAX_ROWS\n'
+               '            or declared_bytes != index["total_bytes"] or declared_bytes > MAX_EXPORT_BYTES):',
+        after='    if False:',
+        expected_failure_marker="test_resealed_aggregate_and_table_counts_are_rejected",
+        rationale="A resealed index cannot invent aggregate chunk, row or byte counts.",
+    ),
+    MutationCase(
+        mutation_id="WORKBENCH_BACKUP_CHUNK_SEAL", component="Chunked shared portable backup v2",
+        source_path="scripts/llm/workbench_backup_chunks.py", test_script="tests/test_workbench_backup_chunks.py",
+        before='            if ev.sealed({k: v for k, v in body.items() if k != "chunk_hash"}) != body.get("chunk_hash"):',
+        after='            if False:',
+        expected_failure_marker="test_rehashed_chunk_still_requires_inner_seal",
+        rationale="Recomputing outer file and manifest hashes does not replace a chunk's original seal.",
+    ),
+    MutationCase(
+        mutation_id="WORKBENCH_BACKUP_CHUNK_DUPLICATE", component="Chunked shared portable backup v2",
+        source_path="scripts/llm/workbench_backup_chunks.py", test_script="tests/test_workbench_backup_chunks.py",
+        before='                if row[0] in identities:', after='                if False:',
+        expected_failure_marker="test_duplicate_primary_identity_refused_even_with_resealed_chunks",
+        rationale="Chunk reassembly rejects duplicate primary identities before any state writes.",
+    ),
+    MutationCase(
+        mutation_id="WORKBENCH_BACKUP_CHUNK_BYTES", component="Chunked shared portable backup v2",
+        source_path="scripts/llm/workbench_backup_chunks.py", test_script="tests/test_workbench_backup_chunks.py",
+        before='            if len(raw) != descriptor["bytes"] or ev.sha(raw) != descriptor["sha256"]:',
+        after='            if False:',
+        expected_failure_marker="test_rehashed_chunk_requires_actual_declared_byte_count",
+        rationale="Per-chunk byte counts are checked against reopened bytes, not trusted from a resealed descriptor.",
+    ),
+    MutationCase(
         mutation_id="WORKBENCH_SHARED_HISTORICAL_EVIDENCE_RETRY", component="Bound historical migration evidence S2a",
         source_path="scripts/llm/workbench_shared_state.py", test_script="tests/test_workbench_shared_state.py",
         before='                if any(path.name != backup_hash and (not has_intent or path.relative_to(staging).as_posix() not in historical)\n'
