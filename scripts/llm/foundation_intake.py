@@ -60,10 +60,16 @@ def _utc_now():
     return datetime.now(timezone.utc).isoformat(timespec="seconds")
 
 
-def _read_anchor(root, relative, expected):
+def _read_anchor(root, relative, expected, *, is_json=False):
     raw = ev.read_local(root, _relative(relative))
     if len(raw) > 1024 * 1024 or ev.sha(raw) != _hash(expected):
         _fail("EXTERNAL_ANCHOR_HASH_MISMATCH")
+    try:
+        materials.reject_credentials(raw.decode("utf-8"))
+    except UnicodeDecodeError:
+        _fail("ANCHOR_TEXT_INVALID")
+    if is_json:
+        materials.reject_credentials(ev.parse(raw))
     return raw
 
 
@@ -226,7 +232,7 @@ def run_cninfo_intake(request, output_root):
     anchors, rows, rejected, source_rows, seen, seen_files = [], [], [], [], set(), set()
     quarantine_rows = []
     for anchor in request["manifests"]:
-        raw = _read_anchor(source, anchor["relative_path"], anchor["expected_sha256"])
+        raw = _read_anchor(source, anchor["relative_path"], anchor["expected_sha256"], is_json=True)
         document = ev.parse(raw)
         variant, originals = _originals(document)
         anchors.append({"path": anchor["relative_path"], "sha256": anchor["expected_sha256"], "raw": raw})
@@ -254,15 +260,16 @@ def run_cninfo_intake(request, output_root):
                                  "source_manifest_hash": anchor["expected_sha256"], "reason": _reason(error)})
     classification = request["classification"]
     if classification:
-        raw = _read_anchor(source, classification["evidence_path"], classification["expected_sha256"])
+        raw = _read_anchor(source, classification["evidence_path"], classification["expected_sha256"],
+                           is_json=Path(classification["evidence_path"]).suffix.lower() == ".json")
         anchors.append({"path": classification["evidence_path"], "sha256": classification["expected_sha256"], "raw": raw})
     if _execution_identity(request) != identity:
         _fail("CODE_CHANGED_DURING_PREPARATION")
     # Preflight the entire accepted set before any irreversible registration.
     if rows:
         materials._manifest(_manifest(request, rows))
-    root.mkdir(mode=0o700)
-    records = root / "records"; records.mkdir(mode=0o700)
+    materials._create_private_root(root, ("records",))
+    records = root / "records"
     backup.fsync_directory(root); backup.fsync_directory(root.parent)
     files = {}
 

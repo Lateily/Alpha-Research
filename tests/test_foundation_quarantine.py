@@ -68,5 +68,13 @@ class QuarantineTests(unittest.TestCase):
         (root / "objects" / (ev.sha(self.raw) + ".pdf")).write_bytes(self.raw + b"changed")
         with self.assertRaises(ValueError): quarantine.verify_quarantine(root, expected_quarantine_hash=result["quarantine_hash"])
 
+    def test_symlink_parent_cannot_create_inside_original_source(self):
+        link = self.root / "linked-parent"
+        link.symlink_to(self.source, target_is_directory=True)
+        with self.assertRaises((ValueError, OSError)):
+            quarantine.create_quarantine(self.source, link / "new-quarantine", [self.row],
+                                         created_at="2026-11-02T00:00:00Z")
+        self.assertEqual(sorted(path.name for path in self.source.iterdir()), ["original.PDF"])
+
 
 if __name__ == "__main__": unittest.main()

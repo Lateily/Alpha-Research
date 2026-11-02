@@ -160,6 +160,9 @@ def _request_date_bounds(endpoint, params, target):
         selected = params.get("ann_date")
         return ((selected, selected, None) if selected else
                 (params.get("start_date") or None, params.get("end_date") or target, None))
+    if endpoint["freshness"] == "GLOBAL_ASOF_CALENDAR_UNVERIFIED" and params.get("trade_date"):
+        selected = params["trade_date"]
+        return selected, selected, None
     return params.get("start_date") or None, params.get("end_date") or target, None
 
 
@@ -236,7 +239,7 @@ def _summarize(response, endpoint, params, selected_fields, target):
                 else:
                     if params.get("period") and period != params["period"]:
                         gaps.add("PERIOD_MISMATCH")
-                    if period > target:
+                    if period > target and endpoint["api_name"] != "forecast":
                         gaps.add("INVALID_PERIOD")
         for request_field, response_field in (("is_open", "is_open"), ("list_status", "list_status"),
                                                ("limit_type", "limit"), ("report_type", "report_type"),

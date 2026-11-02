@@ -212,7 +212,8 @@ def validate_request(catalog, api_name, params, fields, target_trade_date):
     if params.get("ann_date") and (params.get("start_date") or params.get("end_date")):
         raise ValueError("AMBIGUOUS_ENDPOINT_DATE_SELECTION")
     if endpoint["freshness"] != "REQUESTED_CALENDAR_WINDOW" and any(
-            v and v > target_trade_date for k, v in params.items() if request["allowed_params"][k] == "DATE"):
+            v and v > target_trade_date for k, v in params.items()
+            if request["allowed_params"][k] == "DATE" and not (api_name == "forecast" and k == "period")):
         raise ValueError("FUTURE_ENDPOINT_REQUEST")
     paging = endpoint["paging"]
     if ("offset" in params and "limit" not in params

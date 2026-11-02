@@ -67,6 +67,58 @@ class IntakeTests(unittest.TestCase):
             self.run_intake(value)
         self.assertFalse((self.root / "operation").exists())
 
+    def test_source_and_classification_anchor_credentials_refused_before_write(self):
+        for kind in ("source", "encoded-source", "classification"):
+            with self.subTest(kind=kind):
+                request = copy.deepcopy(self.request)
+                if kind in {"source", "encoded-source"}:
+                    document = copy.deepcopy(self.document)
+                    document["capture_note"] = "Authorization: Bearer synthetic-review-only"
+                    raw = ev.canonical(document).encode()
+                    if kind == "encoded-source":
+                        credential_fixture = "Authorization: Bearer synthetic-review-only"
+                        escaped = "".join("\\u%04x" % ord(char) for char in credential_fixture).encode()
+                        raw = raw.replace(credential_fixture.encode(), escaped)
+                    self.anchor_path.write_bytes(raw)
+                    request["manifests"][0]["expected_sha256"] = ev.sha(self.anchor_path.read_bytes())
+                else:
+                    self.anchor_path.write_bytes(ev.canonical(self.document).encode())
+                    request["manifests"][0]["expected_sha256"] = ev.sha(self.anchor_path.read_bytes())
+                    path = self.source / "cohort.md"
+                    path.write_bytes(b"Authorization: Bearer synthetic-review-only")
+                    request["classification"] = {"industry_key": "semiconductor", "taxonomy_version": "draft-v1",
+                        "evidence_path": "cohort.md", "expected_sha256": ev.sha(path.read_bytes())}
+                with self.assertRaisesRegex(ValueError, "CREDENTIAL"):
+                    self.run_intake(request, name="secret-" + kind)
+                self.assertFalse((self.root / ("secret-" + kind)).exists())
+
+    def test_symlink_output_parent_refused_before_any_creation(self):
+        link = self.root / "linked-parent"
+        link.symlink_to(self.source, target_is_directory=True)
+        before = {str(p.relative_to(self.source)): p.read_bytes() if p.is_file() else None
+                  for p in self.source.rglob("*")}
+        with self.assertRaises((ValueError, OSError)):
+            self.run_intake(name="linked-parent/new-operation")
+        self.assertEqual(before, {str(p.relative_to(self.source)): p.read_bytes() if p.is_file() else None
+                                 for p in self.source.rglob("*")})
+
+    def test_raced_output_parent_cannot_redirect_creation_into_source(self):
+        parent = self.root / "new-parent"; parent.mkdir()
+        moved = self.root / "held-parent"
+        original_mkdir = intake.materials.os.mkdir
+        fired = []
+        def raced(path, *args, **kwargs):
+            if not fired and str(path) in {"new-operation", str(parent / "new-operation")}:
+                fired.append(True)
+                parent.rename(moved)
+                parent.symlink_to(self.source, target_is_directory=True)
+            return original_mkdir(path, *args, **kwargs)
+        with mock.patch.object(intake.materials.os, "mkdir", side_effect=raced):
+            with self.assertRaises((ValueError, OSError)):
+                self.run_intake(name="new-parent/new-operation")
+        self.assertTrue(fired)
+        self.assertFalse((self.source / "new-operation").exists())
+
     def test_original_hash_mismatch_is_retained_as_blocked_not_registered(self):
         (self.company / "raw/original.PDF").write_bytes(self.pdf + b"changed")
         result = self.run_intake()

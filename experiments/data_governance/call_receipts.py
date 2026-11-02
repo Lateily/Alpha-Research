@@ -240,7 +240,7 @@ def _summary(response, context, source, params):
         for field in set(fields) & numeric_fields:
             if type(row[field]) not in {int, float} or not math.isfinite(row[field]):
                 raise ValueError("INVALID_RESPONSE")
-        if context["ts_code"] and "ts_code" in row and row["ts_code"] != context["ts_code"]:
+        if context["ts_code"] is not None and row.get("ts_code") != context["ts_code"]:
             raise ValueError("INVALID_RESPONSE")
         date = row.get(source["date_field"])
         try:

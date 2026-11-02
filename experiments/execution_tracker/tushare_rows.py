@@ -81,7 +81,7 @@ def fetch_rows(name, token, *, timeout=30, attempts=4, pause=1.5,
                               f"{_scrub(payload.get('msg'), token)}")
             except (urllib.error.HTTPError, PermissionError) as exc:
                 if endpoint_session is not None and (isinstance(exc, PermissionError)
-                                                       or exc.code in {401, 403}):
+                                                       or exc.code in {400, 401, 403, 422}):
                     raise
                 transport_failed = not response_received
                 reason = ("TUSHARE_TRANSPORT_FAILED" if endpoint_session is not None else

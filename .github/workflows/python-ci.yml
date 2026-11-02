@@ -157,6 +157,7 @@ jobs:
           python3 -B tests/test_endpoint_contracts.py
           python3 -B tests/test_endpoint_calls.py
           python3 -B tests/test_endpoint_counterexamples.py
+          python3 -B tests/test_endpoint_review_regressions.py
           python3 -B tests/test_source_observation_hooks.py
       - name: U0 security registry transport retry
         run: python3 tests/test_security_registry_transport.py

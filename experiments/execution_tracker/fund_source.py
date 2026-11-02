@@ -202,6 +202,8 @@ def _observed_stock_rows(data, ticker, target):
         rows.append(row)
     if sum(r["trade_date"] == target for r in rows) != 1:
         raise RuntimeError("OBSERVATION_TARGET_ROW_REQUIRED")
+    if len({r["trade_date"] for r in rows}) != len(rows):
+        raise RuntimeError("OBSERVATION_DUPLICATE_DATE")
     return rows
 
 

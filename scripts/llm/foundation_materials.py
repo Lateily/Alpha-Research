@@ -313,6 +313,25 @@ def _child(parent, name):
         os.close(fd)
 
 
+def _create_private_root(path, children=()):
+    """Create only below an opened no-follow parent, never a lexical alias."""
+    with _directory(path.parent) as parent:
+        os.mkdir(path.name, mode=0o700, dir_fd=parent)
+        os.fsync(parent)
+        with _child(parent, path.name) as root:
+            _owned(root)
+            identity = os.fstat(root)
+            for name in children:
+                if type(name) is not str or not re.fullmatch(r"[A-Za-z][A-Za-z0-9_-]*", name):
+                    _fail("OUTPUT_CHILD_INVALID")
+                os.mkdir(name, mode=0o700, dir_fd=root)
+            os.fsync(root)
+    with _directory(path) as reopened:
+        current = os.fstat(reopened)
+        if (current.st_dev, current.st_ino) != (identity.st_dev, identity.st_ino):
+            _fail("OUTPUT_PARENT_CHANGED")
+
+
 def _names(fd, limit):
     names = set()
     with os.scandir(fd) as entries:

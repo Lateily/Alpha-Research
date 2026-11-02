@@ -109,7 +109,7 @@ def create_quarantine(source_root, target_root, rows, *, created_at):
              "created_at": created_at, "entries": sorted(entries, key=lambda entry: entry["sha256"])}
     value["quarantine_hash"] = ev.sealed(value)
     _body(value)
-    target.mkdir(mode=0o700)
+    materials._create_private_root(target, ("objects",))
     backup.fsync_directory(target.parent)
     for digest, raw in content.items():
         backup.write_new(target / "objects" / (digest + ".pdf"), raw)

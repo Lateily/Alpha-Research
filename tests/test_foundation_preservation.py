@@ -263,9 +263,11 @@ class PreservationTests(unittest.TestCase):
             self.build()
         with mock.patch.object(preservation, "MAX_TOTAL_BYTES", 1), self.assertRaises(ValueError):
             self.build()
-        (self.archive / "DATA.json").write_bytes(b"{}")
-        with self.assertRaisesRegex(ValueError, "PORTABLE_PATH_COLLISION"):
-            self.build()
+        # Case-insensitive filesystems cannot create these as distinct siblings.
+        with mock.patch.object(preservation.os, "scandir") as scan:
+            scan.return_value.__enter__.return_value = [Path("data.json"), Path("DATA.json")]
+            with self.assertRaisesRegex(ValueError, "PORTABLE_PATH_COLLISION"):
+                self.build()
 
     def test_duplicate_json_keys_cyclic_manifest_and_authority_promotion_are_refused(self):
         manifest = self.build()
