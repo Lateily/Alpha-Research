@@ -1,5 +1,5 @@
 {
-  "fetched_at": "2026-11-03T07:47:25Z",
+  "fetched_at": "2026-11-03T16:32:34Z",
   "_status": "ok",
   "api_used": "ths_index+ths_member",
   "scope": "watchlist_only",
@@ -279,6 +279,19 @@
       ]
     },
     {
+      "ts_code": "883408.TI",
+      "name": "近期新高",
+      "type": "S",
+      "total_count": 22.0,
+      "member_count": 4,
+      "members": [
+        "300054.SZ",
+        "300308.SZ",
+        "603233.SH",
+        "688120.SH"
+      ]
+    },
+    {
       "ts_code": "883416.TI",
       "name": "百日新高",
       "type": "S",
@@ -434,18 +447,6 @@
       "members": [
         "300054.SZ",
         "603233.SH",
-        "688120.SH"
-      ]
-    },
-    {
-      "ts_code": "883408.TI",
-      "name": "近期新高",
-      "type": "S",
-      "total_count": 22.0,
-      "member_count": 3,
-      "members": [
-        "300054.SZ",
-        "300308.SZ",
         "688120.SH"
       ]
     },
@@ -2675,6 +2676,7 @@
       "700001.TI"
     ],
     "603233.SH": [
+      "883408.TI",
       "883423.TI",
       "883994.TI",
       "883986.TI",
@@ -2912,6 +2914,6 @@
     ]
   },
   "total_concepts": 231,
-  "total_memberships": 407,
+  "total_memberships": 408,
   "disclaimer": "不是买卖指令;研究信号,human executes."
 }

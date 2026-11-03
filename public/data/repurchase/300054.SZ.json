@@ -1,7 +1,7 @@
 {
   "_status": "ok",
   "ticker": "300054.SZ",
-  "fetched_at": "2026-11-03T07:49:39Z",
+  "fetched_at": "2026-11-03T16:34:55Z",
   "api_used": "repurchase",
   "window_days": 180,
   "events": [
@@ -10,6 +10,17 @@
       "ann_date": "20261103",
       "end_date": "20261031",
       "proc": "实施",
+      "exp_date": null,
+      "vol": 1778720,
+      "amount": 120024249.39,
+      "high_limit": 75.44,
+      "low_limit": 57.0
+    },
+    {
+      "ts_code": "300054.SZ",
+      "ann_date": "20261103",
+      "end_date": "20261031",
+      "proc": "完成",
       "exp_date": null,
       "vol": 1778720,
       "amount": 120024249.39,
@@ -62,10 +73,10 @@
     }
   ],
   "summary": {
-    "total_count": 5,
-    "total_amount_180d": 476829656.86,
+    "total_count": 6,
+    "total_amount_180d": 596853906.25,
     "active_program": false,
     "last_announce_date": "2026-11-03",
-    "signal_level": "MED"
+    "signal_level": "HIGH"
   }
 }
