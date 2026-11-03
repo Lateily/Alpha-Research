@@ -1,25 +1,25 @@
 {
-  "generated_at": "2026-11-02T18:36:32.151231+00:00",
+  "generated_at": "2026-11-03T07:45:23.295908+00:00",
   "industry": "ai_infrastructure",
-  "composite_score": 65.2,
+  "composite_score": 67.2,
   "composite_signal": "MODERATE",
   "hyperscaler_basket": {
     "NVDA": {
-      "price": 206.39,
+      "price": 202.06,
       "ath_3mo": 239.24,
-      "drawdown_3mo_pct": -13.7
+      "drawdown_3mo_pct": -15.5
     },
     "MSFT": {
-      "price": 518.89,
+      "price": 507.12,
       "ath_3mo": 543.45,
-      "drawdown_3mo_pct": -4.5
+      "drawdown_3mo_pct": -6.7
     },
     "GOOGL": {
-      "price": 284.21,
+      "price": 278.99,
       "ath_3mo": 362.2,
-      "drawdown_3mo_pct": -21.5
+      "drawdown_3mo_pct": -23.0
     },
-    "_avg_drawdown_pct": 13.2,
+    "_avg_drawdown_pct": 15.1,
     "_window": "3 months (~63 trading days)",
     "_constituents": [
       "NVDA",
@@ -30,7 +30,7 @@
   "interpretation": "Capex cycle healthy but not accelerating. Existing thesis intact; no incremental urgency.",
   "component_scores": {
     "nvda_revenue": 68,
-    "hyperscaler_capex": 65,
+    "hyperscaler_capex": 71,
     "tsmc_revenue": 68,
     "price_momentum": 50
   },
@@ -62,19 +62,19 @@
         }
       ],
       "price": {
-        "price": 206.39,
-        "return_3m_pct": 6.1,
+        "price": 202.06,
+        "return_3m_pct": 3.4,
         "ath_3mo": 239.24,
-        "drawdown_3mo_pct": -13.7
+        "drawdown_3mo_pct": -15.5
       },
       "latest_qoq": 17.9,
       "score": 68,
       "signal": "STABLE"
     },
     "hyperscaler_capex": {
-      "combined_capex_latest_bn": 168.9,
-      "combined_capex_qoq_pct": 12.3,
-      "score": 65,
+      "combined_capex_latest_bn": 201.9,
+      "combined_capex_qoq_pct": 30.2,
+      "score": 71,
       "components": {
         "MSFT": {
           "name": "Microsoft",
@@ -101,10 +101,10 @@
             }
           ],
           "price": {
-            "price": 518.89,
-            "return_3m_pct": 33.1,
+            "price": 507.12,
+            "return_3m_pct": 31.4,
             "ath_3mo": 543.45,
-            "drawdown_3mo_pct": -4.5
+            "drawdown_3mo_pct": -6.7
           },
           "latest_qoq": 10.0,
           "score": 65,
@@ -135,10 +135,10 @@
             }
           ],
           "price": {
-            "price": 284.21,
-            "return_3m_pct": -21.0,
+            "price": 278.99,
+            "return_3m_pct": -23.8,
             "ath_3mo": 362.2,
-            "drawdown_3mo_pct": -21.5
+            "drawdown_3mo_pct": -23.0
           },
           "latest_qoq": 14.3,
           "score": 65,
@@ -169,10 +169,10 @@
             }
           ],
           "price": {
-            "price": 613.73,
-            "return_3m_pct": 5.4,
+            "price": 606.73,
+            "return_3m_pct": 1.2,
             "ath_3mo": 777.59,
-            "drawdown_3mo_pct": -21.1
+            "drawdown_3mo_pct": -22.0
           },
           "latest_qoq": 12.7,
           "score": 65,
@@ -181,6 +181,11 @@
         "AMZN": {
           "name": "Amazon",
           "quarters": [
+            {
+              "quarter": "2026-09-30",
+              "capex_bn": 77.26,
+              "qoq_pct": 74.8
+            },
             {
               "quarter": "2026-03-31",
               "capex_bn": 44.2,
@@ -195,25 +200,20 @@
               "quarter": "2025-09-30",
               "capex_bn": 35.09,
               "qoq_pct": 9.0
-            },
-            {
-              "quarter": "2025-06-30",
-              "capex_bn": 32.18,
-              "qoq_pct": 28.6
             }
           ],
           "price": {
-            "price": 249.62,
-            "return_3m_pct": 2.9,
+            "price": 245.63,
+            "return_3m_pct": 0.6,
             "ath_3mo": 278.09,
-            "drawdown_3mo_pct": -10.2
+            "drawdown_3mo_pct": -11.7
           },
-          "latest_qoq": 11.8,
-          "score": 65,
+          "latest_qoq": 74.8,
+          "score": 90,
           "weight": 0.25
         }
       },
-      "signal": "STABLE"
+      "signal": "EXPANDING"
     },
     "tsmc_revenue": {
       "ticker": "TSM",
@@ -242,17 +242,17 @@
         }
       ],
       "price": {
-        "price": 404.81,
-        "return_3m_pct": -6.5,
+        "price": 398.63,
+        "return_3m_pct": -11.5,
         "ath_3mo": 485.8,
-        "drawdown_3mo_pct": -16.7
+        "drawdown_3mo_pct": -17.9
       },
       "latest_qoq": 17.6,
       "score": 68,
       "signal": "STRONG"
     },
     "price_momentum": {
-      "basket_return_3m_pct": 6.5,
+      "basket_return_3m_pct": 3.9,
       "score": 50,
       "signal": "NEUTRAL"
     }
