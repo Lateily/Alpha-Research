@@ -24,7 +24,10 @@ The asserted request timestamp is retained separately, never presented as observ
 acquisition/generation evidence. Preparation records its own timezone-aware clock;
 new question as_of must match that Shanghai date. Reopening uses the frozen observed
 timestamp rather than today's clock. The downstream trial is normalized to UTC+08
-and preflighted before its final seal is published.
+and preflighted before its final seal is published, including the unchanged
+consumer request/report byte limits. Citations use the Shanghai publication day
+and retain date-only precision rather than treating an upper bound as an observed
+publication timestamp.
 The source cutoff remains separately visible. Every assessment is UNRESOLVED;
 no automatic positive/negative thesis verdict is accepted in the request.
 

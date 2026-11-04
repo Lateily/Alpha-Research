@@ -282,6 +282,53 @@ class MaterialResearchTests(unittest.TestCase):
             self.adapter().prepare_research_pack(self.root / 'active-library', value, self.root / 'active-pack')
         self.assertFalse((self.root / 'active-pack').exists())
 
+    def test_publication_day_uses_shanghai_precision_not_source_offset(self):
+        adapter = self.adapter()
+        row = copy.deepcopy(self.row)
+        row['published_at'] = '2020-01-03T05:59:59+14:00'
+        row['available_at'] = '2020-01-03T00:00:00+08:00'
+        row['provenance']['captured_at'] = '2020-01-03T00:01:00+08:00'
+        row['provenance']['publication_precision'] = {
+            'basis': 'DATE_ONLY_UPPER_BOUND_NOT_OBSERVED_TIME', 'published_on': '20200102'}
+        admitted = materials.ingest_material(self.source, self.root / 'offset-library', {
+            'schema': 'ar.material-intake.v1', 'library_id': 'offset-test',
+            'created_at': '2020-01-06T12:00:00+08:00', 'materials': [row]})
+        value = copy.deepcopy(self.request); value['expected_library_hash'] = admitted['library_hash']
+        receipt = adapter.prepare_research_pack(self.root / 'offset-library', value, self.root / 'offset-pack')
+        import workbench_earnings_trial as earnings
+        result = earnings.run(self.root / 'offset-pack', self.root / 'offset-result', expected_pack_hash=receipt['pack_hash'])
+        request = json.loads((self.root / 'offset-pack/requests/earnings-600000.SH.json').read_bytes())
+        pdf_sources = [s for k, s in request['sources'].items() if k != 'questions']
+        self.assertEqual(pdf_sources[0]['published_on'], '20200102')
+        self.assertIn('DATE_ONLY_UPPER_BOUND_NOT_OBSERVED_TIME', pdf_sources[0]['origin'])
+        self.assertIn('20200102', result['reports'][0]['report'])
+
+    def test_prepare_refuses_consumer_report_limit_before_final_seal(self):
+        adapter = self.adapter()
+        text = 'X' * 1023
+        raw = pdf_bytes((text,)); (self.source / 'long.pdf').write_bytes(raw)
+        row = copy.deepcopy(self.row); row['files'] = [{'source_path': 'long.pdf', 'sha256': ev.sha(raw), 'size_bytes': len(raw)}]
+        admitted = materials.ingest_material(self.source, self.root / 'large-library', {
+            'schema': 'ar.material-intake.v1', 'library_id': 'report-limit-test',
+            'created_at': '2020-01-06T12:00:00+08:00', 'materials': [row]})
+        value = copy.deepcopy(self.request); value['expected_library_hash'] = admitted['library_hash']
+        value['documents'][0]['sha256'] = ev.sha(raw)
+        cite = {'sha256': ev.sha(raw), 'page': 1, 'start': 1, 'end': 1, 'expected': text}
+        value['questions'] = [{**copy.deepcopy(value['questions'][0]), 'id': 'limit-' + str(n), 'citations': [copy.deepcopy(cite) for _ in range(8)]} for n in range(16)]
+        with self.assertRaisesRegex(ValueError, 'CONSUMER_REPORT_LIMIT'):
+            adapter.prepare_research_pack(self.root / 'large-library', value, self.root / 'large-pack')
+        self.assertFalse((self.root / 'large-pack/material-pack.json').exists())
+        import workbench_earnings_trial as earnings
+        with self.assertRaisesRegex(ValueError, 'PIN_REQUIRED'):
+            earnings.run(self.root / 'large-pack', self.root / 'large-result')
+
+    def test_prepare_refuses_consumer_request_limit_before_writing(self):
+        value = copy.deepcopy(self.request)
+        value['questions'][0]['criteria']['measurement'] = 'X' * 1_000_001
+        with self.assertRaisesRegex(ValueError, 'CONSUMER_REQUEST_LIMIT'):
+            self.prepare(value, 'large-request')
+        self.assertFalse((self.root / 'large-request').exists())
+
     def test_job_rejects_wrong_external_pin_before_any_report(self):
         self.prepare()
         import workbench_earnings_trial as earnings

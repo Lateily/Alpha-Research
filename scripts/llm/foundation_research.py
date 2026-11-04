@@ -226,10 +226,12 @@ def _compile(request, documents, prepared_at):
             files['inputs/' + relative] = text.encode()
             page_map[source] = {'sha256': selection['sha256'], 'physical_page': page, 'text_sha256': ev.sha(text.encode()),
                                 'original_path': pdf_path, 'text_path': 'inputs/' + relative}
+            publication_day = materials._time(row['published_at']).astimezone(timezone(timedelta(hours=8))).strftime('%Y%m%d')
+            precision = row['provenance'].get('publication_precision', {'basis': 'TIMESTAMP_RECORDED'})
             sources[source] = {'path': relative, 'sha256': ev.sha(text.encode()), 'company': request['company'],
-                'tier': 'E3', 'published_on': materials._time(row['published_at']).strftime('%Y%m%d'), 'format': 'text',
+                'tier': 'E3', 'published_on': publication_day, 'format': 'text',
                 'origin': row['provenance']['source_locator'] + ' ; PDF SHA256 ' + selection['sha256'] + ' ; physical page ' + str(page)
-                    + ' ; publisher UNVERIFIED ; extracted text is a derivative',
+                    + ' ; publisher UNVERIFIED ; publication precision ' + precision['basis'] + ' ; extracted text is a derivative',
                 'observed_at': row['provenance']['captured_at']}
     responses = []
     for question in request['questions']:
@@ -252,6 +254,9 @@ def _compile(request, documents, prepared_at):
         'authoring': request['authoring'], 'payload': {'company': request['company'],
             'claims': {'source': 'questions', 'pointer': '/questions', 'expected': claims}, 'registered_at': None, 'responses': responses}}
     files['requests/earnings-' + request['company'] + '.json'] = ev.canonical(trial).encode()
+    from workbench_earnings_trial import MAX_REQUEST_BYTES
+    if len(files['requests/earnings-' + request['company'] + '.json']) > MAX_REQUEST_BYTES:
+        _fail('CONSUMER_REQUEST_LIMIT')
     files['request.json'] = ev.canonical(request).encode()
     files['source-map.json'] = ev.canonical({'schema': 'ar.material-research-provenance.v1', 'documents': provenance,
         'pages': page_map, 'extractor': {'name': 'pypdf', 'version': EXTRACTOR_VERSION},
@@ -260,6 +265,16 @@ def _compile(request, documents, prepared_at):
     if sum(map(len, files.values())) > MAX_PACK_BYTES or any(len(raw) > ev.MAX_FILE for raw in files.values()):
         _fail('PACK_SIZE_LIMIT')
     return files
+
+
+def _preflight(root, files):
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+    from experiments.research_workflows import trial
+    from workbench_earnings_trial import MAX_REPORT_BYTES
+    request = next(value for name, value in files.items() if name.startswith('requests/earnings-'))
+    rendered = trial.build(ev.parse(request), root / 'inputs')
+    if len(rendered['report'].encode()) > MAX_REPORT_BYTES:
+        _fail('CONSUMER_REPORT_LIMIT')
 
 
 def _summary(request, files, pack_hash, preparation_identity, prepared_at):
@@ -301,9 +316,7 @@ def prepare_research_pack(library_root, request, output_root):
     materials._create_private_root(output / 'inputs/pages')
     for name, raw in files.items():
         backup.write_new(output / name, raw)
-    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
-    from experiments.research_workflows import trial
-    trial.build(ev.parse(files['requests/earnings-' + request['company'] + '.json']), output / 'inputs')
+    _preflight(output, files)
     backup.write_new(output / MARKER, ev.canonical(manifest).encode())
     result = verify_research_pack(output, manifest['pack_hash'])
     if _execution_identity() != preparation_identity:
@@ -352,6 +365,7 @@ def verify_research_pack(pack_root, expected_pack_hash):
     # Re-extract PDFs, re-derive source metadata and re-check every quotation.
     if raw != compiled:
         _fail('PACK_DERIVATION_MISMATCH')
+    _preflight(root, raw)
     return _summary(request, manifest['files'], expected_pack_hash, identity, manifest['prepared_at'])
 
 

@@ -200,6 +200,30 @@ class MutationCase:
 
 MUTATIONS: tuple[MutationCase, ...] = (
     MutationCase(
+        mutation_id="MATERIAL_RESEARCH_CONSUMER_REQUEST", component="Real material research vertical",
+        source_path="scripts/llm/foundation_research.py", test_script="tests/test_foundation_research.py",
+        before="    if len(files['requests/earnings-' + request['company'] + '.json']) > MAX_REQUEST_BYTES:\n        _fail('CONSUMER_REQUEST_LIMIT')\n",
+        after="",
+        expected_failure_marker="test_prepare_refuses_consumer_request_limit_before_writing",
+        rationale="The preparer must honor the consumer request-size contract before writing a partial pack.",
+    ),
+    MutationCase(
+        mutation_id="MATERIAL_RESEARCH_PUBLICATION_ZONE", component="Real material research vertical",
+        source_path="scripts/llm/foundation_research.py", test_script="tests/test_foundation_research.py",
+        before="            publication_day = materials._time(row['published_at']).astimezone(timezone(timedelta(hours=8))).strftime('%Y%m%d')\n",
+        after="            publication_day = materials._time(row['published_at']).strftime('%Y%m%d')\n",
+        expected_failure_marker="test_publication_day_uses_shanghai_precision_not_source_offset",
+        rationale="A source offset cannot silently change the declared Shanghai publication day in citations.",
+    ),
+    MutationCase(
+        mutation_id="MATERIAL_RESEARCH_CONSUMER_REPORT", component="Real material research vertical",
+        source_path="scripts/llm/foundation_research.py", test_script="tests/test_foundation_research.py",
+        before="    if len(rendered['report'].encode()) > MAX_REPORT_BYTES:\n        _fail('CONSUMER_REPORT_LIMIT')\n",
+        after="",
+        expected_failure_marker="test_prepare_refuses_consumer_report_limit_before_final_seal",
+        rationale="Preparation cannot publish a sealed pack that the real earnings consumer will reject for size.",
+    ),
+    MutationCase(
         mutation_id="MATERIAL_RESEARCH_PARTIAL_LEGACY", component="Real material research vertical",
         source_path="scripts/llm/workbench_earnings_trial.py", test_script="tests/test_foundation_research.py",
         before='    markers = [pack_root / name for name in ("material-pack.json", "material-pack.intent.json", "source-map.json")]\n',
