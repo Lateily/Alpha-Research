@@ -251,10 +251,13 @@ class MaterialResearchTests(unittest.TestCase):
         adapter = self.adapter()
         value = copy.deepcopy(self.request)
         value.update(as_of='20200107', generated_at='2020-01-06T18:00:00Z')
-        with mock.patch.object(adapter, '_observed_at', return_value='2020-01-06T18:30:00Z', create=True):
-            receipt = self.prepare(value)
         import workbench_earnings_trial as earnings
-        result = earnings.run(self.root / 'pack', self.root / 'utc-result', expected_pack_hash=receipt['pack_hash'])
+        try:
+            with mock.patch.object(adapter, '_observed_at', return_value='2020-01-06T18:30:00Z', create=True):
+                receipt = self.prepare(value)
+            result = earnings.run(self.root / 'pack', self.root / 'utc-result', expected_pack_hash=receipt['pack_hash'])
+        except ValueError as exc:
+            self.fail('Valid UTC-boundary input must prepare and render: ' + str(exc))
         self.assertEqual(result['status'], 'COMPLETED_HISTORICAL_EARNINGS')
         trial = json.loads((self.root / 'pack/requests/earnings-600000.SH.json').read_bytes())
         self.assertEqual(trial['generated_at'], '2020-01-07T02:30:00+08:00')
