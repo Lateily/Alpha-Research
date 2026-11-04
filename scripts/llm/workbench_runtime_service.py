@@ -55,6 +55,8 @@ def asset_inventory(root):
 
 def validate_profile(value, root):
     root = runtime.safe_path(root)
+    if any((p/'.git').exists() for p in (root,*root.parents)):
+        raise ValueError('SERVICE_ROOT_INSIDE_REPOSITORY')
     if (type(value) is not dict or set(value)!=FIELDS or value['schema']!='ar.isolated-service.v1'
             or value['root']!=str(root) or value['scope']!='ISOLATED_ONLY' or value['production_authority'] is not False
             or value['origin']!=ORIGIN or value['owner']!=OWNER or value['member']!=MEMBER
@@ -100,6 +102,7 @@ def prepare_profile(root, code_root, environment_root, environment_hash, port):
     root = runtime.safe_path(root); code_root = runtime.safe_path(code_root)
     environment_root = runtime.safe_path(environment_root)
     if root.exists(): raise ValueError('SERVICE_NEW_ROOT_REQUIRED')
+    if any((p/'.git').exists() for p in root.parents): raise ValueError('SERVICE_ROOT_INSIDE_REPOSITORY')
     if any(root==p or root in p.parents or p in root.parents for p in (code_root,environment_root)):
         raise ValueError('SERVICE_ROOT_OVERLAP')
     if type(port) is not int or not 18000<=port<=18999: raise ValueError('SERVICE_PORT_INVALID')

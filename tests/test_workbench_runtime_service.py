@@ -98,6 +98,14 @@ class RuntimeServiceTests(unittest.TestCase):
             (assets/'alias').symlink_to(root, target_is_directory=True)
             with self.assertRaisesRegex(ValueError,'SERVICE_ASSETS_SYMLINK'): m.asset_inventory(root)
 
+    def test_profile_under_repository_is_refused_before_creation(self):
+        m = self.module()
+        with tempfile.TemporaryDirectory() as tmp:
+            base=Path(tmp).resolve(); (base/'.git').mkdir()
+            with self.assertRaisesRegex(ValueError,'SERVICE_ROOT_INSIDE_REPOSITORY'):
+                m.prepare_profile(base/'new-profile',base/'code',base/'environment','a'*64,18341)
+            self.assertFalse((base/'new-profile').exists())
+
     def test_code_assets_and_environment_are_rechecked(self):
         m = self.module()
         with tempfile.TemporaryDirectory() as tmp:
