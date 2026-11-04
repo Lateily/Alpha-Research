@@ -635,6 +635,7 @@ def main(argv=None):
     parser.add_argument("--read-only-source-root", type=Path, help="Local AR root; only a fixed public artifact allowlist is read")
     parser.add_argument("--brief-pack-root", type=Path, help="Operator-frozen historical brief pack; requests/brief.json and inputs/ are read only")
     parser.add_argument("--earnings-pack-root", type=Path, help="Operator-frozen historical earnings pack; requests and inputs are read only")
+    parser.add_argument("--earnings-pack-hash", help="Independent material-pack hash; required for admitted-PDF research packs")
     parser.add_argument("--state-root", type=Path, help="Dedicated nonproduction state directory, separate from code releases")
     parser.add_argument("--private-origin", help="Exact existing Tailscale Serve HTTPS origin on port 8443")
     parser.add_argument("--owner-login", help="Exact owner Tailscale login; access identity is not research approval")
@@ -646,6 +647,8 @@ def main(argv=None):
     args = parser.parse_args(argv)
     host = serve_host(args.host)
     private = private_access(args.private_origin, args.owner_login, args.private_allowlist)
+    if args.earnings_pack_hash is not None and args.earnings_pack_root is None:
+        raise WorkbenchError("FROZEN_MATERIAL_PACK_ROOT_REQUIRED")
     # governance-mutation: WORKBENCH_SHARED_SYNC_OPT_IN
     if args.read_only_auto_sync and (not args.shared_workspace_v1 or private is None or args.read_only_source_root is None):
         raise WorkbenchError("READ_ONLY_SYNC_CONFIGURATION_REQUIRED", 403)
@@ -676,6 +679,7 @@ def main(argv=None):
     system = workspace.Workspace(store, None if args.shared_workspace_v1 else args.read_only_source_root,
                                  brief_pack_root=args.brief_pack_root,
                                  earnings_pack_root=args.earnings_pack_root,
+                                 earnings_pack_hash=args.earnings_pack_hash,
                                  private_mode=private is not None)
     origin = private.origin if private else f"http://{host}:{args.port}"
     shared = None

@@ -71,7 +71,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
-      - run: pip install pandas jsonschema==4.25.1
+      - run: pip install pandas jsonschema==4.25.1 pypdf==6.10.0
       - name: Independent research workflow trials (offline)
         run: |
           python3 tests/test_research_workflow_trial.py
@@ -153,6 +153,7 @@ jobs:
           python3 -B tests/test_foundation_preservation.py
           python3 -B tests/test_foundation_release.py
           python3 -B tests/test_foundation_intake.py
+          python3 -B tests/test_foundation_research.py
           python3 -B tests/test_foundation_quarantine.py
           python3 -B tests/test_endpoint_contracts.py
           python3 -B tests/test_endpoint_calls.py
@@ -553,7 +554,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
-      - run: pip install pandas jsonschema==4.25.1
+      - run: pip install pandas jsonschema==4.25.1 pypdf==6.10.0
       - name: Macro and AIOS governance mutation gate shard (offline)
         run: >-
           python3 scripts/governance_mutation_gate.py

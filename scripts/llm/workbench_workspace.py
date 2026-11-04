@@ -117,12 +117,16 @@ def projection(events):
 
 class Workspace:
     def __init__(self, store, source_root=None, clock=time.time,
-                 brief_pack_root=None, earnings_pack_root=None, private_mode=False):
+                 brief_pack_root=None, earnings_pack_root=None, earnings_pack_hash=None, private_mode=False):
         self.store, self.clock = store, clock
         self.private_mode = private_mode
         self.source_root = Path(source_root) if source_root else None
         self.brief_pack_root = Path(brief_pack_root) if brief_pack_root else None
         self.earnings_pack_root = Path(earnings_pack_root) if earnings_pack_root else None
+        self.earnings_pack_hash = earnings_pack_hash
+        if earnings_pack_hash is not None and (self.earnings_pack_root is None or
+                not isinstance(earnings_pack_hash, str) or re.fullmatch(r"[0-9a-f]{64}", earnings_pack_hash) is None):
+            raise WorkspaceError("FROZEN_MATERIAL_PACK_HASH_INVALID")
         if self.source_root and (self.source_root.is_symlink() or not self.source_root.is_dir()):
             raise WorkspaceError("READ_ONLY_SOURCE_ROOT_INVALID")
         if self.source_root and self.source_root.resolve() in store.path.resolve().parents:
@@ -366,7 +370,8 @@ class Workspace:
                 if target_root.is_symlink():
                     raise WorkspaceError("EARNINGS_OUTPUT_SYMLINK_REFUSED", 409)
                 target_root.mkdir(mode=0o700, exist_ok=True)
-                result = earnings_trial.run(self.earnings_pack_root, target_root / job_id)
+                result = earnings_trial.run(self.earnings_pack_root, target_root / job_id,
+                    **({"expected_pack_hash": self.earnings_pack_hash} if self.earnings_pack_hash is not None else {}))
             else:
                 receipt = self.store.replay({"command_id": "job_" + evidence.sealed(job_id)[:40], "scenario": "complete-replay"})["receipt"]
                 result = {"receipt_hash": receipt["receipt_hash"], "replay_id": receipt["command_id"], "status": receipt["status"], "synthetic": True}

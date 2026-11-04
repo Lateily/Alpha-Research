@@ -200,6 +200,46 @@ class MutationCase:
 
 MUTATIONS: tuple[MutationCase, ...] = (
     MutationCase(
+        mutation_id="MATERIAL_RESEARCH_EXTERNAL_PIN", component="Real material research vertical",
+        source_path="scripts/llm/foundation_research.py", test_script="tests/test_foundation_research.py",
+        before="            or manifest['pack_hash'] != expected_pack_hash or ev.sealed(body) != expected_pack_hash\n",
+        after="            or ev.sealed(body) != manifest['pack_hash']\n",
+        expected_failure_marker="test_coherent_reseal_cannot_replace_external_pin",
+        rationale="Another fully valid self-sealed pack cannot replace the independently pinned research input.",
+    ),
+    MutationCase(
+        mutation_id="MATERIAL_RESEARCH_COMPANY", component="Real material research vertical",
+        source_path="scripts/llm/foundation_research.py", test_script="tests/test_foundation_research.py",
+        before="                or row['ts_code'] != request['company'] or ev.sha(raw) != selection['sha256']\n",
+        after="                or False or ev.sha(raw) != selection['sha256']\n",
+        expected_failure_marker="test_wrong_library_hash_and_unadmitted_documents_never_write",
+        rationale="A real admitted filing must not be reused as another company's research evidence.",
+    ),
+    MutationCase(
+        mutation_id="MATERIAL_RESEARCH_QUOTE", component="Real material research vertical",
+        source_path="scripts/llm/foundation_research.py", test_script="tests/test_foundation_research.py",
+        before=" or '\\n'.join(lines[citation['start'] - 1:citation['end']]) != citation['expected']:",
+        after=" or False:",
+        expected_failure_marker="test_quotes_are_checked_against_selected_pdf_not_request_self_claims",
+        rationale="Caller quotations are verified against selected physical PDF pages before pack publication.",
+    ),
+    MutationCase(
+        mutation_id="MATERIAL_RESEARCH_INVENTORY", component="Real material research vertical",
+        source_path="scripts/llm/foundation_research.py", test_script="tests/test_foundation_research.py",
+        before="    if actual != expected:\n        _fail('PACK_INVENTORY_INVALID')",
+        after="    if False:\n        _fail('PACK_INVENTORY_INVALID')",
+        expected_failure_marker="test_extra_regular_file_cannot_be_ignored_by_pack_verifier",
+        rationale="The selected research pack cannot carry extra unregistered evidence files.",
+    ),
+    MutationCase(
+        mutation_id="MATERIAL_RESEARCH_JOB_PIN", component="Real material research vertical",
+        source_path="scripts/llm/workbench_earnings_trial.py", test_script="tests/test_foundation_research.py",
+        before="            material_pack = foundation_research.verify_research_pack(pack_root, expected_pack_hash)",
+        after="            material_pack = None",
+        expected_failure_marker="test_job_rejects_wrong_external_pin_before_any_report",
+        rationale="The real earnings entry must enforce the operator pin, not merely the preparation CLI.",
+    ),
+    MutationCase(
         mutation_id="ENDPOINT_REVIEW_DEFAULT_NUMERIC_FIELDS", component="Endpoint independent review",
         source_path="experiments/data_governance/call_receipts.py", test_script="tests/test_endpoint_review_regressions.py",
         before='    if items and not params.get("fields"):\n        required = DEFAULT_NUMERIC_FIELDS[source["endpoint"]]\n',

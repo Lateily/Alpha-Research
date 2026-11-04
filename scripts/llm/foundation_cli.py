@@ -43,6 +43,13 @@ def arguments(argv=None):
     materials.add_argument("--industry")
     materials.add_argument("--date")
     materials.add_argument("--ticker")
+    research = commands.add_parser("research-pack")
+    research.add_argument("--library-root", required=True)
+    research.add_argument("--request", required=True)
+    research.add_argument("--write-root", required=True)
+    verify_research = commands.add_parser("research-pack-verify")
+    verify_research.add_argument("--pack-root", required=True)
+    verify_research.add_argument("--expected-pack-hash", required=True)
     for name in ("preservation", "preservation-verify", "reconcile"):
         commands.add_parser(name).add_argument("--request", required=True)
     return parser.parse_args(argv)
@@ -96,6 +103,13 @@ def execute(args):
     if args.command == "materials":
         from foundation_materials import query_library
         return query_library(args.library_root, industry_key=args.industry, trade_date=args.date, ts_code=args.ticker)
+    if args.command == "research-pack":
+        from foundation_research import REQUEST_KEYS, prepare_research_pack
+        value = request_json(args.request, required=REQUEST_KEYS)
+        return prepare_research_pack(args.library_root, value, args.write_root)
+    if args.command == "research-pack-verify":
+        from foundation_research import verify_research_pack
+        return verify_research_pack(args.pack_root, args.expected_pack_hash)
     if args.command == "preservation":
         from foundation_preservation import build_preservation_manifest
         value = request_json(args.request, required=("packages", "created_at"))

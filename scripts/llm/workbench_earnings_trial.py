@@ -32,9 +32,20 @@ def _nonfinite(_):
     raise EarningsTrialError("EARNINGS_REQUEST_NONFINITE")
 
 
-def run(pack_root: Path, output_root: Path) -> dict:
+def run(pack_root: Path, output_root: Path, *, expected_pack_hash=None) -> dict:
     """HTTP supplies no ticker or path; the operator fixes one pack at startup."""
     pack_root = Path(pack_root)
+    material_pack = None
+    marker = pack_root / "material-pack.json"
+    if expected_pack_hash is not None or marker.exists() or marker.is_symlink():
+        if expected_pack_hash is None:
+            raise EarningsTrialError("FROZEN_MATERIAL_PACK_PIN_REQUIRED")
+        import foundation_research
+        try:
+            consumer_identity = foundation_research._execution_identity()
+            material_pack = foundation_research.verify_research_pack(pack_root, expected_pack_hash)
+        except (OSError, ValueError, KeyError, TypeError):
+            raise EarningsTrialError("FROZEN_MATERIAL_PACK_INVALID") from None
     requests_root = pack_root / "requests"
     inputs_root = pack_root / "inputs"
     if (pack_root.is_symlink() or requests_root.is_symlink() or inputs_root.is_symlink()
@@ -102,7 +113,15 @@ def run(pack_root: Path, output_root: Path) -> dict:
             "request_sha256": request_hash,
             "receipt_sha256": hashlib.sha256((output / "receipt.json").read_bytes()).hexdigest(),
         })
+    if material_pack is not None:
+        try:
+            foundation_research.verify_research_pack(pack_root, expected_pack_hash)
+            if foundation_research._execution_identity() != consumer_identity:
+                raise EarningsTrialError("FROZEN_MATERIAL_CONSUMER_CODE_CHANGED")
+        except (OSError, ValueError, KeyError, TypeError):
+            raise EarningsTrialError("FROZEN_MATERIAL_PACK_CHANGED") from None
     return {"status": "COMPLETED_HISTORICAL_EARNINGS", "sample_purpose": "WORKFLOW_DEBUG",
             "as_of": prepared[0][3]["as_of"], "coverage": "FROZEN_REQUESTS_ONLY",
             "human_review": "PENDING", "production_authority": False, "u4_authority": False,
-            "paper_authority": False, "trade_authority": False, "reports": reports}
+            "paper_authority": False, "trade_authority": False, "reports": reports,
+            **({"material_pack": material_pack, "consumer_execution_identity": consumer_identity} if material_pack is not None else {})}
