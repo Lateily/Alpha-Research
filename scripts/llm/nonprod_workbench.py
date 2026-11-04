@@ -565,6 +565,22 @@ def make_handler(store, assets, origin, session, system=None, private=None, shar
                     except (ValueError, UnicodeError):
                         raise WorkbenchError("MATERIAL_QUERY_INVALID") from None
                     self.reply(200, shared.materials(identity["login"], **params))
+                elif shared is not None and urlsplit(self.path).path == "/api/shared-workspace/research-library":
+                    from urllib.parse import parse_qs
+                    try:
+                        parsed = urlsplit(self.path)
+                        query = parse_qs(parsed.query, keep_blank_values=True, strict_parsing=True, max_num_fields=6, errors="strict")
+                        allowed = {"industry_key", "industry_taxonomy", "taxonomy_version", "research_date", "ts_code", "page"}
+                        # governance-mutation: SHARED_RESEARCH_LIBRARY_URL
+                        if parsed.fragment or set(query) - allowed or any(len(v) != 1 or not v[0] for v in query.values()):
+                            raise ValueError
+                        params = {k: v[0] for k, v in query.items()}
+                        if "page" in params:
+                            if not re.fullmatch(r"[0-9]{1,3}", params["page"]): raise ValueError
+                            params["page"] = int(params["page"])
+                    except (ValueError, UnicodeError):
+                        raise WorkbenchError("RESEARCH_LIBRARY_QUERY_INVALID") from None
+                    self.reply(200, shared.research_results(identity["login"], **params))
                 elif self.path == "/api/workspace" and system is not None and shared is None:
                     state = system.snapshot()
                     if identity:
@@ -636,6 +652,8 @@ def main(argv=None):
     parser.add_argument("--brief-pack-root", type=Path, help="Operator-frozen historical brief pack; requests/brief.json and inputs/ are read only")
     parser.add_argument("--earnings-pack-root", type=Path, help="Operator-frozen historical earnings pack; requests and inputs are read only")
     parser.add_argument("--earnings-pack-hash", help="Independent material-pack hash; required for admitted-PDF research packs")
+    parser.add_argument("--research-library-root", type=Path, help="Operator-pinned read-only research metadata library; private shared mode only")
+    parser.add_argument("--research-library-hash", help="Independent immutable research-library hash; no content-sharing permission")
     parser.add_argument("--state-root", type=Path, help="Dedicated nonproduction state directory, separate from code releases")
     parser.add_argument("--private-origin", help="Exact existing Tailscale Serve HTTPS origin on port 8443")
     parser.add_argument("--owner-login", help="Exact owner Tailscale login; access identity is not research approval")
@@ -647,6 +665,9 @@ def main(argv=None):
     args = parser.parse_args(argv)
     host = serve_host(args.host)
     private = private_access(args.private_origin, args.owner_login, args.private_allowlist)
+    if ((args.research_library_root is None) != (args.research_library_hash is None)
+            or (args.research_library_root is not None and (private is None or not args.shared_workspace_v1))):
+        raise WorkbenchError("RESEARCH_LIBRARY_CONFIGURATION_REQUIRED")
     if args.earnings_pack_hash is not None and args.earnings_pack_root is None:
         raise WorkbenchError("FROZEN_MATERIAL_PACK_ROOT_REQUIRED")
     # governance-mutation: WORKBENCH_SHARED_SYNC_OPT_IN
@@ -658,8 +679,14 @@ def main(argv=None):
         raise WorkbenchError("GOVERNANCE_SHARED_PRIVATE_MODE_REQUIRED", 403)
     if args.shared_import_once and not args.shared_workspace_v1:
         raise WorkbenchError("SHARED_INPUT_STORE_REQUIRED", 403)
-    assets = load_assets(ROOT / "tools/nonprod_workbench/dist")
     state_root = args.state_root or ROOT / ".ai-workspace/nonprod-workbench"
+    if args.research_library_root is not None:
+        library_dir = args.research_library_root.resolve()
+        for boundary in (state_root, args.read_only_source_root):
+            if boundary is not None:
+                other = boundary.resolve()
+                if library_dir == other or library_dir in other.parents or other in library_dir.parents:
+                    raise WorkbenchError("RESEARCH_LIBRARY_ROOT_OVERLAP")
     if args.read_only_source_root and (state_root.resolve() == args.read_only_source_root.resolve() or args.read_only_source_root.resolve() in state_root.resolve().parents or state_root.resolve() in args.read_only_source_root.resolve().parents):
         raise WorkbenchError("STATE_MUST_BE_OUTSIDE_READ_ONLY_SOURCE")
     if args.brief_pack_root:
@@ -674,6 +701,7 @@ def main(argv=None):
             raise WorkbenchError("STATE_MUST_BE_OUTSIDE_FROZEN_EARNINGS_PACK")
     if (ROOT / ".ai-workspace").is_symlink():
         raise WorkbenchError("STATE_PARENT_SYMLINK_REFUSED")
+    assets = load_assets(ROOT / "tools/nonprod_workbench/dist")
     store = Store(state_root, shared_v1=True) if args.shared_workspace_v1 else Store(state_root)
     lifetime_lock = service_lock(state_root)
     system = workspace.Workspace(store, None if args.shared_workspace_v1 else args.read_only_source_root,
@@ -688,7 +716,9 @@ def main(argv=None):
         from workbench_shared_inputs import FrozenInputs
         from workbench_shared_jobs import SharedJobQueue
         from workbench_shared_worker import SharedWorker
-        shared = SharedWorkspace(system, governance_evidence_enabled=args.governance_evidence_v1)
+        shared = SharedWorkspace(system, governance_evidence_enabled=args.governance_evidence_v1,
+                                 research_library_root=args.research_library_root,
+                                 research_library_hash=args.research_library_hash)
         inputs = FrozenInputs(store)
         if args.shared_import_once: inputs.import_once(args.shared_import_once)
         queue = SharedJobQueue(shared, inputs, shared._execution_identity["code_sha"])

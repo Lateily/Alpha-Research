@@ -1,10 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { ChevronLeft, ChevronRight, Database, Download, FileText, Play, RefreshCw, Users, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Database, Download, FileText, Library, Play, RefreshCw, Users, X } from 'lucide-react';
 import { statusTone } from './status-tone.mjs';
 import { commonSyncView, createSharedPoller, getPending, latestOwnedJob, pollSharedPending, recordSubmissionFailure, retainedStatus, retrySharedPending, savePending, sharedActorQuery, sharedQueryState, sharedRead, sharedViewFreshness } from './shared-view.mjs';
 import DataCenter from './data-center';
+import ResearchLibrary from './research-library';
 
-const views = [['my', '我的任务', FileText], ['team', '团队结果', Users], ['common', '共同数据', Database]];
+const views = [['my', '我的任务', FileText], ['team', '团队结果', Users], ['common', '共同数据', Database], ['research', '研究资料库', Library]];
 function Status({ value, stale = false }) {
   const display = retainedStatus(value, stale);
   return <span className={`badge ${statusTone(display)}`}>{display || 'NOT_PRODUCED'}</span>;
@@ -143,7 +144,7 @@ export default function SharedWorkspace({ api, access, refreshRevision }) {
     {visiblePending.some(item => !item.job_id) && <div className="source-strip"><Status value="SUBMISSION_UNCONFIRMED" stale={freshness.commonStale} /></div>}
     {!syncView.canBrief && <div className="shared-error" role="status">{freshness.commonStale ? 'DISCONNECTED' : common?.error || 'NO_FROZEN_PUBLICATION'}</div>}
     <nav className="shared-tabs" aria-label="共享工作区视图">{views.map(([key, label, Icon]) => <button key={key} aria-current={view === key ? 'page' : undefined} onClick={() => { setView(key); setPage(0); }}><Icon size={16} />{label}</button>)}</nav>
-    {view !== 'common' ? <>
+    {view === 'research' ? <ResearchLibrary api={api} renew={renew} login={access.login} codeSha={data?.execution_identity?.code_sha} parentStale={freshness.commonStale} refreshRevision={refreshRevision} /> : view !== 'common' ? <>
       <div className="shared-toolbar"><span>{total} 个任务</span>{view === 'my' && <div><button disabled={busy || pending.length >= 2 || freshness.commonStale || !common?.current_snapshot_id} onClick={() => run('observe')}><Database size={16} />观察</button><button className="primary" disabled={busy || pending.length >= 2 || freshness.commonStale || !common?.current_snapshot_id} onClick={() => run('snapshot-brief')}><Play size={16} />{busy ? '提交中' : '生成简报'}</button>{pending.length > 0 && !busy && <button onClick={reload}><RefreshCw size={16} />核对原任务</button>}</div>}</div>
       {view === 'my' && visiblePending.filter(item => !item.job_id).map(item => <div className="source-strip" key={item.body.command_id}><code>{item.body.command_id}</code><span>{item.body.kind}</span><code>{item.body.snapshot_id}</code><button disabled={busy || freshness.commonStale} aria-label={`重试原提交 ${item.body.command_id}`} onClick={() => retry(item.body.command_id)}><RefreshCw size={16} />重试原提交</button></div>)}
       <div className="shared-job-list">{rows.map(job => <button className="shared-job-row" key={job.job_id} onClick={() => open(job.job_id)}>

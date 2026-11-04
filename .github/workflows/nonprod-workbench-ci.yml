@@ -31,3 +31,5 @@ jobs:
       - run: node node_modules/vite/bin/vite.js build --config tools/nonprod_workbench/vite.config.js
       - name: Trust line and run-quality display helpers (node)
         run: node tests/nonprod-workbench-trust-line.test.mjs
+      - name: Pinned research metadata display and identity guards (node)
+        run: node --test tests/nonprod-research-library.test.mjs

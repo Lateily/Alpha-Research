@@ -200,6 +200,51 @@ class MutationCase:
 
 MUTATIONS: tuple[MutationCase, ...] = (
     MutationCase(
+        mutation_id="SHARED_RESEARCH_LIBRARY_ROOT", component="Shared research metadata library",
+        source_path="scripts/llm/workbench_research_library.py", test_script="tests/test_shared_research_library.py",
+        before="if info.st_uid != os.geteuid() or info.st_mode & 0o022:", after="if False:",
+        expected_failure_marker="test_world_writable_library_is_refused_after_prior_success",
+        rationale="Each read must reject a library root whose permissions changed after startup.",
+    ),
+    MutationCase(
+        mutation_id="SHARED_RESEARCH_LIBRARY_PIN", component="Shared research metadata library",
+        source_path="scripts/llm/workbench_research_library.py", test_script="tests/test_shared_research_library.py",
+        before="return results.query_results(self.root, expected_library_hash=self.expected_hash, **query)",
+        after="return results.query_results(self.root, expected_library_hash=materials.verify_library(self.root)['library_hash'], **query)",
+        expected_failure_marker="test_wrong_external_pin_and_incomplete_operator_flags_are_refused",
+        rationale="Shared query must verify the operator's independently retained library pin.",
+    ),
+    MutationCase(
+        mutation_id="SHARED_RESEARCH_LIBRARY_URL", component="Shared research metadata library",
+        source_path="scripts/llm/nonprod_workbench.py", test_script="tests/test_shared_research_library.py",
+        before='if parsed.fragment or set(query) - allowed or any(len(v) != 1 or not v[0] for v in query.values()):',
+        after='if parsed.fragment or set(query) - allowed or any(not v[0] for v in query.values()):',
+        expected_failure_marker="test_url_parser_refuses_unknown_duplicate_empty_and_bad_values",
+        rationale="A duplicate filter must not select an arbitrary first value.",
+    ),
+    MutationCase(
+        mutation_id="SHARED_RESEARCH_LIBRARY_METADATA", component="Shared research metadata library",
+        source_path="scripts/llm/workbench_research_library.py", test_script="tests/test_shared_research_library.py",
+        before='item = {key: row[key] for key in ROW_FIELDS}', after='item = dict(row)',
+        expected_failure_marker="test_projection_whitelist_cannot_leak_future_stored_content_fields",
+        rationale="Future stored report fields cannot leak through a generic shared projection.",
+    ),
+    MutationCase(
+        mutation_id="SHARED_RESEARCH_LIBRARY_CONTENT", component="Shared research metadata library",
+        source_path="scripts/llm/workbench_research_library.py", test_script="tests/test_shared_research_library.py",
+        before="'content_sharing_allowed': False, 'content_status': 'RIGHTS_UNVERIFIED_CONTENT_DENIED'",
+        after="'content_sharing_allowed': True, 'content_status': 'RIGHTS_UNVERIFIED_CONTENT_DENIED'",
+        expected_failure_marker="test_owner_and_member_query_the_same_pinned_metadata_only",
+        rationale="An index query grants no source or report distribution rights.",
+    ),
+    MutationCase(
+        mutation_id="SHARED_RESEARCH_LIBRARY_CONTEXT", component="Shared research metadata library",
+        source_path="tools/nonprod_workbench/ui/research-library-view.mjs", test_script="tests/test_shared_research_library.py",
+        before="data.my_workspace?.login !== login ||", after="",
+        expected_failure_marker="test_browser_response_context_is_closed",
+        rationale="A response for another identity cannot render in the current research tab.",
+    ),
+    MutationCase(
         mutation_id="RESEARCH_RESULT_CAPTURE_PIN", component="Research result library",
         source_path="scripts/llm/foundation_results.py", test_script="tests/test_foundation_results.py",
         before="    _bound_pack(pack_files, request['expected_pack_hash'])\n",
