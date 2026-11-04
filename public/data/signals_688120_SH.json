@@ -1,7 +1,7 @@
 {
   "ticker": "688120.SH",
-  "generated_at": "2026-11-03",
-  "price": 173.89,
+  "generated_at": "2026-11-04",
+  "price": 166.13,
   "zone": "OVERSOLD",
   "entry_zone": true,
   "exit_zone": false,
@@ -9,51 +9,41 @@
     {
       "type": "RSI_OVERSOLD",
       "strength": "moderate",
-      "date": "20261102",
+      "date": "20261103",
       "bullish": true,
       "description": {
-        "e": "RSI(14) = 29.3 — oversold, watch for reversal",
-        "z": "RSI(14)=29.3，超卖，关注反转信号"
-      }
-    },
-    {
-      "type": "KDJ_GOLDEN_CROSS",
-      "strength": "strong",
-      "date": "20261102",
-      "bullish": true,
-      "description": {
-        "e": "KDJ K(9.8) crossed above D(9.2) in oversold — reversal signal",
-        "z": "KDJ K(9.8)上穿D(9.2)，超卖区金叉看涨"
+        "e": "RSI(14) = 27.1 — oversold, watch for reversal",
+        "z": "RSI(14)=27.1，超卖，关注反转信号"
       }
     }
   ],
   "signal_count": {
-    "bullish": 2,
+    "bullish": 1,
     "bearish": 0,
-    "total": 2
+    "total": 1
   },
   "indicators": {
-    "ma5": 175.3,
-    "ma20": 212.01,
+    "ma5": 172.42,
+    "ma20": 208.66,
     "ma60": null,
-    "rsi14": 29.3,
-    "vol_ma20": 94547,
-    "vol_ratio": 1.28,
-    "price_vs_ma20": -17.98,
+    "rsi14": 27.1,
+    "vol_ma20": 96547,
+    "vol_ratio": 1.25,
+    "price_vs_ma20": -20.38,
     "price_vs_ma60": null,
-    "change_1d": 6.39,
-    "change_5d": -11.71,
-    "change_20d": -25.76,
-    "macd_dif": -19.5344,
-    "macd_dea": -14.8188,
-    "macd_hist": -9.4312,
-    "bb_upper": 260.81,
-    "bb_mid": 212.01,
-    "bb_lower": 163.2,
-    "bb_bandwidth": 46.04,
-    "kdj_k": 9.8,
-    "kdj_d": 9.2,
-    "kdj_j": 11.0,
+    "change_1d": -4.46,
+    "change_5d": -7.99,
+    "change_20d": -28.7,
+    "macd_dif": -20.3176,
+    "macd_dea": -15.9186,
+    "macd_hist": -8.7981,
+    "bb_upper": 260.34,
+    "bb_mid": 208.66,
+    "bb_lower": 156.99,
+    "bb_bandwidth": 49.53,
+    "kdj_k": 9.7,
+    "kdj_d": 9.4,
+    "kdj_j": 10.5,
     "cvd_latest": null,
     "cvd_slope_5d": null,
     "cvd_chg_1d": null,

@@ -1,7 +1,7 @@
 {
   "ticker": "300308.SZ",
-  "generated_at": "2026-11-03",
-  "price": 550.0,
+  "generated_at": "2026-11-04",
+  "price": 480.2,
   "zone": "OVERSOLD",
   "entry_zone": true,
   "exit_zone": false,
@@ -9,41 +9,51 @@
     {
       "type": "RSI_OVERSOLD",
       "strength": "moderate",
-      "date": "20261102",
+      "date": "20261103",
       "bullish": true,
       "description": {
-        "e": "RSI(14) = 28.8 — oversold, watch for reversal",
-        "z": "RSI(14)=28.8，超卖，关注反转信号"
+        "e": "RSI(14) = 23.9 — oversold, watch for reversal",
+        "z": "RSI(14)=23.9，超卖，关注反转信号"
+      }
+    },
+    {
+      "type": "BB_LOWER_BREAK",
+      "strength": "moderate",
+      "date": "20261103",
+      "bullish": true,
+      "description": {
+        "e": "Price (480.2) touched Bollinger lower (481.5) — oversold, mean reversion watch",
+        "z": "股价(480.2)触及布林下轨(481.5)，超卖，关注均值回归"
       }
     }
   ],
   "signal_count": {
-    "bullish": 1,
+    "bullish": 2,
     "bearish": 0,
-    "total": 1
+    "total": 2
   },
   "indicators": {
-    "ma5": 579.67,
-    "ma20": 665.5,
+    "ma5": 560.31,
+    "ma20": 648.86,
     "ma60": null,
-    "rsi14": 28.8,
-    "vol_ma20": 283340,
-    "vol_ratio": 1.2,
-    "price_vs_ma20": -17.36,
+    "rsi14": 23.9,
+    "vol_ma20": 304464,
+    "vol_ratio": 1.92,
+    "price_vs_ma20": -25.99,
     "price_vs_ma60": null,
-    "change_1d": -0.54,
-    "change_5d": -7.49,
-    "change_20d": -32.52,
-    "macd_dif": -73.8633,
-    "macd_dea": -68.7525,
-    "macd_hist": -10.2215,
-    "bb_upper": 828.63,
-    "bb_mid": 665.5,
-    "bb_lower": 502.37,
-    "bb_bandwidth": 49.02,
-    "kdj_k": 19.1,
-    "kdj_d": 22.1,
-    "kdj_j": 12.9,
+    "change_1d": -12.69,
+    "change_5d": -16.78,
+    "change_20d": -40.94,
+    "macd_dif": -79.2094,
+    "macd_dea": -70.8439,
+    "macd_hist": -16.7309,
+    "bb_upper": 816.25,
+    "bb_mid": 648.86,
+    "bb_lower": 481.47,
+    "bb_bandwidth": 51.59,
+    "kdj_k": 12.7,
+    "kdj_d": 19.0,
+    "kdj_j": 0.2,
     "cvd_latest": null,
     "cvd_slope_5d": null,
     "cvd_chg_1d": null,
