@@ -78,6 +78,7 @@ def _result(value, expected_hash, pack, artifact_files):
     receipt = ev.parse(artifact_files['receipt.json'])
     if (row['company'] != pack['company'] or row['as_of'] != pack['as_of']
             or row['human_review'] != 'PENDING' or row['registration_status'] != 'NOT_PREREGISTERED'
+            or type(row['report']) is not str
             or row['report'].encode() != artifact_files['report.md']
             or row['report_sha256'] != ev.sha(artifact_files['report.md'])
             or row['receipt_sha256'] != ev.sha(artifact_files['receipt.json'])

@@ -69,3 +69,10 @@ mutation smoke survived the three-page case, so the positive fixture was expande
 to four distinct pages; no gate was weakened. Tests also pin historical consumer
 identity, stale-writer fencing, source/output corruption, CLI forwarding and every
 metadata/file write interruption. Full final gates remain pending.
+
+Author boundary check: a non-string report field raised AttributeError instead
+of a bounded refusal. Its actual-entry regression failed before the one-line
+type guard and passed afterward. Updated focused/adjacent suite75 PASS (23 new),
+all11 new behavior mutation targets killed by failures, zero errors. The real
+5956c64 intake/query demonstration is retained under that SHA and is not reused
+as final evidence after the amendment. Independent review will name the new HEAD.

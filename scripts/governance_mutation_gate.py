@@ -200,6 +200,14 @@ class MutationCase:
 
 MUTATIONS: tuple[MutationCase, ...] = (
     MutationCase(
+        mutation_id="RESEARCH_RESULT_REPORT_TYPE", component="Research result library",
+        source_path="scripts/llm/foundation_results.py", test_script="tests/test_foundation_results.py",
+        before="            or type(row['report']) is not str\n",
+        after="",
+        expected_failure_marker="test_malformed_report_text_is_a_bounded_refusal",
+        rationale="Malformed report text must be refused at the public boundary, not leak an unhandled type traceback.",
+    ),
+    MutationCase(
         mutation_id="RESEARCH_RESULT_IMPORTER_CODE", component="Research result library",
         source_path="scripts/llm/foundation_results.py", test_script="tests/test_foundation_results.py",
         before="    materials.inspect_material_source(stage, manifest)\n    if research._execution_identity() != importer: _fail('IMPORT_CODE_CHANGED')\n",

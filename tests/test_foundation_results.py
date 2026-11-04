@@ -100,6 +100,20 @@ class ResultIndexTests(unittest.TestCase):
                 self.assertFalse(self.destination.exists())
                 self.assertFalse((self.root / ('stage-' + str(self.stage))).exists())
 
+    def test_malformed_report_text_is_a_bounded_refusal(self):
+        value = copy.deepcopy(self.request)
+        value['result']['reports'][0]['report'] = 42
+        value['expected_result_hash'] = ev.sealed(value['result'])
+        try:
+            self.ingest(value)
+        except ValueError:
+            pass
+        except Exception as exc:
+            self.fail('Malformed text must be a bounded ValueError refusal, not ' + type(exc).__name__)
+        else:
+            self.fail('Malformed report text was accepted')
+        self.assertFalse(self.destination.exists())
+
     def test_importer_code_change_before_registration_refuses_publication(self):
         self.module(); adapter = self.adapter()
         stable = {'code_sha':'a' * 40, 'source_tree_hash':'b' * 64}
