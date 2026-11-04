@@ -200,6 +200,38 @@ class MutationCase:
 
 MUTATIONS: tuple[MutationCase, ...] = (
     MutationCase(
+        mutation_id="MATERIAL_RESEARCH_PARTIAL_LEGACY", component="Real material research vertical",
+        source_path="scripts/llm/workbench_earnings_trial.py", test_script="tests/test_foundation_research.py",
+        before='    markers = [pack_root / name for name in ("material-pack.json", "material-pack.intent.json", "source-map.json")]\n',
+        after='    markers = [pack_root / "material-pack.json"]\n',
+        expected_failure_marker="test_interrupted_material_root_never_downgrades_to_legacy_job",
+        rationale="An interrupted preparation remains a pinned material job, never silently a legacy job.",
+    ),
+    MutationCase(
+        mutation_id="MATERIAL_RESEARCH_OBSERVED_DATE", component="Real material research vertical",
+        source_path="scripts/llm/foundation_research.py", test_script="tests/test_foundation_research.py",
+        before="    if observed.strftime('%Y%m%d') != request['as_of']:\n        _fail('DRAFT_DATE_NOT_OBSERVED')\n",
+        after="",
+        expected_failure_marker="test_observed_preparation_time_is_not_caller_asserted_history",
+        rationale="Caller-asserted dates cannot manufacture historical question-generation evidence.",
+    ),
+    MutationCase(
+        mutation_id="MATERIAL_RESEARCH_TIMEZONE", component="Real material research vertical",
+        source_path="scripts/llm/foundation_research.py", test_script="tests/test_foundation_research.py",
+        before="        'generated_at': prepared_at, 'mode': 'HISTORICAL_REPLAY', 'sources': sources,\n",
+        after="        'generated_at': request['generated_at'], 'mode': 'HISTORICAL_REPLAY', 'sources': sources,\n",
+        expected_failure_marker="test_utc_midnight_boundary_preflights_and_renders_with_normalized_time",
+        rationale="UTC inputs crossing the Shanghai date boundary must produce a renderable normalized trial.",
+    ),
+    MutationCase(
+        mutation_id="MATERIAL_RESEARCH_DECODED_PDF", component="Real material research vertical",
+        source_path="scripts/llm/foundation_research.py", test_script="tests/test_foundation_research.py",
+        before="        if isinstance(value, NameObject) and str(value) in active:\n            _fail('PDF_ACTIVE_CONTENT')\n",
+        after="",
+        expected_failure_marker="test_decoded_active_pdf_names_are_refused_through_admission_and_prepare",
+        rationale="Escaped PDF names cannot bypass the no-active-content preparation boundary.",
+    ),
+    MutationCase(
         mutation_id="MATERIAL_RESEARCH_EXTERNAL_PIN", component="Real material research vertical",
         source_path="scripts/llm/foundation_research.py", test_script="tests/test_foundation_research.py",
         before="            or manifest['pack_hash'] != expected_pack_hash or ev.sealed(body) != expected_pack_hash\n",

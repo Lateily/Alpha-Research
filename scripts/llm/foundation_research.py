@@ -18,6 +18,7 @@ import workbench_evidence as ev
 from workbench_snapshot_brief import reject_credentials
 
 MARKER = 'material-pack.json'
+INTENT = 'material-pack.intent.json'
 EXTRACTOR_VERSION = '6.10.0'
 MAX_DOCUMENTS, MAX_PAGES, MAX_QUESTIONS = 8, 32, 16
 MAX_PACK_BYTES = 64 * 1024 * 1024
@@ -37,6 +38,10 @@ def _fail(reason):
 def _execution_identity():
     from workbench_shared_workspace import execution_identity
     return execution_identity(Path(__file__).resolve().parents[2])
+
+
+def _observed_at():
+    return datetime.now(timezone.utc).astimezone(timezone(timedelta(hours=8))).isoformat(timespec='seconds')
 
 
 def _string(value, limit=1000):
@@ -108,6 +113,7 @@ def _request(value):
 
 def _extract_child(raw, selected):
     import pypdf
+    from pypdf.generic import ArrayObject, DictionaryObject, IndirectObject, NameObject
     if pypdf.__version__ != EXTRACTOR_VERSION:
         _fail('EXTRACTOR_VERSION_CHANGED')
     if len(raw) > ev.MAX_FILE or not raw.startswith(b'%PDF-') or materials.ACTIVE_PDF.search(raw):
@@ -115,6 +121,30 @@ def _extract_child(raw, selected):
     reader = pypdf.PdfReader(io.BytesIO(raw), strict=True)
     if reader.is_encrypted or len(reader.pages) > 2048 or max(selected) > len(reader.pages):
         _fail('PDF_PAGE_INVALID')
+    # PDF names can escape bytes with #xx; inspect decoded objects, not only raw text.
+    pending, seen, references = [reader.trailer], set(), set()
+    for generation, objects in reader.xref.items():
+        pending.extend(IndirectObject(number, generation, reader) for number in objects if number)
+    pending.extend(IndirectObject(number, 0, reader) for number in reader.xref_objStm)
+    active = {'/JavaScript', '/JS', '/Launch', '/EmbeddedFile', '/OpenAction', '/AA', '/Encrypt'}
+    while pending:
+        value = pending.pop()
+        if isinstance(value, IndirectObject):
+            key = (value.idnum, value.generation)
+            if key in references:
+                continue
+            references.add(key); value = value.get_object()
+        if id(value) in seen:
+            continue
+        seen.add(id(value))
+        if len(seen) > 100000:
+            _fail('PDF_OBJECT_LIMIT')
+        if isinstance(value, NameObject) and str(value) in active:
+            _fail('PDF_ACTIVE_CONTENT')
+        if isinstance(value, DictionaryObject):
+            pending.extend(value.keys()); pending.extend(value.values())
+        elif isinstance(value, ArrayObject):
+            pending.extend(value)
     pages = {}
     for number in selected:
         text = reader.pages[number - 1].extract_text().replace('\r\n', '\n').replace('\r', '\n')
@@ -155,13 +185,20 @@ def _source_name(sha256, page):
     return 'pdf-' + sha256 + '-p' + str(page)
 
 
-def _compile(request, documents):
-    files, sources, page_map, provenance = {}, {}, {}, []
+def _compile(request, documents, prepared_at):
+    observed = materials._time(prepared_at).astimezone(timezone(timedelta(hours=8)))
+    if observed.strftime('%Y%m%d') != request['as_of']:
+        _fail('DRAFT_DATE_NOT_OBSERVED')
+    if materials._time(request['source_cutoff_at']) > observed:
+        _fail('CUTOFF_AFTER_PREPARATION')
+    prepared_at = observed.isoformat(timespec='seconds')
+    files = {INTENT: ev.canonical({'schema': 'ar.material-research-intent.v1', 'prepared_at': prepared_at, **LABELS}).encode()}
+    sources, page_map, provenance = {}, {}, []
     claims = [{'id': q['id'], 'question': q['question'], **q['criteria']} for q in request['questions']]
     files['inputs/questions.json'] = ev.canonical({'questions': claims}).encode()
     sources['questions'] = {'path': 'questions.json', 'sha256': ev.sha(files['inputs/questions.json']),
         'company': request['company'], 'tier': 'E3', 'published_on': request['as_of'], 'format': 'json',
-        'origin': 'document:NEW_DRAFT_NOT_PRIOR_THESIS', 'observed_at': request['generated_at']}
+        'origin': 'document:NEW_DRAFT_NOT_PRIOR_THESIS; observed preparation time, not caller-asserted history', 'observed_at': prepared_at}
     if len(documents) != len(request['documents']):
         _fail('DOCUMENT_SET_INVALID')
     for selection, document in zip(request['documents'], documents):
@@ -174,7 +211,7 @@ def _compile(request, documents):
             _fail('ORIGINAL_BINDING_INVALID')
         cutoff = materials._time(request['source_cutoff_at'])
         if (materials._time(row['published_at']) > cutoff or materials._time(row['available_at']) > cutoff
-                or materials._time(row['provenance']['captured_at']) > materials._time(request['generated_at'])):
+                or materials._time(row['provenance']['captured_at']) > observed):
             _fail('ORIGINAL_AFTER_CUTOFF')
         if row['rights'] != materials.RIGHTS:
             _fail('RIGHTS_CONFLICT')
@@ -211,30 +248,32 @@ def _compile(request, documents):
                 '; historical materials are not a current completeness assertion. New question draft, not prior thesis registration.',
             'missing_evidence': question['missing_evidence']})
     trial = {'schema': 'ar.workflow-trial.v1', 'workflow': 'earnings', 'as_of': request['as_of'],
-        'generated_at': request['generated_at'], 'mode': 'HISTORICAL_REPLAY', 'sources': sources,
+        'generated_at': prepared_at, 'mode': 'HISTORICAL_REPLAY', 'sources': sources,
         'authoring': request['authoring'], 'payload': {'company': request['company'],
             'claims': {'source': 'questions', 'pointer': '/questions', 'expected': claims}, 'registered_at': None, 'responses': responses}}
     files['requests/earnings-' + request['company'] + '.json'] = ev.canonical(trial).encode()
     files['request.json'] = ev.canonical(request).encode()
     files['source-map.json'] = ev.canonical({'schema': 'ar.material-research-provenance.v1', 'documents': provenance,
         'pages': page_map, 'extractor': {'name': 'pypdf', 'version': EXTRACTOR_VERSION},
+        'prepared_at': prepared_at, 'asserted_draft_generated_at': request['generated_at'],
         'rights': materials.RIGHTS, **LABELS}).encode()
     if sum(map(len, files.values())) > MAX_PACK_BYTES or any(len(raw) > ev.MAX_FILE for raw in files.values()):
         _fail('PACK_SIZE_LIMIT')
     return files
 
 
-def _summary(request, files, pack_hash, preparation_identity):
+def _summary(request, files, pack_hash, preparation_identity, prepared_at):
     return {'schema': 'ar.material-research-pack-receipt.v1', 'pack_hash': pack_hash, 'company': request['company'],
         'as_of': request['as_of'], 'source_cutoff_at': request['source_cutoff_at'], 'documents': len(request['documents']),
         'pages': sum(len(d['pages']) for d in request['documents']), 'questions': len(request['questions']),
         'files': files, 'mode': 'HISTORICAL_REPLAY', 'rights': dict(materials.RIGHTS),
-        'preparation_execution_identity': preparation_identity, **LABELS}
+        'preparation_execution_identity': preparation_identity, 'prepared_at': prepared_at, **LABELS}
 
 
 def prepare_research_pack(library_root, request, output_root):
     request = _request(request)
     preparation_identity = _execution_identity()
+    prepared_at = materials._time(_observed_at()).astimezone(timezone(timedelta(hours=8))).isoformat(timespec='seconds')
     library, output = materials._root(library_root), materials._root(output_root)
     if library == output or library in output.parents or output in library.parents:
         _fail('ROOT_OVERLAP')
@@ -250,11 +289,11 @@ def prepare_research_pack(library_root, request, output_root):
             _fail('ORIGINAL_BINDING_INVALID')
         relative = 'registrations/' + row['registration_hash'] + '/files/' + materials._blob_name(item)
         documents.append({'material': row, 'raw': ev.read_local(library, relative)})
-    files = _compile(request, documents)
+    files = _compile(request, documents, prepared_at)
     if _execution_identity() != preparation_identity:
         _fail('CODE_CHANGED')
     manifest = {'schema': 'ar.material-research-pack.v1', 'files': {name: ev.sha(raw) for name, raw in sorted(files.items())},
-                'preparation_execution_identity': preparation_identity, **LABELS}
+                'preparation_execution_identity': preparation_identity, 'prepared_at': prepared_at, **LABELS}
     manifest['pack_hash'] = ev.sealed(manifest)
     # Final marker is written last. An interrupted root is retained, never reusable.
     materials._create_private_root(output, ('inputs', 'requests'))
@@ -262,6 +301,9 @@ def prepare_research_pack(library_root, request, output_root):
     materials._create_private_root(output / 'inputs/pages')
     for name, raw in files.items():
         backup.write_new(output / name, raw)
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+    from experiments.research_workflows import trial
+    trial.build(ev.parse(files['requests/earnings-' + request['company'] + '.json']), output / 'inputs')
     backup.write_new(output / MARKER, ev.canonical(manifest).encode())
     result = verify_research_pack(output, manifest['pack_hash'])
     if _execution_identity() != preparation_identity:
@@ -276,7 +318,7 @@ def verify_research_pack(pack_root, expected_pack_hash):
         materials._owned(directory)
     marker_raw = ev.read_local(root, MARKER)
     manifest = ev.parse(marker_raw)
-    materials._exact(manifest, {'schema', 'files', 'pack_hash', 'preparation_execution_identity', *LABELS})
+    materials._exact(manifest, {'schema', 'files', 'pack_hash', 'preparation_execution_identity', 'prepared_at', *LABELS})
     identity = manifest['preparation_execution_identity']
     materials._exact(identity, {'code_sha', 'source_tree_hash'})
     materials._hash(identity['code_sha'], 40); materials._hash(identity['source_tree_hash'])
@@ -306,11 +348,11 @@ def verify_research_pack(pack_root, expected_pack_hash):
     request = _request(ev.parse(raw['request.json']))
     provenance = ev.parse(raw['source-map.json'])
     documents = [{'material': d['material'], 'raw': raw[d['original_path']]} for d in provenance['documents']]
-    compiled = _compile(request, documents)
+    compiled = _compile(request, documents, manifest['prepared_at'])
     # Re-extract PDFs, re-derive source metadata and re-check every quotation.
     if raw != compiled:
         _fail('PACK_DERIVATION_MISMATCH')
-    return _summary(request, manifest['files'], expected_pack_hash, identity)
+    return _summary(request, manifest['files'], expected_pack_hash, identity, manifest['prepared_at'])
 
 
 if __name__ == '__main__':

@@ -36,8 +36,8 @@ def run(pack_root: Path, output_root: Path, *, expected_pack_hash=None) -> dict:
     """HTTP supplies no ticker or path; the operator fixes one pack at startup."""
     pack_root = Path(pack_root)
     material_pack = None
-    marker = pack_root / "material-pack.json"
-    if expected_pack_hash is not None or marker.exists() or marker.is_symlink():
+    markers = [pack_root / name for name in ("material-pack.json", "material-pack.intent.json", "source-map.json")]
+    if expected_pack_hash is not None or any(p.exists() or p.is_symlink() for p in markers):
         if expected_pack_hash is None:
             raise EarningsTrialError("FROZEN_MATERIAL_PACK_PIN_REQUIRED")
         import foundation_research

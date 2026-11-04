@@ -19,7 +19,12 @@ Externally pinned admitted material library
 
 This proves byte/citation flow, not company facts, source authenticity,
 investment judgment, a prior thesis registration or a full earnings analysis.
-New question drafts use their actual generation date and registered_at=null.
+New question drafts use the program-observed preparation date and registered_at=null.
+The asserted request timestamp is retained separately, never presented as observed
+acquisition/generation evidence. Preparation records its own timezone-aware clock;
+new question as_of must match that Shanghai date. Reopening uses the frozen observed
+timestamp rather than today's clock. The downstream trial is normalized to UTC+08
+and preflighted before its final seal is published.
 The source cutoff remains separately visible. Every assessment is UNRESOLVED;
 no automatic positive/negative thesis verdict is accepted in the request.
 
@@ -53,7 +58,8 @@ python3 -B scripts/llm/nonprod_workbench.py --host 127.0.0.1 --port 8792 \
 Operator paths never come from HTTP requests. The existing loopback UI can run
 earnings-trial and inspect its report; the private/shared whitelist still refuses
 that kind. No permission or scheduled earnings entry is enabled. Legacy earnings
-packs without material-pack.json retain the previous contract. A material pack
+packs without material-pack.json, material-pack.intent.json or source-map.json
+retain the previous contract. A material pack
 requires the independent hash; an expected hash also prevents marker-removal
 downgrade. The job verifies the complete original/text/request derivation before
 and after rendering and retains failed output evidence without marking success.
@@ -65,13 +71,17 @@ Max8 PDFs,32 selected pages total,16 draft questions,8 citations/question,
 single-file guard remains. No OCR or missing-text substitution. pypdf6.10.0 is
 pinned; extraction runs in a separate clean-environment process with a10-second
 per-document timeout and no shell, provider configuration or inherited secrets.
+Decoded PDF object names are also inspected, including escaped and compressed
+objects; raw-byte scanning alone is not the no-active-PDF check.
 This local preparation profile is not the two-slot shared worker's120-second
 profile. A future shared research runner needs its own explicit resource contract.
 
 The new output root is exclusive. Original PDFs and selected page texts are
 copied unchanged/derived separately; the source library is never edited. The
 complete file inventory and marker seal bind all files; the marker is written
-last. An interruption retains an uncompleted root, which is never overwritten
+last. A persistent material intent is written before any trial content, so a
+crash before the final seal cannot silently downgrade into the legacy path.
+An interruption retains an uncompleted root, which is never overwritten
 or silently retried as a new complete input. Reopening re-extracts original PDF
 pages and rebuilds the exact trial request. A coherent re-seal cannot bypass the
 external pin. A local pack is not an off-machine backup.

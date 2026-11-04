@@ -12,7 +12,7 @@ import unittest
 from unittest import mock
 
 from pypdf import PdfWriter
-from pypdf.generic import DictionaryObject, NameObject, DecodedStreamObject
+from pypdf.generic import DictionaryObject, NameObject, DecodedStreamObject, TextStringObject
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'scripts/llm'))
@@ -74,6 +74,8 @@ class MaterialResearchTests(unittest.TestCase):
             self._identity_guard = mock.patch.object(adapter, '_execution_identity',
                 return_value={'code_sha': 'a' * 40, 'source_tree_hash': 'b' * 64}, create=True)
             self._identity_guard.start(); self.addCleanup(self._identity_guard.stop)
+            clock = mock.patch.object(adapter, '_observed_at', return_value='2020-01-06T18:30:00+08:00', create=True)
+            clock.start(); self.addCleanup(clock.stop)
         return adapter
 
     def prepare(self, value=None, name='pack'):
@@ -212,6 +214,71 @@ class MaterialResearchTests(unittest.TestCase):
             earnings.run(self.root / 'pack', self.root / 'result')
         self.assertFalse((self.root / 'result').exists())
 
+    def test_interrupted_material_root_never_downgrades_to_legacy_job(self):
+        adapter = self.adapter()
+        original = adapter.backup.write_new
+        def crash(path, raw, **kwargs):
+            if Path(path).name == adapter.MARKER:
+                raise OSError('crash before sealing')
+            return original(path, raw, **kwargs)
+        with mock.patch.object(adapter.backup, 'write_new', side_effect=crash):
+            with self.assertRaises(OSError): self.prepare()
+        pdf = next((self.root / 'pack/inputs/originals').glob('*.pdf'))
+        pdf.write_bytes(pdf_bytes(('Different original.',)))
+        import nonprod_workbench as wb
+        import workbench_workspace as ws
+        system = ws.Workspace(wb.Store(self.root / 'interrupted-state'), earnings_pack_root=self.root / 'pack')
+        job = system.start_job({'command_id': 'interrupted-material-001', 'kind': 'earnings-trial'})
+        self.assertEqual(job['status'], 'STOP')
+        self.assertIn('PIN_REQUIRED', job['result']['error'])
+        self.assertFalse(any((self.root / 'interrupted-state').rglob('report.md')))
+
+    def test_observed_preparation_time_is_not_caller_asserted_history(self):
+        adapter = self.adapter()
+        with mock.patch.object(adapter, '_observed_at', return_value='2026-11-04T18:00:00+08:00', create=True):
+            with self.assertRaisesRegex(ValueError, 'DRAFT_DATE_NOT_OBSERVED'):
+                self.prepare(name='backdated')
+        self.assertFalse((self.root / 'backdated').exists())
+        result = self.prepare()
+        self.assertEqual(result['prepared_at'], '2020-01-06T18:30:00+08:00')
+        trial = json.loads((self.root / 'pack/requests/earnings-600000.SH.json').read_bytes())
+        self.assertEqual(trial['sources']['questions']['observed_at'], result['prepared_at'])
+        self.assertEqual(trial['generated_at'], result['prepared_at'])
+        self.assertNotEqual(trial['generated_at'], self.request['generated_at'])
+        self.assertEqual(adapter.verify_research_pack(self.root / 'pack', result['pack_hash'])['prepared_at'], result['prepared_at'])
+
+    def test_utc_midnight_boundary_preflights_and_renders_with_normalized_time(self):
+        adapter = self.adapter()
+        value = copy.deepcopy(self.request)
+        value.update(as_of='20200107', generated_at='2020-01-06T18:00:00Z')
+        with mock.patch.object(adapter, '_observed_at', return_value='2020-01-06T18:30:00Z', create=True):
+            receipt = self.prepare(value)
+        import workbench_earnings_trial as earnings
+        result = earnings.run(self.root / 'pack', self.root / 'utc-result', expected_pack_hash=receipt['pack_hash'])
+        self.assertEqual(result['status'], 'COMPLETED_HISTORICAL_EARNINGS')
+        trial = json.loads((self.root / 'pack/requests/earnings-600000.SH.json').read_bytes())
+        self.assertEqual(trial['generated_at'], '2020-01-07T02:30:00+08:00')
+
+    def test_decoded_active_pdf_names_are_refused_through_admission_and_prepare(self):
+        class EscapedName(NameObject):
+            def write_to_stream(self, stream, encryption_key=None):
+                stream.write(str(self).replace('OpenAction', 'Open#41ction').replace('JavaScript', 'Java#53cript').replace('/JS', '/#4A#53').encode())
+        writer = PdfWriter(clone_from=io.BytesIO(self.pdf))
+        writer._root_object[EscapedName('/OpenAction')] = DictionaryObject({
+            NameObject('/S'): EscapedName('/JavaScript'), EscapedName('/JS'): TextStringObject('void(0)')})
+        buffer = io.BytesIO(); writer.write(buffer); raw = buffer.getvalue()
+        self.assertIsNone(materials.ACTIVE_PDF.search(raw))
+        (self.source / 'active.pdf').write_bytes(raw)
+        row = copy.deepcopy(self.row); row['files'] = [{'source_path': 'active.pdf', 'sha256': ev.sha(raw), 'size_bytes': len(raw)}]
+        admitted = materials.ingest_material(self.source, self.root / 'active-library', {
+            'schema': 'ar.material-intake.v1', 'library_id': 'active-test',
+            'created_at': '2020-01-06T12:00:00+08:00', 'materials': [row]})
+        value = copy.deepcopy(self.request); value['expected_library_hash'] = admitted['library_hash']
+        value['documents'][0]['sha256'] = value['questions'][0]['citations'][0]['sha256'] = ev.sha(raw)
+        with self.assertRaises(ValueError):
+            self.adapter().prepare_research_pack(self.root / 'active-library', value, self.root / 'active-pack')
+        self.assertFalse((self.root / 'active-pack').exists())
+
     def test_job_rejects_wrong_external_pin_before_any_report(self):
         self.prepare()
         import workbench_earnings_trial as earnings
@@ -252,6 +319,9 @@ class MaterialResearchTests(unittest.TestCase):
                 self.assertEqual(adapter.verify_research_pack(root, complete['pack_hash'])['questions'], 1)
             else:
                 with self.assertRaises((ValueError, OSError)): adapter.verify_research_pack(root, complete['pack_hash'])
+            import workbench_earnings_trial as earnings
+            with self.assertRaisesRegex(ValueError, 'PIN_REQUIRED'):
+                earnings.run(root, self.root / ('crash-result-' + str(stop_at)))
             self.assertEqual((self.source / 'filing.pdf').read_bytes(), self.pdf)
 
     def test_existing_workspace_executes_bound_pack_but_private_mode_denies_it(self):
