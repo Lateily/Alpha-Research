@@ -22,6 +22,8 @@ def arguments(argv=None):
     workflows = commands.add_parser("workflows")
     workflows.add_argument("--catalog")
     workflows.add_argument("--kind")
+    control = commands.add_parser("control")
+    control.add_argument("--request", required=True)
     pin = commands.add_parser("pin")
     pin.add_argument("--request", required=True)
     pin.add_argument("--write-root")
@@ -78,6 +80,10 @@ def request_json(filename, *, required, optional=()):
 
 
 def execute(args):
+    if args.command == "control":
+        from foundation_control import reconcile_versions
+        value = request_json(args.request, required=("expected_versions", "observations"))
+        return reconcile_versions(**value)
     if args.command == "inventory":
         from foundation_runtime import collect_runtime_inventory
         value = request_json(args.config, required=("repositories", "observed_at"),

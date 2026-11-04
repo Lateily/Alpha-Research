@@ -1,0 +1,14 @@
+{
+  "schema": "ar.publication-authority.v1",
+  "version": "1.0",
+  "sources": {
+    "mac_nightly": {"artifact_role": "formal_model_snapshot", "authority": "FORMAL_MODEL_PUBLICATION", "pointer": "public/data/v2/current_run.json"},
+    "github_legacy_review": {"artifact_role": "legacy_review_data", "authority": "REVIEW_ONLY", "branch": "automation/daily-market-data"},
+    "shared_workbench": {"artifact_role": "isolated_task_output", "authority": "ISOLATED_CONSUMER"},
+    "research_candidate": {"artifact_role": "research_draft", "authority": "DRAFT_ONLY"}
+  },
+  "version_roles": ["main", "production", "shared", "candidate", "github_legacy"],
+  "runtime_acceptance": "NOT_ATTESTED",
+  "research_authority": false,
+  "deployment_authority": false
+}

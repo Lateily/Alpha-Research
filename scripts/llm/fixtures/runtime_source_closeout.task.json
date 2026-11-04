@@ -1,0 +1,22 @@
+{
+  "schema": "ai-task.v1",
+  "task_id": "RUNTIME-SOURCE-CLOSEOUT-20261104",
+  "architecture_block": ["Foundation runtime", "Publication source governance"],
+  "objective": "Implement and independently verify role-specific version reconciliation, formal versus legacy publication-source boundaries and a rebuilt isolated shared runtime with bounded restart recovery.",
+  "non_goals": ["No merge, push, production or current shared changes, provider calls, legacy schedule change or new research/trading authority."],
+  "human_owner": "Junyan",
+  "reviewer": "Independent nonauthor reviewer",
+  "executor_candidates": ["Codex"],
+  "dependencies": ["Accepted shared1a9f46d source", "Existing persistent queue and source binding", "Pinned official wheels"],
+  "authority_docs": ["AGENTS.md", "scripts/llm/AGENTS.md", "docs/engineering/RUNTIME_SOURCE_CLOSEOUT_V1.md"],
+  "file_scope": ["config/publication-authority.v1.json", "config/shared-runtime.lock.json", "scripts/llm/foundation_control.py", "scripts/llm/foundation_cli.py", "scripts/llm/workbench_runtime_env.py", "scripts/llm/workbench_runtime_service.py", "scripts/llm/workbench_runtime.py", "tests/test_foundation_control.py", "tests/test_workbench_runtime_env.py", "tests/test_workbench_runtime_service.py", "scripts/governance_mutation_gate.py", ".github/workflows/python-ci.yml", "docs/engineering/RUNTIME_SOURCE_CLOSEOUT_V1.md", "docs/engineering/RUNTIME_SOURCE_RUNBOOK_V1.md", "docs/superpowers/plans/2026-11-04-runtime-source-closeout.md", "scripts/llm/fixtures/runtime_source_closeout.task.json"],
+  "forbidden_scope": ["/Users/years/ar-live", "Current shared service and state", "Tailscale", "Existing member allowlist", "Official ledgers", "Scheduled source workflows", "Provider credentials"],
+  "input_contracts": ["Closed publication roles and distinct expected versions", "Independent wheel/environment/profile SHA256", "Synthetic frozen input and clean source/assets"],
+  "output_artifacts": ["Read-only source/version reconciliation", "Offline reproducible environment receipts", "Isolated lifecycle and persistent-task recovery evidence", "Same-final acceptance and independent review"],
+  "acceptance_tests": ["python3 -B -m unittest tests.test_foundation_control -q", "python3 -B -m unittest tests.test_workbench_runtime_env -q", "python3 -B -m unittest tests.test_workbench_runtime_service -q", "Same-final complete offline CI and all behavior mutations", "Two offline environment builds and real isolated shared subprocess recovery"],
+  "risk_level": "MEDIUM",
+  "network_policy": "ALLOWLIST",
+  "budget": {"max_cny": "0", "max_minutes": 180},
+  "approval_gates": ["Current request authorizes isolated implementation and independent review", "Exact official PyPI metadata/wheel provisioning only; builds/runtime offline", "No merge, push, service cutover or real data permissions implied"],
+  "created_at": "2026-11-04T21:30:00+00:00"
+}
