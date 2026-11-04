@@ -1,0 +1,22 @@
+{
+  "schema": "ai-task.v1",
+  "task_id": "MATERIAL-RESEARCH-VERTICAL-20261104",
+  "architecture_block": ["Data foundation", "Independent earnings workflow", "Local nonproduction workbench"],
+  "objective": "Connect admitted real local PDF materials to a sealed, independently pinned historical earnings pack and the existing earnings-trial job, retaining exact citations and pending human review.",
+  "non_goals": ["No new provider calls, external model transmission, team document serving, automatic thesis verdict, U4/paper write, live service upgrade, production synchronization or human two-device acceptance."],
+  "human_owner": "Junyan",
+  "reviewer": "Independent nonauthor reviewer",
+  "executor_candidates": ["Codex"],
+  "dependencies": ["Accepted foundation9889b0c", "Existing admitted CNINFO library", "Installed pypdf6.10.0", "Existing earnings-trial renderer"],
+  "authority_docs": ["AGENTS.md", "scripts/llm/AGENTS.md", "docs/engineering/FOUNDATION_MATERIALS_V1.md", "docs/superpowers/plans/2026-11-04-material-research-vertical.md"],
+  "file_scope": ["scripts/llm/foundation_research.py", "scripts/llm/foundation_cli.py", "scripts/llm/workbench_earnings_trial.py", "scripts/llm/workbench_workspace.py", "scripts/llm/nonprod_workbench.py", "scripts/llm/workbench_shared_workspace.py", "tests/test_foundation_research.py", ".github/workflows/python-ci.yml", "scripts/governance_mutation_gate.py", "docs/engineering/MATERIAL_RESEARCH_VERTICAL_V1.md", "docs/superpowers/plans/2026-11-04-material-research-vertical.md", "scripts/llm/fixtures/material_research_vertical.task.json"],
+  "forbidden_scope": ["/Users/years/ar-live", "In-use8443 service and state", "Official ledgers", "Historical originals and quarantine", "Provider credentials"],
+  "input_contracts": ["Externally pinned admitted material library and explicit historical PDF/page selections", "New draft questions and exact page/line quotations, never historical registration assertions", "Operator supplies the independently retained final pack hash to the job"],
+  "output_artifacts": ["Sealed complete historical earnings input with original PDF/page provenance", "Existing earnings-trial readable reports, exact citations and pending-review artifacts", "Isolated final-code acceptance and independent-review record"],
+  "acceptance_tests": ["python3 -B -m unittest tests.test_foundation_research tests.test_foundation_materials tests.test_foundation_cli tests.test_workbench_workspace -q", "Same-final-SHA offline CI execution steps and behavior mutation gate", "Real admitted original to local earnings task with independent byte/hash and quoted-page checks", "Wrong company/date/hash, re-sealed corruption, empty extraction, incomplete output and private dispatch must not succeed"],
+  "risk_level": "MEDIUM",
+  "network_policy": "OFFLINE",
+  "budget": {"max_cny": "0", "max_minutes": 180},
+  "approval_gates": ["Implementation follows the previously approved foundation blueprint and user's direct execution direction; two-machine acceptance is deferred.", "Nonauthor final-code review before any proposed integration.", "No merge, push, service upgrade, rights expansion, external transfer or production action is implied."],
+  "created_at": "2026-11-04T00:00:00+00:00"
+}

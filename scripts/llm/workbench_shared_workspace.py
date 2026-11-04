@@ -24,6 +24,11 @@ EXECUTION_FILES = (
     "experiments/data_governance/__init__.py", "experiments/data_governance/catalog.py",
     "experiments/data_governance/call_receipts.py", "experiments/data_governance/health.py",
     "scripts/llm/workbench_earnings_trial.py", "scripts/llm/workbench_research.py",
+    "scripts/llm/foundation_research.py", "scripts/llm/foundation_materials.py", "scripts/llm/foundation_cli.py",
+    "scripts/llm/foundation_results.py",
+    "scripts/llm/workbench_research_library.py",
+    "experiments/research_workflows/trial.py", "experiments/research_workflows/evidence.py",
+    "experiments/research_workflows/renderers.py", "experiments/research_workflows/smc_annotation.py",
     "scripts/llm/adapters/base.py", "scripts/llm/adapters/deepseek.py",
     "scripts/llm/adapters/__init__.py", "scripts/llm/adapters/deterministic.py",
     "scripts/llm/ai_os/__init__.py", "scripts/llm/ai_os/skill_registry.py",
@@ -61,7 +66,8 @@ def execution_identity(root: Path) -> dict:
 
 
 class SharedWorkspace:
-    def __init__(self, system: Workspace, *, governance_evidence_enabled=False):
+    def __init__(self, system: Workspace, *, governance_evidence_enabled=False,
+                 research_library_root=None, research_library_hash=None):
         if not system.store.shared_v1 or not system.private_mode:
             raise WorkspaceError("SHARED_PRIVATE_MODE_REQUIRED", 403)
         self.system, self.store = system, system.store
@@ -71,6 +77,19 @@ class SharedWorkspace:
         if type(governance_evidence_enabled) is not bool:
             raise WorkspaceError("GOVERNANCE_CONFIGURATION_INVALID", 400)
         self.governance_evidence_enabled = governance_evidence_enabled
+        if (research_library_root is None) != (research_library_hash is None):
+            raise WorkspaceError("RESEARCH_LIBRARY_CONFIGURATION_REQUIRED", 400)
+        from workbench_research_library import ResearchLibrary
+        self.research_library = (ResearchLibrary(research_library_root, research_library_hash)
+                                 if research_library_root is not None else None)
+
+    def research_results(self, actor, *, industry_key=None, industry_taxonomy=None,
+                         taxonomy_version=None, research_date=None, ts_code=None, page=0):
+        from workbench_research_library import projection
+        return projection(self.research_library, owner=self.identity(actor),
+            code_sha=self._execution_identity['code_sha'], page=page, industry_key=industry_key,
+            industry_taxonomy=industry_taxonomy, taxonomy_version=taxonomy_version,
+            research_date=research_date, ts_code=ts_code)
 
     @staticmethod
     def _snapshot_id(value):

@@ -1,0 +1,17 @@
+{
+  "schema":"ai-task.v1","task_id":"SHARED-RESEARCH-LIBRARY-20261104",
+  "architecture_block":["Shared workbench","Read-only research metadata"],
+  "objective":"Expose externally pinned research-result metadata query on the existing private shared workbench, with unchanged rights and authority boundaries.",
+  "non_goals":["No report/PDF/excerpt delivery, new task executor, research verdict, allowlist expansion, production or ledger writes."],
+  "human_owner":"Junyan","reviewer":"Independent nonauthor reviewer","executor_candidates":["Codex"],
+  "dependencies":["Accepted a27d407 result library","Existing shared9889b0c access and backup/recovery"],
+  "authority_docs":["AGENTS.md","scripts/llm/AGENTS.md","docs/engineering/SHARED_RESEARCH_LIBRARY_V1.md","docs/engineering/RESEARCH_RESULT_LIBRARY_V1.md"],
+  "file_scope":["scripts/llm/workbench_research_library.py","scripts/llm/nonprod_workbench.py","scripts/llm/workbench_shared_workspace.py","tools/nonprod_workbench/ui/","tests/test_shared_research_library.py","tests/nonprod-research-library.test.mjs","scripts/governance_mutation_gate.py",".github/workflows/","docs/engineering/SHARED_RESEARCH_LIBRARY_V1.md","docs/superpowers/plans/2026-11-04-shared-research-library.md","scripts/llm/fixtures/shared_research_library.task.json","tests/nonprod-research-library-component.test.mjs"],
+  "forbidden_scope":["/Users/years/ar-live","Official ledgers","Existing source/result library files","Running services before final gates","Provider credentials","Member allowlist"],
+  "input_contracts":["Operator-selected immutable result library and independent hash","Existing private Tailscale identities/session","Closed exact research-date filters"],
+  "output_artifacts":["Versioned metadata-only shared GET response","Responsive shared research-library view","Same-final acceptance, independent review and rollback receipts"],
+  "acceptance_tests":["python3 -B -m unittest tests.test_shared_research_library -q","node --test tests/nonprod-research-library.test.mjs tests/nonprod-research-library-component.test.mjs","Same-final complete offline CI and all behavior mutations","UI build and desktop/mobile browser checks","Remote CI before isolated shared rollout"],
+  "risk_level":"MEDIUM","network_policy":"ALLOWLIST","budget":{"max_cny":"0","max_minutes":180},
+  "approval_gates":["Current request to connect the shared page under approved foundation blueprint","Independent same-final review, full local acceptance and pure-code remote CI before private rollout","No merge, raw-content sharing, production or human research approval implied"],
+  "created_at":"2026-11-04T18:40:00+00:00"
+}

@@ -586,13 +586,17 @@ def inspect_material_source(source_root, manifest) -> dict:
             "status": "SOURCE_BYTES_ADMITTED_NOT_RESEARCH_APPROVAL", "files": checked}
 
 
-def ingest_material(source_root, library_root, manifest) -> dict:
+def ingest_material(source_root, library_root, manifest, *, expected_library_hash=None, require_new=False) -> dict:
     """Explicit create-only intake; any interrupted directory blocks later use.
 
     Invalid writes are deliberately retained, never silently repaired/deleted.
     Registration metadata is the final commit record, not human approval.
     """
     manifest = _manifest(manifest)
+    if type(require_new) is not bool or require_new and expected_library_hash is not None:
+        _fail("DESTINATION_PRECONDITION_INVALID")
+    if expected_library_hash is not None:
+        _hash(expected_library_hash)
     if _time(manifest["created_at"]) > datetime.now(timezone.utc):
         _fail("FUTURE_CREATED_AT")
     source, root = _root(source_root), _root(library_root)
@@ -604,11 +608,14 @@ def ingest_material(source_root, library_root, manifest) -> dict:
     _json_copy(receipt)
     # Require an existing explicit parent; never create an arbitrary ancestor tree.
     with _directory(source) as source_fd, _directory(root.parent) as parent:
+        if expected_library_hash is not None:
+            os.stat(root.name, dir_fd=parent, follow_symlinks=False)
         try:
             os.mkdir(root.name, mode=0o700, dir_fd=parent)
             os.fsync(parent)
         except FileExistsError:
-            pass
+            if require_new:
+                _fail("DESTINATION_ALREADY_EXISTS")
         with _child(parent, root.name) as root_fd:
             _owned(root_fd)
             fcntl.flock(root_fd, fcntl.LOCK_EX)
@@ -617,7 +624,7 @@ def ingest_material(source_root, library_root, manifest) -> dict:
                 backup.write_new(root / "library.json", ev.canonical(_marker(manifest["library_id"])).encode())
                 os.mkdir("registrations", mode=0o700, dir_fd=root_fd)
                 os.fsync(root_fd)
-            existing = _verify_open(root_fd)
+            existing = _verify_open(root_fd, expected_library_hash=expected_library_hash)
             if existing["library_id"] != manifest["library_id"]:
                 _fail("LIBRARY_IDENTITY_CONFLICT")
             if identity in existing["registrations"]:
