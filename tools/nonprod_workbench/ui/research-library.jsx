@@ -7,21 +7,24 @@ export default function ResearchLibrary({ api, renew, login, codeSha, parentStal
   const [draft, setDraft] = useState({ industry_key: '', research_date: '', ts_code: '', industry_taxonomy: '', taxonomy_version: '' });
   const [filters, setFilters] = useState({}), [page, setPage] = useState(0), [selected, setSelected] = useState(null);
   const [state, setState] = useState(null), reader = useRef(null), currentKey = useRef(null);
-  const context = { login, codeSha, filters, page }, key = libraryContextKey(context); currentKey.current = key;
-  const view = libraryView(state, key, parentStale), data = view.data;
+  const parentCycle = useRef({ stale: parentStale, epoch: 0 });
+  if (parentCycle.current.stale !== parentStale) parentCycle.current = { stale: parentStale, epoch: parentCycle.current.epoch + 1 };
+  const verificationEpoch = JSON.stringify([refreshRevision, parentCycle.current.epoch]);
+  const context = { login, codeSha, filters, page }, key = libraryContextKey(context);
+  const requestKey = JSON.stringify([key, verificationEpoch]); currentKey.current = requestKey;
+  const view = libraryView(state, key, parentStale, verificationEpoch), data = view.data;
   const detail = data?.results.find(row => row.record_hash === selected);
   useEffect(() => {
-    if (!codeSha) return;
+    if (!codeSha || parentStale) { reader.current = null; return; }
     const controller = createLibraryReader({
       read: () => readResearchLibrary(api, context, renew),
-      apply: data => { if (currentKey.current === key) setState({ key, data, stale: false, error: '', checkedAt: new Date().toISOString() }); },
-      fail: error => { if (currentKey.current === key) setState(old => ({ key, data: old?.key === key ? old.data : null,
+      apply: data => { if (currentKey.current === requestKey) setState({ key, verificationEpoch, data, stale: false, error: '', checkedAt: new Date().toISOString() }); },
+      fail: error => { if (currentKey.current === requestKey) setState(old => ({ key, verificationEpoch, data: old?.key === key ? old.data : null,
         stale: true, error: error.message, checkedAt: old?.key === key ? old.checkedAt : null })); }
     });
     reader.current = controller; controller.refresh();
-    return () => controller.stop();
-  }, [key]);
-  useEffect(() => { reader.current?.refresh(); }, [refreshRevision]);
+    return () => { controller.stop(); if (reader.current === controller) reader.current = null; };
+  }, [key, verificationEpoch, parentStale]);
   function submit(event) {
     event.preventDefault(); setSelected(null); setPage(0);
     const next = { ...draft, research_date: draft.research_date.replaceAll('-', '') };
@@ -41,7 +44,7 @@ export default function ResearchLibrary({ api, renew, login, codeSha, parentStal
       <button className="icon-button" title="查询研究索引" aria-label="查询研究索引" type="submit"><Search size={18} /></button>
       <details className="research-taxonomy"><summary>行业分类口径</summary><div><label>分类体系<input value={draft.industry_taxonomy} maxLength={128} onChange={change('industry_taxonomy')} /></label><label>分类版本<input value={draft.taxonomy_version} maxLength={128} onChange={change('taxonomy_version')} /></label></div></details>
     </form>
-    <div className="source-strip"><span>{data?.total ?? '—'} 项</span><span>库 hash</span><code>{data?.library_hash || 'NOT_CONFIGURED'}</code></div>
+    <div className="source-strip"><span>{data?.total ?? '—'} 项</span><span>库 hash</span><code>{view.hashStatus}</code></div>
     <div className="table-scroll"><table><thead><tr><th>股票 / 研究日</th><th>行业 / 分类版本</th><th>原件截止 / 草稿状态</th><th>核验记录</th></tr></thead><tbody>{(data?.results || []).map(row => <tr key={row.record_hash}>
       <td><strong>{row.company}</strong><span>{row.research_date}</span><code>{row.material_id} / {row.version}</code></td>
       <td>{row.industry_key}<code>{row.industry_taxonomy}</code><code>{row.taxonomy_version}</code></td>

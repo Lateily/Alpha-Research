@@ -33,3 +33,5 @@ jobs:
         run: node tests/nonprod-workbench-trust-line.test.mjs
       - name: Pinned research metadata display and identity guards (node)
         run: node --test tests/nonprod-research-library.test.mjs
+      - name: Actual shared component refresh and recovery (synthetic hooks)
+        run: node --test tests/nonprod-research-library-component.test.mjs

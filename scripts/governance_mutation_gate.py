@@ -200,6 +200,13 @@ class MutationCase:
 
 MUTATIONS: tuple[MutationCase, ...] = (
     MutationCase(
+        mutation_id="SHARED_RESEARCH_LIBRARY_REFRESH", component="Shared research metadata library",
+        source_path="tools/nonprod_workbench/ui/research-library-view.mjs", test_script="tests/test_shared_research_library.py",
+        before=" || state.verificationEpoch !== verificationEpoch", after="",
+        expected_failure_marker="test_browser_response_context_is_closed",
+        rationale="A parent reconnection cannot silently revalidate retained library metadata.",
+    ),
+    MutationCase(
         mutation_id="SHARED_RESEARCH_LIBRARY_ROOT", component="Shared research metadata library",
         source_path="scripts/llm/workbench_research_library.py", test_script="tests/test_shared_research_library.py",
         before="if info.st_uid != os.geteuid() or info.st_mode & 0o022:", after="if False:",

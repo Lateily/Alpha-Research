@@ -56,6 +56,14 @@ test('different login filter version and page contexts never retain prior data',
   assert.equal(view.libraryView(state,key,true).stale,true);
 });
 
+test('revalidation epochs keep previous metadata stale until a new independent read succeeds', () => {
+  const key=view.libraryContextKey(context);
+  const state={key,data:fixture(),stale:false,error:'',verificationEpoch:'old'};
+  assert.equal(view.libraryView(state,key,false,'new').stale,true);
+  assert.equal(view.libraryView({...state,verificationEpoch:'new'},key,false,'new').stale,false);
+  assert.equal(view.libraryView({key,data:null,stale:true,error:'HASH_INVALID'},key,false).hashStatus,'UNAVAILABLE');
+});
+
 test('valid metadata rows render only with bounded identities and source clocks', async () => {
   const data=fixture();data.status='RESULTS_AVAILABLE_NOT_HUMAN_VERIFIED';data.total=1;
   const row={material_id:'research-result-test',version:'v1',company:'600000.SH',industry_key:'chip & memory',

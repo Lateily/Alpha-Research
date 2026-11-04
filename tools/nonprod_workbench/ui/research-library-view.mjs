@@ -23,10 +23,12 @@ function validRow(row) {
 export function libraryContextKey({ login, codeSha, filters = {}, page = 0 }) {
   return JSON.stringify([login, codeSha, ...fields.map(key => filters[key] || ''), page]);
 }
-export function libraryView(state, key, parentStale) {
-  if (state?.key !== key) return { data: null, stale: true, status: 'WAIT', error: '' };
-  const stale = Boolean(parentStale || state.stale);
-  return { ...state, stale, status: stale ? 'DISCONNECTED' : state.data.status };
+export function libraryView(state, key, parentStale, verificationEpoch) {
+  if (state?.key !== key) return { data: null, stale: true, status: 'WAIT', error: '', hashStatus: 'NOT_CHECKED' };
+  // governance-mutation: SHARED_RESEARCH_LIBRARY_REFRESH
+  const stale = Boolean(parentStale || state.stale || state.verificationEpoch !== verificationEpoch);
+  const hashStatus = state.data?.library_hash || (state.data?.status === 'NOT_CONFIGURED' ? 'NOT_CONFIGURED' : state.error ? 'UNAVAILABLE' : 'NOT_CHECKED');
+  return { ...state, stale, status: stale ? 'DISCONNECTED' : state.data.status, hashStatus };
 }
 export async function readResearchLibrary(api, { login, codeSha, filters = {}, page = 0 }, renew) {
   const params = new URLSearchParams({ page: String(page) });

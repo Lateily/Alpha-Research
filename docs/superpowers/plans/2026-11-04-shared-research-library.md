@@ -56,3 +56,13 @@ adapter -> closed GET route -> separate React view, not another storage system.
 - Browser plugin startup failed its installed native binding; use the documented
   existing-browser fallback. Native desktop is locked, so prefer browser extension
   operations; do not modify system/browser settings or bypass safety prompts.
+- Independent2b69c47 review found P2: the shared header refresh did not invalidate
+  the child research index, and parent recovery could unmark stale without its
+  own verification. Actual-component hook regression reproduced0 new library
+  reads after header refresh. Added parent refresh revision and independent
+  verification epochs; disposed outage reads cannot make recovered data fresh.
+  Component/header/recovery and epoch counterexamples passed RED->GREEN. The
+  initial-error hash label now stays UNAVAILABLE, not a false NOT_CONFIGURED.
+- Component hook tests bundle actual JSX with existing esbuild in the UI CI job;
+  Python/mutation CI remains dependency-free Node helpers. The UI test includes
+  a behavior-level parent-binding mutation, not merely a source-string match.
