@@ -211,6 +211,29 @@ class ResultIndexTests(unittest.TestCase):
                 self.destination, self.root / 'conflict-stage', value)
         self.assertEqual(materials.verify_library(self.destination)['library_hash'], first['library_hash'])
 
+    def test_pack_changed_between_verification_and_capture_cannot_poison_prior_library(self):
+        first = self.ingest(); module = self.module()
+        packet = copy.deepcopy(self.packet_request); packet['questions'][0]['question'] += ' Snapshot boundary.'
+        pack_root = self.root / 'race-pack'
+        pack = self.adapter().prepare_research_pack(self.library, packet, pack_root)
+        output = earnings.run(pack_root, self.root / 'race-case', expected_pack_hash=pack['pack_hash'])
+        value = copy.deepcopy(self.request); value.update(version='v2', expected_pack_hash=pack['pack_hash'], result=output,
+            expected_result_hash=ev.sealed(output), expected_destination_library_hash=first['library_hash'])
+        original = module._tree
+        def mutate_before_capture(root):
+            if Path(root) == pack_root:
+                intent = pack_root / 'material-pack.intent.json'; intent.write_bytes(intent.read_bytes() + b'\n')
+            return original(root)
+        with mock.patch.object(module, '_tree', side_effect=mutate_before_capture):
+            with self.assertRaises(ValueError):
+                module.ingest_result(self.library, pack_root, self.root / 'race-case/600000.SH',
+                    self.destination, self.root / 'race-stage', value)
+        after = materials.verify_library(self.destination)
+        self.assertEqual(after['library_hash'], first['library_hash'])
+        self.assertEqual(len(after['registrations']), 1)
+        self.assertEqual(len(self.query(first['library_hash'])['results']), 1)
+        self.assertFalse((self.root / 'race-stage').exists())
+
     def test_appended_result_and_portable_query_preserve_prior_record(self):
         first = self.ingest()
         packet = copy.deepcopy(self.packet_request); packet['questions'][0]['question'] += ' A distinct draft.'

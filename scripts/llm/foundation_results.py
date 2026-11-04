@@ -102,6 +102,25 @@ def _index(verified):
             for row in verified['materials'] for f in row['files']}
 
 
+def _bound_pack(files, expected_hash):
+    materials._hash(expected_hash)
+    raw = files[research.MARKER]; manifest = ev.parse(raw)
+    materials._exact(manifest, {'schema', 'files', 'pack_hash', 'preparation_execution_identity', 'prepared_at', *LABELS})
+    if (manifest['schema'] != 'ar.material-research-pack.v1' or ev.canonical(manifest).encode() != raw
+            or manifest['pack_hash'] != expected_hash
+            or ev.sealed({k: v for k, v in manifest.items() if k != 'pack_hash'}) != expected_hash
+            or any(type(manifest[k]) is not type(v) or manifest[k] != v for k, v in LABELS.items())
+            or type(manifest['files']) is not dict or not 1 <= len(manifest['files']) <= 128):
+        _fail('CAPTURED_PACK_BINDING_INVALID')
+    if (set(manifest['files']) != set(files) - {research.MARKER}
+            or any(manifest['files'][name] != ev.sha(files[name]) for name in manifest['files'])):
+        _fail('CAPTURED_PACK_BINDING_INVALID')
+    _identity(manifest['preparation_execution_identity'])
+    request = research._request(ev.parse(files['request.json']))
+    return request, research._summary(request, manifest['files'], manifest['pack_hash'],
+                                      manifest['preparation_execution_identity'], manifest['prepared_at'])
+
+
 def _stored(root, verified):
     index, rows = _index(verified), []
     for material in verified['materials']:
@@ -134,15 +153,7 @@ def _stored(root, verified):
                     _fail('STORED_ARTIFACT_HASH_INVALID')
             groups.append(content)
         pack_files, case = groups
-        manifest = ev.parse(pack_files[research.MARKER])
-        if (manifest['pack_hash'] != record['pack_hash']
-                or ev.sealed({k: v for k, v in manifest.items() if k != 'pack_hash'}) != record['pack_hash']
-                or set(manifest['files']) != set(pack_files) - {research.MARKER}
-                or any(manifest['files'][name] != ev.sha(pack_files[name]) for name in manifest['files'])):
-            _fail('STORED_PACK_BINDING_INVALID')
-        request = research._request(ev.parse(pack_files['request.json']))
-        pack = research._summary(request, manifest['files'], manifest['pack_hash'],
-                                  manifest['preparation_execution_identity'], manifest['prepared_at'])
+        request, pack = _bound_pack(pack_files, record['pack_hash'])
         result = copy.deepcopy(record['result_metadata'])
         result['reports'][0]['report'] = case['report.md'].decode()
         artifact = _result(result, record['result_hash'], pack, case)
@@ -215,6 +226,7 @@ def ingest_result(source_library_root, pack_root, artifact_root, result_library_
     verified_source = materials.verify_library(source, expected_library_hash=request['expected_source_library_hash'])
     pack = research.verify_research_pack(pack_root, request['expected_pack_hash'])
     pack_files, case = _tree(pack_root), _tree(case_root)
+    _bound_pack(pack_files, request['expected_pack_hash'])
     frozen = research._request(ev.parse(pack_files['request.json']))
     if frozen['expected_library_hash'] != verified_source['library_hash']:
         _fail('SOURCE_LIBRARY_BINDING_INVALID')

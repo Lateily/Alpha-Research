@@ -76,3 +76,12 @@ type guard and passed afterward. Updated focused/adjacent suite75 PASS (23 new),
 all11 new behavior mutation targets killed by failures, zero errors. The real
 5956c64 intake/query demonstration is retained under that SHA and is not reused
 as final evidence after the amendment. Independent review will name the new HEAD.
+
+Independent d893727 review found one P2: the pack path was verified before a
+separate capture, permitting a producer-file interleave to poison an append.
+The public-entry regression reproduced intake refusal after the destination had
+already changed. The fix binds the captured marker, exact inventory and actual
+file bytes to the external pack hash before staging/publication, using the same
+helper as stored-query verification.76 focused/adjacent cases PASS, all12 new
+mutation targets killed by assertion failures with zero errors. The regression
+also requires the prior library hash, registration count and query to be unchanged.

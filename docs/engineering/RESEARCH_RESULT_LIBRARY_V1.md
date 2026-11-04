@@ -12,6 +12,9 @@ result. Verify the admitted source library, exact case inventory, renderer outpu
 hashes, citations, pending review and false authorities before creating a staging
 package. Copy selected original PDF bytes and all input/output artifacts into the
 result library; deduplicate identical bytes, not independent research samples.
+The captured input inventory is checked against the external pack pin again:
+an earlier path verification is not proof of the bytes subsequently copied.
+Both admission and stored-query use the same captured-byte binding check.
 
 An intake is explicit. No automatic job hook, shared dispatcher kind, provider,
 network transport, approval, schedule, paper or production write is introduced.

@@ -200,6 +200,14 @@ class MutationCase:
 
 MUTATIONS: tuple[MutationCase, ...] = (
     MutationCase(
+        mutation_id="RESEARCH_RESULT_CAPTURE_PIN", component="Research result library",
+        source_path="scripts/llm/foundation_results.py", test_script="tests/test_foundation_results.py",
+        before="    _bound_pack(pack_files, request['expected_pack_hash'])\n",
+        after="",
+        expected_failure_marker="test_pack_changed_between_verification_and_capture_cannot_poison_prior_library",
+        rationale="Bind the bytes actually copied to the external pack pin before any result-library publication.",
+    ),
+    MutationCase(
         mutation_id="RESEARCH_RESULT_REPORT_TYPE", component="Research result library",
         source_path="scripts/llm/foundation_results.py", test_script="tests/test_foundation_results.py",
         before="            or type(row['report']) is not str\n",
