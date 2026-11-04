@@ -25,6 +25,7 @@ EXECUTION_FILES = (
     "experiments/data_governance/call_receipts.py", "experiments/data_governance/health.py",
     "scripts/llm/workbench_earnings_trial.py", "scripts/llm/workbench_research.py",
     "scripts/llm/foundation_research.py", "scripts/llm/foundation_materials.py", "scripts/llm/foundation_cli.py",
+    "scripts/llm/foundation_results.py",
     "experiments/research_workflows/trial.py", "experiments/research_workflows/evidence.py",
     "experiments/research_workflows/renderers.py", "experiments/research_workflows/smc_annotation.py",
     "scripts/llm/adapters/base.py", "scripts/llm/adapters/deepseek.py",
