@@ -1,11 +1,11 @@
 {
   "ticker": "300054.SZ",
-  "fetched_at": "2026-11-04T07:24:29Z",
-  "trade_date": "20261104",
+  "fetched_at": "2026-11-04T16:30:10Z",
+  "trade_date": "20261105",
   "_status": "ok",
   "api_used": "top_list",
   "days_window": 30,
-  "as_of": "20261103",
+  "as_of": "20261104",
   "appearances": [],
   "summary": {
     "total_appearances": 0,

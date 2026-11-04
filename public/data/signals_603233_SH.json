@@ -12,8 +12,8 @@
       "date": "20261103",
       "bullish": false,
       "description": {
-        "e": "RSI(14) = 70.1 — overbought, watch for exhaustion",
-        "z": "RSI(14)=70.1，超买，注意回调风险"
+        "e": "RSI(14) = 70.2 — overbought, watch for exhaustion",
+        "z": "RSI(14)=70.2，超买，注意回调风险"
       }
     },
     {
@@ -36,7 +36,7 @@
     "ma5": 19.72,
     "ma20": 18.89,
     "ma60": null,
-    "rsi14": 70.1,
+    "rsi14": 70.2,
     "vol_ma20": 154388,
     "vol_ratio": 1.68,
     "price_vs_ma20": 10.76,
@@ -44,9 +44,9 @@
     "change_1d": 1.8,
     "change_5d": 13.2,
     "change_20d": 17.33,
-    "macd_dif": 0.463,
-    "macd_dea": 0.2259,
-    "macd_hist": 0.4742,
+    "macd_dif": 0.4629,
+    "macd_dea": 0.2258,
+    "macd_hist": 0.4743,
     "bb_upper": 20.46,
     "bb_mid": 18.89,
     "bb_lower": 17.32,

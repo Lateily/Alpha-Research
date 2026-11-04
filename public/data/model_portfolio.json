@@ -8,7 +8,7 @@
     "no_position_mutation": true,
     "run_date": "2026-11-04",
     "pilot_start_date": "2026-06-08",
-    "generated_at": "2026-11-04T07:27:56.900910+00:00",
+    "generated_at": "2026-11-04T16:34:18.781114+00:00",
     "fresh_pilot": true,
     "legacy_paper_positions_inherited": false,
     "sources": [
@@ -64,7 +64,7 @@
         "quant_confluence": {
           "action": "NEUTRAL",
           "score": 5,
-          "rationale": "Bullish: Ma20 Bounce | Bearish: Kdj Overbought | RSI 55 | Price vs MA20 +2.9% | Regime: PERMISSIVE | VP 48"
+          "rationale": "Bullish: Ma20 Bounce | Bearish: Kdj Overbought | RSI 56 | Price vs MA20 +2.9% | Regime: PERMISSIVE | VP 48"
         }
       },
       "validation_status": "PENDING",
@@ -298,8 +298,8 @@
             "total": 2
           },
           "key_indicators": {
-            "rsi14": 55.4,
-            "macd_hist": 0.9625,
+            "rsi14": 55.6,
+            "macd_hist": 0.9758,
             "price_vs_ma20": 2.86,
             "price_vs_ma60": null,
             "change_5d": 3.58,
@@ -388,8 +388,8 @@
             "total": 0
           },
           "key_indicators": {
-            "rsi14": 35.0,
-            "macd_hist": 0.089,
+            "rsi14": 34.7,
+            "macd_hist": 0.1048,
             "price_vs_ma20": -7.92,
             "price_vs_ma60": null,
             "change_5d": -3.49,
@@ -424,7 +424,7 @@
           },
           "key_indicators": {
             "rsi14": 23.9,
-            "macd_hist": -16.7309,
+            "macd_hist": -16.8764,
             "price_vs_ma20": -25.99,
             "price_vs_ma60": null,
             "change_5d": -16.78,
@@ -471,8 +471,8 @@
             "total": 2
           },
           "key_indicators": {
-            "rsi14": 70.1,
-            "macd_hist": 0.4742,
+            "rsi14": 70.2,
+            "macd_hist": 0.4743,
             "price_vs_ma20": 10.76,
             "price_vs_ma60": null,
             "change_5d": 13.2,
@@ -483,7 +483,7 @@
               "type": "RSI_OVERBOUGHT",
               "strength": "moderate",
               "bullish": false,
-              "desc": "RSI(14) = 70.1 — overbought, watch for exhaustion"
+              "desc": "RSI(14) = 70.2 — overbought, watch for exhaustion"
             },
             {
               "type": "KDJ_OVERBOUGHT",
@@ -574,7 +574,7 @@
           },
           "key_indicators": {
             "rsi14": 27.1,
-            "macd_hist": -8.7981,
+            "macd_hist": -8.6985,
             "price_vs_ma20": -20.38,
             "price_vs_ma60": null,
             "change_5d": -7.99,
