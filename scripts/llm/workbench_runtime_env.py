@@ -27,11 +27,17 @@ def safe_path(path):
 
 def file_hash(path):
     path = safe_path(path)
-    fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW)
+    fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
     with os.fdopen(fd, 'rb') as stream:
-        if not stat.S_ISREG(os.fstat(stream.fileno()).st_mode): raise ValueError('RUNTIME_FILE_TYPE')
+        before = os.fstat(stream.fileno())
+        if not stat.S_ISREG(before.st_mode): raise ValueError('RUNTIME_FILE_TYPE')
         digest = hashlib.sha256()
         while data := stream.read(1024 * 1024): digest.update(data)
+        def identity(info):
+            return (info.st_dev,info.st_ino,info.st_size,info.st_mtime_ns,info.st_ctime_ns,info.st_mode)
+        # governance-mutation: RUNTIME_STABLE_HASH
+        if identity(before)!=identity(os.fstat(stream.fileno())) or identity(before)!=identity(path.lstat()):
+            raise ValueError('RUNTIME_FILE_CHANGED')
     return digest.hexdigest()
 
 

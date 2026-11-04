@@ -199,6 +199,18 @@ class MutationCase:
 
 
 MUTATIONS: tuple[MutationCase, ...] = (
+    MutationCase("RUNTIME_STABLE_HASH", "Independent runtime", "scripts/llm/workbench_runtime_env.py", "tests/test_workbench_runtime_env.py",
+                 "if identity(before)!=identity(os.fstat(stream.fileno())) or identity(before)!=identity(path.lstat()):", "if False:",
+                 "test_in_place_change_and_replacement_during_hash_are_refused", "Reading an old chunk cannot attest changed final bytes."),
+    MutationCase("RUNTIME_COMMITTED_BYTES", "Isolated service", "scripts/llm/workbench_runtime_service.py", "tests/test_workbench_runtime_service.py",
+                 "if any(digest!=ev.sha(git('show',sha+':'+name,raw=True)) for name,digest in hashes.items()):", "if False:",
+                 "test_hidden_index_edits_cannot_claim_the_committed_sha", "Index concealment flags cannot bless uncommitted runtime bytes."),
+    MutationCase("RUNTIME_ENTRY_BYTECODE", "Isolated service", "scripts/llm/workbench_runtime.py", "tests/test_workbench_runtime_service.py",
+                 'sys.pycache_prefix = "/dev/null"', 'sys.pycache_prefix = None',
+                 "test_operator_and_worker_bypass_ignored_bytecode", "Operator startup must import the pinned source, not ignored caches."),
+    MutationCase("RUNTIME_WORKER_BYTECODE", "Isolated service", "scripts/llm/workbench_shared_worker.py", "tests/test_workbench_runtime_service.py",
+                 'sys.pycache_prefix = "/dev/null"', 'sys.pycache_prefix = None',
+                 "test_operator_and_worker_bypass_ignored_bytecode", "Renderer startup must bypass old bytecode before project imports."),
     MutationCase("RUNTIME_SERVICE_CLEAN_CODE", "Isolated service", "scripts/llm/workbench_runtime_service.py", "tests/test_workbench_runtime_service.py",
                  "if git('status','--porcelain','--untracked-files=normal'):", "if False:", "test_dirty_code_is_not_an_installed_version", "An installed SHA cannot hide local code edits."),
     MutationCase("RUNTIME_ENV_PIN", "Independent runtime", "scripts/llm/workbench_runtime_env.py", "tests/test_workbench_runtime_env.py",

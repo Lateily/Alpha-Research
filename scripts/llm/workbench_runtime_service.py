@@ -26,17 +26,20 @@ FIELDS = {'schema','root','code_root','environment_root','environment_hash','cod
 
 def code_identity(root):
     root = runtime.safe_path(root)
-    def git(*args):
+    def git(*args, raw=False):
         result = subprocess.run(['/usr/bin/git','-c','core.fsmonitor=false','-C',str(root),*args],
                                 env={**runtime.clean_environment(root),'GIT_CONFIG_NOSYSTEM':'1','GIT_CONFIG_GLOBAL':'/dev/null'},
                                 capture_output=True, timeout=30, check=True)
-        return result.stdout.decode().strip()
+        return result.stdout if raw else result.stdout.decode().strip()
     if Path(git('rev-parse','--show-toplevel')).resolve() != root: raise ValueError('SERVICE_CODE_ROOT')
     sha = git('rev-parse','HEAD')
     # governance-mutation: RUNTIME_SERVICE_CLEAN_CODE
     if git('status','--porcelain','--untracked-files=normal'): raise ValueError('SERVICE_CODE_DIRTY')
     from workbench_shared_workspace import EXECUTION_FILES
     hashes = {name: runtime.file_hash(root/name) for name in (*EXECUTION_FILES,*RUNTIME_FILES)}
+    # governance-mutation: RUNTIME_COMMITTED_BYTES
+    if any(digest!=ev.sha(git('show',sha+':'+name,raw=True)) for name,digest in hashes.items()):
+        raise ValueError('SERVICE_SOURCE_NOT_COMMITTED')
     if git('rev-parse','HEAD') != sha: raise ValueError('SERVICE_CODE_CHANGED')
     return {'code_sha':sha,'source_tree_hash':ev.sealed(hashes)}
 

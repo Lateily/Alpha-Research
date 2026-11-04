@@ -2,6 +2,7 @@
 import copy
 import hashlib
 import json
+import os
 from pathlib import Path
 import sys
 import tempfile
@@ -68,7 +69,7 @@ class RuntimeEnvironmentTests(unittest.TestCase):
         m = self.module()
         with tempfile.TemporaryDirectory() as tmp:
             base = Path(tmp).resolve(); wheels = base / 'wheels'; wheels.mkdir()
-            with patch.object(m.subprocess, 'run') as execute:
+            with patch.object(m.subprocess, 'run', side_effect=AssertionError('UNVERIFIED_WHEEL_EXECUTED')) as execute:
                 for fake in (False, True):
                     if fake:
                         for name in m.LOCK['wheels']: (wheels / name).write_bytes(b'not official')
@@ -92,6 +93,29 @@ class RuntimeEnvironmentTests(unittest.TestCase):
         for key, value in (('index', 'https://example.com'), ('dependencies', {'pypdf':'latest'})):
             lock = copy.deepcopy(m.LOCK); lock[key] = value
             with self.assertRaisesRegex(ValueError, 'RUNTIME_LOCK'): m.validate_lock(lock)
+
+    def test_in_place_change_and_replacement_during_hash_are_refused(self):
+        m=self.module()
+        for replacement in (False,True):
+            with self.subTest(replacement=replacement), tempfile.TemporaryDirectory() as tmp:
+                root=Path(tmp).resolve(); target=root/'large'; target.write_bytes(b'A'*(2*1024*1024))
+                original=m.os.fdopen; mutated=[]
+                class Stream:
+                    def __init__(self, stream): self.stream=stream
+                    def __enter__(self): self.stream.__enter__(); return self
+                    def __exit__(self,*args): return self.stream.__exit__(*args)
+                    def fileno(self): return self.stream.fileno()
+                    def read(self,size):
+                        data=self.stream.read(size)
+                        if not mutated:
+                            if replacement:
+                                target.rename(root/'retained-original'); target.write_bytes(b'B'*(2*1024*1024))
+                            else:
+                                with target.open('r+b') as writer: writer.write(b'B'*1024)
+                            mutated.append(True)
+                        return data
+                with patch.object(m.os,'fdopen',side_effect=lambda *a,**kw:Stream(original(*a,**kw))):
+                    with self.assertRaisesRegex(ValueError,'RUNTIME_FILE_CHANGED'): m.file_hash(target)
 
 
 if __name__ == '__main__': unittest.main()

@@ -1,8 +1,14 @@
 """Isolated runtime operator; no installation, production source or arbitrary command."""
+import sys
+
+# A fresh entry must not import ignored timestamp-valid source-tree bytecode.
+# governance-mutation: RUNTIME_ENTRY_BYTECODE
+sys.pycache_prefix = "/dev/null"
+sys.dont_write_bytecode = True
+
 import argparse
 import json
 from pathlib import Path
-import sys
 
 sys.path.insert(0,str(Path(__file__).resolve().parent))
 import workbench_runtime_env as runtime

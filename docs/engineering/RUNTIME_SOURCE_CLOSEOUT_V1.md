@@ -67,6 +67,13 @@ market/model request, methodology change, new research workflow or source licens
 Private real two-computer acceptance remains deferred. This work may prepare a
 later deployment but cannot claim it occurred.
 
+Review hardening: compare every execution/runtime file directly with its HEAD
+blob, not only Git status (which index flags can conceal). Runtime hashing checks
+descriptor and final-path identity/size/timestamps before and after reading.
+Operator and renderer entry points set a non-directory bytecode-cache prefix
+before project imports; -B alone does not stop reads of ignored cached code.
+This small renderer bootstrap change leaves queue, rendering and token rules intact.
+
 ## Acceptance
 
 Normal, missing, conflicting and historical contracts at real CLI/API boundaries;

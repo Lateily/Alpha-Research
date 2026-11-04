@@ -40,6 +40,8 @@ so tree hashes need not match. The builder copies verified wheel bytes privately
 uses no system-site-packages and never overwrites an existing root. An interrupted
 build has no final runtime.json and is not accepted. Preserve failures for review.
 Manifest covers exact files/modes including any bytecode; unknown files fail.
+The operator and renderer bypass source-tree bytecode before importing project
+modules. Git concealment flags cannot hide edits from the direct HEAD-blob check.
 Host stdlib/OS remain prerequisites, not a bundled or cross-OS image.
 
 ## Isolated Start And Recovery

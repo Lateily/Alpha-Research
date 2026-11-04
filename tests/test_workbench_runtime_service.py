@@ -1,5 +1,8 @@
 """Isolated operator profile and ownership guards; no live service access."""
 import copy
+import os
+import py_compile
+import subprocess
 from pathlib import Path
 import sys
 import tempfile
@@ -105,6 +108,50 @@ class RuntimeServiceTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError,'SERVICE_ROOT_INSIDE_REPOSITORY'):
                 m.prepare_profile(base/'new-profile',base/'code',base/'environment','a'*64,18341)
             self.assertFalse((base/'new-profile').exists())
+
+    def test_hidden_index_edits_cannot_claim_the_committed_sha(self):
+        m=self.module()
+        from workbench_shared_workspace import EXECUTION_FILES
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp).resolve()
+            def git(*args):
+                return subprocess.check_output(['/usr/bin/git','-c','core.hooksPath=/dev/null','-c','user.name=Fixture',
+                                                '-c','user.email=fixture@example.com','-C',str(root),*args],stderr=subprocess.DEVNULL)
+            names=sorted(set((*EXECUTION_FILES,*m.RUNTIME_FILES)))
+            for name in names:
+                path=root/name; path.parent.mkdir(parents=True,exist_ok=True); path.write_text('VALUE = 1\n')
+            git('init','-q'); git('add','--',*names); git('commit','-qm','Synthetic runtime identity')
+            before=m.code_identity(root)
+            name='scripts/llm/workbench_runtime.py'; git('update-index','--assume-unchanged',name)
+            (root/name).write_text('VALUE = 2\n'); self.assertEqual(git('status','--porcelain'),b'')
+            with self.assertRaisesRegex(ValueError,'SERVICE_SOURCE_NOT_COMMITTED'): m.code_identity(root)
+            self.assertEqual(len(before['code_sha']),40)
+
+    def test_operator_and_worker_bypass_ignored_bytecode(self):
+        repo=Path(__file__).resolve().parents[1]
+        for entry in ('workbench_runtime.py','workbench_shared_worker.py'):
+            with self.subTest(entry=entry), tempfile.TemporaryDirectory() as tmp:
+                root=Path(tmp).resolve(); (root/entry).write_bytes((repo/'scripts/llm'/entry).read_bytes())
+                if entry=='workbench_runtime.py':
+                    name='workbench_runtime_service.py'
+                    template="def verify_profile(*a): return {'code_identity':{'code_sha':'%s'}}\n"
+                    (root/'workbench_runtime_env.py').write_text('')
+                    args=['verify','--profile',str(root/'unused'),'--pin','a'*64]
+                else:
+                    name='workbench_evidence.py'; template="print('%s')\n"
+                    (root/'workbench_snapshot_brief.py').write_text('')
+                    (root/'workbench_backup.py').write_text('durable_directory = fsync_directory = write_new = None\n')
+                    (root/'workbench_shared_inputs.py').write_text('validate_snapshot = None\n')
+                    (root/'workbench_workspace.py').write_text('WorkspaceError = ValueError\n')
+                    args=[]
+                module=root/name; module.write_text(template%'cached'); os.utime(module,(1700000000,1700000000))
+                cache=root/'__pycache__'/(module.stem+'.'+sys.implementation.cache_tag+'.pyc')
+                py_compile.compile(str(module),cfile=str(cache),doraise=True,
+                                   invalidation_mode=py_compile.PycInvalidationMode.TIMESTAMP)
+                module.write_text(template%'source'); os.utime(module,(1700000000,1700000000))
+                result=subprocess.run([sys.executable,'-I','-B','-X','pycache_prefix=',str(root/entry),*args],capture_output=True,text=True)
+                self.assertIn('source',result.stdout,result.stderr)
+                self.assertNotIn('cached',result.stdout)
 
     def test_code_assets_and_environment_are_rechecked(self):
         m = self.module()

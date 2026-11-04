@@ -1,12 +1,17 @@
 """Bounded, clean-environment rendering of registered frozen shared inputs."""
 from __future__ import annotations
 
+import sys
+if __name__ == "__main__":
+    # governance-mutation: RUNTIME_WORKER_BYTECODE
+    sys.pycache_prefix = "/dev/null"
+    sys.dont_write_bytecode = True
+
 import json
 import os
 import signal
 import sqlite3
 import subprocess
-import sys
 import threading
 import time
 from pathlib import Path
