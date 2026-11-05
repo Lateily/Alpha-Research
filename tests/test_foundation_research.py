@@ -201,6 +201,23 @@ class MaterialResearchTests(unittest.TestCase):
         with self.assertRaises((ValueError, OSError)): self.prepare(name='alias/new-pack')
         self.assertFalse((self.source / 'new-pack').exists())
 
+    def test_parser_reuses_only_identical_bytes_pages_and_extractor(self):
+        research = self.adapter()
+        research._cached_pdf.cache_clear()
+        original = research.subprocess.Popen
+        with mock.patch.object(research.subprocess, 'Popen', wraps=original) as parser:
+            one = research.extract_pages(self.pdf, [1])
+            one['1'] = 'caller mutation must not persist'
+            two = research.extract_pages(self.pdf, [1])
+            self.assertNotEqual(two['1'], one['1'])
+            self.assertLessEqual(parser.call_count, 1)
+            changed = pdf_bytes(('Different revenue statement.',))
+            self.assertIn('Different revenue statement.', research.extract_pages(changed, [1])['1'])
+            self.assertEqual(parser.call_count, 2)
+            with mock.patch.object(research, '_extractor_hash', return_value='changed-extractor'):
+                research.extract_pages(changed, [1])
+            self.assertEqual(parser.call_count, 3)
+
     def test_blank_and_oversize_pdf_extraction_refuses_without_network(self):
         writer = PdfWriter(); writer.add_blank_page(width=100, height=100)
         raw = io.BytesIO(); writer.write(raw)

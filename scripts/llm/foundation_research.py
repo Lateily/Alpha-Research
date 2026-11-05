@@ -10,6 +10,7 @@ import signal
 import subprocess
 import sys
 from datetime import datetime, time, timedelta, timezone
+from functools import lru_cache
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import foundation_materials as materials
@@ -154,10 +155,23 @@ def _extract_child(raw, selected):
     return pages
 
 
+def _extractor_hash():
+    path = Path(__file__).resolve()
+    return ev.sha(ev.read_local(path.parent, path.name))
+
+
 def extract_pages(raw, selected):
-    """No shells, network configuration, credentials or unbounded parser process."""
+    """Memoize only deterministic parsing; callers still verify bytes and seals."""
     if len(raw) > ev.MAX_FILE:
         _fail('PDF_SIZE_LIMIT')
+    return dict(_cached_pdf(bytes(raw), tuple(selected), _extractor_hash()))
+
+
+@lru_cache(maxsize=8)
+def _cached_pdf(raw, selected, extractor_hash):
+    """At most eight bounded PDFs; immutable results cannot be modified by callers."""
+    if _extractor_hash() != extractor_hash:
+        _fail('PDF_EXTRACTOR_CHANGED')
     env = {k: os.environ[k] for k in ('PATH', 'LANG', 'LC_ALL') if k in os.environ}
     env.update(AR_OFFLINE='1', PYTHONDONTWRITEBYTECODE='1')
     process = subprocess.Popen([sys.executable, '-I', '-B', str(Path(__file__).resolve()), '--extract', json.dumps(selected)],
@@ -172,7 +186,9 @@ def extract_pages(raw, selected):
         pages = ev.parse(output)
         if set(pages) != {str(p) for p in selected} or any(type(x) is not str for x in pages.values()):
             _fail('PDF_EXTRACTION_REFUSED')
-        return pages
+        if _extractor_hash() != extractor_hash:
+            _fail('PDF_EXTRACTOR_CHANGED')
+        return tuple(sorted(pages.items()))
     finally:
         try:
             os.killpg(process.pid, signal.SIGKILL)

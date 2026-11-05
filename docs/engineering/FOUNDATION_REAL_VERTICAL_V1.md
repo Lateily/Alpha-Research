@@ -28,6 +28,11 @@ acceptance are isolated; production and the running shared service are unchanged
 - New earnings submissions carry expected workspace ID and code SHA. Retention
   references the original job seal (which binds the complete deep archive),
   keeping the existing global path-depth and file-size limits unchanged.
+- Repeated PDF extraction may reuse a bounded eight-entry pure derivation memo,
+  keyed by actual PDF bytes, physical pages and extractor-source hash. Each call
+  receives a new result dictionary. File inventories, independent pins, quotes,
+  cutoff checks and output seals are still checked on every reopening; no seal,
+  permission, registry validation or human review status is cached.
 
 ## Release Gates
 

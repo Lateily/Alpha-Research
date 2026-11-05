@@ -160,7 +160,9 @@ jobs:
           python3 -B tests/test_foundation_intake.py
           python3 -B tests/test_foundation_research.py
           python3 -B tests/test_foundation_results.py
-          python3 -B -m unittest tests.test_foundation_observation tests.test_foundation_local_store tests.test_workbench_shared_material -q
+          python3 -B -m unittest discover -s tests -p test_foundation_observation.py -q
+          python3 -B -m unittest discover -s tests -p test_foundation_local_store.py -q
+          python3 -B -m unittest discover -s tests -p test_workbench_shared_material.py -q
           python3 -B tests/test_shared_research_library.py
           python3 -B tests/test_foundation_quarantine.py
           python3 -B tests/test_endpoint_contracts.py
