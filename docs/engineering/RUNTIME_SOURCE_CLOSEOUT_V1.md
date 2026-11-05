@@ -75,6 +75,8 @@ before project imports; -B alone does not stop reads of ignored cached code.
 This small renderer bootstrap change leaves queue, rendering and token rules intact.
 The supervisor and generated template bootstrap from the trusted host interpreter
 with site activation disabled; they must not execute a venv before verifying it.
+Entry import guards also refuse SourcelessFileLoader modules: changing the cache
+prefix alone does not block a standalone ignored .pyc without its source file.
 
 ## Acceptance
 

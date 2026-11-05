@@ -167,6 +167,23 @@ class RuntimeServiceTests(unittest.TestCase):
             self.assertEqual(command[0],host)
             self.assertIn('-S',command)
 
+    def test_operator_and_worker_refuse_sourceless_modules(self):
+        repo=Path(__file__).resolve().parents[1]
+        for entry in ('workbench_runtime.py','workbench_shared_worker.py'):
+            with self.subTest(entry=entry), tempfile.TemporaryDirectory() as tmp:
+                root=Path(tmp).resolve(); (root/entry).write_bytes((repo/'scripts/llm'/entry).read_bytes())
+                payload=root/'payload.py'; payload.write_text("print('UNPINNED_SOURCELESS_EXECUTED')\n")
+                py_compile.compile(str(payload),cfile=str(root/'hashlib.pyc'),doraise=True)
+                if entry=='workbench_runtime.py':
+                    (root/'workbench_runtime_env.py').write_text('import hashlib\n')
+                    (root/'workbench_runtime_service.py').write_text('')
+                else:
+                    (root/'workbench_evidence.py').write_text('import hashlib\n')
+                result=subprocess.run([sys.executable,'-I','-B',str(root/entry),'--help'],capture_output=True,text=True)
+                self.assertNotIn('UNPINNED_SOURCELESS_EXECUTED',result.stdout)
+                self.assertIn('SOURCELESS_MODULE_REFUSED',result.stderr)
+                self.assertNotEqual(result.returncode,0)
+
     def test_code_assets_and_environment_are_rechecked(self):
         m = self.module()
         with tempfile.TemporaryDirectory() as tmp:

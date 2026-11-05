@@ -6,6 +6,15 @@ if __name__ == "__main__":
     # governance-mutation: RUNTIME_WORKER_BYTECODE
     sys.pycache_prefix = "/dev/null"
     sys.dont_write_bytecode = True
+    import importlib.machinery
+    class _SourceOnlyImports:
+        def find_spec(self, fullname, path=None, target=None):
+            spec = importlib.machinery.PathFinder.find_spec(fullname, path)
+            # governance-mutation: RUNTIME_WORKER_SOURCELESS
+            if spec is not None and isinstance(spec.loader, importlib.machinery.SourcelessFileLoader):
+                raise ImportError('SOURCELESS_MODULE_REFUSED')
+            return None
+    sys.meta_path.insert(0, _SourceOnlyImports())
 
 import json
 import os

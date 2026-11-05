@@ -42,6 +42,7 @@ build has no final runtime.json and is not accepted. Preserve failures for revie
 Manifest covers exact files/modes including any bytecode; unknown files fail.
 The operator and renderer bypass source-tree bytecode before importing project
 modules. Git concealment flags cannot hide edits from the direct HEAD-blob check.
+Standalone sourceless .pyc modules are refused before project imports too.
 Host stdlib/OS remain prerequisites, not a bundled or cross-OS image.
 
 ## Isolated Start And Recovery

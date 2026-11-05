@@ -199,6 +199,12 @@ class MutationCase:
 
 
 MUTATIONS: tuple[MutationCase, ...] = (
+    MutationCase("RUNTIME_ENTRY_SOURCELESS", "Isolated service", "scripts/llm/workbench_runtime.py", "tests/test_workbench_runtime_service.py",
+                 "if spec is not None and isinstance(spec.loader, importlib.machinery.SourcelessFileLoader):", "if False:",
+                 "test_operator_and_worker_refuse_sourceless_modules", "Ignored bytecode without source cannot execute before operator verification."),
+    MutationCase("RUNTIME_WORKER_SOURCELESS", "Isolated service", "scripts/llm/workbench_shared_worker.py", "tests/test_workbench_runtime_service.py",
+                 "if spec is not None and isinstance(spec.loader, importlib.machinery.SourcelessFileLoader):", "if False:",
+                 "test_operator_and_worker_refuse_sourceless_modules", "Renderer bootstrap must also refuse sourceless project modules."),
     MutationCase("RUNTIME_TRUSTED_BOOTSTRAP", "Isolated service", "scripts/llm/workbench_runtime_service.py", "tests/test_workbench_runtime_service.py",
                  "command=[environment_info['base_executable'],'-I','-B','-S',", "command=[str(environment_root/'venv/bin/python3'),'-I','-B','-S',",
                  "test_launch_template_uses_trusted_host_before_checking_venv", "Do not execute the environment being verified as its own bootstrap."),
