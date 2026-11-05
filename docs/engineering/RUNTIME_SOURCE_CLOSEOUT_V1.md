@@ -67,7 +67,7 @@ market/model request, methodology change, new research workflow or source licens
 Private real two-computer acceptance remains deferred. This work may prepare a
 later deployment but cannot claim it occurred.
 
-Review hardening: compare every execution/runtime file directly with its HEAD
+Review hardening: compare every tracked file directly with its HEAD
 blob, not only Git status (which index flags can conceal). Runtime hashing checks
 descriptor and final-path identity/size/timestamps before and after reading.
 Operator and renderer entry points set a non-directory bytecode-cache prefix
@@ -77,6 +77,9 @@ The supervisor and generated template bootstrap from the trusted host interprete
 with site activation disabled; they must not execute a venv before verifying it.
 Entry import guards also refuse SourcelessFileLoader modules: changing the cache
 prefix alone does not block a standalone ignored .pyc without its source file.
+Identity verification reads the full HEAD tree in one Git object batch, including
+startup helpers outside the old execution list; it imports no application helper
+before checking those bytes. Runtime data belongs outside this clean code root.
 
 ## Acceptance
 

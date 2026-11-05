@@ -118,14 +118,17 @@ class RuntimeServiceTests(unittest.TestCase):
             def git(*args):
                 return subprocess.check_output(['/usr/bin/git','-c','core.hooksPath=/dev/null','-c','user.name=Fixture',
                                                 '-c','user.email=fixture@example.com','-C',str(root),*args],stderr=subprocess.DEVNULL)
-            names=sorted(set((*EXECUTION_FILES,*m.RUNTIME_FILES)))
+            helper='experiments/research_funnel/knowledge_cards.py'
+            names=sorted(set((*EXECUTION_FILES,*m.RUNTIME_FILES,helper)))
             for name in names:
                 path=root/name; path.parent.mkdir(parents=True,exist_ok=True); path.write_text('VALUE = 1\n')
             git('init','-q'); git('add','--',*names); git('commit','-qm','Synthetic runtime identity')
             before=m.code_identity(root)
-            name='scripts/llm/workbench_runtime.py'; git('update-index','--assume-unchanged',name)
-            (root/name).write_text('VALUE = 2\n'); self.assertEqual(git('status','--porcelain'),b'')
-            with self.assertRaisesRegex(ValueError,'SERVICE_SOURCE_NOT_COMMITTED'): m.code_identity(root)
+            for name in ('scripts/llm/workbench_runtime.py',helper):
+                git('update-index','--assume-unchanged',name)
+                (root/name).write_text('VALUE = 2\n'); self.assertEqual(git('status','--porcelain'),b'')
+                with self.subTest(path=name), self.assertRaisesRegex(ValueError,'SERVICE_SOURCE_NOT_COMMITTED'): m.code_identity(root)
+                (root/name).write_text('VALUE = 1\n'); git('update-index','--no-assume-unchanged',name)
             self.assertEqual(len(before['code_sha']),40)
 
     def test_operator_and_worker_bypass_ignored_bytecode(self):

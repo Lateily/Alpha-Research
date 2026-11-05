@@ -215,7 +215,7 @@ MUTATIONS: tuple[MutationCase, ...] = (
                  "if identity(before)!=identity(os.fstat(stream.fileno())) or identity(before)!=identity(path.lstat()):", "if False:",
                  "test_in_place_change_and_replacement_during_hash_are_refused", "Reading an old chunk cannot attest changed final bytes."),
     MutationCase("RUNTIME_COMMITTED_BYTES", "Isolated service", "scripts/llm/workbench_runtime_service.py", "tests/test_workbench_runtime_service.py",
-                 "if any(digest!=ev.sha(git('show',sha+':'+name,raw=True)) for name,digest in hashes.items()):", "if False:",
+                 "if hashes!=expected:", "if False:",
                  "test_hidden_index_edits_cannot_claim_the_committed_sha", "Index concealment flags cannot bless uncommitted runtime bytes."),
     MutationCase("RUNTIME_ENTRY_BYTECODE", "Isolated service", "scripts/llm/workbench_runtime.py", "tests/test_workbench_runtime_service.py",
                  'sys.pycache_prefix = "/dev/null"', 'sys.pycache_prefix = None',

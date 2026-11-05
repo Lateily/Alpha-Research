@@ -26,19 +26,40 @@ FIELDS = {'schema','root','code_root','environment_root','environment_hash','cod
 
 def code_identity(root):
     root = runtime.safe_path(root)
-    def git(*args, raw=False):
+    def git(*args, raw=False, input_data=None):
         result = subprocess.run(['/usr/bin/git','-c','core.fsmonitor=false','-C',str(root),*args],
                                 env={**runtime.clean_environment(root),'GIT_CONFIG_NOSYSTEM':'1','GIT_CONFIG_GLOBAL':'/dev/null'},
-                                capture_output=True, timeout=30, check=True)
+                                input=input_data, capture_output=True, timeout=30, check=True)
         return result.stdout if raw else result.stdout.decode().strip()
     if Path(git('rev-parse','--show-toplevel')).resolve() != root: raise ValueError('SERVICE_CODE_ROOT')
     sha = git('rev-parse','HEAD')
     # governance-mutation: RUNTIME_SERVICE_CLEAN_CODE
     if git('status','--porcelain','--untracked-files=normal'): raise ValueError('SERVICE_CODE_DIRTY')
-    from workbench_shared_workspace import EXECUTION_FILES
-    hashes = {name: runtime.file_hash(root/name) for name in (*EXECUTION_FILES,*RUNTIME_FILES)}
+    # Read the HEAD tree, not the index's visibility flags or a hand-maintained
+    # import list. Do not import application helpers before verifying their bytes.
+    entries=[]
+    for record in git('ls-tree','-r','-z',sha,raw=True).split(b'\0'):
+        if not record: continue
+        try:
+            metadata,name=record.split(b'\t',1); mode,kind,oid=metadata.split(b' ')
+            if mode not in {b'100644',b'100755'} or kind!=b'blob': raise ValueError
+            entries.append((name.decode('utf-8'),oid))
+        except (ValueError,UnicodeError): raise ValueError('SERVICE_TREE_ENTRY_INVALID') from None
+    if not entries or len(entries)>10000: raise ValueError('SERVICE_TREE_SIZE_LIMIT')
+    objects=git('cat-file','--batch',raw=True,input_data=b''.join(oid+b'\n' for _,oid in entries))
+    if len(objects)>256*1024*1024: raise ValueError('SERVICE_TREE_SIZE_LIMIT')
+    offset=0; expected={}; hashes={}
+    for name,oid in entries:
+        end=objects.find(b'\n',offset)
+        header=objects[offset:end].split(b' ')
+        if end<0 or len(header)!=3 or header[:2]!=[oid,b'blob'] or not header[2].isdigit():
+            raise ValueError('SERVICE_GIT_OBJECT_INVALID')
+        size=int(header[2]); start=end+1; offset=start+size+1
+        if objects[start+size:offset]!=b'\n': raise ValueError('SERVICE_GIT_OBJECT_INVALID')
+        expected[name]=ev.sha(objects[start:start+size]); hashes[name]=runtime.file_hash(root/name)
+    if offset!=len(objects): raise ValueError('SERVICE_GIT_OBJECT_INVALID')
     # governance-mutation: RUNTIME_COMMITTED_BYTES
-    if any(digest!=ev.sha(git('show',sha+':'+name,raw=True)) for name,digest in hashes.items()):
+    if hashes!=expected:
         raise ValueError('SERVICE_SOURCE_NOT_COMMITTED')
     if git('rev-parse','HEAD') != sha: raise ValueError('SERVICE_CODE_CHANGED')
     return {'code_sha':sha,'source_tree_hash':ev.sealed(hashes)}
