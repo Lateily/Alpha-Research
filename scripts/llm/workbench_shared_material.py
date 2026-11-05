@@ -90,12 +90,14 @@ def register(inputs, library_root, pack_root, *, expected_library_hash, expected
         inputs._capacity(db, entry['input_hash'], entry['publication_fingerprint'], entry['attempt_fingerprint'])
         target = inputs.base / 'material-packs' / entry['input_hash']
         durable_directory(target.parent)
+        work = inputs.store.path.parent / 'input-write-evidence' / entry['input_hash']
+        durable_directory(work)
+        from workbench_shared_inputs import _new_or_identical
+        _new_or_identical(work / 'material-intent.json', ev.canonical(entry).encode(), evidence_root=work / 'writes')
         # governance-mutation: SHARED_MATERIAL_REGISTRATION_RESUME
         if target.exists():
             verify_input(target, value)
         else:
-            work = inputs.store.path.parent / 'input-write-evidence' / entry['input_hash']
-            durable_directory(work)
             attempts = list(work.glob('material-attempt-*'))
             if len(attempts) >= 3: raise ValueError('SHARED_MATERIAL_REGISTRATION_RECOVERY_REQUIRED')
             staging = work / ('material-attempt-' + uuid.uuid4().hex)
@@ -103,8 +105,7 @@ def register(inputs, library_root, pack_root, *, expected_library_hash, expected
             os.rename(staging, target)
             from workbench_backup import fsync_directory
             fsync_directory(target.parent); fsync_directory(work)
-        from workbench_shared_inputs import _new_or_identical
-        _new_or_identical(inputs.base / 'envelopes' / (sid + '.json'), ev.canonical(entry).encode())
+        _new_or_identical(inputs.base / 'envelopes' / (sid + '.json'), ev.canonical(entry).encode(), evidence_root=work / 'writes')
         db.execute('INSERT INTO shared_inputs VALUES (?, ?, ?)', (sid, entry['input_hash'], ev.canonical(entry)))
     return inputs._descriptor(inputs.verify(sid))
 

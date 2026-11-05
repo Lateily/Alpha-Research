@@ -16680,7 +16680,7 @@ MUTATIONS = MUTATIONS + (
     MutationCase(
         mutation_id='SHARED_MATERIAL_BACKUP_BINARY', component='Shared earnings vertical',
         source_path='scripts/llm/workbench_backup.py', test_script='tests/test_workbench_shared_material.py',
-        before="                    if not bound or not raw.startswith(b'%PDF-'):",
+        before="                    if not recovered_prefix and (not bound or not raw.startswith(b'%PDF-')):",
         after="                    if False:", expected_failure_marker='test_existing_queue_seals_archive_query_and_backup',
         rationale='Only registered original PDF bytes may bypass text decoding in a backup.',
     ),

@@ -169,19 +169,49 @@ class SharedMaterialTests(unittest.TestCase):
         with mock.patch.object(material, '_copy', side_effect=crash):
             with self.assertRaises(OSError): material.register(queue.inputs, self.fixture.library, self.pack, **params)
         before = {p for p in (queue.store.path.parent / 'input-write-evidence').rglob('*') if p.is_file()}
+        partial = next(p for p in before if p.suffix == '.pdf')
+        partial.write_bytes(partial.read_bytes()[:17])
         entry = material.register(queue.inputs, self.fixture.library, self.pack, **params)
         self.assertEqual(queue.inputs.verify(entry['snapshot_id'])['input_hash'], entry['input_hash'])
         self.assertTrue(all(p.exists() for p in before))
+        import workbench_backup as backup
+        backed = backup.backup_shared(queue.store, self.root / 'recovered-copy-backup')
+        self.assertEqual(backed['status'], 'LOCAL_SHARED_BACKUP_VERIFIED')
+        partial.write_bytes(b'%PDF-1.7\nnot a prefix of the registered original\n')
+        with self.assertRaises(ValueError): backup.backup_shared(queue.store, self.root / 'rejected-copy-backup')
 
     def test_envelope_write_interruption_reuses_only_verified_pool(self):
         queue, view, _ = self.queue(register=False)
         params = dict(expected_library_hash=self.fixture.request['expected_library_hash'], expected_pack_hash=self.prepared['pack_hash'])
         import workbench_shared_inputs as inputs
-        with mock.patch.object(inputs, '_new_or_identical', side_effect=OSError('injected envelope interruption')):
+        original = inputs._new_or_identical
+        def stop_envelope(path, *args, **kwargs):
+            if Path(path).parent.name == 'envelopes': raise OSError('injected envelope interruption')
+            return original(path, *args, **kwargs)
+        with mock.patch.object(inputs, '_new_or_identical', side_effect=stop_envelope):
             with self.assertRaises(OSError): material.register(queue.inputs, self.fixture.library, self.pack, **params)
         try: entry = material.register(queue.inputs, self.fixture.library, self.pack, **params)
         except (OSError, ValueError) as error: self.fail('Verified registration must resume: ' + type(error).__name__)
         self.assertEqual(queue.inputs.verify(entry['snapshot_id'])['input_hash'], entry['input_hash'])
+        import workbench_backup as backup
+        backed = backup.backup_shared(queue.store, self.root / 'recovered-envelope-backup')
+        self.assertEqual(backed['status'], 'LOCAL_SHARED_BACKUP_VERIFIED')
+
+    def test_partial_atomic_envelope_write_remains_backup_recoverable(self):
+        import workbench_backup as backup
+        queue, view, _ = self.queue(register=False)
+        params = dict(expected_library_hash=self.fixture.request['expected_library_hash'], expected_pack_hash=self.prepared['pack_hash'])
+        original = backup.os.link
+        def stop_link(source, destination, *args, **kwargs):
+            if Path(destination).parent.name == 'envelopes': raise OSError('injected before envelope publication')
+            return original(source, destination, *args, **kwargs)
+        with mock.patch.object(backup.os, 'link', side_effect=stop_link):
+            with self.assertRaises(OSError): material.register(queue.inputs, self.fixture.library, self.pack, **params)
+        partials = list((queue.store.path.parent / 'input-write-evidence').rglob('*.partial'))
+        self.assertTrue(partials)
+        material.register(queue.inputs, self.fixture.library, self.pack, **params)
+        self.assertTrue(all(p.exists() for p in partials))
+        self.assertEqual(backup.backup_shared(queue.store, self.root / 'atomic-backup')['status'], 'LOCAL_SHARED_BACKUP_VERIFIED')
 
     def test_submission_is_bound_to_workspace_and_code(self):
         from workbench_workspace import WorkspaceError
