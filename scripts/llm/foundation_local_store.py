@@ -2,7 +2,9 @@
 from __future__ import annotations
 
 from pathlib import Path
-import shutil
+import hashlib
+import os
+import stat
 
 import foundation_preservation as preservation
 import workbench_evidence as ev
@@ -11,7 +13,8 @@ from workbench_backup import durable_directory, fsync_directory, write_new
 
 def _destination(value, sources):
     root = Path(value).absolute()
-    if root.exists() or root.is_symlink() or any(p.is_symlink() for p in root.parents):
+    # governance-mutation: FOUNDATION_LOCAL_PARENT_ALIAS
+    if '..' in root.parts or root.exists() or root.is_symlink() or any(p.is_symlink() for p in root.parents):
         raise ValueError('LOCAL_STORE_NEW_ROOT_REQUIRED')
     for source in sources:
         source = Path(source).absolute()
@@ -23,6 +26,49 @@ def _destination(value, sources):
 def _inventory(root):
     return preservation._inventory(root, max_bytes=preservation.MAX_TOTAL_BYTES,
                                     max_entries=preservation.MAX_ENTRIES)
+
+
+def _reserve(root):
+    durable_directory(root.parent)
+    # governance-mutation: FOUNDATION_LOCAL_EXCLUSIVE_ROOT
+    root.mkdir(mode=0o700)  # Exclusive: never adopt a concurrent directory.
+    fsync_directory(root); fsync_directory(root.parent)
+
+
+def _copy(source, destination, inventory):
+    from foundation_sources import _open_readonly
+    _reserve(destination)
+    for name in inventory['directories']:
+        durable_directory(destination / name)
+    total = 0
+    for name, expected in inventory['files'].items():
+        source_fd = _open_readonly(Path(source) / name)
+        with os.fdopen(source_fd, 'rb') as reader:
+            before = os.fstat(reader.fileno())
+            if not stat.S_ISREG(before.st_mode) or before.st_size > preservation.MAX_FILE_BYTES:
+                raise ValueError('LOCAL_STORE_SOURCE_FILE_INVALID')
+            target = destination / name
+            durable_directory(target.parent)
+            fd = os.open(target, os.O_CREAT | os.O_EXCL | os.O_WRONLY | os.O_NOFOLLOW, 0o600)
+            checksum, size = hashlib.sha256(), 0
+            with os.fdopen(fd, 'wb') as writer:
+                while True:
+                    block = reader.read(min(preservation.CHUNK_BYTES, before.st_size - size + 1))
+                    if not block: break
+                    size += len(block); total += len(block)
+                    if size > before.st_size or total > inventory['total_bytes']:
+                        raise ValueError('LOCAL_STORE_COPY_SIZE_LIMIT')
+                    writer.write(block); checksum.update(block)
+                # governance-mutation: FOUNDATION_LOCAL_PAYLOAD_DURABLE
+                writer.flush(); os.fsync(writer.fileno())
+            if (size != before.st_size or checksum.hexdigest() != expected
+                    or preservation._stamp(before) != preservation._stamp(os.fstat(reader.fileno()))):
+                raise ValueError('LOCAL_STORE_SOURCE_CHANGED')
+    for path in sorted((p for p in destination.rglob('*') if p.is_dir()), reverse=True):
+        fsync_directory(path)
+    fsync_directory(destination)
+    if _inventory(destination) != inventory:
+        raise ValueError('LOCAL_STORE_COPY_INVENTORY_CONFLICT')
 
 
 def _trust(root):
@@ -43,12 +89,14 @@ def create_generation(packages, destination, *, created_at, trust_root=None):
     sources = {row['package_id']: Path(row['local_root']) for row in packages}
     root = _destination(destination, [*sources.values(), *([trust_root] if trust_root else [])])
     trust = _trust(Path(trust_root)) if trust_root else None
-    durable_directory(root)
+    _reserve(root)
     durable_directory(root / 'packages')
     for identity, source in sources.items():
-        shutil.copytree(source, root / 'packages' / identity, symlinks=True)
+        row = next(row for row in manifest['packages'] if row['package_id'] == identity)
+        _copy(source, root / 'packages' / identity,
+              {key: row[key] for key in ('files', 'directories', 'total_bytes')})
     if trust_root:
-        shutil.copytree(trust_root, root / 'trust', symlinks=True)
+        _copy(trust_root, root / 'trust', _inventory(Path(trust_root)))
         if _trust(root / 'trust') != trust or _trust(Path(trust_root)) != trust:
             raise ValueError('LOCAL_STORE_TRUST_CHANGED')
     preservation.verify_preservation_copy(manifest,
@@ -99,8 +147,7 @@ def restore_generation(source, destination, *, expected_generation_hash):
     source = preservation._root(source)
     expected = verify_generation(source, expected_generation_hash=expected_generation_hash)
     target = _destination(destination, [source])
-    durable_directory(target.parent)
-    shutil.copytree(source, target, symlinks=True)
+    _copy(source, target, _inventory(source))
     restored = verify_generation(target, expected_generation_hash=expected_generation_hash)
     if verify_generation(source, expected_generation_hash=expected_generation_hash) != restored or restored != expected:
         raise ValueError('LOCAL_STORE_RESTORE_CHANGED')

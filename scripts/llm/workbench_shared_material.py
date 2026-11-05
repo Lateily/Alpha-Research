@@ -1,7 +1,6 @@
 """Registered earnings packs and immutable per-job archives; metadata sharing only."""
 from __future__ import annotations
 
-import shutil
 import uuid
 from pathlib import Path
 
@@ -11,6 +10,7 @@ import foundation_results as results
 import workbench_earnings_trial as earnings
 import workbench_evidence as ev
 from workbench_backup import durable_directory, write_new
+from foundation_local_store import _destination, _reserve, _copy, _inventory
 
 SCHEMA = 'ar.shared-material-input.v1'
 KIND = 'earnings-review'
@@ -52,16 +52,10 @@ def envelope(value):
 
 
 def copy_input(library_root, pack_root, target, value):
-    target = Path(target).absolute()
-    if target.exists() or any(p.is_symlink() for p in (target, *target.parents)):
-        raise ValueError('SHARED_MATERIAL_NEW_ROOT_REQUIRED')
-    for source in (library_root, pack_root):
-        source = Path(source).absolute()
-        if source == target or source in target.parents or target in source.parents:
-            raise ValueError('SHARED_MATERIAL_ROOT_OVERLAP')
-    durable_directory(target)
-    shutil.copytree(library_root, target / 'library', symlinks=True)
-    shutil.copytree(pack_root, target / 'pack', symlinks=True)
+    target = _destination(target, [library_root, pack_root])
+    _reserve(target)
+    _copy(library_root, target / 'library', _inventory(Path(library_root)))
+    _copy(pack_root, target / 'pack', _inventory(Path(pack_root)))
     verify_input(target, value)
     if snapshot(library_root, pack_root, expected_library_hash=value['library_hash'],
                 expected_pack_hash=value['pack_hash']) != value:

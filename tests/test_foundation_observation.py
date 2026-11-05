@@ -4,7 +4,7 @@ from pathlib import Path
 import sys
 import tempfile
 import unittest
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'scripts/llm'))
@@ -15,6 +15,8 @@ class ObservationTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory(); self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name).resolve() / 'observations'
+        guard = patch.object(observation, 'AUTHORIZATION_ROOT', self.root.parent / 'authorization-journal', create=True)
+        guard.start(); self.addCleanup(guard.stop)
 
     def response(self, api, params, fields):
         values = {'ts_code': params['ts_code'], 'trade_date': params['trade_date'],
@@ -39,6 +41,14 @@ class ObservationTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             observation.observe(self.root, grant, expected_grant_hash=observation.digest(grant), invoke=invoke)
         invoke.assert_not_called()
+
+    def test_changing_output_root_cannot_reuse_authorization(self):
+        invoke = Mock(side_effect=self.response); grant = observation.initial_grant()
+        observation.observe(self.root, grant, expected_grant_hash=observation.digest(grant), invoke=invoke)
+        with self.assertRaises((ValueError, OSError)):
+            observation.observe(self.root.parent / 'another-output', grant,
+                                expected_grant_hash=observation.digest(grant), invoke=invoke)
+        self.assertEqual(invoke.call_count, 2)
 
     def test_gap_retained_no_retry_and_separate_precise_grant(self):
         invoke = Mock(side_effect=RuntimeError('secret provider text'))

@@ -107,6 +107,16 @@ class SharedMaterialTests(unittest.TestCase):
         with queue.store.connect() as db:
             tables = {name: [list(row) for row in db.execute('SELECT * FROM ' + name)] for name in state.ALL_TABLES}
         verify_queue_state(queue.store.path.parent, tables)
+        import workbench_backup as backup
+        archive = self.root / 'backup'
+        backed = backup.backup_shared(queue.store, archive)
+        restored = backup.restore_shared(archive, self.root / 'cold-state')
+        self.assertEqual(restored['status'], 'LOCAL_SHARED_RESTORE_VERIFIED')
+        from foundation_retention import build_retention_pin, verify_retention_pin
+        pin = build_retention_pin(archive, expected_backup_hash=backed['backup_hash'],
+                                 snapshot_ids=[entry['snapshot_id']], job_ids=[job['job_id']],
+                                 created_at='2026-11-05T12:00:00+00:00')
+        self.assertEqual(verify_retention_pin(pin, archive, expected_backup_hash=backed['backup_hash']), pin)
 
     def test_kind_mismatch_and_default_off(self):
         from workbench_workspace import WorkspaceError
@@ -116,3 +126,23 @@ class SharedMaterialTests(unittest.TestCase):
         with self.assertRaises(WorkspaceError):
             queue.enqueue({'command_id': 'wrong-kind-material', 'kind': 'snapshot-brief', 'snapshot_id': entry['snapshot_id']}, 'owner@example.com')
         with self.assertRaises(WorkspaceError): queue.inputs.select_current(entry['snapshot_id'])
+
+    def test_http_registered_inputs_and_closed_submission(self):
+        import json
+        import nonprod_workbench as wb
+        from workbench_shared_test_support import OWNER, MEMBER, http
+        queue, view, entry = self.queue()
+        allow = self.root / 'members.json'; allow.write_text(json.dumps({'members': [MEMBER]})); allow.chmod(0o600)
+        private = wb.private_access('https://workbench.test-tail.ts.net:8443', OWNER, allow)
+        status, choices = http(queue.store, view.system, private, '/api/shared-workspace/research-inputs', shared=view)
+        self.assertEqual(status, 200); self.assertTrue(choices['enabled'])
+        self.assertEqual(choices['inputs'][0]['snapshot_id'], entry['snapshot_id'])
+        body = {'command_id': 'http-material-command', 'kind': material.KIND, 'snapshot_id': entry['snapshot_id']}
+        status, job = http(queue.store, view.system, private, '/api/workspace/job', body=body, login=MEMBER, shared=view)
+        self.assertEqual(status, 202)
+        self.assertEqual(view.job(job['job_id'], OWNER)['actor'], MEMBER)
+        status, rejected = http(queue.store, view.system, private, '/api/workspace/job',
+                               body={**body, 'path': '/etc/passwd'}, shared=view)
+        self.assertEqual(status, 400)
+        self.assertEqual(http(queue.store, view.system, private, '/api/shared-workspace/research-inputs',
+                              login='unknown@example.com', shared=view)[0], 403)

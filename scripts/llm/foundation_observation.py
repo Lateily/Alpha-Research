@@ -5,6 +5,7 @@ import hashlib
 import http.client
 import json
 import re
+import os
 from pathlib import Path
 import sys
 
@@ -16,6 +17,7 @@ from workbench_backup import durable_directory, write_new
 
 FIELDS = {'daily': ['close', 'trade_date', 'ts_code'],
           'moneyflow_dc': ['net_amount', 'trade_date', 'ts_code']}
+AUTHORIZATION_ROOT = Path.home() / '.ar/source-authorizations-v1'
 
 
 def digest(value):
@@ -72,8 +74,22 @@ def _grant(value, expected, previous):
 def observe(root, grant, *, expected_grant_hash, invoke, previous=None):
     grant = _grant(grant, expected_grant_hash, previous)
     root = Path(root).absolute()
-    if any(p.is_symlink() for p in (root, *root.parents)):
+    if '..' in root.parts or any(p.is_symlink() for p in (root, *root.parents)):
         raise ValueError('OBSERVATION_ROOT_SYMLINK')
+    authority = AUTHORIZATION_ROOT.absolute()
+    if '..' in authority.parts or any(p.is_symlink() for p in (authority, *authority.parents)):
+        raise ValueError('OBSERVATION_AUTHORITY_ROOT_INVALID')
+    durable_directory(authority)
+    if previous is not None:
+        prior = ev.parse(ev.read_local(authority, previous['grant_hash'] + '.result.json'))
+        if prior != {'receipt_hash': previous['receipt_hash']}:
+            raise ValueError('OBSERVATION_RETRY_EVIDENCE_CONFLICT')
+    # Independent of output destination; even an interrupted attempt consumes the grant.
+    try:
+        # governance-mutation: FOUNDATION_OBSERVATION_REPLAY
+        write_new(authority / (expected_grant_hash + '.json'), ev.canonical(grant).encode())
+    except FileExistsError:
+        raise ValueError('OBSERVATION_GRANT_ALREADY_CONSUMED') from None
     durable_directory(root)
     generation = root / expected_grant_hash
     # O_EXCL is the durable one-use reservation. Interrupted runs are not reused.
@@ -104,11 +120,15 @@ def observe(root, grant, *, expected_grant_hash, invoke, previous=None):
                'retry_status': 'SEPARATE_PRECISE_APPROVAL_REQUIRED'}
     receipt['receipt_hash'] = digest(receipt)
     write_new(generation / 'receipt.json', ev.canonical(receipt).encode())
+    write_new(authority / (expected_grant_hash + '.result.json'),
+              ev.canonical({'receipt_hash': receipt['receipt_hash']}).encode())
     return receipt
 
 
 def tushare_once(token):
     """Fixed host, one POST, no proxy/redirect/fallback, bounded read and timeout."""
+    if os.environ.get('AR_OFFLINE'):
+        raise ValueError('OBSERVATION_OFFLINE_REQUIRED_NO_NETWORK')
     if not isinstance(token, str) or not token or len(token) > 512 or any(c.isspace() for c in token):
         raise ValueError('OBSERVATION_TOKEN_UNAVAILABLE')
     def invoke(api, params, fields):

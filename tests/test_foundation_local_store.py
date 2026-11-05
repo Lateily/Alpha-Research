@@ -2,6 +2,8 @@ from pathlib import Path
 import sys
 import tempfile
 import unittest
+import os
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'scripts/llm'))
@@ -48,3 +50,32 @@ class LocalStoreTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             storage.restore_generation(self.root / 'generation', self.root / 'restored',
                                          expected_generation_hash='0' * 64)
+
+    def test_parent_alias_never_writes_into_source(self):
+        source = Path(self.packages[0]['local_root'])
+        alias = source.parent / 'alias'; alias.mkdir()
+        with self.assertRaises(ValueError): self.create(alias / '..' / source.name / 'nested')
+        self.assertFalse((source / 'nested').exists())
+        materials.verify_library(source, expected_library_hash=self.packages[0]['expected_content_hash'])
+
+    def test_concurrent_destination_is_not_adopted(self):
+        original = storage._destination
+        def race(*args):
+            target = original(*args); target.mkdir(); (target / 'unrelated.txt').write_text('not in request')
+            return target
+        with mock.patch.object(storage, '_destination', side_effect=race):
+            with self.assertRaises((ValueError, OSError)): self.create()
+        self.assertFalse((self.root / 'generation/generation.json').exists())
+
+    def test_payload_files_are_synced_before_success(self):
+        seen = set(); original = os.fsync
+        def sync(fd):
+            info = os.fstat(fd); seen.add((info.st_dev, info.st_ino)); return original(fd)
+        with mock.patch.object(os, 'fsync', side_effect=sync):
+            result = self.create()
+            storage.restore_generation(self.root / 'generation', self.root / 'restored',
+                                       expected_generation_hash=result['generation_hash'])
+        for base in (self.root / 'generation', self.root / 'restored'):
+            for path in base.rglob('*'):
+                if path.is_file():
+                    info = path.stat(); self.assertIn((info.st_dev, info.st_ino), seen, str(path))

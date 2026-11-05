@@ -27,6 +27,8 @@ EXECUTION_FILES = (
     "scripts/llm/foundation_research.py", "scripts/llm/foundation_materials.py", "scripts/llm/foundation_cli.py",
     "scripts/llm/foundation_results.py",
     "scripts/llm/workbench_shared_material.py",
+    "scripts/llm/foundation_local_store.py", "scripts/llm/foundation_preservation.py",
+    "scripts/llm/foundation_sources.py",
     "scripts/llm/workbench_research_library.py",
     "experiments/research_workflows/trial.py", "experiments/research_workflows/evidence.py",
     "experiments/research_workflows/renderers.py", "experiments/research_workflows/smc_annotation.py",
@@ -101,8 +103,11 @@ class SharedWorkspace:
         from workbench_shared_jobs import _output_root
         libraries = [self.research_library] if self.research_library else []
         if self.queue:
+            archived = 0
             for job in self.queue.jobs():
                 if job['kind'] != 'earnings-review' or job['status'] != 'SUCCEEDED': continue
+                archived += 1
+                if archived > 100: raise WorkspaceError('RESEARCH_LIBRARY_QUERY_CAPACITY', 409)
                 detail = self.queue.job(job['job_id'])
                 if detail['status'] != 'SUCCEEDED':
                     raise WorkspaceError('RESEARCH_LIBRARY_EVIDENCE_INVALID', 409)
