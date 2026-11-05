@@ -536,6 +536,8 @@ def make_handler(store, assets, origin, session, system=None, private=None, shar
                         state["access"] = identity
                         if shared is not None:
                             state["access"] = {**identity, "shared_workspace_v1": True}
+                            if shared.materials_enabled:
+                                state['access']['allowed_job_kinds'] = [*identity['allowed_job_kinds'], 'earnings-review']
                     self.reply(200, state)
                 elif shared is not None and self.path.split("?", 1)[0] == "/api/shared-workspace":
                     from urllib.parse import parse_qs
@@ -543,6 +545,8 @@ def make_handler(store, assets, origin, session, system=None, private=None, shar
                     if set(query) - {"page"} or (query and (len(query["page"]) != 1 or not re.fullmatch(r"[0-9]{1,3}", query["page"][0]))):
                         raise WorkbenchError("SHARED_PAGE_INVALID")
                     self.reply(200, shared.snapshot(identity["login"], page=int(query.get("page", ["0"])[0])))
+                elif shared is not None and self.path == '/api/shared-workspace/research-inputs':
+                    self.reply(200, shared.research_inputs(identity['login']))
                 elif shared is not None and self.path.startswith("/api/shared-workspace/jobs/"):
                     self.reply(200, shared.job(self.path.removeprefix("/api/shared-workspace/jobs/"), identity["login"]))
                 elif shared is not None and self.path.startswith("/api/shared-workspace/input-card/"):
@@ -622,7 +626,9 @@ def make_handler(store, assets, origin, session, system=None, private=None, shar
                 payload = decode_json(raw)
                 if identity:
                     workspace.exact(payload, {"command_id", "kind", "snapshot_id"} if shared is not None and shared.queue is not None else {"command_id", "kind"})
-                    if not isinstance(payload["kind"], str) or payload["kind"] not in {"observe", "snapshot-brief"}:
+                    allowed_kinds = {'observe', 'snapshot-brief'}
+                    if shared is not None and shared.materials_enabled: allowed_kinds.add('earnings-review')
+                    if not isinstance(payload["kind"], str) or payload["kind"] not in allowed_kinds:
                         raise WorkbenchError("PRIVATE_OPERATION_DISABLED", 403)
                 if self.path.startswith("/api/workspace/") and system is not None:
                     if shared is not None:
@@ -659,6 +665,7 @@ def main(argv=None):
     parser.add_argument("--owner-login", help="Exact owner Tailscale login; access identity is not research approval")
     parser.add_argument("--private-allowlist", type=Path, help="Outside-repo owner-owned mode0600 member allowlist")
     parser.add_argument("--shared-workspace-v1", action="store_true", help="Opt-in isolated persistent shared jobs; requires private access")
+    parser.add_argument('--shared-materials-v1', action='store_true', help='Opt-in registered earnings tasks; no content distribution')
     parser.add_argument("--governance-evidence-v1", action="store_true", help="Read operator-registered governance evidence from fixed isolated state; shared private mode only")
     parser.add_argument("--shared-import-once", type=Path, help="Explicit one-time frozen input import for shared mode; no automatic synchronizer")
     parser.add_argument("--read-only-auto-sync", action="store_true", help="Opt-in scoped file sync every 60 seconds; shared private mode and fixed source required")
@@ -675,6 +682,8 @@ def main(argv=None):
         raise WorkbenchError("READ_ONLY_SYNC_CONFIGURATION_REQUIRED", 403)
     if args.shared_workspace_v1 and private is None:
         raise WorkbenchError("SHARED_PRIVATE_MODE_REQUIRED", 403)
+    if args.shared_materials_v1 and (not args.shared_workspace_v1 or private is None):
+        raise WorkbenchError('SHARED_MATERIAL_PRIVATE_MODE_REQUIRED', 403)
     if args.governance_evidence_v1 and (not args.shared_workspace_v1 or private is None):
         raise WorkbenchError("GOVERNANCE_SHARED_PRIVATE_MODE_REQUIRED", 403)
     if args.shared_import_once and not args.shared_workspace_v1:
@@ -718,7 +727,8 @@ def main(argv=None):
         from workbench_shared_worker import SharedWorker
         shared = SharedWorkspace(system, governance_evidence_enabled=args.governance_evidence_v1,
                                  research_library_root=args.research_library_root,
-                                 research_library_hash=args.research_library_hash)
+                                 research_library_hash=args.research_library_hash,
+                                 materials_enabled=args.shared_materials_v1)
         inputs = FrozenInputs(store)
         if args.shared_import_once: inputs.import_once(args.shared_import_once)
         queue = SharedJobQueue(shared, inputs, shared._execution_identity["code_sha"])

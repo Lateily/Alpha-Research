@@ -82,10 +82,10 @@ export default function SharedWorkspace({ api, access, refreshRevision }) {
       if (request === detailSequence.current && actorContext.current === context) setDetailError(error.message);
     } finally { if (detailLoading.current === request) detailLoading.current = null; }
   }
-  async function run(kind) {
+  async function run(kind, registeredSnapshotId = null) {
     const context = actorContext.current;
     const workspaceId = visibleQuery.data?.my_workspace.workspace_id;
-    const snapshotId = visibleQuery.data?.common_data.current_snapshot_id;
+    const snapshotId = registeredSnapshotId || visibleQuery.data?.common_data.current_snapshot_id;
     if (!workspaceId || !snapshotId || sharedViewFreshness(visibleQuery).commonStale) return;
     const body = { command_id: `shared_${crypto.randomUUID().replaceAll('-', '')}`, kind, snapshot_id: snapshotId };
     setBusy(true);
@@ -145,7 +145,7 @@ export default function SharedWorkspace({ api, access, refreshRevision }) {
     {visiblePending.some(item => !item.job_id) && <div className="source-strip"><Status value="SUBMISSION_UNCONFIRMED" stale={freshness.commonStale} /></div>}
     {!syncView.canBrief && <div className="shared-error" role="status">{freshness.commonStale ? 'DISCONNECTED' : common?.error || 'NO_FROZEN_PUBLICATION'}</div>}
     <nav className="shared-tabs" aria-label="共享工作区视图">{views.map(([key, label, Icon]) => <button key={key} aria-current={view === key ? 'page' : undefined} onClick={() => { setView(key); setPage(0); }}><Icon size={16} />{label}</button>)}</nav>
-    {view === 'research' ? <ResearchLibrary api={api} renew={renew} login={access.login} codeSha={data?.execution_identity?.code_sha} parentStale={freshness.commonStale} refreshRevision={`${refreshRevision}:${libraryRefreshRevision}`} /> : view !== 'common' ? <>
+    {view === 'research' ? <ResearchLibrary api={api} renew={renew} login={access.login} codeSha={data?.execution_identity?.code_sha} parentStale={freshness.commonStale} refreshRevision={`${refreshRevision}:${libraryRefreshRevision}`} onRun={snapshotId => run('earnings-review', snapshotId)} busy={busy || pending.length >= 2} /> : view !== 'common' ? <>
       <div className="shared-toolbar"><span>{total} 个任务</span>{view === 'my' && <div><button disabled={busy || pending.length >= 2 || freshness.commonStale || !common?.current_snapshot_id} onClick={() => run('observe')}><Database size={16} />观察</button><button className="primary" disabled={busy || pending.length >= 2 || freshness.commonStale || !common?.current_snapshot_id} onClick={() => run('snapshot-brief')}><Play size={16} />{busy ? '提交中' : '生成简报'}</button>{pending.length > 0 && !busy && <button onClick={reload}><RefreshCw size={16} />核对原任务</button>}</div>}</div>
       {view === 'my' && visiblePending.filter(item => !item.job_id).map(item => <div className="source-strip" key={item.body.command_id}><code>{item.body.command_id}</code><span>{item.body.kind}</span><code>{item.body.snapshot_id}</code><button disabled={busy || freshness.commonStale} aria-label={`重试原提交 ${item.body.command_id}`} onClick={() => retry(item.body.command_id)}><RefreshCw size={16} />重试原提交</button></div>)}
       <div className="shared-job-list">{rows.map(job => <button className="shared-job-row" key={job.job_id} onClick={() => open(job.job_id)}>
@@ -168,7 +168,8 @@ export default function SharedWorkspace({ api, access, refreshRevision }) {
       {detailError && <div role="alert" className="shared-error">DISCONNECTED · {detailError}</div>}
       {detail ? <>{freshness.detailStale && <div className="shared-error" role="status">DISCONNECTED · STALE</div>}<div className="source-strip"><Status value={detail.status} stale={freshness.detailStale} /><code>{detail.actor}</code><code>{detail.workspace_id || 'LEGACY_UNATTRIBUTED'}</code></div><dl>{[['执行版本', detail.code_sha], ['输入 hash', detail.input_hash], ['输出 hash', detail.output_hash], ['失败原因', detail.error]].map(([label, value]) => <React.Fragment key={label}><dt>{label}</dt><dd><code>{value || 'NOT_PRODUCED'}</code></dd></React.Fragment>)}</dl>
         <div className="shared-toolbar"><button disabled={!freshness.downloadsEnabled} onClick={() => download(`${selected}.json`, detail)}><Download size={16} />任务回执</button>{detail.report && <><button disabled={!freshness.downloadsEnabled} onClick={() => download(`${selected}.md`, detail.report, 'text/markdown')}><Download size={16} />报告</button><button disabled={!freshness.downloadsEnabled} onClick={() => download(`${selected}-citations.json`, detail.citations)}><Download size={16} />引用</button></>}</div>
-        {detail.report && <pre className="shared-report">{detail.report}</pre>}<details><summary>步骤与引用</summary><pre>{JSON.stringify({ result: detail.result, citations: detail.citations }, null, 2)}</pre></details></> : !detailError && <p>WAIT</p>}
+        {detail.research && <><div className="source-strip"><Status value={detail.research.archive_status} stale={freshness.detailStale} /><Status value={detail.research.human_review} stale={freshness.detailStale} /><span>{detail.research.company} · {detail.research.research_date}</span><span>{detail.research.content_status}</span></div><dl>{[['原件截止', detail.research.source_cutoff_at], ['报告 SHA256', detail.research.report_sha256], ['回库 hash', detail.research.archive_library_hash]].map(([name,value]) => <React.Fragment key={name}><dt>{name}</dt><dd><code>{value}</code></dd></React.Fragment>)}</dl><div className="table-scroll"><table><thead><tr><th>问题</th><th>PDF SHA256</th><th>物理页 / 文本行</th></tr></thead><tbody>{detail.research.citation_locations.map((row,i) => <tr key={i}><td>{row.question_id}</td><td><code>{row.sha256}</code></td><td>{row.page} / {row.start}–{row.end}</td></tr>)}</tbody></table></div></>}
+        {detail.report && <pre className="shared-report">{detail.report}</pre>}<details><summary>步骤与引用</summary><pre>{JSON.stringify({ result: detail.result, citations: detail.citations, research: detail.research }, null, 2)}</pre></details></> : !detailError && <p>WAIT</p>}
     </section>}
   </div>;
 }

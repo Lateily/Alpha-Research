@@ -31,8 +31,11 @@ import workbench_snapshot_brief as brief
 from workbench_backup import durable_directory, fsync_directory, write_new
 from workbench_shared_inputs import validate_snapshot
 from workbench_workspace import WorkspaceError
+import workbench_shared_material as material
 
-KINDS = frozenset({"observe", "snapshot-brief"})
+KINDS = frozenset({"observe", "snapshot-brief", material.KIND})
+INPUT_SCHEMAS = {'observe': 'ar.shared-input.v1', 'snapshot-brief': 'ar.shared-input.v1',
+                 material.KIND: material.SCHEMA}
 SEAL_SCHEMA = "ar.shared-job-output.v1"
 BINDING_FIELDS = ("job_id", "workspace_id", "actor", "kind", "snapshot_id", "input_hash",
                   "code_sha", "source_tree_hash", "schema_version", "job_schema", "input_schema",
@@ -81,6 +84,9 @@ def _render_child(kind, frozen_root, output_root):
             or spec["input_hash"] != spec["snapshot"].get("frozen_input_hash")):
         raise WorkspaceError("SHARED_RENDER_INPUT_INVALID", 409)
     snapshot = spec["snapshot"]
+    if kind == material.KIND:
+        material.render(frozen_root, output_root / 'staging', snapshot)
+        return
     validate_snapshot(snapshot, frozen_root, sealed_originals=True)
     if kind == "snapshot-brief":
         brief.run_frozen(snapshot, frozen_root, output_root / "staging")
@@ -90,6 +96,8 @@ def _render_child(kind, frozen_root, output_root):
 
 
 def _output_result(kind, directory, snapshot):
+    if kind == material.KIND:
+        return material.verify_output(directory, snapshot)
     if kind == "snapshot-brief":
         receipt = brief.verify(directory)
         if ev.parse(ev.read_local(directory, "snapshot.json")) != snapshot:

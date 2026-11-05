@@ -26,6 +26,7 @@ EXECUTION_FILES = (
     "scripts/llm/workbench_earnings_trial.py", "scripts/llm/workbench_research.py",
     "scripts/llm/foundation_research.py", "scripts/llm/foundation_materials.py", "scripts/llm/foundation_cli.py",
     "scripts/llm/foundation_results.py",
+    "scripts/llm/workbench_shared_material.py",
     "scripts/llm/workbench_research_library.py",
     "experiments/research_workflows/trial.py", "experiments/research_workflows/evidence.py",
     "experiments/research_workflows/renderers.py", "experiments/research_workflows/smc_annotation.py",
@@ -67,13 +68,16 @@ def execution_identity(root: Path) -> dict:
 
 class SharedWorkspace:
     def __init__(self, system: Workspace, *, governance_evidence_enabled=False,
-                 research_library_root=None, research_library_hash=None):
+                 research_library_root=None, research_library_hash=None, materials_enabled=False):
         if not system.store.shared_v1 or not system.private_mode:
             raise WorkspaceError("SHARED_PRIVATE_MODE_REQUIRED", 403)
         self.system, self.store = system, system.store
         self._execution_identity = execution_identity(CODE_ROOT)
         self.queue = None
         self.sync = None
+        if type(materials_enabled) is not bool:
+            raise WorkspaceError('MATERIAL_CONFIGURATION_INVALID', 400)
+        self.materials_enabled = materials_enabled
         if type(governance_evidence_enabled) is not bool:
             raise WorkspaceError("GOVERNANCE_CONFIGURATION_INVALID", 400)
         self.governance_evidence_enabled = governance_evidence_enabled
@@ -85,11 +89,52 @@ class SharedWorkspace:
 
     def research_results(self, actor, *, industry_key=None, industry_taxonomy=None,
                          taxonomy_version=None, research_date=None, ts_code=None, page=0):
-        from workbench_research_library import projection
-        return projection(self.research_library, owner=self.identity(actor),
+        from workbench_research_library import projection, ResearchLibrary
+        owner = self.identity(actor)
+        query = dict(industry_key=industry_key, industry_taxonomy=industry_taxonomy,
+                     taxonomy_version=taxonomy_version, research_date=research_date, ts_code=ts_code)
+        if not self.materials_enabled:
+            return projection(self.research_library, owner=owner,
             code_sha=self._execution_identity['code_sha'], page=page, industry_key=industry_key,
             industry_taxonomy=industry_taxonomy, taxonomy_version=taxonomy_version,
             research_date=research_date, ts_code=ts_code)
+        from workbench_shared_jobs import _output_root
+        libraries = [self.research_library] if self.research_library else []
+        if self.queue:
+            for job in self.queue.jobs():
+                if job['kind'] != 'earnings-review' or job['status'] != 'SUCCEEDED': continue
+                detail = self.queue.job(job['job_id'])
+                if detail['status'] != 'SUCCEEDED':
+                    raise WorkspaceError('RESEARCH_LIBRARY_EVIDENCE_INVALID', 409)
+                output = _output_root(self.store.path.parent, job, {'attempt_id': job['attempt_id']}) / 'result'
+                libraries.append(ResearchLibrary(output / 'archive', detail['research']['archive_library_hash']))
+        class Collection:
+            def read(self, **filters):
+                views = [library.read(**filters) for library in libraries]
+                rows = [row for view in views for row in view['results']]
+                return {'results': rows, 'status': 'RESULTS_AVAILABLE_NOT_HUMAN_VERIFIED' if rows else 'EMPTY',
+                        'library_hash': evidence.sealed([view['library_hash'] for view in views])}
+        return projection(Collection(), owner=owner, code_sha=self._execution_identity['code_sha'], page=page, **query)
+
+    def research_inputs(self, actor):
+        from workbench_shared_inputs import FrozenInputs
+        from workbench_shared_material import SCHEMA
+        owner = self.identity(actor)
+        if not self.materials_enabled or self.queue is None:
+            return {'schema': 'ar.shared-research-inputs.v1', 'enabled': False, 'inputs': [], 'my_workspace': owner}
+        with self.store.connect() as db:
+            rows = db.execute('SELECT snapshot_id FROM shared_inputs ORDER BY rowid LIMIT 101').fetchall()
+        if len(rows) > 100: raise WorkspaceError('MATERIAL_INDEX_CAPACITY', 409)
+        inputs, result = FrozenInputs(self.store), []
+        for row in rows:
+            entry = inputs.verify(row[0])
+            if entry['schema'] != SCHEMA: continue
+            value = entry['snapshot']
+            result.append({key: entry[key] for key in ('snapshot_id', 'input_hash')} | {
+                key: value[key] for key in ('company', 'research_date', 'source_cutoff_at', 'pack_hash',
+                                            'human_review', 'content_sharing_allowed')})
+        return {'schema': 'ar.shared-research-inputs.v1', 'enabled': True, 'inputs': result,
+                'my_workspace': owner, 'consumer_code_sha': self._execution_identity['code_sha']}
 
     @staticmethod
     def _snapshot_id(value):
@@ -143,6 +188,7 @@ class SharedWorkspace:
         try:
             for sid in ids:
                 envelope = inputs.verify(sid)
+                if envelope['schema'] != 'ar.shared-input.v1': continue
                 verified_jobs = []
                 if (trade_date is None or trade_date == envelope["source_trade_date"]) and industry_key is None and ts_code is None:
                     for job in jobs:
@@ -239,7 +285,7 @@ class SharedWorkspace:
             return sorted(rows, key=lambda j: j["submitted_at"], reverse=True)[start:start + PAGE_SIZE]
         my_window, team_window = window(mine), window(jobs)
         latest = [next((job for job in reversed(mine) if job["kind"] == kind), None)
-                  for kind in ("observe", "snapshot-brief")]
+                  for kind in ("observe", "snapshot-brief", "earnings-review")]
         latest = [job for job in latest if job is not None]
         # The memo exists only for this request, never across reads or actors.
         verified_inputs = {}
@@ -254,7 +300,7 @@ class SharedWorkspace:
         if self.queue is not None:
             common.update(sync_status="EXPLICIT_IMPORT_ONLY", current_snapshot_id=None)
             with self.store.connect() as db:
-                latest_input = db.execute("SELECT snapshot_id FROM shared_inputs ORDER BY rowid DESC LIMIT 1").fetchone()
+                latest_input = db.execute("SELECT snapshot_id FROM shared_inputs WHERE json_extract(body, '$.schema')='ar.shared-input.v1' ORDER BY rowid DESC LIMIT 1").fetchone()
             if self.sync is not None:
                 state = self.sync.state()
                 common.update(sync=state, automatic_sync=True, sync_status=state["status"],

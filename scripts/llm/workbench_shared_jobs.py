@@ -9,7 +9,7 @@ from pathlib import Path
 import workbench_evidence as ev
 import workbench_shared_workspace as shared_module
 from workbench_shared_inputs import FrozenInputs
-from workbench_shared_worker import BINDING_FIELDS, KINDS, verify_seal
+from workbench_shared_worker import BINDING_FIELDS, KINDS, INPUT_SCHEMAS, verify_seal
 from workbench_workspace import WorkspaceError, exact, identifier
 
 JOB_SCHEMA = "ar.shared-job.v1"
@@ -35,7 +35,7 @@ def _accepted(events, job_id):
 def _check_job(job, row, events, identities):
     accepted = _accepted(events, row[0])
     if (job.get("job_id") != row[0] or job.get("command_id") != row[1] or job.get("job_schema") != JOB_SCHEMA
-            or job.get("schema_version") != shared_module.SCHEMA or job.get("input_schema") != "ar.shared-input.v1"
+            or job.get("schema_version") != shared_module.SCHEMA or job.get("input_schema") != INPUT_SCHEMAS.get(job.get('kind'))
             or job.get("kind") not in KINDS or job.get("status") not in ACTIVE | TERMINAL
             or identities.get(job.get("actor")) != job.get("workspace_id") or accepted is None):
         raise WorkspaceError("SHARED_JOB_BINDING_INVALID", 409)
@@ -128,6 +128,8 @@ class SharedJobQueue:
 
     def _compatible(self, db, row, job):
         _check_job(job, row, self.shared.system.events(db), dict(db.execute("SELECT login, workspace_id FROM shared_workspaces")))
+        if job['kind'] == 'earnings-review' and not self.shared.materials_enabled:
+            raise WorkspaceError('PRIVATE_OPERATION_DISABLED', 403)
         code = shared_module.execution_identity(shared_module.CODE_ROOT)
         if any(job[key] != code[key] or code[key] != self.shared._execution_identity[key] for key in ("code_sha", "source_tree_hash")):
             raise WorkspaceError("SHARED_RECOVERY_CODE_CHANGED", 409)
@@ -139,6 +141,9 @@ class SharedJobQueue:
     def enqueue(self, payload: dict, actor: str) -> dict:
         exact(payload, {"command_id", "kind", "snapshot_id"}); identifier(payload["command_id"])
         if payload["kind"] not in KINDS: raise WorkspaceError("PRIVATE_OPERATION_DISABLED", 403)
+        # governance-mutation: SHARED_MATERIAL_OPT_IN
+        if payload['kind'] == 'earnings-review' and not self.shared.materials_enabled:
+            raise WorkspaceError('PRIVATE_OPERATION_DISABLED', 403)
         owner = self.shared.identity(actor)
         request_hash = _request(payload, actor, owner["workspace_id"])
         with self.store.connect() as db:
@@ -155,6 +160,9 @@ class SharedJobQueue:
             if code != self.shared._execution_identity:
                 raise WorkspaceError("EXECUTION_CODE_CHANGED_RESTART_REQUIRED", 409)
             envelope = self.inputs.verify(payload["snapshot_id"])
+            # governance-mutation: SHARED_MATERIAL_KIND
+            if envelope['schema'] != INPUT_SCHEMAS[payload['kind']]:
+                raise WorkspaceError('SHARED_JOB_INPUT_KIND_CONFLICT', 409)
             active = [ev.parse(row[3]) for row in self._rows(db) if ev.parse(row[3])["status"] in ACTIVE]
             # governance-mutation: WORKBENCH_SHARED_QUEUE_LIMITS
             if len(active) >= 20 or sum(job["actor"] == actor for job in active) >= 2:
@@ -356,6 +364,14 @@ class SharedJobQueue:
         with self.store.connect() as db: _, job = self._load(db, job_id)
         job = self._view(job)
         detail = {**self.shared._metadata(job), "result": job["result"], "snapshot_id": job["snapshot_id"]}
+        if job['status'] == 'SUCCEEDED' and job['kind'] == 'earnings-review':
+            import workbench_shared_material as material
+            output = _output_root(self.store.path.parent, job, {'attempt_id': job['attempt_id']}) / 'result'
+            try:
+                envelope = self.inputs.verify(job['snapshot_id'])
+                detail['research'] = material.detail(output, envelope['snapshot'], envelope['frozen_root'])
+            except (OSError, ValueError, KeyError, TypeError):
+                detail.update(status='RECOVERY_REQUIRED', error='SHARED_OUTPUT_INTEGRITY_ERROR', result=None)
         if job["status"] == "SUCCEEDED" and job["kind"] == "snapshot-brief":
             output = _output_root(self.store.path.parent, job, {"attempt_id": job["attempt_id"]}) / "result"
             try:

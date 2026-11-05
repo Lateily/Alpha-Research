@@ -63,6 +63,16 @@ def arguments(argv=None):
     verify_research = commands.add_parser("research-pack-verify")
     verify_research.add_argument("--pack-root", required=True)
     verify_research.add_argument("--expected-pack-hash", required=True)
+    register = commands.add_parser('shared-material-register')
+    register.add_argument('--state-root', required=True)
+    register.add_argument('--request', required=True)
+    local = commands.add_parser('local-preserve')
+    local.add_argument('--request', required=True)
+    local.add_argument('--write-root', required=True)
+    restore = commands.add_parser('local-restore')
+    restore.add_argument('--source-root', required=True)
+    restore.add_argument('--write-root', required=True)
+    restore.add_argument('--expected-generation-hash', required=True)
     for name in ("preservation", "preservation-verify", "reconcile"):
         commands.add_parser(name).add_argument("--request", required=True)
     return parser.parse_args(argv)
@@ -80,6 +90,19 @@ def request_json(filename, *, required, optional=()):
 
 
 def execute(args):
+    if args.command == 'shared-material-register':
+        from nonprod_workbench import Store
+        from workbench_shared_inputs import FrozenInputs
+        from workbench_shared_material import register
+        value = request_json(args.request, required=('library_root', 'pack_root', 'expected_library_hash', 'expected_pack_hash'))
+        return register(FrozenInputs(Store(Path(args.state_root), shared_v1=True)), **value)
+    if args.command == 'local-preserve':
+        from foundation_local_store import create_generation
+        value = request_json(args.request, required=('packages', 'created_at'), optional=('trust_root',))
+        return create_generation(destination=args.write_root, **value)
+    if args.command == 'local-restore':
+        from foundation_local_store import restore_generation
+        return restore_generation(args.source_root, args.write_root, expected_generation_hash=args.expected_generation_hash)
     if args.command == "control":
         from foundation_control import reconcile_versions
         value = request_json(args.request, required=("expected_versions", "observations"))
