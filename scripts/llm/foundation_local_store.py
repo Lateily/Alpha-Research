@@ -24,7 +24,7 @@ def _destination(value, sources):
 
 
 def _inventory(root):
-    return preservation._inventory(root, max_bytes=preservation.MAX_TOTAL_BYTES,
+    return preservation._inventory(preservation._root(root), max_bytes=preservation.MAX_TOTAL_BYTES,
                                     max_entries=preservation.MAX_ENTRIES)
 
 
@@ -37,6 +37,7 @@ def _reserve(root):
 
 def _copy(source, destination, inventory):
     from foundation_sources import _open_readonly
+    source = preservation._root(source)
     _reserve(destination)
     for name in inventory['directories']:
         durable_directory(destination / name)
@@ -86,7 +87,7 @@ def _trust(root):
 
 def create_generation(packages, destination, *, created_at, trust_root=None):
     manifest = preservation.build_preservation_manifest(packages, created_at=created_at)
-    sources = {row['package_id']: Path(row['local_root']) for row in packages}
+    sources = {row['package_id']: preservation._root(row['local_root']) for row in packages}
     root = _destination(destination, [*sources.values(), *([trust_root] if trust_root else [])])
     trust = _trust(Path(trust_root)) if trust_root else None
     _reserve(root)

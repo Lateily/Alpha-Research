@@ -538,6 +538,8 @@ def make_handler(store, assets, origin, session, system=None, private=None, shar
                             state["access"] = {**identity, "shared_workspace_v1": True}
                             if shared.materials_enabled:
                                 state['access']['allowed_job_kinds'] = [*identity['allowed_job_kinds'], 'earnings-review']
+                                state['access']['scope'] = 'SHARED_RESULTS_AND_REGISTERED_EARNINGS_NO_APPROVAL'
+                                state['policy']['access_scope'] = state['access']['scope']
                     self.reply(200, state)
                 elif shared is not None and self.path.split("?", 1)[0] == "/api/shared-workspace":
                     from urllib.parse import parse_qs
@@ -625,7 +627,10 @@ def make_handler(store, assets, origin, session, system=None, private=None, shar
                     raise WorkbenchError("BODY_TRUNCATED")
                 payload = decode_json(raw)
                 if identity:
-                    workspace.exact(payload, {"command_id", "kind", "snapshot_id"} if shared is not None and shared.queue is not None else {"command_id", "kind"})
+                    fields = {"command_id", "kind", "snapshot_id"} if shared is not None and shared.queue is not None else {"command_id", "kind"}
+                    if shared is not None and shared.queue is not None and isinstance(payload, dict) and payload.get('kind') == 'earnings-review':
+                        fields |= {'expected_workspace_id', 'expected_code_sha'}
+                    workspace.exact(payload, fields)
                     allowed_kinds = {'observe', 'snapshot-brief'}
                     if shared is not None and shared.materials_enabled: allowed_kinds.add('earnings-review')
                     if not isinstance(payload["kind"], str) or payload["kind"] not in allowed_kinds:

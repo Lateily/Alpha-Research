@@ -39,7 +39,9 @@ def _check_job(job, row, events, identities):
             or job.get("kind") not in KINDS or job.get("status") not in ACTIVE | TERMINAL
             or identities.get(job.get("actor")) != job.get("workspace_id") or accepted is None):
         raise WorkspaceError("SHARED_JOB_BINDING_INVALID", 409)
-    payload = {key: job[key] for key in ("command_id", "kind", "snapshot_id")}
+    fields = ('command_id', 'kind', 'snapshot_id', *(
+        ('expected_workspace_id', 'expected_code_sha') if job.get('kind') == 'earnings-review' else ()))
+    payload = {key: job[key] for key in fields}
     if (row[2] != _request(payload, job["actor"], job["workspace_id"])
             or accepted["request_hash"] != row[2] or accepted.get("actor") != job["actor"]
             or any(accepted["data"].get(key) != job.get(key) for key in (*BINDING_FIELDS, "command_id", "submitted_at"))):
@@ -139,12 +141,19 @@ class SharedJobQueue:
         return envelope
 
     def enqueue(self, payload: dict, actor: str) -> dict:
-        exact(payload, {"command_id", "kind", "snapshot_id"}); identifier(payload["command_id"])
-        if payload["kind"] not in KINDS: raise WorkspaceError("PRIVATE_OPERATION_DISABLED", 403)
+        fields = {'command_id', 'kind', 'snapshot_id'}
+        if isinstance(payload, dict) and payload.get('kind') == 'earnings-review':
+            fields |= {'expected_workspace_id', 'expected_code_sha'}
+        exact(payload, fields); identifier(payload["command_id"])
+        if not isinstance(payload['kind'], str) or payload["kind"] not in KINDS: raise WorkspaceError("PRIVATE_OPERATION_DISABLED", 403)
         # governance-mutation: SHARED_MATERIAL_OPT_IN
         if payload['kind'] == 'earnings-review' and not self.shared.materials_enabled:
             raise WorkspaceError('PRIVATE_OPERATION_DISABLED', 403)
         owner = self.shared.identity(actor)
+        # governance-mutation: SHARED_MATERIAL_SUBMISSION_CONTEXT
+        if payload['kind'] == 'earnings-review' and (
+                payload['expected_workspace_id'] != owner['workspace_id'] or payload['expected_code_sha'] != self.code_sha):
+            raise WorkspaceError('SHARED_SUBMISSION_CONTEXT_CHANGED', 409)
         request_hash = _request(payload, actor, owner["workspace_id"])
         with self.store.connect() as db:
             db.execute("BEGIN IMMEDIATE")
@@ -369,7 +378,13 @@ class SharedJobQueue:
             output = _output_root(self.store.path.parent, job, {'attempt_id': job['attempt_id']}) / 'result'
             try:
                 envelope = self.inputs.verify(job['snapshot_id'])
-                detail['research'] = material.detail(output, envelope['snapshot'], envelope['frozen_root'])
+                projected = material.detail(output, envelope['snapshot'], envelope['frozen_root'])
+                # governance-mutation: SHARED_MATERIAL_DETAIL_SEAL
+                if any(projected[key] != job['result'][key] for key in (
+                        'output_hash', 'report_sha256', 'archive_library_hash', 'archive_status',
+                        'human_review', 'content_sharing_allowed')):
+                    raise WorkspaceError('SHARED_REPORT_CHANGED', 409)
+                detail['research'] = projected
             except (OSError, ValueError, KeyError, TypeError):
                 detail.update(status='RECOVERY_REQUIRED', error='SHARED_OUTPUT_INTEGRITY_ERROR', result=None)
         if job["status"] == "SUCCEEDED" and job["kind"] == "snapshot-brief":

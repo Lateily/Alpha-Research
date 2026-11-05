@@ -279,6 +279,11 @@ def _registered_jobs(tables, manifest):
     for identity, (job, registration, registry_hash) in jobs.items():
         names = sorted({name for group in manifest["artifact_inventory"] if group["job_id"] == identity
                         for name in group["files"]})
+        if job['kind'] == 'earnings-review':
+            # The verified job seal pins its deep archive inventory. Keep v1's
+            # global portable-reference depth limit; reference that seal and roots.
+            names = [name for name in names if len(name.split('/')) <= 8
+                     and name.split('/')[-1] in {'input.json', 'seal.json', 'result.json', 'archive.json'}]
         result[identity] = {"job_id": identity, "registration": registration, "registry_hash": registry_hash,
                             "kind": job["kind"], "status": job["status"],
                             "binding": {key: job[key] for key in JOB_BINDING_FIELDS if key in job},

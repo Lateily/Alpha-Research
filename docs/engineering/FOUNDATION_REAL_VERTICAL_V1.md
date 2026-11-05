@@ -25,6 +25,9 @@ acceptance are isolated; production and the running shared service are unchanged
   the original validators; no mutable parallel research ledger is introduced.
 - Rights remain UNVERIFIED. Shared pages expose metadata and citation locations,
   not PDF/report full text. No AI review is a human signature.
+- New earnings submissions carry expected workspace ID and code SHA. Retention
+  references the original job seal (which binds the complete deep archive),
+  keeping the existing global path-depth and file-size limits unchanged.
 
 ## Release Gates
 

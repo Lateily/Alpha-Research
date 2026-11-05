@@ -28,6 +28,9 @@ export default function SharedWorkspace({ api, access, refreshRevision }) {
   const actorContext = useRef({ login: access.login });
   if (actorContext.current.login !== access.login) actorContext.current = { login: access.login };
   const visibleQuery = sharedActorQuery(query, access.login);
+  const submissionContext = useRef(null);
+  submissionContext.current = { workspaceId: visibleQuery.data?.my_workspace.workspace_id,
+    codeSha: visibleQuery.data?.execution_identity?.code_sha };
   selectedRef.current = selected;
   async function renew() {
     const response = await fetch('/', { credentials: 'same-origin', cache: 'no-store' });
@@ -82,12 +85,15 @@ export default function SharedWorkspace({ api, access, refreshRevision }) {
       if (request === detailSequence.current && actorContext.current === context) setDetailError(error.message);
     } finally { if (detailLoading.current === request) detailLoading.current = null; }
   }
-  async function run(kind, registeredSnapshotId = null) {
+  async function run(kind, selection = null) {
     const context = actorContext.current;
     const workspaceId = visibleQuery.data?.my_workspace.workspace_id;
-    const snapshotId = registeredSnapshotId || visibleQuery.data?.common_data.current_snapshot_id;
+    const snapshotId = selection?.snapshot_id || visibleQuery.data?.common_data.current_snapshot_id;
+    if (kind === 'earnings-review' && (!selection || selection.workspace_id !== submissionContext.current?.workspaceId ||
+        selection.code_sha !== submissionContext.current?.codeSha || workspaceId !== selection.workspace_id)) return;
     if (!workspaceId || !snapshotId || sharedViewFreshness(visibleQuery).commonStale) return;
     const body = { command_id: `shared_${crypto.randomUUID().replaceAll('-', '')}`, kind, snapshot_id: snapshotId };
+    if (kind === 'earnings-review') Object.assign(body, { expected_workspace_id: selection.workspace_id, expected_code_sha: selection.code_sha });
     setBusy(true);
     try {
       savePending(window.localStorage, workspaceId, body);
@@ -145,7 +151,7 @@ export default function SharedWorkspace({ api, access, refreshRevision }) {
     {visiblePending.some(item => !item.job_id) && <div className="source-strip"><Status value="SUBMISSION_UNCONFIRMED" stale={freshness.commonStale} /></div>}
     {!syncView.canBrief && <div className="shared-error" role="status">{freshness.commonStale ? 'DISCONNECTED' : common?.error || 'NO_FROZEN_PUBLICATION'}</div>}
     <nav className="shared-tabs" aria-label="共享工作区视图">{views.map(([key, label, Icon]) => <button key={key} aria-current={view === key ? 'page' : undefined} onClick={() => { setView(key); setPage(0); }}><Icon size={16} />{label}</button>)}</nav>
-    {view === 'research' ? <ResearchLibrary api={api} renew={renew} login={access.login} codeSha={data?.execution_identity?.code_sha} parentStale={freshness.commonStale} refreshRevision={`${refreshRevision}:${libraryRefreshRevision}`} onRun={snapshotId => run('earnings-review', snapshotId)} busy={busy || pending.length >= 2} /> : view !== 'common' ? <>
+    {view === 'research' ? <ResearchLibrary api={api} renew={renew} login={access.login} workspaceId={data?.my_workspace.workspace_id} codeSha={data?.execution_identity?.code_sha} parentStale={freshness.commonStale} refreshRevision={`${refreshRevision}:${libraryRefreshRevision}`} onRun={selection => run('earnings-review', selection)} busy={busy || pending.length >= 2} /> : view !== 'common' ? <>
       <div className="shared-toolbar"><span>{total} 个任务</span>{view === 'my' && <div><button disabled={busy || pending.length >= 2 || freshness.commonStale || !common?.current_snapshot_id} onClick={() => run('observe')}><Database size={16} />观察</button><button className="primary" disabled={busy || pending.length >= 2 || freshness.commonStale || !common?.current_snapshot_id} onClick={() => run('snapshot-brief')}><Play size={16} />{busy ? '提交中' : '生成简报'}</button>{pending.length > 0 && !busy && <button onClick={reload}><RefreshCw size={16} />核对原任务</button>}</div>}</div>
       {view === 'my' && visiblePending.filter(item => !item.job_id).map(item => <div className="source-strip" key={item.body.command_id}><code>{item.body.command_id}</code><span>{item.body.kind}</span><code>{item.body.snapshot_id}</code><button disabled={busy || freshness.commonStale} aria-label={`重试原提交 ${item.body.command_id}`} onClick={() => retry(item.body.command_id)}><RefreshCw size={16} />重试原提交</button></div>)}
       <div className="shared-job-list">{rows.map(job => <button className="shared-job-row" key={job.job_id} onClick={() => open(job.job_id)}>

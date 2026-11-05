@@ -3,7 +3,7 @@ import test from 'node:test';
 import { build } from 'esbuild';
 import { readFile } from 'node:fs/promises';
 
-async function componentScenario(mutant = false) {
+async function componentScenario(mutant = false, workspaceSwitch = false) {
   const runtime = { active: null, instances: new Map(), pending: [] };
   const hooks = {
     createElement: (type, props, ...children) => ({type,props:{...props,children}}), Fragment: Symbol('Fragment'),
@@ -18,24 +18,33 @@ async function componentScenario(mutant = false) {
   try {
     const bundle=await build({entryPoints:['tools/nonprod_workbench/ui/shared-workspace.jsx'],bundle:true,write:false,format:'esm',platform:'node',
       plugins:[{name:'component-hooks',setup(b){
-        if(mutant)b.onLoad({filter:/shared-workspace\.jsx$/},async args=>{
+        if(mutant === true)b.onLoad({filter:/shared-workspace\.jsx$/},async args=>{
           const source=await readFile(args.path,'utf8'),before='refreshRevision={`${refreshRevision}:${libraryRefreshRevision}`}';
           assert.equal(source.split(before).length,2,'counterexample requires the actual parent-child refresh binding');
           return {contents:source.replace(before,'refreshRevision={refreshRevision}'),loader:'jsx'};
+        });
+        if(mutant === 'picker')b.onLoad({filter:/research-library\.jsx$/},async args=>{
+          const source=await readFile(args.path,'utf8');
+          return {contents:source.replace('[login, workspaceId, codeSha, parentStale, refreshRevision]',
+            '[login, codeSha, parentStale, refreshRevision]'),loader:'jsx'};
         });
         b.onResolve({filter:/^react$/},()=>({path:'react',namespace:'hooks'}));
         b.onLoad({filter:/.*/,namespace:'hooks'},()=>({contents:'const h=globalThis.__arLibraryHooks;export default h;export const {useState,useRef,useEffect}=h;'}));
         b.onResolve({filter:/^lucide-react$/},()=>({path:'icons',namespace:'icons'}));
         b.onLoad({filter:/.*/,namespace:'icons'},()=>({contents:'export const ChevronLeft=()=>null,ChevronRight=()=>null,Database=()=>null,Download=()=>null,FileText=()=>null,Library=()=>null,Play=()=>null,RefreshCw=()=>null,Users=()=>null,X=()=>null,FileSearch=()=>null,Search=()=>null;'}));
       }}]});
-    const {default:SharedWorkspace}=await import('data:text/javascript;base64,'+Buffer.from(bundle.outputFiles[0].text).toString('base64'));
+    const {default:SharedWorkspace}=await import('data:text/javascript;base64,'+Buffer.from(bundle.outputFiles[0].text).toString('base64')+`#scenario-${mutant}-${workspaceSwitch}`);
     const timers=new Map();let nextTimer=0;
     globalThis.setTimeout=callback=>{timers.set(++nextTimer,callback);return nextTimer;};
     globalThis.clearTimeout=id=>timers.delete(id);
     globalThis.window={setInterval:()=>null,clearInterval:()=>{},localStorage:{getItem:()=>null,setItem:()=>{}}};
-    const calls=[];let parentFails=false,libraryFails=false;
+    const calls=[];let parentFails=false,libraryFails=false,workspace='synthetic';
     const props={access:{login:'owner'},refreshRevision:0,api:async path=>{
       calls.push(path);
+      if(path === '/api/shared-workspace/research-inputs')return {enabled:workspaceSwitch,
+        my_workspace:{login:'owner',workspace_id:workspace},consumer_code_sha:'a'.repeat(40),
+        inputs:[{snapshot_id:'registered-pack',company:'600000.SH',research_date:'20261105',
+          pack_hash:'c'.repeat(64),input_hash:'d'.repeat(64),source_cutoff_at:'2026-10-04T00:00:00+08:00'}]};
       if(path.startsWith('/api/shared-workspace/research-library')){
         if(libraryFails)throw new Error('SYNTHETIC_LIBRARY_MISSING');
         return {schema:'ar.shared-research-library.v1',my_workspace:{login:'owner'},consumer_code_sha:'a'.repeat(40),library_hash:'b'.repeat(64),
@@ -45,7 +54,7 @@ async function componentScenario(mutant = false) {
           rights:{status:'UNVERIFIED',visibility:'PRIVATE',sharing_allowed:false,model_use_allowed:false}};
       }
       if(parentFails)throw new Error('SYNTHETIC_PARENT_OFFLINE');
-      return {my_workspace:{login:'owner',workspace_id:'synthetic'},execution_identity:{code_sha:'a'.repeat(40)},
+      return {my_workspace:{login:'owner',workspace_id:workspace},execution_identity:{code_sha:'a'.repeat(40)},
         common_data:{},owned_commands:{},my_jobs:[],team_jobs:[]};
     }};
     function nodes(tree,result=[]){if(Array.isArray(tree))for(const n of tree)nodes(n,result);else if(tree&&typeof tree==='object'){
@@ -61,6 +70,20 @@ async function componentScenario(mutant = false) {
     async function parentTick(){assert.equal(timers.size,1,'only the parent has a scheduled poll');
       const [id,callback]=[...timers.entries()][0];timers.delete(id);callback();await settle();}
     await settle();nodes(tree).find(v=>v.type==='button'&&v.props.children.includes('研究资料库')).props.onClick();await settle();
+    if(workspaceSwitch){
+      const picker=()=>nodes(childTree).find(v=>v.type==='select'&&v.props['aria-label']==='冻结财报材料');
+      const submit=()=>nodes(childTree).find(v=>v.type==='button'&&v.props['aria-label']==='提交财报回应任务');
+      assert.ok(picker());picker().props.onChange({target:{value:'registered-pack'}});await settle();
+      assert.equal(submit().props.disabled,false);const staleClick=submit().props.onClick;
+      const before=calls.filter(path=>path.endsWith('/research-inputs')).length;
+      workspace='workspace-b';await parentTick();
+      assert.equal(calls.filter(path=>path.endsWith('/research-inputs')).length,before+1,'new workspace must re-read registered inputs');
+      assert.equal(picker().props.value,'','new workspace must clear the old selection');
+      assert.equal(submit().props.disabled,true);
+      staleClick();await settle();
+      assert.equal(calls.filter(path=>path==='/api/workspace/job').length,0,'a retained old handler must not submit into the new workspace');
+      return;
+    }
     const before=reads();header().props.onClick();await settle();
     assert.equal(reads()-before,1,'header refresh must reverify the mounted library');
     parentFails=true;await parentTick();
@@ -79,4 +102,8 @@ async function componentScenario(mutant = false) {
 test('actual shared refresh handler revalidates the mounted research component', () => componentScenario());
 test('dropping actual parent-child refresh binding fails by behavior, not a source-string assertion', async () => {
   await assert.rejects(componentScenario(true), error => error.code === 'ERR_ASSERTION' && error.actual === 0 && error.expected === 1);
+});
+test('material picker clears and revalidates on workspace change and refuses a retained old click', () => componentScenario(false,true));
+test('dropping picker workspace dependency is caught by behavior', async () => {
+  await assert.rejects(componentScenario('picker',true), error => error.code === 'ERR_ASSERTION');
 });

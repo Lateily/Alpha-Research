@@ -79,3 +79,13 @@ class LocalStoreTests(unittest.TestCase):
             for path in base.rglob('*'):
                 if path.is_file():
                     info = path.stat(); self.assertIn((info.st_dev, info.st_ino), seen, str(path))
+
+    def test_relative_valid_source_is_normalized(self):
+        source = Path(self.packages[0]['local_root']); previous = Path.cwd()
+        try:
+            os.chdir(source.parent)
+            self.packages[0]['local_root'] = source.name
+            result = self.create()
+        finally: os.chdir(previous)
+        self.assertEqual(storage.verify_generation(self.root / 'generation',
+            expected_generation_hash=result['generation_hash'])['generation_hash'], result['generation_hash'])

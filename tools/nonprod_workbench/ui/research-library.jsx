@@ -4,7 +4,7 @@ import { createLibraryReader, libraryContextKey, libraryView, readResearchLibrar
 import { statusTone } from './status-tone.mjs';
 import { sharedRead } from './shared-view.mjs';
 
-export default function ResearchLibrary({ api, renew, login, codeSha, parentStale, refreshRevision, onRun, busy }) {
+export default function ResearchLibrary({ api, renew, login, workspaceId, codeSha, parentStale, refreshRevision, onRun, busy }) {
   const [packs, setPacks] = useState(null), [packId, setPackId] = useState(''), [packError, setPackError] = useState('');
   const [draft, setDraft] = useState({ industry_key: '', research_date: '', ts_code: '', industry_taxonomy: '', taxonomy_version: '' });
   const [filters, setFilters] = useState({}), [page, setPage] = useState(0), [selected, setSelected] = useState(null);
@@ -22,11 +22,13 @@ export default function ResearchLibrary({ api, renew, login, codeSha, parentStal
     if (parentStale || !codeSha) return;
     sharedRead(api, '/api/shared-workspace/research-inputs', renew).then(result => {
       if (!active) return;
-      if (result.my_workspace.login !== login || (result.enabled && result.consumer_code_sha !== codeSha)) throw new Error('RESEARCH_INPUT_CONTEXT_CHANGED');
+      if (result.my_workspace.login !== login || result.my_workspace.workspace_id !== workspaceId ||
+          (result.enabled && result.consumer_code_sha !== codeSha)) throw new Error('RESEARCH_INPUT_CONTEXT_CHANGED');
       setPacks(result);
     }).catch(error => { if (active) setPackError(error.message); });
     return () => { active = false; };
-  }, [login, codeSha, parentStale, refreshRevision]);
+  }, [login, workspaceId, codeSha, parentStale, refreshRevision]);
+  const visiblePacks = !parentStale && packs?.my_workspace.workspace_id === workspaceId && packs?.consumer_code_sha === codeSha ? packs : null;
   useEffect(() => {
     if (!codeSha || parentStale) { reader.current = null; return; }
     const controller = createLibraryReader({
@@ -51,7 +53,7 @@ export default function ResearchLibrary({ api, renew, login, codeSha, parentStal
     <div className="source-strip"><span>索引只读</span><span>人工核验 PENDING</span><span>正文分发 DENIED</span><span>最后核验 {view.checkedAt || 'NOT_CHECKED'}</span></div>
     {view.error && <div className="shared-error" role="alert">DISCONNECTED · {view.error}</div>}
     {packError && <div className="shared-error" role="alert">{packError}</div>}
-    {packs?.enabled && <div className="research-filters"><label>冻结财报材料<select aria-label="冻结财报材料" value={packId} onChange={event => setPackId(event.target.value)}><option value="">选择材料包</option>{packs.inputs.map(pack => <option key={pack.snapshot_id} value={pack.snapshot_id}>{pack.company} · {pack.research_date} · {pack.pack_hash.slice(0,12)}</option>)}</select></label><button className="icon-button" title="提交财报回应任务" aria-label="提交财报回应任务" disabled={busy || parentStale || !packId} onClick={() => onRun?.(packId)}><Play size={18} /></button>{packs.inputs.filter(pack => pack.snapshot_id === packId).map(pack => <code key={pack.snapshot_id}>{pack.input_hash} · 原件截止 {pack.source_cutoff_at}</code>)}</div>}
+    {visiblePacks?.enabled && <div className="research-filters"><label>冻结财报材料<select aria-label="冻结财报材料" value={packId} onChange={event => setPackId(event.target.value)}><option value="">选择材料包</option>{visiblePacks.inputs.map(pack => <option key={pack.snapshot_id} value={pack.snapshot_id}>{pack.company} · {pack.research_date} · {pack.pack_hash.slice(0,12)}</option>)}</select></label><button className="icon-button" title="提交财报回应任务" aria-label="提交财报回应任务" disabled={busy || !visiblePacks.inputs.some(pack => pack.snapshot_id === packId)} onClick={() => onRun?.({ snapshot_id: packId, workspace_id: workspaceId, code_sha: codeSha })}><Play size={18} /></button>{visiblePacks.inputs.filter(pack => pack.snapshot_id === packId).map(pack => <code key={pack.snapshot_id}>{pack.input_hash} · 原件截止 {pack.source_cutoff_at}</code>)}</div>}
     <form className="research-filters" onSubmit={submit}>
       <label>行业<input value={draft.industry_key} maxLength={128} onChange={change('industry_key')} /></label>
       <label>研究日<input type="date" value={draft.research_date} onChange={change('research_date')} /></label>

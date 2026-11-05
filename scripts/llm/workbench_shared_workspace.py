@@ -3,6 +3,9 @@ from __future__ import annotations
 
 import json
 import subprocess
+import os
+import sys
+import tempfile
 import uuid
 from pathlib import Path
 
@@ -45,7 +48,12 @@ EXECUTION_FILES = (
 
 def execution_identity(root: Path) -> dict:
     def git(*args):
-        result = subprocess.run(["git", "-C", str(root), *args], capture_output=True, check=False)
+        # macOS xcrun creates a binary cache under TMPDIR. It is tool scratch,
+        # never part of a research output, seal or portable backup.
+        directory = '/private/tmp' if sys.platform == 'darwin' else None
+        with tempfile.TemporaryDirectory(prefix='ar-git-identity-', dir=directory) as scratch:
+            result = subprocess.run(["git", "-C", str(root), *args], capture_output=True, check=False,
+                                    env={**os.environ, 'TMPDIR': scratch})
         if result.returncode:
             raise WorkspaceError("EXECUTION_IDENTITY_UNAVAILABLE", 409)
         return result.stdout

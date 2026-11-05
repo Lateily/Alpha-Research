@@ -67,7 +67,7 @@ class SharedMaterialTests(unittest.TestCase):
         (output / 'case/600000.SH/report.md').write_text('changed')
         with self.assertRaises(ValueError): material.verify_output(output, snapshot)
 
-    def queue(self, enabled=True):
+    def queue(self, enabled=True, register=True):
         import nonprod_workbench as wb
         import workbench_workspace as ws
         import workbench_shared_workspace as shared
@@ -81,13 +81,18 @@ class SharedMaterialTests(unittest.TestCase):
         view = shared.SharedWorkspace(ws.Workspace(store, private_mode=True), materials_enabled=enabled)
         inputs = FrozenInputs(store)
         entry = material.register(inputs, self.fixture.library, self.pack,
-            expected_library_hash=self.fixture.request['expected_library_hash'], expected_pack_hash=self.prepared['pack_hash'])
+            expected_library_hash=self.fixture.request['expected_library_hash'], expected_pack_hash=self.prepared['pack_hash']) if register else None
         return SharedJobQueue(view, inputs, view._execution_identity['code_sha']), view, entry
+
+    def payload(self, queue, entry, command='material-command-001', actor='owner@example.com'):
+        return {'command_id': command, 'kind': material.KIND, 'snapshot_id': entry['snapshot_id'],
+                'expected_workspace_id': queue.shared.identity(actor)['workspace_id'],
+                'expected_code_sha': queue.code_sha}
 
     def test_existing_queue_seals_archive_query_and_backup(self):
         import workbench_shared_worker as worker
         queue, view, entry = self.queue()
-        payload = {'command_id': 'material-command-001', 'kind': material.KIND, 'snapshot_id': entry['snapshot_id']}
+        payload = self.payload(queue, entry)
         job = queue.enqueue(payload, 'owner@example.com')
         self.assertEqual(queue.enqueue(payload, 'owner@example.com')['job_id'], job['job_id'])
         claim = queue.claim(); result = worker.run_attempt(claim)
@@ -117,12 +122,19 @@ class SharedMaterialTests(unittest.TestCase):
                                  snapshot_ids=[entry['snapshot_id']], job_ids=[job['job_id']],
                                  created_at='2026-11-05T12:00:00+00:00')
         self.assertEqual(verify_retention_pin(pin, archive, expected_backup_hash=backed['backup_hash']), pin)
+        original = material.detail
+        def wrong_projection(*args):
+            return {**original(*args), 'archive_library_hash': '0' * 64}
+        with mock.patch.object(material, 'detail', side_effect=wrong_projection):
+            self.assertEqual(view.job(job['job_id'], 'member@example.com')['status'], 'RECOVERY_REQUIRED')
+        (Path(claim['output_root']) / 'unbound.pdf').write_bytes(b'%PDF-1.7\nUnregistered binary.\n%%EOF\n')
+        with self.assertRaises(ValueError): backup.backup_shared(queue.store, self.root / 'rejected-backup')
 
     def test_kind_mismatch_and_default_off(self):
         from workbench_workspace import WorkspaceError
         queue, view, entry = self.queue(False)
         with self.assertRaises(WorkspaceError):
-            queue.enqueue({'command_id': 'disabled-material', 'kind': material.KIND, 'snapshot_id': entry['snapshot_id']}, 'owner@example.com')
+            queue.enqueue(self.payload(queue, entry, 'disabled-material'), 'owner@example.com')
         with self.assertRaises(WorkspaceError):
             queue.enqueue({'command_id': 'wrong-kind-material', 'kind': 'snapshot-brief', 'snapshot_id': entry['snapshot_id']}, 'owner@example.com')
         with self.assertRaises(WorkspaceError): queue.inputs.select_current(entry['snapshot_id'])
@@ -137,7 +149,7 @@ class SharedMaterialTests(unittest.TestCase):
         status, choices = http(queue.store, view.system, private, '/api/shared-workspace/research-inputs', shared=view)
         self.assertEqual(status, 200); self.assertTrue(choices['enabled'])
         self.assertEqual(choices['inputs'][0]['snapshot_id'], entry['snapshot_id'])
-        body = {'command_id': 'http-material-command', 'kind': material.KIND, 'snapshot_id': entry['snapshot_id']}
+        body = self.payload(queue, entry, 'http-material-command', MEMBER)
         status, job = http(queue.store, view.system, private, '/api/workspace/job', body=body, login=MEMBER, shared=view)
         self.assertEqual(status, 202)
         self.assertEqual(view.job(job['job_id'], OWNER)['actor'], MEMBER)
@@ -146,3 +158,35 @@ class SharedMaterialTests(unittest.TestCase):
         self.assertEqual(status, 400)
         self.assertEqual(http(queue.store, view.system, private, '/api/shared-workspace/research-inputs',
                               login='unknown@example.com', shared=view)[0], 403)
+
+    def test_interrupted_registration_resumes_without_deleting_evidence(self):
+        queue, view, _ = self.queue(register=False)
+        params = dict(expected_library_hash=self.fixture.request['expected_library_hash'],
+                      expected_pack_hash=self.prepared['pack_hash'])
+        original = material._copy
+        def crash(*args):
+            original(*args); raise OSError('injected after copied source')
+        with mock.patch.object(material, '_copy', side_effect=crash):
+            with self.assertRaises(OSError): material.register(queue.inputs, self.fixture.library, self.pack, **params)
+        before = {p for p in (queue.store.path.parent / 'input-write-evidence').rglob('*') if p.is_file()}
+        entry = material.register(queue.inputs, self.fixture.library, self.pack, **params)
+        self.assertEqual(queue.inputs.verify(entry['snapshot_id'])['input_hash'], entry['input_hash'])
+        self.assertTrue(all(p.exists() for p in before))
+
+    def test_envelope_write_interruption_reuses_only_verified_pool(self):
+        queue, view, _ = self.queue(register=False)
+        params = dict(expected_library_hash=self.fixture.request['expected_library_hash'], expected_pack_hash=self.prepared['pack_hash'])
+        import workbench_shared_inputs as inputs
+        with mock.patch.object(inputs, '_new_or_identical', side_effect=OSError('injected envelope interruption')):
+            with self.assertRaises(OSError): material.register(queue.inputs, self.fixture.library, self.pack, **params)
+        try: entry = material.register(queue.inputs, self.fixture.library, self.pack, **params)
+        except (OSError, ValueError) as error: self.fail('Verified registration must resume: ' + type(error).__name__)
+        self.assertEqual(queue.inputs.verify(entry['snapshot_id'])['input_hash'], entry['input_hash'])
+
+    def test_submission_is_bound_to_workspace_and_code(self):
+        from workbench_workspace import WorkspaceError
+        queue, view, entry = self.queue()
+        for changes in ({'expected_workspace_id': 'not-this-workspace'}, {'expected_code_sha': '0' * 40}):
+            with self.assertRaises(WorkspaceError):
+                queue.enqueue({**self.payload(queue, entry), **changes}, 'owner@example.com')
+        self.assertEqual(queue.jobs(), [])

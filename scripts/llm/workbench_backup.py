@@ -252,10 +252,35 @@ def _validate_tables(tables):
     return events[-1]["event_hash"] if events else "0" * 64
 
 
+def _material_pdf_bindings(root, tables):
+    from workbench_shared_inputs import FrozenInputs
+    entries, exact = {}, {}
+    for sid, checksum, body in tables.get('shared_inputs', []):
+        if ev.parse(body).get('schema') != 'ar.shared-material-input.v1': continue
+        entry = FrozenInputs.verify_registered(root / 'frozen-inputs', sid, (checksum, body))
+        entries[sid] = entry
+        prefix = 'frozen-inputs/material-packs/' + checksum + '/'
+        for name, digest in entry['snapshot']['files'].items():
+            if name.endswith('.pdf'): exact[prefix + name] = digest
+    job_prefixes = {}
+    for job_id, _command, _request, body in tables.get('shared_jobs', []):
+        job = ev.parse(body)
+        if job.get('kind') != 'earnings-review': continue
+        entry = entries.get(job.get('snapshot_id'))
+        if entry is None or job.get('input_hash') != entry['input_hash']:
+            raise ev.EvidenceError('BACKUP_MATERIAL_INPUT_INVALID')
+        hashes = {checksum for name, checksum in entry['snapshot']['files'].items()
+                  if name.startswith('pack/inputs/originals/') and name.endswith('.pdf')}
+        prefix = 'shared-jobs/' + job['workspace_id'] + '/' + job_id + '/attempts/'
+        job_prefixes[prefix] = hashes
+    return exact, job_prefixes
+
+
 def _inventory(root, tables, *, scope="ISOLATED_STATE_ARTIFACT_ROOTS"):
     jobs = {job["job_id"]: job for job in legacy_jobs(tables["workspace_events"])}
     jobs.update({row[0]: ev.parse(row[3]) for row in tables.get("shared_jobs", [])})
     replays = {row[0] for row in tables["research_runs"]}
+    pdf_files, pdf_jobs = _material_pdf_bindings(root, tables)
     files, groups, directories = {}, {}, set()
     for area in sorted(ARTIFACT_ROOTS):
         base = root / area
@@ -285,7 +310,15 @@ def _inventory(root, tables, *, scope="ISOLATED_STATE_ARTIFACT_ROOTS"):
             if path.is_file():
                 raw = ev.read_local(root, relative)
                 import workbench_snapshot_brief as brief
-                if relative.endswith(".json"): brief.reject_credentials(ev.parse(b'{"artifact":' + raw + b'}'))
+                if relative.endswith('.pdf'):
+                    checksum = ev.sha(raw)
+                    bound = pdf_files.get(relative) == checksum or any(
+                        relative.startswith(prefix) and checksum in checksums for prefix, checksums in pdf_jobs.items())
+                    # Only admitted, hash-bound originals are opaque binary backup members.
+                    # governance-mutation: SHARED_MATERIAL_BACKUP_BINARY
+                    if not bound or not raw.startswith(b'%PDF-'):
+                        raise ev.EvidenceError('BACKUP_UNBOUND_BINARY_REFUSED')
+                elif relative.endswith(".json"): brief.reject_credentials(ev.parse(b'{"artifact":' + raw + b'}'))
                 else: brief.reject_credentials(raw.decode("utf-8", errors="replace" if area in RECOVERY_ROOTS or _worker_partial(relative) else "strict"))
                 files[relative] = raw
                 groups[group].append(relative)
