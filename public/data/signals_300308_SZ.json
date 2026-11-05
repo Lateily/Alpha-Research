@@ -1,59 +1,38 @@
 {
   "ticker": "300308.SZ",
   "generated_at": "2026-11-05",
-  "price": 533.38,
+  "price": 493.33,
   "zone": "NEUTRAL",
-  "entry_zone": true,
+  "entry_zone": false,
   "exit_zone": false,
-  "signals": [
-    {
-      "type": "RSI_RECOVERING",
-      "strength": "moderate",
-      "date": "20261104",
-      "bullish": true,
-      "description": {
-        "e": "RSI recovering 23.9→33.2 — momentum rebuilding",
-        "z": "RSI从23.9回升至33.2，动能修复"
-      }
-    },
-    {
-      "type": "KDJ_GOLDEN_CROSS",
-      "strength": "strong",
-      "date": "20261104",
-      "bullish": true,
-      "description": {
-        "e": "KDJ K(21.2) crossed above D(19.7) in oversold — reversal signal",
-        "z": "KDJ K(21.2)上穿D(19.7)，超卖区金叉看涨"
-      }
-    }
-  ],
+  "signals": [],
   "signal_count": {
-    "bullish": 2,
+    "bullish": 0,
     "bearish": 0,
-    "total": 2
+    "total": 0
   },
   "indicators": {
-    "ma5": 539.73,
-    "ma20": 635.11,
+    "ma5": 521.98,
+    "ma20": 620.62,
     "ma60": null,
-    "rsi14": 33.2,
-    "vol_ma20": 327194,
-    "vol_ratio": 1.87,
-    "price_vs_ma20": -16.02,
+    "rsi14": 30.3,
+    "vol_ma20": 345081,
+    "vol_ratio": 1.81,
+    "price_vs_ma20": -20.51,
     "price_vs_ma60": null,
-    "change_1d": 11.07,
-    "change_5d": -16.17,
-    "change_20d": -34.02,
-    "macd_dif": -78.1039,
-    "macd_dea": -72.109,
-    "macd_hist": -11.9898,
-    "bb_upper": 792.7,
-    "bb_mid": 635.11,
-    "bb_lower": 477.51,
-    "bb_bandwidth": 49.63,
-    "kdj_k": 21.2,
-    "kdj_d": 19.7,
-    "kdj_j": 24.2,
+    "change_1d": -7.51,
+    "change_5d": -15.24,
+    "change_20d": -36.99,
+    "macd_dif": -79.3819,
+    "macd_dea": -73.1987,
+    "macd_hist": -12.3664,
+    "bb_upper": 774.38,
+    "bb_mid": 620.62,
+    "bb_lower": 466.86,
+    "bb_bandwidth": 49.55,
+    "kdj_k": 18.9,
+    "kdj_d": 19.5,
+    "kdj_j": 17.8,
     "cvd_latest": null,
     "cvd_slope_5d": null,
     "cvd_chg_1d": null,
