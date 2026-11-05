@@ -199,6 +199,12 @@ class MutationCase:
 
 
 MUTATIONS: tuple[MutationCase, ...] = (
+    MutationCase("RUNTIME_TRUSTED_BOOTSTRAP", "Isolated service", "scripts/llm/workbench_runtime_service.py", "tests/test_workbench_runtime_service.py",
+                 "command=[environment_info['base_executable'],'-I','-B','-S',", "command=[str(environment_root/'venv/bin/python3'),'-I','-B','-S',",
+                 "test_launch_template_uses_trusted_host_before_checking_venv", "Do not execute the environment being verified as its own bootstrap."),
+    MutationCase("RUNTIME_BOOTSTRAP_NO_SITE", "Isolated service", "scripts/llm/workbench_runtime_service.py", "tests/test_workbench_runtime_service.py",
+                 "'-I','-B','-S',str(code_root/'scripts/llm/workbench_runtime.py')", "'-I','-B',str(code_root/'scripts/llm/workbench_runtime.py')",
+                 "test_launch_template_uses_trusted_host_before_checking_venv", "The trusted host bootstrap must not activate site packages before checks."),
     MutationCase("RUNTIME_STABLE_HASH", "Independent runtime", "scripts/llm/workbench_runtime_env.py", "tests/test_workbench_runtime_env.py",
                  "if identity(before)!=identity(os.fstat(stream.fileno())) or identity(before)!=identity(path.lstat()):", "if False:",
                  "test_in_place_change_and_replacement_during_hash_are_refused", "Reading an old chunk cannot attest changed final bytes."),

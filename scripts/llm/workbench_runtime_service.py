@@ -109,7 +109,7 @@ def prepare_profile(root, code_root, environment_root, environment_hash, port):
     if any(root==p or root in p.parents or p in root.parents for p in (code_root,environment_root)):
         raise ValueError('SERVICE_ROOT_OVERLAP')
     if type(port) is not int or not 18000<=port<=18999: raise ValueError('SERVICE_PORT_INVALID')
-    runtime.verify_environment(environment_root,environment_hash)
+    environment_info=runtime.verify_environment(environment_root,environment_hash)
     identity=code_identity(code_root); assets=asset_inventory(code_root)
     root.mkdir(mode=0o700)
     value={'schema':'ar.isolated-service.v1','root':str(root),'code_root':str(code_root),
@@ -119,7 +119,8 @@ def prepare_profile(root, code_root, environment_root, environment_hash, port):
     validate_profile(value,root)
     write_new(root/'allowlist.json',ev.canonical({'members':[MEMBER]}).encode())
     raw=ev.canonical(value).encode(); write_new(root/'profile.json',raw); pin=ev.sha(raw)
-    command=[str(environment_root/'venv/bin/python3'),'-I','-B',str(code_root/'scripts/llm/workbench_runtime.py'),
+    # governance-mutation: RUNTIME_TRUSTED_BOOTSTRAP
+    command=[environment_info['base_executable'],'-I','-B','-S',str(code_root/'scripts/llm/workbench_runtime.py'),
              'serve','--profile',str(root/'profile.json'),'--pin',pin,'--seconds','300']
     template={'Label':'com.ar.isolated-runtime.'+pin[:12],'ProgramArguments':command,'RunAtLoad':True,
               'WorkingDirectory':str(root),'EnvironmentVariables':runtime.clean_environment(root),

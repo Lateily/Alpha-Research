@@ -30,7 +30,7 @@ listed in `config/shared-runtime.lock.json` and independently check their hashes
 Package provisioning is separate; the builder has no download path or index.
 
 ```sh
-<host-python3.12> -I -B <code>/scripts/llm/workbench_runtime.py build \
+<host-python3.12> -I -B -S <code>/scripts/llm/workbench_runtime.py build \
   --root <new-runtime-directory> --wheelhouse <verified-wheelhouse>
 ```
 
@@ -51,12 +51,12 @@ Commit a clean candidate before preparing a profile. Use a new private directory
 outside all code/environment directories and outside any Git checkout.
 
 ```sh
-<host-python3.12> -I -B <code>/scripts/llm/workbench_runtime.py prepare \
+<host-python3.12> -I -B -S <code>/scripts/llm/workbench_runtime.py prepare \
   --root <new-profile-directory> --code <clean-candidate> \
   --environment <new-runtime-directory> --environment-pin <runtime_hash> --port 18341
-<new-runtime-directory>/venv/bin/python3 -I -B <code>/scripts/llm/workbench_runtime.py verify \
+<host-python3.12> -I -B -S <code>/scripts/llm/workbench_runtime.py verify \
   --profile <new-profile-directory>/profile.json --pin <profile_hash>
-<new-runtime-directory>/venv/bin/python3 -I -B <code>/scripts/llm/workbench_runtime.py serve \
+<host-python3.12> -I -B -S <code>/scripts/llm/workbench_runtime.py serve \
   --profile <new-profile-directory>/profile.json --pin <profile_hash> --seconds 300
 ```
 
@@ -68,6 +68,11 @@ code/environment/assets and fixed allowlist before every start, holds a lifetime
 lock, writes new lifecycle events, and bounds unexpected restarts to2. Failed
 children exhausted of retries return a failing CLI status. Each invocation lasts
 at most300seconds plus bounded owned-child shutdown; this is not 24/7 operation.
+
+Always start the operator/supervisor from the trusted host interpreter with -S,
+not from the venv it is about to verify. The generated template uses that host
+bootstrap too. Otherwise a changed venv .pth could execute before pin checks.
+Only the supervisor starts the newly verified venv as the application child.
 
 Stop with Ctrl-C or signal only the supervisor process returned by your own
 launcher. Do not infer authority from a PID in an old receipt. The supervisor

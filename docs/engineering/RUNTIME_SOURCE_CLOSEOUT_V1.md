@@ -73,6 +73,8 @@ descriptor and final-path identity/size/timestamps before and after reading.
 Operator and renderer entry points set a non-directory bytecode-cache prefix
 before project imports; -B alone does not stop reads of ignored cached code.
 This small renderer bootstrap change leaves queue, rendering and token rules intact.
+The supervisor and generated template bootstrap from the trusted host interpreter
+with site activation disabled; they must not execute a venv before verifying it.
 
 ## Acceptance
 

@@ -2,6 +2,7 @@
 import copy
 import os
 import py_compile
+import plistlib
 import subprocess
 from pathlib import Path
 import sys
@@ -152,6 +153,19 @@ class RuntimeServiceTests(unittest.TestCase):
                 result=subprocess.run([sys.executable,'-I','-B','-X','pycache_prefix=',str(root/entry),*args],capture_output=True,text=True)
                 self.assertIn('source',result.stdout,result.stderr)
                 self.assertNotIn('cached',result.stdout)
+
+    def test_launch_template_uses_trusted_host_before_checking_venv(self):
+        m=self.module()
+        with tempfile.TemporaryDirectory() as tmp:
+            base=Path(tmp).resolve(); host=str(Path(sys.executable).resolve())
+            with patch.object(m.runtime,'verify_environment',return_value={'base_executable':host}), \
+                 patch.object(m,'code_identity',return_value={'code_sha':'b'*40,'source_tree_hash':'c'*64}), \
+                 patch.object(m,'asset_inventory',return_value={'index.html':'d'*64}), \
+                 patch.object(m,'runtime_inventory',return_value={'x':'e'*64}):
+                m.prepare_profile(base/'profile',base/'code',base/'environment','a'*64,18341)
+            command=plistlib.loads((base/'profile/launchd.NOT_INSTALLED.plist').read_bytes())['ProgramArguments']
+            self.assertEqual(command[0],host)
+            self.assertIn('-S',command)
 
     def test_code_assets_and_environment_are_rechecked(self):
         m = self.module()
