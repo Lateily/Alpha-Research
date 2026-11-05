@@ -1,5 +1,5 @@
 {
-  "fetched_at": "2026-11-04T16:30:24Z",
+  "fetched_at": "2026-11-05T07:59:02Z",
   "_status": "ok",
   "api_used": "ths_index+ths_member",
   "scope": "watchlist_only",
@@ -1974,6 +1974,16 @@
       ]
     },
     {
+      "ts_code": "883929.TI",
+      "name": "回购计划",
+      "type": "S",
+      "total_count": 60.0,
+      "member_count": 1,
+      "members": [
+        "688120.SH"
+      ]
+    },
+    {
       "ts_code": "883934.TI",
       "name": "保险重仓",
       "type": "S",
@@ -2743,6 +2753,7 @@
       "700001.TI"
     ],
     "688120.SH": [
+      "883929.TI",
       "883426.TI",
       "883964.TI",
       "883904.TI",
@@ -2915,7 +2926,7 @@
       "700001.TI"
     ]
   },
-  "total_concepts": 231,
-  "total_memberships": 409,
+  "total_concepts": 232,
+  "total_memberships": 410,
   "disclaimer": "不是买卖指令;研究信号,human executes."
 }
