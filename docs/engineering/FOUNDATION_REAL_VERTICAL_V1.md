@@ -40,6 +40,10 @@ acceptance are isolated; production and the running shared service are unchanged
   Recovery preserves bytes without adding registry rows or making them runnable.
   Unknown or unverifiable binary data still blocks acceptance; an intent's own
   resealed inventory cannot authorize a different library.
+- Shared task downloads retain their object URL until the queued browser
+  navigation has consumed it, then release it. Client acceptance must re-open
+  actual downloaded bytes and compare the job/input/output bindings; clicking
+  the button alone is not download acceptance.
 
 ## Release Gates
 

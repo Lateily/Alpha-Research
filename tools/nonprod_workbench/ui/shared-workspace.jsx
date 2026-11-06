@@ -13,7 +13,8 @@ function Status({ value, stale = false }) {
 function download(name, value, type = 'application/json') {
   const blob = new Blob([typeof value === 'string' ? value : JSON.stringify(value, null, 2)], { type });
   const url = URL.createObjectURL(blob), link = document.createElement('a');
-  link.href = url; link.download = name; link.click(); URL.revokeObjectURL(url);
+  link.href = url; link.download = name; link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 export default function SharedWorkspace({ api, access, refreshRevision }) {

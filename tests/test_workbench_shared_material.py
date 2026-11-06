@@ -237,7 +237,10 @@ class SharedMaterialTests(unittest.TestCase):
         before = {p.relative_to(state).as_posix(): p.read_bytes() for area in ('frozen-inputs', 'input-write-evidence')
                   for p in (state / area).rglob('*') if p.is_file()}
         archive, cold = self.root / 'before-retry-backup', self.root / 'before-retry-restored'
-        backed = backup.backup_shared(queue.store, archive)
+        try:
+            backed = backup.backup_shared(queue.store, archive)
+        except (ValueError, OSError) as error:
+            self.fail(f'Verified uncommitted input must remain backup-recoverable: {error}')
         self.assertEqual(backed['status'], 'LOCAL_SHARED_BACKUP_VERIFIED')
         self.assertEqual(backup.restore_shared(archive, cold)['status'], 'LOCAL_SHARED_RESTORE_VERIFIED')
         restored = wb.Store(cold, shared_v1=True)
