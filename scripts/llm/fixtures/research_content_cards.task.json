@@ -1,0 +1,22 @@
+{
+  "schema": "ai-task.v1",
+  "task_id": "RESEARCH-CONTENT-CARDS-20261106",
+  "architecture_block": ["Research facts", "Valuation", "Technical research", "Execution feedback"],
+  "objective": "Build four evidence-bound offline research cards from an existing verified historical material pack without changing the deployed workbench.",
+  "non_goals": ["No provider or model calls, production/shared changes, U4 selection, paper registration, order simulation, merge or push."],
+  "human_owner": "Junyan",
+  "reviewer": "Independent nonauthor reviewer",
+  "executor_candidates": ["Codex"],
+  "dependencies": ["Released ba42de2", "Material research pack v1", "Existing SMC ICT engine", "Existing cycle verifier"],
+  "authority_docs": ["AGENTS.md", "scripts/llm/AGENTS.md", "docs/engineering/RESEARCH_CONTENT_CARDS_V1.md"],
+  "file_scope": ["scripts/llm/research_content.py", "scripts/llm/fixtures/research_content_cards.task.json", "tests/test_research_content.py", "scripts/governance_mutation_gate.py", ".github/workflows/python-ci.yml", "docs/engineering/RESEARCH_CONTENT_CARDS_V1.md"],
+  "forbidden_scope": ["ar-live", "Running shared code and state", "Formal ledgers", "Frozen historical inputs", "Credentials", "Constitutional contracts"],
+  "input_contracts": ["Externally pinned material pack", "Exact typed numeric/draft request", "Optional pinned existing strategy/cycle evidence"],
+  "output_artifacts": ["Sealed four-card draft and source references", "Reproducible report", "Behavior tests", "Same-version acceptance and independent review"],
+  "acceptance_tests": ["Normal/missing/contradictory/legacy behavior cases", "Reseal and origin/date/identity counterexamples", "Offline same-final full CI and mutations", "Historical real-material example without new calls"],
+  "risk_level": "MEDIUM",
+  "network_policy": "OFFLINE",
+  "budget": {"max_cny": "0", "max_minutes": 240},
+  "approval_gates": ["Existing user approval for isolated research-content implementation", "No deployment or high-risk human authority inherited"],
+  "created_at": "2026-11-06T18:00:00+00:00"
+}
