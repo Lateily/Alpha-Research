@@ -246,7 +246,10 @@ class FrozenInputs:
         return verify_selection_events(events, self.verify)
 
     def select_current(self, snapshot_id, *, clock=time.time):
-        descriptor = self._descriptor(self.verify(snapshot_id))
+        envelope = self.verify(snapshot_id)
+        if envelope['schema'] != 'ar.shared-input.v1':
+            raise WorkspaceError('MARKET_PUBLICATION_REQUIRED', 409)
+        descriptor = self._descriptor(envelope)
         with self.store.connect() as db:
             db.execute("BEGIN IMMEDIATE")
             events = Workspace.events(None, db)
@@ -303,6 +306,12 @@ class FrozenInputs:
                 raise WorkspaceError("FROZEN_CAPTURE_BINDING_CONFLICT", 409)
             return actual, publication, attempt
         def envelope_binding(envelope, snapshot_id, expected_hash):
+            from workbench_shared_material import SCHEMA, envelope as material_envelope
+            if envelope.get('schema') == SCHEMA:
+                actual = material_envelope(envelope['snapshot'])
+                if actual != envelope or actual['snapshot_id'] != snapshot_id or actual['input_hash'] != expected_hash:
+                    raise WorkspaceError('FROZEN_CAPTURE_BINDING_CONFLICT', 409)
+                return actual['input_hash']
             actual, publication, attempt = link(snapshot_id, expected_hash, envelope["snapshot"])
             if (envelope.get("schema") != "ar.shared-input.v1" or envelope.get("snapshot_id") != snapshot_id
                     or envelope.get("input_hash") != actual or envelope.get("publication_fingerprint") != publication
@@ -340,6 +349,10 @@ class FrozenInputs:
                     identity = entry.name if name == "publications" else entry.name.removesuffix(".json")
                     if identity not in linked:
                         history.add(name + ":" + entry.name)
+        materials = self.base / 'material-packs'
+        if materials.exists():
+            for entry in materials.iterdir():
+                history.add(entry.name)
         from workbench_workspace import MAX_EVENTS
         events = db.execute("SELECT COUNT(*) FROM workspace_events").fetchone()[0]
         reserved = db.execute("SELECT COUNT(*) FROM shared_jobs WHERE json_extract(body, '$.terminal_event_reserved')=1").fetchone()[0]
@@ -484,6 +497,13 @@ class FrozenInputs:
             registered = ev.parse(row[1])
             if envelope != registered or envelope.get("snapshot_id") != snapshot_id or envelope.get("input_hash") != row[0]:
                 raise WorkspaceError("FROZEN_REGISTRY_BINDING_INVALID", 409)
+            from workbench_shared_material import SCHEMA, envelope as material_envelope, verify_input
+            if envelope.get('schema') == SCHEMA:
+                if material_envelope(envelope['snapshot']) != envelope:
+                    raise WorkspaceError('FROZEN_MATERIAL_BINDING_INVALID', 409)
+                frozen_root = base / 'material-packs' / envelope['input_hash']
+                verify_input(frozen_root, envelope['snapshot'])
+                return {**envelope, 'frozen_root': frozen_root}
             pub_hash, attempt_hash = envelope["publication_fingerprint"], envelope["attempt_fingerprint"]
             if any(not isinstance(h, str) or not re.fullmatch(r"[0-9a-f]{64}", h) for h in (pub_hash, attempt_hash)):
                 raise WorkspaceError("FROZEN_FINGERPRINT_INVALID", 409)

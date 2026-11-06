@@ -1,12 +1,26 @@
 """Bounded, clean-environment rendering of registered frozen shared inputs."""
 from __future__ import annotations
 
+import sys
+if __name__ == "__main__":
+    # governance-mutation: RUNTIME_WORKER_BYTECODE
+    sys.pycache_prefix = "/dev/null"
+    sys.dont_write_bytecode = True
+    import importlib.machinery
+    class _SourceOnlyImports:
+        def find_spec(self, fullname, path=None, target=None):
+            spec = importlib.machinery.PathFinder.find_spec(fullname, path)
+            # governance-mutation: RUNTIME_WORKER_SOURCELESS
+            if spec is not None and isinstance(spec.loader, importlib.machinery.SourcelessFileLoader):
+                raise ImportError('SOURCELESS_MODULE_REFUSED')
+            return None
+    sys.meta_path.insert(0, _SourceOnlyImports())
+
 import json
 import os
 import signal
 import sqlite3
 import subprocess
-import sys
 import threading
 import time
 from pathlib import Path
@@ -17,8 +31,11 @@ import workbench_snapshot_brief as brief
 from workbench_backup import durable_directory, fsync_directory, write_new
 from workbench_shared_inputs import validate_snapshot
 from workbench_workspace import WorkspaceError
+import workbench_shared_material as material
 
-KINDS = frozenset({"observe", "snapshot-brief"})
+KINDS = frozenset({"observe", "snapshot-brief", material.KIND})
+INPUT_SCHEMAS = {'observe': 'ar.shared-input.v1', 'snapshot-brief': 'ar.shared-input.v1',
+                 material.KIND: material.SCHEMA}
 SEAL_SCHEMA = "ar.shared-job-output.v1"
 BINDING_FIELDS = ("job_id", "workspace_id", "actor", "kind", "snapshot_id", "input_hash",
                   "code_sha", "source_tree_hash", "schema_version", "job_schema", "input_schema",
@@ -67,6 +84,9 @@ def _render_child(kind, frozen_root, output_root):
             or spec["input_hash"] != spec["snapshot"].get("frozen_input_hash")):
         raise WorkspaceError("SHARED_RENDER_INPUT_INVALID", 409)
     snapshot = spec["snapshot"]
+    if kind == material.KIND:
+        material.render(frozen_root, output_root / 'staging', snapshot)
+        return
     validate_snapshot(snapshot, frozen_root, sealed_originals=True)
     if kind == "snapshot-brief":
         brief.run_frozen(snapshot, frozen_root, output_root / "staging")
@@ -76,6 +96,8 @@ def _render_child(kind, frozen_root, output_root):
 
 
 def _output_result(kind, directory, snapshot):
+    if kind == material.KIND:
+        return material.verify_output(directory, snapshot)
     if kind == "snapshot-brief":
         receipt = brief.verify(directory)
         if ev.parse(ev.read_local(directory, "snapshot.json")) != snapshot:

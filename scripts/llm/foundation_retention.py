@@ -172,6 +172,20 @@ def _validate_pin(value):
     if snapshots != [row["snapshot_id"] for row in pin["snapshots"]] or jobs != [row["job_id"] for row in pin["jobs"]]:
         _fail("SELECTION_ORDER_INVALID")
     for row in pin["snapshots"]:
+        if row['validation_scope'] == 'REGISTERED_MATERIAL_NOT_MARKET_PUBLICATION':
+            for key in ('input_hash', 'publication_fingerprint', 'attempt_fingerprint', 'snapshot_hash'):
+                _hash(row[key])
+            if (row['source_run_id'] is not None or row['source_trade_date'] is not None
+                    or row['snapshot_hash'] != row['input_hash']
+                    or row['envelope_ref'] != f"frozen-inputs/envelopes/{row['snapshot_id']}.json"
+                    or row['publication_ref'] != 'frozen-inputs/material-packs/' + row['input_hash']
+                    or row['attempt_ref'] != row['envelope_ref'] or type(row['records']) is not dict):
+                _fail('SNAPSHOT_REFERENCE_INVALID')
+            for name, record in row['records'].items():
+                _ref(name); _exact(record, {'status', 'binding', 'source_sha256'})
+                if record['status'] != 'MATERIAL' or record['binding'] != 'MATCH': _fail('RECORDS_INVALID')
+                _hash(record['source_sha256'])
+            continue
         for key in ("input_hash", "publication_fingerprint", "attempt_fingerprint", "snapshot_hash"):
             _hash(row[key])
         for key in ("envelope_ref", "publication_ref", "attempt_ref"):
@@ -233,6 +247,13 @@ def _validate_pin(value):
 def _snapshot(root, row):
     snapshot_id, input_hash, body = row
     envelope = FrozenInputs.verify_registered(root / "frozen-inputs", snapshot_id, (input_hash, body))
+    if envelope['schema'] == 'ar.shared-material-input.v1':
+        reference = f'frozen-inputs/envelopes/{snapshot_id}.json'
+        return {**{key: envelope[key] for key in SNAPSHOT_FIELDS}, 'snapshot_hash': input_hash,
+                'envelope_ref': reference, 'attempt_ref': reference,
+                'publication_ref': 'frozen-inputs/material-packs/' + input_hash,
+                'records': {name: {'status': 'MATERIAL', 'binding': 'MATCH', 'source_sha256': checksum}
+                            for name, checksum in envelope['snapshot']['files'].items()}}
     return {**{key: envelope[key] for key in SNAPSHOT_FIELDS},
             "snapshot_hash": envelope["snapshot"]["snapshot_hash"],
             "envelope_ref": f"frozen-inputs/envelopes/{snapshot_id}.json",
@@ -258,6 +279,11 @@ def _registered_jobs(tables, manifest):
     for identity, (job, registration, registry_hash) in jobs.items():
         names = sorted({name for group in manifest["artifact_inventory"] if group["job_id"] == identity
                         for name in group["files"]})
+        if job['kind'] == 'earnings-review':
+            # The verified job seal pins its deep archive inventory. Keep v1's
+            # global portable-reference depth limit; reference that seal and roots.
+            names = [name for name in names if len(name.split('/')) <= 8
+                     and name.split('/')[-1] in {'input.json', 'seal.json', 'result.json', 'archive.json'}]
         result[identity] = {"job_id": identity, "registration": registration, "registry_hash": registry_hash,
                             "kind": job["kind"], "status": job["status"],
                             "binding": {key: job[key] for key in JOB_BINDING_FIELDS if key in job},

@@ -1,0 +1,89 @@
+{
+  "schema": "ai-task.v1",
+  "task_id": "FOUNDATION-REAL-VERTICAL-20261105",
+  "architecture_block": [
+    "Data observation",
+    "Local preservation",
+    "Shared earnings research",
+    "Content-bound PDF parsing"
+  ],
+  "objective": "Implement finite real endpoint evidence, verified local preservation and a registered earnings task through the existing isolated shared queue.",
+  "non_goals": [
+    "No production or running shared-service change, merge, push, external upload, model call, research approval or trading."
+  ],
+  "human_owner": "Junyan",
+  "reviewer": "Independent nonauthor reviewer",
+  "executor_candidates": [
+    "Codex"
+  ],
+  "dependencies": [
+    "Accepted 1b313306 runtime",
+    "EndpointSession",
+    "Frozen research packs and existing queue"
+  ],
+  "authority_docs": [
+    "AGENTS.md",
+    "scripts/llm/AGENTS.md",
+    "docs/engineering/FOUNDATION_REAL_VERTICAL_V1.md"
+  ],
+  "file_scope": [
+    "scripts/llm/foundation_research.py",
+    "scripts/llm/foundation_observation.py",
+    "scripts/llm/foundation_local_store.py",
+    "scripts/llm/workbench_shared_material.py",
+    "scripts/llm/workbench_shared_inputs.py",
+    "scripts/llm/workbench_shared_jobs.py",
+    "scripts/llm/workbench_shared_worker.py",
+    "scripts/llm/workbench_shared_workspace.py",
+    "scripts/llm/workbench_backup.py",
+    "scripts/llm/nonprod_workbench.py",
+    "scripts/llm/foundation_cli.py",
+    "scripts/llm/workbench_runtime_service.py",
+    "scripts/llm/foundation_retention.py",
+    "tools/nonprod_workbench/ui/",
+    "tests/",
+    "scripts/governance_mutation_gate.py",
+    ".github/workflows/python-ci.yml",
+    "config/data-source-inventory.v1.json",
+    "docs/engineering/FOUNDATION_REAL_VERTICAL_V1.md",
+    "docs/superpowers/plans/2026-11-05-foundation-real-vertical.md",
+    "scripts/llm/fixtures/foundation_real_vertical.task.json"
+  ],
+  "forbidden_scope": [
+    "/Users/years/ar-live writes",
+    "Current shared service and state",
+    "Tailscale and whitelist",
+    "Formal ledgers",
+    "Credential files"
+  ],
+  "input_contracts": [
+    "Exact chat-authorized daily/moneyflow_dc 603629.SH 20261104 one call each",
+    "Independent library, pack and preservation hashes",
+    "New draft date, original cutoff retained"
+  ],
+  "output_artifacts": [
+    "Immutable call and gap evidence",
+    "Local generation and verified cold recovery",
+    "Sealed earnings output and queryable archive",
+    "Same-final acceptance and independent review"
+  ],
+  "acceptance_tests": [
+    "Targeted observation, local-store and shared-material behavior tests",
+    "Same-final full offline CI and behavior mutations",
+    "Exact authorized real calls without retries",
+    "Local copy and cold restore with independent hashes",
+    "Isolated browser end-to-end and responsive verification"
+  ],
+  "risk_level": "MEDIUM",
+  "network_policy": "ALLOWLIST",
+  "budget": {
+    "max_cny": "0",
+    "max_minutes": 240
+  },
+  "approval_gates": [
+    "Chat authorizes isolated implementation",
+    "Only api.tushare.pro HTTPS for the two exact initial requests with existing TUSHARE_TOKEN",
+    "No automatic retry, external transmission or running-service upgrade"
+  ],
+  "created_at": "2026-11-05T12:00:00+00:00"
+}
