@@ -1,6 +1,6 @@
 {
   "ticker": "300308.SZ",
-  "fetched_at": "2026-11-05T16:37:56Z",
+  "fetched_at": "2026-11-06T07:49:36Z",
   "permission_model": "runtime_probe",
   "_status": "partial",
   "data": {
@@ -759,22 +759,9 @@
           "pct_chg": -6.0106,
           "vol": 525921.31,
           "amount": 45764386.519
-        },
-        {
-          "ts_code": "300308.SZ",
-          "trade_date": "20260807",
-          "open": 981.09,
-          "high": 999.88,
-          "low": 902.0,
-          "close": 919.87,
-          "pre_close": 955.0,
-          "change": -35.13,
-          "pct_chg": -3.6785,
-          "vol": 571891.57,
-          "amount": 54670636.3291
         }
       ],
-      "row_count": 59,
+      "row_count": 58,
       "_status": "ok",
       "as_of": "20261105"
     },
@@ -1939,34 +1926,19 @@
           "free_share": 84012.6316,
           "total_mv": 101132922.6926,
           "circ_mv": 95963175.2284
-        },
-        {
-          "ts_code": "300308.SZ",
-          "trade_date": "20260807",
-          "close": 919.87,
-          "turnover_rate": 5.1525,
-          "turnover_rate_f": 6.8072,
-          "volume_ratio": 1.12,
-          "pe": 99.6553,
-          "pe_ttm": 71.9789,
-          "pb": 30.2358,
-          "ps": 28.1382,
-          "ps_ttm": 21.0724,
-          "dv_ratio": 0.0975,
-          "dv_ttm": 0.1519,
-          "total_share": 116973.4641,
-          "float_share": 110993.9778,
-          "free_share": 84012.6316,
-          "total_mv": 107600385.8489,
-          "circ_mv": 102100032.3826
         }
       ],
-      "row_count": 59,
+      "row_count": 58,
       "_status": "ok",
       "as_of": "20261105"
     },
     "adj_factor": {
       "rows": [
+        {
+          "ts_code": "300308.SZ",
+          "trade_date": "20261106",
+          "adj_factor": 6.6141
+        },
         {
           "ts_code": "300308.SZ",
           "trade_date": "20261105",
@@ -2256,16 +2228,11 @@
           "ts_code": "300308.SZ",
           "trade_date": "20260810",
           "adj_factor": 6.6039
-        },
-        {
-          "ts_code": "300308.SZ",
-          "trade_date": "20260807",
-          "adj_factor": 6.6039
         }
       ],
       "row_count": 59,
       "_status": "ok",
-      "as_of": "20261105"
+      "as_of": "20261106"
     },
     "income": {
       "rows": [

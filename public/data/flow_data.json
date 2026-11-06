@@ -1,18 +1,18 @@
 {
-  "fetched_at": "2026-11-05T16:37:36.388532",
+  "fetched_at": "2026-11-06T07:49:16.947257",
   "northbound": {
     "latest_net_flow": null,
     "5d_cumulative": 0.0,
     "20d_cumulative": 0.0,
     "trend": "outflow",
-    "updated": "2026-11-05"
+    "updated": "2026-11-06"
   },
   "southbound": {
     "latest_net_flow": -213.262,
     "5d_cumulative": -92.1194,
     "20d_cumulative": -336.0303,
     "trend": "outflow",
-    "updated": "2026-11-05"
+    "updated": "2026-11-06"
   },
   "dragon_tiger": [
     {
@@ -209,7 +209,7 @@
       "code": "000678",
       "name": "襄阳轴承",
       "date": "",
-      "reason": "日涨幅偏离值达到7%的前5只证券",
+      "reason": "日换手率达到20%的前5只证券",
       "buy_amt": null,
       "sell_amt": null,
       "net_amt": null,
@@ -219,7 +219,7 @@
       "code": "000678",
       "name": "襄阳轴承",
       "date": "",
-      "reason": "日换手率达到20%的前5只证券",
+      "reason": "日涨幅偏离值达到7%的前5只证券",
       "buy_amt": null,
       "sell_amt": null,
       "net_amt": null,
@@ -429,6 +429,16 @@
       "code": "002058",
       "name": "紫竹高科",
       "date": "",
+      "reason": "日振幅值达到15%的前5只证券",
+      "buy_amt": null,
+      "sell_amt": null,
+      "net_amt": null,
+      "focus": false
+    },
+    {
+      "code": "002058",
+      "name": "紫竹高科",
+      "date": "",
       "reason": "日跌幅偏离值达到7%的前5只证券",
       "buy_amt": null,
       "sell_amt": null,
@@ -439,16 +449,6 @@
       "code": "002058",
       "name": "紫竹高科",
       "date": "",
-      "reason": "日振幅值达到15%的前5只证券",
-      "buy_amt": null,
-      "sell_amt": null,
-      "net_amt": null,
-      "focus": false
-    },
-    {
-      "code": "002058",
-      "name": "紫竹高科",
-      "date": "",
       "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
       "buy_amt": null,
       "sell_amt": null,
@@ -459,7 +459,7 @@
       "code": "002086",
       "name": "东方海洋",
       "date": "",
-      "reason": "日换手率达到20%的前5只证券",
+      "reason": "日涨幅偏离值达到7%的前5只证券",
       "buy_amt": null,
       "sell_amt": null,
       "net_amt": null,
@@ -469,7 +469,7 @@
       "code": "002086",
       "name": "东方海洋",
       "date": "",
-      "reason": "日涨幅偏离值达到7%的前5只证券",
+      "reason": "日换手率达到20%的前5只证券",
       "buy_amt": null,
       "sell_amt": null,
       "net_amt": null,
@@ -499,7 +499,7 @@
       "code": "002086",
       "name": "东方海洋",
       "date": "",
-      "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
+      "reason": "日涨幅偏离值达到7%的前5只证券",
       "buy_amt": null,
       "sell_amt": null,
       "net_amt": null,
@@ -509,7 +509,7 @@
       "code": "002086",
       "name": "东方海洋",
       "date": "",
-      "reason": "日涨幅偏离值达到7%的前5只证券",
+      "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
       "buy_amt": null,
       "sell_amt": null,
       "net_amt": null,

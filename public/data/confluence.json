@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-05T16:42:50.983291+00:00",
+  "generated_at": "2026-11-06T07:54:49.227064+00:00",
   "model_state": "NORMAL_OBSERVATION_MODE",
   "tickers_scored": 9,
   "summary": {
@@ -10,7 +10,7 @@
   "scores": [
     {
       "ticker": "688120.SH",
-      "score": 30,
+      "score": 23,
       "action": "HOLD",
       "action_zh": "温和多头，持有",
       "zone": "NEUTRAL",
@@ -28,36 +28,36 @@
         {
           "type": "VOLUME_BREAKOUT",
           "base_weight": 18,
-          "decay": 1.0,
+          "decay": 0.67,
           "independence_factor": 1.0,
           "regime_mult": 1.0,
           "staleness": 1.0,
           "flow_role": "fact_positive",
           "policy_gate": null,
-          "raw_contribution_before_policy": 18.0,
-          "final_contribution": 18.0
+          "raw_contribution_before_policy": 12.0,
+          "final_contribution": 12.0
         },
         {
           "type": "MACD_GOLDEN_CROSS",
           "base_weight": 12,
-          "decay": 1.0,
+          "decay": 0.9,
           "independence_factor": 1.0,
           "regime_mult": 1.0,
           "staleness": 1.0,
           "flow_role": "other",
           "policy_gate": null,
-          "raw_contribution_before_policy": 12.0,
-          "final_contribution": 12.0
+          "raw_contribution_before_policy": 10.8,
+          "final_contribution": 10.8
         }
       ],
       "contributing_signals": [
         {
           "type": "VOLUME_BREAKOUT",
-          "contribution": 18.0
+          "contribution": 12.0
         },
         {
           "type": "MACD_GOLDEN_CROSS",
-          "contribution": 12.0
+          "contribution": 10.8
         }
       ],
       "rationale_e": "Bullish: Volume Breakout, Macd Golden Cross | RSI 46 | Price vs MA20 -2.5% | VP 45",
@@ -66,11 +66,11 @@
         "VOLUME_BREAKOUT",
         "MACD_GOLDEN_CROSS"
       ],
-      "computed_at": "2026-11-05T16:42:50.983213+00:00"
+      "computed_at": "2026-11-06T07:54:49.226938+00:00"
     },
     {
       "ticker": "002594.SZ",
-      "score": 1,
+      "score": 2,
       "action": "NEUTRAL",
       "action_zh": "信号中性，等待",
       "zone": "NEUTRAL",
@@ -88,52 +88,52 @@
         {
           "type": "MA20_BOUNCE",
           "base_weight": 12,
-          "decay": 1.0,
+          "decay": 0.8,
           "independence_factor": 1.0,
           "regime_mult": 1.2,
           "staleness": 1.0,
           "flow_role": "other",
           "policy_gate": null,
-          "raw_contribution_before_policy": 14.4,
-          "final_contribution": 14.4
+          "raw_contribution_before_policy": 11.5,
+          "final_contribution": 11.5
         },
         {
           "type": "BB_UPPER_BREAK",
           "base_weight": -5,
-          "decay": 1.0,
+          "decay": 0.67,
           "independence_factor": 1.0,
           "regime_mult": 0.8,
           "staleness": 1.0,
           "flow_role": "other",
           "policy_gate": null,
-          "raw_contribution_before_policy": -4.0,
-          "final_contribution": -4.0
+          "raw_contribution_before_policy": -2.7,
+          "final_contribution": -2.7
         },
         {
           "type": "KDJ_OVERBOUGHT",
           "base_weight": -12,
-          "decay": 1.0,
+          "decay": 0.67,
           "independence_factor": 1.0,
           "regime_mult": 0.8,
           "staleness": 1.0,
           "flow_role": "other",
           "policy_gate": null,
-          "raw_contribution_before_policy": -9.6,
-          "final_contribution": -9.6
+          "raw_contribution_before_policy": -6.4,
+          "final_contribution": -6.4
         }
       ],
       "contributing_signals": [
         {
           "type": "MA20_BOUNCE",
-          "contribution": 14.4
+          "contribution": 11.5
         },
         {
           "type": "KDJ_OVERBOUGHT",
-          "contribution": -9.6
+          "contribution": -6.4
         },
         {
           "type": "BB_UPPER_BREAK",
-          "contribution": -4.0
+          "contribution": -2.7
         }
       ],
       "rationale_e": "Bullish: Ma20 Bounce | Bearish: Kdj Overbought, Bb Upper Break | RSI 60 | Price vs MA20 +4.0% | Regime: PERMISSIVE | VP 48",
@@ -143,7 +143,7 @@
         "BB_UPPER_BREAK",
         "KDJ_OVERBOUGHT"
       ],
-      "computed_at": "2026-11-05T16:42:50.982902+00:00"
+      "computed_at": "2026-11-06T07:54:49.226449+00:00"
     },
     {
       "ticker": "175.HK",
@@ -186,7 +186,7 @@
       "signal_types": [
         "KDJ_OVERSOLD"
       ],
-      "computed_at": "2026-11-05T16:42:50.982968+00:00"
+      "computed_at": "2026-11-06T07:54:49.226552+00:00"
     },
     {
       "ticker": "300054.SZ",
@@ -209,7 +209,7 @@
       "rationale_e": "RSI 54 | Price vs MA20 +7.7% | VP 47",
       "rationale_z": "RSI 54 | 距MA20 +7.7% | VP 47",
       "signal_types": [],
-      "computed_at": "2026-11-05T16:42:50.983014+00:00"
+      "computed_at": "2026-11-06T07:54:49.226624+00:00"
     },
     {
       "ticker": "300308.SZ",
@@ -232,7 +232,7 @@
       "rationale_e": "RSI 30 | Price vs MA20 -20.5% | Regime: PERMISSIVE | VP 48",
       "rationale_z": "RSI 30 | 距MA20 -20.5% | 政策顺风 | VP 48",
       "signal_types": [],
-      "computed_at": "2026-11-05T16:42:50.983065+00:00"
+      "computed_at": "2026-11-06T07:54:49.226696+00:00"
     },
     {
       "ticker": "603233.SH",
@@ -255,7 +255,7 @@
       "rationale_e": "RSI 66 | Price vs MA20 +8.4% | VP 50",
       "rationale_z": "RSI 66 | 距MA20 +8.4% | VP 50",
       "signal_types": [],
-      "computed_at": "2026-11-05T16:42:50.983104+00:00"
+      "computed_at": "2026-11-06T07:54:49.226758+00:00"
     },
     {
       "ticker": "6160.HK",
@@ -332,7 +332,7 @@
         "MA60_BOUNCE",
         "MACD_GOLDEN_CROSS"
       ],
-      "computed_at": "2026-11-05T16:42:50.983158+00:00"
+      "computed_at": "2026-11-06T07:54:49.226845+00:00"
     },
     {
       "ticker": "700.HK",
@@ -355,7 +355,7 @@
       "rationale_e": "RSI 41 | Price vs MA20 -3.5%",
       "rationale_z": "RSI 41 | 距MA20 -3.5%",
       "signal_types": [],
-      "computed_at": "2026-11-05T16:42:50.983253+00:00"
+      "computed_at": "2026-11-06T07:54:49.227003+00:00"
     },
     {
       "ticker": "9999.HK",
@@ -378,7 +378,7 @@
       "rationale_e": "RSI 56 | Price vs MA20 +2.8%",
       "rationale_z": "RSI 56 | 距MA20 +2.8%",
       "signal_types": [],
-      "computed_at": "2026-11-05T16:42:50.983285+00:00"
+      "computed_at": "2026-11-06T07:54:49.227054+00:00"
     }
   ]
 }
