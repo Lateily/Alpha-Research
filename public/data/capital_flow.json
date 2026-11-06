@@ -1,194 +1,12 @@
 {
-  "fetched_at": "2026-11-06T07:50:45Z",
-  "trade_date": "20261106",
+  "fetched_at": "2026-11-06T16:11:28Z",
+  "trade_date": "20261107",
   "tier": 15000,
   "_status": "partial",
   "hot_concepts": [],
   "cold_concepts": [],
-  "hot_industries": [
-    {
-      "name": "红利破净股",
-      "ts_code": "BK1636.DC",
-      "net_inflow_yuan": 9860792320000.0,
-      "pct_chg": 0.29
-    },
-    {
-      "name": "公用事业",
-      "ts_code": "BK0427.DC",
-      "net_inflow_yuan": 9594158400000.0,
-      "pct_chg": 0.55
-    },
-    {
-      "name": "电力",
-      "ts_code": "BK0428.DC",
-      "net_inflow_yuan": 9402432160000.0,
-      "pct_chg": 0.76
-    },
-    {
-      "name": "银行",
-      "ts_code": "BK1283.DC",
-      "net_inflow_yuan": 8527605760000.0,
-      "pct_chg": 0.99
-    },
-    {
-      "name": "银行Ⅱ",
-      "ts_code": "BK0475.DC",
-      "net_inflow_yuan": 8527605760000.0,
-      "pct_chg": 0.99
-    },
-    {
-      "name": "长期破净",
-      "ts_code": "BK1635.DC",
-      "net_inflow_yuan": 8506206720000.0,
-      "pct_chg": -0.27
-    },
-    {
-      "name": "红利股",
-      "ts_code": "BK1641.DC",
-      "net_inflow_yuan": 7906122240000.0,
-      "pct_chg": 0.19
-    },
-    {
-      "name": "半导体设备",
-      "ts_code": "BK1326.DC",
-      "net_inflow_yuan": 7403156480000.0,
-      "pct_chg": -2.33
-    },
-    {
-      "name": "绿色电力",
-      "ts_code": "BK1024.DC",
-      "net_inflow_yuan": 6905720320000.0,
-      "pct_chg": 0.09
-    },
-    {
-      "name": "保险重仓",
-      "ts_code": "BK1685.DC",
-      "net_inflow_yuan": 6881413120000.0,
-      "pct_chg": -0.24
-    },
-    {
-      "name": "水力发电",
-      "ts_code": "BK1380.DC",
-      "net_inflow_yuan": 6330020320000.0,
-      "pct_chg": 1.46
-    },
-    {
-      "name": "破净股",
-      "ts_code": "BK1112.DC",
-      "net_inflow_yuan": 5277975040000.0,
-      "pct_chg": -0.57
-    },
-    {
-      "name": "国有大型银行Ⅲ",
-      "ts_code": "BK1611.DC",
-      "net_inflow_yuan": 5087274240000.0,
-      "pct_chg": 1.04
-    },
-    {
-      "name": "集成电路制造",
-      "ts_code": "BK1329.DC",
-      "net_inflow_yuan": 4973124480000.0,
-      "pct_chg": -1.87
-    },
-    {
-      "name": "铁路公路",
-      "ts_code": "BK0421.DC",
-      "net_inflow_yuan": 4807853280000.0,
-      "pct_chg": 0.7
-    },
-    {
-      "name": "虚拟电厂",
-      "ts_code": "BK0958.DC",
-      "net_inflow_yuan": 4570873120000.0,
-      "pct_chg": -0.62
-    },
-    {
-      "name": "电信运营商",
-      "ts_code": "BK1587.DC",
-      "net_inflow_yuan": 4047691360000.0,
-      "pct_chg": 2.87
-    },
-    {
-      "name": "高速公路",
-      "ts_code": "BK1483.DC",
-      "net_inflow_yuan": 3988038480000.0,
-      "pct_chg": 1.2
-    },
-    {
-      "name": "黑龙江",
-      "ts_code": "BK0146.DC",
-      "net_inflow_yuan": 3864879840000.0,
-      "pct_chg": -0.7
-    },
-    {
-      "name": "低市净率",
-      "ts_code": "BK1723.DC",
-      "net_inflow_yuan": 3687964160000.0,
-      "pct_chg": -0.66
-    }
-  ],
-  "cold_industries": [
-    {
-      "name": "融资融券",
-      "ts_code": "BK0596.DC",
-      "net_inflow_yuan": -503647109120000.0,
-      "pct_chg": -1.99
-    },
-    {
-      "name": "基金减仓",
-      "ts_code": "BK1689.DC",
-      "net_inflow_yuan": -345513369600000.0,
-      "pct_chg": -2.1
-    },
-    {
-      "name": "深股通",
-      "ts_code": "BK0804.DC",
-      "net_inflow_yuan": -303472599040000.0,
-      "pct_chg": -2.03
-    },
-    {
-      "name": "富时罗素",
-      "ts_code": "BK0867.DC",
-      "net_inflow_yuan": -301987594240000.0,
-      "pct_chg": -1.38
-    },
-    {
-      "name": "MSCI中国",
-      "ts_code": "BK0821.DC",
-      "net_inflow_yuan": -281990635520000.0,
-      "pct_chg": -1.92
-    },
-    {
-      "name": "2026中报预增",
-      "ts_code": "BK1749.DC",
-      "net_inflow_yuan": -217725155840000.0,
-      "pct_chg": -2.6
-    },
-    {
-      "name": "深成500",
-      "ts_code": "BK0568.DC",
-      "net_inflow_yuan": -215430069760000.0,
-      "pct_chg": -1.97
-    },
-    {
-      "name": "标准普尔",
-      "ts_code": "BK0879.DC",
-      "net_inflow_yuan": -205399065600000.0,
-      "pct_chg": -1.15
-    },
-    {
-      "name": "昨日高振幅",
-      "ts_code": "BK1633.DC",
-      "net_inflow_yuan": -197718402560000.0,
-      "pct_chg": -2.73
-    },
-    {
-      "name": "大盘股",
-      "ts_code": "BK1663.DC",
-      "net_inflow_yuan": -185182863360000.0,
-      "pct_chg": -1.69
-    }
-  ],
+  "hot_industries": [],
+  "cold_industries": [],
   "concept_meta": {
     "api_used": null,
     "_attempted_endpoints": [
@@ -205,7 +23,7 @@
     "_attempted_endpoints": [
       "moneyflow_ind_dc"
     ],
-    "row_count": 1058,
+    "row_count": 0,
     "_status": "ok"
   }
 }

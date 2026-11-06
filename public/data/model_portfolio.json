@@ -8,7 +8,7 @@
     "no_position_mutation": true,
     "run_date": "2026-11-06",
     "pilot_start_date": "2026-06-08",
-    "generated_at": "2026-11-06T07:54:49.347951+00:00",
+    "generated_at": "2026-11-06T16:15:35.012719+00:00",
     "fresh_pilot": true,
     "legacy_paper_positions_inherited": false,
     "sources": [
@@ -22,7 +22,7 @@
     "disclaimer": "Internal model-recommendation pilot. UNVALIDATED model output — not validated alpha, and not external investment advice. Target ranges are thesis-derived and NOT calibrated; entry references pend the next market sync. Live execution-return tracking begins from the next trading-day pilot run. The product edge is the loop: recommendation -> user execution -> performance attribution -> model improvement.",
     "counts": {
       "core_thesis": 5,
-      "quant_swing_active": 1,
+      "quant_swing_active": 0,
       "quant_swing_setup_watch": 9,
       "research_pool": 20,
       "watch_pool": 31
@@ -64,7 +64,7 @@
         "quant_confluence": {
           "action": "NEUTRAL",
           "score": 2,
-          "rationale": "Bullish: Ma20 Bounce | Bearish: Kdj Overbought, Bb Upper Break | RSI 60 | Price vs MA20 +4.0% | Regime: PERMISSIVE | VP 48"
+          "rationale": "Bullish: Ma20 Bounce | Bearish: Kdj Overbought, Bb Upper Break | RSI 59 | Price vs MA20 +4.0% | Regime: PERMISSIVE | VP 48"
         }
       },
       "validation_status": "PENDING",
@@ -241,40 +241,7 @@
     }
   ],
   "quant_swing": {
-    "active": [
-      {
-        "ticker": "688120.SH",
-        "name": "华海清科",
-        "market": "A",
-        "sleeve": "quant_swing",
-        "model_action": "HOLD",
-        "horizon_days": 5,
-        "evidence_tier": "quant_confluence",
-        "why": "Bullish: Volume Breakout, Macd Golden Cross | RSI 46 | Price vs MA20 -2.5% | VP 45",
-        "target_range": {
-          "basis": "quant_signal",
-          "calibrated": false,
-          "entry_reference": "pending_next_market_sync",
-          "reward_to_risk": null,
-          "note": "Quant-signal idea — not yet calibrated to a live entry."
-        },
-        "construction_plan": "Confluence-confirmed short-term idea; stage entry on the next session — pending calibration. No size, no auto-trade.",
-        "risk_rules": {
-          "invalidation": [],
-          "current_blocker": null
-        },
-        "source_signals": {
-          "quant_confluence": {
-            "action": "HOLD",
-            "score": 23,
-            "rationale": "Bullish: Volume Breakout, Macd Golden Cross | RSI 46 | Price vs MA20 -2.5% | VP 45",
-            "regime": "NEUTRAL"
-          }
-        },
-        "validation_status": "unvalidated_pilot",
-        "no_trade_flag": true
-      }
-    ],
+    "active": [],
     "setup_watch": [
       {
         "ticker": "002594.SZ",
@@ -298,8 +265,8 @@
             "total": 3
           },
           "key_indicators": {
-            "rsi14": 59.6,
-            "macd_hist": 1.3387,
+            "rsi14": 59.4,
+            "macd_hist": 1.3456,
             "price_vs_ma20": 4.03,
             "price_vs_ma60": null,
             "change_5d": 4.55,
@@ -383,7 +350,7 @@
         "bias": "neutral",
         "why_not_active": "confluence verdict is NEUTRAL — no active swing trade today",
         "trigger_to_activate": "confluence upgrade to non-neutral; no technical signal firing yet.",
-        "risk_rule": "No setup yet — watch MA20 (58.52) / MA60 (None) for the first directional signal.",
+        "risk_rule": "No setup yet — watch MA20 (58.41) / MA60 (None) for the first directional signal.",
         "technical": {
           "zone": "NEUTRAL",
           "entry_zone": false,
@@ -394,12 +361,12 @@
             "total": 0
           },
           "key_indicators": {
-            "rsi14": 54.0,
-            "macd_hist": 1.7289,
-            "price_vs_ma20": 7.66,
+            "rsi14": 50.7,
+            "macd_hist": 2.0021,
+            "price_vs_ma20": 5.05,
             "price_vs_ma60": null,
-            "change_5d": 9.15,
-            "vol_ratio": 1.55
+            "change_5d": 13.63,
+            "vol_ratio": 1.06
           },
           "signals": []
         },
@@ -429,8 +396,8 @@
             "total": 0
           },
           "key_indicators": {
-            "rsi14": 30.3,
-            "macd_hist": -12.3664,
+            "rsi14": 30.5,
+            "macd_hist": -12.4145,
             "price_vs_ma20": -20.51,
             "price_vs_ma60": null,
             "change_5d": -15.24,
@@ -464,8 +431,8 @@
             "total": 0
           },
           "key_indicators": {
-            "rsi14": 66.4,
-            "macd_hist": 0.4738,
+            "rsi14": 66.2,
+            "macd_hist": 0.4752,
             "price_vs_ma20": 8.37,
             "price_vs_ma60": null,
             "change_5d": 12.49,
@@ -538,42 +505,29 @@
         "sleeve": "quant_swing",
         "state": "SETUP_WATCH",
         "signal_class": "no_trade_signal",
-        "setup_type": "volume_breakout / macd_golden_cross",
-        "bias": "bullish",
-        "why_not_active": "confluence verdict is HOLD — no active swing trade today",
-        "trigger_to_activate": "confluence upgrade to non-neutral, or a volume-confirmed breakout (current vol_ratio 2.03).",
-        "risk_rule": "Setup invalidated on a decisive close below MA20 (206.02); loss of MA60 (None) ends it.",
+        "setup_type": "no_signal",
+        "bias": "neutral",
+        "why_not_active": "confluence verdict is NEUTRAL — no active swing trade today",
+        "trigger_to_activate": "confluence upgrade to non-neutral; no technical signal firing yet.",
+        "risk_rule": "No setup yet — watch MA20 (204.79) / MA60 (None) for the first directional signal.",
         "technical": {
           "zone": "NEUTRAL",
-          "entry_zone": true,
+          "entry_zone": false,
           "exit_zone": false,
           "signal_count": {
-            "bullish": 2,
+            "bullish": 0,
             "bearish": 0,
-            "total": 2
+            "total": 0
           },
           "key_indicators": {
-            "rsi14": 46.4,
-            "macd_hist": 0.5775,
-            "price_vs_ma20": -2.51,
+            "rsi14": 46.3,
+            "macd_hist": 3.5515,
+            "price_vs_ma20": -1.95,
             "price_vs_ma60": null,
-            "change_5d": 13.51,
-            "vol_ratio": 2.03
+            "change_5d": 22.85,
+            "vol_ratio": 1.39
           },
-          "signals": [
-            {
-              "type": "VOLUME_BREAKOUT",
-              "strength": "moderate",
-              "bullish": true,
-              "desc": "Volume 2.0× avg, price +2.5% — buying surge"
-            },
-            {
-              "type": "MACD_GOLDEN_CROSS",
-              "strength": "moderate",
-              "bullish": true,
-              "desc": "MACD DIF(-16.362) crossed above DEA(-16.651) below zero — bullish momentum"
-            }
-          ]
+          "signals": []
         },
         "as_of": "2026-11-06",
         "validation_status": "unvalidated_pilot",
