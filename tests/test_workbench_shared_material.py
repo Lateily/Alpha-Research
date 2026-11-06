@@ -197,6 +197,67 @@ class SharedMaterialTests(unittest.TestCase):
         backed = backup.backup_shared(queue.store, self.root / 'recovered-envelope-backup')
         self.assertEqual(backed['status'], 'LOCAL_SHARED_BACKUP_VERIFIED')
 
+    def preserve_uncommitted(self, phase, forge_intent=False):
+        import workbench_shared_inputs as inputs
+        import workbench_backup as backup
+        import nonprod_workbench as wb
+        queue, view, _ = self.queue(register=False)
+        original_copy, original_write = material._copy, inputs._new_or_identical
+        def crash_copy(*args):
+            original_copy(*args)
+            raise OSError('interrupted after complete library copy')
+        def crash_envelope(path, *args, **kwargs):
+            if Path(path).parent.name == 'envelopes': raise OSError('interrupted before registry INSERT')
+            return original_write(path, *args, **kwargs)
+        fault = (mock.patch.object(material, '_copy', side_effect=crash_copy) if phase == 'library'
+                 else mock.patch.object(inputs, '_new_or_identical', side_effect=crash_envelope))
+        with fault, self.assertRaises(OSError):
+            material.register(queue.inputs, self.fixture.library, self.pack,
+                expected_library_hash=self.fixture.request['expected_library_hash'], expected_pack_hash=self.prepared['pack_hash'])
+        self.fixture.library.rename(self.root / 'unavailable-source-library')
+        self.pack.rename(self.root / 'unavailable-source-pack')
+        state = queue.store.path.parent
+        if forge_intent:
+            work = next((state / 'input-write-evidence').iterdir())
+            intent = ev.parse((work / 'material-intent.json').read_bytes())
+            library = next(work.glob('material-attempt-*')) / 'library'
+            registration = next(library.glob('registrations/*/registration.json'))
+            changed = ev.parse(registration.read_bytes())
+            changed['manifest']['materials'][0]['title'] = 'not independently pinned'
+            registration.write_text(ev.canonical(changed))
+            value = intent['snapshot']
+            value['files'].update({'library/' + p.relative_to(library).as_posix(): ev.sha(p.read_bytes())
+                                   for p in library.rglob('*') if p.is_file()})
+            value['frozen_input_hash'] = ev.sealed({k:v for k,v in value.items() if k != 'frozen_input_hash'})
+            altered = material.envelope(value)
+            (work / 'material-intent.json').write_text(ev.canonical(altered))
+            work.rename(work.parent / altered['input_hash'])
+            with self.assertRaises(ValueError): backup.backup_shared(queue.store, self.root / 'forged-intent-backup')
+            return
+        before = {p.relative_to(state).as_posix(): p.read_bytes() for area in ('frozen-inputs', 'input-write-evidence')
+                  for p in (state / area).rglob('*') if p.is_file()}
+        archive, cold = self.root / 'before-retry-backup', self.root / 'before-retry-restored'
+        backed = backup.backup_shared(queue.store, archive)
+        self.assertEqual(backed['status'], 'LOCAL_SHARED_BACKUP_VERIFIED')
+        self.assertEqual(backup.restore_shared(archive, cold)['status'], 'LOCAL_SHARED_RESTORE_VERIFIED')
+        restored = wb.Store(cold, shared_v1=True)
+        with restored.connect() as db:
+            self.assertEqual(db.execute('SELECT COUNT(*) FROM shared_inputs').fetchone()[0], 0)
+        self.assertTrue(before)
+        for name, raw in before.items(): self.assertEqual((cold / name).read_bytes(), raw)
+        pdf = next(state.rglob('*.pdf'))
+        pdf.write_bytes(b'%PDF-1.7\nnot the admitted bytes\n%%EOF\n')
+        with self.assertRaises(ValueError): backup.backup_shared(queue.store, self.root / 'tampered-uncommitted-backup')
+
+    def test_uncommitted_verified_pool_backups_before_retry_without_external_source(self):
+        self.preserve_uncommitted('pool')
+
+    def test_uncommitted_library_copy_backups_before_retry_without_external_source(self):
+        self.preserve_uncommitted('library')
+
+    def test_uncommitted_intent_cannot_repin_unverified_library_bytes(self):
+        self.preserve_uncommitted('library', forge_intent=True)
+
     def test_partial_atomic_envelope_write_remains_backup_recoverable(self):
         import workbench_backup as backup
         queue, view, _ = self.queue(register=False)

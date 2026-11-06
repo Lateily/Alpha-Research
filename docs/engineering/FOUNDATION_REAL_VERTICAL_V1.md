@@ -33,6 +33,13 @@ acceptance are isolated; production and the running shared service are unchanged
   receives a new result dictionary. File inventories, independent pins, quotes,
   cutoff checks and output seals are still checked on every reopening; no seal,
   permission, registry validation or human review status is cached.
+- The nested extractor bootstraps cache bypass and source-only imports before
+  importing project helpers. Parent guards are not assumed to cross interpreters.
+- Uncommitted material pools/attempts can be backed up before registration retry
+  when retained originals independently verify against the intent's library pin.
+  Recovery preserves bytes without adding registry rows or making them runnable.
+  Unknown or unverifiable binary data still blocks acceptance; an intent's own
+  resealed inventory cannot authorize a different library.
 
 ## Release Gates
 

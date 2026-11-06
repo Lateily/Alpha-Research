@@ -252,6 +252,55 @@ def _validate_tables(tables):
     return events[-1]["event_hash"] if events else "0" * 64
 
 
+def _uncommitted_material_bindings(root, registered_hashes):
+    from workbench_shared_material import envelope, verify_input
+    import foundation_materials as materials
+    import foundation_results as results
+    recovery = {}
+    intents = sorted((root / 'input-write-evidence').glob('*/material-intent.json'))
+    if len(intents) > 100: raise ev.EvidenceError('BACKUP_MATERIAL_RECOVERY_LIMIT')
+    # Uncommitted intents are recovery evidence, never registered research inputs.
+    # governance-mutation: SHARED_MATERIAL_UNCOMMITTED_BACKUP
+    for intent in intents:
+        work = intent.parent
+        if work.name in registered_hashes: continue
+        entry = ev.parse(ev.read_local(work, 'material-intent.json'))
+        value = entry.get('snapshot', {})
+        if (not re.fullmatch(r'[0-9a-f]{64}', work.name)
+                or envelope(value) != entry or entry['input_hash'] != work.name):
+            raise ev.EvidenceError('BACKUP_MATERIAL_RECOVERY_INTENT_INVALID')
+        pool = root / 'frozen-inputs/material-packs' / work.name
+        attempts = sorted(work.glob('material-attempt-*'))
+        if len(attempts) > 3: raise ev.EvidenceError('BACKUP_MATERIAL_RECOVERY_LIMIT')
+        if any(not re.fullmatch(r'material-attempt-[0-9a-f]{32}', p.name) for p in attempts):
+            raise ev.EvidenceError('BACKUP_MATERIAL_RECOVERY_PATH_INVALID')
+        containers = [pool, *attempts]
+        trusted = {}
+        if pool.exists(): verify_input(pool, value)
+        for container in containers:
+            library = container / 'library'
+            if not (library / 'library.json').exists(): continue
+            try:
+                materials.verify_library(library, expected_library_hash=value['library_hash'])
+                actual = {name: ev.sha(raw) for name, raw in results._tree(library).items()}
+                expected = {name[len('library/'):]: checksum for name, checksum in value['files'].items()
+                            if name.startswith('library/')}
+                if actual != expected: raise ValueError('RECOVERY_LIBRARY_CONFLICT')
+            except (ValueError, OSError):
+                continue  # A partial library still needs a separately verified retained original.
+            for name, checksum in actual.items():
+                if name.endswith('.pdf'):
+                    trusted[checksum] = (library / name).relative_to(root).as_posix()
+        for container in containers:
+            for name, checksum in value['files'].items():
+                if not name.endswith('.pdf') or not (container / name).exists(): continue
+                if checksum not in trusted:
+                    raise ev.EvidenceError('BACKUP_MATERIAL_RECOVERY_ORIGINAL_UNAVAILABLE')
+                relative = (container / name).relative_to(root).as_posix()
+                recovery[relative] = (trusted[checksum], checksum)
+    return recovery
+
+
 def _material_pdf_bindings(root, tables):
     from workbench_shared_inputs import FrozenInputs
     entries, exact, recovery = {}, {}, {}
@@ -275,6 +324,7 @@ def _material_pdf_bindings(root, tables):
                     if name.endswith('.pdf'):
                         relative = attempt.relative_to(root).as_posix() + '/' + name
                         recovery[relative] = (prefix + name, digest)
+    recovery.update(_uncommitted_material_bindings(root, {entry['input_hash'] for entry in entries.values()}))
     job_prefixes = {}
     for job_id, _command, _request, body in tables.get('shared_jobs', []):
         job = ev.parse(body)

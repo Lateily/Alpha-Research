@@ -199,6 +199,18 @@ class MutationCase:
 
 
 MUTATIONS: tuple[MutationCase, ...] = (
+    MutationCase('MATERIAL_EXTRACTOR_BYTECODE', 'Shared earnings vertical', 'scripts/llm/foundation_research.py', 'tests/test_foundation_research.py',
+                 "sys.pycache_prefix = '/dev/null'", 'sys.pycache_prefix = None',
+                 'test_nested_extractor_bypasses_ignored_helper_bytecode', 'Nested interpreters must bypass ignored helper caches.'),
+    MutationCase('MATERIAL_EXTRACTOR_SOURCELESS', 'Shared earnings vertical', 'scripts/llm/foundation_research.py', 'tests/test_foundation_research.py',
+                 'if spec is not None and isinstance(spec.loader, importlib.machinery.SourcelessFileLoader):', 'if False:',
+                 'test_extractor_entry_refuses_sourceless_helpers', 'Extractor startup must refuse source-free bytecode before project imports.'),
+    MutationCase('SHARED_MATERIAL_UNCOMMITTED_BACKUP', 'Shared earnings vertical', 'scripts/llm/workbench_backup.py', 'tests/test_workbench_shared_material.py',
+                 'for intent in intents:', 'for intent in []:',
+                 'test_uncommitted_verified_pool_backups_before_retry_without_external_source', 'Uncommitted verified evidence must survive backup before retry.'),
+    MutationCase('SHARED_MATERIAL_RECOVERY_LIBRARY_PIN', 'Shared earnings vertical', 'scripts/llm/workbench_backup.py', 'tests/test_workbench_shared_material.py',
+                 "materials.verify_library(library, expected_library_hash=value['library_hash'])", 'pass',
+                 'test_uncommitted_intent_cannot_repin_unverified_library_bytes', 'A retained intent cannot authorize different library bytes by resealing its own inventory.'),
     MutationCase("RUNTIME_ENTRY_SOURCELESS", "Isolated service", "scripts/llm/workbench_runtime.py", "tests/test_workbench_runtime_service.py",
                  "if spec is not None and isinstance(spec.loader, importlib.machinery.SourcelessFileLoader):", "if False:",
                  "test_operator_and_worker_refuse_sourceless_modules", "Ignored bytecode without source cannot execute before operator verification."),

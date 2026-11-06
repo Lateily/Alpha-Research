@@ -4,8 +4,12 @@ import importlib
 import importlib.util
 import io
 import json
+import os
 from pathlib import Path
+import py_compile
+import shutil
 import socket
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -217,6 +221,39 @@ class MaterialResearchTests(unittest.TestCase):
             with mock.patch.object(research, '_extractor_hash', return_value='changed-extractor'):
                 research.extract_pages(changed, [1])
             self.assertEqual(parser.call_count, 3)
+
+    def test_nested_extractor_bypasses_ignored_helper_bytecode(self):
+        code = self.root / 'copied/scripts/llm'
+        shutil.copytree(ROOT / 'scripts/llm', code, ignore=shutil.ignore_patterns('__pycache__', '*.pyc'))
+        shutil.copy2(ROOT / 'scripts/team_ai_workspace.py', code.parent / 'team_ai_workspace.py')
+        module = code / 'foundation_materials.py'
+        source = module.read_bytes(); stamp = module.stat().st_mtime_ns
+        marker = self.root / 'unverified-bytecode-executed'
+        module.write_bytes(source + ('\nfrom pathlib import Path as _P\n_P(' + repr(str(marker)) + ').touch()\n').encode())
+        cache = code / '__pycache__' / ('foundation_materials.' + sys.implementation.cache_tag + '.pyc')
+        py_compile.compile(str(module), cfile=str(cache), doraise=True,
+                           invalidation_mode=py_compile.PycInvalidationMode.TIMESTAMP)
+        # A cache for the genuine source metadata must never be accepted by the child.
+        raw = cache.read_bytes()
+        module.write_bytes(source); os.utime(module, ns=(stamp, stamp))
+        cache.write_bytes(raw[:8] + int(stamp // 10**9).to_bytes(4, 'little') + len(source).to_bytes(4, 'little') + raw[16:])
+        driver = 'import sys;sys.pycache_prefix="/dev/null";sys.path.insert(0,sys.argv[1]);import foundation_research as r;print(r.extract_pages(sys.stdin.buffer.read(),[1])["1"])'
+        result = subprocess.run([sys.executable, '-I', '-B', '-c', driver, str(code)], input=self.pdf,
+                                capture_output=True, timeout=20)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn(b'Revenue was 100 CNY.', result.stdout)
+        self.assertFalse(marker.exists(), 'nested extractor executed ignored helper bytecode')
+
+    def test_extractor_entry_refuses_sourceless_helpers(self):
+        code = self.root / 'sourceless'; code.mkdir()
+        shutil.copy2(ROOT / 'scripts/llm/foundation_research.py', code / 'foundation_research.py')
+        payload = code / 'payload.py'; payload.write_text("print('UNPINNED_SOURCELESS_EXECUTED')\n")
+        py_compile.compile(str(payload), cfile=str(code / 'foundation_materials.pyc'), doraise=True)
+        result = subprocess.run([sys.executable, '-I', '-B', str(code / 'foundation_research.py'), '--extract', '[1]'],
+                                input=self.pdf, capture_output=True, timeout=20)
+        self.assertNotIn(b'UNPINNED_SOURCELESS_EXECUTED', result.stdout)
+        self.assertIn(b'SOURCELESS_MODULE_REFUSED', result.stderr)
+        self.assertNotEqual(result.returncode, 0)
 
     def test_blank_and_oversize_pdf_extraction_refuses_without_network(self):
         writer = PdfWriter(); writer.add_blank_page(width=100, height=100)

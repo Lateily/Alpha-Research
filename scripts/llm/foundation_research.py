@@ -1,6 +1,25 @@
 """Local historical PDF evidence packs for the existing earnings-trial job."""
 from __future__ import annotations
 
+import sys
+
+if __name__ == '__main__':
+    # The nested -I interpreter does not inherit the parent's import guards.
+    # governance-mutation: MATERIAL_EXTRACTOR_BYTECODE
+    sys.pycache_prefix = '/dev/null'
+    sys.dont_write_bytecode = True
+    import importlib.machinery
+
+    class _SourceOnlyImports:
+        def find_spec(self, fullname, path=None, target=None):
+            spec = importlib.machinery.PathFinder.find_spec(fullname, path)
+            # governance-mutation: MATERIAL_EXTRACTOR_SOURCELESS
+            if spec is not None and isinstance(spec.loader, importlib.machinery.SourcelessFileLoader):
+                raise ImportError('SOURCELESS_MODULE_REFUSED')
+            return None
+
+    sys.meta_path.insert(0, _SourceOnlyImports())
+
 import io
 import json
 import os
@@ -8,7 +27,6 @@ from pathlib import Path
 import re
 import signal
 import subprocess
-import sys
 from datetime import datetime, time, timedelta, timezone
 from functools import lru_cache
 
