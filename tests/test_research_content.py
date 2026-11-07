@@ -60,6 +60,59 @@ class ResearchContentTests(unittest.TestCase):
         self.assertFalse(output['paper_authority'])
         self.assertEqual(output['human_review'], 'PENDING')
 
+    def v2_draft(self):
+        from test_research_daily import observation, reseal
+        source = observation()
+        source['company'] = self.draft['company']
+        for key in ('daily', 'adjustment_factors'):
+            for row in source[key]: row['ts_code'] = source['company']
+        reseal(source)
+        draft = copy.deepcopy(self.draft)
+        draft.update(schema='ar.research-content-request.v2', as_of='20260804', generated_at='2026-08-04T16:00:00+08:00',
+                     technical={'adapter': 'LEGACY_FEATURE_STORE_DAILY_V1', 'observation': source,
+                                'observation_hash': source['observation_hash']})
+        return draft
+
+    def test_v2_daily_wiring_does_not_change_v1_or_promote_gates(self):
+        old = self.build()
+        result = self.build(self.v2_draft())
+        self.assertEqual(result['schema'], 'ar.research-content-cards.v2')
+        self.assertEqual(result['technical']['status'], 'INPUT_ADAPTED_GATES_PENDING')
+        self.assertEqual(result['technical']['source_trade_date'], '20260803')
+        self.assertEqual(result['material_cutoff_at'], self.request['source_cutoff_at'])
+        self.assertEqual(self.build(), old)
+        self.assertEqual(old['schema'], 'ar.research-content-cards.v1')
+
+    def test_v2_valuation_basis_is_rederived_from_quoted_facts(self):
+        draft = self.v2_draft()
+        for key, original in [('total', 0), ('gain', 0), ('tax', 1), ('minority', 1)]:
+            draft['facts'].append({**copy.deepcopy(draft['facts'][original]), 'id': key})
+        draft['valuation'] = {'schema': 'ar.valuation-basis.v1', 'period': '2019FY',
+            'nonrecurring': {'profit': 'revenue', 'ex_profit': 'cash', 'total': 'total',
+                'pretax_items': [{'fact_id': 'gain', 'sign': 1}], 'tax': 'tax', 'minority': 'minority',
+                'coverage_note': 'Deliberately contradictory synthetic semantic mapping.'},
+            'anchors': {'reported_eps': None, 'ex_nonrecurring_eps': None, 'operating_cashflow': 'cash'}, 'cash_inventory': None}
+        result = self.build(draft)['valuation']
+        self.assertEqual(result['schema'], 'ar.valuation-basis-card.v1')
+        self.assertEqual(result['nonrecurring']['after_tax_calculated'], '60')
+        self.assertEqual(result['status'], 'DATA_BLOCKED')
+
+    def test_v2_resealed_daily_card_is_rebuilt_and_source_pin_cannot_be_changed(self):
+        content = self.content(); draft = self.v2_draft()
+        with mock.patch.object(content, '_observed_at', return_value='2026-08-04T17:00:00+08:00'):
+            receipt = content.create(draft, self.root / 'pack', self.pack['pack_hash'], self.root / 'v2')
+        cards_path = self.root / 'v2/cards.json'; cards = ev.parse(cards_path.read_bytes())
+        cards['technical']['daily_bars'][0]['volume'] = 999
+        cards_path.write_text(ev.canonical(cards))
+        marker = self.root / 'v2/content-manifest.json'; manifest = ev.parse(marker.read_bytes())
+        manifest['files']['cards.json'] = ev.sha(cards_path.read_bytes())
+        manifest['content_hash'] = ev.sealed({k: v for k, v in manifest.items() if k != 'content_hash'})
+        marker.write_text(ev.canonical(manifest))
+        with self.assertRaisesRegex(ValueError, 'DERIVATION'):
+            content.verify(self.root / 'v2', manifest['content_hash'], self.root / 'pack', self.pack['pack_hash'])
+        draft['technical']['observation_hash'] = 'f' * 64
+        with self.assertRaisesRegex(ValueError, 'PIN'): self.build(draft)
+
     def test_pack_pin_and_resealed_quote_are_rejected(self):
         with self.assertRaisesRegex(ValueError, 'PIN'):
             self.content().build(self.draft, self.root / 'pack', 'f' * 64)

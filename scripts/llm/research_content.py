@@ -19,6 +19,7 @@ from workbench_snapshot_brief import reject_credentials
 from experiments.research_workflows.evidence import text
 
 SCHEMA = 'ar.research-content-request.v1'
+SCHEMA_V2 = 'ar.research-content-request.v2'
 KEYS = {'schema', 'company', 'as_of', 'generated_at', 'pack_hash', 'authoring',
         'facts', 'calculations', 'responses', 'valuation', 'technical', 'feedback'}
 LABELS = {**material.LABELS, 'claim_allowed': False, 'no_trade_flag': True}
@@ -38,7 +39,8 @@ def _observed_at():
 def _execution_identity():
     root = Path(__file__).resolve().parents[2]
     identity = material._execution_identity()
-    names = ('scripts/llm/research_content.py', 'experiments/research_workflows/smc_ict_engine.py',
+    names = ('scripts/llm/research_content.py', 'scripts/llm/research_daily.py', 'scripts/llm/research_valuation.py',
+             'experiments/research_workflows/smc_ict_engine.py',
              'experiments/research_workflows/smc_ict_input.py', 'experiments/research_workflows/smc_ict_concepts.py',
              'experiments/research_funnel/research_cycle.py', 'experiments/research_funnel/research_method.py')
     hashes = {name: ev.sha(ev.read_local(root, name)) for name in names}
@@ -336,7 +338,7 @@ def build(request, pack_root, pack_hash, *, cycle_root=None, closure_root=None):
     request = ev.parse(ev.canonical(request).encode())
     reject_credentials(request)
     materials._exact(request, KEYS)
-    if request['schema'] != SCHEMA or request['pack_hash'] != pack_hash:
+    if request['schema'] not in (SCHEMA, SCHEMA_V2) or request['pack_hash'] != pack_hash:
         _fail('SCHEMA_OR_PIN')
     source, read = _pack(materials._root(pack_root), pack_hash)
     if request['company'] != source['company']:
@@ -354,14 +356,27 @@ def build(request, pack_root, pack_hash, *, cycle_root=None, closure_root=None):
     facts = _facts(request['facts'], read)
     calculations = _calculations(request['calculations'], facts)
     responses = _responses(request['responses'], source['questions'], facts, calculations)
-    return {'schema': 'ar.research-content-cards.v1', 'company': request['company'],
+    valuation = _valuation(None, facts) if request['schema'] == SCHEMA_V2 else _valuation(request['valuation'], facts)
+    technical = _technical(None, request) if request['schema'] == SCHEMA_V2 else _technical(request['technical'], request)
+    if request['schema'] == SCHEMA_V2:
+        if request['valuation'] is not None:
+            import research_valuation
+            valuation = research_valuation.evaluate(request['valuation'], facts)
+        if request['technical'] is not None:
+            import research_daily
+            value = request['technical']
+            materials._exact(value, {'adapter', 'observation', 'observation_hash'})
+            if value['adapter'] != 'LEGACY_FEATURE_STORE_DAILY_V1':
+                _fail('DAILY_ADAPTER')
+            technical = research_daily.adapt(value['observation'], value['observation_hash'], request['company'], request['generated_at'])
+    return {'schema': 'ar.research-content-cards.v2' if request['schema'] == SCHEMA_V2 else 'ar.research-content-cards.v1', 'company': request['company'],
             'research_date': request['as_of'], 'generated_at': request['generated_at'],
             'material_cutoff_at': source['source_cutoff_at'], 'pack_hash': pack_hash,
             'registration_status': 'NEW_DRAFT_NOT_PREREGISTERED', 'authoring': request['authoring'],
             'source_authenticity': 'UNVERIFIED', 'rights': dict(materials.RIGHTS),
             'facts': {'status': 'CITED_DRAFT_NOT_HUMAN_VERIFIED', 'observations': list(facts.values()),
                       'calculations': list(calculations.values()), 'responses': responses},
-            'valuation': _valuation(request['valuation'], facts), 'technical': _technical(request['technical'], request),
+            'valuation': valuation, 'technical': technical,
             'execution_feedback': _feedback(request['feedback'], request, cycle_root, closure_root), **LABELS}
 
 
