@@ -16,6 +16,7 @@ KEYS = {'schema', 'company', 'source_trade_date', 'captured_at', 'source_scope',
         'sample_purpose', 'source_authenticity', 'rights', 'production_authority',
         'paper_authority', 'trading_authority', 'claim_allowed', 'prospective_sample_eligible',
         'provider_calls', 'model_calls', 'observation_hash'}
+MAX_OBSERVATION_BYTES = 512 * 1024
 
 
 def _fail(reason):
@@ -43,9 +44,40 @@ def _quantity(value, *, positive=False):
     return number
 
 
+def bounded_bytes(observation):
+    """Fence shape before canonical serialization, including unused metadata."""
+    pending, nodes, text_bytes = [(observation, 0)], 0, 0
+    while pending:
+        value, depth = pending.pop(); nodes += 1
+        if depth > 10 or nodes > 20000:
+            _fail('OBSERVATION_SIZE')
+        if type(value) is dict:
+            if len(value) > 64 or any(type(key) is not str for key in value):
+                _fail('OBSERVATION_SIZE')
+            pending.extend((item, depth + 1) for pair in value.items() for item in pair)
+        elif type(value) is list:
+            if len(value) > 512:
+                _fail('OBSERVATION_SIZE')
+            pending.extend((item, depth + 1) for item in value)
+        elif type(value) is str:
+            size = len(value.encode('utf-8')); text_bytes += size
+            if size > 4096 or text_bytes > MAX_OBSERVATION_BYTES:
+                _fail('OBSERVATION_SIZE')
+        elif type(value) is int:
+            if value.bit_length() > 1024:
+                _fail('OBSERVATION_SIZE')
+        elif type(value) not in (float, bool, type(None)):
+            _fail('OBSERVATION_SIZE')
+    raw = ev.canonical(observation).encode()
+    # governance-mutation: DAILY_OBSERVATION_SIZE
+    if len(raw) > MAX_OBSERVATION_BYTES:
+        _fail('OBSERVATION_SIZE')
+    return raw
+
+
 def adapt(observation, pin, company, generated_at):
     # Retain a detached canonical snapshot before checking or deriving anything.
-    source = ev.parse(ev.canonical(observation).encode())
+    source = ev.parse(bounded_bytes(observation))
     materials._exact(source, KEYS); materials._hash(pin)
     # governance-mutation: DAILY_OBSERVATION_PIN
     if source['observation_hash'] != pin or ev.sealed({k: v for k, v in source.items() if k != 'observation_hash'}) != pin:
@@ -84,6 +116,8 @@ def adapt(observation, pin, company, generated_at):
     with localcontext(Context(prec=80, rounding=ROUND_HALF_EVEN)):
         for row in source['daily']:
             materials._exact(row, {'ts_code', 'trade_date', 'open', 'high', 'low', 'close', 'volume_shares', 'amount_cny'})
+            if any(type(row[key]) is str and len(row[key]) > 64 for key in ('open', 'high', 'low', 'close')):
+                _fail('PRICE_REPRESENTATION_SIZE')
             volume = shares(row['volume_shares']); _quantity(row['amount_cny'])
             bars.append({'ts_code': row['ts_code'], 'date': row['trade_date'],
                          **{key: row[key] for key in ('open', 'high', 'low', 'close')}, 'volume': volume})

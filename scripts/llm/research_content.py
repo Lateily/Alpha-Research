@@ -335,6 +335,9 @@ def _feedback(value, request, cycle_root, closure_root):
 
 
 def build(request, pack_root, pack_hash, *, cycle_root=None, closure_root=None):
+    if type(request) is dict and request.get('schema') == SCHEMA_V2 and type(request.get('technical')) is dict:
+        import research_daily
+        research_daily.bounded_bytes(request['technical'].get('observation'))
     request = ev.parse(ev.canonical(request).encode())
     reject_credentials(request)
     materials._exact(request, KEYS)
@@ -424,10 +427,14 @@ def create(request, pack_root, pack_hash, output_root, *, cycle_root=None, closu
                 'created_at': observed.isoformat(), 'execution_identity': identity,
                 'files': {name: ev.sha(raw) for name, raw in files.items()}, **LABELS}
     manifest['content_hash'] = ev.sealed(manifest)
+    manifest_raw = ev.canonical(manifest).encode()
+    # governance-mutation: CONTENT_OUTPUT_SIZE_PREFLIGHT
+    if any(len(raw) > ev.MAX_FILE for raw in (*files.values(), manifest_raw)):
+        _fail('OUTPUT_SIZE')
     materials._create_private_root(output)
     for name, raw in files.items():
         backup.write_new(output / name, raw)
-    backup.write_new(output / 'content-manifest.json', ev.canonical(manifest).encode())
+    backup.write_new(output / 'content-manifest.json', manifest_raw)
     return verify(output, manifest['content_hash'], pack_root, pack_hash, cycle_root=cycle_root, closure_root=closure_root)
 
 

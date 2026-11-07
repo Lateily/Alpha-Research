@@ -113,6 +113,31 @@ class ResearchContentTests(unittest.TestCase):
         draft['technical']['observation_hash'] = 'f' * 64
         with self.assertRaisesRegex(ValueError, 'PIN'): self.build(draft)
 
+    def test_v2_output_size_preflight_refuses_without_a_partial_destination(self):
+        content = self.content(); draft = self.v2_draft()
+        output = self.root / 'oversized'
+        # A renderer can amplify a bounded request; preflight its actual bytes.
+        with mock.patch.object(content, '_observed_at', return_value='2026-08-04T17:00:00+08:00'), \
+                mock.patch.object(content, 'report', return_value=b'x' * (ev.MAX_FILE + 1)):
+            with self.assertRaisesRegex(ValueError, 'OUTPUT_SIZE'):
+                content.create(draft, self.root / 'pack', self.pack['pack_hash'], output)
+        self.assertFalse(output.exists())
+
+    def test_v2_reviewer_leading_zero_amplification_refuses_before_any_writes(self):
+        from test_research_daily import reseal
+        content = self.content(); draft = self.v2_draft(); source = draft['technical']['observation']
+        source['daily'][0]['open'] = '10.00'; reseal(source)
+        draft['technical']['observation_hash'] = source['observation_hash']
+        padding = ev.MAX_FILE - len(ev.canonical(draft).encode()) - 128
+        source['daily'][0]['open'] = '0' * padding + '10.00'; reseal(source)
+        draft['technical']['observation_hash'] = source['observation_hash']
+        self.assertLess(len(ev.canonical(draft).encode()), ev.MAX_FILE)
+        output = self.root / 'reviewer-amplification'
+        with mock.patch.object(content, '_observed_at', return_value='2026-08-04T17:00:00+08:00'):
+            with self.assertRaisesRegex(ValueError, 'SIZE|PRICE_REPRESENTATION'):
+                content.create(draft, self.root / 'pack', self.pack['pack_hash'], output)
+        self.assertFalse(output.exists())
+
     def test_pack_pin_and_resealed_quote_are_rejected(self):
         with self.assertRaisesRegex(ValueError, 'PIN'):
             self.content().build(self.draft, self.root / 'pack', 'f' * 64)

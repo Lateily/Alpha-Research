@@ -108,6 +108,32 @@ class DailyResearchTests(unittest.TestCase):
         self.assertEqual(before['observations']['atr14_raw'], '3')
         self.assertNotIn('fvg', before['observations'])
 
+    def test_observation_and_price_representation_are_bounded_before_derivation(self):
+        for field in ('ignored-metadata', 'price'):
+            source = observation()
+            if field == 'ignored-metadata': source['pending'] = ['x' * (1024 * 1024)]
+            else: source['daily'][0]['open'] = '0' * 2000 + '10.00'
+            reseal(source)
+            with self.subTest(field=field), self.assertRaisesRegex(ValueError, 'SIZE|PRICE_REPRESENTATION'):
+                self.build(source)
+
+    def test_canonical_ascii_byte_budget_is_enforced_even_with_small_unicode_fields(self):
+        source = observation(); source['pending'] = ['\u4e2d' * 1000] * 100; reseal(source)
+        self.assertLess(sum(len(item.encode()) for item in source['pending']), 512 * 1024)
+        self.assertGreater(len(ev.canonical(source).encode()), 512 * 1024)
+        with self.assertRaisesRegex(ValueError, 'OBSERVATION_SIZE'): self.build(source)
+
+    def test_metadata_depth_and_collection_fanout_refuse_before_canonical_copy(self):
+        for kind in ('depth', 'fanout'):
+            source = observation()
+            if kind == 'fanout': source['pending'] = ['x'] * 513
+            else:
+                nested = []
+                for _ in range(12): nested = [nested]
+                source['pending'] = nested
+            reseal(source)
+            with self.subTest(kind=kind), self.assertRaisesRegex(ValueError, 'OBSERVATION_SIZE'): self.build(source)
+
 
 if __name__ == '__main__':
     unittest.main()

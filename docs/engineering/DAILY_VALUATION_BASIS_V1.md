@@ -57,6 +57,12 @@ are retained inside the request and externally pinned; output verification
 rederives cards and report from pinned material bytes. The source cutoff,
 market observation date and newly observed research date remain separate.
 No existing immutable material pack is extended in place.
+Observations have a 512 KiB canonical-byte budget, depth 10, 20000 visited
+nodes, at most 512 list items / 64 dictionary keys, 4096-byte strings and
+64-character price representations. Shape is fenced before canonical copying.
+All serialized output files and the manifest are preflighted against the
+unchanged global per-file limit BEFORE creating an exclusive destination;
+oversized derivation must not leave a half-written immutable package.
 
 ## Acceptance
 

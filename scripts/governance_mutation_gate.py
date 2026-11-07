@@ -200,6 +200,20 @@ class MutationCase:
 
 MUTATIONS: tuple[MutationCase, ...] = (
     MutationCase(
+        mutation_id="CONTENT_OUTPUT_SIZE_PREFLIGHT", component="Daily valuation basis",
+        source_path="scripts/llm/research_content.py", test_script="tests/test_research_content.py",
+        before="    if any(len(raw) > ev.MAX_FILE for raw in (*files.values(), manifest_raw)):\n", after="    if False:\n",
+        expected_failure_marker="test_v2_output_size_preflight_refuses_without_a_partial_destination",
+        rationale="Derived file size is checked before creating the immutable destination.",
+    ),
+    MutationCase(
+        mutation_id="DAILY_OBSERVATION_SIZE", component="Daily valuation basis",
+        source_path="scripts/llm/research_daily.py", test_script="tests/test_research_daily.py",
+        before="    if len(raw) > MAX_OBSERVATION_BYTES:\n", after="    if False:\n",
+        expected_failure_marker="test_canonical_ascii_byte_budget_is_enforced_even_with_small_unicode_fields",
+        rationale="Escaped canonical bytes, not just character counts, must fit the bounded observation.",
+    ),
+    MutationCase(
         mutation_id="DAILY_EXACT_REPLAY", component="Daily valuation basis",
         source_path="scripts/llm/research_daily.py", test_script="tests/test_research_daily.py",
         before="        if value != candidate and (float(Decimal(candidate) / 100) * 100.0).hex() != float(value).hex():\n",
