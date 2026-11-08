@@ -94,8 +94,21 @@ class ValuationBasisTests(unittest.TestCase):
         value.update(earnings_history=[row], cash_disclosures=[], multiple_observation=None)
         return value, facts
 
+    def evaluate_v2(self, value, facts, **kwargs):
+        return self.module().evaluate(value, facts, **{'generated_at': '2026-08-05T16:00:00+08:00', **kwargs})
+
+    def test_v2_requires_a_real_draft_chronology_bound(self):
+        value, facts = self.v2()
+        with self.assertRaisesRegex(ValueError, 'CHRONOLOGY_BOUND_REQUIRED'):
+            self.module().evaluate(value, facts)
+        value['period'] = '2028H1'; value['cash_inventory'] = None
+        for row in facts.values():
+            if row['period'] == '2026H1': row['period'] = '2028H1'
+        with self.assertRaisesRegex(ValueError, 'PERIOD_AFTER_CHRONOLOGY_BOUND'):
+            self.evaluate_v2(value, facts)
+
     def test_v2_annual_history_is_not_automatically_normalized_eps(self):
-        value, facts = self.v2(); card = self.module().evaluate(value, facts)
+        value, facts = self.v2(); card = self.evaluate_v2(value, facts)
         self.assertEqual(card['earnings_history'][0]['values']['ex_eps'], '2')
         self.assertIsNone(card['normalized_eps']); self.assertIsNone(card['value_band'])
         self.assertIn('operating_cost', card['earnings_history'][0]['missing_fields'])
@@ -110,7 +123,7 @@ class ValuationBasisTests(unittest.TestCase):
                 facts['prior-revenue']['period'] = facts['prior-eps']['period'] = period
             if bad == 'unit': facts['prior-eps']['unit'] = 'CNY'
             if bad == 'duplicate': value['earnings_history'] *= 2
-            with self.subTest(bad=bad), self.assertRaises(ValueError): self.module().evaluate(value, facts)
+            with self.subTest(bad=bad), self.assertRaises(ValueError): self.evaluate_v2(value, facts)
 
     def test_v2_nonapplicability_is_bound_but_not_a_fabricated_numeric_zero(self):
         value, facts = self.v2(); value['cash_inventory']['components']['long_term_debt'] = None
@@ -119,7 +132,7 @@ class ValuationBasisTests(unittest.TestCase):
         value['cash_disclosures'] = [{'component': 'long_term_debt', 'period': '20260630',
             'kind': 'EXPLICIT_NOT_APPLICABLE', 'citation': citation}]
         read = lambda name: quote.encode()
-        card = self.module().evaluate(value, facts, read=read)
+        card = self.evaluate_v2(value, facts, read=read)
         self.assertIsNone(card['cash_inventory']['net_cash_per_share'])
         self.assertEqual(card['cash_disclosures'][0]['numeric_zero_inferred'], False)
         for bad in ('changed-quote', 'period', 'conflicting-number'):
@@ -127,7 +140,7 @@ class ValuationBasisTests(unittest.TestCase):
             if bad == 'changed-quote': broken['cash_disclosures'][0]['citation']['expected'] = 'not the same quote'
             if bad == 'period': broken['cash_disclosures'][0]['period'] = '20251231'
             if bad == 'conflicting-number': broken['cash_inventory']['components']['long_term_debt'] = 'long_debt'
-            with self.subTest(bad=bad), self.assertRaises(ValueError): self.module().evaluate(broken, facts, read=read)
+            with self.subTest(bad=bad), self.assertRaises(ValueError): self.evaluate_v2(broken, facts, read=read)
 
     def test_v2_multiple_history_is_not_a_fair_multiple_and_pin_is_checked(self):
         import workbench_evidence as ev
@@ -157,7 +170,7 @@ class ValuationBasisTests(unittest.TestCase):
         value['cash_disclosures'] = [{'component': 'other_interest_debt', 'period': '20260630',
             'kind': 'CLASSIFICATION_SCOPE_UNRESOLVED', 'citation': {'sha256': 'a'*64,
              'page': 1, 'start': 1, 'end': 1, 'expected': quote}}]
-        card = self.module().evaluate(value, facts, read=lambda name: quote.encode())
+        card = self.evaluate_v2(value, facts, read=lambda name: quote.encode())
         self.assertEqual(card['cash_inventory']['missing_components'], ['other_interest_debt'])
         self.assertIsNone(card['cash_inventory']['net_cash_per_share'])
 

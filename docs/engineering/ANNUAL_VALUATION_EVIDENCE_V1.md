@@ -54,6 +54,14 @@ numeric fact map for revenue, ex-nonrecurring profit, reported/ex EPS, OCF,
 pretax profit, tax, interest income, cost and sales/admin/R&D expenses. Missing
 fields stay null; ex-profit margins and reported effective tax are arithmetic
 diagnostics, not normal tax or a cycle EPS forecast. No future FY is admitted.
+V2 requires the actual draft timestamp: both the asserted basis period and FY
+history must have ended by its Shanghai date. Content builds also bind this to
+the frozen financial-material cutoff. A caller-advanced basis label cannot
+authorize future reported history; this check does not certify publication.
+Content-request v2 admits at most 96 quoted numeric facts so five complete FY
+rows (60 facts) and a current-period bridge fit together. V1 and the standalone
+fact helper retain 64; per-response references and global file/PDF limits do
+not change. The new v2 bound is not an unbounded or global capacity increase.
 
 V2 cash disclosures bind exact physical-page quotes to an unresolved same-date
 inventory component. EXPLICIT_NOT_APPLICABLE requires the issuer checkbox;

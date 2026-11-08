@@ -107,6 +107,88 @@ class ResearchContentTests(unittest.TestCase):
         self.assertEqual(result['earnings_history'][0]['diagnostics']['ex_profit_margin_pct'], '20')
         self.assertIsNone(result['normalized_eps']); self.assertIsNone(result['multiple_basis']['fair_multiple_low'])
 
+    def annual_draft(self):
+        import research_valuation as valuation
+        from test_research_valuation import fixture
+        basis, facts = fixture()
+        facts = {key: row for key, row in facts.items()
+                 if key in ('profit', 'ex_profit', 'total', 'gain', 'tax', 'minority')}
+        basis.update(schema='ar.valuation-basis.v2', cash_inventory=None,
+                     anchors={key: None for key in basis['anchors']}, earnings_history=[],
+                     cash_disclosures=[], multiple_observation=None)
+        for year in range(2021, 2026):
+            row = {'period': str(year) + 'FY'}
+            for index, key in enumerate(sorted(valuation.HISTORY_FIELDS), 1):
+                ref = 'h' + str(year) + '-' + key
+                facts[ref] = {'id': ref, 'value': str(index), 'period': row['period'],
+                             'unit': 'CNY_PER_SHARE' if key in ('reported_eps', 'ex_eps') else 'CNY'}
+                row[key] = ref
+            basis['earnings_history'].append(row)
+        rows = []
+        for line, fact in enumerate(facts.values(), 1):
+            rows.append({**fact, 'metric': fact['id'], 'token_index': 0,
+                         'citation': {'sha256': 'a'*64, 'page': 1, 'start': line, 'end': line,
+                                      'expected': fact['value']}})
+        draft = copy.deepcopy(self.draft)
+        draft.update(schema='ar.research-content-request.v2', as_of='20261108',
+                     generated_at='2026-11-08T16:00:00+08:00', valuation=basis,
+                     technical=None, facts=rows, calculations=[])
+        draft['responses'][0].update(fact_ids=['profit', 'ex_profit'], calculation_ids=[])
+        source = {**self.request, 'generated_at': '2026-10-04T16:00:00+08:00',
+                  'source_cutoff_at': '2026-10-04T23:59:59+08:00'}
+        read = lambda name: '\n'.join(row['citation']['expected'] for row in rows).encode()
+        return draft, source, read
+
+    def test_v2_five_complete_years_and_bridge_fit_the_versioned_fact_boundary(self):
+        draft, source, read = self.annual_draft()
+        self.assertEqual(len(draft['facts']), 66)
+        with mock.patch.object(self.content(), '_pack', return_value=(source, read)):
+            try:
+                result = self.build(draft)
+            except ValueError as exc:
+                self.fail('Complete five-year evidence was refused: ' + str(exc))
+        self.assertEqual(len(result['valuation']['earnings_history']), 5)
+        self.assertTrue(all(not row['missing_fields'] for row in result['valuation']['earnings_history']))
+
+    def test_fact_capacity_is_bounded_and_legacy_limit_is_unchanged(self):
+        for schema, count, accepted in [('v1', 64, True), ('v1', 65, False),
+                                        ('v2', 96, True), ('v2', 97, False)]:
+            draft = copy.deepcopy(self.draft)
+            draft['schema'] = 'ar.research-content-request.' + schema
+            draft['facts'].extend({**copy.deepcopy(draft['facts'][0]), 'id': 'extra-' + str(index)}
+                                  for index in range(count - len(draft['facts'])))
+            with self.subTest(schema=schema, count=count):
+                if accepted:
+                    try:
+                        self.assertEqual(len(self.build(draft)['facts']['observations']), count)
+                    except ValueError as exc:
+                        self.fail('Versioned fact boundary refused valid count: ' + str(exc))
+                else:
+                    with self.assertRaisesRegex(ValueError, 'ROW_LIMIT'):
+                        self.build(draft)
+
+    def test_v2_reported_history_is_bound_to_draft_and_material_cutoff(self):
+        for change in ('future-basis', 'current-unfinished-fy', 'after-material-cutoff'):
+            draft, source, read = self.annual_draft()
+            basis = draft['valuation']
+            basis['earnings_history'] = basis['earnings_history'][-1:]
+            draft['facts'] = [row for row in draft['facts']
+                              if row['period'] in ('2026H1', '2025FY')]
+            if change == 'after-material-cutoff':
+                source['source_cutoff_at'] = '2024-12-30T23:59:59+08:00'
+            else:
+                new_period = '2028H1' if change == 'future-basis' else '2026FY'
+                old_period = basis['period']; basis['period'] = new_period
+                for row in draft['facts']:
+                    if row['period'] == old_period: row['period'] = new_period
+                history = basis['earnings_history'][-1]
+                history['period'] = '2027FY' if change == 'future-basis' else '2026FY'
+                for ref in (history[key] for key in history if key != 'period'):
+                    next(row for row in draft['facts'] if row['id'] == ref)['period'] = history['period']
+            with self.subTest(change=change), mock.patch.object(self.content(), '_pack', return_value=(source, read)):
+                with self.assertRaisesRegex(ValueError, 'PERIOD|CHRONOLOGY'):
+                    self.build(draft)
+
     def test_v2_resealed_daily_card_is_rebuilt_and_source_pin_cannot_be_changed(self):
         content = self.content(); draft = self.v2_draft()
         with mock.patch.object(content, '_observed_at', return_value='2026-08-04T17:00:00+08:00'):

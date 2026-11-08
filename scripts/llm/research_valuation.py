@@ -20,7 +20,7 @@ def _render(value):
     return rendered.rstrip('0').rstrip('.') if '.' in rendered else rendered
 
 
-def evaluate(value, facts, *, read=None, company=None, generated_at=None):
+def evaluate(value, facts, *, read=None, company=None, generated_at=None, financial_cutoff_at=None):
     # Facts are the numeric/quote-verified map from research_content, not claims
     # accepted directly from an untrusted request. Semantic mappings remain E3.
     from research_content import _number
@@ -116,7 +116,7 @@ def evaluate(value, facts, *, read=None, company=None, generated_at=None):
             'human_review': 'PENDING', 'evidence_tier': 'E3',
             'warning': 'Ex-nonrecurring profit is a reported anchor, not proof of sustainable normal earnings.'}
     if v2:
-        result.update(_extended_basis(value, fact, read, company, generated_at))
+        result.update(_extended_basis(value, fact, read, company, generated_at, financial_cutoff_at))
     return result
 
 
@@ -125,7 +125,18 @@ HISTORY_FIELDS = {'revenue', 'ex_profit', 'reported_eps', 'ex_eps', 'operating_c
                   'selling_expense', 'admin_expense', 'rd_expense'}
 
 
-def _extended_basis(value, fact, read, company, generated_at):
+def _extended_basis(value, fact, read, company, generated_at, financial_cutoff_at):
+    if generated_at is None:
+        _fail('CHRONOLOGY_BOUND_REQUIRED')
+    shanghai = timezone(timedelta(hours=8))
+    allowed_end = materials._time(generated_at).astimezone(shanghai).date()
+    if financial_cutoff_at is not None:
+        allowed_end = min(allowed_end, materials._time(financial_cutoff_at).astimezone(shanghai).date())
+    suffix = {'FY': '1231', 'H1': '0630', 'Q1': '0331', 'Q2': '0630', 'Q3': '0930', 'Q4': '1231'}
+    basis_end = materials._date(value['period'][:4] + suffix[value['period'][4:]])
+    # governance-mutation: VALUATION_BASIS_CHRONOLOGY
+    if basis_end > allowed_end:
+        _fail('PERIOD_AFTER_CHRONOLOGY_BOUND')
     rows = value['earnings_history']
     if type(rows) is not list or not 1 <= len(rows) <= 5:
         _fail('HISTORY_ROWS')
@@ -136,8 +147,7 @@ def _extended_basis(value, fact, read, company, generated_at):
             period = row['period']
             # governance-mutation: VALUATION_ANNUAL_HISTORY_DATE
             if (type(period) is not str or not re.fullmatch(r'\d{4}FY', period)
-                    or period[:4] > value['period'][:4]
-                    or (period[:4] == value['period'][:4] and not value['period'].endswith('FY'))):
+                    or materials._date(period[:4] + '1231') > min(basis_end, allowed_end)):
                 _fail('HISTORY_PERIOD')
             periods.append(period)
             values = {key: fact(ref, 'CNY_PER_SHARE' if key in ('reported_eps', 'ex_eps') else 'CNY', period)

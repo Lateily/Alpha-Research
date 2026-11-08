@@ -127,8 +127,8 @@ def _pack(root, pin):
     return ev.parse(read('request.json')), read
 
 
-def _facts(rows, read):
-    _rows(rows, 'id')
+def _facts(rows, read, *, maximum=64):
+    _rows(rows, 'id', maximum=maximum)
     result = {}
     for row in rows:
         materials._exact(row, {'id', 'metric', 'period', 'unit', 'citation', 'token_index', 'value'})
@@ -356,7 +356,8 @@ def build(request, pack_root, pack_hash, *, cycle_root=None, closure_root=None):
         _fail('AI_DRAFT_REQUIRED')
     for key in ('model', 'prompt_version'):
         material._string(request['authoring'][key], 200)
-    facts = _facts(request['facts'], read)
+    # governance-mutation: CONTENT_V2_FACT_CAPACITY
+    facts = _facts(request['facts'], read, maximum=96 if request['schema'] == SCHEMA_V2 else 64)
     calculations = _calculations(request['calculations'], facts)
     responses = _responses(request['responses'], source['questions'], facts, calculations)
     valuation = _valuation(None, facts) if request['schema'] == SCHEMA_V2 else _valuation(request['valuation'], facts)
@@ -365,7 +366,8 @@ def build(request, pack_root, pack_hash, *, cycle_root=None, closure_root=None):
         if request['valuation'] is not None:
             import research_valuation
             valuation = research_valuation.evaluate(request['valuation'], facts, read=read,
-                                                     company=request['company'], generated_at=request['generated_at'])
+                company=request['company'], generated_at=request['generated_at'],
+                financial_cutoff_at=source['source_cutoff_at'])
         if request['technical'] is not None:
             import research_daily
             value = request['technical']

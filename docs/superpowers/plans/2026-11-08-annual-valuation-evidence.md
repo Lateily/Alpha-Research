@@ -33,19 +33,25 @@ and research cards remain the evidence boundary; version any new contract.
 
 Files: foundation_research.py, new test_annual_pdf_safety.py, CI, mutation gate.
 Consumes: pinned original bytes. Produces: same extract_pages(raw, pages) API.
-- [ ] Write missing-audit, duplicate scalar, distinct-node, edge and active-name tests.
-- [ ] Run RED; extract a full-graph audit helper, then run GREEN.
-- [ ] Retain a bounded real annual extraction and guard diagnostic outside Git.
+- [x] Write missing-audit, duplicate scalar, distinct-node, edge and active-name tests.
+- [x] Run RED; extract a full-graph audit helper, then run GREEN.
+- [x] Retain a bounded real annual extraction and guard diagnostic outside Git.
 
 ### Task 2: Financial Basis
 
 Files: research_valuation.py/research_content.py and focused tests if a new
 typed evidence contract is needed; local source-bound demonstration outside Git.
 Consumes: new annual/H1 pack and existing quote-verified fact map.
-- [ ] Read annual and financial notes through the repaired guard; visually check columns.
-- [ ] Inventory EPS history, normalized-earnings assumptions, cash/debt and multiples.
-- [ ] Add RED/GREEN tests for necessary new typed evidence states, no blanket zero fill.
-- [ ] Generate NEW cards with exact source binding and all unresolved gaps visible.
+- [x] Read annual and financial notes through the repaired guard; visually check columns.
+- [x] Inventory EPS history, normalized-earnings assumptions, cash/debt and multiples.
+- [x] Add RED/GREEN tests for necessary new typed evidence states, no blanket zero fill.
+- [x] Generate NEW cards with exact source binding and all unresolved gaps visible.
+
+The first nonauthor review found two P2 issues. Follow-up regressions bind v2
+reported periods to the actual draft/material cutoff and make the five-FY
+contract reachable via an explicit 96-fact v2 cap (v1 remains 64). Both fixes
+require a new final SHA and a complete repeat of Task 3; prior candidate gates
+are not final acceptance.
 
 ### Task 3: Same-Final Verification
 

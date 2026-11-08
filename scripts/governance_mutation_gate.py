@@ -202,10 +202,25 @@ MUTATIONS: tuple[MutationCase, ...] = (
     MutationCase(
         mutation_id="VALUATION_ANNUAL_HISTORY_DATE", component="Annual financial evidence",
         source_path="scripts/llm/research_valuation.py", test_script="tests/test_research_valuation.py",
-        before="            if (type(period) is not str or not re.fullmatch(r'\\d{4}FY', period)\n                    or period[:4] > value['period'][:4]\n                    or (period[:4] == value['period'][:4] and not value['period'].endswith('FY'))):\n",
+        before="            if (type(period) is not str or not re.fullmatch(r'\\d{4}FY', period)\n                    or materials._date(period[:4] + '1231') > min(basis_end, allowed_end)):\n",
         after="            if False:\n",
         expected_failure_marker="test_v2_future_or_nonannual_history_and_wrong_units_are_rejected",
         rationale="History anchors cannot include a future FY or an H1 mislabeled as annual.",
+    ),
+    MutationCase(
+        mutation_id="VALUATION_BASIS_CHRONOLOGY", component="Annual financial evidence",
+        source_path="scripts/llm/research_valuation.py", test_script="tests/test_research_valuation.py",
+        before="    if basis_end > allowed_end:\n", after="    if False:\n",
+        expected_failure_marker="test_v2_requires_a_real_draft_chronology_bound",
+        rationale="A caller-controlled future basis cannot override the actual draft/material date.",
+    ),
+    MutationCase(
+        mutation_id="CONTENT_V2_FACT_CAPACITY", component="Annual financial evidence",
+        source_path="scripts/llm/research_content.py", test_script="tests/test_research_content.py",
+        before="    facts = _facts(request['facts'], read, maximum=96 if request['schema'] == SCHEMA_V2 else 64)\n",
+        after="    facts = _facts(request['facts'], read, maximum=256 if request['schema'] == SCHEMA_V2 else 64)\n",
+        expected_failure_marker="test_fact_capacity_is_bounded_and_legacy_limit_is_unchanged",
+        rationale="The v2 fact extension remains explicitly bounded; legacy and global caps are unchanged.",
     ),
     MutationCase(
         mutation_id="VALUATION_DISCLOSURE_QUOTE", component="Annual financial evidence",
