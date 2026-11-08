@@ -1,0 +1,22 @@
+{
+  "schema": "ai-task.v1",
+  "task_id": "VALUATION-DAILY-STRATEGY-20261108",
+  "architecture_block": ["Research evidence", "Daily strategy", "Offline validation"],
+  "objective": "Add source-bound normalization diagnostics and a registered-input daily sweep/reclaim strategy card without imputing missing data.",
+  "non_goals": ["No production/shared/API/provider/paid-model/ledger/paper/U4 action, push, merge or release."],
+  "human_owner": "Junyan",
+  "reviewer": "Independent nonauthor AI engineer",
+  "executor_candidates": ["Codex"],
+  "dependencies": ["d90cb9d final sealed cards", "ce46949 daily input/profile contract", "Existing retained financial originals and daily observation"],
+  "authority_docs": ["AGENTS.md", "scripts/llm/AGENTS.md", "experiments/AGENTS.md", "docs/engineering/VALUATION_DAILY_STRATEGY_V1.md"],
+  "file_scope": ["scripts/llm/research_normalization.py", "tests/test_research_normalization.py", "experiments/research_workflows/technical_contract.py", "experiments/research_workflows/technical_profiles.py", "experiments/research_workflows/daily_strategy.py", "tests/test_technical_contract.py", "tests/test_technical_contract_cli.py", "tests/test_daily_strategy.py", "scripts/governance_mutation_gate.py", ".github/workflows/python-ci.yml", "tests/test_no_network_guard.py", "docs/engineering/VALUATION_DAILY_STRATEGY_V1.md", "docs/superpowers/plans/2026-11-08-valuation-daily-strategy.md", "scripts/llm/fixtures/valuation_daily_strategy.task.json"],
+  "forbidden_scope": ["ar-live", "Running shared service/code/state", "Formal ledgers", "Original source/old packs", "Global safety limit increases", "Credentials", "Constitutional or capital rules"],
+  "input_contracts": ["Existing pinned content/material pack", "Explicit nullable E4 worksheet", "Operator-registered daily pack with exact ce46949 profile and evidence"],
+  "output_artifacts": ["Normalization worksheet", "Daily strategy card/report/chart annotations", "Same-final offline gates and independent review"],
+  "acceptance_tests": ["Typed financial bridge and missing assumptions", "Original input126 tests and41 pins", "Daily first-event/prefix/Wilder/context/missing/CLI integrity", "Full local CI/every mutation", "Original/legacy/installed preservation"],
+  "risk_level": "HIGH",
+  "network_policy": "OFFLINE",
+  "budget": {"max_cny": "0", "max_minutes": 240},
+  "approval_gates": ["Current user request authorizes isolated implementation; human financial/method/case/paper gates remain separate"],
+  "created_at": "2026-11-08T23:21:57+00:00"
+}

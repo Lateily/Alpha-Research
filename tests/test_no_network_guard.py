@@ -72,6 +72,29 @@ from experiments.research_funnel import u4_pre_decision  # noqa: E402,F401
 import paper_execution_audit  # noqa: E402,F401
 
 # ── 在守卫下跑完整离线套件入口(任何隐藏外呼 → NetworkAttempt 崩溃)──
+import json  # noqa: E402
+from pathlib import Path  # noqa: E402
+import test_technical_contract as technical_contract_tests  # noqa: E402
+import test_technical_contract_cli as technical_cli_tests  # noqa: E402
+import test_research_normalization as normalization_tests  # noqa: E402
+import test_daily_strategy as daily_strategy_tests  # noqa: E402
+from scripts.llm.ai_os.task_compiler import compile_task_manifest  # noqa: E402
+
+for research_suite in (
+    technical_contract_tests, technical_cli_tests, normalization_tests, daily_strategy_tests,
+):
+    research_result = unittest.TextTestRunner(verbosity=0).run(
+        unittest.defaultTestLoader.loadTestsFromModule(research_suite)
+    )
+    assert research_result.wasSuccessful(), f"{research_suite.__name__} failed under socket guard"
+valuation_task = json.loads(
+    (Path(HERE).parent / "scripts/llm/fixtures/valuation_daily_strategy.task.json").read_text(encoding="utf-8")
+)
+valuation_compiled = compile_task_manifest(valuation_task).to_dict()
+assert valuation_compiled["status"] == "SPEC_READY", valuation_compiled["errors"]
+assert valuation_compiled["manifest"]["network_policy"] == "OFFLINE"
+assert valuation_compiled["manifest"]["budget"]["max_cny"] == "0"
+
 import test_research_workflow_sources as workflow_source_tests  # noqa: E402
 workflow_source_result = unittest.TextTestRunner(verbosity=0).run(
     unittest.defaultTestLoader.loadTestsFromModule(workflow_source_tests)

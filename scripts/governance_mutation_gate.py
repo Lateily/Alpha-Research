@@ -36,6 +36,7 @@ from pathlib import Path
 MODULE_NAME = "mutation_gate_target"
 script, name, kind, class_name, receipt_path = sys.argv[1:6]
 sys.argv = [script]
+sys.path.insert(0, str(Path(script).resolve().parent))
 scope = runpy.run_path(script, run_name=MODULE_NAME)
 
 def is_expected_runtime_target(value, expected_name):
@@ -179,6 +180,29 @@ NIGHTLY_ACCEPTANCE_GOVERNANCE_PATHS = (
     "experiments/execution_tracker/run_nightly.py",
 )
 NIGHTLY_ACCEPTANCE_MUTATION_PREFIX = "NIGHTLY_ACCEPTANCE_"
+TECHNICAL_GUARD_PATH = "experiments/research_workflows/technical_contract.py"
+TECHNICAL_GUARD_MARKER_RE = re.compile(
+    r"^\s*# technical-guard: (?P<mutation_id>[A-Z0-9_]+)\s*$"
+)
+# Technical guard names predate the behavior-pin IDs; keep that binding explicit.
+TECHNICAL_GUARD_MUTATIONS = {
+    "T2_U4_OUTER_CHAIN": "TECHNICAL_U4_OUTER_CHAIN",
+    "T2_EXPOSURE_BOUNDARY": "TECHNICAL_EXPOSURE_BOUNDARY",
+    "T2_U4_EXACT_IDENTITY": "TECHNICAL_U4_EXACT_IDENTITY",
+    "T2_SOURCE_PIT": "TECHNICAL_SOURCE_PIT",
+    "T2_BAR_PIT": "TECHNICAL_BAR_PIT",
+    "T2_RAW_PRICE_BASIS": "TECHNICAL_RAW_PRICE_BASIS",
+    "T2_CALENDAR_HOLE": "TECHNICAL_CALENDAR_HOLE",
+    "T2_ACTION_CONTINUITY": "TECHNICAL_ACTION_CONTINUITY",
+    "T2_FIX1_RED_FLAG_PROVENANCE": "TECHNICAL_F1_ORIGINAL_PROVENANCE",
+    "T2_CURRENT_RED_FLAG_COVERAGE": "TECHNICAL_CURRENT_RED_FLAG_COVERAGE",
+    "T2_FIX1_ORIGINAL_ACTIVE_PRECEDENCE": "TECHNICAL_F1_ACTIVE_PRECEDENCE",
+    "T2_FIX1_E1_NEGATIVE_PROOF": "TECHNICAL_F1_NEGATIVE_PROOF",
+    "T2_FIX1_FLOW_CALENDAR_DEPENDENCY": "TECHNICAL_F2_CALENDAR_FLOW",
+    "T2_FLOW_LAST_TWO": "TECHNICAL_FLOW_LAST_TWO",
+    "T2_CONTEXT_RECEIPT_PIT": "TECHNICAL_CONTEXT_RECEIPT_PIT",
+    "T2_CONTEXT_CONFIRMATION": "TECHNICAL_CONTEXT_CONFIRMATION",
+}
 
 
 class MutationGateError(RuntimeError):
@@ -17026,6 +17050,453 @@ MUTATIONS = MUTATIONS + (
     ),
 )
 
+# Input-contract slice pins use existing single-target behavior receipts.
+MUTATIONS += (
+    MutationCase(
+        mutation_id="TECHNICAL_REGISTRY_BYTE_BINDING", component="Technical input contract",
+        source_path="experiments/research_workflows/technical_contract.py", test_script="tests/test_technical_contract.py",
+        before='        _verify_registry_bytes(manifest_raw, request_raw, trusted_binding)',
+        after='        pass  # disabled external registry byte binding',
+        expected_failure_marker="test_resealed_package_does_not_change_registry_binding",
+        rationale="Internal resealing cannot revise an externally registered pack.",
+    ),
+    MutationCase(
+        mutation_id="TECHNICAL_NESTED_EXACT_FIELDS", component="Technical input contract",
+        source_path="experiments/research_workflows/technical_contract.py", test_script="tests/test_technical_contract.py",
+        before='    if type(value) is not dict or set(value) != SCHEMAS[schema]:',
+        after='    if type(value) is not dict:',
+        expected_failure_marker="test_unknown_nested_bar_field_refused",
+        rationale="Unknown nested authority fields must be refused.",
+    ),
+    MutationCase(
+        mutation_id="TECHNICAL_DUPLICATE_JSON_KEY", component="Technical input contract",
+        source_path="experiments/research_workflows/technical_contract.py", test_script="tests/test_technical_contract.py",
+        before='        if key in result:', after='        if False:',
+        expected_failure_marker="test_duplicate_nested_key_refused",
+        rationale="Duplicate keys cannot collapse into an accepted projection.",
+    ),
+    MutationCase(
+        mutation_id="TECHNICAL_EXACT_TICK_BOUNDARY", component="Technical input contract",
+        source_path="experiments/research_workflows/technical_contract.py", test_script="tests/test_technical_contract.py",
+        before='            if price and number % Decimal("0.01") != 0:', after='            if False:',
+        expected_failure_marker="test_decimal_tick_precision_preserved",
+        rationale="Off-tick original decimal prices cannot be silently accepted.",
+    ),
+    MutationCase(
+        mutation_id="TECHNICAL_DECIMAL_CONTEXT_PRECISION", component="Technical input contract",
+        source_path="experiments/research_workflows/technical_contract.py", test_script="tests/test_technical_contract.py",
+        before='            context.prec = 2 * MAX_DECIMAL_TEXT + 4', after='            context.prec = 28',
+        expected_failure_marker="test_decimal_tick_precision_preserved",
+        rationale="A valid bounded large coefficient must not fail due to host precision.",
+    ),
+    MutationCase(
+        mutation_id="TECHNICAL_PROFILE_TYPED_OVERRIDE", component="Technical input contract",
+        source_path="experiments/research_workflows/technical_contract.py", test_script="tests/test_technical_contract.py",
+        before='        return canonical(profile) == canonical(approved)', after='        return profile == approved',
+        expected_failure_marker="test_profile_boolean_cannot_impersonate_integer_parameter",
+        rationale="Boolean equality cannot override the approved integer parameter.",
+    ),
+    MutationCase(
+        mutation_id="TECHNICAL_ANCESTOR_NOFOLLOW", component="Technical input contract",
+        source_path="experiments/research_workflows/technical_contract.py", test_script="tests/test_technical_contract.py",
+        before='            child = os.open(part, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=fd)',
+        after='            child = os.open(part, os.O_RDONLY | os.O_DIRECTORY, dir_fd=fd)',
+        expected_failure_marker="test_pack_ancestor_symlink_refused",
+        rationale="A parent alias cannot evade original-source no-follow traversal.",
+    ),
+    MutationCase(
+        mutation_id="TECHNICAL_HARDLINK_REFUSAL", component="Technical input contract",
+        source_path="experiments/research_workflows/technical_contract.py", test_script="tests/test_technical_contract.py",
+        before='            if before.st_nlink != 1:', after='            if False:',
+        expected_failure_marker="test_hardlink_and_leaf_symlink_refused",
+        rationale="An external hardlink is an original-source mutation alias.",
+    ),
+    MutationCase(
+        mutation_id="TECHNICAL_ABSOLUTE_ALIAS", component="Technical input contract",
+        source_path="experiments/research_workflows/technical_contract.py", test_script="tests/test_technical_contract.py",
+        before='    if path.anchor != "/" or ".." in path.parts or "\\x00" in str(path):',
+        after='    if not path.is_absolute() or ".." in path.parts or "\\x00" in str(path):',
+        expected_failure_marker="test_double_slash_registry_path_refused",
+        rationale="Double-slash absolute aliases cannot bypass lexical root identity.",
+    ),
+    MutationCase(
+        mutation_id="TECHNICAL_TIMESTAMP_OFFSET", component="Technical input contract",
+        source_path="experiments/research_workflows/technical_contract.py", test_script="tests/test_technical_contract.py",
+        before='    if not value.endswith("Z") and (int(value[-5:-3]) > 23 or int(value[-2:]) > 59):',
+        after='    if False:',
+        expected_failure_marker="test_out_of_range_timestamp_offsets_refused_by_loader",
+        rationale="Invalid offset components cannot be normalized into valid timestamps.",
+    ),
+    MutationCase(
+        mutation_id="TECHNICAL_U4_EXACT_IDENTITY", component="Technical input contract",
+        source_path="experiments/research_workflows/technical_contract.py", test_script="tests/test_technical_contract.py",
+        before='    if any(identity[field] != rb[field] for field in identity) or any(\n            identity[field] != request[field] for field in ("ts_code", "industry_key")):',
+        after='    if False and (any(identity[field] != rb[field] for field in identity) or any(\n            identity[field] != request[field] for field in ("ts_code", "industry_key"))):',
+        expected_failure_marker="test_case_industry_cannot_override_u4_industry",
+        rationale="Fully resealed request/context identity cannot override original U4 identity.",
+    ),
+    MutationCase(
+        mutation_id="TECHNICAL_EXPOSURE_BOUNDARY", component="Technical input contract",
+        source_path="experiments/research_workflows/technical_contract.py", test_script="tests/test_technical_contract.py",
+        before='    if prospective and request["exposure_status"] != "UNEXPOSED":', after='    if False:',
+        expected_failure_marker="test_exposed_window_cannot_be_promoted_to_prospective",
+        rationale="Exposed historical materials cannot acquire prospective eligibility.",
+    ),
+    MutationCase(
+        mutation_id="TECHNICAL_BAR_PIT", component="Technical input contract",
+        source_path="experiments/research_workflows/technical_contract.py", test_script="tests/test_technical_contract.py",
+        before='        if _time(bar["bar_close_at"]) > cutoff or _time(bar["available_at"]) > cutoff:', after='        if False:',
+        expected_failure_marker="test_future_available_bar_blocked",
+        rationale="Availability after cutoff blocks structure even with a valid calendar close.",
+    ),
+    MutationCase(
+        mutation_id="TECHNICAL_SOURCE_PIT", component="Technical input contract",
+        source_path="experiments/research_workflows/technical_contract.py", test_script="tests/test_technical_contract.py",
+        before='        if _time(source["published_at"]) > cutoff or _time(source["available_at"]) > cutoff:', after='        if False:',
+        expected_failure_marker="test_source_publication_available_and_capture_are_distinct",
+        rationale="Capture cannot substitute for cutoff-valid source availability.",
+    ),
+    MutationCase(
+        mutation_id="TECHNICAL_ACTION_CONTINUITY", component="Technical input contract",
+        source_path="experiments/research_workflows/technical_contract.py", test_script="tests/test_technical_contract.py",
+        before='        if (not actions["verified"] or actions["coverage"]["start"] > bars[0]["trade_date"]\n                or actions["coverage"]["end"] < as_of):',
+        after='        if False and (not actions["verified"] or actions["coverage"]["start"] > bars[0]["trade_date"]\n                or actions["coverage"]["end"] < as_of):',
+        expected_failure_marker="test_action_coverage_and_verification_required",
+        rationale="Unknown action coverage cannot be represented as uninterrupted raw history.",
+    ),
+    MutationCase(
+        mutation_id="TECHNICAL_CONTEXT_CONFIRMATION", component="Technical input contract",
+        source_path="experiments/research_workflows/technical_contract.py", test_script="tests/test_technical_contract.py",
+        before='    if context["review_status"] == "DISPUTED":', after='    if False:',
+        expected_failure_marker="test_context_names_without_receipt_disputed_and_adverse",
+        rationale="A bound disputed review must remain disputed, not confirmed.",
+    ),
+    MutationCase(
+        mutation_id="TECHNICAL_CONTEXT_RECEIPT_PIT", component="Technical input contract",
+        source_path="experiments/research_workflows/technical_contract.py", test_script="tests/test_technical_contract_cli.py",
+        before='        if _time(receipt["reviewed_at"]) > cutoff:', after='        if False:',
+        expected_failure_marker="test_cli_matching_late_receipt_blocks_context_not_refuses",
+        rationale="A matching late human review cannot backdate context confirmation.",
+    ),
+    MutationCase(
+        mutation_id="TECHNICAL_F1_ORIGINAL_PROVENANCE", component="Technical input contract",
+        source_path="experiments/research_workflows/technical_contract.py", test_script="tests/test_technical_contract.py",
+        before='        if not isinstance(value, dict) or value.get("schema_version") != "technical-red-flag-sources.v1":\n            statuses.append("UNKNOWN")',
+        after='        if not isinstance(value, dict) or value.get("schema_version") != "technical-red-flag-sources.v1":\n            statuses.append("CLEAR")',
+        expected_failure_marker="test_naked_clear_without_original_is_unknown",
+        rationale="A copied CLEAR descriptor is not negative original-source proof.",
+    ),
+    MutationCase(
+        mutation_id="TECHNICAL_F1_ACTIVE_PRECEDENCE", component="Technical input contract",
+        source_path="experiments/research_workflows/technical_contract.py", test_script="tests/test_technical_contract.py",
+        before='    status = "ACTIVE" if "ACTIVE" in statuses else "CLEAR" if current else "UNKNOWN"',
+        after='    status = "CLEAR" if flags["verdict"] == "CLEAR" else "ACTIVE" if "ACTIVE" in statuses else "CLEAR" if current else "UNKNOWN"',
+        expected_failure_marker="test_copied_clear_flag_cannot_override_reopened_active_source",
+        rationale="Original ACTIVE overrides a copied package CLEAR claim.",
+    ),
+    MutationCase(
+        mutation_id="TECHNICAL_F1_NEGATIVE_PROOF", component="Technical input contract",
+        source_path="experiments/research_workflows/technical_contract.py", test_script="tests/test_technical_contract.py",
+        before='                            and covered.get("income_period_source_blocked") == []',
+        after='                            and True',
+        expected_failure_marker="test_e1_negative_without_explicit_gap_coverage_is_unknown",
+        rationale="Absent original gap coverage is UNKNOWN, not a negative proof.",
+    ),
+    MutationCase(
+        mutation_id="TECHNICAL_F2_CALENDAR_FLOW", component="Technical input contract",
+        source_path="experiments/research_workflows/technical_contract.py", test_script="tests/test_technical_contract.py",
+        before='    # technical-guard: T2_FIX1_FLOW_CALENDAR_DEPENDENCY\n    if calendar_reasons:',
+        after='    # technical-guard: T2_FIX1_FLOW_CALENDAR_DEPENDENCY\n    if False:',
+        expected_failure_marker="test_final_calendar_hole_never_confirms_older_flow_pair",
+        rationale="A calendar hole cannot confirm flow through an older available pair.",
+    ),
+    MutationCase(
+        mutation_id="TECHNICAL_OUTPUT_SOURCE_BOUNDARY", component="Technical input inspection",
+        source_path="experiments/research_workflows/technical_contract.py", test_script="tests/test_technical_contract_cli.py",
+        before='    if output == registry or output in registry.parents or any(\n            output == root or root in output.parents or output in root.parents for root in protected):',
+        after='    if False and (output == registry or output in registry.parents or any(\n            output == root or root in output.parents or output in root.parents for root in protected)):',
+        expected_failure_marker="test_cli_output_inside_pack_refused_without_write",
+        rationale="A new directory under original inputs is not authorized output.",
+    ),
+    MutationCase(
+        mutation_id="TECHNICAL_OUTPUT_EXCLUSIVE_CREATE", component="Technical input inspection",
+        source_path="experiments/research_workflows/technical_contract.py", test_script="tests/test_technical_contract_cli.py",
+        before='            except FileExistsError:\n                _fail("OUTPUT_EXISTS")',
+        after='            except FileExistsError:\n                pass',
+        expected_failure_marker="test_cli_existing_output_is_never_overwritten",
+        rationale="Retries cannot fill or overwrite an existing output directory.",
+    ),
+    MutationCase(
+        mutation_id="TECHNICAL_OUTPUT_ALIAS_RACE", component="Technical input inspection",
+        source_path="experiments/research_workflows/technical_contract.py", test_script="tests/test_technical_contract_cli.py",
+        before='def _output_current(output, fd):\n    try:',
+        after='def _output_current(output, fd):\n    return\n    try:',
+        expected_failure_marker="test_cli_output_parent_alias_race_never_writes_source",
+        rationale="Publication cannot continue when the named output parent becomes an alias.",
+    ),
+    MutationCase(
+        mutation_id="TECHNICAL_SNAPSHOT_SOURCE_RACE", component="Technical input inspection",
+        source_path="experiments/research_workflows/technical_contract.py", test_script="tests/test_technical_contract_cli.py",
+        before='                _recheck_sources(captured)\n                pack =',
+        after='                captured = {path: (_read_file(path, [0]) if value is not None else None) for path, value in captured.items()}\n                pack =',
+        expected_failure_marker="test_cli_source_race_at_snapshot_refused",
+        rationale="Snapshot bytes must be the bytes actually accepted, never a later refreshed source.",
+    ),
+    MutationCase(
+        mutation_id="TECHNICAL_SNAPSHOT_REGISTRY_RACE", component="Technical input inspection",
+        source_path="experiments/research_workflows/technical_contract.py", test_script="tests/test_technical_contract_cli.py",
+        before='        if current != accepted:',
+        after='        if current != accepted and path.name != "operator-registry.json":',
+        expected_failure_marker="test_cli_registry_race_at_snapshot_refused",
+        rationale="An operator registry change invalidates the accepted preflight binding.",
+    ),
+    MutationCase(
+        mutation_id="TECHNICAL_MANIFEST_SOURCE_RACE", component="Technical input inspection",
+        source_path="experiments/research_workflows/technical_contract.py", test_script="tests/test_technical_contract_cli.py",
+        before='        if current != accepted:',
+        after='        if current != accepted and path.name != "bars.json":',
+        expected_failure_marker="test_cli_source_race_at_manifest_boundary_refused",
+        rationale="A source change during output writing cannot receive a complete manifest.",
+    ),
+    MutationCase(
+        mutation_id="TECHNICAL_MANIFEST_REGISTRY_RACE", component="Technical input inspection",
+        source_path="experiments/research_workflows/technical_contract.py", test_script="tests/test_technical_contract_cli.py",
+        before='        if current != accepted:',
+        after='        if current != accepted and path.name != "operator-registry.json":',
+        expected_failure_marker="test_cli_registry_race_at_manifest_boundary_refused",
+        rationale="Registry trust is rechecked again at publication, not just preflight.",
+    ),
+    MutationCase(
+        mutation_id="TECHNICAL_MANIFEST_LAST", component="Technical input inspection",
+        source_path="experiments/research_workflows/technical_contract.py", test_script="tests/test_technical_contract_cli.py",
+        before='                _write_new(output, fd, ".manifest.pending", manifest)',
+        after='                _write_new(output, fd, "manifest.json", manifest)',
+        expected_failure_marker="test_cli_source_race_at_manifest_boundary_refused",
+        rationale="A later failed boundary must never leave a published complete manifest.",
+    ),
+    MutationCase(
+        mutation_id="TECHNICAL_WRITER_FAILURE", component="Technical input inspection",
+        source_path="experiments/research_workflows/technical_contract.py", test_script="tests/test_technical_contract_cli.py",
+        before='    except OSError:\n        _fail("OUTPUT_WRITE_FAILED")\n    finally:\n        if fd is not None:',
+        after='    except OSError:\n        pass\n    finally:\n        if fd is not None:',
+        expected_failure_marker="test_cli_partial_write_failure_retains_earlier_output",
+        rationale="A fatal writer failure must stop later writers, retaining only prior forensic output.",
+    ),
+    MutationCase(
+        mutation_id="TECHNICAL_U4_UNAVAILABLE_IDENTITY", component="Technical input inspection",
+        source_path="experiments/research_workflows/technical_contract.py", test_script="tests/test_technical_contract_cli.py",
+        before='        if identity[field] in {None, "UNAVAILABLE", "UNAVAILABLE_UNBOUND", "UNAVAILABLE_PENDING"}:',
+        after='        if False:',
+        expected_failure_marker="test_cli_actual_select_keeps_unavailable_identity_blocked",
+        rationale="Original unavailable identity must remain explicit even when SELECT is bound.",
+    ),
+    MutationCase(
+        mutation_id="TECHNICAL_MANIFEST_STAGING_ALIAS", component="Technical input inspection",
+        source_path="experiments/research_workflows/technical_contract.py", test_script="tests/test_technical_contract_cli.py",
+        before='                    _verify_manifest(fd, manifest, staged_identity)',
+        after='                    pass  # mutated manifest pair verification',
+        expected_failure_marker="test_cli_manifest_staging_alias_race_never_publishes",
+        rationale="A substituted staging link cannot become the authoritative complete manifest.",
+    ),
+    MutationCase(
+        mutation_id="TECHNICAL_MANIFEST_PUBLISHED_BYTES", component="Technical input inspection",
+        source_path="experiments/research_workflows/technical_contract.py", test_script="tests/test_technical_contract_cli.py",
+        before='        if raw != manifest:', after='        if False:',
+        expected_failure_marker="test_cli_manifest_inplace_bytes_at_link_refused",
+        rationale="Same-inode staging edits must not publish bytes other than the accepted manifest.",
+    ),
+    MutationCase(
+        mutation_id="TECHNICAL_OUTPUT_SNAPSHOT_SYMLINK", component="Technical input inspection",
+        source_path="experiments/research_workflows/technical_contract.py", test_script="tests/test_technical_contract_cli.py",
+        before='        raw, _ = _read_output(root_fd, relative)',
+        after='        with os.fdopen(os.open(relative, os.O_RDONLY, dir_fd=root_fd), "rb") as stream:\n            raw = stream.read(MAX_TOTAL_BYTES + 1)',
+        expected_failure_marker="test_cli_snapshot_same_bytes_symlink_refused",
+        rationale="A same-byte snapshot alias must fail the shared no-follow output verification.",
+    ),
+    MutationCase(
+        mutation_id="TECHNICAL_OUTPUT_SNAPSHOT_HARDLINK", component="Technical input inspection",
+        source_path="experiments/research_workflows/technical_contract.py", test_script="tests/test_technical_contract_cli.py",
+        before='        if not stat.S_ISREG(before.st_mode) or before.st_nlink != links:',
+        after='        if not stat.S_ISREG(before.st_mode):',
+        expected_failure_marker="test_cli_snapshot_same_bytes_hardlink_refused",
+        rationale="Regular same-byte snapshots are still refused when linked to independent scratch.",
+    ),
+    MutationCase(
+        mutation_id="TECHNICAL_OUTPUT_ACTUAL_HASH", component="Technical input inspection",
+        source_path="experiments/research_workflows/technical_contract.py", test_script="tests/test_technical_contract_cli.py",
+        before='        if sha(raw) != digest:', after='        if False:',
+        expected_failure_marker="test_cli_output_hash_changes_before_and_at_commit_refused",
+        rationale="Every named output digest must describe actual bytes before and after publication.",
+    ),
+    MutationCase(
+        mutation_id="TECHNICAL_SOURCE_AT_MANIFEST_LINK", component="Technical input inspection",
+        source_path="experiments/research_workflows/technical_contract.py", test_script="tests/test_technical_contract_cli.py",
+        before='                    _recheck_sources(captured)\n                    _output_current(output, fd)',
+        after='                    _output_current(output, fd)',
+        expected_failure_marker="test_cli_source_edit_at_manifest_link_refused",
+        rationale="Source changes at the actual link must invalidate and roll back this commit entry.",
+    ),
+    MutationCase(
+        mutation_id="TECHNICAL_REGISTRY_AT_MANIFEST_LINK", component="Technical input inspection",
+        source_path="experiments/research_workflows/technical_contract.py", test_script="tests/test_technical_contract_cli.py",
+        before='                    _recheck_sources(captured)\n                    _output_current(output, fd)',
+        after='                    _output_current(output, fd)',
+        expected_failure_marker="test_cli_registry_edit_at_manifest_link_refused",
+        rationale="Registry changes at the actual link must retain SOURCE_CHANGED failure evidence.",
+    ),
+    MutationCase(
+        mutation_id="TECHNICAL_MANIFEST_ROLLBACK", component="Technical input inspection",
+        source_path="experiments/research_workflows/technical_contract.py", test_script="tests/test_technical_contract_cli.py",
+        before='                            os.unlink("manifest.json", dir_fd=fd)',
+        after='                            pass  # mutated rollback',
+        expected_failure_marker="test_cli_source_edit_at_manifest_link_refused",
+        rationale="A post-link failure must remove this call's newly created complete manifest.",
+    ),
+    MutationCase(
+        mutation_id="TECHNICAL_POSTLINK_FAILURE_CODE", component="Technical input inspection",
+        source_path="experiments/research_workflows/technical_contract.py", test_script="tests/test_technical_contract_cli.py",
+        before='                    if isinstance(exc, ContractError):\n                        raise',
+        after='                    if isinstance(exc, ContractError):\n                        pass',
+        expected_failure_marker="test_cli_registry_edit_at_manifest_link_refused",
+        rationale="Post-link source refusal must retain SOURCE_CHANGED, not relabel it as output corruption.",
+    ),
+    MutationCase(
+        mutation_id="TECHNICAL_MARKET_DATE_OVERFLOW", component="Technical input contract",
+        source_path="experiments/research_workflows/technical_contract.py", test_script="tests/test_technical_contract_cli.py",
+        before='    except OverflowError:\n        _fail("INVALID_TIMESTAMP")',
+        after='    except OverflowError:\n        return _time(value).strftime("%Y%m%d")',
+        expected_failure_marker="test_cli_extreme_market_date_refused",
+        rationale="Unrepresentable market dates must refuse, not accept an unconverted date as blocked research.",
+    ),
+)
+
+
+# The remaining technical markers have independent negative behavior receipts.
+MUTATIONS += (
+    MutationCase(
+        mutation_id="TECHNICAL_U4_OUTER_CHAIN", component="Technical input contract",
+        source_path=TECHNICAL_GUARD_PATH, test_script="tests/test_technical_contract.py",
+        before='        if (type(record["seq"]) is not int or record["seq"] != index or record["prev"] != previous\n                or record["hash"] != event_ledger.record_hash(record) or type(record["ts"]) is not str\n                or record["ts"] < timestamp):',
+        after='        if False:',
+        expected_failure_marker="test_actual_u4_jsonl_outer_chain_reopened",
+        rationale="Reopened original U4 records must retain their outer hash-chain binding.",
+    ),
+    MutationCase(
+        mutation_id="TECHNICAL_RAW_PRICE_BASIS", component="Technical input contract",
+        source_path=TECHNICAL_GUARD_PATH, test_script="tests/test_technical_contract.py",
+        before='        if bar["price_basis"] != "RAW":', after='        if False:',
+        expected_failure_marker="test_action_break_and_mixed_price_basis_blocked",
+        rationale="Adjusted and raw prices cannot be silently mixed into structural history.",
+    ),
+    MutationCase(
+        mutation_id="TECHNICAL_CALENDAR_HOLE", component="Technical input contract",
+        source_path=TECHNICAL_GUARD_PATH, test_script="tests/test_technical_contract.py",
+        before='        if len(expected) > MAX_ROWS or any(date not in dates for date in expected):',
+        after='        if False:',
+        expected_failure_marker="test_calendar_hole_and_unknown_suspension_blocked",
+        rationale="Missing calendar days remain explicit structural blockers.",
+    ),
+    MutationCase(
+        mutation_id="TECHNICAL_CURRENT_RED_FLAG_COVERAGE", component="Technical input contract",
+        source_path=TECHNICAL_GUARD_PATH, test_script="tests/test_technical_contract.py",
+        before='               and flags["as_of"] == date and flags["coverage_start"] <= date <= flags["coverage_end"]',
+        after='               and True',
+        expected_failure_marker="test_old_flag_coverage_not_clean",
+        rationale="An expired original negative proof cannot claim current clean coverage.",
+    ),
+    MutationCase(
+        mutation_id="TECHNICAL_FLOW_LAST_TWO", component="Technical input contract",
+        source_path=TECHNICAL_GUARD_PATH, test_script="tests/test_technical_contract.py",
+        before='        block("flow", "FLOW_LAST_TWO_MISSING")\n        return',
+        after='        quality["flow"].update(status="CONFIRMED", last_two_sum="0", missing_reason=None)\n        return',
+        expected_failure_marker="test_missing_flow_day_not_zero",
+        rationale="The exact last two traded dates cannot borrow older or absent flow rows.",
+    ),
+)
+
+MUTATIONS += (
+    MutationCase(
+        mutation_id="NORMALIZATION_ASSUMPTION_RANGE", component="Research normalization",
+        source_path="scripts/llm/research_normalization.py", test_script="tests/test_research_normalization.py",
+        before="        if number is not None and ((key == 'tax_pct' and not 0 <= number <= 100)",
+        after="        if False and ((key == 'tax_pct' and not 0 <= number <= 100)",
+        expected_failure_marker="test_period_units_identity_and_assumption_ranges_are_enforced",
+        rationale="Out-of-range tax or nonpositive denominator hypotheses must be refused.",
+    ),
+    MutationCase(
+        mutation_id="NORMALIZATION_REPORTED_TYPES", component="Research normalization",
+        source_path="scripts/llm/research_normalization.py", test_script="tests/test_research_normalization.py",
+        before="        if ref not in facts or facts[ref]['period'] != row['period'] or facts[ref]['unit'] != 'CNY':",
+        after="        if ref not in facts:",
+        expected_failure_marker="test_period_units_identity_and_assumption_ranges_are_enforced",
+        rationale="Reported arithmetic cannot mix periods or noncurrency financial facts.",
+    ),
+    MutationCase(
+        mutation_id="NORMALIZATION_NO_IMPUTATION", component="Research normalization",
+        source_path="scripts/llm/research_normalization.py", test_script="tests/test_research_normalization.py",
+        before="        eps = operating = after_tax = None",
+        after="        eps = Decimal('0'); operating = after_tax = None",
+        expected_failure_marker="test_reported_bridge_is_not_ebit_or_normal_eps",
+        rationale="Missing scenario assumptions must remain null, never zero-filled earnings.",
+    ),
+    MutationCase(
+        mutation_id="NORMALIZATION_SOURCE_SNAPSHOT", component="Research normalization",
+        source_path="scripts/llm/research_normalization.py", test_script="tests/test_research_normalization.py",
+        before="    if manifest['content_hash'] != content_hash or ev.sealed({k: v for k, v in manifest.items() if k != 'content_hash'}) != content_hash:",
+        after="    if False:",
+        expected_failure_marker="test_source_manifest_swapped_after_verify_is_not_accepted",
+        rationale="An upstream verification cannot authorize a later coherently resealed source manifest.",
+    ),
+    MutationCase(
+        mutation_id="NORMALIZATION_DERIVATION", component="Research normalization",
+        source_path="scripts/llm/research_normalization.py", test_script="tests/test_research_normalization.py",
+        before="    if any(ev.sha(value) != manifest['files'][name] or ev.read_local(output_root, name) != value for name, value in expected.items()):",
+        after="    if False:",
+        expected_failure_marker="test_actual_sealed_reopen_and_tamper_rejection",
+        rationale="Coherent resealing cannot replace the source-derived normalization card.",
+    ),
+    MutationCase(
+        mutation_id="DAILY_STRATEGY_WILDER", component="Daily strategy",
+        source_path="experiments/research_workflows/daily_strategy.py", test_script="tests/test_daily_strategy.py",
+        before="            value = (value * (period - 1) + current) / period",
+        after="            value = current",
+        expected_failure_marker="test_wilder_uses_recursive_history_not_a_rolling_mean",
+        rationale="Wilder ATR must retain recursive history after the initial seed.",
+    ),
+    MutationCase(
+        mutation_id="DAILY_STRATEGY_REGISTRY_PIN", component="Daily strategy",
+        source_path="experiments/research_workflows/daily_strategy.py", test_script="tests/test_daily_strategy.py",
+        before="    if sha(raw) != registry_hash:", after="    if False:",
+        expected_failure_marker="test_external_registry_pin_and_mutated_bars_are_refused",
+        rationale="Only externally pinned operator registry bytes authorize candidate inputs.",
+    ),
+    MutationCase(
+        mutation_id="DAILY_STRATEGY_TARGET_PIT", component="Daily strategy",
+        source_path="experiments/research_workflows/daily_strategy.py", test_script="tests/test_daily_strategy.py",
+        before="            if datetime.fromisoformat(point['known_at']) >= bars[reclaim].end:",
+        after="            if False:",
+        expected_failure_marker="test_future_confirmed_high_cannot_improve_a_past_target",
+        rationale="A future-confirmed pivot cannot improve an already selected event's target.",
+    ),
+    MutationCase(
+        mutation_id="DAILY_STRATEGY_STRUCTURAL_GATE", component="Daily strategy",
+        source_path="experiments/research_workflows/daily_strategy.py", test_script="tests/test_daily_strategy.py",
+        before="    if validated['quality']['structural_input_status'] != 'STRUCTURALLY_VALID':",
+        after="    if False:",
+        expected_failure_marker="test_action_gap_blocks_structure_and_cannot_be_replaced_with_a_verdict",
+        rationale="Unknown corporate-action continuity must block setup and level derivation.",
+    ),
+    MutationCase(
+        mutation_id="DAILY_STRATEGY_DERIVATION", component="Daily strategy",
+        source_path="experiments/research_workflows/daily_strategy.py", test_script="tests/test_daily_strategy.py",
+        before="    if any(ev.read_local(output_root, name) != raw or marker['files'][name] != sha(raw) for name,raw in files.items()):",
+        after="    if False:",
+        expected_failure_marker="test_saved_card_reopens_and_coherent_reseal_cannot_change_derivation",
+        rationale="A resealed saved strategy cannot revise its registered-input derivation.",
+    ),
+)
+
+
 @dataclass(frozen=True)
 class CommandResult:
     returncode: int
@@ -17182,6 +17653,7 @@ def validate_manifest(root: Path, cases: Sequence[MutationCase]) -> None:
     validate_funnel_marker_coverage(root, cases)
     validate_funnel_nightly_marker_coverage(root, cases)
     validate_nightly_acceptance_marker_coverage(root, cases)
+    validate_technical_marker_coverage(root, cases)
 
 
 def validate_k1_marker_coverage(
@@ -17485,6 +17957,37 @@ def validate_nightly_acceptance_marker_coverage(
             "nightly acceptance governance marker drift: "
             f"markers_without_mutations={missing_mutations}; "
             f"mutations_without_markers={missing_markers}"
+        )
+
+
+def validate_technical_marker_coverage(
+    root: Path,
+    cases: Sequence[MutationCase],
+) -> None:
+    source = _resolved_under(root, TECHNICAL_GUARD_PATH)
+    if not source.is_file():
+        raise MutationGateError(f"technical guard source is missing: {TECHNICAL_GUARD_PATH}")
+    marked: dict[str, int] = {}
+    for line_number, line in enumerate(source.read_text(encoding="utf-8").splitlines(), 1):
+        match = TECHNICAL_GUARD_MARKER_RE.fullmatch(line)
+        if not match:
+            continue
+        marker = match.group("mutation_id")
+        if marker in marked:
+            raise MutationGateError(f"duplicate technical guard marker: {marker}")
+        marked[marker] = line_number
+    declared = {case.mutation_id: case for case in cases}
+    missing_pins = sorted(
+        mutation_id for mutation_id in TECHNICAL_GUARD_MUTATIONS.values()
+        if mutation_id not in declared or declared[mutation_id].source_path != TECHNICAL_GUARD_PATH
+    )
+    unbound = sorted(set(marked) - set(TECHNICAL_GUARD_MUTATIONS))
+    missing_markers = sorted(set(TECHNICAL_GUARD_MUTATIONS) - set(marked))
+    if missing_pins or unbound or missing_markers:
+        raise MutationGateError(
+            "technical guard marker drift: "
+            f"markers_without_bindings={unbound}; missing_markers={missing_markers}; "
+            f"missing_mutations={missing_pins}"
         )
 
 
