@@ -96,6 +96,16 @@ class ResearchContentTests(unittest.TestCase):
         self.assertEqual(result['schema'], 'ar.valuation-basis-card.v1')
         self.assertEqual(result['nonrecurring']['after_tax_calculated'], '60')
         self.assertEqual(result['status'], 'DATA_BLOCKED')
+        fields = ('revenue', 'ex_profit', 'reported_eps', 'ex_eps', 'operating_cashflow',
+                  'pre_tax_profit', 'tax_expense', 'interest_income', 'operating_cost',
+                  'selling_expense', 'admin_expense', 'rd_expense')
+        history = {key: None for key in fields}; history.update(period='2019FY', revenue='revenue', ex_profit='cash')
+        draft['valuation'].update(schema='ar.valuation-basis.v2', earnings_history=[history],
+                                  cash_disclosures=[], multiple_observation=None)
+        result = self.build(draft)['valuation']
+        self.assertEqual(result['schema'], 'ar.valuation-basis-card.v2')
+        self.assertEqual(result['earnings_history'][0]['diagnostics']['ex_profit_margin_pct'], '20')
+        self.assertIsNone(result['normalized_eps']); self.assertIsNone(result['multiple_basis']['fair_multiple_low'])
 
     def test_v2_resealed_daily_card_is_rebuilt_and_source_pin_cannot_be_changed(self):
         content = self.content(); draft = self.v2_draft()

@@ -364,7 +364,8 @@ def build(request, pack_root, pack_hash, *, cycle_root=None, closure_root=None):
     if request['schema'] == SCHEMA_V2:
         if request['valuation'] is not None:
             import research_valuation
-            valuation = research_valuation.evaluate(request['valuation'], facts)
+            valuation = research_valuation.evaluate(request['valuation'], facts, read=read,
+                                                     company=request['company'], generated_at=request['generated_at'])
         if request['technical'] is not None:
             import research_daily
             value = request['technical']

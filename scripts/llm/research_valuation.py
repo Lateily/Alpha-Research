@@ -1,5 +1,6 @@
 """Typed financial reconciliations; reported anchors are not normal earnings."""
 from decimal import Context, Decimal, ROUND_HALF_EVEN, localcontext
+from datetime import datetime, time, timedelta, timezone
 import re
 
 import foundation_materials as materials
@@ -19,12 +20,14 @@ def _render(value):
     return rendered.rstrip('0').rstrip('.') if '.' in rendered else rendered
 
 
-def evaluate(value, facts):
+def evaluate(value, facts, *, read=None, company=None, generated_at=None):
     # Facts are the numeric/quote-verified map from research_content, not claims
     # accepted directly from an untrusted request. Semantic mappings remain E3.
     from research_content import _number
-    materials._exact(value, {'schema', 'period', 'nonrecurring', 'anchors', 'cash_inventory'})
-    if value['schema'] != 'ar.valuation-basis.v1' or not re.fullmatch(r'\d{4}(FY|H1|Q[1-4])', value['period']):
+    v2 = type(value) is dict and value.get('schema') == 'ar.valuation-basis.v2'
+    materials._exact(value, {'schema', 'period', 'nonrecurring', 'anchors', 'cash_inventory'} |
+                     ({'earnings_history', 'cash_disclosures', 'multiple_observation'} if v2 else set()))
+    if value['schema'] not in ('ar.valuation-basis.v1', 'ar.valuation-basis.v2') or not re.fullmatch(r'\d{4}(FY|H1|Q[1-4])', value['period']):
         _fail('SCHEMA_OR_PERIOD')
 
     def fact(key, unit, period):
@@ -101,7 +104,7 @@ def evaluate(value, facts):
                            'observed_cash': _render(observed['cash']) if 'cash' in observed else None,
                            'missing_components': missing, 'net_cash': _render(net) if net is not None else None,
                            'net_cash_per_share': _render(per_share) if per_share is not None else None}
-    return {'schema': 'ar.valuation-basis-card.v1',
+    result = {'schema': 'ar.valuation-basis-card.v2' if v2 else 'ar.valuation-basis-card.v1',
             'status': 'BASIS_PARTIAL_NORMALIZATION_PENDING' if matched else 'DATA_BLOCKED',
             'adapter': 'SEMICONDUCTOR_NORMALIZED_EARNINGS',
             'formula': 'normalized_eps * fair_multiple + net_cash_per_share',
@@ -112,3 +115,131 @@ def evaluate(value, facts):
                                'Documented comparable/history fair-multiple range', 'Source semantics and human verification'],
             'human_review': 'PENDING', 'evidence_tier': 'E3',
             'warning': 'Ex-nonrecurring profit is a reported anchor, not proof of sustainable normal earnings.'}
+    if v2:
+        result.update(_extended_basis(value, fact, read, company, generated_at))
+    return result
+
+
+HISTORY_FIELDS = {'revenue', 'ex_profit', 'reported_eps', 'ex_eps', 'operating_cashflow',
+                  'pre_tax_profit', 'tax_expense', 'interest_income', 'operating_cost',
+                  'selling_expense', 'admin_expense', 'rd_expense'}
+
+
+def _extended_basis(value, fact, read, company, generated_at):
+    rows = value['earnings_history']
+    if type(rows) is not list or not 1 <= len(rows) <= 5:
+        _fail('HISTORY_ROWS')
+    periods, history = [], []
+    with localcontext(Context(prec=80, rounding=ROUND_HALF_EVEN)):
+        for row in rows:
+            materials._exact(row, {'period', *HISTORY_FIELDS})
+            period = row['period']
+            # governance-mutation: VALUATION_ANNUAL_HISTORY_DATE
+            if (type(period) is not str or not re.fullmatch(r'\d{4}FY', period)
+                    or period[:4] > value['period'][:4]
+                    or (period[:4] == value['period'][:4] and not value['period'].endswith('FY'))):
+                _fail('HISTORY_PERIOD')
+            periods.append(period)
+            values = {key: fact(ref, 'CNY_PER_SHARE' if key in ('reported_eps', 'ex_eps') else 'CNY', period)
+                      for key, ref in row.items() if key != 'period' and ref is not None}
+            refs = [ref for key, ref in row.items() if key != 'period' and ref is not None]
+            if len(refs) != len(set(refs)):
+                _fail('HISTORY_DUPLICATE_REFERENCE')
+            ratios = {}
+            for name, numerator, denominator in [('ex_profit_margin_pct', 'ex_profit', 'revenue'),
+                                                   ('effective_tax_pct_NOT_NORMAL_TAX', 'tax_expense', 'pre_tax_profit')]:
+                n, d = values.get(numerator), values.get(denominator)
+                ratios[name] = _render((100*n/d).quantize(Decimal('0.00000001'))) if n is not None and d is not None and d != 0 else None
+            history.append({'period': period, 'references': {key: row[key] for key in sorted(HISTORY_FIELDS)},
+                'values': {key: _render(values[key]) if key in values else None for key in sorted(HISTORY_FIELDS)},
+                'missing_fields': sorted(HISTORY_FIELDS - values.keys()), 'diagnostics': ratios,
+                'status': 'REPORTED_ANNUAL_ANCHORS_NOT_NORMALIZED_EARNINGS'})
+    if periods != sorted(set(periods)):
+        _fail('HISTORY_ORDER')
+    disclosures = value['cash_disclosures']
+    if type(disclosures) is not list or len(disclosures) > 16:
+        _fail('DISCLOSURE_ROWS')
+    bound = []
+    for row in disclosures:
+        materials._exact(row, {'component', 'period', 'kind', 'citation'})
+        inventory = value['cash_inventory']
+        if (inventory is None or row['component'] not in CASH_COMPONENTS or row['period'] != inventory['period']
+                or inventory['components'][row['component']] is not None):
+            _fail('DISCLOSURE_CONFLICT')
+        if row['kind'] not in ('EXPLICIT_NOT_APPLICABLE', 'BLANK_CURRENT_COLUMN_UNRESOLVED', 'CLASSIFICATION_SCOPE_UNRESOLVED') or read is None:
+            _fail('DISCLOSURE_KIND_OR_SOURCE')
+        citation = row['citation']; materials._exact(citation, {'sha256', 'page', 'start', 'end', 'expected'})
+        materials._hash(citation['sha256'])
+        if any(type(citation[key]) is not int or citation[key] < 1 for key in ('page', 'start', 'end')):
+            _fail('DISCLOSURE_RANGE')
+        name = 'inputs/pages/' + citation['sha256'] + '-p' + str(citation['page']) + '.txt'
+        lines = read(name).decode('utf-8').splitlines()
+        if citation['start'] > citation['end'] or citation['end'] > len(lines):
+            _fail('DISCLOSURE_RANGE')
+        quote = '\n'.join(lines[citation['start']-1:citation['end']])
+        # governance-mutation: VALUATION_DISCLOSURE_QUOTE
+        if quote != citation['expected']:
+            _fail('DISCLOSURE_QUOTE')
+        if row['kind'] == 'EXPLICIT_NOT_APPLICABLE' and '\u25a1\u9002\u7528\u221a\u4e0d\u9002\u7528' not in re.sub(r'\s+', '', quote):
+            _fail('DISCLOSURE_NOT_EXPLICIT')
+        bound.append({**row, 'status': 'QUOTE_VERIFIED_SEMANTICS_AND_COLUMN_INTERPRETATION_PENDING',
+                      'numeric_zero_inferred': False, 'human_review': 'PENDING'})
+    return {'earnings_history': history, 'cash_disclosures': bound,
+            'multiple_basis': _multiple_observation(value['multiple_observation'], company, generated_at),
+            'normalization_status': 'CYCLE_AND_ASSUMPTIONS_NOT_CALIBRATED',
+            'cash_scope': 'Reported cash and financing inventory; not surplus distributable cash or a human-verified nil balance.'}
+
+
+def _multiple_observation(value, company, generated_at):
+    common = {'fair_multiple_low': None, 'fair_multiple_high': None, 'calibrated': False,
+              'missing_basis': ['Approved comparable universe and earnings quality', 'Full-cycle PIT history',
+                                'Growth, reinvestment and discount-rate assumptions'],
+              'source_authenticity': 'UNVERIFIED', 'rights': 'UNVERIFIED_PRIVATE_LOCAL_ONLY',
+              'prospective_sample_eligible': False, 'human_review': 'PENDING'}
+    if value is None:
+        return {**common, 'status': 'DATA_BLOCKED', 'observed_positive_pe_range': None}
+    from research_content import _number
+    import research_daily
+    materials._exact(value, {'observation', 'observation_hash'})
+    source = ev.parse(research_daily.bounded_bytes(value['observation'])); pin = value['observation_hash']
+    materials._hash(pin)
+    materials._exact(source, {'schema', 'company', 'captured_at', 'cutoff_trade_date', 'source_scope',
+                              'source_table', 'source_db_sha256', 'rows', 'observation_hash'})
+    # governance-mutation: VALUATION_MULTIPLE_OBSERVATION_PIN
+    if source['observation_hash'] != pin or ev.sealed({key: item for key, item in source.items() if key != 'observation_hash'}) != pin:
+        _fail('MULTIPLE_PIN')
+    if (source['schema'] != 'ar.local-pe-observation.v1' or source['company'] != company
+            or source['source_scope'] != research_daily.SCOPE or source['source_table'] != 'raw_daily_basic'):
+        _fail('MULTIPLE_SCOPE')
+    materials._hash(source['source_db_sha256'])
+    captured = materials._time(source['captured_at']); cutoff = materials._date(source['cutoff_trade_date'])
+    closed_at = datetime.combine(cutoff, time(15), timezone(timedelta(hours=8)))
+    # governance-mutation: VALUATION_MULTIPLE_OBSERVATION_DATE
+    if generated_at is None or not closed_at <= captured <= materials._time(generated_at):
+        _fail('MULTIPLE_FUTURE')
+    rows = source['rows']
+    if type(rows) is not list or not 1 <= len(rows) <= 512:
+        _fail('MULTIPLE_ROWS')
+    dates, positive, missing = [], [], 0
+    for row in rows:
+        materials._exact(row, {'trade_date', 'pe_ttm', 'pb'})
+        day = materials._date(row['trade_date'])
+        if day > cutoff:
+            _fail('MULTIPLE_FUTURE')
+        dates.append(row['trade_date'])
+        pe = _number(row['pe_ttm']) if row['pe_ttm'] is not None else None
+        if row['pb'] is not None:
+            _number(row['pb'])
+        if pe is not None and pe > 0:
+            positive.append(pe)
+        else:
+            missing += 1
+    if dates != sorted(set(dates)) or dates[-1] != source['cutoff_trade_date']:
+        _fail('MULTIPLE_ORDER_OR_CUTOFF')
+    return {**common, 'status': 'OBSERVED_MARKET_PE_NOT_FAIR_MULTIPLE', 'observation_hash': pin,
+            'source_scope': source['source_scope'], 'source_db_sha256': source['source_db_sha256'],
+            'captured_at': source['captured_at'], 'cutoff_trade_date': source['cutoff_trade_date'],
+            'row_count': len(rows), 'missing_or_nonpositive_pe_rows': missing,
+            'date_range': {'first': dates[0], 'last': dates[-1]},
+            'observed_positive_pe_range': {'low': _render(min(positive)), 'high': _render(max(positive))} if positive else None,
+            'warning': 'Short retrospective provider PE history mixes earnings vintages; not PIT-certified or a reasonable normalized-PE range.'}

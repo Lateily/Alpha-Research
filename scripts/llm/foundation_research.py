@@ -41,6 +41,8 @@ INTENT = 'material-pack.intent.json'
 EXTRACTOR_VERSION = '6.10.0'
 MAX_DOCUMENTS, MAX_PAGES, MAX_QUESTIONS = 8, 32, 16
 MAX_PACK_BYTES = 64 * 1024 * 1024
+MAX_PDF_OBJECTS = 100000
+MAX_PDF_VISITS = 1000000
 LABELS = {'sample_purpose': 'WORKFLOW_DEBUG', 'human_review': 'PENDING',
           'production_authority': False, 'trading_authority': False,
           'paper_authority': False, 'u4_authority': False,
@@ -130,9 +132,60 @@ def _request(value):
     return value
 
 
+def _audit_pdf_objects(reader):
+    from pypdf.generic import ArrayObject, DictionaryObject, IndirectObject, NameObject, NumberObject
+    # Names/integers are childless immutable leaves. Repeated font constants
+    # share a logical-node budget, but every decoded name is inspected first.
+    seed_count = 1 + sum(sum(number != 0 for number in objects) for objects in reader.xref.values()) + len(reader.xref_objStm)
+    # governance-mutation: PDF_AUDIT_REFERENCE_BOUND
+    if seed_count > MAX_PDF_OBJECTS:
+        _fail('PDF_REFERENCE_LIMIT')
+    pending, seen, references, scalars = [reader.trailer], set(), set(), set()
+    for generation, objects in reader.xref.items():
+        pending.extend(IndirectObject(number, generation, reader) for number in objects if number)
+    pending.extend(IndirectObject(number, 0, reader) for number in reader.xref_objStm)
+    active = {'/JavaScript', '/JS', '/Launch', '/EmbeddedFile', '/OpenAction', '/AA', '/Encrypt'}
+    visits = 0
+    while pending:
+        visits += 1
+        if visits > MAX_PDF_VISITS:
+            _fail('PDF_VISIT_LIMIT')
+        value = pending.pop()
+        if isinstance(value, IndirectObject):
+            key = (value.idnum, value.generation)
+            if key in references:
+                continue
+            if len(references) >= MAX_PDF_OBJECTS:
+                _fail('PDF_REFERENCE_LIMIT')
+            references.add(key); value = value.get_object()
+        # governance-mutation: PDF_AUDIT_ACTIVE_NAME
+        if isinstance(value, NameObject) and str(value) in active:
+            _fail('PDF_ACTIVE_CONTENT')
+        if type(value) in (NameObject, NumberObject):
+            key = (type(value), str(value))
+            if key in scalars:
+                continue
+            scalars.add(key)
+        elif id(value) in seen:
+            continue
+        else:
+            seen.add(id(value))
+        # governance-mutation: PDF_AUDIT_OBJECT_BOUND
+        if len(seen) + len(scalars) > MAX_PDF_OBJECTS:
+            _fail('PDF_OBJECT_LIMIT')
+        children = 2 * len(value) if isinstance(value, DictionaryObject) else len(value) if isinstance(value, ArrayObject) else 0
+        # governance-mutation: PDF_AUDIT_QUEUE_BOUND
+        if visits + len(pending) + children > MAX_PDF_VISITS:
+            _fail('PDF_VISIT_LIMIT')
+        if isinstance(value, DictionaryObject):
+            pending.extend(value.keys()); pending.extend(value.values())
+        elif isinstance(value, ArrayObject):
+            pending.extend(value)
+    return {'nodes': len(seen) + len(scalars), 'visits': visits, 'indirect_objects': len(references)}
+
+
 def _extract_child(raw, selected):
     import pypdf
-    from pypdf.generic import ArrayObject, DictionaryObject, IndirectObject, NameObject
     if pypdf.__version__ != EXTRACTOR_VERSION:
         _fail('EXTRACTOR_VERSION_CHANGED')
     if len(raw) > ev.MAX_FILE or not raw.startswith(b'%PDF-') or materials.ACTIVE_PDF.search(raw):
@@ -140,30 +193,8 @@ def _extract_child(raw, selected):
     reader = pypdf.PdfReader(io.BytesIO(raw), strict=True)
     if reader.is_encrypted or len(reader.pages) > 2048 or max(selected) > len(reader.pages):
         _fail('PDF_PAGE_INVALID')
-    # PDF names can escape bytes with #xx; inspect decoded objects, not only raw text.
-    pending, seen, references = [reader.trailer], set(), set()
-    for generation, objects in reader.xref.items():
-        pending.extend(IndirectObject(number, generation, reader) for number in objects if number)
-    pending.extend(IndirectObject(number, 0, reader) for number in reader.xref_objStm)
-    active = {'/JavaScript', '/JS', '/Launch', '/EmbeddedFile', '/OpenAction', '/AA', '/Encrypt'}
-    while pending:
-        value = pending.pop()
-        if isinstance(value, IndirectObject):
-            key = (value.idnum, value.generation)
-            if key in references:
-                continue
-            references.add(key); value = value.get_object()
-        if id(value) in seen:
-            continue
-        seen.add(id(value))
-        if len(seen) > 100000:
-            _fail('PDF_OBJECT_LIMIT')
-        if isinstance(value, NameObject) and str(value) in active:
-            _fail('PDF_ACTIVE_CONTENT')
-        if isinstance(value, DictionaryObject):
-            pending.extend(value.keys()); pending.extend(value.values())
-        elif isinstance(value, ArrayObject):
-            pending.extend(value)
+    # governance-mutation: PDF_AUDIT_WHOLE_GRAPH
+    _audit_pdf_objects(reader)
     pages = {}
     for number in selected:
         text = reader.pages[number - 1].extract_text().replace('\r\n', '\n').replace('\r', '\n')

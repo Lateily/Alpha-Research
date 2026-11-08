@@ -162,6 +162,8 @@ jobs:
           python3 -B tests/test_research_content.py
           python3 -B tests/test_research_daily.py
           python3 -B tests/test_research_valuation.py
+          python3 -B tests/test_annual_pdf_safety.py
+          python3 -B scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/annual_valuation_evidence.task.json
           python3 -B scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/daily_valuation_basis.task.json
           python3 -B scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/research_content_cards.task.json
           python3 -B tests/test_foundation_results.py

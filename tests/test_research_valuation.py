@@ -83,6 +83,103 @@ class ValuationBasisTests(unittest.TestCase):
         card = self.module().evaluate(value, facts)
         self.assertEqual(card['nonrecurring']['after_tax_calculated'], '25')
 
+    def v2(self):
+        value, facts = fixture(); value['schema'] = 'ar.valuation-basis.v2'
+        fields = ('revenue', 'ex_profit', 'reported_eps', 'ex_eps', 'operating_cashflow',
+                  'pre_tax_profit', 'tax_expense', 'interest_income', 'operating_cost',
+                  'selling_expense', 'admin_expense', 'rd_expense')
+        row = {key: None for key in fields}; row.update(period='2025FY', revenue='prior-revenue', ex_eps='prior-eps')
+        facts['prior-revenue'] = {'id': 'prior-revenue', 'value': '200', 'unit': 'CNY', 'period': '2025FY'}
+        facts['prior-eps'] = {'id': 'prior-eps', 'value': '2', 'unit': 'CNY_PER_SHARE', 'period': '2025FY'}
+        value.update(earnings_history=[row], cash_disclosures=[], multiple_observation=None)
+        return value, facts
+
+    def test_v2_annual_history_is_not_automatically_normalized_eps(self):
+        value, facts = self.v2(); card = self.module().evaluate(value, facts)
+        self.assertEqual(card['earnings_history'][0]['values']['ex_eps'], '2')
+        self.assertIsNone(card['normalized_eps']); self.assertIsNone(card['value_band'])
+        self.assertIn('operating_cost', card['earnings_history'][0]['missing_fields'])
+        self.assertEqual(card['multiple_basis']['status'], 'DATA_BLOCKED')
+
+    def test_v2_future_or_nonannual_history_and_wrong_units_are_rejected(self):
+        for bad in ('future', 'half-year', 'unit', 'duplicate'):
+            value, facts = self.v2()
+            if bad in ('future', 'half-year'):
+                period = '2026FY' if bad == 'future' else '2025H1'
+                value['earnings_history'][0]['period'] = period
+                facts['prior-revenue']['period'] = facts['prior-eps']['period'] = period
+            if bad == 'unit': facts['prior-eps']['unit'] = 'CNY'
+            if bad == 'duplicate': value['earnings_history'] *= 2
+            with self.subTest(bad=bad), self.assertRaises(ValueError): self.module().evaluate(value, facts)
+
+    def test_v2_nonapplicability_is_bound_but_not_a_fabricated_numeric_zero(self):
+        value, facts = self.v2(); value['cash_inventory']['components']['long_term_debt'] = None
+        quote = '45\u3001 \u957f\u671f\u501f\u6b3e\n(1) \u957f\u671f\u501f\u6b3e\u5206\u7c7b\n\u25a1\u9002\u7528 \u221a\u4e0d\u9002\u7528'
+        citation = {'sha256': 'a'*64, 'page': 1, 'start': 1, 'end': 3, 'expected': quote}
+        value['cash_disclosures'] = [{'component': 'long_term_debt', 'period': '20260630',
+            'kind': 'EXPLICIT_NOT_APPLICABLE', 'citation': citation}]
+        read = lambda name: quote.encode()
+        card = self.module().evaluate(value, facts, read=read)
+        self.assertIsNone(card['cash_inventory']['net_cash_per_share'])
+        self.assertEqual(card['cash_disclosures'][0]['numeric_zero_inferred'], False)
+        for bad in ('changed-quote', 'period', 'conflicting-number'):
+            broken = copy.deepcopy(value)
+            if bad == 'changed-quote': broken['cash_disclosures'][0]['citation']['expected'] = 'not the same quote'
+            if bad == 'period': broken['cash_disclosures'][0]['period'] = '20251231'
+            if bad == 'conflicting-number': broken['cash_inventory']['components']['long_term_debt'] = 'long_debt'
+            with self.subTest(bad=bad), self.assertRaises(ValueError): self.module().evaluate(broken, facts, read=read)
+
+    def test_v2_multiple_history_is_not_a_fair_multiple_and_pin_is_checked(self):
+        import workbench_evidence as ev
+        value, facts = self.v2()
+        payload = {'schema': 'ar.local-pe-observation.v1', 'company': '603986.SH',
+            'captured_at': '2026-08-04T16:00:00+08:00', 'cutoff_trade_date': '20260803',
+            'source_scope': 'SQLITE_MAIN_FILE_IMMUTABLE_READ_NOT_FULL_WAL_OR_PUBLICATION_ACCEPTANCE',
+            'source_table': 'raw_daily_basic', 'source_db_sha256': 'a'*64,
+            'rows': [{'trade_date': '20260803', 'pe_ttm': '20', 'pb': '2'}]}
+        payload['observation_hash'] = ev.sealed(payload)
+        value['multiple_observation'] = {'observation': payload, 'observation_hash': payload['observation_hash']}
+        kwargs = {'company': '603986.SH', 'generated_at': '2026-08-05T16:00:00+08:00'}
+        card = self.module().evaluate(value, facts, **kwargs)
+        self.assertEqual(card['multiple_basis']['observed_positive_pe_range'], {'low': '20', 'high': '20'})
+        self.assertIsNone(card['multiple_basis']['fair_multiple_low'])
+        self.assertEqual(card['multiple_basis']['status'], 'OBSERVED_MARKET_PE_NOT_FAIR_MULTIPLE')
+        value['multiple_observation']['observation_hash'] = 'f'*64
+        with self.assertRaisesRegex(ValueError, 'PIN'): self.module().evaluate(value, facts, **kwargs)
+
+    def test_malformed_basis_type_still_raises_a_contract_error(self):
+        for value in ([], 'invalid', 1, None):
+            with self.subTest(value=value), self.assertRaises(ValueError): self.module().evaluate(value, {})
+
+    def test_classification_gap_keeps_a_disclosed_payable_out_of_an_invented_debt_total(self):
+        value, facts = self.v2(); value['cash_inventory']['components']['other_interest_debt'] = None
+        quote = 'Asset purchase payables 5; financing scope unverified.'
+        value['cash_disclosures'] = [{'component': 'other_interest_debt', 'period': '20260630',
+            'kind': 'CLASSIFICATION_SCOPE_UNRESOLVED', 'citation': {'sha256': 'a'*64,
+             'page': 1, 'start': 1, 'end': 1, 'expected': quote}}]
+        card = self.module().evaluate(value, facts, read=lambda name: quote.encode())
+        self.assertEqual(card['cash_inventory']['missing_components'], ['other_interest_debt'])
+        self.assertIsNone(card['cash_inventory']['net_cash_per_share'])
+
+    def test_multiple_future_identity_order_and_preclose_captures_are_rejected(self):
+        import workbench_evidence as ev
+        for change in ('company', 'future', 'preclose', 'order', 'nonfinite'):
+            value, facts = self.v2()
+            source = {'schema': 'ar.local-pe-observation.v1', 'company': '603986.SH',
+                'captured_at': '2026-08-04T16:00:00+08:00', 'cutoff_trade_date': '20260803',
+                'source_scope': 'SQLITE_MAIN_FILE_IMMUTABLE_READ_NOT_FULL_WAL_OR_PUBLICATION_ACCEPTANCE',
+                'source_table': 'raw_daily_basic', 'source_db_sha256': 'a'*64,
+                'rows': [{'trade_date': '20260803', 'pe_ttm': '20', 'pb': '2'}]}
+            if change == 'company': source['company'] = '600000.SH'
+            if change == 'future': source['captured_at'] = '2026-08-06T16:00:00+08:00'
+            if change == 'preclose': source['captured_at'] = '2026-08-03T14:00:00+08:00'
+            if change == 'order': source['rows'] *= 2
+            if change == 'nonfinite': source['rows'][0]['pe_ttm'] = 'Infinity'
+            source['observation_hash'] = ev.sealed(source)
+            value['multiple_observation'] = {'observation': source, 'observation_hash': source['observation_hash']}
+            with self.subTest(change=change), self.assertRaises(ValueError):
+                self.module().evaluate(value, facts, company='603986.SH', generated_at='2026-08-05T16:00:00+08:00')
+
 
 if __name__ == '__main__':
     unittest.main()
