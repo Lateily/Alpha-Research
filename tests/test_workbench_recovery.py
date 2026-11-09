@@ -92,7 +92,7 @@ class RecoveryTests(unittest.TestCase):
 
     def test_profile_external_pin_precedes_any_environment_execution(self):
         m=self.module(); self.prepare()
-        with patch.object(m.runtime,'verify_environment') as checked:
+        with self.checks(), patch.object(m.runtime,'verify_environment') as checked:
             with self.assertRaisesRegex(ValueError,'RECOVERY_PROFILE_PIN'):
                 m.verify(self.base/'capsule/profile.json','0'*64)
             checked.assert_not_called()
