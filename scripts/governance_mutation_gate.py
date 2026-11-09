@@ -17887,6 +17887,50 @@ MUTATIONS += (
 )
 
 
+MUTATIONS += (
+    MutationCase(
+        mutation_id="BASIS_RESERVE_NO_IMPUTATION",
+        component="Research financial basis",
+        source_path="scripts/llm/research_basis_evidence.py",
+        test_script="tests/test_research_basis_evidence.py",
+        before="    if reserve is None:",
+        after="    if False:",
+        expected_failure_marker="test_missing_operating_reserve_blocks_exact_cash",
+        rationale="Missing operating reserve leaves exact net cash and per-share cash blocked.",
+    ),
+    MutationCase(
+        mutation_id="DAILY_BASIS_COMPLETION_PENDING",
+        component="Research daily basis",
+        source_path="scripts/llm/research_daily_basis.py",
+        test_script="tests/test_research_daily_basis.py",
+        before="    return re.fullmatch(header+publication+EVENT_PATTERN+effects, compact) is None",
+        after="    return False",
+        expected_failure_marker="test_pending_or_negated_completion_on_either_side_is_not_an_action",
+        rationale="Approval, pending and negated text on either side is not a completed cancellation.",
+    ),
+    MutationCase(
+        mutation_id="DAILY_BASIS_EFFECTIVE_EVENT_DATE",
+        component="Research daily basis",
+        source_path="scripts/llm/research_daily_basis.py",
+        before="    if event_date != effective or content._number(match['count'].replace(',', '')) != quantity:",
+        after="    if content._number(match['count'].replace(',', '')) != quantity:",
+        test_script="tests/test_research_daily_basis.py",
+        expected_failure_marker="test_publication_date_cannot_replace_the_completed_event_date",
+        rationale="Publication date cannot impersonate the completed cancellation date.",
+    ),
+    MutationCase(
+        mutation_id="DAILY_BASIS_SINGLE_COMPLETED_EVENT",
+        component="Research daily basis",
+        source_path="scripts/llm/research_daily_basis.py",
+        test_script="tests/test_research_daily_basis.py",
+        before="    if len(matches) != 1:\n        _fail('ACTION_EVENT_AMBIGUITY')",
+        after="    if not matches:\n        _fail('ACTION_EVENT_AMBIGUITY')",
+        expected_failure_marker="test_ambiguous_multiple_completed_actions_are_not_one_event",
+        rationale="Multiple completed actions require narrower source evidence, not an arbitrary first event.",
+    ),
+)
+
+
 @dataclass(frozen=True)
 class CommandResult:
     returncode: int

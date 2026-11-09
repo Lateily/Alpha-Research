@@ -74,6 +74,12 @@ continuity; empty/finite observations never prove no-action coverage. Capture-
 only bars remain capture-only, raw provider units/context/settlement/costs stay
 uncertified, and no entry/stop/target or after-cost R/R is invented.
 
+Action admission uses one unambiguous directly dated cancellation assertion with
+its quantity, not any date found elsewhere in the quote. Approval, pending,
+processing or negation on either side refuses admission. Announcement dates do
+not replace event dates; multiple completed events require narrower evidence.
+Unsupported language remains blocked rather than receiving a generic NLP guess.
+
 ## Public Artifact
 
 research_basis_evidence.create(raw,pin,content_root,content_hash,pack_root,

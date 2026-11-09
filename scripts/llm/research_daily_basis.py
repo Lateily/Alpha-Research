@@ -143,6 +143,36 @@ def _calendar(value, dates, generated):
             'technical_wiring': 'NOT_AUTHORIZED'}
 
 
+EVENT_DAY = r'(?:20[0-9]{2}\u5e74[0-9]{1,2}\u6708[0-9]{1,2}\u65e5|20[0-9]{2}-[0-9]{2}-[0-9]{2})'
+EVENT_NUMBER = r'(?:[0-9]{1,3}(?:,[0-9]{3})+|[0-9]+)(?:\.[0-9]+)?'
+EVENT_PATTERN = (r'(?:\u516c\u53f8)?(?:\u5df2)?\u4e8e(?P<day>'+EVENT_DAY
+    +r')(?:(?:\u5df2)?\u5b8c\u6210(?:\u4e86)?)?\u56de\u8d2d\u6ce8\u9500(?P<count>'
+    +EVENT_NUMBER+r')\u80a1(?:\u9650\u5236\u6027\u80a1\u7968|\u80a1\u7968|\u80a1\u4efd)')
+
+
+def _completion_pending(compact):
+    # Unknown prose is refused; this is a closed assertion grammar, not NLP.
+    header = r'(?:\u221a\u9002\u7528\u25a1\u4e0d\u9002\u7528)?'
+    publication = r'(?:\u516c\u53f8\u4e8e'+EVENT_DAY+r'\u53d1\u5e03\u516c\u544a\uff0c)?'
+    effects = (r'(?:\uff0c\u5bf9\u6bcf\u80a1\u6536\u76ca\u548c\u7a00\u91ca\u6bcf\u80a1\u6536\u76ca\u65e0\u5f71\u54cd'
+               r'\uff0c\u5bf9\u6bcf\u80a1\u51c0\u8d44\u4ea7\u548c\u7a00\u91ca\u6027\u6bcf\u80a1\u51c0\u8d44\u4ea7\u65e0\u91cd\u5927\u5f71\u54cd)?\u3002')
+    # governance-mutation: DAILY_BASIS_COMPLETION_PENDING
+    return re.fullmatch(header+publication+EVENT_PATTERN+effects, compact) is None
+
+
+def _completed_event(compact, effective, quantity):
+    matches = list(re.finditer(EVENT_PATTERN, compact))
+    # governance-mutation: DAILY_BASIS_SINGLE_COMPLETED_EVENT
+    if len(matches) != 1:
+        _fail('ACTION_EVENT_AMBIGUITY')
+    match = matches[0]; text = match['day']
+    chinese = re.fullmatch(r'(20[0-9]{2})\u5e74([0-9]{1,2})\u6708([0-9]{1,2})\u65e5', text)
+    event_date = date(*map(int, chinese.groups())) if chinese else date.fromisoformat(text)
+    # governance-mutation: DAILY_BASIS_EFFECTIVE_EVENT_DATE
+    if event_date != effective or content._number(match['count'].replace(',', '')) != quantity:
+        _fail('ACTION_EVENT_DATE_QUANTITY')
+
+
 def _action(action, facts, source_map, read, company, generated, first, last, coverage_end):
     materials._exact(action, {'effective_date', 'kind', 'fact_id', 'citation'})
     effective = materials._date(action['effective_date'])
@@ -180,10 +210,12 @@ def _action(action, facts, source_map, read, company, generated, first, last, co
         r'(20[0-9]{2})\u5e74([0-9]{1,2})\u6708([0-9]{1,2})\u65e5', compact)}
     source_dates.update(date.fromisoformat(s) for s in re.findall(r'20[0-9]{2}-[0-9]{2}-[0-9]{2}', compact))
     tokens = re.findall(r'(?<![0-9.,])((?:[0-9]{1,3}(?:,[0-9]{3})+|[0-9]+)(?:\.[0-9]+)?)\s*\u80a1', quote)
-    uncertain = re.search(r'(?:\u62df|\u672a|\u8ba1\u5212|\u5c06|\u4e0d\u4e88|\u4e0d\u4f1a)[^\u3002\uff1b;]{0,40}\u6ce8\u9500', compact)
+    uncertain = (re.search(r'(?:\u62df|\u672a|\u8ba1\u5212|\u5c06|\u4e0d\u4e88|\u4e0d\u4f1a)[^\u3002\uff1b;]{0,40}\u6ce8\u9500', compact)
+                 or _completion_pending(compact))
     if (effective not in source_dates or '\u56de\u8d2d\u6ce8\u9500' not in compact or uncertain
             or not any(content._number(token.replace(',', '')) == quantity for token in tokens)):
         _fail('ACTION_SEMANTICS')
+    _completed_event(compact, effective, quantity)
     try:
         documents = source_map['documents']; pages = source_map['pages']
         if source_map['schema'] != 'ar.material-research-provenance.v1' or type(documents) is not list or not 1 <= len(documents) <= 8 or type(pages) is not dict or len(pages) > 32:

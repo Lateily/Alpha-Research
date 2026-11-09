@@ -89,7 +89,8 @@ class BasisEvidenceTests(unittest.TestCase):
         self.assertEqual(self.derive(cards,w)['rd'][0]['status'],'DATA_BLOCKED')
 
     def test_cash_equivalent_bridge_and_financing_are_distinct(self):
-        cards,w=fixture(); row=self.derive(cards,w)['cash']
+        cards,w=fixture(); w['cash']['operating_reserve'].update(value='0',fact_ids=['cash'])
+        row=self.derive(cards,w)['cash']
         self.assertEqual(row['cash_equivalent_bridge']['money_funds_less_excluded'],'800')
         self.assertEqual(row['cash_equivalent_bridge']['excluded_components_total'],'200')
         self.assertEqual(row['net_cash_inventory'],'790'); self.assertEqual(row['net_cash_per_share'],'7.9')
@@ -97,11 +98,21 @@ class BasisEvidenceTests(unittest.TestCase):
 
     def test_partial_financing_subtotal_is_never_net_cash(self):
         cards,w=fixture(); w['cash']['components']['other_interest_debt']=None
+        w['cash']['operating_reserve'].update(value='0',fact_ids=['cash'])
         row=self.derive(cards,w)['cash']
         self.assertEqual(row['known_component_residual'],'850')
         self.assertIsNone(row['net_cash_inventory']); self.assertIsNone(row['net_cash_per_share'])
         self.assertEqual(row['missing_components'],['other_interest_debt'])
         self.assertIsNone(row['excess_cash'])
+
+    def test_missing_operating_reserve_blocks_exact_cash(self):
+        cards,w=fixture(); row=self.derive(cards,w)['cash']
+        self.assertIsNone(row['net_cash_inventory'])
+        self.assertIsNone(row['net_cash_per_share'])
+        self.assertEqual(row['known_component_residual'],'790')
+        self.assertTrue(row['missing_operating_reserve'])
+        self.assertEqual(row['status'],'DATA_BLOCKED')
+        self.assertIsNone(row['excess_cash']); self.assertFalse(row['cash_value_credit_allowed'])
 
     def test_exclusion_bridge_conflict_cannot_look_reconciled(self):
         cards,w=fixture(); next(x for x in cards['facts']['observations'] if x['id']=='deposit')['value']='181'

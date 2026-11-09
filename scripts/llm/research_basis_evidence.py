@@ -112,7 +112,6 @@ def _cash(value,fact,facts,bound):
     residual=money-known if money is not None else None
     # governance-mutation: BASIS_CASH_NO_IMPUTATION
     net=residual if not missing else None
-    per_share=(net/shares).quantize(Decimal('0.00000001')) if net is not None else None
     cash_eq=fact(value['declared_equivalents'],'CNY',period)
     excluded=fact(value['excluded_from_equivalents'],'CNY',period)
     detail=value['excluded_components']
@@ -129,10 +128,14 @@ def _cash(value,fact,facts,bound):
     reserve=_assumption(value['operating_reserve'],'CNY',facts)
     if reserve is not None and reserve<0:
         _fail('OPERATING_RESERVE_RANGE')
+    # governance-mutation: BASIS_RESERVE_NO_IMPUTATION
+    if reserve is None:
+        net=None
+    per_share=(net/shares).quantize(Decimal('0.00000001')) if net is not None else None
     render=lambda number: content._decimal(number) if number is not None else None
-    return {**value,'status':'DATA_BLOCKED' if missing or not matched else 'INVENTORY_ARITHMETIC_SEMANTICS_UNVERIFIED',
+    return {**value,'status':'DATA_BLOCKED' if missing or not matched or reserve is None else 'INVENTORY_ARITHMETIC_SEMANTICS_UNVERIFIED',
         'observed_components':{key:render(number) for key,number in numbers.items()},
-        'missing_components':missing,'known_component_residual':render(residual),
+        'missing_components':missing,'missing_operating_reserve':reserve is None,'known_component_residual':render(residual),
         'residual_scope':'KNOWN_COMPONENTS_ONLY_NOT_NET_OR_SURPLUS_CASH',
         'net_cash_inventory':render(net),'net_cash_per_share':render(per_share),
         'cash_equivalent_bridge':{'status':'ARITHMETIC_RECONCILED_SEMANTICS_UNVERIFIED' if matched else 'DATA_BLOCKED',

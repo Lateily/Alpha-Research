@@ -72,6 +72,48 @@ class DailyBasisTests(unittest.TestCase):
             (default_files if files is None else files).__getitem__,
             company='603986.SH', generated_at='2026-08-04T16:00:00+08:00')
 
+    def action_sentence(self, sentence, effective='20260709'):
+        value,facts,files,citation,mapping=fixture()
+        name=next(key for key in files if key!='source-map.json')
+        files[name]=('Heading\n'+sentence+'\n').encode()
+        citation['expected']=sentence; facts['cancelled']['citation']=copy.deepcopy(citation)
+        facts['cancelled']['period']=effective
+        next(iter(mapping['pages'].values()))['text_sha256']=ev.sha(files[name])
+        files['source-map.json']=ev.canonical(mapping).encode()
+        value['actions']=[{'effective_date':effective,'kind':'SHARE_CANCELLATION',
+                          'fact_id':'cancelled','citation':citation}]
+        return self.derive(value,facts,files)
+
+    def test_pending_or_negated_completion_on_either_side_is_not_an_action(self):
+        date='2026\u5e747\u67089\u65e5'; event='\u56de\u8d2d\u6ce8\u95004,565\u80a1\u9650\u5236\u6027\u80a1\u7968'
+        for sentence in (
+            '\u516c\u53f8\u4e8e'+date+'\u5ba1\u8bae\u901a\u8fc7'+event+'\u7684\u8bae\u6848\uff0c\u5c1a\u5f85\u80a1\u4e1c\u5927\u4f1a\u6279\u51c6\u3002',
+            '\u516c\u53f8\u4e8e'+date+'\u5ba1\u8bae\u901a\u8fc7'+event+'\uff0c\u6ce8\u9500\u5c1a\u672a\u5b8c\u6210\u3002',
+            '\u516c\u53f8\u4e8e'+date+'\u5b8c\u6210'+event+'\u7684\u5ba1\u6279\uff0c\u624b\u7eed\u529e\u7406\u4e2d\u3002',
+            '\u516c\u53f8\u5e76\u975e\u4e8e'+date+'\u5b8c\u6210'+event+'\u3002',
+            '\u516c\u53f8\u6ca1\u6709\u4e8e'+date+'\u5b8c\u6210'+event+'\u3002',
+            '\u516c\u53f8\u9884\u8ba1\u4e8e'+date+'\u5b8c\u6210'+event+'\u3002',
+            '\u516c\u53f8\u4e8e'+date+event+'\uff0c\u8be5\u4e8b\u9879\u4ecd\u987b\u80a1\u4e1c\u5927\u4f1a\u8868\u51b3\u3002',
+            '\u516c\u53f8\u4e8e'+date+event+'\uff0c\u8fd9\u662f\u610f\u5411\u800c\u975e\u5b9e\u9645\u5b8c\u6210\u3002',
+        ):
+            with self.subTest(sentence=sentence),self.assertRaises(ValueError):
+                self.action_sentence(sentence)
+
+    def test_publication_date_cannot_replace_the_completed_event_date(self):
+        sentence='\u516c\u53f8\u4e8e2026\u5e747\u67089\u65e5\u53d1\u5e03\u516c\u544a\uff0c\u5df2\u4e8e2026\u5e746\u67089\u65e5\u5b8c\u6210\u56de\u8d2d\u6ce8\u95004,565\u80a1\u9650\u5236\u6027\u80a1\u7968\u3002'
+        with self.assertRaises(ValueError): self.action_sentence(sentence)
+        result=self.action_sentence(sentence,'20260609')
+        self.assertFalse(result['actions'][0]['in_window'])
+        self.assertEqual(result['continuity_status'],'UNKNOWN_NO_ABSENCE_PROOF')
+        self.assertEqual(result['actions'][0]['available_at'],'2026-07-11T10:00:00+08:00')
+
+    def test_ambiguous_multiple_completed_actions_are_not_one_event(self):
+        sentence='\u516c\u53f8\u4e8e2026\u5e747\u67089\u65e5\u5b8c\u6210\u56de\u8d2d\u6ce8\u95004,565\u80a1\u9650\u5236\u6027\u80a1\u7968\uff0c\u4e8e2026\u5e746\u67089\u65e5\u5b8c\u6210\u56de\u8d2d\u6ce8\u95004,565\u80a1\u9650\u5236\u6027\u80a1\u7968\u3002'
+        with self.assertRaises(ValueError): self.action_sentence(sentence)
+        from decimal import Decimal
+        with self.assertRaises(ValueError):
+            self.module()._completed_event(sentence,date(2026,7,9),Decimal('4565'))
+
     def test_schedule_includes_weekends_and_never_certifies_or_creates_levels(self):
         result = self.derive()
         schedule = result['calendar']
@@ -231,6 +273,8 @@ class DailyBasisTests(unittest.TestCase):
             value['actions'] = [{'effective_date': '20260709', 'kind': 'SHARE_CANCELLATION',
                                  'fact_id': 'cancelled', 'citation': citation}]
             with self.subTest(wording=wording), self.assertRaises(ValueError): self.derive(value, facts, files)
+        with self.assertRaises(ValueError):
+            self.action_sentence('\u516c\u53f8\u5e76\u975e\u4e8e2026\u5e747\u67089\u65e5\u5b8c\u6210\u56de\u8d2d\u6ce8\u95004,565\u80a1\u9650\u5236\u6027\u80a1\u7968\u3002')
 
     def test_duplicate_citation_with_an_alias_fact_is_still_duplicate_evidence(self):
         value, facts, files, citation, _ = fixture()
