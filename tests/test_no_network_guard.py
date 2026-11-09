@@ -76,12 +76,14 @@ import json  # noqa: E402
 from pathlib import Path  # noqa: E402
 import test_technical_contract as technical_contract_tests  # noqa: E402
 import test_technical_contract_cli as technical_cli_tests  # noqa: E402
+import test_research_artifact_io as research_artifact_io_tests  # noqa: E402
 import test_research_normalization as normalization_tests  # noqa: E402
 import test_daily_strategy as daily_strategy_tests  # noqa: E402
 from scripts.llm.ai_os.task_compiler import compile_task_manifest  # noqa: E402
 
 for research_suite in (
-    technical_contract_tests, technical_cli_tests, normalization_tests, daily_strategy_tests,
+    technical_contract_tests, technical_cli_tests, research_artifact_io_tests,
+    normalization_tests, daily_strategy_tests,
 ):
     research_result = unittest.TextTestRunner(verbosity=0).run(
         unittest.defaultTestLoader.loadTestsFromModule(research_suite)

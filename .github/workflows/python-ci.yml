@@ -88,6 +88,7 @@ jobs:
         run: |
           python3 tests/test_technical_contract.py
           python3 tests/test_technical_contract_cli.py
+          python3 tests/test_research_artifact_io.py
           python3 tests/test_research_normalization.py
           python3 tests/test_daily_strategy.py
           python3 scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/valuation_daily_strategy.task.json

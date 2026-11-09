@@ -8,6 +8,7 @@ import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'scripts/llm'))
 import foundation_materials as materials
 import research_content as content
+import research_artifact_io as artifacts
 import workbench_backup as backup
 import workbench_evidence as ev
 
@@ -24,7 +25,8 @@ def _execution_identity():
     base = content._execution_identity()
     root = Path(__file__).resolve().parent
     hashes = {name: ev.sha(ev.read_local(root, name)) for name in ('daily_strategy.py', 'technical_contract.py', 'technical_profiles.py')}
-    return {**base, 'source_tree_hash': ev.sealed({'base': base['source_tree_hash'], 'daily': hashes})}
+    helper = ev.sha(ev.read_local(Path(content.__file__).resolve().parent, 'research_artifact_io.py'))
+    return {**base, 'source_tree_hash': ev.sealed({'base': base['source_tree_hash'], 'daily': hashes, 'artifact_io':helper})}
 
 
 def wilder_at(bars, index, period=14):
@@ -60,6 +62,40 @@ def _snapshot(registry_path, registry_hash, pack_id):
     return result
 
 
+def _captured_snapshot(registry_path, registry_hash, pack_id):
+    captured = {}
+    token = inputs._CAPTURE.set(captured)
+    try:
+        result = _snapshot(registry_path, registry_hash, pack_id)
+    finally:
+        inputs._CAPTURE.reset(token)
+    return result, captured
+
+
+class _EventEvidence(inputs._FrozenEvidence):
+    def bytes(self, ref):
+        inputs._ref(ref, [])
+        key = ref['root_alias'] + ':' + ref['path']
+        # A missing file cannot appear later and silently join the event view.
+        if key not in self.raw:
+            return None
+        return super().bytes(ref)
+
+
+def _event_evidence(validated, captured, registry_path):
+    raw = captured[inputs._absolute(Path(registry_path))][0]
+    roots, _ = inputs._inspection_config(raw)
+    evidence = {}
+    hashes = dict(validated['bindings']['evidence_byte_hashes'])
+    for key, pin in hashes.items():
+        alias, name = key.split(':', 1)
+        saved = captured.get(roots[alias] / name)
+        if saved is None or sha(saved[0]) != pin:
+            inputs._fail('EVENT_SOURCE_CHANGED')
+        evidence[key] = saved[0]
+    return _EventEvidence(roots, [0], evidence, hashes)
+
+
 def _render(number):
     if number is None:
         return None
@@ -82,6 +118,11 @@ def _points(rows):
 
 
 def _first_event(bars, points):
+    with localcontext(Context(prec=200, rounding=ROUND_HALF_EVEN)):
+        return _first_event_exact(bars, points)
+
+
+def _first_event_exact(bars, points):
     for index in range(1, len(bars)):
         prior = bars[index - 1].end
         known = [p for p in points['LOW'] if datetime.fromisoformat(p['known_at']) <= prior]
@@ -151,30 +192,65 @@ def _lifecycle(rows, bars, sweep, reclaim, levels):
     return seen, ambiguous
 
 
-def _event_context(validated, rows, reclaim):
+def _event_history_gaps(validated, rows, reclaim):
+    cutoff = datetime.fromisoformat(rows[reclaim]['bar_close_at'])
+    late = [row['trade_date'] for row in rows[:reclaim + 1] if datetime.fromisoformat(row['available_at']) > cutoff]
+    late_roles = [source['role'] for source in validated['source_manifest']['sources']
+                  if source['role'] in {'bars', 'calendar', 'corporate_actions'} and any(
+                      datetime.fromisoformat(source[key]) > cutoff for key in ('published_at', 'available_at'))]
+    return {'bar_dates': late, 'source_roles': late_roles}
+
+
+def _event_context(validated, rows, reclaim, evidence, history_gaps):
     observed = rows[:reclaim + 1]
+    event_time = rows[reclaim]['bar_close_at']
+    request = dict(validated['request'], as_of=event_time, data_cutoff=event_time)
+    quality = {'roles': {role: {'reason_codes': []} for role in ('context', 'flow', 'research_binding')}}
+    reasons = []
+    def block(role, code):
+        reasons.append(code)
+        if code not in quality['roles'][role]['reason_codes']:
+            quality['roles'][role]['reason_codes'].append(code)
+    inputs._context(validated['inputs']['context'], request, evidence, {}, quality, block)
+    rb = validated['inputs']['research_binding']
+    if rb is not None:
+        inputs._red_flags(request, rb['red_flags'], evidence, quality, block)
+    else:
+        quality['red_flags'] = {'status': 'UNKNOWN', 'source_refs': []}
+        block('research_binding', 'RED_FLAG_COVERAGE_UNKNOWN')
+    history_missing = bool(history_gaps['bar_dates'] or history_gaps['source_roles'])
+    calendar_reasons = ['EVENT_INPUT_AFTER_CUTOFF'] if history_missing else []
+    inputs._flow(validated['inputs']['flow'], request, [row['trade_date'] for row in observed], calendar_reasons, quality, block)
+    for source in validated['source_manifest']['sources']:
+        role = source['role']
+        if role in quality['roles'] and any(datetime.fromisoformat(source[key]) > datetime.fromisoformat(event_time)
+                                            for key in ('published_at', 'available_at')):
+            block(role, 'EVENT_SOURCE_AFTER_CUTOFF')
+            if role == 'context':
+                quality['context']['status'] = 'DATA_BLOCKED'
+                quality['context']['reason_codes'].append('EVENT_SOURCE_AFTER_CUTOFF')
+            elif role == 'flow':
+                quality['flow'].update(status='DATA_BLOCKED', last_two_sum=None, missing_reason='EVENT_SOURCE_AFTER_CUTOFF')
+            else:
+                quality['red_flags']['status'] = 'UNKNOWN'
     volume = None
-    if len(observed) >= 60:
-        volume = sum(Decimal(x['volume']) for x in observed[-5:]) * 12 >= sum(Decimal(x['volume']) for x in observed[-60:])
+    # governance-mutation: DAILY_EVENT_VOLUME_PRECISION
+    with localcontext(Context(prec=200, rounding=ROUND_HALF_EVEN)):
+        if not history_missing and len(observed) >= 60:
+            volume = sum(Decimal(x['volume']) for x in observed[-5:]) * 12 >= sum(Decimal(x['volume']) for x in observed[-60:])
     dates = [x['trade_date'] for x in observed[-2:]]
-    flow = validated['inputs']['flow']
-    pairs = {x['trade_date']: x for x in flow['rows']} if flow else {}
-    event_time = max(datetime.fromisoformat(rows[reclaim][k]) for k in ('bar_close_at', 'available_at'))
-    known = [pairs[d] for d in dates if d in pairs and pairs[d]['settlement_status'] == 'SETTLED'
-             and pairs[d]['main_net_flow'] is not None and datetime.fromisoformat(pairs[d]['available_at']) <= event_time]
-    total = sum(Decimal(x['main_net_flow']) for x in known) if len(known) == len(dates) == 2 else None
-    context = validated['inputs']['context']
-    at_event = (context is not None and inputs._market_date(context['as_of']) == rows[reclaim]['trade_date']
-                and datetime.fromisoformat(context['authored_at']) <= event_time
-                and context['reviewed_at'] is not None and datetime.fromisoformat(context['reviewed_at']) <= event_time)
+    total = Decimal(quality['flow']['last_two_sum']) if quality['flow']['last_two_sum'] is not None else None
+    at_event = quality['context']['status'] == 'CONFIRMED'
     return {'volume_5_mean_gte_60_mean': volume, 'settled_flow_dates': dates,
             'settled_flow_sum': _render(total), 'settled_flow_positive': total > 0 if total is not None else None,
-            'context_known_at_event': at_event, 'context_validation': validated['quality'].get('context'),
-            'red_flags': validated['quality'].get('red_flags'), 'event_information_cutoff': event_time.isoformat()}
+            'context_known_at_event': at_event, 'context_validation': quality['context'],
+            'red_flags': quality['red_flags'], 'event_information_cutoff': event_time,
+            'event_source_reason_codes': sorted(set(reasons)), 'history_gaps': history_gaps,
+            'validation_scope': 'DERIVED_EVENT_VIEW_FROM_PINNED_SOURCES_NOT_NEW_AUTHORITY'}
 
 
 def evaluate(registry_path, registry_hash, pack_id):
-    validated = _snapshot(registry_path, registry_hash, pack_id)
+    validated, captured = _captured_snapshot(registry_path, registry_hash, pack_id)
     request = validated['request']; profile = load_profile(PROFILE_ID)
     result = {'schema': 'ar.daily-strategy-card.v1', 'profile_id': PROFILE_ID,
               'profile_hash': profile['profile_hash'], 'spec_byte_sha256': profile['spec_byte_sha256'],
@@ -204,12 +280,18 @@ def evaluate(registry_path, registry_hash, pack_id):
         result.update(status='WAIT' if waiting else 'NO_SETUP',
                       reason_codes=sorted(set(result['reason_codes'] + ['RECLAIM_PENDING' if waiting else 'RECLAIM_EXPIRED'])))
         return result
-    levels = result['levels'] = _levels(rows, bars, points, sweep, reclaim)
+    gaps = _event_history_gaps(validated, rows, reclaim)
+    history_missing = bool(gaps['bar_dates'] or gaps['source_roles'])
+    # governance-mutation: DAILY_EVENT_HISTORY_PIT
+    levels = result['levels'] = None if history_missing else _levels(rows, bars, points, sweep, reclaim)
     lifecycle, ambiguous = _lifecycle(rows, bars, sweep, reclaim, levels)
     result['lifecycle'] = lifecycle
-    result['context'] = _event_context(validated, rows, reclaim)
+    evidence = _event_evidence(validated, captured, registry_path)
+    result['context'] = _event_context(validated, rows, reclaim, evidence, gaps)
     reasons = list(result['reason_codes']) + ['COST_MODEL_NOT_SUPPLIED']
-    if levels is None:
+    if history_missing:
+        reasons.append('EVENT_INPUT_AFTER_CUTOFF')
+    elif levels is None:
         reasons.append('ATR_HISTORY_INSUFFICIENT')
     elif levels['target_1'] is None:
         reasons.append('TARGET_MISSING')
@@ -224,7 +306,7 @@ def evaluate(registry_path, registry_hash, pack_id):
     if lifecycle['entry_trigger_seen_at'] is not None: reasons.append('ENTRY_ALREADY_TRIGGERED_BEFORE_PLAN')
     if lifecycle['target_seen_at'] is not None: reasons.append('TARGET_ALREADY_REACHED_BEFORE_PLAN')
     if ambiguous: reasons.append('INTRABAR_ORDER_UNKNOWN')
-    result.update(status='INVALIDATED' if lifecycle['structure_invalidated_at'] is not None else 'WAIT',
+    result.update(status='DATA_BLOCKED' if history_missing else 'INVALIDATED' if lifecycle['structure_invalidated_at'] is not None else 'WAIT',
                   reason_codes=sorted(set(reasons)))
     return result
 
@@ -272,15 +354,19 @@ def create(registry_path, registry_hash, pack_id, output_root):
         inputs._fail('STRATEGY_CODE_CHANGED')
     if any(len(value) > ev.MAX_FILE for value in (*files.values(), encoded)):
         inputs._fail('STRATEGY_OUTPUT_SIZE')
-    materials._create_private_root(output)
-    for name, value in files.items(): backup.write_new(output / name, value)
-    backup.write_new(output / 'strategy-manifest.json', encoded)
-    return verify(output, manifest['strategy_hash'], registry_path, registry_hash, pack_id)
+    return artifacts.publish(output, files, 'strategy-manifest.json', encoded,
+        lambda: verify(output, manifest['strategy_hash'], registry_path, registry_hash, pack_id))
 
 
 def verify(output_root, strategy_hash, registry_path, registry_hash, pack_id):
+    with artifacts.read(output_root, {'strategy-card.json', 'chart-annotations.json',
+            'human-review-template.json', 'technical-report.md', 'strategy-manifest.json'}) as raw:
+        return _verify(raw, strategy_hash, registry_path, registry_hash, pack_id)
+
+
+def _verify(saved, strategy_hash, registry_path, registry_hash, pack_id):
     inputs._hash(strategy_hash)
-    marker = ev.parse(ev.read_local(output_root, 'strategy-manifest.json'))
+    marker = ev.parse(saved['strategy-manifest.json'])
     materials._exact(marker, {'schema', 'registry_sha256', 'pack_id', 'execution_identity',
                              'files', 'strategy_hash', *content.LABELS})
     if (marker['schema'] != 'ar.daily-strategy-manifest.v1' or marker['strategy_hash'] != strategy_hash
@@ -294,7 +380,7 @@ def verify(output_root, strategy_hash, registry_path, registry_hash, pack_id):
     materials._hash(marker['execution_identity']['code_sha'], 40)
     materials._hash(marker['execution_identity']['source_tree_hash'])
     # governance-mutation: DAILY_STRATEGY_DERIVATION
-    if any(ev.read_local(output_root, name) != raw or marker['files'][name] != sha(raw) for name,raw in files.items()):
+    if any(saved[name] != raw or marker['files'][name] != sha(raw) for name,raw in files.items()):
         inputs._fail('STRATEGY_DERIVATION')
     card = ev.parse(files['strategy-card.json'])
     return {'schema': 'ar.daily-strategy-receipt.v1', 'strategy_hash': strategy_hash,

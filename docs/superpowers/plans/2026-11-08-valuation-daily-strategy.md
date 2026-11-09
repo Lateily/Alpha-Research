@@ -52,3 +52,15 @@ Files: governance_mutation_gate.py, python-ci.yml, no-network suite, task fixtur
 - [ ] Full local CI/every mutation and fresh independent review on that SHA.
 - [ ] Reopen receipts/legacy reports and verify installed/source/ledger pins.
 - [ ] Keep branch/worktree and all failed history; no push/merge/release.
+
+## 2026-11-09 Rejected-Candidate Follow-Up
+
+f39eb7a is retained and rejected: full CI112/113, full mutation baseline failed,
+independent review R1-R5. Fix the output directory race with a shared held-fd
+artifact writer/read snapshot; enforce event-time indicator/context evidence and
+fixed Decimal precision. Repair minimal governance fixtures and the Git-less
+in-process artifact identity fixture without disabling real guard requirements.
+Keep the four original ce46949 port files byte-identical and every existing pin
+ID; only update the two necessary derivation anchors after their read API moves.
+Add behavior pins for the new regressions. Freeze a replacement clean SHA and
+rerun all gates, retained demonstrations, legacy reopens and independent review.

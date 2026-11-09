@@ -6,6 +6,7 @@ from pathlib import Path
 import foundation_materials as materials
 import foundation_research as material
 import research_content as content
+import research_artifact_io as artifacts
 import workbench_backup as backup
 import workbench_evidence as ev
 from workbench_snapshot_brief import reject_credentials
@@ -21,8 +22,9 @@ def _fail(reason):
 
 def _execution_identity():
     base = content._execution_identity()
-    raw = ev.read_local(Path(__file__).resolve().parent, Path(__file__).name)
-    return {**base, 'source_tree_hash': ev.sealed({'base': base['source_tree_hash'], 'normalization': ev.sha(raw)})}
+    root = Path(__file__).resolve().parent
+    hashes = {name: ev.sha(ev.read_local(root, name)) for name in ('research_normalization.py', 'research_artifact_io.py')}
+    return {**base, 'source_tree_hash': ev.sealed({'base': base['source_tree_hash'], 'normalization': hashes})}
 
 
 def derive(cards, worksheet):
@@ -181,16 +183,18 @@ def create(raw, worksheet_hash, content_root, content_hash, pack_root, pack_hash
         _fail('CODE_CHANGED')
     if any(len(value) > ev.MAX_FILE for value in (*files.values(), encoded)):
         _fail('OUTPUT_SIZE')
-    materials._create_private_root(output)
-    for name, value in files.items():
-        backup.write_new(output / name, value)
-    backup.write_new(output / MARKER, encoded)
-    return verify(output, manifest['normalization_hash'], content_root, content_hash, pack_root, pack_hash)
+    return artifacts.publish(output, files, MARKER, encoded,
+        lambda: verify(output, manifest['normalization_hash'], content_root, content_hash, pack_root, pack_hash))
 
 
 def verify(output_root, pin, content_root, content_hash, pack_root, pack_hash):
+    with artifacts.read(output_root, {'worksheet.json', 'normalization-card.json', 'report.md', MARKER}) as raw:
+        return _verify(raw, pin, content_root, content_hash, pack_root, pack_hash)
+
+
+def _verify(saved, pin, content_root, content_hash, pack_root, pack_hash):
     materials._hash(pin)
-    manifest = ev.parse(ev.read_local(output_root, MARKER))
+    manifest = ev.parse(saved[MARKER])
     materials._exact(manifest, {'schema', 'content_hash', 'pack_hash', 'worksheet_hash', 'execution_identity',
                               'files', 'normalization_hash', *content.LABELS})
     if (manifest['schema'] != 'ar.normalization-manifest.v1' or manifest['normalization_hash'] != pin
@@ -202,10 +206,10 @@ def verify(output_root, pin, content_root, content_hash, pack_root, pack_hash):
     materials._exact(manifest['execution_identity'], {'code_sha', 'source_tree_hash'})
     materials._hash(manifest['execution_identity']['code_sha'], 40)
     materials._hash(manifest['execution_identity']['source_tree_hash'])
-    raw = ev.read_local(output_root, 'worksheet.json')
+    raw = saved['worksheet.json']
     expected = _files(raw, manifest['worksheet_hash'], _snapshot(content_root, content_hash, pack_root, pack_hash))
     # governance-mutation: NORMALIZATION_DERIVATION
-    if any(ev.sha(value) != manifest['files'][name] or ev.read_local(output_root, name) != value for name, value in expected.items()):
+    if any(ev.sha(value) != manifest['files'][name] or saved[name] != value for name, value in expected.items()):
         _fail('DERIVATION')
     return {'normalization_hash': pin, 'content_hash': content_hash, 'pack_hash': pack_hash,
             'report_sha256': manifest['files']['report.md'], 'status': 'NORMALIZATION_BASIS_PARTIAL', **content.LABELS}

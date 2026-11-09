@@ -1,6 +1,6 @@
 """Daily strategy consumes registered evidence, not caller verdicts or future bars."""
 import copy
-from decimal import Decimal
+from decimal import Decimal, localcontext
 import importlib
 import importlib.util
 from pathlib import Path
@@ -32,6 +32,15 @@ class DailyStrategyTests(unittest.TestCase):
 
     def run_card(self):
         return self.module().evaluate(self.f.registry, fixtures.sha(self.f.registry.read_bytes()), 'synthetic-1')
+
+    def append_day(self, day='20261010'):
+        f = self.f; row = copy.deepcopy(f.payloads['bars']['rows'][0])
+        row.update(trade_date=day, bar_close_at=f.stamp(day), available_at=f.stamp(day))
+        f.payloads['bars']['rows'].append(row)
+        f.request.update(as_of=f.stamp(day), data_cutoff=f.stamp(day), generated_at=f.stamp(day))
+        f.payloads['calendar']['coverage']['end'] = day
+        f.payloads['calendar']['days'].append(dict(trade_date=day, is_open=True, close_at=f.stamp(day), suspensions=[]))
+        f.calendar_hash(); f.payloads['corporate_actions']['coverage']['end'] = day
 
     def test_registered_first_event_levels_and_missing_cost_are_visible(self):
         result = self.run_card()
@@ -111,6 +120,7 @@ class DailyStrategyTests(unittest.TestCase):
         after = self.run_card()
         self.assertEqual(after['setup'], initial['setup'])
         self.assertEqual(after['levels'], initial['levels'])
+        self.assertEqual(after['context'], initial['context'])
         self.assertEqual(after['status'], 'INVALIDATED')
         self.assertEqual(after['lifecycle']['entry_trigger_seen_at'], day)
         self.assertEqual(after['lifecycle']['target_seen_at'], day)
@@ -138,7 +148,10 @@ class DailyStrategyTests(unittest.TestCase):
         import json
         module = self.module(); self.assertTrue(hasattr(module, 'create'), 'sealed daily artifact API missing')
         output = self.f.root / 'daily-card'; pin = fixtures.sha(self.f.registry.read_bytes())
-        receipt = module.create(self.f.registry, pin, 'synthetic-1', output)
+        # The mutation sandbox intentionally has no .git. Only this in-process
+        # artifact fixture uses a deterministic identity; real CLI tests do not.
+        with mock.patch.object(module, '_execution_identity', return_value={'code_sha':'a'*40, 'source_tree_hash':'b'*64}):
+            receipt = module.create(self.f.registry, pin, 'synthetic-1', output)
         self.assertEqual(module.verify(output, receipt['strategy_hash'], self.f.registry, pin, 'synthetic-1'), receipt)
         card = json.loads((output/'strategy-card.json').read_bytes()); card['levels']['entry_reference'] = '1.00'
         raw = fixtures.encode(card); (output/'strategy-card.json').write_bytes(raw)
@@ -150,18 +163,21 @@ class DailyStrategyTests(unittest.TestCase):
 
     def test_actual_cli_create_reopen_and_wrong_registry_pin(self):
         import json
+        import scripts.governance_mutation_gate as gate
+        guard=self.f.root/'child-guard'; gate._write_network_guard(guard)
+        environment=gate._subprocess_env(Path(__file__).resolve().parents[1],guard)
         command = [sys.executable, '-B', '-m', 'experiments.research_workflows.daily_strategy']
         common = ['--registry', str(self.f.registry), '--registry-hash', fixtures.sha(self.f.registry.read_bytes()),
                   '--pack-id', 'synthetic-1', '--output', str(self.f.root/'cli-card')]
         repo = Path(__file__).resolve().parents[1]
-        created = subprocess.run(command+['create', *common], cwd=repo, capture_output=True, timeout=30)
+        created = subprocess.run(command+['create', *common], cwd=repo,env=environment,capture_output=True, timeout=30)
         self.assertEqual(created.returncode, 0, created.stderr.decode())
         receipt = json.loads(created.stdout)
-        reopened = subprocess.run(command+['verify', *common, '--strategy-hash', receipt['strategy_hash']], cwd=repo, capture_output=True, timeout=30)
+        reopened = subprocess.run(command+['verify', *common, '--strategy-hash', receipt['strategy_hash']], cwd=repo,env=environment,capture_output=True, timeout=30)
         self.assertEqual(reopened.returncode, 0, reopened.stderr.decode())
         self.assertEqual(json.loads(reopened.stdout), receipt)
         common[3] = 'f'*64
-        wrong = subprocess.run(command+['verify', *common, '--strategy-hash', receipt['strategy_hash']], cwd=repo, capture_output=True, timeout=30)
+        wrong = subprocess.run(command+['verify', *common, '--strategy-hash', receipt['strategy_hash']], cwd=repo,env=environment,capture_output=True, timeout=30)
         self.assertNotEqual(wrong.returncode, 0)
 
     def test_size_and_source_output_overlap_are_rejected_without_directory(self):
@@ -201,6 +217,97 @@ class DailyStrategyTests(unittest.TestCase):
         self.assertEqual(result['status'], 'WAIT')
         self.assertIsNone(result['lifecycle']['entry_trigger_seen_at'])
         self.assertEqual(result['registration_readiness'], 'NOT_AUTHORIZED')
+
+    def test_delayed_indicator_history_blocks_levels_without_reselecting_event(self):
+        self.append_day(); f = self.f
+        f.payloads['bars']['rows'][0].update(high='100.00', available_at=f.stamp('20261010'))
+        f.seal(register=True); result = self.run_card()
+        self.assertEqual(result['quality']['structural_input_status'], 'STRUCTURALLY_VALID')
+        self.assertEqual(result['setup']['reclaim_date'], '20261009')
+        self.assertEqual(result['status'], 'DATA_BLOCKED')
+        self.assertIsNone(result['levels'])
+        self.assertIsNone(result['context']['volume_5_mean_gte_60_mean'])
+        self.assertIn('EVENT_INPUT_AFTER_CUTOFF', result['reason_codes'])
+
+    def test_delayed_sweep_or_reclaim_does_not_move_the_event_cutoff(self):
+        self.append_day(); f = self.f
+        for index in (58, 59):
+            original = f.payloads['bars']['rows'][index]['available_at']
+            f.payloads['bars']['rows'][index]['available_at'] = f.stamp('20261010')
+            f.seal(register=True); result = self.run_card()
+            self.assertEqual(result['setup']['reclaim_date'], '20261009')
+            self.assertIsNone(result['levels'])
+            self.assertEqual(result['context']['event_information_cutoff'], fixtures.STAMP)
+            f.payloads['bars']['rows'][index]['available_at'] = original
+
+    def test_late_context_evidence_cannot_be_known_at_the_reclaim(self):
+        self.append_day(); f = self.f; context = f.payloads['context']
+        late = '2026-10-09T16:00:00+08:00'
+        context['data_cutoff'] = late
+        context['source_refs'] = [f.source('late-discussion.json', {
+            'schema_version':'technical-context-source.v1', 'industry_key':'SYNTHETIC',
+            'as_of':fixtures.STAMP, 'published_at':late, 'available_at':late, 'content':'Late synthetic discussion.'})]
+        f.context_receipt(); f.seal(register=True); result = self.run_card()
+        self.assertFalse(result['context']['context_known_at_event'])
+        self.assertEqual(result['context']['context_validation']['status'], 'DATA_BLOCKED')
+        self.assertIn('CONTEXT_SOURCE_AFTER_CUTOFF', result['context']['context_validation']['reason_codes'])
+
+    def test_event_decimal_cancellation_and_small_ambient_precision_are_exact(self):
+        f = self.f
+        f.payloads['flow']['rows'][0]['main_net_flow']='1000000000000000000000000000001'
+        f.payloads['flow']['rows'][1]['main_net_flow']='-1000000000000000000000000000000'
+        f.seal(register=True); before = self.run_card()
+        self.assertEqual(before['quality']['flow']['last_two_sum'], '1')
+        self.assertEqual(before['context']['settled_flow_sum'], '1')
+        self.assertTrue(before['context']['settled_flow_positive'])
+        with localcontext() as ambient:
+            ambient.prec=3; after=self.run_card()
+        self.assertEqual(after['setup'], before['setup'])
+        self.assertEqual(after['levels'], before['levels'])
+        self.assertEqual(after['context'], before['context'])
+
+    def test_latest_known_low_is_not_replaced_with_the_older_low(self):
+        self.f.payloads['bars']['rows'][30]['low']='8.90'
+        self.f.seal(register=True); result=self.run_card()
+        self.assertEqual(result['setup']['reference']['index'], 55)
+        self.assertEqual(result['setup']['reference']['price'], '9.00')
+
+    def test_volume_near_equality_is_not_rounded_into_confirmation(self):
+        value=10**30
+        for row in self.f.payloads['bars']['rows'][:-5]: row['volume']=str(value+1)
+        for row in self.f.payloads['bars']['rows'][-5:]: row['volume']=str(value)
+        self.f.seal(register=True)
+        self.assertFalse(self.run_card()['context']['volume_5_mean_gte_60_mean'])
+        with localcontext() as ambient:
+            ambient.prec=3
+            self.assertFalse(self.run_card()['context']['volume_5_mean_gte_60_mean'])
+
+    def test_tick_sweep_is_independent_of_ambient_decimal_precision(self):
+        with localcontext() as exact:
+            exact.prec=200
+            for row in self.f.payloads['bars']['rows']:
+                for key in ('open','high','low','close'): row[key]=format(Decimal(row[key])+Decimal('1000000000'),'f')
+        self.f.seal(register=True); before=self.run_card()
+        self.assertIsNotNone(before['setup'])
+        with localcontext() as ambient:
+            ambient.prec=3; after=self.run_card()
+        self.assertEqual(after['setup'], before['setup'])
+        self.assertEqual(after['levels'], before['levels'])
+
+    def test_late_role_manifest_cannot_certify_event_time_inputs(self):
+        self.append_day(); f=self.f
+        for role in ('bars','context'):
+            source=next(x for x in f.manifest['sources'] if x['role']==role)
+            old=copy.deepcopy(source)
+            for key in ('published_at','available_at','captured_at'): source[key]=f.stamp('20261010')
+            f.seal(register=True); result=self.run_card()
+            if role=='bars':
+                self.assertIsNone(result['levels'])
+                self.assertIn('bars', result['context']['history_gaps']['source_roles'])
+            else:
+                self.assertFalse(result['context']['context_known_at_event'])
+                self.assertIn('EVENT_SOURCE_AFTER_CUTOFF',result['context']['context_validation']['reason_codes'])
+            source.clear(); source.update(old)
 
 
 if __name__ == '__main__':

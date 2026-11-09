@@ -17450,7 +17450,7 @@ MUTATIONS += (
     MutationCase(
         mutation_id="NORMALIZATION_DERIVATION", component="Research normalization",
         source_path="scripts/llm/research_normalization.py", test_script="tests/test_research_normalization.py",
-        before="    if any(ev.sha(value) != manifest['files'][name] or ev.read_local(output_root, name) != value for name, value in expected.items()):",
+        before="    if any(ev.sha(value) != manifest['files'][name] or saved[name] != value for name, value in expected.items()):",
         after="    if False:",
         expected_failure_marker="test_actual_sealed_reopen_and_tamper_rejection",
         rationale="Coherent resealing cannot replace the source-derived normalization card.",
@@ -17489,10 +17489,121 @@ MUTATIONS += (
     MutationCase(
         mutation_id="DAILY_STRATEGY_DERIVATION", component="Daily strategy",
         source_path="experiments/research_workflows/daily_strategy.py", test_script="tests/test_daily_strategy.py",
-        before="    if any(ev.read_local(output_root, name) != raw or marker['files'][name] != sha(raw) for name,raw in files.items()):",
+        before="    if any(saved[name] != raw or marker['files'][name] != sha(raw) for name,raw in files.items()):",
         after="    if False:",
         expected_failure_marker="test_saved_card_reopens_and_coherent_reseal_cannot_change_derivation",
         rationale="A resealed saved strategy cannot revise its registered-input derivation.",
+    ),
+)
+
+
+MUTATIONS += (
+    MutationCase(
+        mutation_id="TECHNICAL_MARKER_VALIDATION_REQUIRED", component="Technical marker coverage",
+        source_path="scripts/governance_mutation_gate.py", test_script="tests/test_governance_mutation_gate.py",
+        before="    validate_technical_marker_coverage(root, cases)\n",
+        after="    pass  # disabled required technical marker coverage\n",
+        expected_failure_marker="test_validate_manifest_enforces_technical_marker_mapping",
+        rationale="The production manifest must enforce the required technical marker mapping.",
+    ),
+)
+
+
+MUTATIONS += (
+    MutationCase(
+        mutation_id="RESEARCH_ARTIFACT_HELD_WRITES", component="Research artifact publication",
+        source_path="scripts/llm/research_artifact_io.py", test_script="tests/test_research_artifact_io.py",
+        before="            directory_io._write_new(output, fd, name, raw)",
+        after="            __import__('workbench_backup').write_new(output / name, raw)",
+        expected_failure_marker="test_fd_writer_never_writes_a_substituted_root",
+        rationale="A substituted output pathname cannot redirect even one descriptor-held artifact write.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_ARTIFACT_READ_SNAPSHOT", component="Research artifact publication",
+        source_path="scripts/llm/research_artifact_io.py", test_script="tests/test_research_artifact_io.py",
+        before="        if any(directory_io._read_output(fd, name) != pair for name, pair in saved.items()):",
+        after="        if False:",
+        expected_failure_marker="test_read_holds_root_and_payload_fingerprints_across_derivation",
+        rationale="Held artifact payloads must retain their bytes and fingerprints throughout derivation.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_ARTIFACT_COMMIT_ROLLBACK", component="Research artifact publication",
+        source_path="scripts/llm/research_artifact_io.py", test_script="tests/test_research_artifact_io.py",
+        before="            if published:", after="            if False:",
+        expected_failure_marker="test_failed_postpublication_check_retracts_only_new_commit",
+        rationale="A failed postpublication check must retract this invocation's new commit marker.",
+    ),
+    MutationCase(
+        mutation_id="DAILY_EVENT_HISTORY_PIT", component="Daily event evidence",
+        source_path="experiments/research_workflows/daily_strategy.py", test_script="tests/test_daily_strategy.py",
+        before="    levels = result['levels'] = None if history_missing else _levels(rows, bars, points, sweep, reclaim)",
+        after="    levels = result['levels'] = _levels(rows, bars, points, sweep, reclaim)",
+        expected_failure_marker="test_delayed_indicator_history_blocks_levels_without_reselecting_event",
+        rationale="Later-available indicator history must leave historical event levels null.",
+    ),
+    MutationCase(
+        mutation_id="DAILY_EVENT_FIXED_CLOSE_CUTOFF", component="Daily event evidence",
+        source_path="experiments/research_workflows/daily_strategy.py", test_script="tests/test_daily_strategy.py",
+        before="    cutoff = datetime.fromisoformat(rows[reclaim]['bar_close_at'])",
+        after="    cutoff = datetime.fromisoformat(rows[reclaim]['available_at'])",
+        expected_failure_marker="test_delayed_sweep_or_reclaim_does_not_move_the_event_cutoff",
+        rationale="Delayed reclaim availability cannot move the historical event's close-time cutoff.",
+    ),
+    MutationCase(
+        mutation_id="DAILY_EVENT_CONTEXT_PREFIX", component="Daily event evidence",
+        source_path="experiments/research_workflows/daily_strategy.py", test_script="tests/test_daily_strategy.py",
+        before="    request = dict(validated['request'], as_of=event_time, data_cutoff=event_time)",
+        after="    request = dict(validated['request'])",
+        expected_failure_marker="test_later_touch_and_invalidation_do_not_rewrite_the_event",
+        rationale="Appending a replay bar cannot repaint the event's full context and red-flag snapshot.",
+    ),
+    MutationCase(
+        mutation_id="DAILY_EVENT_CONTEXT_SOURCE_PIT", component="Daily event evidence",
+        source_path="experiments/research_workflows/daily_strategy.py", test_script="tests/test_daily_strategy.py",
+        before="    inputs._context(validated['inputs']['context'], request, evidence, {}, quality, block)",
+        after="    inputs._context(validated['inputs']['context'], dict(request, data_cutoff=validated['request']['data_cutoff']), evidence, {}, quality, block)",
+        expected_failure_marker="test_late_context_evidence_cannot_be_known_at_the_reclaim",
+        rationale="Bound event discussion evidence must use the event cutoff rather than the later replay cutoff.",
+    ),
+    MutationCase(
+        mutation_id="DAILY_EVENT_CONTEXT_ROLE_PIT", component="Daily event evidence",
+        source_path="experiments/research_workflows/daily_strategy.py", test_script="tests/test_daily_strategy.py",
+        before="        if role in quality['roles'] and any(datetime.fromisoformat(source[key]) > datetime.fromisoformat(event_time)\n                                            for key in ('published_at', 'available_at')):",
+        after="        if False:",
+        expected_failure_marker="test_late_role_manifest_cannot_certify_event_time_inputs",
+        rationale="Late role-source metadata cannot certify context as known at the event.",
+    ),
+    MutationCase(
+        mutation_id="DAILY_EVENT_FLOW_PRECISION", component="Daily event arithmetic",
+        source_path="experiments/research_workflows/daily_strategy.py", test_script="tests/test_daily_strategy.py",
+        before="    total = Decimal(quality['flow']['last_two_sum']) if quality['flow']['last_two_sum'] is not None else None",
+        after="    total = sum((Decimal(row['main_net_flow']) for row in validated['inputs']['flow']['rows'][-2:]), Decimal(0)) if quality['flow']['last_two_sum'] is not None else None",
+        expected_failure_marker="test_event_decimal_cancellation_and_small_ambient_precision_are_exact",
+        rationale="The event must retain the contract's exact settled-flow sum rather than recompute under ambient precision.",
+    ),
+    MutationCase(
+        mutation_id="DAILY_EVENT_VOLUME_PRECISION", component="Daily event arithmetic",
+        source_path="experiments/research_workflows/daily_strategy.py", test_script="tests/test_daily_strategy.py",
+        before="    # governance-mutation: DAILY_EVENT_VOLUME_PRECISION\n    with localcontext(Context(prec=200, rounding=ROUND_HALF_EVEN)):",
+        after="    # governance-mutation: DAILY_EVENT_VOLUME_PRECISION\n    with localcontext(Context(prec=28, rounding=ROUND_HALF_EVEN)):",
+        expected_failure_marker="test_volume_near_equality_is_not_rounded_into_confirmation",
+        rationale="Large accepted volumes near equality cannot round a false comparison into confirmation.",
+    ),
+    MutationCase(
+        mutation_id="DAILY_EVENT_TICK_PRECISION", component="Daily event arithmetic",
+        source_path="experiments/research_workflows/daily_strategy.py", test_script="tests/test_daily_strategy.py",
+        before="def _first_event(bars, points):\n    with localcontext(Context(prec=200, rounding=ROUND_HALF_EVEN)):",
+        after="def _first_event(bars, points):\n    with localcontext():",
+        expected_failure_marker="test_tick_sweep_is_independent_of_ambient_decimal_precision",
+        rationale="Strict tick subtraction must remain exact independently of the caller's Decimal context.",
+    ),
+    MutationCase(
+        mutation_id="DAILY_STRATEGY_FIRST_REFERENCE", component="Daily event evidence",
+        source_path="experiments/research_workflows/daily_strategy.py", test_script="tests/test_daily_strategy.py",
+        before="        ref = known[-1]; level = Decimal(ref['price']); confirmation = ref['index'] + 2",
+        after="        ref = known[0]; level = Decimal(ref['price']); confirmation = ref['index'] + 2",
+        expected_failure_marker="test_latest_known_low_is_not_replaced_with_the_older_low",
+        rationale="The most recent eligible confirmed low cannot be replaced with an older reference.",
     ),
 )
 

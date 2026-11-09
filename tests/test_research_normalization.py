@@ -181,18 +181,21 @@ class NormalizationArtifactTests(unittest.TestCase):
         self.assertFalse(output.exists())
 
     def test_cli_create_verify_and_external_pin_refusal(self):
+        import scripts.governance_mutation_gate as gate
+        guard=self.root/'child-guard'; gate._write_network_guard(guard)
+        environment=gate._subprocess_env(Path(__file__).resolve().parents[1],guard)
         worksheet = self.root/'worksheet.json'; worksheet.write_bytes(self.raw)
         output = self.root/'cli-result'
         command = [sys.executable, '-B', str(Path(__file__).resolve().parents[1]/'scripts/llm/research_normalization.py')]
         common = ['--content-root', str(self.content_root), '--content-hash', self.receipt['content_hash'],
                   '--pack-root', str(self.root/'pack'), '--pack-hash', self.f.pack['pack_hash'], '--output', str(output)]
-        created = subprocess.run(command+['create', *common, '--worksheet', str(worksheet), '--worksheet-hash', self.pin], capture_output=True, timeout=30)
+        created = subprocess.run(command+['create', *common, '--worksheet', str(worksheet), '--worksheet-hash', self.pin], env=environment,capture_output=True, timeout=30)
         self.assertEqual(created.returncode, 0, created.stderr.decode())
         receipt = self.ev.parse(created.stdout)
-        reopened = subprocess.run(command+['verify', *common, '--normalization-hash', receipt['normalization_hash']], capture_output=True, timeout=30)
+        reopened = subprocess.run(command+['verify', *common, '--normalization-hash', receipt['normalization_hash']], env=environment,capture_output=True, timeout=30)
         self.assertEqual(reopened.returncode, 0, reopened.stderr.decode())
         self.assertEqual(self.ev.parse(reopened.stdout), receipt)
-        wrong = subprocess.run(command+['verify', *common, '--normalization-hash', 'f'*64], capture_output=True, timeout=30)
+        wrong = subprocess.run(command+['verify', *common, '--normalization-hash', 'f'*64], env=environment,capture_output=True, timeout=30)
         self.assertNotEqual(wrong.returncode, 0)
 
     def test_output_limit_and_root_overlap_refuse_before_creation(self):

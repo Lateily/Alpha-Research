@@ -69,6 +69,25 @@ All artifacts carry WORKFLOW_DEBUG, PENDING and false production/U4/paper/trade
 authority. Hash verifies bytes, not issuer authenticity or authenticated humans.
 The entire SMC/ICT catalog is not implemented by this one profile.
 
+## Integration Hardening
+
+Publish both new artifacts through a shared descriptor-pinned, manifest-last
+writer. An output-root or ancestor substitution cannot redirect writes. Reopen
+requires exact inventory and unchanged root/file fingerprints across derivation;
+failure retracts only this call's own commit inode, retaining other evidence.
+The global file/PDF bounds and original technical input guard remain unchanged.
+
+The event cutoff is the reclaim close, never the replay cutoff or a delayed
+observation's arrival time. Every required historical bar and structural source
+must be available by that cutoff; otherwise preserve the selected event, emit
+DATA_BLOCKED and no levels/volume confirmation. Revalidate the original frozen
+discussion, mapping, review and red-flag bytes against that derived event view.
+Keep final-replay quality separate, and do not let appended later bars repaint
+the event snapshot. All flow/volume/tick arithmetic has fixed sufficient Decimal
+precision independent of ambient settings. Source identity contains a commit
+reference plus live source hashes, not by itself a clean-commit attestation;
+the independent same-final clean-source gates supply that separate evidence.
+
 ## Acceptance
 
 TDD through actual CLI/registered input and sealed reopen. Normal/missing,
