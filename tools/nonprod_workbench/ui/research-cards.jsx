@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight, FileSearch, Play, RefreshCw, Search } from 'lucide-react';
-import { canRunCard, cardsContextKey, cardsView, readCardInputs, readCardLibrary } from './research-cards-view.mjs';
+import { canRunCard, cardsContextKey, cardsView, readCardInputs, readCardLibrary, refreshCardVerification } from './research-cards-view.mjs';
 import { createSharedPoller } from './shared-view.mjs';
 import { statusTone } from './status-tone.mjs';
 
@@ -14,10 +14,11 @@ export function CitationLocations({locations}) {
 export default function ResearchCards({api,renew,login,workspaceId,codeSha,parentStale,refreshRevision,onRun,onOpenJob,busy}) {
   const [draft,setDraft]=useState({industry_key:'',research_date:'',ts_code:''});
   const [filters,setFilters]=useState({}),[page,setPage]=useState(0),[selected,setSelected]=useState('');
-  const [state,setState]=useState(null),reader=useRef(null),active=useRef(null);
+  const [state,setState]=useState(null),reader=useRef(null),active=useRef(null),verified=useRef(null);
+  const [revision,setRevision]=useState(0);
   const cycle=useRef({stale:parentStale,epoch:0});
   if(cycle.current.stale!==parentStale)cycle.current={stale:parentStale,epoch:cycle.current.epoch+1};
-  const epoch=JSON.stringify([refreshRevision,cycle.current.epoch]);
+  const epoch=JSON.stringify([refreshRevision,cycle.current.epoch,revision]);
   const context={login,workspaceId,codeSha,filters,page},key=cardsContextKey(context),requestKey=JSON.stringify([key,epoch]);
   active.current=requestKey;
   const view=cardsView(state,key,parentStale,epoch),data=view.data;
@@ -25,29 +26,35 @@ export default function ResearchCards({api,renew,login,workspaceId,codeSha,paren
   const selectedInput=choices.find(row=>row.snapshot_id===selected);
   useEffect(()=>{setSelected('');},[login,workspaceId,codeSha,epoch]);
   useEffect(()=>{
+    verified.current=null;
     if(!codeSha||!workspaceId||parentStale){reader.current=null;return;}
     const current=createSharedPoller({
       read:async()=>{const inputs=await readCardInputs(api,context,renew);const library=await readCardLibrary(api,context,renew);return {...library,registeredInputs:inputs};},
-      apply:data=>{if(active.current===requestKey)setState({key,verificationEpoch:epoch,data,stale:false,error:''});},
-      fail:error=>{if(active.current===requestKey)setState(old=>({key,verificationEpoch:epoch,data:old?.key===key?old.data:null,stale:true,error:error.message}));},
+      apply:data=>{if(active.current===requestKey){verified.current=requestKey;setState({key,verificationEpoch:epoch,data,stale:false,error:''});}},
+      fail:error=>{if(active.current===requestKey){verified.current=null;setState(old=>({key,verificationEpoch:epoch,data:old?.key===key?old.data:null,stale:true,error:error.message}));}},
       schedule:()=>null,cancel:()=>{}
     });
     reader.current=current;current.refresh();
-    return()=>{current.stop();if(reader.current===current)reader.current=null;};
+    return()=>{current.stop();if(verified.current===requestKey)verified.current=null;if(reader.current===current)reader.current=null;};
   },[requestKey,parentStale]);
   const badge=value=><span className={`badge ${statusTone(view.stale?'DISCONNECTED':value==='BREAK'?'DATA_BLOCKED':value)}`}>{view.stale?'DISCONNECTED':value}</span>;
+  function refresh(){
+    // Invalidate live callbacks before React renders the next verification epoch.
+    refreshCardVerification({verified,active,setSelected,setRevision});
+  }
   function submit(event){
     event.preventDefault();const next={...draft,research_date:draft.research_date.replaceAll('-','')};
     setPage(0);setFilters(next);
     // governance-mutation: SHARED_CARDS_QUERY_REFRESH
-    if(cardsContextKey({...context,filters:next,page:0})===key)reader.current?.refresh();
+    if(cardsContextKey({...context,filters:next,page:0})===key)refresh();
   }
   function run(){
+    if(verified.current!==requestKey)return;
     if(!canRunCard({activeKey:active.current,requestKey,stale:view.stale,busy,selected:selectedInput}))return;
     onRun({snapshot_id:selectedInput.snapshot_id,workspace_id:workspaceId,code_sha:codeSha});
   }
   return <div className="data-center research-library">
-    <div className="section-title"><h3>研究卡</h3><div>{badge(view.status)}<button className="icon-button" aria-label="刷新研究卡" title="重新核验研究卡" onClick={()=>reader.current?.refresh()}><RefreshCw size={17}/></button></div></div>
+    <div className="section-title"><h3>研究卡</h3><div>{badge(view.status)}<button className="icon-button" aria-label="刷新研究卡" title="重新核验研究卡" onClick={refresh}><RefreshCw size={17}/></button></div></div>
     <div className="source-strip"><span>WORKFLOW_DEBUG</span><span>人工核验 PENDING</span><span>正文分发 DENIED</span><code>{view.hashStatus}</code></div>
     {view.error&&<div className="shared-error" role="alert">DISCONNECTED · {view.error}</div>}
     <div className="research-filters"><label>冻结研究卡<select aria-label="冻结研究卡" value={selected} onChange={event=>setSelected(event.target.value)}><option value="">选择研究卡包</option>{choices.map(row=><option key={row.snapshot_id} value={row.snapshot_id}>{row.company} · {row.research_date} · {row.content_hash.slice(0,12)}</option>)}</select></label><button className="icon-button" aria-label="提交研究卡核验" title="提交研究卡核验" disabled={busy||view.stale||!selectedInput} onClick={run}><Play size={18}/></button></div>

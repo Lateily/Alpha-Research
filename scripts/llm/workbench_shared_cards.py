@@ -110,9 +110,14 @@ def envelope(value):
         'validation_scope':SCOPE,'snapshot':value}
 
 def verify_input(root,value):
-    envelope(value); root=Path(root)
+    envelope(value); root=materials._root(root)
+    with materials._directory(root):
+        pass
+    names=('library','pack','content','basis')
+    if {path.name for path in root.iterdir()}!=set(names):
+        raise ValueError('SHARED_CARDS_ROOT_MEMBERSHIP')
     # governance-mutation: SHARED_CARDS_INVENTORY
-    if {name:ev.sha(raw) for name,raw in results._tree(root).items()}!=value['files']:
+    if _files({name:root/name for name in names})!=value['files']:
         raise ValueError('SHARED_CARDS_INVENTORY_CONFLICT')
     actual=snapshot(*(root/name for name in ('library','pack','content','basis')),
         expected_library_hash=value['library_hash'],expected_pack_hash=value['pack_hash'],

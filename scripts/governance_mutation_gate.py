@@ -18119,6 +18119,38 @@ MUTATIONS += (
 )
 
 
+MUTATIONS += (
+    MutationCase('SHARED_CARDS_REVALIDATION_FENCE','Shared cards','tools/nonprod_workbench/ui/research-cards-view.mjs',
+        'tests/test_workbench_shared_cards.py',
+        "  verified.current=null;active.current=null;setSelected('');setRevision(value=>value+1);",
+        "  setSelected('');",
+        'test_browser_card_contract','Every refresh fences retained handlers before asynchronous work.'),
+    MutationCase('SHARED_CARDS_CLOSED_LIBRARY','Shared cards','tools/nonprod_workbench/ui/research-cards-view.mjs',
+        'tests/test_workbench_shared_cards.py',
+        "if(!exact(data,[...commonKeys,'status','library_hash','query','page','page_size','total','results','rights'])||",
+        "if(false||",'test_browser_card_contract','Unknown library response fields are denied.'),
+    MutationCase('SHARED_CARDS_CLOSED_INPUTS','Shared cards','tools/nonprod_workbench/ui/research-cards-view.mjs',
+        'tests/test_workbench_shared_cards.py',
+        "!exact(data,[...commonKeys,'enabled','inputs'])||","false||",'test_browser_card_contract',
+        'Unknown input response fields cannot carry financial bodies.'),
+    MutationCase('SHARED_CARDS_DENIED_LABELS','Shared cards','tools/nonprod_workbench/ui/research-cards-view.mjs',
+        'tests/test_workbench_shared_cards.py',
+        "Object.entries(labels).every(([key,value])=>v[key]===value)&&","true&&",'test_browser_card_contract',
+        'Every denied claim label and zero-call count is checked with its exact type.'),
+    MutationCase('SHARED_CARDS_PER_TREE_BUDGET','Shared cards','scripts/llm/workbench_shared_cards.py',
+        'tests/test_workbench_shared_cards.py',
+        "    if _files({name:root/name for name in names})!=value['files']:",
+        "    if {name:ev.sha(raw) for name,raw in results._tree(root).items()}!=value['files']:",
+        'test_four_valid_trees_over_256_combined_files_copy_and_verify',
+        'Valid bounded four-tree inputs do not inherit a single-tree file limit.'),
+    MutationCase('SHARED_CARDS_ROOT_MEMBERSHIP','Shared cards','scripts/llm/workbench_shared_cards.py',
+        'tests/test_workbench_shared_cards.py',
+        "    if {path.name for path in root.iterdir()}!=set(names):","    if False:",
+        'test_four_valid_trees_over_256_combined_files_copy_and_verify',
+        'Combined frozen roots reject extra members rather than ignoring them.'),
+)
+
+
 @dataclass(frozen=True)
 class CommandResult:
     returncode: int

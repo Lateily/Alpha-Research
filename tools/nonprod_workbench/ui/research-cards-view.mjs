@@ -3,6 +3,11 @@ import { libraryView } from './research-library-view.mjs';
 
 const filters=['industry_key','industry_taxonomy','taxonomy_version','research_date','ts_code'];
 const authorities=['production_authority','paper_authority','u4_authority','trading_authority'];
+const labels={sample_purpose:'WORKFLOW_DEBUG',human_review:'PENDING',content_sharing_allowed:false,
+  content_status:'RIGHTS_UNVERIFIED_CONTENT_DENIED',production_authority:false,paper_authority:false,
+  u4_authority:false,trading_authority:false,prospective_sample_eligible:false,network_calls:0,model_calls:0,
+  claim_allowed:false,no_trade_flag:true};
+const commonKeys=['schema','my_workspace','consumer_code_sha',...Object.keys(labels)];
 const hash=v=>typeof v==='string'&&/^[a-f0-9]{64}$/.test(v);
 const code=v=>typeof v==='string'&&/^[a-f0-9]{40}$/.test(v);
 const text=v=>typeof v==='string'&&v.length>0&&v.length<=200;
@@ -17,7 +22,9 @@ function safe(v,depth=0){
   if(v&&typeof v==='object')return Object.entries(v).every(([key,value])=>!forbidden.has(key)&&safe(value,depth+1));
   return typeof v!=='string'||v.length<=256;
 }
-function common(v,c){return v&&safe(v)&&v.my_workspace?.login===c.login&&v.my_workspace?.workspace_id===c.workspaceId&&
+function common(v,c){return v&&safe(v)&&exact(v.my_workspace,['login','workspace_id'])&&
+  Object.entries(labels).every(([key,value])=>v[key]===value)&&
+  v.my_workspace?.login===c.login&&v.my_workspace?.workspace_id===c.workspaceId&&
   v.consumer_code_sha===c.codeSha&&code(c.codeSha)&&v.sample_purpose==='WORKFLOW_DEBUG'&&v.human_review==='PENDING'&&
   v.content_sharing_allowed===false&&v.content_status==='RIGHTS_UNVERIFIED_CONTENT_DENIED'&&authorities.every(k=>v[k]===false);}
 function metadata(row){return row&&text(row.company)&&date(row.research_date)&&
@@ -50,6 +57,9 @@ function row(v){return exact(v,['job_id','workspace_id','actor','submitted_at','
   array(v.steps,8)&&v.steps.every(text);}
 export function cardsContextKey(c){return JSON.stringify([c.login,c.workspaceId,c.codeSha,...filters.map(k=>c.filters?.[k]||''),c.page||0]);}
 export const cardsView=libraryView;
+export function refreshCardVerification({verified,active,setSelected,setRevision}){
+  verified.current=null;active.current=null;setSelected('');setRevision(value=>value+1);
+}
 export function canRunCard({activeKey,requestKey,stale,busy,selected}){
   // governance-mutation: SHARED_CARDS_CLIENT_SUBMISSION
   return activeKey===requestKey&&!stale&&!busy&&Boolean(selected);
@@ -57,7 +67,7 @@ export function canRunCard({activeKey,requestKey,stale,busy,selected}){
 export async function readCardInputs(api,c,renew){
   const data=await sharedRead(api,'/api/shared-workspace/research-card-inputs',renew);
   // governance-mutation: SHARED_CARDS_CLIENT_INPUT_CONTEXT
-  if(!common(data,c)||data.schema!=='ar.shared-research-card-inputs.v1'||typeof data.enabled!=='boolean'||!array(data.inputs,100)||
+  if(!exact(data,[...commonKeys,'enabled','inputs'])||!common(data,c)||data.schema!=='ar.shared-research-card-inputs.v1'||typeof data.enabled!=='boolean'||!array(data.inputs,100)||
     (!data.enabled&&data.inputs.length)||data.inputs.some(v=>!exact(v,['snapshot_id','input_hash','company','research_date',
       'source_cutoff_at','artifact_generated_at','industry_key','industry_taxonomy','taxonomy_version','pack_hash',
       'content_hash','basis_hash','classification_status','projection_hash'])||!metadata(v)||!text(v.snapshot_id)||!hash(v.projection_hash)||!text(v.classification_status)))
@@ -70,10 +80,13 @@ export async function readCardLibrary(api,c,renew){
   for(const key of filters)if(c.filters?.[key])params.set(key,c.filters[key]);
   const data=await sharedRead(api,`/api/shared-workspace/research-card-library?${params}`,renew);
   // governance-mutation: SHARED_CARDS_CLIENT_LIBRARY_CONTEXT
-  if(!common(data,c)||data.schema!=='ar.shared-research-card-library.v1'||!['EMPTY','RESULTS_AVAILABLE_NOT_HUMAN_VERIFIED'].includes(data.status)||
+  if(!exact(data,[...commonKeys,'status','library_hash','query','page','page_size','total','results','rights'])||
+    !common(data,c)||!exact(data.query,filters)||!exact(data.rights,['status','visibility','sharing_allowed','model_use_allowed'])||
+    data.schema!=='ar.shared-research-card-library.v1'||!['EMPTY','RESULTS_AVAILABLE_NOT_HUMAN_VERIFIED'].includes(data.status)||
     !hash(data.library_hash)||data.page!==(c.page||0)||data.page_size!==50||!array(data.results,50)||
     !Number.isSafeInteger(data.total)||data.total<data.results.length||data.total>100||
     filters.some(k=>(data.query?.[k]??null)!==(c.filters?.[k]||null))||data.results.some(v=>!row(v))||
+    data.results.some(v=>filters.some(k=>data.query[k]!==null&&v[k==='ts_code'?'company':k]!==data.query[k]))||
     data.rights?.status!=='UNVERIFIED'||data.rights?.visibility!=='PRIVATE'||data.rights?.sharing_allowed!==false||data.rights?.model_use_allowed!==false)
     throw new Error('CARDS_CONTEXT_MISMATCH');
   return data;

@@ -20,13 +20,15 @@ async function scenario(check){
         b.onLoad({filter:/.*/,namespace:'icons'},()=>({contents:'export const ChevronLeft=()=>null,ChevronRight=()=>null,FileSearch=()=>null,Play=()=>null,RefreshCw=()=>null,Search=()=>null;'}));
       }}]});
     const {default:Cards,CitationLocations}=await import('data:text/javascript;base64,'+Buffer.from(result.outputFiles[0].text).toString('base64')+'#'+Math.random());
-    const calls=[],submitted=[];let fail=false,tree;
+    const calls=[],submitted=[];let fail=false,hold=false,release,tree;
     const props={login:'owner',workspaceId:'workspace-a',codeSha:'a'.repeat(40),parentStale:false,refreshRevision:0,busy:false,
       renew:async()=>{},onRun:value=>submitted.push(value),onOpenJob:()=>{},api:async path=>{
         calls.push(path);if(fail)throw new Error('HASH_CHANGED');
+        if(hold)await new Promise(resolve=>{release=resolve;});
         const base={my_workspace:{login:props.login,workspace_id:props.workspaceId},consumer_code_sha:props.codeSha,
           sample_purpose:'WORKFLOW_DEBUG',human_review:'PENDING',content_sharing_allowed:false,content_status:'RIGHTS_UNVERIFIED_CONTENT_DENIED',
-          production_authority:false,paper_authority:false,u4_authority:false,trading_authority:false};
+          production_authority:false,paper_authority:false,u4_authority:false,trading_authority:false,
+          prospective_sample_eligible:false,network_calls:0,model_calls:0,claim_allowed:false,no_trade_flag:true};
         if(path.endsWith('/research-card-inputs'))return {...base,schema:'ar.shared-research-card-inputs.v1',enabled:true,inputs:[{
           snapshot_id:'registered-card',input_hash:'b'.repeat(64),company:'603986.SH',research_date:'20261110',
           source_cutoff_at:'2026-10-04T23:59:59+08:00',artifact_generated_at:'2026-11-10T01:48:00+08:00',
@@ -42,7 +44,8 @@ async function scenario(check){
     function nodes(value){if(Array.isArray(value))return value.flatMap(nodes);if(!value||typeof value!=='object')return[];return[value,...nodes(value.props?.children)];}
     const button=()=>nodes(tree).find(n=>n.props?.['aria-label']==='提交研究卡核验');
     await settle();
-    await check({props,calls,submitted,settle,nodes:()=>nodes(tree),button,CitationLocations,fail:()=>{fail=true;},render:()=>{state.dirty=true;}});
+    await check({props,calls,submitted,settle,nodes:()=>nodes(tree),button,CitationLocations,fail:()=>{fail=true;},
+      hold:()=>{hold=true;},release:()=>{hold=false;release?.();},render:()=>{state.dirty=true;}});
   }finally{for(const slot of state.slots)slot?.cleanup?.();globalThis.__arCardHooks=previous;}
 }
 test('actual card selection clears on workspace change and a retained click cannot submit',()=>scenario(async s=>{
@@ -67,4 +70,16 @@ test('actual card citation component displays bound fact PDF page and line locat
   const shown=JSON.stringify(tree);
   assert.ok(shown.includes('bound-fact'));assert.ok(shown.includes('a'.repeat(64)));
   assert.ok(shown.includes('6'));assert.ok(shown.includes('4'));assert.ok(shown.includes('5'));
+}));
+test('same-context refresh fences retained handlers immediately and after failure',()=>scenario(async s=>{
+  s.nodes().find(n=>n.props?.['aria-label']==='冻结研究卡').props.onChange({target:{value:'registered-card'}});await s.settle();
+  const old=s.button().props.onClick;s.fail();
+  s.nodes().find(n=>n.props?.['aria-label']==='刷新研究卡').props.onClick();old();
+  await s.settle();old();assert.equal(s.submitted.length,0);assert.equal(s.button().props.disabled,true);
+}));
+test('same-context refresh disables selection throughout pending verification',()=>scenario(async s=>{
+  s.nodes().find(n=>n.props?.['aria-label']==='冻结研究卡').props.onChange({target:{value:'registered-card'}});await s.settle();
+  s.hold();s.nodes().find(n=>n.props?.['aria-label']==='刷新研究卡').props.onClick();await s.settle();
+  const disabled=s.button().props.disabled;s.release();await s.settle();
+  assert.equal(disabled,true);assert.equal(s.button().props.disabled,true);
 }));

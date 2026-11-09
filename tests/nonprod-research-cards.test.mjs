@@ -6,7 +6,8 @@ const cards=existsSync(url)?await import(url):{};
 const context={login:'owner',workspaceId:'workspace-a',codeSha:'a'.repeat(40),filters:{industry_key:'chip',research_date:'20261110'},page:0};
 function base(){return {my_workspace:{login:'owner',workspace_id:'workspace-a'},consumer_code_sha:context.codeSha,
   sample_purpose:'WORKFLOW_DEBUG',human_review:'PENDING',content_sharing_allowed:false,
-  content_status:'RIGHTS_UNVERIFIED_CONTENT_DENIED',production_authority:false,paper_authority:false,u4_authority:false,trading_authority:false};}
+    content_status:'RIGHTS_UNVERIFIED_CONTENT_DENIED',production_authority:false,paper_authority:false,u4_authority:false,trading_authority:false,
+    prospective_sample_eligible:false,network_calls:0,model_calls:0,claim_allowed:false,no_trade_flag:true};}
 function library(){return {...base(),schema:'ar.shared-research-card-library.v1',status:'EMPTY',library_hash:'b'.repeat(64),
   query:{industry_key:'chip',industry_taxonomy:null,taxonomy_version:null,research_date:'20261110',ts_code:null},
   page:0,page_size:50,total:0,results:[],rights:{status:'UNVERIFIED',visibility:'PRIVATE',sharing_allowed:false,model_use_allowed:false}};}
@@ -32,6 +33,19 @@ test('card choices are exact identity metadata and not arbitrary source paths',a
   assert.equal((await cards.readCardInputs(async()=>value,context,async()=>{})).enabled,true);
   await assert.rejects(cards.readCardInputs(async()=>({...value,inputs:[{path:'/private/tmp'}]}),context,async()=>{}),/CARDS_CONTEXT_MISMATCH/);
 });
+test('response roots nested envelopes and all fixed labels are closed',async()=>{
+  for(const change of [d=>d.raw_financial_data={revenue_value:123456,source_text:'DENIED_PROSE'},
+    d=>d.claim_allowed=true,d=>d.no_trade_flag=false,d=>d.prospective_sample_eligible=true,
+    d=>d.network_calls=1,d=>d.model_calls=false,d=>d.deployment_authority=true,
+    d=>d.my_workspace.extra='DENIED',d=>d.query.extra='DENIED',d=>d.rights.extra='DENIED']){
+    const value=library();change(value);
+    await assert.rejects(cards.readCardLibrary(async()=>value,context,async()=>{}),/CARDS_CONTEXT_MISMATCH/);
+  }
+  for(const change of [d=>d.extra={source_text:'DENIED'},d=>d.claim_allowed=true,d=>d.my_workspace.extra=true]){
+    const value={...base(),schema:'ar.shared-research-card-inputs.v1',enabled:true,inputs:[]};change(value);
+    await assert.rejects(cards.readCardInputs(async()=>value,context,async()=>{}),/CARDS_CONTEXT_MISMATCH/);
+  }
+});
 test('workspace changes and revalidation epochs hide stale card data',()=>{
   assert.equal(typeof cards.cardsContextKey,'function');
   const key=cards.cardsContextKey(context),state={key,verificationEpoch:'old',data:library(),stale:false};
@@ -46,6 +60,11 @@ test('actual submission predicate rejects retained handlers stale views and miss
   assert.equal(cards.canRunCard(ready),true);
   for(const changed of [{activeKey:'new-workspace'},{stale:true},{busy:true},{selected:null}])
     assert.equal(cards.canRunCard({...ready,...changed}),false);
+});
+test('refresh handler clears live verification active context selection and increments epoch synchronously',()=>{
+  const verified={current:'old'},active={current:'old'};let selected='old',revision=4;
+  cards.refreshCardVerification({verified,active,setSelected:v=>{selected=v;},setRevision:fn=>{revision=fn(revision);}});
+  assert.equal(verified.current,null);assert.equal(active.current,null);assert.equal(selected,'');assert.equal(revision,5);
 });
 test('populated cards preserve missing valuation and daily continuity break without body leakage',async()=>{
   const item={company:'603986.SH',research_date:'20261110',source_cutoff_at:'2026-10-04T23:59:59+08:00',

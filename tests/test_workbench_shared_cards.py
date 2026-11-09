@@ -204,17 +204,49 @@ class SharedCardTests(unittest.TestCase):
             capture_output=True,text=True,timeout=40)
         self.assertEqual(value.returncode,0,(value.stdout+value.stderr)[-5000:])
 
-    def test_browser_card_component_boundaries(self):
-        import subprocess
-        value=subprocess.run(['node','--test','tests/nonprod-research-cards-component.test.mjs'],cwd=ROOT,
-            capture_output=True,text=True,timeout=40)
-        self.assertEqual(value.returncode,0,(value.stdout+value.stderr)[-5000:])
-
     def test_combined_input_inventory_stays_bounded(self):
         m=self.module(); self.assertTrue(hasattr(m,'_files'))
         with patch.object(m.results,'_tree',return_value={str(i)+'.json':b'{}' for i in range(513)}):
             with self.assertRaisesRegex(ValueError,'SHARED_CARDS_INPUT_LIMIT'):
                 m._files({'library':self.root})
+
+    def test_four_valid_trees_over_256_combined_files_copy_and_verify(self):
+        import foundation_materials as materials
+        import foundation_results as results
+        import research_content as content
+        import research_basis_evidence as basis
+        source=self.fixture.fixture; additions=[]
+        for group in range(15):
+            row=copy.deepcopy(source.row); row.update(material_id='capacity-'+str(group),files=[])
+            for item in range(16):
+                name='capacity-'+str(group)+'-'+str(item)+'.txt'; raw=('Synthetic capacity '+name+'\n').encode()
+                (source.source/name).write_bytes(raw)
+                row['files'].append({'source_path':name,'sha256':ev.sha(raw),'size_bytes':len(raw)})
+            additions.append(row)
+        enlarged=materials.ingest_material(source.source,source.library,{
+            'schema':'ar.material-intake.v1','library_id':'synthetic-library',
+            'created_at':'2020-01-06T12:00:00+08:00','materials':additions},
+            expected_library_hash=self.fixture.request['expected_library_hash'])
+        request=copy.deepcopy(source.request); request['expected_library_hash']=enlarged['library_hash']
+        pack=source.prepare(request,name='expanded-pack'); draft=copy.deepcopy(self.fixture.draft)
+        draft['pack_hash']=pack['pack_hash']; proot=self.root/'expanded-pack'
+        croot=self.root/'expanded-content'; broot=self.root/'expanded-basis'
+        with patch.object(content,'_observed_at',return_value=draft['generated_at']):
+            made=content.create(draft,proot,pack['pack_hash'],croot)
+        worksheet=ev.canonical(self.worksheet).encode()
+        derived=basis.create(worksheet,ev.sha(worksheet),croot,made['content_hash'],proot,pack['pack_hash'],broot)
+        m=self.module(); value=m.snapshot(source.library,proot,croot,broot,expected_library_hash=enlarged['library_hash'],
+            expected_pack_hash=pack['pack_hash'],expected_content_hash=made['content_hash'],expected_basis_hash=derived['basis_hash'])
+        self.assertGreater(len(value['files']),256); self.assertLessEqual(len(value['files']),512)
+        for path in (source.library,proot,croot,broot): self.assertLessEqual(len(results._tree(path)),256)
+        target=self.root/'expanded-frozen'
+        try:
+            m.copy_input(source.library,proot,croot,broot,target,value)
+        except ValueError as error:
+            self.fail('A valid four-tree input must stay usable: '+str(error))
+        self.assertEqual(m.verify_input(target,value),value)
+        (target/'unexpected').mkdir()
+        with self.assertRaises(ValueError): m.verify_input(target,value)
 
     def test_new_card_date_does_not_relabel_old_material_or_market_date(self):
         import research_content as content
