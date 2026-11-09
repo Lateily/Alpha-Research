@@ -307,6 +307,12 @@ class FrozenInputs:
             return actual, publication, attempt
         def envelope_binding(envelope, snapshot_id, expected_hash):
             from workbench_shared_material import SCHEMA, envelope as material_envelope
+            import workbench_shared_cards as cards
+            if envelope.get('schema')==cards.SCHEMA:
+                actual=cards.envelope(envelope['snapshot'])
+                if actual!=envelope or actual['snapshot_id']!=snapshot_id or actual['input_hash']!=expected_hash:
+                    raise WorkspaceError('FROZEN_CAPTURE_BINDING_CONFLICT',409)
+                return actual['input_hash']
             if envelope.get('schema') == SCHEMA:
                 actual = material_envelope(envelope['snapshot'])
                 if actual != envelope or actual['snapshot_id'] != snapshot_id or actual['input_hash'] != expected_hash:
@@ -498,6 +504,13 @@ class FrozenInputs:
             if envelope != registered or envelope.get("snapshot_id") != snapshot_id or envelope.get("input_hash") != row[0]:
                 raise WorkspaceError("FROZEN_REGISTRY_BINDING_INVALID", 409)
             from workbench_shared_material import SCHEMA, envelope as material_envelope, verify_input
+            import workbench_shared_cards as cards
+            if envelope.get('schema')==cards.SCHEMA:
+                if cards.envelope(envelope['snapshot'])!=envelope:
+                    raise WorkspaceError('FROZEN_CARDS_BINDING_INVALID',409)
+                frozen_root=base/'material-packs'/envelope['input_hash']
+                cards.verify_input(frozen_root,envelope['snapshot'])
+                return {**envelope,'frozen_root':frozen_root}
             if envelope.get('schema') == SCHEMA:
                 if material_envelope(envelope['snapshot']) != envelope:
                     raise WorkspaceError('FROZEN_MATERIAL_BINDING_INVALID', 409)

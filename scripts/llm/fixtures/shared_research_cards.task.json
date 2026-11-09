@@ -1,0 +1,17 @@
+{
+ "schema":"ai-task.v1","task_id":"SHARED-RESEARCH-CARDS-20261109",
+ "architecture_block":["Shared research workbench","Frozen research cards"],
+ "objective":"Connect frozen content/basis cards to an isolated opt-in shared task, verified metadata archive and industry/date query page.",
+ "non_goals":["No production/current service/ledger/ACL edits, provider, source/financial/human approval, body rights expansion, push, merge or rollout."],
+ "human_owner":"Junyan","reviewer":"Independent nonauthor reviewer","executor_candidates":["Codex"],
+ "dependencies":["Isolated recovery4e91a30","Finite core-gap branch final acceptance","Existing content/basis verifiers and shared queue/seals"],
+ "authority_docs":["AGENTS.md","scripts/llm/AGENTS.md","docs/engineering/SHARED_RESEARCH_CARDS_V1.md"],
+ "file_scope":["scripts/llm/workbench_shared_cards.py","scripts/llm/workbench_shared_inputs.py","scripts/llm/workbench_shared_jobs.py","scripts/llm/workbench_shared_worker.py","scripts/llm/workbench_shared_workspace.py","scripts/llm/nonprod_workbench.py","scripts/llm/workbench_backup.py","scripts/llm/foundation_retention.py","scripts/llm/workbench_recovery.py","scripts/llm/workbench_runtime.py","scripts/llm/fixtures/shared_research_cards.task.json","tools/nonprod_workbench/ui","tests/test_workbench_shared_cards.py","tests/nonprod-research-cards.test.mjs","tests/nonprod-research-cards-component.test.mjs","scripts/governance_mutation_gate.py",".github/workflows/python-ci.yml",".github/workflows/nonprod-workbench-ci.yml","docs/engineering/SHARED_RESEARCH_CARDS_V1.md","docs/superpowers/plans/2026-11-09-shared-research-cards.md"],
+ "forbidden_scope":["Production/current shared code,state and services","Original source libraries and historical artifacts","Formal ledgers and credentials","Tailscale/LaunchAgents"],
+ "input_contracts":["Independent library/pack/content/basis hashes","Registered immutable input ID","Current actor/workspace/code","Existing sealed content/basis contracts"],
+ "output_artifacts":["New versioned frozen input and sealed deterministic metadata archive","Query/task/card page and private receipt","Same-final tests/mutations/review and isolated QA evidence"],
+ "acceptance_tests":["python3 -B tests/test_workbench_shared_cards.py","node --test tests/nonprod-research-cards.test.mjs","Same-final full offline CI/mutations, retained historical task and cold restore, independent review and browser QA"],
+ "risk_level":"MEDIUM","network_policy":"OFFLINE","budget":{"max_cny":"0","max_minutes":240},
+ "approval_gates":["Ordered isolated implementation approved","Shared activation separately approved; no authority inferred from this task","Two-human acceptance remains deferred"],
+ "created_at":"2026-11-09T22:00:00+00:00"
+}

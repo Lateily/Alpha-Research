@@ -32,10 +32,11 @@ from workbench_backup import durable_directory, fsync_directory, write_new
 from workbench_shared_inputs import validate_snapshot
 from workbench_workspace import WorkspaceError
 import workbench_shared_material as material
+import workbench_shared_cards as cards
 
-KINDS = frozenset({"observe", "snapshot-brief", material.KIND})
+KINDS = frozenset({"observe", "snapshot-brief", material.KIND, cards.KIND})
 INPUT_SCHEMAS = {'observe': 'ar.shared-input.v1', 'snapshot-brief': 'ar.shared-input.v1',
-                 material.KIND: material.SCHEMA}
+                 material.KIND: material.SCHEMA,cards.KIND:cards.SCHEMA}
 SEAL_SCHEMA = "ar.shared-job-output.v1"
 BINDING_FIELDS = ("job_id", "workspace_id", "actor", "kind", "snapshot_id", "input_hash",
                   "code_sha", "source_tree_hash", "schema_version", "job_schema", "input_schema",
@@ -84,6 +85,9 @@ def _render_child(kind, frozen_root, output_root):
             or spec["input_hash"] != spec["snapshot"].get("frozen_input_hash")):
         raise WorkspaceError("SHARED_RENDER_INPUT_INVALID", 409)
     snapshot = spec["snapshot"]
+    if kind==cards.KIND:
+        cards.render(frozen_root,output_root/'staging',snapshot)
+        return
     if kind == material.KIND:
         material.render(frozen_root, output_root / 'staging', snapshot)
         return
@@ -96,6 +100,7 @@ def _render_child(kind, frozen_root, output_root):
 
 
 def _output_result(kind, directory, snapshot):
+    if kind==cards.KIND: return cards.verify_output(directory,snapshot)
     if kind == material.KIND:
         return material.verify_output(directory, snapshot)
     if kind == "snapshot-brief":

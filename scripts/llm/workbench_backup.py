@@ -266,8 +266,11 @@ def _uncommitted_material_bindings(root, registered_hashes):
         if work.name in registered_hashes: continue
         entry = ev.parse(ev.read_local(work, 'material-intent.json'))
         value = entry.get('snapshot', {})
+        import workbench_shared_cards as cards
+        selected_envelope=cards.envelope if entry.get('schema')==cards.SCHEMA else envelope
+        selected_verify=cards.verify_input if entry.get('schema')==cards.SCHEMA else verify_input
         if (not re.fullmatch(r'[0-9a-f]{64}', work.name)
-                or envelope(value) != entry or entry['input_hash'] != work.name):
+                or selected_envelope(value) != entry or entry['input_hash'] != work.name):
             raise ev.EvidenceError('BACKUP_MATERIAL_RECOVERY_INTENT_INVALID')
         pool = root / 'frozen-inputs/material-packs' / work.name
         attempts = sorted(work.glob('material-attempt-*'))
@@ -276,7 +279,7 @@ def _uncommitted_material_bindings(root, registered_hashes):
             raise ev.EvidenceError('BACKUP_MATERIAL_RECOVERY_PATH_INVALID')
         containers = [pool, *attempts]
         trusted = {}
-        if pool.exists(): verify_input(pool, value)
+        if pool.exists(): selected_verify(pool, value)
         for container in containers:
             library = container / 'library'
             if not (library / 'library.json').exists(): continue
@@ -305,7 +308,7 @@ def _material_pdf_bindings(root, tables):
     from workbench_shared_inputs import FrozenInputs
     entries, exact, recovery = {}, {}, {}
     for sid, checksum, body in tables.get('shared_inputs', []):
-        if ev.parse(body).get('schema') != 'ar.shared-material-input.v1': continue
+        if ev.parse(body).get('schema') not in {'ar.shared-material-input.v1','ar.shared-research-card-input.v1'}: continue
         entry = FrozenInputs.verify_registered(root / 'frozen-inputs', sid, (checksum, body))
         entries[sid] = entry
         prefix = 'frozen-inputs/material-packs/' + checksum + '/'
@@ -328,7 +331,7 @@ def _material_pdf_bindings(root, tables):
     job_prefixes = {}
     for job_id, _command, _request, body in tables.get('shared_jobs', []):
         job = ev.parse(body)
-        if job.get('kind') != 'earnings-review': continue
+        if job.get('kind') not in {'earnings-review','research-cards-review'}: continue
         entry = entries.get(job.get('snapshot_id'))
         if entry is None or job.get('input_hash') != entry['input_hash']:
             raise ev.EvidenceError('BACKUP_MATERIAL_INPUT_INVALID')

@@ -35,3 +35,7 @@ jobs:
         run: node --test tests/nonprod-research-library.test.mjs
       - name: Actual shared component refresh and recovery (synthetic hooks)
         run: node --test tests/nonprod-research-library-component.test.mjs
+      - name: Frozen research card client contracts (offline)
+        run: node --test tests/nonprod-research-cards.test.mjs
+      - name: Actual research card selection refresh and identity (synthetic hooks)
+        run: node --test tests/nonprod-research-cards-component.test.mjs

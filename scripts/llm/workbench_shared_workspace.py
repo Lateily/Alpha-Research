@@ -43,6 +43,14 @@ EXECUTION_FILES = (
     "experiments/macro_os/m1a.py",
     "experiments/macro_os/__init__.py", "experiments/macro_os/storage.py",
     "experiments/macro_os/official_releases.py",
+    "scripts/llm/workbench_shared_cards.py", "scripts/llm/research_content.py",
+    "scripts/llm/research_basis_evidence.py", "scripts/llm/research_artifact_io.py",
+    "scripts/llm/research_normalization.py", "scripts/llm/research_daily.py",
+    "scripts/llm/research_daily_basis.py", "scripts/llm/research_valuation.py",
+    "experiments/research_workflows/technical_contract.py", "experiments/research_workflows/technical_profiles.py",
+    "experiments/research_workflows/smc_ict_engine.py", "experiments/research_workflows/smc_ict_input.py",
+    "experiments/research_workflows/smc_ict_concepts.py", "experiments/execution_tracker/session_calendar.py",
+    "experiments/research_funnel/research_cycle.py", "experiments/research_funnel/research_method.py",
 )
 
 
@@ -78,7 +86,7 @@ def execution_identity(root: Path) -> dict:
 
 class SharedWorkspace:
     def __init__(self, system: Workspace, *, governance_evidence_enabled=False,
-                 research_library_root=None, research_library_hash=None, materials_enabled=False):
+                 research_library_root=None, research_library_hash=None, materials_enabled=False,cards_enabled=False):
         if not system.store.shared_v1 or not system.private_mode:
             raise WorkspaceError("SHARED_PRIVATE_MODE_REQUIRED", 403)
         self.system, self.store = system, system.store
@@ -88,6 +96,8 @@ class SharedWorkspace:
         if type(materials_enabled) is not bool:
             raise WorkspaceError('MATERIAL_CONFIGURATION_INVALID', 400)
         self.materials_enabled = materials_enabled
+        if type(cards_enabled) is not bool: raise WorkspaceError('CARDS_CONFIGURATION_INVALID',400)
+        self.cards_enabled=cards_enabled
         if type(governance_evidence_enabled) is not bool:
             raise WorkspaceError("GOVERNANCE_CONFIGURATION_INVALID", 400)
         self.governance_evidence_enabled = governance_evidence_enabled
@@ -148,6 +158,49 @@ class SharedWorkspace:
                                             'human_review', 'content_sharing_allowed')})
         return {'schema': 'ar.shared-research-inputs.v1', 'enabled': True, 'inputs': result,
                 'my_workspace': owner, 'consumer_code_sha': self._execution_identity['code_sha']}
+
+    def research_card_inputs(self,actor):
+        from workbench_shared_inputs import FrozenInputs
+        import workbench_shared_cards as cards
+        owner=self.identity(actor); rows=[]
+        if self.cards_enabled and self.queue is not None:
+            with self.store.connect() as db:
+                registered=db.execute('SELECT snapshot_id FROM shared_inputs ORDER BY rowid LIMIT 101').fetchall()
+            if len(registered)>100: raise WorkspaceError('CARDS_INDEX_CAPACITY',409)
+            for item in registered:
+                entry=FrozenInputs(self.store).verify(item[0])
+                if entry['schema']!=cards.SCHEMA: continue
+                value=entry['snapshot']
+                rows.append({k:entry[k] for k in ('snapshot_id','input_hash')}|
+                    {k:value[k] for k in (*cards.METADATA,'classification_status','projection_hash')})
+        return {'schema':'ar.shared-research-card-inputs.v1','enabled':self.cards_enabled,'inputs':rows,
+            'my_workspace':owner,'consumer_code_sha':self._execution_identity['code_sha'],**cards.LABELS}
+
+    def research_card_results(self,actor,*,industry_key=None,industry_taxonomy=None,
+                              taxonomy_version=None,research_date=None,ts_code=None,page=0):
+        from workbench_research_library import filters
+        import workbench_shared_cards as cards
+        owner=self.identity(actor)
+        query=dict(industry_key=industry_key,industry_taxonomy=industry_taxonomy,
+            taxonomy_version=taxonomy_version,research_date=research_date,ts_code=ts_code)
+        filters(query,page); rows=[]; count=0
+        if self.queue is not None:
+            for job in self.queue.jobs():
+                if job['kind']!=cards.KIND or job['status']!='SUCCEEDED': continue
+                count+=1
+                if count>100: raise WorkspaceError('CARDS_QUERY_CAPACITY',409)
+                detail=self.queue.job(job['job_id'])
+                if detail['status']!='SUCCEEDED' or 'research_cards' not in detail:
+                    raise WorkspaceError('CARDS_ARCHIVE_EVIDENCE_INVALID',409)
+                row={k:detail[k] for k in ('job_id','workspace_id','actor','submitted_at','code_sha','input_hash','output_hash')}
+                row.update(detail['research_cards']); rows.append(row)
+        all_hash=evidence.sealed(rows)
+        rows=[row for row in rows if all(value is None or row['company' if key=='ts_code' else key]==value
+            for key,value in query.items())]
+        return {'schema':'ar.shared-research-card-library.v1','status':'RESULTS_AVAILABLE_NOT_HUMAN_VERIFIED' if rows else 'EMPTY',
+            'library_hash':all_hash,'query':query,'page':page,'page_size':PAGE_SIZE,'total':len(rows),
+            'results':rows[page*PAGE_SIZE:(page+1)*PAGE_SIZE],'my_workspace':owner,
+            'consumer_code_sha':self._execution_identity['code_sha'],'rights':dict(cards.materials.RIGHTS),**cards.LABELS}
 
     @staticmethod
     def _snapshot_id(value):
@@ -298,7 +351,7 @@ class SharedWorkspace:
             return sorted(rows, key=lambda j: j["submitted_at"], reverse=True)[start:start + PAGE_SIZE]
         my_window, team_window = window(mine), window(jobs)
         latest = [next((job for job in reversed(mine) if job["kind"] == kind), None)
-                  for kind in ("observe", "snapshot-brief", "earnings-review")]
+                  for kind in ("observe", "snapshot-brief", "earnings-review","research-cards-review")]
         latest = [job for job in latest if job is not None]
         # The memo exists only for this request, never across reads or actors.
         verified_inputs = {}
