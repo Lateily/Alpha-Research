@@ -92,6 +92,11 @@ jobs:
           python3 tests/test_research_normalization.py
           python3 tests/test_daily_strategy.py
           python3 scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/valuation_daily_strategy.task.json
+      - name: Financial and real-daily basis evidence (offline, nonproduction)
+        run: |
+          python3 tests/test_research_basis_evidence.py
+          python3 tests/test_research_daily_basis.py
+          python3 scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/research_basis_evidence.task.json
       - name: Three-subject source capture (synthetic transport, offline)
         run: python3 tests/test_research_workflow_sources.py
       - name: Full feature health JSON Schema (producer receipts, offline)

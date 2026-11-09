@@ -79,11 +79,14 @@ import test_technical_contract_cli as technical_cli_tests  # noqa: E402
 import test_research_artifact_io as research_artifact_io_tests  # noqa: E402
 import test_research_normalization as normalization_tests  # noqa: E402
 import test_daily_strategy as daily_strategy_tests  # noqa: E402
+import test_research_basis_evidence as basis_evidence_tests  # noqa: E402
+import test_research_daily_basis as daily_basis_tests  # noqa: E402
 from scripts.llm.ai_os.task_compiler import compile_task_manifest  # noqa: E402
 
 for research_suite in (
     technical_contract_tests, technical_cli_tests, research_artifact_io_tests,
     normalization_tests, daily_strategy_tests,
+    basis_evidence_tests, daily_basis_tests,
 ):
     research_result = unittest.TextTestRunner(verbosity=0).run(
         unittest.defaultTestLoader.loadTestsFromModule(research_suite)
@@ -96,6 +99,13 @@ valuation_compiled = compile_task_manifest(valuation_task).to_dict()
 assert valuation_compiled["status"] == "SPEC_READY", valuation_compiled["errors"]
 assert valuation_compiled["manifest"]["network_policy"] == "OFFLINE"
 assert valuation_compiled["manifest"]["budget"]["max_cny"] == "0"
+basis_task = json.loads(
+    (Path(HERE).parent / "scripts/llm/fixtures/research_basis_evidence.task.json").read_text(encoding="utf-8")
+)
+basis_compiled = compile_task_manifest(basis_task).to_dict()
+assert basis_compiled["status"] == "SPEC_READY", basis_compiled["errors"]
+assert basis_compiled["manifest"]["network_policy"] == "OFFLINE"
+assert basis_compiled["manifest"]["budget"]["max_cny"] == "0"
 
 import test_research_workflow_sources as workflow_source_tests  # noqa: E402
 workflow_source_result = unittest.TextTestRunner(verbosity=0).run(
