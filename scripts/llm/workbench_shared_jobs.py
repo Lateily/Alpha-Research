@@ -378,16 +378,19 @@ class SharedJobQueue:
         return [self._view(job, context=context, verified_inputs=verified_inputs) for job, context in zip(selected, contexts)]
 
     def job(self, job_id):
+        return self._job_with_verified_inputs(job_id,{})
+
+    def _job_with_verified_inputs(self,job_id,verified_inputs):
         identifier(job_id)
         with self.store.connect() as db: _, job = self._load(db, job_id)
-        job = self._view(job)
+        job = self._view(job,verified_inputs=verified_inputs)
         detail = {**self.shared._metadata(job), "result": job["result"], "snapshot_id": job["snapshot_id"]}
         if job['status']=='SUCCEEDED' and job['kind']=='research-cards-review':
             import workbench_shared_cards as cards
             output=_output_root(self.store.path.parent,job,{'attempt_id':job['attempt_id']})/'result'
             try:
-                envelope=self.inputs.verify(job['snapshot_id'])
-                projected=cards.detail(output,envelope['snapshot'],envelope['frozen_root'])
+                envelope=verified_inputs[job['snapshot_id']]
+                projected=cards._metadata_detail(output,envelope['snapshot'],envelope['frozen_root'])
                 if any(projected[k]!=job['result'][k] for k in ('output_hash','report_sha256',
                         'archive_library_hash','archive_status','human_review','content_sharing_allowed')):
                     raise WorkspaceError('SHARED_REPORT_CHANGED',409)

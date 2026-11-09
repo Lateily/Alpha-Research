@@ -109,8 +109,8 @@ def envelope(value):
         'attempt_fingerprint':value['content_hash'],'source_run_id':None,'source_trade_date':None,
         'validation_scope':SCOPE,'snapshot':value}
 
-def verify_input(root,value):
-    envelope(value); root=materials._root(root)
+def _verify_inventory(root,value):
+    root=materials._root(root)
     with materials._directory(root):
         pass
     names=('library','pack','content','basis')
@@ -119,6 +119,10 @@ def verify_input(root,value):
     # governance-mutation: SHARED_CARDS_INVENTORY
     if _files({name:root/name for name in names})!=value['files']:
         raise ValueError('SHARED_CARDS_INVENTORY_CONFLICT')
+    return root
+
+def verify_input(root,value):
+    envelope(value); root=_verify_inventory(root,value)
     actual=snapshot(*(root/name for name in ('library','pack','content','basis')),
         expected_library_hash=value['library_hash'],expected_pack_hash=value['pack_hash'],
         expected_content_hash=value['content_hash'],expected_basis_hash=value['basis_hash'])
@@ -197,11 +201,19 @@ def verify_output(output,value):
         'human_review':'PENDING','content_sharing_allowed':False}
 
 def detail(output,value,frozen_root):
-    checked=verify_output(output,value); verify_input(frozen_root,value)
+    verify_input(frozen_root,value)
+    return _metadata_detail(output,value,frozen_root)
+
+def _metadata_detail(output,value,frozen_root):
+    """Only after this request's deep verification; recheck all bytes on both sides."""
+    envelope(value); _verify_inventory(frozen_root,value)
+    checked=verify_output(output,value)
     review=ev.parse(ev.read_local(output,'review.json'))
     expected=_projection(Path(frozen_root)/'content',Path(frozen_root)/'basis',value['content_hash'],value['basis_hash'])
     # governance-mutation: SHARED_CARDS_DERIVATION
     if any(review.get(key)!=item for key,item in expected.items()): raise ValueError('SHARED_CARDS_DERIVATION')
+    _verify_inventory(frozen_root,value)
+    if verify_output(output,value)!=checked: raise ValueError('SHARED_CARDS_OUTPUT_CHANGED_DURING_READ')
     return {**checked,**{k:value[k] for k in ('company','research_date','source_cutoff_at','artifact_generated_at',
         'industry_key','industry_taxonomy','taxonomy_version','content_hash','basis_hash','pack_hash')},
         **expected,'steps':['REGISTERED_INPUT_VERIFIED','CONTENT_RECOMPUTED','BASIS_RECOMPUTED','METADATA_ARCHIVED','OUTPUT_SEALED'],

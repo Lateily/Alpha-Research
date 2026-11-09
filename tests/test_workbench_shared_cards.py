@@ -264,4 +264,79 @@ class SharedCardTests(unittest.TestCase):
         self.assertEqual(value['source_cutoff_at'],self.fixture.request['source_cutoff_at'])
         self.assertIsNone(self.module().envelope(value)['source_trade_date'])
 
+    def test_existing_actor_read_does_not_need_an_unrelated_writer_lock(self):
+        import sqlite3
+        queue,view,entry,payload=self.queue()
+        expected=view.identity('owner@example.com')
+        blocker=queue.store.connect(); blocker.execute('BEGIN IMMEDIATE')
+        try:
+            with patch.object(queue.store,'connect',side_effect=lambda:sqlite3.connect(str(queue.store.path),timeout=0)):
+                try:actual=view.identity('owner@example.com')
+                except sqlite3.OperationalError as error:self.fail('Existing actor GET acquired a writer lock: '+str(error))
+            self.assertEqual(actual,expected)
+        finally:blocker.rollback(); blocker.close()
+
+    def complete_card(self,queue,payload):
+        import workbench_shared_worker as worker
+        job=queue.enqueue(payload,'owner@example.com'); claim=queue.claim()
+        result=worker.run_attempt(claim); self.assertEqual(result['status'],'SUCCEEDED')
+        queue.finish(claim,result); return job
+
+    def test_detail_verifies_semantics_once_per_request_and_never_caches_across_reads(self):
+        queue,view,entry,payload=self.queue(); job=self.complete_card(queue,payload); m=self.module()
+        with patch.object(m,'verify_input',wraps=m.verify_input) as checked:
+            first=view.job(job['job_id'],'owner@example.com')
+            self.assertEqual(first['status'],'SUCCEEDED'); self.assertEqual(checked.call_count,1)
+            second=view.job(job['job_id'],'member@example.com')
+            self.assertEqual(second['research_cards'],first['research_cards']); self.assertEqual(checked.call_count,2)
+
+    def test_query_reuses_only_request_local_verification_for_the_same_input(self):
+        queue,view,entry,payload=self.queue(); self.complete_card(queue,payload)
+        self.complete_card(queue,{**payload,'command_id':'card-second-query'})
+        m=self.module()
+        with patch.object(m,'verify_input',wraps=m.verify_input) as checked:
+            self.assertEqual(view.research_card_results('owner@example.com')['total'],2)
+            self.assertEqual(checked.call_count,1)
+            self.assertEqual(view.research_card_results('member@example.com')['total'],2)
+            self.assertEqual(checked.call_count,2)
+
+    def test_request_local_reuse_rejects_bytes_changed_after_semantic_check(self):
+        queue,view,entry,payload=self.queue(); job=self.complete_card(queue,payload); m=self.module()
+        self.assertTrue(hasattr(m,'_metadata_detail'))
+        original=m._metadata_detail
+        def mutate(output,value,frozen_root):
+            (Path(frozen_root)/'content/report.md').write_bytes(b'CHANGED_AFTER_SEMANTIC_CHECK')
+            return original(output,value,frozen_root)
+        with patch.object(m,'_metadata_detail',side_effect=mutate):
+            detail=view.job(job['job_id'],'owner@example.com')
+        self.assertEqual(detail['status'],'RECOVERY_REQUIRED'); self.assertNotIn('research_cards',detail)
+        self.assertEqual(view.job(job['job_id'],'owner@example.com')['status'],'RECOVERY_REQUIRED')
+
+    def test_request_local_reuse_rechecks_pdf_content_basis_and_root_after_projection(self):
+        queue,view,entry,payload=self.queue(); job=self.complete_card(queue,payload); m=self.module()
+        root=Path(queue.inputs.verify(entry['snapshot_id'])['frozen_root'])
+        pdf=next(path for path in root.rglob('*.pdf'))
+        original=m._metadata_detail; project=m._projection
+        for path in (pdf,root/'content/report.md',root/'basis/report.md'):
+            with self.subTest(path=path.name):
+                raw=path.read_bytes()
+                def late(output,value,frozen_root):
+                    def mutate(*args):
+                        result=project(*args);path.write_bytes(b'CHANGED_AFTER_PROJECTION');return result
+                    with patch.object(m,'_projection',side_effect=mutate):return original(output,value,frozen_root)
+                try:
+                    with patch.object(m,'_metadata_detail',side_effect=late):
+                        self.assertEqual(view.job(job['job_id'],'owner@example.com')['status'],'RECOVERY_REQUIRED')
+                finally:path.write_bytes(raw)
+        extra=root/'unexpected'
+        def late_root(output,value,frozen_root):
+            def mutate(*args):
+                result=project(*args);extra.mkdir();return result
+            with patch.object(m,'_projection',side_effect=mutate):return original(output,value,frozen_root)
+        try:
+            with patch.object(m,'_metadata_detail',side_effect=late_root):
+                self.assertEqual(view.job(job['job_id'],'owner@example.com')['status'],'RECOVERY_REQUIRED')
+        finally:extra.rmdir()
+        self.assertEqual(view.job(job['job_id'],'owner@example.com')['status'],'SUCCEEDED')
+
 if __name__=='__main__': unittest.main()

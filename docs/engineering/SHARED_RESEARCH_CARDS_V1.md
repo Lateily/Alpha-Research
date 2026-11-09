@@ -49,3 +49,13 @@ declarations unchanged, one final SHA complete offline CI and behavioral gate,
 nonauthor independent review and desktop/mobile browser QA. No push, merge,
 remote CI or current-service activation is implied. Actual two-human acceptance
 remains DEFERRED; physical reboot/off-machine preservation are not attested.
+# Request-Local Read Verification
+
+Each HTTP read deeply verifies each referenced frozen input once, then checks
+every output's binding and all four source inventories before and after metadata
+projection. Reuse exists only inside that request; independent reads never use a
+retained semantic cache. Public detail verification has no skip flag. Existing
+actor lookups read their exact persisted binding without acquiring the queue
+writer lock; missing actors retain atomic insert-or-ignore and refetch. These
+changes do not extend the UI freshness window, SQLite wait budget, source limits,
+rights or any human/production authority.

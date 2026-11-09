@@ -18151,6 +18151,40 @@ MUTATIONS += (
 )
 
 
+MUTATIONS += (
+    MutationCase('SHARED_CARDS_IDENTITY_READ_ONLY','Shared cards','scripts/llm/workbench_shared_workspace.py',
+        'tests/test_workbench_shared_cards.py',
+        '            if row is not None:\n                return {"login": actor, "workspace_id": row[0]}',
+        '            if False:\n                return {"login": actor, "workspace_id": row[0]}',
+        'test_existing_actor_read_does_not_need_an_unrelated_writer_lock',
+        'Reading an existing exact actor binding does not request the queue writer lock.'),
+    MutationCase('SHARED_CARDS_DETAIL_REQUEST_MEMO','Shared cards','scripts/llm/workbench_shared_jobs.py',
+        'tests/test_workbench_shared_cards.py',
+        "                projected=cards._metadata_detail(output,envelope['snapshot'],envelope['frozen_root'])",
+        "                projected=cards.detail(output,envelope['snapshot'],envelope['frozen_root'])",
+        'test_detail_verifies_semantics_once_per_request_and_never_caches_across_reads',
+        'A detail request performs one deep verification, retaining full byte rechecks.'),
+    MutationCase('SHARED_CARDS_QUERY_REQUEST_MEMO','Shared cards','scripts/llm/workbench_shared_workspace.py',
+        'tests/test_workbench_shared_cards.py',
+        "                detail=self.queue._job_with_verified_inputs(job['job_id'],verified_inputs)",
+        "                detail=self.queue._job_with_verified_inputs(job['job_id'],{})",
+        'test_query_reuses_only_request_local_verification_for_the_same_input',
+        'One query reuses only its own verified snapshot while checking every output.'),
+    MutationCase('SHARED_CARDS_NO_CROSS_REQUEST_MEMO','Shared cards','scripts/llm/workbench_shared_jobs.py',
+        'tests/test_workbench_shared_cards.py',
+        '        return self._job_with_verified_inputs(job_id,{})',
+        "        self._retained_card_memo=getattr(self,'_retained_card_memo',{}); return self._job_with_verified_inputs(job_id,self._retained_card_memo)",
+        'test_detail_verifies_semantics_once_per_request_and_never_caches_across_reads',
+        'Independent reads never reuse a prior request semantic-verification cache.'),
+    MutationCase('SHARED_CARDS_POST_PROJECTION_INVENTORY','Shared cards','scripts/llm/workbench_shared_cards.py',
+        'tests/test_workbench_shared_cards.py',
+        "    _verify_inventory(frozen_root,value)\n    if verify_output(output,value)!=checked:",
+        "    if verify_output(output,value)!=checked:",
+        'test_request_local_reuse_rechecks_pdf_content_basis_and_root_after_projection',
+        'Late PDF, content, basis and root changes remain refused after derivation.'),
+)
+
+
 @dataclass(frozen=True)
 class CommandResult:
     returncode: int

@@ -183,13 +183,13 @@ class SharedWorkspace:
         owner=self.identity(actor)
         query=dict(industry_key=industry_key,industry_taxonomy=industry_taxonomy,
             taxonomy_version=taxonomy_version,research_date=research_date,ts_code=ts_code)
-        filters(query,page); rows=[]; count=0
+        filters(query,page); rows=[]; count=0; verified_inputs={}
         if self.queue is not None:
             for job in self.queue.jobs():
                 if job['kind']!=cards.KIND or job['status']!='SUCCEEDED': continue
                 count+=1
                 if count>100: raise WorkspaceError('CARDS_QUERY_CAPACITY',409)
-                detail=self.queue.job(job['job_id'])
+                detail=self.queue._job_with_verified_inputs(job['job_id'],verified_inputs)
                 if detail['status']!='SUCCEEDED' or 'research_cards' not in detail:
                     raise WorkspaceError('CARDS_ARCHIVE_EVIDENCE_INVALID',409)
                 row={k:detail[k] for k in ('job_id','workspace_id','actor','submitted_at','code_sha','input_hash','output_hash')}
@@ -279,6 +279,9 @@ class SharedWorkspace:
         if not isinstance(actor, str) or not actor or len(actor) > 254 or any(ord(c) <= 32 for c in actor):
             raise WorkspaceError("SHARED_ACTOR_REQUIRED", 403)
         with self.store.connect() as db:
+            row = db.execute("SELECT workspace_id FROM shared_workspaces WHERE login=?", (actor,)).fetchone()
+            if row is not None:
+                return {"login": actor, "workspace_id": row[0]}
             db.execute("BEGIN IMMEDIATE")
             db.execute("INSERT OR IGNORE INTO shared_workspaces VALUES (?, ?)", (actor, str(uuid.uuid4())))
             row = db.execute("SELECT workspace_id FROM shared_workspaces WHERE login=?", (actor,)).fetchone()
