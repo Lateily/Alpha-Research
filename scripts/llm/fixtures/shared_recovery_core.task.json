@@ -1,0 +1,22 @@
+{
+  "schema": "ai-task.v1",
+  "task_id": "SHARED-RECOVERY-CORE-20261109",
+  "architecture_block": ["Foundation runtime", "Shared recovery"],
+  "objective": "Restore a pinned retained shared backup into a new isolated capsule and verify full shared topology with bounded owned-process recovery before core missing-data closure and research-card integration.",
+  "non_goals": ["No live production/shared change, host reboot, launchd installation, external backup, API, paid model, push, merge or trading authority."],
+  "human_owner": "Junyan",
+  "reviewer": "Independent nonauthor reviewer",
+  "executor_candidates": ["Codex"],
+  "dependencies": ["Accepted dca5b68", "Existing split backup and queue seals", "Existing pinned offline runtime"],
+  "authority_docs": ["AGENTS.md", "scripts/llm/AGENTS.md", "docs/engineering/SHARED_RECOVERY_CORE_V1.md"],
+  "file_scope": ["scripts/llm/workbench_recovery.py", "scripts/llm/workbench_runtime.py", "scripts/llm/fixtures/shared_recovery_core.task.json", "tests/test_workbench_recovery.py", "scripts/governance_mutation_gate.py", ".github/workflows/python-ci.yml", "docs/engineering/SHARED_RECOVERY_CORE_V1.md", "docs/superpowers/plans/2026-11-09-shared-recovery-core.md"],
+  "forbidden_scope": ["/Users/years/ar-live", "Current shared code and state", "Tailscale", "LaunchAgents", "Formal ledgers", "Source credentials", "Existing backup artifacts"],
+  "input_contracts": ["External shared backup and environment hashes", "Clean committed code and built assets", "Frozen resource inventories"],
+  "output_artifacts": ["New pinned recovery capsule", "Owned-process recovery evidence", "Same-final offline acceptance and nonauthor review"],
+  "acceptance_tests": ["python3 -B -m unittest tests.test_workbench_recovery tests.test_workbench_runtime_service -q", "Same-final complete offline CI and behavior mutations", "Retained backup restore and isolated restart demonstration"],
+  "risk_level": "MEDIUM",
+  "network_policy": "OFFLINE",
+  "budget": {"max_cny": "0", "max_minutes": 180},
+  "approval_gates": ["Current request authorizes isolated implementation", "Live activation, host reboot, external preservation and remote publication require separate approval", "Two-human acceptance remains deferred"],
+  "created_at": "2026-11-09T20:35:00+00:00"
+}

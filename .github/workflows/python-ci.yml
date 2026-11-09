@@ -97,6 +97,10 @@ jobs:
           python3 tests/test_research_basis_evidence.py
           python3 tests/test_research_daily_basis.py
           python3 scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/research_basis_evidence.task.json
+      - name: Retained shared-state recovery capsule (offline, isolated)
+        run: |
+          python3 -B tests/test_workbench_recovery.py
+          python3 scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/shared_recovery_core.task.json
       - name: Three-subject source capture (synthetic transport, offline)
         run: python3 tests/test_research_workflow_sources.py
       - name: Full feature health JSON Schema (producer receipts, offline)

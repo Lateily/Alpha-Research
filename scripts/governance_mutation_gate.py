@@ -17931,6 +17931,40 @@ MUTATIONS += (
 )
 
 
+MUTATIONS += (
+    MutationCase('RECOVERY_BACKUP_PIN', 'Shared recovery', 'scripts/llm/workbench_recovery.py',
+        'tests/test_workbench_recovery.py',
+        "    if manifest.get('backup_hash') != pin:", "    if False:",
+        'test_wrong_external_backup_pin_refuses_before_destination_creation',
+        'A separately supplied archive pin is checked before creating any destination.'),
+    MutationCase('RECOVERY_PROFILE_PIN', 'Shared recovery', 'scripts/llm/workbench_recovery.py',
+        'tests/test_workbench_recovery.py',
+        "    if type(pin) is not str or not runtime.HEX.fullmatch(pin) or ev.sha(raw)!=pin:", "    if False:",
+        'test_profile_external_pin_precedes_any_environment_execution',
+        'A wrong external profile hash must fail before environment or source checks.'),
+    MutationCase('RECOVERY_RESTORE_PIN', 'Shared recovery', 'scripts/llm/workbench_recovery.py',
+        'tests/test_workbench_recovery.py',
+        "    if ev.sha(restore)!=value['restore_hash'] or ev.sha(migration)!=value['migration_hash']:", "    if False:",
+        'test_unknown_flags_real_identities_and_resealed_restore_are_refused',
+        'Restoration provenance stays byte-bound even while application state evolves.'),
+    MutationCase('RECOVERY_RESOURCE_PIN', 'Shared recovery', 'scripts/llm/workbench_recovery.py',
+        'tests/test_workbench_recovery.py',
+        "        if item is not None and _resource(item['root'])!=item:", "        if False:",
+        'test_changed_frozen_source_is_refused_after_restore',
+        'A frozen publication resource cannot change unnoticed across restart.'),
+    MutationCase('RECOVERY_DATABASE_TABLES', 'Shared recovery', 'scripts/llm/workbench_recovery.py',
+        'tests/test_workbench_recovery.py',
+        "            if not set(ALL_TABLES).issubset(present) or present-set(ALL_TABLES)-{'shared_metadata','workspace_owner'}:",
+        "            if False:", 'test_unknown_database_tables_and_corrupt_bytes_fail_closed',
+        'Unknown side-channel tables and missing storage tables are refused.'),
+    MutationCase('RECOVERY_CODE_PIN', 'Shared recovery', 'scripts/llm/workbench_recovery.py',
+        'tests/test_workbench_recovery.py',
+        "    if service.code_identity(code)!=value['code_identity'] or _runtime_sources(code)!=value['runtime_sources']:",
+        "    if False:", 'test_restart_rechecks_code_assets_environment_and_allowlist',
+        'Recovery must retain the committed producer identity and runtime source hashes.'),
+)
+
+
 @dataclass(frozen=True)
 class CommandResult:
     returncode: int
