@@ -1,13 +1,134 @@
 """Descriptor-pinned, manifest-last publication for the two offline research cards."""
 from contextlib import contextmanager
+import ctypes
+import errno
 import os
+from pathlib import Path
+import secrets
 import stat
+import sys
 
 import foundation_materials as materials
 import workbench_evidence as ev
 from experiments.research_workflows import technical_contract as directory_io
 
 PENDING = '.artifact-manifest.pending'
+PROVISION_BASE = Path('/private/tmp' if sys.platform == 'darwin' else '/tmp')
+
+
+def _no_acl(fd):
+    if sys.platform == 'darwin':
+        libc = ctypes.CDLL(None, use_errno=True)
+        get_acl = libc.acl_get_fd_np
+        get_acl.argtypes = (ctypes.c_int, ctypes.c_int)
+        get_acl.restype = ctypes.c_void_p
+        get_entry = libc.acl_get_entry
+        get_entry.argtypes = (ctypes.c_void_p, ctypes.c_int, ctypes.POINTER(ctypes.c_void_p))
+        release = libc.acl_free
+        release.argtypes = (ctypes.c_void_p,)
+        ctypes.set_errno(0)
+        acl = get_acl(fd, 0x100)  # SDK ACL_TYPE_EXTENDED
+        if not acl:
+            if ctypes.get_errno() == errno.ENOENT and stat.S_ISDIR(os.fstat(fd).st_mode):
+                return
+            raise ev.EvidenceError('RESEARCH_ARTIFACT_PROVISION_UNTRUSTED')
+        try:
+            entry = ctypes.c_void_p()
+            valid = libc.acl_valid
+            valid.argtypes = (ctypes.c_void_p,)
+            if valid(acl):
+                raise ev.EvidenceError('RESEARCH_ARTIFACT_PROVISION_UNTRUSTED')
+            ctypes.set_errno(0)
+            if get_entry(acl, 0, ctypes.byref(entry)) != -1 or ctypes.get_errno() != errno.EINVAL:
+                raise ev.EvidenceError('RESEARCH_ARTIFACT_PROVISION_UNTRUSTED')
+        finally:
+            release(acl)
+    elif sys.platform.startswith('linux'):
+        if any(name in {'system.posix_acl_access', 'system.posix_acl_default'} for name in os.listxattr(fd)):
+            raise ev.EvidenceError('RESEARCH_ARTIFACT_PROVISION_UNTRUSTED')
+    else:
+        raise ev.EvidenceError('RESEARCH_ARTIFACT_PROVISION_UNSUPPORTED')
+
+
+def _trusted_directory(fd):
+    info = os.fstat(fd)
+    sticky_system = info.st_uid == 0 and bool(info.st_mode & stat.S_ISVTX)
+    if (not stat.S_ISDIR(info.st_mode) or info.st_uid not in {0, os.geteuid()}
+            or (info.st_mode & 0o022 and not sticky_system)):
+        raise ev.EvidenceError('RESEARCH_ARTIFACT_PROVISION_UNTRUSTED')
+    _no_acl(fd)
+
+
+@contextmanager
+def _provision_parent():
+    # Trust OS/root and this user's code, not arbitrary same-UID hostile processes.
+    # A root-owned sticky temp ancestor prevents other users replacing our child.
+    path = PROVISION_BASE.resolve(strict=True)
+    fd = os.open(path.anchor, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+    try:
+        _trusted_directory(fd)
+        for component in path.parts[1:]:
+            child = os.open(component, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=fd)
+            os.close(fd)
+            fd = child
+            _trusted_directory(fd)
+        directory_io._output_current(path, fd)
+        yield path, fd
+        directory_io._output_current(path, fd)
+    finally:
+        os.close(fd)
+
+
+def _rename_exclusive(source_parent, source, target_parent, target):
+    libc = ctypes.CDLL(None, use_errno=True)
+    if sys.platform == 'darwin':
+        operation, flags = getattr(libc, 'renameatx_np', None), 4  # SDK RENAME_EXCL
+    elif sys.platform.startswith('linux'):
+        operation, flags = getattr(libc, 'renameat2', None), 1  # RENAME_NOREPLACE
+    else:
+        operation, flags = None, None
+    if operation is None:
+        raise ev.EvidenceError('RESEARCH_ARTIFACT_PROVISION_UNSUPPORTED')
+    operation.argtypes = (ctypes.c_int, ctypes.c_char_p, ctypes.c_int, ctypes.c_char_p, ctypes.c_uint)
+    operation.restype = ctypes.c_int
+    # governance-mutation: RESEARCH_ARTIFACT_EXCLUSIVE_ROOT
+    if operation(source_parent, os.fsencode(source), target_parent, os.fsencode(target), flags):
+        code = ctypes.get_errno()
+        if code in {errno.EEXIST, errno.ENOTEMPTY}:
+            raise ev.EvidenceError('OUTPUT_EXISTS')
+        raise ev.EvidenceError('RESEARCH_ARTIFACT_PROVISION_REFUSED')
+
+
+@contextmanager
+def _new_output(output):
+    fd = None
+    try:
+        with directory_io._directory(output.parent) as target_parent, _provision_parent() as (path, parent):
+            if os.fstat(parent).st_dev != os.fstat(target_parent).st_dev:
+                raise ev.EvidenceError('RESEARCH_ARTIFACT_PROVISION_CROSS_DEVICE')
+            name = '.ar-research-' + secrets.token_hex(24)
+            os.mkdir(name, mode=0o700, dir_fd=parent)
+            created = os.stat(name, dir_fd=parent, follow_symlinks=False)
+            fd = os.open(name, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=parent)
+            held = os.fstat(fd)
+            if ((held.st_dev, held.st_ino) != (created.st_dev, created.st_ino)
+                    or held.st_uid != os.geteuid() or stat.S_IMODE(held.st_mode) != 0o700):
+                raise ev.EvidenceError('RESEARCH_ARTIFACT_PROVISION_UNTRUSTED')
+            _no_acl(fd)
+            _inventory(fd, set())
+            directory_io._output_current(path, parent)
+            directory_io._output_current(output.parent, target_parent)
+            _rename_exclusive(parent, name, target_parent, output.name)
+            os.fsync(parent)
+            os.fsync(target_parent)
+            # Never acquire initial ownership from the now-public pathname.
+            directory_io._output_current(output, fd)
+            yield fd
+    except OSError:
+        raise ev.EvidenceError('RESEARCH_ARTIFACT_PROVISION_REFUSED') from None
+    finally:
+        if fd is not None:
+            os.close(fd)
 
 
 def _inventory(fd, names):
@@ -83,7 +204,7 @@ def publish(output, files, marker, encoded, verify):
     if any(len(raw) > ev.MAX_FILE for raw in (*files.values(), encoded)):
         raise ev.EvidenceError('RESEARCH_ARTIFACT_OUTPUT_SIZE')
     hashes = {name: ev.sha(raw) for name, raw in files.items()}
-    with directory_io._new_output(output) as fd:
+    with _new_output(output) as fd:
         for name, raw in files.items():
             # governance-mutation: RESEARCH_ARTIFACT_HELD_WRITES
             directory_io._write_new(output, fd, name, raw)

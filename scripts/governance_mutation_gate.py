@@ -17635,6 +17635,34 @@ MUTATIONS += (
 )
 
 
+MUTATIONS += (
+    MutationCase(
+        mutation_id="RESEARCH_ARTIFACT_INITIAL_ROOT_PIN", component="Research artifact root acquisition",
+        source_path="scripts/llm/research_artifact_io.py", test_script="tests/test_research_artifact_io.py",
+        before="    with _new_output(output) as fd:",
+        after="    with directory_io._new_output(output) as fd:",
+        expected_failure_marker="test_initial_public_root_substitution_is_rejected_before_any_payload_write",
+        rationale="Public-name acquisition cannot adopt a substituted pre-existing directory before the first payload write.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_ARTIFACT_EXCLUSIVE_ROOT", component="Research artifact root acquisition",
+        source_path="scripts/llm/research_artifact_io.py", test_script="tests/test_research_artifact_io.py",
+        before="    if operation(source_parent, os.fsencode(source), target_parent, os.fsencode(target), flags):",
+        after="    if operation(source_parent, os.fsencode(source), target_parent, os.fsencode(target), 0):",
+        expected_failure_marker="test_exclusive_root_collision_preserves_existing_empty_directory",
+        rationale="Native root publication must not replace even an existing empty destination directory.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_ARTIFACT_TRUSTED_PROVISION", component="Research artifact root acquisition",
+        source_path="scripts/llm/research_artifact_io.py", test_script="tests/test_research_artifact_io.py",
+        before="            or (info.st_mode & 0o022 and not sticky_system)):",
+        after="            or (False and not sticky_system)):",
+        expected_failure_marker="test_untrusted_provisioning_ancestry_is_rejected",
+        rationale="Non-system provisioning ancestry writable by other principals must be refused.",
+    ),
+)
+
+
 @dataclass(frozen=True)
 class CommandResult:
     returncode: int

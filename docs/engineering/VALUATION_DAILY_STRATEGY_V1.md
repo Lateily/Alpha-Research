@@ -75,6 +75,19 @@ Publish both new artifacts through a shared descriptor-pinned, manifest-last
 writer. An output-root or ancestor substitution cannot redirect writes. Reopen
 requires exact inventory and unchanged root/file fingerprints across derivation;
 failure retracts only this call's own commit inode, retaining other evidence.
+Initial acquisition is privately provisioned, not a reopen of a freshly named
+public output. The fixed OS temp base (never request/TMPDIR-selected) is traversed
+using no-follow descriptors; every ancestor must be root/current-user owned,
+without ACL entries or group/other write access, except a root-owned sticky
+system temp ancestor. A random exclusive0700 staging directory is acquired there
+and its descriptor retained before publishing the requested public name using
+macOS RENAME_EXCL or Linux RENAME_NOREPLACE. Existing destinations, unsupported
+operations and cross-device moves refuse without an overwriting fallback.
+The provisioning boundary trusts OS/root and this user's code; it does not
+claim protection against hostile same-UID code or kernel/root compromise.
+After publication, public-path substitution is checked against the already held
+staging inode before any payload write. Original created directories and empty
+foreign replacements are preserved on rejection.
 The held-descriptor reader enforces the unchanged12MiB per-file cap before read,
 and bounds each request to the remaining cap plus one rejection byte, including
 file growth. The original port's separate16MiB total bound is not a substitute.

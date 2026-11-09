@@ -36,7 +36,7 @@ def fault():
         Path(cfg['signal']).write_text('injected after exclusive creation')
 # The injection is after exclusive creation, independent of how files are written.
 if hasattr(module, 'artifacts'):
-    holder=module.artifacts.directory_io; original=holder._new_output
+    holder=module.artifacts; original=holder._new_output
     @contextmanager
     def created(output):
         with original(output) as fd:
@@ -48,6 +48,40 @@ else:
         result=original(*args, **kwargs); fault(); return result
     holder._create_private_root=created
 sys.argv=['creator', *sys.argv[3:]]
+module.main()
+'''
+
+EARLY_LAUNCHER = r'''
+import importlib, json, os, sys
+from pathlib import Path
+sys.path.insert(0, str(Path.cwd()/'scripts/llm'))
+module=importlib.import_module(sys.argv[1]); cfg=json.loads(sys.argv[2])
+output=Path(cfg['output']); victim=Path(cfg['victim']); done=False
+def fault():
+    global done
+    if not done:
+        done=True; output.rename(cfg['aside']); victim.rename(output)
+        Path(cfg['signal']).write_text('public root replaced before payload writes')
+if cfg['point']=='first-open':
+    original=os.open
+    def acquire(path, flags, *args, **kwargs):
+        if path==output.name and flags & os.O_DIRECTORY and kwargs.get('dir_fd') is not None and output.exists():
+            fault()
+        return original(path,flags,*args,**kwargs)
+    os.open=acquire
+elif hasattr(module.artifacts, '_rename_exclusive'):
+    original=module.artifacts._rename_exclusive
+    def provision(*args, **kwargs):
+        result=original(*args,**kwargs); fault(); return result
+    module.artifacts._rename_exclusive=provision
+else:
+    original=os.mkdir
+    def provision(path, *args, **kwargs):
+        result=original(path,*args,**kwargs)
+        if path==output.name and kwargs.get('dir_fd') is not None: fault()
+        return result
+    os.mkdir=provision
+sys.argv=['creator',*sys.argv[3:]]
 module.main()
 '''
 
@@ -99,6 +133,44 @@ class ArtifactPublicationTests(unittest.TestCase):
     def test_daily_cli_root_and_parent_substitution_never_write_source(self):
         self.race('daily')
 
+    def test_cli_initial_public_root_substitution_preserves_both_directories(self):
+        import scripts.governance_mutation_gate as gate
+        for kind in ('normalization','daily'):
+            for point in ('first-open','creation-return'):
+                with self.subTest(kind=kind,point=point):
+                    f,module,args,_protected,marker=self.fixture(kind)
+                    output=f.root/'artifact'; victim=f.root/'empty-existing'; victim.mkdir(mode=0o700)
+                    cfg={'point':point,'output':str(output),'victim':str(victim),
+                         'aside':str(f.root/'our-created-root'),'signal':str(f.root/'fault-applied')}
+                    guard=f.root/'child-guard'; gate._write_network_guard(guard)
+                    child=subprocess.run([sys.executable,'-B','-c',EARLY_LAUNCHER,module.__name__,json.dumps(cfg),
+                                          *args,'--output',str(output)],cwd=REPO,
+                                         env=gate._subprocess_env(REPO,guard),capture_output=True,timeout=40)
+                    self.assertTrue(Path(cfg['signal']).exists(),child.stderr.decode())
+                    self.assertNotEqual(child.returncode,0,'Creator adopted an existing empty directory')
+                    self.assertIn('OUTPUT_CHANGED',child.stderr.decode())
+                    self.assertEqual(self.snapshot(output),{})
+                    self.assertEqual(self.snapshot(Path(cfg['aside'])),{})
+                    self.assertFalse((output/marker).exists())
+
+    def test_initial_public_root_substitution_is_rejected_before_any_payload_write(self):
+        import tempfile
+        import research_artifact_io as io
+        with tempfile.TemporaryDirectory() as tmp:
+            parent=Path(tmp).resolve(); output=parent/'output'; victim=parent/'pre-existing'
+            victim.mkdir(mode=0o700); original=io.os.open; fired=False
+            def acquire(path,flags,*args,**kwargs):
+                nonlocal fired
+                if not fired and path==output.name and flags & io.os.O_DIRECTORY and kwargs.get('dir_fd') is not None:
+                    fired=True; output.rename(parent/'ours'); victim.rename(output)
+                return original(path,flags,*args,**kwargs)
+            with mock.patch.object(io.os,'open',side_effect=acquire):
+                with self.assertRaisesRegex(ValueError,'OUTPUT_CHANGED'):
+                    io.publish(output,{'card.json':b'draft'},'commit.json',b'marker',lambda: {})
+            self.assertTrue(fired)
+            self.assertEqual(self.snapshot(output),{})
+            self.assertEqual(self.snapshot(parent/'ours'),{})
+
     def test_fd_writer_never_writes_a_substituted_root(self):
         import tempfile
         import research_artifact_io as io
@@ -106,7 +178,7 @@ class ArtifactPublicationTests(unittest.TestCase):
             with self.subTest(mode=mode), tempfile.TemporaryDirectory() as tmp:
                 parent=Path(tmp).resolve(); output=parent/'output'; protected=parent/'protected'; protected.mkdir()
                 (protected/'sentinel.txt').write_bytes(b'original source')
-                original=io.directory_io._new_output
+                original=io._new_output
                 @contextmanager
                 def substituted(root):
                     with original(root) as fd:
@@ -114,12 +186,97 @@ class ArtifactPublicationTests(unittest.TestCase):
                         if mode=='alias': root.symlink_to(protected,target_is_directory=True)
                         else: root.mkdir(); (root/'unrelated.txt').write_bytes(b'keep')
                         yield fd
-                with mock.patch.object(io.directory_io,'_new_output',substituted):
+                with mock.patch.object(io,'_new_output',substituted):
                     with self.assertRaisesRegex(ValueError,'OUTPUT_CHANGED'):
                         io.publish(output,{'card.json':b'draft'},'commit.json',b'marker',lambda: {})
                 self.assertEqual(self.snapshot(protected),{'sentinel.txt':b'original source'})
                 if mode=='directory': self.assertEqual(self.snapshot(output),{'unrelated.txt':b'keep'})
                 self.assertEqual(self.snapshot(parent/'our-created-root'),{})
+
+    def test_exclusive_root_collision_preserves_existing_empty_directory(self):
+        import tempfile
+        import research_artifact_io as io
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp).resolve()/'output'; root.mkdir(mode=0o700)
+            before=root.stat()
+            with self.assertRaisesRegex(ValueError,'OUTPUT_EXISTS'):
+                io.publish(root,{'card.json':b'draft'},'commit.json',b'marker',lambda: {})
+            self.assertEqual(root.stat().st_ino,before.st_ino)
+            self.assertEqual(self.snapshot(root),{})
+
+    def test_untrusted_provisioning_ancestry_is_rejected(self):
+        import tempfile
+        import research_artifact_io as io
+        with tempfile.TemporaryDirectory() as tmp:
+            parent=Path(tmp).resolve(); unsafe=parent/'unsafe'; unsafe.mkdir(); unsafe.chmod(0o777)
+            with mock.patch.object(io,'PROVISION_BASE',unsafe):
+                with self.assertRaisesRegex(ValueError,'PROVISION_UNTRUSTED'):
+                    io.publish(parent/'output',{'card.json':b'draft'},'commit.json',b'marker',lambda: {})
+            self.assertEqual(self.snapshot(parent),{})
+
+    def test_provisioning_parent_substitution_cannot_publish(self):
+        import tempfile
+        import research_artifact_io as io
+        with tempfile.TemporaryDirectory() as tmp:
+            parent=Path(tmp).resolve(); trusted=parent/'trusted'; trusted.mkdir(mode=0o700)
+            original=io.os.mkdir; injected=False
+            def moved(path,*args,**kwargs):
+                nonlocal injected
+                result=original(path,*args,**kwargs)
+                if str(path).startswith('.ar-research-') and not injected:
+                    injected=True; trusted.rename(parent/'original-trusted'); trusted.mkdir(mode=0o700)
+                return result
+            with mock.patch.object(io,'PROVISION_BASE',trusted), mock.patch.object(io.os,'mkdir',side_effect=moved):
+                with self.assertRaisesRegex(ValueError,'OUTPUT_CHANGED'):
+                    io.publish(parent/'output',{'card.json':b'draft'},'commit.json',b'marker',lambda: {})
+            self.assertTrue(injected)
+            self.assertFalse((parent/'output').exists())
+            self.assertEqual(self.snapshot(parent),{})
+
+    def test_native_exclusive_publication_fails_closed(self):
+        import errno
+        import tempfile
+        import research_artifact_io as io
+        with tempfile.TemporaryDirectory() as tmp:
+            parent=Path(tmp).resolve()
+            for failure in (OSError(errno.EXDEV,'different device'),ValueError('PROVISION_UNSUPPORTED')):
+                with self.subTest(failure=str(failure)), mock.patch.object(io,'_rename_exclusive',side_effect=failure):
+                    with self.assertRaisesRegex(ValueError,'PROVISION_|UNSAFE_PATH'):
+                        io.publish(parent/'output',{'card.json':b'draft'},'commit.json',b'marker',lambda: {})
+                    self.assertFalse((parent/'output').exists())
+            with mock.patch.object(io.ctypes,'CDLL',return_value=object()):
+                with self.assertRaisesRegex(ValueError,'PROVISION_UNSUPPORTED'):
+                    io._rename_exclusive(0,'stage',0,'output')
+
+    def test_linux_acl_grants_and_unknown_platform_are_refused(self):
+        import research_artifact_io as io
+        with mock.patch.object(io.sys,'platform','linux'), mock.patch.object(io.os,'listxattr',return_value=['system.posix_acl_access'],create=True):
+            with self.assertRaisesRegex(ValueError,'PROVISION_UNTRUSTED'): io._no_acl(0)
+        with mock.patch.object(io.sys,'platform','unsupported'):
+            with self.assertRaisesRegex(ValueError,'PROVISION_UNSUPPORTED'): io._no_acl(0)
+
+    @unittest.skipUnless(sys.platform=='darwin','actual macOS ACL refusal')
+    def test_macos_acl_provisioning_directory_is_refused(self):
+        import tempfile
+        import research_artifact_io as io
+        with tempfile.TemporaryDirectory() as tmp:
+            parent=Path(tmp).resolve(); trusted=parent/'with-acl'; trusted.mkdir(mode=0o700)
+            subprocess.run(['/bin/chmod','+a','everyone allow write',str(trusted)],check=True,capture_output=True)
+            with mock.patch.object(io,'PROVISION_BASE',trusted):
+                with self.assertRaisesRegex(ValueError,'PROVISION_UNTRUSTED'):
+                    io.publish(parent/'output',{'card.json':b'draft'},'commit.json',b'marker',lambda: {})
+            self.assertFalse((parent/'output').exists())
+            self.assertEqual(self.snapshot(parent),{})
+
+    def test_native_rename_uses_platform_exclusive_flags(self):
+        import research_artifact_io as io
+        for platform,name,flag in (('darwin','renameatx_np',4),('linux','renameat2',1)):
+            with self.subTest(platform=platform):
+                operation=mock.Mock(return_value=0); library=mock.Mock(spec=[name])
+                setattr(library,name,operation)
+                with mock.patch.object(io.sys,'platform',platform), mock.patch.object(io.ctypes,'CDLL',return_value=library):
+                    io._rename_exclusive(1,'stage',2,'output')
+                operation.assert_called_once_with(1,b'stage',2,b'output',flag)
 
     def test_failed_postpublication_check_retracts_only_new_commit(self):
         for kind in ('normalization','daily'):

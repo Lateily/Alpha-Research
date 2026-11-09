@@ -70,3 +70,12 @@ artifact reader inherited the port's16MiB read bound instead of the existing
 12MiB per-file contract. Its incomplete broad runs were stopped deliberately,
 not counted as passed. Add a dedicated capped fd reader, exact/small/growing and
 coherently resealed12MiB+1 API/CLI regressions, then rerun a new final SHA.
+
+44ce28f is retained and rejected for R7: public mkdir/open could initially adopt
+an empty substituted directory. Replace that acquisition with a private,
+descriptor-held OS-temp staging protocol and exclusive native directory rename.
+Enforce trusted ancestry/ownership/ACL checks; explicitly exclude hostile
+same-UID code from that provisioning boundary. No overwriting-rename fallback,
+no port/global-limit changes. Add pure-helper and both actual CLI substitutions
+at first public open and public-creation return, collision/permissions/ACL and
+native-refusal regressions. Preserve every existing pin and re-freeze all gates.
