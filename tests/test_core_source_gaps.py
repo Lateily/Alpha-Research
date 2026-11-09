@@ -27,7 +27,7 @@ class CoreGapTests(unittest.TestCase):
         self.ledger=self.root/'ledger'
 
     def source(self, *, api='moneyflow_dc',date='20261030',symbol='603629.SH',kind='down',
-               stamp='2026-11-09T18:00:00+00:00'):
+               stamp='2026-11-09T18:00:00+00:00',number=2.5):
         self.serial+=1; root=self.root/('source-'+str(self.serial))
         clock=lambda:datetime.fromisoformat(stamp)
         session=EndpointSession(root,collector_run_id='gap-fixture-'+str(self.serial),target_trade_date=date,clock=clock)
@@ -35,7 +35,7 @@ class CoreGapTests(unittest.TestCase):
         def invoke():
             if kind=='down': raise OSError('PRIVATE_PROVIDER_ERROR')
             if kind=='permission': raise PermissionError('PRIVATE_PERMISSION_MESSAGE')
-            return {'code':0,'data':{'fields':fields,'items':[] if kind=='empty' else [[symbol,date,2.5]]}}
+            return {'code':0,'data':{'fields':fields,'items':[] if kind=='empty' else [[symbol,date,number]]}}
         try: session.observe(api,{'ts_code':symbol,'trade_date':date},','.join(fields),invoke)
         except EndpointObservationError: pass
         return root
@@ -176,6 +176,25 @@ class CoreGapTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError,'GAPS_LEDGER_BUSY'): self.ingest(other,a['head_hash'])
         os.chmod(self.ledger,0o755)
         with self.assertRaisesRegex(ValueError,'GAPS_PRIVATE_ROOT_REQUIRED'): self.view(a['head_hash'])
+
+    def test_equal_time_different_successful_response_bytes_are_conflicting(self):
+        a=self.ingest(self.source(kind='good',number=2.5))
+        b=self.ingest(self.source(kind='good',number=99.0),a['head_hash'])
+        row=self.view(b['head_hash'])['scopes'][0]
+        self.assertEqual(row['status'],'CONFLICTING_TIME_EVIDENCE')
+        self.assertEqual(row['recheck_status'],'BLOCKED_RECONCILIATION')
+        self.assertIsNone(row['next_eligible_at']); self.assertFalse(row['dispatch_allowed'])
+
+    def test_equal_time_identical_successes_do_not_false_block(self):
+        a=self.ingest(self.source(kind='good'))
+        b=self.ingest(self.source(kind='good'),a['head_hash'])
+        self.assertEqual(self.view(b['head_hash'])['scopes'][0]['status'],'VALID_SCOPE_OBSERVED')
+
+    def test_preexisting_private_directory_does_not_bypass_repository_guard(self):
+        repository=self.root/'fixture-repository'; (repository/'.git').mkdir(parents=True)
+        self.ledger=repository/'empty-ledger'; self.ledger.mkdir(mode=0o700)
+        with self.assertRaisesRegex(ValueError,'GAPS_ROOT_INSIDE_REPOSITORY'): self.ingest(self.source())
+        self.assertEqual(list(self.ledger.iterdir()),[])
 
 
 if __name__=='__main__': unittest.main()

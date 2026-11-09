@@ -87,6 +87,8 @@ def _binding(row, files):
 
 def _root(root):
     root=safe_path(root)
+    # governance-mutation: CORE_GAPS_REPOSITORY_ROOT
+    if any((p/'.git').exists() for p in (root,*root.parents)): raise ValueError('GAPS_ROOT_INSIDE_REPOSITORY')
     if root.exists():
         if not root.is_dir() or root.stat().st_uid!=os.getuid() or root.stat().st_mode & 0o077:
             raise ValueError('GAPS_PRIVATE_ROOT_REQUIRED')
@@ -148,7 +150,6 @@ def ingest(root,source_root,*,expected_evidence_hash,expected_head):
     if frozen['evidence_hash']!=expected_evidence_hash: raise ValueError('GAPS_EVIDENCE_PIN_MISMATCH')
     if not root.exists():
         if expected_head!=ZERO: raise ValueError('GAPS_HEAD_CONFLICT')
-        if any((p/'.git').exists() for p in (root,*root.parents)): raise ValueError('GAPS_ROOT_INSIDE_REPOSITORY')
         durable_directory(root)
     with _lock(root):
         if not (root/'metadata.json').exists():
@@ -204,13 +205,14 @@ def view(root,*,expected_head,observed_at):
         group['history'].append({'logical_call_id':start['logical_call_id'],'evidence_hash':item['evidence_hash'],
             'observation_time':stamp,'ingested_at':item['recorded_at'],'request_status':result['request_status'],
             'dataset_quality':result['dataset_quality'],'reasons':result['gaps'],'error_code':result['error_code'],
-            'completed_at':result['completed_at']})
+            'completed_at':result['completed_at'],'response_hash':result['response_hash']})
     for row in scopes.values():
         history=row['history']; history.sort(key=lambda x:(_time(x['observation_time']),x['logical_call_id']))
         latest=history[-1]; latest_time=_time(latest['observation_time'])
         same=[h for h in history if _time(h['observation_time'])==latest_time]
         valid=latest['dataset_quality']=='OBSERVED_SCOPE_VALID'
-        contradictory=len({(h['request_status'],h['dataset_quality'],tuple(h['reasons'])) for h in same})>1
+        # governance-mutation: CORE_GAPS_RESPONSE_CONFLICT
+        contradictory=len({(h['request_status'],h['dataset_quality'],tuple(h['reasons']),h['response_hash']) for h in same})>1
         had_gap=any(h['dataset_quality']!='OBSERVED_SCOPE_VALID' for h in history)
         reasons=set(latest['reasons']); next_at=None
         if contradictory: status='CONFLICTING_TIME_EVIDENCE'; plan='BLOCKED_RECONCILIATION'

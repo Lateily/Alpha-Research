@@ -18029,6 +18029,22 @@ MUTATIONS += (
 )
 
 
+MUTATIONS += (
+    MutationCase('CORE_GAPS_RESPONSE_CONFLICT','Core gaps','scripts/llm/core_source_gaps.py',
+        'tests/test_core_source_gaps.py',
+        "        contradictory=len({(h['request_status'],h['dataset_quality'],tuple(h['reasons']),h['response_hash']) for h in same})>1",
+        "        contradictory=len({(h['request_status'],h['dataset_quality'],tuple(h['reasons'])) for h in same})>1",
+        'test_equal_time_different_successful_response_bytes_are_conflicting',
+        'Equal-quality receipts with different successful values at the same time stay conflicting.'),
+    MutationCase('CORE_GAPS_REPOSITORY_ROOT','Core gaps','scripts/llm/core_source_gaps.py',
+        'tests/test_core_source_gaps.py',
+        "    if any((p/'.git').exists() for p in (root,*root.parents)): raise ValueError('GAPS_ROOT_INSIDE_REPOSITORY')",
+        "    if False: raise ValueError('GAPS_ROOT_INSIDE_REPOSITORY')",
+        'test_preexisting_private_directory_does_not_bypass_repository_guard',
+        'A precreated private empty directory cannot bypass repository isolation.'),
+)
+
+
 @dataclass(frozen=True)
 class CommandResult:
     returncode: int

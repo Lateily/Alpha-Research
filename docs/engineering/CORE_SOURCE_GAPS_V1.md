@@ -16,6 +16,8 @@ No secret, arbitrary provider, browser path, command or dispatcher is accepted.
 An append-only local ledger freezes the original evidence files by an external
 inventory SHA256, verifies the existing catalog and summaries, and appends one
 hash-chained event per new batch. All writes require the expected current head;
+Ledger roots, including precreated private empty directories, must be outside
+all Git ancestors. Source evidence may be retained inside an artifact checkout.
 duplicate logical calls with changed evidence refuse. Copies, failed drafts and
 old failures are retained, never edited into success. Each projection reopens
 source bytes and the chain against an independently supplied head hash.
@@ -37,6 +39,9 @@ Valid later evidence for the exact same scope can show RECOVERED_SCOPE_OBSERVED;
 the original failure and observation chronology stay visible. Equal-time
 contradictory results remain blocked, and a late older observation cannot
 overwrite a newer one. Scope-valid data is not research/model/human approval.
+Equal-time successful responses with different response hashes are conservatively
+conflicting even if their row count and quality flags match; identical response
+bytes do not false-block. No raw values or provider message is stored here.
 
 ## Public API
 
