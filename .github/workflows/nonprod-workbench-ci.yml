@@ -39,3 +39,5 @@ jobs:
         run: node --test tests/nonprod-research-cards.test.mjs
       - name: Actual research card selection refresh and identity (synthetic hooks)
         run: node --test tests/nonprod-research-cards-component.test.mjs
+      - name: Independent common and detail refresh lifecycle (offline)
+        run: node --test tests/nonprod-shared-refresh-pair.test.mjs

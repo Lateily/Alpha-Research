@@ -59,3 +59,8 @@ actor lookups read their exact persisted binding without acquiring the queue
 writer lock; missing actors retain atomic insert-or-ignore and refetch. These
 changes do not extend the UI freshness window, SQLite wait budget, source limits,
 rights or any human/production authority.
+
+Common refresh and pending/detail refresh are independent single-flight readers.
+Slow detail work cannot delay the next common poll. Both readers are disposed
+together; late identity/workspace responses and explicit detail errors remain
+fenced. The original fifteen-second freshness guard is unchanged.

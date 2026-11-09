@@ -18185,6 +18185,24 @@ MUTATIONS += (
 )
 
 
+MUTATIONS += (
+    MutationCase('SHARED_CARDS_COMMON_POLL_INDEPENDENT','Shared cards','tools/nonprod_workbench/ui/shared-view.mjs',
+        'tests/test_workbench_shared_cards.py',
+        '    details.refresh();','    await details.refresh();','test_browser_card_contract',
+        'Slow pending/detail work cannot hold common freshness scheduling.'),
+    MutationCase('SHARED_CARDS_DETAIL_POLL_DISPOSED','Shared cards','tools/nonprod_workbench/ui/shared-view.mjs',
+        'tests/test_workbench_shared_cards.py',
+        'stop(){common.stop();details.stop();}','stop(){common.stop();}',
+        'test_browser_card_contract','Disposal also fences late detail failures.'),
+    MutationCase('SHARED_CARDS_LEGACY_DETAIL_SIGNATURE','Shared cards','scripts/llm/workbench_shared_jobs.py',
+        'tests/test_workbench_shared_cards.py',
+        "        job = (self._view(job,verified_inputs=verified_inputs) if job['kind']=='research-cards-review'\n               else self._view(job))",
+        "        job = self._view(job,verified_inputs=verified_inputs)",
+        'test_legacy_detail_reopen_contract_keeps_its_existing_call_signature',
+        'New card request memo does not alter legacy detail call contracts.'),
+)
+
+
 @dataclass(frozen=True)
 class CommandResult:
     returncode: int

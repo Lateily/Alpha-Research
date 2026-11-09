@@ -200,7 +200,7 @@ class SharedCardTests(unittest.TestCase):
 
     def test_browser_card_contract(self):
         import subprocess
-        value=subprocess.run(['node','--test','tests/nonprod-research-cards.test.mjs'],cwd=ROOT,
+        value=subprocess.run(['node','--test','tests/nonprod-research-cards.test.mjs','tests/nonprod-shared-refresh-pair.test.mjs'],cwd=ROOT,
             capture_output=True,text=True,timeout=40)
         self.assertEqual(value.returncode,0,(value.stdout+value.stderr)[-5000:])
 
@@ -275,6 +275,12 @@ class SharedCardTests(unittest.TestCase):
                 except sqlite3.OperationalError as error:self.fail('Existing actor GET acquired a writer lock: '+str(error))
             self.assertEqual(actual,expected)
         finally:blocker.rollback(); blocker.close()
+
+    def test_legacy_detail_reopen_contract_keeps_its_existing_call_signature(self):
+        from test_workbench_shared_jobs import SharedJobTests
+        result=unittest.TestResult()
+        SharedJobTests('test_detail_read_rechecks_bytes_after_seal_reopen').run(result)
+        self.assertEqual(result.testsRun,1);self.assertEqual(result.errors,[]);self.assertEqual(result.failures,[])
 
     def complete_card(self,queue,payload):
         import workbench_shared_worker as worker

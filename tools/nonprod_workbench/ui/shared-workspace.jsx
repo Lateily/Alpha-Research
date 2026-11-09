@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight, Database, Download, FileText, Library, Play, RefreshCw, Users, X } from 'lucide-react';
 import { statusTone } from './status-tone.mjs';
-import { commonSyncView, createSharedPoller, getPending, latestOwnedJob, pollSharedPending, recordSubmissionFailure, retainedStatus, retrySharedPending, savePending, sharedActorQuery, sharedQueryState, sharedRead, sharedViewFreshness } from './shared-view.mjs';
+import { commonSyncView, createSharedRefreshPair, getPending, latestOwnedJob, pollSharedPending, recordSubmissionFailure, retainedStatus, retrySharedPending, savePending, sharedActorQuery, sharedQueryState, sharedRead, sharedViewFreshness } from './shared-view.mjs';
 import DataCenter from './data-center';
 import ResearchLibrary from './research-library';
 import ResearchCards from './research-cards';
@@ -41,15 +41,19 @@ export default function SharedWorkspace({ api, access, refreshRevision }) {
   function reload() { setLibraryRefreshRevision(value => value + 1); return poller.current?.refresh(); }
   useEffect(() => {
     const context = actorContext.current;
-    const current = createSharedPoller({
+    const current = createSharedRefreshPair({
       read: () => sharedRead(api, `/api/shared-workspace?page=${page}`, renew),
-      apply: async data => {
+      apply: data => {
         if (actorContext.current !== context) return;
         if (data.my_workspace.login !== access.login) throw new Error('SHARED_IDENTITY_CHANGED');
         const workspaceId = data.my_workspace.workspace_id;
         setQuery(previous => sharedQueryState(previous, data));
-        await pollSharedPending(api, window.localStorage, workspaceId, data.owned_commands || {}, renew);
+      },
+      readDetails: async data => {
         if (poller.current !== current || actorContext.current !== context) return;
+        const workspaceId = data.my_workspace.workspace_id;
+        await pollSharedPending(api, window.localStorage, workspaceId, data.owned_commands || {}, renew);
+        if (poller.current !== current || actorContext.current !== context || submissionContext.current?.workspaceId !== workspaceId) return;
         setPending(getPending(window.localStorage, workspaceId));
         if (selectedRef.current) await open(selectedRef.current, false);
       },

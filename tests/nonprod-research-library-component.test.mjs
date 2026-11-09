@@ -43,12 +43,15 @@ async function componentScenario(mutant = false, workspaceSwitch = false, downlo
     globalThis.setTimeout=callback=>{timers.set(++nextTimer,callback);return nextTimer;};
     globalThis.clearTimeout=id=>timers.delete(id);
     globalThis.window={setInterval:()=>null,clearInterval:()=>{},localStorage:{getItem:()=>null,setItem:()=>{}}};
-    const calls=[];let parentFails=false,libraryFails=false,workspace='synthetic';
+    const calls=[];let parentFails=false,libraryFails=false,workspace='synthetic',holdDetails=false,releaseDetails;
     const receipt={job_id:'download-job',actor:'owner',workspace_id:workspace,status:'SUCCEEDED',code_sha:'a'.repeat(40),
       input_hash:'b'.repeat(64),output_hash:'c'.repeat(64),research:{report_sha256:'d'.repeat(64),citation_locations:[]}};
     const props={access:{login:'owner'},refreshRevision:0,api:async path=>{
       calls.push(path);
-      if(path.startsWith('/api/shared-workspace/jobs/'))return receipt;
+      if(path.startsWith('/api/shared-workspace/jobs/')){
+        if(holdDetails)await new Promise(resolve=>{releaseDetails=resolve;});
+        return receipt;
+      }
       if(path === '/api/shared-workspace/research-inputs')return {enabled:workspaceSwitch,
         my_workspace:{login:'owner',workspace_id:workspace},consumer_code_sha:'a'.repeat(40),
         inputs:[{snapshot_id:'registered-pack',company:'600000.SH',research_date:'20261105',
@@ -80,6 +83,17 @@ async function componentScenario(mutant = false, workspaceSwitch = false, downlo
     await settle();
     if(downloadScenario){
       await nodes(tree).find(v=>v.type==='button'&&v.props.className==='shared-job-row').props.onClick();await settle();
+      if(downloadScenario==='slow'){
+        holdDetails=true;await parentTick();
+        const detailCount=calls.filter(path=>path.startsWith('/api/shared-workspace/jobs/')).length;
+        assert.equal(timers.size,1,'slow detail must not prevent scheduling the next common poll');
+        const before=calls.filter(path=>path.startsWith('/api/shared-workspace?page=')).length;
+        await parentTick();
+        assert.equal(calls.filter(path=>path.startsWith('/api/shared-workspace?page=')).length,before+1);
+        assert.equal(calls.filter(path=>path.startsWith('/api/shared-workspace/jobs/')).length,detailCount,
+          'detail refresh remains single-flight while common data advances');
+        holdDetails=false;releaseDetails();await settle();return;
+      }
       const urls=new Map(),navigation=[],downloaded=[];let blobId=0;
       URL.createObjectURL=blob=>{const url=`blob:receipt-${++blobId}`;urls.set(url,blob);return url;};
       URL.revokeObjectURL=url=>urls.delete(url);
@@ -138,3 +152,4 @@ test('actual receipt download preserves file bytes through queued browser naviga
 test('immediate file URL revocation is caught by the actual download behavior', async () => {
   await assert.rejects(componentScenario('download',false,true), error => error.code === 'ERR_ASSERTION' && error.actual === 0 && error.expected === 1);
 });
+test('slow actual task detail never blocks common refresh or creates duplicate detail reads',()=>componentScenario(false,false,'slow'));
