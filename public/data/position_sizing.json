@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-09T07:58:47.018914+00:00",
+  "generated_at": "2026-11-09T19:04:02.290996+00:00",
   "date": "2026-11-09",
   "portfolio_value": 199215.0,
   "risk_pct_per_trade": 0.02,
@@ -18,36 +18,14 @@
       "rationale_z": "高信念：ATR止损5.0% · VP系数0.69× · 信号系数1.30× → 仓位25.0%（¥49,804）",
       "ticker": "300308.SZ",
       "vp_score": 48,
-      "conf_score": 9,
+      "conf_score": 17,
       "is_held": true,
       "signals": [
         {
           "type": "RSI_OVERSOLD",
-          "contribution": 6.7
-        },
-        {
-          "type": "BB_LOWER_BREAK",
-          "contribution": 2.4
+          "contribution": 16.8
         }
       ]
-    },
-    {
-      "recommended_pct": 25.0,
-      "recommended_value": 49804.0,
-      "stop_distance_pct": 5.0,
-      "atr_pct": 2.5,
-      "vp_multiplier": 0.69,
-      "conf_multiplier": 1.0,
-      "risk_cny": 3984.0,
-      "conviction_tier": "HIGH CONVICTION",
-      "conviction_tier_zh": "高信念",
-      "rationale_e": "HIGH CONVICTION: ATR-stop 5.0% · VP-mult 0.69× · conf-mult 1.00× → 25.0% of portfolio (¥49,804)",
-      "rationale_z": "高信念：ATR止损5.0% · VP系数0.69× · 信号系数1.00× → 仓位25.0%（¥49,804）",
-      "ticker": "002594.SZ",
-      "vp_score": 48,
-      "conf_score": 0,
-      "is_held": true,
-      "signals": []
     },
     {
       "recommended_pct": 25.0,
@@ -86,6 +64,24 @@
       "rationale_z": "高信念：ATR止损5.0% · VP系数0.67× · 信号系数1.00× → 仓位25.0%（¥49,804）",
       "ticker": "300054.SZ",
       "vp_score": 47,
+      "conf_score": 0,
+      "is_held": false,
+      "signals": []
+    },
+    {
+      "recommended_pct": 25.0,
+      "recommended_value": 49804.0,
+      "stop_distance_pct": 5.0,
+      "atr_pct": 2.5,
+      "vp_multiplier": 0.71,
+      "conf_multiplier": 1.0,
+      "risk_cny": 3984.0,
+      "conviction_tier": "HIGH CONVICTION",
+      "conviction_tier_zh": "高信念",
+      "rationale_e": "HIGH CONVICTION: ATR-stop 5.0% · VP-mult 0.71× · conf-mult 1.00× → 25.0% of portfolio (¥49,804)",
+      "rationale_z": "高信念：ATR止损5.0% · VP系数0.71× · 信号系数1.00× → 仓位25.0%（¥49,804）",
+      "ticker": "603233.SH",
+      "vp_score": 50,
       "conf_score": 0,
       "is_held": false,
       "signals": []
@@ -176,33 +172,25 @@
       "signals": []
     },
     {
-      "recommended_pct": 22.9,
-      "recommended_value": 45535.0,
+      "recommended_pct": 20.1,
+      "recommended_value": 40071.0,
       "stop_distance_pct": 5.0,
       "atr_pct": 2.5,
-      "vp_multiplier": 0.71,
-      "conf_multiplier": 0.8,
+      "vp_multiplier": 0.69,
+      "conf_multiplier": 0.73,
       "risk_cny": 3984.0,
       "conviction_tier": "HIGH CONVICTION",
       "conviction_tier_zh": "高信念",
-      "rationale_e": "HIGH CONVICTION: ATR-stop 5.0% · VP-mult 0.71× · conf-mult 0.80× → 22.9% of portfolio (¥45,535)",
-      "rationale_z": "高信念：ATR止损5.0% · VP系数0.71× · 信号系数0.80× → 仓位22.9%（¥45,535）",
-      "ticker": "603233.SH",
-      "vp_score": 50,
-      "conf_score": -6,
-      "is_held": false,
+      "rationale_e": "HIGH CONVICTION: ATR-stop 5.0% · VP-mult 0.69× · conf-mult 0.73× → 20.1% of portfolio (¥40,071)",
+      "rationale_z": "高信念：ATR止损5.0% · VP系数0.69× · 信号系数0.73× → 仓位20.1%（¥40,071）",
+      "ticker": "002594.SZ",
+      "vp_score": 48,
+      "conf_score": -8,
+      "is_held": true,
       "signals": [
         {
-          "type": "RSI_OVERBOUGHT",
-          "contribution": -5.6
-        },
-        {
-          "type": "BB_UPPER_BREAK",
-          "contribution": -0.0
-        },
-        {
-          "type": "KDJ_OVERBOUGHT",
-          "contribution": -0.0
+          "type": "KDJ_DEATH_CROSS",
+          "contribution": -8.0
         }
       ]
     }
