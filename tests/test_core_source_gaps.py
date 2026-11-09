@@ -7,6 +7,7 @@ from pathlib import Path
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 
 ROOT=Path(__file__).resolve().parents[1]
 sys.path[:0]=[str(ROOT/'scripts/llm'),str(ROOT)]
@@ -125,8 +126,12 @@ class CoreGapTests(unittest.TestCase):
         self.assertEqual(self.view(b['head_hash'])['scopes'][0]['status'],'RECOVERED_SCOPE_OBSERVED')
 
     def test_later_ingestion_is_not_knowledge_available_in_an_earlier_view(self):
-        a=self.ingest(self.source(kind='good'))
-        value=self.module().view(self.ledger,expected_head=a['head_hash'],observed_at='2026-11-08T00:00:00Z')
+        m=self.module()
+        with patch.object(m,'datetime',wraps=datetime) as clock:
+            clock.now.return_value=datetime(2026,11,10,tzinfo=timezone.utc)
+            a=self.ingest(self.source(kind='good'))
+        # After provider observation but before local ingestion: isolate this guard.
+        value=self.module().view(self.ledger,expected_head=a['head_hash'],observed_at='2026-11-09T18:01:00Z')
         self.assertEqual(value['scopes'],[])
         self.assertFalse(value['prospective_sample_eligible'])
 
