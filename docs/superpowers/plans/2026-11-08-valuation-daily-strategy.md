@@ -64,3 +64,9 @@ Keep the four original ce46949 port files byte-identical and every existing pin
 ID; only update the two necessary derivation anchors after their read API moves.
 Add behavior pins for the new regressions. Freeze a replacement clean SHA and
 rerun all gates, retained demonstrations, legacy reopens and independent review.
+
+8c7450e is also retained and rejected: R1-R5 repaired, but R6 found the new
+artifact reader inherited the port's16MiB read bound instead of the existing
+12MiB per-file contract. Its incomplete broad runs were stopped deliberately,
+not counted as passed. Add a dedicated capped fd reader, exact/small/growing and
+coherently resealed12MiB+1 API/CLI regressions, then rerun a new final SHA.

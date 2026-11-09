@@ -17521,7 +17521,7 @@ MUTATIONS += (
     MutationCase(
         mutation_id="RESEARCH_ARTIFACT_READ_SNAPSHOT", component="Research artifact publication",
         source_path="scripts/llm/research_artifact_io.py", test_script="tests/test_research_artifact_io.py",
-        before="        if any(directory_io._read_output(fd, name) != pair for name, pair in saved.items()):",
+        before="        if any(_read_file(fd, name) != pair for name, pair in saved.items()):",
         after="        if False:",
         expected_failure_marker="test_read_holds_root_and_payload_fingerprints_across_derivation",
         rationale="Held artifact payloads must retain their bytes and fingerprints throughout derivation.",
@@ -17604,6 +17604,33 @@ MUTATIONS += (
         after="        ref = known[0]; level = Decimal(ref['price']); confirmation = ref['index'] + 2",
         expected_failure_marker="test_latest_known_low_is_not_replaced_with_the_older_low",
         rationale="The most recent eligible confirmed low cannot be replaced with an older reference.",
+    ),
+)
+
+
+MUTATIONS += (
+    MutationCase(
+        mutation_id="RESEARCH_ARTIFACT_READ_GLOBAL_CAP", component="Research artifact read bounds",
+        source_path="scripts/llm/research_artifact_io.py", test_script="tests/test_research_normalization.py",
+        before="def _read_file(root_fd, relative):\n",
+        after="def _read_file(root_fd, relative):\n    return directory_io._read_output(root_fd, relative)\n",
+        expected_failure_marker="test_oversized_resealed_worksheet_is_rejected_by_verify_api_and_cli",
+        rationale="Public artifact reopen must retain the global file ceiling instead of borrowing the larger technical-input bound.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_ARTIFACT_READ_PREFLIGHT_CAP", component="Research artifact read bounds",
+        source_path="scripts/llm/research_artifact_io.py", test_script="tests/test_research_artifact_io.py",
+        before="        if before.st_size > ev.MAX_FILE:", after="        if False:",
+        expected_failure_marker="test_read_enforces_the_existing_file_cap_before_returning_bytes",
+        rationale="An already oversized artifact must be refused before any payload read.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_ARTIFACT_READ_REQUEST_BOUND", component="Research artifact read bounds",
+        source_path="scripts/llm/research_artifact_io.py", test_script="tests/test_research_artifact_io.py",
+        before="            chunk = os.read(fd, min(65536, ev.MAX_FILE + 1 - size))",
+        after="            chunk = os.read(fd, 65536)",
+        expected_failure_marker="test_read_growth_stops_at_the_same_limit",
+        rationale="A growing file cannot make an individual read request exceed the remaining cap-plus-one bound.",
     ),
 )
 

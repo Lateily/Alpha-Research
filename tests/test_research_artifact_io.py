@@ -180,6 +180,37 @@ class ArtifactPublicationTests(unittest.TestCase):
             self.assertEqual((root/'commit.json').read_bytes(),b'foreign-marker')
             self.assertEqual((root/'our-marker-aside').read_bytes(),b'new-marker')
 
+    def test_read_enforces_the_existing_file_cap_before_returning_bytes(self):
+        import tempfile
+        import research_artifact_io as io
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp).resolve(); target=root/'card.json'
+            with mock.patch.object(io.ev,'MAX_FILE',8):
+                target.write_bytes(b'12345678')
+                with io.read(root,{'card.json'}) as saved:
+                    self.assertEqual(saved['card.json'],b'12345678')
+                target.write_bytes(b'123456789')
+                with mock.patch.object(io.os,'read',wraps=io.os.read) as reader:
+                    with self.assertRaisesRegex(ValueError,'OUTPUT_SIZE'):
+                        with io.read(root,{'card.json'}): pass
+                    self.assertEqual(reader.call_count,0)
+
+    def test_read_growth_stops_at_the_same_limit(self):
+        import tempfile
+        import research_artifact_io as io
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp).resolve(); target=root/'card.json'; target.write_bytes(b'12345678')
+            original=io.os.read; requests=[]
+            def grows(fd, count):
+                requests.append(count)
+                if len(requests)==1: target.write_bytes(b'123456789')
+                return original(fd,count)
+            with mock.patch.object(io.ev,'MAX_FILE',8), mock.patch.object(io.os,'read',side_effect=grows):
+                with self.assertRaisesRegex(ValueError,'OUTPUT_SIZE'):
+                    with io.read(root,{'card.json'}): pass
+            self.assertTrue(requests)
+            self.assertLessEqual(max(requests),9)
+
 
 if __name__=='__main__':
     unittest.main()

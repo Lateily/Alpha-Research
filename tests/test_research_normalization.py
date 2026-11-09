@@ -231,6 +231,35 @@ class NormalizationArtifactTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'SOURCE_PIN'):
                 module._snapshot(*self.args())
 
+    def test_oversized_resealed_worksheet_is_rejected_by_verify_api_and_cli(self):
+        import scripts.governance_mutation_gate as gate
+        module=self.module(); output=self.root/'oversize-reopen'
+        module.create(self.raw,self.pin,*self.args(),output)
+        path=output/module.MARKER; manifest=self.ev.parse(path.read_bytes())
+        guard=self.root/'child-guard'; gate._write_network_guard(guard)
+        repo=Path(__file__).resolve().parents[1]
+        command=[sys.executable,'-B',str(repo/'scripts/llm/research_normalization.py'),'verify',
+                 '--content-root',str(self.content_root),'--content-hash',self.receipt['content_hash'],
+                 '--pack-root',str(self.root/'pack'),'--pack-hash',self.f.pack['pack_hash'],
+                 '--output',str(output),'--normalization-hash']
+        for size in (self.ev.MAX_FILE,self.ev.MAX_FILE+1):
+            padded=self.raw+b' '*(size-len(self.raw)); (output/'worksheet.json').write_bytes(padded)
+            manifest['worksheet_hash']=self.ev.sha(padded)
+            manifest['files']['worksheet.json']=self.ev.sha(padded)
+            manifest['normalization_hash']=self.ev.sealed({k:v for k,v in manifest.items() if k!='normalization_hash'})
+            path.write_text(self.ev.canonical(manifest))
+            if size==self.ev.MAX_FILE:
+                self.assertEqual(module.verify(output,manifest['normalization_hash'],*self.args())['status'],'NORMALIZATION_BASIS_PARTIAL')
+            else:
+                with self.assertRaisesRegex(ValueError,'OUTPUT_SIZE'):
+                    module.verify(output,manifest['normalization_hash'],*self.args())
+            child=subprocess.run([*command,manifest['normalization_hash']],cwd=repo,env=gate._subprocess_env(repo,guard),capture_output=True,timeout=30)
+            if size==self.ev.MAX_FILE:
+                self.assertEqual(child.returncode,0,child.stderr.decode())
+            else:
+                self.assertNotEqual(child.returncode,0)
+                self.assertIn('OUTPUT_SIZE',child.stderr.decode())
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -75,6 +75,9 @@ Publish both new artifacts through a shared descriptor-pinned, manifest-last
 writer. An output-root or ancestor substitution cannot redirect writes. Reopen
 requires exact inventory and unchanged root/file fingerprints across derivation;
 failure retracts only this call's own commit inode, retaining other evidence.
+The held-descriptor reader enforces the unchanged12MiB per-file cap before read,
+and bounds each request to the remaining cap plus one rejection byte, including
+file growth. The original port's separate16MiB total bound is not a substitute.
 The global file/PDF bounds and original technical input guard remain unchanged.
 
 The event cutoff is the reclaim close, never the replay cutoff or a delayed
