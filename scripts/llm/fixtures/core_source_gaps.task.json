@@ -1,0 +1,22 @@
+{
+  "schema":"ai-task.v1",
+  "task_id":"CORE-SOURCE-GAPS-20261109",
+  "architecture_block":["Data governance","Missing-data closure"],
+  "objective":"Persist and reopen exact-scope core source observations, missing-data history and bounded human-only recheck proposals without dispatching providers or changing production.",
+  "non_goals":["No source API call, automatic retry, live source hook, current shared change, production/ledger write, rights attestation, paid model, push, merge or rollout."],
+  "human_owner":"Junyan",
+  "reviewer":"Independent nonauthor reviewer",
+  "executor_candidates":["Codex"],
+  "dependencies":["Scoped recovery4e91a30","Existing immutable EndpointSession catalogs and receipts"],
+  "authority_docs":["AGENTS.md","scripts/llm/AGENTS.md","docs/engineering/CORE_SOURCE_GAPS_V1.md"],
+  "file_scope":["scripts/llm/core_source_gaps.py","tests/test_core_source_gaps.py","scripts/llm/fixtures/core_source_gaps.task.json","scripts/governance_mutation_gate.py",".github/workflows/python-ci.yml","docs/engineering/CORE_SOURCE_GAPS_V1.md","docs/superpowers/plans/2026-11-09-core-source-gaps.md"],
+  "forbidden_scope":["/Users/years/ar-live","Existing shared service/state","Source credentials","Formal ledgers","Original source evidence","Tailscale/LaunchAgents"],
+  "input_contracts":["Externally pinned immutable endpoint receipts","Exact API/security/day/fields","Expected append-only head hash"],
+  "output_artifacts":["Frozen source evidence and append-only gap events","Scoped health and human-only proposal view","Same-final tests/mutations and independent review"],
+  "acceptance_tests":["python3 -B tests/test_core_source_gaps.py","Complete same-final offline CI and behavior mutation gate","Retained real receipt ingest and synthetic recovery demonstration"],
+  "risk_level":"MEDIUM",
+  "network_policy":"OFFLINE",
+  "budget":{"max_cny":"0","max_minutes":180},
+  "approval_gates":["Ordered isolated implementation authorized","Any exact historical network recheck requires explicit new approval","Shared activation and production changes separately approved; two-human acceptance remains deferred"],
+  "created_at":"2026-11-09T21:22:28+00:00"
+}

@@ -17989,6 +17989,46 @@ MUTATIONS += (
 )
 
 
+MUTATIONS += (
+    MutationCase('CORE_GAPS_EXTERNAL_PIN','Core gaps','scripts/llm/core_source_gaps.py',
+        'tests/test_core_source_gaps.py',
+        "    if frozen['evidence_hash']!=expected_evidence_hash: raise ValueError('GAPS_EVIDENCE_PIN_MISMATCH')",
+        "    if False: raise ValueError('GAPS_EVIDENCE_PIN_MISMATCH')",
+        'test_wrong_external_source_pin_precedes_any_ledger_creation',
+        'External source pin must precede creation of the gap ledger.'),
+    MutationCase('CORE_GAPS_HEAD_CAS','Core gaps','scripts/llm/core_source_gaps.py',
+        'tests/test_core_source_gaps.py',
+        "        if head!=expected_head: raise ValueError('GAPS_HEAD_CONFLICT')",
+        "        if False: raise ValueError('GAPS_HEAD_CONFLICT')",
+        'test_head_cas_and_duplicate_call_are_not_silent_replays',
+        'A stale writer cannot append against a changed ledger head.'),
+    MutationCase('CORE_GAPS_FROZEN_PIN','Core gaps','scripts/llm/core_source_gaps.py',
+        'tests/test_core_source_gaps.py',
+        "        if frozen['evidence_hash']!=value['evidence_hash']: raise ValueError('GAPS_EVIDENCE_PIN_MISMATCH')",
+        "        if False: raise ValueError('GAPS_EVIDENCE_PIN_MISMATCH')",
+        'test_frozen_source_tampering_fails_cold_reopen',
+        'Cold query revalidates original frozen bytes, not only their schema.'),
+    MutationCase('CORE_GAPS_EXACT_FIELDS','Core gaps','scripts/llm/core_source_gaps.py',
+        'tests/test_core_source_gaps.py',
+        "api not in CORE or set(start['fields'].split(','))!=CORE[api] or set(params)!={'ts_code','trade_date'}",
+        "api not in CORE or set(params)!={'ts_code','trade_date'}",
+        'test_view_reopen_is_read_only_and_wrong_scope_fields_rejected',
+        'The finite three-field scope is not silently widened.'),
+    MutationCase('CORE_GAPS_KNOWLEDGE_TIME','Core gaps','scripts/llm/core_source_gaps.py',
+        'tests/test_core_source_gaps.py',
+        "        if _time(item['recorded_at'])>when or _time(stamp)>when: continue",
+        "        if _time(stamp)>when: continue",
+        'test_later_ingestion_is_not_knowledge_available_in_an_earlier_view',
+        'A historical target day cannot backdate later-ingested knowledge.'),
+    MutationCase('CORE_GAPS_INVENTORY_BOUND','Core gaps','scripts/llm/core_source_gaps.py',
+        'tests/test_core_source_gaps.py',
+        "        if count>512: raise ValueError('GAPS_EVIDENCE_LIMIT')",
+        "        if False: raise ValueError('GAPS_EVIDENCE_LIMIT')",
+        'test_directory_inventory_is_bounded_even_for_empty_directories',
+        'Empty directories also consume the finite evidence traversal budget.'),
+)
+
+
 @dataclass(frozen=True)
 class CommandResult:
     returncode: int
