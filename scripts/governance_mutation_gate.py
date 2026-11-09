@@ -17965,6 +17965,30 @@ MUTATIONS += (
 )
 
 
+MUTATIONS += (
+    MutationCase('RECOVERY_MIGRATION_BINDING', 'Shared recovery', 'scripts/llm/workbench_recovery.py',
+        'tests/test_workbench_recovery.py',
+        "            if migration_row!=(ev.canonical(expected),):", "            if False:",
+        'test_original_pin_cannot_accept_replaced_empty_database_or_missing_migration',
+        'The original external pin cannot authenticate an unrelated empty database.'),
+    MutationCase('RECOVERY_HISTORY_PREFIX', 'Shared recovery', 'scripts/llm/workbench_recovery.py',
+        'tests/test_workbench_recovery.py',
+        "            if current[:len(rows)]!=rows:", "            if False:",
+        'test_original_history_must_remain_even_if_migration_anchor_is_preserved',
+        'Preserving a migration row alone cannot conceal deletion of restored history.'),
+    MutationCase('RECOVERY_READY_PIN', 'Shared recovery', 'scripts/llm/workbench_recovery.py',
+        'tests/test_workbench_recovery.py',
+        "    if ev.canonical(marker)!=ev.canonical(_completion(value,pin)):", "    if False:",
+        'test_completion_marker_is_required_and_exact',
+        'The final readiness commit must exactly bind the external profile and restore.'),
+    MutationCase('RECOVERY_FINAL_VALIDATION', 'Shared recovery', 'scripts/llm/workbench_recovery.py',
+        'tests/test_workbench_recovery.py',
+        "    _verify_value(value,root)\n", "    pass\n",
+        'test_final_validation_failure_never_publishes_startable_profile',
+        'Final environment/source validation precedes publication of a usable profile.'),
+)
+
+
 @dataclass(frozen=True)
 class CommandResult:
     returncode: int

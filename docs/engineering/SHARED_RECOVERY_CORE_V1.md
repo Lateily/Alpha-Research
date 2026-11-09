@@ -27,6 +27,14 @@ validation and all original 12MiB/hash/seal/migration rules remain unchanged.
 The source archive is retained; a partial failed recovery has no valid final
 profile and is not resumed by overwriting files. A new root is required.
 
+The final validation runs against a draft before publishing the final profile
+and template. A manifest-last READY marker is mandatory on every verify/start;
+its exact body binds the external profile pin and restoration identity. An
+interrupted publication without that marker requires reconciliation, not an
+inferred success. The database must retain the precise source migration row,
+original immutable history and terminal jobs; active job/attempt state may evolve
+only while retaining original identities and token/binding evidence.
+
 State changes during rehearsal are expected. Verify restored tables/artifacts
 exactly before first start; subsequently verify the frozen source backup and
 restoration provenance, not equality with the evolving database. Each restart

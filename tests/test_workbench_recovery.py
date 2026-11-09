@@ -4,6 +4,7 @@ from contextlib import contextmanager
 import importlib.util
 from pathlib import Path
 import plistlib
+import shutil
 import sys
 import subprocess
 import sqlite3
@@ -183,6 +184,48 @@ class RecoveryTests(unittest.TestCase):
             (root/'allowlist.json').write_text('{"members":["another@example.com"]}')
             with self.assertRaisesRegex(ValueError,'RECOVERY_ALLOWLIST_CHANGED'):
                 m.verify(root/'profile.json',prepared['profile_hash'])
+
+    def test_original_pin_cannot_accept_replaced_empty_database_or_missing_migration(self):
+        m=self.module(); prepared=self.prepare(); root=self.base/'capsule'
+        empty=wb.Store(self.base/'empty-state',shared_v1=True)
+        shutil.copyfile(empty.path,root/'state/shared-workbench.sqlite3')
+        with self.checks(), self.assertRaisesRegex(ValueError,'RECOVERY_MIGRATION_BINDING'):
+            m.verify(root/'profile.json',prepared['profile_hash'])
+
+    def test_original_history_must_remain_even_if_migration_anchor_is_preserved(self):
+        m=self.module()
+        with sqlite3.connect(self.base/'old-state/shared-workbench.sqlite3') as db:
+            db.execute('INSERT INTO shared_workspaces VALUES (?,?)',('original@example.com','11111111-1111-4111-8111-111111111111'))
+        self.archive=self.base/'history-archive'
+        self.pin=backup.backup_shared(wb.Store(self.base/'old-state',shared_v1=True),self.archive)['backup_hash']
+        prepared=self.prepare(); root=self.base/'capsule'
+        with sqlite3.connect(root/'state/shared-workbench.sqlite3') as db:
+            db.execute('DROP TRIGGER shared_workspaces_delete')
+            db.execute('DELETE FROM shared_workspaces')
+        with self.checks(), self.assertRaisesRegex(ValueError,'RECOVERY_HISTORY_CHANGED'):
+            m.verify(root/'profile.json',prepared['profile_hash'])
+
+    def test_final_validation_failure_never_publishes_startable_profile(self):
+        m=self.module(); count=[0]
+        def environment(*args):
+            count[0]+=1
+            if count[0]==2: raise ValueError('INJECTED_FINAL_ENVIRONMENT_FAILURE')
+            return {'base_executable':str(Path(sys.executable).resolve())}
+        with self.checks(), patch.object(m.runtime,'verify_environment',side_effect=environment):
+            with self.assertRaisesRegex(ValueError,'INJECTED_FINAL_ENVIRONMENT_FAILURE'):
+                m.prepare(self.base/'capsule',self.archive,self.pin,self.base/'code',
+                          self.base/'environment','a'*64,18341)
+        root=self.base/'capsule'
+        self.assertFalse((root/'profile.json').exists())
+        self.assertFalse((root/'READY.json').exists())
+
+    def test_completion_marker_is_required_and_exact(self):
+        m=self.module(); prepared=self.prepare(); root=self.base/'capsule'
+        marker=root/'READY.json'
+        self.assertTrue(marker.is_file(),'accepted recovery needs a final commit marker')
+        marker.write_text('{}')
+        with self.checks(), self.assertRaisesRegex(ValueError,'RECOVERY_NOT_READY'):
+            m.verify(root/'profile.json',prepared['profile_hash'])
 
 
 if __name__ == '__main__': unittest.main()

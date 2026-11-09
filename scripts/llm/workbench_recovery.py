@@ -113,6 +113,45 @@ def verify(path, pin):
         raise ValueError('RECOVERY_PROFILE_PIN_MISMATCH')
     value=ev.parse(raw); root=path.parent
     _validate(value,root)
+    try: marker=ev.parse(ev.read_local(root,'READY.json'))
+    except (ValueError,OSError): raise ValueError('RECOVERY_NOT_READY') from None
+    # governance-mutation: RECOVERY_READY_PIN
+    if ev.canonical(marker)!=ev.canonical(_completion(value,pin)):
+        raise ValueError('RECOVERY_NOT_READY')
+    return _verify_value(value,root)
+
+
+def _completion(value,pin):
+    return {'schema':'ar.isolated-recovery-ready.v1','profile_hash':pin,
+            'backup_hash':value['backup_hash'],'restore_hash':value['restore_hash'],'production_authority':False}
+
+
+def _source_history(tables, original):
+    for name, rows in original.items():
+        current=tables[name]
+        if name not in {'shared_jobs','shared_attempts'}:
+            # governance-mutation: RECOVERY_HISTORY_PREFIX
+            if current[:len(rows)]!=rows:
+                raise ValueError('RECOVERY_HISTORY_CHANGED')
+            continue
+        indexed={row[0]:row for row in current}
+        for row in rows:
+            actual=indexed.get(row[0])
+            if actual is None or actual[:-1]!=row[:-1]: raise ValueError('RECOVERY_HISTORY_CHANGED')
+            before,after=ev.parse(row[-1]),ev.parse(actual[-1])
+            if name=='shared_attempts' and before['status']=='RUNNING':
+                if {k:v for k,v in before.items() if k!='status'}!={k:v for k,v in after.items() if k!='status'}:
+                    raise ValueError('RECOVERY_HISTORY_CHANGED')
+            elif name=='shared_jobs' and before['status'] in {'QUEUED','RUNNING'}:
+                from workbench_shared_worker import BINDING_FIELDS
+                if any(before[k]!=after.get(k) for k in (*BINDING_FIELDS,'command_id','submitted_at')):
+                    raise ValueError('RECOVERY_HISTORY_CHANGED')
+            elif actual!=row:
+                raise ValueError('RECOVERY_HISTORY_CHANGED')
+
+
+def _verify_value(value, root):
+    _validate(value,root)
     restore=ev.read_local(root,'restore.json')
     migration=ev.read_local(root/'state','migration-receipt.json')
     # governance-mutation: RECOVERY_RESTORE_PIN
@@ -121,7 +160,11 @@ def verify(path, pin):
     receipt=ev.parse(restore)
     if receipt.get('backup_hash')!=value['backup_hash'] or receipt.get('status')!='LOCAL_SHARED_RESTORE_VERIFIED':
         raise ValueError('RECOVERY_RESTORE_BINDING')
-    _archive(value['backup_root'],value['backup_hash'])
+    manifest,data=_archive(value['backup_root'],value['backup_hash'])
+    from workbench_shared_state import migration_receipt
+    expected=migration_receipt(manifest,data,legacy=ev.parse(migration).get('schema')=='ar.shared-migration.v1')
+    if (ev.parse(migration)!=expected or ev.canonical(receipt)!=ev.canonical({**expected,'status':'LOCAL_SHARED_RESTORE_VERIFIED'})):
+        raise ValueError('RECOVERY_RESTORE_BINDING')
     code=Path(value['code_root'])
     runtime.verify_environment(Path(value['environment_root']),value['environment_hash'])
     if service.code_identity(code)!=value['code_identity'] or _runtime_sources(code)!=value['runtime_sources']:
@@ -147,6 +190,11 @@ def verify(path, pin):
                 raise ValueError('RECOVERY_DATABASE_SCHEMA')
             tables={name:[list(row) for row in db.execute('SELECT '+', '.join(columns)+' FROM '+name+' ORDER BY rowid')]
                     for name,columns in ALL_TABLES.items()}
+            migration_row=db.execute('SELECT receipt FROM shared_migrations WHERE backup_hash=?',(value['backup_hash'],)).fetchone()
+            # governance-mutation: RECOVERY_MIGRATION_BINDING
+            if migration_row!=(ev.canonical(expected),):
+                raise ValueError('RECOVERY_MIGRATION_BINDING')
+            _source_history(tables,data['tables'])
             backup._validate_tables(tables)
             backup._verify_completed(root/'state',tables)
     except sqlite3.Error:
@@ -194,14 +242,16 @@ def prepare(root, backup_root, backup_hash, code_root, environment_root, environ
     _validate(value,root)
     backup.write_new(root/'allowlist.json',ev.canonical({'members':[service.MEMBER]}).encode())
     raw=ev.canonical(value).encode(); pin=ev.sha(raw)
+    backup.write_new(root/'profile.draft.json',raw)
+    _verify_value(value,root)
     command=[info['base_executable'],'-I','-B','-S',str(code/'scripts/llm/workbench_runtime.py'),
              'recovery-serve','--profile',str(root/'profile.json'),'--pin',pin,'--seconds','300']
     template={'Label':'com.ar.isolated-recovery.'+pin[:12],'ProgramArguments':command,'RunAtLoad':True,
         'WorkingDirectory':str(root),'EnvironmentVariables':runtime.clean_environment(root),
         'StandardOutPath':str(root/'launchd.stdout'),'StandardErrorPath':str(root/'launchd.stderr')}
-    backup.write_new(root/'launchd.NOT_INSTALLED.plist',plistlib.dumps(template))
     backup.write_new(root/'profile.json',raw)
-    verify(root/'profile.json',pin)
+    backup.write_new(root/'launchd.NOT_INSTALLED.plist',plistlib.dumps(template))
+    backup.write_new(root/'READY.json',ev.canonical(_completion(value,pin)).encode())
     return {'status':'ISOLATED_RECOVERY_PREPARED_NOT_STARTED','root':str(root),'profile_hash':pin,
             'backup_hash':backup_hash,'code_sha':identity['code_sha'],'template_status':'GENERATED_NOT_INSTALLED',
             'physical_host_reboot':'NOT_ATTESTED','production_authority':False}
