@@ -4,6 +4,13 @@ import { canRunCard, cardsContextKey, cardsView, readCardInputs, readCardLibrary
 import { createSharedPoller } from './shared-view.mjs';
 import { statusTone } from './status-tone.mjs';
 
+export function CitationLocations({locations}) {
+  return <details><summary>引用位置 · {locations.length}</summary><div className="table-scroll"><table>
+    <thead><tr><th>事实标识</th><th>PDF SHA256</th><th>物理页 / 文本行</th></tr></thead>
+    <tbody>{locations.map((row,index)=><tr key={index}><td><code>{row.fact_id}</code></td><td><code>{row.sha256}</code></td><td>{row.page} / {row.start}–{row.end}</td></tr>)}</tbody>
+  </table></div></details>;
+}
+
 export default function ResearchCards({api,renew,login,workspaceId,codeSha,parentStale,refreshRevision,onRun,onOpenJob,busy}) {
   const [draft,setDraft]=useState({industry_key:'',research_date:'',ts_code:''});
   const [filters,setFilters]=useState({}),[page,setPage]=useState(0),[selected,setSelected]=useState('');
@@ -57,6 +64,7 @@ export default function ResearchCards({api,renew,login,workspaceId,codeSha,paren
         <tr><td>日线技术</td><td>{badge(row.cards.daily.status)}{badge(row.cards.daily.continuity_status)}</td><td><code>{row.cards.daily.source_trade_date||'NOT_SUPPLIED'}</code><span>{row.cards.daily.vintage_status}</span><code>{row.cards.daily.reason_codes.join(' · ')}</code><div>eligible false</div></td></tr>
         <tr><td>执行反馈</td><td>{badge(row.cards.execution_feedback.status)}</td><td>{row.cards.execution_feedback.pnl_status}</td></tr>
       </tbody></table></div>
+      <CitationLocations locations={row.citation_locations}/>
     </section>)}
     {!data?.results.length&&<p className="shared-empty">{view.error?'UNAVAILABLE':data?'无匹配研究卡':'WAIT'}</p>}
     <div className="shared-pagination"><button className="icon-button" title="上一页研究卡" aria-label="上一页研究卡" disabled={!page} onClick={()=>setPage(page-1)}><ChevronLeft size={17}/></button><span>{page+1} / {Math.max(1,Math.ceil((data?.total||0)/50))}</span><button className="icon-button" title="下一页研究卡" aria-label="下一页研究卡" disabled={!data||(page+1)*50>=data.total} onClick={()=>setPage(page+1)}><ChevronRight size={17}/></button></div>

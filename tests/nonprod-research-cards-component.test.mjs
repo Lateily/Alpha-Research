@@ -19,7 +19,7 @@ async function scenario(check){
         b.onResolve({filter:/^lucide-react$/},()=>({path:'icons',namespace:'icons'}));
         b.onLoad({filter:/.*/,namespace:'icons'},()=>({contents:'export const ChevronLeft=()=>null,ChevronRight=()=>null,FileSearch=()=>null,Play=()=>null,RefreshCw=()=>null,Search=()=>null;'}));
       }}]});
-    const {default:Cards}=await import('data:text/javascript;base64,'+Buffer.from(result.outputFiles[0].text).toString('base64')+'#'+Math.random());
+    const {default:Cards,CitationLocations}=await import('data:text/javascript;base64,'+Buffer.from(result.outputFiles[0].text).toString('base64')+'#'+Math.random());
     const calls=[],submitted=[];let fail=false,tree;
     const props={login:'owner',workspaceId:'workspace-a',codeSha:'a'.repeat(40),parentStale:false,refreshRevision:0,busy:false,
       renew:async()=>{},onRun:value=>submitted.push(value),onOpenJob:()=>{},api:async path=>{
@@ -42,7 +42,7 @@ async function scenario(check){
     function nodes(value){if(Array.isArray(value))return value.flatMap(nodes);if(!value||typeof value!=='object')return[];return[value,...nodes(value.props?.children)];}
     const button=()=>nodes(tree).find(n=>n.props?.['aria-label']==='提交研究卡核验');
     await settle();
-    await check({props,calls,submitted,settle,nodes:()=>nodes(tree),button,fail:()=>{fail=true;},render:()=>{state.dirty=true;}});
+    await check({props,calls,submitted,settle,nodes:()=>nodes(tree),button,CitationLocations,fail:()=>{fail=true;},render:()=>{state.dirty=true;}});
   }finally{for(const slot of state.slots)slot?.cleanup?.();globalThis.__arCardHooks=previous;}
 }
 test('actual card selection clears on workspace change and a retained click cannot submit',()=>scenario(async s=>{
@@ -60,4 +60,11 @@ test('a failed independent revalidation does not retain actionable old card choi
   s.nodes().find(n=>n.props?.['aria-label']==='冻结研究卡').props.onChange({target:{value:'registered-card'}});await s.settle();
   assert.equal(s.button().props.disabled,false);s.fail();s.props.refreshRevision++;s.render();await s.settle();
   assert.equal(s.button().props.disabled,true);assert.ok(JSON.stringify(s.nodes()).includes('DISCONNECTED'));
+}));
+test('actual card citation component displays bound fact PDF page and line locations',()=>scenario(async s=>{
+  assert.equal(typeof s.CitationLocations,'function');
+  const tree=s.CitationLocations({locations:[{fact_id:'bound-fact',sha256:'a'.repeat(64),page:6,start:4,end:5}]});
+  const shown=JSON.stringify(tree);
+  assert.ok(shown.includes('bound-fact'));assert.ok(shown.includes('a'.repeat(64)));
+  assert.ok(shown.includes('6'));assert.ok(shown.includes('4'));assert.ok(shown.includes('5'));
 }));
