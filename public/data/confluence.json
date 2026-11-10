@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-09T19:04:02.263380+00:00",
+  "generated_at": "2026-11-10T08:20:21.910524+00:00",
   "model_state": "NORMAL_OBSERVATION_MODE",
   "tickers_scored": 9,
   "summary": {
@@ -10,7 +10,7 @@
   "scores": [
     {
       "ticker": "300308.SZ",
-      "score": 17,
+      "score": 13,
       "action": "NEUTRAL",
       "action_zh": "信号中性，等待",
       "zone": "OVERSOLD",
@@ -28,20 +28,20 @@
         {
           "type": "RSI_OVERSOLD",
           "base_weight": 14,
-          "decay": 1.0,
+          "decay": 0.8,
           "independence_factor": 1.0,
           "regime_mult": 1.2,
           "staleness": 1.0,
           "flow_role": "other",
           "policy_gate": null,
-          "raw_contribution_before_policy": 16.8,
-          "final_contribution": 16.8
+          "raw_contribution_before_policy": 13.4,
+          "final_contribution": 13.4
         }
       ],
       "contributing_signals": [
         {
           "type": "RSI_OVERSOLD",
-          "contribution": 16.8
+          "contribution": 13.4
         }
       ],
       "rationale_e": "Bullish: Rsi Oversold | RSI 28 | Price vs MA20 -23.5% | Regime: PERMISSIVE | VP 48",
@@ -49,7 +49,7 @@
       "signal_types": [
         "RSI_OVERSOLD"
       ],
-      "computed_at": "2026-11-09T19:04:02.263149+00:00"
+      "computed_at": "2026-11-10T08:20:21.910175+00:00"
     },
     {
       "ticker": "175.HK",
@@ -92,7 +92,7 @@
       "signal_types": [
         "KDJ_OVERSOLD"
       ],
-      "computed_at": "2026-11-09T19:04:02.263046+00:00"
+      "computed_at": "2026-11-10T08:20:21.910034+00:00"
     },
     {
       "ticker": "300054.SZ",
@@ -115,7 +115,7 @@
       "rationale_e": "RSI 50 | Price vs MA20 +4.1% | VP 47",
       "rationale_z": "RSI 50 | 距MA20 +4.1% | VP 47",
       "signal_types": [],
-      "computed_at": "2026-11-09T19:04:02.263095+00:00"
+      "computed_at": "2026-11-10T08:20:21.910102+00:00"
     },
     {
       "ticker": "603233.SH",
@@ -138,7 +138,7 @@
       "rationale_e": "RSI 60 | Price vs MA20 +6.3% | VP 50",
       "rationale_z": "RSI 60 | 距MA20 +6.3% | VP 50",
       "signal_types": [],
-      "computed_at": "2026-11-09T19:04:02.263203+00:00"
+      "computed_at": "2026-11-10T08:20:21.910243+00:00"
     },
     {
       "ticker": "6160.HK",
@@ -215,7 +215,7 @@
         "MA60_BOUNCE",
         "MACD_GOLDEN_CROSS"
       ],
-      "computed_at": "2026-11-09T19:04:02.263262+00:00"
+      "computed_at": "2026-11-10T08:20:21.910323+00:00"
     },
     {
       "ticker": "688120.SH",
@@ -238,7 +238,7 @@
       "rationale_e": "RSI 46 | Price vs MA20 -1.0% | VP 45",
       "rationale_z": "RSI 46 | 距MA20 -1.0% | VP 45",
       "signal_types": [],
-      "computed_at": "2026-11-09T19:04:02.263301+00:00"
+      "computed_at": "2026-11-10T08:20:21.910377+00:00"
     },
     {
       "ticker": "700.HK",
@@ -261,7 +261,7 @@
       "rationale_e": "RSI 41 | Price vs MA20 -3.5%",
       "rationale_z": "RSI 41 | 距MA20 -3.5%",
       "signal_types": [],
-      "computed_at": "2026-11-09T19:04:02.263341+00:00"
+      "computed_at": "2026-11-10T08:20:21.910458+00:00"
     },
     {
       "ticker": "9999.HK",
@@ -284,11 +284,11 @@
       "rationale_e": "RSI 56 | Price vs MA20 +2.8%",
       "rationale_z": "RSI 56 | 距MA20 +2.8%",
       "signal_types": [],
-      "computed_at": "2026-11-09T19:04:02.263374+00:00"
+      "computed_at": "2026-11-10T08:20:21.910515+00:00"
     },
     {
       "ticker": "002594.SZ",
-      "score": -8,
+      "score": -6,
       "action": "NEUTRAL",
       "action_zh": "信号中性，等待",
       "zone": "NEUTRAL",
@@ -306,20 +306,20 @@
         {
           "type": "KDJ_DEATH_CROSS",
           "base_weight": -10,
-          "decay": 1.0,
+          "decay": 0.75,
           "independence_factor": 1.0,
           "regime_mult": 0.8,
           "staleness": 1.0,
           "flow_role": "other",
           "policy_gate": null,
-          "raw_contribution_before_policy": -8.0,
-          "final_contribution": -8.0
+          "raw_contribution_before_policy": -6.0,
+          "final_contribution": -6.0
         }
       ],
       "contributing_signals": [
         {
           "type": "KDJ_DEATH_CROSS",
-          "contribution": -8.0
+          "contribution": -6.0
         }
       ],
       "rationale_e": "Bearish: Kdj Death Cross | RSI 54 | Price vs MA20 +2.4% | Regime: PERMISSIVE | VP 48",
@@ -327,7 +327,7 @@
       "signal_types": [
         "KDJ_DEATH_CROSS"
       ],
-      "computed_at": "2026-11-09T19:04:02.262973+00:00"
+      "computed_at": "2026-11-10T08:20:21.909935+00:00"
     }
   ]
 }

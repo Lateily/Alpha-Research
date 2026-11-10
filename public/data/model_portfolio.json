@@ -6,9 +6,9 @@
     "no_size": true,
     "no_buy_sell": true,
     "no_position_mutation": true,
-    "run_date": "2026-11-09",
+    "run_date": "2026-11-10",
     "pilot_start_date": "2026-06-08",
-    "generated_at": "2026-11-09T19:04:02.355729+00:00",
+    "generated_at": "2026-11-10T08:20:22.027025+00:00",
     "fresh_pilot": true,
     "legacy_paper_positions_inherited": false,
     "sources": [
@@ -63,7 +63,7 @@
         },
         "quant_confluence": {
           "action": "NEUTRAL",
-          "score": -8,
+          "score": -6,
           "rationale": "Bearish: Kdj Death Cross | RSI 54 | Price vs MA20 +2.4% | Regime: PERMISSIVE | VP 48"
         }
       },
@@ -281,7 +281,7 @@
             }
           ]
         },
-        "as_of": "2026-11-09",
+        "as_of": "2026-11-10",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -323,7 +323,7 @@
             }
           ]
         },
-        "as_of": "2026-11-09",
+        "as_of": "2026-11-10",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -358,7 +358,7 @@
           },
           "signals": []
         },
-        "as_of": "2026-11-09",
+        "as_of": "2026-11-10",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -400,7 +400,7 @@
             }
           ]
         },
-        "as_of": "2026-11-09",
+        "as_of": "2026-11-10",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -435,7 +435,7 @@
           },
           "signals": []
         },
-        "as_of": "2026-11-09",
+        "as_of": "2026-11-10",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -489,7 +489,7 @@
             }
           ]
         },
-        "as_of": "2026-11-09",
+        "as_of": "2026-11-10",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -524,7 +524,7 @@
           },
           "signals": []
         },
-        "as_of": "2026-11-09",
+        "as_of": "2026-11-10",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -559,7 +559,7 @@
           },
           "signals": []
         },
-        "as_of": "2026-11-09",
+        "as_of": "2026-11-10",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -594,7 +594,7 @@
           },
           "signals": []
         },
-        "as_of": "2026-11-09",
+        "as_of": "2026-11-10",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       }
