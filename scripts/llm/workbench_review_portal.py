@@ -69,9 +69,9 @@ def _source(row):
     keep['kind']='SOURCE_METADATA_NOT_AUTHENTICATED'
     keep['rights_status']='UNVERIFIED_PRIVATE_SOURCE_BODY_DENIED'
     for key in ('published_at','captured_at'):
-        keep[key]=_text(row[key],100) if key in row else None
-    keep['pages']=row.get('pages',[])
-    if type(keep['pages']) is not list or len(keep['pages'])>100 or any(type(n) is not int or n<1 for n in keep['pages']):
+        keep[key]=_text(row[key],100) if row.get(key) is not None else None
+    keep['pages']=row.get('pages')
+    if keep['pages'] is not None and (type(keep['pages']) is not list or len(keep['pages'])>100 or any(type(n) is not int or n<1 for n in keep['pages'])):
         raise ValueError('REVIEW_PAGES_INVALID')
     url=row.get('registered_public_url')
     if url is not None:

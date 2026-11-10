@@ -24,7 +24,8 @@ TABLES = {
 }
 BRIEF_PATH = re.compile(r"snapshot-briefs/[A-Za-z0-9_-]{8,100}/(?:snapshot\.json|report\.md|citations\.json|source-manifest\.json|receipt\.json|SHA256SUMS|sources/\d{3}\.json)\Z")
 RECOVERY_ROOTS = {"input-write-evidence", "migration-evidence"}
-ARTIFACT_ROOTS = {"research-runs", "snapshot-briefs", "brief-trials", "earnings-trials", "workspaces", "shared-jobs", "frozen-inputs", "governance-evidence", "review-packets"} | RECOVERY_ROOTS
+ARTIFACT_ROOTS = {"research-runs", "snapshot-briefs", "brief-trials", "earnings-trials", "workspaces", "shared-jobs", "frozen-inputs", "governance-evidence"} | RECOVERY_ROOTS
+ARTIFACT_ROOTS = ARTIFACT_ROOTS | {"review-packets"}
 
 
 @contextmanager

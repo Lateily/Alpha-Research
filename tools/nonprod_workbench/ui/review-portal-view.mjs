@@ -35,7 +35,7 @@ export function validateReviewDetail(value,context,packetHash){
   require(Array.isArray(p.sources)&&p.sources.length<=32);for(const source of p.sources){exact(source,['id','title','sha256','kind','rights_status','published_at','captured_at','pages','registered_public_url','url_rechecked']);
     text(source.id,200);text(source.title,1000);require(hash.test(source.sha256)&&source.kind==='SOURCE_METADATA_NOT_AUTHENTICATED'&&source.rights_status==='UNVERIFIED_PRIVATE_SOURCE_BODY_DENIED'&&source.url_rechecked===false);
     for(const key of ['published_at','captured_at'])if(source[key]!==null)text(source[key],100);
-    require(Array.isArray(source.pages)&&source.pages.length<=100&&source.pages.every(n=>Number.isSafeInteger(n)&&n>0));
+    require(source.pages===null||(Array.isArray(source.pages)&&source.pages.length<=100&&source.pages.every(n=>Number.isSafeInteger(n)&&n>0)));
     // governance-mutation: REVIEW_CLIENT_SOURCE_URL
     require(source.registered_public_url===null||/^https:\/\/static\.cninfo\.com\.cn\/finalpage\/\d{4}-\d{2}-\d{2}\/\d+\.PDF$/.test(source.registered_public_url));
   }

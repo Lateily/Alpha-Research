@@ -96,6 +96,16 @@ class ReviewPortalTests(unittest.TestCase):
         grant=path.parent/'grant.json';value=json.loads(grant.read_bytes());value['audience'].append('outsider@example.com');grant.write_text(ev.canonical(value))
         with self.assertRaises(WorkspaceError):portal.detail(record['packet_hash'],'member@example.com')
 
+    def test_non_document_source_metadata_keeps_unknown_dates_and_pages_null(self):
+        path=self.packet/'PROVENANCE.json';p=json.loads(path.read_text())
+        p['source_materials'].append({'id':'M2','title':'Synthetic frozen receipt','sha256':'5'*64,
+            'published_at':None,'captured_at':None,'pages':None,'registered_public_url':None})
+        raw=ev.canonical(p).encode();path.write_bytes(raw)
+        manifest=json.loads((self.packet/'MANIFEST.json').read_text());manifest['files']['PROVENANCE.json']=ev.sha(raw)
+        raw=ev.canonical(manifest).encode();(self.packet/'MANIFEST.json').write_bytes(raw);self.pin=ev.sha(raw)
+        portal,record=self.admitted();source=portal.detail(record['packet_hash'],'owner@example.com')['packet']['sources'][1]
+        for key in ('published_at','captured_at','pages','registered_public_url'):self.assertIsNone(source[key])
+
     def test_comment_actor_context_retry_and_append_only(self):
         portal,record=self.admitted();command=self.command(record)
         first=portal.submit(command,'member@example.com');again=portal.submit(command,'member@example.com')

@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {build} from 'esbuild';
 import {context,packetHash,list,detail,annotation} from './nonprod-review-portal.test.mjs';
+import {reviewLabels} from '../tools/nonprod_workbench/ui/review-portal-view.mjs';
 
 async function scenario(check){
   const state={slots:[],cursor:0,pending:[],dirty:true};
@@ -19,7 +20,7 @@ async function scenario(check){
     const {default:Portal}=await import('data:text/javascript;base64,'+Buffer.from(output.outputFiles[0].text).toString('base64')+'#'+Math.random());
     let tree,fail=false,postFail=false,hold=false,release;const calls=[],posts=[];
     const props={...context,parentStale:false,refreshRevision:0,renew:async()=>{},api:async(path,body)=>{
-      calls.push(path);if(body){posts.push(body);if(postFail)throw new Error('CONNECTION_LOST');return {...detail(),disposition:'APPENDED',annotation:{...annotation(),...{annotation_id:body.command_id,comment:body.comment}}};}
+      calls.push(path);if(body){posts.push(body);if(postFail)throw new Error('CONNECTION_LOST');return {...reviewLabels,disposition:'APPENDED',annotation:{...annotation(),...{annotation_id:body.command_id,comment:body.comment}}};}
       if(fail)throw new Error('PIN_CHANGED');if(hold)await new Promise(resolve=>{release=resolve;});return path.endsWith('/reviews')?list():detail();
     }};
     function nodes(v){if(Array.isArray(v))return v.flatMap(nodes);if(!v||typeof v!=='object')return[];return[v,...nodes(v.props?.children)];}
@@ -45,4 +46,9 @@ test('uncertain submission retries the exact persisted command and ignores doubl
   s.postFail();const submit=s.find('提交批注').props.onClick;submit();submit();await s.settle();assert.equal(s.posts.length,1);
   s.find('重试原批注').props.onClick();await s.settle();assert.equal(s.posts.length,2);assert.deepEqual(s.posts[0],s.posts[1]);
   assert.ok(JSON.stringify(s.nodes()).includes('SUBMISSION_UNCONFIRMED'));
+}));
+test('a complete matching receipt confirms a successful submission and unlocks the form',()=>scenario(async s=>{
+  s.find('提交批注').props.onClick();await s.settle();assert.equal(s.posts.length,1);
+  assert.ok(JSON.stringify(s.nodes()).includes('APPENDED'));assert.equal(s.find('重试原批注'),undefined);
+  assert.equal(s.find('批注内容').props.disabled,false);
 }));
