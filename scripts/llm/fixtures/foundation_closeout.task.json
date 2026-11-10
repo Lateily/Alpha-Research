@@ -1,22 +1,83 @@
 {
   "schema": "ai-task.v1",
   "task_id": "FOUNDATION-CLOSEOUT-20261110",
-  "architecture_block": ["Runtime recovery", "Core gap coverage", "Local preservation", "Research evidence"],
+  "architecture_block": [
+    "Runtime recovery",
+    "Core gap coverage",
+    "Local preservation",
+    "Research evidence"
+  ],
   "objective": "Preserve review recovery features, project independently pinned finite source requirements including never-called scopes, and retain gap ledgers through existing local preservation contracts.",
-  "non_goals": ["No installed service or formal production change", "No market API, model dispatch, automatic retry, guessed financial values or trading authority", "No host reboot, launchd installation, off-machine attestation, push, merge or rollout"],
+  "non_goals": [
+    "No installed service or formal production change",
+    "No market API, model dispatch, automatic retry, guessed financial values or trading authority",
+    "No host reboot, launchd installation, off-machine attestation, push, merge or rollout"
+  ],
   "human_owner": "Junyan",
   "reviewer": "Independent nonauthor engineering reviewer",
-  "executor_candidates": ["Codex"],
-  "dependencies": ["Accepted inherited b1f3704 stack", "Existing backup, gap, retention and research contracts"],
-  "authority_docs": ["AGENTS.md", "scripts/llm/AGENTS.md", "docs/engineering/FOUNDATION_CLOSEOUT_20261110.md"],
-  "file_scope": ["scripts/llm/workbench_recovery.py", "scripts/llm/workbench_runtime.py", "scripts/llm/core_source_gaps.py", "scripts/llm/foundation_preservation.py", "tests/test_workbench_recovery.py", "tests/test_core_source_gaps.py", "tests/test_foundation_preservation.py", "scripts/governance_mutation_gate.py", ".github/workflows/python-ci.yml", "scripts/llm/fixtures/foundation_closeout.task.json", "docs/engineering/SHARED_RECOVERY_CORE_V1.md", "docs/engineering/CORE_SOURCE_GAPS_V1.md", "docs/engineering/FOUNDATION_CLOSEOUT_20261110.md", "docs/superpowers/plans/2026-11-10-foundation-closeout.md"],
-  "forbidden_scope": ["Formal production and installed shared services", "Formal U4/paper/execution ledgers", "Credentials", "Original evidence and old mutation records"],
-  "input_contracts": ["Independent backup/environment/profile/expected-scope/ledger/inventory hashes", "Existing receipts, libraries, review grants and immutable source material", "Bounded public supplement only as separately authorized in the local task; never used in offline CI"],
-  "output_artifacts": ["Exact v3 review recovery profile, legacy v1/v2 unchanged", "Expected-scope coverage and retained-gap verifier", "Explicit CORE_GAP_LEDGER preservation kind", "Same-final acceptance, cold reopen evidence and independent engineering review"],
-  "acceptance_tests": ["AR_OFFLINE=1 python3 -B -m unittest tests.test_workbench_recovery tests.test_core_source_gaps tests.test_foundation_preservation tests.test_foundation_retention -q", "Wrong pins, absent expected scope, another security/date and changed retained source all refuse or remain blocked", "All existing and added behavior mutations; complete offline CI on the same clean final SHA", "Real retained generation cold reopen and bounded owned-process restart"],
+  "executor_candidates": [
+    "Codex"
+  ],
+  "dependencies": [
+    "Accepted inherited b1f3704 stack",
+    "Existing backup, gap, retention and research contracts"
+  ],
+  "authority_docs": [
+    "AGENTS.md",
+    "scripts/llm/AGENTS.md",
+    "docs/engineering/FOUNDATION_CLOSEOUT_20261110.md"
+  ],
+  "file_scope": [
+    "scripts/llm/workbench_recovery.py",
+    "scripts/llm/workbench_runtime.py",
+    "scripts/llm/core_source_gaps.py",
+    "scripts/llm/foundation_preservation.py",
+    "tests/test_workbench_recovery.py",
+    "tests/test_core_source_gaps.py",
+    "tests/test_foundation_preservation.py",
+    "scripts/governance_mutation_gate.py",
+    ".github/workflows/python-ci.yml",
+    "scripts/llm/fixtures/foundation_closeout.task.json",
+    "docs/engineering/SHARED_RECOVERY_CORE_V1.md",
+    "docs/engineering/CORE_SOURCE_GAPS_V1.md",
+    "docs/engineering/FOUNDATION_CLOSEOUT_20261110.md",
+    "docs/superpowers/plans/2026-11-10-foundation-closeout.md",
+    "tests/test_governance_mutation_gate.py"
+  ],
+  "forbidden_scope": [
+    "Formal production and installed shared services",
+    "Formal U4/paper/execution ledgers",
+    "Credentials",
+    "Original evidence and old mutation records"
+  ],
+  "input_contracts": [
+    "Independent backup/environment/profile/expected-scope/ledger/inventory hashes",
+    "Existing receipts, libraries, review grants and immutable source material",
+    "Bounded public supplement only as separately authorized in the local task; never used in offline CI"
+  ],
+  "output_artifacts": [
+    "Exact v3 review recovery profile, legacy v1/v2 unchanged",
+    "Expected-scope coverage and retained-gap verifier",
+    "Explicit CORE_GAP_LEDGER preservation kind",
+    "Same-final acceptance, cold reopen evidence and independent engineering review"
+  ],
+  "acceptance_tests": [
+    "AR_OFFLINE=1 python3 -B -m unittest tests.test_workbench_recovery tests.test_core_source_gaps tests.test_foundation_preservation tests.test_foundation_retention -q",
+    "Wrong pins, absent expected scope, another security/date and changed retained source all refuse or remain blocked",
+    "All existing and added behavior mutations; complete offline CI on the same clean final SHA",
+    "Real retained generation cold reopen and bounded owned-process restart"
+  ],
   "risk_level": "MEDIUM",
   "network_policy": "OFFLINE",
-  "budget": {"max_cny": "0", "max_minutes": 480},
-  "approval_gates": ["Isolated implementation approved", "Public source supplement is separately allowed only for 603986.SH 2023..2026-11-10 SSE/CNINFO annual/share-change/dividend/halts originals and Tushare official docs", "No publication or activation without separate approval", "Financial content, off-machine custody, physical reboot and two-human acceptance are separate gates"],
+  "budget": {
+    "max_cny": "0",
+    "max_minutes": 480
+  },
+  "approval_gates": [
+    "Isolated implementation approved",
+    "Public source supplement is separately allowed only for 603986.SH 2023..2026-11-10 SSE/CNINFO annual/share-change/dividend/halts originals and Tushare official docs",
+    "No publication or activation without separate approval",
+    "Financial content, off-machine custody, physical reboot and two-human acceptance are separate gates"
+  ],
   "created_at": "2026-11-10T18:30:00+00:00"
 }
