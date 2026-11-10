@@ -36,7 +36,7 @@ async function componentScenario(mutant = false, workspaceSwitch = false, downlo
         b.onResolve({filter:/^react$/},()=>({path:'react',namespace:'hooks'}));
         b.onLoad({filter:/.*/,namespace:'hooks'},()=>({contents:'const h=globalThis.__arLibraryHooks;export default h;export const {useState,useRef,useEffect}=h;'}));
         b.onResolve({filter:/^lucide-react$/},()=>({path:'icons',namespace:'icons'}));
-        b.onLoad({filter:/.*/,namespace:'icons'},()=>({contents:'export const ChevronLeft=()=>null,ChevronRight=()=>null,Database=()=>null,Download=()=>null,FileText=()=>null,Library=()=>null,Play=()=>null,RefreshCw=()=>null,Users=()=>null,X=()=>null,FileSearch=()=>null,Search=()=>null;'}));
+        b.onLoad({filter:/.*/,namespace:'icons'},()=>({contents:'export const ChevronLeft=()=>null,ChevronRight=()=>null,Database=()=>null,Download=()=>null,FileText=()=>null,Library=()=>null,Play=()=>null,RefreshCw=()=>null,Users=()=>null,X=()=>null,FileSearch=()=>null,Search=()=>null,Send=()=>null;'}));
       }}]});
     const {default:SharedWorkspace}=await import('data:text/javascript;base64,'+Buffer.from(bundle.outputFiles[0].text).toString('base64')+`#scenario-${mutant}-${workspaceSwitch}-${downloadScenario}`);
     const timers=new Map();let nextTimer=0;
