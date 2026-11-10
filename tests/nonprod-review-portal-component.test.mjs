@@ -18,9 +18,9 @@ async function scenario(check){
       b.onResolve({filter:/^lucide-react$/},()=>({path:'icons',namespace:'icons'}));b.onLoad({filter:/.*/,namespace:'icons'},()=>({contents:'export const RefreshCw=()=>null,Send=()=>null;'}));
     }}]});
     const {default:Portal}=await import('data:text/javascript;base64,'+Buffer.from(output.outputFiles[0].text).toString('base64')+'#'+Math.random());
-    let tree,fail=false,postFail=false,hold=false,release;const calls=[],posts=[];
+    let tree,fail=false,postFail=false,postStatus=null,hold=false,release;const calls=[],posts=[];
     const props={...context,parentStale:false,refreshRevision:0,renew:async()=>{},api:async(path,body)=>{
-      calls.push(path);if(body){posts.push(body);if(postFail)throw new Error('CONNECTION_LOST');return {...reviewLabels,disposition:'APPENDED',annotation:{...annotation(),...{annotation_id:body.command_id,comment:body.comment}}};}
+      calls.push(path);if(body){posts.push(body);if(postFail)throw Object.assign(new Error('CONNECTION_LOST'),postStatus?{status:postStatus}:{});return {...reviewLabels,disposition:'APPENDED',annotation:{...annotation(),...{annotation_id:body.command_id,comment:body.comment}}};}
       if(fail)throw new Error('PIN_CHANGED');if(hold)await new Promise(resolve=>{release=resolve;});return path.endsWith('/reviews')?list():detail();
     }};
     function nodes(v){if(Array.isArray(v))return v.flatMap(nodes);if(!v||typeof v!=='object')return[];return[v,...nodes(v.props?.children)];}
@@ -28,7 +28,7 @@ async function scenario(check){
     const find=label=>nodes(tree).find(n=>n.props?.['aria-label']===label);
     await settle();find('审阅样稿').props.onChange({target:{value:packetHash}});await settle();
     find('批注事项').props.onChange({target:{value:'F1'}});find('批注内容').props.onChange({target:{value:'口径需复核'}});await settle();
-    await check({props,posts,calls,find,settle,nodes:()=>nodes(tree),render:()=>{state.dirty=true;},fail:()=>{fail=true;},postFail:()=>{postFail=true;},hold:()=>{hold=true;},release:()=>{hold=false;release?.();}});
+    await check({props,posts,calls,find,settle,nodes:()=>nodes(tree),render:()=>{state.dirty=true;},fail:()=>{fail=true;},postFail:status=>{postFail=true;postStatus=status;},hold:()=>{hold=true;},release:()=>{hold=false;release?.();}});
   }finally{for(const slot of state.slots)slot?.cleanup?.();globalThis.__arReviewHooks=oldHooks;globalThis.window=oldWindow;}
 }
 test('actual review component renders sample as text and refuses retained submit after refresh',()=>scenario(async s=>{
@@ -51,4 +51,10 @@ test('a complete matching receipt confirms a successful submission and unlocks t
   s.find('提交批注').props.onClick();await s.settle();assert.equal(s.posts.length,1);
   assert.ok(JSON.stringify(s.nodes()).includes('APPENDED'));assert.equal(s.find('重试原批注'),undefined);
   assert.equal(s.find('批注内容').props.disabled,false);
+}));
+test('definitive validation rejection removes pending bytes and permits correction after refresh',()=>scenario(async s=>{
+  s.postFail(400);s.find('提交批注').props.onClick();await s.settle();
+  assert.equal(s.find('批注内容').props.disabled,false);assert.equal(s.find('重试原批注'),undefined);
+  assert.ok(JSON.stringify(s.nodes()).includes('REJECTED'));
+  s.find('刷新审阅').props.onClick();await s.settle();assert.equal(s.find('批注内容').props.disabled,false);
 }));

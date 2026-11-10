@@ -2,6 +2,7 @@
 import csv
 from datetime import datetime
 import io
+import math
 from pathlib import Path
 import re
 import uuid
@@ -50,7 +51,7 @@ def _audience(value):
 
 def make_grant(manifest_pin,audience,authorization_ref):
     return {'schema':GRANT,'packet_manifest_sha256':_hash(manifest_pin),'audience':_audience(audience),
-        'capabilities':CAPABILITIES,'authorization_ref':_text(authorization_ref,2000),
+        'capabilities':list(CAPABILITIES),'authorization_ref':_text(authorization_ref,2000),
         'raw_source_body_allowed':False,'external_model_use_allowed':False,'research_approval':False}
 
 
@@ -94,12 +95,15 @@ def _prepare(root,pin):
     if (type(names) is not dict or set(names)-FILES or not {'RESEARCH_SAMPLE.md','PROVENANCE.json','REVIEW_ROWS.csv'}<=set(names)
             or {p.name for p in root.iterdir()}!=set(names)|{'MANIFEST.json'}):
         raise ValueError('REVIEW_INPUT_FILES_INVALID')
+    buffers={}
     for name,checksum in names.items():
-        if ev.sha(ev.read_local(root,name))!=_hash(checksum):raise ValueError('REVIEW_INPUT_CHANGED')
-    p=ev.parse(ev.read_local(root,'PROVENANCE.json'))
-    sample=ev.read_local(root,'RESEARCH_SAMPLE.md').decode('utf-8');_text(sample,65536)
+        buffers[name]=ev.read_local(root,name)
+        # governance-mutation: REVIEW_CONSUMED_BUFFER_PIN
+        if ev.sha(buffers[name])!=_hash(checksum):raise ValueError('REVIEW_INPUT_CHANGED')
+    p=ev.parse(buffers['PROVENANCE.json'])
+    sample=buffers['RESEARCH_SAMPLE.md'].decode('utf-8');_text(sample,65536)
     if re.search(r'(?:/Users/|/private/|file://|[A-Z]:\\)',sample):raise ValueError('REVIEW_PRIVATE_PATH')
-    rows=list(csv.DictReader(io.StringIO(ev.read_local(root,'REVIEW_ROWS.csv').decode('utf-8-sig'))))
+    rows=list(csv.DictReader(io.StringIO(buffers['REVIEW_ROWS.csv'].decode('utf-8-sig'))))
     if not 1<=len(rows)<=100:raise ValueError('REVIEW_ITEM_LIMIT')
     items=[{'id':_text(row['编号'],100),'layer':_text(row['归因层'],30),
             'title':_text(row['核对事项'],1000),'prompt':_text(row['提示'],2000)} for row in rows]
@@ -128,9 +132,9 @@ def _prepare(root,pin):
 
 def register(view,packet_root,manifest_pin,grant,grant_pin):
     if not view.review_enabled:raise ValueError('REVIEW_DISABLED')
+    grant_raw=ev.canonical(grant).encode();grant=ev.parse(grant_raw)
     value=_prepare(packet_root,manifest_pin);_grant(grant,grant_pin,manifest_pin)
     raw=ev.canonical(value).encode();checksum=ev.sha(raw)
-    grant_raw=ev.canonical(grant).encode()
     record={'packet_hash':checksum,'grant_hash':ev.sha(grant_raw),'manifest_sha256':manifest_pin,
             'packet_id':value['packet_id']}
     base=view.store.path.parent/'review-packets';target=base/checksum
@@ -171,6 +175,12 @@ def _retained(root,record):
     return value,grant
 
 
+def _server_time(value):
+    # governance-mutation: REVIEW_SERVER_TIMESTAMP
+    if type(value) not in (int,float) or not math.isfinite(value) or not 0<=value<=253402300799:
+        raise ValueError('REVIEW_TIMESTAMP_INVALID')
+
+
 def _annotations(events,record,value,grant):
     rows=[];seen=set()
     for e in events:
@@ -186,7 +196,7 @@ def _annotations(events,record,value,grant):
                 or not re.fullmatch(r'[a-f0-9]{40}',row['code_sha'])
                 or str(uuid.UUID(row['workspace_id']))!=row['workspace_id']):
             raise ValueError('REVIEW_ANNOTATION_BINDING_INVALID')
-        _text(row['comment'],4000);reject_credentials(row);seen.add(row['annotation_id'])
+        _server_time(e['at']);_text(row['comment'],4000);reject_credentials(row);seen.add(row['annotation_id'])
         payload={'command_id':row['annotation_id'],'packet_hash':row['packet_hash'],'item_id':row['item_id'],
             'expected_workspace_id':row['workspace_id'],'expected_code_sha':row['code_sha'],
             'status':row['status'],'severity':row['severity'],'comment':row['comment']}
@@ -280,6 +290,7 @@ class ReviewPortal:
                     return {'disposition':'IDEMPOTENT','annotation':annotation,**LABELS}
                 if len(_annotations(events,record,value,grant))>=1000:raise WorkspaceError('REVIEW_COMMENT_CAPACITY',429)
                 event=self.view.system.append(db,events,payload['command_id'],request_hash,'REVIEW_ANNOTATION',bound,actor=actor)
+                _server_time(event['at'])
                 return {'disposition':'APPENDED','annotation':{**bound,'at':event['at'],'event_hash':event['event_hash']},**LABELS}
         except WorkspaceError:raise
         except (ValueError,OSError,KeyError,TypeError):raise WorkspaceError('REVIEW_COMMENT_INVALID',400) from None

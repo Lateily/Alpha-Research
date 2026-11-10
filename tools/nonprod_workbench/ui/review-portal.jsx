@@ -1,7 +1,7 @@
 import React,{useEffect,useRef,useState} from 'react';
 import {RefreshCw,Send} from 'lucide-react';
 import {sharedRead} from './shared-view.mjs';
-import {clearPending,readPending,reviewLabels,savePending,validateCommentReceipt,validateReviewDetail,validateReviewList} from './review-portal-view.mjs';
+import {canSubmitReview,clearPending,definitiveReviewRejection,readPending,reviewLabels,savePending,validateCommentReceipt,validateReviewDetail,validateReviewList} from './review-portal-view.mjs';
 
 export default function ReviewPortal({api,renew,login,workspaceId,codeSha,parentStale,refreshRevision}){
   const [selected,setSelected]=useState(''),[state,setState]=useState(null),[revision,setRevision]=useState(0);
@@ -38,8 +38,7 @@ export default function ReviewPortal({api,renew,login,workspaceId,codeSha,parent
   function refresh(){verified.current=null;active.current=null;setRevision(n=>n+1);}
   function choose(value){verified.current=null;active.current=null;setSelected(value);setItem('');setComment('');setPending(null);setNotice('');}
   async function submit(retry=false){
-    // governance-mutation: REVIEW_CLIENT_CONTEXT
-    if(stale||verified.current!==key||active.current!==key||posting.current||!packet)return;
+    if(!canSubmitReview({stale,verifiedKey:verified.current,activeKey:active.current,requestKey:key,posting:posting.current,packet}))return;
     const body=retry?pending:{command_id:'review_'+crypto.randomUUID().replaceAll('-',''),packet_hash:selected,item_id:item,expected_workspace_id:workspaceId,expected_code_sha:codeSha,status,severity,comment};
     if(!body||(!retry&&pending)||!packet.items.some(r=>r.id===body.item_id)||!body.comment.trim())return;
     const token={};posting.current=token;setBusy(true);setNotice('SUBMITTING');
@@ -48,7 +47,12 @@ export default function ReviewPortal({api,renew,login,workspaceId,codeSha,parent
       const receipt=validateCommentReceipt(await api('/api/shared-workspace/review-comment',body),context,body);
       if(active.current!==key)return;
       clearPending(window.localStorage,context,selected);setPending(null);setComment('');setNotice(receipt.disposition);refresh();
-    }catch(error){if(active.current===key)setNotice('SUBMISSION_UNCONFIRMED · '+error.message);}
+    }catch(error){
+      if(definitiveReviewRejection(error)){
+        try{clearPending(window.localStorage,context,selected);if(active.current===key){setPending(null);setNotice('REJECTED · '+error.message);}}
+        catch(storageError){if(active.current===key)setNotice('LOCAL_RETRY_STATE_ERROR · '+storageError.message);}
+      }else if(active.current===key)setNotice('SUBMISSION_UNCONFIRMED · '+error.message);
+    }
     finally{if(posting.current===token){posting.current=false;setBusy(false);}}
   }
   return <section className="data-center review-portal">

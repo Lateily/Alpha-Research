@@ -17,7 +17,7 @@ export function validateReviewList(value,context){
 function annotation(row,audience,items,packetHash){
   exact(row,['packet_hash','item_id','actor','workspace_id','code_sha','status','severity','comment','human_review','research_approval','annotation_id','at','event_hash']);
   require(row.packet_hash===packetHash&&audience.includes(row.actor)&&items.includes(row.item_id)&&uuid.test(row.workspace_id)&&sha.test(row.code_sha)&&hash.test(row.event_hash));
-  require(row.human_review==='PENDING'&&row.research_approval===false&&statuses.includes(row.status)&&severities.includes(row.severity)&&Number.isFinite(row.at)&&row.at>=0);
+  require(row.human_review==='PENDING'&&row.research_approval===false&&statuses.includes(row.status)&&severities.includes(row.severity)&&Number.isFinite(row.at)&&row.at>=0&&row.at<=253402300799);
   text(row.comment);text(row.annotation_id,200);
 }
 export function validateReviewDetail(value,context,packetHash){
@@ -56,3 +56,11 @@ export const pendingKey=(context,packetHash)=>'ar.review.pending.v1:'+JSON.strin
 export function readPending(storage,context,packetHash){const raw=storage.getItem(pendingKey(context,packetHash));if(raw===null)return null;require(raw.length<=18000);return validatePayload(JSON.parse(raw),context,packetHash);}
 export function savePending(storage,context,packetHash,body){validatePayload(body,context,packetHash);const key=pendingKey(context,packetHash);storage.setItem(key,JSON.stringify(body));require(storage.getItem(key)===JSON.stringify(body));}
 export function clearPending(storage,context,packetHash){storage.removeItem(pendingKey(context,packetHash));}
+export function canSubmitReview({stale,verifiedKey,activeKey,requestKey,posting,packet}){
+  // governance-mutation: REVIEW_CLIENT_CONTEXT
+  return !stale&&verifiedKey===requestKey&&activeKey===requestKey&&!posting&&!!packet;
+}
+export function definitiveReviewRejection(error){
+  // governance-mutation: REVIEW_CLIENT_DEFINITIVE_REJECTION
+  return [400,403,404,413,415,422,429].includes(error.status);
+}

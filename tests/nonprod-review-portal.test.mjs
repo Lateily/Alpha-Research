@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { reviewLabels, validateReviewList, validateReviewDetail, validateCommentReceipt, pendingKey, readPending, savePending } from '../tools/nonprod_workbench/ui/review-portal-view.mjs';
+import { canSubmitReview, definitiveReviewRejection, reviewLabels, validateReviewList, validateReviewDetail, validateCommentReceipt, pendingKey, readPending, savePending } from '../tools/nonprod_workbench/ui/review-portal-view.mjs';
 
 export const context={login:'reed',workspaceId:'11111111-1111-4111-8111-111111111111',codeSha:'b'.repeat(40)};
 export const packetHash='a'.repeat(64);
@@ -30,4 +30,12 @@ test('pending commands are bounded and isolated by actor workspace code and pack
   assert.equal(readPending(storage,{...context,codeSha:'c'.repeat(40)},packetHash),null);
   values.set(pendingKey(context,packetHash),JSON.stringify({...payload(),actor:'spoof'}));
   assert.throws(()=>readPending(storage,context,packetHash));
+});
+test('comment submission fences invalidated contexts and distinguishes rejection from unknown delivery',()=>{
+  const valid={stale:false,verifiedKey:'ctx',activeKey:'ctx',requestKey:'ctx',posting:false,packet:{}};
+  assert.equal(canSubmitReview(valid),true);
+  for(const change of [{stale:true},{verifiedKey:null},{activeKey:null},{requestKey:'other'},{posting:true},{packet:null}])assert.equal(canSubmitReview({...valid,...change}),false);
+  assert.equal(definitiveReviewRejection({status:400}),true);
+  assert.equal(definitiveReviewRejection({status:429}),true);
+  for(const error of [{status:409},{status:500},{}])assert.equal(definitiveReviewRejection(error),false);
 });

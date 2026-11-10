@@ -9,6 +9,7 @@ import sys
 import subprocess
 import tempfile
 import unittest
+from unittest.mock import patch
 from types import SimpleNamespace
 
 ROOT=Path(__file__).resolve().parents[1]
@@ -77,6 +78,61 @@ class ReviewPortalTests(unittest.TestCase):
         with self.assertRaises(ValueError):m.register(self.view,self.packet,'0'*64,grant,ev.sealed(grant))
         self.assertFalse((self.store.path.parent/'review-packets').exists())
 
+    def test_admission_consumes_only_the_pinned_buffers_and_copies_grant(self):
+        m=self.module();original=ev.read_local;reads=[];grant=m.make_grant(self.pin,sorted(self.ids),'Synthetic approval')
+        def changed(root,name):
+            raw=original(root,name)
+            if Path(root)==self.packet and name=='RESEARCH_SAMPLE.md':
+                reads.append(raw)
+                if len(reads)==2:return b'UNAPPROVED INTERMEDIATE SOURCE BODY'
+            return raw
+        with patch.object(ev,'read_local',side_effect=changed):
+            try:record=m.register(self.view,self.packet,self.pin,grant,ev.sealed(grant))
+            except ValueError:return
+        result=m.ReviewPortal(self.view).detail(record['packet_hash'],'member@example.com')
+        self.assertIn('Synthetic F/C/R/L',result['packet']['sample'])
+        self.assertNotIn('UNAPPROVED',result['packet']['sample'])
+
+    def test_grant_mutation_after_check_does_not_change_admitted_audience(self):
+        m=self.module();grant=m.make_grant(self.pin,sorted(self.ids),'Synthetic approval');pin=ev.sealed(grant)
+        check=m._grant
+        def mutate(value,*args):
+            result=check(value,*args)
+            grant['audience']=['outsider@example.com']
+            return result
+        with patch.object(m,'_grant',side_effect=mutate):
+            record=m.register(self.view,self.packet,self.pin,grant,pin)
+        try:result=m.ReviewPortal(self.view).detail(record['packet_hash'],'member@example.com')
+        except WorkspaceError as error:self.fail('Pin-checked grant changed after validation: '+error.code)
+        self.assertEqual(result['audience'],sorted(self.ids))
+        self.assertEqual(record['grant_hash'],pin)
+
+    def test_annotation_server_time_is_finite_nonnegative_and_client_compatible(self):
+        portal,record=self.admitted();portal.submit(self.command(record),'member@example.com')
+        with self.store.connect() as db:events=self.system.events(db)
+        for value in ('NOT_A_SERVER_TIMESTAMP',-1,True,float('inf'),1e20):
+            altered=copy.deepcopy(events);altered[-1]['at']=value
+            with self.assertRaises(ValueError):self.module().verify_retained(self.store.path.parent,altered)
+
+    def test_invalid_time_archive_cannot_report_a_successful_cold_restore(self):
+        portal,record=self.admitted();portal.submit(self.command(record),'member@example.com')
+        import workbench_backup as backup
+        target=self.root/'bad-time-backup';backup.backup_shared(self.store,target)
+        manifest,data=backup.read_shared(target)
+        self.assertEqual(manifest['schema'],'ar-shared-workspace-backup.v1')
+        row=data['tables']['workspace_events'][-1];event=ev.parse(row[3]);event['at']='NOT_A_SERVER_TIMESTAMP'
+        event['event_hash']=ev.sealed({k:v for k,v in event.items() if k!='event_hash'});row[3]=ev.canonical(event)
+        raw=ev.canonical(data).encode();(target/'data.json').write_bytes(raw)
+        manifest['files']['data.json']=ev.sha(raw);manifest['event_tail']=event['event_hash']
+        manifest['backup_hash']=ev.sealed({k:v for k,v in manifest.items() if k!='backup_hash'})
+        (target/'manifest.json').write_text(ev.canonical(manifest))
+        with self.assertRaises(ValueError):backup.restore_shared(target,self.root/'bad-time-cold')
+
+    def test_invalid_server_clock_does_not_commit_annotation(self):
+        portal,record=self.admitted();self.system.clock=lambda:True
+        with self.assertRaises(WorkspaceError):portal.submit(self.command(record),'member@example.com')
+        self.assertEqual(portal.detail(record['packet_hash'],'owner@example.com')['annotations'],[])
+
     def test_audience_grant_is_independently_pinned_and_raw_sources_denied(self):
         m=self.module();grant=m.make_grant(self.pin,sorted(self.ids),'Synthetic approval')
         with self.assertRaises(ValueError):m.register(self.view,self.packet,self.pin,grant,'0'*64)
@@ -85,6 +141,7 @@ class ReviewPortalTests(unittest.TestCase):
         self.assertNotIn('/PRIVATE/NEVER',ev.canonical(result))
         self.assertFalse(result['raw_source_body_allowed']);self.assertEqual(result['human_review'],'PENDING')
         self.assertFalse(result['paper_authority']);self.assertFalse(result['production_authority'])
+        self.ids['outsider@example.com']={'login':'outsider@example.com','workspace_id':'00000000-0000-4000-8000-000000000003'}
         with self.assertRaises(WorkspaceError) as denied:portal.detail(record['packet_hash'],'outsider@example.com')
         self.assertEqual(denied.exception.code,'REVIEW_AUDIENCE_DENIED')
 
@@ -166,7 +223,7 @@ class ReviewPortalTests(unittest.TestCase):
         self.assertEqual(code,403)
 
     def test_actual_client_contract_and_callback_regressions(self):
-        result=subprocess.run(['node','--test','tests/nonprod-review-portal.test.mjs','tests/nonprod-review-portal-component.test.mjs'],cwd=ROOT,capture_output=True,text=True,timeout=60)
+        result=subprocess.run(['node','--test','tests/nonprod-review-portal.test.mjs'],cwd=ROOT,capture_output=True,text=True,timeout=60)
         self.assertEqual(result.returncode,0,result.stdout+result.stderr)
 
     def test_http_review_routes_keep_private_auth_and_old_operation_denials(self):

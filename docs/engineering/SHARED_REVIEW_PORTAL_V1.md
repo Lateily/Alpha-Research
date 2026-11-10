@@ -54,12 +54,21 @@ packet endpoints show only admitted audience packets and verified comments.
 An exact POST review-comment endpoint reuses Origin/session/CSRF/JSON and length
 checks without broadening existing operation routes. Stale actor/workspace/code,
 packet tamper, unknown fields, wrong pins and unauthorized audience fail closed.
+Admission transforms only the exact hash-checked buffers and captures grant bytes
+before validating their independent pin. Later reads may reject changes but never
+replace the consumed buffers. Comment timestamps are finite nonnegative server
+seconds bounded to year 9999, verified before commit and again during restore.
 
 The page uses existing UI controls/icons, immutable sample and source/gap views,
 item/status/severity selectors, textarea and explicit submit. React renders text,
 not raw HTML/Markdown. Source links are validated HTTPS cninfo metadata only.
 Refresh/login changes invalidate submit callbacks. Unconfirmed submissions retain
 the same command ID for retry; never silently duplicate or claim delivery.
+Definitive validation/auth/size/rate rejections remove the local pending record
+and reopen editing. Network/5xx/ambiguous conflicts retain the original command.
+Mounted JSX tests run in the UI CI with its locked esbuild dependency; the Python
+mutation runner executes dependency-free client guard/receipt state tests. Neither
+suite skips its assertions when dependencies are absent.
 
 Submitted comments are visible to the exact packet audience, never public or
 automatically visible to later members. No private autosaved draft sync is added.
