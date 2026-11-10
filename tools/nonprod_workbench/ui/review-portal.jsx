@@ -48,7 +48,7 @@ export default function ReviewPortal({api,renew,login,workspaceId,codeSha,parent
       if(active.current!==key)return;
       clearPending(window.localStorage,context,selected);setPending(null);setComment('');setNotice(receipt.disposition);refresh();
     }catch(error){
-      if(definitiveReviewRejection(error)){
+      if(definitiveReviewRejection(error,retry)){
         try{clearPending(window.localStorage,context,selected);if(active.current===key){setPending(null);setNotice('REJECTED · '+error.message);}}
         catch(storageError){if(active.current===key)setNotice('LOCAL_RETRY_STATE_ERROR · '+storageError.message);}
       }else if(active.current===key)setNotice('SUBMISSION_UNCONFIRMED · '+error.message);

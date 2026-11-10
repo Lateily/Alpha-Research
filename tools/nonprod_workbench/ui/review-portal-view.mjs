@@ -60,7 +60,7 @@ export function canSubmitReview({stale,verifiedKey,activeKey,requestKey,posting,
   // governance-mutation: REVIEW_CLIENT_CONTEXT
   return !stale&&verifiedKey===requestKey&&activeKey===requestKey&&!posting&&!!packet;
 }
-export function definitiveReviewRejection(error){
+export function definitiveReviewRejection(error,retry=false){
   // governance-mutation: REVIEW_CLIENT_DEFINITIVE_REJECTION
-  return [400,403,404,413,415,422,429].includes(error.status);
+  return !retry&&[400,403,404,413,415,422,429].includes(error.status);
 }

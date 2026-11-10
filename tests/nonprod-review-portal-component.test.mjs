@@ -58,3 +58,9 @@ test('definitive validation rejection removes pending bytes and permits correcti
   assert.ok(JSON.stringify(s.nodes()).includes('REJECTED'));
   s.find('刷新审阅').props.onClick();await s.settle();assert.equal(s.find('批注内容').props.disabled,false);
 }));
+test('an auth rejection during retry cannot erase the original uncertain command',()=>scenario(async s=>{
+  s.postFail();s.find('提交批注').props.onClick();await s.settle();
+  s.postFail(403);s.find('重试原批注').props.onClick();await s.settle();
+  assert.deepEqual(s.posts[0],s.posts[1]);assert.equal(s.find('批注内容').props.disabled,true);
+  assert.ok(s.find('重试原批注'));assert.ok(JSON.stringify(s.nodes()).includes('SUBMISSION_UNCONFIRMED'));
+}));

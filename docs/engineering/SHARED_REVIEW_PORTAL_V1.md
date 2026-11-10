@@ -64,8 +64,10 @@ item/status/severity selectors, textarea and explicit submit. React renders text
 not raw HTML/Markdown. Source links are validated HTTPS cninfo metadata only.
 Refresh/login changes invalidate submit callbacks. Unconfirmed submissions retain
 the same command ID for retry; never silently duplicate or claim delivery.
-Definitive validation/auth/size/rate rejections remove the local pending record
-and reopen editing. Network/5xx/ambiguous conflicts retain the original command.
+Definitive first-attempt validation/auth/size/rate rejections remove the local
+pending record and reopen editing. Network/5xx/ambiguous conflicts retain the
+original command. Any rejection of an already uncertain retry retains it too:
+rejection of a retry cannot prove the original attempt was not committed.
 Mounted JSX tests run in the UI CI with its locked esbuild dependency; the Python
 mutation runner executes dependency-free client guard/receipt state tests. Neither
 suite skips its assertions when dependencies are absent.

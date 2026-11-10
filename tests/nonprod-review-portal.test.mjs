@@ -37,5 +37,6 @@ test('comment submission fences invalidated contexts and distinguishes rejection
   for(const change of [{stale:true},{verifiedKey:null},{activeKey:null},{requestKey:'other'},{posting:true},{packet:null}])assert.equal(canSubmitReview({...valid,...change}),false);
   assert.equal(definitiveReviewRejection({status:400}),true);
   assert.equal(definitiveReviewRejection({status:429}),true);
+  assert.equal(definitiveReviewRejection({status:403},true),false);
   for(const error of [{status:409},{status:500},{}])assert.equal(definitiveReviewRejection(error),false);
 });

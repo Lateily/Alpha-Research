@@ -18365,8 +18365,11 @@ MUTATIONS = MUTATIONS + (
         before='    if type(value) not in (int,float) or not math.isfinite(value) or not 0<=value<=253402300799:',after='    if False:',
         expected_failure_marker='test_annotation_server_time_is_finite_nonnegative_and_client_compatible',rationale='Rehashed malformed event times cannot survive semantic restore verification.'),
     MutationCase(mutation_id='REVIEW_CLIENT_DEFINITE_REJECT',component='Granted human review',source_path='tools/nonprod_workbench/ui/review-portal-view.mjs',test_script='tests/test_workbench_review_portal.py',
-        before='  return [400,403,404,413,415,422,429].includes(error.status);',after='  return false;',
+        before='  return !retry&&[400,403,404,413,415,422,429].includes(error.status);',after='  return false;',
         expected_failure_marker='test_actual_client_contract_and_callback_regressions',rationale='A definite validation refusal is not an uncertain retained submission.'),
+    MutationCase(mutation_id='REVIEW_RETRY_STAYS_UNCERTAIN',component='Granted human review',source_path='tools/nonprod_workbench/ui/review-portal-view.mjs',test_script='tests/test_workbench_review_portal.py',
+        before='  return !retry&&[400,403,404,413,415,422,429].includes(error.status);',after='  return [400,403,404,413,415,422,429].includes(error.status);',
+        expected_failure_marker='test_actual_client_contract_and_callback_regressions',rationale='Rejecting a later retry does not prove the original uncertain attempt was not committed.'),
 )
 
 
