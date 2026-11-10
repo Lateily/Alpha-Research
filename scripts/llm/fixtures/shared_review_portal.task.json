@@ -1,0 +1,17 @@
+{
+ "schema":"ai-task.v1","task_id":"SHARED-REVIEW-PORTAL-20261110",
+ "architecture_block":["Shared workbench","Human review packet"],
+ "objective":"Admit a pinned curated packet for the original private audience and append attributed version-bound comments; release only after final-SHA gates.",
+ "non_goals":["No production, merge, raw source distribution, financial approval, provider/model calls, global limit expansion or historical deletion."],
+ "human_owner":"Junyan","reviewer":"Independent nonauthor reviewer","executor_candidates":["Codex"],
+ "dependencies":["Shared cards d8d51d7","Retained local Reed packet manifest and separate scoped grant"],
+ "authority_docs":["docs/engineering/SHARED_REVIEW_PORTAL_V1.md"],
+ "file_scope":["scripts/llm/workbench_review_portal.py","scripts/llm/workbench_shared_workspace.py","scripts/llm/nonprod_workbench.py","scripts/llm/workbench_backup.py","scripts/llm/fixtures/shared_review_portal.task.json","tools/nonprod_workbench/ui","tests/test_workbench_review_portal.py","tests/nonprod-review-portal.test.mjs","tests/nonprod-review-portal-component.test.mjs","scripts/governance_mutation_gate.py",".github/workflows/python-ci.yml",".github/workflows/nonprod-workbench-ci.yml","docs/engineering/SHARED_REVIEW_PORTAL_V1.md","docs/superpowers/plans/2026-11-10-shared-review-portal.md"],
+ "forbidden_scope":["Production code, schedules, ledger and source originals","Raw documents/runtime data in GitHub","Credential or ACL expansion"],
+ "input_contracts":["Independent curated manifest hash and audience grant hash","Current private login/workspace/code","Original source/financial hash references and pending labels"],
+ "output_artifacts":["Default-off review API/page","Immutable packet/comment event bindings","Cold backup/reopen and exact-SHA local/remote acceptance","Reversible isolated upgrade only after gates"],
+ "acceptance_tests":["python3 -B tests/test_workbench_review_portal.py","node --test tests/nonprod-review-portal.test.mjs","Same-SHA full CI/mutations, independent review, browser QA and remote CI before rollout"],
+ "risk_level":"HIGH","network_policy":"ALLOWLIST","budget":{"max_cny":"0","max_minutes":240},
+ "approval_gates":["Current Junyan request authorizes derivative review for original Junyan/Reed audience only","Only code/synthetic tests may be pushed to Draft GitHub PR","All same-SHA gates precede isolated upgrade; no production merge or deployment"],
+ "created_at":"2026-11-10T15:00:00+00:00"
+}

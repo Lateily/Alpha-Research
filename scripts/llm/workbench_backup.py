@@ -24,7 +24,7 @@ TABLES = {
 }
 BRIEF_PATH = re.compile(r"snapshot-briefs/[A-Za-z0-9_-]{8,100}/(?:snapshot\.json|report\.md|citations\.json|source-manifest\.json|receipt\.json|SHA256SUMS|sources/\d{3}\.json)\Z")
 RECOVERY_ROOTS = {"input-write-evidence", "migration-evidence"}
-ARTIFACT_ROOTS = {"research-runs", "snapshot-briefs", "brief-trials", "earnings-trials", "workspaces", "shared-jobs", "frozen-inputs", "governance-evidence"} | RECOVERY_ROOTS
+ARTIFACT_ROOTS = {"research-runs", "snapshot-briefs", "brief-trials", "earnings-trials", "workspaces", "shared-jobs", "frozen-inputs", "governance-evidence", "review-packets"} | RECOVERY_ROOTS
 
 
 @contextmanager
@@ -343,6 +343,13 @@ def _material_pdf_bindings(root, tables):
 
 
 def _inventory(root, tables, *, scope="ISOLATED_STATE_ARTIFACT_ROOTS"):
+    from workbench_review_portal import verify_retained
+    from workbench_workspace import Workspace
+    with closing(sqlite3.connect(':memory:')) as db:
+        db.execute('CREATE TABLE workspace_events(seq, command_id, request_hash, body)')
+        db.executemany('INSERT INTO workspace_events VALUES (?, ?, ?, ?)',tables['workspace_events'])
+        review_events=Workspace.events(None,db)
+    verify_retained(root,review_events,dict(tables.get('shared_workspaces',[])))
     jobs = {job["job_id"]: job for job in legacy_jobs(tables["workspace_events"])}
     jobs.update({row[0]: ev.parse(row[3]) for row in tables.get("shared_jobs", [])})
     replays = {row[0] for row in tables["research_runs"]}

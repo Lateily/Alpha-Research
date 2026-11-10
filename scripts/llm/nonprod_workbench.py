@@ -542,6 +542,8 @@ def make_handler(store, assets, origin, session, system=None, private=None, shar
                                 state['policy']['access_scope'] = state['access']['scope']
                             if shared.cards_enabled:
                                 state['access']['allowed_job_kinds']=[*state['access']['allowed_job_kinds'],'research-cards-review']
+                            if shared.review_enabled:
+                                state['access']['review_portal_enabled']=True
                     self.reply(200, state)
                 elif shared is not None and self.path.split("?", 1)[0] == "/api/shared-workspace":
                     from urllib.parse import parse_qs
@@ -553,6 +555,12 @@ def make_handler(store, assets, origin, session, system=None, private=None, shar
                     self.reply(200, shared.research_inputs(identity['login']))
                 elif shared is not None and self.path == '/api/shared-workspace/research-card-inputs':
                     self.reply(200,shared.research_card_inputs(identity['login']))
+                elif shared is not None and self.path == '/api/shared-workspace/reviews':
+                    self.reply(200,shared.review_portal.list(identity['login']))
+                elif shared is not None and self.path.startswith('/api/shared-workspace/review/'):
+                    checksum=self.path.removeprefix('/api/shared-workspace/review/')
+                    if not re.fullmatch(r'[a-f0-9]{64}',checksum):raise WorkbenchError('REVIEW_PATH_INVALID',400)
+                    self.reply(200,shared.review_portal.detail(checksum,identity['login']))
                 elif shared is not None and self.path.startswith("/api/shared-workspace/jobs/"):
                     self.reply(200, shared.job(self.path.removeprefix("/api/shared-workspace/jobs/"), identity["login"]))
                 elif shared is not None and self.path.startswith("/api/shared-workspace/input-card/"):
@@ -614,6 +622,17 @@ def make_handler(store, assets, origin, session, system=None, private=None, shar
                 identity = private.check(self.headers, self.client_address[0]) if private is not None else None
                 browser_session = private_session(session, identity["login"]) if identity else session
                 authorize(self.headers, origin, browser_session, write=True)
+                if identity and shared is not None and shared.review_enabled and self.path=='/api/shared-workspace/review-comment':
+                    lengths=self.headers.get_all('Content-Length',[])
+                    if self.headers.get('Transfer-Encoding') or len(lengths)!=1 or not re.fullmatch(r'[0-9]{1,5}',lengths[0]):
+                        raise WorkbenchError('BODY_LENGTH_REQUIRED',411)
+                    size=int(lengths[0])
+                    if not 1<=size<=16384:raise WorkbenchError('BODY_TOO_LARGE',413)
+                    if self.headers.get('Content-Type')!='application/json':raise WorkbenchError('JSON_REQUIRED',415)
+                    raw=self.rfile.read(size)
+                    if len(raw)!=size:raise WorkbenchError('BODY_TRUNCATED')
+                    self.reply(200,shared.review_portal.submit(decode_json(raw),identity['login']))
+                    return
                 if identity and (self.path != "/api/workspace/job" or system is None):
                     raise WorkbenchError("PRIVATE_OPERATION_DISABLED", 403)
                 lengths = self.headers.get_all("Content-Length", [])
@@ -678,6 +697,7 @@ def main(argv=None):
     parser.add_argument("--shared-workspace-v1", action="store_true", help="Opt-in isolated persistent shared jobs; requires private access")
     parser.add_argument('--shared-materials-v1', action='store_true', help='Opt-in registered earnings tasks; no content distribution')
     parser.add_argument('--shared-research-cards-v1',action='store_true',help='Opt-in frozen card metadata review tasks; no research/content/production approval')
+    parser.add_argument('--shared-review-v1',action='store_true',help='Opt-in explicitly granted derivative packets and attributed comments; no raw source or research approval')
     parser.add_argument("--governance-evidence-v1", action="store_true", help="Read operator-registered governance evidence from fixed isolated state; shared private mode only")
     parser.add_argument("--shared-import-once", type=Path, help="Explicit one-time frozen input import for shared mode; no automatic synchronizer")
     parser.add_argument("--read-only-auto-sync", action="store_true", help="Opt-in scoped file sync every 60 seconds; shared private mode and fixed source required")
@@ -698,6 +718,8 @@ def main(argv=None):
         raise WorkbenchError('SHARED_MATERIAL_PRIVATE_MODE_REQUIRED', 403)
     if args.shared_research_cards_v1 and (not args.shared_workspace_v1 or private is None):
         raise WorkbenchError('SHARED_CARDS_PRIVATE_MODE_REQUIRED',403)
+    if args.shared_review_v1 and (not args.shared_workspace_v1 or private is None):
+        raise WorkbenchError('SHARED_REVIEW_PRIVATE_MODE_REQUIRED',403)
     if args.governance_evidence_v1 and (not args.shared_workspace_v1 or private is None):
         raise WorkbenchError("GOVERNANCE_SHARED_PRIVATE_MODE_REQUIRED", 403)
     if args.shared_import_once and not args.shared_workspace_v1:
@@ -742,7 +764,8 @@ def main(argv=None):
         shared = SharedWorkspace(system, governance_evidence_enabled=args.governance_evidence_v1,
                                  research_library_root=args.research_library_root,
                                  research_library_hash=args.research_library_hash,
-                                 materials_enabled=args.shared_materials_v1,cards_enabled=args.shared_research_cards_v1)
+                                 materials_enabled=args.shared_materials_v1,cards_enabled=args.shared_research_cards_v1,
+                                 review_enabled=args.shared_review_v1)
         inputs = FrozenInputs(store)
         if args.shared_import_once: inputs.import_once(args.shared_import_once)
         queue = SharedJobQueue(shared, inputs, shared._execution_identity["code_sha"])

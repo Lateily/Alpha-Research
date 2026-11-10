@@ -49,6 +49,7 @@ EXECUTION_FILES = (
     "scripts/llm/research_daily_basis.py", "scripts/llm/research_valuation.py",
     "experiments/research_workflows/technical_contract.py", "experiments/research_workflows/technical_profiles.py",
     "experiments/research_workflows/smc_ict_engine.py", "experiments/research_workflows/smc_ict_input.py",
+    "scripts/llm/workbench_review_portal.py",
     "experiments/research_workflows/smc_ict_concepts.py", "experiments/execution_tracker/session_calendar.py",
     "experiments/research_funnel/research_cycle.py", "experiments/research_funnel/research_method.py",
 )
@@ -86,7 +87,7 @@ def execution_identity(root: Path) -> dict:
 
 class SharedWorkspace:
     def __init__(self, system: Workspace, *, governance_evidence_enabled=False,
-                 research_library_root=None, research_library_hash=None, materials_enabled=False,cards_enabled=False):
+                 research_library_root=None, research_library_hash=None, materials_enabled=False,cards_enabled=False,review_enabled=False):
         if not system.store.shared_v1 or not system.private_mode:
             raise WorkspaceError("SHARED_PRIVATE_MODE_REQUIRED", 403)
         self.system, self.store = system, system.store
@@ -98,6 +99,10 @@ class SharedWorkspace:
         self.materials_enabled = materials_enabled
         if type(cards_enabled) is not bool: raise WorkspaceError('CARDS_CONFIGURATION_INVALID',400)
         self.cards_enabled=cards_enabled
+        if type(review_enabled) is not bool:raise WorkspaceError('REVIEW_CONFIGURATION_INVALID',400)
+        self.review_enabled=review_enabled
+        from workbench_review_portal import ReviewPortal
+        self.review_portal=ReviewPortal(self)
         if type(governance_evidence_enabled) is not bool:
             raise WorkspaceError("GOVERNANCE_CONFIGURATION_INVALID", 400)
         self.governance_evidence_enabled = governance_evidence_enabled

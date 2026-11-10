@@ -18329,6 +18329,34 @@ def _parse_receipt(path: Path) -> TestReceipt:
     return TestReceipt(**payload)
 
 
+MUTATIONS = MUTATIONS + (
+    MutationCase(mutation_id='REVIEW_PACKET_MANIFEST_PIN',component='Granted human review',source_path='scripts/llm/workbench_review_portal.py',test_script='tests/test_workbench_review_portal.py',
+        before="    if ev.sha(raw)!=_hash(pin):raise ValueError('REVIEW_MANIFEST_PIN_MISMATCH')",after="    if False:raise ValueError('REVIEW_MANIFEST_PIN_MISMATCH')",
+        expected_failure_marker='test_wrong_pin_refuses_before_review_files_or_events',rationale='Independent input manifest pin remains mandatory.'),
+    MutationCase(mutation_id='REVIEW_AUDIENCE_GRANT_PIN',component='Granted human review',source_path='scripts/llm/workbench_review_portal.py',test_script='tests/test_workbench_review_portal.py',
+        before="    if ev.sealed(value)!=_hash(pin) or ev.canonical(value)!=ev.canonical(make_grant(manifest_pin,value['audience'],value['authorization_ref'])):",after='    if False:',
+        expected_failure_marker='test_audience_grant_is_independently_pinned_and_raw_sources_denied',rationale='Valid packet hash cannot authorize a substituted audience grant.'),
+    MutationCase(mutation_id='REVIEW_RETAINED_FILE_PINS',component='Granted human review',source_path='scripts/llm/workbench_review_portal.py',test_script='tests/test_workbench_review_portal.py',
+        before="    if ev.sha(raw)!=record['packet_hash'] or ev.sha(grant_raw)!=record['grant_hash']:",after='    if False:',
+        expected_failure_marker='test_packet_or_grant_tamper_cannot_self_reseal',rationale='Read verification uses original committed pins.'),
+    MutationCase(mutation_id='REVIEW_PACKET_AUDIENCE_GATE',component='Granted human review',source_path='scripts/llm/workbench_review_portal.py',test_script='tests/test_workbench_review_portal.py',
+        before="            if actor not in grant['audience']:raise WorkspaceError('REVIEW_AUDIENCE_DENIED',403)",after="            if False:raise WorkspaceError('REVIEW_AUDIENCE_DENIED',403)",
+        expected_failure_marker='test_audience_grant_is_independently_pinned_and_raw_sources_denied',rationale='Future service members do not inherit old packet access.'),
+    MutationCase(mutation_id='REVIEW_COMMENT_CONTEXT_GATE',component='Granted human review',source_path='scripts/llm/workbench_review_portal.py',test_script='tests/test_workbench_review_portal.py',
+        before="            if payload['expected_workspace_id']!=owner['workspace_id'] or payload['expected_code_sha']!=self.view._execution_identity['code_sha']:",after='            if False:',
+        expected_failure_marker='test_comment_actor_context_retry_and_append_only',rationale='A fresh command must bind current actor workspace and code.'),
+    MutationCase(mutation_id='REVIEW_COMMENT_EXACT_RETRY',component='Granted human review',source_path='scripts/llm/workbench_review_portal.py',test_script='tests/test_workbench_review_portal.py',
+        before="                    if existing['kind']!='REVIEW_ANNOTATION' or existing['request_hash']!=request_hash or existing.get('actor')!=actor:",after='                    if False:',
+        expected_failure_marker='test_comment_actor_context_retry_and_append_only',rationale='Changed requests cannot reuse a prior annotation id.'),
+    MutationCase(mutation_id='REVIEW_CLIENT_STALE_CALLBACK',component='Granted human review',source_path='tools/nonprod_workbench/ui/review-portal.jsx',test_script='tests/test_workbench_review_portal.py',
+        before='    if(stale||verified.current!==key||active.current!==key||posting.current||!packet)return;',after='    if(posting.current||!packet)return;',
+        expected_failure_marker='test_actual_client_contract_and_callback_regressions',rationale='Retained callbacks cannot submit during refresh or after an identity change.'),
+    MutationCase(mutation_id='REVIEW_CLIENT_COMPLETE_RECEIPT',component='Granted human review',source_path='tools/nonprod_workbench/ui/review-portal-view.mjs',test_script='tests/test_workbench_review_portal.py',
+        before='  require(row.annotation_id===body.command_id&&row.workspace_id===context.workspaceId&&row.code_sha===context.codeSha&&row.comment===body.comment&&row.status===body.status&&row.severity===body.severity);return value;',after='  require(row.annotation_id===body.command_id);return value;',
+        expected_failure_marker='test_actual_client_contract_and_callback_regressions',rationale='A same-id receipt with different content must not confirm submission.'),
+)
+
+
 def replace_exact(text: str, before: str, after: str, mutation_id: str) -> str:
     count = text.count(before)
     if count != 1:
