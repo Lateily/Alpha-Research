@@ -17,6 +17,7 @@ import workbench_runtime_service as service
 
 SCHEMA = 'ar.isolated-recovery.v1'
 SCHEMA_V2 = 'ar.isolated-recovery.v2'
+SCHEMA_V3 = 'ar.isolated-recovery.v3'
 EXTRA = {'backup_root','backup_hash','restore_hash','migration_hash','resources'}
 
 
@@ -67,11 +68,15 @@ def _runtime_sources(code):
 
 def _validate(value, root):
     v2=type(value) is dict and value.get('schema')==SCHEMA_V2
-    if (type(value) is not dict or set(value)!=service.FIELDS|EXTRA|({'features'} if v2 else set()) or value.get('schema') not in {SCHEMA,SCHEMA_V2}
+    v3=type(value) is dict and value.get('schema')==SCHEMA_V3
+    if (type(value) is not dict or set(value)!=service.FIELDS|EXTRA|({'features'} if v2 or v3 else set()) or value.get('schema') not in {SCHEMA,SCHEMA_V2,SCHEMA_V3}
             or type(value.get('resources')) is not dict or set(value['resources'])!={'source','library','library_hash'}):
         raise ValueError('RECOVERY_PROFILE_INVALID')
     if v2 and (type(value['features']) is not dict or set(value['features'])!={'research_cards_enabled'}
             or type(value['features']['research_cards_enabled']) is not bool):
+        raise ValueError('RECOVERY_FEATURES_INVALID')
+    if v3 and (type(value['features']) is not dict or set(value['features'])!={'research_cards_enabled','human_review_enabled'}
+            or any(type(flag) is not bool for flag in value['features'].values())):
         raise ValueError('RECOVERY_FEATURES_INVALID')
     core = {k:v for k,v in value.items() if k in service.FIELDS}
     core['schema']='ar.isolated-service.v1'
@@ -212,6 +217,11 @@ def arguments(value):
     args+=['--shared-materials-v1','--governance-evidence-v1']
     if value['schema']==SCHEMA_V2 and value['features']['research_cards_enabled']:
         args+=['--shared-research-cards-v1']
+    if value['schema']==SCHEMA_V3 and value['features']['research_cards_enabled']:
+        args+=['--shared-research-cards-v1']
+    # governance-mutation: RECOVERY_REVIEW_OPT_IN
+    if value['schema']==SCHEMA_V3 and value['features']['human_review_enabled']:
+        args+=['--shared-review-v1']
     source=value['resources']['source']; library=value['resources']['library']
     if source is not None: args+=['--read-only-source-root',source['root'],'--read-only-auto-sync']
     if library is not None:
@@ -220,8 +230,8 @@ def arguments(value):
 
 
 def prepare(root, backup_root, backup_hash, code_root, environment_root, environment_hash, port,
-            *, source_root=None, library_root=None, library_hash=None,cards_enabled=False):
-    if type(cards_enabled) is not bool: raise ValueError('RECOVERY_FEATURES_INVALID')
+            *, source_root=None, library_root=None, library_hash=None,cards_enabled=False,review_enabled=False):
+    if type(cards_enabled) is not bool or type(review_enabled) is not bool: raise ValueError('RECOVERY_FEATURES_INVALID')
     root,archive,code,environment=(runtime.safe_path(p) for p in (root,backup_root,code_root,environment_root))
     if (library_root is None)!=(library_hash is None): raise ValueError('RECOVERY_LIBRARY_PIN_REQUIRED')
     _roots(root,code,environment,archive,
@@ -249,6 +259,8 @@ def prepare(root, backup_root, backup_hash, code_root, environment_root, environ
         'resources':resources}
     if cards_enabled:
         value.update(schema=SCHEMA_V2,features={'research_cards_enabled':True})
+    if review_enabled:
+        value.update(schema=SCHEMA_V3,features={'research_cards_enabled':cards_enabled,'human_review_enabled':True})
     _validate(value,root)
     backup.write_new(root/'allowlist.json',ev.canonical({'members':[service.MEMBER]}).encode())
     raw=ev.canonical(value).encode(); pin=ev.sha(raw)

@@ -4,6 +4,7 @@ All fixtures are synthetic WORKFLOW_DEBUG packages. No production, trading, or
 deployment authority is granted. This file was authored, not executed, in wave 3.
 """
 import copy
+from datetime import datetime
 import json
 import os
 import shutil
@@ -383,6 +384,186 @@ class PreservationTests(unittest.TestCase):
             manifest = self.build([request])
             self.assertEqual(manifest["packages"][0]["total_bytes"], len(raw))
             self.verify(manifest, {"library-001": library})
+
+    def retained_inventory(self, root):
+        files, directories, total = {}, [], 0
+        for path in sorted(root.rglob("*")):
+            name = path.relative_to(root).as_posix()
+            if path.is_dir():
+                directories.append(name)
+            else:
+                raw = path.read_bytes()
+                files[name] = ev.sha(raw)
+                total += len(raw)
+        return {"files": files, "directories": directories, "total_bytes": total}
+
+    def gap_request(self):
+        import core_source_gaps as gaps
+        from experiments.data_governance.endpoint_calls import EndpointObservationError, EndpointSession
+
+        source, ledger = self.root / "gap-source", self.root / "gap-ledger"
+        session = EndpointSession(source, collector_run_id="preservation-gap-fixture",
+                                  target_trade_date="20261104",
+                                  clock=lambda: datetime.fromisoformat("2026-11-09T18:00:00+00:00"))
+
+        def unavailable():
+            raise OSError("synthetic offline source unavailable")
+
+        with self.assertRaises(EndpointObservationError):
+            session.observe("moneyflow_dc", {"ts_code": "603629.SH", "trade_date": "20261104"},
+                            "ts_code,trade_date,net_amount", unavailable)
+        source_hash = gaps.evidence(source)["evidence_hash"]
+        saved = gaps.ingest(ledger, source, expected_evidence_hash=source_hash, expected_head="0" * 64)
+        (ledger / "write-evidence" / "retained-empty").mkdir()
+        (ledger / "write-evidence" / "failed-copy.partial").write_bytes(b"uncommitted source-copy evidence\n")
+        request = self.request(package_id="gaps-001", kind="CORE_GAP_LEDGER", local_root=ledger,
+                               expected_content_hash=ev.sealed(self.retained_inventory(ledger)))
+        return request, saved["head_hash"]
+
+    def build_gap(self, request):
+        try:
+            return self.build([request])
+        except ValueError as error:
+            self.fail("pinned retained gap package must be accepted: " + str(error))
+
+    def test_core_gap_mixed_cold_copy_reopens_real_validators_without_promoting_failed_evidence(self):
+        import core_source_gaps as gaps
+        import foundation_materials as materials
+        import foundation_quarantine as quarantine
+        from tests.test_foundation_materials import FoundationMaterialsTests
+        from tests.test_foundation_quarantine import QuarantineTests
+
+        request, head = self.gap_request()
+        material_fixture = FoundationMaterialsTests()
+        material_fixture.setUp()
+        self.addCleanup(material_fixture.doCleanups)
+        admitted = material_fixture.ingest()
+        quarantine_fixture = QuarantineTests()
+        quarantine_fixture.setUp()
+        self.addCleanup(quarantine_fixture.doCleanups)
+        opaque = quarantine_fixture.create()
+        requests = [self.request(), request,
+                    self.request(package_id="library-001", kind="RESEARCH_LIBRARY",
+                                 local_root=material_fixture.library, expected_content_hash=admitted["library_hash"]),
+                    self.request(package_id="quarantine-001", kind="QUARANTINED_ORIGINALS",
+                                 local_root=quarantine_fixture.root / "quarantine",
+                                 expected_content_hash=opaque["quarantine_hash"])]
+        before = {row["package_id"]: self.retained_inventory(row["local_root"]) for row in requests}
+        try:
+            manifest = self.build(requests)
+        except ValueError as error:
+            self.fail("finite mixed package must include its retained gap ledger: " + str(error))
+        gap_row = next(row for row in manifest["packages"] if row["package_id"] == "gaps-001")
+        self.assertEqual(gap_row["files"], before["gaps-001"]["files"])
+        self.assertIn("write-evidence/retained-empty", gap_row["directories"])
+        self.assertIn("write-evidence/failed-copy.partial", gap_row["files"])
+        self.assertEqual(gap_row["semantics"]["validator"], "core_source_gaps.verify_retained")
+        self.assertEqual(gap_row["semantics"]["head_hash"], head)
+        self.assertEqual(gap_row["semantics"]["event_count"], 1)
+        self.assertEqual(gap_row["semantics"]["source_count"], 1)
+        self.assertEqual(gap_row["semantics"]["logical_call_count"], 1)
+        self.assertFalse(gap_row["semantics"]["automatic_retry"])
+        self.assertEqual(gap_row["semantics"]["research_readiness"], "NOT_EVALUATED")
+
+        moved = {}
+        for row in requests:
+            identity, source = row["package_id"], row["local_root"]
+            self.assertEqual(self.retained_inventory(source), before[identity])
+            destination = self.root / ("cold-" + identity)
+            shutil.copytree(source, destination)
+            moved[identity] = destination
+            source.rename(source.with_name(source.name + "-unavailable"))
+        checked = self.verify(manifest, moved)
+        self.assertEqual(checked["verified_package_ids"], ["backup-001", "gaps-001", "library-001", "quarantine-001"])
+        self.assertEqual(checked["package_bytes"], "MATCH")
+        self.assertEqual(checked["requirements"]["off_machine_storage"], "NOT_ATTESTED")
+        self.assertEqual(checked["human_review"], "PENDING")
+        self.assertFalse(checked["production_authority"])
+        self.assertFalse(checked["trading_authority"])
+        reopened = gaps.view(moved["gaps-001"], expected_head=head, observed_at="2099-01-01T00:00:00Z")
+        self.assertEqual(len(reopened["scopes"]), 1)
+        self.assertEqual(reopened["scopes"][0]["status"], "DATA_BLOCKED")
+        self.assertEqual(reopened["scopes"][0]["attempts_seen"], 1)
+        self.assertEqual(materials.verify_library(moved["library-001"],
+                         expected_library_hash=admitted["library_hash"])["materials"][0]["rights"], materials.RIGHTS)
+        self.assertFalse(quarantine.verify_quarantine(moved["quarantine-001"],
+                         expected_quarantine_hash=opaque["quarantine_hash"])["policy"]["research_use_allowed"])
+        for identity, destination in moved.items():
+            self.assertEqual(self.retained_inventory(destination), before[identity])
+
+    def test_core_gap_external_complete_inventory_pin_precedes_semantic_acceptance(self):
+        import core_source_gaps as gaps
+
+        request, _head = self.gap_request()
+        inventory = self.retained_inventory(request["local_root"])
+        pins = ["f" * 64, ev.sealed(inventory["files"]),
+                ev.sealed({**inventory, "directories": []}),
+                ev.sealed({**inventory, "total_bytes": inventory["total_bytes"] + 1})]
+        with mock.patch.object(gaps, "verify_retained", side_effect=AssertionError("semantic reader ran before pin refusal")):
+            for pin in pins:
+                with self.subTest(pin=pin), self.assertRaisesRegex(ValueError, "EXPECTED_CONTENT_HASH_MISMATCH"):
+                    self.build([{**request, "expected_content_hash": pin}])
+        self.assertEqual(self.retained_inventory(request["local_root"]), inventory)
+
+    def test_core_gap_correct_inventory_does_not_bypass_existing_chain_validator(self):
+        request, _head = self.gap_request()
+        event = next((request["local_root"] / "events").iterdir())
+        value = ev.parse(event.read_bytes())
+        value["previous_hash"] = "f" * 64
+        event.write_bytes(ev.canonical(value).encode())
+        request["expected_content_hash"] = ev.sealed(self.retained_inventory(request["local_root"]))
+        with self.assertRaisesRegex(ValueError, "GAPS_CHAIN_INVALID"):
+            self.build([request])
+
+    def test_core_gap_cold_tamper_missing_extra_and_empty_directory_refuse_original_pin(self):
+        request, _head = self.gap_request()
+        manifest = self.build_gap(request)
+        for change in ("tampered", "missing", "extra", "directory"):
+            destination = self.root / ("gap-" + change)
+            shutil.copytree(request["local_root"], destination)
+            if change == "tampered":
+                (destination / "metadata.json").write_bytes(b"{}")
+            elif change == "missing":
+                (destination / "write-evidence" / "failed-copy.partial").unlink()
+            elif change == "extra":
+                (destination / "write-evidence" / "extra.partial").write_bytes(b"unexpected")
+            else:
+                (destination / "write-evidence" / "another-empty").mkdir()
+            with self.subTest(change=change), self.assertRaisesRegex(ValueError, "EXPECTED_CONTENT_HASH_MISMATCH"):
+                self.verify(manifest, {"gaps-001": destination})
+
+    def test_core_gap_authority_cannot_be_promoted_by_resealing_metadata_or_handoff(self):
+        request, _head = self.gap_request()
+        manifest = self.build_gap(request)
+        for key, value in (("production_authority", True), ("automatic_retry", True),
+                           ("rights", "VERIFIED"), ("research_readiness", "APPROVED")):
+            changed = copy.deepcopy(manifest)
+            changed["packages"][0]["semantics"][key] = value
+            self.reseal_manifest(changed)
+            with self.subTest(field=key), self.assertRaisesRegex(ValueError, "DESTINATION_PACKAGE_BINDING_MISMATCH"):
+                self.verify(changed, {"gaps-001": request["local_root"]})
+        metadata = request["local_root"] / "metadata.json"
+        value = ev.parse(metadata.read_bytes())
+        value["production_authority"] = True
+        metadata.write_bytes(ev.canonical(value).encode())
+        request["expected_content_hash"] = ev.sealed(self.retained_inventory(request["local_root"]))
+        with self.assertRaisesRegex(ValueError, "GAPS_METADATA_INVALID"):
+            self.build([request])
+
+    def test_core_gap_inventory_is_rechecked_after_semantic_validation(self):
+        import core_source_gaps as gaps
+
+        request, _head = self.gap_request()
+        original = gaps.verify_retained
+
+        def append_after_reopen(root):
+            result = original(root)
+            (root / "write-evidence" / "concurrent.partial").write_bytes(b"concurrent failed evidence")
+            return result
+
+        with mock.patch.object(gaps, "verify_retained", side_effect=append_after_reopen):
+            with self.assertRaisesRegex(ValueError, "PACKAGE_CHANGED"):
+                self.build([request])
 
 
 if __name__ == "__main__":

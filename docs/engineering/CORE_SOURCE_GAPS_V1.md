@@ -58,6 +58,24 @@ does not retroactively accept that run or create a prospective sample.
 
 ## Acceptance
 
+The 2026-11-10 closeout also exposes `coverage(root, expected_scopes,
+expected_scope_hash=..., expected_head=..., observed_at=...)`. The caller pins
+the complete expectation list independently before receipt reads. A bounded list
+of 1..64 exact finite scopes uses the existing producer's canonical sorted field
+identity; duplicate canonical scopes refuse. Scope metadata is held before
+reopening observations. Every expected scope is emitted, including an uncalled
+one as DATA_BLOCKED/NO_CALL_EVIDENCE with dispatch_allowed=false. Another
+security/day or a caller mutation after pinning cannot satisfy that requirement.
+This is a finite observation projection, not global source-coverage certification.
+
+`verify_retained(root)` reopens a nonempty ledger and its frozen original
+receipts without writes, wall-clock promotion or provider dispatch. Preservation
+uses the exact CORE_GAP_LEDGER kind, an external complete inventory hash
+(files, directories and total_bytes) before the original semantic validator, and
+another full inventory check afterward. An arbitrary or empty directory cannot
+become accepted gap history. The existing local-generation engine can now retain
+and cold-reopen it alongside original material, quarantine and shared backups.
+
 TDD covers real EndpointSession-generated failure/success fixtures; permission,
 interruption, missing/old/future/wrong entity, exact field/date identity, chronology,
 CAS conflicts, tampering, durable reopen, duplicate logical calls and exhaustion.

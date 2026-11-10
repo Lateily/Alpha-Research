@@ -2,6 +2,7 @@
 import copy
 from contextlib import contextmanager
 import importlib.util
+import inspect
 from pathlib import Path
 import plistlib
 import shutil
@@ -226,6 +227,38 @@ class RecoveryTests(unittest.TestCase):
         marker.write_text('{}')
         with self.checks(), self.assertRaisesRegex(ValueError,'RECOVERY_NOT_READY'):
             m.verify(root/'profile.json',prepared['profile_hash'])
+
+    def test_review_recovery_is_explicit_and_preserves_legacy_profiles(self):
+        m=self.module()
+        self.assertIn('review_enabled',inspect.signature(m.prepare).parameters,
+                      'retained review topology has no explicit recovery opt-in')
+        legacy=self.prepare(root=self.base/'legacy')
+        cards=self.prepare(root=self.base/'cards',cards_enabled=True)
+        reviewed=self.prepare(root=self.base/'reviewed',review_enabled=True)
+        for receipt,schema in ((legacy,m.SCHEMA),(cards,m.SCHEMA_V2),(reviewed,m.SCHEMA_V3)):
+            with self.checks(): value=m.verify(Path(receipt['root'])/'profile.json',receipt['profile_hash'])
+            self.assertEqual(value['schema'],schema)
+            args=m.arguments(value)
+            self.assertEqual('--shared-review-v1' in args,receipt is reviewed)
+            self.assertEqual('--shared-research-cards-v1' in args,receipt is cards)
+            self.assertEqual(value['owner'],'owner@example.com')
+            self.assertFalse(value['production_authority'])
+
+    def test_review_recovery_rejects_unknown_or_nonboolean_feature_grants(self):
+        m=self.module()
+        self.assertIn('review_enabled',inspect.signature(m.prepare).parameters)
+        for bad in (1,'true',None):
+            with self.assertRaisesRegex(ValueError,'RECOVERY_FEATURES_INVALID'):
+                self.prepare(root=self.base/'invalid-review',review_enabled=bad)
+            self.assertFalse((self.base/'invalid-review').exists())
+        receipt=self.prepare(review_enabled=True,cards_enabled=True)
+        root=Path(receipt['root']); value=ev.parse((root/'profile.json').read_bytes())
+        self.assertEqual(value['features'],{'research_cards_enabled':True,'human_review_enabled':True})
+        self.assertIn('--shared-review-v1',m.arguments(value))
+        self.assertIn('--shared-research-cards-v1',m.arguments(value))
+        value['features']['grant_audience_override']=['anyone@example.com']
+        with self.checks(),self.assertRaisesRegex(ValueError,'RECOVERY_FEATURES_INVALID'):
+            m._validate(value,root)
 
 
 if __name__ == '__main__': unittest.main()

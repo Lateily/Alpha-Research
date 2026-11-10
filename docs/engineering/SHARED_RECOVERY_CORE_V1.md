@@ -58,6 +58,14 @@ or a BREAK into a trading setup. Those slices follow recovery acceptance.
 
 ## Acceptance
 
+The 2026-11-10 isolated closeout adds exact profile v3 for explicit human-review
+recovery. `recovery-prepare --human-review` preserves the review feature across
+child restarts; research cards remain a separate explicit boolean. Legacy v1/v2
+shapes and defaults are unchanged. Unknown or nonboolean feature grants refuse.
+The original packet grant, audience, comment actor and output seals are never
+rewritten to fit the synthetic recovery identities. A restored packet denied to
+those synthetic users is expected, not a reason to bypass the audience check.
+
 TDD: valid backup/new root, wrong external pin, retained artifacts, credential
 absence, existing/overlapping/symlink paths, changed resource/code/environment,
 unknown flags, duplicate supervisor, bounded restarts, cold supervisor restart,

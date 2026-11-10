@@ -235,6 +235,64 @@ def view(root,*,expected_head,observed_at):
             'outside_coverage':'NOT_INSTRUMENTED','human_review':'PENDING',**LABELS}
 
 
+def coverage(root,expected_scopes,*,expected_scope_hash,expected_head,observed_at):
+    _hash(expected_scope_hash)
+    if type(expected_scopes) is not list or not 1<=len(expected_scopes)<=64:
+        raise ValueError('GAPS_EXPECTATION_LIMIT')
+    expected={}; held=[]
+    for index,scope in enumerate(expected_scopes):
+        if index>=64: raise ValueError('GAPS_EXPECTATION_LIMIT')
+        if type(scope) is not dict or set(scope)!={'api_name','ts_code','trade_date','fields'}:
+            raise ValueError('GAPS_EXPECTATION_FIELDS')
+        scope=dict(scope)
+        api=scope['api_name']; fields=scope['fields']; day=scope['trade_date']; symbol=scope['ts_code']
+        if (type(api) is not str or api not in CORE or type(fields) is not str
+                or len(fields)>128 or len(fields.split(','))!=3 or set(fields.split(','))!=CORE[api]
+                or type(symbol) is not str or re.fullmatch(r'[0-9]{6}\.(SH|SZ|BJ)',symbol) is None
+                or type(day) is not str or re.fullmatch(r'[0-9]{8}',day) is None):
+            raise ValueError('GAPS_EXPECTATION_SCOPE')
+        try: datetime.strptime(day,'%Y%m%d')
+        except ValueError: raise ValueError('GAPS_EXPECTATION_DATE') from None
+        held.append(scope)
+        scope={**scope,'fields':','.join(sorted(fields.split(',')))}
+        key=ev.sealed(scope)
+        if key in expected: raise ValueError('GAPS_EXPECTATION_DUPLICATE')
+        expected[key]=scope
+    # governance-mutation: CORE_GAPS_EXPECTATION_PIN
+    if ev.sealed(held)!=expected_scope_hash:
+        raise ValueError('GAPS_EXPECTATION_PIN_MISMATCH')
+    observed=view(root,expected_head=expected_head,observed_at=observed_at)
+    available={row['gap_id']:row for row in observed['scopes']}
+    rows=[]
+    # Every required scope must survive projection, including never-invoked ones.
+    # governance-mutation: CORE_GAPS_EXPECTED_COVERAGE
+    for key in sorted(expected):
+        match=available.get(key)
+        if match is None:
+            rows.append({'gap_id':key,**expected[key],'status':'DATA_BLOCKED','reason':'NO_CALL_EVIDENCE',
+                'history':[],'attempts_seen':0,'recheck_status':'BLOCKED_NO_OBSERVATION',
+                'next_eligible_at':None,'dispatch_allowed':False,'rights':'UNVERIFIED',
+                'research_readiness':'NOT_EVALUATED'})
+        else: rows.append(match)
+    observed_count=sum(bool(row['history']) for row in rows)
+    valid=sum(row['status'] in {'VALID_SCOPE_OBSERVED','RECOVERED_SCOPE_OBSERVED'} for row in rows)
+    return {'schema':'ar.core-source-coverage.v1','expectation_hash':expected_scope_hash,
+        'head_hash':observed['head_hash'],'observed_at':observed['observed_at'],
+        'status':'OBSERVED_SCOPE_VALID' if valid==len(expected) else 'DATA_BLOCKED',
+        'counts':{'expected':len(expected),'observed':observed_count,'valid':valid,'missing':len(expected)-observed_count},
+        'scopes':rows,'outside_expected_scope_count':len(set(available)-set(expected)),
+        'observation_authority':observed['observation_authority'],'human_review':'PENDING',**LABELS}
+
+
+def verify_retained(root):
+    events,head,calls=_read(root)
+    # governance-mutation: CORE_GAPS_RETAINED_HISTORY
+    if not events: raise ValueError('GAPS_RETAINED_HISTORY_REQUIRED')
+    return {'schema':'ar.core-gap-retained.v1','head_hash':head,'event_count':len(events),
+        'source_count':len({row['evidence_hash'] for row in events}),'logical_call_count':len(calls),
+        'observation_authority':'LOCAL_RECEIPTS_NOT_PROVIDER_AUTHENTICATED','human_review':'PENDING',**LABELS}
+
+
 def main():
     parser=argparse.ArgumentParser(description=__doc__); commands=parser.add_subparsers(dest='command',required=True)
     inspect=commands.add_parser('evidence'); inspect.add_argument('--source',type=Path,required=True)
@@ -242,10 +300,18 @@ def main():
     add.add_argument('--source-pin',required=True); add.add_argument('--head',required=True)
     show=commands.add_parser('view'); show.add_argument('--root',type=Path,required=True)
     show.add_argument('--head',required=True); show.add_argument('--observed-at',required=True)
+    required=commands.add_parser('coverage'); required.add_argument('--root',type=Path,required=True)
+    required.add_argument('--expectations',type=Path,required=True); required.add_argument('--scope-pin',required=True)
+    required.add_argument('--head',required=True); required.add_argument('--observed-at',required=True)
     args=parser.parse_args()
     if args.command=='evidence': result=evidence(args.source)
     elif args.command=='ingest': result=ingest(args.root,args.source,expected_evidence_hash=args.source_pin,expected_head=args.head)
-    else: result=view(args.root,expected_head=args.head,observed_at=args.observed_at)
+    elif args.command=='view': result=view(args.root,expected_head=args.head,observed_at=args.observed_at)
+    else:
+        source=safe_path(args.expectations)
+        scopes=ev.parse(ev.read_local(source.parent,source.name))
+        result=coverage(args.root,scopes,expected_scope_hash=args.scope_pin,
+                        expected_head=args.head,observed_at=args.observed_at)
     print(ev.canonical(result))
 
 

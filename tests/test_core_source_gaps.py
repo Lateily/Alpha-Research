@@ -47,6 +47,106 @@ class CoreGapTests(unittest.TestCase):
     def view(self,head):
         return self.module().view(self.ledger,expected_head=head,observed_at='2099-01-01T00:00:00Z')
 
+    def scope(self,api='moneyflow_dc',date='20261030',symbol='603629.SH'):
+        return {'api_name':api,'ts_code':symbol,'trade_date':date,
+                'fields':','.join(sorted(['ts_code','trade_date','net_amount' if api=='moneyflow_dc' else 'close']))}
+
+    def coverage(self,scopes,head=None,pin=None):
+        m=self.module()
+        self.assertTrue(callable(getattr(m,'coverage',None)),
+                        'required but never-called core scopes are not projected')
+        return m.coverage(self.ledger,scopes,expected_scope_hash=pin or ev.sealed(scopes),
+                          expected_head=head or '0'*64,observed_at='2099-01-01T00:00:00Z')
+
+    def test_required_but_never_called_scope_stays_explicitly_blocked(self):
+        scopes=[self.scope('daily'),self.scope()]
+        value=self.coverage(scopes)
+        self.assertEqual(value['status'],'DATA_BLOCKED')
+        self.assertEqual(value['counts'],{'expected':2,'observed':0,'valid':0,'missing':2})
+        self.assertEqual(len(value['scopes']),2)
+        self.assertTrue(all(r['status']=='DATA_BLOCKED' and r['reason']=='NO_CALL_EVIDENCE'
+                            and not r['dispatch_allowed'] for r in value['scopes']))
+        self.assertFalse(self.ledger.exists(),'read-only coverage must not create a ledger')
+        self.assertFalse(value['automatic_retry'])
+        self.assertEqual(value['research_readiness'],'NOT_EVALUATED')
+
+    def test_expected_day_and_entity_never_use_another_observation(self):
+        receipt=self.ingest(self.source(api='daily',kind='good'))
+        scopes=[self.scope('daily'),self.scope('daily',date='20261102'),
+                self.scope('daily',symbol='600000.SH')]
+        value=self.coverage(scopes,receipt['head_hash'])
+        self.assertEqual(value['counts'],{'expected':3,'observed':1,'valid':1,'missing':2})
+        self.assertEqual(value['status'],'DATA_BLOCKED')
+        matched=next(r for r in value['scopes'] if r['gap_id']==ev.sealed(scopes[0]))
+        self.assertEqual(matched['status'],'VALID_SCOPE_OBSERVED')
+        self.assertEqual(value['outside_expected_scope_count'],0)
+
+    def test_expectation_field_order_uses_existing_endpoint_canonicalization(self):
+        receipt=self.ingest(self.source(kind='good'))
+        scope={**self.scope(),'fields':'ts_code,trade_date,net_amount'}
+        value=self.coverage([scope],receipt['head_hash'])
+        self.assertEqual(value['status'],'OBSERVED_SCOPE_VALID')
+        self.assertEqual(value['scopes'][0]['fields'],'net_amount,trade_date,ts_code')
+
+    def test_expectation_input_is_held_across_observation_reopen(self):
+        m=self.module(); scopes=[self.scope()]; original=m.view
+        def mutate(*args,**kwargs):
+            scopes[0]['ts_code']='600000.SH'
+            return original(*args,**kwargs)
+        with patch.object(m,'view',side_effect=mutate):
+            value=self.coverage(scopes)
+        self.assertEqual(value['scopes'][0]['ts_code'],'603629.SH')
+
+    def test_coverage_recovers_exact_scope_and_preserves_original_failure(self):
+        failed=self.ingest(self.source())
+        good=self.ingest(self.source(kind='good',stamp='2026-11-09T18:30:00+00:00'),failed['head_hash'])
+        value=self.coverage([self.scope()],good['head_hash'])
+        self.assertEqual(value['status'],'OBSERVED_SCOPE_VALID')
+        self.assertEqual(value['counts'],{'expected':1,'observed':1,'valid':1,'missing':0})
+        self.assertEqual(value['scopes'][0]['status'],'RECOVERED_SCOPE_OBSERVED')
+        self.assertEqual(len(value['scopes'][0]['history']),2)
+        self.assertEqual(value['rights'],'UNVERIFIED')
+
+    def test_coverage_pin_is_independent_and_precedes_observation_read(self):
+        m=self.module(); self.assertTrue(callable(getattr(m,'coverage',None)))
+        with patch.object(m,'view') as observed:
+            with self.assertRaisesRegex(ValueError,'GAPS_EXPECTATION_PIN_MISMATCH'):
+                self.coverage([self.scope()],pin='f'*64)
+            observed.assert_not_called()
+        self.assertFalse(self.ledger.exists())
+
+    def test_coverage_refuses_empty_duplicate_invalid_or_authority_expanded_scopes(self):
+        good=self.scope()
+        for scopes in ([],[good,good],[good,{**good,'fields':'ts_code,trade_date,net_amount'}],[{**good,'trade_date':'20260230'}],
+                       [{**good,'ts_code':'anything'}],[{**good,'api_name':'income'}],
+                       [{**good,'fields':'ts_code,trade_date,net_amount,net_amount'}],
+                       [{**good,'dispatch_allowed':True}], [good]*65):
+            with self.subTest(scopes=str(scopes)[:160]):
+                with self.assertRaisesRegex(ValueError,'GAPS_EXPECTATION'):
+                    self.coverage(scopes)
+
+    def test_retained_ledger_semantics_reopen_without_writes_or_data_promotion(self):
+        m=self.module()
+        self.assertTrue(callable(getattr(m,'verify_retained',None)),
+                        'preservation has no existing gap-ledger semantic reopen API')
+        receipt=self.ingest(self.source())
+        before={p.relative_to(self.ledger).as_posix():p.read_bytes() for p in self.ledger.rglob('*') if p.is_file()}
+        result=m.verify_retained(self.ledger)
+        self.assertEqual(result['head_hash'],receipt['head_hash'])
+        self.assertEqual(result['event_count'],1)
+        self.assertEqual(result['logical_call_count'],1)
+        self.assertFalse(result['automatic_retry'])
+        self.assertEqual(result['research_readiness'],'NOT_EVALUATED')
+        self.assertEqual(before,{p.relative_to(self.ledger).as_posix():p.read_bytes() for p in self.ledger.rglob('*') if p.is_file()})
+        next((self.ledger/'sources').rglob('terminal.json')).write_bytes(b'{}')
+        with self.assertRaises(ValueError): m.verify_retained(self.ledger)
+
+    def test_empty_directory_is_not_a_retained_gap_ledger(self):
+        m=self.module(); self.assertTrue(callable(getattr(m,'verify_retained',None)))
+        with self.assertRaisesRegex(ValueError,'GAPS_RETAINED_HISTORY_REQUIRED'):
+            m.verify_retained(self.ledger)
+        self.assertFalse(self.ledger.exists())
+
     def test_wrong_external_source_pin_precedes_any_ledger_creation(self):
         m=self.module(); source=self.source()
         with self.assertRaisesRegex(ValueError,'GAPS_EVIDENCE_PIN'):
