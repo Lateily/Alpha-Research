@@ -383,7 +383,7 @@ class SharedJobQueue:
     def _job_with_verified_inputs(self,job_id,verified_inputs):
         identifier(job_id)
         with self.store.connect() as db: _, job = self._load(db, job_id)
-        job = (self._view(job,verified_inputs=verified_inputs) if job['kind']=='research-cards-review'
+        job = (self._view(job,verified_inputs=verified_inputs) if job.get('kind')=='research-cards-review'
                else self._view(job))
         detail = {**self.shared._metadata(job), "result": job["result"], "snapshot_id": job["snapshot_id"]}
         if job['status']=='SUCCEEDED' and job['kind']=='research-cards-review':

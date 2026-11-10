@@ -18196,10 +18196,19 @@ MUTATIONS += (
         'test_browser_card_contract','Disposal also fences late detail failures.'),
     MutationCase('SHARED_CARDS_LEGACY_DETAIL_SIGNATURE','Shared cards','scripts/llm/workbench_shared_jobs.py',
         'tests/test_workbench_shared_cards.py',
-        "        job = (self._view(job,verified_inputs=verified_inputs) if job['kind']=='research-cards-review'\n               else self._view(job))",
+        "        job = (self._view(job,verified_inputs=verified_inputs) if job.get('kind')=='research-cards-review'\n               else self._view(job))",
         "        job = self._view(job,verified_inputs=verified_inputs)",
         'test_legacy_detail_reopen_contract_keeps_its_existing_call_signature',
         'New card request memo does not alter legacy detail call contracts.'),
+)
+
+
+MUTATIONS += (
+    MutationCase('SHARED_CARDS_MALFORMED_KIND_RECOVERY','Shared cards','scripts/llm/workbench_shared_jobs.py',
+        'tests/test_workbench_shared_cards.py',
+        "if job.get('kind')=='research-cards-review'","if job['kind']=='research-cards-review'",
+        'test_malformed_mutable_kind_reaches_existing_recovery_validation',
+        'Malformed mutable dispatch fields reach the immutable recovery validation boundary.'),
 )
 
 

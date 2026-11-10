@@ -282,6 +282,24 @@ class SharedCardTests(unittest.TestCase):
         SharedJobTests('test_detail_read_rechecks_bytes_after_seal_reopen').run(result)
         self.assertEqual(result.testsRun,1);self.assertEqual(result.errors,[]);self.assertEqual(result.failures,[])
 
+    def test_malformed_mutable_kind_reaches_existing_recovery_validation(self):
+        queue,view,entry,payload=self.queue(); job=self.complete_card(queue,payload)
+        with queue.store.connect() as db:
+            raw=db.execute('SELECT body FROM shared_jobs WHERE job_id=?',(job['job_id'],)).fetchone()[0]
+        for kind in ('MISSING',None,[], 'unknown-kind'):
+            with self.subTest(kind=kind):
+                value=ev.parse(raw)
+                if kind=='MISSING':value.pop('kind')
+                else:value['kind']=kind
+                with queue.store.connect() as db:
+                    db.execute('UPDATE shared_jobs SET body=? WHERE job_id=?',(ev.canonical(value),job['job_id']))
+                try:detail=view.job(job['job_id'],'owner@example.com')
+                except Exception as error:self.fail('Malformed kind bypassed recovery validation: '+repr(error))
+                self.assertEqual(detail['status'],'RECOVERY_REQUIRED')
+                self.assertEqual(detail['actor'],'owner@example.com')
+                self.assertNotIn('research_cards',detail)
+        with queue.store.connect() as db:db.execute('UPDATE shared_jobs SET body=? WHERE job_id=?',(raw,job['job_id']))
+
     def complete_card(self,queue,payload):
         import workbench_shared_worker as worker
         job=queue.enqueue(payload,'owner@example.com'); claim=queue.claim()
