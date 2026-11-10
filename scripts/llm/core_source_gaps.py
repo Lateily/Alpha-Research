@@ -309,8 +309,11 @@ def main():
     elif args.command=='view': result=view(args.root,expected_head=args.head,observed_at=args.observed_at)
     else:
         source=safe_path(args.expectations)
-        scopes=ev.parse(ev.read_local(source.parent,source.name))
-        result=coverage(args.root,scopes,expected_scope_hash=args.scope_pin,
+        request=ev.parse(ev.read_local(source.parent,source.name))
+        # governance-mutation: CORE_GAPS_CLI_ENVELOPE
+        if set(request)!={'schema','scopes'} or request['schema']!='ar.core-source-expectations.v1':
+            raise ValueError('GAPS_EXPECTATION_ENVELOPE_INVALID')
+        result=coverage(args.root,request['scopes'],expected_scope_hash=args.scope_pin,
                         expected_head=args.head,observed_at=args.observed_at)
     print(ev.canonical(result))
 

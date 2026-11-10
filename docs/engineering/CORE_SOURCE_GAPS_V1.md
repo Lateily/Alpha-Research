@@ -67,6 +67,9 @@ reopening observations. Every expected scope is emitted, including an uncalled
 one as DATA_BLOCKED/NO_CALL_EVIDENCE with dispatch_allowed=false. Another
 security/day or a caller mutation after pinning cannot satisfy that requirement.
 This is a finite observation projection, not global source-coverage certification.
+The CLI file is an exact `{"schema":"ar.core-source-expectations.v1","scopes":[...]}`
+object; the independent scope pin covers the list, not the envelope. Top-level
+lists, unknown keys or schemas and wrong pins refuse through the actual CLI.
 
 `verify_retained(root)` reopens a nonempty ledger and its frozen original
 receipts without writes, wall-clock promotion or provider dispatch. Preservation

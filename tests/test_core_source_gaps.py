@@ -4,6 +4,7 @@ import importlib.util
 import json
 import os
 from pathlib import Path
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -69,6 +70,28 @@ class CoreGapTests(unittest.TestCase):
         self.assertFalse(self.ledger.exists(),'read-only coverage must not create a ledger')
         self.assertFalse(value['automatic_retry'])
         self.assertEqual(value['research_readiness'],'NOT_EVALUATED')
+
+    def test_coverage_cli_accepts_exact_envelope_and_refuses_unknown_fields(self):
+        head=self.ingest(self.source(api='daily',kind='good'))['head_hash']
+        scopes=[self.scope('daily'),self.scope()]
+        source=self.root/'expectations.json'
+        envelope={'schema':'ar.core-source-expectations.v1','scopes':scopes}
+        command=[sys.executable,'-B',str(ROOT/'scripts/llm/core_source_gaps.py'),'coverage',
+                 '--root',str(self.ledger),'--expectations',str(source),'--head',head,
+                 '--observed-at','2099-01-01T00:00:00Z','--scope-pin',ev.sealed(scopes)]
+        source.write_bytes(ev.canonical(envelope).encode())
+        actual=subprocess.run(command,capture_output=True,timeout=30)
+        self.assertEqual(actual.returncode,0,actual.stderr.decode())
+        self.assertEqual(ev.parse(actual.stdout),self.coverage(scopes,head))
+        wrong_pin=subprocess.run(command[:-1]+['f'*64],capture_output=True,timeout=30)
+        self.assertEqual(wrong_pin.returncode,2)
+        self.assertEqual(wrong_pin.stdout,b'')
+        for malformed in (scopes,{**envelope,'schema':'unknown'},{**envelope,'dispatch_allowed':True}):
+            with self.subTest(malformed=malformed):
+                source.write_bytes(ev.canonical(malformed).encode())
+                refused=subprocess.run(command,capture_output=True,timeout=30)
+                self.assertEqual(refused.returncode,2)
+                self.assertEqual(refused.stdout,b'')
 
     def test_expected_day_and_entity_never_use_another_observation(self):
         receipt=self.ingest(self.source(api='daily',kind='good'))

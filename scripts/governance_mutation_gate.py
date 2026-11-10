@@ -19210,6 +19210,12 @@ MUTATIONS += (
         '        checked = verify_retained(root)', '        checked = {}',
         'test_core_gap_correct_inventory_does_not_bypass_existing_chain_validator',
         'A matching inventory alone cannot bypass the original gap chain validator.'),
+    MutationCase('CORE_GAPS_CLI_ENVELOPE','Core gaps','scripts/llm/core_source_gaps.py',
+        'tests/test_core_source_gaps.py',
+        "        if set(request)!={'schema','scopes'} or request['schema']!='ar.core-source-expectations.v1':",
+        '        if False:',
+        'test_coverage_cli_accepts_exact_envelope_and_refuses_unknown_fields',
+        'The real CLI admits only the exact versioned expectation envelope.'),
 )
 
 
