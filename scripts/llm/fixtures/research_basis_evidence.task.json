@@ -1,0 +1,22 @@
+{
+  "schema": "ai-task.v1",
+  "task_id": "RESEARCH-BASIS-EVIDENCE-20261109",
+  "architecture_block": ["Research financial evidence", "Real daily evidence", "Offline validation"],
+  "objective": "Extend retained-source EPS, cash, multiple and real-daily evidence without imputing missing inputs or certifying human decisions.",
+  "non_goals": ["No production/shared/formal-ledger/U4/paper/provider/API/paid/collection/push/merge/release action."],
+  "human_owner": "Junyan",
+  "reviewer": "Independent nonauthor AI engineer",
+  "executor_candidates": ["Codex"],
+  "dependencies": ["Accepted898eb59 isolated artifacts and guards", "Retained issuer originals and daily capture", "Original ce46949 daily contract/profile"],
+  "authority_docs": ["AGENTS.md", "scripts/llm/AGENTS.md", "experiments/AGENTS.md", "docs/engineering/RESEARCH_BASIS_EVIDENCE_V1.md"],
+  "file_scope": ["scripts/llm/research_basis_evidence.py", "scripts/llm/research_daily_basis.py", "tests/test_research_basis_evidence.py", "tests/test_research_daily_basis.py", "scripts/governance_mutation_gate.py", "tests/test_no_network_guard.py", ".github/workflows/python-ci.yml", "docs/engineering/RESEARCH_BASIS_EVIDENCE_V1.md", "docs/superpowers/plans/2026-11-09-research-basis-evidence.md", "scripts/llm/fixtures/research_basis_evidence.task.json"],
+  "forbidden_scope": ["ar-live", "Installed shared code/state/service", "Formal ledgers", "Original source and old outputs", "Original schemas/technical ports/limits", "Credentials", "Capital or constitutional rules"],
+  "input_contracts": ["Externally pinned material and content v2", "Exact nullable basis worksheet", "Original observation and raw SSE capture bytes"],
+  "output_artifacts": ["Financial/daily basis card and report", "Retained-source demonstration", "Same-final full offline gates and independent review"],
+  "acceptance_tests": ["Typed same-period financial reconciliations and honest gaps", "Actual CLI pin/reseal/size/root rejection", "Calendar provenance/ambiguity, positive action, capture-only vintage", "All original1589records unchanged plus new behavior kills", "Full local CI and source/legacy/installed preservation"],
+  "risk_level": "HIGH",
+  "network_policy": "OFFLINE",
+  "budget": {"max_cny": "0", "max_minutes": 240},
+  "approval_gates": ["Current user authorizes isolated continuation; all human financial/method/case/U4/paper gates remain separate"],
+  "created_at": "2026-11-09T15:32:00+00:00"
+}

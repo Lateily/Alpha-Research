@@ -247,7 +247,7 @@ def _validate_pin(value):
 def _snapshot(root, row):
     snapshot_id, input_hash, body = row
     envelope = FrozenInputs.verify_registered(root / "frozen-inputs", snapshot_id, (input_hash, body))
-    if envelope['schema'] == 'ar.shared-material-input.v1':
+    if envelope['schema'] in {'ar.shared-material-input.v1','ar.shared-research-card-input.v1'}:
         reference = f'frozen-inputs/envelopes/{snapshot_id}.json'
         return {**{key: envelope[key] for key in SNAPSHOT_FIELDS}, 'snapshot_hash': input_hash,
                 'envelope_ref': reference, 'attempt_ref': reference,
@@ -279,7 +279,7 @@ def _registered_jobs(tables, manifest):
     for identity, (job, registration, registry_hash) in jobs.items():
         names = sorted({name for group in manifest["artifact_inventory"] if group["job_id"] == identity
                         for name in group["files"]})
-        if job['kind'] == 'earnings-review':
+        if job['kind'] in {'earnings-review','research-cards-review'}:
             # The verified job seal pins its deep archive inventory. Keep v1's
             # global portable-reference depth limit; reference that seal and roots.
             names = [name for name in names if len(name.split('/')) <= 8

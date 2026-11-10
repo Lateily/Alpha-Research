@@ -53,6 +53,17 @@ export function retainedStatus(value, stale) {
   return stale ? 'DISCONNECTED' : value;
 }
 
+// Common freshness must not wait for the independent, single-flight detail read.
+export function createSharedRefreshPair({read,apply,readDetails,fail,schedule=setTimeout,cancel=clearTimeout}) {
+  let latest;
+  const details=createSharedPoller({read:()=>readDetails(latest),apply:()=>{},fail,schedule:()=>null,cancel:()=>{}});
+  const common=createSharedPoller({read,apply:async data=>{
+    apply(data);latest=data;
+    details.refresh();
+  },fail,schedule,cancel});
+  return {refresh:()=>common.refresh(),stop(){common.stop();details.stop();}};
+}
+
 export function commonSyncView(common, stale) {
   const identities = common?.observation?.run_identity || {};
   return {

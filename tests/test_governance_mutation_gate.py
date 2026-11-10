@@ -57,6 +57,93 @@ class GovernanceMutationGateTests(unittest.TestCase):
         gate.validate_manifest(REPO_ROOT, gate.MUTATIONS)
         self.assertGreaterEqual(len(gate.MUTATIONS), 16)
 
+    def test_technical_marker_mapping_is_required_16(self) -> None:
+        self.assertEqual({
+            "T2_U4_OUTER_CHAIN": "TECHNICAL_U4_OUTER_CHAIN",
+            "T2_EXPOSURE_BOUNDARY": "TECHNICAL_EXPOSURE_BOUNDARY",
+            "T2_U4_EXACT_IDENTITY": "TECHNICAL_U4_EXACT_IDENTITY",
+            "T2_SOURCE_PIT": "TECHNICAL_SOURCE_PIT",
+            "T2_BAR_PIT": "TECHNICAL_BAR_PIT",
+            "T2_RAW_PRICE_BASIS": "TECHNICAL_RAW_PRICE_BASIS",
+            "T2_CALENDAR_HOLE": "TECHNICAL_CALENDAR_HOLE",
+            "T2_ACTION_CONTINUITY": "TECHNICAL_ACTION_CONTINUITY",
+            "T2_FIX1_RED_FLAG_PROVENANCE": "TECHNICAL_F1_ORIGINAL_PROVENANCE",
+            "T2_CURRENT_RED_FLAG_COVERAGE": "TECHNICAL_CURRENT_RED_FLAG_COVERAGE",
+            "T2_FIX1_ORIGINAL_ACTIVE_PRECEDENCE": "TECHNICAL_F1_ACTIVE_PRECEDENCE",
+            "T2_FIX1_E1_NEGATIVE_PROOF": "TECHNICAL_F1_NEGATIVE_PROOF",
+            "T2_FIX1_FLOW_CALENDAR_DEPENDENCY": "TECHNICAL_F2_CALENDAR_FLOW",
+            "T2_FLOW_LAST_TWO": "TECHNICAL_FLOW_LAST_TWO",
+            "T2_CONTEXT_RECEIPT_PIT": "TECHNICAL_CONTEXT_RECEIPT_PIT",
+            "T2_CONTEXT_CONFIRMATION": "TECHNICAL_CONTEXT_CONFIRMATION",
+        }, gate.TECHNICAL_GUARD_MUTATIONS)
+        gate.validate_technical_marker_coverage(REPO_ROOT, gate.MUTATIONS)
+
+    def test_technical_marker_coverage_requires_every_mutation(self) -> None:
+        for mutation_id in gate.TECHNICAL_GUARD_MUTATIONS.values():
+            cases = tuple(case for case in gate.MUTATIONS if case.mutation_id != mutation_id)
+            with self.subTest(mutation_id=mutation_id), self.assertRaisesRegex(
+                gate.MutationGateError, "missing_mutations=.*" + mutation_id
+            ):
+                gate.validate_technical_marker_coverage(REPO_ROOT, cases)
+
+    def test_technical_marker_coverage_requires_source(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp, self.assertRaisesRegex(
+            gate.MutationGateError, "technical guard source is missing"
+        ):
+            gate.validate_technical_marker_coverage(Path(tmp), gate.MUTATIONS)
+
+    def test_technical_marker_coverage_rejects_unbound_marker(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write_technical_markers(root, (*gate.TECHNICAL_GUARD_MUTATIONS, "T2_UNBOUND"))
+            with self.assertRaisesRegex(
+                gate.MutationGateError, "markers_without_bindings=.*T2_UNBOUND"
+            ):
+                gate.validate_technical_marker_coverage(root, gate.MUTATIONS)
+
+    def test_technical_marker_coverage_rejects_duplicate_marker(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write_technical_markers(root, (*gate.TECHNICAL_GUARD_MUTATIONS, "T2_U4_OUTER_CHAIN"))
+            with self.assertRaisesRegex(
+                gate.MutationGateError, "duplicate technical guard marker: T2_U4_OUTER_CHAIN"
+            ):
+                gate.validate_technical_marker_coverage(root, gate.MUTATIONS)
+
+    def test_technical_marker_coverage_rejects_removed_required_marker(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            for marker in gate.TECHNICAL_GUARD_MUTATIONS:
+                write_technical_markers(root, tuple(
+                    value for value in gate.TECHNICAL_GUARD_MUTATIONS if value != marker
+                ))
+                with self.subTest(marker=marker), self.assertRaisesRegex(
+                    gate.MutationGateError, "missing_markers=.*" + marker
+                ):
+                    gate.validate_technical_marker_coverage(root, gate.MUTATIONS)
+
+    def test_technical_marker_coverage_rejects_wrong_source_binding(self) -> None:
+        cases = tuple(
+            gate.MutationCase(**{**gate.asdict(case), "source_path": "unrelated.py"})
+            if case.mutation_id == "TECHNICAL_U4_OUTER_CHAIN" else case
+            for case in gate.MUTATIONS
+        )
+        with self.assertRaisesRegex(
+            gate.MutationGateError, "missing_mutations=.*TECHNICAL_U4_OUTER_CHAIN"
+        ):
+            gate.validate_technical_marker_coverage(REPO_ROOT, cases)
+
+    def test_validate_manifest_enforces_technical_marker_mapping(self) -> None:
+        # Exclude the call site's own mutation so its removed anchor cannot kill this test.
+        cases = tuple(case for case in gate.MUTATIONS if case.mutation_id not in {
+            "TECHNICAL_U4_OUTER_CHAIN", "TECHNICAL_MARKER_VALIDATION_REQUIRED",
+        })
+        with self.assertRaisesRegex(
+            gate.MutationGateError,
+            "technical guard marker drift:.*missing_mutations=.*TECHNICAL_U4_OUTER_CHAIN",
+        ):
+            gate.validate_manifest(REPO_ROOT, cases)
+
     def test_validate_manifest_enforces_k1_marker_coverage(self) -> None:
         case = gate.MutationCase(
             mutation_id="AIOS_K1_SYNTHETIC_GATE",
@@ -625,11 +712,14 @@ class GovernanceMutationGateTests(unittest.TestCase):
                 *gate.FUNNEL_GOVERNANCE_PATHS,
                 *gate.FUNNEL_NIGHTLY_GOVERNANCE_PATHS,
                 *gate.NIGHTLY_ACCEPTANCE_GOVERNANCE_PATHS,
+                gate.TECHNICAL_GUARD_PATH,
             ):
                 path = root / relative
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text("# no governance markers in synthetic fixture\n", encoding="utf-8")
-            with self.assertRaisesRegex(gate.MutationGateError, "SURVIVED"):
+            with mock.patch.object(gate, "TECHNICAL_GUARD_MUTATIONS", {}), self.assertRaisesRegex(
+                gate.MutationGateError, "SURVIVED"
+            ):
                 gate.run_gate(root, [case])
 
     def test_paths_cannot_escape_repository(self) -> None:
@@ -678,6 +768,12 @@ class GovernanceMutationGateTests(unittest.TestCase):
         self.assertEqual("1", environment["AR_OFFLINE"])
 
 
+def write_technical_markers(root: Path, markers: tuple[str, ...]) -> None:
+    path = root / gate.TECHNICAL_GUARD_PATH
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("".join(f"# technical-guard: {marker}\n" for marker in markers), encoding="utf-8")
+
+
 def synthetic_cases(count: int) -> tuple[gate.MutationCase, ...]:
     return tuple(
         gate.MutationCase(
@@ -715,6 +811,7 @@ def write_synthetic_repo(root: Path, cases: tuple[gate.MutationCase, ...]) -> No
         *gate.FUNNEL_GOVERNANCE_PATHS,
         *gate.FUNNEL_NIGHTLY_GOVERNANCE_PATHS,
         *gate.NIGHTLY_ACCEPTANCE_GOVERNANCE_PATHS,
+        gate.TECHNICAL_GUARD_PATH,
     ):
         path = root / relative
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -874,7 +971,9 @@ class GovernanceMutationShardTests(unittest.TestCase):
 
     def test_shard_runs_only_its_cases_but_validates_the_full_manifest(self) -> None:
         cases = synthetic_cases(4)
-        with tempfile.TemporaryDirectory() as tmp:
+        with tempfile.TemporaryDirectory() as tmp, mock.patch.object(
+            gate, "TECHNICAL_GUARD_MUTATIONS", {}
+        ):
             root = Path(tmp)
             write_synthetic_repo(root, cases)
             with mock.patch("sys.stdout"):
@@ -897,7 +996,7 @@ class GovernanceMutationShardTests(unittest.TestCase):
             write_synthetic_repo(root, cases)
             with mock.patch.object(gate, "MUTATIONS", cases), mock.patch.object(
                 gate, "REPO_ROOT", root
-            ), mock.patch("sys.stdout"):
+            ), mock.patch.object(gate, "TECHNICAL_GUARD_MUTATIONS", {}), mock.patch("sys.stdout"):
                 for index in (1, 2):
                     self.assertEqual(
                         0,

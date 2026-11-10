@@ -40,7 +40,7 @@ def _check_job(job, row, events, identities):
             or identities.get(job.get("actor")) != job.get("workspace_id") or accepted is None):
         raise WorkspaceError("SHARED_JOB_BINDING_INVALID", 409)
     fields = ('command_id', 'kind', 'snapshot_id', *(
-        ('expected_workspace_id', 'expected_code_sha') if job.get('kind') == 'earnings-review' else ()))
+        ('expected_workspace_id', 'expected_code_sha') if job.get('kind') in {'earnings-review','research-cards-review'} else ()))
     payload = {key: job[key] for key in fields}
     if (row[2] != _request(payload, job["actor"], job["workspace_id"])
             or accepted["request_hash"] != row[2] or accepted.get("actor") != job["actor"]
@@ -132,6 +132,8 @@ class SharedJobQueue:
         _check_job(job, row, self.shared.system.events(db), dict(db.execute("SELECT login, workspace_id FROM shared_workspaces")))
         if job['kind'] == 'earnings-review' and not self.shared.materials_enabled:
             raise WorkspaceError('PRIVATE_OPERATION_DISABLED', 403)
+        if job['kind']=='research-cards-review' and not self.shared.cards_enabled:
+            raise WorkspaceError('PRIVATE_OPERATION_DISABLED',403)
         code = shared_module.execution_identity(shared_module.CODE_ROOT)
         if any(job[key] != code[key] or code[key] != self.shared._execution_identity[key] for key in ("code_sha", "source_tree_hash")):
             raise WorkspaceError("SHARED_RECOVERY_CODE_CHANGED", 409)
@@ -142,18 +144,25 @@ class SharedJobQueue:
 
     def enqueue(self, payload: dict, actor: str) -> dict:
         fields = {'command_id', 'kind', 'snapshot_id'}
-        if isinstance(payload, dict) and payload.get('kind') == 'earnings-review':
+        if isinstance(payload, dict) and payload.get('kind') in {'earnings-review','research-cards-review'}:
             fields |= {'expected_workspace_id', 'expected_code_sha'}
         exact(payload, fields); identifier(payload["command_id"])
         if not isinstance(payload['kind'], str) or payload["kind"] not in KINDS: raise WorkspaceError("PRIVATE_OPERATION_DISABLED", 403)
         # governance-mutation: SHARED_MATERIAL_OPT_IN
         if payload['kind'] == 'earnings-review' and not self.shared.materials_enabled:
             raise WorkspaceError('PRIVATE_OPERATION_DISABLED', 403)
+        # governance-mutation: SHARED_CARDS_OPT_IN
+        if payload['kind']=='research-cards-review' and not self.shared.cards_enabled:
+            raise WorkspaceError('PRIVATE_OPERATION_DISABLED',403)
         owner = self.shared.identity(actor)
         # governance-mutation: SHARED_MATERIAL_SUBMISSION_CONTEXT
         if payload['kind'] == 'earnings-review' and (
                 payload['expected_workspace_id'] != owner['workspace_id'] or payload['expected_code_sha'] != self.code_sha):
             raise WorkspaceError('SHARED_SUBMISSION_CONTEXT_CHANGED', 409)
+        # governance-mutation: SHARED_CARDS_SUBMISSION_CONTEXT
+        if payload['kind']=='research-cards-review' and (
+                payload['expected_workspace_id']!=owner['workspace_id'] or payload['expected_code_sha']!=self.code_sha):
+            raise WorkspaceError('SHARED_SUBMISSION_CONTEXT_CHANGED',409)
         request_hash = _request(payload, actor, owner["workspace_id"])
         with self.store.connect() as db:
             db.execute("BEGIN IMMEDIATE")
@@ -369,10 +378,26 @@ class SharedJobQueue:
         return [self._view(job, context=context, verified_inputs=verified_inputs) for job, context in zip(selected, contexts)]
 
     def job(self, job_id):
+        return self._job_with_verified_inputs(job_id,{})
+
+    def _job_with_verified_inputs(self,job_id,verified_inputs):
         identifier(job_id)
         with self.store.connect() as db: _, job = self._load(db, job_id)
-        job = self._view(job)
+        job = (self._view(job,verified_inputs=verified_inputs) if job.get('kind')=='research-cards-review'
+               else self._view(job))
         detail = {**self.shared._metadata(job), "result": job["result"], "snapshot_id": job["snapshot_id"]}
+        if job['status']=='SUCCEEDED' and job['kind']=='research-cards-review':
+            import workbench_shared_cards as cards
+            output=_output_root(self.store.path.parent,job,{'attempt_id':job['attempt_id']})/'result'
+            try:
+                envelope=verified_inputs[job['snapshot_id']]
+                projected=cards._metadata_detail(output,envelope['snapshot'],envelope['frozen_root'])
+                if any(projected[k]!=job['result'][k] for k in ('output_hash','report_sha256',
+                        'archive_library_hash','archive_status','human_review','content_sharing_allowed')):
+                    raise WorkspaceError('SHARED_REPORT_CHANGED',409)
+                detail['research_cards']=projected
+            except (OSError,ValueError,KeyError,TypeError):
+                detail.update(status='RECOVERY_REQUIRED',error='SHARED_OUTPUT_INTEGRITY_ERROR',result=None)
         if job['status'] == 'SUCCEEDED' and job['kind'] == 'earnings-review':
             import workbench_shared_material as material
             output = _output_root(self.store.path.parent, job, {'attempt_id': job['attempt_id']}) / 'result'

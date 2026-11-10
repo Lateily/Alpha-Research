@@ -1,0 +1,22 @@
+{
+  "schema": "ai-task.v1",
+  "task_id": "ANNUAL-VALUATION-EVIDENCE-20261108",
+  "architecture_block": ["Material safety", "Valuation evidence", "Research cards"],
+  "objective": "Repair duplicate immutable-scalar PDF audit accounting under unchanged global limits, then extend exact-source annual earnings, cash/debt and multiple evidence without imputation.",
+  "non_goals": ["No provider/model calls, source rewriting, arbitrary EPS/PE, production/shared/ledger changes, U4, paper, push, merge or deploy."],
+  "human_owner": "Junyan",
+  "reviewer": "Independent nonauthor reviewer",
+  "executor_candidates": ["Codex"],
+  "dependencies": ["1e98d17 verified research cards", "Admitted annual/H1 originals", "Pinned PDF extractor and material contracts"],
+  "authority_docs": ["AGENTS.md", "scripts/llm/AGENTS.md", "docs/engineering/ANNUAL_VALUATION_EVIDENCE_V1.md"],
+  "file_scope": ["scripts/llm/foundation_research.py", "scripts/llm/research_valuation.py", "scripts/llm/research_content.py", "tests/test_annual_pdf_safety.py", "tests/test_research_valuation.py", "tests/test_research_content.py", "scripts/governance_mutation_gate.py", ".github/workflows/python-ci.yml", "docs/engineering/ANNUAL_VALUATION_EVIDENCE_V1.md", "docs/superpowers/plans/2026-11-08-annual-valuation-evidence.md", "scripts/llm/fixtures/annual_valuation_evidence.task.json"],
+  "forbidden_scope": ["ar-live", "Running shared code/state", "Formal ledgers", "Original PDFs and old packs", "Credentials", "Constitutional rules", "Global limit increases"],
+  "input_contracts": ["Admitted externally pinned originals", "Exact physical-page facts and same-period inventories", "Explicit normal-earnings/multiple assumptions and gaps", "V2 completed periods bounded by actual draft and financial cutoff; maximum 96 facts, legacy 64 unchanged"],
+  "output_artifacts": ["Bounded safe extraction", "New sealed financial-evidence cards", "Guard regressions and mutations", "Same-final acceptance and independent review"],
+  "acceptance_tests": ["Whole-graph active/object/work-bound counterexamples", "Actual annual under unchanged caps", "Financial normal/missing/conflicting/legacy cases", "All local CI and full mutation gate", "Source and installed-version preservation"],
+  "risk_level": "HIGH",
+  "network_policy": "OFFLINE",
+  "budget": {"max_cny": "0", "max_minutes": 240},
+  "approval_gates": ["Explicit user authorization for isolated safe extraction and valuation evidence", "No release or financial/human decision authority inferred"],
+  "created_at": "2026-11-08T12:00:00+00:00"
+}
