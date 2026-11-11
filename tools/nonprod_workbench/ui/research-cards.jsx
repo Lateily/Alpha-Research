@@ -1,11 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight, FileSearch, Play, RefreshCw, Search } from 'lucide-react';
-import { canRunCard, cardsContextKey, cardsView, readCardInputs, readCardLibrary, refreshCardVerification } from './research-cards-view.mjs';
+import { canRunCard, cardValuationStatus, cardsContextKey, cardsView, readCardInputs, readCardLibrary, refreshCardVerification } from './research-cards-view.mjs';
 import { createSharedPoller } from './shared-view.mjs';
 import { statusTone } from './status-tone.mjs';
 
-export function CitationLocations({locations}) {
-  return <details><summary>引用位置 · {locations.length}</summary><div className="table-scroll"><table>
+export function CitationLocations({locations,hidden=false}) {
+  return <details hidden={hidden}><summary>引用位置 · {locations.length}</summary><div className="table-scroll"><table>
     <thead><tr><th>事实标识</th><th>PDF SHA256</th><th>物理页 / 文本行</th></tr></thead>
     <tbody>{locations.map((row,index)=><tr key={index}><td><code>{row.fact_id}</code></td><td><code>{row.sha256}</code></td><td>{row.page} / {row.start}–{row.end}</td></tr>)}</tbody>
   </table></div></details>;
@@ -67,7 +67,7 @@ export default function ResearchCards({api,renew,login,workspaceId,codeSha,paren
       <dl className="input-card-fields">{[['原件截止',row.source_cutoff_at],['研究稿生成',row.artifact_generated_at],['输入 hash',row.input_hash],['报告 SHA256',row.report_sha256],['产物来源版本',row.content_producer.code_sha],['任务执行版本',row.code_sha]].map(([name,value])=><React.Fragment key={name}><dt>{name}</dt><dd><code>{value}</code></dd></React.Fragment>)}</dl>
       <div className="table-scroll"><table><thead><tr><th>研究卡</th><th>状态</th><th>缺口 / 核验</th></tr></thead><tbody>
         <tr><td>事实回应</td><td>{badge(row.cards.facts.status)}</td><td>{row.cards.facts.observation_count} 条数字引用 · {row.cards.facts.calculation_count} 项计算<code>{JSON.stringify(row.cards.facts.assessment_counts)}</code></td></tr>
-        <tr><td>正常化估值</td><td>{badge(row.cards.valuation.status)}</td><td><div>EPS {row.cards.valuation.normalized_eps_status}</div><div>净现金 {row.cards.valuation.net_cash_status}</div><div>合理倍数 {row.cards.valuation.fair_multiple_status}</div><div>价值带 {row.cards.valuation.value_band_status}</div><code>{row.cards.valuation.missing_normalization_assumptions.join(' · ')}</code><code>{row.cards.valuation.missing_cash_components.join(' · ')}</code></td></tr>
+        <tr><td>正常化估值</td><td>{badge(cardValuationStatus(row.cards.valuation))}</td><td><div>{row.cards.valuation.status}</div><div>EPS {row.cards.valuation.normalized_eps_status}</div><div>净现金 {row.cards.valuation.net_cash_status}</div><div>合理倍数 {row.cards.valuation.fair_multiple_status}</div><div>价值带 {row.cards.valuation.value_band_status}</div><code>{row.cards.valuation.missing_normalization_assumptions.join(' · ')}</code><code>{row.cards.valuation.missing_cash_components.join(' · ')}</code></td></tr>
         <tr><td>日线技术</td><td>{badge(row.cards.daily.status)}{badge(row.cards.daily.continuity_status)}</td><td><code>{row.cards.daily.source_trade_date||'NOT_SUPPLIED'}</code><span>{row.cards.daily.vintage_status}</span><code>{row.cards.daily.reason_codes.join(' · ')}</code><div>eligible false</div></td></tr>
         <tr><td>执行反馈</td><td>{badge(row.cards.execution_feedback.status)}</td><td>{row.cards.execution_feedback.pnl_status}</td></tr>
       </tbody></table></div>
