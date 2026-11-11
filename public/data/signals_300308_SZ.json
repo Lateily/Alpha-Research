@@ -1,49 +1,59 @@
 {
   "ticker": "300308.SZ",
-  "generated_at": "2026-11-10",
-  "price": 452.03,
-  "zone": "OVERSOLD",
+  "generated_at": "2026-11-11",
+  "price": 471.0,
+  "zone": "NEUTRAL",
   "entry_zone": true,
   "exit_zone": false,
   "signals": [
     {
-      "type": "RSI_OVERSOLD",
+      "type": "RSI_RECOVERING",
       "strength": "moderate",
-      "date": "20261109",
+      "date": "20261110",
       "bullish": true,
       "description": {
-        "e": "RSI(14) = 28.1 — oversold, watch for reversal",
-        "z": "RSI(14)=28.1，超卖，关注反转信号"
+        "e": "RSI recovering 27.9→31.2 — momentum rebuilding",
+        "z": "RSI从27.9回升至31.2，动能修复"
+      }
+    },
+    {
+      "type": "KDJ_GOLDEN_CROSS",
+      "strength": "strong",
+      "date": "20261110",
+      "bullish": true,
+      "description": {
+        "e": "KDJ K(17.3) crossed above D(17.1) in oversold — reversal signal",
+        "z": "KDJ K(17.3)上穿D(17.1)，超卖区金叉看涨"
       }
     }
   ],
   "signal_count": {
-    "bullish": 1,
+    "bullish": 2,
     "bearish": 0,
-    "total": 1
+    "total": 2
   },
   "indicators": {
-    "ma5": 481.39,
-    "ma20": 590.64,
+    "ma5": 479.55,
+    "ma20": 577.44,
     "ma60": null,
-    "rsi14": 28.1,
-    "vol_ma20": 371446,
-    "vol_ratio": 1.28,
-    "price_vs_ma20": -23.47,
+    "rsi14": 31.2,
+    "vol_ma20": 375416,
+    "vol_ratio": 1.04,
+    "price_vs_ma20": -18.43,
     "price_vs_ma60": null,
-    "change_1d": 0.9,
-    "change_5d": -17.81,
-    "change_20d": -37.61,
-    "macd_dif": -85.2712,
-    "macd_dea": -77.3573,
-    "macd_hist": -15.8279,
-    "bb_upper": 747.95,
-    "bb_mid": 590.64,
-    "bb_lower": 433.32,
-    "bb_bandwidth": 53.27,
-    "kdj_k": 14.5,
-    "kdj_d": 17.0,
-    "kdj_j": 9.5,
+    "change_1d": 4.2,
+    "change_5d": -1.92,
+    "change_20d": -35.92,
+    "macd_dif": -84.1642,
+    "macd_dea": -78.6479,
+    "macd_hist": -11.0328,
+    "bb_upper": 728.26,
+    "bb_mid": 577.44,
+    "bb_lower": 426.62,
+    "bb_bandwidth": 52.24,
+    "kdj_k": 17.3,
+    "kdj_d": 17.1,
+    "kdj_j": 17.5,
     "cvd_latest": null,
     "cvd_slope_5d": null,
     "cvd_chg_1d": null,
