@@ -23,18 +23,32 @@ CONFIG_REL = Path("config/team-ai-workspace.v1.json")
 LOCAL_REPORT_REL = Path(".ai-workspace/doctor-report.json")
 SKILL_NAME_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 VERSION_RE = re.compile(r"(?P<major>\d+)\.(?P<minor>\d+)(?:\.(?P<patch>\d+))?")
-SECRET_PATTERNS = (
-    ("OPENAI_STYLE_KEY", re.compile(rb"\bsk-[A-Za-z0-9_-]{20,}\b")),
-    ("GITHUB_TOKEN", re.compile(rb"\b(?:ghp|github_pat)_[A-Za-z0-9_]{20,}\b")),
-    ("PRIVATE_KEY", re.compile(rb"-----BEGIN [A-Z ]*PRIVATE KEY-----")),
+# The literals are necessary conditions, not substitute detectors. A rule
+# without a known necessary literal must always reach the regex scan.
+_SECRET_RULES = (
+    ("OPENAI_STYLE_KEY", re.compile(rb"\bsk-[A-Za-z0-9_-]{20,}\b"), (b"sk-",)),
+    ("GITHUB_TOKEN", re.compile(rb"\b(?:ghp|github_pat)_[A-Za-z0-9_]{20,}\b"), (b"ghp_", b"github_pat_")),
+    ("PRIVATE_KEY", re.compile(rb"-----BEGIN [A-Z ]*PRIVATE KEY-----"), (b"PRIVATE KEY-----",)),
     (
         "ASSIGNED_SECRET",
         re.compile(
             rb"(?im)^[ \t]*[A-Z0-9_]*(?:TOKEN|SECRET|PASSWORD|API_KEY)[ \t]*=[ \t]*"
             rb"[\"']([^\"'\r\n]{16,})[\"']"
         ),
+        (b"TOKEN", b"SECRET", b"PASSWORD", b"API_KEY"),
     ),
 )
+SECRET_PATTERNS = tuple((name, pattern) for name, pattern, _literals in _SECRET_RULES)
+
+
+def possible_repository_secret(raw: bytes) -> bool:
+    """Reject only impossible regex candidates without scanning their full syntax."""
+    upper = raw.upper()
+    return any(not literals or any(literal in (upper if pattern.flags & re.IGNORECASE else raw)
+                                   for literal in literals)
+               for _name, pattern, literals in _SECRET_RULES)
+
+
 PLACEHOLDER_MARKERS = (
     b"example",
     b"placeholder",

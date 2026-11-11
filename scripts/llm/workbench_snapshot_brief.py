@@ -10,7 +10,7 @@ from pathlib import Path
 
 import workbench_evidence as evidence
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from team_ai_workspace import SECRET_PATTERNS
+from team_ai_workspace import SECRET_PATTERNS, possible_repository_secret
 
 
 class SnapshotBriefError(ValueError):
@@ -30,10 +30,14 @@ def reject_credentials(value):
         elif isinstance(item, str):
             # Inspect decoded values and common log escapes, never rewritten originals.
             text = item.replace("\\t", "\t").replace("\\n", "\n").replace("\\r", "\r")
-            if any(pattern.search(text.encode()) for _name, pattern in SECRET_PATTERNS):
-                raise SnapshotBriefError("CREDENTIAL_SHAPED_CONTENT_REFUSED")
-            if re.search(r"(?i)(authorization\s*:\s*bearer\s+\S+|\bbearer\s+[A-Za-z0-9_.-]{8,}|\bsk-[A-Za-z0-9_-]{12,}|\bAKIA[A-Z0-9]{16})", text):
-                raise SnapshotBriefError("CREDENTIAL_SHAPED_CONTENT_REFUSED")
+            if possible_repository_secret(text.encode()):
+                if any(pattern.search(text.encode()) for _name, pattern in SECRET_PATTERNS):
+                    raise SnapshotBriefError("CREDENTIAL_SHAPED_CONTENT_REFUSED")
+            folded = text.casefold()
+            # Python IGNORECASE also matches dotless I and dotted capital I.
+            if any(literal in folded for literal in ("bearer", "sk-", "akia", "ak\u0131a", "aki\u0307a")):
+                if re.search(r"(?i)(authorization\s*:\s*bearer\s+\S+|\bbearer\s+[A-Za-z0-9_.-]{8,}|\bsk-[A-Za-z0-9_-]{12,}|\bAKIA[A-Z0-9]{16})", text):
+                    raise SnapshotBriefError("CREDENTIAL_SHAPED_CONTENT_REFUSED")
 
 
 def render(snapshot):

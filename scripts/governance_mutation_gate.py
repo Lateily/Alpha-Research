@@ -4100,6 +4100,20 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="Repository-recognized credential shapes must be refused before freezing and event persistence.",
     ),
     MutationCase(
+        mutation_id="WORKBENCH_BRIEF_CREDENTIAL_PREFILTER_FAST_PATH", component="AIOS nonproduction workbench",
+        source_path="scripts/llm/workbench_snapshot_brief.py", test_script="tests/test_workbench_workspace.py",
+        before="if possible_repository_secret(text.encode()):", after="if True:",
+        expected_failure_marker="test_credential_scan_keeps_legacy_matches_and_avoids_benign_window_regexes",
+        rationale="Plain material windows should not repeatedly run full repository regex scans.",
+    ),
+    MutationCase(
+        mutation_id="WORKBENCH_BRIEF_CREDENTIAL_PREFILTER_UNICODE", component="AIOS nonproduction workbench",
+        source_path="scripts/llm/workbench_snapshot_brief.py", test_script="tests/test_workbench_workspace.py",
+        before='"akia", "ak\\u0131a", "aki\\u0307a"', after='"akia"',
+        expected_failure_marker="test_credential_scan_keeps_legacy_matches_and_avoids_benign_window_regexes",
+        rationale="The fast path must preserve legacy Unicode IGNORECASE matching.",
+    ),
+    MutationCase(
         mutation_id="WORKBENCH_BRIEF_BACKUP_ROUNDTRIP", component="AIOS nonproduction workbench",
         source_path="scripts/llm/workbench_backup.py", test_script="tests/test_workbench_workspace.py",
         before='if job["kind"] != "snapshot-brief" or job["status"] != "SUCCEEDED":', after='if True:',
