@@ -30,6 +30,7 @@ class SnapshotBriefError(ValueError):
 def reject_credentials(value):
     # Redaction is not byte-identical freezing; refuse instead.
     pending = [value]
+    checked = set()
     while pending:
         item = pending.pop()
         if isinstance(item, dict):
@@ -38,6 +39,11 @@ def reject_credentials(value):
         elif isinstance(item, list):
             pending.extend(item)
         elif isinstance(item, str):
+            # Duplicate keys and scalar values in a single frozen tree need
+            # only one scan. Do not retain material text between invocations.
+            cacheable = type(item) is str and len(item) <= 128
+            if cacheable and item in checked:
+                continue
             # Inspect decoded values and common log escapes, never rewritten originals.
             text = item.replace("\\t", "\t").replace("\\n", "\n").replace("\\r", "\r")
             raw = text.encode()
@@ -52,6 +58,8 @@ def reject_credentials(value):
             for pattern, required in _BRIEF_CREDENTIAL_RULES:
                 if (required is None or required in folded) and pattern.search(text):
                     raise SnapshotBriefError("CREDENTIAL_SHAPED_CONTENT_REFUSED")
+            if cacheable and len(checked) < 4096:
+                checked.add(item)
 
 
 def render(snapshot):

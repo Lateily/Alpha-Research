@@ -4121,6 +4121,13 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="A detector without a provably necessary literal must still run.",
     ),
     MutationCase(
+        mutation_id="WORKBENCH_BRIEF_CREDENTIAL_REPEAT_SCAN", component="AIOS nonproduction workbench",
+        source_path="scripts/llm/workbench_snapshot_brief.py", test_script="tests/test_workbench_workspace.py",
+        before="if cacheable and item in checked:", after="if False:",
+        expected_failure_marker="test_credential_scan_checks_repeated_exact_values_once_per_call",
+        rationale="Equal values only share a scan inside one invocation, not across reads.",
+    ),
+    MutationCase(
         mutation_id="WORKBENCH_BRIEF_BACKUP_ROUNDTRIP", component="AIOS nonproduction workbench",
         source_path="scripts/llm/workbench_backup.py", test_script="tests/test_workbench_workspace.py",
         before='if job["kind"] != "snapshot-brief" or job["status"] != "SUCCEEDED":', after='if True:',

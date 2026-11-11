@@ -418,6 +418,19 @@ class EvidenceTests(unittest.TestCase):
             with self.assertRaisesRegex(brief.SnapshotBriefError, 'CREDENTIAL'):
                 brief.reject_credentials('svc_' + 'A' * 16)
 
+    def test_credential_scan_checks_repeated_exact_values_once_per_call(self):
+        import workbench_snapshot_brief as brief
+        detector = mock.Mock(wraps=re.compile(r'\bbearer\s+[A-Za-z0-9_.-]{8,}'))
+        with mock.patch.object(brief, '_BRIEF_CREDENTIAL_RULES', ((detector, b'bearer'),)):
+            values = [{'key': 'bearer short'} for _ in range(512)]
+            brief.reject_credentials(values)
+            self.assertEqual(detector.search.call_count, 1)
+            brief.reject_credentials(values)
+            self.assertEqual(detector.search.call_count, 2)
+            values[0]['key'] = 'bearer ' + 'a' * 8
+            with self.assertRaisesRegex(brief.SnapshotBriefError, 'CREDENTIAL'):
+                brief.reject_credentials(values)
+
     def test_backup_restores_successful_snapshot_briefs_and_event_bindings(self):
         with tempfile.TemporaryDirectory() as temporary:
             state = Path(temporary)

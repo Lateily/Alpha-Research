@@ -67,6 +67,7 @@ fenced. The original fifteen-second freshness guard is unchanged.
 
 Large material libraries are still scanned and hash-checked on every read. The
 credential scanner uses necessary literal indicators before invoking the
-unchanged detectors, including their Unicode case and escape behavior. No
-cross-request result cache, file identity shortcut, or permission change is
-used by this optimization.
+unchanged detectors, including their Unicode case and escape behavior. A
+bounded set avoids rescanning identical short strings inside one invocation.
+There is no cross-request result cache, file identity shortcut, or permission
+change.
