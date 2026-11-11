@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import inspect
 import os
 import subprocess
 import sys
@@ -53,6 +54,12 @@ def receipt(**overrides: object) -> gate.TestReceipt:
 
 
 class GovernanceMutationGateTests(unittest.TestCase):
+    def test_default_gate_and_merge_use_the_full_current_manifest(self) -> None:
+        for public in (gate.run_gate, gate.merge_shard_receipts):
+            with self.subTest(entry=public.__name__):
+                cases = inspect.signature(public).parameters["cases"].default
+                self.assertTrue(cases is gate.MUTATIONS, "default manifest is stale")
+
     def test_production_manifest_has_unique_live_anchors(self) -> None:
         gate.validate_manifest(REPO_ROOT, gate.MUTATIONS)
         self.assertGreaterEqual(len(gate.MUTATIONS), 16)

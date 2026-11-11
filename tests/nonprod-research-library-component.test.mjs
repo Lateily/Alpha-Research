@@ -44,7 +44,7 @@ async function componentScenario(mutant = false, workspaceSwitch = false, downlo
     globalThis.clearTimeout=id=>timers.delete(id);
     globalThis.window={setInterval:()=>null,clearInterval:()=>{},localStorage:{getItem:()=>null,setItem:()=>{}}};
     const calls=[];let parentFails=false,libraryFails=false,workspace='synthetic',holdDetails=false,releaseDetails;
-    const receipt={job_id:'download-job',actor:'owner',workspace_id:workspace,status:'SUCCEEDED',code_sha:'a'.repeat(40),
+    const receipt={job_id:'download-job',kind:'earnings-review',actor:'owner',workspace_id:workspace,status:'SUCCEEDED',code_sha:'a'.repeat(40),
       input_hash:'b'.repeat(64),output_hash:'c'.repeat(64),research:{report_sha256:'d'.repeat(64),citation_locations:[]}};
     const props={access:{login:'owner'},refreshRevision:0,api:async path=>{
       calls.push(path);

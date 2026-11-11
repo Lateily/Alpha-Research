@@ -259,6 +259,16 @@ def _package(package_id, kind, root, expected, *, max_bytes, max_entries):
         catalog = library.get("files")
         semantics = {"validator": "foundation_materials.verify_library",
                      "validation_scope": "EXISTING_LIBRARY_BYTES_AND_LINEAGE"}
+    elif kind == "CORE_GAP_LEDGER":
+        # governance-mutation: PRESERVATION_CORE_GAP_INVENTORY_PIN
+        if ev.sealed(inventory) != expected:
+            _fail("EXPECTED_CONTENT_HASH_MISMATCH")
+        from core_source_gaps import verify_retained
+        # governance-mutation: PRESERVATION_CORE_GAP_SEMANTIC_REOPEN
+        checked = verify_retained(root)
+        catalog = inventory["files"]
+        semantics = {"validator": "core_source_gaps.verify_retained",
+                     "validation_scope": "EXISTING_GAP_LEDGER_AND_FROZEN_RECEIPTS_ONLY", **checked}
     else:
         from foundation_quarantine import verify_quarantine
         checked = verify_quarantine(root, expected_quarantine_hash=expected)
@@ -282,7 +292,7 @@ def _requests(packages):
         _exact(package, PACKAGE_FIELDS)
         identity = _identifier(package["package_id"])
         kind = package["kind"]
-        if type(kind) is not str or kind not in {"SHARED_BACKUP", "RESEARCH_LIBRARY", "QUARANTINED_ORIGINALS"}:
+        if type(kind) is not str or kind not in {"SHARED_BACKUP", "RESEARCH_LIBRARY", "QUARANTINED_ORIGINALS", "CORE_GAP_LEDGER"}:
             _fail("PACKAGE_KIND_INVALID")
         if identity.casefold() in identities:
             _fail("PACKAGE_ID_DUPLICATE")

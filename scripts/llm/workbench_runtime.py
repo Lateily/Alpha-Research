@@ -52,6 +52,7 @@ def main(argv=None):
     recovery.add_argument('--library',type=Path)
     recovery.add_argument('--library-pin')
     recovery.add_argument('--research-cards',action='store_true',help='Explicit synthetic recovery-v2 opt-in for registered card tasks')
+    recovery.add_argument('--human-review',action='store_true',help='Explicit synthetic recovery-v3 opt-in; original review grants are not changed')
     for name in ('recovery-verify','recovery-serve','recovery-child'):
         sub=commands.add_parser(name); sub.add_argument('--profile',type=Path,required=True); sub.add_argument('--pin',required=True)
         if name=='recovery-serve': sub.add_argument('--seconds',type=int,default=300)
@@ -62,7 +63,7 @@ def main(argv=None):
         if args.command=='recovery-prepare':
             result=workbench_recovery.prepare(args.root,args.backup,args.backup_pin,args.code,args.environment,
                 args.environment_pin,args.port,source_root=args.source,library_root=args.library,library_hash=args.library_pin,
-                cards_enabled=args.research_cards)
+                cards_enabled=args.research_cards,review_enabled=args.human_review)
         elif args.command=='recovery-verify':
             value=workbench_recovery.verify(args.profile,args.pin)
             result={'status':'PINNED_ISOLATED_RECOVERY_VALID','code_sha':value['code_identity']['code_sha'],
