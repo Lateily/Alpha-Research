@@ -12,6 +12,11 @@ import workbench_evidence as evidence
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from team_ai_workspace import SECRET_PATTERNS, possible_repository_secret
 
+# Python Unicode IGNORECASE also admits these four characters in ASCII
+# letter matches. Keep the regex as the authority on all candidate strings.
+_BRIEF_CASE_EXCEPTIONS = ((b"\xc5\xbf", b"s"), (b"\xe2\x84\xaa", b"k"),
+                          (b"\xc4\xb0", b"i"), (b"\xc4\xb1", b"i"))
+
 
 class SnapshotBriefError(ValueError):
     pass
@@ -30,12 +35,15 @@ def reject_credentials(value):
         elif isinstance(item, str):
             # Inspect decoded values and common log escapes, never rewritten originals.
             text = item.replace("\\t", "\t").replace("\\n", "\n").replace("\\r", "\r")
-            if possible_repository_secret(text.encode()):
+            raw = text.encode()
+            if possible_repository_secret(raw):
                 if any(pattern.search(text.encode()) for _name, pattern in SECRET_PATTERNS):
                     raise SnapshotBriefError("CREDENTIAL_SHAPED_CONTENT_REFUSED")
-            folded = text.casefold()
-            # Python IGNORECASE also matches dotless I and dotted capital I.
-            if any(literal in folded for literal in ("bearer", "sk-", "akia", "ak\u0131a", "aki\u0307a")):
+            folded = raw.lower()
+            if not raw.isascii():
+                for source, replacement in _BRIEF_CASE_EXCEPTIONS:
+                    folded = folded.replace(source, replacement)
+            if any(literal in folded for literal in (b"bearer", b"sk-", b"akia")):
                 if re.search(r"(?i)(authorization\s*:\s*bearer\s+\S+|\bbearer\s+[A-Za-z0-9_.-]{8,}|\bsk-[A-Za-z0-9_-]{12,}|\bAKIA[A-Z0-9]{16})", text):
                     raise SnapshotBriefError("CREDENTIAL_SHAPED_CONTENT_REFUSED")
 

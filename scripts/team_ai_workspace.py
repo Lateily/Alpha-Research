@@ -39,14 +39,19 @@ _SECRET_RULES = (
     ),
 )
 SECRET_PATTERNS = tuple((name, pattern) for name, pattern, _literals in _SECRET_RULES)
+_SECRET_BYTE_LITERALS = tuple(literal for _, pattern, literals in _SECRET_RULES
+                              if not pattern.flags & re.IGNORECASE for literal in literals)
+_SECRET_FOLDED_LITERALS = tuple(literal for _, pattern, literals in _SECRET_RULES
+                                if pattern.flags & re.IGNORECASE for literal in literals)
+_SECRET_UNFILTERED = any(not literals for _, _, literals in _SECRET_RULES)
 
 
 def possible_repository_secret(raw: bytes) -> bool:
     """Reject only impossible regex candidates without scanning their full syntax."""
+    if _SECRET_UNFILTERED or any(literal in raw for literal in _SECRET_BYTE_LITERALS):
+        return True
     upper = raw.upper()
-    return any(not literals or any(literal in (upper if pattern.flags & re.IGNORECASE else raw)
-                                   for literal in literals)
-               for _name, pattern, literals in _SECRET_RULES)
+    return any(literal in upper for literal in _SECRET_FOLDED_LITERALS)
 
 
 PLACEHOLDER_MARKERS = (
