@@ -1,11 +1,11 @@
 {
   "ticker": "002594.SZ",
-  "fetched_at": "2026-11-11T07:47:05Z",
-  "trade_date": "20261111",
+  "fetched_at": "2026-11-11T16:27:19Z",
+  "trade_date": "20261112",
   "_status": "ok",
   "api_used": "top_list",
   "days_window": 30,
-  "as_of": "20261110",
+  "as_of": "20261111",
   "appearances": [],
   "summary": {
     "total_appearances": 0,

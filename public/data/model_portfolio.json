@@ -8,7 +8,7 @@
     "no_position_mutation": true,
     "run_date": "2026-11-11",
     "pilot_start_date": "2026-06-08",
-    "generated_at": "2026-11-11T07:50:58.031060+00:00",
+    "generated_at": "2026-11-11T16:31:00.842786+00:00",
     "fresh_pilot": true,
     "legacy_paper_positions_inherited": false,
     "sources": [
@@ -265,8 +265,8 @@
             "total": 0
           },
           "key_indicators": {
-            "rsi14": 52.0,
-            "macd_hist": 0.9528,
+            "rsi14": 52.1,
+            "macd_hist": 0.9555,
             "price_vs_ma20": 1.67,
             "price_vs_ma60": null,
             "change_5d": -0.6,
@@ -342,8 +342,8 @@
             "total": 0
           },
           "key_indicators": {
-            "rsi14": 50.7,
-            "macd_hist": 2.0618,
+            "rsi14": 50.9,
+            "macd_hist": 2.0453,
             "price_vs_ma20": 5.26,
             "price_vs_ma60": null,
             "change_5d": 13.15,
@@ -378,7 +378,7 @@
           },
           "key_indicators": {
             "rsi14": 31.2,
-            "macd_hist": -11.0328,
+            "macd_hist": -11.1681,
             "price_vs_ma20": -18.43,
             "price_vs_ma60": null,
             "change_5d": -1.92,
@@ -389,7 +389,7 @@
               "type": "RSI_RECOVERING",
               "strength": "moderate",
               "bullish": true,
-              "desc": "RSI recovering 27.9→31.2 — momentum rebuilding"
+              "desc": "RSI recovering 28.0→31.2 — momentum rebuilding"
             },
             {
               "type": "KDJ_GOLDEN_CROSS",
@@ -426,7 +426,7 @@
           },
           "key_indicators": {
             "rsi14": 57.6,
-            "macd_hist": 0.2867,
+            "macd_hist": 0.2861,
             "price_vs_ma20": 4.59,
             "price_vs_ma60": null,
             "change_5d": -3.06,
@@ -521,8 +521,8 @@
             "total": 0
           },
           "key_indicators": {
-            "rsi14": 47.1,
-            "macd_hist": 6.9012,
+            "rsi14": 47.3,
+            "macd_hist": 6.8343,
             "price_vs_ma20": 0.35,
             "price_vs_ma60": null,
             "change_5d": 21.94,
