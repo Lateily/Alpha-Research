@@ -23,18 +23,37 @@ CONFIG_REL = Path("config/team-ai-workspace.v1.json")
 LOCAL_REPORT_REL = Path(".ai-workspace/doctor-report.json")
 SKILL_NAME_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 VERSION_RE = re.compile(r"(?P<major>\d+)\.(?P<minor>\d+)(?:\.(?P<patch>\d+))?")
-SECRET_PATTERNS = (
-    ("OPENAI_STYLE_KEY", re.compile(rb"\bsk-[A-Za-z0-9_-]{20,}\b")),
-    ("GITHUB_TOKEN", re.compile(rb"\b(?:ghp|github_pat)_[A-Za-z0-9_]{20,}\b")),
-    ("PRIVATE_KEY", re.compile(rb"-----BEGIN [A-Z ]*PRIVATE KEY-----")),
+# The literals are necessary conditions, not substitute detectors. A rule
+# without a known necessary literal must always reach the regex scan.
+_SECRET_RULES = (
+    ("OPENAI_STYLE_KEY", re.compile(rb"\bsk-[A-Za-z0-9_-]{20,}\b"), (b"sk-",)),
+    ("GITHUB_TOKEN", re.compile(rb"\b(?:ghp|github_pat)_[A-Za-z0-9_]{20,}\b"), (b"ghp_", b"github_pat_")),
+    ("PRIVATE_KEY", re.compile(rb"-----BEGIN [A-Z ]*PRIVATE KEY-----"), (b"PRIVATE KEY-----",)),
     (
         "ASSIGNED_SECRET",
         re.compile(
             rb"(?im)^[ \t]*[A-Z0-9_]*(?:TOKEN|SECRET|PASSWORD|API_KEY)[ \t]*=[ \t]*"
             rb"[\"']([^\"'\r\n]{16,})[\"']"
         ),
+        (b"TOKEN", b"SECRET", b"PASSWORD", b"API_KEY"),
     ),
 )
+SECRET_PATTERNS = tuple((name, pattern) for name, pattern, _literals in _SECRET_RULES)
+_SECRET_BYTE_LITERALS = tuple(literal for _, pattern, literals in _SECRET_RULES
+                              if not pattern.flags & re.IGNORECASE for literal in literals)
+_SECRET_FOLDED_LITERALS = tuple(literal for _, pattern, literals in _SECRET_RULES
+                                if pattern.flags & re.IGNORECASE for literal in literals)
+_SECRET_UNFILTERED = any(not literals for _, _, literals in _SECRET_RULES)
+
+
+def possible_repository_secret(raw: bytes) -> bool:
+    """Reject only impossible regex candidates without scanning their full syntax."""
+    if _SECRET_UNFILTERED or any(literal in raw for literal in _SECRET_BYTE_LITERALS):
+        return True
+    upper = raw.upper()
+    return any(literal in upper for literal in _SECRET_FOLDED_LITERALS)
+
+
 PLACEHOLDER_MARKERS = (
     b"example",
     b"placeholder",

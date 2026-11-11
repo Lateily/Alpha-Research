@@ -10,7 +10,17 @@ from pathlib import Path
 
 import workbench_evidence as evidence
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from team_ai_workspace import SECRET_PATTERNS
+from team_ai_workspace import SECRET_PATTERNS, possible_repository_secret
+
+# Python Unicode IGNORECASE also admits these four characters in ASCII
+# letter matches. Keep the regex as the authority on all candidate strings.
+_BRIEF_CASE_EXCEPTIONS = ((b"\xc5\xbf", b"s"), (b"\xe2\x84\xaa", b"k"),
+                          (b"\xc4\xb0", b"i"), (b"\xc4\xb1", b"i"))
+_BRIEF_CREDENTIAL_RULES = (
+    (re.compile(r"(?i)(authorization\s*:\s*bearer\s+\S+|\bbearer\s+[A-Za-z0-9_.-]{8,})"), b"bearer"),
+    (re.compile(r"(?i)\bsk-[A-Za-z0-9_-]{12,}"), b"sk-"),
+    (re.compile(r"(?i)\bAKIA[A-Z0-9]{16}"), b"akia"),
+)
 
 
 class SnapshotBriefError(ValueError):
@@ -20,6 +30,7 @@ class SnapshotBriefError(ValueError):
 def reject_credentials(value):
     # Redaction is not byte-identical freezing; refuse instead.
     pending = [value]
+    checked = set()
     while pending:
         item = pending.pop()
         if isinstance(item, dict):
@@ -28,12 +39,27 @@ def reject_credentials(value):
         elif isinstance(item, list):
             pending.extend(item)
         elif isinstance(item, str):
+            # Duplicate keys and scalar values in a single frozen tree need
+            # only one scan. Do not retain material text between invocations.
+            cacheable = type(item) is str and len(item) <= 128
+            if cacheable and item in checked:
+                continue
             # Inspect decoded values and common log escapes, never rewritten originals.
             text = item.replace("\\t", "\t").replace("\\n", "\n").replace("\\r", "\r")
-            if any(pattern.search(text.encode()) for _name, pattern in SECRET_PATTERNS):
-                raise SnapshotBriefError("CREDENTIAL_SHAPED_CONTENT_REFUSED")
-            if re.search(r"(?i)(authorization\s*:\s*bearer\s+\S+|\bbearer\s+[A-Za-z0-9_.-]{8,}|\bsk-[A-Za-z0-9_-]{12,}|\bAKIA[A-Z0-9]{16})", text):
-                raise SnapshotBriefError("CREDENTIAL_SHAPED_CONTENT_REFUSED")
+            raw = text.encode()
+            if possible_repository_secret(raw):
+                if any(pattern.search(text.encode()) for _name, pattern in SECRET_PATTERNS):
+                    raise SnapshotBriefError("CREDENTIAL_SHAPED_CONTENT_REFUSED")
+            folded = raw.lower()
+            if not raw.isascii():
+                for source, replacement in _BRIEF_CASE_EXCEPTIONS:
+                    folded = folded.replace(source, replacement)
+            # A new detector without a provably necessary literal uses None.
+            for pattern, required in _BRIEF_CREDENTIAL_RULES:
+                if (required is None or required in folded) and pattern.search(text):
+                    raise SnapshotBriefError("CREDENTIAL_SHAPED_CONTENT_REFUSED")
+            if cacheable and len(checked) < 4096:
+                checked.add(item)
 
 
 def render(snapshot):

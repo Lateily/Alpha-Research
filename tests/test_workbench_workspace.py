@@ -2,6 +2,7 @@
 import copy
 import json
 import os
+import re
 import sqlite3
 import subprocess
 import sys
@@ -369,6 +370,66 @@ class EvidenceTests(unittest.TestCase):
                     self.assertEqual(result["result"]["error"], "CREDENTIAL_SHAPED_CONTENT_REFUSED")
                     self.assertFalse((state / "snapshot-briefs/credential_shape_test").exists())
                     self.assertNotIn(marker.encode(), system.store.path.read_bytes())
+
+    def test_credential_scan_keeps_legacy_matches_and_avoids_benign_window_regexes(self):
+        import workbench_snapshot_brief as brief
+        fillers = "A" * 24
+        corpus = [
+            f'sk-{fillers}', f'ghp_{fillers}', f'github_pat_{fillers}',
+            "-----BEGIN " + "RSA PRIVATE KEY-----",
+            f'prefix\\n  app_token = "{fillers}"', f'APP_PASSWORD="{fillers}"',
+            f'client_secret="{fillers}"', f'service_api_key="{fillers}"',
+            f'Authorizat\u0131on:\\tBearer\u00a0{fillers}', f'bEaReR\u001c{fillers}',
+            f'\u017f\u212a-{fillers}', f'A\u212a\u0130A{fillers}', f'A\u212a\u0131A{fillers}',
+            'api_key="short"', 'Xsk-abc', 'Bearer tiny', 'AKI is not an AWS key',
+        ]
+        supplemental = re.compile(
+            r'(?i)(authorization\s*:\s*bearer\s+\S+|\bbearer\s+[A-Za-z0-9_.-]{8,}|'
+            r'\bsk-[A-Za-z0-9_-]{12,}|\bAKIA[A-Z0-9]{16})'
+        )
+        for example in corpus:
+            decoded = example.replace('\\t', '\t').replace('\\n', '\n').replace('\\r', '\r')
+            matched = (any(rule.search(decoded.encode()) for _, rule in brief.SECRET_PATTERNS)
+                       or supplemental.search(decoded))
+            with self.subTest(example=example[:14]):
+                if matched:
+                    with self.assertRaisesRegex(brief.SnapshotBriefError, 'CREDENTIAL'):
+                        brief.reject_credentials({'nested': [example]})
+                else:
+                    brief.reject_credentials({'nested': [example]})
+        window = ('q\xfeZ78b&!\xa0=i' * 4096) + ' ordinary PDF window'
+        searches = []
+        def count_search(_frame, event, target):
+            if event == 'c_call' and getattr(target, '__name__', '') == 'search' and isinstance(
+                    getattr(target, '__self__', None), re.Pattern):
+                searches.append(target)
+        previous = sys.getprofile()
+        try:
+            sys.setprofile(count_search)
+            brief.reject_credentials(window)
+        finally:
+            sys.setprofile(previous)
+        self.assertEqual(len(searches), 0, 'benign material window ran full credential regexes')
+
+    def test_credential_scan_executes_new_rules_without_a_literal_hint(self):
+        import workbench_snapshot_brief as brief
+        extra = (re.compile(r'\bsvc_[A-Z0-9]{16}\b'), None)
+        with mock.patch.object(brief, '_BRIEF_CREDENTIAL_RULES', brief._BRIEF_CREDENTIAL_RULES + (extra,)):
+            with self.assertRaisesRegex(brief.SnapshotBriefError, 'CREDENTIAL'):
+                brief.reject_credentials('svc_' + 'A' * 16)
+
+    def test_credential_scan_checks_repeated_exact_values_once_per_call(self):
+        import workbench_snapshot_brief as brief
+        detector = mock.Mock(wraps=re.compile(r'\bbearer\s+[A-Za-z0-9_.-]{8,}'))
+        with mock.patch.object(brief, '_BRIEF_CREDENTIAL_RULES', ((detector, b'bearer'),)):
+            values = [{'key': 'bearer short'} for _ in range(512)]
+            brief.reject_credentials(values)
+            self.assertEqual(detector.search.call_count, 1)
+            brief.reject_credentials(values)
+            self.assertEqual(detector.search.call_count, 2)
+            values[0]['key'] = 'bearer ' + 'a' * 8
+            with self.assertRaisesRegex(brief.SnapshotBriefError, 'CREDENTIAL'):
+                brief.reject_credentials(values)
 
     def test_backup_restores_successful_snapshot_briefs_and_event_bindings(self):
         with tempfile.TemporaryDirectory() as temporary:

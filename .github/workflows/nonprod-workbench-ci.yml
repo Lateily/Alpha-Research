@@ -3,6 +3,8 @@ on:
   pull_request:
     paths:
       - "tools/nonprod_workbench/**"
+      - "scripts/llm/workbench_snapshot_brief.py"
+      - "scripts/team_ai_workspace.py"
       - "tests/nonprod-workbench-trust-line.test.mjs"
       - "package.json"
       - "package-lock.json"
