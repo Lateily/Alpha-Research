@@ -93,6 +93,20 @@ class RebaselineTests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, "durable manifest"):
                 nightly_publish.recover_interrupted_publish(state_path, et, repo)
 
+    def test_lost_manifest_approval_cannot_override_v3_publication_fence(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            et, repo, public, state_path, missing = _layout(tmp)
+            state = read_json(state_path)
+            state.update(schema=nightly_publish.PUBLICATION_STATE_SCHEMA,
+                         commit_guard=nightly_publish.COMMIT_PROOF)
+            write_json(state_path, state)
+            nightly_publish.fence_run("R_LOST", os.path.dirname(missing), "TEST_EXPIRED")
+            before = [read_bytes(path) for path in (state_path, os.path.join(public, "current_run.json"))]
+            with self.assertRaisesRegex(RuntimeError, "PUBLICATION_FENCED"):
+                nightly_publish.rebaseline_lost_manifest(state_path, et, repo, now=NOW, **APPROVAL)
+            self.assertEqual(before, [read_bytes(path) for path in (state_path, os.path.join(public, "current_run.json"))])
+            self.assertFalse(os.path.exists(os.path.join(et, nightly_publish.REBASELINE_LEDGER_NAME)))
+
     def test_rebaseline_records_ledger_event_and_supersedes_state(self):
         with tempfile.TemporaryDirectory() as tmp:
             et, repo, public, state_path, missing = _layout(tmp)

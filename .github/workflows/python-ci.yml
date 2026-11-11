@@ -427,6 +427,8 @@ jobs:
       # 判分只收可证明盘中读取的 nowcast(注入伦敦/北京两种时钟)。
       - name: Execution tracker Asia/Shanghai clock (offline)
         run: python3 tests/test_execution_clock.py
+      - name: Nightly operational deadline and calendar gates (offline)
+        run: python3 tests/test_nightly_operational_gates.py
       # Governance gates are not delivered until a precise no-op mutation makes
       # the corresponding behavioral suite fail. The runner works in a temp
       # copy, strips secrets, blocks sockets, and rejects infrastructure-red as

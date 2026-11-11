@@ -89,6 +89,18 @@ class DualAcceptanceTest(unittest.TestCase):
         with self.assertRaisesRegex(dual.AuditError, "pointer"):
             dual.validate_publication(self.root, self.run_id, self.target)
 
+    def test_publication_v3_needs_deadline_proof(self) -> None:
+        _, et = self._publication()
+        state_path = et / "publication_state.json"
+        state = json.loads(state_path.read_text())
+        state["schema"] = dual.nightly_publish.PUBLICATION_STATE_SCHEMA
+        write_json(state_path, state)
+        with self.assertRaisesRegex(dual.AuditError, "COMMIT_DEADLINE_UNPROVEN"):
+            dual.validate_publication(self.root, self.run_id, self.target)
+        state["commit_guard"] = dual.nightly_publish.COMMIT_PROOF
+        write_json(state_path, state)
+        dual.validate_publication(self.root, self.run_id, self.target)
+
     def test_publication_refuses_manifest_hash_drift(self) -> None:
         public, et = self._publication()
         pointer = json.loads((public / "current_run.json").read_text(encoding="utf-8"))

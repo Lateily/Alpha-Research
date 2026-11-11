@@ -276,6 +276,13 @@ class SettlementTest(unittest.TestCase):
 
 
 class PublicationRecoveryTest(unittest.TestCase):
+    def publish_fixture(self, run_id, target, stage, et, repo, run, state, **kwargs):
+        publication.atomic_json(str(et / "run_state.json"), {
+            "phase": "PUBLISHING", "run_id": run_id, "target_trade_date": target, "run_dir": str(run),
+        })
+        return publication.publish_stage(run_id, target, stage, str(et), str(repo), str(run), str(state),
+                                         deadline_guard=lambda: None, **kwargs)
+
     def layout(self, root):
         et = root / "experiments" / "execution_tracker"
         public = root / "public" / "data" / "v2"
@@ -313,7 +320,7 @@ class PublicationRecoveryTest(unittest.TestCase):
             stage = publication.prepare_stage(str(et), str(root), str(run_dir))
             publication.atomic_json(os.path.join(stage["public"], "meta.json"),
                                     {"run_id": "DEBUG_NEW", "sample_purpose": "WORKFLOW_DEBUG"})
-            publication.publish_stage("DEBUG_NEW", TODAY, stage, str(et), str(root), str(run_dir), str(state))
+            self.publish_fixture("DEBUG_NEW", TODAY, stage, et, root, run_dir, state)
             self.assertEqual(publication.recover_interrupted_publish(
                 str(state), str(et), str(root))["status"], "COMMITTED_VERIFIED")
             self.assertEqual((et / "current_run.json").read_bytes(), (public / "current_run.json").read_bytes())
@@ -332,9 +339,9 @@ class PublicationRecoveryTest(unittest.TestCase):
             run_dir = et / "runs" / "DEBUG_FAILED"
             stage = publication.prepare_stage(str(et), str(root), str(run_dir))
             publication.atomic_json(os.path.join(stage["public"], "meta.json"), {"sample_purpose": "WORKFLOW_DEBUG"})
-            with self.assertRaises(RuntimeError):
-                publication.publish_stage("DEBUG_FAILED", TODAY, stage, str(et), str(root),
-                                          str(run_dir), str(state), fail_phase="after_public_marker")
+            with self.assertRaisesRegex(RuntimeError, "injected publish failure"):
+                self.publish_fixture("DEBUG_FAILED", TODAY, stage, et, root, run_dir, state,
+                                     fail_phase="after_public_marker")
             self.assertEqual((public / "current_run.json").read_bytes(), before)
             self.assertEqual((et / "current_run.json").read_bytes(), before)
             self.assertEqual((et / publication.REBASELINE_LEDGER_NAME).read_bytes(), ledger)

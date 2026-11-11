@@ -277,7 +277,7 @@ def tencent_realtime_quotes(tickers):
     return rows
 
 
-def tushare_realtime_quotes(tickers, src="sina"):
+def tushare_realtime_quotes(tickers, src="sina", *, before_read=None):
     """Intraday realtime quotes via Tushare SDK. Observation only; never samples.
 
     This intentionally uses the Tushare package wrapper rather than direct Tencent/Sina
@@ -293,6 +293,8 @@ def tushare_realtime_quotes(tickers, src="sina"):
     ts_codes = ",".join(tickers)
     symbols = [_ts_code_for_realtime(t) for t in tickers]
     first_err = None
+    if before_read is not None:
+        before_read()
     try:
         df = ts.realtime_quote(ts_code=ts_codes, src=src)
         rows = df.to_dict("records")
@@ -302,6 +304,8 @@ def tushare_realtime_quotes(tickers, src="sina"):
     except Exception as e:                                  # noqa: BLE001
         first_err = e
     if src == "sina":
+        if before_read is not None:
+            before_read()
         try:
             df = rtq.get_realtime_quotes_sina(rtq.symbol_verify(ts_codes))
             rows = df.to_dict("records")
@@ -310,6 +314,8 @@ def tushare_realtime_quotes(tickers, src="sina"):
             return [_normalize_realtime_row(r, "tushare_sdk:realtime_quote:sina_internal") for r in rows]
         except Exception as internal_err:                   # noqa: BLE001
             first_err = RuntimeError(f"{first_err}; internal sina failed: {internal_err}")
+    if before_read is not None:
+        before_read()
     try:
         df = ts.get_realtime_quotes(symbols)
         rows = df.to_dict("records")
@@ -317,6 +323,8 @@ def tushare_realtime_quotes(tickers, src="sina"):
             raise RuntimeError("empty get_realtime_quotes")
         return [_normalize_realtime_row(r, "tushare_sdk:get_realtime_quotes") for r in rows]
     except Exception as second_err:                         # noqa: BLE001
+        if before_read is not None:
+            before_read()
         try:
             return tencent_realtime_quotes(tickers)
         except Exception as third_err:                      # noqa: BLE001
@@ -418,7 +426,23 @@ def main():
         print(json.dumps(rows, ensure_ascii=False, indent=2))
         return
     if args.realtime:
-        rows = tushare_realtime_quotes([t.strip() for t in args.realtime.split(",")])
+        import market_clock as mc
+        from run_premarket_monitor import is_trading_day
+
+        day = mc.trade_date(mc.shanghai_now())
+        token = os.environ.get("TUSHARE_TOKEN", "").strip()
+        calendar = lambda date: is_trading_day(date, token)
+        try:
+            # governance-mutation: EXECUTION_CLOCK_REALTIME_CLI_ADMISSION
+            mc.require_session(None, calendar, day)
+            rows = tushare_realtime_quotes([t.strip() for t in args.realtime.split(",")],
+                                           before_read=lambda: mc.require_session(None, calendar, day))
+            captured = mc.shanghai_now()
+            if mc.trade_date(captured) != day or not mc.in_trading_session(captured):
+                raise mc.SessionRefused(mc.OUTSIDE_MARKET_HOURS, "Quote returned outside the admitted session")
+        except mc.SessionRefused as exc:
+            print(json.dumps({"status": exc.status, "reason": str(exc)}, ensure_ascii=False))
+            sys.exit(1)
         print(json.dumps(rows, ensure_ascii=False, indent=2))
         return
     ap.print_help()

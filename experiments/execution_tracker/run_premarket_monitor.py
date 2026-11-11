@@ -189,21 +189,20 @@ def log_nowcasts(reads, date, checkpoint, log_path=None, captured_at=None):
 
 
 def is_trading_day(date, token=None):
-    """SSE trade_cal for one 'YYYYMMDD' date; weekday fallback when unreachable.
-    Returns (open: bool, reason: str)."""
-    import datetime
+    """One confirmed SSE calendar row; None means unavailable, never a weekday guess."""
     try:
         d = fs._tushare_call("trade_cal", token or os.environ.get("TUSHARE_TOKEN", ""),
                              {"exchange": "SSE", "start_date": date, "end_date": date},
                              "cal_date,is_open")
-        items = d.get("items") or []
-        if items and not items[0][1]:
-            return False, f"{date} 非交易日(trade_cal)"
-        return True, "open"
-    except Exception:                                     # noqa: BLE001 — trade_cal unreachable
-        if datetime.datetime.strptime(date, "%Y%m%d").weekday() >= 5:
-            return False, f"{date} 周末(trade_cal 不可达,按 weekday 判)"
-        return True, "open(trade_cal 不可达,按 weekday 判)"
+    except Exception:
+        return None, f"{date} 交易日历不可达"
+    rows = d.get("items") if isinstance(d, dict) else None
+    fields = d.get("fields") if isinstance(d, dict) else None
+    if (fields != ["cal_date", "is_open"] or not isinstance(rows, list) or len(rows) != 1
+            or not isinstance(rows[0], list) or len(rows[0]) != 2
+            or rows[0][0] != date or type(rows[0][1]) is not int or rows[0][1] not in (0, 1)):
+        return None, f"{date} 交易日历响应缺失或不匹配"
+    return (True, "open(trade_cal)") if rows[0][1] == 1 else (False, f"{date} 非交易日(trade_cal)")
 
 
 def is_market_open_now(token=None, now=None):
@@ -213,44 +212,60 @@ def is_market_open_now(token=None, now=None):
     `now` must be timezone-aware (default: now); the window is Asia/Shanghai,
     never the machine's local clock (2026-09 London-clock incident).
     Returns (open: bool, reason: str)."""
-    now = mc.shanghai_now() if now is None else mc.to_shanghai(now)
-    hm = now.strftime("%H%M")
-    if not ("0910" <= hm <= "1505"):                     # auction 09:15 .. close 15:00, small slack
-        return False, f"当前 {now.strftime('%H:%M')} Asia/Shanghai 不在交易时段(09:10-15:05)"
-    return is_trading_day(now.strftime("%Y%m%d"), token)
+    status, why = mc.session_admission(None if now is None else lambda: now,
+                                       lambda day: is_trading_day(day, token))
+    return status == mc.ADMITTED, why
 
 
-def monitor(token, portfolio=PORTFOLIO, indices=INDICES, quote_fn=None, market_open=None):
+def monitor(token, portfolio=PORTFOLIO, indices=INDICES, quote_fn=None, *, clock=None, trading_day_fn=None):
     """Pull realtime, read, classify. Returns an OBSERVATION dict (never sample-eligible)."""
-    if market_open is None:
-        market_open, why = is_market_open_now(token)
-    else:
-        why = "injected"
-    if not market_open:
+    calendar = trading_day_fn or (lambda day: is_trading_day(day, token))
+    day = mc.trade_date(mc.shanghai_now(clock))
+
+    def refused(status, why):
         return {"layer": "P1.2_premarket_monitor",
                 "sample_eligible": False, "no_trade_flag": True, "observation_only": True,
                 "market_state": "MARKET_CLOSED", "reason": why,
                 "avg_portfolio_gap": None, "single_beta_amplified": False,
                 "high_reflexivity": False, "holdings": [], "indices": [],
-                "overnight_anchor": load_overnight_anchor(),
-                "note": "闭市/非交易时段 — 拒绝对 stale 行情分类(--force 可覆盖)"}
-    quote_fn = quote_fn or (lambda tickers: fs.tushare_realtime_quotes(tickers, src="sina"))
+                "admission_status": status, "overnight_anchor": None,
+                "note": "闭市或日历未证实，拒绝读取或使用行情"}
+    quote_fn = quote_fn or (lambda tickers: fs.tushare_realtime_quotes(
+        tickers, src="sina", before_read=lambda: mc.require_session(clock, calendar, day)))
+    status, why = mc.session_admission(clock, calendar, expected_date=day)
+    if status != mc.ADMITTED:
+        return refused(status, why)
     name_map = dict(portfolio)
-    quotes = quote_fn([t for t, _ in portfolio])
+    try:
+        quotes = quote_fn([t for t, _ in portfolio])
+    except mc.SessionRefused as exc:
+        return refused(exc.status, str(exc))
+    captured = mc.shanghai_now(clock)
+    if mc.trade_date(captured) != day or not mc.in_trading_session(captured):
+        return refused(mc.OUTSIDE_MARKET_HOURS, "行情返回时已离开本次上海交易时段")
     for q in quotes:
         if not q.get("name"):
             q["name"] = name_map.get(q.get("ticker"))
     reads = [read_quote(q) for q in quotes]
     idx_reads = []
-    try:
-        idx_reads = [read_quote(q) for q in quote_fn([t for t, _ in indices])]
-    except Exception:                                          # noqa: BLE001
-        pass
+    if indices:
+        status, why = mc.session_admission(clock, calendar, expected_date=day)
+        if status != mc.ADMITTED:
+            return refused(status, why)
+        try:
+            idx_reads = [read_quote(q) for q in quote_fn([t for t, _ in indices])]
+        except mc.SessionRefused as exc:
+            return refused(exc.status, str(exc))
+        except Exception:
+            pass
+        captured = mc.shanghai_now(clock)
+        if mc.trade_date(captured) != day or not mc.in_trading_session(captured):
+            return refused(mc.OUTSIDE_MARKET_HOURS, "指数行情返回时已离开本次上海交易时段")
     cls = classify(reads)
     return {
         "layer": "P1.2_premarket_monitor",
         "sample_eligible": False, "no_trade_flag": True, "observation_only": True,
-        "market_state": cls["state"], "reason": cls["reason"],
+        "market_state": cls["state"], "reason": cls["reason"], "captured_at": mc.stamp(captured),
         "avg_portfolio_gap": cls["avg_gap"],
         "single_beta_amplified": cls["single_beta_amplified"],
         "high_reflexivity": cls["high_reflexivity"],
@@ -308,9 +323,11 @@ def selftest():
     ck("intraday_range = 6%", abs(r["intraday_range"] - 0.06) < 1e-9)
 
     # OBSERVATION ONLY: monitor output never sample-eligible, never an order
+    import datetime as _dt
+    fixture_clock = lambda: _dt.datetime(2026, 7, 2, 10, 0, tzinfo=mc.SHANGHAI)
     out = monitor(token=None, portfolio=[("A.SZ", "a"), ("B.SZ", "b")], indices=[],
                   quote_fn=lambda ts: [_q(t, t, 96, 100, 96, 97, 95) for t in ts],
-                  market_open=True)                       # injected: keep selftest offline/deterministic
+                  clock=fixture_clock, trading_day_fn=lambda _: (True, "fixture"))
     ck("monitor sample_eligible False", out["sample_eligible"] is False)
     ck("monitor no_trade_flag True", out["no_trade_flag"] is True)
     ck("every holding read sample_eligible False", all(h["sample_eligible"] is False for h in out["holdings"]))
@@ -322,12 +339,11 @@ def selftest():
     # HIGH_REFLEXIVITY). Closed -> refuse to classify; no quote_fn ever called.
     closed = monitor(token=None, portfolio=[("A.SZ", "a")], indices=[],
                      quote_fn=lambda ts: (_ for _ in ()).throw(AssertionError("quote_fn must not be called when closed")),
-                     market_open=False)
+                     clock=fixture_clock, trading_day_fn=lambda _: (False, "fixture"))
     ck("closed -> MARKET_CLOSED", closed["market_state"] == "MARKET_CLOSED")
     ck("closed -> no holdings classified", closed["holdings"] == [])
     ck("closed -> still sample_eligible False", closed["sample_eligible"] is False)
     ck("closed -> still carries overnight anchor", "overnight_anchor" in closed)
-    import datetime as _dt
     ok_evening, why_evening = is_market_open_now(
         token="", now=_dt.datetime(2026, 7, 2, 20, 0, tzinfo=mc.SHANGHAI))
     ck("20:00 -> closed (time window, offline)", ok_evening is False and "不在交易时段" in why_evening)
@@ -387,7 +403,7 @@ def main():
     ap.add_argument("--selftest", action="store_true")
     ap.add_argument("--run", action="store_true", help="live intraday observation (needs TUSHARE_TOKEN)")
     ap.add_argument("--save", action="store_true", help="also write observations/<date>_<time>.json")
-    ap.add_argument("--force", action="store_true", help="override the MARKET_CLOSED guard (testing only)")
+    ap.add_argument("--force", action="store_true", help="legacy flag; does not override market or calendar guards")
     ap.add_argument("--nowcast", action="store_true",
                     help="also log per-ticker main-force nowcasts (append-only, scored post-close)")
     ap.add_argument("--checkpoint", default=None, help="checkpoint label for the nowcast log, e.g. 1030")
@@ -398,15 +414,16 @@ def main():
         token = os.environ.get("TUSHARE_TOKEN", "").strip()
         if not token:
             print("NO TUSHARE_TOKEN — run `source ~/.zprofile` first"); sys.exit(1)
-        obs = monitor(token, market_open=True if args.force else None)
+        obs = monitor(token)
         print(f"\n=== PREMARKET / OPENING OBSERVATION (sample_eligible=false) ===")
         oa = obs.get("overnight_anchor") or {}
         print(f"overnight anchor : {oa.get('bias')} | {oa.get('why')}")
         print(f"state : {obs['market_state']} | {obs['reason']}")
         if obs["market_state"] == "MARKET_CLOSED":
-            print(obs["note"]); print("不是买卖指令；研究信号，human executes。"); return
+            print(f"{obs['admission_status']}: {obs['note']}")
+            print("不是买卖指令；研究信号，human executes。"); return
         if args.nowcast:
-            now = mc.shanghai_now()
+            now = mc.parse_instant(obs["captured_at"])
             cp = args.checkpoint or mc.hhmm(now)
             added = log_nowcasts(obs["holdings"], mc.trade_date(now), cp, captured_at=now)
             print(f"nowcast: +{len(added)} logged @checkpoint {cp} (prediction-not-truth, scored post-close)")

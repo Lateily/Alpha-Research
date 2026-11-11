@@ -180,16 +180,18 @@ class WatchtowerTests(TempDirCase):
         return {"dry": True}
 
     def test_london_clock_start_is_outside_market_hours(self):
-        status, why = wt.start_admission("", now=at(BST, 9, 14), trading_day_fn=trading_day)
+        calendar = mock.Mock(side_effect=trading_day)
+        status, why = wt.start_admission("", now=at(BST, 9, 14), trading_day_fn=calendar)
+        calendar.assert_not_called()
         self.assertEqual(status, wt.OUTSIDE_MARKET_HOURS)
         self.assertIn("16:14:00+08:00", why)
 
     def test_beijing_clock_start_is_admitted(self):
-        status, _ = wt.start_admission("", now=at(CST, 9, 14), trading_day_fn=trading_day)
+        status, _ = wt.start_admission("", now=at(CST, 9, 15), trading_day_fn=trading_day)
         self.assertEqual(status, wt.ADMITTED)
 
     def test_non_trading_day_start_is_refused(self):
-        status, _ = wt.start_admission("", now=at(CST, 9, 14), trading_day_fn=holiday)
+        status, _ = wt.start_admission("", now=at(CST, 9, 15), trading_day_fn=holiday)
         self.assertEqual(status, wt.NON_TRADING_DAY)
 
     def test_london_daemon_exits_without_polling_or_logging(self):
@@ -218,20 +220,21 @@ class WatchtowerTests(TempDirCase):
 
         def poll():
             polled.append(mc.hhmm(clock()))
-            wt.poll_once("", dry=True, clock=clock, quote_fn=quotes)
+            wt.poll_once("", dry=True, clock=clock, quote_fn=quotes, trading_day_fn=trading_day)
 
         status = wt.daemon("", clock=clock, sleep=clock.sleep, poll=poll,
                            trading_day_fn=trading_day)
         self.assertEqual(status, "SESSION_END")
         self.assertEqual(polled[0], "1450")
-        self.assertIn("1504", polled)                   # 15:00-15:05 still polls alerts
+        self.assertEqual(polled[-1], "1458")
+        self.assertTrue(all("0915" <= t < "1500" for t in polled))
         with open(self.nowcast_log, encoding="utf-8") as fh:
             logged = json.load(fh)
         self.assertEqual([(r["date"], r["checkpoint"], r.get("captured_at")) for r in logged],
                          [("20260923", "wt1450", "2026-09-23T14:50:00+08:00")])
         with open(wt.ALERT_LOG, encoding="utf-8") as fh:
             flips = [a["key"] for a in json.load(fh) if a["rule"] == "NOWCAST_FLIP"]
-        self.assertEqual(len(flips), 2)                 # the 15:00 flip alerted, never logged
+        self.assertEqual(len(flips), 1)
 
 
 class EodDecisionTests(TempDirCase):
