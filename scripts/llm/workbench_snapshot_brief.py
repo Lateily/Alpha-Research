@@ -16,6 +16,11 @@ from team_ai_workspace import SECRET_PATTERNS, possible_repository_secret
 # letter matches. Keep the regex as the authority on all candidate strings.
 _BRIEF_CASE_EXCEPTIONS = ((b"\xc5\xbf", b"s"), (b"\xe2\x84\xaa", b"k"),
                           (b"\xc4\xb0", b"i"), (b"\xc4\xb1", b"i"))
+_BRIEF_CREDENTIAL_RULES = (
+    (re.compile(r"(?i)(authorization\s*:\s*bearer\s+\S+|\bbearer\s+[A-Za-z0-9_.-]{8,})"), b"bearer"),
+    (re.compile(r"(?i)\bsk-[A-Za-z0-9_-]{12,}"), b"sk-"),
+    (re.compile(r"(?i)\bAKIA[A-Z0-9]{16}"), b"akia"),
+)
 
 
 class SnapshotBriefError(ValueError):
@@ -43,8 +48,9 @@ def reject_credentials(value):
             if not raw.isascii():
                 for source, replacement in _BRIEF_CASE_EXCEPTIONS:
                     folded = folded.replace(source, replacement)
-            if any(literal in folded for literal in (b"bearer", b"sk-", b"akia")):
-                if re.search(r"(?i)(authorization\s*:\s*bearer\s+\S+|\bbearer\s+[A-Za-z0-9_.-]{8,}|\bsk-[A-Za-z0-9_-]{12,}|\bAKIA[A-Z0-9]{16})", text):
+            # A new detector without a provably necessary literal uses None.
+            for pattern, required in _BRIEF_CREDENTIAL_RULES:
+                if (required is None or required in folded) and pattern.search(text):
                     raise SnapshotBriefError("CREDENTIAL_SHAPED_CONTENT_REFUSED")
 
 

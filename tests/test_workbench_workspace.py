@@ -411,6 +411,13 @@ class EvidenceTests(unittest.TestCase):
             sys.setprofile(previous)
         self.assertEqual(len(searches), 0, 'benign material window ran full credential regexes')
 
+    def test_credential_scan_executes_new_rules_without_a_literal_hint(self):
+        import workbench_snapshot_brief as brief
+        extra = (re.compile(r'\bsvc_[A-Z0-9]{16}\b'), None)
+        with mock.patch.object(brief, '_BRIEF_CREDENTIAL_RULES', brief._BRIEF_CREDENTIAL_RULES + (extra,)):
+            with self.assertRaisesRegex(brief.SnapshotBriefError, 'CREDENTIAL'):
+                brief.reject_credentials('svc_' + 'A' * 16)
+
     def test_backup_restores_successful_snapshot_briefs_and_event_bindings(self):
         with tempfile.TemporaryDirectory() as temporary:
             state = Path(temporary)

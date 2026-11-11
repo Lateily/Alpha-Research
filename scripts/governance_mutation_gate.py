@@ -4114,6 +4114,13 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="The fast path must preserve legacy Unicode IGNORECASE matching.",
     ),
     MutationCase(
+        mutation_id="WORKBENCH_BRIEF_CREDENTIAL_PREFILTER_NO_HINT", component="AIOS nonproduction workbench",
+        source_path="scripts/llm/workbench_snapshot_brief.py", test_script="tests/test_workbench_workspace.py",
+        before="(required is None or required in folded)", after="(required is not None and required in folded)",
+        expected_failure_marker="test_credential_scan_executes_new_rules_without_a_literal_hint",
+        rationale="A detector without a provably necessary literal must still run.",
+    ),
+    MutationCase(
         mutation_id="WORKBENCH_BRIEF_BACKUP_ROUNDTRIP", component="AIOS nonproduction workbench",
         source_path="scripts/llm/workbench_backup.py", test_script="tests/test_workbench_workspace.py",
         before='if job["kind"] != "snapshot-brief" or job["status"] != "SUCCEEDED":', after='if True:',
