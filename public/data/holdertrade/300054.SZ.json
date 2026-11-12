@@ -1,10 +1,25 @@
 {
   "_status": "ok",
   "ticker": "300054.SZ",
-  "fetched_at": "2026-11-12T08:11:18Z",
+  "fetched_at": "2026-11-12T17:01:12Z",
   "api_used": "stk_holdertrade",
   "window_days": 180,
   "events": [
+    {
+      "ts_code": "300054.SZ",
+      "ann_date": "20261112",
+      "holder_name": "机构专用",
+      "holder_type": "P",
+      "in_de": "DE",
+      "change_vol": 465100,
+      "change_ratio": 0.0625,
+      "after_share": null,
+      "after_ratio": null,
+      "avg_price": 61.06,
+      "total_share": null,
+      "begin_date": null,
+      "close_date": null
+    },
     {
       "ts_code": "300054.SZ",
       "ann_date": "20260804",
@@ -172,12 +187,12 @@
     }
   ],
   "summary": {
-    "total_count": 11,
+    "total_count": 12,
     "in_count": 0,
-    "de_count": 11,
-    "net_change_vol_180d": -1523300,
-    "net_change_ratio_180d": -0.20480000000000004,
-    "last_announce_date": "2026-08-04",
+    "de_count": 12,
+    "net_change_vol_180d": -1988400,
+    "net_change_ratio_180d": -0.26730000000000004,
+    "last_announce_date": "2026-11-12",
     "signal_level": "NEUTRAL"
   }
 }
