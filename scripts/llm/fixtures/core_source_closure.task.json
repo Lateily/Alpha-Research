@@ -1,0 +1,22 @@
+{
+  "schema": "ai-task.v1",
+  "task_id": "P0-CORE-SOURCE-CLOSURE-20261112",
+  "architecture_block": ["Data governance", "Research evidence"],
+  "objective": "In isolation join pinned real core endpoint observations, observed historical consumer impact, and the already-consumed exact-scope human recheck; seal separate 603986.SH evidence without backfilling.",
+  "non_goals": ["No market API, paid model, credential read, retry, publication, backfill, activation, trade or release."],
+  "human_owner": "Junyan",
+  "reviewer": "Independent nonauthor reviewer",
+  "executor_candidates": ["Codex"],
+  "dependencies": ["Pinned 3c52980 foundation", "Existing Core Source Gap Closure V1", "Retained original nightly result, EndpointSession catalogs and exact historical grant/receipt"],
+  "authority_docs": ["AGENTS.md", "scripts/llm/AGENTS.md", "docs/engineering/CORE_SOURCE_GAPS_V1.md", "experiments/AGENTS.md"],
+  "file_scope": ["scripts/llm/core_source_closure.py", "scripts/llm/fixtures/core_source_closure.task.json", "tests/test_core_source_closure.py", "docs/engineering/CORE_SOURCE_CLOSURE_V1.md", "scripts/governance_mutation_gate.py", ".github/workflows/python-ci.yml", "isolated local P0 delivery and new 603986.SH evidence outside Git"],
+  "forbidden_scope": ["ar-live writes or workflow execution", "Shared service or state", "Market/model providers and credentials", "Production ledgers and schedule", "Old sealed packages", "#411 and physical acceptance", "Two-human acceptance"],
+  "input_contracts": ["Externally pinned original nightly result and exact endpoint receipt ledger head", "Exact required API/security/trade date/fields and trusted grant/receipt pins", "Separate issuer/official research evidence generation"],
+  "output_artifacts": ["Read-only closure projection with observed consumer impact, late recheck and no publication authority", "Behavioral regressions and mutation checks", "Same-candidate acceptance and independent review", "Separately sealed 603986.SH evidence retaining DATA_BLOCKED"],
+  "acceptance_tests": ["python3 -B tests/test_core_source_gaps.py", "python3 -B tests/test_core_source_closure.py", "Offline pinned real evidence replay; refuse substituted scope, tampering and temporal leakage", "Same candidate offline CI behavior and mutation gate, independent review"],
+  "risk_level": "MEDIUM",
+  "network_policy": "OFFLINE",
+  "budget": {"max_cny": "0", "max_minutes": 180},
+  "approval_gates": ["Junyan approved isolated P0 implementation and evidence review", "Only read existing exact-scope consumed provider evidence; no new dispatch", "Research public-document reference capture is separate from the offline runtime", "Physical nonproduction Mac and London window, merge, production and shared-service changes require separate human approval"],
+  "created_at": "2026-11-12T14:20:00+00:00"
+}

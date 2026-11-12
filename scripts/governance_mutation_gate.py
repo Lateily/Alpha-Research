@@ -19021,6 +19021,27 @@ MUTATIONS += (
         'The real CLI admits only the exact versioned expectation envelope.'),
 )
 
+MUTATIONS += (
+    MutationCase('CORE_CLOSURE_INCIDENT_PIN', 'Core closure', 'scripts/llm/core_source_closure.py',
+        'tests/test_core_source_closure.py', '    if ev.sha(raw) != pin:', '    if False:',
+        'test_incident_bytes_must_match_external_pin',
+        'Only an independently pinned historical result may drive the impact report.'),
+    MutationCase('CORE_CLOSURE_CONSUMPTION', 'Core closure', 'scripts/llm/core_source_closure.py',
+        'tests/test_core_source_closure.py',
+        "    if ev.parse(_read(marker)) != {'receipt_hash': receipt_pin}:", '    if False:',
+        'test_consumption_marker_must_bind_exact_receipt',
+        'A terminal recheck must match the independently retained consumption marker.'),
+    MutationCase('CORE_CLOSURE_LATE_ONLY', 'Core closure', 'scripts/llm/core_source_closure.py',
+        'tests/test_core_source_closure.py',
+        "    if gaps._time(start['invoked_at']) < not_before:", '    if False:',
+        'test_recheck_cannot_predate_original_failure',
+        'An earlier invocation is not a late historical recheck.'),
+    MutationCase('CORE_CLOSURE_VISIBLE_RECHECK', 'Core closure', 'scripts/llm/core_source_closure.py',
+        'tests/test_core_source_closure.py', '    if not matching:', '    if False:',
+        'test_recheck_not_known_at_cutoff_cannot_enter_projection',
+        'An externally pinned receipt cannot substitute for visible ledger history.'),
+)
+
 
 SHARD_SPEC_RE = re.compile(r"^(?P<index>[1-9][0-9]*)/(?P<count>[1-9][0-9]*)$")
 SHARD_RECEIPT_SCHEMA = "ar-governance-mutation-shard-receipt.v1"
