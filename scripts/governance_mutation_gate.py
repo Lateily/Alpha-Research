@@ -19021,6 +19021,45 @@ MUTATIONS += (
         'The real CLI admits only the exact versioned expectation envelope.'),
 )
 
+MUTATIONS += (
+    MutationCase('CORE_CLOSURE_INCIDENT_PIN', 'Core closure', 'scripts/llm/core_source_closure.py',
+        'tests/test_core_source_closure.py', '    if ev.sha(raw) != pin:', '    if False:',
+        'test_incident_bytes_must_match_external_pin',
+        'Only an independently pinned historical result may drive the impact report.'),
+    MutationCase('CORE_CLOSURE_CONSUMPTION', 'Core closure', 'scripts/llm/core_source_closure.py',
+        'tests/test_core_source_closure.py',
+        "    if ev.parse(_read(marker)) != {'receipt_hash': receipt_pin}:", '    if False:',
+        'test_consumption_marker_must_bind_exact_receipt',
+        'A terminal recheck must match the independently retained consumption marker.'),
+    MutationCase('CORE_CLOSURE_LATE_ONLY', 'Core closure', 'scripts/llm/core_source_closure.py',
+        'tests/test_core_source_closure.py',
+        "    if gaps._time(start['invoked_at']) < not_before:", '    if False:',
+        'test_recheck_cannot_predate_original_failure',
+        'An earlier invocation is not a late historical recheck.'),
+    MutationCase('CORE_CLOSURE_VISIBLE_RECHECK', 'Core closure', 'scripts/llm/core_source_closure.py',
+        'tests/test_core_source_closure.py', '    if not _visible_call(ledger, scope, row, source):', '    if False:',
+        'test_recheck_not_known_at_cutoff_cannot_enter_projection',
+        'An externally pinned receipt cannot substitute for visible ledger history.'),
+    MutationCase('CORE_CLOSURE_PER_CALL_BINDING', 'Core closure', 'scripts/llm/core_source_closure.py',
+        'tests/test_core_source_closure.py',
+        "                if gaps._binding(candidate, batch['files']) == binding:\n                    return True",
+        "                if gaps._binding(candidate, batch['files']) == binding:\n                    return batch_hash == source['evidence_hash']",
+        'test_exact_call_remains_visible_when_archived_in_a_larger_batch',
+        'The same independently verified call stays visible regardless of batch grouping.'),
+    MutationCase('CORE_CLOSURE_WRONG_TERMINAL', 'Core closure', 'scripts/llm/core_source_closure.py',
+        'tests/test_core_source_closure.py',
+        "                if gaps._binding(candidate, batch['files']) == binding:",
+        "                if True:",
+        'test_same_call_id_with_different_terminal_does_not_bind',
+        'A matching logical call ID cannot substitute for the original terminal bytes.'),
+    MutationCase('CORE_CLOSURE_MARKER_NOT_CUSTODY', 'Core closure', 'scripts/llm/core_source_closure.py',
+        'tests/test_core_source_closure.py',
+        "'consumption_marker_evidence': 'SUPPLIED_MARKER_MATCHES_RECEIPT_NOT_CUSTODY_ATTESTED'",
+        "'grant_consumed': True",
+        'test_matching_marker_does_not_attest_independent_custody',
+        'A caller-supplied marker does not attest its custody.'),
+)
+
 
 SHARD_SPEC_RE = re.compile(r"^(?P<index>[1-9][0-9]*)/(?P<count>[1-9][0-9]*)$")
 SHARD_RECEIPT_SCHEMA = "ar-governance-mutation-shard-receipt.v1"
