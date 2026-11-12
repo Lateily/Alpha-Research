@@ -18,6 +18,10 @@ ROOT = Path(__file__).resolve().parents[1]
 MANIFEST_PATH = ROOT / "docs/research/contracts/research_closed_loop.v1.json"
 DOC_PATH = ROOT / "docs/research/RESEARCH_CLOSED_LOOP_V1.md"
 TASK_PATH = ROOT / "scripts/llm/fixtures/research_closed_loop_v1.task.json"
+PUBLISHER_PATH = "experiments/execution_tracker/nightly_publish.py"
+HISTORICAL_PUBLISHER_PATH = "docs/research/contracts/historical/nightly_publish.3336329.snapshot"
+PUBLISHER_BINDING_PATH = ROOT / "docs/research/contracts/nightly_publisher_binding.v1.json"
+V1_MANIFEST_SHA256 = "sha256:d4121d5444e6491f8371b28208a77f8e6e6f19643e863fd210791e308b0a2106"
 EXPECTED_ARTIFACT_PATHS = (
     "docs/research/RESEARCH_CLOSED_LOOP_V1.md",
     "docs/research/ALL_MARKET_RESEARCH_FUNNEL.md",
@@ -81,6 +85,11 @@ def _load(path: Path) -> dict[str, Any]:
 
 def _sha(path: Path) -> str:
     return "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _v1_binding_path(path: str) -> Path:
+    # The V1 manifest predates the new publisher; only its publisher is archived.
+    return ROOT / (HISTORICAL_PUBLISHER_PATH if path == PUBLISHER_PATH else path)
 
 
 def _validate(manifest: dict[str, Any]) -> list[str]:
@@ -205,6 +214,38 @@ class ResearchClosedLoopV1Tests(unittest.TestCase):
     def setUp(self) -> None:
         self.manifest = _load(MANIFEST_PATH)
 
+    def _assert_publisher_version_binding(self) -> None:
+        self.assertTrue(PUBLISHER_BINDING_PATH.is_file(), "separate publisher binding required")
+        snapshot = ROOT / HISTORICAL_PUBLISHER_PATH
+        self.assertTrue(snapshot.is_file(), "historical publisher bytes required")
+        current = ROOT / PUBLISHER_PATH
+        self.assertTrue(current.is_file(), "current publisher bytes required")
+        for path in (MANIFEST_PATH, PUBLISHER_BINDING_PATH, snapshot, current):
+            self.assertEqual(path, path.resolve(), "binding requires a canonical file")
+        self.assertEqual(_sha(MANIFEST_PATH), V1_MANIFEST_SHA256)
+        historical_sha = next(row["sha256"] for row in self.manifest["artifact_bindings"]
+                              if row["path"] == PUBLISHER_PATH)
+        self.assertEqual(_sha(snapshot), historical_sha)
+        self.assertNotEqual(_sha(current), historical_sha, "historical bytes cannot be the new publisher")
+        self.assertEqual(_load(PUBLISHER_BINDING_PATH), {
+            "schema": "ar.nightly_publisher_binding.v1",
+            "scope": "OFFLINE_SOURCE_COMPATIBILITY_ONLY",
+            "historical": {
+                "source_commit": "333632910357baddcfbd9137ad5f01d666b9a912",
+                "v1_manifest_path": "docs/research/contracts/research_closed_loop.v1.json",
+                "v1_manifest_sha256": V1_MANIFEST_SHA256,
+                "snapshot_path": HISTORICAL_PUBLISHER_PATH,
+                "publisher_sha256": historical_sha,
+            },
+            "current": {
+                "path": PUBLISHER_PATH,
+                "publisher_sha256": _sha(current),
+            },
+        })
+
+    def test_publisher_version_binding_checks_both_byte_versions(self) -> None:
+        self._assert_publisher_version_binding()
+
     def test_t10_revision_is_explicit_and_not_human_frozen(self) -> None:
         self.assertEqual(self.manifest["schema_version"], "1.5")
         self.assertEqual(self.manifest["method_version"], "RESEARCH_CLOSED_LOOP_V1_5_CANDIDATE")
@@ -224,7 +265,10 @@ class ResearchClosedLoopV1Tests(unittest.TestCase):
                      "docs/research/PAPER_T10_CALENDAR_V1.md"):
             with self.subTest(path=path):
                 self.assertIn(path, bindings)
-                self.assertEqual(bindings[path], _sha(ROOT / path))
+                resolved = _v1_binding_path(path)
+                self.assertTrue(resolved.is_file(), path)
+                self.assertEqual(bindings[path], _sha(resolved))
+        self._assert_publisher_version_binding()
 
     def test_t10_candidate_cannot_self_declare_human_freeze(self) -> None:
         changed = copy.deepcopy(self.manifest)
@@ -240,9 +284,10 @@ class ResearchClosedLoopV1Tests(unittest.TestCase):
         self.assertEqual(list(EXPECTED_ARTIFACT_PATHS), paths)
         for row in rows:
             self.assertEqual(set(row), {"path", "sha256"})
-            path = ROOT / row["path"]
+            path = _v1_binding_path(row["path"])
             self.assertTrue(path.is_file(), row["path"])
             self.assertEqual(row["sha256"], _sha(path), row["path"])
+        self._assert_publisher_version_binding()
 
     def test_artifact_binding_set_cannot_shrink(self) -> None:
         changed = json.loads(json.dumps(self.manifest))

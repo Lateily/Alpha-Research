@@ -15,6 +15,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
 ET = ROOT / "experiments" / "execution_tracker"
@@ -652,10 +653,17 @@ class RebaselineHardeningTests(unittest.TestCase):
         run_id = "../../OUTSIDE"
         with tempfile.TemporaryDirectory() as tmp:
             et, repo, _, state_path, _ = _layout(tmp, run_id=run_id)
+            with mock.patch.object(nightly_publish, "require_unfenced") as check_fence:
+                with self.assertRaisesRegex(RuntimeError, "run_id 形状非法"):
+                    nightly_publish.rebaseline_lost_manifest(
+                        state_path, et, repo, now=NOW, **approval_for(run_id))
+                check_fence.assert_not_called()
+            # Ledger replay also validates these pointers without the entry guard.
+            state = read_json(state_path)
             with self.assertRaisesRegex(RuntimeError, "run_id 形状非法"):
-                nightly_publish.rebaseline_lost_manifest(
-                    state_path, et, repo, now=NOW, **approval_for(run_id))
-            self.assertEqual(read_json(state_path)["status"], "COMMITTED")
+                nightly_publish._require_consistent_pointers(et, repo, state)
+            self.assertEqual(state["status"], "COMMITTED")
+            self.assertEqual(read_json(state_path), state)
 
     # ── MAJOR 3: approval must bind this action, and must not overclaim identity ──
     def test_placeholder_approval_is_refused(self):
