@@ -80,7 +80,29 @@ def _incident(path, pin, scope, when):
     }, not_before
 
 
-def _recheck(root, grant_pin, receipt_pin, marker, scope, not_before):
+def _visible_call(ledger, scope, row, source):
+    call_id = row['start']['logical_call_id']
+    binding = gaps._binding(row, source['files'])
+    for observed in scope['history']:
+        if observed['logical_call_id'] != call_id:
+            continue
+        # Ledger batches may contain other calls; the call's original
+        # START, terminal, catalog and projection must still match exactly.
+        batch_hash = gaps._hash(observed['evidence_hash'])
+        batch = gaps.evidence(Path(ledger) / 'sources' / batch_hash)
+        if batch['evidence_hash'] != batch_hash:
+            raise ValueError('CLOSURE_LEDGER_BATCH_CHANGED')
+        for candidate in batch['calls']:
+            if candidate['start']['logical_call_id'] == call_id:
+                # governance-mutation: CORE_CLOSURE_PER_CALL_BINDING
+                # governance-mutation: CORE_CLOSURE_WRONG_TERMINAL
+                if gaps._binding(candidate, batch['files']) == binding:
+                    return True
+                raise ValueError('CLOSURE_LEDGER_CALL_MISMATCH')
+    return False
+
+
+def _recheck(ledger, root, grant_pin, receipt_pin, marker, scope, not_before):
     root = safe_path(root)
     grant = ev.parse(ev.read_local(root, 'grant.json'))
     if ev.sealed(grant) != grant_pin:
@@ -128,21 +150,21 @@ def _recheck(root, grant_pin, receipt_pin, marker, scope, not_before):
     # governance-mutation: CORE_CLOSURE_LATE_ONLY
     if gaps._time(start['invoked_at']) < not_before:
         raise ValueError('CLOSURE_RECHECK_NOT_LATE')
-    call_id = start['logical_call_id']
     history = scope['history']
-    matching = [h for h in history if h['logical_call_id'] == call_id
-                and h['evidence_hash'] == source['evidence_hash']]
     # governance-mutation: CORE_CLOSURE_VISIBLE_RECHECK
-    if not matching:
+    if not _visible_call(ledger, scope, row, source):
         return {'status': 'AUTHORIZED_RECHECK_NOT_VISIBLE'}
+    observation_time = gaps._time(result['completed_at'] or start['invoked_at'])
     if (scope['status'] == 'CONFLICTING_TIME_EVIDENCE'
-            or gaps._time(history[-1]['observation_time']) > gaps._time(matching[0]['observation_time'])):
+            or (history and gaps._time(history[-1]['observation_time']) > observation_time)):
         status = 'AUTHORIZED_RECHECK_RECONCILIATION_REQUIRED'
     else:
         status = 'AUTHORIZED_LATE_SCOPE_OBSERVED' if valid else 'AUTHORIZED_RECHECK_STILL_BLOCKED'
     return {'status': status, 'grant_hash': grant_pin, 'receipt_hash': receipt_pin,
-            'logical_call_id': call_id, 'completed_at': result['completed_at'],
-            'approval_evidence': APPROVAL_EVIDENCE, 'grant_consumed': True, 'max_attempts': 1}
+            'logical_call_id': start['logical_call_id'], 'completed_at': result['completed_at'],
+            'approval_evidence': APPROVAL_EVIDENCE, 'max_attempts': 1,
+            # governance-mutation: CORE_CLOSURE_MARKER_NOT_CUSTODY
+            'consumption_marker_evidence': 'SUPPLIED_MARKER_MATCHES_RECEIPT_NOT_CUSTODY_ATTESTED'}
 
 
 def closure(root, expected_scopes, *, expectation_pin, expected_head, observed_at, incident_path,
@@ -166,7 +188,7 @@ def closure(root, expected_scopes, *, expectation_pin, expected_head, observed_a
             raise ValueError('CLOSURE_RECHECK_INPUTS_INCOMPLETE')
         gaps._hash(grant_pin)
         gaps._hash(receipt_pin)
-        recheck = _recheck(*args, scope, not_before)
+        recheck = _recheck(root, *args, scope, not_before)
     return {'schema': 'ar.core-source-incident-closure.v1', 'gap_id': incident_scope,
             'incident': incident, 'coverage': coverage, 'recheck': recheck,
             'original_run_repaired': False, 'dispatch_allowed': False, **gaps.LABELS}

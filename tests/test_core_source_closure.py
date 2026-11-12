@@ -1,6 +1,7 @@
 """Incident closure controls built from the real offline endpoint producer."""
 from datetime import datetime, timezone
 from pathlib import Path
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -138,6 +139,34 @@ class ClosureTests(unittest.TestCase):
         self.write(args['consumption_marker'], {'receipt_hash': 'f' * 64})
         with self.assertRaisesRegex(ValueError, 'CLOSURE_CONSUMPTION_MISMATCH'):
             self.report(**args)
+
+    def test_matching_marker_does_not_attest_independent_custody(self):
+        args = self.make_recheck()
+        self.write(args['consumption_marker'], {'receipt_hash': args['receipt_pin']})
+        result = self.report(**args)['recheck']
+        self.assertNotIn('grant_consumed', result)
+        self.assertEqual(result['consumption_marker_evidence'],
+                         'SUPPLIED_MARKER_MATCHES_RECEIPT_NOT_CUSTODY_ATTESTED')
+
+    def test_exact_call_remains_visible_when_archived_in_a_larger_batch(self):
+        args = self.make_recheck(ingest=False)
+        batch = self.root / 'batch'
+        shutil.copytree(args['recheck_root'] / 'endpoints', batch)
+        session = EndpointSession(batch, collector_run_id='batch-companion', target_trade_date='20261030')
+        fields = ['close', 'trade_date', 'ts_code']
+        params = {'ts_code': '603629.SH', 'trade_date': '20261030'}
+        session.observe('daily', params, ','.join(fields), lambda: {
+            'code': 0, 'data': {'fields': fields, 'items': [[11, '20261030', '603629.SH']]}})
+        self.head = gaps.ingest(self.ledger, batch, expected_head=self.head,
+                                expected_evidence_hash=gaps.evidence(batch)['evidence_hash'])['head_hash']
+        value = self.report(**args)
+        self.assertEqual(value['recheck']['status'], 'AUTHORIZED_LATE_SCOPE_OBSERVED')
+        self.assertEqual(value['coverage']['counts']['valid'], 2)
+
+    def test_same_call_id_with_different_terminal_does_not_bind(self):
+        self.make_recheck(price=11)
+        with self.assertRaisesRegex(ValueError, 'CLOSURE_LEDGER_CALL_MISMATCH'):
+            self.report(**self.make_recheck(ingest=False, price=14))
 
     def test_recheck_not_ingested_is_not_observed(self):
         args = self.make_recheck(ingest=False)

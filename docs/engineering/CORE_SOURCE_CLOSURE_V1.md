@@ -22,6 +22,8 @@ Work from the pinned shared-stack base, without moving any deployed reference.
 Inputs to the CLI are paths to local immutable copies and separately supplied
 pins, not paths or commands taken from a provider response. To pass a recheck,
 provide its exact grant hash and receipt hash and the existing consumption
-marker. Local evidence is not independent provider or human authentication.
+marker. The marker's content can be checked, but custody cannot be attested
+by this interface. The exact call binding is independent of batch grouping.
+Local evidence is not independent provider or human authentication.
 No scope-wide data availability, as-known-then status, or production recovery
 is implied. The isolated report never promotes research readiness.
