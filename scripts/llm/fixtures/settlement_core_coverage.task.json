@@ -1,0 +1,22 @@
+{
+  "schema": "ai-task.v1",
+  "task_id": "P0-SETTLEMENT-CORE-COVERAGE-20261113",
+  "architecture_block": ["Data governance", "Settlement"],
+  "objective": "Project the six exact historical settlement acceptance scopes, distinct original date evidence and recorded impact, the prior authorized moneyflow recheck and the new three individually bounded observations.",
+  "non_goals": ["No general provider dispatcher, automatic retry, backlog reconstruction, old-package rewrite, physical acceptance, deployment or merge."],
+  "human_owner": "Junyan",
+  "reviewer": "Independent nonauthor",
+  "executor_candidates": ["Codex"],
+  "dependencies": ["Accepted isolated d869838", "Versioned EndpointSession receipts", "Pinned original Oct 30 result and separate one-use recheck evidence"],
+  "authority_docs": ["AGENTS.md", "scripts/llm/AGENTS.md", "experiments/AGENTS.md", "docs/engineering/CORE_SOURCE_CLOSURE_V1.md", "config/data-endpoint-contracts.v1.json"],
+  "file_scope": ["scripts/llm/settlement_core_coverage.py", "scripts/llm/core_source_closure.py", "scripts/llm/fixtures/settlement_core_coverage.task.json", "tests/test_settlement_core_coverage.py", "scripts/governance_mutation_gate.py", ".github/workflows/python-ci.yml", "docs/engineering/SETTLEMENT_CORE_COVERAGE_V1.md", "isolated untracked local operator, acceptance and evidence artifacts"],
+  "forbidden_scope": ["Production, existing shared state, schedule, #411 physical actions", "Old archives and PRs", "Secrets, uploading real evidence or raw provider responses", "Any other live API, new paid access or model call"],
+  "input_contracts": ["Pinned original incident", "Verified legacy closure", "Strict three-scope authorized plan and pinned receipt manifest plus original endpoint receipts"],
+  "output_artifacts": ["Bounded coverage report and observed impact", "Same-final-SHA tests and nonauthor review", "Private three single-attempt endpoint receipts when authorized; no raw response persistence"],
+  "acceptance_tests": ["python3 -B tests/test_settlement_core_coverage.py", "python3 -B tests/test_core_source_closure.py", "python3 -B tests/test_core_source_gaps.py", "Exact same-SHA offline CI and mutation gate; real receipt readback, temporal control and missing scope", "Independent review and git diff --check"],
+  "risk_level": "MEDIUM",
+  "network_policy": "ALLOWLIST",
+  "budget": {"max_cny": "0", "max_minutes": 150},
+  "approval_gates": ["Junyan authorized 3 exact existing-entitlement Tushare historical calls: daily 603629.SH, index_daily 000001.SH, moneyflow_mkt_dc market; day 20261030; per-task approved fields, one call per scope, no retries", "No provider calls through repo reader; explicit local fixed-purpose one-shot runner only", "No GitHub upload or service changes in this scope"],
+  "created_at": "2026-11-13T11:15:00+00:00"
+}

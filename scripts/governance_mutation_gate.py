@@ -19060,6 +19060,21 @@ MUTATIONS += (
         'A caller-supplied marker does not attest its custody.'),
 )
 
+MUTATIONS += (
+    MutationCase('SETTLEMENT_PLAN_PIN', 'Settlement coverage', 'scripts/llm/settlement_core_coverage.py',
+        'tests/test_settlement_core_coverage.py', '    if ev.sealed(plan) != plan_pin:', '    if False:',
+        'test_wrong_authorization_pin_refuses', 'The exact one-use plan is externally pinned.'),
+    MutationCase('SETTLEMENT_CAPTURE_BYTES', 'Settlement coverage', 'scripts/llm/settlement_core_coverage.py',
+        'tests/test_settlement_core_coverage.py', "    if ev.sealed(files) != capture['evidence_hash']:", '    if False:',
+        'test_changed_receipt_bytes_are_refused_even_when_valid_json', 'Parsed equivalence cannot replace original bytes.'),
+    MutationCase('SETTLEMENT_CAPTURE_SCOPE', 'Settlement coverage', 'scripts/llm/settlement_core_coverage.py',
+        'tests/test_settlement_core_coverage.py', '        if key not in allowed or key in result:', '        if key in result:',
+        'test_unapproved_scope_inside_resealed_capture_refuses', 'An unapproved index cannot count even in a re-sealed packet.'),
+    MutationCase('SETTLEMENT_CAPTURE_CUTOFF', 'Settlement coverage', 'scripts/llm/settlement_core_coverage.py',
+        'tests/test_settlement_core_coverage.py', '    if sealed > cutoff:', '    if False:',
+        'test_call_visible_only_after_capture_is_sealed', 'Completion before the local seal is not enough for visibility.'),
+)
+
 
 SHARD_SPEC_RE = re.compile(r"^(?P<index>[1-9][0-9]*)/(?P<count>[1-9][0-9]*)$")
 SHARD_RECEIPT_SCHEMA = "ar-governance-mutation-shard-receipt.v1"
