@@ -1,10 +1,16 @@
 {
-  "fetched_at": "2026-11-12T16:58:11Z",
+  "fetched_at": "2026-11-13T07:44:32Z",
   "permission_model": "runtime_probe",
   "_status": "ok",
   "data": {
     "trade_cal": {
       "rows": [
+        {
+          "exchange": "SSE",
+          "cal_date": "20261113",
+          "is_open": 1,
+          "pretrade_date": "20261112"
+        },
         {
           "exchange": "SSE",
           "cal_date": "20261112",
@@ -1902,9 +1908,9 @@
           "pretrade_date": "20251231"
         }
       ],
-      "row_count": 316,
+      "row_count": 317,
       "_status": "ok",
-      "as_of": "20261112"
+      "as_of": "20261113"
     },
     "moneyflow_hsgt": {
       "rows": [

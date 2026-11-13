@@ -6,9 +6,9 @@
     "no_size": true,
     "no_buy_sell": true,
     "no_position_mutation": true,
-    "run_date": "2026-11-12",
+    "run_date": "2026-11-13",
     "pilot_start_date": "2026-06-08",
-    "generated_at": "2026-11-12T17:01:51.028371+00:00",
+    "generated_at": "2026-11-13T07:48:32.348524+00:00",
     "fresh_pilot": true,
     "legacy_paper_positions_inherited": false,
     "sources": [
@@ -63,7 +63,7 @@
         },
         "quant_confluence": {
           "action": "NEUTRAL",
-          "score": 5,
+          "score": 1,
           "rationale": "Bullish: Kdj Oversold | Bearish: Macd Death Cross | RSI 39 | Price vs MA20 -3.2% | Regime: PERMISSIVE | VP 48"
         }
       },
@@ -287,7 +287,7 @@
             }
           ]
         },
-        "as_of": "2026-11-12",
+        "as_of": "2026-11-13",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -329,7 +329,7 @@
             }
           ]
         },
-        "as_of": "2026-11-12",
+        "as_of": "2026-11-13",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -364,7 +364,7 @@
           },
           "signals": []
         },
-        "as_of": "2026-11-12",
+        "as_of": "2026-11-13",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -399,7 +399,7 @@
           },
           "signals": []
         },
-        "as_of": "2026-11-12",
+        "as_of": "2026-11-13",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -434,7 +434,7 @@
           },
           "signals": []
         },
-        "as_of": "2026-11-12",
+        "as_of": "2026-11-13",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -488,7 +488,7 @@
             }
           ]
         },
-        "as_of": "2026-11-12",
+        "as_of": "2026-11-13",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -523,7 +523,7 @@
           },
           "signals": []
         },
-        "as_of": "2026-11-12",
+        "as_of": "2026-11-13",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -558,7 +558,7 @@
           },
           "signals": []
         },
-        "as_of": "2026-11-12",
+        "as_of": "2026-11-13",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -593,7 +593,7 @@
           },
           "signals": []
         },
-        "as_of": "2026-11-12",
+        "as_of": "2026-11-13",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       }

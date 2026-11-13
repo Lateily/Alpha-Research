@@ -1,13 +1,55 @@
 {
   "_status": "ok",
   "ticker": "002594.SZ",
-  "fetched_at": "2026-11-12T16:58:58Z",
+  "fetched_at": "2026-11-13T07:45:23Z",
   "api_used": "stk_surv",
   "_attempted_endpoints": [
     "stk_surv"
   ],
   "window_days": 90,
   "surveys": [
+    {
+      "ts_code": "002594.SZ",
+      "name": "比亚迪",
+      "surv_date": "20261111",
+      "fund_visitors": "戴文杰",
+      "rece_place": "上海",
+      "rece_mode": "策略会",
+      "rece_org": "申万宏源证券",
+      "org_type": "证券公司",
+      "comp_rece": "吴越,黄悦",
+      "inst_count": 2,
+      "surv_type": "策略会",
+      "description": null
+    },
+    {
+      "ts_code": "002594.SZ",
+      "name": "比亚迪",
+      "surv_date": "20261111",
+      "fund_visitors": "文姬",
+      "rece_place": "上海",
+      "rece_mode": "策略会",
+      "rece_org": "浙商证券",
+      "org_type": "证券公司",
+      "comp_rece": "吴越,黄悦",
+      "inst_count": 2,
+      "surv_type": "策略会",
+      "description": null
+    },
+    {
+      "ts_code": "002594.SZ",
+      "name": "比亚迪",
+      "surv_date": "20261111",
+      "fund_visitors": "--",
+      "rece_place": "上海",
+      "rece_mode": "策略会",
+      "rece_org": "受邀投资者40人",
+      "org_type": "--",
+      "comp_rece": "吴越,黄悦",
+      "inst_count": 1,
+      "surv_type": "策略会",
+      "description": null
+    },
     {
       "ts_code": "002594.SZ",
       "name": "比亚迪",
@@ -598,9 +640,9 @@
     }
   ],
   "summary": {
-    "total_30d": 1,
-    "total_90d": 42,
-    "unique_inst_30d": 2,
-    "latest_date": "2026-11-10"
+    "total_30d": 4,
+    "total_90d": 45,
+    "unique_inst_30d": 7,
+    "latest_date": "2026-11-11"
   }
 }

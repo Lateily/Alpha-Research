@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "fetched_at": "2026-11-12T16:56:51.656110",
+    "fetched_at": "2026-11-13T07:43:08.602664",
     "version": "4.1",
     "tickers": [
       "300308.SZ",
@@ -17,16 +17,16 @@
   "yahoo": {
     "300308.SZ": {
       "price": {
-        "last": 508.9,
-        "prev_close": 542,
-        "change_pct": -6.107,
-        "high": 567.89,
-        "low": 506.39,
-        "volume": 6269670000,
+        "last": 466.2,
+        "prev_close": 508.9,
+        "change_pct": -8.391,
+        "high": 525,
+        "low": 461.71,
+        "volume": 5360971400,
         "avg_volume_20d": null,
         "volume_ratio": null,
-        "high_52w": 567.89,
-        "low_52w": 506.39
+        "high_52w": 525,
+        "low_52w": 461.71
       },
       "technical": {
         "sma_20": null,
@@ -90,16 +90,16 @@
     },
     "002594.SZ": {
       "price": {
-        "last": 80.32,
-        "prev_close": 82.04,
-        "change_pct": -2.097,
-        "high": 82.03,
-        "low": 80.3,
-        "volume": 3343455800,
+        "last": 79.99,
+        "prev_close": 80.32,
+        "change_pct": -0.411,
+        "high": 80.84,
+        "low": 79.86,
+        "volume": 2653381900,
         "avg_volume_20d": null,
         "volume_ratio": null,
-        "high_52w": 82.03,
-        "low_52w": 80.3
+        "high_52w": 80.84,
+        "low_52w": 79.86
       },
       "technical": {
         "sma_20": null,
@@ -163,16 +163,16 @@
     },
     "175.HK": {
       "price": {
-        "last": 14.25,
-        "prev_close": 14.2,
-        "change_pct": 0.352,
-        "high": 14.23,
-        "low": 13.9,
-        "volume": -231,
+        "last": 13.92,
+        "prev_close": 13.88,
+        "change_pct": 0.288,
+        "high": 13.88,
+        "low": 13.42,
+        "volume": -352,
         "avg_volume_20d": null,
         "volume_ratio": null,
-        "high_52w": 14.23,
-        "low_52w": 13.9
+        "high_52w": 13.88,
+        "low_52w": 13.42
       },
       "technical": {
         "sma_20": null,
@@ -236,16 +236,16 @@
     },
     "603233.SH": {
       "price": {
-        "last": 20.27,
-        "prev_close": 20.16,
-        "change_pct": 0.546,
-        "high": 20.37,
-        "low": 19.76,
-        "volume": 1275704700,
+        "last": 20.45,
+        "prev_close": 20.27,
+        "change_pct": 0.888,
+        "high": 20.72,
+        "low": 20,
+        "volume": 1188429000,
         "avg_volume_20d": null,
         "volume_ratio": null,
-        "high_52w": 20.37,
-        "low_52w": 19.76
+        "high_52w": 20.72,
+        "low_52w": 20
       },
       "technical": {
         "sma_20": null,
@@ -309,16 +309,16 @@
     },
     "688120.SH": {
       "price": {
-        "last": 202.5,
-        "prev_close": 204.25,
-        "change_pct": -0.857,
-        "high": 216,
-        "low": 201.12,
-        "volume": 1221984800,
+        "last": 200,
+        "prev_close": 202.5,
+        "change_pct": -1.235,
+        "high": 210.5,
+        "low": 197.2,
+        "volume": 907276900,
         "avg_volume_20d": null,
         "volume_ratio": null,
-        "high_52w": 216,
-        "low_52w": 201.12
+        "high_52w": 210.5,
+        "low_52w": 197.2
       },
       "technical": {
         "sma_20": null,
@@ -382,16 +382,16 @@
     },
     "300054.SZ": {
       "price": {
-        "last": 61.06,
-        "prev_close": 62.16,
-        "change_pct": -1.77,
-        "high": 64.83,
-        "low": 60.99,
-        "volume": 2688760400,
+        "last": 58.93,
+        "prev_close": 61.06,
+        "change_pct": -3.488,
+        "high": 63.16,
+        "low": 58.74,
+        "volume": 2495360700,
         "avg_volume_20d": null,
         "volume_ratio": null,
-        "high_52w": 64.83,
-        "low_52w": 60.99
+        "high_52w": 63.16,
+        "low_52w": 58.74
       },
       "technical": {
         "sma_20": null,
@@ -461,14 +461,14 @@
       "5d_cumulative": 0.0,
       "20d_cumulative": 0.0,
       "trend": "outflow",
-      "updated": "2026-11-12"
+      "updated": "2026-11-13"
     },
     "southbound": {
       "latest_net_flow": 58.4637,
       "5d_cumulative": 119.4947,
       "20d_cumulative": -304.3332,
       "trend": "inflow",
-      "updated": "2026-11-12"
+      "updated": "2026-11-13"
     },
     "dragon_tiger": [
       {
@@ -535,7 +535,7 @@
         "code": "000530",
         "name": "冰山冷热",
         "date": "",
-        "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
+        "reason": "日换手率达到20%的前5只证券",
         "buy_amt": null,
         "sell_amt": null,
         "net_amt": null,
@@ -545,7 +545,7 @@
         "code": "000530",
         "name": "冰山冷热",
         "date": "",
-        "reason": "日换手率达到20%的前5只证券",
+        "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
         "buy_amt": null,
         "sell_amt": null,
         "net_amt": null,
@@ -615,16 +615,6 @@
         "code": "000678",
         "name": "襄阳轴承",
         "date": "",
-        "reason": "日换手率达到20%的前5只证券",
-        "buy_amt": null,
-        "sell_amt": null,
-        "net_amt": null,
-        "focus": false
-      },
-      {
-        "code": "000678",
-        "name": "襄阳轴承",
-        "date": "",
         "reason": "日振幅值达到15%的前5只证券",
         "buy_amt": null,
         "sell_amt": null,
@@ -636,6 +626,16 @@
         "name": "襄阳轴承",
         "date": "",
         "reason": "日涨幅偏离值达到7%的前5只证券",
+        "buy_amt": null,
+        "sell_amt": null,
+        "net_amt": null,
+        "focus": false
+      },
+      {
+        "code": "000678",
+        "name": "襄阳轴承",
+        "date": "",
+        "reason": "日换手率达到20%的前5只证券",
         "buy_amt": null,
         "sell_amt": null,
         "net_amt": null,
@@ -915,7 +915,7 @@
         "code": "002148",
         "name": "北纬科技",
         "date": "",
-        "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
+        "reason": "日涨幅偏离值达到7%的前5只证券",
         "buy_amt": null,
         "sell_amt": null,
         "net_amt": null,
@@ -925,7 +925,7 @@
         "code": "002148",
         "name": "北纬科技",
         "date": "",
-        "reason": "日涨幅偏离值达到7%的前5只证券",
+        "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
         "buy_amt": null,
         "sell_amt": null,
         "net_amt": null,

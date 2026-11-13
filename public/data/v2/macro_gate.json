@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-12T17:01:20Z",
+  "generated_at": "2026-11-13T07:47:59Z",
   "mode": "review_context_only",
   "_contract": "v1 第一版:不预测方向、不改仓位 — 仅作复盘/研究的宏观上下文原料。任何用本文件自动调仓的行为都超出契约。",
   "_status": "PARTIAL",
@@ -57,16 +57,16 @@
       "headline": "1w",
       "unit": "pct_annual",
       "_status": "OK",
-      "actual": 1.3966,
-      "previous": 1.39,
-      "as_of": "20261112",
-      "previous_as_of": "20261111",
-      "freshness_days": 1,
+      "actual": 1.381,
+      "previous": 1.3966,
+      "as_of": "20261113",
+      "previous_as_of": "20261112",
+      "freshness_days": 0,
       "detail": {
-        "on": 1.332,
-        "1w": 1.3966,
+        "on": 1.297,
+        "1w": 1.381,
         "3m": 1.4,
-        "1y": 1.4378
+        "1y": 1.437
       }
     },
     {
@@ -75,14 +75,14 @@
       "headline": "2s10s",
       "unit": "pct_points",
       "_status": "OK",
-      "actual": 0.25,
-      "previous": 0.32,
-      "as_of": "20261110",
-      "previous_as_of": "20261109",
-      "freshness_days": 3,
+      "actual": 0.24,
+      "previous": 0.25,
+      "as_of": "20261112",
+      "previous_as_of": "20261110",
+      "freshness_days": 1,
       "detail": {
-        "y2": 4.73,
-        "y10": 4.98
+        "y2": 4.86,
+        "y10": 5.1
       }
     }
   ],
