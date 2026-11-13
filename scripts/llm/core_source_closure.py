@@ -25,6 +25,14 @@ def _read(path):
     return ev.read_local(path.parent, path.name)
 
 
+def _source_dates(official):
+    last = official['tail'].strip().splitlines()[-1]
+    body, marker, source_dates = last.partition(' source_dates=')
+    if not marker or not body.startswith('DATA_BLOCKED: settlement-date mismatch across sources '):
+        raise ValueError('CLOSURE_NO_SETTLEMENT_DATE_EVIDENCE')
+    return ev.parse(source_dates.encode())
+
+
 def _incident(path, pin, scope, when):
     raw = _read(path)
     # governance-mutation: CORE_CLOSURE_INCIDENT_PIN
@@ -54,11 +62,7 @@ def _incident(path, pin, scope, when):
     official = steps['official_sample']
     if official['status'] != 'FAILED' or type(official['exit_code']) is not int or official['exit_code'] == 0:
         raise ValueError('CLOSURE_OFFICIAL_SAMPLE_NOT_FAILED')
-    last = official['tail'].strip().splitlines()[-1]
-    body, marker, source_dates = last.partition(' source_dates=')
-    if not marker or not body.startswith('DATA_BLOCKED: settlement-date mismatch across sources '):
-        raise ValueError('CLOSURE_NO_SETTLEMENT_DATE_EVIDENCE')
-    dates = ev.parse(source_dates.encode())
+    dates = _source_dates(official)
     api, code, day = (scope[k] for k in ('api_name', 'ts_code', 'trade_date'))
     companion = 'daily' if api == 'moneyflow_dc' else 'moneyflow_dc'
     stale = dates[api][code]

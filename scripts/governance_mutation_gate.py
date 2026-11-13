@@ -19060,6 +19060,35 @@ MUTATIONS += (
         'A caller-supplied marker does not attest its custody.'),
 )
 
+MUTATIONS += (
+    MutationCase('SETTLEMENT_PLAN_PIN', 'Settlement coverage', 'scripts/llm/settlement_core_coverage.py',
+        'tests/test_settlement_core_coverage.py', '    if ev.sealed(plan) != plan_pin:', '    if False:',
+        'test_wrong_authorization_pin_refuses', 'The exact one-use plan is externally pinned.'),
+    MutationCase('SETTLEMENT_CAPTURE_BYTES', 'Settlement coverage', 'scripts/llm/settlement_core_coverage.py',
+        'tests/test_settlement_core_coverage.py', "    if ev.sealed(files) != capture['evidence_hash']:", '    if False:',
+        'test_changed_receipt_bytes_are_refused_even_when_valid_json', 'Parsed equivalence cannot replace original bytes.'),
+    MutationCase('SETTLEMENT_CAPTURE_SCOPE', 'Settlement coverage', 'scripts/llm/settlement_core_coverage.py',
+        'tests/test_settlement_core_coverage.py', '        if key not in allowed or key in result:', '        if key in result:',
+        'test_unapproved_scope_inside_resealed_capture_refuses', 'An unapproved index cannot count even in a re-sealed packet.'),
+    MutationCase('SETTLEMENT_CAPTURE_CUTOFF', 'Settlement coverage', 'scripts/llm/settlement_core_coverage.py',
+        'tests/test_settlement_core_coverage.py', '    if sealed > cutoff:', '    if False:',
+        'test_call_visible_only_after_capture_is_sealed', 'Completion before the local seal is not enough for visibility.'),
+    MutationCase('SETTLEMENT_CAPTURE_PARSE_PINNED', 'Settlement coverage', 'scripts/llm/settlement_core_coverage.py',
+        'tests/test_settlement_core_coverage.py', '    rows = _pinned_receipts(endpoints, files)',
+        '    rows = read_endpoint_receipts(endpoints)', 'test_parser_cannot_see_transient_substitute_terminal',
+        'The endpoint parser receives only the verified bytes.'),
+    MutationCase('SETTLEMENT_CAPTURE_NEWER_LEDGER', 'Settlement coverage', 'scripts/llm/settlement_core_coverage.py',
+        'tests/test_settlement_core_coverage.py', '    if latest > now:', '    if False:',
+        'test_older_capture_cannot_mask_newer_failed_ledger', 'An older success cannot hide a newer failure.'),
+    MutationCase('SETTLEMENT_CAPTURE_TIME_CONFLICT', 'Settlement coverage', 'scripts/llm/settlement_core_coverage.py',
+        'tests/test_settlement_core_coverage.py', '    if latest == now:', '    if False:',
+        'test_conflicting_same_time_successes_are_blocked', 'Same-time divergent responses stay blocked.'),
+    MutationCase('SETTLEMENT_CAPTURE_ROOT', 'Settlement coverage', 'scripts/llm/settlement_core_coverage.py',
+        'tests/test_settlement_core_coverage.py', '    if endpoints.is_symlink() or not endpoints.is_dir():',
+        '    if False:', 'test_malformed_empty_endpoint_root_is_not_missing_evidence',
+        'Non-directory or linked roots cannot masquerade as empty evidence.'),
+)
+
 
 SHARD_SPEC_RE = re.compile(r"^(?P<index>[1-9][0-9]*)/(?P<count>[1-9][0-9]*)$")
 SHARD_RECEIPT_SCHEMA = "ar-governance-mutation-shard-receipt.v1"
