@@ -7695,6 +7695,16 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="The final signal must still target the original unreaped child session.",
     ),
     MutationCase(
+        mutation_id="NIGHTLY_UNREAPED_LEADER_LIVE_SESSION",
+        component="Nightly deadline",
+        source_path="experiments/execution_tracker/nightly_deadline.py",
+        test_script="tests/test_nightly_operational_gates.py",
+        before="return live_member is True  # governance-mutation: NIGHTLY_UNREAPED_LEADER_LIVE_SESSION",
+        after="return False  # governance-mutation: NIGHTLY_UNREAPED_LEADER_LIVE_SESSION",
+        expected_failure_marker="test_kill_can_reach_proven_descendant_of_unreaped_leader",
+        rationale="An unreaped group leader must not hide a positively identified live descendant in its session.",
+    ),
+    MutationCase(
         mutation_id="NIGHTLY_RECOVERY_FENCES_INTERRUPTED_RUN",
         component="Nightly recovery",
         source_path="experiments/execution_tracker/run_nightly.py",

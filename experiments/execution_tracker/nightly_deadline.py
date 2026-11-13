@@ -158,7 +158,11 @@ def _darwin_group_has_live_process(pgid):
         if size != ctypes.sizeof(fields) or fields[0] != pid or fields[2] != pgid:
             unknown = True
         elif fields[3] in (1, 2, 3, 4):
-            return True  # SIDL, SRUN, SSLEEP, SSTOP.
+            try:
+                if os.getsid(pid) == pgid and os.getpgid(pid) == pgid:
+                    return True  # SIDL, SRUN, SSLEEP, SSTOP in the original session.
+            except OSError:
+                unknown = True
         elif fields[3] != 5:
             unknown = True
     return None if unknown else False
@@ -198,9 +202,14 @@ def _group_has_live_process(pgid):
 
 def _owned_group(child):
     # Keep the original leader unreaped, so its PID/session cannot be reused.
+    if child.returncode is not None:
+        return False
     try:
-        return (child.returncode is None and os.getpgid(child.pid) == child.pid
-                and os.getsid(child.pid) == child.pid)
+        return os.getpgid(child.pid) == child.pid and os.getsid(child.pid) == child.pid
+    except ProcessLookupError:
+        # Darwin hides an exited leader from these lookups before it is reaped.
+        live_member = _group_has_live_process(child.pid)
+        return live_member is True  # governance-mutation: NIGHTLY_UNREAPED_LEADER_LIVE_SESSION
     except OSError:
         return False
 

@@ -109,7 +109,7 @@ class OperationalGatesTest(unittest.TestCase):
         self.assertIn(signal.SIGTERM, [call.args[1] for call in send.call_args_list])
         self.assertNotIn(signal.SIGKILL, [call.args[1] for call in send.call_args_list])
 
-    def _cleanup_trace(self, *, owned=True, live=True, term_sent=True):
+    def _cleanup_trace(self, *, owned=True, live=True, term_sent=True, leader_exited=False):
         now = 5_000_000_000
         trace = []
         child = mock.Mock(pid=1234, returncode=None)
@@ -126,6 +126,8 @@ class OperationalGatesTest(unittest.TestCase):
                 raise ProcessLookupError
 
         def group(_):
+            if leader_exited and now >= 25_000_000_000:
+                raise ProcessLookupError
             return child.pid if owned or now < 25_000_000_000 else 5678
 
         with mock.patch.object(deadlines, "continuous_ns", side_effect=lambda: now), \
@@ -145,6 +147,12 @@ class OperationalGatesTest(unittest.TestCase):
 
     def test_kill_requires_current_owned_group(self):
         self.assertEqual(self._cleanup_trace(owned=False), [("SIGTERM", 15_000_000_000)])
+
+    def test_kill_can_reach_proven_descendant_of_unreaped_leader(self):
+        self.assertEqual(self._cleanup_trace(leader_exited=True), [
+            ("SIGTERM", 15_000_000_000), ("SIGKILL", 25_000_000_000),
+        ])
+        self.assertEqual(self._cleanup_trace(leader_exited=True, live=None), [("SIGTERM", 15_000_000_000)])
 
     def test_kill_requires_proven_liveness(self):
         for live in (False, None):
