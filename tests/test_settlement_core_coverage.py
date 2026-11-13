@@ -183,6 +183,25 @@ class CoverageTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'SETTLEMENT_PLAN_PIN'):
             self.report(**args)
 
+    def test_malformed_empty_endpoint_root_is_not_missing_evidence(self):
+        import settlement_core_coverage as core
+        for mode in ('regular-file', 'symlink'):
+            with self.subTest(mode=mode):
+                root = Path(tempfile.mkdtemp(dir=self.root))
+                endpoints = root / 'endpoints'
+                if mode == 'regular-file':
+                    endpoints.write_bytes(b'')
+                else:
+                    endpoints.symlink_to(tempfile.mkdtemp(dir=self.root), target_is_directory=True)
+                plan = core.plan_for_approval('Junyan-chat-synthetic-only')
+                self.write(root / 'plan.json', plan)
+                pin = ev.sealed(plan)
+                capture = {'schema': 'ar.settlement-core-capture.v1', 'plan_hash': pin,
+                           'sealed_at': '2026-11-13T12:01:00Z', 'evidence_hash': ev.sealed({})}
+                capture_pin = self.write(root / 'capture.json', capture)
+                with self.assertRaisesRegex(ValueError, 'SETTLEMENT_CAPTURE_ENDPOINT_ROOT'):
+                    self.report(capture_root=root, plan_pin=pin, capture_pin=capture_pin)
+
     def test_cli_is_read_only_and_rejects_partial_capture_arguments(self):
         command = [sys.executable, '-B', str(ROOT / 'scripts/llm/settlement_core_coverage.py'),
                    '--ledger', str(self.root / 'absent-v1-ledger'), '--expected-head', gaps.ZERO,

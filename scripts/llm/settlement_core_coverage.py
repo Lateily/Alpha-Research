@@ -79,6 +79,9 @@ def _capture(root, plan_pin, capture_pin, *, cutoff, not_before):
         raise ValueError('SETTLEMENT_CAPTURE_BINDING')
     sealed = gaps._time(capture['sealed_at'])
     endpoints = root / 'endpoints'
+    # governance-mutation: SETTLEMENT_CAPTURE_ROOT
+    if endpoints.is_symlink() or not endpoints.is_dir():
+        raise ValueError('SETTLEMENT_CAPTURE_ENDPOINT_ROOT')
     files = gaps._inventory(endpoints)
     # governance-mutation: SETTLEMENT_CAPTURE_BYTES
     if ev.sealed(files) != capture['evidence_hash']:

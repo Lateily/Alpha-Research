@@ -19083,6 +19083,10 @@ MUTATIONS += (
     MutationCase('SETTLEMENT_CAPTURE_TIME_CONFLICT', 'Settlement coverage', 'scripts/llm/settlement_core_coverage.py',
         'tests/test_settlement_core_coverage.py', '    if latest == now:', '    if False:',
         'test_conflicting_same_time_successes_are_blocked', 'Same-time divergent responses stay blocked.'),
+    MutationCase('SETTLEMENT_CAPTURE_ROOT', 'Settlement coverage', 'scripts/llm/settlement_core_coverage.py',
+        'tests/test_settlement_core_coverage.py', '    if endpoints.is_symlink() or not endpoints.is_dir():',
+        '    if False:', 'test_malformed_empty_endpoint_root_is_not_missing_evidence',
+        'Non-directory or linked roots cannot masquerade as empty evidence.'),
 )
 
 
