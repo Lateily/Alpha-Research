@@ -8,7 +8,7 @@
     "no_position_mutation": true,
     "run_date": "2026-11-13",
     "pilot_start_date": "2026-06-08",
-    "generated_at": "2026-11-13T07:48:32.348524+00:00",
+    "generated_at": "2026-11-13T16:41:55.857546+00:00",
     "fresh_pilot": true,
     "legacy_paper_positions_inherited": false,
     "sources": [
@@ -64,7 +64,7 @@
         "quant_confluence": {
           "action": "NEUTRAL",
           "score": 1,
-          "rationale": "Bullish: Kdj Oversold | Bearish: Macd Death Cross | RSI 39 | Price vs MA20 -3.2% | Regime: PERMISSIVE | VP 48"
+          "rationale": "Bullish: Kdj Oversold | Bearish: Macd Death Cross | RSI 38 | Price vs MA20 -3.2% | Regime: PERMISSIVE | VP 48"
         }
       },
       "validation_status": "PENDING",
@@ -265,8 +265,8 @@
             "total": 2
           },
           "key_indicators": {
-            "rsi14": 38.6,
-            "macd_hist": -0.0528,
+            "rsi14": 38.4,
+            "macd_hist": -0.0494,
             "price_vs_ma20": -3.21,
             "price_vs_ma60": null,
             "change_5d": -6.88,
@@ -277,7 +277,7 @@
               "type": "MACD_DEATH_CROSS",
               "strength": "strong",
               "bullish": false,
-              "desc": "MACD DIF(-0.323) crossed below DEA(-0.297) below zero — bearish momentum"
+              "desc": "MACD DIF(-0.328) crossed below DEA(-0.303) below zero — bearish momentum"
             },
             {
               "type": "KDJ_OVERSOLD",
@@ -355,8 +355,8 @@
             "total": 0
           },
           "key_indicators": {
-            "rsi14": 50.0,
-            "macd_hist": 1.9282,
+            "rsi14": 49.5,
+            "macd_hist": 1.9107,
             "price_vs_ma20": 4.29,
             "price_vs_ma60": null,
             "change_5d": -3.08,
@@ -390,8 +390,8 @@
             "total": 0
           },
           "key_indicators": {
-            "rsi14": 38.7,
-            "macd_hist": 8.6666,
+            "rsi14": 38.4,
+            "macd_hist": 8.3402,
             "price_vs_ma20": -9.53,
             "price_vs_ma60": null,
             "change_5d": 3.16,
@@ -425,8 +425,8 @@
             "total": 0
           },
           "key_indicators": {
-            "rsi14": 57.3,
-            "macd_hist": 0.0792,
+            "rsi14": 57.4,
+            "macd_hist": 0.0806,
             "price_vs_ma20": 3.82,
             "price_vs_ma60": null,
             "change_5d": -2.17,
@@ -514,8 +514,8 @@
             "total": 0
           },
           "key_indicators": {
-            "rsi14": 47.2,
-            "macd_hist": 8.0602,
+            "rsi14": 46.9,
+            "macd_hist": 8.0428,
             "price_vs_ma20": 1.99,
             "price_vs_ma60": null,
             "change_5d": 0.83,

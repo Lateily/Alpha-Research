@@ -1,10 +1,10 @@
 {
   "ticker": "688120.SH",
-  "fetched_at": "2026-11-13T07:44:42Z",
-  "trade_date": "20261113",
+  "fetched_at": "2026-11-13T16:37:55Z",
+  "trade_date": "20261114",
   "_status": "ok",
   "api_used": "cyq_chips",
-  "as_of": "20261112",
+  "as_of": "20261113",
   "fallback_days": 1,
   "chips": [
     {
@@ -185,191 +185,191 @@
     },
     {
       "price": 162.0,
-      "percent": 0.53
+      "percent": 0.51
     },
     {
       "price": 164.7,
-      "percent": 2.25
+      "percent": 2.16
     },
     {
       "price": 167.4,
-      "percent": 3.02
+      "percent": 2.9
     },
     {
       "price": 170.1,
-      "percent": 2.43
+      "percent": 2.33
     },
     {
       "price": 172.8,
-      "percent": 1.71
+      "percent": 1.65
     },
     {
       "price": 175.5,
-      "percent": 1.43
+      "percent": 1.38
     },
     {
       "price": 178.2,
-      "percent": 2.09
+      "percent": 2.0
     },
     {
       "price": 180.9,
-      "percent": 2.55
-    },
-    {
-      "price": 183.6,
-      "percent": 2.07
-    },
-    {
-      "price": 186.3,
-      "percent": 1.5
-    },
-    {
-      "price": 189.0,
-      "percent": 1.42
-    },
-    {
-      "price": 191.7,
-      "percent": 1.63
-    },
-    {
-      "price": 194.4,
-      "percent": 2.06
-    },
-    {
-      "price": 197.1,
-      "percent": 3.77
-    },
-    {
-      "price": 199.8,
-      "percent": 6.52
-    },
-    {
-      "price": 202.5,
-      "percent": 6.24
-    },
-    {
-      "price": 205.2,
-      "percent": 4.34
-    },
-    {
-      "price": 207.9,
-      "percent": 3.21
-    },
-    {
-      "price": 210.6,
-      "percent": 2.57
-    },
-    {
-      "price": 213.3,
-      "percent": 1.82
-    },
-    {
-      "price": 216.0,
-      "percent": 1.77
-    },
-    {
-      "price": 218.7,
-      "percent": 1.43
-    },
-    {
-      "price": 221.4,
-      "percent": 1.66
-    },
-    {
-      "price": 224.1,
-      "percent": 1.83
-    },
-    {
-      "price": 226.8,
-      "percent": 2.0
-    },
-    {
-      "price": 229.5,
-      "percent": 2.46
-    },
-    {
-      "price": 232.2,
-      "percent": 2.5
-    },
-    {
-      "price": 234.9,
-      "percent": 2.31
-    },
-    {
-      "price": 237.6,
-      "percent": 1.99
-    },
-    {
-      "price": 240.3,
-      "percent": 1.83
-    },
-    {
-      "price": 243.0,
-      "percent": 1.83
-    },
-    {
-      "price": 245.7,
-      "percent": 1.75
-    },
-    {
-      "price": 248.4,
-      "percent": 1.62
-    },
-    {
-      "price": 251.1,
-      "percent": 1.55
-    },
-    {
-      "price": 253.8,
-      "percent": 1.69
-    },
-    {
-      "price": 256.5,
-      "percent": 1.87
-    },
-    {
-      "price": 259.2,
-      "percent": 2.03
-    },
-    {
-      "price": 261.9,
-      "percent": 2.3
-    },
-    {
-      "price": 264.6,
       "percent": 2.45
     },
     {
+      "price": 183.6,
+      "percent": 1.99
+    },
+    {
+      "price": 186.3,
+      "percent": 1.45
+    },
+    {
+      "price": 189.0,
+      "percent": 1.37
+    },
+    {
+      "price": 191.7,
+      "percent": 1.57
+    },
+    {
+      "price": 194.4,
+      "percent": 1.98
+    },
+    {
+      "price": 197.1,
+      "percent": 3.71
+    },
+    {
+      "price": 199.8,
+      "percent": 6.99
+    },
+    {
+      "price": 202.5,
+      "percent": 7.3
+    },
+    {
+      "price": 205.2,
+      "percent": 5.15
+    },
+    {
+      "price": 207.9,
+      "percent": 3.57
+    },
+    {
+      "price": 210.6,
+      "percent": 2.53
+    },
+    {
+      "price": 213.3,
+      "percent": 1.75
+    },
+    {
+      "price": 216.0,
+      "percent": 1.71
+    },
+    {
+      "price": 218.7,
+      "percent": 1.38
+    },
+    {
+      "price": 221.4,
+      "percent": 1.6
+    },
+    {
+      "price": 224.1,
+      "percent": 1.76
+    },
+    {
+      "price": 226.8,
+      "percent": 1.93
+    },
+    {
+      "price": 229.5,
+      "percent": 2.36
+    },
+    {
+      "price": 232.2,
+      "percent": 2.4
+    },
+    {
+      "price": 234.9,
+      "percent": 2.22
+    },
+    {
+      "price": 237.6,
+      "percent": 1.92
+    },
+    {
+      "price": 240.3,
+      "percent": 1.76
+    },
+    {
+      "price": 243.0,
+      "percent": 1.76
+    },
+    {
+      "price": 245.7,
+      "percent": 1.69
+    },
+    {
+      "price": 248.4,
+      "percent": 1.56
+    },
+    {
+      "price": 251.1,
+      "percent": 1.49
+    },
+    {
+      "price": 253.8,
+      "percent": 1.63
+    },
+    {
+      "price": 256.5,
+      "percent": 1.8
+    },
+    {
+      "price": 259.2,
+      "percent": 1.96
+    },
+    {
+      "price": 261.9,
+      "percent": 2.21
+    },
+    {
+      "price": 264.6,
+      "percent": 2.35
+    },
+    {
       "price": 267.3,
-      "percent": 2.0
+      "percent": 1.93
     },
     {
       "price": 270.0,
-      "percent": 1.41
+      "percent": 1.36
     },
     {
       "price": 272.7,
-      "percent": 1.12
+      "percent": 1.08
     },
     {
       "price": 275.4,
-      "percent": 0.91
+      "percent": 0.88
     },
     {
       "price": 278.1,
-      "percent": 0.75
+      "percent": 0.72
     },
     {
       "price": 280.8,
-      "percent": 0.48
+      "percent": 0.46
     },
     {
       "price": 283.5,
-      "percent": 0.34
+      "percent": 0.33
     },
     {
       "price": 286.2,
-      "percent": 0.19
+      "percent": 0.18
     },
     {
       "price": 288.9,
@@ -504,5 +504,5 @@
       "percent": 0.05
     }
   ],
-  "_note": "requested trade_date=20261113 was empty (cyq_chips is T+1); fell back to most recent non-empty day 20261112"
+  "_note": "requested trade_date=20261114 was empty (cyq_chips is T+1); fell back to most recent non-empty day 20261113"
 }

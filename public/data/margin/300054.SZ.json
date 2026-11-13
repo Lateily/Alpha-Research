@@ -1,23 +1,10 @@
 {
   "_status": "ok",
   "ticker": "300054.SZ",
-  "fetched_at": "2026-11-13T07:47:54Z",
+  "fetched_at": "2026-11-13T16:41:15Z",
   "api_used": "margin_detail",
   "window_days": 30,
   "records": [
-    {
-      "trade_date": "20261014",
-      "ts_code": "300054.SZ",
-      "rzye": 2033142929.0,
-      "rqye": 24898596.0,
-      "rzmre": 67923293.0,
-      "rqyl": 415600.0,
-      "rzche": 75033383.0,
-      "rqchl": 31800,
-      "rqmcl": 8600,
-      "rzrqye": 2058041525.0,
-      "name": null
-    },
     {
       "trade_date": "20261015",
       "ts_code": "300054.SZ",
@@ -293,13 +280,13 @@
     }
   ],
   "summary": {
-    "total_count": 22,
+    "total_count": 21,
     "latest_date": "2026-11-12",
     "latest_rzye": 1685095224.0,
     "latest_rqye": 24069852.0,
-    "rzye_change_30d_pct": -17.11870326653262,
-    "rqye_change_30d_pct": -3.3284768345974207,
-    "net_leverage_change_30d": -13.7902264319352,
+    "rzye_change_30d_pct": -15.294656901452889,
+    "rqye_change_30d_pct": 3.7178890543559198,
+    "net_leverage_change_30d": -19.012545955808807,
     "signal_level": "LEVERAGE_BEAR_MED"
   }
 }
