@@ -7705,6 +7705,16 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="An unreaped group leader must not hide a positively identified live descendant in its session.",
     ),
     MutationCase(
+        mutation_id="NIGHTLY_ORIGINAL_CHILD_RETAINED",
+        component="Nightly deadline",
+        source_path="experiments/execution_tracker/nightly_deadline.py",
+        test_script="tests/test_nightly_operational_gates.py",
+        before="or not _child_retained(child.pid):  # governance-mutation: NIGHTLY_ORIGINAL_CHILD_RETAINED",
+        after="or False:  # governance-mutation: NIGHTLY_ORIGINAL_CHILD_RETAINED",
+        expected_failure_marker="test_kill_refuses_reaped_leader_even_if_session_ids_match",
+        rationale="Matching numeric IDs without kernel proof of the original retained child do not authorize signals.",
+    ),
+    MutationCase(
         mutation_id="NIGHTLY_RECOVERY_FENCES_INTERRUPTED_RUN",
         component="Nightly recovery",
         source_path="experiments/execution_tracker/run_nightly.py",

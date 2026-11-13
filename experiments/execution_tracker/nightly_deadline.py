@@ -200,9 +200,41 @@ def _group_has_live_process(pgid):
     return None
 
 
+@lru_cache(maxsize=1)
+def _darwin_waitid():
+    import ctypes
+
+    wait = ctypes.CDLL(None, use_errno=True).waitid
+    wait.argtypes = (ctypes.c_int, ctypes.c_uint, ctypes.c_void_p, ctypes.c_int)
+    wait.restype = ctypes.c_int
+
+    def retained(pid, options):
+        # The Darwin SDK's siginfo_t is smaller than this aligned buffer.
+        # We need only success/ECHILD, not the returned exit status.
+        info = (ctypes.c_uint64 * 32)()
+        return wait(os.P_PID, pid, ctypes.byref(info), options) == 0
+
+    return retained
+
+
+def _child_retained(pid):
+    if signal.getsignal(signal.SIGCHLD) == signal.SIG_IGN:
+        return False
+    try:
+        options = os.WEXITED | os.WNOHANG | os.WNOWAIT
+        if hasattr(os, "waitid"):
+            os.waitid(os.P_PID, pid, options)
+            return True
+        if sys.platform == "darwin":
+            return _darwin_waitid()(pid, options)
+    except (OSError, AttributeError, RuntimeError):
+        pass
+    return False
+
+
 def _owned_group(child):
     # Keep the original leader unreaped, so its PID/session cannot be reused.
-    if child.returncode is not None:
+    if child.returncode is not None or not _child_retained(child.pid):  # governance-mutation: NIGHTLY_ORIGINAL_CHILD_RETAINED
         return False
     try:
         return os.getpgid(child.pid) == child.pid and os.getsid(child.pid) == child.pid

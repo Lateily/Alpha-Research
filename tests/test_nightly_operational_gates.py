@@ -109,7 +109,8 @@ class OperationalGatesTest(unittest.TestCase):
         self.assertIn(signal.SIGTERM, [call.args[1] for call in send.call_args_list])
         self.assertNotIn(signal.SIGKILL, [call.args[1] for call in send.call_args_list])
 
-    def _cleanup_trace(self, *, owned=True, live=True, term_sent=True, leader_exited=False):
+    def _cleanup_trace(self, *, owned=True, live=True, term_sent=True, leader_exited=False,
+                       retained=True):
         now = 5_000_000_000
         trace = []
         child = mock.Mock(pid=1234, returncode=None)
@@ -135,6 +136,8 @@ class OperationalGatesTest(unittest.TestCase):
                 mock.patch.object(deadlines.os, "getpgid", side_effect=group), \
                 mock.patch.object(deadlines.os, "getsid", return_value=child.pid), \
                 mock.patch.object(deadlines.os, "killpg", side_effect=send), \
+                mock.patch.object(deadlines, "_child_retained",
+                                  side_effect=lambda _: retained or now < 25_000_000_000), \
                 mock.patch.object(deadlines, "_group_has_live_process", return_value=live):
             deadlines._stop_group(child)
         child.wait.assert_called_once()
@@ -153,6 +156,16 @@ class OperationalGatesTest(unittest.TestCase):
             ("SIGTERM", 15_000_000_000), ("SIGKILL", 25_000_000_000),
         ])
         self.assertEqual(self._cleanup_trace(leader_exited=True, live=None), [("SIGTERM", 15_000_000_000)])
+
+    def test_kill_refuses_reaped_leader_even_if_session_ids_match(self):
+        self.assertEqual(self._cleanup_trace(retained=False), [("SIGTERM", 15_000_000_000)])
+
+    def test_child_retention_probe_does_not_reap_and_refuses_reaped_pid(self):
+        with subprocess.Popen([sys.executable, "-I", "-B", "-c", "import sys; sys.stdin.buffer.read()"],
+                              stdin=subprocess.PIPE) as child:
+            self.assertTrue(deadlines._child_retained(child.pid))
+            child.communicate(timeout=5)
+            self.assertFalse(deadlines._child_retained(child.pid))
 
     def test_kill_requires_proven_liveness(self):
         for live in (False, None):
