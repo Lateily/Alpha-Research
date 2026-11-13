@@ -3,6 +3,7 @@ import argparse
 from pathlib import Path
 import re
 import sys
+import tempfile
 
 import core_source_closure as closure
 import core_source_gaps as gaps
@@ -40,6 +41,25 @@ def plan_for_approval(approval_ref):
     }
 
 
+def _pinned_receipts(endpoints, files):
+    expected_dirs = {str(parent) for name in files for parent in Path(name).parents if str(parent) != '.'}
+    actual_dirs = {p.relative_to(endpoints).as_posix() for p in endpoints.rglob('*') if p.is_dir()}
+    if actual_dirs != expected_dirs:
+        raise ValueError('SETTLEMENT_CAPTURE_DIRECTORY_SHAPE')
+    # The parser opens files by path. Stage exact verified bytes in a fresh
+    # private directory, never pass it the externally supplied source paths.
+    with tempfile.TemporaryDirectory(prefix='ar-settlement-pinned-') as tmp:
+        held = Path(tmp).resolve()
+        for name, expected in files.items():
+            raw = ev.read_local(endpoints, name)
+            if ev.sha(raw) != expected:
+                raise ValueError('SETTLEMENT_CAPTURE_CHANGED')
+            target = held / name
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(raw)
+        return read_endpoint_receipts(held)
+
+
 def _capture(root, plan_pin, capture_pin, *, cutoff, not_before):
     root = safe_path(root)
     gaps._hash(plan_pin)
@@ -63,7 +83,8 @@ def _capture(root, plan_pin, capture_pin, *, cutoff, not_before):
     # governance-mutation: SETTLEMENT_CAPTURE_BYTES
     if ev.sealed(files) != capture['evidence_hash']:
         raise ValueError('SETTLEMENT_CAPTURE_BYTES')
-    rows = read_endpoint_receipts(endpoints)
+    # governance-mutation: SETTLEMENT_CAPTURE_PARSE_PINNED
+    rows = _pinned_receipts(endpoints, files)
     if gaps._inventory(endpoints) != files:
         raise ValueError('SETTLEMENT_CAPTURE_CHANGED')
     result = {}
@@ -81,17 +102,49 @@ def _capture(root, plan_pin, capture_pin, *, cutoff, not_before):
                 or not not_before <= invoked <= sealed
                 or completed is not None and not invoked <= gaps._time(completed) <= sealed):
             raise ValueError('SETTLEMENT_CAPTURE_TIME_OR_RUN')
-        result[key] = {
+        result[key] = ({
             'logical_call_id': start['logical_call_id'], 'completed_at': completed,
+            'observation_time': completed or start['invoked_at'],
             'request_status': terminal['request_status'], 'quality': terminal['dataset_quality'],
             'gaps': terminal['gaps'], 'error_code': terminal['error_code'],
             'response_hash': terminal['response_hash'], 'catalog_hash': start['catalog_hash'],
-        }
+        }, row, files)
     # governance-mutation: SETTLEMENT_CAPTURE_CUTOFF
     if sealed > cutoff:
         return {}, None
     return result, {'plan_hash': plan_pin, 'capture_sha256': capture_pin,
                     'sealed_at': capture['sealed_at'], 'approval_evidence': closure.APPROVAL_EVIDENCE}
+
+
+def _reconcile(ledger, capture, legacy):
+    history = legacy['history'] if legacy else []
+    if capture is None:
+        if not history:
+            return 'NO_CALL_EVIDENCE'
+        return None if legacy['status'] in {'VALID_SCOPE_OBSERVED', 'RECOVERED_SCOPE_OBSERVED'} else (
+            'CONFLICTING_TIME_EVIDENCE' if legacy['status'] == 'CONFLICTING_TIME_EVIDENCE' else 'LEGACY_SCOPE_NOT_VALID')
+    current, row, files = capture
+    current_reason = None if current['quality'] == 'OBSERVED_SCOPE_VALID' else 'CAPTURE_NOT_SCOPE_VALID'
+    if not history:
+        return current_reason
+    if any(old['logical_call_id'] == current['logical_call_id'] for old in history):
+        if not closure._visible_call(ledger, legacy, row, {'files': files}):
+            raise ValueError('SETTLEMENT_DUPLICATE_CALL_BINDING')
+    now = gaps._time(current['observation_time'])
+    latest = gaps._time(history[-1]['observation_time'])
+    # governance-mutation: SETTLEMENT_CAPTURE_NEWER_LEDGER
+    if latest > now:
+        return _reconcile(ledger, None, legacy)
+    # governance-mutation: SETTLEMENT_CAPTURE_TIME_CONFLICT
+    if latest == now:
+        observed = (current['request_status'], current['quality'], tuple(current['gaps']),
+                    current['response_hash'], current['error_code'])
+        for old in history:
+            if gaps._time(old['observation_time']) == now and observed != (
+                    old['request_status'], old['dataset_quality'], tuple(old['reasons']),
+                    old['response_hash'], old['error_code']):
+                return 'CONFLICTING_TIME_EVIDENCE'
+    return current_reason
 
 
 def project(ledger, *, expected_head, incident_path, incident_pin, observed_at,
@@ -126,21 +179,15 @@ def project(ledger, *, expected_head, incident_path, incident_pin, observed_at,
         original_date = dates.get(api, {}).get(code) if code else None
         if original_date is not None:
             gaps.datetime.strptime(original_date, '%Y%m%d')
-        current = captures.get(ev.sealed(scope))
+        capture = captures.get(ev.sealed(scope))
         legacy = prior_rows.get(api)
-        valid = False
-        reason = 'NO_CALL_EVIDENCE'
-        if current is not None:
-            valid = current['quality'] == 'OBSERVED_SCOPE_VALID'
-            reason = None if valid else 'CAPTURE_NOT_SCOPE_VALID'
-        elif legacy and legacy['history']:
-            valid = legacy['status'] in {'VALID_SCOPE_OBSERVED', 'RECOVERED_SCOPE_OBSERVED'}
-            reason = None if valid else 'LEGACY_SCOPE_NOT_VALID'
+        reason = _reconcile(ledger, capture, legacy)
         # Do not let a valid late observation set original availability or publication.
         output.append({'scope_id': key, **scope, 'original_date': original_date,
                        'original_role': 'CONTEXT_ONLY' if code is None else 'SETTLEMENT_DATE_GATE',
-                       'status': 'OBSERVED_SCOPE_VALID' if valid else 'DATA_BLOCKED', 'reason': reason,
-                       'receipt': current, 'legacy_history': legacy['history'] if legacy else []})
+                       'status': 'OBSERVED_SCOPE_VALID' if reason is None else 'DATA_BLOCKED', 'reason': reason,
+                       'receipt': capture[0] if capture is not None else None,
+                       'legacy_history': legacy['history'] if legacy else []})
     valid = sum(row['status'] == 'OBSERVED_SCOPE_VALID' for row in output)
     return {'schema': 'ar.settlement-core-coverage.v1', 'as_of': prior['coverage']['observed_at'],
             'incident': prior['incident'], 'prior_authorized_recheck': prior['recheck'],

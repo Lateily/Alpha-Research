@@ -13,6 +13,10 @@ collection times are outside scope).
    records. Require an independent plan/receipt pin, match the exact call ID,
    catalog, fields, date, entity and terminal hashes, and preserve absent,
    partial and failed scopes. Do not reinterpret a date log as a call receipt.
+   Parse a private copy of the verified bytes. If the legacy ledger and new
+   capture cover the same scope, newest visible evidence wins, except
+   contradictory evidence at the same time blocks that scope. Same logical
+   calls must retain their byte binding.
 3. Cutoff checks hide late observations before local seal time. No dispatch,
    historical publication, point-in-time promotion or research clearance.
 4. Run tests and negative mutations on the final pinned revision. Outside Git,

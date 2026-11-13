@@ -5,6 +5,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path[:0] = [str(ROOT / 'scripts/llm'), str(ROOT)]
@@ -124,6 +125,57 @@ class CoverageTests(unittest.TestCase):
         path.write_bytes(path.read_bytes() + b'\n')
         with self.assertRaisesRegex(ValueError, 'SETTLEMENT_CAPTURE_BYTES'):
             self.report(**args)
+
+    def test_parser_cannot_see_transient_substitute_terminal(self):
+        import settlement_core_coverage as core
+        args = self.packet(stale=('daily',))
+        endpoints = args['capture_root'] / 'endpoints'
+        original = next(path for path in (endpoints / 'calls').glob('*/terminal.json')
+                        if ev.parse(path.read_bytes())['result']['dataset_quality'] == 'DATA_BLOCKED')
+        raw = original.read_bytes()
+        other = self.packet()['capture_root'] / 'endpoints'
+        substitute = other / original.relative_to(endpoints)
+        actual = core.read_endpoint_receipts
+        def transient(root):
+            original.write_bytes(substitute.read_bytes())
+            try:
+                return actual(root)
+            finally:
+                original.write_bytes(raw)
+        with patch.object(core, 'read_endpoint_receipts', side_effect=transient):
+            result = self.report(**args)
+        row = next(x for x in result['scopes'] if x['scope_id'] == 'stock-daily')
+        self.assertEqual(row['status'], 'DATA_BLOCKED')
+
+    def report_with_ledger(self, *, stamp, fail=False, price=5.0):
+        import settlement_core_coverage as core
+        args = self.packet()
+        ledger = self.root / 'ledger'
+        session = EndpointSession(self.root / 'legacy', collector_run_id='prior-ledger',
+                                  target_trade_date='20261030',
+                                  clock=lambda: datetime.fromisoformat(stamp))
+        fields = ['close', 'trade_date', 'ts_code']
+        params = {'trade_date': '20261030', 'ts_code': '603629.SH'}
+        session.observe('daily', params, ','.join(fields), lambda: {'code': 0, 'data': {
+            'fields': fields, 'items': [[price, '20261029' if fail else '20261030', '603629.SH']]}})
+        source = self.root / 'legacy'
+        head = gaps.ingest(ledger, source, expected_evidence_hash=gaps.evidence(source)['evidence_hash'],
+                           expected_head=gaps.ZERO)['head_hash']
+        value = core.project(ledger, expected_head=head, incident_path=self.incident,
+                             incident_pin=self.pin, observed_at=self.when, **args)
+        return next(x for x in value['scopes'] if x['scope_id'] == 'stock-daily')
+
+    def test_conflicting_same_time_successes_are_blocked(self):
+        row = self.report_with_ledger(stamp='2026-11-13T12:00:00+00:00')
+        self.assertEqual((row['status'], row['reason']), ('DATA_BLOCKED', 'CONFLICTING_TIME_EVIDENCE'))
+
+    def test_older_capture_cannot_mask_newer_failed_ledger(self):
+        row = self.report_with_ledger(stamp='2026-11-13T13:00:00+00:00', fail=True)
+        self.assertEqual((row['status'], row['reason']), ('DATA_BLOCKED', 'LEGACY_SCOPE_NOT_VALID'))
+
+    def test_equal_time_matching_values_do_not_false_block(self):
+        row = self.report_with_ledger(stamp='2026-11-13T12:00:00+00:00', price=4.0)
+        self.assertEqual((row['status'], row['reason']), ('OBSERVED_SCOPE_VALID', None))
 
     def test_wrong_authorization_pin_refuses(self):
         args = self.packet()

@@ -19073,6 +19073,16 @@ MUTATIONS += (
     MutationCase('SETTLEMENT_CAPTURE_CUTOFF', 'Settlement coverage', 'scripts/llm/settlement_core_coverage.py',
         'tests/test_settlement_core_coverage.py', '    if sealed > cutoff:', '    if False:',
         'test_call_visible_only_after_capture_is_sealed', 'Completion before the local seal is not enough for visibility.'),
+    MutationCase('SETTLEMENT_CAPTURE_PARSE_PINNED', 'Settlement coverage', 'scripts/llm/settlement_core_coverage.py',
+        'tests/test_settlement_core_coverage.py', '    rows = _pinned_receipts(endpoints, files)',
+        '    rows = read_endpoint_receipts(endpoints)', 'test_parser_cannot_see_transient_substitute_terminal',
+        'The endpoint parser receives only the verified bytes.'),
+    MutationCase('SETTLEMENT_CAPTURE_NEWER_LEDGER', 'Settlement coverage', 'scripts/llm/settlement_core_coverage.py',
+        'tests/test_settlement_core_coverage.py', '    if latest > now:', '    if False:',
+        'test_older_capture_cannot_mask_newer_failed_ledger', 'An older success cannot hide a newer failure.'),
+    MutationCase('SETTLEMENT_CAPTURE_TIME_CONFLICT', 'Settlement coverage', 'scripts/llm/settlement_core_coverage.py',
+        'tests/test_settlement_core_coverage.py', '    if latest == now:', '    if False:',
+        'test_conflicting_same_time_successes_are_blocked', 'Same-time divergent responses stay blocked.'),
 )
 
 
