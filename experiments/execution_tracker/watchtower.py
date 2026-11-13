@@ -25,14 +25,17 @@ TELEGRAM_BOT_TOKEN/TELEGRAM_CHAT_ID are set in the environment).
 
   python3 watchtower.py --selftest        # offline rule tests
   python3 watchtower.py --once            # single poll (smoke)
-  python3 watchtower.py --daemon          # poll until 15:05 (launchd entry point)
+  python3 watchtower.py --daemon          # poll until 15:00 (launchd entry point)
 Install as launchd job: see launchd/com.ar.watchtower.plist
 
 Clock: every session decision uses Asia/Shanghai (market_clock), never the
-machine's local time. Started outside 09:00-15:00 Shanghai, --daemon/--once print
+machine's local time. Outside [09:15, 15:00) Shanghai no polling is admitted.
+Only a daemon starting at the scheduled 09:14 Shanghai minute may wait for 09:15.
+Outside the Shanghai session, --daemon/--once print
 OUTSIDE_MARKET_HOURS and exit 3 without reading a quote; on a non-trading day they
 print NON_TRADING_DAY and exit 0. Nothing reaches the nowcast pool either way.
 """
+import datetime
 import json
 import os
 import subprocess
@@ -53,14 +56,9 @@ STOP_PROX = 0.01
 TARGET_PROX = 0.01
 INDEX_MOVE = 0.015
 NOWCAST_MIN_CONF = 0.6
-SESSION_END = "150500"
-POLL_FROM = "091000"          # auction 09:15, small slack (same as run_premarket_monitor)
-START_FROM = "0900"           # launchd fires 09:14 Shanghai; pre-open slack only
-START_UNTIL = "1500"
-
-ADMITTED = "ADMITTED"
-OUTSIDE_MARKET_HOURS = "OUTSIDE_MARKET_HOURS"
-NON_TRADING_DAY = "NON_TRADING_DAY"
+ADMITTED = mc.ADMITTED
+OUTSIDE_MARKET_HOURS = mc.OUTSIDE_MARKET_HOURS
+NON_TRADING_DAY = mc.NON_TRADING_DAY
 EXIT_OUTSIDE_MARKET_HOURS = 3
 
 STATE_PATH = os.path.join(HERE, "watchtower_state.json")
@@ -182,23 +180,20 @@ def evaluate_events(quotes, orders, state, today, nowcast_sink=None):
 def start_admission(token, now=None, trading_day_fn=None):
     """Fail-closed gate before --daemon/--once reads a single quote.
     now: aware datetime (default: now). Returns (status, reason)."""
-    now = mc.shanghai_now() if now is None else mc.to_shanghai(now)
-    hm = now.strftime("%H%M")
-    # governance-mutation: EXECUTION_CLOCK_WATCHTOWER_START_WINDOW
-    if not (START_FROM <= hm < START_UNTIL):
-        return OUTSIDE_MARKET_HOURS, (f"{mc.stamp(now)} 不在 Asia/Shanghai 启动窗 "
-                                      f"{START_FROM}-{START_UNTIL};不读行情、不写 nowcast")
     trading_day_fn = trading_day_fn or (lambda d: is_trading_day(d, token))
-    is_open, why = trading_day_fn(mc.trade_date(now))
-    # governance-mutation: EXECUTION_CLOCK_WATCHTOWER_TRADING_DAY
-    if not is_open:
-        return NON_TRADING_DAY, why
-    return ADMITTED, f"{mc.stamp(now)} {why}"
+    return mc.session_admission(None if now is None else lambda: now, trading_day_fn)
 
 
-def poll_once(token, dry=False, clock=None, quote_fn=None):
+def poll_once(token, dry=False, clock=None, quote_fn=None, *, trading_day_fn=None, expected_date=None):
     """One live poll: fetch quotes, evaluate rules, notify + log.
     clock: optional zero-arg callable -> aware datetime (tests); quote_fn: tickers -> rows."""
+    day = expected_date or mc.trade_date(mc.shanghai_now(clock))
+    calendar = trading_day_fn or (lambda d: is_trading_day(d, token))
+    # governance-mutation: EXECUTION_CLOCK_WATCHTOWER_POLL_ADMISSION
+    status, why = mc.session_admission(clock, calendar, expected_date=day)
+    if status != ADMITTED:
+        report_status(status, why)
+        return []
     orders = load_json(FUND_ORDERS, [])
     dyn = load_json(WATCH_DYNAMIC, None)
     if isinstance(dyn, dict) and dyn.get("watch"):
@@ -207,10 +202,22 @@ def poll_once(token, dry=False, clock=None, quote_fn=None):
         watch_pairs = list(WATCH)          # P4 回退:无动态名单时用硬编码
     tickers = sorted({o["ticker"] for o in orders if o["status"] in ("pending", "filled")}
                      | {t for t, _ in watch_pairs} | {c for c, _ in INDICES})
-    quote_fn = quote_fn or (lambda ts: fs.tushare_realtime_quotes(ts, src="sina"))
-    rows = quote_fn(tickers)
+    quote_fn = quote_fn or (lambda ts: fs.tushare_realtime_quotes(
+        ts, src="sina", before_read=lambda: mc.require_session(clock, calendar, day)))
+    current = mc.shanghai_now(clock)
+    if mc.trade_date(current) != day or not mc.in_trading_session(current):
+        report_status(OUTSIDE_MARKET_HOURS, "行情请求前已离开本次上海交易时段")
+        return []
+    try:
+        rows = quote_fn(tickers)
+    except mc.SessionRefused as exc:
+        report_status(exc.status, str(exc))
+        return []
     captured = mc.shanghai_now(clock)          # the instant these quotes were read
     today = mc.trade_date(captured)
+    if today != day or not mc.in_trading_session(captured):
+        report_status(OUTSIDE_MARKET_HOURS, "行情返回时已离开本次上海交易时段")
+        return []
     quotes = {}
     name_map = dict(watch_pairs); name_map.update({c: n for c, n in INDICES})
     name_map.update({o["ticker"]: o["name"] for o in orders})
@@ -251,28 +258,40 @@ def report_status(status, why):
 
 
 def daemon(token, clock=None, sleep=time.sleep, poll=None, trading_day_fn=None):
-    """Poll 09:10-15:05 Shanghai on the admitted trade date. Returns the exit status."""
+    """Poll only within the confirmed Shanghai session of the admitted date."""
     start = mc.shanghai_now(clock)
-    status, why = start_admission(token, start, trading_day_fn)
+    day = mc.trade_date(start)
+    if datetime.time(9, 14) <= start.time() < mc.NOWCAST_OPEN:
+        opens_at = start.replace(hour=9, minute=15, second=0, microsecond=0)
+        sleep((opens_at - start).total_seconds())
+        start = mc.shanghai_now(clock)
+        if not opens_at <= start < opens_at + datetime.timedelta(minutes=1):
+            report_status(OUTSIDE_MARKET_HOURS, "未在预开市等待窗口内唤醒")
+            return OUTSIDE_MARKET_HOURS
+    calendar = trading_day_fn or (lambda d: is_trading_day(d, token))
+    status, why = mc.session_admission(clock, calendar, expected_date=day)
     # governance-mutation: EXECUTION_CLOCK_WATCHTOWER_DAEMON_REFUSES
     if status != ADMITTED:
         report_status(status, why)
         return status
-    poll = poll or (lambda: poll_once(token, clock=clock))
-    day = mc.trade_date(start)
     print(f"watchtower daemon up @{mc.stamp(start)} "
-          f"(poll {POLL_SECONDS}s until {SESSION_END} Asia/Shanghai)")
+          f"(poll {POLL_SECONDS}s until 15:00 Asia/Shanghai)")
     notify("AR Watchtower", "盯盘守护进程已启动")
     while True:
         now = mc.shanghai_now(clock)
-        hms = now.strftime("%H%M%S")
-        if mc.trade_date(now) != day or hms >= SESSION_END:
+        if mc.trade_date(now) != day or not mc.in_trading_session(now):
             break
-        if hms >= POLL_FROM:
-            try:
+        try:
+            if poll is None:
+                poll_once(token, clock=clock, trading_day_fn=calendar, expected_date=day)
+            else:
+                status, why = mc.session_admission(clock, calendar, expected_date=day)
+                if status != ADMITTED:
+                    report_status(status, why)
+                    return status
                 poll()
-            except Exception as e:                 # noqa: BLE001
-                print("poll error:", str(e)[:100])
+        except Exception as e:
+            print("poll error:", str(e)[:100])
         sleep(POLL_SECONDS)
     notify("AR Watchtower", "收盘,守护进程退出(定盘结算走盘后流程)")
     print("session end.")
@@ -358,7 +377,7 @@ def main():
     ap = argparse.ArgumentParser(description="AR Watchtower daemon (observation only)")
     ap.add_argument("--selftest", action="store_true")
     ap.add_argument("--once", action="store_true", help="single live poll (smoke)")
-    ap.add_argument("--daemon", action="store_true", help="poll until 15:05")
+    ap.add_argument("--daemon", action="store_true", help="poll during the confirmed Shanghai session")
     ap.add_argument("--dry", action="store_true", help="evaluate but do not send notifications")
     args = ap.parse_args()
     if args.selftest:

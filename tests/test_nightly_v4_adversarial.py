@@ -552,6 +552,13 @@ class CiCoverageTest(unittest.TestCase):
 
 
 class StagingPublicationTest(unittest.TestCase):
+    def _publish(self, run_id, target, stage, et, repo, run_dir, state, **kwargs):
+        write_json(os.path.join(et, "run_state.json"), {
+            "phase": "PUBLISHING", "run_id": run_id, "target_trade_date": target, "run_dir": run_dir,
+        })
+        return nightly_publish.publish_stage(run_id, target, stage, et, repo, run_dir, state,
+                                             deadline_guard=lambda: None, **kwargs)
+
     def _layout(self, tmp: str):
         repo = os.path.join(tmp, "repo")
         et = os.path.join(repo, "experiments", "execution_tracker")
@@ -595,13 +602,13 @@ class StagingPublicationTest(unittest.TestCase):
     def test_publish_failure_restores_files_and_markers(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             repo, et, public, run_dir, stage = self._layout(tmp)
-            write_json(os.path.join(et, "current_run.json"), {"run_id": "OLD"})
-            write_json(os.path.join(public, "current_run.json"), {"run_id": "OLD"})
+            write_json(os.path.join(et, "current_run.json"), {"run_id": "OLD", "target_trade_date": "20260803"})
+            write_json(os.path.join(public, "current_run.json"), {"run_id": "OLD", "target_trade_date": "20260803"})
             write_json(os.path.join(stage["et"], "rotation_panel.json"), {"value": "new"})
             write_json(os.path.join(stage["public"], "meta.json"), {"value": "new-public"})
             state = os.path.join(et, "publication_state.json")
             with self.assertRaises(RuntimeError):
-                nightly_publish.publish_stage(
+                self._publish(
                     "R1", "20260804", stage, et, repo, run_dir, state, fail_after=1
                 )
             self.assertEqual(read_json(os.path.join(et, "rotation_panel.json"))["value"], "old")
@@ -615,7 +622,7 @@ class StagingPublicationTest(unittest.TestCase):
             write_json(os.path.join(stage["et"], "rotation_panel.json"), {"value": "new"})
             write_json(os.path.join(stage["public"], "meta.json"), {"value": "new-public"})
             state = os.path.join(et, "publication_state.json")
-            manifest = nightly_publish.publish_stage(
+            manifest = self._publish(
                 "R2", "20260804", stage, et, repo, run_dir, state
             )
             self.assertEqual(read_json(os.path.join(et, "rotation_panel.json"))["value"], "new")
@@ -636,12 +643,12 @@ class StagingPublicationTest(unittest.TestCase):
     def test_failure_after_public_pointer_restores_all_publication_metadata(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             repo, et, public, run_dir, stage = self._layout(tmp)
-            write_json(os.path.join(et, "current_run.json"), {"run_id": "OLD"})
-            write_json(os.path.join(public, "current_run.json"), {"run_id": "OLD"})
+            write_json(os.path.join(et, "current_run.json"), {"run_id": "OLD", "target_trade_date": "20260803"})
+            write_json(os.path.join(public, "current_run.json"), {"run_id": "OLD", "target_trade_date": "20260803"})
             write_json(os.path.join(stage["et"], "rotation_panel.json"), {"value": "new"})
             state = os.path.join(et, "publication_state.json")
             with self.assertRaisesRegex(RuntimeError, "public marker"):
-                nightly_publish.publish_stage(
+                self._publish(
                     "R_POINTER", "20260804", stage, et, repo, run_dir, state,
                     fail_phase="after_public_marker",
                 )
@@ -657,7 +664,7 @@ class StagingPublicationTest(unittest.TestCase):
             repo, et, public, run_dir, stage = self._layout(tmp)
             write_json(os.path.join(stage["public"], "meta.json"), {"value": "new-public"})
             state_path = os.path.join(et, "publication_state.json")
-            nightly_publish.publish_stage(
+            self._publish(
                 "R_TAMPER", "20260804", stage, et, repo, run_dir, state_path
             )
             write_json(os.path.join(public, "meta.json"), {"value": "forged"})
@@ -676,7 +683,7 @@ class StagingPublicationTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             repo, et, _, run_dir, stage = self._layout(tmp)
             state_path = os.path.join(et, "publication_state.json")
-            nightly_publish.publish_stage(
+            self._publish(
                 "R_COMMITTED", "20260804", stage, et, repo, run_dir, state_path
             )
             run_state = os.path.join(et, "run_state.json")
@@ -705,7 +712,7 @@ class StagingPublicationTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             repo, et, _, run_dir, stage = self._layout(tmp)
             state_path = os.path.join(et, "publication_state.json")
-            nightly_publish.publish_stage(
+            self._publish(
                 "R_OLD", "20260804", stage, et, repo, run_dir, state_path
             )
             run_state = os.path.join(et, "run_state.json")
@@ -793,7 +800,7 @@ class StagingPublicationTest(unittest.TestCase):
 
             def fake_steps(
                 *, require_live, verify, base, run_id, persistent_feature_db,
-                persistent_macro_db, persistent_funnel_root,
+                persistent_macro_db, persistent_funnel_root, run_deadline,
             ):
                 self.assertTrue(verify)
                 self.assertEqual(

@@ -21,6 +21,7 @@ if str(CODE_ROOT) not in sys.path:
     sys.path.insert(0, str(CODE_ROOT))
 
 import nightly_acceptance
+import nightly_publish
 import run_nightly
 from experiments.research_funnel import research_trust_view
 
@@ -135,13 +136,17 @@ def validate_publication(root: Path, run_id: str, target: str) -> dict:
         raise AuditError("manifest artifacts differ from current_run pointer")
     state = _read(et / "publication_state.json")
     plan_path = et / "runs" / run_id / "publish_plan.json"
-    if (state.get("schema") != "nightly_publication_state/v2"
-            or state.get("status") != "COMMITTED"
+    if (state.get("status") != "COMMITTED"
             or state.get("run_id") != run_id
             or state.get("target_trade_date") != target
             or state.get("manifest") != str(durable_manifest)
             or state.get("plan") != str(plan_path)):
         raise AuditError("publication state is not bound to this committed run")
+    try:
+        nightly_publish.require_commit_proof(state)
+        nightly_publish.require_unfenced(durable_manifest.parent)
+    except (OSError, RuntimeError) as exc:
+        raise AuditError(str(exc)) from exc
     plan = _read(plan_path)
     entries = plan.get("entries")
     if (plan.get("schema") != "nightly_publish/v2" or plan.get("run_id") != run_id

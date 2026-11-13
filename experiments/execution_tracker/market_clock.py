@@ -32,6 +32,16 @@ LEGACY_CLOCK_CUTOVER = "20260917"
 IN_SESSION = "IN_SESSION"
 POST_CLOSE = "POST_CLOSE"
 UNPROVEN_IN_SESSION = "UNPROVEN_IN_SESSION"
+ADMITTED = "ADMITTED"
+OUTSIDE_MARKET_HOURS = "OUTSIDE_MARKET_HOURS"
+NON_TRADING_DAY = "NON_TRADING_DAY"
+CALENDAR_UNPROVEN = "CALENDAR_UNPROVEN"
+
+
+class SessionRefused(RuntimeError):
+    def __init__(self, status, reason):
+        super().__init__(reason)
+        self.status = status
 
 _DATE_RE = re.compile(r"^\d{8}$")
 _CHECKPOINT_RE = re.compile(r"^(?:wt)?([01]\d|2[0-3])([0-5]\d)$")
@@ -85,6 +95,36 @@ def parse_instant(raw):
 def in_trading_session(dt):
     """Clock-time check only: [09:15, 15:00) on the UTC+8 wall clock."""
     return NOWCAST_OPEN <= to_shanghai(dt).time() < SESSION_CLOSE
+
+
+def session_admission(clock, trading_day, expected_date=None):
+    """Require an explicit open session, and recheck the clock after calendar I/O."""
+    now = shanghai_now(clock)
+    day = trade_date(now)
+    # governance-mutation: EXECUTION_CLOCK_WATCHTOWER_START_WINDOW
+    if not in_trading_session(now) or (expected_date is not None and day != expected_date):
+        return OUTSIDE_MARKET_HOURS, f"{stamp(now)} 不在交易时段或不属于本次上海交易日"
+    try:
+        is_open, why = trading_day(day)
+    except Exception:
+        return CALENDAR_UNPROVEN, "交易日历不可验证"
+    # governance-mutation: EXECUTION_CLOCK_WATCHTOWER_TRADING_DAY
+    if is_open is False:
+        return NON_TRADING_DAY, why
+    # governance-mutation: EXECUTION_CLOCK_EXPLICIT_OPEN_CALENDAR
+    if is_open is not True:
+        return CALENDAR_UNPROVEN, why
+    current = shanghai_now(clock)
+    # governance-mutation: EXECUTION_CLOCK_CALENDAR_POST_READ_CLOCK
+    if trade_date(current) != day or not in_trading_session(current):
+        return OUTSIDE_MARKET_HOURS, f"{stamp(current)} 日历返回时已离开本次上海交易时段"
+    return ADMITTED, why
+
+
+def require_session(clock, trading_day, expected_date):
+    status, why = session_admission(clock, trading_day, expected_date=expected_date)
+    if status != ADMITTED:
+        raise SessionRefused(status, why)
 
 
 def capture_verdict(date, captured):

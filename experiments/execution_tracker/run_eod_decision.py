@@ -177,7 +177,10 @@ def main(argv=None, clock=None, quote_fn=None, trading_day_fn=None):
     argv = sys.argv[1:] if argv is None else argv
     if "--selftest" in argv:
         sys.exit(0 if selftest() else 1)
-    status, why = admission(mc.shanghai_now(clock), force="--force" in argv)
+    started = mc.shanghai_now(clock)
+    day = mc.trade_date(started)
+    force = "--force" in argv and quote_fn is not None
+    status, why = admission(started, force=force)
     if status:
         print(f"{status}: {why}")
         return EXIT_OUTSIDE_MARKET_HOURS if status == OUTSIDE_MARKET_HOURS else 0
@@ -188,11 +191,19 @@ def main(argv=None, clock=None, quote_fn=None, trading_day_fn=None):
         print("DATA_BLOCKED: NO TUSHARE_TOKEN")
         return 1
     trading_day_fn = trading_day_fn or (lambda d: is_trading_day(d, token))
-    is_open, why = trading_day_fn(mc.trade_date(mc.shanghai_now(clock)))
+    status, why = mc.session_admission(clock, trading_day_fn, expected_date=day)
     # governance-mutation: EXECUTION_CLOCK_EOD_TRADING_DAY
-    if not is_open:
-        print(f"{NON_TRADING_DAY}: {why};不产出。")
-        return 0
+    if status != mc.ADMITTED:
+        print(f"{status}: {why};不产出。")
+        return EXIT_OUTSIDE_MARKET_HOURS if status == OUTSIDE_MARKET_HOURS else 0
+    current = mc.shanghai_now(clock)
+    if mc.trade_date(current) != day:
+        print(f"{OUTSIDE_MARKET_HOURS}: 已离开本次上海交易日;不产出。")
+        return EXIT_OUTSIDE_MARKET_HOURS
+    status, why = admission(current, force=force)
+    if status:
+        print(f"{status}: {why}")
+        return EXIT_OUTSIDE_MARKET_HOURS if status == OUTSIDE_MARKET_HOURS else 0
     signals = _load(SIGNALS, [])
     tickers = sorted({s["ticker"] for s in signals
                       if s.get("setup_type") == "execution_gate"
@@ -202,12 +213,38 @@ def main(argv=None, clock=None, quote_fn=None, trading_day_fn=None):
     if not tickers:
         print("今日无活跃 execution_gate 信号;窗内无事。")
         return 0
-    quote_fn = quote_fn or (lambda ts: fs.tushare_realtime_quotes(ts, src="sina"))
-    rows = quote_fn(tickers)
+    def before_read():
+        mc.require_session(clock, trading_day_fn, day)
+        current = mc.shanghai_now(clock)
+        # governance-mutation: EXECUTION_CLOCK_EOD_FINAL_QUOTE_DATE
+        if mc.trade_date(current) != day:
+            raise mc.SessionRefused(OUTSIDE_MARKET_HOURS, "已离开本次上海交易日")
+        status, why = admission(current, force=force)
+        if status:
+            raise mc.SessionRefused(status, why)
+
+    quote_fn = quote_fn or (lambda ts: fs.tushare_realtime_quotes(ts, src="sina", before_read=before_read))
+    current = mc.shanghai_now(clock)
+    if mc.trade_date(current) != day or not mc.in_trading_session(current):
+        print(f"{OUTSIDE_MARKET_HOURS}: 行情请求前已离开本次上海交易时段;不产出。")
+        return EXIT_OUTSIDE_MARKET_HOURS
+    status, why = admission(current, force=force)
+    if status:
+        print(f"{status}: {why}")
+        return 0
+    try:
+        rows = quote_fn(tickers)
+    except mc.SessionRefused as exc:
+        print(f"{exc.status}: {exc};不产出。")
+        return EXIT_OUTSIDE_MARKET_HOURS if exc.status == OUTSIDE_MARKET_HOURS else 0
     captured = mc.shanghai_now(clock)        # 行情读取时刻
-    if not mc.in_trading_session(captured):
+    if mc.trade_date(captured) != day or not mc.in_trading_session(captured):
         print(f"{OUTSIDE_MARKET_HOURS}: 行情读取于 {mc.stamp(captured)},已过收盘;不产出。")
         return EXIT_OUTSIDE_MARKET_HOURS
+    status, why = admission(captured, force=force)
+    if status:
+        print(f"{status}: 行情返回时已离开尾盘决策窗;不产出。")
+        return 0
     hhmm = mc.hhmm(captured)
     quotes = {}
     for r in rows:

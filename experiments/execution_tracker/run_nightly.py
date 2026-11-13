@@ -23,6 +23,7 @@ import time
 import uuid
 
 from nightly_limits import NIGHTLY_STEP_TIMEOUT_SECONDS, step_timeout
+import nightly_deadline
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "nightly_run.json")
@@ -864,6 +865,7 @@ def run_steps(
     persistent_feature_db=None,
     persistent_macro_db=None,
     persistent_funnel_root=None,
+    run_deadline=None,
 ):
     """verify=True(正式路径):步骤终态 = max(进程判定, 产物实物判定)。
     COMPLETE 从此必须由实物背书 —— 进程退 0 + 免责声明不再等于成功(B2/B3)。"""
@@ -873,8 +875,12 @@ def run_steps(
     run_start = time.time()
     results, status_by = [], {}
     target = None
+    fenced = False
 
     for name, cmd, needs_token, deps in STEPS:
+        if fenced:
+            results.append({"step": name, "status": "SKIPPED_STALE_INPUT", "why": "PUBLICATION_FENCED"})
+            continue
         bad = [d for d in deps if status_by.get(d) != "OK"]
         if bad:
             entry = {"step": name, "status": "SKIPPED_STALE_INPUT",
@@ -916,10 +922,21 @@ def run_steps(
             else:
                 env.pop("AR_TARGET_TRADE_DATE", None)
             # governance-mutation: NIGHTLY_RUNNER_PER_STEP_TIMEOUT
-            code, out = _subprocess_runner(cmd, cwd=base, env=env, timeout=step_timeout(name))
+            limit = step_timeout(name)
+            try:
+                lease = ({"deadline": run_deadline.start(name, limit), "fence": run_deadline.fence,
+                          "lock_fd": run_deadline.lock_fd} if run_deadline else {})
+                code, out = _subprocess_runner(cmd, cwd=base, env=env, timeout=limit, **lease)
+            except nightly_deadline.DeadlineExpired as exc:
+                code, out = 124, str(exc)
         else:
             code, out = runner(cmd)
-        status = _classify(code, out)
+        if run_deadline is not None:
+            if code == 124 or (run_deadline.current is not None and not run_deadline.current.remaining()):
+                run_deadline.fence("STEP_DEADLINE_EXPIRED")
+                code, fenced = 124, True
+                out += "\nTIMEOUT: publication fenced"
+        status = "FAILED" if fenced else _classify(code, out)
         entry = {"step": name, "status": status, "exit_code": code,
                  "elapsed_sec": round(time.time() - t0, 2), "tail": out[-1200:]}
         if verify:
@@ -932,11 +949,15 @@ def run_steps(
             entry["artifacts"] = adet
             if _SEVERITY.get(av, 5) > _SEVERITY.get(status, 5):
                 status = av
+            if run_deadline is not None and run_deadline.current is not None and not run_deadline.current.remaining():
+                run_deadline.fence("STEP_DEADLINE_EXPIRED")
+                entry["exit_code"] = 124
+                status, fenced = "FAILED", True
             entry["status"] = status
         entry["blocks_publication"] = True
         # governance-mutation: MACRO_M1C_FAILURE_ISOLATION
         # governance-mutation: FUNNEL_NIGHTLY_ISOLATION
-        if name in ISOLATED_CALIBRATION_STEPS and status != "OK":
+        if name in ISOLATED_CALIBRATION_STEPS and status != "OK" and not fenced:
             # A calibration module may fail closed on its own evidence, but it
             # cannot veto unrelated NAV, ledger, or research publication.  The
             # staging layer removes prior Macro derivatives first, so isolation
@@ -1018,7 +1039,12 @@ def run_steps(
             "note": "nightly v4;COMPLETE 由结构化状态、实物、run_id 与统一交易日共同背书。不是买卖指令。"}
 
 
-def _subprocess_runner(cmd, cwd=None, env=None, timeout=NIGHTLY_STEP_TIMEOUT_SECONDS):
+def _subprocess_runner(cmd, cwd=None, env=None, timeout=NIGHTLY_STEP_TIMEOUT_SECONDS, *, deadline=None, fence=None, lock_fd=None):
+    if deadline is not None:
+        if fence is None:
+            raise RuntimeError("MISSING_PUBLICATION_FENCE")
+        return nightly_deadline.run_owned(cmd, cwd or HERE, env, deadline, fence, lock_fd=lock_fd)
+    # Standalone offline calls have no publication authority.
     try:
         p = subprocess.run(cmd, cwd=cwd or HERE, env=env, text=True,
                            capture_output=True, timeout=timeout)
@@ -1481,18 +1507,36 @@ def _rollback_from(run_id):
 def _crash_check_and_rollback():
     """上一轮留下 run_state 标记 = 中途崩溃:派生产物是混合态,先回滚再开新轮。"""
     import nightly_publish as _np
-    publish_recovery = _np.recover_interrupted_publish(
-        PUBLICATION_STATE, HERE, REPO_ROOT)
     if not os.path.exists(RUN_STATE):
+        publish_recovery = _np.recover_interrupted_publish(PUBLICATION_STATE, HERE, REPO_ROOT)
         return ({"publication": publish_recovery} if publish_recovery else None)
     try:
         with open(RUN_STATE, encoding="utf-8") as fh:
             prev = json.load(fh)
     except (json.JSONDecodeError, OSError) as exc:
         raise RuntimeError(f"run_state 不可解析 —— fail-closed: {exc}") from exc
+    if not isinstance(prev, dict):
+        raise RuntimeError("UNPROVEN_INTERRUPTED_RUN_STATE")
     if prev.get("orchestrator") == "nightly_v4":
-        # v4 引擎只写 staging。若 commit marker 已落,保留已提交发布;
-        # 若崩在发布中,上面的 publication journal 已回滚。
+        interrupted_id = prev.get("run_id")
+        if not isinstance(interrupted_id, str) or not _np.SAFE_RUN_ID_RE.fullmatch(interrupted_id):
+            raise RuntimeError("UNPROVEN_INTERRUPTED_RUN_ID")
+
+        def fence_interrupted():
+            # governance-mutation: NIGHTLY_RECOVERY_FENCES_INTERRUPTED_RUN
+            _np.fence_run(interrupted_id, os.path.join(HERE, "runs", interrupted_id), "INTERRUPTED_RUN")
+
+        try:
+            with open(PUBLICATION_STATE, encoding="utf-8") as fh:
+                journal = json.load(fh)
+        except (OSError, ValueError):
+            journal = None
+        maybe_committed = (isinstance(journal, dict) and journal.get("status") == "COMMITTED"
+                           and journal.get("run_id") == interrupted_id)
+        if not maybe_committed:
+            fence_interrupted()
+        # A corrupt committed publication needs operator rebaseline, not rollback.
+        publish_recovery = _np.recover_interrupted_publish(PUBLICATION_STATE, HERE, REPO_ROOT)
         if ((publish_recovery or {}).get("status") == "COMMITTED_VERIFIED"
                 and (publish_recovery or {}).get("run_id") == prev.get("run_id")):
             os.remove(RUN_STATE)
@@ -1504,7 +1548,10 @@ def _crash_check_and_rollback():
                 "publication": publish_recovery,
             }
         n = (publish_recovery or {}).get("restored", 0)
+        if maybe_committed:
+            fence_interrupted()
     else:
+        publish_recovery = _np.recover_interrupted_publish(PUBLICATION_STATE, HERE, REPO_ROOT)
         n = _rollback_from(prev.get("run_id", ""))
     os.remove(RUN_STATE)
     print(f"[crash-recovery] 上一轮 {prev.get('run_id')} 中途崩溃,已回滚 {n} 个派生产物"
@@ -1514,11 +1561,15 @@ def _crash_check_and_rollback():
 
 
 def _prune_runs(keep=14):
+    import nightly_publish as _np
+
     try:
         runs = sorted(os.listdir(RUNS_DIR))
         for r in runs[:-keep]:
             import shutil
-            shutil.rmtree(os.path.join(RUNS_DIR, r), ignore_errors=True)
+            path = os.path.join(RUNS_DIR, r)
+            if not _np._fence_present(path):
+                shutil.rmtree(path, ignore_errors=True)
     except FileNotFoundError:
         pass
 
@@ -1585,7 +1636,7 @@ def _merge_data_quality(contract_quality, research_quality):
     return left if order.get(left, 3) >= order.get(right, 3) else right
 
 
-def _execute_nightly():
+def _execute_nightly(lock_fd=None):
     """在已持有全局锁时执行一轮。普通异常不清 run_state,交给下一轮恢复。"""
     run_id = f"{time.strftime('%Y%m%d_%H%M%S')}_{time.time_ns()}_{uuid.uuid4().hex[:8]}"
     run_dir = os.path.join(RUNS_DIR, run_id)
@@ -1628,6 +1679,7 @@ def _execute_nightly():
 
         import nightly_publish as _np
         stage = _np.prepare_stage(HERE, REPO_ROOT, run_dir)
+        run_deadline = nightly_deadline.RunDeadline(lambda reason: _np.fence_run(run_id, run_dir, reason), lock_fd)
         _atomic_write(RUN_STATE, {
             "schema": "nightly_run_state/v1", "orchestrator": "nightly_v4",
             "run_id": run_id, "phase": "RUNNING_STAGING", "run_dir": run_dir,
@@ -1639,6 +1691,7 @@ def _execute_nightly():
             verify=True,
             base=stage["et"],
             run_id=run_id,
+            run_deadline=run_deadline,
             persistent_feature_db=os.path.join(
                 REPO_ROOT, "data_history", "feature_store.sqlite3"
             ),
@@ -1685,7 +1738,7 @@ def _execute_nightly():
             try:
                 manifest = _np.publish_stage(
                     run_id, res.get("target_trade_date"), stage,
-                    HERE, REPO_ROOT, run_dir, PUBLICATION_STATE)
+                    HERE, REPO_ROOT, run_dir, PUBLICATION_STATE, deadline_guard=run_deadline.check)
                 res["published"] = True
                 res["publication_manifest"] = manifest
             except Exception as exc:
@@ -1735,10 +1788,9 @@ def main():
         except OSError:
             print("REFUSED: 另一轮夜链正在运行(nightly.lock 被持有)—— 不并发跑两轮")
             return 1
-        try:
-            return _execute_nightly()
-        finally:
-            fcntl.flock(lockf, fcntl.LOCK_UN)
+        # Close, don't explicitly unlock: a surviving step holds the same
+        # open-file description and keeps new controllers out until it exits.
+        return _execute_nightly(lock_fd=lockf.fileno())
 
 
 if __name__ == "__main__":

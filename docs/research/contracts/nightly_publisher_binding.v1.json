@@ -1,0 +1,15 @@
+{
+  "schema": "ar.nightly_publisher_binding.v1",
+  "scope": "OFFLINE_SOURCE_COMPATIBILITY_ONLY",
+  "historical": {
+    "source_commit": "333632910357baddcfbd9137ad5f01d666b9a912",
+    "v1_manifest_path": "docs/research/contracts/research_closed_loop.v1.json",
+    "v1_manifest_sha256": "sha256:d4121d5444e6491f8371b28208a77f8e6e6f19643e863fd210791e308b0a2106",
+    "snapshot_path": "docs/research/contracts/historical/nightly_publish.3336329.snapshot",
+    "publisher_sha256": "sha256:9a286f4cc8e49bccc646b9fab499cf4b6dd8122616239e09b25fa28b3ab29adf"
+  },
+  "current": {
+    "path": "experiments/execution_tracker/nightly_publish.py",
+    "publisher_sha256": "sha256:9593aeec0f47062e131b8d6f695e55b6d36354a716801479ccb220c420109afd"
+  }
+}

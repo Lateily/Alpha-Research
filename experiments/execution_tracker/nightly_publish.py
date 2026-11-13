@@ -27,6 +27,9 @@ REBASELINE_APPROVAL_TEMPLATE = (
     "durable_manifest=LOST_UNRECOVERABLE"
 )
 NIGHTLY_LOCK_NAME = "nightly.lock"
+LEGACY_PUBLICATION_STATE_SCHEMA = "nightly_publication_state/v2"
+PUBLICATION_STATE_SCHEMA = "nightly_publication_state/v3"
+COMMIT_PROOF = "POINTERS_DURABLE_WITHIN_DEADLINE"
 DISCLAIMER = "不是买卖指令；研究信号，human executes."
 
 
@@ -109,13 +112,19 @@ def sha256_file(path):
     return h.hexdigest()
 
 
-def atomic_json(path, value):
+def atomic_json(path, value, *, before_replace=None):
     os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
     tmp = path + ".tmp"
     with open(tmp, "w", encoding="utf-8") as fh:
         json.dump(value, fh, ensure_ascii=False, indent=1)
         fh.flush()
         os.fsync(fh.fileno())
+    if before_replace is not None:
+        try:
+            before_replace()
+        except BaseException:
+            atomic_remove(tmp)
+            raise
     os.replace(tmp, path)
     _fsync_parent(path)
 
@@ -653,6 +662,64 @@ def _destination(scope, rel, live_et, live_repo):
     return os.path.join(live_repo, "public", "data", "v2", rel)
 
 
+def _fence_present(run_dir):
+    try:
+        os.lstat(os.path.join(run_dir, "publication_fence.json"))
+    except FileNotFoundError:
+        return False
+    return True
+
+
+def fence_run(run_id, run_dir, reason):
+    """Persist a denial marker under the nightly writer lock, before signals."""
+    if not SAFE_RUN_ID_RE.fullmatch(run_id) or os.path.basename(os.path.abspath(run_dir)) != run_id:
+        raise RuntimeError("INVALID_PUBLICATION_FENCE_IDENTITY")
+    if os.path.islink(run_dir):
+        raise RuntimeError("INVALID_PUBLICATION_FENCE_DIRECTORY")
+    if not _fence_present(run_dir):
+        atomic_json(os.path.join(run_dir, "publication_fence.json"), {
+            "schema": "nightly_publication_fence/v1", "run_id": run_id, "reason": reason,
+        })
+        _fsync_parent(run_dir)
+
+
+def require_unfenced(run_dir):
+    # governance-mutation: NIGHTLY_PUBLICATION_FENCE
+    if _fence_present(run_dir):
+        raise RuntimeError("PUBLICATION_FENCED")
+
+
+def _require_active_publication(run_id, target, run_dir, live_et, live_repo, deadline_guard):
+    require_unfenced(run_dir)
+    if deadline_guard is None:
+        raise RuntimeError("PUBLICATION_REQUIRES_ACTIVE_DEADLINE")
+    def required_json(path):
+        try:
+            with open(path, encoding="utf-8") as fh:
+                value = json.load(fh)
+        except (OSError, ValueError) as exc:
+            raise RuntimeError("UNPROVEN_PUBLICATION_STATE") from exc
+        if not isinstance(value, dict):
+            raise RuntimeError("UNPROVEN_PUBLICATION_STATE")
+        return value
+
+    active = required_json(os.path.join(live_et, "run_state.json"))
+    if (active.get("phase") != "PUBLISHING" or active.get("run_id") != run_id
+            or active.get("target_trade_date") != target
+            or not isinstance(active.get("run_dir"), str)
+            or os.path.realpath(active["run_dir"]) != os.path.realpath(run_dir)):
+        raise RuntimeError("PUBLICATION_RUN_NOT_ACTIVE")
+    markers = [os.path.join(live_et, "current_run.json"),
+               os.path.join(live_repo, "public", "data", "v2", "current_run.json")]
+    if any(os.path.lexists(path) for path in markers):
+        a, b = [required_json(path) for path in markers]
+        previous = a.get("target_trade_date")
+        if a != b or not isinstance(previous, str) or not re.fullmatch(r"[0-9]{8}", previous):
+            raise RuntimeError("UNPROVEN_PREVIOUS_PUBLICATION")
+        if a.get("run_id") == run_id or target <= previous:
+            raise RuntimeError("PUBLICATION_REPLAY_OR_DATE_REGRESSION")
+
+
 def build_publish_plan(run_id, target, stage, live_et, live_repo, run_dir):
     protected = verify_protected_inputs(stage["et"], run_dir, target=target)
     if protected:
@@ -732,11 +799,31 @@ def rollback_plan(plan, live_et, live_repo):
 
 
 def publish_stage(run_id, target, stage, live_et, live_repo, run_dir,
-                  state_path, fail_after=None, fail_phase=None):
+                  state_path, fail_after=None, fail_phase=None, *, deadline_guard=None):
     """Publish staged files with a durable rollback journal and commit marker last."""
+    if not isinstance(run_id, str) or not SAFE_RUN_ID_RE.fullmatch(run_id):
+        raise RuntimeError("INVALID_PUBLICATION_RUN_ID")
+    if not isinstance(target, str) or not re.fullmatch(r"[0-9]{8}", target):
+        raise RuntimeError("INVALID_PUBLICATION_TRADE_DATE")
+    resolved_run = os.path.realpath(run_dir)
+    if os.path.dirname(resolved_run) == os.path.realpath(os.path.join(live_et, "runs")) and os.path.basename(resolved_run) != run_id:
+        raise RuntimeError("PUBLICATION_STAGE_RUN_MISMATCH")
+    stage_root = os.path.join(resolved_run, "staging", "repo")
+    if any(os.path.realpath(stage[key]) != os.path.join(stage_root, rel)
+           for key, rel in (("et", "experiments/execution_tracker"), ("public", "public/data/v2"))):
+        raise RuntimeError("PUBLICATION_STAGE_RUN_MISMATCH")
+
+    def check():
+        require_unfenced(run_dir)
+        if deadline_guard is not None:
+            deadline_guard()
+
+    _require_active_publication(run_id, target, run_dir, live_et, live_repo, deadline_guard)
+    check()
     plan = build_publish_plan(run_id, target, stage, live_et, live_repo, run_dir)
+    check()
     state = {
-        "schema": "nightly_publication_state/v2",
+        "schema": PUBLICATION_STATE_SCHEMA,
         "status": "PUBLISHING",
         "run_id": run_id,
         "target_trade_date": target,
@@ -745,6 +832,7 @@ def publish_stage(run_id, target, stage, live_et, live_repo, run_dir,
     atomic_json(state_path, state)
     try:
         for index, entry in enumerate(plan["entries"], 1):
+            check()
             dst = _destination(entry["scope"], entry["rel"], live_et, live_repo)
             atomic_copy(entry["source"], dst)
             if sha256_file(dst) != entry["source_hash"]:
@@ -779,13 +867,19 @@ def publish_stage(run_id, target, stage, live_et, live_repo, run_dir,
             "manifest_sha256": sha256_file(run_manifest),
         })
         public_marker = os.path.join(live_repo, "public", "data", "v2", "current_run.json")
-        atomic_json(public_marker, pointer)
+        check()
+        atomic_json(public_marker, pointer, before_replace=check)
         if fail_phase == "after_public_marker":
             raise RuntimeError("injected publish failure after public marker")
-        atomic_json(os.path.join(live_et, "current_run.json"), pointer)
+        atomic_json(os.path.join(live_et, "current_run.json"), pointer, before_replace=check)
+        # Both pointer writes (including parent fsyncs) must have completed in
+        # budget. A crash before this proof leaves the rollback journal PUBLISHING.
+        # governance-mutation: NIGHTLY_DURABLE_POINTER_DEADLINE
+        check()
         state["status"] = "COMMITTED"
         state["artifact_count"] = len(plan["entries"])
         state["manifest"] = run_manifest
+        state["commit_guard"] = COMMIT_PROOF
         atomic_json(state_path, state)
         return pointer
     except BaseException:
@@ -805,6 +899,7 @@ def recover_interrupted_publish(state_path, live_et, live_repo):
     except (OSError, json.JSONDecodeError) as exc:
         raise RuntimeError(f"publication_state 不可解析: {exc}") from exc
     if state.get("status") == "COMMITTED":
+        # governance-mutation: NIGHTLY_COMMITTED_VERIFICATION_FAILS_CLOSED
         return verify_committed_publication(state, live_et, live_repo)
     if state.get("status") == SUPERSEDED_STATUS:
         # governance-mutation: PUBLISH_SUPERSEDED_REQUIRES_LEDGERED_EVENT
@@ -826,6 +921,16 @@ def recover_interrupted_publish(state_path, live_et, live_repo):
     return {"run_id": state.get("run_id"), "restored": restored}
 
 
+def require_commit_proof(state):
+    """Verify the v3 deadline receipt; v2 commits predate the deadline gate."""
+    schema = state.get("schema")
+    if schema == LEGACY_PUBLICATION_STATE_SCHEMA and "commit_guard" not in state:
+        return
+    # governance-mutation: NIGHTLY_COMMITTED_DEADLINE_PROOF
+    if schema != PUBLICATION_STATE_SCHEMA or state.get("commit_guard") != COMMIT_PROOF:
+        raise RuntimeError("PUBLICATION_COMMIT_DEADLINE_UNPROVEN")
+
+
 def verify_committed_publication(state, live_et, live_repo):
     """Verify the durable commit pointer and immutable public aliases.
 
@@ -833,9 +938,11 @@ def verify_committed_publication(state, live_et, live_repo):
     hashes are audited by the WAL.  Public contract aliases must stay identical
     to the committed manifest until the next publication.
     """
+    require_commit_proof(state)
     manifest_path = state.get("manifest")
     if not manifest_path or not os.path.isfile(manifest_path):
         raise RuntimeError("已提交发布缺 durable manifest —— fail-closed")
+    require_unfenced(os.path.dirname(manifest_path))
     with open(manifest_path, encoding="utf-8") as fh:
         manifest = json.load(fh)
     manifest_hash = sha256_file(manifest_path)
@@ -995,8 +1102,7 @@ def _require_consistent_pointers(live_et, live_repo, state):
     is a wider publication corruption that must not be relabelled as one clean
     lost-manifest re-baseline.
     """
-    if state.get("schema") != "nightly_publication_state/v2":
-        raise RuntimeError("publication_state schema 非 nightly_publication_state/v2 —— fail-closed")
+    require_commit_proof(state)
     run_id = str(state.get("run_id") or "")
     target = str(state.get("target_trade_date") or "")
     # governance-mutation: PUBLISH_REBASELINE_SAFE_RUN_ID
@@ -1203,9 +1309,14 @@ def rebaseline_lost_manifest(state_path, live_et, live_repo, *, reason, approved
         run_id = str(state.get("run_id") or "")
         if not run_id:
             raise RuntimeError("publication_state 缺 run_id —— fail-closed")
+        if not SAFE_RUN_ID_RE.fullmatch(run_id):
+            raise RuntimeError("publication_state run_id 形状非法 —— fail-closed")
         rec_id = f"rebaseline:{run_id}"
         manifest_path = state.get("manifest")
         status = state.get("status")
+        if status == "COMMITTED":
+            # governance-mutation: NIGHTLY_REBASELINE_RESPECTS_FENCE
+            require_unfenced(os.path.join(live_et, "runs", run_id))
         events = _verified_rebaseline_events(ledger_path)
         matching = [rec for rec in events
                     if rec.get("kind") == LOST_MANIFEST_EVENT_KIND
