@@ -103,11 +103,97 @@ class OperationalGatesTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp, \
                 mock.patch.object(deadlines.os, "killpg", wraps=deadlines.os.killpg) as send:
             code, _ = deadlines.run_owned(
-                [sys.executable, "-I", "-B", "-c", "import time; time.sleep(5)"],
+                [sys.executable, "-I", "-B", "-c", "import time; time.sleep(45)"],
                 tmp, {}, deadlines.Deadline(0.35), mock.Mock())
         self.assertEqual(code, 124)
         self.assertIn(signal.SIGTERM, [call.args[1] for call in send.call_args_list])
         self.assertNotIn(signal.SIGKILL, [call.args[1] for call in send.call_args_list])
+
+    def _cleanup_trace(self, *, owned=True, live=True, term_sent=True):
+        now = 5_000_000_000
+        trace = []
+        child = mock.Mock(pid=1234, returncode=None)
+
+        def sleep(seconds):
+            nonlocal now
+            now += round(seconds * 10**9)
+
+        def send(pgid, sig):
+            self.assertEqual(pgid, child.pid)
+            if sig:
+                trace.append((signal.Signals(sig).name, now))
+            if sig == signal.SIGTERM and not term_sent:
+                raise ProcessLookupError
+
+        def group(_):
+            return child.pid if owned or now < 25_000_000_000 else 5678
+
+        with mock.patch.object(deadlines, "continuous_ns", side_effect=lambda: now), \
+                mock.patch.object(deadlines.time, "sleep", side_effect=sleep), \
+                mock.patch.object(deadlines.os, "getpgid", side_effect=group), \
+                mock.patch.object(deadlines.os, "getsid", return_value=child.pid), \
+                mock.patch.object(deadlines.os, "killpg", side_effect=send), \
+                mock.patch.object(deadlines, "_group_has_live_process", return_value=live):
+            deadlines._stop_group(child)
+        child.wait.assert_called_once()
+        return trace
+
+    def test_cleanup_waits_two_full_windows(self):
+        self.assertEqual(self._cleanup_trace(), [
+            ("SIGTERM", 15_000_000_000), ("SIGKILL", 25_000_000_000),
+        ])
+
+    def test_kill_requires_current_owned_group(self):
+        self.assertEqual(self._cleanup_trace(owned=False), [("SIGTERM", 15_000_000_000)])
+
+    def test_kill_requires_proven_liveness(self):
+        for live in (False, None):
+            with self.subTest(live=live):
+                self.assertEqual(self._cleanup_trace(live=live), [("SIGTERM", 15_000_000_000)])
+
+    def test_no_kill_when_term_target_has_already_exited(self):
+        self.assertEqual(self._cleanup_trace(term_sent=False), [("SIGTERM", 15_000_000_000)])
+
+    def test_cleanup_clock_fault_requires_full_grace_on_fallback(self):
+        now = 0
+
+        def sleep(seconds):
+            nonlocal now
+            now += round(seconds * 10**9)
+
+        with mock.patch.object(deadlines, "continuous_ns", side_effect=[100, 100, 99]), \
+                mock.patch.object(deadlines.time, "monotonic_ns", side_effect=lambda: now), \
+                mock.patch.object(deadlines.time, "sleep", side_effect=sleep):
+            self.assertTrue(deadlines._wait_cleanup_grace(10))
+        self.assertEqual(now, 10_100_000_000)
+
+    def test_linux_group_liveness_needs_a_non_zombie_member_in_the_owned_session(self):
+        leader = mock.Mock(name="leader-entry")
+        leader.name = "1234"
+        descendant = mock.Mock(name="descendant-entry")
+        descendant.name = "5678"
+        with mock.patch.object(deadlines.os, "scandir", return_value=mock.MagicMock()) as proc, \
+                mock.patch("builtins.open") as read_stat:
+            proc.return_value.__enter__.return_value = [leader, descendant]
+            for stat, expected in (("S 1234 1234 1234", True), ("Z 1234 1234 1234", None),
+                                   ("S 1234 1234 8000", None)):
+                with self.subTest(stat=stat):
+                    read_stat.side_effect = [
+                        mock.mock_open(read_data="1234 (leader) Z 1 1234 1234")(),
+                        mock.mock_open(read_data="5678 (child with a ) in name) " + stat)(),
+                    ]
+                    self.assertIs(deadlines._linux_group_has_live_process(1234), expected)
+
+    def test_failed_durable_fence_never_enters_cleanup(self):
+        deadline = mock.Mock()
+        deadline.remaining.side_effect = [1, 0]
+        with tempfile.TemporaryDirectory() as tmp, \
+                mock.patch.object(deadlines.subprocess, "Popen"), \
+                mock.patch.object(deadlines, "_exit_observer", return_value=mock.MagicMock()), \
+                mock.patch.object(deadlines, "_stop_group") as cleanup:
+            with self.assertRaisesRegex(OSError, "fixture fsync"):
+                deadlines.run_owned(["fixture"], tmp, {}, deadline, mock.Mock(side_effect=OSError("fixture fsync")))
+            cleanup.assert_not_called()
 
     def test_group_signal_permission_error_with_live_member_is_not_swallowed(self):
         child = mock.Mock(pid=1234, returncode=None)

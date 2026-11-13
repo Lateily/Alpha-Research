@@ -14,7 +14,8 @@ from functools import lru_cache
 
 
 POLL_SECONDS = 0.1
-TERM_GRACE_SECONDS = 10
+FENCE_GRACE_SECONDS = 10  # governance-mutation: NIGHTLY_FENCE_TO_TERM_GRACE
+TERM_GRACE_SECONDS = 10  # governance-mutation: NIGHTLY_TERM_TO_KILL_GRACE
 KILL_REAP_SECONDS = 10
 
 
@@ -145,7 +146,8 @@ def _darwin_group_has_live_process(pgid):
     pids = (ctypes.c_int * 256)()
     count = list_group(pgid, pids, ctypes.sizeof(pids))
     if count <= 0 or count >= len(pids):
-        return True  # Unproven; the unreaped leader should still be listed.
+        return None
+    unknown = False
     for pid in pids[:count]:
         # proc_bsdshortinfo: 64 bytes; pid, ppid, pgid, status are the first words.
         fields = (ctypes.c_uint32 * 16)()
@@ -153,9 +155,54 @@ def _darwin_group_has_live_process(pgid):
         size = info(pid, 13, 0, fields, ctypes.sizeof(fields))  # PROC_PIDT_SHORTBSDINFO
         if size == 0 and ctypes.get_errno() == errno.ESRCH:
             continue
-        if size != ctypes.sizeof(fields) or fields[0] != pid or fields[2] != pgid or fields[3] != 5:
-            return True  # Unknown or not SZOMB.
-    return False
+        if size != ctypes.sizeof(fields) or fields[0] != pid or fields[2] != pgid:
+            unknown = True
+        elif fields[3] in (1, 2, 3, 4):
+            return True  # SIDL, SRUN, SSLEEP, SSTOP.
+        elif fields[3] != 5:
+            unknown = True
+    return None if unknown else False
+
+
+def _linux_group_has_live_process(pgid):
+    def member(pid):
+        with open(f"/proc/{pid}/stat", encoding="utf-8", errors="replace") as stream:
+            fields = stream.read().rsplit(")", 1)[1].split()
+        state, group, session = fields[0], int(fields[2]), int(fields[3])
+        return group == session == pgid and state in {"R", "S", "D", "T", "t", "I", "W", "P"}
+
+    try:
+        if member(pgid):
+            return True
+        with os.scandir("/proc") as entries:
+            for entry in entries:
+                if not entry.name.isascii() or not entry.name.isdecimal() or entry.name == str(pgid):
+                    continue
+                try:
+                    if member(entry.name):
+                        return True
+                except (OSError, ValueError, IndexError):
+                    continue
+    except (OSError, ValueError, IndexError):
+        pass
+    return None  # No positively identified live member.
+
+
+def _group_has_live_process(pgid):
+    if sys.platform == "darwin":
+        return _darwin_group_has_live_process(pgid)
+    if sys.platform.startswith("linux"):
+        return _linux_group_has_live_process(pgid)
+    return None
+
+
+def _owned_group(child):
+    # Keep the original leader unreaped, so its PID/session cannot be reused.
+    try:
+        return (child.returncode is None and os.getpgid(child.pid) == child.pid
+                and os.getsid(child.pid) == child.pid)
+    except OSError:
+        return False
 
 
 def _send_group(child, signum):
@@ -168,35 +215,39 @@ def _send_group(child, signum):
     except PermissionError:
         # macOS can return EPERM for a group containing only unreaped zombies.
         # Do not swallow a real permission failure with a live member.
-        if sys.platform == "darwin" and not _darwin_group_has_live_process(child.pid):
+        if sys.platform == "darwin" and _darwin_group_has_live_process(child.pid) is False:
             return False
         raise
     return True
 
 
-def _stop_group(child):
-    if _send_group(child, signal.SIGTERM):
-        # Cleanup remains possible even if the clock failure caused the fence.
-        grace_clock = continuous_ns
+def _wait_cleanup_grace(seconds):
+    # Clock failure may cause the fence. Restart the full grace on a new clock.
+    duration = seconds * 10**9
+    for clock in (continuous_ns, time.monotonic_ns):
         try:
-            grace_start = grace_clock()
+            start = previous = clock()
+            while True:
+                current = clock()
+                if current < previous:
+                    break
+                left = duration - (current - start)
+                if left <= 0:
+                    return True
+                previous = current
+                time.sleep(min(left / 10**9, POLL_SECONDS))
         except (OSError, RuntimeError, AttributeError):
-            grace_clock = time.monotonic_ns
-            grace_start = grace_clock()
-        while True:
-            try:
-                elapsed = (grace_clock() - grace_start) / 10**9
-            except (OSError, RuntimeError, AttributeError):
-                grace_clock = time.monotonic_ns
-                grace_start = grace_clock()
-                elapsed = 0
-            left = TERM_GRACE_SECONDS - elapsed
-            if not _send_group(child, 0):
-                break
-            if left <= 0:
-                _send_group(child, signal.SIGKILL)
-                break
-            time.sleep(min(left, POLL_SECONDS))
+            continue
+    return False
+
+
+def _stop_group(child):
+    if (_wait_cleanup_grace(FENCE_GRACE_SECONDS) and _owned_group(child)
+            and _send_group(child, signal.SIGTERM)):
+        # governance-mutation: NIGHTLY_KILL_REQUIRES_LIVE_GROUP
+        if (_wait_cleanup_grace(TERM_GRACE_SECONDS) and _group_has_live_process(child.pid) is True
+                and _owned_group(child)):  # governance-mutation: NIGHTLY_KILL_REQUIRES_OWNED_GROUP
+            _send_group(child, signal.SIGKILL)
     child.wait(timeout=KILL_REAP_SECONDS)
 
 
