@@ -405,10 +405,17 @@ class FrozenInputs:
         if self._source_stamp(source_root) != stamp or ev.read_local(source_root, POINTER) != originals[POINTER]:
             raise WorkspaceError("SOURCE_CHANGED", 409)
 
-    def import_once(self, source_root: Path, *, expected_attempt_sha=_UNSET_ATTEMPT) -> dict:
+    def import_once(self, source_root: Path, *, expected_attempt_sha=_UNSET_ATTEMPT, diagnostic=None) -> dict:
+        # The poller may observe progress in memory; no other consumer needs a diagnostic.
+        def mark(stage, **fields):
+            if diagnostic is not None:
+                diagnostic.update(stage=stage, **fields)
+
+        mark("CAPTURE_SOURCE")
         source_root = self.check_source_root(source_root)
         stamp = self._source_stamp(source_root)
         snapshot = ev.capture(source_root)
+        mark("VALIDATE_SOURCE")
         self._check_sync_attempt(snapshot, source_root, expected_attempt_sha)
         originals = validate_snapshot(snapshot, source_root)
         for name in publication_paths(snapshot) - _required_paths(snapshot):
@@ -417,6 +424,7 @@ class FrozenInputs:
                        payload=None, degraded_reason="NOT_DECLARED_IN_PUBLICATION")
         snapshot["publication_provenance"] = publication_provenance(snapshot, originals)
         publication, pub_hash, attempt_hash = fingerprints(snapshot, originals)
+        mark("CHECK_CAPTURE_TARGET", publication_run_id=snapshot.get("published_run_id"))
         input_hash = ev.sealed({"publication_fingerprint": pub_hash, "attempt_fingerprint": attempt_hash})
         snapshot["frozen_input_hash"] = input_hash
         snapshot["snapshot_hash"] = ev.sealed({k: v for k, v in snapshot.items() if k != "snapshot_hash"})
@@ -425,13 +433,20 @@ class FrozenInputs:
             raise WorkspaceError("SOURCE_CHANGED", 409)
         if any(p.is_symlink() for p in (self.base, *self.base.parents)):
             raise WorkspaceError("FROZEN_DIRECTORY_INVALID", 409)
+        mark("OPEN_REGISTRY")
         with self.store.connect() as db:
             db.execute("BEGIN IMMEDIATE")
             prior = db.execute("SELECT snapshot_id FROM shared_inputs WHERE input_hash=?", (input_hash,)).fetchone()
             if prior:
+                mark("RECHECK_EXISTING_SOURCE", registry_outcome="NOT_CONFIRMED")
                 self._recheck_source(snapshot, source_root, originals, stamp, expected_attempt_sha=expected_attempt_sha)
-                return self._descriptor(self.verify(prior[0]))
+                mark("VERIFY_REGISTERED")
+                reused = self._descriptor(self.verify(prior[0]))
+                mark("REGISTRY_REUSE_COMMIT", registry_outcome="EXISTING")
+                return reused
+            mark("CHECK_CAPACITY")
             self._capacity(db, input_hash, pub_hash, attempt_hash)
+            mark("BIND_CAPTURE_RECEIPT")
             work = self.store.path.parent / "input-write-evidence" / input_hash
             snapshot_id = str(uuid.uuid5(uuid.NAMESPACE_URL, "ar.shared-input.v1:" + input_hash))
             capture_path = work / "capture.json"
@@ -451,6 +466,7 @@ class FrozenInputs:
                 capture = {"schema": "ar.shared-input-capture.v1", "input_hash": input_hash,
                            "snapshot_id": snapshot_id, "snapshot": snapshot}
                 _new_or_identical(capture_path, ev.canonical(capture).encode(), evidence_root=work / "writes")
+            mark("SEAL_PUBLICATION")
             publications = self.base / "publications"
             publications.mkdir(parents=True, exist_ok=True, mode=0o700)
             frozen_root = publications / pub_hash
@@ -467,6 +483,7 @@ class FrozenInputs:
                     fsync_directory(publications)
             _new_or_identical(frozen_root / "publication.json", ev.canonical(publication).encode(), evidence_root=work / "writes")
             validate_snapshot(snapshot, frozen_root, sealed_originals=True)
+            mark("SEAL_ENVELOPE")
             attempt = snapshot["records"][ATTEMPT]
             _new_or_identical(self.base / "attempts" / (attempt_hash + ".json"), ev.canonical(attempt).encode(), evidence_root=work / "writes")
             envelope = {"schema": "ar.shared-input.v1", "snapshot_id": snapshot_id, "input_hash": input_hash,
@@ -474,8 +491,12 @@ class FrozenInputs:
                         "source_run_id": snapshot["published_run_id"], "source_trade_date": snapshot["target_trade_date"],
                         "validation_scope": SCOPE, "snapshot": snapshot}
             _new_or_identical(self.base / "envelopes" / (snapshot_id + ".json"), ev.canonical(envelope).encode(), evidence_root=work / "writes")
+            mark("FINAL_SOURCE_RECHECK")
             self._recheck_source(snapshot, source_root, originals, stamp, expected_attempt_sha=expected_attempt_sha)
+            mark("REGISTRY_INSERT", registry_outcome="NOT_CONFIRMED")
             db.execute("INSERT INTO shared_inputs VALUES (?, ?, ?)", (snapshot_id, input_hash, ev.canonical(envelope)))
+            mark("REGISTRY_COMMIT")
+        mark("VERIFY_REGISTERED", registry_outcome="COMMITTED")
         return self._descriptor(self.verify(snapshot_id))
 
     @staticmethod

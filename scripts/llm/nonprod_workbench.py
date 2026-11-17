@@ -776,9 +776,16 @@ def main(argv=None):
         if shared is not None:
             worker = SharedWorker(queue)
             if args.read_only_auto_sync:
-                from workbench_shared_sync import ReadOnlySync
-                shared.sync = ReadOnlySync(inputs, args.read_only_source_root)
-                shared.sync.start()
+                from workbench_shared_sync import ReadOnlySync, warn_sync_failure
+                code_sha = shared._execution_identity["code_sha"]
+                stage = "SYNC_INITIALIZE"
+                try:
+                    shared.sync = ReadOnlySync(inputs, args.read_only_source_root, code_sha=code_sha)
+                    stage = "SYNC_START"
+                    shared.sync.start()
+                except Exception as exc:
+                    warn_sync_failure(exc, {"stage": stage}, code_sha=code_sha)
+                    return 1
             worker.start()
         if private is None:
             worker = threading.Thread(target=system.scheduler, daemon=True)

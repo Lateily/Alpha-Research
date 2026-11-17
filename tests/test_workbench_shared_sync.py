@@ -6,6 +6,7 @@ import io
 import json
 import os
 import socket
+import sqlite3
 import subprocess
 import sys
 import tempfile
@@ -51,6 +52,155 @@ class SharedSyncTests(unittest.TestCase):
         while not predicate() and time.monotonic() < deadline:
             time.sleep(.01)
         self.assertTrue(predicate(), "background condition not reached")
+
+    def failure_record(self, logs):
+        self.assertEqual(len(logs.records), 1)
+        record = logs.records[0]
+        self.assertIsNone(record.exc_info)
+        row = json.loads(record.getMessage())
+        self.assertEqual(row["event"], "workbench_sync_failure.v1")
+        self.assertEqual(set(row), {"event", "at_utc", "code_sha", "stage", "error_code", "latest_attempt_run_id",
+                                    "publication_run_id", "registry_outcome"})
+        return row
+
+    def test_diagnostics_distinguish_file_recheck_from_registry_and_are_operator_only(self):
+        first = self.poller.tick()
+        run = "20261116_203005_1794861005000000000_0123abcd"
+        attempt_run = "20261117_203006_1794947406000000000_4567abcd"
+        publisher_source(self.source, run, "20261116")
+        path = self.source / frozen.ATTEMPT
+        attempt = ev.parse(path.read_bytes())
+        path.write_text(ev.canonical(dict(attempt, run_id=attempt_run, target_trade_date="20261117")))
+        poller = sync.ReadOnlySync(self.inputs, self.source, code_sha="a" * 40)
+        with mock.patch.object(self.inputs, "_recheck_source", side_effect=ws.WorkspaceError("SOURCE_CHANGED", 409)):
+            with self.assertLogs("workbench_shared_sync", level="WARNING") as logs:
+                state = poller.tick()
+        row = self.failure_record(logs)
+        self.assertEqual(row["stage"], "FINAL_SOURCE_RECHECK")
+        self.assertEqual(row["error_code"], "SOURCE_CHANGED")
+        self.assertEqual(row["latest_attempt_run_id"], attempt_run)
+        self.assertEqual(row["publication_run_id"], run)
+        self.assertEqual(row["code_sha"], "a" * 40)
+        self.assertEqual(row["registry_outcome"], "NOT_ATTEMPTED")
+        self.assertEqual(state["safe_error"], "SOURCE_CHANGED")
+        self.assertEqual(state["current_snapshot_id"], first["current_snapshot_id"])
+        self.assertNotIn("stage", state)
+        self.assertEqual(self.count(), 1)
+        self.assertEqual(self.inputs.current_selection()["binding"]["snapshot_id"], first["current_snapshot_id"])
+        self.assertEqual(len(list((self.store.path.parent / "input-write-evidence").glob("*/capture.json"))), 2)
+        with self.assertNoLogs("workbench_shared_sync", level="WARNING"):
+            self.assertEqual(poller.tick()["status"], "SYNCED")
+            self.assertEqual(poller.tick()["status"], "SYNCED")
+
+    def test_diagnostics_redact_sqlite_messages_and_preserve_failed_insert(self):
+        first = self.poller.tick()
+        publisher_source(self.source, "registry_failure", "20261014")
+        with self.store.connect() as db:
+            db.execute("""CREATE TRIGGER synthetic_insert_guard BEFORE INSERT ON shared_inputs
+                          BEGIN SELECT RAISE(ABORT, 'SYNTHETIC_PRIVATE_MESSAGE'); END""")
+        with self.assertLogs("workbench_shared_sync", level="WARNING") as logs:
+            state = self.poller.tick()
+        row = self.failure_record(logs)
+        self.assertEqual(row["stage"], "REGISTRY_INSERT")
+        self.assertEqual(row["error_code"], "SQLITE_CONSTRAINT")
+        self.assertEqual(row["registry_outcome"], "NOT_CONFIRMED")
+        self.assertIsNone(row["publication_run_id"])
+        self.assertNotIn("SYNTHETIC_PRIVATE_MESSAGE", repr(logs.output))
+        self.assertEqual(state["safe_error"], "SOURCE_UNAVAILABLE_OR_INVALID")
+        self.assertEqual(state["current_snapshot_id"], first["current_snapshot_id"])
+        self.assertEqual(self.count(), 1)
+
+    def test_diagnostics_distinguish_committed_registry_and_failed_selection(self):
+        first = self.poller.tick()
+        publisher_source(self.source, "selection_failure", "20261014")
+        with mock.patch.object(self.inputs, "select_current", side_effect=ws.WorkspaceError("WORKSPACE_EVENT_LIMIT", 409)):
+            with self.assertLogs("workbench_shared_sync", level="WARNING") as logs:
+                state = self.poller.tick()
+        row = self.failure_record(logs)
+        self.assertEqual(row["stage"], "SELECT_CURRENT")
+        self.assertEqual(row["error_code"], "WORKSPACE_EVENT_LIMIT")
+        self.assertEqual(row["registry_outcome"], "COMMITTED")
+        self.assertEqual(state["status"], "CAPACITY_BLOCKED")
+        self.assertEqual(state["current_snapshot_id"], first["current_snapshot_id"])
+        self.assertEqual(self.inputs.current_selection()["binding"]["snapshot_id"], first["current_snapshot_id"])
+        self.assertEqual(self.count(), 2)
+
+    def test_diagnostics_do_not_claim_registry_commit_on_commit_failure(self):
+        first = self.poller.tick()
+        publisher_source(self.source, "commit_failure", "20261014")
+        connect = self.store.connect
+
+        def reject_commit():
+            db = connect()
+            db.set_authorizer(lambda action, arg, *_: (
+                sqlite3.SQLITE_DENY if action == sqlite3.SQLITE_TRANSACTION and arg == "COMMIT" else sqlite3.SQLITE_OK))
+            return db
+
+        with mock.patch.object(self.store, "connect", side_effect=reject_commit):
+            with self.assertLogs("workbench_shared_sync", level="WARNING") as logs:
+                state = self.poller.tick()
+        row = self.failure_record(logs)
+        self.assertEqual(row["stage"], "REGISTRY_COMMIT")
+        self.assertEqual(row["registry_outcome"], "NOT_CONFIRMED")
+        self.assertEqual(state["status"], "SYNC_FAILED")
+        self.assertEqual(state["current_snapshot_id"], first["current_snapshot_id"])
+        self.assertEqual(self.count(), 1)
+
+    def test_diagnostics_do_not_claim_existing_current_after_registry_loss(self):
+        first = self.poller.tick()
+        with self.store.connect() as db:
+            # Simulate loss outside the application in this disposable database.
+            db.execute("DROP TRIGGER shared_inputs_delete")
+            db.execute("DELETE FROM shared_inputs WHERE snapshot_id=?", (first["current_snapshot_id"],))
+        with self.assertLogs("workbench_shared_sync", level="WARNING") as logs:
+            state = self.poller.tick()
+        row = self.failure_record(logs)
+        self.assertEqual(row["stage"], "VERIFY_CURRENT")
+        self.assertEqual(row["registry_outcome"], "NOT_CONFIRMED")
+        self.assertEqual(row["error_code"], "FROZEN_SNAPSHOT_NOT_REGISTERED")
+        self.assertEqual(state["current_snapshot_id"], first["current_snapshot_id"])
+        self.assertEqual(state["status"], "SYNC_FAILED")
+        self.assertEqual(self.count(), 0)
+
+    def test_diagnostics_distinguish_reuse_commit_from_reopening(self):
+        first = self.poller.tick()
+        # A newly started poller reopens the same already-registered input.
+        poller = sync.ReadOnlySync(self.inputs, self.source)
+        connect = self.store.connect
+
+        def reject_commit():
+            db = connect()
+            db.set_authorizer(lambda action, arg, *_: (
+                sqlite3.SQLITE_DENY if action == sqlite3.SQLITE_TRANSACTION and arg == "COMMIT" else sqlite3.SQLITE_OK))
+            return db
+
+        with mock.patch.object(self.store, "connect", side_effect=reject_commit):
+            with self.assertLogs("workbench_shared_sync", level="WARNING") as logs:
+                state = poller.tick()
+        row = self.failure_record(logs)
+        self.assertEqual(row["stage"], "REGISTRY_REUSE_COMMIT")
+        self.assertEqual(row["registry_outcome"], "EXISTING")
+        self.assertEqual(state["status"], "SYNC_FAILED")
+        self.assertEqual(state["current_snapshot_id"], first["current_snapshot_id"])
+        self.assertEqual(self.count(), 1)
+
+    def test_diagnostics_closes_unknown_code_and_cannot_change_failure_result(self):
+        first = self.poller.tick()
+        publisher_source(self.source, "unexpected_error", "20261014")
+        unknown = "SYNTHETIC_PRIVATE_CODE"
+        with mock.patch.object(self.inputs, "import_once", side_effect=ws.WorkspaceError(unknown, 409)):
+            with self.assertLogs("workbench_shared_sync", level="WARNING") as logs:
+                original = self.poller.tick()
+            row = self.failure_record(logs)
+            self.assertEqual(row["stage"], "IMPORT")
+            self.assertEqual(row["error_code"], "WORKSPACE_ERROR_REDACTED")
+            self.assertNotIn(unknown, repr(logs.output))
+            with mock.patch("logging.Logger.warning", side_effect=OSError("sink unavailable")):
+                state = self.poller.tick()
+        self.assertEqual(state, original)
+        self.assertEqual(state["status"], "SYNC_FAILED")
+        self.assertEqual(state["current_snapshot_id"], first["current_snapshot_id"])
+        self.assertEqual(self.count(), 1)
 
     def test_malformed_source_repairs_in_background_without_dead_poller(self):
         from workbench_shared_test_support import reseal_publisher
@@ -460,9 +610,34 @@ class SharedSyncTests(unittest.TestCase):
                 self.assertEqual(constructor.call_count, int(mode == "sync"))
             server.server_close.assert_called_once()
             if mode == "sync":
+                self.assertEqual(constructor.call_args.kwargs["code_sha"], self.view._execution_identity["code_sha"])
                 with wb.Store(self.root / "cli-sync", shared_v1=True).connect() as db:
                     self.assertEqual(db.execute("SELECT COUNT(*) FROM shared_inputs").fetchone()[0], 1)
         self.assertFalse(any(thread.name == "read-only-shared-sync" for thread in threading.enumerate()))
+
+    def test_diagnostics_cli_startup_refuses_without_raw_traceback(self):
+        self.common()
+        allowlist = self.root / "cli-members.json"
+        allowlist.write_text(json.dumps({"members": [MEMBER]})); allowlist.chmod(0o600)
+        private = wb.private_access("https://workbench.test-tail.ts.net:8443", OWNER, allowlist)
+        arguments = ["--state-root", str(self.root / "startup-state"), "--shared-workspace-v1",
+                     "--read-only-auto-sync", "--read-only-source-root", str(self.source)]
+        for failure_at, stage in (("__init__", "SYNC_INITIALIZE"), ("start", "SYNC_START")):
+            server = mock.Mock()
+            for_check = OSError(13, "SYNTHETIC_STARTUP_SECRET", str(self.root / "internal"))
+            with mock.patch.object(wb, "private_access", return_value=private), \
+                 mock.patch.object(wb, "load_assets", return_value={"/": (b"fixture", "text/html")}), \
+                 mock.patch.object(wb, "ThreadingHTTPServer", return_value=server), \
+                 mock.patch.object(sync.ReadOnlySync, failure_at, side_effect=for_check):
+                with self.assertLogs("workbench_shared_sync", level="WARNING") as logs:
+                    self.assertEqual(wb.main(arguments), 1)
+            row = self.failure_record(logs)
+            self.assertEqual(row["stage"], stage)
+            self.assertEqual(row["error_code"], "IO_PERMISSION")
+            self.assertNotIn("SYNTHETIC_STARTUP_SECRET", repr(logs.output))
+            self.assertNotIn(str(self.root), repr(logs.output))
+            server.serve_forever.assert_not_called()
+            server.server_close.assert_called_once()
 
     def test_sync_http_privilege_arguments_refused(self):
         self.poller.tick(); self.common()
