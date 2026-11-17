@@ -491,6 +491,65 @@ class FrozenInputTests(unittest.TestCase):
             brief.run_frozen(snapshot, verified["frozen_root"], self.root / "false-alias-report")
         self.assertFalse((self.root / "false-alias-report").exists())
 
+    def test_publication_seal_fault_reports_boundary_without_advancing_registry(self):
+        import workbench_backup as backup
+        import workbench_shared_inputs as module
+
+        candidate = self.root / "candidate"
+        frozen_source(candidate, "published_two", "20261014")
+        cases = (
+            ("SEAL_PUBLICATION", module.tempfile, "TemporaryDirectory",
+             lambda p, a, kw: kw.get("dir") == p, False),
+            ("SEAL_PUBLICATION_TEMP_WRITE", module, "write_new",
+             lambda p, a, kw: a[0].name == "publication.json" and a[0].parent.parent.parent == p, False),
+            ("SEAL_PUBLICATION_VERIFY_STAGING", module, "validate_snapshot",
+             lambda p, a, kw: kw.get("sealed_originals") and a[1].parent.parent == p, False),
+            ("SEAL_PUBLICATION_ATOMIC_RENAME", module.os, "rename",
+             lambda p, a, kw: Path(a[1]).parent == p, False),
+            ("SEAL_PUBLICATION_FSYNC", backup, "fsync_directory",
+             lambda p, a, kw: a[0] == p, True),
+            ("SEAL_PUBLICATION_VERIFY_FINAL", module, "validate_snapshot",
+             lambda p, a, kw: kw.get("sealed_originals") and a[1].parent == p, True),
+        )
+        for stage, owner, method, at_boundary, renamed in cases:
+            with self.subTest(stage=stage):
+                store = wb.Store(self.root / stage, shared_v1=True)
+                inputs = module.FrozenInputs(store)
+                first = inputs.import_once(self.source)
+                original = inputs.verify(first["snapshot_id"])["frozen_root"]
+                publications = original.parent
+                progress = {}
+                real = getattr(owner, method)
+
+                def fail_at_boundary(*args, **kwargs):
+                    if at_boundary(publications, args, kwargs):
+                        raise OSError("synthetic publication fault")
+                    return real(*args, **kwargs)
+
+                with patch.object(owner, method, side_effect=fail_at_boundary):
+                    with self.assertRaisesRegex(OSError, "synthetic publication fault"):
+                        inputs.import_once(candidate, diagnostic=progress)
+
+                self.assertEqual(progress["stage"], stage)
+                self.assertNotIn("registry_outcome", progress)
+                with store.connect() as db:
+                    self.assertEqual(db.execute("SELECT snapshot_id FROM shared_inputs").fetchall(),
+                                     [(first["snapshot_id"],)])
+                self.assertEqual(inputs.verify(first["snapshot_id"])["frozen_root"], original)
+                remaining = set(publications.iterdir()) - {original}
+                self.assertEqual(len(remaining), int(renamed))
+                if renamed:
+                    orphan, = remaining
+                    self.assertTrue((orphan / "publication.json").is_file())
+                    seal_inode = orphan.stat().st_ino
+
+                result = inputs.import_once(candidate)
+                verified = inputs.verify(result["snapshot_id"])
+                self.assertEqual(verified["source_run_id"], "published_two")
+                if renamed:
+                    self.assertEqual(verified["frozen_root"], orphan)
+                    self.assertEqual(orphan.stat().st_ino, seal_inode)
+
     def test_bound_input_partial_writes_converge_without_overwriting_corruption(self):
         import workbench_shared_inputs as module
         for kind in ("capture", "attempt", "envelope"):
