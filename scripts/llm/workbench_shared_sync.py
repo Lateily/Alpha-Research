@@ -34,12 +34,15 @@ _SYNC_ERRORS = frozenset({
     "FROZEN_SEAL_UNAVAILABLE_OR_INVALID", "FROZEN_SEAL_BINDING_INVALID", "FROZEN_SNAPSHOT_NOT_REGISTERED",
     "SYNC_SELECTION_BINDING_INVALID", "MARKET_PUBLICATION_REQUIRED", "WORKSPACE_EVENT_LIMIT",
     "FROZEN_SOURCE_HASH_MISMATCH", "FROZEN_MODULE_IDENTITY_MISMATCH", "SYNC_POLLER_ALREADY_RUNNING",
+    "FROZEN_ORIGINAL_INVENTORY_INVALID", "FROZEN_ROOT_SYMLINK",
+    "WRITE_DIRECTORY_INVALID", "WRITE_DIRECTORY_SYMLINK", "WRITE_FILE_SIZE_LIMIT",
 })
 _DB_ERRORS = {getattr(sqlite3, code): code for code in
               ("SQLITE_BUSY", "SQLITE_LOCKED", "SQLITE_READONLY", "SQLITE_IOERR", "SQLITE_CORRUPT",
                "SQLITE_FULL", "SQLITE_CANTOPEN", "SQLITE_CONSTRAINT", "SQLITE_NOTADB") if hasattr(sqlite3, code)}
 _IO_ERRORS = {errno.ENOENT: "IO_NOT_FOUND", errno.EACCES: "IO_PERMISSION", errno.EPERM: "IO_PERMISSION",
-              errno.ENOSPC: "IO_NO_SPACE", errno.EROFS: "IO_READ_ONLY", errno.EIO: "IO_ERROR"}
+              errno.ENOSPC: "IO_NO_SPACE", errno.EROFS: "IO_READ_ONLY", errno.EIO: "IO_ERROR",
+              errno.EXDEV: "IO_CROSS_DEVICE"}
 
 
 def _diagnostic_code(exc):
@@ -88,7 +91,8 @@ class ReadOnlySync:
         self.source_root = inputs.check_source_root(source_root)
         self.clock = clock
         self.stop_event = stop_event if stop_event is not None else threading.Event()
-        self._lock = threading.RLock()
+        self._lock = threading.Lock()
+        self._tick_lock = threading.RLock()
         self._lifecycle = threading.Lock()
         self._thread = None
         self._lease = None
@@ -112,12 +116,19 @@ class ReadOnlySync:
     def state(self):
         with self._lock: return copy.deepcopy(self._state)
 
+    def _publish_state(self, state):
+        with self._lock:
+            self._state = state
+            return copy.deepcopy(state)
+
     def tick(self) -> dict:
         progress = {"stage": "SOURCE_ROOT"}
         failure = None
-        with self._lock:
-            self._state["last_checked_at"] = self.clock()
-            self._state["latest_attempt"] = None
+        with self._tick_lock:
+            # Keep the preceding completed projection readable until this check finishes.
+            state = self.state()
+            state["last_checked_at"] = self.clock()
+            state["latest_attempt"] = None
             try:
                 self.inputs.check_source_root(self.source_root)
                 progress["stage"] = "READ_ATTEMPT"
@@ -132,21 +143,20 @@ class ReadOnlySync:
                             or (attempt.get("published") is not None and type(attempt["published"]) is not bool)):
                         raise WorkspaceError("SOURCE_ATTEMPT_IDENTITY_INVALID", 409)
                     # Use the existing safe display contract, not diagnostic text.
-                    self._state["latest_attempt"] = {k: attempt.get(k) for k in ("run_id", "target_trade_date", "report", "published")}
+                    state["latest_attempt"] = {k: attempt.get(k) for k in ("run_id", "target_trade_date", "report", "published")}
                     attempt_hash = ev.sha(attempt_raw)
                 except FileNotFoundError:
-                    self._state["latest_attempt"] = None
                     attempt_hash = None
                 progress["stage"] = "READ_POINTER"
                 pointer = ev.read_local(self.source_root, POINTER)
                 reject_credentials(ev.parse(pointer))
                 fingerprint = (ev.sha(pointer), attempt_hash)
-                if fingerprint == self._fingerprint and self._state["status"] == "SYNCED":
-                    if self._state["current_snapshot_id"]:
+                if fingerprint == self._fingerprint and state["status"] == "SYNCED":
+                    if state["current_snapshot_id"]:
                         progress.update(stage="VERIFY_CURRENT", registry_outcome="NOT_CONFIRMED",
-                                        publication_run_id=self._state["source_run_id"])
-                        self.inputs.verify(self._state["current_snapshot_id"])
-                    return self.state()
+                                        publication_run_id=state["source_run_id"])
+                        self.inputs.verify(state["current_snapshot_id"])
+                    return self._publish_state(state)
                 progress["stage"] = "IMPORT"
                 descriptor = self.inputs.import_once(self.source_root, expected_attempt_sha=attempt_hash,
                                                      diagnostic=progress)
@@ -158,20 +168,21 @@ class ReadOnlySync:
                 progress["stage"] = "UPDATE_PROJECTION"
                 records = envelope["snapshot"]["records"]
                 captured_attempt = records[ATTEMPT].get("payload")
-                self._state["latest_attempt"] = ({k: captured_attempt.get(k) for k in ("run_id", "target_trade_date", "report", "published")}
-                                                 if captured_attempt else None)
-                self._fingerprint = (records[POINTER]["source_sha256"], records[ATTEMPT].get("source_sha256"))
-                self._state.update(status="SYNCED", safe_error=None, last_successful_sync_at=selected["at"],
-                                   **{k: descriptor[k] for k in ("source_run_id", "source_trade_date")},
-                                   current_snapshot_id=descriptor["snapshot_id"])
+                capture_projection = ({k: captured_attempt.get(k) for k in ("run_id", "target_trade_date", "report", "published")}
+                                      if captured_attempt else None)
+                next_fingerprint = (records[POINTER]["source_sha256"], records[ATTEMPT].get("source_sha256"))
+                state.update(status="SYNCED", safe_error=None, last_successful_sync_at=selected["at"],
+                             **{k: descriptor[k] for k in ("source_run_id", "source_trade_date")},
+                             current_snapshot_id=descriptor["snapshot_id"], latest_attempt=capture_projection)
+                self._fingerprint = next_fingerprint
             except Exception as exc:
                 code = exc.code if isinstance(exc, WorkspaceError) else (
                     "SOURCE_SHAPE_INVALID" if isinstance(exc, ev.EvidenceError) and str(exc) == "SOURCE_SHAPE_INVALID"
                     else "SOURCE_UNAVAILABLE_OR_INVALID")
-                self._state.update(status="CAPACITY_BLOCKED" if "CAPACITY" in code or code == "WORKSPACE_EVENT_LIMIT" else "SYNC_FAILED",
-                                   safe_error=code)
+                state.update(status="CAPACITY_BLOCKED" if "CAPACITY" in code or code == "WORKSPACE_EVENT_LIMIT" else "SYNC_FAILED",
+                             safe_error=code)
                 failure = exc
-            result = self.state()
+            result = self._publish_state(state)
         if failure is not None:
             warn_sync_failure(failure, progress, code_sha=self._code_sha,
                               attempt_run_id=(result["latest_attempt"] or {}).get("run_id"))
@@ -206,6 +217,10 @@ class ReadOnlySync:
                 remaining = max(0, deadline - time.monotonic())
                 if self.stop_event.wait(remaining): return
                 if time.monotonic() >= deadline: break
+            self._background_tick()
+
+    def _background_tick(self):
+        with self._tick_lock:
             # governance-mutation: WORKBENCH_SHARED_SYNC_WORKER_BOUNDARY
             try:
                 self.tick()

@@ -474,13 +474,18 @@ class FrozenInputs:
                 with tempfile.TemporaryDirectory(prefix=".capture-", dir=publications) as temporary:
                     staging = Path(temporary) / "publication"
                     staging.mkdir(mode=0o700)
+                    mark("SEAL_PUBLICATION_TEMP_WRITE")
                     for name, raw in originals.items():
                         _new_or_identical(staging / name, raw, evidence_root=work / "writes")
                     _new_or_identical(staging / "publication.json", ev.canonical(publication).encode(), evidence_root=work / "writes")
+                    mark("SEAL_PUBLICATION_VERIFY_STAGING")
                     validate_snapshot(snapshot, staging, sealed_originals=True)
+                    mark("SEAL_PUBLICATION_ATOMIC_RENAME")
                     os.rename(staging, frozen_root)
                     from workbench_backup import fsync_directory
+                    mark("SEAL_PUBLICATION_FSYNC")
                     fsync_directory(publications)
+            mark("SEAL_PUBLICATION_VERIFY_FINAL")
             _new_or_identical(frozen_root / "publication.json", ev.canonical(publication).encode(), evidence_root=work / "writes")
             validate_snapshot(snapshot, frozen_root, sealed_originals=True)
             mark("SEAL_ENVELOPE")

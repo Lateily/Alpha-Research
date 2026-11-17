@@ -1,5 +1,6 @@
 """S3 synthetic file/SQLite/loopback integration and behavior pins."""
 import contextlib
+import errno
 import http.client as http_client
 import importlib.util
 import io
@@ -53,6 +54,99 @@ class SharedSyncTests(unittest.TestCase):
             time.sleep(.01)
         self.assertTrue(predicate(), "background condition not reached")
 
+    def test_state_and_common_data_remain_readable_during_uncommitted_sync(self):
+        before = self.poller.tick()
+        self.common()
+        new_run = "20261116_203005_1794861005000000000_0123abcd"
+        publisher_source(self.source, new_run, "20261116")
+        new_attempt = "20261117_203006_1794947406000000000_4567abcd"
+        attempt_path = self.source / frozen.ATTEMPT
+        attempt_path.write_text(ev.canonical(dict(ev.parse(attempt_path.read_bytes()),
+                                                  run_id=new_attempt, target_trade_date="20261117")))
+        self.now += 600
+        reached_selection = threading.Event()
+        allow_selection = threading.Event()
+        read_finished = threading.Event()
+        selected = []
+        observed = []
+        select = self.inputs.select_current
+
+        def pause_selection(*args, **kwargs):
+            reached_selection.set()
+            if not allow_selection.wait(10):
+                raise AssertionError("test did not release select_current")
+            return select(*args, **kwargs)
+
+        def read_status():
+            observed.append((self.poller.state(), self.view.snapshot(MEMBER)["common_data"]))
+            read_finished.set()
+
+        with mock.patch.object(self.inputs, "select_current", side_effect=pause_selection):
+            writer = threading.Thread(target=lambda: selected.append(self.poller.tick()))
+            reader = threading.Thread(target=read_status)
+            writer.start()
+            try:
+                self.assertTrue(reached_selection.wait(5), "sync did not reach selection")
+                self.assertEqual(self.count(), 2, "new registry row must exist before this read")
+                reader.start()
+                self.assertTrue(read_finished.wait(2), "state read waited for the blocked sync")
+                self.assertEqual(observed[0][0], before, "in-progress state leaked to readers")
+                common = observed[0][1]
+                self.assertEqual(common["current_snapshot_id"], before["current_snapshot_id"])
+                self.assertEqual(common["source_run_id"], before["source_run_id"])
+                self.assertEqual(common["latest_attempt"], before["latest_attempt"])
+            finally:
+                allow_selection.set()
+                writer.join(10)
+                if reader.ident is not None:
+                    reader.join(10)
+        self.assertEqual(len(selected), 1)
+        self.assertEqual(selected[0], self.poller.state())
+        self.assertEqual(selected[0]["status"], "SYNCED")
+        self.assertEqual(selected[0]["source_run_id"], new_run)
+        self.assertEqual(selected[0]["latest_attempt"]["run_id"], new_attempt)
+        self.assertEqual(selected[0]["last_checked_at"], self.now)
+        self.assertNotEqual(selected[0]["current_snapshot_id"], before["current_snapshot_id"])
+
+    def test_overlapping_sync_calls_still_serialize_imports(self):
+        entered = threading.Event()
+        second_started = threading.Event()
+        release = threading.Event()
+        double_import = threading.Event()
+        results = []
+        import_once = self.inputs.import_once
+
+        def hold_first(*args, **kwargs):
+            if entered.is_set():
+                double_import.set()
+            entered.set()
+            if not release.wait(10):
+                raise AssertionError("test did not release import_once")
+            return import_once(*args, **kwargs)
+
+        def second():
+            second_started.set()
+            results.append(self.poller.tick())
+
+        with mock.patch.object(self.inputs, "import_once", side_effect=hold_first) as get:
+            first = threading.Thread(target=lambda: results.append(self.poller.tick()))
+            other = threading.Thread(target=second)
+            first.start()
+            try:
+                self.assertTrue(entered.wait(5))
+                other.start()
+                self.assertTrue(second_started.wait(5))
+                self.assertFalse(double_import.wait(.2), "second import ran concurrently")
+            finally:
+                release.set()
+                first.join(10)
+                if other.ident is not None:
+                    other.join(10)
+        self.assertEqual(len(results), 2)
+        self.assertEqual({result["status"] for result in results}, {"SYNCED"})
+        self.assertEqual(get.call_count, 1)
+        self.assertEqual(self.count(), 1)
+
     def failure_record(self, logs):
         self.assertEqual(len(logs.records), 1)
         record = logs.records[0]
@@ -62,6 +156,49 @@ class SharedSyncTests(unittest.TestCase):
         self.assertEqual(set(row), {"event", "at_utc", "code_sha", "stage", "error_code", "latest_attempt_run_id",
                                     "publication_run_id", "registry_outcome"})
         return row
+
+    def test_operator_log_distinguishes_seal_write_recheck_and_rename(self):
+        before = self.poller.tick()
+        run = "20261116_203005_1794861005000000000_0123abcd"
+        publisher_source(self.source, run, "20261116")
+        publish_dir = self.store.path.parent / "frozen-inputs" / "publications"
+        seal_before = set(publish_dir.iterdir())
+        write = frozen._new_or_identical
+
+        def staged_write(fault):
+            def write_or_fault(path, *args, **kwargs):
+                if path.name != "publication.json" or not path.parent.parent.name.startswith(".capture-"):
+                    return write(path, *args, **kwargs)
+                if fault == "write":
+                    raise OSError(errno.ENOSPC, "SYNTHETIC_PRIVATE_MESSAGE", str(path))
+                write(path, *args, **kwargs)
+                (path.parent / "unexpected.tmp").write_bytes(b"synthetic")
+            return write_or_fault
+
+        cases = (
+            ("SEAL_PUBLICATION_TEMP_WRITE", "IO_NO_SPACE",
+             mock.patch.object(frozen, "_new_or_identical", side_effect=staged_write("write"))),
+            ("SEAL_PUBLICATION_VERIFY_STAGING", "FROZEN_ORIGINAL_INVENTORY_INVALID",
+             mock.patch.object(frozen, "_new_or_identical", side_effect=staged_write("inventory"))),
+            ("SEAL_PUBLICATION_ATOMIC_RENAME", "IO_CROSS_DEVICE",
+             mock.patch.object(frozen.os, "rename",
+                               side_effect=OSError(errno.EXDEV, "SYNTHETIC_PRIVATE_MESSAGE"))),
+        )
+        for stage, code, change in cases:
+            with self.subTest(stage=stage), change:
+                with self.assertLogs("workbench_shared_sync", level="WARNING") as logs:
+                    state = self.poller.tick()
+                record = self.failure_record(logs)
+                self.assertEqual((record["stage"], record["error_code"]), (stage, code))
+                self.assertEqual(record["publication_run_id"], run)
+                self.assertEqual(record["registry_outcome"], "NOT_ATTEMPTED")
+                self.assertNotIn("SYNTHETIC_PRIVATE_MESSAGE", repr(logs.output))
+                self.assertNotIn(str(self.root), repr(logs.output))
+                self.assertEqual(state["status"], "SYNC_FAILED")
+                self.assertEqual(state["current_snapshot_id"], before["current_snapshot_id"])
+                self.assertEqual(self.count(), 1)
+                self.assertEqual(set(publish_dir.iterdir()), seal_before)
+        self.assertEqual(self.poller.tick()["source_run_id"], run)
 
     def test_diagnostics_distinguish_file_recheck_from_registry_and_are_operator_only(self):
         first = self.poller.tick()
