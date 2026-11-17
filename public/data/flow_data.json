@@ -1,5 +1,5 @@
 {
-  "fetched_at": "2026-11-17T09:03:18.219610",
+  "fetched_at": "2026-11-17T17:48:56.671605",
   "northbound": {
     "latest_net_flow": null,
     "5d_cumulative": 0.0,
@@ -8,9 +8,9 @@
     "updated": "2026-11-17"
   },
   "southbound": {
-    "latest_net_flow": -42.2673,
-    "5d_cumulative": 57.8576,
-    "20d_cumulative": -236.7795,
+    "latest_net_flow": 22.0366,
+    "5d_cumulative": 107.2884,
+    "20d_cumulative": -197.5132,
     "trend": "inflow",
     "updated": "2026-11-17"
   },

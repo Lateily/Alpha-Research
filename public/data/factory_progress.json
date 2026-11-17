@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "generated_at": "2026-11-17T09:10:08.284372+00:00",
+    "generated_at": "2026-11-17T17:53:56.680705+00:00",
     "layer": "Factory Progress aggregator (read-only over committed artifacts)",
     "disclaimer": "internal progress dashboard — UNVALIDATED research pipeline state; nothing here is a recommendation, a buy list, or validated alpha"
   },
@@ -442,11 +442,10 @@
           "signals": {
             "zone": "NEUTRAL",
             "generated_at": "2026-11-17",
-            "rsi14": 39.8,
-            "ma20": 82.7,
+            "rsi14": 39.5,
+            "ma20": 82.58,
             "ma60": null,
             "signals": [
-              "RSI_RECOVERING",
               "KDJ_OVERSOLD"
             ],
             "source": "signals_file"
@@ -639,11 +638,12 @@
           "signals": {
             "zone": "NEUTRAL",
             "generated_at": "2026-11-17",
-            "rsi14": 39.6,
-            "ma20": 194.13,
+            "rsi14": 48.3,
+            "ma20": 193.33,
             "ma60": null,
             "signals": [
-              "KDJ_DEATH_CROSS"
+              "RSI_RECOVERING",
+              "MA20_BOUNCE"
             ],
             "source": "signals_file"
           }
@@ -835,10 +835,12 @@
           "signals": {
             "zone": "NEUTRAL",
             "generated_at": "2026-11-17",
-            "rsi14": 39.3,
-            "ma20": 58.55,
+            "rsi14": 44.6,
+            "ma20": 58.54,
             "ma60": null,
-            "signals": [],
+            "signals": [
+              "RSI_RECOVERING"
+            ],
             "source": "signals_file"
           }
         },
@@ -1205,7 +1207,7 @@
           "volume_ratio": 0.78,
           "momentum_factor": 14.9,
           "low_vol_factor": 45.6,
-          "alpha_score": 50.6,
+          "alpha_score": 50.5,
           "source": "universe_a",
           "signals": {
             "zone": null,
@@ -1461,7 +1463,7 @@
           "volume_ratio": 0.78,
           "momentum_factor": 57.3,
           "low_vol_factor": 45.6,
-          "alpha_score": 50.6,
+          "alpha_score": 50.5,
           "source": "universe_a",
           "value_factor": 45.6,
           "signals": {

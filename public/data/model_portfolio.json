@@ -8,7 +8,7 @@
     "no_position_mutation": true,
     "run_date": "2026-11-17",
     "pilot_start_date": "2026-06-08",
-    "generated_at": "2026-11-17T09:10:07.690055+00:00",
+    "generated_at": "2026-11-17T17:53:55.733617+00:00",
     "fresh_pilot": true,
     "legacy_paper_positions_inherited": false,
     "sources": [
@@ -63,8 +63,8 @@
         },
         "quant_confluence": {
           "action": "NEUTRAL",
-          "score": 10,
-          "rationale": "Bullish: Rsi Recovering, Kdj Oversold | RSI 40 | Price vs MA20 -2.7% | Regime: PERMISSIVE | VP 48"
+          "score": 14,
+          "rationale": "Bullish: Kdj Oversold | RSI 40 | Price vs MA20 -2.7% | Regime: PERMISSIVE | VP 48"
         }
       },
       "validation_status": "PENDING",
@@ -106,7 +106,7 @@
         "quant_confluence": {
           "action": "NEUTRAL",
           "score": 0,
-          "rationale": "RSI 62 | Price vs MA20 +5.5% | VP 50"
+          "rationale": "RSI 62 | Price vs MA20 +5.0% | VP 50"
         }
       },
       "validation_status": "PENDING",
@@ -250,40 +250,34 @@
         "sleeve": "quant_swing",
         "state": "SETUP_WATCH",
         "signal_class": "no_trade_signal",
-        "setup_type": "rsi_recovering / kdj_oversold",
+        "setup_type": "kdj_oversold",
         "bias": "bullish",
         "why_not_active": "confluence verdict is NEUTRAL — no active swing trade today",
-        "trigger_to_activate": "confluence upgrade to non-neutral, or a volume-confirmed breakout (current vol_ratio 0.81).",
-        "risk_rule": "Setup invalidated on a decisive close below MA20 (82.7); loss of MA60 (None) ends it.",
+        "trigger_to_activate": "confluence upgrade to non-neutral, or a volume-confirmed breakout (current vol_ratio 0.71).",
+        "risk_rule": "Setup invalidated on a decisive close below MA20 (82.58); loss of MA60 (None) ends it.",
         "technical": {
           "zone": "NEUTRAL",
           "entry_zone": true,
           "exit_zone": false,
           "signal_count": {
-            "bullish": 2,
+            "bullish": 1,
             "bearish": 0,
-            "total": 2
+            "total": 1
           },
           "key_indicators": {
-            "rsi14": 39.8,
-            "macd_hist": -0.5646,
-            "price_vs_ma20": -2.67,
+            "rsi14": 39.5,
+            "macd_hist": -0.6344,
+            "price_vs_ma20": -2.71,
             "price_vs_ma60": null,
-            "change_5d": -5.19,
-            "vol_ratio": 0.81
+            "change_5d": -4.84,
+            "vol_ratio": 0.71
           },
           "signals": [
-            {
-              "type": "RSI_RECOVERING",
-              "strength": "moderate",
-              "bullish": true,
-              "desc": "RSI recovering 37.6→39.8 — momentum rebuilding"
-            },
             {
               "type": "KDJ_OVERSOLD",
               "strength": "strong",
               "bullish": true,
-              "desc": "KDJ J=-11.1 (extreme <0) — high-probability reversal zone"
+              "desc": "KDJ J=-6.4 (extreme <0) — high-probability reversal zone"
             }
           ]
         },
@@ -340,29 +334,36 @@
         "sleeve": "quant_swing",
         "state": "SETUP_WATCH",
         "signal_class": "no_trade_signal",
-        "setup_type": "no_signal",
-        "bias": "neutral",
+        "setup_type": "rsi_recovering",
+        "bias": "bullish",
         "why_not_active": "confluence verdict is NEUTRAL — no active swing trade today",
-        "trigger_to_activate": "confluence upgrade to non-neutral; no technical signal firing yet.",
-        "risk_rule": "No setup yet — watch MA20 (58.55) / MA60 (None) for the first directional signal.",
+        "trigger_to_activate": "confluence upgrade to non-neutral, or a volume-confirmed breakout (current vol_ratio 1.12).",
+        "risk_rule": "Setup invalidated on a decisive close below MA20 (58.54); loss of MA60 (None) ends it.",
         "technical": {
           "zone": "NEUTRAL",
-          "entry_zone": false,
+          "entry_zone": true,
           "exit_zone": false,
           "signal_count": {
-            "bullish": 0,
+            "bullish": 1,
             "bearish": 0,
-            "total": 0
+            "total": 1
           },
           "key_indicators": {
-            "rsi14": 39.3,
-            "macd_hist": 0.6981,
-            "price_vs_ma20": -4.84,
+            "rsi14": 44.6,
+            "macd_hist": 0.46,
+            "price_vs_ma20": -1.28,
             "price_vs_ma60": null,
-            "change_5d": -8.2,
-            "vol_ratio": 0.96
+            "change_5d": -5.77,
+            "vol_ratio": 1.12
           },
-          "signals": []
+          "signals": [
+            {
+              "type": "RSI_RECOVERING",
+              "strength": "moderate",
+              "bullish": true,
+              "desc": "RSI recovering 39.7→44.6 — momentum rebuilding"
+            }
+          ]
         },
         "as_of": "2026-11-17",
         "validation_status": "unvalidated_pilot",
@@ -379,7 +380,7 @@
         "bias": "neutral",
         "why_not_active": "confluence verdict is NEUTRAL — no active swing trade today",
         "trigger_to_activate": "confluence upgrade to non-neutral; no technical signal firing yet.",
-        "risk_rule": "No setup yet — watch MA20 (539.71) / MA60 (None) for the first directional signal.",
+        "risk_rule": "No setup yet — watch MA20 (526.97) / MA60 (None) for the first directional signal.",
         "technical": {
           "zone": "NEUTRAL",
           "entry_zone": false,
@@ -390,12 +391,12 @@
             "total": 0
           },
           "key_indicators": {
-            "rsi14": 30.9,
-            "macd_hist": 0.3396,
-            "price_vs_ma20": -24.22,
+            "rsi14": 30.1,
+            "macd_hist": -4.988,
+            "price_vs_ma20": -25.42,
             "price_vs_ma60": null,
-            "change_5d": -9.53,
-            "vol_ratio": 1.25
+            "change_5d": -16.56,
+            "vol_ratio": 1.14
           },
           "signals": []
         },
@@ -414,7 +415,7 @@
         "bias": "neutral",
         "why_not_active": "confluence verdict is NEUTRAL — no active swing trade today",
         "trigger_to_activate": "confluence upgrade to non-neutral; no technical signal firing yet.",
-        "risk_rule": "No setup yet — watch MA20 (19.7) / MA60 (None) for the first directional signal.",
+        "risk_rule": "No setup yet — watch MA20 (19.83) / MA60 (None) for the first directional signal.",
         "technical": {
           "zone": "NEUTRAL",
           "entry_zone": false,
@@ -425,12 +426,12 @@
             "total": 0
           },
           "key_indicators": {
-            "rsi14": 61.5,
-            "macd_hist": 0.0454,
-            "price_vs_ma20": 5.52,
+            "rsi14": 61.7,
+            "macd_hist": 0.0413,
+            "price_vs_ma20": 4.98,
             "price_vs_ma60": null,
-            "change_5d": 1.22,
-            "vol_ratio": 0.85
+            "change_5d": 2.66,
+            "vol_ratio": 0.78
           },
           "signals": []
         },
@@ -499,34 +500,40 @@
         "sleeve": "quant_swing",
         "state": "SETUP_WATCH",
         "signal_class": "no_trade_signal",
-        "setup_type": "kdj_death_cross",
-        "bias": "bearish",
+        "setup_type": "rsi_recovering / ma20_bounce",
+        "bias": "bullish",
         "why_not_active": "confluence verdict is NEUTRAL — no active swing trade today",
-        "trigger_to_activate": "confluence upgrade to non-neutral, or a volume-confirmed breakdown (current vol_ratio 0.95).",
-        "risk_rule": "Bearish read negated on a volume-backed reclaim of MA20 (194.13).",
+        "trigger_to_activate": "confluence upgrade to non-neutral, or a volume-confirmed breakout (current vol_ratio 1.07).",
+        "risk_rule": "Setup invalidated on a decisive close below MA20 (193.33); loss of MA60 (None) ends it.",
         "technical": {
           "zone": "NEUTRAL",
-          "entry_zone": false,
-          "exit_zone": true,
+          "entry_zone": true,
+          "exit_zone": false,
           "signal_count": {
-            "bullish": 0,
-            "bearish": 1,
-            "total": 1
+            "bullish": 2,
+            "bearish": 0,
+            "total": 2
           },
           "key_indicators": {
-            "rsi14": 39.6,
-            "macd_hist": 5.8153,
-            "price_vs_ma20": -2.67,
+            "rsi14": 48.3,
+            "macd_hist": 6.218,
+            "price_vs_ma20": 4.75,
             "price_vs_ma60": null,
-            "change_5d": -6.16,
-            "vol_ratio": 0.95
+            "change_5d": -0.04,
+            "vol_ratio": 1.07
           },
           "signals": [
             {
-              "type": "KDJ_DEATH_CROSS",
+              "type": "RSI_RECOVERING",
               "strength": "moderate",
-              "bullish": false,
-              "desc": "KDJ K(61.8) crossed below D(63.1) in overbought — reversal signal"
+              "bullish": true,
+              "desc": "RSI recovering 39.9→48.3 — momentum rebuilding"
+            },
+            {
+              "type": "MA20_BOUNCE",
+              "strength": "moderate",
+              "bullish": true,
+              "desc": "Price bounced off MA20 (194.1) — near-term support held"
             }
           ]
         },
