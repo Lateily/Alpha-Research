@@ -56,12 +56,13 @@ test('workspace changes and revalidation epochs hide stale card data',()=>{
 });
 test('card evidence has its own exact fifteen-second expiry and live action boundary',()=>{
   const key=cards.cardsContextKey(context),state={key,verificationEpoch:'epoch',data:library(),stale:false,lastSuccessAt:1000};
-  const current={state,key,parentStale:false,epoch:'epoch'};
+  const current={state,key,parentStale:false,parentFresh:()=>true,epoch:'epoch'};
   assert.equal(cards.cardsView(state,key,false,'epoch',16000).stale,false);
   assert.equal(cards.cardsView(state,key,false,'epoch',16001).stale,true);
   assert.equal(cards.cardActionCurrent(current,'request','request','request',16000),true);
   assert.equal(cards.cardActionCurrent(current,'request','request','request',16001),false);
   assert.equal(cards.cardActionCurrent({...current,parentStale:true},'request','request','request',1001),false);
+  assert.equal(cards.cardActionCurrent({...current,parentFresh:()=>false},'request','request','request',1001),false);
   for(const changed of [{active:'other'},{verified:'other'}])
     assert.equal(cards.cardActionCurrent(current,'request',changed.active||'request',changed.verified||'request',1001),false);
   for(const timestamp of [undefined,NaN,Infinity])

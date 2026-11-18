@@ -151,6 +151,7 @@ export function cardsView(state,key,parentStale,epoch,now=Date.now()){
 export function cardActionCurrent(current,requestKey,activeKey,verifiedKey,now=Date.now()){
   // governance-mutation: SHARED_CARDS_LIVE_ACTION_FRESHNESS
   return activeKey===requestKey&&verifiedKey===requestKey&&
+    typeof current.parentFresh==='function'&&current.parentFresh()===true&&
     !cardsView(current.state,current.key,current.parentStale,current.epoch,now).stale;
 }
 export function refreshCardVerification({verified,active,setSelected,setRevision}){

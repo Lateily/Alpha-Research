@@ -19033,6 +19033,11 @@ MUTATIONS += (
         "    !cardsView(current.state,current.key,current.parentStale,current.epoch,now).stale;",
         "    true;", 'test_browser_card_contract',
         'Retained card handlers must recheck current parent and card freshness at action time.'),
+    MutationCase('SHARED_CARDS_PARENT_ACTION_EXPIRY','Shared cards','tools/nonprod_workbench/ui/research-cards-view.mjs',
+        'tests/test_workbench_shared_cards.py',
+        "    typeof current.parentFresh==='function'&&current.parentFresh()===true&&", "",
+        'test_browser_card_contract',
+        'A retained card action must recheck exact parent expiry between timer renders.'),
 )
 
 SHARD_SPEC_RE = re.compile(r"^(?P<index>[1-9][0-9]*)/(?P<count>[1-9][0-9]*)$")
