@@ -19057,6 +19057,10 @@ MUTATIONS += (
         'tests/test_workbench_shared_cards.py',
         'cadenceFromStart&&!unsuccessful?', 'cadenceFromStart?', 'test_browser_card_contract',
         'Failed verified reads keep their cooldown rather than creating a rapid failure loop.'),
+    MutationCase('SHARED_CARDS_DETAIL_RETRY_OWNER','Shared cards','tools/nonprod_workbench/ui/shared-view.mjs',
+        'tests/test_workbench_shared_cards.py',
+        '    if(cadenceFromStart&&detailStarted)return;', '', 'test_browser_card_contract',
+        'Fast common responses cannot cancel the independent detail failure cooldown.'),
 )
 
 SHARD_SPEC_RE = re.compile(r"^(?P<index>[1-9][0-9]*)/(?P<count>[1-9][0-9]*)$")

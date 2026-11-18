@@ -62,11 +62,14 @@ export function retainedStatus(value, stale) {
 
 // Common freshness must not wait for the independent, single-flight detail read.
 export function createSharedRefreshPair({read,apply,readDetails,fail,schedule=setTimeout,cancel=clearTimeout,cadenceFromStart=false,now=Date.now}) {
-  let latest;
+  let latest,detailStarted=false;
   const details=createSharedPoller({read:()=>readDetails(latest),apply:()=>{},fail,
     schedule:cadenceFromStart?schedule:()=>null,cancel,cadenceFromStart,now});
   const common=createSharedPoller({read,apply:async data=>{
     apply(data);latest=data;
+    // The independent reader owns its retry cooldown after the initial kick.
+    if(cadenceFromStart&&detailStarted)return;
+    detailStarted=true;
     details.refresh();
   },fail,schedule,cancel,cadenceFromStart,now});
   return {refresh:()=>common.refresh(),stop(){common.stop();details.stop();}};

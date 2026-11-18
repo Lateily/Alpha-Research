@@ -1,6 +1,18 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import * as shared from '../tools/nonprod_workbench/ui/shared-view.mjs';
+test('fast common reads cannot cancel the independent detail failure cooldown',async()=>{
+  let now=0,id=0;const timers=new Map(),starts=[];
+  const schedule=(fn,delay)=>{timers.set(++id,{fn,at:now+delay});return id;},cancel=key=>timers.delete(key);
+  const sleep=delay=>new Promise(resolve=>schedule(resolve,delay));
+  const pair=shared.createSharedRefreshPair({read:async()=>{await sleep(100);return {};},apply:()=>{},
+    readDetails:async()=>{starts.push(now);await sleep(12400);throw new Error('INVALID_DETAIL');},fail:()=>{},
+    cadenceFromStart:true,now:()=>now,schedule,cancel});
+  pair.refresh();
+  for(;;){const entry=[...timers].sort((a,b)=>a[1].at-b[1].at)[0];if(!entry||entry[1].at>20000)break;
+    const [key,timer]=entry;timers.delete(key);now=timer.at;timer.fn();for(let i=0;i<15;i++)await Promise.resolve();}
+  pair.stop();assert.equal(starts[0],100);assert.equal(starts[1],17500);
+});
 test('selected detail verification has its own cadence instead of skipping common cycles',async()=>{
   let now=0,id=0;const timers=new Map(),completed=[];
   const schedule=(fn,delay)=>{timers.set(++id,{fn,at:now+delay});return id;},cancel=key=>timers.delete(key);
