@@ -142,7 +142,17 @@ export function detailReadCurrent(selection,active,reader){
 }
 
 export function cardsContextKey(c){return JSON.stringify([c.login,c.workspaceId,c.codeSha,...filters.map(k=>c.filters?.[k]||''),c.page||0]);}
-export const cardsView=libraryView;
+export function cardsView(state,key,parentStale,epoch,now=Date.now()){
+  const view=libraryView(state,key,parentStale,epoch);
+  // governance-mutation: SHARED_CARDS_OWN_EXPIRY
+  const expired=!Number.isFinite(state?.lastSuccessAt)||now-state.lastSuccessAt>15000;
+  return {...view,stale:view.stale||expired,status:view.stale||expired?'DISCONNECTED':view.status};
+}
+export function cardActionCurrent(current,requestKey,activeKey,verifiedKey,now=Date.now()){
+  // governance-mutation: SHARED_CARDS_LIVE_ACTION_FRESHNESS
+  return activeKey===requestKey&&verifiedKey===requestKey&&
+    !cardsView(current.state,current.key,current.parentStale,current.epoch,now).stale;
+}
 export function refreshCardVerification({verified,active,setSelected,setRevision}){
   verified.current=null;active.current=null;setSelected('');setRevision(value=>value+1);
 }

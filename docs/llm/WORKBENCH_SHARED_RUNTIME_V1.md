@@ -1,5 +1,17 @@
 # Shared Workbench V1 Operator Guide
 
+## Research Card Refresh
+
+The opt-in research-card region independently revalidates its registered inputs
+and sealed result metadata. Background verification retains a valid selection;
+an explicit refresh or actor/workspace/code/query change fences old handlers.
+Parent expiry disables actions but does not cancel current card verification.
+Both parent and card evidence must be fresh: card actions recheck the unchanged
+15-second cutoff at click time, rather than borrowing the heading's timestamp.
+Failed verification blocks immediately and retries read-only; it never submits
+a task. Paired reads are drained before another poll, including partial failure.
+These are lifecycle guarantees, not a 24-hour availability or research approval.
+
 This is S4 preparation, not a deployment or acceptance receipt. No current URL
 has been swapped, no Windows acceptance is claimed, and no private entry or
 production replacement is authorized here. The controller still owns final

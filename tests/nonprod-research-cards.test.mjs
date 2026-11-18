@@ -48,11 +48,24 @@ test('response roots nested envelopes and all fixed labels are closed',async()=>
 });
 test('workspace changes and revalidation epochs hide stale card data',()=>{
   assert.equal(typeof cards.cardsContextKey,'function');
-  const key=cards.cardsContextKey(context),state={key,verificationEpoch:'old',data:library(),stale:false};
+  const key=cards.cardsContextKey(context),state={key,verificationEpoch:'old',data:library(),stale:false,lastSuccessAt:Date.now()};
   assert.notEqual(cards.cardsContextKey({...context,workspaceId:'workspace-b'}),key);
   assert.equal(cards.cardsView(state,key,false,'new').stale,true);
   assert.equal(cards.cardsView(state,'changed',false,'old').data,null);
   assert.equal(cards.cardsView(state,key,false,'old').stale,false);
+});
+test('card evidence has its own exact fifteen-second expiry and live action boundary',()=>{
+  const key=cards.cardsContextKey(context),state={key,verificationEpoch:'epoch',data:library(),stale:false,lastSuccessAt:1000};
+  const current={state,key,parentStale:false,epoch:'epoch'};
+  assert.equal(cards.cardsView(state,key,false,'epoch',16000).stale,false);
+  assert.equal(cards.cardsView(state,key,false,'epoch',16001).stale,true);
+  assert.equal(cards.cardActionCurrent(current,'request','request','request',16000),true);
+  assert.equal(cards.cardActionCurrent(current,'request','request','request',16001),false);
+  assert.equal(cards.cardActionCurrent({...current,parentStale:true},'request','request','request',1001),false);
+  for(const changed of [{active:'other'},{verified:'other'}])
+    assert.equal(cards.cardActionCurrent(current,'request',changed.active||'request',changed.verified||'request',1001),false);
+  for(const timestamp of [undefined,NaN,Infinity])
+    assert.equal(cards.cardsView({...state,lastSuccessAt:timestamp},key,false,'epoch',1001).stale,true);
 });
 test('actual submission predicate rejects retained handlers stale views and missing selections',()=>{
   assert.equal(typeof cards.canRunCard,'function');

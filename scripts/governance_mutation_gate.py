@@ -19022,6 +19022,19 @@ MUTATIONS += (
 )
 
 
+MUTATIONS += (
+    MutationCase('SHARED_CARDS_OWN_EXPIRY','Shared cards','tools/nonprod_workbench/ui/research-cards-view.mjs',
+        'tests/test_workbench_shared_cards.py',
+        "  const expired=!Number.isFinite(state?.lastSuccessAt)||now-state.lastSuccessAt>15000;",
+        "  const expired=false;", 'test_browser_card_contract',
+        'A fresh common heading cannot authorize card evidence older than fifteen seconds.'),
+    MutationCase('SHARED_CARDS_LIVE_ACTION_FRESHNESS','Shared cards','tools/nonprod_workbench/ui/research-cards-view.mjs',
+        'tests/test_workbench_shared_cards.py',
+        "    !cardsView(current.state,current.key,current.parentStale,current.epoch,now).stale;",
+        "    true;", 'test_browser_card_contract',
+        'Retained card handlers must recheck current parent and card freshness at action time.'),
+)
+
 SHARD_SPEC_RE = re.compile(r"^(?P<index>[1-9][0-9]*)/(?P<count>[1-9][0-9]*)$")
 SHARD_RECEIPT_SCHEMA = "ar-governance-mutation-shard-receipt.v1"
 

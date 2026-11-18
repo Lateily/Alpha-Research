@@ -20,11 +20,18 @@ async function scenario(check){
         b.onLoad({filter:/.*/,namespace:'icons'},()=>({contents:'export const ChevronLeft=()=>null,ChevronRight=()=>null,FileSearch=()=>null,Play=()=>null,RefreshCw=()=>null,Search=()=>null;'}));
       }}]});
     const {default:Cards,CitationLocations}=await import('data:text/javascript;base64,'+Buffer.from(result.outputFiles[0].text).toString('base64')+'#'+Math.random());
-    const calls=[],submitted=[];let fail=false,hold=false,release,tree;
+    const calls=[],submitted=[],releases=[];let fail=false,hold=false,holdInputs=false,failLibrary=false,tree;
+    const original={now:Date.now,setTimeout:globalThis.setTimeout,clearTimeout:globalThis.clearTimeout,
+      setInterval:globalThis.setInterval,clearInterval:globalThis.clearInterval};
+    let now=1000,nextTimer=0;const timers=new Map();
+    Date.now=()=>now;
+    globalThis.setTimeout=(fn,delay)=>{const id=++nextTimer;timers.set(id,{fn,at:now+delay});return id;};
+    globalThis.setInterval=(fn,delay)=>{const id=++nextTimer;timers.set(id,{fn,at:now+delay,interval:delay});return id;};
+    globalThis.clearTimeout=globalThis.clearInterval=id=>timers.delete(id);
     const props={login:'owner',workspaceId:'workspace-a',codeSha:'a'.repeat(40),parentStale:false,refreshRevision:0,busy:false,
       renew:async()=>{},onRun:value=>submitted.push(value),onOpenJob:()=>{},api:async path=>{
-        calls.push(path);if(fail)throw new Error('HASH_CHANGED');
-        if(hold)await new Promise(resolve=>{release=resolve;});
+        calls.push(path);if(fail||(failLibrary&&path.includes('/research-card-library?')))throw new Error('HASH_CHANGED');
+        if(hold||(holdInputs&&path.endsWith('/research-card-inputs')))await new Promise(resolve=>{releases.push(resolve);});
         const base={my_workspace:{login:props.login,workspace_id:props.workspaceId},consumer_code_sha:props.codeSha,
           sample_purpose:'WORKFLOW_DEBUG',human_review:'PENDING',content_sharing_allowed:false,content_status:'RIGHTS_UNVERIFIED_CONTENT_DENIED',
           production_authority:false,paper_authority:false,u4_authority:false,trading_authority:false,
@@ -43,9 +50,21 @@ async function scenario(check){
     async function settle(){for(let i=0;i<12;i++){if(state.dirty)render();while(state.pending.length)state.pending.shift()();await Promise.resolve();}}
     function nodes(value){if(Array.isArray(value))return value.flatMap(nodes);if(!value||typeof value!=='object')return[];return[value,...nodes(value.props?.children)];}
     const button=()=>nodes(tree).find(n=>n.props?.['aria-label']==='提交研究卡核验');
-    await settle();
-    await check({props,calls,submitted,settle,nodes:()=>nodes(tree),button,CitationLocations,fail:()=>{fail=true;},
-      hold:()=>{hold=true;},release:()=>{hold=false;release?.();},render:()=>{state.dirty=true;}});
+    async function advance(ms){const target=now+ms;
+      for(;;){const entry=[...timers].filter(([,t])=>t.at<=target).sort((a,b)=>a[1].at-b[1].at)[0];if(!entry)break;
+        const [id,timer]=entry;now=timer.at;if(timer.interval)timer.at+=timer.interval;else timers.delete(id);
+        timer.fn();await settle();}
+      now=target;await settle();}
+    try{
+      await settle();
+      await check({props,calls,submitted,settle,advance,nodes:()=>nodes(tree),button,CitationLocations,fail:()=>{fail=true;},
+        recover:()=>{fail=false;failLibrary=false;},hold:()=>{hold=true;},halfFailure:()=>{holdInputs=true;failLibrary=true;},
+        release:()=>{hold=false;holdInputs=false;for(const resolve of releases.splice(0))resolve();},render:()=>{state.dirty=true;}});
+    }finally{
+      for(const slot of state.slots)slot?.cleanup?.();
+      Date.now=original.now;Object.assign(globalThis,{setTimeout:original.setTimeout,clearTimeout:original.clearTimeout,
+        setInterval:original.setInterval,clearInterval:original.clearInterval});
+    }
   }finally{for(const slot of state.slots)slot?.cleanup?.();globalThis.__arCardHooks=previous;}
 }
 test('actual card selection clears on workspace change and a retained click cannot submit',()=>scenario(async s=>{
@@ -82,4 +101,54 @@ test('same-context refresh disables selection throughout pending verification',(
   s.hold();s.nodes().find(n=>n.props?.['aria-label']==='刷新研究卡').props.onClick();await s.settle();
   const disabled=s.button().props.disabled;s.release();await s.settle();
   assert.equal(disabled,true);assert.equal(s.button().props.disabled,true);
+}));
+
+test('a transient parent expiry does not discard the verified card selection after recovery',()=>scenario(async s=>{
+  s.nodes().find(n=>n.props?.['aria-label']==='冻结研究卡').props.onChange({target:{value:'registered-card'}});await s.settle();
+  assert.equal(s.button().props.disabled,false);
+  const retained=s.button().props.onClick;
+  s.props.parentStale=true;s.render();await s.settle();
+  assert.equal(s.button().props.disabled,true);retained();
+  assert.equal(s.submitted.length,0,'a retained handler cannot bypass current parent expiry');
+  s.props.parentStale=false;s.render();await s.settle();
+  assert.equal(s.button().props.disabled,false,'fresh context must recover without erasing a valid choice');
+}));
+
+test('card evidence expires independently at fifteen seconds and recovers after held verification',()=>scenario(async s=>{
+  s.nodes().find(n=>n.props?.['aria-label']==='冻结研究卡').props.onChange({target:{value:'registered-card'}});await s.settle();
+  const old=s.button().props.onClick;s.hold();await s.advance(15000);
+  assert.equal(s.button().props.disabled,false,'the existing exact boundary remains valid');
+  await s.advance(1000);assert.equal(s.props.parentStale,false);
+  assert.equal(s.button().props.disabled,true);old();assert.equal(s.submitted.length,0);
+  assert.equal(s.calls.length,4,'a held refresh must not create overlapping polls');
+  s.release();await s.settle();assert.equal(s.button().props.disabled,false);
+  s.button().props.onClick();assert.equal(s.submitted.length,1);
+}));
+
+test('a failed card verification recovers autonomously without a page refresh or automatic submission',()=>scenario(async s=>{
+  s.nodes().find(n=>n.props?.['aria-label']==='冻结研究卡').props.onChange({target:{value:'registered-card'}});await s.settle();
+  s.fail();await s.advance(5000);assert.equal(s.button().props.disabled,true);
+  s.recover();await s.advance(5000);assert.equal(s.button().props.disabled,false);
+  assert.equal(s.submitted.length,0);
+}));
+
+test('parent expiry while card verification is pending does not cancel progress',()=>scenario(async s=>{
+  s.hold();await s.advance(5000);const calls=s.calls.length;
+  s.props.parentStale=true;s.render();await s.settle();
+  s.props.parentStale=false;s.render();await s.settle();
+  assert.equal(s.calls.length,calls,'parent availability is not a new verification context');
+  s.release();await s.settle();
+  s.nodes().find(n=>n.props?.['aria-label']==='冻结研究卡').props.onChange({target:{value:'registered-card'}});await s.settle();
+  assert.equal(s.button().props.disabled,false);
+}));
+
+test('a rejected paired read waits for its held sibling before scheduling another verification',()=>scenario(async s=>{
+  s.nodes().find(n=>n.props?.['aria-label']==='冻结研究卡').props.onChange({target:{value:'registered-card'}});await s.settle();
+  assert.equal(s.button().props.disabled,false);
+  s.halfFailure();await s.advance(5000);
+  assert.equal(s.button().props.disabled,true,'known validation failure must block before the sibling settles');
+  await s.advance(5000);
+  assert.equal(s.calls.length,4,'one rejected response cannot start overlapping input verifications');
+  s.release();await s.settle();s.recover();await s.advance(5000);
+  assert.ok(!JSON.stringify(s.nodes()).includes('HASH_CHANGED'));
 }));
