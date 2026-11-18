@@ -158,6 +158,118 @@ class SharedCardTests(unittest.TestCase):
         for key,value in [('expected_code_sha','0'*40),('expected_workspace_id','0'*36)]:
             with self.assertRaises(WorkspaceError): queue.enqueue({**payload,key:value},'owner@example.com')
 
+    def test_scoped_input_index_rechecks_matching_cards_and_preserves_legacy_full_scope(self):
+        from workbench_shared_inputs import FrozenInputs
+        queue,view,entry,_=self.queue()
+        method=getattr(view,'scoped_card_inputs',None)
+        self.assertTrue(callable(method),'narrow versioned card-input index is missing')
+        other=self.module().material.register(queue.inputs,self.fixture.fixture.library,self.root/'pack',
+            expected_library_hash=self.fixture.request['expected_library_hash'],
+            expected_pack_hash=self.fixture.pack['pack_hash'])
+        original=FrozenInputs.verify; calls=[]
+        def verify(inputs,sid):
+            calls.append(sid)
+            return original(inputs,sid)
+        with patch.object(FrozenInputs,'verify',verify):
+            value=method('owner@example.com')
+        self.assertEqual(value['schema'],'ar.shared-research-card-inputs.v2')
+        self.assertEqual(value['validation_scope'],'MATCHING_CARDS_ONLY_OTHER_INPUTS_NOT_EVALUATED')
+        self.assertEqual(value['inputs'][0]['snapshot_id'],entry['snapshot_id'])
+        self.assertEqual(calls,[entry['snapshot_id']])
+        calls.clear()
+        with patch.object(FrozenInputs,'verify',verify):
+            legacy=view.research_card_inputs('owner@example.com')
+        self.assertEqual(set(calls),{entry['snapshot_id'],other['snapshot_id']})
+        self.assertEqual(legacy['schema'],'ar.shared-research-card-inputs.v1')
+        self.assertNotIn('validation_scope',legacy)
+        self.assertEqual(value['inputs'],legacy['inputs'])
+
+    def test_scoped_index_refuses_reclassified_registry_header(self):
+        queue,view,entry,_=self.queue()
+        method=getattr(view,'scoped_card_inputs',None)
+        self.assertTrue(callable(method),'narrow versioned card-input index is missing')
+        with queue.store.connect() as db:
+            raw=db.execute('SELECT body FROM shared_inputs WHERE snapshot_id=?',(entry['snapshot_id'],)).fetchone()[0]
+            changed=ev.parse(raw);changed['schema']='ar.shared-input.v1'
+            body=ev.canonical(changed)
+            # Reach the read boundary by simulating offline database corruption.
+            db.execute('DROP TRIGGER shared_inputs_update')
+            db.execute('UPDATE shared_inputs SET body=? WHERE snapshot_id=?',(body,entry['snapshot_id']))
+        envelope=queue.inputs.base/'envelopes'/(entry['snapshot_id']+'.json')
+        envelope.write_text(body)
+        with self.assertRaises(ValueError):method('owner@example.com')
+
+    def test_scoped_index_rechecks_envelope_and_current_source_bytes_each_time(self):
+        queue,view,entry,_=self.queue()
+        method=getattr(view,'scoped_card_inputs',None)
+        self.assertTrue(callable(method),'narrow versioned card-input index is missing')
+        self.assertEqual(len(method('owner@example.com')['inputs']),1)
+        target=queue.inputs.base/'material-packs'/entry['input_hash']/'basis/basis-card.json'
+        original=target.read_bytes();target.write_bytes(b'{}')
+        with self.assertRaises(ValueError):method('owner@example.com')
+        target.write_bytes(original)
+        envelope=queue.inputs.base/'envelopes'/(entry['snapshot_id']+'.json')
+        envelope.write_bytes(b'{}')
+        with self.assertRaises(ValueError):method('owner@example.com')
+
+    def test_scoped_index_checks_unselected_header_without_claiming_its_source_health(self):
+        queue,view,entry,_=self.queue()
+        other=self.module().material.register(queue.inputs,self.fixture.fixture.library,self.root/'pack',
+            expected_library_hash=self.fixture.request['expected_library_hash'],
+            expected_pack_hash=self.fixture.pack['pack_hash'])
+        other_root=queue.inputs.verify(other['snapshot_id'])['frozen_root']
+        (other_root/'pack/source-map.json').write_bytes(b'{}')
+        scoped=view.scoped_card_inputs('owner@example.com')
+        self.assertEqual(scoped['inputs'][0]['snapshot_id'],entry['snapshot_id'])
+        self.assertEqual(scoped['validation_scope'],'MATCHING_CARDS_ONLY_OTHER_INPUTS_NOT_EVALUATED')
+        with self.assertRaises(ValueError):view.research_card_inputs('owner@example.com')
+        header=queue.inputs.base/'envelopes'/(other['snapshot_id']+'.json')
+        header.write_bytes(b'{}')
+        with self.assertRaises(ValueError):view.scoped_card_inputs('owner@example.com')
+
+    def test_narrow_context_proves_registration_not_input_or_output_health(self):
+        queue,view,entry,payload=self.queue()
+        method=getattr(view,'context',None)
+        self.assertTrue(callable(method),'narrow versioned workspace context is missing')
+        job=queue.enqueue(payload,'owner@example.com')
+        with (patch.object(queue.inputs,'verify',side_effect=AssertionError('context must not claim full input proof')),
+              patch.object(view,'_views',side_effect=AssertionError('context must not claim output proof'))):
+            value=method('owner@example.com')
+        self.assertEqual(value['schema'],'ar.shared-workspace-context.v1')
+        self.assertEqual(value['validation_scope'],'IDENTITY_AND_JOB_REGISTRATION_NOT_OUTPUTS')
+        self.assertEqual(value['owned_commands'][payload['command_id']],{'job_id':job['job_id']})
+        self.assertNotIn('common_data',value)
+        self.assertNotIn('my_jobs',value)
+        self.assertIs(value['production_authority'],False)
+        self.assertIs(value['trading_authority'],False)
+
+    def test_narrow_context_refuses_corrupted_job_registration(self):
+        queue,view,entry,payload=self.queue()
+        method=getattr(view,'context',None)
+        self.assertTrue(callable(method),'narrow versioned workspace context is missing')
+        job=queue.enqueue(payload,'owner@example.com')
+        with queue.store.connect() as db:
+            body=ev.parse(db.execute('SELECT body FROM shared_jobs WHERE job_id=?',(job['job_id'],)).fetchone()[0])
+            body['actor']='unregistered@example.com'
+            db.execute('UPDATE shared_jobs SET body=? WHERE job_id=?',(ev.canonical(body),job['job_id']))
+        with self.assertRaises(ValueError):method('owner@example.com')
+
+    def test_narrow_http_context_and_scoped_index_keep_private_authorization(self):
+        import nonprod_workbench as wb
+        from workbench_shared_test_support import http,OWNER,MEMBER
+        queue,view,entry,_=self.queue()
+        allow=self.root/'members-scoped.json';allow.write_text(ev.canonical({'members':[MEMBER]}));allow.chmod(0o600)
+        private=wb.private_access('https://workbench.test-tail.ts.net:8443',OWNER,allow)
+        for route,schema in [('/api/shared-workspace/context','ar.shared-workspace-context.v1'),
+                ('/api/shared-workspace/research-card-inputs-scoped','ar.shared-research-card-inputs.v2')]:
+            status,data=http(queue.store,view.system,private,route,shared=view)
+            self.assertEqual(status,200)
+            self.assertEqual(data['schema'],schema)
+            status,_=http(queue.store,view.system,private,route,login='outsider@example.com',shared=view)
+            self.assertEqual(status,403)
+            status,_=http(queue.store,view.system,private,route+'?path=/private/tmp',shared=view)
+            self.assertNotEqual(status,200)
+
     def test_http_card_choices_closed_query_and_exact_submission(self):
         import nonprod_workbench as wb
         from workbench_shared_test_support import http,OWNER,MEMBER

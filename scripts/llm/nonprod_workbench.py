@@ -555,6 +555,10 @@ def make_handler(store, assets, origin, session, system=None, private=None, shar
                     self.reply(200, shared.research_inputs(identity['login']))
                 elif shared is not None and self.path == '/api/shared-workspace/research-card-inputs':
                     self.reply(200,shared.research_card_inputs(identity['login']))
+                elif shared is not None and self.path == '/api/shared-workspace/research-card-inputs-scoped':
+                    self.reply(200,shared.scoped_card_inputs(identity['login']))
+                elif shared is not None and self.path == '/api/shared-workspace/context':
+                    self.reply(200,shared.context(identity['login']))
                 elif shared is not None and self.path == '/api/shared-workspace/reviews':
                     self.reply(200,shared.review_portal.list(identity['login']))
                 elif shared is not None and self.path.startswith('/api/shared-workspace/review/'):

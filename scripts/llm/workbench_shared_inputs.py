@@ -240,6 +240,32 @@ class FrozenInputs:
         self.store = store
         self.base = store.path.parent / "frozen-inputs"
 
+    def index_headers(self):
+        """Bind registry classification bytes, not unrelated publication content."""
+        schemas = {'ar.shared-input.v1', 'ar.shared-material-input.v1',
+                   'ar.shared-research-card-input.v1'}
+        with self.store.connect() as db:
+            rows = db.execute("SELECT snapshot_id,input_hash,body,json_extract(body,'$.schema'),"
+                              "json_extract(body,'$.snapshot_id'),json_extract(body,'$.input_hash') "
+                              "FROM shared_inputs ORDER BY rowid LIMIT 101").fetchall()
+        if len(rows) > 100:
+            raise WorkspaceError('CARDS_INDEX_CAPACITY',409)
+        result = []
+        for sid, checksum, body, schema, declared_sid, declared_hash in rows:
+            # governance-mutation: SHARED_CARDS_HEADER_CLASSIFICATION
+            if (schema not in schemas or not isinstance(checksum,str)
+                    or re.fullmatch(r'[a-f0-9]{64}',checksum) is None
+                    or sid != declared_sid or checksum != declared_hash
+                    or sid != str(uuid.uuid5(uuid.NAMESPACE_URL,schema+':'+checksum))):
+                raise WorkspaceError('FROZEN_REGISTRY_BINDING_INVALID',409)
+            raw = ev.read_local(self.base,'envelopes/'+sid+'.json')
+            # A scoped query may skip other payloads, never a changed registry header.
+            # governance-mutation: SHARED_CARDS_HEADER_BYTES
+            if ev.sha(raw) != ev.sha(body.encode('utf-8')):
+                raise WorkspaceError('FROZEN_REGISTRY_BINDING_INVALID',409)
+            result.append({'snapshot_id':sid,'input_hash':checksum,'schema':schema})
+        return result
+
     def current_selection(self):
         with self.store.connect() as db:
             events = Workspace.events(None, db)

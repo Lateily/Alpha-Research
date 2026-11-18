@@ -181,6 +181,25 @@ class SharedWorkspace:
         return {'schema':'ar.shared-research-card-inputs.v1','enabled':self.cards_enabled,'inputs':rows,
             'my_workspace':owner,'consumer_code_sha':self._execution_identity['code_sha'],**cards.LABELS}
 
+    def scoped_card_inputs(self,actor):
+        from workbench_shared_inputs import FrozenInputs
+        import workbench_shared_cards as cards
+        owner=self.identity(actor); rows=[]
+        if self.cards_enabled and self.queue is not None:
+            inputs=FrozenInputs(self.store)
+            for header in inputs.index_headers():
+                if header['schema']!=cards.SCHEMA:continue
+                # governance-mutation: SHARED_CARDS_SCOPED_FULL_VERIFY
+                entry=inputs.verify(header['snapshot_id'])
+                if entry['schema']!=cards.SCHEMA or entry['input_hash']!=header['input_hash']:
+                    raise WorkspaceError('FROZEN_REGISTRY_BINDING_INVALID',409)
+                value=entry['snapshot']
+                rows.append({k:entry[k] for k in ('snapshot_id','input_hash')}|
+                    {k:value[k] for k in (*cards.METADATA,'classification_status','projection_hash')})
+        return {'schema':'ar.shared-research-card-inputs.v2','enabled':self.cards_enabled,'inputs':rows,
+            'validation_scope':'MATCHING_CARDS_ONLY_OTHER_INPUTS_NOT_EVALUATED',
+            'my_workspace':owner,'consumer_code_sha':self._execution_identity['code_sha'],**cards.LABELS}
+
     def research_card_results(self,actor,*,industry_key=None,industry_taxonomy=None,
                               taxonomy_version=None,research_date=None,ts_code=None,page=0):
         from workbench_research_library import filters
@@ -347,6 +366,21 @@ class SharedWorkspace:
                 ("LEGACY_NOT_RECOVERABLE" if job.get("recovery") == "LEGACY_NOT_RECOVERABLE" else None),
                 "sample_purpose": "WORKFLOW_DEBUG", "human_review": "PENDING",
                 "production_authority": False, "trading_authority": False}
+
+    def context(self,actor):
+        owner=self.identity(actor)
+        jobs=self._jobs()
+        # No output status, history health, input or nightly acceptance is inferred here.
+        # governance-mutation: SHARED_CONTEXT_REGISTRATION_BINDING
+        if any((job.get('result') or {}).get('error')=='SHARED_JOB_BINDING_INVALID' for job in jobs):
+            raise WorkspaceError('SHARED_JOB_BINDING_INVALID',409)
+        return {'schema':'ar.shared-workspace-context.v1','my_workspace':owner,
+            'owned_commands':{job['command_id']:{'job_id':job['job_id']} for job in jobs
+                              if job.get('actor')==actor and job.get('command_id')},
+            'execution_identity':self._execution_identity,
+            'validation_scope':'IDENTITY_AND_JOB_REGISTRATION_NOT_OUTPUTS',
+            'sample_purpose':'WORKFLOW_DEBUG','human_review':'PENDING',
+            'production_authority':False,'trading_authority':False}
 
     def snapshot(self, actor: str, *, page: int = 0) -> dict:
         owner = self.identity(actor)

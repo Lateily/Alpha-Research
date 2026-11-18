@@ -18441,6 +18441,40 @@ MUTATIONS = MUTATIONS + (
 )
 
 
+MUTATIONS = MUTATIONS + (
+    MutationCase(
+        mutation_id='SHARED_CARDS_HEADER_CLASSIFICATION', component='Scoped card reads',
+        source_path='scripts/llm/workbench_shared_inputs.py', test_script='tests/test_workbench_shared_cards.py',
+        before="            if (schema not in schemas or not isinstance(checksum,str)\n"
+               "                    or re.fullmatch(r'[a-f0-9]{64}',checksum) is None\n"
+               "                    or sid != declared_sid or checksum != declared_hash\n"
+               "                    or sid != str(uuid.uuid5(uuid.NAMESPACE_URL,schema+':'+checksum))):",
+        after='            if False:',
+        expected_failure_marker='test_scoped_index_refuses_reclassified_registry_header',
+        rationale='Changing a card header classification cannot silently hide its registered input.'),
+    MutationCase(
+        mutation_id='SHARED_CARDS_HEADER_BYTES', component='Scoped card reads',
+        source_path='scripts/llm/workbench_shared_inputs.py', test_script='tests/test_workbench_shared_cards.py',
+        before="            if ev.sha(raw) != ev.sha(body.encode('utf-8')):", after='            if False:',
+        expected_failure_marker='test_scoped_index_checks_unselected_header_without_claiming_its_source_health',
+        rationale='Scoped payload filtering still reopens and hash-binds every registry header.'),
+    MutationCase(
+        mutation_id='SHARED_CARDS_SCOPED_FULL_VERIFY', component='Scoped card reads',
+        source_path='scripts/llm/workbench_shared_workspace.py', test_script='tests/test_workbench_shared_cards.py',
+        before="                entry=inputs.verify(header['snapshot_id'])",
+        after="                entry=evidence.parse(evidence.read_local(inputs.base,'envelopes/'+header['snapshot_id']+'.json'))",
+        expected_failure_marker='test_scoped_index_rechecks_envelope_and_current_source_bytes_each_time',
+        rationale='A valid indexed header cannot replace current full card source verification.'),
+    MutationCase(
+        mutation_id='SHARED_CONTEXT_REGISTRATION_BINDING', component='Scoped card reads',
+        source_path='scripts/llm/workbench_shared_workspace.py', test_script='tests/test_workbench_shared_cards.py',
+        before="        if any((job.get('result') or {}).get('error')=='SHARED_JOB_BINDING_INVALID' for job in jobs):",
+        after='        if False:',
+        expected_failure_marker='test_narrow_context_refuses_corrupted_job_registration',
+        rationale='Narrow context freshness still requires real actor/command registration binding.'),
+)
+
+
 def replace_exact(text: str, before: str, after: str, mutation_id: str) -> str:
     count = text.count(before)
     if count != 1:
