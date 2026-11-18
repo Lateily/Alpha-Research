@@ -12,7 +12,6 @@ import os
 import re
 import stat
 import sys
-from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from pathlib import Path, PurePosixPath
 
@@ -53,31 +52,19 @@ def utc_now():
     return datetime.now(timezone.utc).isoformat(timespec="seconds")
 
 
-def _open_root(root):
+def read_local(root: Path, relative: str):
+    parts = PurePosixPath(relative).parts
+    if not parts or relative.startswith("/") or any(x in {"..", "."} for x in parts):
+        raise EvidenceError("SOURCE_PATH_INVALID")
+    # Open every component without following links. The configured root is
+    # trusted by the launcher; paths obtained from artifacts are not trusted.
     flags = os.O_RDONLY | os.O_NOFOLLOW
     root_parts = Path(root).absolute().parts
     if ".." in root_parts:
         raise EvidenceError("SOURCE_PATH_INVALID")
     fd = os.open(root_parts[0], flags | os.O_DIRECTORY)
     try:
-        for component in root_parts[1:]:
-            new = os.open(component, flags | os.O_DIRECTORY, dir_fd=fd)
-            os.close(fd)
-            fd = new
-        return fd
-    except BaseException:
-        os.close(fd)
-        raise
-
-
-def _read_relative(root_fd, relative):
-    parts = PurePosixPath(relative).parts
-    if not parts or relative.startswith("/") or any(x in {"..", "."} for x in parts):
-        raise EvidenceError("SOURCE_PATH_INVALID")
-    flags = os.O_RDONLY | os.O_NOFOLLOW
-    fd = os.dup(root_fd)
-    try:
-        for component in parts[:-1]:
+        for component in (*root_parts[1:], *parts[:-1]):
             new = os.open(component, flags | os.O_DIRECTORY, dir_fd=fd)
             os.close(fd)
             fd = new
@@ -102,40 +89,6 @@ def _read_relative(root_fd, relative):
                 raise EvidenceError("SOURCE_CHANGED_DURING_READ")
             return raw
     finally:
-        os.close(fd)
-
-
-def read_local(root: Path, relative: str):
-    # Every one-shot read checks the full absolute path, as before.
-    fd = _open_root(root)
-    try:
-        return _read_relative(fd, relative)
-    finally:
-        os.close(fd)
-
-
-@contextmanager
-def read_root(root):
-    """Reuse one checked directory, never bytes, within one inventory traversal."""
-    root = Path(root).absolute()
-    fd = _open_root(root)
-    before = os.fstat(fd)
-    active = True
-    def read(relative):
-        if not active:
-            raise EvidenceError("SOURCE_READER_CLOSED")
-        return _read_relative(fd, relative)
-    try:
-        yield read
-        current = _open_root(root)
-        try:
-            after = os.fstat(current)
-            if (before.st_dev, before.st_ino, before.st_mode) != (after.st_dev, after.st_ino, after.st_mode):
-                raise EvidenceError("SOURCE_ROOT_CHANGED_DURING_READ")
-        finally:
-            os.close(current)
-    finally:
-        active = False
         os.close(fd)
 
 

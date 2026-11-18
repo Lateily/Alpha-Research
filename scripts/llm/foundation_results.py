@@ -33,23 +33,24 @@ def _identity(value):
 
 def _tree(root):
     root = materials._root(root)
+    with materials._directory(root):
+        pass
     files, size, directories = {}, 0, set()
-    with ev.read_root(root) as read:
-        for path in root.rglob('*'):
-            if path.is_symlink() or not (path.is_dir() or path.is_file()):
-                _fail('ARTIFACT_PATH_INVALID')
-            if path.is_file():
-                if path.stat().st_nlink != 1 or path.stat().st_mode & 0o111:
-                    _fail('ARTIFACT_LINK_OR_MODE_INVALID')
-                raw = read(path.relative_to(root).as_posix())
-                size += len(raw); files[path.relative_to(root).as_posix()] = raw
-            else:
-                directories.add(path.relative_to(root).as_posix())
-            if len(files) > 256 or size > 128 * 1024 * 1024:
-                _fail('ARTIFACT_LIMIT')
-        expected_directories = {str(parent) for name in files for parent in Path(name).parents if str(parent) != '.'}
-        if directories != expected_directories:
-            _fail('ARTIFACT_DIRECTORY_INVENTORY_INVALID')
+    for path in root.rglob('*'):
+        if path.is_symlink() or not (path.is_dir() or path.is_file()):
+            _fail('ARTIFACT_PATH_INVALID')
+        if path.is_file():
+            if path.stat().st_nlink != 1 or path.stat().st_mode & 0o111:
+                _fail('ARTIFACT_LINK_OR_MODE_INVALID')
+            raw = ev.read_local(root, path.relative_to(root).as_posix())
+            size += len(raw); files[path.relative_to(root).as_posix()] = raw
+        else:
+            directories.add(path.relative_to(root).as_posix())
+        if len(files) > 256 or size > 128 * 1024 * 1024:
+            _fail('ARTIFACT_LIMIT')
+    expected_directories = {str(parent) for name in files for parent in Path(name).parents if str(parent) != '.'}
+    if directories != expected_directories:
+        _fail('ARTIFACT_DIRECTORY_INVENTORY_INVALID')
     return files
 
 
