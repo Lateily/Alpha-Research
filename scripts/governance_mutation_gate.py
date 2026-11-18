@@ -18443,6 +18443,14 @@ MUTATIONS = MUTATIONS + (
 
 MUTATIONS = MUTATIONS + (
     MutationCase(
+        mutation_id='SHARED_CARDS_HEADER_UNAMBIGUOUS', component='Scoped card reads',
+        source_path='scripts/llm/workbench_shared_inputs.py', test_script='tests/test_workbench_shared_cards.py',
+        before="                if (len(fields)!=len(keys) or {key for key,_kind,_value in fields}!=keys\n"
+               "                        or any(kind!='text' for key,kind,_value in fields if key in declarations)):",
+        after='                if False:',
+        expected_failure_marker='test_scoped_index_rejects_duplicate_classification_declarations',
+        rationale='Conflicting duplicate declarations cannot hide an indexed card behind the first JSON value.'),
+    MutationCase(
         mutation_id='SHARED_CARDS_HEADER_CLASSIFICATION', component='Scoped card reads',
         source_path='scripts/llm/workbench_shared_inputs.py', test_script='tests/test_workbench_shared_cards.py',
         before="            if (schema not in schemas or not isinstance(checksum,str)\n"
@@ -18472,6 +18480,24 @@ MUTATIONS = MUTATIONS + (
         after='        if False:',
         expected_failure_marker='test_narrow_context_refuses_corrupted_job_registration',
         rationale='Narrow context freshness still requires real actor/command registration binding.'),
+    MutationCase(
+        mutation_id='SHARED_CONTEXT_CLIENT_SCOPE', component='Scoped card reads',
+        source_path='tools/nonprod_workbench/ui/shared-view.mjs', test_script='tests/test_workbench_shared_cards.py',
+        before="      data.validation_scope !== 'IDENTITY_AND_JOB_REGISTRATION_NOT_OUTPUTS' ||\n", after='',
+        expected_failure_marker='test_browser_card_contract',
+        rationale='Narrow identity context must not accept a falsely asserted output-validation scope.'),
+    MutationCase(
+        mutation_id='SHARED_CONTEXT_CLIENT_ACTOR', component='Scoped card reads',
+        source_path='tools/nonprod_workbench/ui/shared-view.mjs', test_script='tests/test_workbench_shared_cards.py',
+        before='      data.my_workspace.login !== context.login || ', after='      ',
+        expected_failure_marker='test_browser_card_contract',
+        rationale='Context metadata for another actor cannot become the current action authority.'),
+    MutationCase(
+        mutation_id='SHARED_CARDS_SCOPED_CLIENT_SCOPE', component='Scoped card reads',
+        source_path='tools/nonprod_workbench/ui/research-cards-view.mjs', test_script='tests/test_workbench_shared_cards.py',
+        before="data.validation_scope!=='MATCHING_CARDS_ONLY_OTHER_INPUTS_NOT_EVALUATED'", after='false',
+        expected_failure_marker='test_browser_card_contract',
+        rationale='Scoped index payloads require their exact versioned validation boundary before reuse of legacy row guards.'),
 )
 
 

@@ -325,3 +325,32 @@ visibility, source read-only proof and prior-output preservation. Do not fill
 Windows receipts from two Mac browsers or synthetic fixtures. Report code,
 LOCAL_QA, TWO_DEVICE_PENDING, SHARED_DEPLOYMENT and PRODUCTION_AUTHORITY
 separately; none implies formal U4/paper/research or trading approval.
+
+## Scoped Card Reads
+
+Legacy `/api/shared-workspace` and `/research-card-inputs` retain their complete
+existing verification paths and V1 contracts. The card view uses two additional
+read-only contracts to avoid repeatedly checking unrelated historical payloads:
+
+- `/api/shared-workspace/context`, `ar.shared-workspace-context.v1`, validates
+  actor/workspace/execution identity and command registration only. Its scope is
+  `IDENTITY_AND_JOB_REGISTRATION_NOT_OUTPUTS`. It contains no job output statuses,
+  publication health, nightly acceptance or source-body acceptance.
+- `/api/shared-workspace/research-card-inputs-scoped`,
+  `ar.shared-research-card-inputs.v2`, reopens every bounded registry header and
+  binds its bytes, schema-derived UUID and input hash before selecting matching
+  card inputs. Every matching card still reaches the original full frozen-input
+  verifier. Its scope is
+  `MATCHING_CARDS_ONLY_OTHER_INPUTS_NOT_EVALUATED`; unrelated source payloads are
+  neither verified nor represented as healthy by this endpoint.
+
+Card results and individual task details keep their complete existing source,
+derivation, output-seal and permission verification. No cross-request proof or
+content cache is introduced. A fresh context does not renew card input, result
+or detail evidence: their independent 15-second guards and action-time checks
+remain mandatory. Returning to another workspace view uses the original full
+history request and cannot promote retained narrow context as full acceptance.
+
+These contracts do not establish sustained performance, human research approval,
+two-device acceptance or 24-hour availability. Those require separate observed
+evidence on the actual final installation.

@@ -199,6 +199,26 @@ class SharedCardTests(unittest.TestCase):
         envelope.write_text(body)
         with self.assertRaises(ValueError):method('owner@example.com')
 
+    def test_scoped_index_rejects_duplicate_classification_declarations(self):
+        queue,view,entry,_=self.queue()
+        other=self.module().material.register(queue.inputs,self.fixture.fixture.library,self.root/'pack',
+            expected_library_hash=self.fixture.request['expected_library_hash'],
+            expected_pack_hash=self.fixture.pack['pack_hash'])
+        with queue.store.connect() as db:
+            original=db.execute('SELECT body FROM shared_inputs WHERE snapshot_id=?',(other['snapshot_id'],)).fetchone()[0]
+            db.execute('DROP TRIGGER shared_inputs_update')
+        parsed=ev.parse(original)
+        header=queue.inputs.base/'envelopes'/(other['snapshot_id']+'.json')
+        for key,bad in [('schema','ar.shared-research-card-input.v1'),('snapshot_id',entry['snapshot_id']),
+                        ('input_hash','0'*64),('schema',parsed['schema'])]:
+            first=ev.canonical(key)+':'+ev.canonical(parsed[key])
+            duplicated=original.replace(first,first+','+ev.canonical(key)+':'+ev.canonical(bad),1)
+            self.assertNotEqual(duplicated,original)
+            with queue.store.connect() as db:
+                db.execute('UPDATE shared_inputs SET body=? WHERE snapshot_id=?',(duplicated,other['snapshot_id']))
+            header.write_text(duplicated)
+            with self.subTest(key=key), self.assertRaises(ValueError):view.scoped_card_inputs('owner@example.com')
+
     def test_scoped_index_rechecks_envelope_and_current_source_bytes_each_time(self):
         queue,view,entry,_=self.queue()
         method=getattr(view,'scoped_card_inputs',None)

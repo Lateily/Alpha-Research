@@ -171,6 +171,14 @@ export async function readCardInputs(api,c,renew){
     throw new Error('CARDS_CONTEXT_MISMATCH');
   return data;
 }
+export async function readScopedCardInputs(api,c,renew){
+  const data=await sharedRead(api,'/api/shared-workspace/research-card-inputs-scoped',renew);
+  if(!exact(data,[...commonKeys,'enabled','inputs','validation_scope'])||data.schema!=='ar.shared-research-card-inputs.v2'||
+    data.validation_scope!=='MATCHING_CARDS_ONLY_OTHER_INPUTS_NOT_EVALUATED')throw new Error('CARDS_CONTEXT_MISMATCH');
+  const {validation_scope,...body}=data;
+  await readCardInputs(async()=>({...body,schema:'ar.shared-research-card-inputs.v1'}),c,renew);
+  return data;
+}
 export async function readCardLibrary(api,c,renew){
   const params=new URLSearchParams({page:String(c.page||0)});
   if(Object.keys(c.filters||{}).some(k=>!filters.includes(k)))throw new Error('CARDS_CONTEXT_MISMATCH');

@@ -21,7 +21,7 @@ function archiveRow(){
       execution_feedback:{status:'NOT_SUPPLIED',pnl_status:'NOT_SUPPLIED'}}};
 }
 
-async function scenario(check,populated=false){
+async function scenario(check,populated=false,scopedInputs=false){
   const state={slots:[],cursor:0,pending:[],dirty:true};
   const hooks={createElement:(type,props,...children)=>({type,props:{...props,children}}),Fragment:Symbol('Fragment'),
     useState(initial){const n=state.cursor++;if(!(n in state.slots))state.slots[n]=typeof initial==='function'?initial():initial;
@@ -47,7 +47,7 @@ async function scenario(check,populated=false){
     globalThis.setTimeout=(fn,delay)=>{const id=++nextTimer;timers.set(id,{fn,at:now+delay});return id;};
     globalThis.setInterval=(fn,delay)=>{const id=++nextTimer;timers.set(id,{fn,at:now+delay,interval:delay});return id;};
     globalThis.clearTimeout=globalThis.clearInterval=id=>timers.delete(id);
-    const props={login:'owner',workspaceId:'workspace-a',codeSha:'a'.repeat(40),parentStale:false,refreshRevision:0,busy:false,
+    const props={login:'owner',workspaceId:'workspace-a',codeSha:'a'.repeat(40),parentStale:false,refreshRevision:0,busy:false,scopedInputs,
       parentFresh:()=>!props.parentStale,
       renew:async()=>{},onRun:value=>submitted.push(value),onOpenJob:value=>opened.push(value),api:async path=>{
         calls.push(path);if(fail||(failLibrary&&path.includes('/research-card-library?')))throw new Error('HASH_CHANGED');
@@ -56,7 +56,9 @@ async function scenario(check,populated=false){
           sample_purpose:'WORKFLOW_DEBUG',human_review:'PENDING',content_sharing_allowed:false,content_status:'RIGHTS_UNVERIFIED_CONTENT_DENIED',
           production_authority:false,paper_authority:false,u4_authority:false,trading_authority:false,
           prospective_sample_eligible:false,network_calls:0,model_calls:0,claim_allowed:false,no_trade_flag:true};
-        if(path.endsWith('/research-card-inputs'))return {...base,schema:'ar.shared-research-card-inputs.v1',enabled:true,inputs:emptyInputs?[]:[{
+        if(path.endsWith('/research-card-inputs')||path.endsWith('/research-card-inputs-scoped'))return {...base,
+          schema:path.endsWith('-scoped')?'ar.shared-research-card-inputs.v2':'ar.shared-research-card-inputs.v1',
+          ...(path.endsWith('-scoped')?{validation_scope:'MATCHING_CARDS_ONLY_OTHER_INPUTS_NOT_EVALUATED'}:{}),enabled:true,inputs:emptyInputs?[]:[{
           snapshot_id:'registered-card',input_hash:'b'.repeat(64),company:'603986.SH',research_date:'20261110',
           source_cutoff_at:'2026-10-04T23:59:59+08:00',artifact_generated_at:'2026-11-10T01:48:00+08:00',
           industry_key:'chip',industry_taxonomy:'manual',taxonomy_version:'v1',pack_hash:'c'.repeat(64),
@@ -87,6 +89,20 @@ async function scenario(check,populated=false){
     }
   }finally{for(const slot of state.slots)slot?.cleanup?.();globalThis.__arCardHooks=previous;}
 }
+test('actual scoped card consumer uses V2 without a legacy input GET',()=>scenario(async s=>{
+  assert.ok(s.calls.includes('/api/shared-workspace/research-card-inputs-scoped'));
+  assert.ok(!s.calls.includes('/api/shared-workspace/research-card-inputs'));
+  s.nodes().find(n=>n.props?.['aria-label']==='冻结研究卡').props.onChange({target:{value:'registered-card'}});await s.settle();
+  assert.equal(s.button().props.disabled,false);
+},false,true));
+test('fresh scoped parent context cannot renew held card evidence or a retained action',()=>scenario(async s=>{
+  s.nodes().find(n=>n.props?.['aria-label']==='冻结研究卡').props.onChange({target:{value:'registered-card'}});await s.settle();
+  const retained=s.button().props.onClick;s.hold();await s.advance(15000);
+  assert.equal(s.button().props.disabled,false);
+  s.props.parentFresh=()=>true;s.render();s.setTime(16001);await s.settle();retained();
+  assert.equal(s.submitted.length,0);await s.advance(1000);assert.equal(s.button().props.disabled,true);
+  s.release();await s.settle();assert.equal(s.button().props.disabled,false);
+},false,true));
 test('actual card selection clears on workspace change and a retained click cannot submit',()=>scenario(async s=>{
   s.nodes().find(n=>n.props?.['aria-label']==='冻结研究卡').props.onChange({target:{value:'registered-card'}});await s.settle();
   assert.equal(s.button().props.disabled,false);const old=s.button().props.onClick;

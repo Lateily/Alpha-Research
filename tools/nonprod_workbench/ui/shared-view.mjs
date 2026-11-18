@@ -121,6 +121,32 @@ export async function sharedRead(api, path, renew) {
   }
 }
 
+export async function readSharedContext(api, context, renew) {
+  const data = await sharedRead(api, '/api/shared-workspace/context', renew);
+  const exact = (value, keys) => value && typeof value === 'object' && !Array.isArray(value) &&
+    Object.keys(value).sort().join('|') === [...keys].sort().join('|');
+  const identifier = value => typeof value === 'string' && /^[A-Za-z0-9_-]{8,100}$/.test(value);
+  if (!exact(data, ['schema', 'my_workspace', 'execution_identity', 'owned_commands', 'validation_scope',
+      'sample_purpose', 'human_review', 'production_authority', 'trading_authority']) ||
+      data.schema !== 'ar.shared-workspace-context.v1' ||
+      data.validation_scope !== 'IDENTITY_AND_JOB_REGISTRATION_NOT_OUTPUTS' ||
+      data.sample_purpose !== 'WORKFLOW_DEBUG' || data.human_review !== 'PENDING' ||
+      data.production_authority !== false || data.trading_authority !== false ||
+      !exact(data.my_workspace, ['login', 'workspace_id']) ||
+      typeof context.login !== 'string' || !context.login || context.login.length > 254 || /[\s\x00-\x1f]/.test(context.login) ||
+      data.my_workspace.login !== context.login || !identifier(data.my_workspace.workspace_id) ||
+      (context.workspaceId !== undefined && data.my_workspace.workspace_id !== context.workspaceId) ||
+      !exact(data.execution_identity, ['code_sha', 'source_tree_hash']) ||
+      typeof data.execution_identity.code_sha !== 'string' || typeof data.execution_identity.source_tree_hash !== 'string' ||
+      !/^[a-f0-9]{40}$/.test(data.execution_identity.code_sha) ||
+      !/^[a-f0-9]{64}$/.test(data.execution_identity.source_tree_hash) ||
+      (context.codeSha !== undefined && data.execution_identity.code_sha !== context.codeSha) ||
+      !data.owned_commands || typeof data.owned_commands !== 'object' || Array.isArray(data.owned_commands) ||
+      Object.entries(data.owned_commands).some(([command, value]) => !identifier(command) ||
+        !exact(value, ['job_id']) || !identifier(value.job_id))) throw new Error('SHARED_CONTEXT_MISMATCH');
+  return data;
+}
+
 export async function retrySharedPending(api, storage, workspaceId, commandId, renew) {
   const current = await sharedRead(api, '/api/shared-workspace', renew);
   if (current.my_workspace.workspace_id !== workspaceId) throw new Error('PENDING_WORKSPACE_MISMATCH');

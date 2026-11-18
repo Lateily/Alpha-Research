@@ -3,6 +3,33 @@ import test from 'node:test';
 import { existsSync } from 'node:fs';
 const url = new URL('../tools/nonprod_workbench/ui/shared-view.mjs', import.meta.url);
 const view = existsSync(url) ? await import(url) : {};
+const identityContext={login:'owner@example.com',workspaceId:'51715142-1963-466f-8470-ceb609afccbd',codeSha:'a'.repeat(40)};
+function contextReply(){return {schema:'ar.shared-workspace-context.v1',
+  my_workspace:{login:identityContext.login,workspace_id:identityContext.workspaceId},
+  execution_identity:{code_sha:identityContext.codeSha,source_tree_hash:'b'.repeat(64)},
+  owned_commands:{'original-command':{job_id:'0cfde834-bca2-4a5a-8d8c-06c9110e1604'}},
+  validation_scope:'IDENTITY_AND_JOB_REGISTRATION_NOT_OUTPUTS',sample_purpose:'WORKFLOW_DEBUG',
+  human_review:'PENDING',production_authority:false,trading_authority:false};}
+test('narrow context is an exact identity and registration contract without full-history GET',async()=>{
+  assert.equal(typeof view.readSharedContext,'function');const calls=[],reply=contextReply();
+  const received=await view.readSharedContext(async path=>{calls.push(path);return reply;},identityContext,assert.fail);
+  assert.deepEqual(calls,['/api/shared-workspace/context']);assert.equal(received,reply);
+  assert.equal(Object.hasOwn(received,'common_data'),false);assert.equal(Object.hasOwn(received,'my_jobs'),false);
+});
+test('narrow context rejects scope authority ownership code and malformed command bindings',async()=>{
+  assert.equal(typeof view.readSharedContext,'function');
+  for(const change of [d=>d.schema='ar.shared-workspace.v1',d=>d.validation_scope='FULLY_VERIFIED',
+    d=>d.my_workspace.login='member@example.com',d=>d.my_workspace.workspace_id='another-workspace',
+    d=>d.execution_identity.code_sha='c'.repeat(40),d=>d.execution_identity.source_tree_hash='bad',
+    d=>d.execution_identity.code_sha=['a'.repeat(40)],d=>d.execution_identity.source_tree_hash=['b'.repeat(64)],
+    d=>d.execution_identity.extra=true,d=>d.my_workspace.extra=true,d=>d.owned_commands=[],
+    d=>d.owned_commands['original-command'].status='SUCCEEDED',d=>d.owned_commands['original-command'].job_id='../bad',
+    d=>d.owned_commands['bad command']={job_id:'original-job'},d=>d.common_data={sync_status:'SYNCED'},
+    d=>d.sample_purpose='ACCEPTED',d=>d.human_review='PASS',d=>d.production_authority=true,d=>d.trading_authority=true]){
+    const bad=contextReply();change(bad);
+    await assert.rejects(view.readSharedContext(async()=>bad,identityContext,assert.fail),/SHARED_CONTEXT_MISMATCH/);
+  }
+});
 test('detail verification has its own exact fifteen-second age despite fresh common reads',()=>{
   const query={connection:'CONNECTED',stale:false,lastSuccessAt:16000};
   assert.equal(view.sharedViewFreshness(query,false,16000,1000).downloadsEnabled,true);

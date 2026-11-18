@@ -244,14 +244,26 @@ class FrozenInputs:
         """Bind registry classification bytes, not unrelated publication content."""
         schemas = {'ar.shared-input.v1', 'ar.shared-material-input.v1',
                    'ar.shared-research-card-input.v1'}
+        keys = {'schema','snapshot_id','input_hash','publication_fingerprint','attempt_fingerprint',
+                'source_run_id','source_trade_date','validation_scope','snapshot'}
+        declarations = {'schema','snapshot_id','input_hash'}
         with self.store.connect() as db:
-            rows = db.execute("SELECT snapshot_id,input_hash,body,json_extract(body,'$.schema'),"
-                              "json_extract(body,'$.snapshot_id'),json_extract(body,'$.input_hash') "
-                              "FROM shared_inputs ORDER BY rowid LIMIT 101").fetchall()
-        if len(rows) > 100:
-            raise WorkspaceError('CARDS_INDEX_CAPACITY',409)
+            rows = db.execute('SELECT snapshot_id,input_hash,body FROM shared_inputs ORDER BY rowid LIMIT 101').fetchall()
+            if len(rows) > 100:
+                raise WorkspaceError('CARDS_INDEX_CAPACITY',409)
+            headers = []
+            for sid,checksum,body in rows:
+                if type(body) is not str or db.execute('SELECT json_valid(?)',(body,)).fetchone()[0] != 1:
+                    raise WorkspaceError('FROZEN_REGISTRY_BINDING_INVALID',409)
+                fields = db.execute('SELECT key,type,value FROM json_each(?)',(body,)).fetchall()
+                # governance-mutation: SHARED_CARDS_HEADER_UNAMBIGUOUS
+                if (len(fields)!=len(keys) or {key for key,_kind,_value in fields}!=keys
+                        or any(kind!='text' for key,kind,_value in fields if key in declarations)):
+                    raise WorkspaceError('FROZEN_REGISTRY_BINDING_INVALID',409)
+                value = {key:item for key,_kind,item in fields if key in declarations}
+                headers.append((sid,checksum,body,value['schema'],value['snapshot_id'],value['input_hash']))
         result = []
-        for sid, checksum, body, schema, declared_sid, declared_hash in rows:
+        for sid, checksum, body, schema, declared_sid, declared_hash in headers:
             # governance-mutation: SHARED_CARDS_HEADER_CLASSIFICATION
             if (schema not in schemas or not isinstance(checksum,str)
                     or re.fullmatch(r'[a-f0-9]{64}',checksum) is None

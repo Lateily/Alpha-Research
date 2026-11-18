@@ -11,6 +11,30 @@ function base(){return {my_workspace:{login:'owner',workspace_id:'workspace-a'},
 function library(){return {...base(),schema:'ar.shared-research-card-library.v1',status:'EMPTY',library_hash:'b'.repeat(64),
   query:{industry_key:'chip',industry_taxonomy:null,taxonomy_version:null,research_date:'20261110',ts_code:null},
   page:0,page_size:50,total:0,results:[],rights:{status:'UNVERIFIED',visibility:'PRIVATE',sharing_allowed:false,model_use_allowed:false}};}
+function registeredInput(){return {snapshot_id:'registered-card',input_hash:'b'.repeat(64),company:'603986.SH',research_date:'20261110',
+  source_cutoff_at:'2026-10-04T23:59:59+08:00',artifact_generated_at:'2026-11-10T01:48:00+08:00',
+  industry_key:'chip',industry_taxonomy:'manual',taxonomy_version:'v1',pack_hash:'c'.repeat(64),
+  content_hash:'d'.repeat(64),basis_hash:'e'.repeat(64),classification_status:'SOURCE_METADATA_NOT_RECLASSIFIED',projection_hash:'f'.repeat(64)};}
+test('scoped card inputs use only V2 GET and preserve the original response schema and scope',async()=>{
+  assert.equal(typeof cards.readScopedCardInputs,'function');const calls=[];
+  const data={...base(),schema:'ar.shared-research-card-inputs.v2',
+    validation_scope:'MATCHING_CARDS_ONLY_OTHER_INPUTS_NOT_EVALUATED',enabled:true,inputs:[]};
+  const original=structuredClone(data);Object.freeze(data);
+  const received=await cards.readScopedCardInputs(async path=>{calls.push(path);return data;},context,assert.fail);
+  assert.deepEqual(calls,['/api/shared-workspace/research-card-inputs-scoped']);
+  assert.deepEqual(received,original);assert.deepEqual(data,original);
+});
+test('scoped card inputs reject wrong scope and retain every legacy input context guard',async()=>{
+  assert.equal(typeof cards.readScopedCardInputs,'function');
+  for(const change of [d=>d.schema='ar.shared-research-card-inputs.v1',d=>d.validation_scope='ALL_INPUTS_VERIFIED',
+    d=>delete d.validation_scope,d=>d.my_workspace.login='member',d=>d.my_workspace.workspace_id='workspace-b',
+    d=>d.consumer_code_sha='c'.repeat(40),d=>d.production_authority=true,d=>d.extra=true,
+    d=>d.enabled=false,d=>d.inputs=[{path:'/private/tmp'}]]){
+    const data={...base(),schema:'ar.shared-research-card-inputs.v2',
+      validation_scope:'MATCHING_CARDS_ONLY_OTHER_INPUTS_NOT_EVALUATED',enabled:true,inputs:[registeredInput()]};
+    change(data);await assert.rejects(cards.readScopedCardInputs(async()=>data,context,assert.fail),/CARDS_CONTEXT_MISMATCH/);
+  }
+});
 test('card query and context use separate closed contract',async()=>{
   assert.equal(typeof cards.readCardLibrary,'function');let path;
   const value=await cards.readCardLibrary(async p=>{path=p;return library();},context,async()=>{});
