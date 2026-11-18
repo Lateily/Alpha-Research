@@ -1,52 +1,73 @@
 {
-  "verdict": "PASS",
-  "as_of": "2026-11-17T17:48:56.885073+00:00",
+  "verdict": "WARN",
+  "as_of": "2026-11-18T08:27:50.481157+00:00",
   "max_age_days": 2,
   "meta": {
-    "fetched_at": "2026-11-17T17:45:55.050258",
-    "count": 5930,
+    "fetched_at": "2026-11-18T08:23:59.546170",
+    "count": 5931,
     "version": "4.2",
     "scorer": "barra_lite_v1"
   },
   "coverage": {
-    "price": 0.9403,
-    "pe": 0.941,
-    "pb": 0.941,
-    "roe": 0.8739
+    "price": 0.9401,
+    "pe": 0.9408,
+    "pb": 0.9408,
+    "roe": 0.0
   },
   "factor_summaries": {
     "value": {
-      "coverage": 0.981787521079258,
-      "unique": 909,
-      "stdev": 21.810122,
-      "median": 57.3
+      "coverage": 0.9819591974371944,
+      "unique": 911,
+      "stdev": 21.987442,
+      "median": 57.6
     },
     "quality": {
-      "coverage": 0.981787521079258,
-      "unique": 978,
-      "stdev": 26.986475,
+      "coverage": 0.9819591974371944,
+      "unique": 1,
+      "stdev": 0.0,
       "median": 50.0
     },
     "momentum": {
-      "coverage": 0.981787521079258,
-      "unique": 1001,
-      "stdev": 26.818829,
+      "coverage": 0.9819591974371944,
+      "unique": 646,
+      "stdev": 28.86929,
       "median": 50.0
     },
     "size": {
-      "coverage": 0.981787521079258,
+      "coverage": 0.9819591974371944,
       "unique": 943,
-      "stdev": 28.865129,
+      "stdev": 28.865785,
       "median": 50.0
     },
     "low_vol": {
-      "coverage": 0.981787521079258,
-      "unique": 701,
-      "stdev": 28.870183,
+      "coverage": 0.9819591974371944,
+      "unique": 650,
+      "stdev": 28.870546,
       "median": 50.0
     }
   },
   "errors": [],
-  "warnings": [],
+  "warnings": [
+    {
+      "code": "pe_basis_not_registration_grade",
+      "message": "PE is a provider multiple, not a verified TTM/forward valuation anchor.",
+      "clean_pe_ttm_coverage": 0.0
+    },
+    {
+      "code": "momentum_is_short_tape",
+      "message": "factors.momentum is 1-day tape rank, not 12-1 month momentum."
+    },
+    {
+      "code": "quality_factor_inert_or_unbacked",
+      "message": "Quality factor lacks broad ROE coverage and should not be used as quality evidence.",
+      "roe_coverage": 0.0,
+      "quality_summary": {
+        "coverage": 0.9819591974371944,
+        "unique": 1,
+        "stdev": 0.0,
+        "median": 50.0
+      }
+    }
+  ],
   "ticker_checks": []
 }

@@ -1,7 +1,7 @@
 {
-  "_status": "empty",
+  "_status": "api_error",
   "ticker": "603233.SH",
-  "fetched_at": "2026-11-17T17:53:07Z",
+  "fetched_at": "2026-11-18T08:31:40Z",
   "api_used": "share_float",
   "window_days": 180,
   "events": [],
@@ -11,5 +11,6 @@
     "next_unlock_date": null,
     "next_unlock_ratio": null,
     "risk_level": null
-  }
+  },
+  "_error": "RuntimeError: {'ts_code': '603233.SH', 'start_date': '20261118', 'end_date': '20270517'}: Exception: 查询数据失败，请确认参数！可以反馈管理员协助您排查问题, dial tcp 10.255.255.2:8806: connect: connection refused | {'ts_code': '603233.SH'}: Exception: 查询数据失败，请确认参数！可以反馈管理员协助您排查问题, dial tcp 10.255.255.2:8806: connect: connection refused"
 }

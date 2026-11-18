@@ -1,89 +1,80 @@
 {
-  "generated_at": "2026-11-17T17:53:25Z",
+  "generated_at": "2026-11-18T08:32:23Z",
   "mode": "review_context_only",
   "_contract": "v1 第一版:不预测方向、不改仓位 — 仅作复盘/研究的宏观上下文原料。任何用本文件自动调仓的行为都超出契约。",
-  "_status": "PARTIAL",
+  "_status": "SOURCE_DOWN",
   "items": [
     {
       "endpoint": "cn_gdp",
       "cadence": "quarterly",
       "headline": "gdp_yoy",
       "unit": "pct_yoy",
-      "_status": "OK",
-      "actual": 4.6,
-      "previous": 4.7,
-      "as_of": "2026Q3",
-      "previous_as_of": "2026Q2",
-      "freshness_days": 78
+      "_status": "SOURCE_DOWN",
+      "actual": null,
+      "previous": null,
+      "as_of": null,
+      "freshness_days": null,
+      "_error": "Exception: 查询数据失败，请确认参数！可以反馈管理员协助您排查问题, dial tcp 10.255.255.2:8806: connect: connection refused"
     },
     {
       "endpoint": "cn_cpi",
       "cadence": "monthly",
       "headline": "nt_yoy",
       "unit": "pct_yoy",
-      "_status": "OK",
-      "actual": 0.7,
-      "previous": 0.9,
-      "as_of": "202610",
-      "previous_as_of": "202609",
-      "freshness_days": 48
+      "_status": "SOURCE_DOWN",
+      "actual": null,
+      "previous": null,
+      "as_of": null,
+      "freshness_days": null,
+      "_error": "Exception: 查询数据失败，请确认参数！可以反馈管理员协助您排查问题, dial tcp 10.255.255.2:8806: connect: connection refused"
     },
     {
       "endpoint": "cn_ppi",
       "cadence": "monthly",
       "headline": "ppi_yoy",
       "unit": "pct_yoy",
-      "_status": "OK",
-      "actual": 5.7,
-      "previous": 5.0,
-      "as_of": "202610",
-      "previous_as_of": "202609",
-      "freshness_days": 48
+      "_status": "SOURCE_DOWN",
+      "actual": null,
+      "previous": null,
+      "as_of": null,
+      "freshness_days": null,
+      "_error": "Exception: 查询数据失败，请确认参数！可以反馈管理员协助您排查问题, dial tcp 10.255.255.2:8806: connect: connection refused"
     },
     {
       "endpoint": "cn_pmi",
       "cadence": "monthly",
       "headline": "PMI010000",
       "unit": "index_50_neutral",
-      "_status": "EMPTY_VALID",
+      "_status": "SOURCE_DOWN",
       "actual": null,
       "previous": null,
       "as_of": null,
-      "freshness_days": null
+      "freshness_days": null,
+      "_error": "Exception: 查询数据失败，请确认参数！可以反馈管理员协助您排查问题, dial tcp 10.255.255.2:8806: connect: connection refused"
     },
     {
       "endpoint": "shibor",
       "cadence": "daily",
       "headline": "1w",
       "unit": "pct_annual",
-      "_status": "OK",
-      "actual": 1.4,
-      "previous": 1.39,
-      "as_of": "20261117",
-      "previous_as_of": "20261116",
-      "freshness_days": 1,
-      "detail": {
-        "on": 1.303,
-        "1w": 1.4,
-        "3m": 1.4,
-        "1y": 1.4378
-      }
+      "_status": "SOURCE_DOWN",
+      "actual": null,
+      "previous": null,
+      "as_of": null,
+      "freshness_days": null,
+      "_error": "Exception: 查询数据失败，请确认参数！可以反馈管理员协助您排查问题, dial tcp 10.255.255.2:8806: connect: connection refused"
     },
     {
       "endpoint": "us_tycr",
       "cadence": "daily",
       "headline": "2s10s",
       "unit": "pct_points",
-      "_status": "OK",
-      "actual": 0.29,
-      "previous": 0.27,
-      "as_of": "20261116",
-      "previous_as_of": "20261113",
-      "freshness_days": 2,
-      "detail": {
-        "y2": 4.83,
-        "y10": 5.12
-      }
+      "_status": "SOURCE_DOWN",
+      "actual": null,
+      "previous": null,
+      "as_of": null,
+      "freshness_days": null,
+      "_error": "Exception: 查询数据失败，请确认参数！可以反馈管理员协助您排查问题, dial tcp 10.255.255.2:8806: connect: connection refused"
     }
   ],
   "disclaimer": "不是买卖指令;研究信号,human executes."

@@ -1,7 +1,7 @@
 {
-  "_status": "empty",
+  "_status": "api_error",
   "ticker": "688120.SH",
-  "fetched_at": "2026-11-17T17:53:15Z",
+  "fetched_at": "2026-11-18T08:32:03Z",
   "api_used": "stk_holdertrade",
   "window_days": 180,
   "events": [],
@@ -13,5 +13,6 @@
     "net_change_ratio_180d": 0.0,
     "last_announce_date": null,
     "signal_level": "NEUTRAL"
-  }
+  },
+  "_error": "RuntimeError: {'ts_code': '688120.SH', 'start_date': '20260522', 'end_date': '20261118'}: Exception: 查询数据失败，请确认参数！可以反馈管理员协助您排查问题, dial tcp 10.255.255.2:8806: connect: connection refused | {'ts_code': '688120.SH'}: Exception: 查询数据失败，请确认参数！可以反馈管理员协助您排查问题, dial tcp 10.255.255.2:8806: connect: connection refused"
 }

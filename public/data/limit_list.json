@@ -1,11 +1,14 @@
 {
-  "fetched_at": "2026-11-17T17:50:57Z",
+  "fetched_at": "2026-11-18T08:30:04Z",
   "trade_date": "20261118",
   "tier": 15000,
-  "_status": "ok",
-  "api_used": "limit_list_d",
+  "_status": "endpoint_unavailable",
+  "api_used": null,
   "_attempted_endpoints": [
-    "limit_list_d"
+    "limit_list_d",
+    "limit_list",
+    "limit_list_ths",
+    "limit_step"
   ],
   "limit_up": [],
   "limit_down": [],
@@ -14,5 +17,6 @@
     "lu_count": 0,
     "ld_count": 0,
     "fail_count": 0
-  }
+  },
+  "_error": "limit_list_d: Exception: 查询数据失败，请确认参数！可以反馈管理员协助您排查问题, dial tcp 10.255.255.2:8806: connect: connection refused | limit_list: Exception: 请指定正确的接口名 | limit_list_ths: Exception: 查询数据失败，请确认参数！可以反馈管理员协助您排查问题, dial tcp 10.255.255.2:8806: connect: connection refused | limit_step: Exception: 查询数据失败，请确认参数！可以反馈管理员协助您排查问题, dial tcp 10.255.255.2:8806: connect: connection refused"
 }

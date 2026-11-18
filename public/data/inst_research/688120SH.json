@@ -1,46 +1,21 @@
 {
-  "_status": "ok",
+  "_status": "all_failed",
   "ticker": "688120.SH",
-  "fetched_at": "2026-11-17T17:51:05Z",
-  "api_used": "stk_surv",
+  "fetched_at": "2026-11-18T08:30:28Z",
+  "api_used": null,
   "_attempted_endpoints": [
-    "stk_surv"
+    "stk_surv",
+    "stk_holdertrade",
+    "surv_holdertrade",
+    "investor_research"
   ],
   "window_days": 90,
-  "surveys": [
-    {
-      "ts_code": "688120.SH",
-      "name": "华海清科",
-      "surv_date": "20261105",
-      "fund_visitors": "--",
-      "rece_place": "上证路演中心(https://roadshow.sseinfo.com/)",
-      "rece_mode": "业绩说明会",
-      "rece_org": "网络远程参加公司2026年第三季度业绩说明会活动的投资者",
-      "org_type": "--",
-      "comp_rece": "董事长、总经理 王同庆,独立董事 王浩,董事、财务总监 王怀需,董事会秘书 陈圳寅",
-      "inst_count": 1,
-      "surv_type": "业绩说明会",
-      "description": null
-    },
-    {
-      "ts_code": "688120.SH",
-      "name": "华海清科",
-      "surv_date": "20260903",
-      "fund_visitors": "--",
-      "rece_place": "全景路演网站(http://rs.p5w.net)",
-      "rece_mode": "业绩说明会",
-      "rece_org": "网络远程参加天津辖区上市公司2026年投资者网上集体接待日暨半年报业绩说明会的投资者",
-      "org_type": "--",
-      "comp_rece": "董事长、总经理 王同庆,独立董事 雷震霖,董事、财务总监 王怀需,董事会秘书 陈圳寅",
-      "inst_count": 1,
-      "surv_type": "业绩说明会",
-      "description": null
-    }
-  ],
+  "surveys": [],
   "summary": {
-    "total_30d": 1,
-    "total_90d": 2,
-    "unique_inst_30d": 1,
-    "latest_date": "2026-11-05"
-  }
+    "total_30d": 0,
+    "total_90d": 0,
+    "unique_inst_30d": null,
+    "latest_date": null
+  },
+  "_error": "stk_surv: RuntimeError: stk_surv: Exception: 查询数据失败，请确认参数！可以反馈管理员协助您排查问题, dial tcp 10.255.255.2:8806: connect: connection refused | stk_surv: Exception: 查询数据失败，请确认参数！可以反馈管理员协助您排查问题, dial tcp 10.255.255.2:8806: connect: connection refused | stk_holdertrade: RuntimeError: stk_holdertrade: Exception: 查询数据失败，请确认参数！可以反馈管理员协助您排查问题, dial tcp 10.255.255.2:8806: connect: connection refused | stk_holdertrade: Exception: 查询数据失败，请确认参数！可以反馈管理员协助您排查问题, dial tcp 10.255.255.2:8806: connect: connection refused | surv_holdertrade: RuntimeError: surv_holdertrade: Exception: 请指定正确的接口名 | surv_holdertrade: Exception: 请指定正确的接口名 | investor_research: RuntimeError: investor_research: Exception: 请指定正确的接口名 | investor_research: Exception: 请指定正确的接口名"
 }
