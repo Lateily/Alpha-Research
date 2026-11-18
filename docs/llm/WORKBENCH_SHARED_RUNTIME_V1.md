@@ -14,9 +14,12 @@ Retired generations cannot update a new view even after an identity changes
 away and back. Task detail also has its own 15-second verification age; a
 background recheck does not erase still-fresh steps or receipt controls, while
 an explicit recheck, failed check, or expired detail blocks downloads.
-Common and card polling opt into a five-second start-aligned cadence: a slow
-completed read does not add another five seconds of idle time. Reads remain
-single-flight, and other legacy consumers retain completion-aligned polling.
+Common and card polling opt into a start-aligned cadence with at most one
+second of post-success idle, budgeting for the next slow read. Selected detail
+has its own single-flight cadence instead of waiting for another common cycle.
+Failed reads retain a five-second retry cooldown. Other legacy consumers retain
+completion-aligned polling. Reads slower than the remaining freshness budget
+still expire; this is not an unbounded latency guarantee.
 These are lifecycle guarantees, not a 24-hour availability or research approval.
 
 This is S4 preparation, not a deployment or acceptance receipt. No current URL

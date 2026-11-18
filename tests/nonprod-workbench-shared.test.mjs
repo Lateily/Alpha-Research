@@ -20,12 +20,25 @@ test('start-aligned polling does not add five idle seconds after a slow verified
   poller.stop();
 });
 test('start-aligned fast reads retain a bounded delay and never change the legacy cadence',async()=>{
-  for(const [aligned,elapsed,expected] of [[true,2000,3000],[true,-2000,5000],[false,12000,5000]]){
+  for(const [aligned,elapsed,expected] of [[true,2000,1000],[true,-2000,1000],[false,12000,5000]]){
     let now=1000;const delays=[];
     const poller=view.createSharedPoller({read:async()=>{now+=elapsed;return {};},apply:()=>{},fail:assert.fail,
       cadenceFromStart:aligned,now:()=>now,schedule:(_,delay)=>{delays.push(delay);return 1;},cancel:()=>{}});
     await poller.refresh();poller.stop();assert.deepEqual(delays,[expected]);
   }
+});
+test('slow failed reads retain a retry cooldown instead of hammering invalid evidence',async()=>{
+  let now=1000;const delays=[];
+  const poller=view.createSharedPoller({read:async()=>{now+=12400;throw new Error('INVALID_EVIDENCE');},apply:assert.fail,fail:()=>{},
+    cadenceFromStart:true,now:()=>now,schedule:(_,delay)=>{delays.push(delay);return 1;},cancel:()=>{}});
+  await poller.refresh();poller.stop();assert.deepEqual(delays,[5000]);
+});
+test('a fast then slow verified response stays inside the unchanged freshness budget',async()=>{
+  let now=0;const durations=[1000,12400],completions=[],delays=[];
+  const poller=view.createSharedPoller({read:async()=>{now+=durations.shift();return {};},apply:()=>completions.push(now),fail:assert.fail,
+    cadenceFromStart:true,now:()=>now,schedule:(_,delay)=>{delays.push(delay);return 1;},cancel:()=>{}});
+  await poller.refresh();now+=delays[0];await poller.refresh();poller.stop();
+  assert.ok(completions[1]-completions[0]<=15000,'post-read idle must budget the next slow read as well');
 });
 test('slow shared GET is single-flight and applies every completed read', async () => {
   assert.equal(typeof view.createSharedPoller, 'function', 'missing completion-driven polling');

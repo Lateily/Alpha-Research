@@ -19045,9 +19045,18 @@ MUTATIONS += (
         'Fresh common reads cannot keep stale task detail downloadable.'),
     MutationCase('SHARED_CARDS_REFRESH_CADENCE','Shared cards','tools/nonprod_workbench/ui/shared-view.mjs',
         'tests/test_workbench_shared_cards.py',
-        "        const delay=cadenceFromStart?Math.max(0,5000-Math.max(0,now()-startedAt)):5000;",
+        "        const delay=cadenceFromStart&&!unsuccessful?Math.min(1000,Math.max(0,5000-Math.max(0,now()-startedAt))):5000;",
         "        const delay=5000;", 'test_browser_card_contract',
         'Slow verified responses must not incur an additional five-second idle freshness gap.'),
+    MutationCase('SHARED_CARDS_DETAIL_INDEPENDENT_CADENCE','Shared cards','tools/nonprod_workbench/ui/shared-view.mjs',
+        'tests/test_workbench_shared_cards.py',
+        '    schedule:cadenceFromStart?schedule:()=>null,cancel,cadenceFromStart,now});',
+        '    schedule:()=>null,cancel,cadenceFromStart,now});', 'test_browser_card_contract',
+        'Selected detail must not skip a whole common cycle when its read is slightly slower.'),
+    MutationCase('SHARED_CARDS_FAILED_REFRESH_COOLDOWN','Shared cards','tools/nonprod_workbench/ui/shared-view.mjs',
+        'tests/test_workbench_shared_cards.py',
+        'cadenceFromStart&&!unsuccessful?', 'cadenceFromStart?', 'test_browser_card_contract',
+        'Failed verified reads keep their cooldown rather than creating a rapid failure loop.'),
 )
 
 SHARD_SPEC_RE = re.compile(r"^(?P<index>[1-9][0-9]*)/(?P<count>[1-9][0-9]*)$")

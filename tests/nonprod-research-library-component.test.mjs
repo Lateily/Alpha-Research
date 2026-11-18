@@ -78,8 +78,8 @@ async function componentScenario(mutant = false, workspaceSwitch = false, downlo
       for(const effect of runtime.pending.splice(0))effect();await Promise.resolve();await Promise.resolve();}}
     const reads=()=>calls.filter(path=>path.includes('/research-library')).length;
     const header=()=>nodes(tree).find(v=>v.type==='button'&&v.props['aria-label']==='刷新共享工作区');
-    async function parentTick(){assert.equal(timers.size,1,'only the parent has a scheduled poll');
-      const [id,callback]=[...timers.entries()][0];timers.delete(id);callback();await settle();}
+    async function parentTick(){assert.ok(timers.size>=1&&timers.size<=2,'common and detail each own at most one timer');
+      for(const [id,callback] of [...timers.entries()]){timers.delete(id);callback();}await settle();}
     await settle();
     if(downloadScenario){
       await nodes(tree).find(v=>v.type==='button'&&v.props.className==='shared-job-row').props.onClick();await settle();

@@ -36,17 +36,18 @@ export function createSharedPoller({ read, apply, fail, schedule = setTimeout, c
     if (stopped) return Promise.resolve();
     if (inFlight) return inFlight;
     cancel(timer); timer = null;
-    const startedAt=now();
+    const startedAt=now();let unsuccessful=false;
     inFlight = (async () => {
       try {
         const data = await read();
         if (!stopped) await apply(data);
       } catch (error) {
+        unsuccessful=true;
         if (!stopped) fail(error);
       } finally {
         inFlight = null;
         // governance-mutation: SHARED_CARDS_REFRESH_CADENCE
-        const delay=cadenceFromStart?Math.max(0,5000-Math.max(0,now()-startedAt)):5000;
+        const delay=cadenceFromStart&&!unsuccessful?Math.min(1000,Math.max(0,5000-Math.max(0,now()-startedAt))):5000;
         if (!stopped) timer = schedule(refresh, delay);
       }
     })();
@@ -60,13 +61,14 @@ export function retainedStatus(value, stale) {
 }
 
 // Common freshness must not wait for the independent, single-flight detail read.
-export function createSharedRefreshPair({read,apply,readDetails,fail,schedule=setTimeout,cancel=clearTimeout,cadenceFromStart=false}) {
+export function createSharedRefreshPair({read,apply,readDetails,fail,schedule=setTimeout,cancel=clearTimeout,cadenceFromStart=false,now=Date.now}) {
   let latest;
-  const details=createSharedPoller({read:()=>readDetails(latest),apply:()=>{},fail,schedule:()=>null,cancel:()=>{}});
+  const details=createSharedPoller({read:()=>readDetails(latest),apply:()=>{},fail,
+    schedule:cadenceFromStart?schedule:()=>null,cancel,cadenceFromStart,now});
   const common=createSharedPoller({read,apply:async data=>{
     apply(data);latest=data;
     details.refresh();
-  },fail,schedule,cancel,cadenceFromStart});
+  },fail,schedule,cancel,cadenceFromStart,now});
   return {refresh:()=>common.refresh(),stop(){common.stop();details.stop();}};
 }
 
