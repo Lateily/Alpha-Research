@@ -11,6 +11,22 @@ test('detail verification has its own exact fifteen-second age despite fresh com
   for(const timestamp of [null,NaN,Infinity])
     assert.equal(view.sharedViewFreshness(query,false,16001,timestamp).downloadsEnabled,false);
 });
+test('start-aligned polling does not add five idle seconds after a slow verified response',async()=>{
+  let now=1000,release;const timers=[];
+  const poller=view.createSharedPoller({read:()=>new Promise(resolve=>{release=resolve;}),apply:()=>{},fail:assert.fail,
+    cadenceFromStart:true,now:()=>now,schedule:(fn,delay)=>{timers.push({fn,delay});return 1;},cancel:()=>{}});
+  const first=poller.refresh();now=13000;release({});await first;
+  assert.equal(timers.length,1);assert.equal(timers[0].delay,0);
+  poller.stop();
+});
+test('start-aligned fast reads retain a bounded delay and never change the legacy cadence',async()=>{
+  for(const [aligned,elapsed,expected] of [[true,2000,3000],[true,-2000,5000],[false,12000,5000]]){
+    let now=1000;const delays=[];
+    const poller=view.createSharedPoller({read:async()=>{now+=elapsed;return {};},apply:()=>{},fail:assert.fail,
+      cadenceFromStart:aligned,now:()=>now,schedule:(_,delay)=>{delays.push(delay);return 1;},cancel:()=>{}});
+    await poller.refresh();poller.stop();assert.deepEqual(delays,[expected]);
+  }
+});
 test('slow shared GET is single-flight and applies every completed read', async () => {
   assert.equal(typeof view.createSharedPoller, 'function', 'missing completion-driven polling');
   const responses = [], applied = [], timers = new Map(); let nextTimer = 0;

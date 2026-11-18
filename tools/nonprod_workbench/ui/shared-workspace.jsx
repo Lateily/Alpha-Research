@@ -66,6 +66,7 @@ export default function SharedWorkspace({ api, access, refreshRevision }) {
   useEffect(() => {
     const context = actorContext.current;
     const current = createSharedRefreshPair({
+      cadenceFromStart:true,
       read: () => sharedRead(api, `/api/shared-workspace?page=${page}`, renew),
       apply: data => {
         if (actorContext.current !== context) return;

@@ -19043,6 +19043,11 @@ MUTATIONS += (
         "  const detailExpired=detailLastSuccessAt!==undefined&&\n    (!Number.isFinite(detailLastSuccessAt)||now-detailLastSuccessAt>15000);",
         "  const detailExpired=false;", 'test_browser_card_contract',
         'Fresh common reads cannot keep stale task detail downloadable.'),
+    MutationCase('SHARED_CARDS_REFRESH_CADENCE','Shared cards','tools/nonprod_workbench/ui/shared-view.mjs',
+        'tests/test_workbench_shared_cards.py',
+        "        const delay=cadenceFromStart?Math.max(0,5000-Math.max(0,now()-startedAt)):5000;",
+        "        const delay=5000;", 'test_browser_card_contract',
+        'Slow verified responses must not incur an additional five-second idle freshness gap.'),
 )
 
 SHARD_SPEC_RE = re.compile(r"^(?P<index>[1-9][0-9]*)/(?P<count>[1-9][0-9]*)$")

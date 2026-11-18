@@ -30,12 +30,13 @@ export function sharedViewFreshness(query, detailStale = false, now = Date.now()
 }
 
 // One GET in flight per view. Disposal rejects late results, not slow results.
-export function createSharedPoller({ read, apply, fail, schedule = setTimeout, cancel = clearTimeout }) {
+export function createSharedPoller({ read, apply, fail, schedule = setTimeout, cancel = clearTimeout, cadenceFromStart = false, now = Date.now }) {
   let stopped = false, inFlight = null, timer = null;
   function refresh() {
     if (stopped) return Promise.resolve();
     if (inFlight) return inFlight;
     cancel(timer); timer = null;
+    const startedAt=now();
     inFlight = (async () => {
       try {
         const data = await read();
@@ -44,7 +45,9 @@ export function createSharedPoller({ read, apply, fail, schedule = setTimeout, c
         if (!stopped) fail(error);
       } finally {
         inFlight = null;
-        if (!stopped) timer = schedule(refresh, 5000);
+        // governance-mutation: SHARED_CARDS_REFRESH_CADENCE
+        const delay=cadenceFromStart?Math.max(0,5000-Math.max(0,now()-startedAt)):5000;
+        if (!stopped) timer = schedule(refresh, delay);
       }
     })();
     return inFlight;
@@ -57,13 +60,13 @@ export function retainedStatus(value, stale) {
 }
 
 // Common freshness must not wait for the independent, single-flight detail read.
-export function createSharedRefreshPair({read,apply,readDetails,fail,schedule=setTimeout,cancel=clearTimeout}) {
+export function createSharedRefreshPair({read,apply,readDetails,fail,schedule=setTimeout,cancel=clearTimeout,cadenceFromStart=false}) {
   let latest;
   const details=createSharedPoller({read:()=>readDetails(latest),apply:()=>{},fail,schedule:()=>null,cancel:()=>{}});
   const common=createSharedPoller({read,apply:async data=>{
     apply(data);latest=data;
     details.refresh();
-  },fail,schedule,cancel});
+  },fail,schedule,cancel,cadenceFromStart});
   return {refresh:()=>common.refresh(),stop(){common.stop();details.stop();}};
 }
 
