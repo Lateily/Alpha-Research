@@ -42,6 +42,8 @@ export default function SharedWorkspace({ api, access, refreshRevision }) {
   const [busy, setBusy] = useState(false), [pending, setPending] = useState([]);
   const [detail, setDetail] = useState(null), [selection, setSelected] = useState(null), [detailError, setDetailError] = useState('');
   const [detailStale, setDetailStale] = useState(false);
+  const [detailLastSuccessAt,setDetailLastSuccessAt]=useState(null);
+  const detailFreshness=useRef(null);
   const [libraryRefreshRevision, setLibraryRefreshRevision] = useState(0);
   const poller = useRef(null), selectedRef = useRef(null), detailSequence = useRef(0), detailLoading = useRef(null), readerRef = useRef(null), cardDownloadRef = useRef(null);
   const [now, setNow] = useState(Date.now);
@@ -97,7 +99,7 @@ export default function SharedWorkspace({ api, access, refreshRevision }) {
   useEffect(() => {
     ++detailSequence.current;
     selectedRef.current = null;
-    setSelected(null); setDetail(null); setDetailStale(true); setBusy(false);
+    setSelected(null); setDetail(null); setDetailStale(true); setDetailLastSuccessAt(null); setBusy(false);
     setPending(getPending(window.localStorage, visibleQuery.data?.my_workspace.workspace_id));
   }, [reader]);
   async function open(jobId,kind,select=true,requestReader=readerRef.current) {
@@ -108,16 +110,22 @@ export default function SharedWorkspace({ api, access, refreshRevision }) {
     if(!same){chosen={jobId,kind,reader:requestReader};selectedRef.current=chosen;setSelected(chosen);setDetail(null);}
     const request = ++detailSequence.current;
     detailLoading.current = request;
-    setDetailError(''); setDetailStale(true);
+    setDetailError(''); if(select||!same){
+      if(detailFreshness.current)detailFreshness.current.stale=true;
+      setDetailStale(true);
+    }
     const current=()=>request===detailSequence.current&&detailReadCurrent(chosen,selectedRef.current,readerRef.current);
     try {
       const data = await sharedRead(api, `/api/shared-workspace/jobs/${encodeURIComponent(jobId)}`, renew);
       if(!current())return;
       if(data?.job_id!==jobId||data.kind!==kind||(kind===cardKind&&!cardStatuses.has(data.status)))
         throw new Error('SHARED_DETAIL_BINDING_MISMATCH');
-      setDetail(data);setDetailStale(false);
+      setDetail(data);setDetailStale(false);setDetailLastSuccessAt(Date.now());
     } catch (error) {
-      if(current())setDetailError(kind===cardKind?'RESEARCH_CARD_DETAIL_UNAVAILABLE':error.message);
+      if(current()){
+        if(detailFreshness.current)detailFreshness.current.stale=true;
+        setDetailStale(true);setDetailError(kind===cardKind?'RESEARCH_CARD_DETAIL_UNAVAILABLE':error.message);
+      }
     } finally { if (detailLoading.current === request) detailLoading.current = null; }
   }
   async function run(kind, selection = null) {
@@ -180,11 +188,13 @@ export default function SharedWorkspace({ api, access, refreshRevision }) {
   const rows = view === 'my' ? data?.my_jobs || [] : data?.team_jobs || [];
   const total = view === 'my' ? data?.my_total || 0 : data?.team_total || 0;
   const common = data?.common_data, observation = common?.observation;
-  const freshness = sharedViewFreshness(visibleQuery, detailStale, now);
+  const freshness = sharedViewFreshness(visibleQuery, detailStale, now, detailLastSuccessAt);
+  detailFreshness.current={query:visibleQuery,stale:detailStale,lastSuccessAt:detailLastSuccessAt};
   const cardEvidence=selected?.kind===cardKind?cardTaskEvidence(detail,{jobId:selected.jobId,stale:freshness.detailStale}):null;
   cardDownloadRef.current=cardEvidence;
   function downloadCard(){
-    if(cardEvidence&&cardDownloadRef.current===cardEvidence&&detailLoading.current===null&&detailReadCurrent(selected,selectedRef.current,readerRef.current))
+    const current=detailFreshness.current;
+    if(cardEvidence&&cardDownloadRef.current===cardEvidence&&sharedViewFreshness(current.query,current.stale,Date.now(),current.lastSuccessAt).downloadsEnabled&&detailReadCurrent(selected,selectedRef.current,readerRef.current))
       download(`${selected.jobId}.json`,cardEvidence.receipt);
   }
   const syncView = commonSyncView(common, freshness.commonStale);

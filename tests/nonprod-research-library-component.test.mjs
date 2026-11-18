@@ -85,6 +85,8 @@ async function componentScenario(mutant = false, workspaceSwitch = false, downlo
       await nodes(tree).find(v=>v.type==='button'&&v.props.className==='shared-job-row').props.onClick();await settle();
       if(downloadScenario==='slow'){
         holdDetails=true;await parentTick();
+        const receiptButton=nodes(tree).find(v=>v.type==='button'&&v.props.children.includes('任务回执'));
+        assert.equal(receiptButton.props.disabled,false,'fresh verified detail remains usable during read-only background verification');
         const detailCount=calls.filter(path=>path.startsWith('/api/shared-workspace/jobs/')).length;
         assert.equal(timers.size,1,'slow detail must not prevent scheduling the next common poll');
         const before=calls.filter(path=>path.startsWith('/api/shared-workspace?page=')).length;

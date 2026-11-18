@@ -200,7 +200,7 @@ class SharedCardTests(unittest.TestCase):
 
     def test_browser_card_contract(self):
         import subprocess
-        value=subprocess.run(['node','--test','tests/nonprod-research-cards.test.mjs','tests/nonprod-shared-refresh-pair.test.mjs'],cwd=ROOT,
+        value=subprocess.run(['node','--test','tests/nonprod-research-cards.test.mjs','tests/nonprod-shared-refresh-pair.test.mjs','tests/nonprod-workbench-shared.test.mjs'],cwd=ROOT,
             capture_output=True,text=True,timeout=40)
         self.assertEqual(value.returncode,0,(value.stdout+value.stderr)[-5000:])
 

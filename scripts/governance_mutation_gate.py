@@ -19038,6 +19038,11 @@ MUTATIONS += (
         "    typeof current.parentFresh==='function'&&current.parentFresh()===true&&", "",
         'test_browser_card_contract',
         'A retained card action must recheck exact parent expiry between timer renders.'),
+    MutationCase('SHARED_CARDS_DETAIL_OWN_EXPIRY','Shared cards','tools/nonprod_workbench/ui/shared-view.mjs',
+        'tests/test_workbench_shared_cards.py',
+        "  const detailExpired=detailLastSuccessAt!==undefined&&\n    (!Number.isFinite(detailLastSuccessAt)||now-detailLastSuccessAt>15000);",
+        "  const detailExpired=false;", 'test_browser_card_contract',
+        'Fresh common reads cannot keep stale task detail downloadable.'),
 )
 
 SHARD_SPEC_RE = re.compile(r"^(?P<index>[1-9][0-9]*)/(?P<count>[1-9][0-9]*)$")

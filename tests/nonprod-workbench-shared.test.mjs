@@ -3,6 +3,14 @@ import test from 'node:test';
 import { existsSync } from 'node:fs';
 const url = new URL('../tools/nonprod_workbench/ui/shared-view.mjs', import.meta.url);
 const view = existsSync(url) ? await import(url) : {};
+test('detail verification has its own exact fifteen-second age despite fresh common reads',()=>{
+  const query={connection:'CONNECTED',stale:false,lastSuccessAt:16000};
+  assert.equal(view.sharedViewFreshness(query,false,16000,1000).downloadsEnabled,true);
+  const expired=view.sharedViewFreshness(query,false,16001,1000);
+  assert.equal(expired.commonStale,false);assert.equal(expired.detailStale,true);assert.equal(expired.downloadsEnabled,false);
+  for(const timestamp of [null,NaN,Infinity])
+    assert.equal(view.sharedViewFreshness(query,false,16001,timestamp).downloadsEnabled,false);
+});
 test('slow shared GET is single-flight and applies every completed read', async () => {
   assert.equal(typeof view.createSharedPoller, 'function', 'missing completion-driven polling');
   const responses = [], applied = [], timers = new Map(); let nextTimer = 0;

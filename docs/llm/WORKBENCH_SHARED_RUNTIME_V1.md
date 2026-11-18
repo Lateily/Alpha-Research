@@ -10,6 +10,10 @@ Both parent and card evidence must be fresh: card actions recheck the unchanged
 15-second cutoff at click time, rather than borrowing the heading's timestamp.
 Failed verification blocks immediately and retries read-only; it never submits
 a task. Paired reads are drained before another poll, including partial failure.
+Retired generations cannot update a new view even after an identity changes
+away and back. Task detail also has its own 15-second verification age; a
+background recheck does not erase still-fresh steps or receipt controls, while
+an explicit recheck, failed check, or expired detail blocks downloads.
 These are lifecycle guarantees, not a 24-hour availability or research approval.
 
 This is S4 preparation, not a deployment or acceptance receipt. No current URL

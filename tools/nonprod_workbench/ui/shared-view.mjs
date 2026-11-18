@@ -19,11 +19,14 @@ export function sharedActorQuery(query, login) {
   return query;
 }
 
-export function sharedViewFreshness(query, detailStale = false, now = Date.now()) {
+export function sharedViewFreshness(query, detailStale = false, now = Date.now(), detailLastSuccessAt) {
   const commonStale = query.stale || query.connection === 'DISCONNECTED';
   const expired = !Number.isFinite(query.lastSuccessAt) || now - query.lastSuccessAt > 15000;
   const stale = commonStale || expired;
-  return { commonStale: stale, detailStale: stale || detailStale, downloadsEnabled: !stale && !detailStale };
+  // governance-mutation: SHARED_CARDS_DETAIL_OWN_EXPIRY
+  const detailExpired=detailLastSuccessAt!==undefined&&
+    (!Number.isFinite(detailLastSuccessAt)||now-detailLastSuccessAt>15000);
+  return { commonStale: stale, detailStale: stale || detailStale || detailExpired, downloadsEnabled: !stale && !detailStale && !detailExpired };
 }
 
 // One GET in flight per view. Disposal rejects late results, not slow results.
