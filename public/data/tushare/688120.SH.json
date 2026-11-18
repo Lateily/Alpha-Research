@@ -1,79 +1,324 @@
 {
   "ticker": "688120.SH",
-  "fetched_at": "2026-11-18T08:29:02Z",
+  "fetched_at": "2026-11-18T17:39:01Z",
   "permission_model": "runtime_probe",
-  "_status": "failed",
+  "_status": "partial",
   "data": {
     "daily": {
       "rows": null,
       "row_count": 0,
       "_status": "failed",
       "as_of": null,
-      "_error": "Exception: 查询数据失败，请确认参数！可以反馈管理员协助您排查问题, dial tcp 10.255.255.2:8806: connect: connection refused"
+      "_error": "ConnectTimeout: HTTPConnectionPool(host='api.waditu.com', port=80): Max retries exceeded with url: /dataapi/daily (Caused by ConnectTimeoutError(<HTTPConnection(host='api.waditu.com', port=80) at 0x76f6b6a6e190>, 'Connection to api.waditu.com timed out. (connect timeout=30)'))"
     },
     "daily_basic": {
       "rows": null,
       "row_count": 0,
       "_status": "failed",
       "as_of": null,
-      "_error": "Exception: 查询数据失败，请确认参数！可以反馈管理员协助您排查问题, dial tcp 10.255.255.2:8806: connect: connection refused"
+      "_error": "ConnectTimeout: HTTPConnectionPool(host='api.waditu.com', port=80): Max retries exceeded with url: /dataapi/daily_basic (Caused by ConnectTimeoutError(<HTTPConnection(host='api.waditu.com', port=80) at 0x76f6b6a6f250>, 'Connection to api.waditu.com timed out. (connect timeout=30)'))"
     },
     "adj_factor": {
       "rows": null,
       "row_count": 0,
       "_status": "failed",
       "as_of": null,
-      "_error": "Exception: 查询数据失败，请确认参数！可以反馈管理员协助您排查问题, dial tcp 10.255.255.2:8806: connect: connection refused"
+      "_error": "ConnectTimeout: HTTPConnectionPool(host='api.waditu.com', port=80): Max retries exceeded with url: /dataapi/adj_factor (Caused by ConnectTimeoutError(<HTTPConnection(host='api.waditu.com', port=80) at 0x76f6b6a4b8d0>, 'Connection to api.waditu.com timed out. (connect timeout=30)'))"
     },
     "income": {
       "rows": null,
       "row_count": 0,
       "_status": "failed",
       "as_of": null,
-      "_error": "Exception: 查询数据失败，请确认参数！可以反馈管理员协助您排查问题, dial tcp 10.255.255.2:8806: connect: connection refused"
+      "_error": "ConnectTimeout: HTTPConnectionPool(host='api.waditu.com', port=80): Max retries exceeded with url: /dataapi/income (Caused by ConnectTimeoutError(<HTTPConnection(host='api.waditu.com', port=80) at 0x76f6b6a4a710>, 'Connection to api.waditu.com timed out. (connect timeout=30)'))"
     },
     "balancesheet": {
       "rows": null,
       "row_count": 0,
       "_status": "failed",
       "as_of": null,
-      "_error": "Exception: 查询数据失败，请确认参数！可以反馈管理员协助您排查问题, dial tcp 10.255.255.2:8806: connect: connection refused"
+      "_error": "ConnectTimeout: HTTPConnectionPool(host='api.waditu.com', port=80): Max retries exceeded with url: /dataapi/balancesheet (Caused by ConnectTimeoutError(<HTTPConnection(host='api.waditu.com', port=80) at 0x76f6b6a3dc90>, 'Connection to api.waditu.com timed out. (connect timeout=30)'))"
     },
     "cashflow": {
       "rows": null,
       "row_count": 0,
       "_status": "failed",
       "as_of": null,
-      "_error": "Exception: 查询数据失败，请确认参数！可以反馈管理员协助您排查问题, dial tcp 10.255.255.2:8806: connect: connection refused"
+      "_error": "ConnectTimeout: HTTPConnectionPool(host='api.waditu.com', port=80): Max retries exceeded with url: /dataapi/cashflow (Caused by ConnectTimeoutError(<HTTPConnection(host='api.waditu.com', port=80) at 0x76f6b6a49bd0>, 'Connection to api.waditu.com timed out. (connect timeout=30)'))"
     },
     "dividend": {
       "rows": null,
       "row_count": 0,
       "_status": "failed",
       "as_of": null,
-      "_error": "Exception: 查询数据失败，请确认参数！可以反馈管理员协助您排查问题, dial tcp 10.255.255.2:8806: connect: connection refused"
+      "_error": "ConnectTimeout: HTTPConnectionPool(host='api.waditu.com', port=80): Max retries exceeded with url: /dataapi/dividend (Caused by ConnectTimeoutError(<HTTPConnection(host='api.waditu.com', port=80) at 0x76f6b6a49690>, 'Connection to api.waditu.com timed out. (connect timeout=30)'))"
     },
     "fina_mainbz_region": {
       "rows": null,
       "row_count": 0,
       "_status": "failed",
       "as_of": null,
-      "_error": "Exception: 查询数据失败，请确认参数！可以反馈管理员协助您排查问题, dial tcp 10.255.255.2:8806: connect: connection refused"
+      "_error": "ConnectTimeout: HTTPConnectionPool(host='api.waditu.com', port=80): Max retries exceeded with url: /dataapi/fina_mainbz (Caused by ConnectTimeoutError(<HTTPConnection(host='api.waditu.com', port=80) at 0x76f6b6a4bcd0>, 'Connection to api.waditu.com timed out. (connect timeout=30)'))"
     },
     "fina_mainbz_product": {
-      "rows": null,
-      "row_count": 0,
-      "_status": "failed",
-      "as_of": null,
-      "_error": "Exception: 查询数据失败，请确认参数！可以反馈管理员协助您排查问题, dial tcp 10.255.255.2:8806: connect: connection refused"
+      "rows": [
+        {
+          "ts_code": "688120.SH",
+          "end_date": "20260630",
+          "bz_item": "产品",
+          "bz_code": "P",
+          "bz_sales": 2643200448.43,
+          "bz_profit": 1136315315.89,
+          "bz_cost": 1506885132.54,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "688120.SH",
+          "end_date": "20260630",
+          "bz_item": "主营业务",
+          "bz_code": "P",
+          "bz_sales": 2643200448.43,
+          "bz_profit": 1136315315.89,
+          "bz_cost": 1506885132.54,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "688120.SH",
+          "end_date": "20251231",
+          "bz_item": "半导体装备",
+          "bz_code": "P",
+          "bz_sales": 4054051946.1,
+          "bz_profit": 1657125340.62,
+          "bz_cost": 2396926605.48,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "688120.SH",
+          "end_date": "20251231",
+          "bz_item": "半导体服务",
+          "bz_code": "P",
+          "bz_sales": 594175779.95,
+          "bz_profit": 286470049.22,
+          "bz_cost": 307705730.73,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "688120.SH",
+          "end_date": "20251231",
+          "bz_item": "产品",
+          "bz_code": "P",
+          "bz_sales": 4648227726.05,
+          "bz_profit": 1943595389.84,
+          "bz_cost": 2704632336.21,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "688120.SH",
+          "end_date": "20250630",
+          "bz_item": "产品",
+          "bz_code": "P",
+          "bz_sales": 1949592075.74,
+          "bz_profit": 898289314.58,
+          "bz_cost": 1051302761.16,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "688120.SH",
+          "end_date": "20250630",
+          "bz_item": "主营业务",
+          "bz_code": "P",
+          "bz_sales": 1949592075.74,
+          "bz_profit": 898289314.58,
+          "bz_cost": 1051302761.16,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "688120.SH",
+          "end_date": "20241231",
+          "bz_item": "其他产品和服务",
+          "bz_code": "P",
+          "bz_sales": 418805422.52,
+          "bz_profit": 184991434.85,
+          "bz_cost": 233813987.67,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "688120.SH",
+          "end_date": "20241231",
+          "bz_item": "产品",
+          "bz_code": "P",
+          "bz_sales": 3406228610.47,
+          "bz_profit": 1471577865.56,
+          "bz_cost": 1934650744.91,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "688120.SH",
+          "end_date": "20241231",
+          "bz_item": "CMP/减薄装备销售",
+          "bz_code": "P",
+          "bz_sales": 2987423187.95,
+          "bz_profit": 1286586430.71,
+          "bz_cost": 1700836757.24,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "688120.SH",
+          "end_date": "20231231",
+          "bz_item": "其他",
+          "bz_code": "P",
+          "bz_sales": 230215643.61,
+          "bz_profit": 105850430.48,
+          "bz_cost": 124365213.13,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "688120.SH",
+          "end_date": "20231231",
+          "bz_item": "产品",
+          "bz_code": "P",
+          "bz_sales": 2507991057.37,
+          "bz_profit": 1154091207.27,
+          "bz_cost": 1353899850.1,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "688120.SH",
+          "end_date": "20231231",
+          "bz_item": "CMP设备销售",
+          "bz_code": "P",
+          "bz_sales": 2277775413.76,
+          "bz_profit": 1048240776.79,
+          "bz_cost": 1229534636.97,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "688120.SH",
+          "end_date": "20230630",
+          "bz_item": "配套材料及技术服务",
+          "bz_code": "P",
+          "bz_sales": 91660113.59,
+          "bz_profit": null,
+          "bz_cost": null,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "688120.SH",
+          "end_date": "20230630",
+          "bz_item": "设备销售",
+          "bz_code": "P",
+          "bz_sales": 1142764815.48,
+          "bz_profit": null,
+          "bz_cost": null,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "688120.SH",
+          "end_date": "20230630",
+          "bz_item": "产品",
+          "bz_code": "P",
+          "bz_sales": 1234424929.07,
+          "bz_profit": null,
+          "bz_cost": null,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "688120.SH",
+          "end_date": "20221231",
+          "bz_item": "其他",
+          "bz_code": "P",
+          "bz_sales": 218109612.24,
+          "bz_profit": 105161556.91,
+          "bz_cost": 112948055.33,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "688120.SH",
+          "end_date": "20221231",
+          "bz_item": "产品",
+          "bz_code": "P",
+          "bz_sales": 1648838308.18,
+          "bz_profit": 786862726.38,
+          "bz_cost": 861975581.8,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "688120.SH",
+          "end_date": "20221231",
+          "bz_item": "CMP设备销售",
+          "bz_code": "P",
+          "bz_sales": 1430728695.94,
+          "bz_profit": 681701169.47,
+          "bz_cost": 749027526.47,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "688120.SH",
+          "end_date": "20211231",
+          "bz_item": "配套材料及技术服务",
+          "bz_code": "P",
+          "bz_sales": 111157500.0,
+          "bz_profit": 63273600.0,
+          "bz_cost": 47883900.0,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "688120.SH",
+          "end_date": "20211231",
+          "bz_item": "合计特别调整",
+          "bz_code": "P",
+          "bz_sales": -39.3,
+          "bz_profit": null,
+          "bz_cost": 29.99,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "688120.SH",
+          "end_date": "20211231",
+          "bz_item": "产品",
+          "bz_code": "P",
+          "bz_sales": 804880460.7,
+          "bz_profit": 360019600.0,
+          "bz_cost": 444860929.99,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "688120.SH",
+          "end_date": "20211231",
+          "bz_item": "CMP设备",
+          "bz_code": "P",
+          "bz_sales": 693723000.0,
+          "bz_profit": 296746000.0,
+          "bz_cost": 396977000.0,
+          "curr_type": "CNY"
+        }
+      ],
+      "row_count": 23,
+      "_status": "ok",
+      "as_of": "20260630"
     },
     "forecast": {
-      "rows": null,
-      "row_count": 0,
-      "_status": "failed",
-      "as_of": null,
-      "_error": "Exception: 查询数据失败，请确认参数！可以反馈管理员协助您排查问题, dial tcp 10.255.255.2:8806: connect: connection refused"
+      "rows": [
+        {
+          "ts_code": "688120.SH",
+          "ann_date": "20250124",
+          "end_date": "20241231",
+          "type": "略增",
+          "p_change_min": 34.02,
+          "p_change_max": 49.22,
+          "net_profit_min": 97000.0,
+          "net_profit_max": 108000.0,
+          "last_parent_net": 72374.66,
+          "first_ann_date": "20250124",
+          "summary": "预计:净利润97000-108000",
+          "change_reason": "1、公司凭借产品技术优势，成功把握市场机遇，CMP产品市场占有率和销售规模持续提高，有效保障了经营业绩的稳步增长；2、公司持续加大研发投入和生产能力建设，增强企业核心竞争力，新产品研发和销售进展顺利，减薄装备、清洗装备、晶圆再生、CDS和SDS等初显市场成效，提升了公司营收和盈利规模。",
+          "update_flag": "0"
+        }
+      ],
+      "row_count": 1,
+      "_status": "ok",
+      "as_of": "20250124"
     }
   },
-  "completeness_pct": 0
+  "completeness_pct": 20
 }

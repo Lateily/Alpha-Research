@@ -1,22 +1,20 @@
 {
   "ticker": "603233.SH",
-  "fetched_at": "2026-11-18T08:29:43Z",
+  "fetched_at": "2026-11-18T17:41:56Z",
   "_semantics": "issuer_guidance = 公司业绩预告(forecast) + 业绩快报(express) — 发行人自披露,NOT broker consensus. 卖方预测见 broker_recommend (report_rc, E2).",
   "disclaimer": "不是买卖指令;研究信号,human executes.",
-  "_status": "SOURCE_DOWN",
+  "_status": "EMPTY_VALID",
   "as_of": null,
   "dimensions": {
     "forecast": {
       "row_count": 0,
-      "_status": "SOURCE_DOWN",
-      "as_of": null,
-      "_error": "Exception: 查询数据失败，请确认参数！可以反馈管理员协助您排查问题, dial tcp 10.255.255.2:8806: connect: connection refused"
+      "_status": "EMPTY_VALID",
+      "as_of": null
     },
     "express": {
       "row_count": 0,
-      "_status": "SOURCE_DOWN",
-      "as_of": null,
-      "_error": "Exception: 查询数据失败，请确认参数！可以反馈管理员协助您排查问题, dial tcp 10.255.255.2:8806: connect: connection refused"
+      "_status": "EMPTY_VALID",
+      "as_of": null
     }
   },
   "guidance": [],

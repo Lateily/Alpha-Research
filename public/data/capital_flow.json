@@ -1,8 +1,8 @@
 {
-  "fetched_at": "2026-11-18T08:29:33Z",
-  "trade_date": "20261118",
+  "fetched_at": "2026-11-18T17:39:44Z",
+  "trade_date": "20261119",
   "tier": 15000,
-  "_status": "endpoint_unavailable",
+  "_status": "partial",
   "hot_concepts": [],
   "cold_concepts": [],
   "hot_industries": [],
@@ -19,14 +19,11 @@
     "_status": "endpoint_unavailable"
   },
   "industry_meta": {
-    "api_used": null,
+    "api_used": "moneyflow_ind_dc",
     "_attempted_endpoints": [
-      "moneyflow_ind_dc",
-      "moneyflow_ind",
-      "industry_moneyflow",
-      "ind_moneyflow"
+      "moneyflow_ind_dc"
     ],
     "row_count": 0,
-    "_status": "endpoint_unavailable"
+    "_status": "ok"
   }
 }

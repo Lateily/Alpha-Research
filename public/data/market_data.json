@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "fetched_at": "2026-11-18T08:27:50.270891",
+    "fetched_at": "2026-11-18T17:24:47.999380",
     "version": "4.1",
     "tickers": [
       "300308.SZ",
@@ -464,9 +464,9 @@
       "updated": "2026-11-18"
     },
     "southbound": {
-      "latest_net_flow": 22.0366,
-      "5d_cumulative": 107.2884,
-      "20d_cumulative": -197.5132,
+      "latest_net_flow": 27.5054,
+      "5d_cumulative": 89.0728,
+      "20d_cumulative": -125.6598,
       "trend": "inflow",
       "updated": "2026-11-18"
     },
@@ -515,26 +515,6 @@
         "code": "000530",
         "name": "冰山冷热",
         "date": "",
-        "reason": "日振幅值达到15%的前5只证券",
-        "buy_amt": null,
-        "sell_amt": null,
-        "net_amt": null,
-        "focus": false
-      },
-      {
-        "code": "000530",
-        "name": "冰山冷热",
-        "date": "",
-        "reason": "日换手率达到20%的前5只证券",
-        "buy_amt": null,
-        "sell_amt": null,
-        "net_amt": null,
-        "focus": false
-      },
-      {
-        "code": "000530",
-        "name": "冰山冷热",
-        "date": "",
         "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
         "buy_amt": null,
         "sell_amt": null,
@@ -556,6 +536,26 @@
         "name": "冰山冷热",
         "date": "",
         "reason": "日换手率达到20%的前5只证券",
+        "buy_amt": null,
+        "sell_amt": null,
+        "net_amt": null,
+        "focus": false
+      },
+      {
+        "code": "000530",
+        "name": "冰山冷热",
+        "date": "",
+        "reason": "日换手率达到20%的前5只证券",
+        "buy_amt": null,
+        "sell_amt": null,
+        "net_amt": null,
+        "focus": false
+      },
+      {
+        "code": "000530",
+        "name": "冰山冷热",
+        "date": "",
+        "reason": "日振幅值达到15%的前5只证券",
         "buy_amt": null,
         "sell_amt": null,
         "net_amt": null,
@@ -905,7 +905,7 @@
         "code": "002086",
         "name": "东方海洋",
         "date": "",
-        "reason": "日跌幅偏离值达到7%的前5只证券",
+        "reason": "日换手率达到20%的前5只证券",
         "buy_amt": null,
         "sell_amt": null,
         "net_amt": null,
@@ -915,7 +915,7 @@
         "code": "002086",
         "name": "东方海洋",
         "date": "",
-        "reason": "日换手率达到20%的前5只证券",
+        "reason": "日跌幅偏离值达到7%的前5只证券",
         "buy_amt": null,
         "sell_amt": null,
         "net_amt": null,
@@ -945,7 +945,7 @@
         "code": "002148",
         "name": "北纬科技",
         "date": "",
-        "reason": "日换手率达到20%的前5只证券",
+        "reason": "日涨幅偏离值达到7%的前5只证券",
         "buy_amt": null,
         "sell_amt": null,
         "net_amt": null,
@@ -955,7 +955,7 @@
         "code": "002148",
         "name": "北纬科技",
         "date": "",
-        "reason": "日涨幅偏离值达到7%的前5只证券",
+        "reason": "日换手率达到20%的前5只证券",
         "buy_amt": null,
         "sell_amt": null,
         "net_amt": null,
