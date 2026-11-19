@@ -19123,6 +19123,44 @@ MUTATIONS += (
         'Fast common responses cannot cancel the independent detail failure cooldown.'),
 )
 
+MUTATIONS += (
+    MutationCase('SHARED_CARDS_QUERY_REQUEST_REUSE','Shared card query','scripts/llm/workbench_shared_workspace.py',
+        'tests/test_workbench_shared_cards.py',
+        '            verified_inputs=_verified_inputs', '            verified_inputs={}',
+        'test_combined_card_query_verifies_once_per_request_and_keeps_legacy_envelopes',
+        'One combined request deep-verifies its matching card once without retaining proof between requests.'),
+    MutationCase('SHARED_CARDS_QUERY_INPUT_RECHECK','Shared card query','scripts/llm/workbench_shared_workspace.py',
+        'tests/test_workbench_shared_cards.py',
+        "        for entry in verified_inputs.values():\n            cards._verify_inventory(entry['frozen_root'],entry['snapshot'])",
+        '        pass',
+        'test_combined_query_rechecks_changed_input_after_result_projection',
+        'A source change after projection must not reuse an earlier input proof.'),
+    MutationCase('SHARED_CARDS_QUERY_REGISTRY_RECHECK','Shared card query','scripts/llm/workbench_shared_workspace.py',
+        'tests/test_workbench_shared_cards.py',
+        '        if registry()!=before:', '        if False:',
+        'test_combined_query_rechecks_registry_after_result_projection',
+        'A changed registry must invalidate the combined result before return.'),
+    MutationCase('SHARED_CARDS_QUERY_REGISTRY_BODY','Shared card query','scripts/llm/workbench_shared_workspace.py',
+        'tests/test_workbench_shared_cards.py',
+        "            return [(sid,checksum,evidence.sha(body.encode('utf-8'))) for sid,checksum,body in rows]",
+        '            return [(sid,checksum) for sid,checksum,body in rows]',
+        'test_combined_query_binds_full_registry_body_not_only_header_fields',
+        'Unchanged header fields cannot hide changed envelope or registry body bytes.'),
+    MutationCase('SHARED_CARDS_QUERY_CLIENT_SCOPE','Shared card query','tools/nonprod_workbench/ui/research-cards-view.mjs',
+        'tests/test_workbench_shared_cards.py',
+        "  if(!exact(data,['schema','validation_scope','inputs','library'])||\n    data.schema!=='ar.shared-research-card-query.v1'||data.validation_scope!=='MATCHING_CARDS_AND_RESULTS_NOT_FULL_HISTORY')",
+        '  if(false)',
+        'test_browser_card_contract','A combined response cannot claim broader validation or unknown fields.'),
+    MutationCase('SHARED_CARDS_QUERY_CLIENT_INPUT','Shared card query','tools/nonprod_workbench/ui/research-cards-view.mjs',
+        'tests/test_workbench_shared_cards.py',
+        '  const inputs=await readScopedCardInputs(async()=>data.inputs,c,renew);', '  const inputs=data.inputs;',
+        'test_browser_card_contract','The combined path preserves every original input actor, code and evidence check.'),
+    MutationCase('SHARED_CARDS_QUERY_CLIENT_LIBRARY','Shared card query','tools/nonprod_workbench/ui/research-cards-view.mjs',
+        'tests/test_workbench_shared_cards.py',
+        '  const library=await readCardLibrary(async()=>data.library,c,renew);', '  const library=data.library;',
+        'test_browser_card_contract','The combined path preserves every original result, context and rights check.'),
+)
+
 SHARD_SPEC_RE = re.compile(r"^(?P<index>[1-9][0-9]*)/(?P<count>[1-9][0-9]*)$")
 SHARD_RECEIPT_SCHEMA = "ar-governance-mutation-shard-receipt.v1"
 

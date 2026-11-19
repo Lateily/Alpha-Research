@@ -587,7 +587,7 @@ def make_handler(store, assets, origin, session, system=None, private=None, shar
                     except (ValueError, UnicodeError):
                         raise WorkbenchError("MATERIAL_QUERY_INVALID") from None
                     self.reply(200, shared.materials(identity["login"], **params))
-                elif shared is not None and urlsplit(self.path).path in {"/api/shared-workspace/research-library","/api/shared-workspace/research-card-library"}:
+                elif shared is not None and urlsplit(self.path).path in {"/api/shared-workspace/research-library","/api/shared-workspace/research-card-library","/api/shared-workspace/research-card-query"}:
                     from urllib.parse import parse_qs
                     try:
                         parsed = urlsplit(self.path)
@@ -602,6 +602,9 @@ def make_handler(store, assets, origin, session, system=None, private=None, shar
                             params["page"] = int(params["page"])
                     except (ValueError, UnicodeError):
                         raise WorkbenchError("RESEARCH_LIBRARY_QUERY_INVALID") from None
+                    if parsed.path.endswith('/research-card-query'):
+                        self.reply(200,shared.card_query(identity['login'],**params))
+                        return
                     reader=shared.research_card_results if parsed.path.endswith('/research-card-library') else shared.research_results
                     self.reply(200,reader(identity['login'],**params))
                 elif self.path == "/api/workspace" and system is not None and shared is None:

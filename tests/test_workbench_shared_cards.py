@@ -132,6 +132,112 @@ class SharedCardTests(unittest.TestCase):
         with self.assertRaises(WorkspaceError): queue.enqueue(payload,'owner@example.com')
         with self.assertRaises(WorkspaceError): queue.inputs.select_current(entry['snapshot_id'])
 
+    def completed_card(self):
+        import workbench_shared_worker as worker
+        queue,view,entry,payload=self.queue()
+        job=queue.enqueue(payload,'owner@example.com')
+        claim=queue.claim(); response=worker.run_attempt(claim)
+        self.assertEqual(response['status'],'SUCCEEDED',response)
+        queue.finish(claim,response)
+        return queue,view,entry,job
+
+    def test_combined_card_query_verifies_once_per_request_and_keeps_legacy_envelopes(self):
+        queue,view,entry,_=self.completed_card()
+        method=getattr(view,'card_query',None)
+        self.assertTrue(callable(method),'combined verified card query missing')
+        expected_inputs=view.scoped_card_inputs('member@example.com')
+        expected_library=view.research_card_results('member@example.com')
+        with patch.object(self.module(),'verify_input',wraps=self.module().verify_input) as deep:
+            actual=method('member@example.com')
+            self.assertEqual(deep.call_count,1)
+            again=method('owner@example.com',ts_code='603986.SH')
+            self.assertEqual(deep.call_count,2,'proof leaked across requests')
+        self.assertEqual(set(actual),{'schema','validation_scope','inputs','library'})
+        self.assertEqual(actual['schema'],'ar.shared-research-card-query.v1')
+        self.assertEqual(actual['validation_scope'],'MATCHING_CARDS_AND_RESULTS_NOT_FULL_HISTORY')
+        self.assertEqual(actual['inputs'],expected_inputs)
+        self.assertEqual(actual['library'],expected_library)
+        self.assertEqual(again['library']['total'],0)
+        self.assertEqual(again['inputs']['my_workspace']['login'],'owner@example.com')
+
+    def test_combined_query_rechecks_changed_input_after_result_projection(self):
+        queue,view,entry,_=self.completed_card()
+        method=getattr(view,'card_query',None)
+        self.assertTrue(callable(method),'combined verified card query missing')
+        target=queue.inputs.base/'material-packs'/entry['input_hash']/'basis/basis-card.json'
+        original=view.research_card_results
+        def change(*args,**kwargs):
+            value=original(*args,**kwargs)
+            target.write_bytes(b'{}')
+            return value
+        with patch.object(view,'research_card_results',side_effect=change):
+            with self.assertRaisesRegex(ValueError,'INVENTORY'):
+                method('owner@example.com')
+
+    def test_combined_query_rechecks_registry_after_result_projection(self):
+        queue,view,entry,_=self.completed_card()
+        method=getattr(view,'card_query',None)
+        self.assertTrue(callable(method),'combined verified card query missing')
+        original=view.research_card_results
+        def change(*args,**kwargs):
+            value=original(*args,**kwargs)
+            with queue.store.connect() as db:
+                db.execute('DROP TRIGGER shared_inputs_delete')
+                db.execute('DELETE FROM shared_inputs WHERE snapshot_id=?',(entry['snapshot_id'],))
+            return value
+        with patch.object(view,'research_card_results',side_effect=change):
+            with self.assertRaisesRegex(ValueError,'REGISTRY_CHANGED'):
+                method('owner@example.com')
+
+    def test_combined_query_next_request_reopens_input_and_output_seal(self):
+        queue,view,entry,job=self.completed_card()
+        method=getattr(view,'card_query',None)
+        self.assertTrue(callable(method),'combined verified card query missing')
+        self.assertEqual(method('owner@example.com')['library']['total'],1)
+        envelope=queue.inputs.base/'envelopes'/(entry['snapshot_id']+'.json')
+        raw=envelope.read_bytes();envelope.write_bytes(b'{}')
+        with self.assertRaises(ValueError):method('owner@example.com')
+        envelope.write_bytes(raw)
+        with queue.store.connect() as db:
+            stored=ev.parse(db.execute('SELECT body FROM shared_jobs WHERE job_id=?',(job['job_id'],)).fetchone()[0])
+        seal=queue.store.path.parent/'shared-jobs'/stored['workspace_id']/stored['job_id']/'attempts'/stored['attempt_id']/'seal.json'
+        seal.write_bytes(b'{}')
+        with self.assertRaisesRegex(ValueError,'ARCHIVE_EVIDENCE'):
+            method('owner@example.com')
+
+    def test_combined_query_binds_full_registry_body_not_only_header_fields(self):
+        queue,view,entry,_=self.completed_card()
+        original=view.research_card_results
+        def change(*args,**kwargs):
+            value=original(*args,**kwargs)
+            with queue.store.connect() as db:
+                body=ev.parse(db.execute('SELECT body FROM shared_inputs WHERE snapshot_id=?',(entry['snapshot_id'],)).fetchone()[0])
+                body['source_run_id']='changed-non-header-field'
+                raw=ev.canonical(body)
+                db.execute('DROP TRIGGER shared_inputs_update')
+                db.execute('UPDATE shared_inputs SET body=? WHERE snapshot_id=?',(raw,entry['snapshot_id']))
+            (queue.inputs.base/'envelopes'/(entry['snapshot_id']+'.json')).write_text(raw)
+            return value
+        with patch.object(view,'research_card_results',side_effect=change):
+            with self.assertRaisesRegex(ValueError,'REGISTRY_CHANGED'):
+                view.card_query('owner@example.com')
+
+    def test_combined_query_http_keeps_private_auth_and_closed_filters(self):
+        import nonprod_workbench as wb
+        from workbench_shared_test_support import http,OWNER,MEMBER
+        queue,view,_,_=self.queue()
+        allow=self.root/'query-members.json';allow.write_text(ev.canonical({'members':[MEMBER]}));allow.chmod(0o600)
+        private=wb.private_access('https://workbench.test-tail.ts.net:8443',OWNER,allow)
+        route='/api/shared-workspace/research-card-query?page=0'
+        status,data=http(queue.store,view.system,private,route,shared=view)
+        self.assertEqual(status,200)
+        self.assertEqual(data['schema'],'ar.shared-research-card-query.v1')
+        status,_=http(queue.store,view.system,private,route,login='outsider@example.com',shared=view)
+        self.assertEqual(status,403)
+        for query in ['?path=/private/tmp','?page=0&page=1','?page=-1','?research_date=20261340']:
+            status,_=http(queue.store,view.system,private,'/api/shared-workspace/research-card-query'+query,shared=view)
+            self.assertEqual(status,400)
+
     def test_queued_card_task_seal_query_and_cold_restore(self):
         import workbench_shared_worker as worker
         queue,view,entry,payload=self.queue()

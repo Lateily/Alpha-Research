@@ -179,6 +179,22 @@ export async function readScopedCardInputs(api,c,renew){
   await readCardInputs(async()=>({...body,schema:'ar.shared-research-card-inputs.v1'}),c,renew);
   return data;
 }
+export async function readCardQuery(api,c,renew){
+  const params=new URLSearchParams({page:String(c.page||0)});
+  if(Object.keys(c.filters||{}).some(k=>!filters.includes(k)))throw new Error('CARDS_CONTEXT_MISMATCH');
+  for(const key of filters)if(c.filters?.[key])params.set(key,c.filters[key]);
+  const data=await sharedRead(api,`/api/shared-workspace/research-card-query?${params}`,renew);
+  // governance-mutation: SHARED_CARDS_QUERY_CLIENT_SCOPE
+  if(!exact(data,['schema','validation_scope','inputs','library'])||
+    data.schema!=='ar.shared-research-card-query.v1'||data.validation_scope!=='MATCHING_CARDS_AND_RESULTS_NOT_FULL_HISTORY')
+    throw new Error('CARDS_CONTEXT_MISMATCH');
+  // Keep both original closed schemas and actor/code/rights checks authoritative.
+  // governance-mutation: SHARED_CARDS_QUERY_CLIENT_INPUT
+  const inputs=await readScopedCardInputs(async()=>data.inputs,c,renew);
+  // governance-mutation: SHARED_CARDS_QUERY_CLIENT_LIBRARY
+  const library=await readCardLibrary(async()=>data.library,c,renew);
+  return {...library,registeredInputs:inputs};
+}
 export async function readCardLibrary(api,c,renew){
   const params=new URLSearchParams({page:String(c.page||0)});
   if(Object.keys(c.filters||{}).some(k=>!filters.includes(k)))throw new Error('CARDS_CONTEXT_MISMATCH');

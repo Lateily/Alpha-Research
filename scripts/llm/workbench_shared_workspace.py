@@ -181,7 +181,7 @@ class SharedWorkspace:
         return {'schema':'ar.shared-research-card-inputs.v1','enabled':self.cards_enabled,'inputs':rows,
             'my_workspace':owner,'consumer_code_sha':self._execution_identity['code_sha'],**cards.LABELS}
 
-    def scoped_card_inputs(self,actor):
+    def scoped_card_inputs(self,actor,*,_verified_inputs=None):
         from workbench_shared_inputs import FrozenInputs
         import workbench_shared_cards as cards
         owner=self.identity(actor); rows=[]
@@ -193,6 +193,8 @@ class SharedWorkspace:
                 entry=inputs.verify(header['snapshot_id'])
                 if entry['schema']!=cards.SCHEMA or entry['input_hash']!=header['input_hash']:
                     raise WorkspaceError('FROZEN_REGISTRY_BINDING_INVALID',409)
+                if _verified_inputs is not None:
+                    _verified_inputs[header['snapshot_id']]=entry
                 value=entry['snapshot']
                 rows.append({k:entry[k] for k in ('snapshot_id','input_hash')}|
                     {k:value[k] for k in (*cards.METADATA,'classification_status','projection_hash')})
@@ -201,13 +203,15 @@ class SharedWorkspace:
             'my_workspace':owner,'consumer_code_sha':self._execution_identity['code_sha'],**cards.LABELS}
 
     def research_card_results(self,actor,*,industry_key=None,industry_taxonomy=None,
-                              taxonomy_version=None,research_date=None,ts_code=None,page=0):
+                              taxonomy_version=None,research_date=None,ts_code=None,page=0,_verified_inputs=None):
         from workbench_research_library import filters
         import workbench_shared_cards as cards
         owner=self.identity(actor)
         query=dict(industry_key=industry_key,industry_taxonomy=industry_taxonomy,
             taxonomy_version=taxonomy_version,research_date=research_date,ts_code=ts_code)
         filters(query,page); rows=[]; count=0; verified_inputs={}
+        if _verified_inputs is not None:
+            verified_inputs=_verified_inputs
         if self.queue is not None:
             for job in self.queue.jobs():
                 if job['kind']!=cards.KIND or job['status']!='SUCCEEDED': continue
@@ -225,6 +229,37 @@ class SharedWorkspace:
             'library_hash':all_hash,'query':query,'page':page,'page_size':PAGE_SIZE,'total':len(rows),
             'results':rows[page*PAGE_SIZE:(page+1)*PAGE_SIZE],'my_workspace':owner,
             'consumer_code_sha':self._execution_identity['code_sha'],'rights':dict(cards.materials.RIGHTS),**cards.LABELS}
+
+    def card_query(self,actor,*,industry_key=None,industry_taxonomy=None,
+                   taxonomy_version=None,research_date=None,ts_code=None,page=0):
+        from workbench_shared_inputs import FrozenInputs
+        import workbench_shared_cards as cards
+        # Headers classify inputs; hash full registry bodies to catch changes
+        # to non-header fields while this request reuses verified inputs.
+        def registry():
+            with self.store.connect() as db:
+                rows=db.execute('SELECT snapshot_id,input_hash,body FROM shared_inputs ORDER BY rowid LIMIT 101').fetchall()
+            if len(rows)>100:raise WorkspaceError('CARDS_INDEX_CAPACITY',409)
+            if any(type(row[2]) is not str for row in rows):
+                raise WorkspaceError('FROZEN_REGISTRY_BINDING_INVALID',409)
+            return [(sid,checksum,evidence.sha(body.encode('utf-8'))) for sid,checksum,body in rows]
+        before=registry()
+        verified_inputs={}
+        inputs=self.scoped_card_inputs(actor,_verified_inputs=verified_inputs)
+        library=self.research_card_results(actor,industry_key=industry_key,industry_taxonomy=industry_taxonomy,
+            taxonomy_version=taxonomy_version,research_date=research_date,ts_code=ts_code,page=page,
+            _verified_inputs=verified_inputs)
+        # The memo is private to this request, never a cross-request proof.
+        # governance-mutation: SHARED_CARDS_QUERY_INPUT_RECHECK
+        for entry in verified_inputs.values():
+            cards._verify_inventory(entry['frozen_root'],entry['snapshot'])
+        FrozenInputs(self.store).index_headers()
+        # governance-mutation: SHARED_CARDS_QUERY_REGISTRY_RECHECK
+        if registry()!=before:
+            raise WorkspaceError('FROZEN_REGISTRY_CHANGED_DURING_QUERY',409)
+        return {'schema':'ar.shared-research-card-query.v1',
+            'validation_scope':'MATCHING_CARDS_AND_RESULTS_NOT_FULL_HISTORY',
+            'inputs':inputs,'library':library}
 
     @staticmethod
     def _snapshot_id(value):

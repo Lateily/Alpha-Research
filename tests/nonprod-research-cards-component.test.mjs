@@ -21,7 +21,7 @@ function archiveRow(){
       execution_feedback:{status:'NOT_SUPPLIED',pnl_status:'NOT_SUPPLIED'}}};
 }
 
-async function scenario(check,populated=false,scopedInputs=false){
+async function scenario(check,populated=false,scopedInputs=false,combinedQuery=false){
   const state={slots:[],cursor:0,pending:[],dirty:true};
   const hooks={createElement:(type,props,...children)=>({type,props:{...props,children}}),Fragment:Symbol('Fragment'),
     useState(initial){const n=state.cursor++;if(!(n in state.slots))state.slots[n]=typeof initial==='function'?initial():initial;
@@ -47,7 +47,7 @@ async function scenario(check,populated=false,scopedInputs=false){
     globalThis.setTimeout=(fn,delay)=>{const id=++nextTimer;timers.set(id,{fn,at:now+delay});return id;};
     globalThis.setInterval=(fn,delay)=>{const id=++nextTimer;timers.set(id,{fn,at:now+delay,interval:delay});return id;};
     globalThis.clearTimeout=globalThis.clearInterval=id=>timers.delete(id);
-    const props={login:'owner',workspaceId:'workspace-a',codeSha:'a'.repeat(40),parentStale:false,refreshRevision:0,busy:false,scopedInputs,
+    const props={login:'owner',workspaceId:'workspace-a',codeSha:'a'.repeat(40),parentStale:false,refreshRevision:0,busy:false,scopedInputs,combinedQuery,
       parentFresh:()=>!props.parentStale,
       renew:async()=>{},onRun:value=>submitted.push(value),onOpenJob:value=>opened.push(value),api:async path=>{
         calls.push(path);if(fail||(failLibrary&&path.includes('/research-card-library?')))throw new Error('HASH_CHANGED');
@@ -56,17 +56,20 @@ async function scenario(check,populated=false,scopedInputs=false){
           sample_purpose:'WORKFLOW_DEBUG',human_review:'PENDING',content_sharing_allowed:false,content_status:'RIGHTS_UNVERIFIED_CONTENT_DENIED',
           production_authority:false,paper_authority:false,u4_authority:false,trading_authority:false,
           prospective_sample_eligible:false,network_calls:0,model_calls:0,claim_allowed:false,no_trade_flag:true};
-        if(path.endsWith('/research-card-inputs')||path.endsWith('/research-card-inputs-scoped'))return {...base,
-          schema:path.endsWith('-scoped')?'ar.shared-research-card-inputs.v2':'ar.shared-research-card-inputs.v1',
-          ...(path.endsWith('-scoped')?{validation_scope:'MATCHING_CARDS_ONLY_OTHER_INPUTS_NOT_EVALUATED'}:{}),enabled:true,inputs:emptyInputs?[]:[{
+        const combined=path.includes('/research-card-query?');
+        const input={...base,
+          schema:path.endsWith('-scoped')||combined?'ar.shared-research-card-inputs.v2':'ar.shared-research-card-inputs.v1',
+          ...(path.endsWith('-scoped')||combined?{validation_scope:'MATCHING_CARDS_ONLY_OTHER_INPUTS_NOT_EVALUATED'}:{}),enabled:true,inputs:emptyInputs?[]:[{
           snapshot_id:'registered-card',input_hash:'b'.repeat(64),company:'603986.SH',research_date:'20261110',
           source_cutoff_at:'2026-10-04T23:59:59+08:00',artifact_generated_at:'2026-11-10T01:48:00+08:00',
           industry_key:'chip',industry_taxonomy:'manual',taxonomy_version:'v1',pack_hash:'c'.repeat(64),
           content_hash:'d'.repeat(64),basis_hash:'e'.repeat(64),classification_status:'SOURCE_METADATA_NOT_RECLASSIFIED',projection_hash:'f'.repeat(64)}]};
+        if(path.endsWith('/research-card-inputs')||path.endsWith('/research-card-inputs-scoped'))return input;
         const query=Object.fromEntries(new URL(path,'https://local').searchParams);delete query.page;
-        return {...base,schema:'ar.shared-research-card-library.v1',status:populated?'RESULTS_AVAILABLE_NOT_HUMAN_VERIFIED':'EMPTY',library_hash:'b'.repeat(64),total:populated?1:0,page:0,page_size:50,results:populated?[archiveRow()]:[],
+        const library={...base,schema:'ar.shared-research-card-library.v1',status:populated?'RESULTS_AVAILABLE_NOT_HUMAN_VERIFIED':'EMPTY',library_hash:'b'.repeat(64),total:populated?1:0,page:0,page_size:50,results:populated?[archiveRow()]:[],
           query:{industry_key:null,industry_taxonomy:null,taxonomy_version:null,research_date:null,ts_code:null,...query},
           rights:{status:'UNVERIFIED',visibility:'PRIVATE',sharing_allowed:false,model_use_allowed:false}};
+        return combined?{schema:'ar.shared-research-card-query.v1',validation_scope:'MATCHING_CARDS_AND_RESULTS_NOT_FULL_HISTORY',inputs:input,library}:library;
       }};
     function render(){state.cursor=0;state.dirty=false;tree=Cards(props);}
     async function settle(){for(let i=0;i<12;i++){if(state.dirty)render();while(state.pending.length)state.pending.shift()();await Promise.resolve();}}
@@ -89,6 +92,19 @@ async function scenario(check,populated=false,scopedInputs=false){
     }
   }finally{for(const slot of state.slots)slot?.cleanup?.();globalThis.__arCardHooks=previous;}
 }
+test('actual combined card consumer makes one GET without separate input or library requests',()=>scenario(async s=>{
+  assert.deepEqual(s.calls,['/api/shared-workspace/research-card-query?page=0']);
+  s.nodes().find(n=>n.props?.['aria-label']==='冻结研究卡').props.onChange({target:{value:'registered-card'}});await s.settle();
+  assert.equal(s.button().props.disabled,false);
+},false,true,true));
+test('combined evidence expires after fifteen seconds despite a fresh parent and refuses retained actions',()=>scenario(async s=>{
+  s.nodes().find(n=>n.props?.['aria-label']==='冻结研究卡').props.onChange({target:{value:'registered-card'}});await s.settle();
+  const retained=s.button().props.onClick;s.hold();await s.advance(15000);
+  assert.equal(s.button().props.disabled,false);
+  s.props.parentFresh=()=>true;s.render();s.setTime(16001);await s.settle();retained();
+  assert.equal(s.submitted.length,0);await s.advance(1000);assert.equal(s.button().props.disabled,true);
+  s.release();await s.settle();await s.settle();assert.equal(s.button().props.disabled,false);
+},false,true,true));
 test('actual scoped card consumer uses V2 without a legacy input GET',()=>scenario(async s=>{
   assert.ok(s.calls.includes('/api/shared-workspace/research-card-inputs-scoped'));
   assert.ok(!s.calls.includes('/api/shared-workspace/research-card-inputs'));

@@ -354,3 +354,30 @@ history request and cannot promote retained narrow context as full acceptance.
 These contracts do not establish sustained performance, human research approval,
 two-device acceptance or 24-hour availability. Those require separate observed
 evidence on the actual final installation.
+
+### Combined Research Card Query
+
+`GET /api/shared-workspace/research-card-query` uses the same closed query
+parameters as the existing card library. Its `ar.shared-research-card-query.v1`
+response has exactly `schema`, `validation_scope`, `inputs` and `library`.
+The scope is `MATCHING_CARDS_AND_RESULTS_NOT_FULL_HISTORY`. The two nested
+envelopes retain `ar.shared-research-card-inputs.v2` and
+`ar.shared-research-card-library.v1` unchanged. Every old endpoint remains
+available with its original verification scope.
+
+The combined path deep-verifies each matching registered card using the original
+verifier, and shares that result only inside this one request. Job registrations,
+output seals, archived bytes and derivation checks still run. Before returning,
+it rechecks every reused input inventory, every registry header/envelope binding,
+and the full registry body fingerprints. Changed evidence refuses the response;
+no verified dictionary survives the request or is shared with another actor.
+
+The enabled card UI makes one combined GET rather than two competing deep reads.
+It validates both nested contracts using their existing validators. Its own
+15-second action-time expiry, generation fences and failure/recovery checks are
+unchanged; a fresh lightweight identity response cannot refresh card proof.
+The separate-reading component mode remains supported for older consumers.
+
+Reduced repeated work does not establish a latency SLO, continuous availability,
+human research approval or two-device end-to-end acceptance. Research gaps,
+rights restrictions and pending human review remain visible.

@@ -15,6 +15,27 @@ function registeredInput(){return {snapshot_id:'registered-card',input_hash:'b'.
   source_cutoff_at:'2026-10-04T23:59:59+08:00',artifact_generated_at:'2026-11-10T01:48:00+08:00',
   industry_key:'chip',industry_taxonomy:'manual',taxonomy_version:'v1',pack_hash:'c'.repeat(64),
   content_hash:'d'.repeat(64),basis_hash:'e'.repeat(64),classification_status:'SOURCE_METADATA_NOT_RECLASSIFIED',projection_hash:'f'.repeat(64)};}
+function combinedQuery(){return {schema:'ar.shared-research-card-query.v1',validation_scope:'MATCHING_CARDS_AND_RESULTS_NOT_FULL_HISTORY',
+  inputs:{...base(),schema:'ar.shared-research-card-inputs.v2',validation_scope:'MATCHING_CARDS_ONLY_OTHER_INPUTS_NOT_EVALUATED',enabled:true,inputs:[registeredInput()]},
+  library:library()};}
+test('combined query is one GET and preserves both independently validated envelopes',async()=>{
+  assert.equal(typeof cards.readCardQuery,'function');const calls=[],data=combinedQuery();
+  const found=await cards.readCardQuery(async path=>{calls.push(path);return data;},context,assert.fail);
+  assert.deepEqual(calls,['/api/shared-workspace/research-card-query?page=0&industry_key=chip&research_date=20261110']);
+  assert.deepEqual(found,{...data.library,registeredInputs:data.inputs});
+});
+test('combined query rejects outer scope and each original nested context or evidence violation',async()=>{
+  assert.equal(typeof cards.readCardQuery,'function');
+  for(const change of [d=>d.schema='ar.shared-research-card-query.v0',d=>d.validation_scope='ALL_HISTORY_VERIFIED',
+    d=>d.extra=true,d=>delete d.inputs,d=>d.inputs.my_workspace.login='other',
+    d=>d.inputs.consumer_code_sha='c'.repeat(40),d=>d.inputs.inputs[0].projection_hash='bad',
+    d=>d.library.my_workspace.workspace_id='other',d=>d.library.query.research_date='20261004',
+    d=>d.library.rights.sharing_allowed=true,d=>d.library.results=[{report:'DENIED'}],
+    d=>d.inputs.production_authority=true,d=>d.library.human_review='APPROVED']){
+    const data=combinedQuery();change(data);
+    await assert.rejects(cards.readCardQuery(async()=>data,context,assert.fail),/CARDS_CONTEXT_MISMATCH/);
+  }
+});
 test('scoped card inputs use only V2 GET and preserve the original response schema and scope',async()=>{
   assert.equal(typeof cards.readScopedCardInputs,'function');const calls=[];
   const data={...base(),schema:'ar.shared-research-card-inputs.v2',

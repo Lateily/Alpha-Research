@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight, FileSearch, Play, RefreshCw, Search } from 'lucide-react';
-import { canRunCard, cardActionCurrent, cardValuationStatus, cardsContextKey, cardsView, readCardInputs, readScopedCardInputs, readCardLibrary, refreshCardVerification } from './research-cards-view.mjs';
+import { canRunCard, cardActionCurrent, cardValuationStatus, cardsContextKey, cardsView, readCardInputs, readScopedCardInputs, readCardLibrary, readCardQuery, refreshCardVerification } from './research-cards-view.mjs';
 import { createSharedPoller } from './shared-view.mjs';
 import { statusTone } from './status-tone.mjs';
 
@@ -11,7 +11,7 @@ export function CitationLocations({locations,hidden=false}) {
   </table></div></details>;
 }
 
-export default function ResearchCards({api,renew,login,workspaceId,codeSha,parentStale,parentFresh,refreshRevision,onRun,onOpenJob,busy,scopedInputs=false}) {
+export default function ResearchCards({api,renew,login,workspaceId,codeSha,parentStale,parentFresh,refreshRevision,onRun,onOpenJob,busy,scopedInputs=false,combinedQuery=false}) {
   const [draft,setDraft]=useState({industry_key:'',research_date:'',ts_code:''});
   const [filters,setFilters]=useState({}),[page,setPage]=useState(0),[selected,setSelected]=useState('');
   const [state,setState]=useState(null),reader=useRef(null),active=useRef(null),verified=useRef(null);
@@ -19,7 +19,7 @@ export default function ResearchCards({api,renew,login,workspaceId,codeSha,paren
   const [now,setNow]=useState(Date.now),live=useRef(null);
   const generation=useRef(null),inFlight=useRef(Promise.resolve());
   const epoch=JSON.stringify([refreshRevision,revision]);
-  const context={login,workspaceId,codeSha,filters,page},key=cardsContextKey(context),requestKey=JSON.stringify([key,epoch,scopedInputs]);
+  const context={login,workspaceId,codeSha,filters,page},key=cardsContextKey(context),requestKey=JSON.stringify([key,epoch,scopedInputs,combinedQuery]);
   if(generation.current?.key!==requestKey)generation.current={key:requestKey};
   const token=generation.current;
   active.current=token;
@@ -42,6 +42,7 @@ export default function ResearchCards({api,renew,login,workspaceId,codeSha,paren
         const request=(async()=>{
         await previous;
         if(!owned())return null;
+        if(combinedQuery)return readCardQuery(api,context,renew);
         // Block on the first known failure, but drain both GETs before another poll.
         const responses=await Promise.allSettled([(scopedInputs?readScopedCardInputs:readCardInputs)(api,context,renew),readCardLibrary(api,context,renew)]
           .map(request=>request.catch(error=>{failed(error);throw error;})));
