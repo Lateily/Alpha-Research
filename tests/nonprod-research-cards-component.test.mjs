@@ -234,6 +234,14 @@ test('draining a retired combined read does not consume the new request polling 
   await s.advance(1000);assert.equal(s.calls.length,4);
 },false,true,true));
 
+test('slow combined proof yields one second before automatic renewal for intentional reads',()=>scenario(async s=>{
+  await s.settle();s.hold();await s.advance(1000);assert.equal(s.calls.length,2);
+  await s.advance(6000);s.release();for(let i=0;i<8;i++)await s.settle();
+  await s.advance(0);
+  assert.equal(s.calls.length,2,'slow HTTP including server admission must not create a zero-idle successor');
+  await s.advance(1000);assert.equal(s.calls.length,3);
+},false,true,true));
+
 test('a disposed generation cannot apply a late rejection after an A B A context cycle',()=>scenario(async s=>{
   const original=s.props.api;let rejectOld,holdNext=true;
   s.props.api=async path=>{

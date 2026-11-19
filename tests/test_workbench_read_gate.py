@@ -4,6 +4,7 @@ import sys
 import threading
 import time
 import unittest
+from unittest.mock import patch
 
 ROOT=Path(__file__).resolve().parents[1]
 sys.path[:0]=[str(ROOT/'scripts/llm'),str(ROOT)]
@@ -54,6 +55,29 @@ class ReadGateTests(unittest.TestCase):
         self.assertEqual(errors[0].status,429)
         with gate.acquire():pass
         self.assertEqual(len(gate._waiting),0)
+
+    def test_expired_waiter_cannot_enter_when_owner_becomes_free(self):
+        gate=ReadGate(wait_seconds=.02);clock=[0.0];waiting=threading.Event();outcome=[]
+        original=gate._condition.wait
+        def wait(timeout=None):waiting.set();return original(timeout)
+        def read():
+            try:
+                with gate.acquire():outcome.append('ADMITTED')
+            except WorkspaceError as error:outcome.append(str(error))
+        with patch('workbench_read_gate.time.monotonic',side_effect=lambda:clock[0]),\
+                patch.object(gate._condition,'wait',side_effect=wait):
+            lease=gate.acquire();lease.__enter__();thread=threading.Thread(target=read);thread.start()
+            try:
+                self.assertTrue(waiting.wait(1))
+                with gate._condition:
+                    clock[0]=1.0;lease.__exit__(None,None,None)
+            finally:
+                if gate._owner==threading.get_ident():lease.__exit__(None,None,None)
+                thread.join(2)
+            self.assertFalse(thread.is_alive())
+            self.assertEqual(outcome,['SHARED_VERIFIED_READ_BUSY'])
+            self.assertEqual(len(gate._waiting),0)
+            with gate.acquire():pass
 
     def test_capacity_refuses_without_displacing_existing_waiter(self):
         gate=ReadGate(max_waiters=1);order=[]

@@ -404,7 +404,10 @@ directory enumeration. Hashes and frozen packet formats are unchanged.
 
 The card consumer starts its polling cadence after draining any retired
 request, immediately before the new network read. This timestamp controls only
-the next poll: it never renews evidence freshness. The separate 15-second
+the next poll: it never renews evidence freshness. After a completed card read,
+automatic renewal yields at least one second for intentional user queries;
+legacy consumers keep their existing cadence and failed reads retain their
+five-second cooldown. The separate 15-second
 action-time and detail expiry guards remain unchanged. Concurrent-load timing
 must still be measured on the final installation; this is not a latency SLO,
 two-human acceptance, or a claim of 24-hour operation.

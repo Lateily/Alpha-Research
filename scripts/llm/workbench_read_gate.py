@@ -39,6 +39,7 @@ class ReadGate:
                         remaining=deadline-time.monotonic()
                         if remaining<=0:raise WorkspaceError('SHARED_VERIFIED_READ_BUSY',429)
                         self._condition.wait(remaining)
+                    if time.monotonic()>=deadline:raise WorkspaceError('SHARED_VERIFIED_READ_BUSY',429)
                     self._waiting.popleft();self._owner=owner;self._depth=1
                 except BaseException:
                     self._waiting.remove(ticket);self._condition.notify_all()

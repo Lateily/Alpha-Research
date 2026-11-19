@@ -37,6 +37,7 @@ export default function ResearchCards({api,renew,login,workspaceId,codeSha,paren
     const failed=error=>{if(owned()){verified.current=null;setState(old=>({key,verificationEpoch:epoch,data:old?.key===key?old.data:null,stale:true,error:error.message}));}};
     const current=createSharedPoller({
       cadenceFromStart:true,
+      yieldAfterRead:true,
       read:markReadStarted=>{
         const previous=inFlight.current;
         const request=(async()=>{

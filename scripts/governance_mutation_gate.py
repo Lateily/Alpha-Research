@@ -19213,6 +19213,17 @@ MUTATIONS += (
         'tests/test_workbench_shared_cards.py',
         '        const data = await read(markReadStarted);', '        const data = await read(()=>{});', 'test_browser_card_contract',
         'Draining an obsolete request cannot immediately schedule another automatic read after the new result.'),
+    MutationCase('SHARED_CARDS_SLOW_READ_YIELD','Shared card polling','tools/nonprod_workbench/ui/shared-view.mjs',
+        'tests/test_workbench_shared_cards.py',
+        'schedule(refresh, yieldAfterRead?Math.max(1000,delay):delay)', 'schedule(refresh, delay)',
+        'test_browser_card_contract',
+        'A slow card proof must yield a one-second opportunity for intentional queries rather than a zero-idle loop.'),
+    MutationCase('SHARED_READ_EXPIRED_ADMISSION','Shared read admission','scripts/llm/workbench_read_gate.py',
+        'tests/test_workbench_read_gate.py',
+        "                    if time.monotonic()>=deadline:raise WorkspaceError('SHARED_VERIFIED_READ_BUSY',429)",
+        "                    if False:raise WorkspaceError('SHARED_VERIFIED_READ_BUSY',429)",
+        'test_expired_waiter_cannot_enter_when_owner_becomes_free',
+        'An expired waiter cannot acquire a newly free proof slot after delayed wake or scheduling.'),
 )
 
 SHARD_SPEC_RE = re.compile(r"^(?P<index>[1-9][0-9]*)/(?P<count>[1-9][0-9]*)$")

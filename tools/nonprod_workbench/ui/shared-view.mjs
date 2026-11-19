@@ -30,7 +30,7 @@ export function sharedViewFreshness(query, detailStale = false, now = Date.now()
 }
 
 // One GET in flight per view. Disposal rejects late results, not slow results.
-export function createSharedPoller({ read, apply, fail, schedule = setTimeout, cancel = clearTimeout, cadenceFromStart = false, now = Date.now }) {
+export function createSharedPoller({ read, apply, fail, schedule = setTimeout, cancel = clearTimeout, cadenceFromStart = false, yieldAfterRead = false, now = Date.now }) {
   let stopped = false, inFlight = null, timer = null;
   function refresh() {
     if (stopped) return Promise.resolve();
@@ -49,7 +49,7 @@ export function createSharedPoller({ read, apply, fail, schedule = setTimeout, c
         inFlight = null;
         // governance-mutation: SHARED_CARDS_REFRESH_CADENCE
         const delay=cadenceFromStart&&!unsuccessful?Math.min(1000,Math.max(0,5000-Math.max(0,now()-startedAt))):5000;
-        if (!stopped) timer = schedule(refresh, delay);
+        if (!stopped) timer = schedule(refresh, yieldAfterRead?Math.max(1000,delay):delay);
       }
     })();
     return inFlight;
