@@ -18441,6 +18441,66 @@ MUTATIONS = MUTATIONS + (
 )
 
 
+MUTATIONS = MUTATIONS + (
+    MutationCase(
+        mutation_id='SHARED_CARDS_HEADER_UNAMBIGUOUS', component='Scoped card reads',
+        source_path='scripts/llm/workbench_shared_inputs.py', test_script='tests/test_workbench_shared_cards.py',
+        before="                if (len(fields)!=len(keys) or {key for key,_kind,_value in fields}!=keys\n"
+               "                        or any(kind!='text' for key,kind,_value in fields if key in declarations)):",
+        after='                if False:',
+        expected_failure_marker='test_scoped_index_rejects_duplicate_classification_declarations',
+        rationale='Conflicting duplicate declarations cannot hide an indexed card behind the first JSON value.'),
+    MutationCase(
+        mutation_id='SHARED_CARDS_HEADER_CLASSIFICATION', component='Scoped card reads',
+        source_path='scripts/llm/workbench_shared_inputs.py', test_script='tests/test_workbench_shared_cards.py',
+        before="            if (schema not in schemas or not isinstance(checksum,str)\n"
+               "                    or re.fullmatch(r'[a-f0-9]{64}',checksum) is None\n"
+               "                    or sid != declared_sid or checksum != declared_hash\n"
+               "                    or sid != str(uuid.uuid5(uuid.NAMESPACE_URL,schema+':'+checksum))):",
+        after='            if False:',
+        expected_failure_marker='test_scoped_index_refuses_reclassified_registry_header',
+        rationale='Changing a card header classification cannot silently hide its registered input.'),
+    MutationCase(
+        mutation_id='SHARED_CARDS_HEADER_BYTES', component='Scoped card reads',
+        source_path='scripts/llm/workbench_shared_inputs.py', test_script='tests/test_workbench_shared_cards.py',
+        before="            if ev.sha(raw) != ev.sha(body.encode('utf-8')):", after='            if False:',
+        expected_failure_marker='test_scoped_index_checks_unselected_header_without_claiming_its_source_health',
+        rationale='Scoped payload filtering still reopens and hash-binds every registry header.'),
+    MutationCase(
+        mutation_id='SHARED_CARDS_SCOPED_FULL_VERIFY', component='Scoped card reads',
+        source_path='scripts/llm/workbench_shared_workspace.py', test_script='tests/test_workbench_shared_cards.py',
+        before="                entry=inputs.verify(header['snapshot_id'])",
+        after="                entry=evidence.parse(evidence.read_local(inputs.base,'envelopes/'+header['snapshot_id']+'.json'))",
+        expected_failure_marker='test_scoped_index_rechecks_envelope_and_current_source_bytes_each_time',
+        rationale='A valid indexed header cannot replace current full card source verification.'),
+    MutationCase(
+        mutation_id='SHARED_CONTEXT_REGISTRATION_BINDING', component='Scoped card reads',
+        source_path='scripts/llm/workbench_shared_workspace.py', test_script='tests/test_workbench_shared_cards.py',
+        before="        if any((job.get('result') or {}).get('error')=='SHARED_JOB_BINDING_INVALID' for job in jobs):",
+        after='        if False:',
+        expected_failure_marker='test_narrow_context_refuses_corrupted_job_registration',
+        rationale='Narrow context freshness still requires real actor/command registration binding.'),
+    MutationCase(
+        mutation_id='SHARED_CONTEXT_CLIENT_SCOPE', component='Scoped card reads',
+        source_path='tools/nonprod_workbench/ui/shared-view.mjs', test_script='tests/test_workbench_shared_cards.py',
+        before="      data.validation_scope !== 'IDENTITY_AND_JOB_REGISTRATION_NOT_OUTPUTS' ||\n", after='',
+        expected_failure_marker='test_browser_card_contract',
+        rationale='Narrow identity context must not accept a falsely asserted output-validation scope.'),
+    MutationCase(
+        mutation_id='SHARED_CONTEXT_CLIENT_ACTOR', component='Scoped card reads',
+        source_path='tools/nonprod_workbench/ui/shared-view.mjs', test_script='tests/test_workbench_shared_cards.py',
+        before='      data.my_workspace.login !== context.login || ', after='      ',
+        expected_failure_marker='test_browser_card_contract',
+        rationale='Context metadata for another actor cannot become the current action authority.'),
+    MutationCase(
+        mutation_id='SHARED_CARDS_SCOPED_CLIENT_SCOPE', component='Scoped card reads',
+        source_path='tools/nonprod_workbench/ui/research-cards-view.mjs', test_script='tests/test_workbench_shared_cards.py',
+        before="data.validation_scope!=='MATCHING_CARDS_ONLY_OTHER_INPUTS_NOT_EVALUATED'", after='false',
+        expected_failure_marker='test_browser_card_contract',
+        rationale='Scoped index payloads require their exact versioned validation boundary before reuse of legacy row guards.'),
+)
+
+
 def replace_exact(text: str, before: str, after: str, mutation_id: str) -> str:
     count = text.count(before)
     if count != 1:
@@ -19021,6 +19081,93 @@ MUTATIONS += (
         'The real CLI admits only the exact versioned expectation envelope.'),
 )
 
+
+MUTATIONS += (
+    MutationCase('SHARED_CARDS_OWN_EXPIRY','Shared cards','tools/nonprod_workbench/ui/research-cards-view.mjs',
+        'tests/test_workbench_shared_cards.py',
+        "  const expired=!Number.isFinite(state?.lastSuccessAt)||now-state.lastSuccessAt>15000;",
+        "  const expired=false;", 'test_browser_card_contract',
+        'A fresh common heading cannot authorize card evidence older than fifteen seconds.'),
+    MutationCase('SHARED_CARDS_LIVE_ACTION_FRESHNESS','Shared cards','tools/nonprod_workbench/ui/research-cards-view.mjs',
+        'tests/test_workbench_shared_cards.py',
+        "    !cardsView(current.state,current.key,current.parentStale,current.epoch,now).stale;",
+        "    true;", 'test_browser_card_contract',
+        'Retained card handlers must recheck current parent and card freshness at action time.'),
+    MutationCase('SHARED_CARDS_PARENT_ACTION_EXPIRY','Shared cards','tools/nonprod_workbench/ui/research-cards-view.mjs',
+        'tests/test_workbench_shared_cards.py',
+        "    typeof current.parentFresh==='function'&&current.parentFresh()===true&&", "",
+        'test_browser_card_contract',
+        'A retained card action must recheck exact parent expiry between timer renders.'),
+    MutationCase('SHARED_CARDS_DETAIL_OWN_EXPIRY','Shared cards','tools/nonprod_workbench/ui/shared-view.mjs',
+        'tests/test_workbench_shared_cards.py',
+        "  const detailExpired=detailLastSuccessAt!==undefined&&\n    (!Number.isFinite(detailLastSuccessAt)||now-detailLastSuccessAt>15000);",
+        "  const detailExpired=false;", 'test_browser_card_contract',
+        'Fresh common reads cannot keep stale task detail downloadable.'),
+    MutationCase('SHARED_CARDS_REFRESH_CADENCE','Shared cards','tools/nonprod_workbench/ui/shared-view.mjs',
+        'tests/test_workbench_shared_cards.py',
+        "        const delay=cadenceFromStart&&!unsuccessful?Math.min(1000,Math.max(0,5000-Math.max(0,now()-startedAt))):5000;",
+        "        const delay=5000;", 'test_browser_card_contract',
+        'Slow verified responses must not incur an additional five-second idle freshness gap.'),
+    MutationCase('SHARED_CARDS_DETAIL_INDEPENDENT_CADENCE','Shared cards','tools/nonprod_workbench/ui/shared-view.mjs',
+        'tests/test_workbench_shared_cards.py',
+        '    schedule:cadenceFromStart?schedule:()=>null,cancel,cadenceFromStart,now});',
+        '    schedule:()=>null,cancel,cadenceFromStart,now});', 'test_browser_card_contract',
+        'Selected detail must not skip a whole common cycle when its read is slightly slower.'),
+    MutationCase('SHARED_CARDS_FAILED_REFRESH_COOLDOWN','Shared cards','tools/nonprod_workbench/ui/shared-view.mjs',
+        'tests/test_workbench_shared_cards.py',
+        'cadenceFromStart&&!unsuccessful?', 'cadenceFromStart?', 'test_browser_card_contract',
+        'Failed verified reads keep their cooldown rather than creating a rapid failure loop.'),
+    MutationCase('SHARED_CARDS_DETAIL_RETRY_OWNER','Shared cards','tools/nonprod_workbench/ui/shared-view.mjs',
+        'tests/test_workbench_shared_cards.py',
+        '    if(cadenceFromStart&&detailStarted)return;', '', 'test_browser_card_contract',
+        'Fast common responses cannot cancel the independent detail failure cooldown.'),
+)
+
+MUTATIONS += (
+    MutationCase('SHARED_CARDS_QUERY_REQUEST_REUSE','Shared card query','scripts/llm/workbench_shared_workspace.py',
+        'tests/test_workbench_shared_cards.py',
+        '            verified_inputs=_verified_inputs', '            verified_inputs={}',
+        'test_combined_card_query_verifies_once_per_request_and_keeps_legacy_envelopes',
+        'One combined request deep-verifies its matching card once without retaining proof between requests.'),
+    MutationCase('SHARED_CARDS_QUERY_INPUT_RECHECK','Shared card query','scripts/llm/workbench_shared_workspace.py',
+        'tests/test_workbench_shared_cards.py',
+        "        for entry in verified_inputs.values():\n            cards._verify_inventory(entry['frozen_root'],entry['snapshot'])",
+        '        pass',
+        'test_combined_query_rechecks_changed_input_after_result_projection',
+        'A source change after projection must not reuse an earlier input proof.'),
+    MutationCase('SHARED_CARDS_QUERY_REGISTRY_RECHECK','Shared card query','scripts/llm/workbench_shared_workspace.py',
+        'tests/test_workbench_shared_cards.py',
+        '        if registry()!=before:', '        if False:',
+        'test_combined_query_rechecks_registry_after_result_projection',
+        'A changed registry must invalidate the combined result before return.'),
+    MutationCase('SHARED_CARDS_QUERY_REGISTRY_BODY','Shared card query','scripts/llm/workbench_shared_workspace.py',
+        'tests/test_workbench_shared_cards.py',
+        "            return [(sid,checksum,evidence.sha(body.encode('utf-8'))) for sid,checksum,body in rows]",
+        '            return [(sid,checksum) for sid,checksum,body in rows]',
+        'test_combined_query_binds_full_registry_body_not_only_header_fields',
+        'Unchanged header fields cannot hide changed envelope or registry body bytes.'),
+    MutationCase('SHARED_CARDS_QUERY_CLIENT_SCOPE','Shared card query','tools/nonprod_workbench/ui/research-cards-view.mjs',
+        'tests/test_workbench_shared_cards.py',
+        "  if(!exact(data,['schema','validation_scope','inputs','library'])||\n    data.schema!=='ar.shared-research-card-query.v1'||data.validation_scope!=='MATCHING_CARDS_AND_RESULTS_NOT_FULL_HISTORY')",
+        '  if(false)',
+        'test_browser_card_contract','A combined response cannot claim broader validation or unknown fields.'),
+    MutationCase('SHARED_CARDS_QUERY_CLIENT_INPUT','Shared card query','tools/nonprod_workbench/ui/research-cards-view.mjs',
+        'tests/test_workbench_shared_cards.py',
+        '  const inputs=await readScopedCardInputs(async()=>data.inputs,c,renew);', '  const inputs=data.inputs;',
+        'test_browser_card_contract','The combined path preserves every original input actor, code and evidence check.'),
+    MutationCase('SHARED_CARDS_QUERY_CLIENT_LIBRARY','Shared card query','tools/nonprod_workbench/ui/research-cards-view.mjs',
+        'tests/test_workbench_shared_cards.py',
+        '  const library=await readCardLibrary(async()=>data.library,c,renew);', '  const library=data.library;',
+        'test_browser_card_contract','The combined path preserves every original result, context and rights check.'),
+)
+
+MUTATIONS += (
+    MutationCase('SHARED_CARDS_QUERY_PACK_PERMISSION','Shared card query','scripts/llm/workbench_shared_workspace.py',
+        'tests/test_workbench_shared_cards.py',
+        "        for entry in verified_inputs.values():\n            with cards.materials._directory(Path(entry['frozen_root'])/'pack') as directory:\n                cards.materials._owned(directory)",
+        '        pass', 'test_combined_query_rechecks_pack_permissions_across_reuse',
+        'Byte-identical reused inputs still require the original no-follow pack ownership and mode check.'),
+)
 
 SHARD_SPEC_RE = re.compile(r"^(?P<index>[1-9][0-9]*)/(?P<count>[1-9][0-9]*)$")
 SHARD_RECEIPT_SCHEMA = "ar-governance-mutation-shard-receipt.v1"

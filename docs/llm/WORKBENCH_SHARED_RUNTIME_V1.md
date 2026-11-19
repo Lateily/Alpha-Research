@@ -1,5 +1,27 @@
 # Shared Workbench V1 Operator Guide
 
+## Research Card Refresh
+
+The opt-in research-card region independently revalidates its registered inputs
+and sealed result metadata. Background verification retains a valid selection;
+an explicit refresh or actor/workspace/code/query change fences old handlers.
+Parent expiry disables actions but does not cancel current card verification.
+Both parent and card evidence must be fresh: card actions recheck the unchanged
+15-second cutoff at click time, rather than borrowing the heading's timestamp.
+Failed verification blocks immediately and retries read-only; it never submits
+a task. Paired reads are drained before another poll, including partial failure.
+Retired generations cannot update a new view even after an identity changes
+away and back. Task detail also has its own 15-second verification age; a
+background recheck does not erase still-fresh steps or receipt controls, while
+an explicit recheck, failed check, or expired detail blocks downloads.
+Common and card polling opt into a start-aligned cadence with at most one
+second of post-success idle, budgeting for the next slow read. Selected detail
+has its own single-flight cadence instead of waiting for another common cycle.
+Failed reads retain a five-second retry cooldown. Other legacy consumers retain
+completion-aligned polling. Reads slower than the remaining freshness budget
+still expire; this is not an unbounded latency guarantee.
+These are lifecycle guarantees, not a 24-hour availability or research approval.
+
 This is S4 preparation, not a deployment or acceptance receipt. No current URL
 has been swapped, no Windows acceptance is claimed, and no private entry or
 production replacement is authorized here. The controller still owns final
@@ -303,3 +325,60 @@ visibility, source read-only proof and prior-output preservation. Do not fill
 Windows receipts from two Mac browsers or synthetic fixtures. Report code,
 LOCAL_QA, TWO_DEVICE_PENDING, SHARED_DEPLOYMENT and PRODUCTION_AUTHORITY
 separately; none implies formal U4/paper/research or trading approval.
+
+## Scoped Card Reads
+
+Legacy `/api/shared-workspace` and `/research-card-inputs` retain their complete
+existing verification paths and V1 contracts. The card view uses two additional
+read-only contracts to avoid repeatedly checking unrelated historical payloads:
+
+- `/api/shared-workspace/context`, `ar.shared-workspace-context.v1`, validates
+  actor/workspace/execution identity and command registration only. Its scope is
+  `IDENTITY_AND_JOB_REGISTRATION_NOT_OUTPUTS`. It contains no job output statuses,
+  publication health, nightly acceptance or source-body acceptance.
+- `/api/shared-workspace/research-card-inputs-scoped`,
+  `ar.shared-research-card-inputs.v2`, reopens every bounded registry header and
+  binds its bytes, schema-derived UUID and input hash before selecting matching
+  card inputs. Every matching card still reaches the original full frozen-input
+  verifier. Its scope is
+  `MATCHING_CARDS_ONLY_OTHER_INPUTS_NOT_EVALUATED`; unrelated source payloads are
+  neither verified nor represented as healthy by this endpoint.
+
+Card results and individual task details keep their complete existing source,
+derivation, output-seal and permission verification. No cross-request proof or
+content cache is introduced. A fresh context does not renew card input, result
+or detail evidence: their independent 15-second guards and action-time checks
+remain mandatory. Returning to another workspace view uses the original full
+history request and cannot promote retained narrow context as full acceptance.
+
+These contracts do not establish sustained performance, human research approval,
+two-device acceptance or 24-hour availability. Those require separate observed
+evidence on the actual final installation.
+
+### Combined Research Card Query
+
+`GET /api/shared-workspace/research-card-query` uses the same closed query
+parameters as the existing card library. Its `ar.shared-research-card-query.v1`
+response has exactly `schema`, `validation_scope`, `inputs` and `library`.
+The scope is `MATCHING_CARDS_AND_RESULTS_NOT_FULL_HISTORY`. The two nested
+envelopes retain `ar.shared-research-card-inputs.v2` and
+`ar.shared-research-card-library.v1` unchanged. Every old endpoint remains
+available with its original verification scope.
+
+The combined path deep-verifies each matching registered card using the original
+verifier, and shares that result only inside this one request. Job registrations,
+output seals, archived bytes and derivation checks still run. Before returning,
+it reopens each reused pack through the original no-follow descriptor ownership
+and mode check, and rechecks every input inventory, every registry header/envelope binding,
+and the full registry body fingerprints. Changed evidence refuses the response;
+no verified dictionary survives the request or is shared with another actor.
+
+The enabled card UI makes one combined GET rather than two competing deep reads.
+It validates both nested contracts using their existing validators. Its own
+15-second action-time expiry, generation fences and failure/recovery checks are
+unchanged; a fresh lightweight identity response cannot refresh card proof.
+The separate-reading component mode remains supported for older consumers.
+
+Reduced repeated work does not establish a latency SLO, continuous availability,
+human research approval or two-device end-to-end acceptance. Research gaps,
+rights restrictions and pending human review remain visible.

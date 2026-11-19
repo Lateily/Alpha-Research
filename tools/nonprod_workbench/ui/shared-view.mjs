@@ -19,29 +19,36 @@ export function sharedActorQuery(query, login) {
   return query;
 }
 
-export function sharedViewFreshness(query, detailStale = false, now = Date.now()) {
+export function sharedViewFreshness(query, detailStale = false, now = Date.now(), detailLastSuccessAt) {
   const commonStale = query.stale || query.connection === 'DISCONNECTED';
   const expired = !Number.isFinite(query.lastSuccessAt) || now - query.lastSuccessAt > 15000;
   const stale = commonStale || expired;
-  return { commonStale: stale, detailStale: stale || detailStale, downloadsEnabled: !stale && !detailStale };
+  // governance-mutation: SHARED_CARDS_DETAIL_OWN_EXPIRY
+  const detailExpired=detailLastSuccessAt!==undefined&&
+    (!Number.isFinite(detailLastSuccessAt)||now-detailLastSuccessAt>15000);
+  return { commonStale: stale, detailStale: stale || detailStale || detailExpired, downloadsEnabled: !stale && !detailStale && !detailExpired };
 }
 
 // One GET in flight per view. Disposal rejects late results, not slow results.
-export function createSharedPoller({ read, apply, fail, schedule = setTimeout, cancel = clearTimeout }) {
+export function createSharedPoller({ read, apply, fail, schedule = setTimeout, cancel = clearTimeout, cadenceFromStart = false, now = Date.now }) {
   let stopped = false, inFlight = null, timer = null;
   function refresh() {
     if (stopped) return Promise.resolve();
     if (inFlight) return inFlight;
     cancel(timer); timer = null;
+    const startedAt=now();let unsuccessful=false;
     inFlight = (async () => {
       try {
         const data = await read();
         if (!stopped) await apply(data);
       } catch (error) {
+        unsuccessful=true;
         if (!stopped) fail(error);
       } finally {
         inFlight = null;
-        if (!stopped) timer = schedule(refresh, 5000);
+        // governance-mutation: SHARED_CARDS_REFRESH_CADENCE
+        const delay=cadenceFromStart&&!unsuccessful?Math.min(1000,Math.max(0,5000-Math.max(0,now()-startedAt))):5000;
+        if (!stopped) timer = schedule(refresh, delay);
       }
     })();
     return inFlight;
@@ -54,13 +61,17 @@ export function retainedStatus(value, stale) {
 }
 
 // Common freshness must not wait for the independent, single-flight detail read.
-export function createSharedRefreshPair({read,apply,readDetails,fail,schedule=setTimeout,cancel=clearTimeout}) {
-  let latest;
-  const details=createSharedPoller({read:()=>readDetails(latest),apply:()=>{},fail,schedule:()=>null,cancel:()=>{}});
+export function createSharedRefreshPair({read,apply,readDetails,fail,schedule=setTimeout,cancel=clearTimeout,cadenceFromStart=false,now=Date.now}) {
+  let latest,detailStarted=false;
+  const details=createSharedPoller({read:()=>readDetails(latest),apply:()=>{},fail,
+    schedule:cadenceFromStart?schedule:()=>null,cancel,cadenceFromStart,now});
   const common=createSharedPoller({read,apply:async data=>{
     apply(data);latest=data;
+    // The independent reader owns its retry cooldown after the initial kick.
+    if(cadenceFromStart&&detailStarted)return;
+    detailStarted=true;
     details.refresh();
-  },fail,schedule,cancel});
+  },fail,schedule,cancel,cadenceFromStart,now});
   return {refresh:()=>common.refresh(),stop(){common.stop();details.stop();}};
 }
 
@@ -108,6 +119,32 @@ export async function sharedRead(api, path, renew) {
     await renew();
     return api(path);
   }
+}
+
+export async function readSharedContext(api, context, renew) {
+  const data = await sharedRead(api, '/api/shared-workspace/context', renew);
+  const exact = (value, keys) => value && typeof value === 'object' && !Array.isArray(value) &&
+    Object.keys(value).sort().join('|') === [...keys].sort().join('|');
+  const identifier = value => typeof value === 'string' && /^[A-Za-z0-9_-]{8,100}$/.test(value);
+  if (!exact(data, ['schema', 'my_workspace', 'execution_identity', 'owned_commands', 'validation_scope',
+      'sample_purpose', 'human_review', 'production_authority', 'trading_authority']) ||
+      data.schema !== 'ar.shared-workspace-context.v1' ||
+      data.validation_scope !== 'IDENTITY_AND_JOB_REGISTRATION_NOT_OUTPUTS' ||
+      data.sample_purpose !== 'WORKFLOW_DEBUG' || data.human_review !== 'PENDING' ||
+      data.production_authority !== false || data.trading_authority !== false ||
+      !exact(data.my_workspace, ['login', 'workspace_id']) ||
+      typeof context.login !== 'string' || !context.login || context.login.length > 254 || /[\s\x00-\x1f]/.test(context.login) ||
+      data.my_workspace.login !== context.login || !identifier(data.my_workspace.workspace_id) ||
+      (context.workspaceId !== undefined && data.my_workspace.workspace_id !== context.workspaceId) ||
+      !exact(data.execution_identity, ['code_sha', 'source_tree_hash']) ||
+      typeof data.execution_identity.code_sha !== 'string' || typeof data.execution_identity.source_tree_hash !== 'string' ||
+      !/^[a-f0-9]{40}$/.test(data.execution_identity.code_sha) ||
+      !/^[a-f0-9]{64}$/.test(data.execution_identity.source_tree_hash) ||
+      (context.codeSha !== undefined && data.execution_identity.code_sha !== context.codeSha) ||
+      !data.owned_commands || typeof data.owned_commands !== 'object' || Array.isArray(data.owned_commands) ||
+      Object.entries(data.owned_commands).some(([command, value]) => !identifier(command) ||
+        !exact(value, ['job_id']) || !identifier(value.job_id))) throw new Error('SHARED_CONTEXT_MISMATCH');
+  return data;
 }
 
 export async function retrySharedPending(api, storage, workspaceId, commandId, renew) {

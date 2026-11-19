@@ -78,13 +78,15 @@ async function componentScenario(mutant = false, workspaceSwitch = false, downlo
       for(const effect of runtime.pending.splice(0))effect();await Promise.resolve();await Promise.resolve();}}
     const reads=()=>calls.filter(path=>path.includes('/research-library')).length;
     const header=()=>nodes(tree).find(v=>v.type==='button'&&v.props['aria-label']==='刷新共享工作区');
-    async function parentTick(){assert.equal(timers.size,1,'only the parent has a scheduled poll');
-      const [id,callback]=[...timers.entries()][0];timers.delete(id);callback();await settle();}
+    async function parentTick(){assert.ok(timers.size>=1&&timers.size<=2,'common and detail each own at most one timer');
+      for(const [id,callback] of [...timers.entries()]){timers.delete(id);callback();}await settle();}
     await settle();
     if(downloadScenario){
       await nodes(tree).find(v=>v.type==='button'&&v.props.className==='shared-job-row').props.onClick();await settle();
       if(downloadScenario==='slow'){
         holdDetails=true;await parentTick();
+        const receiptButton=nodes(tree).find(v=>v.type==='button'&&v.props.children.includes('任务回执'));
+        assert.equal(receiptButton.props.disabled,false,'fresh verified detail remains usable during read-only background verification');
         const detailCount=calls.filter(path=>path.startsWith('/api/shared-workspace/jobs/')).length;
         assert.equal(timers.size,1,'slow detail must not prevent scheduling the next common poll');
         const before=calls.filter(path=>path.startsWith('/api/shared-workspace?page=')).length;

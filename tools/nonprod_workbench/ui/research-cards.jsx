@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight, FileSearch, Play, RefreshCw, Search } from 'lucide-react';
-import { canRunCard, cardValuationStatus, cardsContextKey, cardsView, readCardInputs, readCardLibrary, refreshCardVerification } from './research-cards-view.mjs';
+import { canRunCard, cardActionCurrent, cardValuationStatus, cardsContextKey, cardsView, readCardInputs, readScopedCardInputs, readCardLibrary, readCardQuery, refreshCardVerification } from './research-cards-view.mjs';
 import { createSharedPoller } from './shared-view.mjs';
 import { statusTone } from './status-tone.mjs';
 
@@ -11,32 +11,54 @@ export function CitationLocations({locations,hidden=false}) {
   </table></div></details>;
 }
 
-export default function ResearchCards({api,renew,login,workspaceId,codeSha,parentStale,refreshRevision,onRun,onOpenJob,busy}) {
+export default function ResearchCards({api,renew,login,workspaceId,codeSha,parentStale,parentFresh,refreshRevision,onRun,onOpenJob,busy,scopedInputs=false,combinedQuery=false}) {
   const [draft,setDraft]=useState({industry_key:'',research_date:'',ts_code:''});
   const [filters,setFilters]=useState({}),[page,setPage]=useState(0),[selected,setSelected]=useState('');
   const [state,setState]=useState(null),reader=useRef(null),active=useRef(null),verified=useRef(null);
   const [revision,setRevision]=useState(0);
-  const cycle=useRef({stale:parentStale,epoch:0});
-  if(cycle.current.stale!==parentStale)cycle.current={stale:parentStale,epoch:cycle.current.epoch+1};
-  const epoch=JSON.stringify([refreshRevision,cycle.current.epoch,revision]);
-  const context={login,workspaceId,codeSha,filters,page},key=cardsContextKey(context),requestKey=JSON.stringify([key,epoch]);
-  active.current=requestKey;
-  const view=cardsView(state,key,parentStale,epoch),data=view.data;
+  const [now,setNow]=useState(Date.now),live=useRef(null);
+  const generation=useRef(null),inFlight=useRef(Promise.resolve());
+  const epoch=JSON.stringify([refreshRevision,revision]);
+  const context={login,workspaceId,codeSha,filters,page},key=cardsContextKey(context),requestKey=JSON.stringify([key,epoch,scopedInputs,combinedQuery]);
+  if(generation.current?.key!==requestKey)generation.current={key:requestKey};
+  const token=generation.current;
+  active.current=token;
+  const view=cardsView(state,key,parentStale,epoch,now),data=view.data;
+  live.current={state,key,parentStale,parentFresh,epoch,busy,selected,workspaceId,codeSha,onRun,onOpenJob};
   const choices=!view.stale?data?.registeredInputs?.inputs||[]:[];
   const selectedInput=choices.find(row=>row.snapshot_id===selected);
   useEffect(()=>{setSelected('');},[login,workspaceId,codeSha,epoch]);
+  useEffect(()=>{const timer=setInterval(()=>setNow(Date.now()),1000);return()=>clearInterval(timer);},[]);
   useEffect(()=>{
     verified.current=null;
-    if(!codeSha||!workspaceId||parentStale){reader.current=null;return;}
+    if(!codeSha||!workspaceId){reader.current=null;return;}
+    let disposed=false;
+    const owned=()=>!disposed&&active.current===token;
+    const failed=error=>{if(owned()){verified.current=null;setState(old=>({key,verificationEpoch:epoch,data:old?.key===key?old.data:null,stale:true,error:error.message}));}};
     const current=createSharedPoller({
-      read:async()=>{const inputs=await readCardInputs(api,context,renew);const library=await readCardLibrary(api,context,renew);return {...library,registeredInputs:inputs};},
-      apply:data=>{if(active.current===requestKey){verified.current=requestKey;setState({key,verificationEpoch:epoch,data,stale:false,error:''});}},
-      fail:error=>{if(active.current===requestKey){verified.current=null;setState(old=>({key,verificationEpoch:epoch,data:old?.key===key?old.data:null,stale:true,error:error.message}));}},
-      schedule:()=>null,cancel:()=>{}
+      cadenceFromStart:true,
+      read:()=>{
+        const previous=inFlight.current;
+        const request=(async()=>{
+        await previous;
+        if(!owned())return null;
+        if(combinedQuery)return readCardQuery(api,context,renew);
+        // Block on the first known failure, but drain both GETs before another poll.
+        const responses=await Promise.allSettled([(scopedInputs?readScopedCardInputs:readCardInputs)(api,context,renew),readCardLibrary(api,context,renew)]
+          .map(request=>request.catch(error=>{failed(error);throw error;})));
+        const rejected=responses.find(response=>response.status==='rejected');
+        if(rejected)throw rejected.reason;
+        return {...responses[1].value,registeredInputs:responses[0].value};
+        })();
+        inFlight.current=request.catch(()=>{});
+        return request;
+      },
+      apply:data=>{if(owned()&&data){verified.current=token;setState({key,verificationEpoch:epoch,data,stale:false,error:'',lastSuccessAt:Date.now()});}},
+      fail:failed,
     });
     reader.current=current;current.refresh();
-    return()=>{current.stop();if(verified.current===requestKey)verified.current=null;if(reader.current===current)reader.current=null;};
-  },[requestKey,parentStale]);
+    return()=>{disposed=true;current.stop();if(verified.current===token)verified.current=null;if(reader.current===current)reader.current=null;};
+  },[token]);
   const badge=value=><span className={`badge ${statusTone(view.stale?'DISCONNECTED':value==='BREAK'?'DATA_BLOCKED':value)}`}>{view.stale?'DISCONNECTED':value}</span>;
   function refresh(){
     // Invalidate live callbacks before React renders the next verification epoch.
@@ -49,9 +71,15 @@ export default function ResearchCards({api,renew,login,workspaceId,codeSha,paren
     if(cardsContextKey({...context,filters:next,page:0})===key)refresh();
   }
   function run(){
-    if(verified.current!==requestKey)return;
-    if(!canRunCard({activeKey:active.current,requestKey,stale:view.stale,busy,selected:selectedInput}))return;
-    onRun({snapshot_id:selectedInput.snapshot_id,workspace_id:workspaceId,code_sha:codeSha});
+    if(!cardActionCurrent(live.current,token,active.current,verified.current))return;
+    const current=live.current;
+    const chosen=current.state.data.registeredInputs.inputs.find(row=>row.snapshot_id===current.selected);
+    if(!canRunCard({activeKey:active.current,requestKey:token,stale:false,busy:current.busy,selected:chosen}))return;
+    current.onRun({snapshot_id:chosen.snapshot_id,workspace_id:current.workspaceId,code_sha:current.codeSha});
+  }
+  function openJob(jobId){
+    if(!cardActionCurrent(live.current,token,active.current,verified.current))return;
+    live.current.onOpenJob(jobId);
   }
   return <div className="data-center research-library">
     <div className="section-title"><h3>研究卡</h3><div>{badge(view.status)}<button className="icon-button" aria-label="刷新研究卡" title="重新核验研究卡" onClick={refresh}><RefreshCw size={17}/></button></div></div>
@@ -62,7 +90,7 @@ export default function ResearchCards({api,renew,login,workspaceId,codeSha,paren
     <form className="research-filters" onSubmit={submit}>{[['industry_key','行业','text'],['research_date','研究日','date'],['ts_code','股票代码','text']].map(([key,label,type])=><label key={key}>{label}<input type={type} maxLength={128} value={draft[key]} onChange={event=>setDraft({...draft,[key]:event.target.value})}/></label>)}<button className="icon-button" title="查询研究卡" aria-label="查询研究卡" type="submit"><Search size={17}/></button></form>
     <div className="source-strip"><span>{data?.total??'NOT_CHECKED'} 项</span></div>
     {(data?.results||[]).map(row=><section className="research-metadata" key={row.job_id}>
-      <div className="section-title"><h4>{row.company} · {row.research_date}</h4><button className="icon-button" disabled={view.stale} title="查看研究卡任务" aria-label={`查看研究卡任务 ${row.job_id}`} onClick={()=>onOpenJob(row.job_id)}><FileSearch size={17}/></button></div>
+      <div className="section-title"><h4>{row.company} · {row.research_date}</h4><button className="icon-button" disabled={view.stale} title="查看研究卡任务" aria-label={`查看研究卡任务 ${row.job_id}`} onClick={()=>openJob(row.job_id)}><FileSearch size={17}/></button></div>
       <div className="source-strip">{badge(row.human_review)}{badge(row.archive_status)}<span>{row.actor}</span><code>{row.job_id}</code></div>
       <dl className="input-card-fields">{[['原件截止',row.source_cutoff_at],['研究稿生成',row.artifact_generated_at],['输入 hash',row.input_hash],['报告 SHA256',row.report_sha256],['产物来源版本',row.content_producer.code_sha],['任务执行版本',row.code_sha]].map(([name,value])=><React.Fragment key={name}><dt>{name}</dt><dd><code>{value}</code></dd></React.Fragment>)}</dl>
       <div className="table-scroll"><table><thead><tr><th>研究卡</th><th>状态</th><th>缺口 / 核验</th></tr></thead><tbody>

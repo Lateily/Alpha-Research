@@ -240,6 +240,44 @@ class FrozenInputs:
         self.store = store
         self.base = store.path.parent / "frozen-inputs"
 
+    def index_headers(self):
+        """Bind registry classification bytes, not unrelated publication content."""
+        schemas = {'ar.shared-input.v1', 'ar.shared-material-input.v1',
+                   'ar.shared-research-card-input.v1'}
+        keys = {'schema','snapshot_id','input_hash','publication_fingerprint','attempt_fingerprint',
+                'source_run_id','source_trade_date','validation_scope','snapshot'}
+        declarations = {'schema','snapshot_id','input_hash'}
+        with self.store.connect() as db:
+            rows = db.execute('SELECT snapshot_id,input_hash,body FROM shared_inputs ORDER BY rowid LIMIT 101').fetchall()
+            if len(rows) > 100:
+                raise WorkspaceError('CARDS_INDEX_CAPACITY',409)
+            headers = []
+            for sid,checksum,body in rows:
+                if type(body) is not str or db.execute('SELECT json_valid(?)',(body,)).fetchone()[0] != 1:
+                    raise WorkspaceError('FROZEN_REGISTRY_BINDING_INVALID',409)
+                fields = db.execute('SELECT key,type,value FROM json_each(?)',(body,)).fetchall()
+                # governance-mutation: SHARED_CARDS_HEADER_UNAMBIGUOUS
+                if (len(fields)!=len(keys) or {key for key,_kind,_value in fields}!=keys
+                        or any(kind!='text' for key,kind,_value in fields if key in declarations)):
+                    raise WorkspaceError('FROZEN_REGISTRY_BINDING_INVALID',409)
+                value = {key:item for key,_kind,item in fields if key in declarations}
+                headers.append((sid,checksum,body,value['schema'],value['snapshot_id'],value['input_hash']))
+        result = []
+        for sid, checksum, body, schema, declared_sid, declared_hash in headers:
+            # governance-mutation: SHARED_CARDS_HEADER_CLASSIFICATION
+            if (schema not in schemas or not isinstance(checksum,str)
+                    or re.fullmatch(r'[a-f0-9]{64}',checksum) is None
+                    or sid != declared_sid or checksum != declared_hash
+                    or sid != str(uuid.uuid5(uuid.NAMESPACE_URL,schema+':'+checksum))):
+                raise WorkspaceError('FROZEN_REGISTRY_BINDING_INVALID',409)
+            raw = ev.read_local(self.base,'envelopes/'+sid+'.json')
+            # A scoped query may skip other payloads, never a changed registry header.
+            # governance-mutation: SHARED_CARDS_HEADER_BYTES
+            if ev.sha(raw) != ev.sha(body.encode('utf-8')):
+                raise WorkspaceError('FROZEN_REGISTRY_BINDING_INVALID',409)
+            result.append({'snapshot_id':sid,'input_hash':checksum,'schema':schema})
+        return result
+
     def current_selection(self):
         with self.store.connect() as db:
             events = Workspace.events(None, db)

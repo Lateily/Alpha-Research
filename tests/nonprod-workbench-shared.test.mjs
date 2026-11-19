@@ -3,6 +3,70 @@ import test from 'node:test';
 import { existsSync } from 'node:fs';
 const url = new URL('../tools/nonprod_workbench/ui/shared-view.mjs', import.meta.url);
 const view = existsSync(url) ? await import(url) : {};
+const identityContext={login:'owner@example.com',workspaceId:'51715142-1963-466f-8470-ceb609afccbd',codeSha:'a'.repeat(40)};
+function contextReply(){return {schema:'ar.shared-workspace-context.v1',
+  my_workspace:{login:identityContext.login,workspace_id:identityContext.workspaceId},
+  execution_identity:{code_sha:identityContext.codeSha,source_tree_hash:'b'.repeat(64)},
+  owned_commands:{'original-command':{job_id:'0cfde834-bca2-4a5a-8d8c-06c9110e1604'}},
+  validation_scope:'IDENTITY_AND_JOB_REGISTRATION_NOT_OUTPUTS',sample_purpose:'WORKFLOW_DEBUG',
+  human_review:'PENDING',production_authority:false,trading_authority:false};}
+test('narrow context is an exact identity and registration contract without full-history GET',async()=>{
+  assert.equal(typeof view.readSharedContext,'function');const calls=[],reply=contextReply();
+  const received=await view.readSharedContext(async path=>{calls.push(path);return reply;},identityContext,assert.fail);
+  assert.deepEqual(calls,['/api/shared-workspace/context']);assert.equal(received,reply);
+  assert.equal(Object.hasOwn(received,'common_data'),false);assert.equal(Object.hasOwn(received,'my_jobs'),false);
+});
+test('narrow context rejects scope authority ownership code and malformed command bindings',async()=>{
+  assert.equal(typeof view.readSharedContext,'function');
+  for(const change of [d=>d.schema='ar.shared-workspace.v1',d=>d.validation_scope='FULLY_VERIFIED',
+    d=>d.my_workspace.login='member@example.com',d=>d.my_workspace.workspace_id='another-workspace',
+    d=>d.execution_identity.code_sha='c'.repeat(40),d=>d.execution_identity.source_tree_hash='bad',
+    d=>d.execution_identity.code_sha=['a'.repeat(40)],d=>d.execution_identity.source_tree_hash=['b'.repeat(64)],
+    d=>d.execution_identity.extra=true,d=>d.my_workspace.extra=true,d=>d.owned_commands=[],
+    d=>d.owned_commands['original-command'].status='SUCCEEDED',d=>d.owned_commands['original-command'].job_id='../bad',
+    d=>d.owned_commands['bad command']={job_id:'original-job'},d=>d.common_data={sync_status:'SYNCED'},
+    d=>d.sample_purpose='ACCEPTED',d=>d.human_review='PASS',d=>d.production_authority=true,d=>d.trading_authority=true]){
+    const bad=contextReply();change(bad);
+    await assert.rejects(view.readSharedContext(async()=>bad,identityContext,assert.fail),/SHARED_CONTEXT_MISMATCH/);
+  }
+});
+test('detail verification has its own exact fifteen-second age despite fresh common reads',()=>{
+  const query={connection:'CONNECTED',stale:false,lastSuccessAt:16000};
+  assert.equal(view.sharedViewFreshness(query,false,16000,1000).downloadsEnabled,true);
+  const expired=view.sharedViewFreshness(query,false,16001,1000);
+  assert.equal(expired.commonStale,false);assert.equal(expired.detailStale,true);assert.equal(expired.downloadsEnabled,false);
+  for(const timestamp of [null,NaN,Infinity])
+    assert.equal(view.sharedViewFreshness(query,false,16001,timestamp).downloadsEnabled,false);
+});
+test('start-aligned polling does not add five idle seconds after a slow verified response',async()=>{
+  let now=1000,release;const timers=[];
+  const poller=view.createSharedPoller({read:()=>new Promise(resolve=>{release=resolve;}),apply:()=>{},fail:assert.fail,
+    cadenceFromStart:true,now:()=>now,schedule:(fn,delay)=>{timers.push({fn,delay});return 1;},cancel:()=>{}});
+  const first=poller.refresh();now=13000;release({});await first;
+  assert.equal(timers.length,1);assert.equal(timers[0].delay,0);
+  poller.stop();
+});
+test('start-aligned fast reads retain a bounded delay and never change the legacy cadence',async()=>{
+  for(const [aligned,elapsed,expected] of [[true,2000,1000],[true,-2000,1000],[false,12000,5000]]){
+    let now=1000;const delays=[];
+    const poller=view.createSharedPoller({read:async()=>{now+=elapsed;return {};},apply:()=>{},fail:assert.fail,
+      cadenceFromStart:aligned,now:()=>now,schedule:(_,delay)=>{delays.push(delay);return 1;},cancel:()=>{}});
+    await poller.refresh();poller.stop();assert.deepEqual(delays,[expected]);
+  }
+});
+test('slow failed reads retain a retry cooldown instead of hammering invalid evidence',async()=>{
+  let now=1000;const delays=[];
+  const poller=view.createSharedPoller({read:async()=>{now+=12400;throw new Error('INVALID_EVIDENCE');},apply:assert.fail,fail:()=>{},
+    cadenceFromStart:true,now:()=>now,schedule:(_,delay)=>{delays.push(delay);return 1;},cancel:()=>{}});
+  await poller.refresh();poller.stop();assert.deepEqual(delays,[5000]);
+});
+test('a fast then slow verified response stays inside the unchanged freshness budget',async()=>{
+  let now=0;const durations=[1000,12400],completions=[],delays=[];
+  const poller=view.createSharedPoller({read:async()=>{now+=durations.shift();return {};},apply:()=>completions.push(now),fail:assert.fail,
+    cadenceFromStart:true,now:()=>now,schedule:(_,delay)=>{delays.push(delay);return 1;},cancel:()=>{}});
+  await poller.refresh();now+=delays[0];await poller.refresh();poller.stop();
+  assert.ok(completions[1]-completions[0]<=15000,'post-read idle must budget the next slow read as well');
+});
 test('slow shared GET is single-flight and applies every completed read', async () => {
   assert.equal(typeof view.createSharedPoller, 'function', 'missing completion-driven polling');
   const responses = [], applied = [], timers = new Map(); let nextTimer = 0;

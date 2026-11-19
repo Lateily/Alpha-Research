@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight, Database, Download, FileText, Library, Play, RefreshCw, Users, X } from 'lucide-react';
 import { statusTone } from './status-tone.mjs';
-import { commonSyncView, createSharedRefreshPair, getPending, latestOwnedJob, pollSharedPending, recordSubmissionFailure, retainedStatus, retrySharedPending, savePending, sharedActorQuery, sharedQueryState, sharedRead, sharedViewFreshness } from './shared-view.mjs';
+import { commonSyncView, createSharedRefreshPair, getPending, latestOwnedJob, pollSharedPending, readSharedContext, recordSubmissionFailure, retainedStatus, retrySharedPending, savePending, sharedActorQuery, sharedQueryState, sharedRead, sharedViewFreshness } from './shared-view.mjs';
 import DataCenter from './data-center';
 import ResearchLibrary from './research-library';
 import ResearchCards, { CitationLocations } from './research-cards';
@@ -39,15 +39,27 @@ function download(name, value, type = 'application/json') {
 export default function SharedWorkspace({ api, access, refreshRevision }) {
   const [view, setView] = useState('my'), [page, setPage] = useState(0);
   const [query, setQuery] = useState({ data: null, connection: 'WAIT', stale: false, error: '' });
+  const [contextQuery, setContextQuery] = useState({ data: null, connection: 'WAIT', stale: false, error: '' });
   const [busy, setBusy] = useState(false), [pending, setPending] = useState([]);
   const [detail, setDetail] = useState(null), [selection, setSelected] = useState(null), [detailError, setDetailError] = useState('');
   const [detailStale, setDetailStale] = useState(false);
+  const [detailLastSuccessAt,setDetailLastSuccessAt]=useState(null);
+  const detailFreshness=useRef(null);
   const [libraryRefreshRevision, setLibraryRefreshRevision] = useState(0);
   const poller = useRef(null), selectedRef = useRef(null), detailSequence = useRef(0), detailLoading = useRef(null), readerRef = useRef(null), cardDownloadRef = useRef(null);
   const [now, setNow] = useState(Date.now);
   const actorContext = useRef({ login: access.login });
   if (actorContext.current.login !== access.login) actorContext.current = { login: access.login };
-  const visibleQuery = sharedActorQuery(query, access.login);
+  const contextOnly=view==='cards',readGeneration=useRef(null);
+  const generationKey=JSON.stringify([access.login,page,contextOnly]);
+  if(readGeneration.current?.key!==generationKey)readGeneration.current={key:generationKey};
+  const generation=readGeneration.current,activeQuery=contextOnly?contextQuery:query;
+  const setActiveQuery=contextOnly?setContextQuery:setQuery;
+  const currentQuery=activeQuery.generation===generation?activeQuery:
+    {data:null,connection:'WAIT',stale:true,error:''};
+  const visibleQuery = currentQuery.data?sharedActorQuery(currentQuery,access.login):currentQuery;
+  const parentQuery=useRef(visibleQuery);parentQuery.current=visibleQuery;
+  const parentFresh=()=>!sharedViewFreshness(parentQuery.current).commonStale;
   const submissionContext = useRef(null);
   submissionContext.current = { workspaceId: visibleQuery.data?.my_workspace.workspace_id,
     codeSha: visibleQuery.data?.execution_identity?.code_sha };
@@ -62,31 +74,31 @@ export default function SharedWorkspace({ api, access, refreshRevision }) {
   useEffect(() => {
     const context = actorContext.current;
     const current = createSharedRefreshPair({
-      read: () => sharedRead(api, `/api/shared-workspace?page=${page}`, renew),
+      cadenceFromStart:true,
+      read: () => contextOnly?readSharedContext(api,{login:access.login},renew):sharedRead(api, `/api/shared-workspace?page=${page}`, renew),
       apply: data => {
-        if (actorContext.current !== context) return;
+        if (actorContext.current !== context || readGeneration.current !== generation) return;
         if (data.my_workspace.login !== access.login) throw new Error('SHARED_IDENTITY_CHANGED');
-        const workspaceId = data.my_workspace.workspace_id;
-        setQuery(previous => sharedQueryState(previous, data));
+        setActiveQuery(previous => ({...sharedQueryState(previous?.generation===generation?previous:null, data),generation}));
       },
       readDetails: async data => {
-        if (poller.current !== current || actorContext.current !== context) return;
+        if (poller.current !== current || actorContext.current !== context || readGeneration.current !== generation) return;
         const workspaceId = data.my_workspace.workspace_id;
         await pollSharedPending(api, window.localStorage, workspaceId, data.owned_commands || {}, renew);
-        if (poller.current !== current || actorContext.current !== context || submissionContext.current?.workspaceId !== workspaceId) return;
+        if (poller.current !== current || actorContext.current !== context || readGeneration.current !== generation || submissionContext.current?.workspaceId !== workspaceId) return;
         setPending(getPending(window.localStorage, workspaceId));
         const chosen=selectedRef.current;
         if (chosen) await open(chosen.jobId,chosen.kind,false,chosen.reader);
       },
       fail: error => {
-        if (actorContext.current !== context) return;
-        setQuery(previous => sharedQueryState(previous, null, error.message));
+        if (actorContext.current !== context || readGeneration.current !== generation) return;
+        setActiveQuery(previous => ({...sharedQueryState(previous?.generation===generation?previous:null, null, error.message),generation}));
         setDetailStale(true);
       }
     });
     poller.current = current; current.refresh();
     return () => { current.stop(); ++detailSequence.current; };
-  }, [page, access.login]);
+  }, [page, access.login, contextOnly]);
   useEffect(() => { reload(); }, [refreshRevision]);
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 1000);
@@ -95,34 +107,41 @@ export default function SharedWorkspace({ api, access, refreshRevision }) {
   useEffect(() => {
     ++detailSequence.current;
     selectedRef.current = null;
-    setSelected(null); setDetail(null); setDetailStale(true); setBusy(false);
+    setSelected(null); setDetail(null); setDetailStale(true); setDetailLastSuccessAt(null); setBusy(false);
     setPending(getPending(window.localStorage, visibleQuery.data?.my_workspace.workspace_id));
   }, [reader]);
   async function open(jobId,kind,select=true,requestReader=readerRef.current) {
-    if(requestReader!==readerRef.current||!requestReader.ready||!detailKinds.has(kind))return;
+    if(readGeneration.current!==generation||requestReader!==readerRef.current||!requestReader.ready||!detailKinds.has(kind))return;
     let chosen=selectedRef.current;
     const same=chosen?.jobId===jobId&&chosen.kind===kind&&chosen.reader===requestReader;
     if(!select&&(!same||detailLoading.current!==null))return;
     if(!same){chosen={jobId,kind,reader:requestReader};selectedRef.current=chosen;setSelected(chosen);setDetail(null);}
     const request = ++detailSequence.current;
     detailLoading.current = request;
-    setDetailError(''); setDetailStale(true);
-    const current=()=>request===detailSequence.current&&detailReadCurrent(chosen,selectedRef.current,readerRef.current);
+    setDetailError(''); if(select||!same){
+      if(detailFreshness.current)detailFreshness.current.stale=true;
+      setDetailStale(true);
+    }
+    const current=()=>readGeneration.current===generation&&request===detailSequence.current&&detailReadCurrent(chosen,selectedRef.current,readerRef.current);
     try {
       const data = await sharedRead(api, `/api/shared-workspace/jobs/${encodeURIComponent(jobId)}`, renew);
       if(!current())return;
       if(data?.job_id!==jobId||data.kind!==kind||(kind===cardKind&&!cardStatuses.has(data.status)))
         throw new Error('SHARED_DETAIL_BINDING_MISMATCH');
-      setDetail(data);setDetailStale(false);
+      setDetail(data);setDetailStale(false);setDetailLastSuccessAt(Date.now());
     } catch (error) {
-      if(current())setDetailError(kind===cardKind?'RESEARCH_CARD_DETAIL_UNAVAILABLE':error.message);
+      if(current()){
+        if(detailFreshness.current)detailFreshness.current.stale=true;
+        setDetailStale(true);setDetailError(kind===cardKind?'RESEARCH_CARD_DETAIL_UNAVAILABLE':error.message);
+      }
     } finally { if (detailLoading.current === request) detailLoading.current = null; }
   }
   async function run(kind, selection = null) {
+    if(readGeneration.current!==generation||(contextOnly&&kind!==cardKind))return;
     const context = actorContext.current;
     const requestReader=readerRef.current;
     const workspaceId = visibleQuery.data?.my_workspace.workspace_id;
-    const snapshotId = selection?.snapshot_id || visibleQuery.data?.common_data.current_snapshot_id;
+    const snapshotId = selection?.snapshot_id || visibleQuery.data?.common_data?.current_snapshot_id;
     if (kind === 'earnings-review' && (!selection || selection.workspace_id !== submissionContext.current?.workspaceId ||
         selection.code_sha !== submissionContext.current?.codeSha || workspaceId !== selection.workspace_id)) return;
     if (kind === 'research-cards-review' && (!selection || selection.workspace_id !== submissionContext.current?.workspaceId ||
@@ -136,19 +155,20 @@ export default function SharedWorkspace({ api, access, refreshRevision }) {
       savePending(window.localStorage, workspaceId, body);
       setPending(getPending(window.localStorage, workspaceId));
       const receipt = await api('/api/workspace/job', body);
-      if (actorContext.current !== context) return;
+      if (actorContext.current !== context || readGeneration.current !== generation) return;
       savePending(window.localStorage, workspaceId, body, receipt.job_id);
       await reload();
-      if (actorContext.current === context) await open(receipt.job_id,kind,true,requestReader);
+      if (actorContext.current === context && readGeneration.current === generation) await open(receipt.job_id,kind,true,requestReader);
     } catch (error) {
-      if (actorContext.current !== context) return;
+      if (actorContext.current !== context || readGeneration.current !== generation) return;
       recordSubmissionFailure(window.localStorage, workspaceId, body.command_id, error);
       setPending(getPending(window.localStorage, workspaceId));
-      setQuery(previous => sharedQueryState(previous, null, error.message));
+      setActiveQuery(previous => ({...sharedQueryState(previous, null, error.message),generation}));
       setDetailStale(true);
-    } finally { if (actorContext.current === context) setBusy(false); }
+    } finally { if (actorContext.current === context && readGeneration.current === generation) setBusy(false); }
   }
   async function retry(commandId) {
+    if(readGeneration.current!==generation||contextOnly)return;
     const context = actorContext.current;
     const requestReader=readerRef.current;
     const workspaceId = visibleQuery.data?.my_workspace.workspace_id;
@@ -157,20 +177,20 @@ export default function SharedWorkspace({ api, access, refreshRevision }) {
     try {
       const kind=getPending(window.localStorage,workspaceId).find(item=>item.body.command_id===commandId)?.body.kind;
       const scopedApi = (...args) => {
-        if (actorContext.current !== context) throw new Error('SHARED_IDENTITY_CHANGED');
+        if (actorContext.current !== context || readGeneration.current !== generation) throw new Error('SHARED_IDENTITY_CHANGED');
         return api(...args);
       };
       const receipt = await retrySharedPending(scopedApi, window.localStorage, workspaceId, commandId, renew);
-      if (actorContext.current !== context) return;
+      if (actorContext.current !== context || readGeneration.current !== generation) return;
       await reload();
-      if (actorContext.current === context) await open(receipt.job_id,kind,true,requestReader);
+      if (actorContext.current === context && readGeneration.current === generation) await open(receipt.job_id,kind,true,requestReader);
     } catch (error) {
-      if (actorContext.current !== context) return;
+      if (actorContext.current !== context || readGeneration.current !== generation) return;
       recordSubmissionFailure(window.localStorage, workspaceId, commandId, error);
       setPending(getPending(window.localStorage, workspaceId));
-      setQuery(previous => sharedQueryState(previous, null, error.message));
+      setActiveQuery(previous => ({...sharedQueryState(previous, null, error.message),generation}));
       setDetailStale(true);
-    } finally { if (actorContext.current === context) setBusy(false); }
+    } finally { if (actorContext.current === context && readGeneration.current === generation) setBusy(false); }
   }
   const data = visibleQuery.data, login = data?.my_workspace.login || access.login;
   const visiblePending = data ? pending : [];
@@ -178,11 +198,13 @@ export default function SharedWorkspace({ api, access, refreshRevision }) {
   const rows = view === 'my' ? data?.my_jobs || [] : data?.team_jobs || [];
   const total = view === 'my' ? data?.my_total || 0 : data?.team_total || 0;
   const common = data?.common_data, observation = common?.observation;
-  const freshness = sharedViewFreshness(visibleQuery, detailStale, now);
+  const freshness = sharedViewFreshness(visibleQuery, detailStale, now, detailLastSuccessAt);
+  detailFreshness.current={query:visibleQuery,stale:detailStale,lastSuccessAt:detailLastSuccessAt};
   const cardEvidence=selected?.kind===cardKind?cardTaskEvidence(detail,{jobId:selected.jobId,stale:freshness.detailStale}):null;
   cardDownloadRef.current=cardEvidence;
   function downloadCard(){
-    if(cardEvidence&&cardDownloadRef.current===cardEvidence&&detailLoading.current===null&&detailReadCurrent(selected,selectedRef.current,readerRef.current))
+    const current=detailFreshness.current;
+    if(cardEvidence&&cardDownloadRef.current===cardEvidence&&sharedViewFreshness(current.query,current.stale,Date.now(),current.lastSuccessAt).downloadsEnabled&&detailReadCurrent(selected,selectedRef.current,readerRef.current))
       download(`${selected.jobId}.json`,cardEvidence.receipt);
   }
   const syncView = commonSyncView(common, freshness.commonStale);
@@ -190,14 +212,14 @@ export default function SharedWorkspace({ api, access, refreshRevision }) {
   const syncTime = value => value == null ? 'NOT_CHECKED' : new Date(value * 1000).toLocaleString();
   return <div className="workspace-surface shared-workspace">
     <div className="shared-heading"><div><h2>共享研究工作台</h2><code>{login}</code></div>
-      <div className="shared-status"><code>{data?.execution_identity?.code_sha || 'VERSION_UNAVAILABLE'}</code><Status value={freshness.commonStale ? 'DISCONNECTED' : query.connection} /><button className="icon-button" title="刷新" aria-label="刷新共享工作区" onClick={reload}><RefreshCw size={17} /></button></div>
+      <div className="shared-status"><code>{data?.execution_identity?.code_sha || 'VERSION_UNAVAILABLE'}</code><Status value={freshness.commonStale ? 'DISCONNECTED' : visibleQuery.connection} /><button className="icon-button" title="刷新" aria-label="刷新共享工作区" onClick={reload}><RefreshCw size={17} /></button></div>
     </div>
-    <div className="source-strip"><span>WORKFLOW_DEBUG</span><span>人工核验 PENDING</span><span>生产 / 交易权限 false</span><span>最新本人简报 <Status value={latest?.status} stale={freshness.commonStale} /></span></div>
+    <div className="source-strip"><span>WORKFLOW_DEBUG</span><span>人工核验 PENDING</span><span>生产 / 交易权限 false</span>{contextOnly?<code>{data?.validation_scope||'IDENTITY_NOT_EVALUATED'}</code>:<span>最新本人简报 <Status value={latest?.status} stale={freshness.commonStale} /></span>}</div>
     {visibleQuery.error && <div className="shared-error" role="alert">DISCONNECTED · {visibleQuery.error}</div>}
     {visiblePending.some(item => !item.job_id) && <div className="source-strip"><Status value="SUBMISSION_UNCONFIRMED" stale={freshness.commonStale} /></div>}
-    {!syncView.canBrief && <div className="shared-error" role="status">{freshness.commonStale ? 'DISCONNECTED' : common?.error || 'NO_FROZEN_PUBLICATION'}</div>}
+    {!contextOnly&&!syncView.canBrief && <div className="shared-error" role="status">{freshness.commonStale ? 'DISCONNECTED' : common?.error || 'NO_FROZEN_PUBLICATION'}</div>}
     <nav className="shared-tabs" aria-label="共享工作区视图">{[...views,...(access.review_portal_enabled===true?[['review','研究审阅',FileText]]:[])].map(([key, label, Icon]) => <button key={key} aria-current={view === key ? 'page' : undefined} onClick={() => { setView(key); setPage(0); }}><Icon size={16} />{label}</button>)}</nav>
-    {view === 'review' && access.review_portal_enabled===true ? <ReviewPortal api={api} renew={renew} login={access.login} workspaceId={data?.my_workspace.workspace_id} codeSha={data?.execution_identity?.code_sha} parentStale={freshness.commonStale} refreshRevision={cardRevision}/> : view === 'cards' ? <ResearchCards api={api} renew={renew} login={access.login} workspaceId={data?.my_workspace.workspace_id} codeSha={data?.execution_identity?.code_sha} parentStale={freshness.commonStale} refreshRevision={cardRevision} onRun={selection=>run(cardKind,selection)} onOpenJob={jobId=>open(jobId,cardKind,true,reader)} busy={busy||pending.length>=2}/> : view === 'research' ? <ResearchLibrary api={api} renew={renew} login={access.login} workspaceId={data?.my_workspace.workspace_id} codeSha={data?.execution_identity?.code_sha} parentStale={freshness.commonStale} refreshRevision={`${refreshRevision}:${libraryRefreshRevision}`} onRun={selection => run('earnings-review', selection)} busy={busy || pending.length >= 2} /> : view !== 'common' ? <>
+    {view === 'review' && access.review_portal_enabled===true ? <ReviewPortal api={api} renew={renew} login={access.login} workspaceId={data?.my_workspace.workspace_id} codeSha={data?.execution_identity?.code_sha} parentStale={freshness.commonStale} refreshRevision={cardRevision}/> : view === 'cards' ? <ResearchCards api={api} renew={renew} login={access.login} workspaceId={data?.my_workspace.workspace_id} codeSha={data?.execution_identity?.code_sha} parentStale={freshness.commonStale} parentFresh={parentFresh} scopedInputs combinedQuery refreshRevision={cardRevision} onRun={selection=>run(cardKind,selection)} onOpenJob={jobId=>open(jobId,cardKind,true,reader)} busy={busy||pending.length>=2}/> : view === 'research' ? <ResearchLibrary api={api} renew={renew} login={access.login} workspaceId={data?.my_workspace.workspace_id} codeSha={data?.execution_identity?.code_sha} parentStale={freshness.commonStale} refreshRevision={`${refreshRevision}:${libraryRefreshRevision}`} onRun={selection => run('earnings-review', selection)} busy={busy || pending.length >= 2} /> : view !== 'common' ? <>
       <div className="shared-toolbar"><span>{total} 个任务</span>{view === 'my' && <div><button disabled={busy || pending.length >= 2 || freshness.commonStale || !common?.current_snapshot_id} onClick={() => run('observe')}><Database size={16} />观察</button><button className="primary" disabled={busy || pending.length >= 2 || freshness.commonStale || !common?.current_snapshot_id} onClick={() => run('snapshot-brief')}><Play size={16} />{busy ? '提交中' : '生成简报'}</button>{pending.length > 0 && !busy && <button onClick={reload}><RefreshCw size={16} />核对原任务</button>}</div>}</div>
       {view === 'my' && visiblePending.filter(item => !item.job_id).map(item => <div className="source-strip" key={item.body.command_id}><code>{item.body.command_id}</code><span>{item.body.kind}</span><code>{item.body.snapshot_id}</code><button disabled={busy || freshness.commonStale} aria-label={`重试原提交 ${item.body.command_id}`} onClick={() => retry(item.body.command_id)}><RefreshCw size={16} />重试原提交</button></div>)}
       <div className="shared-job-list">{rows.map(job => <button className="shared-job-row" key={job.job_id} onClick={() => open(job.job_id,job.kind,true,reader)}>

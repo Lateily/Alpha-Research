@@ -11,6 +11,51 @@ function base(){return {my_workspace:{login:'owner',workspace_id:'workspace-a'},
 function library(){return {...base(),schema:'ar.shared-research-card-library.v1',status:'EMPTY',library_hash:'b'.repeat(64),
   query:{industry_key:'chip',industry_taxonomy:null,taxonomy_version:null,research_date:'20261110',ts_code:null},
   page:0,page_size:50,total:0,results:[],rights:{status:'UNVERIFIED',visibility:'PRIVATE',sharing_allowed:false,model_use_allowed:false}};}
+function registeredInput(){return {snapshot_id:'registered-card',input_hash:'b'.repeat(64),company:'603986.SH',research_date:'20261110',
+  source_cutoff_at:'2026-10-04T23:59:59+08:00',artifact_generated_at:'2026-11-10T01:48:00+08:00',
+  industry_key:'chip',industry_taxonomy:'manual',taxonomy_version:'v1',pack_hash:'c'.repeat(64),
+  content_hash:'d'.repeat(64),basis_hash:'e'.repeat(64),classification_status:'SOURCE_METADATA_NOT_RECLASSIFIED',projection_hash:'f'.repeat(64)};}
+function combinedQuery(){return {schema:'ar.shared-research-card-query.v1',validation_scope:'MATCHING_CARDS_AND_RESULTS_NOT_FULL_HISTORY',
+  inputs:{...base(),schema:'ar.shared-research-card-inputs.v2',validation_scope:'MATCHING_CARDS_ONLY_OTHER_INPUTS_NOT_EVALUATED',enabled:true,inputs:[registeredInput()]},
+  library:library()};}
+test('combined query is one GET and preserves both independently validated envelopes',async()=>{
+  assert.equal(typeof cards.readCardQuery,'function');const calls=[],data=combinedQuery();
+  const found=await cards.readCardQuery(async path=>{calls.push(path);return data;},context,assert.fail);
+  assert.deepEqual(calls,['/api/shared-workspace/research-card-query?page=0&industry_key=chip&research_date=20261110']);
+  assert.deepEqual(found,{...data.library,registeredInputs:data.inputs});
+});
+test('combined query rejects outer scope and each original nested context or evidence violation',async()=>{
+  assert.equal(typeof cards.readCardQuery,'function');
+  for(const change of [d=>d.schema='ar.shared-research-card-query.v0',d=>d.validation_scope='ALL_HISTORY_VERIFIED',
+    d=>d.extra=true,d=>delete d.inputs,d=>d.inputs.my_workspace.login='other',
+    d=>d.inputs.consumer_code_sha='c'.repeat(40),d=>d.inputs.inputs[0].projection_hash='bad',
+    d=>d.library.my_workspace.workspace_id='other',d=>d.library.query.research_date='20261004',
+    d=>d.library.rights.sharing_allowed=true,d=>d.library.results=[{report:'DENIED'}],
+    d=>d.inputs.production_authority=true,d=>d.library.human_review='APPROVED']){
+    const data=combinedQuery();change(data);
+    await assert.rejects(cards.readCardQuery(async()=>data,context,assert.fail),/CARDS_CONTEXT_MISMATCH/);
+  }
+});
+test('scoped card inputs use only V2 GET and preserve the original response schema and scope',async()=>{
+  assert.equal(typeof cards.readScopedCardInputs,'function');const calls=[];
+  const data={...base(),schema:'ar.shared-research-card-inputs.v2',
+    validation_scope:'MATCHING_CARDS_ONLY_OTHER_INPUTS_NOT_EVALUATED',enabled:true,inputs:[]};
+  const original=structuredClone(data);Object.freeze(data);
+  const received=await cards.readScopedCardInputs(async path=>{calls.push(path);return data;},context,assert.fail);
+  assert.deepEqual(calls,['/api/shared-workspace/research-card-inputs-scoped']);
+  assert.deepEqual(received,original);assert.deepEqual(data,original);
+});
+test('scoped card inputs reject wrong scope and retain every legacy input context guard',async()=>{
+  assert.equal(typeof cards.readScopedCardInputs,'function');
+  for(const change of [d=>d.schema='ar.shared-research-card-inputs.v1',d=>d.validation_scope='ALL_INPUTS_VERIFIED',
+    d=>delete d.validation_scope,d=>d.my_workspace.login='member',d=>d.my_workspace.workspace_id='workspace-b',
+    d=>d.consumer_code_sha='c'.repeat(40),d=>d.production_authority=true,d=>d.extra=true,
+    d=>d.enabled=false,d=>d.inputs=[{path:'/private/tmp'}]]){
+    const data={...base(),schema:'ar.shared-research-card-inputs.v2',
+      validation_scope:'MATCHING_CARDS_ONLY_OTHER_INPUTS_NOT_EVALUATED',enabled:true,inputs:[registeredInput()]};
+    change(data);await assert.rejects(cards.readScopedCardInputs(async()=>data,context,assert.fail),/CARDS_CONTEXT_MISMATCH/);
+  }
+});
 test('card query and context use separate closed contract',async()=>{
   assert.equal(typeof cards.readCardLibrary,'function');let path;
   const value=await cards.readCardLibrary(async p=>{path=p;return library();},context,async()=>{});
@@ -48,11 +93,25 @@ test('response roots nested envelopes and all fixed labels are closed',async()=>
 });
 test('workspace changes and revalidation epochs hide stale card data',()=>{
   assert.equal(typeof cards.cardsContextKey,'function');
-  const key=cards.cardsContextKey(context),state={key,verificationEpoch:'old',data:library(),stale:false};
+  const key=cards.cardsContextKey(context),state={key,verificationEpoch:'old',data:library(),stale:false,lastSuccessAt:Date.now()};
   assert.notEqual(cards.cardsContextKey({...context,workspaceId:'workspace-b'}),key);
   assert.equal(cards.cardsView(state,key,false,'new').stale,true);
   assert.equal(cards.cardsView(state,'changed',false,'old').data,null);
   assert.equal(cards.cardsView(state,key,false,'old').stale,false);
+});
+test('card evidence has its own exact fifteen-second expiry and live action boundary',()=>{
+  const key=cards.cardsContextKey(context),state={key,verificationEpoch:'epoch',data:library(),stale:false,lastSuccessAt:1000};
+  const current={state,key,parentStale:false,parentFresh:()=>true,epoch:'epoch'};
+  assert.equal(cards.cardsView(state,key,false,'epoch',16000).stale,false);
+  assert.equal(cards.cardsView(state,key,false,'epoch',16001).stale,true);
+  assert.equal(cards.cardActionCurrent(current,'request','request','request',16000),true);
+  assert.equal(cards.cardActionCurrent(current,'request','request','request',16001),false);
+  assert.equal(cards.cardActionCurrent({...current,parentStale:true},'request','request','request',1001),false);
+  assert.equal(cards.cardActionCurrent({...current,parentFresh:()=>false},'request','request','request',1001),false);
+  for(const changed of [{active:'other'},{verified:'other'}])
+    assert.equal(cards.cardActionCurrent(current,'request',changed.active||'request',changed.verified||'request',1001),false);
+  for(const timestamp of [undefined,NaN,Infinity])
+    assert.equal(cards.cardsView({...state,lastSuccessAt:timestamp},key,false,'epoch',1001).stale,true);
 });
 test('actual submission predicate rejects retained handlers stale views and missing selections',()=>{
   assert.equal(typeof cards.canRunCard,'function');

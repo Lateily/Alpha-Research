@@ -142,7 +142,18 @@ export function detailReadCurrent(selection,active,reader){
 }
 
 export function cardsContextKey(c){return JSON.stringify([c.login,c.workspaceId,c.codeSha,...filters.map(k=>c.filters?.[k]||''),c.page||0]);}
-export const cardsView=libraryView;
+export function cardsView(state,key,parentStale,epoch,now=Date.now()){
+  const view=libraryView(state,key,parentStale,epoch);
+  // governance-mutation: SHARED_CARDS_OWN_EXPIRY
+  const expired=!Number.isFinite(state?.lastSuccessAt)||now-state.lastSuccessAt>15000;
+  return {...view,stale:view.stale||expired,status:view.stale||expired?'DISCONNECTED':view.status};
+}
+export function cardActionCurrent(current,requestKey,activeKey,verifiedKey,now=Date.now()){
+  // governance-mutation: SHARED_CARDS_LIVE_ACTION_FRESHNESS
+  return activeKey===requestKey&&verifiedKey===requestKey&&
+    typeof current.parentFresh==='function'&&current.parentFresh()===true&&
+    !cardsView(current.state,current.key,current.parentStale,current.epoch,now).stale;
+}
 export function refreshCardVerification({verified,active,setSelected,setRevision}){
   verified.current=null;active.current=null;setSelected('');setRevision(value=>value+1);
 }
@@ -159,6 +170,30 @@ export async function readCardInputs(api,c,renew){
       'content_hash','basis_hash','classification_status','projection_hash'])||!metadata(v)||!text(v.snapshot_id)||!hash(v.projection_hash)||!text(v.classification_status)))
     throw new Error('CARDS_CONTEXT_MISMATCH');
   return data;
+}
+export async function readScopedCardInputs(api,c,renew){
+  const data=await sharedRead(api,'/api/shared-workspace/research-card-inputs-scoped',renew);
+  if(!exact(data,[...commonKeys,'enabled','inputs','validation_scope'])||data.schema!=='ar.shared-research-card-inputs.v2'||
+    data.validation_scope!=='MATCHING_CARDS_ONLY_OTHER_INPUTS_NOT_EVALUATED')throw new Error('CARDS_CONTEXT_MISMATCH');
+  const {validation_scope,...body}=data;
+  await readCardInputs(async()=>({...body,schema:'ar.shared-research-card-inputs.v1'}),c,renew);
+  return data;
+}
+export async function readCardQuery(api,c,renew){
+  const params=new URLSearchParams({page:String(c.page||0)});
+  if(Object.keys(c.filters||{}).some(k=>!filters.includes(k)))throw new Error('CARDS_CONTEXT_MISMATCH');
+  for(const key of filters)if(c.filters?.[key])params.set(key,c.filters[key]);
+  const data=await sharedRead(api,`/api/shared-workspace/research-card-query?${params}`,renew);
+  // governance-mutation: SHARED_CARDS_QUERY_CLIENT_SCOPE
+  if(!exact(data,['schema','validation_scope','inputs','library'])||
+    data.schema!=='ar.shared-research-card-query.v1'||data.validation_scope!=='MATCHING_CARDS_AND_RESULTS_NOT_FULL_HISTORY')
+    throw new Error('CARDS_CONTEXT_MISMATCH');
+  // Keep both original closed schemas and actor/code/rights checks authoritative.
+  // governance-mutation: SHARED_CARDS_QUERY_CLIENT_INPUT
+  const inputs=await readScopedCardInputs(async()=>data.inputs,c,renew);
+  // governance-mutation: SHARED_CARDS_QUERY_CLIENT_LIBRARY
+  const library=await readCardLibrary(async()=>data.library,c,renew);
+  return {...library,registeredInputs:inputs};
 }
 export async function readCardLibrary(api,c,renew){
   const params=new URLSearchParams({page:String(c.page||0)});
