@@ -1,17 +1,16 @@
 {
   "ticker": "688120.SH",
-  "fetched_at": "2026-11-18T08:29:50Z",
-  "trade_date": "20261118",
-  "_status": "SOURCE_DOWN",
-  "api_used": null,
+  "fetched_at": "2026-11-19T08:36:01Z",
+  "trade_date": "20261119",
+  "_status": "ok",
+  "api_used": "top_list",
   "days_window": 30,
-  "as_of": null,
+  "as_of": "20261118",
   "appearances": [],
   "summary": {
     "total_appearances": 0,
     "total_net_amount": 0,
     "last_appearance_date": null,
     "top_reason": null
-  },
-  "_error": "top_list[20261019]: Exception: 查询数据失败，请确认参数！可以反馈管理员协助您排查问题, dial tcp 10.255.255.2:8806: connect: connection refused"
+  }
 }

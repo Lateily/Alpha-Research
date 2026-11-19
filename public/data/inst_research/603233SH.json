@@ -1,21 +1,36 @@
 {
-  "_status": "all_failed",
+  "_status": "ok",
   "ticker": "603233.SH",
-  "fetched_at": "2026-11-18T08:30:22Z",
-  "api_used": null,
+  "fetched_at": "2026-11-19T08:36:17Z",
+  "api_used": "stk_holdertrade",
   "_attempted_endpoints": [
     "stk_surv",
-    "stk_holdertrade",
-    "surv_holdertrade",
-    "investor_research"
+    "stk_holdertrade"
   ],
   "window_days": 90,
-  "surveys": [],
+  "surveys": [
+    {
+      "ts_code": "603233.SH",
+      "ann_date": "20261020",
+      "holder_name": "国泰海通证券股份有限公司总部",
+      "holder_type": "C",
+      "in_de": "DE",
+      "change_vol": 943400.0,
+      "change_ratio": 0.0828,
+      "after_share": null,
+      "after_ratio": null,
+      "avg_price": 18.2,
+      "total_share": null,
+      "surv_date": "20261020",
+      "inst_count": null,
+      "surv_type": null,
+      "description": null
+    }
+  ],
   "summary": {
-    "total_30d": 0,
-    "total_90d": 0,
+    "total_30d": 1,
+    "total_90d": 1,
     "unique_inst_30d": null,
-    "latest_date": null
-  },
-  "_error": "stk_surv: RuntimeError: stk_surv: Exception: 查询数据失败，请确认参数！可以反馈管理员协助您排查问题, dial tcp 10.255.255.2:8806: connect: connection refused | stk_surv: Exception: 查询数据失败，请确认参数！可以反馈管理员协助您排查问题, dial tcp 10.255.255.2:8806: connect: connection refused | stk_holdertrade: RuntimeError: stk_holdertrade: Exception: 查询数据失败，请确认参数！可以反馈管理员协助您排查问题, dial tcp 10.255.255.2:8806: connect: connection refused | stk_holdertrade: Exception: 查询数据失败，请确认参数！可以反馈管理员协助您排查问题, dial tcp 10.255.255.2:8806: connect: connection refused | surv_holdertrade: RuntimeError: surv_holdertrade: Exception: 请指定正确的接口名 | surv_holdertrade: Exception: 请指定正确的接口名 | investor_research: RuntimeError: investor_research: Exception: 请指定正确的接口名 | investor_research: Exception: 请指定正确的接口名"
+    "latest_date": "2026-10-20"
+  }
 }

@@ -1,11 +1,24 @@
 {
   "ticker": "603233.SH",
-  "fetched_at": "2026-11-18T17:29:59Z",
+  "fetched_at": "2026-11-19T08:34:50Z",
   "permission_model": "runtime_probe",
   "_status": "partial",
   "data": {
     "daily": {
       "rows": [
+        {
+          "ts_code": "603233.SH",
+          "trade_date": "20261119",
+          "open": 20.81,
+          "high": 21.14,
+          "low": 20.4,
+          "close": 20.76,
+          "pre_close": 20.71,
+          "change": 0.05,
+          "pct_chg": 0.2414,
+          "vol": 101573.42,
+          "amount": 210146.635
+        },
         {
           "ts_code": "603233.SH",
           "trade_date": "20261118",
@@ -759,27 +772,34 @@
           "pct_chg": -2.9137,
           "vol": 58482.6,
           "amount": 103615.497
-        },
-        {
-          "ts_code": "603233.SH",
-          "trade_date": "20260820",
-          "open": 18.06,
-          "high": 18.34,
-          "low": 17.97,
-          "close": 18.19,
-          "pre_close": 17.91,
-          "change": 0.28,
-          "pct_chg": 1.5634,
-          "vol": 49787.95,
-          "amount": 90350.174
         }
       ],
       "row_count": 59,
       "_status": "ok",
-      "as_of": "20261118"
+      "as_of": "20261119"
     },
     "daily_basic": {
       "rows": [
+        {
+          "ts_code": "603233.SH",
+          "trade_date": "20261119",
+          "close": 20.76,
+          "turnover_rate": 0.8606,
+          "turnover_rate_f": 2.0673,
+          "volume_ratio": null,
+          "pe": 19.836,
+          "pe_ttm": 17.1934,
+          "pb": 3.3048,
+          "ps": 0.8909,
+          "ps_ttm": 0.8525,
+          "dv_ratio": 3.0033,
+          "dv_ttm": 4.1585,
+          "total_share": 118027.0001,
+          "float_share": 118027.0001,
+          "free_share": 49133.8075,
+          "total_mv": 2450240.52,
+          "circ_mv": 2450240.52
+        },
         {
           "ts_code": "603233.SH",
           "trade_date": "20261118",
@@ -1939,34 +1959,19 @@
           "free_share": 44992.2594,
           "total_mv": 2011217.047,
           "circ_mv": 2011217.047
-        },
-        {
-          "ts_code": "603233.SH",
-          "trade_date": "20260820",
-          "close": 18.19,
-          "turnover_rate": 0.4372,
-          "turnover_rate_f": 1.1066,
-          "volume_ratio": 0.71,
-          "pe": 16.7706,
-          "pe_ttm": 16.1038,
-          "pb": 2.6968,
-          "ps": 0.7532,
-          "ps_ttm": 0.7528,
-          "dv_ratio": 3.5523,
-          "dv_ttm": 4.536,
-          "total_share": 113885.452,
-          "float_share": 113885.452,
-          "free_share": 44992.2594,
-          "total_mv": 2071576.3355,
-          "circ_mv": 2071576.3355
         }
       ],
       "row_count": 59,
       "_status": "ok",
-      "as_of": "20261118"
+      "as_of": "20261119"
     },
     "adj_factor": {
       "rows": [
+        {
+          "ts_code": "603233.SH",
+          "trade_date": "20261119",
+          "adj_factor": 3.309
+        },
         {
           "ts_code": "603233.SH",
           "trade_date": "20261118",
@@ -2256,16 +2261,11 @@
           "ts_code": "603233.SH",
           "trade_date": "20260821",
           "adj_factor": 3.2361
-        },
-        {
-          "ts_code": "603233.SH",
-          "trade_date": "20260820",
-          "adj_factor": 3.2361
         }
       ],
       "row_count": 59,
       "_status": "ok",
-      "as_of": "20261118"
+      "as_of": "20261119"
     },
     "income": {
       "rows": [
@@ -7776,11 +7776,10 @@
       "as_of": "20260630"
     },
     "forecast": {
-      "rows": null,
+      "rows": [],
       "row_count": 0,
-      "_status": "failed",
-      "as_of": null,
-      "_error": "ConnectTimeout: HTTPConnectionPool(host='api.waditu.com', port=80): Max retries exceeded with url: /dataapi/forecast (Caused by ConnectTimeoutError(<HTTPConnection(host='api.waditu.com', port=80) at 0x76f6b83a9f10>, 'Connection to api.waditu.com timed out. (connect timeout=30)'))"
+      "_status": "empty",
+      "as_of": null
     }
   },
   "completeness_pct": 80

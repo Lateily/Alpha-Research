@@ -1,12 +1,10 @@
 {
   "_status": "empty",
   "ticker": "300308.SZ",
-  "fetched_at": "2026-11-18T08:31:05Z",
-  "api_used": "lhb_top_inst",
+  "fetched_at": "2026-11-19T08:36:41Z",
+  "api_used": "top_inst",
   "_attempted_endpoints": [
-    "top_inst",
-    "lhb_inst",
-    "lhb_top_inst"
+    "top_inst"
   ],
   "window_days": 30,
   "appearances": [],
