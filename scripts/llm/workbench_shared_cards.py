@@ -22,13 +22,14 @@ METADATA=('company','research_date','source_cutoff_at','artifact_generated_at','
 PROJECTION=('content_producer','basis_producer','citation_locations','cards')
 
 def _files(roots):
+    from workbench_card_inventory import inventory
     files={}; size=0
     for prefix,root in roots.items():
-        for name,raw in results._tree(root).items():
-            size+=len(raw)
+        hashes,subtotal=inventory(root);size+=subtotal
+        for name,checksum in hashes.items():
             # governance-mutation: SHARED_CARDS_INPUT_BOUND
             if len(files)>=512 or size>256*1024*1024: raise ValueError('SHARED_CARDS_INPUT_LIMIT')
-            files[prefix+'/'+name]=ev.sha(raw)
+            files[prefix+'/'+name]=checksum
     return files
 
 def _file(root,marker,pin,name,pin_key):

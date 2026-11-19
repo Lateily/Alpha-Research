@@ -36,10 +36,11 @@ export function createSharedPoller({ read, apply, fail, schedule = setTimeout, c
     if (stopped) return Promise.resolve();
     if (inFlight) return inFlight;
     cancel(timer); timer = null;
-    const startedAt=now();let unsuccessful=false;
+    let startedAt=now(),unsuccessful=false,started=false;
+    const markReadStarted=()=>{if(!started){started=true;startedAt=now();}};
     inFlight = (async () => {
       try {
-        const data = await read();
+        const data = await read(markReadStarted);
         if (!stopped) await apply(data);
       } catch (error) {
         unsuccessful=true;
