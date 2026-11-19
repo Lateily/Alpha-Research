@@ -1,6 +1,6 @@
 {
   "ticker": "688120.SH",
-  "fetched_at": "2026-11-19T08:35:06Z",
+  "fetched_at": "2026-11-19T17:30:55Z",
   "permission_model": "runtime_probe",
   "_status": "partial",
   "data": {
@@ -786,7 +786,7 @@
           "close": 216.3,
           "turnover_rate": 2.5364,
           "turnover_rate_f": 3.5255,
-          "volume_ratio": null,
+          "volume_ratio": 1.15,
           "pe": 102.262,
           "pe_ttm": 85.6165,
           "pb": 9.0994,

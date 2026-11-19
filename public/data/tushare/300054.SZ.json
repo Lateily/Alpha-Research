@@ -1,6 +1,6 @@
 {
   "ticker": "300054.SZ",
-  "fetched_at": "2026-11-19T08:35:21Z",
+  "fetched_at": "2026-11-19T17:31:10Z",
   "permission_model": "runtime_probe",
   "_status": "partial",
   "data": {
@@ -786,7 +786,7 @@
           "close": 59.52,
           "turnover_rate": 3.2248,
           "turnover_rate_f": 3.5558,
-          "volume_ratio": null,
+          "volume_ratio": 1.03,
           "pe": 78.9064,
           "pe_ttm": 53.9868,
           "pb": 9.6823,

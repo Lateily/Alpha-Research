@@ -1,7 +1,7 @@
 {
   "ticker": "300308.SZ",
   "generated_at": "2026-11-19",
-  "price": 396.3,
+  "price": 408.4,
   "zone": "NEUTRAL",
   "entry_zone": true,
   "exit_zone": false,
@@ -9,51 +9,41 @@
     {
       "type": "RSI_RECOVERING",
       "strength": "moderate",
-      "date": "20261118",
+      "date": "20261119",
       "bullish": true,
       "description": {
-        "e": "RSI recovering 30.0→30.6 — momentum rebuilding",
-        "z": "RSI从30.0回升至30.6，动能修复"
-      }
-    },
-    {
-      "type": "KDJ_OVERSOLD",
-      "strength": "strong",
-      "date": "20261118",
-      "bullish": true,
-      "description": {
-        "e": "KDJ J=-0.1 (extreme <0) — high-probability reversal zone",
-        "z": "KDJ J=-0.1极度超卖，高概率反转区间"
+        "e": "RSI recovering 30.4→32.4 — momentum rebuilding",
+        "z": "RSI从30.4回升至32.4，动能修复"
       }
     }
   ],
   "signal_count": {
-    "bullish": 2,
+    "bullish": 1,
     "bearish": 0,
-    "total": 2
+    "total": 1
   },
   "indicators": {
-    "ma5": 434.67,
-    "ma20": 514.44,
+    "ma5": 414.57,
+    "ma20": 505.36,
     "ma60": null,
-    "rsi14": 30.6,
-    "vol_ma20": 465207,
-    "vol_ratio": 0.9,
-    "price_vs_ma20": -22.97,
+    "rsi14": 32.4,
+    "vol_ma20": 465884,
+    "vol_ratio": 0.89,
+    "price_vs_ma20": -19.19,
     "price_vs_ma60": null,
-    "change_1d": 0.84,
-    "change_5d": -26.88,
-    "change_20d": -38.73,
-    "macd_dif": -78.1481,
-    "macd_dea": -75.0995,
-    "macd_hist": -6.0973,
-    "bb_upper": 657.96,
-    "bb_mid": 514.44,
-    "bb_lower": 370.93,
-    "bb_bandwidth": 55.79,
-    "kdj_k": 14.9,
-    "kdj_d": 22.4,
-    "kdj_j": -0.1,
+    "change_1d": 3.05,
+    "change_5d": -19.75,
+    "change_20d": -30.79,
+    "macd_dif": -77.4288,
+    "macd_dea": -75.7403,
+    "macd_hist": -3.377,
+    "bb_upper": 651.55,
+    "bb_mid": 505.36,
+    "bb_lower": 359.17,
+    "bb_bandwidth": 57.85,
+    "kdj_k": 15.3,
+    "kdj_d": 20.0,
+    "kdj_j": 5.8,
     "cvd_latest": null,
     "cvd_slope_5d": null,
     "cvd_chg_1d": null,
