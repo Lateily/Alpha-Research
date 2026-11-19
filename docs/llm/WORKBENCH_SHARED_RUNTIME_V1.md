@@ -368,7 +368,8 @@ available with its original verification scope.
 The combined path deep-verifies each matching registered card using the original
 verifier, and shares that result only inside this one request. Job registrations,
 output seals, archived bytes and derivation checks still run. Before returning,
-it rechecks every reused input inventory, every registry header/envelope binding,
+it reopens each reused pack through the original no-follow descriptor ownership
+and mode check, and rechecks every input inventory, every registry header/envelope binding,
 and the full registry body fingerprints. Changed evidence refuses the response;
 no verified dictionary survives the request or is shared with another actor.
 

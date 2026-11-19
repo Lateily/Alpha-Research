@@ -174,6 +174,71 @@ class SharedCardTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError,'INVENTORY'):
                 method('owner@example.com')
 
+    def test_combined_query_rechecks_pack_permissions_across_reuse(self):
+        import stat
+        queue,view,entry,_=self.completed_card()
+        pack=queue.inputs.base/'material-packs'/entry['input_hash']/'pack'
+        original_mode=stat.S_IMODE(pack.stat().st_mode)
+        for phase in ('scoped_card_inputs','research_card_results'):
+            with self.subTest(phase=phase):
+                original=getattr(view,phase)
+                def change(*args,**kwargs):
+                    value=original(*args,**kwargs)
+                    pack.chmod(original_mode|0o020)
+                    return value
+                try:
+                    with patch.object(view,phase,side_effect=change):
+                        with self.assertRaisesRegex(ValueError,'LIBRARY_NOT_PRIVATE_OWNED'):
+                            view.card_query('owner@example.com')
+                finally:
+                    pack.chmod(original_mode)
+                self.assertEqual(view.card_query('owner@example.com')['library']['total'],1)
+
+    def test_combined_query_rechecks_pack_owner_with_original_descriptor_guard(self):
+        import os
+        from types import SimpleNamespace
+        queue,view,entry,_=self.completed_card()
+        pack=queue.inputs.base/'material-packs'/entry['input_hash']/'pack'
+        identity=pack.stat(); original=view.scoped_card_inputs; fstat=os.fstat
+        changed=False
+        def ownership(fd):
+            info=fstat(fd)
+            if changed and (info.st_dev,info.st_ino)==(identity.st_dev,identity.st_ino):
+                fields={key:getattr(info,key) for key in dir(info) if key.startswith('st_')}
+                return SimpleNamespace(**{**fields,'st_uid':os.geteuid()+1})
+            return info
+        def change(*args,**kwargs):
+            nonlocal changed
+            result=original(*args,**kwargs);changed=True
+            return result
+        # Simulate a foreign uid without requiring privileged chown in tests.
+        with patch.object(os,'fstat',side_effect=ownership),patch.object(view,'scoped_card_inputs',side_effect=change):
+            with self.assertRaisesRegex(ValueError,'LIBRARY_NOT_PRIVATE_OWNED'):
+                view.card_query('owner@example.com')
+
+    def test_combined_query_rechecks_nonbyte_file_guards(self):
+        import os
+        import stat
+        queue,view,entry,_=self.completed_card()
+        target=queue.inputs.base/'material-packs'/entry['input_hash']/'basis/basis-card.json'
+        original_mode=stat.S_IMODE(target.stat().st_mode)
+        link=self.root/'extra-hardlink'
+        original=view.research_card_results
+        for kind in ('executable','hardlinked','unreadable'):
+            with self.subTest(kind=kind):
+                def change(*args,**kwargs):
+                    result=original(*args,**kwargs)
+                    if kind=='hardlinked':os.link(target,link)
+                    else:target.chmod(original_mode|0o100 if kind=='executable' else original_mode&~0o444)
+                    return result
+                try:
+                    with patch.object(view,'research_card_results',side_effect=change):
+                        with self.assertRaises(ValueError):view.card_query('owner@example.com')
+                finally:
+                    if link.exists():link.unlink()
+                    target.chmod(original_mode)
+                self.assertEqual(view.card_query('owner@example.com')['library']['total'],1)
+
     def test_combined_query_rechecks_registry_after_result_projection(self):
         queue,view,entry,_=self.completed_card()
         method=getattr(view,'card_query',None)

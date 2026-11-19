@@ -19161,6 +19161,14 @@ MUTATIONS += (
         'test_browser_card_contract','The combined path preserves every original result, context and rights check.'),
 )
 
+MUTATIONS += (
+    MutationCase('SHARED_CARDS_QUERY_PACK_PERMISSION','Shared card query','scripts/llm/workbench_shared_workspace.py',
+        'tests/test_workbench_shared_cards.py',
+        "        for entry in verified_inputs.values():\n            with cards.materials._directory(Path(entry['frozen_root'])/'pack') as directory:\n                cards.materials._owned(directory)",
+        '        pass', 'test_combined_query_rechecks_pack_permissions_across_reuse',
+        'Byte-identical reused inputs still require the original no-follow pack ownership and mode check.'),
+)
+
 SHARD_SPEC_RE = re.compile(r"^(?P<index>[1-9][0-9]*)/(?P<count>[1-9][0-9]*)$")
 SHARD_RECEIPT_SCHEMA = "ar-governance-mutation-shard-receipt.v1"
 

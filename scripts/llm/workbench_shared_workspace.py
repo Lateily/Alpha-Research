@@ -253,6 +253,11 @@ class SharedWorkspace:
         # governance-mutation: SHARED_CARDS_QUERY_INPUT_RECHECK
         for entry in verified_inputs.values():
             cards._verify_inventory(entry['frozen_root'],entry['snapshot'])
+        # Inventory hashes cannot prove the pack's original ownership/mode guard.
+        # governance-mutation: SHARED_CARDS_QUERY_PACK_PERMISSION
+        for entry in verified_inputs.values():
+            with cards.materials._directory(Path(entry['frozen_root'])/'pack') as directory:
+                cards.materials._owned(directory)
         FrozenInputs(self.store).index_headers()
         # governance-mutation: SHARED_CARDS_QUERY_REGISTRY_RECHECK
         if registry()!=before:
