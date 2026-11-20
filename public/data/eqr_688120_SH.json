@@ -1,6 +1,6 @@
 {
   "ticker": "688120.SH",
-  "generated_at": "2026-11-19T17:29:48.195563+00:00",
+  "generated_at": "2026-11-20T08:21:43.875944+00:00",
   "overall": "MED",
   "sections": {
     "business_model": {
@@ -49,9 +49,9 @@
     "⚠️ Consensus estimates are 999 days old — expectation gap may be stale"
   ],
   "data_freshness": {
-    "financials": "2026-08-21",
-    "price": "2026-11-19",
+    "financials": "2026-08-22",
+    "price": "2026-11-20",
     "consensus": null,
-    "news": "2026-11-19"
+    "news": "2026-11-20"
   }
 }

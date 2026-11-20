@@ -6,9 +6,9 @@
     "no_size": true,
     "no_buy_sell": true,
     "no_position_mutation": true,
-    "run_date": "2026-11-19",
+    "run_date": "2026-11-20",
     "pilot_start_date": "2026-06-08",
-    "generated_at": "2026-11-19T17:35:26.084279+00:00",
+    "generated_at": "2026-11-20T08:28:39.117362+00:00",
     "fresh_pilot": true,
     "legacy_paper_positions_inherited": false,
     "sources": [
@@ -63,7 +63,7 @@
         },
         "quant_confluence": {
           "action": "NEUTRAL",
-          "score": 8,
+          "score": 6,
           "rationale": "Bullish: Rsi Recovering | RSI 40 | Price vs MA20 -2.7% | Regime: PERMISSIVE | VP 48"
         }
       },
@@ -105,7 +105,7 @@
         },
         "quant_confluence": {
           "action": "NEUTRAL",
-          "score": -12,
+          "score": -11,
           "rationale": "Bearish: Macd Death Cross | RSI 61 | Price vs MA20 +3.4% | VP 50"
         }
       },
@@ -281,7 +281,7 @@
             }
           ]
         },
-        "as_of": "2026-11-19",
+        "as_of": "2026-11-20",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -323,7 +323,7 @@
             }
           ]
         },
-        "as_of": "2026-11-19",
+        "as_of": "2026-11-20",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -365,7 +365,7 @@
             }
           ]
         },
-        "as_of": "2026-11-19",
+        "as_of": "2026-11-20",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -407,7 +407,7 @@
             }
           ]
         },
-        "as_of": "2026-11-19",
+        "as_of": "2026-11-20",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -449,7 +449,7 @@
             }
           ]
         },
-        "as_of": "2026-11-19",
+        "as_of": "2026-11-20",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -503,7 +503,7 @@
             }
           ]
         },
-        "as_of": "2026-11-19",
+        "as_of": "2026-11-20",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -538,7 +538,7 @@
           },
           "signals": []
         },
-        "as_of": "2026-11-19",
+        "as_of": "2026-11-20",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -573,7 +573,7 @@
           },
           "signals": []
         },
-        "as_of": "2026-11-19",
+        "as_of": "2026-11-20",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -608,7 +608,7 @@
           },
           "signals": []
         },
-        "as_of": "2026-11-19",
+        "as_of": "2026-11-20",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       }

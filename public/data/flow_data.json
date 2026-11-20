@@ -1,18 +1,18 @@
 {
-  "fetched_at": "2026-11-19T17:29:48.640347",
+  "fetched_at": "2026-11-20T08:21:44.113003",
   "northbound": {
     "latest_net_flow": null,
     "5d_cumulative": 0.0,
     "20d_cumulative": 0.0,
     "trend": "outflow",
-    "updated": "2026-11-19"
+    "updated": "2026-11-20"
   },
   "southbound": {
     "latest_net_flow": 39.5892,
     "5d_cumulative": 70.1983,
     "20d_cumulative": 6.1102,
     "trend": "inflow",
-    "updated": "2026-11-19"
+    "updated": "2026-11-20"
   },
   "dragon_tiger": [
     {
@@ -89,7 +89,7 @@
       "code": "000530",
       "name": "冰山冷热",
       "date": "",
-      "reason": "日振幅值达到15%的前5只证券",
+      "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
       "buy_amt": null,
       "sell_amt": null,
       "net_amt": null,
@@ -109,7 +109,7 @@
       "code": "000530",
       "name": "冰山冷热",
       "date": "",
-      "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
+      "reason": "日振幅值达到15%的前5只证券",
       "buy_amt": null,
       "sell_amt": null,
       "net_amt": null,
@@ -199,7 +199,7 @@
       "code": "000595",
       "name": "新能股份",
       "date": "",
-      "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
+      "reason": "日涨幅偏离值达到7%的前5只证券",
       "buy_amt": null,
       "sell_amt": null,
       "net_amt": null,
@@ -209,7 +209,7 @@
       "code": "000595",
       "name": "新能股份",
       "date": "",
-      "reason": "日涨幅偏离值达到7%的前5只证券",
+      "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
       "buy_amt": null,
       "sell_amt": null,
       "net_amt": null,
@@ -259,7 +259,7 @@
       "code": "000678",
       "name": "襄阳轴承",
       "date": "",
-      "reason": "日涨幅偏离值达到7%的前5只证券",
+      "reason": "日换手率达到20%的前5只证券",
       "buy_amt": null,
       "sell_amt": null,
       "net_amt": null,
@@ -269,7 +269,7 @@
       "code": "000678",
       "name": "襄阳轴承",
       "date": "",
-      "reason": "日换手率达到20%的前5只证券",
+      "reason": "日涨幅偏离值达到7%的前5只证券",
       "buy_amt": null,
       "sell_amt": null,
       "net_amt": null,
@@ -359,7 +359,7 @@
       "code": "000819",
       "name": "岳阳兴长",
       "date": "",
-      "reason": "日涨幅偏离值达到7%的前5只证券",
+      "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
       "buy_amt": null,
       "sell_amt": null,
       "net_amt": null,
@@ -369,7 +369,7 @@
       "code": "000819",
       "name": "岳阳兴长",
       "date": "",
-      "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
+      "reason": "日涨幅偏离值达到7%的前5只证券",
       "buy_amt": null,
       "sell_amt": null,
       "net_amt": null,

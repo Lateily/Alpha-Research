@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-19T17:35:25.939561+00:00",
+  "generated_at": "2026-11-20T08:28:39.029208+00:00",
   "model_state": "NORMAL_OBSERVATION_MODE",
   "tickers_scored": 9,
   "summary": {
@@ -10,7 +10,7 @@
   "scores": [
     {
       "ticker": "300054.SZ",
-      "score": 12,
+      "score": 10,
       "action": "NEUTRAL",
       "action_zh": "信号中性，等待",
       "zone": "NEUTRAL",
@@ -28,20 +28,20 @@
         {
           "type": "MA20_BOUNCE",
           "base_weight": 12,
-          "decay": 1.0,
+          "decay": 0.8,
           "independence_factor": 1.0,
           "regime_mult": 1.0,
           "staleness": 1.0,
           "flow_role": "other",
           "policy_gate": null,
-          "raw_contribution_before_policy": 12.0,
-          "final_contribution": 12.0
+          "raw_contribution_before_policy": 9.6,
+          "final_contribution": 9.6
         }
       ],
       "contributing_signals": [
         {
           "type": "MA20_BOUNCE",
-          "contribution": 12.0
+          "contribution": 9.6
         }
       ],
       "rationale_e": "Bullish: Ma20 Bounce | RSI 49 | Price vs MA20 +1.4% | VP 47",
@@ -49,11 +49,11 @@
       "signal_types": [
         "MA20_BOUNCE"
       ],
-      "computed_at": "2026-11-19T17:35:25.938958+00:00"
+      "computed_at": "2026-11-20T08:28:39.028897+00:00"
     },
     {
       "ticker": "002594.SZ",
-      "score": 8,
+      "score": 6,
       "action": "NEUTRAL",
       "action_zh": "信号中性，等待",
       "zone": "NEUTRAL",
@@ -71,20 +71,20 @@
         {
           "type": "RSI_RECOVERING",
           "base_weight": 7,
-          "decay": 1.0,
+          "decay": 0.75,
           "independence_factor": 1.0,
           "regime_mult": 1.2,
           "staleness": 1.0,
           "flow_role": "other",
           "policy_gate": null,
-          "raw_contribution_before_policy": 8.4,
-          "final_contribution": 8.4
+          "raw_contribution_before_policy": 6.3,
+          "final_contribution": 6.3
         }
       ],
       "contributing_signals": [
         {
           "type": "RSI_RECOVERING",
-          "contribution": 8.4
+          "contribution": 6.3
         }
       ],
       "rationale_e": "Bullish: Rsi Recovering | RSI 40 | Price vs MA20 -2.7% | Regime: PERMISSIVE | VP 48",
@@ -92,7 +92,7 @@
       "signal_types": [
         "RSI_RECOVERING"
       ],
-      "computed_at": "2026-11-19T17:35:25.938731+00:00"
+      "computed_at": "2026-11-20T08:28:39.028767+00:00"
     },
     {
       "ticker": "175.HK",
@@ -135,7 +135,7 @@
       "signal_types": [
         "KDJ_OVERSOLD"
       ],
-      "computed_at": "2026-11-19T17:35:25.938853+00:00"
+      "computed_at": "2026-11-20T08:28:39.028841+00:00"
     },
     {
       "ticker": "6160.HK",
@@ -212,7 +212,7 @@
         "MA60_BOUNCE",
         "MACD_GOLDEN_CROSS"
       ],
-      "computed_at": "2026-11-19T17:35:25.939345+00:00"
+      "computed_at": "2026-11-20T08:28:39.029087+00:00"
     },
     {
       "ticker": "688120.SH",
@@ -235,7 +235,7 @@
       "rationale_e": "RSI 56 | Price vs MA20 +11.9% | VP 45",
       "rationale_z": "RSI 56 | 距MA20 +11.9% | VP 45",
       "signal_types": [],
-      "computed_at": "2026-11-19T17:35:25.939417+00:00"
+      "computed_at": "2026-11-20T08:28:39.029128+00:00"
     },
     {
       "ticker": "700.HK",
@@ -258,7 +258,7 @@
       "rationale_e": "RSI 41 | Price vs MA20 -3.5%",
       "rationale_z": "RSI 41 | 距MA20 -3.5%",
       "signal_types": [],
-      "computed_at": "2026-11-19T17:35:25.939487+00:00"
+      "computed_at": "2026-11-20T08:28:39.029169+00:00"
     },
     {
       "ticker": "9999.HK",
@@ -281,11 +281,11 @@
       "rationale_e": "RSI 56 | Price vs MA20 +2.8%",
       "rationale_z": "RSI 56 | 距MA20 +2.8%",
       "signal_types": [],
-      "computed_at": "2026-11-19T17:35:25.939550+00:00"
+      "computed_at": "2026-11-20T08:28:39.029201+00:00"
     },
     {
       "ticker": "300308.SZ",
-      "score": -4,
+      "score": -6,
       "action": "NEUTRAL",
       "action_zh": "信号中性，等待",
       "zone": "NEUTRAL",
@@ -303,14 +303,14 @@
         {
           "type": "RSI_RECOVERING",
           "base_weight": 7,
-          "decay": 1.0,
+          "decay": 0.75,
           "independence_factor": 1.0,
           "regime_mult": 1.2,
           "staleness": 1.0,
           "flow_role": "other",
           "policy_gate": null,
-          "raw_contribution_before_policy": 8.4,
-          "final_contribution": 8.4
+          "raw_contribution_before_policy": 6.3,
+          "final_contribution": 6.3
         },
         {
           "type": "AI_CAPEX_WEAKENING",
@@ -332,7 +332,7 @@
         },
         {
           "type": "RSI_RECOVERING",
-          "contribution": 8.4
+          "contribution": 6.3
         }
       ],
       "rationale_e": "Bullish: Rsi Recovering | Bearish: Ai Capex Weakening | RSI 32 | Price vs MA20 -19.2% | Regime: PERMISSIVE | VP 48",
@@ -341,11 +341,11 @@
         "RSI_RECOVERING",
         "AI_CAPEX_WEAKENING"
       ],
-      "computed_at": "2026-11-19T17:35:25.939131+00:00"
+      "computed_at": "2026-11-20T08:28:39.028971+00:00"
     },
     {
       "ticker": "603233.SH",
-      "score": -12,
+      "score": -11,
       "action": "NEUTRAL",
       "action_zh": "信号中性，等待",
       "zone": "NEUTRAL",
@@ -363,20 +363,20 @@
         {
           "type": "MACD_DEATH_CROSS",
           "base_weight": -12,
-          "decay": 1.0,
+          "decay": 0.9,
           "independence_factor": 1.0,
           "regime_mult": 1.0,
           "staleness": 1.0,
           "flow_role": "other",
           "policy_gate": null,
-          "raw_contribution_before_policy": -12.0,
-          "final_contribution": -12.0
+          "raw_contribution_before_policy": -10.8,
+          "final_contribution": -10.8
         }
       ],
       "contributing_signals": [
         {
           "type": "MACD_DEATH_CROSS",
-          "contribution": -12.0
+          "contribution": -10.8
         }
       ],
       "rationale_e": "Bearish: Macd Death Cross | RSI 61 | Price vs MA20 +3.4% | VP 50",
@@ -384,7 +384,7 @@
       "signal_types": [
         "MACD_DEATH_CROSS"
       ],
-      "computed_at": "2026-11-19T17:35:25.939237+00:00"
+      "computed_at": "2026-11-20T08:28:39.029028+00:00"
     }
   ]
 }
