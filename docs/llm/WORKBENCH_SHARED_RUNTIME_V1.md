@@ -1,5 +1,19 @@
 # Shared Workbench V1 Operator Guide
 
+## Original Stream Credential Dispatch
+
+Originals still pass the complete library byte inventory, SHA256, no-follow,
+type/size/PDF/text checks and original4096-byte overlap. A Latin1-window byte
+prefilter may avoid conversion only under the exact reviewed detector-policy
+certificate. It does not certify a file or reuse an earlier credential verdict.
+Printable ASCII necessary literals survive Latin1-to-UTF8 conversion; the
+current Unicode case exceptions are outside Latin1. A possible hit delegates
+to the unchanged full string detector, preserving boundaries and log escapes.
+Unknown, replaced, malformed or unfiltered policies delegate as well; the helper
+must not consume iterator-based rules before that delegation. Final decoded JSON
+checks remain independent. This preserves the existing heuristic, not a claim
+of complete secret detection. No input/hash/seal/rights/freshness gate is relaxed.
+
 ## Research Card Refresh
 
 The opt-in research-card region independently revalidates its registered inputs
