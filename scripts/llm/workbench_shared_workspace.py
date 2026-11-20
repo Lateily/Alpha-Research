@@ -10,12 +10,14 @@ import uuid
 from pathlib import Path
 
 import workbench_evidence as evidence
+from workbench_read_gate import ReadGate, verified_read
 from workbench_workspace import Workspace, WorkspaceError, exact, identifier, projection
 
 CODE_ROOT = Path(__file__).resolve().parents[2]
 SCHEMA = "ar.shared-workspace.v1"
 PAGE_SIZE = 50
 EXECUTION_FILES = (
+    'scripts/llm/workbench_read_gate.py','scripts/llm/workbench_card_inventory.py',
     "scripts/llm/nonprod_workbench.py", "scripts/llm/workbench_shared_workspace.py",
     "scripts/llm/workbench_workspace.py", "scripts/llm/workbench_evidence.py",
     "scripts/llm/workbench_snapshot_brief.py", "scripts/llm/workbench_brief_trial.py",
@@ -92,6 +94,7 @@ class SharedWorkspace:
             raise WorkspaceError("SHARED_PRIVATE_MODE_REQUIRED", 403)
         self.system, self.store = system, system.store
         self._execution_identity = execution_identity(CODE_ROOT)
+        self._read_gate=ReadGate()
         self.queue = None
         self.sync = None
         if type(materials_enabled) is not bool:
@@ -164,6 +167,7 @@ class SharedWorkspace:
         return {'schema': 'ar.shared-research-inputs.v1', 'enabled': True, 'inputs': result,
                 'my_workspace': owner, 'consumer_code_sha': self._execution_identity['code_sha']}
 
+    @verified_read
     def research_card_inputs(self,actor):
         from workbench_shared_inputs import FrozenInputs
         import workbench_shared_cards as cards
@@ -181,6 +185,7 @@ class SharedWorkspace:
         return {'schema':'ar.shared-research-card-inputs.v1','enabled':self.cards_enabled,'inputs':rows,
             'my_workspace':owner,'consumer_code_sha':self._execution_identity['code_sha'],**cards.LABELS}
 
+    @verified_read
     def scoped_card_inputs(self,actor,*,_verified_inputs=None):
         from workbench_shared_inputs import FrozenInputs
         import workbench_shared_cards as cards
@@ -202,6 +207,7 @@ class SharedWorkspace:
             'validation_scope':'MATCHING_CARDS_ONLY_OTHER_INPUTS_NOT_EVALUATED',
             'my_workspace':owner,'consumer_code_sha':self._execution_identity['code_sha'],**cards.LABELS}
 
+    @verified_read
     def research_card_results(self,actor,*,industry_key=None,industry_taxonomy=None,
                               taxonomy_version=None,research_date=None,ts_code=None,page=0,_verified_inputs=None):
         from workbench_research_library import filters
@@ -230,6 +236,7 @@ class SharedWorkspace:
             'results':rows[page*PAGE_SIZE:(page+1)*PAGE_SIZE],'my_workspace':owner,
             'consumer_code_sha':self._execution_identity['code_sha'],'rights':dict(cards.materials.RIGHTS),**cards.LABELS}
 
+    @verified_read
     def card_query(self,actor,*,industry_key=None,industry_taxonomy=None,
                    taxonomy_version=None,research_date=None,ts_code=None,page=0):
         from workbench_shared_inputs import FrozenInputs
@@ -422,6 +429,7 @@ class SharedWorkspace:
             'sample_purpose':'WORKFLOW_DEBUG','human_review':'PENDING',
             'production_authority':False,'trading_authority':False}
 
+    @verified_read
     def snapshot(self, actor: str, *, page: int = 0) -> dict:
         owner = self.identity(actor)
         if type(page) is not int or not 0 <= page <= 999:
@@ -478,6 +486,7 @@ class SharedWorkspace:
                 "sample_purpose": "WORKFLOW_DEBUG", "human_review": "PENDING",
                 "production_authority": False, "trading_authority": False}
 
+    @verified_read(actor_position=1)
     def job(self, job_id: str, actor: str) -> dict:
         self.identity(actor)
         identifier(job_id)

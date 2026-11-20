@@ -1,8 +1,26 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+
 import { existsSync } from 'node:fs';
 const url = new URL('../tools/nonprod_workbench/ui/shared-view.mjs', import.meta.url);
 const view = existsSync(url) ? await import(url) : {};
+test('poll cadence starts at actual read after predecessor drain without renewing evidence',async()=>{
+  let now=1000,delay;
+  const poller=view.createSharedPoller({cadenceFromStart:true,now:()=>now,
+    read:async mark=>{now+=6000;mark();now+=300;return {verified:true};},
+    apply:()=>{},fail:error=>{throw error;},cancel:()=>{},schedule:(_fn,value)=>{delay=value;}});
+  await poller.refresh();poller.stop();
+  assert.equal(delay,1000,'queued predecessor time is not the current verification duration');
+});
+test('slow verified card reads reserve a bounded user-read gap without changing legacy cadence',async()=>{
+  for(const [yieldAfterRead,want] of [[true,1000],[false,0]]){
+    let now=1000,delay;
+    const poller=view.createSharedPoller({cadenceFromStart:true,yieldAfterRead,now:()=>now,
+      read:async()=>{now+=7000;return {};},apply:()=>{},fail:assert.fail,cancel:()=>{},
+      schedule:(_fn,value)=>{delay=value;}});
+    await poller.refresh();poller.stop();assert.equal(delay,want);
+  }
+});
 const identityContext={login:'owner@example.com',workspaceId:'51715142-1963-466f-8470-ceb609afccbd',codeSha:'a'.repeat(40)};
 function contextReply(){return {schema:'ar.shared-workspace-context.v1',
   my_workspace:{login:identityContext.login,workspace_id:identityContext.workspaceId},

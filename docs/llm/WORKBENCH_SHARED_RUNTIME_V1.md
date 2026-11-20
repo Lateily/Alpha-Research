@@ -382,3 +382,32 @@ The separate-reading component mode remains supported for older consumers.
 Reduced repeated work does not establish a latency SLO, continuous availability,
 human research approval or two-device end-to-end acceptance. Research gaps,
 rights restrictions and pending human review remain visible.
+
+### Bounded Heavy Read Admission
+
+Research-card input/query/result reads, full shared snapshots and individual
+job details share one per-workspace FIFO proof gate. Nested calls by the same
+thread are reentrant; at most eight readers may wait, for at most 15 seconds.
+An overflow or wait timeout returns `SHARED_VERIFIED_READ_BUSY` (HTTP 429), not
+a previous result or a success. Lightweight identity context is outside this
+gate. Original readers validate identity again after admission and perform all
+their original source, permission, inventory, derivation and output-seal checks.
+This is scheduling only: the gate retains neither proof nor response bytes.
+
+Card inventories open the root with no-follow descriptors, stream every file
+and compute fresh SHA256, then reopen and bind the lexical root again. Each
+directory and file is checked for replacement or mutation. Symlinks, special
+files, hardlinks, executable/unreadable files and empty directories remain
+refused. The existing 12MiB per-file, 256-file/128MiB per-root and 512-file/256MiB
+aggregate limits remain; a 4096-entry traversal bound also prevents unbounded
+directory enumeration. Hashes and frozen packet formats are unchanged.
+
+The card consumer starts its polling cadence after draining any retired
+request, immediately before the new network read. This timestamp controls only
+the next poll: it never renews evidence freshness. After a completed card read,
+automatic renewal yields at least one second for intentional user queries;
+legacy consumers keep their existing cadence and failed reads retain their
+five-second cooldown. The separate 15-second
+action-time and detail expiry guards remain unchanged. Concurrent-load timing
+must still be measured on the final installation; this is not a latency SLO,
+two-human acceptance, or a claim of 24-hour operation.

@@ -222,6 +222,26 @@ test('explicit refreshes drain their predecessor instead of creating parallel ve
   s.release();await s.settle();assert.equal(s.calls.length,6);
 }));
 
+test('draining a retired combined read does not consume the new request polling interval',()=>scenario(async s=>{
+  await s.settle();s.hold();await s.advance(1000);
+  assert.equal(s.calls.length,2);
+  s.nodes().find(n=>n.props?.['aria-label']==='刷新研究卡').props.onClick();await s.settle();
+  await s.advance(6000);assert.equal(s.calls.length,2,'new generation must drain the held predecessor');
+  s.release();for(let i=0;i<8;i++)await s.settle();
+  assert.equal(s.calls.length,3,'only the fresh intentional read starts');
+  await s.advance(0);
+  assert.equal(s.calls.length,3,'drain time cannot schedule another immediate automatic read');
+  await s.advance(1000);assert.equal(s.calls.length,4);
+},false,true,true));
+
+test('slow combined proof yields one second before automatic renewal for intentional reads',()=>scenario(async s=>{
+  await s.settle();s.hold();await s.advance(1000);assert.equal(s.calls.length,2);
+  await s.advance(6000);s.release();for(let i=0;i<8;i++)await s.settle();
+  await s.advance(0);
+  assert.equal(s.calls.length,2,'slow HTTP including server admission must not create a zero-idle successor');
+  await s.advance(1000);assert.equal(s.calls.length,3);
+},false,true,true));
+
 test('a disposed generation cannot apply a late rejection after an A B A context cycle',()=>scenario(async s=>{
   const original=s.props.api;let rejectOld,holdNext=true;
   s.props.api=async path=>{

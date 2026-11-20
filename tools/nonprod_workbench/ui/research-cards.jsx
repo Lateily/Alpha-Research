@@ -37,11 +37,14 @@ export default function ResearchCards({api,renew,login,workspaceId,codeSha,paren
     const failed=error=>{if(owned()){verified.current=null;setState(old=>({key,verificationEpoch:epoch,data:old?.key===key?old.data:null,stale:true,error:error.message}));}};
     const current=createSharedPoller({
       cadenceFromStart:true,
-      read:()=>{
+      yieldAfterRead:true,
+      read:markReadStarted=>{
         const previous=inFlight.current;
         const request=(async()=>{
         await previous;
         if(!owned())return null;
+        // Predecessor drain is not this request's network/verification time.
+        markReadStarted();
         if(combinedQuery)return readCardQuery(api,context,renew);
         // Block on the first known failure, but drain both GETs before another poll.
         const responses=await Promise.allSettled([(scopedInputs?readScopedCardInputs:readCardInputs)(api,context,renew),readCardLibrary(api,context,renew)]

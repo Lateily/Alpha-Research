@@ -160,6 +160,31 @@ class SharedCardTests(unittest.TestCase):
         self.assertEqual(again['library']['total'],0)
         self.assertEqual(again['inputs']['my_workspace']['login'],'owner@example.com')
 
+    def test_concurrent_query_and_detail_serialize_full_verification_not_context(self):
+        import threading
+        queue,view,entry,job=self.completed_card()
+        first=threading.Event();release=threading.Event();overlap=threading.Event();errors=[]
+        original=self.module().verify_input
+        def held(*args,**kwargs):
+            if first.is_set():overlap.set()
+            else:first.set();release.wait(3)
+            return original(*args,**kwargs)
+        def call(method):
+            try:method()
+            except Exception as error:errors.append(error)
+        threads=[threading.Thread(target=call,args=(lambda:view.card_query('owner@example.com'),)),
+                 threading.Thread(target=call,args=(lambda:view.job(job['job_id'],'member@example.com'),))]
+        with patch.object(self.module(),'verify_input',side_effect=held):
+            threads[0].start();self.assertTrue(first.wait(2));threads[1].start()
+            overlapped=overlap.wait(.2)
+            try:self.assertEqual(view.context('owner@example.com')['my_workspace']['login'],'owner@example.com')
+            finally:
+                release.set()
+                for thread in threads:thread.join(5)
+        self.assertFalse(any(thread.is_alive() for thread in threads))
+        self.assertEqual(errors,[])
+        self.assertFalse(overlapped,'concurrent heavy proof walks must not contend while the cheap context stays independent')
+
     def test_combined_query_rechecks_changed_input_after_result_projection(self):
         queue,view,entry,_=self.completed_card()
         method=getattr(view,'card_query',None)
@@ -509,9 +534,12 @@ class SharedCardTests(unittest.TestCase):
 
     def test_combined_input_inventory_stays_bounded(self):
         m=self.module(); self.assertTrue(hasattr(m,'_files'))
-        with patch.object(m.results,'_tree',return_value={str(i)+'.json':b'{}' for i in range(513)}):
-            with self.assertRaisesRegex(ValueError,'SHARED_CARDS_INPUT_LIMIT'):
-                m._files({'library':self.root})
+        roots={}
+        for group in range(3):
+            root=self.root/('aggregate-'+str(group));root.mkdir();roots[str(group)]=root
+            for i in range(171):(root/(str(i)+'.json')).write_bytes(b'{}')
+        with self.assertRaisesRegex(ValueError,'SHARED_CARDS_INPUT_LIMIT'):
+            m._files(roots)
 
     def test_four_valid_trees_over_256_combined_files_copy_and_verify(self):
         import foundation_materials as materials
