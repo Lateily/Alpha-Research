@@ -1,194 +1,12 @@
 {
-  "fetched_at": "2026-11-20T08:23:14Z",
-  "trade_date": "20261120",
+  "fetched_at": "2026-11-20T17:06:55Z",
+  "trade_date": "20261121",
   "tier": 15000,
   "_status": "partial",
   "hot_concepts": [],
   "cold_concepts": [],
-  "hot_industries": [
-    {
-      "name": "印制电路板",
-      "ts_code": "BK1340.DC",
-      "net_inflow_yuan": 20393879040000.0,
-      "pct_chg": -0.1
-    },
-    {
-      "name": "元件",
-      "ts_code": "BK0459.DC",
-      "net_inflow_yuan": 18715714560000.0,
-      "pct_chg": -1.21
-    },
-    {
-      "name": "裸眼3D",
-      "ts_code": "BK1142.DC",
-      "net_inflow_yuan": 15249321440000.0,
-      "pct_chg": -2.64
-    },
-    {
-      "name": "昨日高换手",
-      "ts_code": "BK1632.DC",
-      "net_inflow_yuan": 14577080320000.0,
-      "pct_chg": -3.33
-    },
-    {
-      "name": "红利破净股",
-      "ts_code": "BK1636.DC",
-      "net_inflow_yuan": 8905981440000.0,
-      "pct_chg": -0.48
-    },
-    {
-      "name": "资源开采概念",
-      "ts_code": "BK1017.DC",
-      "net_inflow_yuan": 7926389920000.0,
-      "pct_chg": -2.37
-    },
-    {
-      "name": "水产概念",
-      "ts_code": "BK0967.DC",
-      "net_inflow_yuan": 7242133920000.0,
-      "pct_chg": -1.2
-    },
-    {
-      "name": "AB股",
-      "ts_code": "BK0498.DC",
-      "net_inflow_yuan": 7167272160000.0,
-      "pct_chg": -3.29
-    },
-    {
-      "name": "制冷空调设备",
-      "ts_code": "BK1400.DC",
-      "net_inflow_yuan": 7084350720000.0,
-      "pct_chg": -5.04
-    },
-    {
-      "name": "辽宁板块",
-      "ts_code": "BK0161.DC",
-      "net_inflow_yuan": 6566610400000.0,
-      "pct_chg": -4.11
-    },
-    {
-      "name": "纳米银",
-      "ts_code": "BK0855.DC",
-      "net_inflow_yuan": 6526716960000.0,
-      "pct_chg": -5.16
-    },
-    {
-      "name": "白酒",
-      "ts_code": "BK0896.DC",
-      "net_inflow_yuan": 5376217280000.0,
-      "pct_chg": -3.99
-    },
-    {
-      "name": "体育产业",
-      "ts_code": "BK0708.DC",
-      "net_inflow_yuan": 5260103840000.0,
-      "pct_chg": -4.69
-    },
-    {
-      "name": "其他数字媒体",
-      "ts_code": "BK1295.DC",
-      "net_inflow_yuan": 5079759520000.0,
-      "pct_chg": 15.0
-    },
-    {
-      "name": "其他农产品加工",
-      "ts_code": "BK1505.DC",
-      "net_inflow_yuan": 5024402360000.0,
-      "pct_chg": -2.56
-    },
-    {
-      "name": "红利股",
-      "ts_code": "BK1641.DC",
-      "net_inflow_yuan": 4995870720000.0,
-      "pct_chg": -0.96
-    },
-    {
-      "name": "白酒Ⅲ",
-      "ts_code": "BK1575.DC",
-      "net_inflow_yuan": 4880169760000.0,
-      "pct_chg": -3.84
-    },
-    {
-      "name": "白酒Ⅱ",
-      "ts_code": "BK1277.DC",
-      "net_inflow_yuan": 4880169760000.0,
-      "pct_chg": -3.84
-    },
-    {
-      "name": "空间计算",
-      "ts_code": "BK1143.DC",
-      "net_inflow_yuan": 4784189920000.0,
-      "pct_chg": -4.05
-    },
-    {
-      "name": "预制菜概念",
-      "ts_code": "BK1025.DC",
-      "net_inflow_yuan": 4771803520000.0,
-      "pct_chg": -3.07
-    }
-  ],
-  "cold_industries": [
-    {
-      "name": "融资融券",
-      "ts_code": "BK0596.DC",
-      "net_inflow_yuan": -503828193280000.0,
-      "pct_chg": -4.72
-    },
-    {
-      "name": "基金减仓",
-      "ts_code": "BK1689.DC",
-      "net_inflow_yuan": -345029754880000.0,
-      "pct_chg": -4.43
-    },
-    {
-      "name": "深股通",
-      "ts_code": "BK0804.DC",
-      "net_inflow_yuan": -295196643840000.0,
-      "pct_chg": -4.88
-    },
-    {
-      "name": "MSCI中国",
-      "ts_code": "BK0821.DC",
-      "net_inflow_yuan": -270998937600000.0,
-      "pct_chg": -2.81
-    },
-    {
-      "name": "富时罗素",
-      "ts_code": "BK0867.DC",
-      "net_inflow_yuan": -266419200000000.0,
-      "pct_chg": -3.3
-    },
-    {
-      "name": "标准普尔",
-      "ts_code": "BK0879.DC",
-      "net_inflow_yuan": -219729894400000.0,
-      "pct_chg": -2.96
-    },
-    {
-      "name": "深成500",
-      "ts_code": "BK0568.DC",
-      "net_inflow_yuan": -208253637120000.0,
-      "pct_chg": -3.71
-    },
-    {
-      "name": "沪股通",
-      "ts_code": "BK0707.DC",
-      "net_inflow_yuan": -187225456640000.0,
-      "pct_chg": -4.14
-    },
-    {
-      "name": "半导体概念",
-      "ts_code": "BK0917.DC",
-      "net_inflow_yuan": -176980026880000.0,
-      "pct_chg": -6.16
-    },
-    {
-      "name": "大盘股",
-      "ts_code": "BK1663.DC",
-      "net_inflow_yuan": -167718748160000.0,
-      "pct_chg": -1.98
-    }
-  ],
+  "hot_industries": [],
+  "cold_industries": [],
   "concept_meta": {
     "api_used": null,
     "_attempted_endpoints": [
@@ -205,7 +23,7 @@
     "_attempted_endpoints": [
       "moneyflow_ind_dc"
     ],
-    "row_count": 1081,
+    "row_count": 0,
     "_status": "ok"
   }
 }

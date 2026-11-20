@@ -1,6 +1,6 @@
 {
   "ticker": "002594.SZ",
-  "fetched_at": "2026-11-20T08:22:20Z",
+  "fetched_at": "2026-11-20T17:05:56Z",
   "permission_model": "runtime_probe",
   "_status": "partial",
   "data": {
@@ -786,7 +786,7 @@
           "close": 79.68,
           "turnover_rate": 0.6726,
           "turnover_rate_f": 0.9546,
-          "volume_ratio": null,
+          "volume_ratio": 1.04,
           "pe": 22.271,
           "pe_ttm": 22.9668,
           "pb": 2.9178,

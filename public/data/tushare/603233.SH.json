@@ -1,6 +1,6 @@
 {
   "ticker": "603233.SH",
-  "fetched_at": "2026-11-20T08:22:36Z",
+  "fetched_at": "2026-11-20T17:06:14Z",
   "permission_model": "runtime_probe",
   "_status": "partial",
   "data": {
@@ -786,7 +786,7 @@
           "close": 20.58,
           "turnover_rate": 0.8056,
           "turnover_rate_f": 1.9351,
-          "volume_ratio": null,
+          "volume_ratio": 0.79,
           "pe": 19.6641,
           "pe_ttm": 17.0444,
           "pb": 3.2761,
