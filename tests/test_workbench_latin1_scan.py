@@ -64,7 +64,7 @@ class Latin1CredentialScanTests(unittest.TestCase):
     def test_reference_credentials_escapes_boundaries_and_latin1_whitespace(self):
         suffix=b'A'*24
         corpus=[b'sk-'+suffix,b'ghp_'+suffix,b'github_pat_'+suffix,
-          b'-----BEGIN RSA PRIVATE KEY-----',b'APP_TOKEN="'+suffix+b'"',
+          b'-----BEGIN '+b'RSA '+b'PRIVATE KEY-----',b'APP_TOKEN="'+suffix+b'"',
           b'prefix\\napp_password="'+suffix+b'"',b'client_secret="'+suffix+b'"',
           b'Authorization:\\tBearer '+suffix,b'bEaReR\x85'+suffix,b'bearer\xa0'+suffix,
           b'sk-'+b'A'*12,b'AKIA'+b'A'*16,b'Bearer tiny',b'api_key="short"']
@@ -129,6 +129,24 @@ class Latin1CredentialScanTests(unittest.TestCase):
         with mock.patch.object(team,'_SECRET_FOLDED_LITERALS',team._SECRET_FOLDED_LITERALS+(b'UNLISTED',)):
             _value,count=full_calls(lambda:dispatch(b'benign original'))
         self.assertEqual(count,1)
+
+    def assert_selector_iterator_rejected(self,name,raw):
+        original=getattr(team,name)
+        raw=b'%PDF-1.7\n'+raw
+        for stream_entry in (False,True):
+            with self.subTest(selector=name,stream=stream_entry),mock.patch.object(team,name,iter(original)):
+                with self.assertRaises(brief.SnapshotBriefError):
+                    if stream_entry:
+                        with tempfile.TemporaryFile() as stream:
+                            stream.write(raw);stream.seek(0)
+                            materials._stream(stream.fileno(),size=len(raw),suffix='.pdf')
+                    else:dispatch(raw)
+
+    def test_derived_byte_selector_iterator_is_not_consumed(self):
+        self.assert_selector_iterator_rejected('_SECRET_BYTE_LITERALS',b'ghp_'+b'A'*24)
+
+    def test_derived_folded_selector_iterator_is_not_consumed(self):
+        self.assert_selector_iterator_rejected('_SECRET_FOLDED_LITERALS',b'APP_TOKEN="'+b'A'*24+b'"')
 
     def test_non_ascii_brief_hint_uses_full_predicate(self):
         extra=(re.compile('\xe9'), '\xe9'.encode())

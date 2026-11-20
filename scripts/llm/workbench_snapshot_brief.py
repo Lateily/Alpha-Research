@@ -69,6 +69,19 @@ _LATIN1_POLICY_SIGNATURE = '334b66e886c57e7f295741b39d4af1aba8da42edea477029a73e
 
 def _latin1_candidate(raw):
     try:
+        # Unknown one-shot selectors must reach the full detector unconsumed.
+        if type(_team_workspace._SECRET_BYTE_LITERALS) is not tuple:
+            return True
+        if type(_team_workspace._SECRET_FOLDED_LITERALS) is not tuple:
+            return True
+        if (type(SECRET_PATTERNS) is not tuple
+                or any(type(row) is not tuple or len(row) != 2
+                       or type(row[0]) is not str or type(row[1]) is not re.Pattern
+                       or type(row[1].pattern) is not bytes for row in SECRET_PATTERNS)
+                or type(_team_workspace._SECRET_UNFILTERED) is not bool
+                or any(type(hint) is not bytes for hint in _team_workspace._SECRET_BYTE_LITERALS)
+                or any(type(hint) is not bytes for hint in _team_workspace._SECRET_FOLDED_LITERALS)):
+            return True
         rules = _team_workspace._SECRET_RULES
         if (type(rules) is not tuple or any(type(row) is not tuple or len(row) != 3
                 or type(row[2]) is not tuple for row in rules)
@@ -76,6 +89,16 @@ def _latin1_candidate(raw):
                 or any(type(row) is not tuple or len(row) != 2 for row in _BRIEF_CREDENTIAL_RULES)
                 or type(_BRIEF_CASE_EXCEPTIONS) is not tuple
                 or any(type(row) is not tuple or len(row) != 2 for row in _BRIEF_CASE_EXCEPTIONS)):
+            return True
+        if (any(type(name) is not str or type(pattern) is not re.Pattern
+                or type(pattern.pattern) is not bytes
+                or any(type(hint) is not bytes for hint in required)
+                for name, pattern, required in rules)
+                or any(type(pattern) is not re.Pattern or type(pattern.pattern) is not str
+                       or (required is not None and type(required) is not bytes)
+                       for pattern, required in _BRIEF_CREDENTIAL_RULES)
+                or any(type(source) is not bytes or type(replacement) is not bytes
+                       for source, replacement in _BRIEF_CASE_EXCEPTIONS)):
             return True
         # Unknown detector catalogs retain the original full path.
         if (SECRET_PATTERNS != tuple((name, pattern) for name, pattern, _hints in rules)

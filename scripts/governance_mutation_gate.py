@@ -19271,6 +19271,21 @@ MUTATIONS += (
         'A raw-window negative result cannot certify the independently decoded JSON object.'),
 )
 
+MUTATIONS += (
+    MutationCase('LATIN1_DERIVED_BYTE_ITERATOR','Original stream credential inspection',
+        'scripts/llm/workbench_snapshot_brief.py','tests/test_workbench_latin1_scan.py',
+        '        if type(_team_workspace._SECRET_BYTE_LITERALS) is not tuple:',
+        '        if False:',
+        'test_derived_byte_selector_iterator_is_not_consumed',
+        'Unknown derived byte selectors must reach the full detector without prior consumption.'),
+    MutationCase('LATIN1_DERIVED_FOLDED_ITERATOR','Original stream credential inspection',
+        'scripts/llm/workbench_snapshot_brief.py','tests/test_workbench_latin1_scan.py',
+        '        if type(_team_workspace._SECRET_FOLDED_LITERALS) is not tuple:',
+        '        if False:',
+        'test_derived_folded_selector_iterator_is_not_consumed',
+        'Unknown derived folded selectors must reach the full detector without prior consumption.'),
+)
+
 SHARD_SPEC_RE = re.compile(r"^(?P<index>[1-9][0-9]*)/(?P<count>[1-9][0-9]*)$")
 SHARD_RECEIPT_SCHEMA = "ar-governance-mutation-shard-receipt.v1"
 
