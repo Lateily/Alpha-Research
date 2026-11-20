@@ -11,6 +11,7 @@ from pathlib import Path
 import workbench_evidence as evidence
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from team_ai_workspace import SECRET_PATTERNS, possible_repository_secret
+import team_ai_workspace as _team_workspace
 
 # Python Unicode IGNORECASE also admits these four characters in ASCII
 # letter matches. Keep the regex as the authority on all candidate strings.
@@ -60,6 +61,89 @@ def reject_credentials(value):
                     raise SnapshotBriefError("CREDENTIAL_SHAPED_CONTENT_REFUSED")
             if cacheable and len(checked) < 4096:
                 checked.add(item)
+
+
+_LATIN1_FULL_DETECTOR = reject_credentials
+_LATIN1_POLICY_SIGNATURE = '334b66e886c57e7f295741b39d4af1aba8da42edea477029a73e6878c76b07e9'
+
+
+def _latin1_candidate(raw):
+    try:
+        # Unknown one-shot selectors must reach the full detector unconsumed.
+        if type(_team_workspace._SECRET_BYTE_LITERALS) is not tuple:
+            return True
+        if type(_team_workspace._SECRET_FOLDED_LITERALS) is not tuple:
+            return True
+        if (type(SECRET_PATTERNS) is not tuple
+                or any(type(row) is not tuple or len(row) != 2
+                       or type(row[0]) is not str or type(row[1]) is not re.Pattern
+                       or type(row[1].pattern) is not bytes for row in SECRET_PATTERNS)
+                or type(_team_workspace._SECRET_UNFILTERED) is not bool
+                or any(type(hint) is not bytes for hint in _team_workspace._SECRET_BYTE_LITERALS)
+                or any(type(hint) is not bytes for hint in _team_workspace._SECRET_FOLDED_LITERALS)):
+            return True
+        rules = _team_workspace._SECRET_RULES
+        if (type(rules) is not tuple or any(type(row) is not tuple or len(row) != 3
+                or type(row[2]) is not tuple for row in rules)
+                or type(_BRIEF_CREDENTIAL_RULES) is not tuple
+                or any(type(row) is not tuple or len(row) != 2 for row in _BRIEF_CREDENTIAL_RULES)
+                or type(_BRIEF_CASE_EXCEPTIONS) is not tuple
+                or any(type(row) is not tuple or len(row) != 2 for row in _BRIEF_CASE_EXCEPTIONS)):
+            return True
+        if (any(type(name) is not str or type(pattern) is not re.Pattern
+                or type(pattern.pattern) is not bytes
+                or any(type(hint) is not bytes for hint in required)
+                for name, pattern, required in rules)
+                or any(type(pattern) is not re.Pattern or type(pattern.pattern) is not str
+                       or (required is not None and type(required) is not bytes)
+                       for pattern, required in _BRIEF_CREDENTIAL_RULES)
+                or any(type(source) is not bytes or type(replacement) is not bytes
+                       for source, replacement in _BRIEF_CASE_EXCEPTIONS)):
+            return True
+        # Unknown detector catalogs retain the original full path.
+        if (SECRET_PATTERNS != tuple((name, pattern) for name, pattern, _hints in rules)
+                or possible_repository_secret is not _team_workspace.possible_repository_secret
+                or reject_credentials is not _LATIN1_FULL_DETECTOR):
+            return True
+        policy = {'repository': [[name, pattern.pattern.hex(), int(pattern.flags), [hint.hex() for hint in required]]
+                                for name, pattern, required in rules],
+                  'exported': [[name, pattern.pattern.hex(), int(pattern.flags)] for name, pattern in SECRET_PATTERNS],
+                  'byte_hints': [hint.hex() for hint in _team_workspace._SECRET_BYTE_LITERALS],
+                  'folded_hints': [hint.hex() for hint in _team_workspace._SECRET_FOLDED_LITERALS],
+                  'unfiltered': _team_workspace._SECRET_UNFILTERED,
+                  'brief': [[pattern.pattern, int(pattern.flags), required.hex() if required is not None else None]
+                            for pattern, required in _BRIEF_CREDENTIAL_RULES],
+                  'exceptions': [[source.hex(), replacement.hex()] for source, replacement in _BRIEF_CASE_EXCEPTIONS]}
+        # This certifies detector policy only, never original bytes or a prior verdict.
+        if evidence.sealed(policy) != _LATIN1_POLICY_SIGNATURE:
+            return True
+        hints = []
+        for _name, _pattern, required in rules:
+            if not required:
+                return True
+            hints.extend(required)
+        hints.extend(required for _pattern, required in _BRIEF_CREDENTIAL_RULES)
+        # Escaped whitespace can create controls, but never printable ASCII hints.
+        if any(type(hint) is not bytes or not hint or any(c < 32 or c > 126 for c in hint)
+               for hint in hints):
+            return True
+        for source, _replacement in _BRIEF_CASE_EXCEPTIONS:
+            character = source.decode('utf-8')
+            if len(character) != 1 or ord(character) <= 255:
+                return True
+    except (AttributeError, TypeError, ValueError, UnicodeError):
+        return True
+    folded = raw.lower()
+    return any(hint.lower() in folded for hint in hints)
+
+
+def reject_latin1_credentials(raw):
+    """Printable ASCII candidates survive Latin1->UTF8; full rules decide matches."""
+    if type(raw) is not bytes:
+        raise TypeError('LATIN1_BYTES_REQUIRED')
+    # governance-mutation: LATIN1_FULL_CREDENTIAL_DISPATCH
+    if _latin1_candidate(raw):
+        reject_credentials(raw.decode('latin-1'))
 
 
 def render(snapshot):

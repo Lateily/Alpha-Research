@@ -18,7 +18,7 @@ from urllib.parse import unquote, urlsplit
 
 import workbench_backup as backup
 import workbench_evidence as ev
-from workbench_snapshot_brief import reject_credentials
+from workbench_snapshot_brief import reject_credentials, reject_latin1_credentials
 
 LABELS = {"sample_purpose": "WORKFLOW_DEBUG", "testing_status": "NOT_RUN",
           "human_review": "PENDING", "production_authority": False,
@@ -404,7 +404,7 @@ def _stream(fd, *, size, suffix, destination=None):
             if chunk.startswith((b"MZ", b"\x7fELF", b"PK\x03\x04", b"#!")):
                 _fail("FILE_TYPE_REFUSED")
         window = tail + chunk
-        reject_credentials(window.decode("latin-1"))
+        reject_latin1_credentials(window)
         if suffix == ".pdf" and ACTIVE_PDF.search(window):
             _fail("ACTIVE_OR_ENCRYPTED_PDF_REFUSED")
         if decoder is not None:
