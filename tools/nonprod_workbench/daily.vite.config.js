@@ -1,0 +1,7 @@
+import {defineConfig} from 'vite';
+import react from '@vitejs/plugin-react';
+import {fileURLToPath} from 'node:url';
+export default defineConfig({
+  root:fileURLToPath(new URL('./daily-ui',import.meta.url)),plugins:[react()],publicDir:false,
+  build:{outDir:'../dist/daily-preview',emptyOutDir:true,sourcemap:false}
+});
