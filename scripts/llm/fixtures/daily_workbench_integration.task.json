@@ -1,0 +1,22 @@
+{
+  "schema":"ai-task.v1",
+  "task_id":"DAILY-WORKBENCH-INTEGRATION-20261121",
+  "architecture_block":["Product daily workbench","Existing authenticated shared research API"],
+  "objective":"Connect the approved five-entry interface to existing frozen research submission, persistent tasks, verified steps/citations, archive queries and append-only review comments, then conditionally upgrade the private workbench with lossless backup and rollback.",
+  "non_goals":["No research methodology, live market collection, provider/model calls, new source rights, U4/paper/trading permissions, formal nightly/schedule changes or merge."],
+  "human_owner":"Junyan",
+  "reviewer":"Independent nonauthor source and release review",
+  "executor_candidates":["Codex"],
+  "dependencies":["56a8f1d approved daily interface","b6fa885 unchanged authenticated backend and current retained state"],
+  "authority_docs":["AGENTS.md","web/AGENTS.md","scripts/llm/AGENTS.md","docs/engineering/DAILY_WORKBENCH_INTEGRATION_V1.md"],
+  "file_scope":["tools/nonprod_workbench/daily-ui","tools/nonprod_workbench/live-ui","tools/nonprod_workbench/vite.config.js","tests/nonprod-daily-live*","scripts/llm/fixtures/daily_workbench_integration.task.json","docs/engineering/DAILY_WORKBENCH_INTEGRATION_V1.md","docs/superpowers/plans/2026-11-21-daily-workbench-integration.md",".github/workflows/nonprod-workbench-ci.yml"],
+  "forbidden_scope":["Backend authentication/hash/seal/rights/research engines","Formal production code/state/ledger/schedule","Existing frozen packages and source originals","New private members or authority grants","Secrets and real data in Git/CI"],
+  "input_contracts":["ar.shared-workspace-context.v1","ar.shared-research-card-query.v1 and original nested input/library schemas","ar.shared-workspace.v1 task detail and cardTaskEvidence","ar.human-review-list.v1/detail.v1 and original comment receipt"],
+  "output_artifacts":["Integrated five-entry private UI","Offline synthetic regressions and guard mutations","Same-final-SHA local and remote CI evidence plus independent review","Isolated historical material browser acceptance","Latest-state backups, cold restore/rollback and private release evidence"],
+  "acceptance_tests":["node --test tests/nonprod-*.test.mjs","node node_modules/vite/bin/vite.js build --config tools/nonprod_workbench/vite.config.js","Existing complete Python CI-equivalent steps and governance mutation suite","Reject expired 15000ms actions, changed identity/version/filter/detail, corrupt result contracts, uncertain duplicate submissions and comment permission expansion","Desktop/mobile actual backend browser flow in restored isolated state; exact c71 and AND queries; append-only comments and cold restore; git diff --check"],
+  "risk_level":"HIGH",
+  "network_policy":"ALLOWLIST",
+  "budget":{"max_cny":"0","max_minutes":240},
+  "approval_gates":["Current user explicitly approves 56a8f1d integration and conditional private upgrade after local, independent and remote acceptance","Allow local loopback QA, GitHub code/synthetic-test Draft CI and existing private HTTPS only; no market/model APIs","Before private cutover preserve newest tasks/comments, prove stopped writer, restore and verify both current and candidate versions","Rollback always uses newest stopped state, never replaces new records with an old database","No merge or formal nightly/trading changes"],
+  "created_at":"2026-11-21T00:00:00+00:00"
+}
