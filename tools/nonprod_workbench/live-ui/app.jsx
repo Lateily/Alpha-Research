@@ -117,7 +117,7 @@ export default function LiveApp(){
     portfolio:observation?.paper?{data:observation.paper,target_trade_date:observation.target_trade_date,data_quality:'NOT_SUPPLIED'}:null,
     acceptance:null};
   const contextFresh=auth.fresh&&contextRead.fresh;
-  const viewFresh=route==='research'?contextFresh&&(selected?detail.fresh:cards.fresh):['holdings','macro'].includes(route)?contextFresh&&history.fresh:route==='tests'?contextFresh:contextFresh&&cards.fresh&&history.fresh;
+  const viewFresh=route==='research'?contextFresh&&(selected?detail.fresh:researchTab==='tasks'?history.fresh:cards.fresh):['holdings','macro'].includes(route)?contextFresh&&history.fresh:route==='tests'?contextFresh:contextFresh&&cards.fresh&&history.fresh;
   const model={context,contextRead,cards,history,selected,detail,api,renew,access:auth.data||{},actionReads,parentReads:[[auth.reader,auth.key],[contextRead.reader,contextRead.key]],busy,pending,submit,retry,query,open,page,setPage,historyPage,setHistoryPage,researchTab,setResearchTab,filters};
   function refresh(){auth.refresh();contextRead.refresh();cards.refresh();history.refresh();if(selected)detail.refresh();}
   const viewProofs=captureProofs([[auth.reader,auth.key],[contextRead.reader,contextRead.key],

@@ -49,7 +49,7 @@ async function rootScenario(check,options={}){
   if(path==='/api/state')data={access:{shared_workspace_v1:true,login:f.c.login,allowed_job_kinds:['research-cards-review']}};
   else if(path==='/api/shared-workspace/context')data={...f.labels,schema:'ar.shared-workspace-context.v1',my_workspace:{login:f.c.login,workspace_id:f.c.workspaceId},execution_identity:{code_sha:f.c.codeSha,source_tree_hash:hash},owned_commands:commands,validation_scope:'IDENTITY_AND_JOB_REGISTRATION_NOT_OUTPUTS'};
   else if(path.startsWith('/api/shared-workspace/research-card-query?')){if(holdCards||options.holdCards)return new Promise(()=>{});data=query(path);}
-  else if(path.startsWith('/api/shared-workspace?page=')){if(holdHistory||options.holdHistory)return new Promise(()=>{});data={...f.labels,schema:'ar.shared-workspace.v1',my_workspace:{login:f.c.login,workspace_id:f.c.workspaceId},execution_identity:{code_sha:f.c.codeSha,source_tree_hash:hash},page:0,page_size:50,my_total:0,team_total:0,my_jobs:[],team_jobs:[],common_data:{observation:null}};}
+  else if(path.startsWith('/api/shared-workspace?page=')){if(holdHistory||options.holdHistory)return new Promise(()=>{});data={...f.labels,schema:'ar.shared-workspace.v1',my_workspace:{login:f.c.login,workspace_id:f.c.workspaceId},execution_identity:{code_sha:f.c.codeSha,source_tree_hash:hash},page:0,page_size:50,my_total:0,team_total:f.history?.length||0,my_jobs:[],team_jobs:f.history||[],common_data:{observation:null}};}
   else if(path.startsWith('/api/shared-workspace/jobs/'))data=task;
   else throw Error('UNEXPECTED_GET '+path);
   return{ok:true,status:200,json:async()=>clone(data)};
@@ -111,6 +111,25 @@ test('selected detail stops polling after navigating to Tests',()=>rootScenario(
  s.model().open(jobId);await s.settle();s.nav('测试');await s.settle();const before=s.calls.filter(call=>call.path.includes('/jobs/')).length;await s.runTimers();assert.equal(s.calls.filter(call=>call.path.includes('/jobs/')).length,before);
 }));
 const require=createRequire(import.meta.url);let actualDaily;
+const elements=value=>Array.isArray(value)?value.flatMap(elements):value&&typeof value==='object'?[value,...elements(value.props?.children)]:[];
+function historyClick(s,id){const entry=s.find('LiveResearch'),view=entry.type(entry.props),list=elements(view).find(value=>value.type?.name==='TaskRows');assert.ok(list);return elements(list.type(list.props)).find(value=>value.props?.['data-job-id']===id).props.onClick;}
+for(const mode of ['expired','invalidated','failed','replaced'])test('actual task history download rejects its own '+mode+' read, independently of current cards',()=>rootScenario(async s=>{
+ const id='job_cccccccc-cccc-cccc-cccc-cccccccccccc';s.f.history=[{...s.f.labels,job_id:id,kind:'snapshot-brief',status:'SUCCEEDED',submitted_at:1}];
+ s.model().setResearchTab('tasks');await s.settle();assert.equal(s.model().history.fresh,true);
+ s.at(mode==='expired'||mode==='invalidated'?20000:5000);
+ if(mode==='expired')s.holdHistory();
+ if(mode==='invalidated'){s.holdHistory();s.model().history.refresh();}
+ if(mode==='failed')await s.model().history.reader.read(s.model().history.key,async()=>{throw Error('SYNTHETIC_SEAL_CHANGED');});
+ await s.model().cards.refresh();await s.renewParents();await s.settle();
+ const before=historyClick(s,id);
+ if(mode==='replaced'){s.f.history[0]={...s.f.history[0],status:'RECOVERY_REQUIRED'};await s.model().history.refresh();await s.settle();}
+ before();await s.settle();const drawer=s.find('Drawer');assert.ok(!drawer||drawer.props.canRead()===false);
+}));
+test('current task history metadata remains downloadable when unrelated card read fails',()=>rootScenario(async s=>{
+ const id='job_cccccccc-cccc-cccc-cccc-cccccccccccc';s.f.history=[{...s.f.labels,job_id:id,kind:'snapshot-brief',status:'SUCCEEDED',submitted_at:1}];
+ s.model().setResearchTab('tasks');await s.settle();await s.model().cards.reader.read(s.model().cards.key,async()=>{throw Error('SYNTHETIC_CARD_FAILURE');});await s.settle();
+ historyClick(s,id)();await s.settle();assert.equal(s.find('Drawer')?.props.canRead(),true);
+}));
 async function dailyHTML(props){
  if(!actualDaily){const built=await build({entryPoints:['tools/nonprod_workbench/daily-ui/app.jsx'],bundle:true,write:false,platform:'node',format:'esm',plugins:[{name:'actual',setup(b){b.onResolve({filter:/^(react|lucide-react)$/},args=>({path:pathToFileURL(require.resolve(args.path)).href,external:true}));}}]});actualDaily=(await import('data:text/javascript;base64,'+Buffer.from(built.outputFiles[0].text).toString('base64'))).DailyView;}
  return renderToStaticMarkup(React.createElement(actualDaily,props));

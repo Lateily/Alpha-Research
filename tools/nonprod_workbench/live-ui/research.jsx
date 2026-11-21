@@ -46,6 +46,7 @@ export function LiveResearch({model,onEvidence}) {
   const [draft,setDraft]=useState(applied),[filterError,setFilterError]=useState('');
   useEffect(()=>setDraft(applied()),[JSON.stringify(model.filters)]);
   const {context,contextRead,cards,history,selected,detail,api,renew}=model;
+  const historyProofs=captureProofs([...model.parentReads,[history.reader,history.key]]);
   const library=cards.data,inputs=library?.registeredInputs?.inputs||[],rows=library?.results||[];
   const visible=groupReports(filterReports(rows.map(row=>({...row,industry_label:industryName(row.industry_key)})),{query:localQuery})).map(group=>group.row);
   const industries=[...new Set([...inputs,...rows].map(row=>row.industry_key).filter(Boolean))];
@@ -85,7 +86,7 @@ export function LiveResearch({model,onEvidence}) {
     </>}
     {tab==='tasks'&&<><div className="section-title"><h2>任务记录</h2><button className="icon-button" title="刷新任务列表" aria-label="刷新任务列表" onClick={history.refresh}><RefreshCw size={16}/></button></div>
       {!history.fresh&&<div className="quiet-notice warning">{history.state.error||'列表核验中或已过期'}</div>}
-      <TaskRows jobs={history.data?.team_jobs||[]} onOpen={job=>job.kind==='research-cards-review'?model.open(job.job_id):onEvidence(titleFor(job),job)}/>
+      <TaskRows jobs={history.data?.team_jobs||[]} onOpen={job=>job.kind==='research-cards-review'?model.open(job.job_id):onEvidence(titleFor(job),job,historyProofs)}/>
       <div className="result-pagination"><button className="icon-button" title="上一页任务" aria-label="上一页任务" disabled={!model.historyPage} onClick={()=>model.setHistoryPage(model.historyPage-1)}><ChevronLeft size={16}/></button><span>{model.historyPage+1} / {Math.max(1,Math.ceil((history.data?.team_total||0)/50))}</span><button className="icon-button" title="下一页任务" aria-label="下一页任务" disabled={!history.data||(model.historyPage+1)*50>=history.data.team_total} onClick={()=>model.setHistoryPage(model.historyPage+1)}><ChevronRight size={16}/></button></div>
     </>}
     {tab==='materials'&&<section><SectionTitle title="已登记材料" count={library?inputs.length:'待核验'}/>{inputs.map(item=><div className="material-row" key={item.snapshot_id}><span className="document-icon"><FolderOpen size={22}/></span><div><h3>{item.company}</h3><p>{industryName(item.industry_key)} · 研究日 {dateText(item.research_date)} · 原件截止 {dateText(item.source_cutoff_at)}</p><span className="secondary">原件正文未开放</span></div><EvidenceLink onClick={()=>onEvidence('已登记冻结材料',item)}/></div>)}</section>}
