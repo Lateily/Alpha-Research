@@ -49,3 +49,7 @@ jobs:
         run: node --test tests/nonprod-review-portal.test.mjs
       - name: Actual review component context and uncertain submission (offline)
         run: node --test tests/nonprod-review-portal-component.test.mjs
+      - name: Daily live contracts, retained actions and comment identity (offline)
+        run: node --test tests/nonprod-daily-live.test.mjs tests/nonprod-daily-live-component.test.mjs
+      - name: Approved daily presentation regressions (offline)
+        run: node --test tests/nonprod-daily-workbench.test.mjs tests/nonprod-daily-workbench-component.test.mjs

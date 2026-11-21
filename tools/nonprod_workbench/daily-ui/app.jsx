@@ -135,7 +135,8 @@ function Attention({
 function Today({
   data,
   navigate,
-  onEvidence
+  onEvidence,
+  onOpenJob
 }) {
   const reports = groupReports(data.cards.library.results).map(group=>group.row),
     jobs = data.shared.team_jobs || [],
@@ -148,7 +149,7 @@ function Today({
     <div className="today-columns"><section><SectionTitle title="继续研究" action={<button className="text-button" onClick={() => navigate('research')}>全部研究<ArrowRight size={15} /></button>} />
       {row ? <button className="featured-research" onClick={() => navigate('research')}><div className="featured-top"><span className="document-icon"><FileText size={23} /></span><Status value={row.human_review} /></div><h3>{row.company}<span>{industryLabel(row.industry_key)}</span></h3><p>财报事实、估值依据与日线技术</p><div className="featured-bottom"><span>研究日 {dateText(row.research_date)}</span><ArrowRight size={18} /></div></button> : <Empty title="尚无研究结果" />}
       <SectionTitle title="最近任务" action={<Subtabs label="任务类型" items={[["all", "全部"], ["research-cards-review", "研究卡"], ["snapshot-brief", "简报"]]} value={filter} onChange={setFilter} />} />
-      <TaskRows jobs={shown} onOpen={job => onEvidence(titleFor(job), data.task_details[job.job_id] || job)} />
+      <TaskRows jobs={shown} onOpen={job => onOpenJob&&job.kind==='research-cards-review'?onOpenJob(job.job_id):onEvidence(titleFor(job), data.task_details[job.job_id] || job)} />
     </section><aside className="today-aside"><SectionTitle title="需要关注" /><Attention row={row} onOpen={() => navigate('research')} /><div className="source-note"><span className="source-note-icon"><LockKeyhole size={18} /></span><h3>材料与结果已封存</h3><dl><dt>来源交易日</dt><dd>{dateText(data.source.source_trade_date)}</dd><dt>研究用途</dt><dd>流程调试</dd><dt>研究批准</dt><dd>尚未取得</dd></dl><EvidenceLink onClick={() => onEvidence('封存来源', data.source)} /></div></aside></div>
   </>;
 }
@@ -264,6 +265,7 @@ function Tests({
   onEvidence
 }) {
   const a = data.acceptance;
+  if(!a)return <><PageHeading eyebrow="工作空间 / 测试" title="模型与测试"/><Empty icon={FlaskConical} title="工程验收归档未接入此入口" detail="不以任务完成或样稿核验推断模型有效性。"/><SectionTitle title="当前运行版本"/><code>{data.consumer_code_sha||'未核验'}</code></>;
   return <><PageHeading eyebrow="工作空间 / 测试" title="模型与测试" action={<span className="read-only-tag"><LockKeyhole size={14} />执行入口未接入本预览</span>}><p>工程验收归档 · {a.code_sha.slice(0, 7)}</p></PageHeading><div className="stats-band"><Stat icon={FileCheck2} label="本地检查" value={`${a.local_ci.passed} / ${a.local_ci.total}`} detail="历史工程验收记录" /><Stat icon={ShieldCheck} label="防线变异" value={`${a.local_mutations.killed} / ${a.local_mutations.total}`} detail="不等于策略收益验证" /><Stat icon={LockKeyhole} label="研究批准" value="未取得" detail="工程通过不替代人审" /></div><section><SectionTitle title="验收记录" /><button className="test-record" onClick={() => onEvidence('已归档工程验收', a)}><span className="test-symbol"><FlaskConical size={22} /></span><div><strong>读取性能与校验回归</strong><span>版本 {a.code_sha.slice(0, 7)} · Draft #{a.draft_pr} · 未合并</span></div><ChevronRight size={17} /></button></section><section><SectionTitle title="研究表现" /><Empty icon={BarChart3} title="尚无可用的独立研究表现结论" detail="未将工程测试、历史任务或样稿核验计作策略有效性。" /></section></>;
 }
 export function DailyView({
@@ -271,13 +273,15 @@ export function DailyView({
   data,
   fresh,
   onEvidence = () => {},
-  navigate = () => {}
+  navigate = () => {},
+  onOpenJob
 }) {
   const props = {
     data,
     fresh,
     onEvidence,
-    navigate
+    navigate,
+    onOpenJob
   };
   return route === 'today' ? <Today {...props} /> : route === 'research' ? <Research {...props} /> : route === 'holdings' ? <Holdings {...props} /> : route === 'macro' ? <Macro {...props} /> : <Tests {...props} />;
 }
@@ -285,7 +289,8 @@ function Drawer({
   entry,
   onClose,
   fresh,
-  lastSuccessAt
+  lastSuccessAt,
+  canRead=()=>true
 }) {
   const ref = useRef(null);
   useEffect(() => {
@@ -294,7 +299,7 @@ function Drawer({
     return () => d.close();
   }, []);
   function download() {
-    if (!canDownload(fresh,lastSuccessAt)) return;
+    if (!canDownload(fresh,lastSuccessAt)||!canRead()) return;
     const blob = new Blob([JSON.stringify(entry.value, null, 2) + '\n'], {
       type: 'application/json'
     });
@@ -403,3 +408,5 @@ export default function App() {
     <div className="workspace-main"><header className="topbar"><span className="mobile-brand">AR <strong>研究工作台</strong></span><span className="breadcrumb">工作空间 <ChevronRight size={13} /> {destinations.find(x => x.id === route)?.label}</span><div className="topbar-right"><span className={`connection ${fresh ? 'connected' : ''}`}><i />{fresh ? '副本可读' : resource.loading && !data ? '读取中' : '读取已过期'}</span><IconButton label="刷新封存副本" onClick={load} disabled={resource.loading}><RefreshCw size={16} className={resource.loading ? 'spinning' : ''} /></IconButton><span className="user-avatar" title="本机隔离预览，不作真人身份认证">J</span></div></header>
     <main><div className="preview-banner"><span><LockKeyhole size={13} />只读预览</span><span>历史资料{data ? ` · ${dateText(data.source.source_trade_date)}` : ''}</span></div>{resource.error && <div className="read-error" role="alert">{resource.error} · 操作不可用</div>}{data && !fresh && <div className="read-error" role="status">核验已过期，以下为上次读取的历史副本。</div>}{data ? <DailyView key={route} route={route} data={data} fresh={fresh} navigate={navigate} onEvidence={openEvidence} /> : <Empty icon={Clock3} title={resource.error ? '暂时无法读取' : '正在核对封存材料'} />}<footer className="page-footer"><span>AR / 研究信号，非买卖指令</span><span>人工研究批准独立保留</span></footer></main></div>{evidence && <Drawer entry={evidence} fresh={fresh} lastSuccessAt={resource.lastSuccessAt} onClose={() => setEvidence(null)} />}</div>;
 }
+
+export {Status,IconButton,SectionTitle,Empty,EvidenceLink,Subtabs,PageHeading,TaskRows,ReportDetail,Drawer};
