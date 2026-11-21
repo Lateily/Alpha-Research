@@ -4,7 +4,8 @@ import {DailyView,Drawer,Empty,IconButton} from '../daily-ui/app.jsx';
 import {destinations,dateText,isFresh} from '../daily-ui/view.mjs';
 import {readSharedContext} from '../ui/shared-view.mjs';
 import {readCardQuery} from '../ui/research-cards-view.mjs';
-import {apiRequest,actionCurrent,cardCommand,pendingStore,readJob,requestReceipt,readSharedSnapshot} from './live-state.mjs';
+import {apiRequest,actionCurrent,cardCommand,pendingStore,readJob,requestReceipt,readSharedSnapshot,captureProofs,proofsCurrent} from './live-state.mjs';
+import {definitiveReviewRejection} from '../ui/review-portal-view.mjs';
 import {useRead} from './use-read.jsx';
 import {LiveResearch} from './research.jsx';
 
@@ -15,8 +16,8 @@ const routeFromHash=()=>destinations.some(item=>item.id===location.hash.slice(1)
 
 export default function LiveApp(){
   const [route,setRoute]=useState(routeFromHash),[filters,setFilters]=useState({}),[page,setPage]=useState(0),[historyPage,setHistoryPage]=useState(0);
-  const [selected,setSelected]=useState(null),[pending,setPending]=useState(null),[busy,setBusy]=useState(false),[notice,setNotice]=useState(''),[evidence,setEvidence]=useState(null),[researchTab,setResearchTab]=useState('results');
-  const [,tick]=useState(0),posting=useRef(false),live=useRef(null),completed=useRef(null);
+  const [selected,setSelected]=useState(null),[pending,setPending]=useState(null),[notice,setNotice]=useState(''),[evidence,setEvidence]=useState(null),[researchTab,setResearchTab]=useState('results');
+  const [,tick]=useState(0),ownerRef=useRef(null),live=useRef(null),completed=useRef(null);
   const auth=useRead('access',async()=>{
     let data;
     try{data=await api('/api/state');}catch(error){if(error.status!==403)throw error;await renew();data=await api('/api/state');}
@@ -34,7 +35,7 @@ export default function LiveApp(){
   const cards=useRead(cardsKey,()=>readCardQuery(api,{...context,filters,page},renew));
   const historyKey=context&&needsHistory?JSON.stringify(['history',context,historyPage]):null;
   const history=useRead(historyKey,()=>readSharedSnapshot(api,context,historyPage,renew));
-  const detailKey=context&&selected?JSON.stringify(['task',context,selected]):null;
+  const detailKey=context&&route==='research'&&selected?JSON.stringify(['task',context,selected]):null;
   const detail=useRead(detailKey,async()=>{
     const value=await readJob(api,selected,renew);
     const retained=pendingStore(window.localStorage,context).read();
@@ -44,7 +45,11 @@ export default function LiveApp(){
     return value;
   });
   const actionReads=[[auth.reader,auth.key],[contextRead.reader,contextRead.key],[cards.reader,cards.key]];
-  live.current={context,identityKey,actionReads,cards,contextRead,selected};
+  const intentKey=context&&route==='research'&&!selected?JSON.stringify([context,filters,page]):null;
+  if(!ownerRef.current||ownerRef.current.key!==intentKey)ownerRef.current={key:intentKey,attempt:null};
+  const owner=ownerRef.current,busy=!!owner.attempt;
+  live.current={context,identityKey,actionReads,cards,contextRead,selected,owner};
+  useEffect(()=>()=>{ownerRef.current=null;},[]);
   useEffect(()=>{const timer=setInterval(()=>tick(value=>value+1),1000);return()=>clearInterval(timer);},[]);
   useEffect(()=>{const listener=()=>setRoute(routeFromHash());addEventListener('hashchange',listener);return()=>removeEventListener('hashchange',listener);},[]);
   useEffect(()=>{
@@ -69,40 +74,44 @@ export default function LiveApp(){
   function query(next){setFilters(next);setPage(0);setSelected(null);if(JSON.stringify(next)===JSON.stringify(filters)&&page===0)cards.refresh();}
   async function submit(snapshotId){
     const current=live.current;
-    if(posting.current||!current.context)throw Error('SUBMISSION_BUSY');
+    if(ownerRef.current!==owner||!owner.key||owner.attempt||!current.context)throw Error('SUBMISSION_BUSY');
     const body=cardCommand(current.context,snapshotId,'shared_'+crypto.randomUUID().replaceAll('-',''),current.actionReads,current.cards.data);
     const store=pendingStore(window.localStorage,current.context);
     if(store.read())throw Error('PENDING_COMMAND_EXISTS');
-    store.save(body);setPending(store.read());posting.current=true;setBusy(true);setNotice('');
+    const attempt={};store.save(body);setPending(store.read());owner.attempt=attempt;tick(value=>value+1);setNotice('');
     try{
       const receipt=requestReceipt(await api('/api/workspace/job',body));
       store.save(body,receipt.job_id);
-      if(live.current.identityKey!==current.identityKey)return;
+      if(ownerRef.current!==owner)return;
       setPending(store.read());open(receipt.job_id);
-    }catch(error){if(live.current.identityKey===current.identityKey)setNotice('提交尚未确认 · '+error.message);throw error;}
-    finally{posting.current=false;if(live.current.identityKey===current.identityKey)setBusy(false);}
+    }catch(error){
+      if(definitiveReviewRejection(error,false)&&JSON.stringify(store.read()?.body)===JSON.stringify(body))store.clear();
+      if(ownerRef.current===owner){setPending(store.read());setNotice((definitiveReviewRejection(error,false)?'提交被拒绝 · ':'提交尚未确认 · ')+error.message);}
+      throw error;
+    }finally{if(owner.attempt===attempt)owner.attempt=null;if(ownerRef.current===owner)tick(value=>value+1);}
   }
   async function retry(){
     const current=live.current;
-    if(posting.current||!current.context||!actionCurrent(current.actionReads))throw Error('EVIDENCE_NOT_CURRENT');
+    if(ownerRef.current!==owner||!owner.key||owner.attempt||!current.context||!actionCurrent(current.actionReads))throw Error('EVIDENCE_NOT_CURRENT');
     const store=pendingStore(window.localStorage,current.context),retained=store.read();
     if(!retained)throw Error('PENDING_COMMAND_NOT_FOUND');
-    posting.current=true;setBusy(true);
+    const attempt={};owner.attempt=attempt;tick(value=>value+1);
     try{
       const known=retained.job_id||current.contextRead.data?.owned_commands?.[retained.body.command_id]?.job_id;
-      if(known){store.save(retained.body,known);if(live.current.identityKey===current.identityKey){setPending(store.read());open(known);}return;}
+      if(known){store.save(retained.body,known);if(ownerRef.current===owner){setPending(store.read());open(known);}return;}
       const confirmed=cardCommand(current.context,retained.body.snapshot_id,retained.body.command_id,current.actionReads,current.cards.data);
       if(JSON.stringify(confirmed)!==JSON.stringify(retained.body))throw Error('PENDING_COMMAND_CHANGED');
       const receipt=requestReceipt(await api('/api/workspace/job',retained.body));store.save(retained.body,receipt.job_id);
-      if(live.current.identityKey===current.identityKey){setPending(store.read());open(receipt.job_id);}
-    }finally{posting.current=false;if(live.current.identityKey===current.identityKey)setBusy(false);}
+      if(ownerRef.current===owner){setPending(store.read());open(receipt.job_id);}
+    }finally{if(owner.attempt===attempt)owner.attempt=null;if(ownerRef.current===owner)tick(value=>value+1);}
   }
   const observation=history.data?.common_data?.observation;
   const source={source_trade_date:observation?.target_trade_date||null,source_run_id:observation?.published_run_id||null,
     observed_at:observation?.observed_at||null,scope:history.data?.common_data?.validation_scope||'NOT_EVALUATED'};
   const historyRows=history.data?.team_jobs||cards.data?.results?.map(row=>({...row,kind:'research-cards-review'}))||[];
   const presentation={mode:'AUTHENTICATED_SHARED',consumer_code_sha:context?.codeSha,source,
-    shared:history.data||{team_jobs:historyRows,team_total:cards.data?.total||0,loaded_results_only:true},
+    availability:{cards:cards.data!==null,history:history.data!==null},
+    shared:history.data||{team_jobs:historyRows,team_total:null,loaded_results_only:true},
     cards:{library:cards.data||{results:[]},inputs:cards.data?.registeredInputs||{inputs:[]}},task_details:detail.data?{[detail.data.job_id]:detail.data}:{},
     macro:observation?Object.fromEntries(Object.entries(observation.macro||{}).filter(([,value])=>value?.payload).map(([name,value])=>[name,value.payload])):null,
     portfolio:observation?.paper?{data:observation.paper,target_trade_date:observation.target_trade_date,data_quality:'NOT_SUPPLIED'}:null,
@@ -111,18 +120,18 @@ export default function LiveApp(){
   const viewFresh=route==='research'?contextFresh&&(selected?detail.fresh:cards.fresh):['holdings','macro'].includes(route)?contextFresh&&history.fresh:route==='tests'?contextFresh:contextFresh&&cards.fresh&&history.fresh;
   const model={context,contextRead,cards,history,selected,detail,api,renew,access:auth.data||{},actionReads,parentReads:[[auth.reader,auth.key],[contextRead.reader,contextRead.key]],busy,pending,submit,retry,query,open,page,setPage,historyPage,setHistoryPage,researchTab,setResearchTab,filters};
   function refresh(){auth.refresh();contextRead.refresh();cards.refresh();history.refresh();if(selected)detail.refresh();}
-  function openEvidence(title,value,reads){
-    const bindings=reads||[[auth.reader,auth.key],[contextRead.reader,contextRead.key],
-      route==='research'?(selected?[detail.reader,detail.key]:[cards.reader,cards.key]):[history.reader,history.key]];
-    const times=bindings.map(([reader])=>reader.value().at);
-    const at=times.every(Number.isFinite)?Math.min(...times):null;
-    setEvidence({title,value,reads:bindings,at});
+  const viewProofs=captureProofs([[auth.reader,auth.key],[contextRead.reader,contextRead.key],
+    route==='research'?(selected?[detail.reader,detail.key]:[cards.reader,cards.key]):[history.reader,history.key]]);
+  const sourceProofs=captureProofs([[auth.reader,auth.key],[contextRead.reader,contextRead.key],[history.reader,history.key]]);
+  function openEvidence(title,value,proofs=viewProofs){
+    if(!proofsCurrent(proofs)){setNotice('该份证据已过期或被后续核验替换，请重新打开。');return;}
+    setEvidence({title,value,proofs,at:Math.min(...proofs.map(proof=>proof.at))});
   }
-  const evidenceFresh=()=>!!evidence&&isFresh(evidence.at)&&actionCurrent(evidence.reads);
+  const evidenceFresh=()=>!!evidence&&isFresh(evidence.at)&&proofsCurrent(evidence.proofs);
   return <div className="app-shell"><aside className="sidebar"><div className="brand"><span className="brand-mark">AR</span><div><strong>研究工作台</strong><small>Alpha Research</small></div></div>
     <div className="workspace-name"><span className="workspace-avatar">{login?.[0]?.toUpperCase()||'—'}</span><span title={login||'未连接'}>{login||'身份核验中'}</span><LockKeyhole size={13}/></div>
     <div className="nav-caption">工作空间</div><nav className="primary-nav" aria-label="主导航">{destinations.map(item=>{const Icon=icons[item.id];return <button key={item.id} aria-current={route===item.id?'page':undefined} onClick={()=>navigate(item.id)}><Icon size={19} strokeWidth={1.7}/><span>{item.label}</span>{route===item.id&&<span className="nav-active-dot"/>}</button>;})}</nav>
-    <div className="sidebar-footer"><div><span className="preview-dot"/>私网研究</div><span>生产与交易权限未开放</span><button className="text-button" onClick={()=>openEvidence('运行与来源证据',{context:identity,source,shared_sync:history.data?.common_data},[[auth.reader,auth.key],[contextRead.reader,contextRead.key],[history.reader,history.key]])}><ShieldCheck size={15}/>证据与版本</button></div></aside>
+    <div className="sidebar-footer"><div><span className="preview-dot"/>私网研究</div><span>生产与交易权限未开放</span><button className="text-button" onClick={()=>openEvidence('运行与来源证据',{context:identity,source,shared_sync:history.data?.common_data},sourceProofs)}><ShieldCheck size={15}/>证据与版本</button></div></aside>
     <div className="workspace-main"><header className="topbar"><span className="mobile-brand">AR <strong>研究工作台</strong></span><span className="breadcrumb">工作空间<ChevronRight size={13}/>{destinations.find(item=>item.id===route)?.label}</span><div className="topbar-right"><span className={`connection ${contextFresh?'connected':''}`}><i/>{contextFresh?'已连接':'连接核验中'}</span><code className="version-short">{context?.codeSha.slice(0,7)||'未核验'}</code><IconButton label="刷新工作台" onClick={refresh}><RefreshCw size={16}/></IconButton></div></header>
       <main><div className="preview-banner"><span><LockKeyhole size={13}/>WORKFLOW_DEBUG · 待人审</span><span>发布来源 {dateText(source.source_trade_date)}</span></div>
         {(auth.state.error||contextRead.state.error||notice)&&<div className="read-error" role="alert">{notice||auth.state.error||contextRead.state.error}</div>}

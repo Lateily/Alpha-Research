@@ -9,16 +9,18 @@ const states=['QUEUED','RUNNING','SUCCEEDED','STOP','INTERRUPTED','RECOVERY_REQU
 const need=(ok,message)=>{if(!ok)throw Error(message);};
 
 export function resource(clock=Date.now) {
-  let current={key:null,data:null,at:null,error:'',loading:false},epoch=0,inFlight=null;
+  let current={key:null,data:null,at:null,error:'',loading:false},epoch=0,inFlight=null,revision=0;
   const subscribers=new Set();
   function update(next){current=next;for(const listener of subscribers)listener();}
-  return {
+  const reader={
     value:()=>current,
     subscribe(fn){subscribers.add(fn);return()=>subscribers.delete(fn);},
     fresh(key){return current.key===key&&current.data!==null&&!current.error&&isFresh(current.at,clock());},
-    invalidate(retain=false){++epoch;update(retain?{...current,at:null,error:'',loading:false}:{key:null,data:null,at:null,error:'',loading:false});},
+    capture(key){return reader.fresh(key)?Object.freeze({reader,key,revision,at:current.at}):null;},
+    owns(proof){return proof?.reader===reader&&proof.revision===revision&&reader.fresh(proof.key)&&isFresh(proof.at,clock());},
+    invalidate(retain=false){++epoch;++revision;update(retain?{...current,at:null,error:'',loading:false}:{key:null,data:null,at:null,error:'',loading:false});},
     read(key,loader){
-      if(current.key!==key){++epoch;update({key,data:null,at:null,error:'',loading:false});}
+      if(current.key!==key){++epoch;++revision;update({key,data:null,at:null,error:'',loading:false});}
       const token=epoch;
       if(inFlight?.token===token)return inFlight.promise;
       const previous=inFlight?.promise||Promise.resolve(),owned={token};
@@ -29,21 +31,28 @@ export function resource(clock=Date.now) {
         update({...current,loading:true});
         try{
           const data=await loader();
-          if(epoch===token)update({key,data,at:clock(),error:'',loading:false});
+          if(epoch===token){
+            if(current.error||JSON.stringify(data)!==JSON.stringify(current.data))++revision;
+            update({key,data,at:clock(),error:'',loading:false});
+          }
         }catch(error){
-          if(epoch===token)update({...current,at:null,error:error.message||'READ_FAILED',loading:false});
+          if(epoch===token){++revision;update({...current,at:null,error:error.message||'READ_FAILED',loading:false});}
         }finally{if(inFlight===owned)inFlight=null;}
       })();
       return owned.promise;
     }
   };
+  return reader;
 }
+
+export const captureProofs=reads=>reads.map(([reader,key])=>reader.capture(key));
+export const proofsCurrent=proofs=>Array.isArray(proofs)&&proofs.length>0&&proofs.every(proof=>proof?.reader.owns(proof));
 
 export function actionCurrent(reads,busy=false) {
   // governance-mutation: DAILY_LIVE_ACTION_FRESH
   return !busy&&reads.length>0&&reads.every(([read,key])=>read.fresh(key));
 }
-function identity(c){return typeof c?.login==='string'&&c.login.length<=254&&!/[\s\x00-\x1f]/.test(c.login)&&uuid.test(c.workspaceId)&&sha.test(c.codeSha);}
+function identity(c){return typeof c?.login==='string'&&c.login.length>0&&c.login.length<=254&&!/[\s\x00-\x1f]/.test(c.login)&&uuid.test(c.workspaceId)&&sha.test(c.codeSha);}
 export function cardCommand(c,selected,id,reads,query) {
   need(actionCurrent(reads),'EVIDENCE_NOT_CURRENT');
   need(identity(c)&&command.test(id),'COMMAND_CONTEXT_INVALID');
@@ -60,6 +69,18 @@ export async function readJob(api,id,renew) {
   need(value?.job_id===id&&value.kind==='research-cards-review'&&states.includes(value.status)&&value.sample_purpose==='WORKFLOW_DEBUG'&&
     value.human_review==='PENDING'&&value.production_authority===false&&value.trading_authority===false,'TASK_EVIDENCE_INVALID');
   if(value.status==='SUCCEEDED')need(cardTaskEvidence(value,{jobId:id,stale:false}),'TASK_EVIDENCE_INVALID');
+  else{
+    const keys='job_id command_id workspace_id actor kind snapshot_id input_hash source_run_id source_trade_date submitted_at code_sha source_tree_hash schema_version status attempt_id output_hash error sample_purpose human_review production_authority trading_authority result'.split(' ').sort();
+    const digest=value=>typeof value==='string'&&/^[a-f0-9]{64}$/.test(value);
+    const errorCode=value=>typeof value==='string'&&/^[A-Z][A-Z0-9_]{0,199}$/.test(value);
+    need(Object.keys(value).sort().join('|')===keys.join('|')&&identity({login:value.actor,workspaceId:value.workspace_id,codeSha:value.code_sha})&&
+      command.test(value.command_id)&&uuid.test(value.snapshot_id)&&digest(value.input_hash)&&digest(value.source_tree_hash)&&
+      value.schema_version==='ar.shared-workspace.v1'&&value.source_run_id===null&&value.source_trade_date===null&&
+      Number.isFinite(value.submitted_at)&&value.submitted_at>=0&&(value.attempt_id===null||uuid.test(value.attempt_id))&&
+      (value.status!=='RUNNING'||uuid.test(value.attempt_id))&&(value.output_hash===null||digest(value.output_hash))&&
+      (value.error===null||errorCode(value.error))&&(value.result===null||
+        Object.keys(value.result).join('|')==='error'&&errorCode(value.result.error)),'TASK_EVIDENCE_INVALID');
+  }
   return value;
 }
 export function pendingStore(storage,c) {

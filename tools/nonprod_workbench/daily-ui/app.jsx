@@ -142,15 +142,17 @@ function Today({
     jobs = data.shared.team_jobs || [],
     row = reports[0];
   const [filter, setFilter] = useState('all');
+  const cardsKnown=data.availability?.cards!==false,historyKnown=data.availability?.history!==false;
+  const sourceKnown=historyKnown&&!!data.source.source_trade_date;
   const shown = [...jobs].sort((a, b) => b.submitted_at - a.submitted_at).filter(j => filter === 'all' || j.kind === filter).slice(0, 5);
   return <>
     <PageHeading eyebrow="工作空间 / 今日" title="今日工作" action={<button className="button dark" onClick={() => navigate('research')}><FileSearch size={16} />查看研究<ArrowRight size={16} /></button>}><p>资料截至 {dateText(data.source.source_trade_date)} <span className="inline-divider" />历史封存副本</p></PageHeading>
-    <div className="stats-band"><Stat icon={FileText} label="研究结果" value={reports.length} detail="已归档的研究卡" /><Stat icon={Clock3} label="待人工核验" value={reports.filter(x => x.human_review === 'PENDING').length} detail="未计为研究通过" /><Stat icon={Layers3} label="任务记录" value={data.shared.team_total ?? jobs.length} detail="历史任务 · 只读" /></div>
+    <div className="stats-band"><Stat icon={FileText} label="研究结果" value={cardsKnown?reports.length:'待核验'} detail="已归档的研究卡" /><Stat icon={Clock3} label="待人工核验" value={cardsKnown?reports.filter(x => x.human_review === 'PENDING').length:'待核验'} detail="未计为研究通过" /><Stat icon={Layers3} label="任务记录" value={historyKnown?(data.shared.team_total ?? jobs.length):'待核验'} detail="历史任务 · 只读" /></div>
     <div className="today-columns"><section><SectionTitle title="继续研究" action={<button className="text-button" onClick={() => navigate('research')}>全部研究<ArrowRight size={15} /></button>} />
-      {row ? <button className="featured-research" onClick={() => navigate('research')}><div className="featured-top"><span className="document-icon"><FileText size={23} /></span><Status value={row.human_review} /></div><h3>{row.company}<span>{industryLabel(row.industry_key)}</span></h3><p>财报事实、估值依据与日线技术</p><div className="featured-bottom"><span>研究日 {dateText(row.research_date)}</span><ArrowRight size={18} /></div></button> : <Empty title="尚无研究结果" />}
+      {row ? <button className="featured-research" onClick={() => navigate('research')}><div className="featured-top"><span className="document-icon"><FileText size={23} /></span><Status value={row.human_review} /></div><h3>{row.company}<span>{industryLabel(row.industry_key)}</span></h3><p>财报事实、估值依据与日线技术</p><div className="featured-bottom"><span>研究日 {dateText(row.research_date)}</span><ArrowRight size={18} /></div></button> : <Empty title={cardsKnown?'尚无研究结果':'研究结果待核验'} />}
       <SectionTitle title="最近任务" action={<Subtabs label="任务类型" items={[["all", "全部"], ["research-cards-review", "研究卡"], ["snapshot-brief", "简报"]]} value={filter} onChange={setFilter} />} />
-      <TaskRows jobs={shown} onOpen={job => onOpenJob&&job.kind==='research-cards-review'?onOpenJob(job.job_id):onEvidence(titleFor(job), data.task_details[job.job_id] || job)} />
-    </section><aside className="today-aside"><SectionTitle title="需要关注" /><Attention row={row} onOpen={() => navigate('research')} /><div className="source-note"><span className="source-note-icon"><LockKeyhole size={18} /></span><h3>材料与结果已封存</h3><dl><dt>来源交易日</dt><dd>{dateText(data.source.source_trade_date)}</dd><dt>研究用途</dt><dd>流程调试</dd><dt>研究批准</dt><dd>尚未取得</dd></dl><EvidenceLink onClick={() => onEvidence('封存来源', data.source)} /></div></aside></div>
+      {historyKnown?<TaskRows jobs={shown} onOpen={job => onOpenJob&&job.kind==='research-cards-review'?onOpenJob(job.job_id):onEvidence(titleFor(job), data.task_details[job.job_id] || job)} />:<Empty title="任务记录待核验"/>}
+    </section><aside className="today-aside"><SectionTitle title="需要关注" />{cardsKnown?<Attention row={row} onOpen={() => navigate('research')} />:<Empty title="研究缺项待核验"/>}<div className="source-note"><span className="source-note-icon"><LockKeyhole size={18} /></span><h3>{sourceKnown?'历史发布来源':'发布来源尚未核验'}</h3><dl><dt>来源交易日</dt><dd>{dateText(data.source.source_trade_date)}</dd><dt>研究用途</dt><dd>流程调试</dd><dt>研究批准</dt><dd>尚未取得</dd></dl><EvidenceLink onClick={() => onEvidence('封存来源', data.source)} /></div></aside></div>
   </>;
 }
 function ReportDetail({

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { resource, actionCurrent, cardCommand, readJob, requestReceipt, pendingStore,
+import { resource, actionCurrent, cardCommand, readJob, requestReceipt, pendingStore,captureProofs,proofsCurrent,
   matchingReview, queryFilters, apiRequest, readSharedSnapshot } from '../tools/nonprod_workbench/live-ui/live-state.mjs';
 
 const context={login:'owner@example.com',workspaceId:'a'.repeat(8)+'-aaaa-aaaa-aaaa-'+'a'.repeat(12),codeSha:'a'.repeat(40)};
@@ -12,6 +12,23 @@ test('each read expires at exactly fifteen seconds and future timestamps never e
   let now=1000;const r=resource(()=>now);await r.read('x',async()=>({value:1}));
   assert.equal(r.fresh('x'),true);now=15999;assert.equal(r.fresh('x'),true);
   now=16000;assert.equal(r.fresh('x'),false);now=999;assert.equal(r.fresh('x'),false);
+});
+test('captured evidence keeps its own time and is retired by changed bytes, errors or invalidation',async()=>{
+ let now=1000;const r=resource(()=>now);await r.read('x',async()=>({v:1}));const proofs=captureProofs([[r,'x']]);
+ now=2000;await r.read('x',async()=>({v:1}));assert.equal(proofsCurrent(proofs),true);assert.equal(proofs[0].at,1000);
+ now=16000;assert.equal(proofsCurrent(proofs),false);const newer=captureProofs([[r,'x']]);assert.equal(proofsCurrent(newer),true);
+ await r.read('x',async()=>({v:2}));assert.equal(proofsCurrent(newer),false);
+ const latest=captureProofs([[r,'x']]);await r.read('x',async()=>{throw Error('CHANGED_SEAL');});assert.equal(proofsCurrent(latest),false);
+ await r.read('x',async()=>({v:2}));const fresh=captureProofs([[r,'x']]);r.invalidate(true);assert.equal(proofsCurrent(fresh),false);
+});
+test('non-success task metadata is closed and never accepts unverified report bodies or malformed identities',async()=>{
+ const good={job_id:'cccccccc-cccc-cccc-cccc-cccccccccccc',command_id:'shared_12345678',workspace_id:context.workspaceId,actor:context.login,kind:'research-cards-review',snapshot_id:input.snapshot_id,input_hash:'b'.repeat(64),source_run_id:null,source_trade_date:null,submitted_at:1,code_sha:context.codeSha,source_tree_hash:'b'.repeat(64),schema_version:'ar.shared-workspace.v1',status:'QUEUED',attempt_id:null,output_hash:null,error:null,result:null,sample_purpose:'WORKFLOW_DEBUG',human_review:'PENDING',production_authority:false,trading_authority:false};
+ for(const status of ['QUEUED','RUNNING','STOP','RECOVERY_REQUIRED']){
+  const value={...good,status,...(status==='RUNNING'?{attempt_id:good.job_id}:{}),...(status==='STOP'?{error:'SYNTHETIC_STOP',result:{error:'SYNTHETIC_STOP'}}:{})};
+  assert.deepEqual(await readJob(async()=>value,good.job_id,async()=>{}),value);
+ }
+ for(const bad of [{...good,actor:1},{...good,workspace_id:'bad'},{...good,report:'unverified body'},{...good,result:{report:'body'}},{...good,status:'RUNNING'},{...good,source_trade_date:'20261110'}])
+  await assert.rejects(readJob(async()=>bad,good.job_id,async()=>{}),/TASK_EVIDENCE_INVALID/);
 });
 test('a fresh context cannot renew held card or detail evidence; failures retire the old timestamp',async()=>{
   let now=1000;const c=resource(()=>now),d=resource(()=>now),held=deferred();

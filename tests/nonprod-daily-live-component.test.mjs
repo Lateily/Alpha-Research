@@ -6,10 +6,10 @@ import {resource} from '../tools/nonprod_workbench/live-ui/live-state.mjs';
 import {reviewLabels} from '../tools/nonprod_workbench/ui/review-portal-view.mjs';
 
 async function harness(name,check,mutant=null){
-  const slots=[],effects=[];let cursor=0,dirty=true,tree,now=1000;
+  const slots=[],effects=[];let cursor=0,dirty=true,tree,now=1000,mounted=true,disposedWrites=0;
   const old=Date.now;Date.now=()=>now;
   const hooks={Fragment:Symbol('Fragment'),createElement:(type,props,...children)=>({type,props:{...props,children}}),
-    useState(initial){const n=cursor++;if(!(n in slots))slots[n]=typeof initial==='function'?initial():initial;return[slots[n],value=>{slots[n]=typeof value==='function'?value(slots[n]):value;dirty=true;}];},
+    useState(initial){const n=cursor++;if(!(n in slots))slots[n]=typeof initial==='function'?initial():initial;return[slots[n],value=>{if(!mounted){disposedWrites++;return;}slots[n]=typeof value==='function'?value(slots[n]):value;dirty=true;}];},
     useRef(initial){const n=cursor++;return slots[n]||=( {current:initial});},
     useEffect(fn,deps){const n=cursor++,old=slots[n];if(!old||deps.some((v,i)=>v!==old.deps[i]))effects.push(()=>{old?.cleanup?.();slots[n]={deps,cleanup:fn()};});}};
   globalThis.__dailyLiveHooks=hooks;
@@ -17,9 +17,9 @@ async function harness(name,check,mutant=null){
     const result=await build({entryPoints:['tools/nonprod_workbench/live-ui/research-actions.jsx'],bundle:true,write:false,format:'esm',platform:'node',plugins:[{name:'hooks',setup(b){
       if(mutant)b.onLoad({filter:/research-actions\.jsx$/},async args=>{
         const source=await readFile(args.path,'utf8');
-        const pattern=mutant==='submit'?/\/\/ governance-mutation: DAILY_LIVE_SUBMIT_CLICK\s+if\(current\.key!==key\|\|!actionCurrent\(current\.reads,current\.busy\)[\s\S]*?return;/:/if\(current\.key!==key\|\|!actionCurrent\(current\.reads\)\|\|posting\.current\|\|current\.storageError\|\|!matchingReview\(current\.detail,current\.row\)\)return;/;
+        const pattern=mutant==='owner'?/owner\.mounted&&ref\.current===owner&&/:mutant==='submit'?/\/\/ governance-mutation: DAILY_LIVE_SUBMIT_CLICK\s+if\(current\.key!==key\|\|!actionCurrent\(current\.reads,current\.busy\)[\s\S]*?return;/:/if\(current\.key!==key\|\|!actionCurrent\(current\.reads\)\|\|posting\.current\|\|current\.storageError\|\|!matchingReview\(current\.detail,current\.row\)\)return;/;
         assert.equal((source.match(new RegExp(pattern.source,'g'))||[]).length,1,'precise actual handler guard');
-        return{contents:source.replace(pattern,'if(false)return;'),loader:'jsx'};
+        return{contents:source.replace(pattern,mutant==='owner'?'':'if(false)return;'),loader:'jsx'};
       });
       b.onResolve({filter:/^react$/},()=>({path:'react',namespace:'hooks'}));b.onLoad({filter:/.*/,namespace:'hooks'},()=>({contents:'const h=globalThis.__dailyLiveHooks;export default h;export const {useState,useRef,useEffect}=h;'}));
       b.onResolve({filter:/^lucide-react$/},()=>({path:'icons',namespace:'icons'}));b.onLoad({filter:/.*/,namespace:'icons'},()=>({contents:'export const Play=()=>null,RefreshCw=()=>null,Send=()=>null,Check=()=>null,ChevronRight=()=>null;'}));
@@ -33,10 +33,87 @@ async function harness(name,check,mutant=null){
       detail:{packet_hash:'d'.repeat(64),packet:{pack_hash:'p'.repeat(64),content_hash:'c'.repeat(64),basis_hash:'b'.repeat(64),items:[{id:'F01',title:'事实核对',layer:'F',prompt:'核对冻结来源'}]},annotations:[]},
       api:async(path,body)=>{calls.push({path,body});return{...reviewLabels,disposition:'APPENDED',annotation:{packet_hash:body.packet_hash,item_id:body.item_id,actor:c.login,workspace_id:c.workspaceId,code_sha:c.codeSha,status:body.status,severity:body.severity,comment:body.comment,human_review:'PENDING',research_approval:false,annotation_id:body.command_id,at:1,event_hash:'e'.repeat(64)}};},onSaved:()=>calls.push('saved')};
     const nodes=v=>Array.isArray(v)?v.flatMap(nodes):v&&typeof v==='object'?[v,...nodes(v.props?.children)]:[];
-    async function settle(){for(let i=0;i<15;i++){if(dirty){cursor=0;dirty=false;tree=module[name](props);}while(effects.length)effects.shift()();await Promise.resolve();}}
+    async function settle(){for(let i=0;i<15;i++){if(mounted&&dirty){cursor=0;dirty=false;tree=module[name](props);}while(effects.length)effects.shift()();await Promise.resolve();}}
+    function unmount(){if(!mounted)return;mounted=false;for(const slot of slots)slot?.cleanup?.();effects.length=0;}
     const find=label=>nodes(tree).find(n=>n.props?.['aria-label']===label);
-    await settle();await check({props,calls,find,nodes:()=>nodes(tree),settle,at:n=>{now=n;},render:()=>{dirty=true;},identity,data,storageMap});
-  }finally{for(const slot of slots)slot?.cleanup?.();Date.now=old;delete globalThis.__dailyLiveHooks;}
+    await settle();await check({props,calls,find,nodes:()=>nodes(tree),settle,unmount,disposedWrites:()=>disposedWrites,at:n=>{now=n;},render:()=>{dirty=true;},identity,data,storageMap});
+    unmount();
+  }finally{if(mounted)for(const slot of slots)slot?.cleanup?.();Date.now=old;delete globalThis.__dailyLiveHooks;}
+}
+function deferred(){let resolve,reject;const promise=new Promise((yes,no)=>{resolve=yes;reject=no;});return{promise,resolve,reject};}
+async function chooseStudy(s){s.find('冻结研究材料').props.onChange({target:{value:s.props.query.registeredInputs.inputs[0].snapshot_id}});await s.settle();}
+async function writeComment(s){s.find('批注事项').props.onChange({target:{value:'F01'}});s.find('批注内容').props.onChange({target:{value:'请核对原来源。'}});await s.settle();}
+async function switchIdentity(s){s.props.context={...s.props.context,login:'other@example.com'};s.render();await s.settle();}
+async function identityRoundTrip(s){const original=s.props.context;await switchIdentity(s);s.props.context=original;s.render();await s.settle();}
+
+for(const action of ['submit','retry'])for(const disposal of ['unmount','identity switch','identity round trip']){
+  test(`actual retained study ${action} refuses after ${disposal}`,()=>harness('StudySubmit',async s=>{
+    if(action==='retry'){s.props.pending={body:{command_id:'shared_12345678'}};s.render();await s.settle();}else await chooseStudy(s);
+    const retained=s.find(action==='submit'?'提交研究':'核对原提交').props.onClick;
+    if(disposal==='unmount')s.unmount();else{await (disposal==='identity switch'?switchIdentity(s):identityRoundTrip(s));if(action==='submit')await chooseStudy(s);}
+    await retained();assert.equal(s.calls.length,0);assert.equal(s.disposedWrites(),0);
+  }));
+  test(`actual retained comment ${action} refuses after ${disposal}`,()=>harness('CommentEditor',async s=>{
+    if(action==='retry'){
+      s.props.api=async(path,body)=>{s.calls.push({path,body});throw Error('NETWORK_UNCONFIRMED');};s.render();await s.settle();
+      await writeComment(s);await s.find('提交批注').props.onClick();await s.settle();
+    }else await writeComment(s);
+    const retained=s.find(action==='submit'?'提交批注':'重试原批注').props.onClick,before=s.calls.length,durable=[...s.storageMap];
+    if(disposal==='unmount')s.unmount();else{await (disposal==='identity switch'?switchIdentity(s):identityRoundTrip(s));if(action==='submit')await writeComment(s);}
+    await retained();assert.equal(s.calls.length,before);assert.deepEqual([...s.storageMap],durable);assert.equal(s.disposedWrites(),0);
+  }));
+}
+for(const action of ['submit','retry'])for(const outcome of ['success','failure']){
+  test(`actual study ${action} ${outcome} completion cannot update an unmounted owner`,()=>harness('StudySubmit',async s=>{
+    const gate=deferred();s.props[action==='submit'?'onSubmit':'onRetry']=()=>gate.promise;
+    if(action==='retry')s.props.pending={body:{command_id:'shared_12345678'}};s.render();await s.settle();
+    if(action==='submit')await chooseStudy(s);
+    const request=s.find(action==='submit'?'提交研究':'核对原提交').props.onClick();s.unmount();
+    if(outcome==='success')gate.resolve();else gate.reject(Error('OLD_REQUEST_FAILED'));
+    await request;assert.equal(s.disposedWrites(),0);
+  }));
+  test(`actual older study ${action} ${outcome} completion cannot unlock a newer owner`,()=>harness('StudySubmit',async s=>{
+    const first=deferred(),second=deferred();let attempts=0;
+    s.props[action==='submit'?'onSubmit':'onRetry']=()=>{s.calls.push(++attempts);return attempts===1?first.promise:second.promise;};
+    if(action==='retry')s.props.pending={body:{command_id:'shared_12345678'}};s.render();await s.settle();
+    if(action==='submit')await chooseStudy(s);
+    const label=action==='submit'?'提交研究':'核对原提交',older=s.find(label).props.onClick();
+    await identityRoundTrip(s);if(action==='submit')await chooseStudy(s);
+    const newer=s.find(label).props.onClick();await s.settle();
+    assert.equal(s.calls.length,2,'new owner can act while the disposed request is unresolved');
+    if(outcome==='success')first.resolve();else first.reject(Error('OLD_REQUEST_FAILED'));
+    await older;await s.settle();const duplicate=s.find(label).props.onClick();
+    assert.equal(s.calls.length,2,'old completion cannot release the newer in-flight lock');
+    second.resolve();await newer;await duplicate;
+  }));
+}
+for(const outcome of ['success','uncertain','rejected']){
+  test(`actual comment ${outcome} completion after unmount preserves durable pending without callbacks`,()=>harness('CommentEditor',async s=>{
+    const gate=deferred(),api=s.props.api;s.props.api=async(path,body)=>{const receipt=await api(path,body);await gate.promise;return receipt;};s.render();await s.settle();
+    await writeComment(s);const request=s.find('提交批注').props.onClick();await s.settle();
+    const durable=[...s.storageMap];assert.equal(durable.length,1);s.unmount();
+    if(outcome==='success')gate.resolve();else gate.reject(Object.assign(Error('OLD_REQUEST_FAILED'),outcome==='rejected'?{status:400}:{}));
+    await request;assert.deepEqual([...s.storageMap],durable);assert.equal(s.calls.length,1);assert.equal(s.disposedWrites(),0);
+  }));
+  test(`actual older comment ${outcome} completion cannot clear a newer retry busy or pending`,()=>harness('CommentEditor',async s=>{
+    const first=deferred(),second=deferred(),api=s.props.api;let attempts=0;
+    s.props.api=async(path,body)=>{const gate=++attempts===1?first:second,receipt=await api(path,body);await gate.promise;return receipt;};s.render();await s.settle();
+    await writeComment(s);const older=s.find('提交批注').props.onClick();await s.settle();const durable=[...s.storageMap];
+    await identityRoundTrip(s);const newer=s.find('重试原批注').props.onClick();await s.settle();
+    assert.equal(s.calls.length,2,'current owner can explicitly retry its durable command');
+    if(outcome==='success')first.resolve();else first.reject(Object.assign(Error('OLD_REQUEST_FAILED'),outcome==='rejected'?{status:400}:{}));
+    await older;await s.settle();assert.deepEqual([...s.storageMap],durable);assert.equal(s.calls.length,2);
+    assert.equal(s.find('重试原批注').props.disabled,true);const duplicate=s.find('重试原批注').props.onClick();assert.equal(s.calls.length,2);
+    second.reject(Error('NETWORK_UNCONFIRMED'));await newer;await duplicate;await s.settle();assert.deepEqual([...s.storageMap],durable);assert.equal(s.find('重试原批注').props.disabled,false);
+  }));
+}
+for(const name of ['StudySubmit','CommentEditor'])for(const disposal of ['unmount','identity round trip']){
+  test(`removing mounted context ownership permits an actual retained ${name} write after ${disposal}`,()=>harness(name,async s=>{
+    const study=name==='StudySubmit',prepare=study?chooseStudy:writeComment;await prepare(s);
+    const retained=s.find(study?'提交研究':'提交批注').props.onClick;
+    if(disposal==='unmount')s.unmount();else{await identityRoundTrip(s);await prepare(s);}
+    await retained();assert.equal(s.calls.length,study?1:2);
+  },'owner'));
 }
 test('actual submit button uses selected frozen input once and rejects retained callback at exact expiry',()=>harness('StudySubmit',async s=>{
   assert.equal(s.find('提交研究').props.disabled,true);

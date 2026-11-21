@@ -17,6 +17,12 @@ single-flight context/card/detail/review reads. Every response has its own
 refresh result, detail or review evidence. Every write and download rechecks its
 relevant evidence at click time. Late/failed responses do not revive old controls.
 Retain original command IDs locally for uncertain writes; no automatic POST retry.
+Evidence callbacks retain their original read time and revision, not the current
+reader's later timestamp. Route/identity changes retire action owners; a late
+POST completion cannot clear a newer owner's busy or pending state. Only an
+explicit first-attempt server rejection releases its matching command. Uncertain
+delivery and explicit retry preserve the original command. Unavailable reads
+remain unknown; only validated empty sources may display business zeroes.
 
 Embedding the old multi-tab workspace would preserve behavior but abandon the
 approved layout. Building new backend routes would unnecessarily duplicate the

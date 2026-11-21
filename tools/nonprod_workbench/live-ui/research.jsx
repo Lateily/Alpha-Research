@@ -5,7 +5,7 @@ import {dateText,filterReports,groupReports,titleFor} from '../daily-ui/view.mjs
 import {sharedRead} from '../ui/shared-view.mjs';
 import {validateReviewList,validateReviewDetail} from '../ui/review-portal-view.mjs';
 import {cardTaskEvidence} from '../ui/research-cards-view.mjs';
-import {matchingReview,queryFilters,actionCurrent} from './live-state.mjs';
+import {matchingReview,queryFilters,captureProofs} from './live-state.mjs';
 import {useRead} from './use-read.jsx';
 import {StudySubmit,CommentEditor} from './research-actions.jsx';
 
@@ -26,11 +26,12 @@ function StudyReview({context,reads,row,api,renew,enabled,onEvidence}) {
   });
   if(!enabled)return <Empty title="当前身份未开放审阅"/>;
   const detail=review.data?.detail;
+  const proofs=captureProofs([...reads,[review.reader,key]]);
   return <section className="study-review"><div className="section-title"><h2>审阅与批注</h2><button className="icon-button" title="刷新审阅材料" aria-label="刷新审阅材料" onClick={review.refresh}><RefreshCw size={16}/></button></div>
     {!review.fresh&&<div className="quiet-notice warning">{review.state.error||'审阅材料正在核验或读取已过期'} · 写入不可用</div>}
     {detail?<><details className="review-sample"><summary>获准审阅样稿 · F 事实 / C 计算 / R 规则 / L 解释</summary><pre>{detail.packet.sample}</pre></details>
       <details className="review-sources"><summary>来源与缺项 · {detail.packet.sources.length} 项来源 / {detail.packet.gaps.length} 项缺口</summary>
-        {detail.packet.sources.map(item=><div className="material-row" key={item.id}><div><strong>{item.title}</strong><p>物理页 {item.pages?.join(' / ')||'未提供'} · 来源真实性待核验</p></div><EvidenceLink onClick={()=>onEvidence('来源登记',item,[...reads,[review.reader,key]])}/></div>)}
+        {detail.packet.sources.map(item=><div className="material-row" key={item.id}><div><strong>{item.title}</strong><p>物理页 {item.pages?.join(' / ')||'未提供'} · 来源真实性待核验</p></div><EvidenceLink onClick={()=>onEvidence('来源登记',item,proofs)}/></div>)}
         {detail.packet.gaps.map(item=><div className="review-gap" key={item.id}><strong>{item.title}</strong><Status value={item.status}/><p>{item.reason}</p></div>)}
       </details>
       <CommentEditor key={key} context={context} reads={[...reads,[review.reader,key]]} row={row} detail={detail} api={api} onSaved={review.refresh}/>
@@ -77,7 +78,7 @@ export function LiveResearch({model,onEvidence}) {
         <label>股票<input aria-label="股票代码" placeholder="603986.SH" value={draft.ticker} maxLength={20} onChange={event=>setDraft({...draft,ticker:event.target.value})}/></label>
         <button className="icon-button" type="submit" aria-label="查询研究结果" title="按行业、研究日和股票查询"><Search size={17}/></button></form>
       {filterError&&<p role="alert" className="read-error">{filterError}</p>}
-      <div className="list-meta"><span>{visible.length} 份研究 · {library?.total??'—'} 条核验记录</span><label className="search-field compact"><Search size={15}/><input aria-label="搜索已载入研究" placeholder="搜索已载入结果" value={localQuery} onChange={event=>setLocalQuery(event.target.value)}/></label></div>
+      <div className="list-meta"><span>{library?visible.length+' 份研究':'研究待核验'} · {library?.total??'—'} 条核验记录</span><label className="search-field compact"><Search size={15}/><input aria-label="搜索已载入研究" placeholder="搜索已载入结果" value={localQuery} onChange={event=>setLocalQuery(event.target.value)}/></label></div>
       <div className="reports-list">{visible.map(item=><button className="report-row" key={item.job_id} disabled={!cards.fresh} onClick={()=>model.open(item.job_id)}><span className="report-name"><span className="document-icon small"><FileText size={19}/></span><span><strong>{item.company}</strong><small>{industryName(item.industry_key)} · {item.job_id.slice(0,8)}</small></span></span><span>{dateText(item.research_date)}</span><Status value={item.human_review}/><span className="report-gap">缺少依据<ArrowRight size={16}/></span></button>)}</div>
       {!visible.length&&<Empty icon={Search} title={library?'没有匹配的研究结果':'正在核验研究结果'}/>}
       <div className="result-pagination"><button className="icon-button" aria-label="上一页结果" title="上一页" disabled={!model.page} onClick={()=>model.setPage(model.page-1)}><ChevronLeft size={16}/></button><span>{model.page+1} / {Math.max(1,Math.ceil((library?.total||0)/50))}</span><button className="icon-button" aria-label="下一页结果" title="下一页" disabled={!library||(model.page+1)*50>=library.total} onClick={()=>model.setPage(model.page+1)}><ChevronRight size={16}/></button></div>
@@ -87,6 +88,6 @@ export function LiveResearch({model,onEvidence}) {
       <TaskRows jobs={history.data?.team_jobs||[]} onOpen={job=>job.kind==='research-cards-review'?model.open(job.job_id):onEvidence(titleFor(job),job)}/>
       <div className="result-pagination"><button className="icon-button" title="上一页任务" aria-label="上一页任务" disabled={!model.historyPage} onClick={()=>model.setHistoryPage(model.historyPage-1)}><ChevronLeft size={16}/></button><span>{model.historyPage+1} / {Math.max(1,Math.ceil((history.data?.team_total||0)/50))}</span><button className="icon-button" title="下一页任务" aria-label="下一页任务" disabled={!history.data||(model.historyPage+1)*50>=history.data.team_total} onClick={()=>model.setHistoryPage(model.historyPage+1)}><ChevronRight size={16}/></button></div>
     </>}
-    {tab==='materials'&&<section><SectionTitle title="已登记材料" count={inputs.length}/>{inputs.map(item=><div className="material-row" key={item.snapshot_id}><span className="document-icon"><FolderOpen size={22}/></span><div><h3>{item.company}</h3><p>{industryName(item.industry_key)} · 研究日 {dateText(item.research_date)} · 原件截止 {dateText(item.source_cutoff_at)}</p><span className="secondary">原件正文未开放</span></div><EvidenceLink onClick={()=>onEvidence('已登记冻结材料',item)}/></div>)}</section>}
+    {tab==='materials'&&<section><SectionTitle title="已登记材料" count={library?inputs.length:'待核验'}/>{inputs.map(item=><div className="material-row" key={item.snapshot_id}><span className="document-icon"><FolderOpen size={22}/></span><div><h3>{item.company}</h3><p>{industryName(item.industry_key)} · 研究日 {dateText(item.research_date)} · 原件截止 {dateText(item.source_cutoff_at)}</p><span className="secondary">原件正文未开放</span></div><EvidenceLink onClick={()=>onEvidence('已登记冻结材料',item)}/></div>)}</section>}
   </>;
 }
