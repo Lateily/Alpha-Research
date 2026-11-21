@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import {readFileSync} from 'node:fs';
+import postcss from 'postcss';
 import { resource, actionCurrent, cardCommand, readJob, requestReceipt, pendingStore,captureProofs,proofsCurrent,
   matchingReview, queryFilters, apiRequest, readSharedSnapshot } from '../tools/nonprod_workbench/live-ui/live-state.mjs';
 
@@ -7,6 +9,16 @@ const context={login:'owner@example.com',workspaceId:'a'.repeat(8)+'-aaaa-aaaa-a
 const input={snapshot_id:'b'.repeat(8)+'-bbbb-bbbb-bbbb-'+'b'.repeat(12),input_hash:'b'.repeat(64)};
 const storage=()=>{const map=new Map();return{getItem:k=>map.get(k)??null,setItem:(k,v)=>map.set(k,v),removeItem:k=>map.delete(k)};};
 const deferred=()=>{let resolve,reject;const promise=new Promise((a,b)=>{resolve=a;reject=b;});return{promise,resolve,reject};};
+
+test('mobile result count and local search occupy separate rows without squeezing the count',()=>{
+  const css=postcss.parse(readFileSync(new URL('../tools/nonprod_workbench/live-ui/style.css',import.meta.url),'utf8'));
+  const mobile=css.nodes.find(node=>node.type==='atrule'&&node.name==='media'&&node.params==='(max-width:640px)');
+  const declarations=selector=>Object.fromEntries((mobile?.nodes.find(node=>node.type==='rule'&&node.selector===selector)?.nodes||[]).filter(node=>node.type==='decl').map(node=>[node.prop,node.value]));
+  assert.equal(declarations('.list-meta')['flex-direction'],'column');
+  assert.equal(declarations('.list-meta')['align-items'],'stretch');
+  assert.equal(declarations('.list-meta>span')['flex-shrink'],'0');
+  assert.equal(declarations('.list-meta>.search-field.compact')['min-width'],'0');
+});
 
 test('each read expires at exactly fifteen seconds and future timestamps never enable actions',async()=>{
   let now=1000;const r=resource(()=>now);await r.read('x',async()=>({value:1}));

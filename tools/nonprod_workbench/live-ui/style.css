@@ -32,6 +32,9 @@
 .annotation-list strong,.annotation-list p{overflow-wrap:anywhere}
 .annotation-list p{white-space:pre-wrap;line-height:1.8;margin:12px 0}
 @media(max-width:640px){
+  .list-meta{flex-direction:column;align-items:stretch}
+  .list-meta>span{flex-shrink:0}
+  .list-meta>.search-field.compact{min-width:0;width:100%}
   .server-filters{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
   .server-filters button{justify-self:end}
   .submit-fields{align-items:stretch;flex-direction:column}
