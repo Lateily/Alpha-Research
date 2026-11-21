@@ -1,0 +1,22 @@
+{
+  "schema":"ai-task.v1",
+  "task_id":"DAILY-WORKBENCH-PREVIEW-20261121",
+  "architecture_block":["Product daily workbench","Read-only presentation"],
+  "objective":"Build an isolated clickable five-view daily interface using genuine verified historical metadata, with desktop and mobile visual evidence.",
+  "non_goals":["No live UI replacement, production, task execution, provider collection, trade permission, methodology change, merge or rollout."],
+  "human_owner":"Junyan",
+  "reviewer":"Independent nonauthor engineering review",
+  "executor_candidates":["Codex"],
+  "dependencies":["b6fa885 current backend and verified local archive"],
+  "authority_docs":["AGENTS.md","web/AGENTS.md","docs/engineering/DAILY_WORKBENCH_PREVIEW_V1.md"],
+  "file_scope":["tools/nonprod_workbench/daily-ui","tools/nonprod_workbench/daily.vite.config.js","tests/nonprod-daily-workbench.test.mjs","tests/nonprod-daily-workbench-component.test.mjs","scripts/llm/fixtures/daily_workbench_preview.task.json","docs/engineering/DAILY_WORKBENCH_PREVIEW_V1.md","docs/superpowers/plans/2026-11-21-daily-workbench-preview.md"],
+  "forbidden_scope":["Existing backend and validation modules","Live service code/state/ports/proxy/ACL","Production code/schedule/ledger","Original materials and old frozen packages","Credentials"],
+  "input_contracts":["Verified restored shared archive","Original shared task/card/citation metadata","Pinned and sealed local presentation projection"],
+  "output_artifacts":["Separate clickable daily UI build","Tests and independent review","Desktop and mobile screenshots","Local-only preview URL and evidence report"],
+  "acceptance_tests":["node --test tests/nonprod-daily-workbench.test.mjs tests/nonprod-daily-workbench-component.test.mjs","npx vite build --config tools/nonprod_workbench/daily.vite.config.js","Existing shared UI and freshness regressions","Changed projection/seal, expired read and denied write negative cases","Desktop 1440px and mobile 390px/360px browser QA; git diff --check"],
+  "risk_level":"MEDIUM",
+  "network_policy":"ALLOWLIST",
+  "budget":{"max_cny":"0","max_minutes":240},
+  "approval_gates":["Five-view isolated UI approved in this chat","Allowlist only local loopback preview/browser; no external API calls","No private or production deployment; later activation requires approval"],
+  "created_at":"2026-11-21T00:00:00+00:00"
+}
