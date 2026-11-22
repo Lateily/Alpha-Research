@@ -99,8 +99,10 @@ def main():
     sys.pycache_prefix = '/dev/null'; sys.dont_write_bytecode = True
     sys.meta_path.insert(0,SourceBarrier(code,held))
     sys.path.insert(0,str(code/'scripts/llm'))
-    # Recovery performs its full unchanged environment validation before using
-    # this executable for bounded PDF workers. The -S supervisor stays stdlib-only.
+    # Archive verification can already launch bounded PDF workers, so validate
+    # the complete environment before entering recovery, not after its archive read.
+    import workbench_runtime_env as verified_runtime
+    verified_runtime.verify_environment(environment,retained['environment_hash'])
     sys.executable = str(worker)
     sys.argv = [entry,'serve','--root',str(root),'--pin',pin,*duration]
     exec(compile(held[entry],entry,'exec'),{'__name__':'__main__','__file__':entry})

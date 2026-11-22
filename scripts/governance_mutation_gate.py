@@ -19371,6 +19371,14 @@ MUTATIONS += (
         'A changed runtime manifest is rejected before project imports or worker selection.'),
 )
 
+MUTATIONS += (
+    MutationCase('OPERATIONS_BOOT_FULL_ENVIRONMENT', 'Isolated platform operations',
+        'scripts/llm/workbench_operations_boot.py', 'tests/test_workbench_operations.py',
+        "    verified_runtime.verify_environment(environment,retained['environment_hash'])",
+        '    pass', 'test_boot_checks_full_environment_before_entering_recovery',
+        'Complete runtime inventory must be checked before archive verification can run PDF workers.'),
+)
+
 SHARD_SPEC_RE = re.compile(r"^(?P<index>[1-9][0-9]*)/(?P<count>[1-9][0-9]*)$")
 SHARD_RECEIPT_SCHEMA = "ar-governance-mutation-shard-receipt.v1"
 

@@ -260,7 +260,13 @@ class OperationsTests(unittest.TestCase):
                 capsule = base/'capsule'; capsule.mkdir(mode=0o700)
                 environment = base/'environment'; (environment/'venv/bin').mkdir(parents=True)
                 (environment/'venv/bin/python3').write_bytes(b'not executed before full verification')
-                env_raw = ev.canonical({'files':{'venv/bin/python3':{'sha256':ev.sha((environment/'venv/bin/python3').read_bytes())}}}).encode()
+                (code/'config').mkdir()
+                shutil.copyfile(ROOT/'config/shared-runtime.lock.json',code/'config/shared-runtime.lock.json')
+                executable = str(Path(sys.executable).resolve())
+                env_raw = ev.canonical({'schema':'ar.isolated-runtime.v1','lock_hash':ev.sealed(m.runtime.LOCK),
+                    'python_version':'3.12.14','base_executable':executable,'base_hash':m.runtime.file_hash(executable),
+                    'dependencies':m.runtime.LOCK['dependencies'],'files':m.runtime.inventory(environment),
+                    'scope':'ISOLATED_ONLY','production_authority':False}).encode()
                 (environment/'runtime.json').write_bytes(env_raw)
                 profile = capsule/'profile.json'
                 profile.write_text(ev.canonical({'environment_root':str(environment),'environment_hash':ev.sha(env_raw)}))
@@ -329,6 +335,36 @@ class OperationsTests(unittest.TestCase):
              patch.object(m,'_code_sources',return_value=self.source_pins(code)):
             m.prepare(base/'operations',profile,ev.sha(profile.read_bytes()))
         (environment/'runtime.json').write_text(ev.canonical({**runtime,'changed':True}))
+        argv = plistlib.loads((base/'operations/launchd.NOT_INSTALLED.plist').read_bytes())['ProgramArguments']
+        result = subprocess.run(argv,capture_output=True,env=m.runtime.clean_environment(base),timeout=15)
+        self.assertNotEqual(result.returncode,0)
+        self.assertFalse(marker.exists(),result.stderr.decode())
+
+    def test_boot_checks_full_environment_before_entering_recovery(self):
+        m = self.module(); base = self.base; code = base/'code'; sources = code/'scripts/llm'
+        sources.mkdir(parents=True)
+        for name in self.source_pins(ROOT): shutil.copyfile(ROOT/name,code/name)
+        marker = base/'recovery-entered-before-environment-verification'
+        (sources/'workbench_recovery.py').write_text(
+            'from pathlib import Path\ndef verify(*args):\n    Path(%r).write_text("entered")\n    raise ValueError("RECOVERY_TEST_STOP")\n' % str(marker))
+        environment = base/'environment'; (environment/'venv/bin').mkdir(parents=True)
+        (environment/'venv/bin/python3').write_bytes(b'not executed')
+        (code/'config').mkdir(); shutil.copyfile(ROOT/'config/shared-runtime.lock.json',code/'config/shared-runtime.lock.json')
+        executable = str(Path(sys.executable).resolve())
+        raw = ev.canonical({'schema':'ar.isolated-runtime.v1','lock_hash':ev.sealed(m.runtime.LOCK),
+            'python_version':'3.12.14','base_executable':executable,'base_hash':m.runtime.file_hash(executable),
+            'dependencies':m.runtime.LOCK['dependencies'],'files':m.runtime.inventory(environment),
+            'scope':'ISOLATED_ONLY','production_authority':False}).encode()
+        (environment/'runtime.json').write_bytes(raw)
+        capsule = base/'capsule'; capsule.mkdir(mode=0o700); profile = capsule/'profile.json'
+        profile.write_text(ev.canonical({'environment_root':str(environment),'environment_hash':ev.sha(raw)}))
+        value = {'root':str(capsule),'code_root':str(code),'environment_root':str(environment),
+                 'environment_hash':ev.sha(raw),'code_identity':{'code_sha':'a'*40}}
+        with patch.object(m.recovery,'verify',return_value=value), \
+             patch.object(m.runtime,'verify_environment',return_value={'base_executable':executable}), \
+             patch.object(m,'_code_sources',return_value=self.source_pins(code)):
+            m.prepare(base/'operations',profile,ev.sha(profile.read_bytes()))
+        (environment/'unexpected-package.py').write_text('CHANGED = True\n')
         argv = plistlib.loads((base/'operations/launchd.NOT_INSTALLED.plist').read_bytes())['ProgramArguments']
         result = subprocess.run(argv,capture_output=True,env=m.runtime.clean_environment(base),timeout=15)
         self.assertNotEqual(result.returncode,0)
