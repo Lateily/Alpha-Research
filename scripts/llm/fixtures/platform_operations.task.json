@@ -1,0 +1,22 @@
+{
+  "schema": "ai-task.v1",
+  "task_id": "PLATFORM-OPERATIONS-20261122",
+  "architecture_block": ["Isolated workbench runtime", "Retained state and external observation handoff"],
+  "objective": "Build and rehearse pinned isolated supervision, persistent crash fencing, not-installed startup artifacts, newest-generation backup/rollback and offline alert delivery bookkeeping on a57be7b; provide two-human and 24-hour acceptance checklists without changing the running service.",
+  "non_goals": ["No installation, host sleep/reboot, live takeover, live backup or writes, new private members, actual phone delivery, automatic repair, production nightly or trade authority changes, #411 acceptance, merge or deployment."],
+  "human_owner": "Junyan",
+  "reviewer": "Independent nonauthor source and behavioral review",
+  "executor_candidates": ["Codex"],
+  "dependencies": ["a57be7b454ad7d57ac41125f66b4e69486532bb4", "Existing isolated recovery v1/v2/v3 and unchanged backup v1/v2"],
+  "authority_docs": ["AGENTS.md", "scripts/llm/AGENTS.md", "docs/engineering/PLATFORM_OPERATIONS_V1.md", "docs/engineering/SHARED_RECOVERY_CORE_V1.md"],
+  "file_scope": ["scripts/llm/workbench_operations.py", "scripts/llm/workbench_operations_alerts.py", "scripts/llm/fixtures/platform_operations.task.json", "tests/test_workbench_operations.py", "tests/test_workbench_operations_alerts.py", "scripts/governance_mutation_gate.py", ".github/workflows/python-ci.yml", "docs/engineering/PLATFORM_OPERATIONS_V1.md", "docs/engineering/PLATFORM_OPERATIONS_FIELD_CHECKLIST.md", "docs/superpowers/plans/2026-11-22-platform-operations.md"],
+  "forbidden_scope": ["Formal production code/state/ledger/schedule", "Existing shared code/state/ingress/credentials", "LaunchAgents/LaunchDaemons or Tailscale configuration", "Existing frozen source material and release receipts", "Existing 15000ms/hash/seal/rights/recovery duration guards"],
+  "input_contracts": ["Externally pinned isolated recovery profile and existing environment/source/assets/backup checks", "Synthetic heartbeat/health observations with explicit observer and host identities", "Existing shared backup manifest, tables and artifact hashes"],
+  "output_artifacts": ["Isolated operations supervisor and generated NOT_INSTALLED launchd template", "Persistent bounded crash circuit breaker, event log and offline alert outbox", "Newest-generation local restore/rollback rehearsal without credentials", "Explicit pending real devices/accounts/London windows/phone channel and human acceptance gates"],
+  "acceptance_tests": ["python3 -B tests/test_workbench_operations.py", "python3 -B tests/test_workbench_operations_alerts.py", "Existing full offline CI-equivalent steps and all retained governance mutations plus new behavioral mutations", "Refuse corrupt pins, duplicate supervisors, stale crash resets, overlapping restore roots, invalid/future/replayed heartbeat and local-host external attestations; preserve new records across rollback", "git diff --check"],
+  "risk_level": "HIGH",
+  "network_policy": "OFFLINE",
+  "budget": {"max_cny": "0", "max_minutes": 240},
+  "approval_gates": ["Current request authorizes isolated code, synthetic/retained local rehearsal and independent review only", "Run no real private API, market/provider API, phone sender, launchctl installation, host restart or live switch", "Confirm host/account, London window and separate observer/phone/backup target before field tests", "Two-human acceptance and 24-hour field observation remain pending and cannot be inferred from simulation", "#411 physical tests and any merge/deployment require separate approval"],
+  "created_at": "2026-11-22T00:00:00+00:00"
+}
