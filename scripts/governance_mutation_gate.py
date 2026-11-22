@@ -19286,6 +19286,121 @@ MUTATIONS += (
         'Unknown derived folded selectors must reach the full detector without prior consumption.'),
 )
 
+MUTATIONS += (
+    MutationCase('OPERATIONS_EXTERNAL_PIN', 'Isolated platform operations',
+        'scripts/llm/workbench_operations.py', 'tests/test_workbench_operations.py',
+        "    if type(pin) is not str or not runtime.HEX.fullmatch(pin) or ev.sha(raw) != pin:",
+        '    if False:', 'test_wrong_external_pin_and_changed_manifest_refuse_before_recovery',
+        'A valid-looking profile cannot replace the operator-pinned operations manifest.'),
+    MutationCase('OPERATIONS_PERSISTENT_CRASH_BUDGET', 'Isolated platform operations',
+        'scripts/llm/workbench_operations.py', 'tests/test_workbench_operations.py',
+        "            if status == 'FENCED' or crashes >= 3:", '            if False:',
+        'test_crash_budget_survives_journal_reopen_and_is_not_reset_by_clean_exit',
+        'Supervisor relaunch must not erase the persistent crash budget.'),
+    MutationCase('OPERATIONS_UNCERTAIN_START', 'Isolated platform operations',
+        'scripts/llm/workbench_operations.py', 'tests/test_workbench_operations.py',
+        '            elif active is not None:', '            elif False:',
+        'test_uncertain_reservation_fences_without_adopting_or_killing_old_pid',
+        'An uncertain child reservation cannot be silently taken over after operator death.'),
+    MutationCase('OPERATIONS_JOURNAL_REPLAY_BINDING', 'Isolated platform operations',
+        'scripts/llm/workbench_operations.py', 'tests/test_workbench_operations.py',
+        "        if db.execute('SELECT pin,crashes,active,status FROM control').fetchall() != [(self.pin,crashes,active,status)]:",
+        '        if False:', 'test_changed_control_row_cannot_clear_a_durable_crash',
+        'Stored control state must match the retained event chain.'),
+    MutationCase('OPERATIONS_RESTORE_GENERATION_BINDING', 'Isolated platform operations',
+        'scripts/llm/workbench_operations.py', 'tests/test_workbench_operations.py',
+        "    if receipt['backup_hash'] != manifest['backup_hash'] or receipt['restore']['backup_hash'] != manifest['backup_hash']:",
+        '    if False:', 'test_resealed_receipt_cannot_substitute_another_generation',
+        'A new receipt hash cannot relabel a different backup generation.'),
+    MutationCase('OPERATIONS_EXTERNAL_OBSERVER_IDENTITY', 'Isolated platform operations',
+        'scripts/llm/workbench_operations_alerts.py', 'tests/test_workbench_operations_alerts.py',
+        "        if host == observer: raise ValueError('OBSERVER_HOST_NOT_INDEPENDENT')",
+        '        if False: pass', 'test_same_host_cannot_be_configured_as_independent_observer',
+        'The observed host cannot claim to be its own external observer.'),
+    MutationCase('OPERATIONS_OBSERVER_CLOCK', 'Isolated platform operations',
+        'scripts/llm/workbench_operations_alerts.py', 'tests/test_workbench_operations_alerts.py',
+        "        if before is not None and now < before: raise ValueError('OBSERVER_CLOCK_ROLLBACK')",
+        '        if False: pass', 'test_clock_rollback_refused_and_does_not_clear_loss',
+        'Wall-clock rollback cannot delay a retained host-loss incident.'),
+    MutationCase('OPERATIONS_HEARTBEAT_FRESHNESS', 'Isolated platform operations',
+        'scripts/llm/workbench_operations_alerts.py', 'tests/test_workbench_operations_alerts.py',
+        "        if not 0 <= now-sent <= 60: raise ValueError('OBSERVER_HEARTBEAT_STALE_OR_FUTURE')",
+        '        if False: pass', 'test_heartbeat_stale_future_replay_wrong_identity_and_unknown_fields_rejected',
+        'Future and delayed pulses cannot keep an unavailable host healthy.'),
+    MutationCase('OPERATIONS_HEARTBEAT_REPLAY', 'Isolated platform operations',
+        'scripts/llm/workbench_operations_alerts.py', 'tests/test_workbench_operations_alerts.py',
+        "            if pulse['sequence'] <= sequence or previous_sent is not None and sent < previous_sent:",
+        '            if False:', 'test_heartbeat_stale_future_replay_wrong_identity_and_unknown_fields_rejected',
+        'Replayed pulses cannot refresh liveness after observer restart.'),
+    MutationCase('OPERATIONS_LOSS_TIMEOUT', 'Isolated platform operations',
+        'scripts/llm/workbench_operations_alerts.py', 'tests/test_workbench_operations_alerts.py',
+        "            if now-last >= 300 and state != 'HOST_LOST':", '            if False:',
+        'test_missing_heartbeat_from_start_queues_once_and_persists',
+        'A host that never sends its first pulse must still trigger the five-minute alert.'),
+)
+
+MUTATIONS += (
+    MutationCase('OPERATIONS_BOOT_SOURCE_PIN', 'Isolated platform operations',
+        'scripts/llm/workbench_operations_boot.py', 'tests/test_workbench_operations.py',
+        "        if hashlib.sha256(data).hexdigest() != digest: raise ValueError('OPERATIONS_BOOT_SOURCE_PIN')",
+        '        if False: pass', 'test_generated_boot_refuses_changed_helper_and_ignored_sourceless_before_execution',
+        'Changed tracked sibling code must be rejected before import side effects.'),
+    MutationCase('OPERATIONS_CAPSULE_BINDING', 'Isolated platform operations',
+        'scripts/llm/workbench_operations.py', 'tests/test_workbench_operations.py',
+        "    if ev.parse(ev.read_local(profile.parent,'operations-binding.json')) != {\n            'operations_root':str(root),'operations_hash':pin,'recovery_pin':value['recovery_pin']}:",
+        '    if False:', 'test_resealed_alternate_root_does_not_gain_capsule_authority',
+        'A freshly resealed operations root cannot replace the capsule journal binding.'),
+    MutationCase('OPERATIONS_PREARRIVAL_GAP', 'Isolated platform operations',
+        'scripts/llm/workbench_operations_alerts.py', 'tests/test_workbench_operations_alerts.py',
+        '            self.gap(db, now)  # retain the pre-arrival observation gap',
+        '            pass', 'test_fresh_pulse_after_observer_reopen_retains_overdue_gap',
+        'A returning heartbeat cannot erase a prior observation outage.'),
+)
+
+MUTATIONS += (
+    MutationCase('OPERATIONS_BOOT_COMMITTED_DIGEST', 'Isolated platform operations',
+        'scripts/llm/workbench_operations.py', 'tests/test_workbench_operations.py',
+        '               str(script), boot_pin, str(root), digest, \'--resident\']',
+        '               str(script), runtime.file_hash(script), str(root), digest, \'--resident\']',
+        'test_template_does_not_repin_boot_changed_after_validation',
+        'Template generation cannot re-pin a file changed after committed-byte validation.'),
+    MutationCase('OPERATIONS_BOOT_ENVIRONMENT_PIN', 'Isolated platform operations',
+        'scripts/llm/workbench_operations_boot.py', 'tests/test_workbench_operations.py',
+        "    if hashlib.sha256(runtime_raw).hexdigest() != retained['environment_hash']:",
+        '    if False:', 'test_boot_refuses_changed_environment_before_project_import',
+        'A changed runtime manifest is rejected before project imports or worker selection.'),
+)
+
+MUTATIONS += (
+    MutationCase('OPERATIONS_BOOT_FULL_ENVIRONMENT', 'Isolated platform operations',
+        'scripts/llm/workbench_operations_boot.py', 'tests/test_workbench_operations.py',
+        "    verified_runtime.verify_environment(environment,retained['environment_hash'])",
+        '    pass', 'test_boot_checks_full_environment_before_entering_recovery',
+        'Complete runtime inventory must be checked before archive verification can run PDF workers.'),
+)
+
+MUTATIONS += (
+    MutationCase('OPERATIONS_BOOT_BINARY_LIMIT', 'Isolated platform operations',
+        'scripts/llm/workbench_operations_boot.py', 'tests/test_workbench_operations.py',
+        '        if not stat.S_ISREG(before.st_mode) or before.st_size > 128*1024*1024:',
+        '        if not stat.S_ISREG(before.st_mode):', 'test_worker_hash_stream_does_not_relax_json_artifact_limit',
+        'Executable hashing is streamed and bounded separately; JSON/source artifact limits remain 12MiB.'),
+)
+
+MUTATIONS += (
+    MutationCase('OPERATIONS_JOURNAL_EXPLICIT_INITIALIZATION', 'Isolated platform operations',
+        'scripts/llm/workbench_operations.py', 'tests/test_workbench_operations.py',
+        '        if initialize:', '        if True:',
+        'test_missing_bound_journal_refuses_without_recreating_a_budget',
+        'A missing bound journal must refuse startup instead of creating a zero crash budget.'),
+    MutationCase('OPERATIONS_BOOT_GROWTH_BUDGET', 'Isolated platform operations',
+        'scripts/llm/workbench_operations_boot.py', 'tests/test_workbench_operations.py',
+        '            chunk = stream.read(min(1024*1024,128*1024*1024+1-total))',
+        '            chunk = stream.read(1024*1024)',
+        'test_streaming_binary_growth_stops_at_cap_plus_one_byte',
+        'A concurrently growing executable cannot force reading beyond the cap plus one byte.'),
+)
+
 SHARD_SPEC_RE = re.compile(r"^(?P<index>[1-9][0-9]*)/(?P<count>[1-9][0-9]*)$")
 SHARD_RECEIPT_SCHEMA = "ar-governance-mutation-shard-receipt.v1"
 
