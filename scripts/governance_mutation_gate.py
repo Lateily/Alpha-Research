@@ -19357,6 +19357,20 @@ MUTATIONS += (
         'A returning heartbeat cannot erase a prior observation outage.'),
 )
 
+MUTATIONS += (
+    MutationCase('OPERATIONS_BOOT_COMMITTED_DIGEST', 'Isolated platform operations',
+        'scripts/llm/workbench_operations.py', 'tests/test_workbench_operations.py',
+        '               str(script), boot_pin, str(root), digest, \'--resident\']',
+        '               str(script), runtime.file_hash(script), str(root), digest, \'--resident\']',
+        'test_template_does_not_repin_boot_changed_after_validation',
+        'Template generation cannot re-pin a file changed after committed-byte validation.'),
+    MutationCase('OPERATIONS_BOOT_ENVIRONMENT_PIN', 'Isolated platform operations',
+        'scripts/llm/workbench_operations_boot.py', 'tests/test_workbench_operations.py',
+        "    if hashlib.sha256(runtime_raw).hexdigest() != retained['environment_hash']:",
+        '    if False:', 'test_boot_refuses_changed_environment_before_project_import',
+        'A changed runtime manifest is rejected before project imports or worker selection.'),
+)
+
 SHARD_SPEC_RE = re.compile(r"^(?P<index>[1-9][0-9]*)/(?P<count>[1-9][0-9]*)$")
 SHARD_RECEIPT_SCHEMA = "ar-governance-mutation-shard-receipt.v1"
 

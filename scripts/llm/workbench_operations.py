@@ -5,6 +5,7 @@ import json
 import os
 from pathlib import Path
 import plistlib
+import re
 import signal
 import sqlite3
 import subprocess
@@ -91,7 +92,8 @@ def prepare(root, profile, pin):
     root.mkdir(mode=0o700)
     backup.write_new(root/'operations.json', raw)
     script = Path(value['code_root'])/'scripts/llm/workbench_operations_boot.py'
-    if runtime.file_hash(script) != body['source_files'].get('scripts/llm/workbench_operations_boot.py'):
+    boot_pin = body['source_files'].get('scripts/llm/workbench_operations_boot.py')
+    if runtime.file_hash(script) != boot_pin:
         raise ValueError('OPERATIONS_BOOT_NOT_COMMITTED')
     binding = {'operations_root':str(root),'operations_hash':digest,'recovery_pin':pin}
     backup.write_new(profile.parent/'operations-binding.json',ev.canonical(binding).encode())
@@ -101,7 +103,7 @@ def prepare(root, profile, pin):
                  'assert hashlib.sha256(b).hexdigest()==h; '
                  'exec(compile(b,str(p),"exec"),{"__name__":"__main__","__file__":str(p)})')
     command = [environment['base_executable'], '-I', '-B', '-S', '-c', bootstrap,
-               str(script), runtime.file_hash(script), str(root), digest, '--resident']
+               str(script), boot_pin, str(root), digest, '--resident']
     template = {'Label': 'com.ar.isolated-operations.'+digest[:12], 'RunAtLoad': True,
                 'KeepAlive': {'SuccessfulExit': False}, 'ThrottleInterval': 60,
                 'LimitLoadToSessionType': 'Aqua', 'ProgramArguments': command,
@@ -318,5 +320,6 @@ def main():
 if __name__ == '__main__':
     try: raise SystemExit(main())
     except (ValueError, OSError, sqlite3.Error) as exc:
-        print('ISOLATED_OPERATIONS_REFUSED: '+type(exc).__name__, file=sys.stderr)
+        code = str(exc) if re.fullmatch(r'[A-Z][A-Z0-9_]{1,100}',str(exc)) else type(exc).__name__
+        print('ISOLATED_OPERATIONS_REFUSED: '+code, file=sys.stderr)
         raise SystemExit(2)

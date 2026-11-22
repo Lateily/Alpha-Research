@@ -258,14 +258,21 @@ class OperationsTests(unittest.TestCase):
                 for name in self.source_pins(ROOT):
                     shutil.copyfile(ROOT/name,code/name)
                 capsule = base/'capsule'; capsule.mkdir(mode=0o700)
-                profile = capsule/'profile.json'; profile.write_text('{}')
+                environment = base/'environment'; (environment/'venv/bin').mkdir(parents=True)
+                (environment/'venv/bin/python3').write_bytes(b'not executed before full verification')
+                env_raw = ev.canonical({'files':{'venv/bin/python3':{'sha256':ev.sha((environment/'venv/bin/python3').read_bytes())}}}).encode()
+                (environment/'runtime.json').write_bytes(env_raw)
+                profile = capsule/'profile.json'
+                profile.write_text(ev.canonical({'environment_root':str(environment),'environment_hash':ev.sha(env_raw)}))
                 value = {'root':str(capsule),'code_root':str(code),'environment_root':str(base/'environment'),
                          'environment_hash':'a'*64,'code_identity':{'code_sha':'a'*40}}
                 with patch.object(m.recovery,'verify',return_value=value), \
                      patch.object(m.runtime,'verify_environment',return_value={'base_executable':str(Path(sys.executable).resolve())}), \
                      patch.object(m,'_code_sources',return_value=self.source_pins(code),create=True):
-                    receipt = m.prepare(base/'operations',profile,ev.sha(b'{}'))
+                    receipt = m.prepare(base/'operations',profile,ev.sha(profile.read_bytes()))
                 argv = plistlib.loads((base/'operations/launchd.NOT_INSTALLED.plist').read_bytes())['ProgramArguments']
+                control = subprocess.run(argv,env=m.runtime.clean_environment(base),capture_output=True,timeout=15)
+                self.assertIn(b'ISOLATED_OPERATIONS_REFUSED',control.stderr)
                 marker = base/'unverified-import-executed'
                 payload = 'from pathlib import Path\nPath(%r).write_text("executed")\n' % str(marker)
                 if kind == 'helper': (sources/'workbench_backup.py').write_text(payload)
@@ -276,6 +283,56 @@ class OperationsTests(unittest.TestCase):
                 result = subprocess.run(argv,env=m.runtime.clean_environment(base),capture_output=True,timeout=15)
                 self.assertFalse(marker.exists(),result.stderr.decode())
                 self.assertNotEqual(result.returncode,0)
+
+    def test_template_does_not_repin_boot_changed_after_validation(self):
+        m = self.module(); base = self.base; code = base/'code'; sources = code/'scripts/llm'
+        sources.mkdir(parents=True)
+        for name in self.source_pins(ROOT): shutil.copyfile(ROOT/name,code/name)
+        capsule = base/'capsule'; capsule.mkdir(mode=0o700)
+        profile = capsule/'profile.json'; profile.write_text('{}')
+        value = {'root':str(capsule),'code_root':str(code),'environment_root':str(base/'environment'),
+                 'environment_hash':'a'*64,'code_identity':{'code_sha':'a'*40}}
+        pins = self.source_pins(code); original = m.runtime.file_hash; changed = []
+        marker = base/'repinned-boot-executed'
+        def alter_after_check(path):
+            digest = original(path)
+            if Path(path).name == 'workbench_operations_boot.py' and not changed:
+                changed.append(True)
+                Path(path).write_text('from pathlib import Path\nPath(%r).write_text("executed")\n' % str(marker))
+            return digest
+        with patch.object(m.recovery,'verify',return_value=value), \
+             patch.object(m.runtime,'verify_environment',return_value={'base_executable':str(Path(sys.executable).resolve())}), \
+             patch.object(m,'_code_sources',return_value=pins), patch.object(m.runtime,'file_hash',side_effect=alter_after_check):
+            result = m.prepare(base/'operations',profile,ev.sha(b'{}'))
+        argv = plistlib.loads((base/'operations/launchd.NOT_INSTALLED.plist').read_bytes())['ProgramArguments']
+        completed = subprocess.run(argv,capture_output=True,env=m.runtime.clean_environment(base),timeout=15)
+        self.assertFalse(marker.exists(),completed.stderr.decode())
+        self.assertNotEqual(completed.returncode,0)
+
+    def test_boot_refuses_changed_environment_before_project_import(self):
+        m = self.module(); base = self.base; code = base/'code'; sources = code/'scripts/llm'
+        sources.mkdir(parents=True)
+        for name in self.source_pins(ROOT): shutil.copyfile(ROOT/name,code/name)
+        marker = base/'project-imported-before-environment-check'
+        helper = sources/'workbench_backup.py'
+        helper.write_text('from pathlib import Path\nPath(%r).write_text("executed")\n' % str(marker) + helper.read_text())
+        environment = base/'environment'; (environment/'venv/bin').mkdir(parents=True)
+        (environment/'venv/bin/python3').write_bytes(b'not executed')
+        runtime = {'files':{'venv/bin/python3':{'sha256':ev.sha(b'not executed')}}}
+        raw = ev.canonical(runtime).encode(); (environment/'runtime.json').write_bytes(raw)
+        capsule = base/'capsule'; capsule.mkdir(mode=0o700); profile = capsule/'profile.json'
+        profile.write_text(ev.canonical({'environment_root':str(environment),'environment_hash':ev.sha(raw)}))
+        value = {'root':str(capsule),'code_root':str(code),'environment_root':str(environment),
+                 'environment_hash':ev.sha(raw),'code_identity':{'code_sha':'a'*40}}
+        with patch.object(m.recovery,'verify',return_value=value), \
+             patch.object(m.runtime,'verify_environment',return_value={'base_executable':str(Path(sys.executable).resolve())}), \
+             patch.object(m,'_code_sources',return_value=self.source_pins(code)):
+            m.prepare(base/'operations',profile,ev.sha(profile.read_bytes()))
+        (environment/'runtime.json').write_text(ev.canonical({**runtime,'changed':True}))
+        argv = plistlib.loads((base/'operations/launchd.NOT_INSTALLED.plist').read_bytes())['ProgramArguments']
+        result = subprocess.run(argv,capture_output=True,env=m.runtime.clean_environment(base),timeout=15)
+        self.assertNotEqual(result.returncode,0)
+        self.assertFalse(marker.exists(),result.stderr.decode())
 
 
 if __name__ == '__main__': unittest.main()

@@ -78,6 +78,19 @@ def main():
         if total > 256*1024*1024: raise ValueError('OPERATIONS_BOOT_SOURCE_LIMIT')
         held[str(code/relative)] = data
     profile = Path(value['recovery_profile'])
+    profile_raw = read(profile)
+    if hashlib.sha256(profile_raw).hexdigest() != value['recovery_pin']:
+        raise ValueError('OPERATIONS_BOOT_RECOVERY_PIN')
+    retained = json.loads(profile_raw)
+    environment = Path(retained['environment_root'])
+    runtime_raw = read(environment/'runtime.json')
+    # governance-mutation: OPERATIONS_BOOT_ENVIRONMENT_PIN
+    if hashlib.sha256(runtime_raw).hexdigest() != retained['environment_hash']:
+        raise ValueError('OPERATIONS_BOOT_ENVIRONMENT_PIN')
+    runtime = json.loads(runtime_raw)
+    worker = environment/'venv/bin/python3'
+    if hashlib.sha256(read(worker)).hexdigest() != runtime['files']['venv/bin/python3']['sha256']:
+        raise ValueError('OPERATIONS_BOOT_WORKER_PIN')
     binding = json.loads(read(profile.parent/'operations-binding.json'))
     if binding != {'operations_root':str(root),'operations_hash':pin,'recovery_pin':value['recovery_pin']}:
         raise ValueError('OPERATIONS_BOOT_CAPSULE_BINDING')
@@ -86,6 +99,9 @@ def main():
     sys.pycache_prefix = '/dev/null'; sys.dont_write_bytecode = True
     sys.meta_path.insert(0,SourceBarrier(code,held))
     sys.path.insert(0,str(code/'scripts/llm'))
+    # Recovery performs its full unchanged environment validation before using
+    # this executable for bounded PDF workers. The -S supervisor stays stdlib-only.
+    sys.executable = str(worker)
     sys.argv = [entry,'serve','--root',str(root),'--pin',pin,*duration]
     exec(compile(held[entry],entry,'exec'),{'__name__':'__main__','__file__':entry})
 

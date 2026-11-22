@@ -14,6 +14,10 @@ No installation, sleep, reboot, ingress changes or real notification calls.
 A stdlib-only bootstrap verifies the complete committed Python-source inventory
 before exposing project imports, and serves project imports from captured
 verified buffers. Ignored sourceless modules are refused before execution.
+The generated command retains the committed bootstrap digest, never a second
+filesystem digest. PDF workers use the executable derived from pinned recovery
+and runtime manifests; its byte pin is checked before selection and the full
+unchanged environment verifier runs before any worker invocation.
 A new operator module supervises only the verified recovery-child that it
 creates. It holds the existing capsule supervisor lock and binds that capsule
 durably to one operations root/journal. Every attempt is reserved before Popen. Two
