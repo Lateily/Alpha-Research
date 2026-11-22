@@ -92,7 +92,7 @@ class OperationsTests(unittest.TestCase):
     def test_crash_budget_survives_journal_reopen_and_is_not_reset_by_clean_exit(self):
         m = self.module(); root = self.base/'journal'
         for number in range(3):
-            journal = m.Journal(root, 'b'*64)
+            journal = m.Journal(root, 'b'*64, initialize=number==0)
             token = journal.reserve()
             self.assertEqual(journal.finish(token, -9, planned=False)['crashes'], number+1)
             if number == 0:
@@ -104,13 +104,13 @@ class OperationsTests(unittest.TestCase):
 
     def test_uncertain_reservation_fences_without_adopting_or_killing_old_pid(self):
         m = self.module(); root = self.base/'journal'
-        journal = m.Journal(root, 'b'*64); journal.reserve()
+        journal = m.Journal(root, 'b'*64, initialize=True); journal.reserve()
         with self.assertRaisesRegex(ValueError, 'OPERATIONS_UNCERTAIN_START'):
             m.Journal(root, 'b'*64).reserve()
         self.assertEqual(m.Journal(root, 'b'*64).snapshot()['status'], 'FENCED')
 
     def test_journal_wrong_pin_and_wrong_completion_token_are_rejected(self):
-        m = self.module(); journal = m.Journal(self.base/'journal', 'b'*64)
+        m = self.module(); journal = m.Journal(self.base/'journal', 'b'*64, initialize=True)
         token = journal.reserve()
         with self.assertRaisesRegex(ValueError, 'OPERATIONS_JOURNAL_BINDING'):
             m.Journal(self.base/'journal', 'c'*64)
@@ -119,14 +119,14 @@ class OperationsTests(unittest.TestCase):
         self.assertEqual(journal.snapshot()['active'], token)
 
     def test_planned_stop_does_not_spend_crash_budget(self):
-        m = self.module(); journal = m.Journal(self.base/'journal', 'b'*64)
+        m = self.module(); journal = m.Journal(self.base/'journal', 'b'*64, initialize=True)
         token = journal.reserve(); result = journal.finish(token, -2, planned=True)
         self.assertEqual(result['crashes'], 0)
         self.assertEqual(result['status'], 'STOPPED')
         self.assertIsNone(result['active'])
 
     def test_changed_control_row_cannot_clear_a_durable_crash(self):
-        m = self.module(); root = self.base/'journal'; journal = m.Journal(root,'b'*64)
+        m = self.module(); root = self.base/'journal'; journal = m.Journal(root,'b'*64,initialize=True)
         token = journal.reserve(); journal.finish(token,-9,planned=False)
         with sqlite3.connect(root/'operations.sqlite3') as db:
             db.execute('UPDATE control SET crashes=0')
@@ -378,6 +378,43 @@ class OperationsTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'OPERATIONS_BOOT_FILE'): boot.read(path)
         with path.open('wb') as stream: stream.truncate(128*1024*1024+1)
         with self.assertRaisesRegex(ValueError,'OPERATIONS_BOOT_BINARY_LIMIT'): boot.file_digest(path)
+
+    def test_missing_bound_journal_refuses_without_recreating_a_budget(self):
+        m,result,_,_ = self.prepared(); root = self.base/'operations'
+        journal = m.Journal(root,result['operations_hash'])
+        journal.reserve(); (root/'operations.sqlite3').unlink()
+        with self.assertRaisesRegex(ValueError,'OPERATIONS_JOURNAL_REQUIRED'):
+            m.Journal(root,result['operations_hash'])
+        self.assertFalse((root/'operations.sqlite3').exists())
+
+    def test_empty_or_incomplete_journal_refuses_without_schema_repair(self):
+        m,result,_,_ = self.prepared(); root = self.base/'operations'
+        path = root/'operations.sqlite3'; path.write_bytes(b'')
+        with self.assertRaisesRegex(ValueError,'OPERATIONS_JOURNAL_REQUIRED'):
+            m.Journal(root,result['operations_hash'])
+        self.assertEqual(path.read_bytes(),b'')
+        with sqlite3.connect(path) as db: db.execute('CREATE TABLE partial(value TEXT)')
+        with self.assertRaisesRegex(ValueError,'OPERATIONS_JOURNAL_SCHEMA'):
+            m.Journal(root,result['operations_hash'])
+        with sqlite3.connect(path) as db:
+            self.assertEqual(db.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall(),[('partial',)])
+
+    def test_streaming_binary_growth_stops_at_cap_plus_one_byte(self):
+        import workbench_operations_boot as boot
+        path = self.base/'growing'; path.write_bytes(b''); original = boot.os.fdopen
+        counted = [0]; maximum = 128*1024*1024
+        class GrowingStream:
+            def __init__(self, stream): self.stream = stream
+            def __enter__(self): return self
+            def __exit__(self,*args): return self.stream.__exit__(*args)
+            def fileno(self): return self.stream.fileno()
+            def read(self,size):
+                amount = min(size,maximum+1024*1024-counted[0])
+                counted[0] += amount
+                return b'x'*amount
+        with patch.object(boot.os,'fdopen',side_effect=lambda *a,**k:GrowingStream(original(*a,**k))):
+            with self.assertRaisesRegex(ValueError,'OPERATIONS_BOOT_BINARY_LIMIT'): boot.file_digest(path)
+        self.assertLessEqual(counted[0],maximum+1)
 
 
 if __name__ == '__main__': unittest.main()

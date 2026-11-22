@@ -27,6 +27,9 @@ durably to one operations root/journal. Every attempt is reserved before Popen. 
 unexpected restarts are permitted, including across operator crashes; success
 does not silently reset the budget. Abandoned reservations are counted as
 crashes. A stopped/fenced operator never authorizes another process takeover.
+Preparation initializes and fsyncs the journal before publishing the capsule
+binding. Startup only reopens an existing complete journal with SQLite mode=rw;
+missing, empty or partial journals refuse startup, never reset to a zero budget.
 Signals target only the retained Popen child. The old stop/drain behavior is
 reused; this is not the separately approved #411 nightly timeout mechanism.
 

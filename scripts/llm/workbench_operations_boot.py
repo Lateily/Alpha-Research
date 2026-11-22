@@ -37,8 +37,14 @@ def file_digest(path):
         # governance-mutation: OPERATIONS_BOOT_BINARY_LIMIT
         if not stat.S_ISREG(before.st_mode) or before.st_size > 128*1024*1024:
             raise ValueError('OPERATIONS_BOOT_BINARY_LIMIT')
-        digest = hashlib.sha256()
-        for chunk in iter(lambda:stream.read(1024*1024),b''): digest.update(chunk)
+        digest = hashlib.sha256(); total = 0
+        while True:
+            # governance-mutation: OPERATIONS_BOOT_GROWTH_BUDGET
+            chunk = stream.read(min(1024*1024,128*1024*1024+1-total))
+            if not chunk: break
+            total += len(chunk)
+            if total > 128*1024*1024: raise ValueError('OPERATIONS_BOOT_BINARY_LIMIT')
+            digest.update(chunk)
         identity = lambda s: (s.st_dev,s.st_ino,s.st_size,s.st_mtime_ns,s.st_ctime_ns,s.st_mode)
         if identity(before) != identity(os.fstat(stream.fileno())) or identity(before) != identity(path.lstat()):
             raise ValueError('OPERATIONS_BOOT_CHANGED')

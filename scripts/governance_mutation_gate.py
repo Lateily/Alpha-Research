@@ -19387,6 +19387,20 @@ MUTATIONS += (
         'Executable hashing is streamed and bounded separately; JSON/source artifact limits remain 12MiB.'),
 )
 
+MUTATIONS += (
+    MutationCase('OPERATIONS_JOURNAL_EXPLICIT_INITIALIZATION', 'Isolated platform operations',
+        'scripts/llm/workbench_operations.py', 'tests/test_workbench_operations.py',
+        '        if initialize:', '        if True:',
+        'test_missing_bound_journal_refuses_without_recreating_a_budget',
+        'A missing bound journal must refuse startup instead of creating a zero crash budget.'),
+    MutationCase('OPERATIONS_BOOT_GROWTH_BUDGET', 'Isolated platform operations',
+        'scripts/llm/workbench_operations_boot.py', 'tests/test_workbench_operations.py',
+        '            chunk = stream.read(min(1024*1024,128*1024*1024+1-total))',
+        '            chunk = stream.read(1024*1024)',
+        'test_streaming_binary_growth_stops_at_cap_plus_one_byte',
+        'A concurrently growing executable cannot force reading beyond the cap plus one byte.'),
+)
+
 SHARD_SPEC_RE = re.compile(r"^(?P<index>[1-9][0-9]*)/(?P<count>[1-9][0-9]*)$")
 SHARD_RECEIPT_SCHEMA = "ar-governance-mutation-shard-receipt.v1"
 

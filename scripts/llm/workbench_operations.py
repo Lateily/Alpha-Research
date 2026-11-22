@@ -95,6 +95,7 @@ def prepare(root, profile, pin):
     boot_pin = body['source_files'].get('scripts/llm/workbench_operations_boot.py')
     if runtime.file_hash(script) != boot_pin:
         raise ValueError('OPERATIONS_BOOT_NOT_COMMITTED')
+    Journal(root,digest,initialize=True)
     binding = {'operations_root':str(root),'operations_hash':digest,'recovery_pin':pin}
     backup.write_new(profile.parent/'operations-binding.json',ev.canonical(binding).encode())
     # Pin the entry bytes before the interpreter executes application code.
@@ -140,25 +141,39 @@ def verify(root, pin):
 
 class Journal:
     """Each reservation is committed before creating a child, never cleared on boot."""
-    def __init__(self, root, pin):
+    def __init__(self, root, pin, *, initialize=False):
         self.root = runtime.safe_path(root)
         if type(pin) is not str or not runtime.HEX.fullmatch(pin): raise ValueError('OPERATIONS_PIN_INVALID')
-        backup.durable_directory(self.root)
+        if type(initialize) is not bool: raise ValueError('OPERATIONS_INITIALIZATION_INVALID')
         self.path = runtime.safe_path(self.root/'operations.sqlite3')
         self.pin = pin
+        # governance-mutation: OPERATIONS_JOURNAL_EXPLICIT_INITIALIZATION
+        if initialize:
+            self._initialize()
+        elif not self.path.is_file() or self.path.stat().st_size == 0:
+            raise ValueError('OPERATIONS_JOURNAL_REQUIRED')
         with self.connect() as db:
-            db.execute('CREATE TABLE IF NOT EXISTS control (id INTEGER PRIMARY KEY CHECK(id=1), pin TEXT NOT NULL, crashes INTEGER NOT NULL, active TEXT, status TEXT NOT NULL)')
-            db.execute('CREATE TABLE IF NOT EXISTS events (seq INTEGER PRIMARY KEY, body TEXT NOT NULL, hash TEXT NOT NULL)')
-            db.execute("INSERT OR IGNORE INTO control VALUES (1,?,0,NULL,'STOPPED')", (pin,))
+            if {row[0] for row in db.execute("SELECT name FROM sqlite_master WHERE type='table'")} != {'control','events'}:
+                raise ValueError('OPERATIONS_JOURNAL_SCHEMA')
             if db.execute('SELECT pin FROM control').fetchall() != [(pin,)]:
                 raise ValueError('OPERATIONS_JOURNAL_BINDING')
             self.audit(db)
-        self.path.chmod(0o600)
+
+    def _initialize(self):
+        backup.durable_directory(self.root)
+        fd = os.open(self.path,os.O_CREAT|os.O_EXCL|os.O_RDWR|os.O_NOFOLLOW,0o600); os.close(fd)
+        with closing(sqlite3.connect(self.path.as_uri()+'?mode=rw',uri=True,timeout=5)) as db:
+            with db:
+                db.execute('PRAGMA synchronous=FULL'); db.execute('BEGIN IMMEDIATE')
+                db.execute('CREATE TABLE control (id INTEGER PRIMARY KEY CHECK(id=1), pin TEXT NOT NULL, crashes INTEGER NOT NULL, active TEXT, status TEXT NOT NULL)')
+                db.execute('CREATE TABLE events (seq INTEGER PRIMARY KEY, body TEXT NOT NULL, hash TEXT NOT NULL)')
+                db.execute("INSERT INTO control VALUES (1,?,0,NULL,'STOPPED')",(self.pin,))
+        backup.fsync_directory(self.root)
 
     @contextmanager
     def connect(self):
         runtime.safe_path(self.path)
-        with closing(sqlite3.connect(self.path, timeout=5)) as db:
+        with closing(sqlite3.connect(self.path.as_uri()+'?mode=rw',uri=True,timeout=5)) as db:
             db.execute('PRAGMA synchronous=FULL')
             db.execute('BEGIN IMMEDIATE')
             try:
