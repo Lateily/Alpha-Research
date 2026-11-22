@@ -377,12 +377,19 @@ class OperationsTests(unittest.TestCase):
         self.assertEqual(boot.file_digest(path),ev.sha(raw))
         with self.assertRaisesRegex(ValueError,'OPERATIONS_BOOT_FILE'): boot.read(path)
         with path.open('wb') as stream: stream.truncate(128*1024*1024+1)
-        with self.assertRaisesRegex(ValueError,'OPERATIONS_BOOT_BINARY_LIMIT'): boot.file_digest(path)
+        original = boot.os.fdopen
+        class NoRead:
+            def __init__(self, stream): self.stream = stream
+            def __enter__(self): return self
+            def __exit__(self,*args): return self.stream.__exit__(*args)
+            def fileno(self): return self.stream.fileno()
+            def read(self,*args): raise AssertionError('initially oversized binary was read')
+        with patch.object(boot.os,'fdopen',side_effect=lambda *a,**k:NoRead(original(*a,**k))):
+            with self.assertRaisesRegex(ValueError,'OPERATIONS_BOOT_BINARY_LIMIT'): boot.file_digest(path)
 
     def test_missing_bound_journal_refuses_without_recreating_a_budget(self):
         m,result,_,_ = self.prepared(); root = self.base/'operations'
-        journal = m.Journal(root,result['operations_hash'])
-        journal.reserve(); (root/'operations.sqlite3').unlink()
+        (root/'operations.sqlite3').unlink()
         with self.assertRaisesRegex(ValueError,'OPERATIONS_JOURNAL_REQUIRED'):
             m.Journal(root,result['operations_hash'])
         self.assertFalse((root/'operations.sqlite3').exists())
