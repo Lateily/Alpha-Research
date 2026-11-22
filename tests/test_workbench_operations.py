@@ -3,8 +3,11 @@ import copy
 import importlib.util
 from pathlib import Path
 import plistlib
+import py_compile
 import sqlite3
 import sys
+import shutil
+import subprocess
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -39,10 +42,18 @@ class OperationsTests(unittest.TestCase):
     def prepared(self):
         m, profile, value = self.capsule()
         with patch.object(m.recovery, 'verify', return_value=value), \
-             patch.object(m.runtime, 'verify_environment', return_value={'base_executable': str(Path(sys.executable).resolve())}):
+             patch.object(m.runtime, 'verify_environment', return_value={'base_executable': str(Path(sys.executable).resolve())}), \
+             patch.object(m, '_code_sources', return_value=self.source_pins(ROOT), create=True):
             value['environment_hash'] = 'a'*64
             result = m.prepare(self.base/'operations', profile, ev.sha(b'{}'))
         return m, result, profile, value
+
+    def source_pins(self, code):
+        names = ('workbench_operations.py','workbench_operations_boot.py','workbench_backup.py',
+                 'workbench_backup_chunks.py','workbench_evidence.py','workbench_recovery.py',
+                 'workbench_runtime_env.py','workbench_runtime_service.py')
+        return {'scripts/llm/'+name: ev.sha((code/'scripts/llm'/name).read_bytes())
+                for name in names if (code/'scripts/llm'/name).exists()}
 
     def test_prepares_not_installed_template_without_service_or_install(self):
         m, result, profile, value = self.prepared()
@@ -209,6 +220,62 @@ class OperationsTests(unittest.TestCase):
             events = [ev.parse(row[0]) for row in db.execute('SELECT body FROM workspace_events ORDER BY seq')]
         self.assertTrue(any({**event['data'], 'at':event['at'], 'event_hash':event['event_hash']} == added
                             for event in events if event['kind'] == 'REVIEW_ANNOTATION'))
+
+    def alternate_root(self, exhausted):
+        m, result, profile, value = self.prepared()
+        journal = m.Journal(self.base/'operations',result['operations_hash'])
+        if exhausted:
+            for _ in range(3): journal.finish(journal.reserve(),-9,planned=False)
+        else: journal.reserve()
+        before = journal.snapshot()
+        with patch.object(m.recovery,'verify',return_value=value), \
+             patch.object(m.runtime,'verify_environment',return_value={'base_executable':str(Path(sys.executable).resolve())}), \
+             patch.object(m,'_code_sources',return_value=self.source_pins(ROOT),create=True):
+            with self.assertRaisesRegex(ValueError,'OPERATIONS_CAPSULE_ALREADY_BOUND'):
+                m.prepare(self.base/'replacement',profile,ev.sha(b'{}'))
+        self.assertFalse((self.base/'replacement').exists())
+        self.assertEqual(journal.snapshot(),before)
+
+    def test_alternate_root_cannot_reset_uncertain_reservation(self): self.alternate_root(False)
+    def test_alternate_root_cannot_reset_exhausted_budget(self): self.alternate_root(True)
+
+    def test_resealed_alternate_root_does_not_gain_capsule_authority(self):
+        m,result,profile,value = self.prepared()
+        replacement = self.base/'replacement'; replacement.mkdir(mode=0o700)
+        body = ev.parse((self.base/'operations/operations.json').read_bytes())
+        body['root'] = str(replacement); raw = ev.canonical(body).encode()
+        (replacement/'operations.json').write_bytes(raw)
+        with patch.object(m.recovery,'verify',return_value=value):
+            with self.assertRaisesRegex(ValueError,'OPERATIONS_CAPSULE_BINDING'):
+                m.verify(replacement,ev.sha(raw))
+
+    def test_generated_boot_refuses_changed_helper_and_ignored_sourceless_before_execution(self):
+        m = self.module()
+        for kind in ('helper','sourceless','entry'):
+            with self.subTest(kind=kind):
+                base = self.base/kind; base.mkdir()
+                code = base/'code'; sources = code/'scripts/llm'; sources.mkdir(parents=True)
+                for name in self.source_pins(ROOT):
+                    shutil.copyfile(ROOT/name,code/name)
+                capsule = base/'capsule'; capsule.mkdir(mode=0o700)
+                profile = capsule/'profile.json'; profile.write_text('{}')
+                value = {'root':str(capsule),'code_root':str(code),'environment_root':str(base/'environment'),
+                         'environment_hash':'a'*64,'code_identity':{'code_sha':'a'*40}}
+                with patch.object(m.recovery,'verify',return_value=value), \
+                     patch.object(m.runtime,'verify_environment',return_value={'base_executable':str(Path(sys.executable).resolve())}), \
+                     patch.object(m,'_code_sources',return_value=self.source_pins(code),create=True):
+                    receipt = m.prepare(base/'operations',profile,ev.sha(b'{}'))
+                argv = plistlib.loads((base/'operations/launchd.NOT_INSTALLED.plist').read_bytes())['ProgramArguments']
+                marker = base/'unverified-import-executed'
+                payload = 'from pathlib import Path\nPath(%r).write_text("executed")\n' % str(marker)
+                if kind == 'helper': (sources/'workbench_backup.py').write_text(payload)
+                elif kind == 'entry': (sources/'workbench_operations_boot.py').write_text(payload)
+                else:
+                    path = base/'payload.py'; path.write_text(payload)
+                    py_compile.compile(str(path),cfile=str(sources/'fcntl.pyc'),doraise=True)
+                result = subprocess.run(argv,env=m.runtime.clean_environment(base),capture_output=True,timeout=15)
+                self.assertFalse(marker.exists(),result.stderr.decode())
+                self.assertNotEqual(result.returncode,0)
 
 
 if __name__ == '__main__': unittest.main()

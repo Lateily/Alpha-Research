@@ -23,7 +23,36 @@ import workbench_runtime_env as runtime
 import workbench_runtime_service as service
 
 FIELDS = {'schema', 'root', 'recovery_profile', 'recovery_pin', 'code_sha',
-          'max_crashes', 'scope', 'production_authority'}
+          'max_crashes', 'scope', 'production_authority', 'code_root', 'source_files'}
+
+
+def _code_sources(value):
+    code = Path(value['code_root']); sha = value['code_identity']['code_sha']
+    env = {**runtime.clean_environment(code),'GIT_CONFIG_NOSYSTEM':'1','GIT_CONFIG_GLOBAL':'/dev/null',
+           'GIT_NO_REPLACE_OBJECTS':'1','GIT_OPTIONAL_LOCKS':'0','GIT_NO_LAZY_FETCH':'1'}
+    def git(*args, data=None):
+        return subprocess.run(['/usr/bin/git','-c','core.fsmonitor=false','-C',str(code),*args],
+                              input=data,env=env,capture_output=True,timeout=30,check=True).stdout
+    files = []
+    for row in git('ls-tree','-r','-z',sha).split(b'\0'):
+        if not row: continue
+        metadata,name = row.split(b'\t',1); mode,kind,oid = metadata.split()
+        if name.endswith(b'.py'):
+            if mode not in {b'100644',b'100755'} or kind != b'blob': raise ValueError('OPERATIONS_SOURCE_TYPE')
+            files.append((name.decode(),oid))
+    if not 1 <= len(files) <= 10000: raise ValueError('OPERATIONS_SOURCE_LIMIT')
+    objects = git('cat-file','--batch',data=b''.join(oid+b'\n' for _,oid in files))
+    if len(objects) > 256*1024*1024: raise ValueError('OPERATIONS_SOURCE_LIMIT')
+    result = {}; offset = 0
+    for name,oid in files:
+        end = objects.find(b'\n',offset); header = objects[offset:end].split()
+        if len(header) != 3 or header[:2] != [oid,b'blob'] or not header[2].isdigit():
+            raise ValueError('OPERATIONS_SOURCE_OBJECT')
+        size = int(header[2]); start = end+1; offset = start+size+1
+        if objects[start+size:offset] != b'\n': raise ValueError('OPERATIONS_SOURCE_OBJECT')
+        result[name] = ev.sha(objects[start:start+size])
+    if offset != len(objects): raise ValueError('OPERATIONS_SOURCE_OBJECT')
+    return result
 
 
 def _disjoint(*paths):
@@ -33,30 +62,46 @@ def _disjoint(*paths):
         raise ValueError('OPERATIONS_ROOT_OVERLAP')
 
 
+def _prerequisites(profile, value):
+    paths = [profile.parent,value['code_root'],value['environment_root']]
+    if value.get('backup_root'): paths.append(value['backup_root'])
+    for key in ('source','library'):
+        item = value.get('resources',{}).get(key)
+        if item is not None: paths.append(item['root'])
+    return paths
+
+
 def prepare(root, profile, pin):
     root, profile = runtime.safe_path(root), runtime.safe_path(profile)
     value = recovery.verify(profile, pin)
-    _disjoint(root, profile.parent, value['code_root'], value['environment_root'])
+    _disjoint(root, *_prerequisites(profile,value))
     if root.exists(): raise ValueError('OPERATIONS_NEW_ROOT_REQUIRED')
     if any((p/'.git').exists() for p in (root, *root.parents)):
         raise ValueError('OPERATIONS_ROOT_INSIDE_REPOSITORY')
+    # governance-mutation: OPERATIONS_CAPSULE_ROOT_BINDING
+    if (profile.parent/'operations-binding.json').exists():
+        raise ValueError('OPERATIONS_CAPSULE_ALREADY_BOUND')
     environment = runtime.verify_environment(Path(value['environment_root']), value['environment_hash'])
     body = {'schema': 'ar.workbench-operations.v1', 'root': str(root),
             'recovery_profile': str(profile), 'recovery_pin': pin,
             'code_sha': value['code_identity']['code_sha'], 'max_crashes': 3,
+            'code_root': value['code_root'], 'source_files': _code_sources(value),
             'scope': 'ISOLATED_ONLY', 'production_authority': False}
     raw = ev.canonical(body).encode(); digest = ev.sha(raw)
     root.mkdir(mode=0o700)
     backup.write_new(root/'operations.json', raw)
-    script = Path(value['code_root'])/'scripts/llm/workbench_operations.py'
+    script = Path(value['code_root'])/'scripts/llm/workbench_operations_boot.py'
+    if runtime.file_hash(script) != body['source_files'].get('scripts/llm/workbench_operations_boot.py'):
+        raise ValueError('OPERATIONS_BOOT_NOT_COMMITTED')
+    binding = {'operations_root':str(root),'operations_hash':digest,'recovery_pin':pin}
+    backup.write_new(profile.parent/'operations-binding.json',ev.canonical(binding).encode())
     # Pin the entry bytes before the interpreter executes application code.
     bootstrap = ('import hashlib,pathlib,sys; p=pathlib.Path(sys.argv.pop(1)); '
                  'h=sys.argv.pop(1); b=p.read_bytes(); '
                  'assert hashlib.sha256(b).hexdigest()==h; '
                  'exec(compile(b,str(p),"exec"),{"__name__":"__main__","__file__":str(p)})')
     command = [environment['base_executable'], '-I', '-B', '-S', '-c', bootstrap,
-               str(script), runtime.file_hash(script), 'serve', '--root', str(root),
-               '--pin', digest, '--resident']
+               str(script), runtime.file_hash(script), str(root), digest, '--resident']
     template = {'Label': 'com.ar.isolated-operations.'+digest[:12], 'RunAtLoad': True,
                 'KeepAlive': {'SuccessfulExit': False}, 'ThrottleInterval': 60,
                 'LimitLoadToSessionType': 'Aqua', 'ProgramArguments': command,
@@ -82,8 +127,11 @@ def verify(root, pin):
         raise ValueError('OPERATIONS_MANIFEST_INVALID')
     profile = runtime.safe_path(value['recovery_profile'])
     retained = recovery.verify(profile, value['recovery_pin'])
-    _disjoint(root, profile.parent, retained['code_root'], retained['environment_root'])
-    if retained['code_identity']['code_sha'] != value['code_sha']:
+    if ev.parse(ev.read_local(profile.parent,'operations-binding.json')) != {
+            'operations_root':str(root),'operations_hash':pin,'recovery_pin':value['recovery_pin']}:
+        raise ValueError('OPERATIONS_CAPSULE_BINDING')
+    _disjoint(root, *_prerequisites(profile,retained))
+    if retained['code_identity']['code_sha'] != value['code_sha'] or retained['code_root'] != value['code_root']:
         raise ValueError('OPERATIONS_CODE_BINDING')
     return value
 

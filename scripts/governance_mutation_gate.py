@@ -19339,6 +19339,24 @@ MUTATIONS += (
         'A host that never sends its first pulse must still trigger the five-minute alert.'),
 )
 
+MUTATIONS += (
+    MutationCase('OPERATIONS_BOOT_SOURCE_PIN', 'Isolated platform operations',
+        'scripts/llm/workbench_operations_boot.py', 'tests/test_workbench_operations.py',
+        "        if hashlib.sha256(data).hexdigest() != digest: raise ValueError('OPERATIONS_BOOT_SOURCE_PIN')",
+        '        if False: pass', 'test_generated_boot_refuses_changed_helper_and_ignored_sourceless_before_execution',
+        'Changed tracked sibling code must be rejected before import side effects.'),
+    MutationCase('OPERATIONS_CAPSULE_BINDING', 'Isolated platform operations',
+        'scripts/llm/workbench_operations.py', 'tests/test_workbench_operations.py',
+        "    if ev.parse(ev.read_local(profile.parent,'operations-binding.json')) != {\n            'operations_root':str(root),'operations_hash':pin,'recovery_pin':value['recovery_pin']}:",
+        '    if False:', 'test_resealed_alternate_root_does_not_gain_capsule_authority',
+        'A freshly resealed operations root cannot replace the capsule journal binding.'),
+    MutationCase('OPERATIONS_PREARRIVAL_GAP', 'Isolated platform operations',
+        'scripts/llm/workbench_operations_alerts.py', 'tests/test_workbench_operations_alerts.py',
+        '            self.gap(db, now)  # retain the pre-arrival observation gap',
+        '            pass', 'test_fresh_pulse_after_observer_reopen_retains_overdue_gap',
+        'A returning heartbeat cannot erase a prior observation outage.'),
+)
+
 SHARD_SPEC_RE = re.compile(r"^(?P<index>[1-9][0-9]*)/(?P<count>[1-9][0-9]*)$")
 SHARD_RECEIPT_SCHEMA = "ar-governance-mutation-shard-receipt.v1"
 

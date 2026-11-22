@@ -30,11 +30,19 @@ as a durable offline handoff with no sender or inferred human acceptance.
 
 ## Steps
 
-- [ ] Compile ai-task.v1 and record SPEC_READY.
-- [ ] Write failing operations/observer behavior tests, then implement minimal APIs.
-- [ ] Add new negative guard mutations without changing existing pins.
+- [x] Compile ai-task.v1 and record SPEC_READY.
+- [x] Write failing operations/observer behavior tests, then implement minimal APIs.
+- [x] Add new negative guard mutations without changing existing pins.
 - [ ] Exercise owned-child restart, persistent fencing, cold restore and outbox.
-- [ ] Write Junyan/Reed/24-hour field checklist and separate pending approvals.
+- [x] Write Junyan/Reed/24-hour field checklist and separate pending approvals.
 - [ ] Commit candidate; run full existing offline CI/mutations on exact SHA.
 - [ ] Fresh independent review; repair findings and rerun on final SHA.
 - [ ] Deliver diff, evidence and unexecuted real-world gates; no deployment.
+
+## Review Correction Record
+
+The first a7bdbf2 candidate was rejected by independent review. Retain its tests
+and evidence, but do not transfer its acceptance. Fix-before-final: authenticate
+the complete committed source closure before imports; bind one journal root to
+the capsule; retain an overdue observation gap before accepting a new pulse.
+The backup helper remains consistent-snapshot-only, not stopped-writer proof.

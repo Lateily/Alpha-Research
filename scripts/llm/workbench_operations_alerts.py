@@ -83,6 +83,8 @@ class Observer:
             # governance-mutation: OPERATIONS_HEARTBEAT_REPLAY
             if pulse['sequence'] <= sequence or previous_sent is not None and sent < previous_sent:
                 raise ValueError('OBSERVER_HEARTBEAT_REPLAY')
+            self.gap(db, now)  # retain the pre-arrival observation gap
+            previous_state, incident = db.execute('SELECT state,incident FROM state').fetchone()
             healthy = pulse['health'] == 'HEALTHY'
             current = 'HEALTHY' if healthy else 'SERVICE_DEGRADED'
             if not healthy and previous_state != current:
@@ -96,15 +98,20 @@ class Observer:
     def check(self, now):
         with self.connect() as db:
             self.clock(db, now)
-            started, last_seen, state, incident = db.execute('SELECT started,last_seen,state,incident FROM state').fetchone()
-            last = last_seen if last_seen is not None else started
+            self.gap(db,now)
+            state = db.execute('SELECT state FROM state').fetchone()[0]
+            outbox = [ev.parse(row[0]) for row in db.execute('SELECT body FROM outbox ORDER BY rowid')]
+        return {'status':state,'outbox':outbox,'external_detection':'NOT_ATTESTED',
+                'phone_delivery':'NOT_ATTESTED','human_acknowledgement':'PENDING'}
+
+    def gap(self, db, now):
+        started, last_seen, state, incident = db.execute('SELECT started,last_seen,state,incident FROM state').fetchone()
+        last = last_seen if last_seen is not None else started
+        if last is not None:
             # governance-mutation: OPERATIONS_LOSS_TIMEOUT
             if now-last >= 300 and state != 'HOST_LOST':
                 incident += 1; state = 'HOST_LOST'; self.alert(db,state,now,incident)
                 db.execute('UPDATE state SET state=?,incident=? WHERE id=1', (state,incident))
-            outbox = [ev.parse(row[0]) for row in db.execute('SELECT body FROM outbox ORDER BY rowid')]
-        return {'status':state,'outbox':outbox,'external_detection':'NOT_ATTESTED',
-                'phone_delivery':'NOT_ATTESTED','human_acknowledgement':'PENDING'}
 
     def record_delivery(self, alert_id, *, channel, receipt_hash, at):
         name(channel); timestamp(at)

@@ -11,9 +11,12 @@ No installation, sleep, reboot, ingress changes or real notification calls.
 
 ## Runtime
 
+A stdlib-only bootstrap verifies the complete committed Python-source inventory
+before exposing project imports, and serves project imports from captured
+verified buffers. Ignored sourceless modules are refused before execution.
 A new operator module supervises only the verified recovery-child that it
-creates. It holds the existing capsule supervisor lock and a separate durable
-operations journal. Every attempt is reserved durably before Popen. Two
+creates. It holds the existing capsule supervisor lock and binds that capsule
+durably to one operations root/journal. Every attempt is reserved before Popen. Two
 unexpected restarts are permitted, including across operator crashes; success
 does not silently reset the budget. Abandoned reservations are counted as
 crashes. A stopped/fenced operator never authorizes another process takeover.
@@ -29,8 +32,9 @@ Generated templates and cold process recovery are not startup attestation.
 ## Retention and rollback
 
 Use existing consistent SQLite/WAL export, chunked backup, manifest/artifact
-checks and new-root restore. A rehearsal takes the capsule lock and refuses an
-active owned generation. Restore the newest archive into a new root and verify
+checks and new-root restore. The backup helper is a consistent SQLite/WAL
+snapshot, not a stopped-writer attestation or takeover authority. Restore the
+newest exported archive into a new root and verify
 all tables, events and original artifacts. Do not overwrite or prune history;
 do not restore credentials. Code/environment/source/library resources remain
 separately pinned prerequisites, not implicitly included in the state archive.
@@ -43,6 +47,8 @@ A separate offline observer journal validates ordered heartbeat sequences,
 source/observer identities and time bounds. After 300 seconds without a valid
 heartbeat it queues an idempotent loss alert. Health failures queue a separate
 safe code; no report/source text, token, raw exception or URL enters alerts.
+A fresh pulse first retains any overdue observation gap, then records recovery;
+observer restart cannot silently turn an unobserved interval into continuity.
 An outbox entry is not phone delivery or human acknowledgement. A channel receipt
 and subsequent named acknowledgement are separate records. Local simulations
 cannot assert external-host detection. Polling cadence is 60 seconds; mobile

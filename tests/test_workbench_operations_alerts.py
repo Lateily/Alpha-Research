@@ -82,5 +82,16 @@ class OperationsAlertTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'OBSERVER_BINDING'):
             self.module().Observer(self.root,service='workbench',host='different',observer='host-b')
 
+    def test_fresh_pulse_after_observer_reopen_retains_overdue_gap(self):
+        self.observer().accept(self.pulse(),received_at=1000)
+        result = self.observer().accept(self.pulse(2,1360),received_at=1360)
+        self.assertEqual([row['kind'] for row in result['outbox']],['HOST_LOST','RECOVERED'])
+        self.assertEqual(result['status'],'HEALTHY')
+
+    def test_first_late_pulse_retains_missing_initial_heartbeat(self):
+        self.observer().check(1000)
+        result = self.observer().accept(self.pulse(1,1360),received_at=1360)
+        self.assertEqual([row['kind'] for row in result['outbox']],['HOST_LOST','RECOVERED'])
+
 
 if __name__ == '__main__': unittest.main()
