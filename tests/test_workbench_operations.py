@@ -370,5 +370,14 @@ class OperationsTests(unittest.TestCase):
         self.assertNotEqual(result.returncode,0)
         self.assertFalse(marker.exists(),result.stderr.decode())
 
+    def test_worker_hash_stream_does_not_relax_json_artifact_limit(self):
+        import workbench_operations_boot as boot
+        self.assertTrue(hasattr(boot,'file_digest'),'worker binaries need bounded streaming verification')
+        path = self.base/'worker-binary'; raw = b'x'*(12*1024*1024+1); path.write_bytes(raw)
+        self.assertEqual(boot.file_digest(path),ev.sha(raw))
+        with self.assertRaisesRegex(ValueError,'OPERATIONS_BOOT_FILE'): boot.read(path)
+        with path.open('wb') as stream: stream.truncate(128*1024*1024+1)
+        with self.assertRaisesRegex(ValueError,'OPERATIONS_BOOT_BINARY_LIMIT'): boot.file_digest(path)
+
 
 if __name__ == '__main__': unittest.main()

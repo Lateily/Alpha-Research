@@ -18,6 +18,9 @@ The generated command retains the committed bootstrap digest, never a second
 filesystem digest. PDF workers use the executable derived from pinned recovery
 and runtime manifests; its byte pin is checked before selection and the full
 unchanged environment verifier runs before any worker invocation.
+The 17MiB retained worker binary is hashed in a bounded stream (128MiB maximum),
+not parsed as an artifact. JSON/source/manifest reads keep the existing 12MiB
+bound; no application input or global evidence limit is increased.
 A new operator module supervises only the verified recovery-child that it
 creates. It holds the existing capsule supervisor lock and binds that capsule
 durably to one operations root/journal. Every attempt is reserved before Popen. Two

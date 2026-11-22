@@ -19379,6 +19379,14 @@ MUTATIONS += (
         'Complete runtime inventory must be checked before archive verification can run PDF workers.'),
 )
 
+MUTATIONS += (
+    MutationCase('OPERATIONS_BOOT_BINARY_LIMIT', 'Isolated platform operations',
+        'scripts/llm/workbench_operations_boot.py', 'tests/test_workbench_operations.py',
+        '        if not stat.S_ISREG(before.st_mode) or before.st_size > 128*1024*1024:',
+        '        if not stat.S_ISREG(before.st_mode):', 'test_worker_hash_stream_does_not_relax_json_artifact_limit',
+        'Executable hashing is streamed and bounded separately; JSON/source artifact limits remain 12MiB.'),
+)
+
 SHARD_SPEC_RE = re.compile(r"^(?P<index>[1-9][0-9]*)/(?P<count>[1-9][0-9]*)$")
 SHARD_RECEIPT_SCHEMA = "ar-governance-mutation-shard-receipt.v1"
 

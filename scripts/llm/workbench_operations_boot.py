@@ -27,6 +27,24 @@ def read(path):
         return raw
 
 
+def file_digest(path):
+    path = Path(path)
+    if not path.is_absolute() or '..' in path.parts or any(p.is_symlink() for p in (path,*path.parents)):
+        raise ValueError('OPERATIONS_BOOT_PATH')
+    fd = os.open(path,os.O_RDONLY|os.O_NOFOLLOW|os.O_NONBLOCK)
+    with os.fdopen(fd,'rb') as stream:
+        before = os.fstat(stream.fileno())
+        # governance-mutation: OPERATIONS_BOOT_BINARY_LIMIT
+        if not stat.S_ISREG(before.st_mode) or before.st_size > 128*1024*1024:
+            raise ValueError('OPERATIONS_BOOT_BINARY_LIMIT')
+        digest = hashlib.sha256()
+        for chunk in iter(lambda:stream.read(1024*1024),b''): digest.update(chunk)
+        identity = lambda s: (s.st_dev,s.st_ino,s.st_size,s.st_mtime_ns,s.st_ctime_ns,s.st_mode)
+        if identity(before) != identity(os.fstat(stream.fileno())) or identity(before) != identity(path.lstat()):
+            raise ValueError('OPERATIONS_BOOT_CHANGED')
+        return digest.hexdigest()
+
+
 class BufferedLoader(importlib.abc.Loader):
     def __init__(self, origin, raw): self.origin,self.raw = origin,raw
     def create_module(self, spec): return None
@@ -89,7 +107,7 @@ def main():
         raise ValueError('OPERATIONS_BOOT_ENVIRONMENT_PIN')
     runtime = json.loads(runtime_raw)
     worker = environment/'venv/bin/python3'
-    if hashlib.sha256(read(worker)).hexdigest() != runtime['files']['venv/bin/python3']['sha256']:
+    if file_digest(worker) != runtime['files']['venv/bin/python3']['sha256']:
         raise ValueError('OPERATIONS_BOOT_WORKER_PIN')
     binding = json.loads(read(profile.parent/'operations-binding.json'))
     if binding != {'operations_root':str(root),'operations_hash':pin,'recovery_pin':value['recovery_pin']}:
