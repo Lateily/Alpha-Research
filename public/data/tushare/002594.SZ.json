@@ -1,6 +1,6 @@
 {
   "ticker": "002594.SZ",
-  "fetched_at": "2026-11-23T08:47:59Z",
+  "fetched_at": "2026-11-23T20:25:51Z",
   "permission_model": "runtime_probe",
   "_status": "partial",
   "data": {
@@ -786,7 +786,7 @@
           "close": 78.04,
           "turnover_rate": 0.7835,
           "turnover_rate_f": 1.112,
-          "volume_ratio": null,
+          "volume_ratio": 1.24,
           "pe": 21.8126,
           "pe_ttm": 22.4941,
           "pb": 2.8578,
@@ -1970,297 +1970,297 @@
         {
           "ts_code": "002594.SZ",
           "trade_date": "20261123",
-          "adj_factor": 3.1617
+          "adj_factor": 3.1624
         },
         {
           "ts_code": "002594.SZ",
           "trade_date": "20261120",
-          "adj_factor": 3.1617
+          "adj_factor": 3.1624
         },
         {
           "ts_code": "002594.SZ",
           "trade_date": "20261119",
-          "adj_factor": 3.1617
+          "adj_factor": 3.1624
         },
         {
           "ts_code": "002594.SZ",
           "trade_date": "20261118",
-          "adj_factor": 3.1617
+          "adj_factor": 3.1624
         },
         {
           "ts_code": "002594.SZ",
           "trade_date": "20261117",
-          "adj_factor": 3.1617
+          "adj_factor": 3.1624
         },
         {
           "ts_code": "002594.SZ",
           "trade_date": "20261116",
-          "adj_factor": 3.1617
+          "adj_factor": 3.1624
         },
         {
           "ts_code": "002594.SZ",
           "trade_date": "20261113",
-          "adj_factor": 3.1617
+          "adj_factor": 3.1624
         },
         {
           "ts_code": "002594.SZ",
           "trade_date": "20261112",
-          "adj_factor": 3.1617
+          "adj_factor": 3.1624
         },
         {
           "ts_code": "002594.SZ",
           "trade_date": "20261111",
-          "adj_factor": 3.1617
+          "adj_factor": 3.1624
         },
         {
           "ts_code": "002594.SZ",
           "trade_date": "20261110",
-          "adj_factor": 3.1617
+          "adj_factor": 3.1624
         },
         {
           "ts_code": "002594.SZ",
           "trade_date": "20261109",
-          "adj_factor": 3.1617
+          "adj_factor": 3.1624
         },
         {
           "ts_code": "002594.SZ",
           "trade_date": "20261106",
-          "adj_factor": 3.1617
+          "adj_factor": 3.1624
         },
         {
           "ts_code": "002594.SZ",
           "trade_date": "20261105",
-          "adj_factor": 3.1617
+          "adj_factor": 3.1624
         },
         {
           "ts_code": "002594.SZ",
           "trade_date": "20261104",
-          "adj_factor": 3.1617
+          "adj_factor": 3.1624
         },
         {
           "ts_code": "002594.SZ",
           "trade_date": "20261103",
-          "adj_factor": 3.1617
+          "adj_factor": 3.1624
         },
         {
           "ts_code": "002594.SZ",
           "trade_date": "20261102",
-          "adj_factor": 3.1617
+          "adj_factor": 3.1624
         },
         {
           "ts_code": "002594.SZ",
           "trade_date": "20261030",
-          "adj_factor": 3.1617
+          "adj_factor": 3.1624
         },
         {
           "ts_code": "002594.SZ",
           "trade_date": "20261029",
-          "adj_factor": 3.1617
+          "adj_factor": 3.1624
         },
         {
           "ts_code": "002594.SZ",
           "trade_date": "20261028",
-          "adj_factor": 3.1617
+          "adj_factor": 3.1624
         },
         {
           "ts_code": "002594.SZ",
           "trade_date": "20261027",
-          "adj_factor": 3.1617
+          "adj_factor": 3.1624
         },
         {
           "ts_code": "002594.SZ",
           "trade_date": "20261026",
-          "adj_factor": 3.1617
+          "adj_factor": 3.1624
         },
         {
           "ts_code": "002594.SZ",
           "trade_date": "20261023",
-          "adj_factor": 3.1617
+          "adj_factor": 3.1624
         },
         {
           "ts_code": "002594.SZ",
           "trade_date": "20261022",
-          "adj_factor": 3.1617
+          "adj_factor": 3.1624
         },
         {
           "ts_code": "002594.SZ",
           "trade_date": "20261021",
-          "adj_factor": 3.1617
+          "adj_factor": 3.1624
         },
         {
           "ts_code": "002594.SZ",
           "trade_date": "20261020",
-          "adj_factor": 3.1617
+          "adj_factor": 3.1624
         },
         {
           "ts_code": "002594.SZ",
           "trade_date": "20261019",
-          "adj_factor": 3.1617
+          "adj_factor": 3.1624
         },
         {
           "ts_code": "002594.SZ",
           "trade_date": "20261016",
-          "adj_factor": 3.1617
+          "adj_factor": 3.1624
         },
         {
           "ts_code": "002594.SZ",
           "trade_date": "20261015",
-          "adj_factor": 3.1617
+          "adj_factor": 3.1624
         },
         {
           "ts_code": "002594.SZ",
           "trade_date": "20261014",
-          "adj_factor": 3.1617
+          "adj_factor": 3.1624
         },
         {
           "ts_code": "002594.SZ",
           "trade_date": "20261013",
-          "adj_factor": 3.1617
+          "adj_factor": 3.1624
         },
         {
           "ts_code": "002594.SZ",
           "trade_date": "20261012",
-          "adj_factor": 3.1617
+          "adj_factor": 3.1624
         },
         {
           "ts_code": "002594.SZ",
           "trade_date": "20261009",
-          "adj_factor": 3.1617
+          "adj_factor": 3.1624
         },
         {
           "ts_code": "002594.SZ",
           "trade_date": "20261008",
-          "adj_factor": 3.1617
+          "adj_factor": 3.1624
         },
         {
           "ts_code": "002594.SZ",
           "trade_date": "20260930",
-          "adj_factor": 3.1617
+          "adj_factor": 3.1624
         },
         {
           "ts_code": "002594.SZ",
           "trade_date": "20260929",
-          "adj_factor": 3.1617
+          "adj_factor": 3.1624
         },
         {
           "ts_code": "002594.SZ",
           "trade_date": "20260928",
-          "adj_factor": 3.1617
+          "adj_factor": 3.1624
         },
         {
           "ts_code": "002594.SZ",
           "trade_date": "20260924",
-          "adj_factor": 3.1617
+          "adj_factor": 3.1624
         },
         {
           "ts_code": "002594.SZ",
           "trade_date": "20260923",
-          "adj_factor": 3.1617
+          "adj_factor": 3.1624
         },
         {
           "ts_code": "002594.SZ",
           "trade_date": "20260922",
-          "adj_factor": 3.1617
+          "adj_factor": 3.1624
         },
         {
           "ts_code": "002594.SZ",
           "trade_date": "20260921",
-          "adj_factor": 3.1617
+          "adj_factor": 3.1624
         },
         {
           "ts_code": "002594.SZ",
           "trade_date": "20260918",
-          "adj_factor": 3.1617
+          "adj_factor": 3.1624
         },
         {
           "ts_code": "002594.SZ",
           "trade_date": "20260917",
-          "adj_factor": 3.1617
+          "adj_factor": 3.1624
         },
         {
           "ts_code": "002594.SZ",
           "trade_date": "20260916",
-          "adj_factor": 3.1617
+          "adj_factor": 3.1624
         },
         {
           "ts_code": "002594.SZ",
           "trade_date": "20260915",
-          "adj_factor": 3.1617
+          "adj_factor": 3.1624
         },
         {
           "ts_code": "002594.SZ",
           "trade_date": "20260914",
-          "adj_factor": 3.1617
+          "adj_factor": 3.1624
         },
         {
           "ts_code": "002594.SZ",
           "trade_date": "20260911",
-          "adj_factor": 3.1617
+          "adj_factor": 3.1624
         },
         {
           "ts_code": "002594.SZ",
           "trade_date": "20260910",
-          "adj_factor": 3.1617
+          "adj_factor": 3.1624
         },
         {
           "ts_code": "002594.SZ",
           "trade_date": "20260909",
-          "adj_factor": 3.1617
+          "adj_factor": 3.1624
         },
         {
           "ts_code": "002594.SZ",
           "trade_date": "20260908",
-          "adj_factor": 3.1617
+          "adj_factor": 3.1624
         },
         {
           "ts_code": "002594.SZ",
           "trade_date": "20260907",
-          "adj_factor": 3.1617
+          "adj_factor": 3.1624
         },
         {
           "ts_code": "002594.SZ",
           "trade_date": "20260904",
-          "adj_factor": 3.1617
+          "adj_factor": 3.1624
         },
         {
           "ts_code": "002594.SZ",
           "trade_date": "20260903",
-          "adj_factor": 3.1617
+          "adj_factor": 3.1624
         },
         {
           "ts_code": "002594.SZ",
           "trade_date": "20260902",
-          "adj_factor": 3.1617
+          "adj_factor": 3.1624
         },
         {
           "ts_code": "002594.SZ",
           "trade_date": "20260901",
-          "adj_factor": 3.1617
+          "adj_factor": 3.1624
         },
         {
           "ts_code": "002594.SZ",
           "trade_date": "20260831",
-          "adj_factor": 3.1617
+          "adj_factor": 3.1624
         },
         {
           "ts_code": "002594.SZ",
           "trade_date": "20260828",
-          "adj_factor": 3.1617
+          "adj_factor": 3.1624
         },
         {
           "ts_code": "002594.SZ",
           "trade_date": "20260827",
-          "adj_factor": 3.1617
+          "adj_factor": 3.1624
         },
         {
           "ts_code": "002594.SZ",
           "trade_date": "20260826",
-          "adj_factor": 3.1617
+          "adj_factor": 3.1624
         },
         {
           "ts_code": "002594.SZ",
           "trade_date": "20260825",
-          "adj_factor": 3.1617
+          "adj_factor": 3.1624
         }
       ],
       "row_count": 59,

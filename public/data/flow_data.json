@@ -1,5 +1,5 @@
 {
-  "fetched_at": "2026-11-23T08:47:25.897367",
+  "fetched_at": "2026-11-23T20:25:17.839219",
   "northbound": {
     "latest_net_flow": null,
     "5d_cumulative": 0.0,
@@ -8,9 +8,9 @@
     "updated": "2026-11-23"
   },
   "southbound": {
-    "latest_net_flow": 118.115,
-    "5d_cumulative": 164.9789,
-    "20d_cumulative": 140.9278,
+    "latest_net_flow": -96.2738,
+    "5d_cumulative": 110.9724,
+    "20d_cumulative": 65.4077,
     "trend": "inflow",
     "updated": "2026-11-23"
   },
@@ -259,16 +259,6 @@
       "code": "000678",
       "name": "襄阳轴承",
       "date": "",
-      "reason": "日涨幅偏离值达到7%的前5只证券",
-      "buy_amt": null,
-      "sell_amt": null,
-      "net_amt": null,
-      "focus": false
-    },
-    {
-      "code": "000678",
-      "name": "襄阳轴承",
-      "date": "",
       "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
       "buy_amt": null,
       "sell_amt": null,
@@ -279,16 +269,6 @@
       "code": "000678",
       "name": "襄阳轴承",
       "date": "",
-      "reason": "日换手率达到20%的前5只证券",
-      "buy_amt": null,
-      "sell_amt": null,
-      "net_amt": null,
-      "focus": false
-    },
-    {
-      "code": "000678",
-      "name": "襄阳轴承",
-      "date": "",
       "reason": "日涨幅偏离值达到7%的前5只证券",
       "buy_amt": null,
       "sell_amt": null,
@@ -300,6 +280,26 @@
       "name": "襄阳轴承",
       "date": "",
       "reason": "日换手率达到20%的前5只证券",
+      "buy_amt": null,
+      "sell_amt": null,
+      "net_amt": null,
+      "focus": false
+    },
+    {
+      "code": "000678",
+      "name": "襄阳轴承",
+      "date": "",
+      "reason": "日换手率达到20%的前5只证券",
+      "buy_amt": null,
+      "sell_amt": null,
+      "net_amt": null,
+      "focus": false
+    },
+    {
+      "code": "000678",
+      "name": "襄阳轴承",
+      "date": "",
+      "reason": "日涨幅偏离值达到7%的前5只证券",
       "buy_amt": null,
       "sell_amt": null,
       "net_amt": null,
@@ -429,7 +429,7 @@
       "code": "000889",
       "name": "中嘉博创",
       "date": "",
-      "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
+      "reason": "日振幅值达到15%的前5只证券",
       "buy_amt": null,
       "sell_amt": null,
       "net_amt": null,
@@ -439,7 +439,7 @@
       "code": "000889",
       "name": "中嘉博创",
       "date": "",
-      "reason": "日振幅值达到15%的前5只证券",
+      "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
       "buy_amt": null,
       "sell_amt": null,
       "net_amt": null,

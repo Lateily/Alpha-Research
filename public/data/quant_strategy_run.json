@@ -8,7 +8,7 @@
     "no_buy_sell": true,
     "no_position_mutation": true,
     "run_date": "2026-11-23",
-    "generated_at": "2026-11-23T08:52:33.517183+00:00",
+    "generated_at": "2026-11-23T20:30:21.660207+00:00",
     "data_tier": "degraded_ci_focus_only",
     "data_as_of": null,
     "horizon": "20d primary / 5d secondary diagnostic",
