@@ -1,12 +1,194 @@
 {
-  "fetched_at": "2026-11-20T17:06:55Z",
-  "trade_date": "20261121",
+  "fetched_at": "2026-11-23T08:48:50Z",
+  "trade_date": "20261123",
   "tier": 15000,
   "_status": "partial",
   "hot_concepts": [],
   "cold_concepts": [],
-  "hot_industries": [],
-  "cold_industries": [],
+  "hot_industries": [
+    {
+      "name": "融资融券",
+      "ts_code": "BK0596.DC",
+      "net_inflow_yuan": 256970342400000.0,
+      "pct_chg": 2.97
+    },
+    {
+      "name": "MSCI中国",
+      "ts_code": "BK0821.DC",
+      "net_inflow_yuan": 201349816320000.0,
+      "pct_chg": 1.41
+    },
+    {
+      "name": "富时罗素",
+      "ts_code": "BK0867.DC",
+      "net_inflow_yuan": 194980741120000.0,
+      "pct_chg": 1.5
+    },
+    {
+      "name": "大盘股",
+      "ts_code": "BK1663.DC",
+      "net_inflow_yuan": 187505213440000.0,
+      "pct_chg": 0.82
+    },
+    {
+      "name": "HS300_",
+      "ts_code": "BK0500.DC",
+      "net_inflow_yuan": 174963712000000.0,
+      "pct_chg": 0.5
+    },
+    {
+      "name": "基金减仓",
+      "ts_code": "BK1689.DC",
+      "net_inflow_yuan": 164277575680000.0,
+      "pct_chg": 2.87
+    },
+    {
+      "name": "深股通",
+      "ts_code": "BK0804.DC",
+      "net_inflow_yuan": 157376573440000.0,
+      "pct_chg": 3.18
+    },
+    {
+      "name": "东方财富热股",
+      "ts_code": "BK1637.DC",
+      "net_inflow_yuan": 134771279360000.0,
+      "pct_chg": 4.27
+    },
+    {
+      "name": "通信技术",
+      "ts_code": "BK1650.DC",
+      "net_inflow_yuan": 125321320960000.0,
+      "pct_chg": 3.91
+    },
+    {
+      "name": "大盘成长",
+      "ts_code": "BK1665.DC",
+      "net_inflow_yuan": 122911815680000.0,
+      "pct_chg": 1.83
+    },
+    {
+      "name": "机构重仓",
+      "ts_code": "BK0552.DC",
+      "net_inflow_yuan": 121856506880000.0,
+      "pct_chg": 1.89
+    },
+    {
+      "name": "5G概念",
+      "ts_code": "BK0714.DC",
+      "net_inflow_yuan": 120885964800000.0,
+      "pct_chg": 3.75
+    },
+    {
+      "name": "百元股",
+      "ts_code": "BK1059.DC",
+      "net_inflow_yuan": 113069777920000.0,
+      "pct_chg": 4.0
+    },
+    {
+      "name": "标准普尔",
+      "ts_code": "BK0879.DC",
+      "net_inflow_yuan": 109553640960000.0,
+      "pct_chg": 1.08
+    },
+    {
+      "name": "深成500",
+      "ts_code": "BK0568.DC",
+      "net_inflow_yuan": 108908016640000.0,
+      "pct_chg": 2.33
+    },
+    {
+      "name": "科技风格",
+      "ts_code": "BK1713.DC",
+      "net_inflow_yuan": 107708344320000.0,
+      "pct_chg": 2.1
+    },
+    {
+      "name": "AH股",
+      "ts_code": "BK0499.DC",
+      "net_inflow_yuan": 101590499840000.0,
+      "pct_chg": 1.32
+    },
+    {
+      "name": "沪股通",
+      "ts_code": "BK0707.DC",
+      "net_inflow_yuan": 98668994560000.0,
+      "pct_chg": 2.27
+    },
+    {
+      "name": "权重股",
+      "ts_code": "BK1662.DC",
+      "net_inflow_yuan": 95885178880000.0,
+      "pct_chg": -0.16
+    },
+    {
+      "name": "2026中报预增",
+      "ts_code": "BK1749.DC",
+      "net_inflow_yuan": 94237816320000.0,
+      "pct_chg": 2.84
+    }
+  ],
+  "cold_industries": [
+    {
+      "name": "光伏概念",
+      "ts_code": "BK0588.DC",
+      "net_inflow_yuan": -10568916480000.0,
+      "pct_chg": 2.24
+    },
+    {
+      "name": "中芯概念",
+      "ts_code": "BK0935.DC",
+      "net_inflow_yuan": -9465615360000.0,
+      "pct_chg": 2.08
+    },
+    {
+      "name": "信创",
+      "ts_code": "BK1104.DC",
+      "net_inflow_yuan": -9082214400000.0,
+      "pct_chg": 2.98
+    },
+    {
+      "name": "网络安全",
+      "ts_code": "BK0655.DC",
+      "net_inflow_yuan": -8562618880000.0,
+      "pct_chg": 2.52
+    },
+    {
+      "name": "氮化镓",
+      "ts_code": "BK0916.DC",
+      "net_inflow_yuan": -6442092320000.0,
+      "pct_chg": 2.45
+    },
+    {
+      "name": "第三代半导体",
+      "ts_code": "BK0952.DC",
+      "net_inflow_yuan": -6399813120000.0,
+      "pct_chg": 2.92
+    },
+    {
+      "name": "参股新三板",
+      "ts_code": "BK0600.DC",
+      "net_inflow_yuan": -6042361280000.0,
+      "pct_chg": 1.94
+    },
+    {
+      "name": "氟化工概念",
+      "ts_code": "BK0690.DC",
+      "net_inflow_yuan": -5481469600000.0,
+      "pct_chg": 2.25
+    },
+    {
+      "name": "碳交易",
+      "ts_code": "BK0966.DC",
+      "net_inflow_yuan": -5445870080000.0,
+      "pct_chg": 1.26
+    },
+    {
+      "name": "工业气体",
+      "ts_code": "BK0981.DC",
+      "net_inflow_yuan": -5312169600000.0,
+      "pct_chg": 1.91
+    }
+  ],
   "concept_meta": {
     "api_used": null,
     "_attempted_endpoints": [
@@ -23,7 +205,7 @@
     "_attempted_endpoints": [
       "moneyflow_ind_dc"
     ],
-    "row_count": 0,
+    "row_count": 1081,
     "_status": "ok"
   }
 }

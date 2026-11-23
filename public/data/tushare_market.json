@@ -1,10 +1,28 @@
 {
-  "fetched_at": "2026-11-20T17:06:50Z",
+  "fetched_at": "2026-11-23T08:48:46Z",
   "permission_model": "runtime_probe",
   "_status": "ok",
   "data": {
     "trade_cal": {
       "rows": [
+        {
+          "exchange": "SSE",
+          "cal_date": "20261123",
+          "is_open": 1,
+          "pretrade_date": "20261120"
+        },
+        {
+          "exchange": "SSE",
+          "cal_date": "20261122",
+          "is_open": 0,
+          "pretrade_date": "20261120"
+        },
+        {
+          "exchange": "SSE",
+          "cal_date": "20261121",
+          "is_open": 0,
+          "pretrade_date": "20261120"
+        },
         {
           "exchange": "SSE",
           "cal_date": "20261120",
@@ -1950,9 +1968,9 @@
           "pretrade_date": "20251231"
         }
       ],
-      "row_count": 324,
+      "row_count": 327,
       "_status": "ok",
-      "as_of": "20261120"
+      "as_of": "20261123"
     },
     "moneyflow_hsgt": {
       "rows": [
@@ -2270,36 +2288,9 @@
           "sgt": "118568.27",
           "north_money": "232511.99",
           "south_money": "55373.77"
-        },
-        {
-          "trade_date": "20260923",
-          "ggt_ss": "32328.29",
-          "ggt_sz": "23016.48",
-          "hgt": "114560.67",
-          "sgt": "121944.6",
-          "north_money": "236505.27",
-          "south_money": "55344.77"
-        },
-        {
-          "trade_date": "20260922",
-          "ggt_ss": "32284.05",
-          "ggt_sz": "23026.23",
-          "hgt": "141255.33",
-          "sgt": "149894.55",
-          "north_money": "291149.88",
-          "south_money": "55310.28"
-        },
-        {
-          "trade_date": "20260921",
-          "ggt_ss": "32196.94",
-          "ggt_sz": "22986.44",
-          "hgt": "133832.25",
-          "sgt": "150079.61",
-          "north_money": "283911.86",
-          "south_money": "55183.37"
         }
       ],
-      "row_count": 38,
+      "row_count": 35,
       "_status": "ok",
       "as_of": "20261120"
     }
