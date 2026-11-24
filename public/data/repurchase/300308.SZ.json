@@ -1,7 +1,7 @@
 {
   "_status": "ok",
   "ticker": "300308.SZ",
-  "fetched_at": "2026-11-23T20:29:35Z",
+  "fetched_at": "2026-11-24T10:54:12Z",
   "api_used": "repurchase",
   "window_days": 180,
   "events": [
@@ -10,7 +10,7 @@
       "ann_date": "20261124",
       "end_date": null,
       "proc": "预案",
-      "exp_date": null,
+      "exp_date": "20270223",
       "vol": null,
       "amount": 4000000000.0,
       "high_limit": 600.0,

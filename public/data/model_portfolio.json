@@ -6,9 +6,9 @@
     "no_size": true,
     "no_buy_sell": true,
     "no_position_mutation": true,
-    "run_date": "2026-11-23",
+    "run_date": "2026-11-24",
     "pilot_start_date": "2026-06-08",
-    "generated_at": "2026-11-23T20:30:21.612351+00:00",
+    "generated_at": "2026-11-24T10:55:21.791024+00:00",
     "fresh_pilot": true,
     "legacy_paper_positions_inherited": false,
     "sources": [
@@ -274,7 +274,7 @@
           },
           "signals": []
         },
-        "as_of": "2026-11-23",
+        "as_of": "2026-11-24",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -316,7 +316,7 @@
             }
           ]
         },
-        "as_of": "2026-11-23",
+        "as_of": "2026-11-24",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -351,7 +351,7 @@
           },
           "signals": []
         },
-        "as_of": "2026-11-23",
+        "as_of": "2026-11-24",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -399,7 +399,7 @@
             }
           ]
         },
-        "as_of": "2026-11-23",
+        "as_of": "2026-11-24",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -434,7 +434,7 @@
           },
           "signals": []
         },
-        "as_of": "2026-11-23",
+        "as_of": "2026-11-24",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -488,7 +488,7 @@
             }
           ]
         },
-        "as_of": "2026-11-23",
+        "as_of": "2026-11-24",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -530,7 +530,7 @@
             }
           ]
         },
-        "as_of": "2026-11-23",
+        "as_of": "2026-11-24",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -565,7 +565,7 @@
           },
           "signals": []
         },
-        "as_of": "2026-11-23",
+        "as_of": "2026-11-24",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -600,7 +600,7 @@
           },
           "signals": []
         },
-        "as_of": "2026-11-23",
+        "as_of": "2026-11-24",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       }
