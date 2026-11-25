@@ -1,5 +1,5 @@
 {
-  "fetched_at": "2026-11-24T19:38:32Z",
+  "fetched_at": "2026-11-25T09:45:28Z",
   "_status": "ok",
   "api_used": "ths_index+ths_member",
   "scope": "watchlist_only",
@@ -475,6 +475,18 @@
       ]
     },
     {
+      "ts_code": "883426.TI",
+      "name": "同花顺拟回购指数",
+      "type": "S",
+      "total_count": 115.0,
+      "member_count": 3,
+      "members": [
+        "300054.SZ",
+        "300308.SZ",
+        "688120.SH"
+      ]
+    },
+    {
       "ts_code": "883432.TI",
       "name": "科技(TMT)",
       "type": "S",
@@ -868,17 +880,6 @@
       ]
     },
     {
-      "ts_code": "883426.TI",
-      "name": "同花顺拟回购指数",
-      "type": "S",
-      "total_count": 115.0,
-      "member_count": 2,
-      "members": [
-        "300054.SZ",
-        "688120.SH"
-      ]
-    },
-    {
       "ts_code": "883443.TI",
       "name": "同花顺算力主题精选",
       "type": "S",
@@ -953,6 +954,17 @@
       "members": [
         "002594.SZ",
         "603233.SH"
+      ]
+    },
+    {
+      "ts_code": "883929.TI",
+      "name": "回购计划",
+      "type": "S",
+      "total_count": 60.0,
+      "member_count": 2,
+      "members": [
+        "300308.SZ",
+        "688120.SH"
       ]
     },
     {
@@ -1974,16 +1986,6 @@
       ]
     },
     {
-      "ts_code": "883929.TI",
-      "name": "回购计划",
-      "type": "S",
-      "total_count": 60.0,
-      "member_count": 1,
-      "members": [
-        "688120.SH"
-      ]
-    },
-    {
       "ts_code": "883934.TI",
       "name": "保险重仓",
       "type": "S",
@@ -2506,6 +2508,8 @@
   ],
   "by_stock": {
     "300308.SZ": [
+      "883426.TI",
+      "883929.TI",
       "883959.TI",
       "883926.TI",
       "883913.TI",
@@ -2927,6 +2931,6 @@
     ]
   },
   "total_concepts": 232,
-  "total_memberships": 410,
+  "total_memberships": 412,
   "disclaimer": "不是买卖指令;研究信号,human executes."
 }
