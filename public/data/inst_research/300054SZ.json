@@ -1,13 +1,55 @@
 {
   "_status": "ok",
   "ticker": "300054.SZ",
-  "fetched_at": "2026-11-25T09:45:33Z",
+  "fetched_at": "2026-11-25T18:46:54Z",
   "api_used": "stk_surv",
   "_attempted_endpoints": [
     "stk_surv"
   ],
   "window_days": 90,
   "surveys": [
+    {
+      "ts_code": "300054.SZ",
+      "name": "鼎龙股份",
+      "surv_date": "20261120",
+      "fund_visitors": "刘晓雅,刘芳,贺婷,邹正国,丁林慧,郑中方,兰健,郭淳,何纯,游姗姗,庞师兰,安然,关健,梁宇奇,王心宜,曾淑琴,王娜,吴竟,冯芳,李鑫,柏漪雯,王海波,孙楚晴,王艺霖,郭超,王嘉欣,余天与,梁超然,孙晨,李响,陈宇善,张培博,方锦仪,刘伦,罗敏敏,李兵宇,陈星连,韩廷宾,孙抒逸,徐晓立,高歌,王鑫",
+      "rece_place": "公司6楼多功能厅",
+      "rece_mode": "特定对象调研",
+      "rece_org": "银华基金",
+      "org_type": "基金管理公司",
+      "comp_rece": "投资者关系总监 熊亚威",
+      "inst_count": 43,
+      "surv_type": "特定对象调研",
+      "description": null
+    },
+    {
+      "ts_code": "300054.SZ",
+      "name": "鼎龙股份",
+      "surv_date": "20261120",
+      "fund_visitors": "杨文虎",
+      "rece_place": "公司6楼多功能厅",
+      "rece_mode": "特定对象调研",
+      "rece_org": "生命资产",
+      "org_type": "保险资产管理公司",
+      "comp_rece": "投资者关系总监 熊亚威",
+      "inst_count": 2,
+      "surv_type": "特定对象调研",
+      "description": null
+    },
+    {
+      "ts_code": "300054.SZ",
+      "name": "鼎龙股份",
+      "surv_date": "20261120",
+      "fund_visitors": "何六艺",
+      "rece_place": "公司6楼多功能厅",
+      "rece_mode": "特定对象调研",
+      "rece_org": "幸福人寿",
+      "org_type": "寿险公司",
+      "comp_rece": "投资者关系总监 熊亚威",
+      "inst_count": 2,
+      "surv_type": "特定对象调研",
+      "description": null
+    },
     {
       "ts_code": "300054.SZ",
       "name": "鼎龙股份",
@@ -374,9 +416,9 @@
     }
   ],
   "summary": {
-    "total_30d": 18,
-    "total_90d": 26,
-    "unique_inst_30d": 38,
-    "latest_date": "2026-10-28"
+    "total_30d": 21,
+    "total_90d": 29,
+    "unique_inst_30d": 85,
+    "latest_date": "2026-11-20"
   }
 }
