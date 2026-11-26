@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "fetched_at": "2026-11-26T09:18:43.240069",
+    "fetched_at": "2026-11-26T18:32:36.042563",
     "version": "4.1",
     "tickers": [
       "300308.SZ",
@@ -168,7 +168,7 @@
         "change_pct": -0.699,
         "high": 13.16,
         "low": 12.88,
-        "volume": 132,
+        "volume": 125,
         "avg_volume_20d": null,
         "volume_ratio": null,
         "high_52w": 13.16,
@@ -464,10 +464,10 @@
       "updated": "2026-11-26"
     },
     "southbound": {
-      "latest_net_flow": 64.3433,
-      "5d_cumulative": 187.8075,
-      "20d_cumulative": 212.2031,
-      "trend": "inflow",
+      "latest_net_flow": -213.5086,
+      "5d_cumulative": -65.2903,
+      "20d_cumulative": 32.2833,
+      "trend": "outflow",
       "updated": "2026-11-26"
     },
     "dragon_tiger": [
