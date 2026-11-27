@@ -1,12 +1,194 @@
 {
-  "fetched_at": "2026-11-26T18:34:03Z",
+  "fetched_at": "2026-11-27T09:40:35Z",
   "trade_date": "20261127",
   "tier": 15000,
   "_status": "partial",
   "hot_concepts": [],
   "cold_concepts": [],
-  "hot_industries": [],
-  "cold_industries": [],
+  "hot_industries": [
+    {
+      "name": "融资融券",
+      "ts_code": "BK0596.DC",
+      "net_inflow_yuan": 1010496880640000.0,
+      "pct_chg": 7.77
+    },
+    {
+      "name": "基金减仓",
+      "ts_code": "BK1689.DC",
+      "net_inflow_yuan": 703460433920000.0,
+      "pct_chg": 7.75
+    },
+    {
+      "name": "MSCI中国",
+      "ts_code": "BK0821.DC",
+      "net_inflow_yuan": 687499714560000.0,
+      "pct_chg": 6.41
+    },
+    {
+      "name": "深股通",
+      "ts_code": "BK0804.DC",
+      "net_inflow_yuan": 622102487040000.0,
+      "pct_chg": 7.68
+    },
+    {
+      "name": "富时罗素",
+      "ts_code": "BK0867.DC",
+      "net_inflow_yuan": 572207882240000.0,
+      "pct_chg": 5.23
+    },
+    {
+      "name": "大盘股",
+      "ts_code": "BK1663.DC",
+      "net_inflow_yuan": 524174540800000.0,
+      "pct_chg": 5.72
+    },
+    {
+      "name": "电子",
+      "ts_code": "BK1201.DC",
+      "net_inflow_yuan": 461895147520000.0,
+      "pct_chg": 12.48
+    },
+    {
+      "name": "2026中报预增",
+      "ts_code": "BK1749.DC",
+      "net_inflow_yuan": 461596948480000.0,
+      "pct_chg": 7.71
+    },
+    {
+      "name": "科技风格",
+      "ts_code": "BK1713.DC",
+      "net_inflow_yuan": 450231541760000.0,
+      "pct_chg": 12.15
+    },
+    {
+      "name": "深成500",
+      "ts_code": "BK0568.DC",
+      "net_inflow_yuan": 447858728960000.0,
+      "pct_chg": 7.01
+    },
+    {
+      "name": "通信技术",
+      "ts_code": "BK1650.DC",
+      "net_inflow_yuan": 426927070720000.0,
+      "pct_chg": 10.52
+    },
+    {
+      "name": "华为概念",
+      "ts_code": "BK0854.DC",
+      "net_inflow_yuan": 417102400000000.0,
+      "pct_chg": 9.85
+    },
+    {
+      "name": "沪股通",
+      "ts_code": "BK0707.DC",
+      "net_inflow_yuan": 412400640000000.0,
+      "pct_chg": 6.58
+    },
+    {
+      "name": "大盘成长",
+      "ts_code": "BK1665.DC",
+      "net_inflow_yuan": 385074135040000.0,
+      "pct_chg": 9.85
+    },
+    {
+      "name": "HS300_",
+      "ts_code": "BK0500.DC",
+      "net_inflow_yuan": 383309783040000.0,
+      "pct_chg": 4.47
+    },
+    {
+      "name": "标准普尔",
+      "ts_code": "BK0879.DC",
+      "net_inflow_yuan": 375925473280000.0,
+      "pct_chg": 4.24
+    },
+    {
+      "name": "芯片概念",
+      "ts_code": "BK0891.DC",
+      "net_inflow_yuan": 375166865920000.0,
+      "pct_chg": 11.21
+    },
+    {
+      "name": "5G概念",
+      "ts_code": "BK0714.DC",
+      "net_inflow_yuan": 374130508800000.0,
+      "pct_chg": 10.06
+    },
+    {
+      "name": "半导体概念",
+      "ts_code": "BK0917.DC",
+      "net_inflow_yuan": 370431226880000.0,
+      "pct_chg": 12.03
+    },
+    {
+      "name": "CPO概念",
+      "ts_code": "BK1128.DC",
+      "net_inflow_yuan": 310695336960000.0,
+      "pct_chg": 12.68
+    }
+  ],
+  "cold_industries": [
+    {
+      "name": "趋势股",
+      "ts_code": "BK1715.DC",
+      "net_inflow_yuan": -52494266880000.0,
+      "pct_chg": 0.52
+    },
+    {
+      "name": "银行",
+      "ts_code": "BK1283.DC",
+      "net_inflow_yuan": -35511854080000.0,
+      "pct_chg": -1.07
+    },
+    {
+      "name": "银行Ⅱ",
+      "ts_code": "BK0475.DC",
+      "net_inflow_yuan": -35511854080000.0,
+      "pct_chg": -1.07
+    },
+    {
+      "name": "红利股",
+      "ts_code": "BK1641.DC",
+      "net_inflow_yuan": -32781739520000.0,
+      "pct_chg": 0.64
+    },
+    {
+      "name": "保险重仓",
+      "ts_code": "BK1685.DC",
+      "net_inflow_yuan": -30781473280000.0,
+      "pct_chg": 2.92
+    },
+    {
+      "name": "证金持股",
+      "ts_code": "BK0718.DC",
+      "net_inflow_yuan": -28716643840000.0,
+      "pct_chg": 0.48
+    },
+    {
+      "name": "红利破净股",
+      "ts_code": "BK1636.DC",
+      "net_inflow_yuan": -23693859840000.0,
+      "pct_chg": 0.15
+    },
+    {
+      "name": "长期破净",
+      "ts_code": "BK1635.DC",
+      "net_inflow_yuan": -22047731200000.0,
+      "pct_chg": 2.24
+    },
+    {
+      "name": "超级品牌",
+      "ts_code": "BK0811.DC",
+      "net_inflow_yuan": -15822433280000.0,
+      "pct_chg": 1.12
+    },
+    {
+      "name": "国有大型银行Ⅲ",
+      "ts_code": "BK1611.DC",
+      "net_inflow_yuan": -15604292160000.0,
+      "pct_chg": -2.17
+    }
+  ],
   "concept_meta": {
     "api_used": null,
     "_attempted_endpoints": [
@@ -23,7 +205,7 @@
     "_attempted_endpoints": [
       "moneyflow_ind_dc"
     ],
-    "row_count": 0,
+    "row_count": 1081,
     "_status": "ok"
   }
 }

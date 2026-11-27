@@ -6,9 +6,9 @@
     "no_size": true,
     "no_buy_sell": true,
     "no_position_mutation": true,
-    "run_date": "2026-11-26",
+    "run_date": "2026-11-27",
     "pilot_start_date": "2026-06-08",
-    "generated_at": "2026-11-26T18:38:08.792209+00:00",
+    "generated_at": "2026-11-27T09:44:35.954058+00:00",
     "fresh_pilot": true,
     "legacy_paper_positions_inherited": false,
     "sources": [
@@ -63,7 +63,7 @@
         },
         "quant_confluence": {
           "action": "NEUTRAL",
-          "score": 17,
+          "score": 13,
           "rationale": "Bullish: Rsi Oversold | RSI 23 | Price vs MA20 -9.2% | Regime: PERMISSIVE | VP 48"
         }
       },
@@ -281,7 +281,7 @@
             }
           ]
         },
-        "as_of": "2026-11-26",
+        "as_of": "2026-11-27",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -323,7 +323,7 @@
             }
           ]
         },
-        "as_of": "2026-11-26",
+        "as_of": "2026-11-27",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -358,7 +358,7 @@
           },
           "signals": []
         },
-        "as_of": "2026-11-26",
+        "as_of": "2026-11-27",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -400,7 +400,7 @@
             }
           ]
         },
-        "as_of": "2026-11-26",
+        "as_of": "2026-11-27",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -435,7 +435,7 @@
           },
           "signals": []
         },
-        "as_of": "2026-11-26",
+        "as_of": "2026-11-27",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -489,7 +489,7 @@
             }
           ]
         },
-        "as_of": "2026-11-26",
+        "as_of": "2026-11-27",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -531,7 +531,7 @@
             }
           ]
         },
-        "as_of": "2026-11-26",
+        "as_of": "2026-11-27",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -566,7 +566,7 @@
           },
           "signals": []
         },
-        "as_of": "2026-11-26",
+        "as_of": "2026-11-27",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -601,7 +601,7 @@
           },
           "signals": []
         },
-        "as_of": "2026-11-26",
+        "as_of": "2026-11-27",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       }
