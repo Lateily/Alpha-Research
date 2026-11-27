@@ -1,9 +1,9 @@
 {
   "verdict": "PASS",
-  "as_of": "2026-11-27T09:39:06.439726+00:00",
+  "as_of": "2026-11-27T18:25:10.215749+00:00",
   "max_age_days": 2,
   "meta": {
-    "fetched_at": "2026-11-27T09:35:39.032158",
+    "fetched_at": "2026-11-27T18:22:10.251660",
     "count": 5931,
     "version": "4.2",
     "scorer": "barra_lite_v1"
@@ -18,7 +18,7 @@
     "value": {
       "coverage": 0.9799359298600573,
       "unique": 909,
-      "stdev": 21.827902,
+      "stdev": 21.827949,
       "median": 57.4
     },
     "quality": {
